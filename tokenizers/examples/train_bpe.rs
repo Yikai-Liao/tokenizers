@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use tokenizers::models::bpe::{BpeTrainerBuilder, BPE};
 // use tokenizers::normalizers::{Sequence as NSequence, Strip, NFC};
 // use tokenizers::{PostProcessorWrapper, TokenizerBuilder};
-// 
+//
 // use tokenizers::pre_tokenizers::punctuation::Punctuation;
 // use tokenizers::pre_tokenizers::sequence::Sequence as PSequence;
 // use tokenizers::pre_tokenizers::whitespace::Whitespace;
@@ -16,14 +16,15 @@ use tokenizers::parallelism::MaybeParallelIterator;
 fn build_words(files: Vec<String>) -> HashMap<String, u64> {
     let start = std::time::Instant::now();
     let seps = [
-        ' ', '\n', '\t', '\r', '\x0c', '\x0b', ';', ':', ',', '.', '!', '?', '(', ')', '[', ']',
+        ' ', 'n', '\t', '\r', '\x0c', '\x0b', ';', ':', ',', '.', '!', '?', '(', ')', '[', ']',
         '{', '}', '<', '>', '\'', '"', '`', '~', '@', '#', '$', '%', '^', '&', '*', '-', '_', '+',
-        '=', '\\', '|', '/', ' ', '\n', '\t', '，', '。', '！', '？', '、', '；', '：', '（', '）', '【',
-        '】', '《', '》', '‘', '’', '“', '”', '…', '—', '～', '·', '「', '」', '『', '』', '〈', '〉',
+        '=', '\\', '|', '/', ' ', '\n', '\t', '，', '。', '！', '？', '、', '；', '：', '（', '）',
+        '【', '】', '《', '》', '‘', '’', '“', '”', '…', '—', '～', '·', '「', '」', '『', '』',
+        '〈', '〉',
     ];
     // build an array of bool that returns true if the char is a separator
-    let is_sep = seps.iter().map(|&c| (c as usize, true)).collect::<FxHashMap<_, _>>();
-    
+    let is_sep = seps.iter().map(|&c| (c, true)).collect::<FxHashMap<_, _>>();
+
     // init a HashMap for each thread
     let words = files
         .into_maybe_par_iter()
@@ -37,10 +38,11 @@ fn build_words(files: Vec<String>) -> HashMap<String, u64> {
                         return words;
                     }
                 };
-               
+
                 let mut pivot: usize = 0;
-                for (i, c) in text.char_indices() {
-                    if is_sep.contains_key(&(c as usize)) {
+                text.char_indices()
+                    .filter(|(_, c)| is_sep.contains_key(c))
+                    .for_each(|(i, c)| {
                         if i > pivot {
                             let word = &text[pivot..i];
                             words.get_mut(word).map(|v| *v += 1).unwrap_or_else(|| {
@@ -48,8 +50,7 @@ fn build_words(files: Vec<String>) -> HashMap<String, u64> {
                             });
                         }
                         pivot = i + c.len_utf8();
-                    }
-                }
+                    });
                 words
             },
         )
@@ -62,9 +63,12 @@ fn build_words(files: Vec<String>) -> HashMap<String, u64> {
                     (words2, words1)
                 };
                 for (word, count) in words2 {
-                    words1.get_mut(&word).map(|v| *v += count).unwrap_or_else(|| {
-                        words1.insert(word, count);
-                    });
+                    words1
+                        .get_mut(&word)
+                        .map(|v| *v += count)
+                        .unwrap_or_else(|| {
+                            words1.insert(word, count);
+                        });
                 }
                 words1
             },
