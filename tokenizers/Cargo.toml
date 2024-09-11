@@ -22,7 +22,7 @@ bench = false
 
 [[bench]]
 name = "bpe_benchmark"
-harness = false
+harness = true
 
 [[bench]]
 name = "bert_benchmark"
@@ -89,4 +89,8 @@ lto = "fat"
 [[example]]
 name = "encode_batch"
 required-features = ["http"]
+
+[[example]]
+name = "train_bpe"
+
 
