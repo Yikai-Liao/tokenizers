@@ -7,6 +7,7 @@ use crate::utils::progress::{ProgressBar, ProgressStyle};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap, HashSet};
+use itertools::Itertools;
 
 #[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Ord, PartialOrd)]
 struct Token {
@@ -323,7 +324,7 @@ impl PairStatus {
         }
     }
 
-    fn most_frequent_pair(&mut self) -> Option<(Merge, Vec<usize>)> {
+    fn most_frequent_pair(&mut self, corpus: &Corpus, tk_manager: &TokenManager) -> Option<(Merge, Vec<usize>)> {
         while let Some(mut merge) = self.queue.pop() {
             let pair = &merge.pair;
             let ground_freq = *self.pair_counts.get(pair).unwrap_or(&0);
@@ -342,9 +343,22 @@ impl PairStatus {
             // Then ground_freq must be smaller than merge.count
             // Push the merge back to queue if it is still larger than min_freq
             if ground_freq >= self.min_freq as i64 {
+                // Compress the pair_pos if the pair frequency significantly drops
+                // The parameter 4 should be tuned
+                if ground_freq * 4 < merge.count as i64{
+                    if let Some(pos_list) = self.pair_pos.remove(pair) {
+                        let len_x = tk_manager.get_token_len(pair.0);
+                        self.pair_pos.insert(
+                            *pair,
+                            pos_list
+                                .into_iter()
+                                .filter(|&pos| corpus.is_valid(pair.0, pos) && corpus.is_valid(pair.1, pos + len_x))
+                                .collect()
+                        );
+                    }
+                }
                 merge.count = ground_freq as u64;
                 self.queue.push(merge);
-                // TODO: implement compression in the future
             } else {
                 // remove the pair in pair_pos
                 self.pair_counts.remove(pair);
@@ -930,7 +944,7 @@ impl BpeTrainer {
         let mut merges: Vec<(Pair, Token)> = Vec::with_capacity(self.vocab_size);
 
         while tk_manager.len() < self.vocab_size {
-            let res = pair_stat.most_frequent_pair();
+            let res = pair_stat.most_frequent_pair(&corpus, &tk_manager);
             if res.is_none() {
                 break;
             }
