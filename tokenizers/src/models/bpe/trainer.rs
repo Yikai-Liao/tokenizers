@@ -117,17 +117,11 @@ impl TokenManager {
 
     #[inline(always)]
     fn get_token_len(&self, token: Token) -> usize {
-        self.token_len[token.pure_id() as usize]
+        // self.token_len[token.pure_id() as usize]
+        unsafe { *self.token_len.get_unchecked(token.pure_id() as usize) }
     }
 
     fn add_token(&mut self, s: &str, len: usize) -> Token {
-        // let id = self.vocab.entry(s.to_owned()).or_insert_with(|| {
-        //     let id = self.vocab_r.len() as u32;
-        //     self.vocab_r.push(s.to_owned());
-        //     self.token_len.push(len);
-        //     self.real_vocab.insert(Token { id });
-        //     id
-        // });
         let entry = self.vocab.entry(s.to_owned());
         let id = match entry {
             std::collections::hash_map::Entry::Occupied(o) => *o.get(),
@@ -179,8 +173,10 @@ impl TokenManager {
             let id = self.vocab_r.len() as u32;
             self.vocab_r.push(raw_pair_str.clone());
             self.vocab.insert(raw_pair_str, id);
-            self.token_len
-                .push(self.token_len[pure_x] + self.token_len[pure_y]);
+            let len = unsafe {
+                *self.token_len.get_unchecked(pure_x) + *self.token_len.get_unchecked(pure_y)
+            };
+            self.token_len.push(len);
             id
         };
         let new_token = Token::new(raw_id, &pair.0, &pair.1);
@@ -252,13 +248,18 @@ impl Corpus {
 
     #[inline(always)]
     fn is_valid(&self, x: Token, pos: usize) -> bool {
-        self.data[pos] == x
+        // self.data[pos] == x
+        unsafe { *self.data.get_unchecked(pos) == x }
     }
 
     #[inline(always)]
     fn set_new_token(&mut self, x: Token, pos: usize, length: usize) {
-        self.data[pos] = x;
-        self.data[pos + length - 1] = x;
+        // self.data[pos] = x;
+        // self.data[pos + length - 1] = x;
+        unsafe {
+            *self.data.get_unchecked_mut(pos) = x;
+            *self.data.get_unchecked_mut(pos + length - 1) = x;
+        }
         // set (pos + 1) to (pos + length - 2) to <pad>
         for d in self.data[pos + 1..pos + length - 1].iter_mut() {
             *d = Token { id: 0 };
@@ -267,7 +268,8 @@ impl Corpus {
 
     #[inline(always)]
     fn get_token(&self, pos: usize) -> Token {
-        self.data[pos]
+        // self.data[pos]
+        unsafe { *self.data.get_unchecked(pos) }
     }
 
     fn show(&self, tk_manager: &TokenManager) {
@@ -643,7 +645,8 @@ impl BpeTrainer {
         tk_manager: &mut TokenManager,
     ) -> FxHashMap<char, Token> {
         // Compute the alphabet from seen words
-        let mut alphabet: FxHashMap<char, usize> = HashMap::with_capacity_and_hasher(self.vocab_size, Default::default());
+        let mut alphabet: FxHashMap<char, usize> =
+            HashMap::with_capacity_and_hasher(self.vocab_size, Default::default());
         for (word, count) in wc {
             for c in word.chars() {
                 alphabet
@@ -684,7 +687,8 @@ impl BpeTrainer {
         }
 
         // Keep the initial alphabet (sorted for determinism)
-        let mut alphabet: FxHashMap<char, Token> = FxHashMap::with_capacity_and_hasher(kept.len(), Default::default());
+        let mut alphabet: FxHashMap<char, Token> =
+            FxHashMap::with_capacity_and_hasher(kept.len(), Default::default());
         kept.sort_unstable_by_key(|k| (*k.0) as u32);
         kept.into_iter().for_each(|(c, _)| {
             let token = tk_manager.add_token(&c.to_string(), 1);
