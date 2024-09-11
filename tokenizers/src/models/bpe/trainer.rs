@@ -147,6 +147,13 @@ impl TokenManager {
 
     #[inline(always)]
     fn to_string(&self, token: Token) -> String {
+        if token.pure_id() < 2 {
+            return match token.pure_id() {
+                0 => "<pad>".to_owned(),
+                1 => "<unk>".to_owned(),
+                _ => unreachable!(),
+            }
+        }
         let mut s = self.vocab_r[token.pure_id() as usize].clone();
         if let Some(prefix) = &self.continual_subword_prefix {
             if !token.is_begin() {
@@ -269,6 +276,16 @@ impl Corpus {
     fn get_token(&self, pos: usize) -> Token {
         self.data[pos]
     }
+
+    fn show(&self, tk_manager: &TokenManager) {
+        let mut i = 0;
+        while i < self.data.len() {
+            let token = self.data[i];
+            print!("{}|", tk_manager.to_string(token));
+            i += tk_manager.get_token_len(token);
+        }
+        println!();
+    }
 }
 
 struct PairStatus {
@@ -286,6 +303,7 @@ impl PairStatus {
     ) -> Self {
         let mut queue = BinaryHeap::with_capacity(pair_pos.len());
         let mut final_pair_counts = HashMap::with_capacity(pair_pos.len());
+        let min_freq = min_freq.max(1);
         for (pair, count) in pair_counts.into_iter() {
             if count < min_freq as i64 {
                 // remove the pair in pair_pos
@@ -302,7 +320,7 @@ impl PairStatus {
             pair_pos,
             pair_counts: final_pair_counts,
             queue,
-            min_freq: min_freq.max(1),
+            min_freq
         }
     }
 
@@ -319,6 +337,9 @@ impl PairStatus {
                     .expect(format!("Pair {:?} not found in pair_pos", pair).as_str());
                 return Some((merge, pos_list));
             }
+            if merge.count < self.min_freq {
+                return None
+            }
             // Then ground_freq must be smaller than merge.count
             // Push the merge back to queue if it is still larger than min_freq
             if ground_freq >= self.min_freq as i64 {
@@ -326,7 +347,8 @@ impl PairStatus {
                 self.queue.push(merge);
                 // TODO: implement compression in the future
             } else {
-                return None
+                // remove the pair in pair_pos
+                self.pair_counts.remove(pair);
             }
         }
         None // if queue is empty
@@ -359,6 +381,16 @@ impl PairStatus {
                 pair,
             });
         }
+    }
+
+    fn show_pair_counts(&self, tk_manager: &TokenManager) {
+        let mut tmp = self.pair_counts.iter().collect::<Vec<_>>();
+        // sort by -count, pair
+        tmp.sort_unstable_by_key(|x| (-(x.1), x.0));
+        for (pair, count) in tmp {
+            print!("({}, {}): {} | ", tk_manager.to_string(pair.0), tk_manager.to_string(pair.1), count);
+        }
+        println!();
     }
 }
 
@@ -766,34 +798,38 @@ impl BpeTrainer {
             let len_right = token_manager.get_token_len(right);
 
             // modify the pair_count_patch and pair_pos_patch
-            if left.pure_id() > 1 && len_left + len_pair <= max_len {
+            if left.pure_id() > 1 {
                 pair_count_patch
                     .entry((left, x))
                     .and_modify(|c| *c -= freq)
                     .or_insert(-freq);
-                pair_count_patch
-                    .entry((left, new_token))
-                    .and_modify(|c| *c += freq)
-                    .or_insert(freq);
-                pair_pos_patch
-                    .entry((left, new_token))
-                    .or_insert_with(Vec::new)
-                    .push(pos - len_left);
+                if len_left + len_pair <= max_len {
+                    pair_count_patch
+                        .entry((left, new_token))
+                        .and_modify(|c| *c += freq)
+                        .or_insert(freq);
+                    pair_pos_patch
+                        .entry((left, new_token))
+                        .or_insert_with(Vec::new)
+                        .push(pos - len_left);
+                }
             }
 
-            if right.pure_id() > 1 && len_pair + len_right <= max_len {
+            if right.pure_id() > 1 {
                 pair_count_patch
                     .entry((y, right))
                     .and_modify(|c| *c -= freq)
                     .or_insert(-freq);
-                pair_count_patch
-                    .entry((new_token, right))
-                    .and_modify(|c| *c += freq)
-                    .or_insert(freq);
-                pair_pos_patch
-                    .entry((new_token, right))
-                    .or_insert_with(Vec::new)
-                    .push(pos);
+                if len_pair + len_right <= max_len {
+                    pair_count_patch
+                        .entry((new_token, right))
+                        .and_modify(|c| *c += freq)
+                        .or_insert(freq);
+                    pair_pos_patch
+                        .entry((new_token, right))
+                        .or_insert_with(Vec::new)
+                        .push(pos);
+                }
             }
         }
         (pair_count_patch, pair_pos_patch)
@@ -879,6 +915,7 @@ impl BpeTrainer {
 
         let (mut corpus, mut pair_stat) =
             self.build_corpus(word_counts, &alphabet, &mut tk_manager, &progress);
+        pair_stat.show_pair_counts(&tk_manager);
 
         assert!(!tk_manager.real_vocab.contains(&Token { id: 0 }));
         assert!(!tk_manager.real_vocab.contains(&Token { id: 1 }));
@@ -902,6 +939,7 @@ impl BpeTrainer {
                 
 
             let new_token = tk_manager.build_token_from_pair(&merge.pair);
+            println!("new_token: {:?} ({:?})", tk_manager.to_string(new_token), merge.count);
 
             merges.push((merge.pair, new_token));
 
@@ -909,6 +947,7 @@ impl BpeTrainer {
                 self.merge_token_pair(&mut corpus, &tk_manager, merge.pair, new_token, pos_list);
 
             pair_stat.apply_patch(pair_count_patch, pair_pos_patch);
+            corpus.show(&tk_manager);
 
             if let Some(p) = &progress {
                 p.inc(1);
