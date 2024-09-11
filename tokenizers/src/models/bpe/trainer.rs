@@ -290,6 +290,7 @@ impl PairStatus {
             if count < min_freq as i64 {
                 // remove the pair in pair_pos
                 pair_pos.remove(&pair);
+            } else {
                 final_pair_counts.insert(pair, count);
                 queue.push(Merge {
                     count: count as u64,
@@ -325,8 +326,7 @@ impl PairStatus {
                 self.queue.push(merge);
                 // TODO: implement compression in the future
             } else {
-                // remove the pair in pair_pos
-                self.pair_pos.remove(pair);
+                return None
             }
         }
         None // if queue is empty
@@ -1155,6 +1155,13 @@ mod tests {
         .cloned()
         .map(|(k, v)| (k.to_string(), v))
         .collect();
-        assert_eq!(trained_vocab, expected_vocab)
+        let fmt = |x: &HashMap<String, u32>| -> Vec<(u32, String)> {
+            let mut tmp = x.iter()
+                .map(|(k, &v)| (v, k.clone()))
+                .collect::<Vec<(u32, String)>>();
+            tmp.sort_unstable_by_key(|x| x.0);
+            tmp
+        };
+        assert_eq!(fmt(&trained_vocab), fmt(&expected_vocab));
     }
 }
