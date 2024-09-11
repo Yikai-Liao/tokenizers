@@ -4,7 +4,6 @@ use super::{WithFirstLastIterator, BPE};
 use crate::parallelism::*;
 use crate::tokenizer::{AddedToken, Result, Trainer};
 use crate::utils::progress::{ProgressBar, ProgressStyle};
-use itertools::sorted;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap, HashSet};
@@ -386,7 +385,7 @@ impl PairStatus {
     fn show_pair_counts(&self, tk_manager: &TokenManager) {
         let mut tmp = self.pair_counts.iter().collect::<Vec<_>>();
         // sort by -count, pair
-        tmp.sort_unstable_by_key(|x| (-(x.1), x.0));
+        tmp.sort_unstable_by_key(|x| (-x.1, x.0));
         for (pair, count) in tmp {
             print!("({}, {}): {} | ", tk_manager.to_string(pair.0), tk_manager.to_string(pair.1), count);
         }
@@ -689,18 +688,18 @@ impl BpeTrainer {
 
         let mut words: Vec<(i64, &str)> = wc.iter().map(|(k, v)| (-(*v as i64), k.as_str())).collect();
         // sort by frequency, descending
-        // words.sort_unstable_by_key(|x| x.0);
+        words.sort_unstable();
         let mut freq_change_pivot = vec![0];
         let mut freq_change_value = vec![-words[0].0 as u64];
 
         let mut prev_token = Token { id: 0 };
         let (mark_begin, mark_end) = (tk_manager.mark_begin(), tk_manager.mark_end());
-        for (mut count, word) in words {
+        for (count, word) in words {
             let count = (-count) as u64;
             assert!(count > 0);
             if count < *freq_change_value.last().unwrap() {
                 freq_change_pivot.push(data.len());
-                freq_change_value.push(count as u64);
+                freq_change_value.push(count);
             }
             for (is_first, is_last, c) in word.chars().with_first_and_last() {
                 let mut token = match alphabet.get(&c) {
@@ -747,7 +746,8 @@ impl BpeTrainer {
 
         freq_change_pivot.push(data.len() + 1);
         freq_change_value.push(0);
-
+        // println!("freq pivots: {:?}", freq_change_pivot);
+        // println!("freq values: {:?}", freq_change_value);
         // real_vocab does not contain <pad>
         assert!(!tk_manager.real_vocab.contains(&Token { id: 0 }));
         // remove <unk> in real_vocab if exists
@@ -838,7 +838,6 @@ impl BpeTrainer {
     fn build_tokenizer(
         &self,
         model: &mut BPE,
-        pair_status: PairStatus,
         tk_manager: TokenManager,
         init_tokens: Vec<Token>,
         merges: Vec<(Pair, Token)>,
@@ -915,7 +914,7 @@ impl BpeTrainer {
 
         let (mut corpus, mut pair_stat) =
             self.build_corpus(word_counts, &alphabet, &mut tk_manager, &progress);
-        pair_stat.show_pair_counts(&tk_manager);
+        // pair_stat.show_pair_counts(&tk_manager);
 
         assert!(!tk_manager.real_vocab.contains(&Token { id: 0 }));
         assert!(!tk_manager.real_vocab.contains(&Token { id: 1 }));
@@ -935,11 +934,12 @@ impl BpeTrainer {
             if res.is_none() {
                 break;
             }
+            // pair_stat.show_pair_counts(&tk_manager);
             let (merge, pos_list) = res.unwrap();
                 
 
             let new_token = tk_manager.build_token_from_pair(&merge.pair);
-            println!("new_token: {:?} ({:?})", tk_manager.to_string(new_token), merge.count);
+            // println!("new_token: {:?} ({:?})", tk_manager.to_string(new_token), merge.count);
 
             merges.push((merge.pair, new_token));
 
@@ -947,7 +947,7 @@ impl BpeTrainer {
                 self.merge_token_pair(&mut corpus, &tk_manager, merge.pair, new_token, pos_list);
 
             pair_stat.apply_patch(pair_count_patch, pair_pos_patch);
-            corpus.show(&tk_manager);
+            // corpus.show(&tk_manager);
 
             if let Some(p) = &progress {
                 p.inc(1);
@@ -956,7 +956,7 @@ impl BpeTrainer {
         self.finalize_progress(&progress, merges.len());
 
         // Transfer new vocab & options to model
-        self.build_tokenizer(model, pair_stat, tk_manager, init_tokens, merges);
+        self.build_tokenizer(model, tk_manager, init_tokens, merges);
 
         Ok(self.special_tokens.clone())
     }
@@ -1009,7 +1009,7 @@ impl Trainer for BpeTrainer {
 
 #[cfg(test)]
 mod tests {
-    use super::{BpeTrainer, Pair, BPE};
+    use super::{BpeTrainer, BPE};
     use std::collections::HashMap;
 
     #[test]
@@ -1069,7 +1069,15 @@ mod tests {
         .iter()
         .cloned()
         .collect();
-        assert_eq!(model.vocab, expected_vocab);
+        let fmt = |x: &HashMap<String, u32>| -> Vec<(u32, String)> {
+            let mut tmp = x.iter()
+                .map(|(k, &v)| (v, k.clone()))
+                .collect::<Vec<(u32, String)>>();
+            tmp.sort_unstable_by_key(|x| x.0);
+            tmp
+        };
+
+        assert_eq!(fmt(&model.vocab), fmt(&expected_vocab));
 
         // The keys in `merges` are pairs of symbols, the values are tuples of (rank, id),
         // where 'rank' determines the order in which this merge will be applied during
