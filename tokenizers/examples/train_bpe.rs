@@ -46,7 +46,7 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         .build()?;
 
     let start = std::time::Instant::now();
-    let train_num = 100;
+    let train_num = 20;
     for _ in 0..train_num {
         // timestamp
         tokenizer.train_from_files(

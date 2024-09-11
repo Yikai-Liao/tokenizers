@@ -4,10 +4,10 @@ use super::{WithFirstLastIterator, BPE};
 use crate::parallelism::*;
 use crate::tokenizer::{AddedToken, Result, Trainer};
 use crate::utils::progress::{ProgressBar, ProgressStyle};
+use rustc_hash::{FxHashMap, FxHashSet};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap, HashSet};
-use itertools::Itertools;
 
 #[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, Ord, PartialOrd)]
 struct Token {
@@ -81,9 +81,9 @@ impl Ord for Merge {
 }
 
 struct TokenManager {
-    vocab: HashMap<String, u32>,
+    vocab: FxHashMap<String, u32>,
     vocab_r: Vec<String>,
-    real_vocab: HashSet<Token>, // include all tokens in corpus with marks
+    real_vocab: FxHashSet<Token>, // include all tokens in corpus with marks
     token_len: Vec<usize>,
     continual_subword_prefix: Option<String>,
     end_of_word_suffix: Option<String>,
@@ -96,9 +96,9 @@ impl TokenManager {
         end_of_word_suffix: Option<String>,
     ) -> Self {
         let mut manager = Self {
-            vocab: HashMap::with_capacity(capacity + 2),
+            vocab: FxHashMap::with_capacity_and_hasher(capacity + 2, Default::default()),
             vocab_r: Vec::with_capacity(capacity + 2),
-            real_vocab: HashSet::with_capacity(capacity + 2),
+            real_vocab: FxHashSet::with_capacity_and_hasher(capacity + 2, Default::default()),
             token_len: Vec::with_capacity(capacity + 2),
             continual_subword_prefix,
             end_of_word_suffix,
@@ -128,11 +128,9 @@ impl TokenManager {
         //     self.real_vocab.insert(Token { id });
         //     id
         // });
-        let mut entry = self.vocab.entry(s.to_owned());
+        let entry = self.vocab.entry(s.to_owned());
         let id = match entry {
-            std::collections::hash_map::Entry::Occupied(o) => {
-                *o.get()
-            }
+            std::collections::hash_map::Entry::Occupied(o) => *o.get(),
             std::collections::hash_map::Entry::Vacant(v) => {
                 let id = self.vocab_r.len() as u32;
                 self.vocab_r.push(s.to_owned());
@@ -152,7 +150,7 @@ impl TokenManager {
                 0 => "<pad>".to_owned(),
                 1 => "<unk>".to_owned(),
                 _ => unreachable!(),
-            }
+            };
         }
         let mut s = self.vocab_r[token.pure_id() as usize].clone();
         if let Some(prefix) = &self.continual_subword_prefix {
@@ -248,11 +246,6 @@ impl Corpus {
         prev_status.freq
     }
 
-    fn add_freq_info(&mut self, value: u64, pivot: usize) {
-        self.freq_change_value.push(value);
-        self.freq_change_pivot.push(pivot);
-    }
-
     fn len(&self) -> usize {
         self.data.len()
     }
@@ -289,20 +282,21 @@ impl Corpus {
 }
 
 struct PairStatus {
-    pair_pos: HashMap<Pair, Vec<usize>>,
-    pair_counts: HashMap<Pair, i64>,
+    pair_pos: FxHashMap<Pair, Vec<usize>>,
+    pair_counts: FxHashMap<Pair, i64>,
     queue: BinaryHeap<Merge>,
     min_freq: u64,
 }
 
 impl PairStatus {
     fn new(
-        mut pair_pos: HashMap<Pair, Vec<usize>>,
-        pair_counts: HashMap<Pair, i64>,
+        mut pair_pos: FxHashMap<Pair, Vec<usize>>,
+        pair_counts: FxHashMap<Pair, i64>,
         min_freq: u64,
     ) -> Self {
         let mut queue = BinaryHeap::with_capacity(pair_pos.len());
-        let mut final_pair_counts = HashMap::with_capacity(pair_pos.len());
+        let mut final_pair_counts =
+            FxHashMap::with_capacity_and_hasher(pair_counts.len(), Default::default());
         let min_freq = min_freq.max(1);
         for (pair, count) in pair_counts.into_iter() {
             if count < min_freq as i64 {
@@ -320,11 +314,15 @@ impl PairStatus {
             pair_pos,
             pair_counts: final_pair_counts,
             queue,
-            min_freq
+            min_freq,
         }
     }
 
-    fn most_frequent_pair(&mut self, corpus: &Corpus, tk_manager: &TokenManager) -> Option<(Merge, Vec<usize>)> {
+    fn most_frequent_pair(
+        &mut self,
+        corpus: &Corpus,
+        tk_manager: &TokenManager,
+    ) -> Option<(Merge, Vec<usize>)> {
         while let Some(mut merge) = self.queue.pop() {
             let pair = &merge.pair;
             let ground_freq = *self.pair_counts.get(pair).unwrap_or(&0);
@@ -338,22 +336,25 @@ impl PairStatus {
                 return Some((merge, pos_list));
             }
             if merge.count < self.min_freq {
-                return None
+                return None;
             }
             // Then ground_freq must be smaller than merge.count
             // Push the merge back to queue if it is still larger than min_freq
             if ground_freq >= self.min_freq as i64 {
                 // Compress the pair_pos if the pair frequency significantly drops
                 // The parameter 4 should be tuned
-                if ground_freq * 4 < merge.count as i64{
+                if ground_freq * 4 < merge.count as i64 {
                     if let Some(pos_list) = self.pair_pos.remove(pair) {
                         let len_x = tk_manager.get_token_len(pair.0);
                         self.pair_pos.insert(
                             *pair,
                             pos_list
                                 .into_iter()
-                                .filter(|&pos| corpus.is_valid(pair.0, pos) && corpus.is_valid(pair.1, pos + len_x))
-                                .collect()
+                                .filter(|&pos| {
+                                    corpus.is_valid(pair.0, pos)
+                                        && corpus.is_valid(pair.1, pos + len_x)
+                                })
+                                .collect(),
                         );
                     }
                 }
@@ -369,7 +370,7 @@ impl PairStatus {
 
     fn apply_patch(
         &mut self,
-        mut pair_count_patch: HashMap<Pair, i64>,
+        pair_count_patch: HashMap<Pair, i64>,
         mut pair_pos_patch: HashMap<Pair, Vec<usize>>,
     ) {
         for (pair, count) in pair_count_patch.into_iter() {
@@ -401,7 +402,12 @@ impl PairStatus {
         // sort by -count, pair
         tmp.sort_unstable_by_key(|x| (-x.1, x.0));
         for (pair, count) in tmp {
-            print!("({}, {}): {} | ", tk_manager.to_string(pair.0), tk_manager.to_string(pair.1), count);
+            print!(
+                "({}, {}): {} | ",
+                tk_manager.to_string(pair.0),
+                tk_manager.to_string(pair.1),
+                count
+            );
         }
         println!();
     }
@@ -567,7 +573,7 @@ pub struct BpeTrainer {
     pub end_of_word_suffix: Option<String>,
     /// An optional parameter to limit the max length of any single token
     pub max_token_length: Option<usize>,
-    
+
     words: HashMap<String, u64>,
 }
 
@@ -635,9 +641,9 @@ impl BpeTrainer {
         &self,
         wc: &HashMap<String, u64>,
         tk_manager: &mut TokenManager,
-    ) -> HashMap<char, Token> {
+    ) -> FxHashMap<char, Token> {
         // Compute the alphabet from seen words
-        let mut alphabet: HashMap<char, usize> = HashMap::new();
+        let mut alphabet: FxHashMap<char, usize> = HashMap::with_capacity_and_hasher(self.vocab_size, Default::default());
         for (word, count) in wc {
             for c in word.chars() {
                 alphabet
@@ -678,7 +684,7 @@ impl BpeTrainer {
         }
 
         // Keep the initial alphabet (sorted for determinism)
-        let mut alphabet: HashMap<char, Token> = HashMap::with_capacity(kept.len());
+        let mut alphabet: FxHashMap<char, Token> = FxHashMap::with_capacity_and_hasher(kept.len(), Default::default());
         kept.sort_unstable_by_key(|k| (*k.0) as u32);
         kept.into_iter().for_each(|(c, _)| {
             let token = tk_manager.add_token(&c.to_string(), 1);
@@ -690,17 +696,22 @@ impl BpeTrainer {
     fn build_corpus(
         &self,
         wc: &HashMap<String, u64>,
-        alphabet: &HashMap<char, Token>,
+        alphabet: &FxHashMap<char, Token>,
         tk_manager: &mut TokenManager,
         p: &Option<ProgressBar>,
     ) -> (Corpus, PairStatus) {
-        let mut data = Vec::with_capacity(wc.len());
+        let num_bytes = wc.iter().fold(0, |acc, (k, _)| acc + k.len());
+
+        let mut data = Vec::with_capacity(num_bytes / 2);
         data.push(Token { id: 0 }); // A mask
 
-        let mut pair_pos: HashMap<Pair, Vec<usize>> = HashMap::new();
-        let mut pair_counts: HashMap<Pair, i64> = HashMap::new();
+        let mut pair_pos: FxHashMap<Pair, Vec<usize>> =
+            HashMap::with_capacity_and_hasher(self.vocab_size * 4, Default::default());
+        let mut pair_counts: FxHashMap<Pair, i64> =
+            HashMap::with_capacity_and_hasher(self.vocab_size * 4, Default::default());
 
-        let mut words: Vec<(i64, &str)> = wc.iter().map(|(k, v)| (-(*v as i64), k.as_str())).collect();
+        let mut words: Vec<(i64, &str)> =
+            wc.iter().map(|(k, v)| (-(*v as i64), k.as_str())).collect();
         // sort by frequency, descending
         words.sort_unstable();
         let mut freq_change_pivot = vec![0];
@@ -950,7 +961,6 @@ impl BpeTrainer {
             }
             // pair_stat.show_pair_counts(&tk_manager);
             let (merge, pos_list) = res.unwrap();
-                
 
             let new_token = tk_manager.build_token_from_pair(&merge.pair);
             // println!("new_token: {:?} ({:?})", tk_manager.to_string(new_token), merge.count);
@@ -1084,7 +1094,8 @@ mod tests {
         .cloned()
         .collect();
         let fmt = |x: &HashMap<String, u32>| -> Vec<(u32, String)> {
-            let mut tmp = x.iter()
+            let mut tmp = x
+                .iter()
                 .map(|(k, &v)| (v, k.clone()))
                 .collect::<Vec<(u32, String)>>();
             tmp.sort_unstable_by_key(|x| x.0);
@@ -1217,7 +1228,8 @@ mod tests {
         .map(|(k, v)| (k.to_string(), v))
         .collect();
         let fmt = |x: &HashMap<String, u32>| -> Vec<(u32, String)> {
-            let mut tmp = x.iter()
+            let mut tmp = x
+                .iter()
                 .map(|(k, &v)| (v, k.clone()))
                 .collect::<Vec<(u32, String)>>();
             tmp.sort_unstable_by_key(|x| x.0);
