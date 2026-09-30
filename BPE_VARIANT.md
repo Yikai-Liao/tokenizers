@@ -35,3 +35,7 @@ A read-only Unicode-to-ID table removes per-position string hashing.
 MaybeUninit final storage is initialized by exclusive word regions and converted
 only after complete coverage and joins; its private unsafe conversion is documented
 and tested. Alphabet temporary arrays and ID table capacity are measured separately.
+
+## 匹配控制项
+
+本分支从 corpus-direct `fbdc0b2b` 派生，仅把原接口 plain 路径的 `atomic_corpus` 改为 true。初始化仍采用 C 的并行 alphabet、直接查询和独占直接填充；merge 保留排序 Plan 与 delta 两阶段算法。用于与融合候选隔离算法收益。

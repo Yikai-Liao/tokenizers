@@ -519,7 +519,7 @@ impl BpeTrainer {
                 initialization_workers: None,
                 posting_block_bits: 32,
                 narrow_corpus: false,
-                atomic_corpus: false,
+                atomic_corpus: true,
                 batch_size: 256,
             },
         )?;
