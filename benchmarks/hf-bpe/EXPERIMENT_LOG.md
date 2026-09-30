@@ -233,3 +233,9 @@ I直接commit5.971→6.876秒、train26.187→28.538秒，完整模型gate通过
 K47tests通过后首对清理3.835→2.727秒（-28.9%），但未改merge多1.793秒、train+3.1%。为解决具体方向冲突，仅追加一对反向K→H；清理4.136→2.683秒（-35.1%），train-0.8%但elapsed+0.5%。n2平均清理少1.280秒/32.1%，完整train+1.2%、elapsed+1.1%，未兑现完整收益。停止K，保存两对及[汇总](results/optimization-owner-parallel-drop.aggregate-n2.md)，不扩大allocator/线程矩阵。
 
 J376363d2从H继续，未叠加K。已有inline route probe与173.16M次birth/remove计数支持重复工作方向；output group57.84M仍仅为理论下限。48tests和[独立静态审查](RULE_AGGREGATE_REVIEW.md)通过，native release完成；只做一次H→J512MiB筛选，scratch初始化/LocalGroup/flush全部纳入prepare及完整操作。
+
+筛选完成：[J结果](results/optimization-rule-aggregate.summary.md) prepare8.400→7.723秒（-8.1%），train27.790→24.613秒（-11.4%），elapsed31.762→28.701秒。scratch capacity汇总峰2,106,304B，RSS约4.43GiB、VmSwap0，模型及N/E/pairs/载荷完全一致。未改init少2.011秒，不能把全训3.177秒都归因J；n=1只作为当前筛选，未保证稳定复现。当前选择J，不叠加K，不追加多组。
+
+最后仅离线复用原完整H事件，对实际owner commit符号的15个热点IP批量addr2line；root另以30地址核对并用有界objdump确认频率load、control-byte probe、posting长度与Node-next读取/逆序循环。closure direct self18.94%cycles/15.76%cache，但临时born聚合未单独定量，通用cache/skid与CPU→wall限制保留，见[具体操作](results/optimization-h-debug-owner-commit.md)。原callchain export与全15,897条IP记录逐项event/period一致，inclusive份额只在此完整覆盖依据下保留。
+
+本轮停止：剩余具体大项涉及账本访问/更新、posting链读取和正常释放；I/K简单方向未兑现收益，J之后未找到代价明确的下一项大幅局部改善。保存全部分支、原始结果、正确性证据与复现入口。没有宣称全局最优，也没有把尚未实现的布局或allocator改造计为收益。

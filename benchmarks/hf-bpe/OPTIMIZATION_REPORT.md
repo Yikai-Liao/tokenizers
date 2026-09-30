@@ -1,8 +1,32 @@
 # BPE 热点优化与完整组合选型
 
-## 当前完整组合选型：H权重快路径
+## 当前选择：J规则邻居聚合
 
-当前推荐 **H `00216d91`**（DE+权重1空间桶认证）。每256位置只需一个bit，整桶权重为1时省掉pivot搜索；混合桶保留原精确搜索。在512MiB中文none/50k/min2、u32、初始化/merge各4线程的原Trainer接口下，两个交错pair的直接模块及完整训练都改善。用户要求收益明显时停止重复测试，因此完成n=2后取消第三对。
+当前选择 **J `376363d2`**（H+Task内左右neighbor目录聚合），worktree `/root/code/tokenizers-worktrees/prepare-rule-aggregate`，branch `bpe/prepare-rule-aggregate`。H带debug采样确认route桶探测，独立计数得到birth/remove各173.16M次；J把同Task、同侧、同neighbor的weight更新聚合后flush，保留原owner路由与Node链。
+
+原48tests及[独立静态审查](RULE_AGGREGATE_REVIEW.md)通过；一次H→J原API512MiB关键对照的直接prepare与完整操作同向改善，按预算不追加多组重复。
+
+| 单次同期对照 | H | J |
+|---|---:|---:|
+| prepare（含scratch初始化、group与flush） | 8.400 s | 7.723 s |
+| 完整初始化 | 7.467 s | 5.456 s |
+| merge | 15.726 s | 15.044 s |
+| 完整train | 27.790 s | 24.613 s |
+| feed+train elapsed | 31.762 s | 28.701 s |
+
+prepare少8.1%，train少11.4%，elapsed少9.6%。**未改初始化也快2.011秒，不能把全训3.177秒差额都归因于J。** 这是n=1筛选结果，未证明稳定复现；H的既有两对基线保留。新增scratch capacity汇总峰2,106,304B（约2.01MiB），不是实测同时驻留峰值。RSS均约4.43GiB，VmSwap0；完整模型与N/E/pairs及corpus/posting容量一致，详见[J筛选](results/optimization-rule-aggregate.summary.md)。
+
+K `288ad858`仅并行释放owner，47tests通过；两对清理区间平均少32.1%，但完整train/elapsed未建立收益，停止，不加入J。诊断定位到owner销毁占post-merge缺口99.48%，说明大项存在，也说明单项优化仍须兑现完整结果，见[成本定位](results/optimization-h-cost-probe.md)与[K两对结果](results/optimization-owner-parallel-drop.aggregate-n2.md)。
+
+### 停止依据与剩余成本
+
+最后复用已有完整H采样，按真实owner commit符号的IP核对源码和反汇编，未新增训练。主要热点是旧pair ledger probe和frequency载荷更新、出生ledger probe、posting长度读取与Node链逆序填充。采样属于H，J改变prepare后模块份额可能变化；具体地址的cycles/cache份额不等于精确load或整数减法成本，详见[owner具体操作](results/optimization-h-debug-owner-commit.md)。
+
+I减少出生ledger查询的改法回退，K并行释放未兑现完整收益，J减少route重复查询后尚未找到代价清楚、能大幅减少剩余工作的局部方案。本轮停在J；大幅替换语料布局、allocator或owner结构仍是未验证研究方向。本次停止不表示全局最优。
+
+## 此前H完整组合选型：权重快路径
+
+H **`00216d91`**（DE+权重1空间桶认证）是J的已验证基点。每256位置只需一个bit，整桶权重为1时省掉pivot搜索；混合桶保留原精确搜索。在512MiB中文none/50k/min2、u32、初始化/merge各4线程的原Trainer接口下，两个交错pair的直接模块及完整训练都改善。用户要求收益明显时停止重复测试，因此完成n=2后取消第三对。
 
 | 两对中位 | DE | H |
 |---|---:|---:|
@@ -17,7 +41,7 @@ H/DE配对train比0.821/0.757，elapsed比0.834/0.789；两个直接模块和完
 
 **内存增加100,632B，约98KiB**，并非降低内存。该工作集约99.1%的空间桶全部权重1；这是空间覆盖，未测实际查询命中率。WeightLookup总容量由3,220,160增到3,320,792B，初始化/merge复用同一分配，bytes不能重复相加。全47tests与 [独立审查](WEIGHT_ONE_BUCKET_REVIEW.md) 通过；无显式SIMD。
 
-I `e3a1954c` 全48tests与审查通过，但一次H→I的commit5.971→6.876秒、train26.187→28.538秒，停止推进，见 [I筛选](results/optimization-commit-screen.summary.md)。J规则邻居聚合仅保存原型；按用户要求先补H实际512MiB的详细成本分析，再决定后续实现，不按函数占比猜收益。
+I `e3a1954c` 全48tests与审查通过，但一次H→I的commit5.971→6.876秒、train26.187→28.538秒，停止推进，见 [I筛选](results/optimization-commit-screen.summary.md)。此后按用户要求补齐H实际binary debug信息、源码采样与动态计数后，再验证J，详见[debug采样](results/optimization-h-debug-profile.md)。
 
 ## 此前DE完整组合选型
 
@@ -120,15 +144,16 @@ C完整42项库测试通过；B把既有1500-case逐轮HF差分扩到新flat Ato
 在 `benchmarks/hf-bpe`：
 
 ```bash
-python3 build_native_fair.py /root/code/tokenizers-worktrees/fused-lookup --label fused-lookup
-python3 run_native_fair.py --case fused-lookup-reproduction \
-  --worktree /root/code/tokenizers-worktrees/fused-lookup \
-  --build-root .build/native-fused-lookup --binary target/release/hf-bpe-native-fused-lookup \
-  --corpus .build/gb-corpus/zh-512m.txt --output results/fused-lookup-reproduction.jsonl \
+python3 build_native_fair.py /root/code/tokenizers-worktrees/prepare-rule-aggregate --label prepare-rule-aggregate
+python3 run_native_fair.py --case rule-aggregate-reproduction \
+  --worktree /root/code/tokenizers-worktrees/prepare-rule-aggregate \
+  --build-root .build/native-prepare-rule-aggregate --binary target/release/hf-bpe-native-prepare-rule-aggregate \
+  --corpus .build/gb-corpus/zh-512m.txt --output results/rule-aggregate-reproduction.jsonl \
   --initialization-workers 4 --merge-workers 4 --atomic-corpus \
-  --require-stats fused_prepare_ms --require-stats weight_lookup_bytes
+  --require-stats fused_prepare_ms --require-stats weight_lookup_bytes \
+  --require-stats peak_prepare_aggregate_bytes
 ```
 
 每次environment JSON锁定实际worktree源码、临时探针副本、runner/Cargo.lock、二进制、输入和脚本hash；probe只在原do_train返回前输出私有统计。实际调用原train_vocab，未增加公有Trainer选算法API。计时原始数据与阶段解释见 [C结果](results/optimization-c-512.summary.md)、[B结果](results/optimization-b-512.summary.md)、[B2结果](results/optimization-b2-512.summary.md)。旧PR/native公平四项见 [PARALLEL_REPORT.md](PARALLEL_REPORT.md)。
 
-当前推荐完整DE组合，当前大块prepare诊断继续进行。失败B的比较仅作诊断，完整组合用C/B2三组配对选型；不追加Atomic对照或宽度/线程矩阵。下一轮若继续，应集中在初始pair计数或owner commit，先按源码确定访问/分配热点再改；后续以实际热点和改变模块的公平计时选型。
+当前选择J；H两对完整组合证据作为保留基线。失败B/F/G/I/K均保存来源与结果，不纳入推荐。没有追加Atomic对照或宽度/线程矩阵。各新增候选由实际采样、阶段边界与动态计数支持，完整收益与归因边界分开记录。

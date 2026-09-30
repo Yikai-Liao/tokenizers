@@ -17,7 +17,7 @@ Top-IP attribution (exclusive sample IP, weighted by event period):
 | hashbrown `RawTable` functions | 3.40% | 7.41% |
 | `cfree` | 3.56% | 1.76% |
 
-The two `Output` rows total 10.81% of cycle samples, but **that is not all hash cost**: these functions include map entry/probing, group updates, and route-node work. The 3.40% cycle / 7.41% miss RawTable aggregate is almost entirely table growth/rehashing rather than steady-state probes. Direct `reserve_rehash` top IPs account for 3.256% cycles / 7.176% misses: `BirthGroup` growth 2.102% / 4.121%, `(u64,(u64,u32))` growth 0.799% / 2.149%, parallel `Entry` growth 0.187% / 0.844%, and `(CompactString,u64)` growth 0.168% / 0.062%. These are different exclusive IPs from the `Output` function IPs in the table. The selected inline `find_inner`/`match_tag` samples below establish route-map probing, but their total share was not isolated. Top-IP categories in the table are mutually exclusive; inclusive call-chain shares are separate and overlap. Inclusive shares were 50.51% cycles / 48.48% misses in the owner/training worker closure and 34.08% / 24.30% in fused prepare. Do not sum inclusive categories with one another or with top-IP shares.
+The two `Output` rows total 10.81% of cycle samples, but **that is not all hash cost**: these functions include map entry/probing, group updates, and route-node work. The 3.40% cycle / 7.41% miss RawTable aggregate is almost entirely table growth/rehashing rather than steady-state probes. Direct `reserve_rehash` top IPs account for 3.256% cycles / 7.176% misses: `BirthGroup` growth 2.102% / 4.121%, `(u64,(u64,u32))` growth 0.799% / 2.149%, parallel `Entry` growth 0.187% / 0.844%, and `(CompactString,u64)` growth 0.168% / 0.062%. These are different exclusive IPs from the `Output` function IPs in the table. The selected inline `find_inner`/`match_tag` samples below establish route-map probing, but their total share was not isolated. Top-IP categories in the table are mutually exclusive; inclusive call-chain shares are separate and overlap. The callchain export contains 15,897 sample records and matches every event/period in the authoritative IP-only export (zero mismatches; identical total periods), so its inclusive sample shares cover the full recorded sample set: 50.51% cycles / 48.48% misses in the owner/training worker closure and 34.08% / 24.30% in fused prepare. These are sampled callchain shares, not wall-time shares; do not sum inclusive categories with one another or with top-IP shares.
 
 The largest source-resolved probe samples map into inline hashbrown and SSE2 code:
 
@@ -27,11 +27,15 @@ The largest source-resolved probe samples map into inline hashbrown and SSE2 cod
 
 The `cfree` top-IP samples are 3.56% of cycle period. A filtered caller check attributes 2.02% cycles / 1.21% miss period to `Vec<Owner>::drop`, plus 1.02% cycles / 0.39% misses to an owner/training closure. This confirms owner-ledger destruction is sampled work, but whole-process sampling cannot say how much wall time it occupies inside the post-merge interval.
 
+The owner commit worker was later resolved from the full IP-only sample file; see [optimization-h-debug-owner-commit.md](optimization-h-debug-owner-commit.md) for direct closure offsets and source inline chains.
+
 ## Timer boundary and limits
 
 The debug run measured train 28.569 s, initialize 6.933 s, merge 17.156 s. Therefore the unaccounted interval after initialization and merge is **4.480 s**. The initialization timer already includes tokenization; it is not subtracted again. In source, `stats.merge_ms` ends at `parallel.rs:1375`, before vocab/merge string construction and function-scope local destruction. This profile suggests owner teardown as one contributor, but it cannot uniquely divide the 4.480 s between string conversion, `Owner`/posting destruction, corpus buffers, and report/return work. A separate phase-boundary/count probe is required for that decision.
 
 The earlier H profile from the formal non-DWARF binary remains function/symbol-offset evidence only. `perf --call-graph dwarf` captures stack data; it does not add debug information to a binary.
+
+The generic cache-miss event does not isolate a cache level, and sampled IPs can skid. Source/inline chains establish the executed path; their event shares do not prove that a particular load caused all recorded misses or cycles. The unchanged commit closure is resolved further in [optimization-h-debug-owner-commit.md](optimization-h-debug-owner-commit.md).
 
 ## Artifacts
 

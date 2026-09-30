@@ -4,7 +4,9 @@
 
 最终目标是在同一原Trainer接口、语料和参数下选择**稳定的最快端到端组合**。主指标是feed到train_vocab返回的elapsed，以及其中完整train；模块计时用于解释组合为什么变快或变慢。已失败版本的前后比较只保留作诊断，胜出组合必须优于当前最快有效组合。
 
-当前推荐H `00216d91`（DE+权重1空间桶快路径）。两个交错pair的初始group/prepare及全训均改善；train中位32.397→25.577秒，配对train比0.821/0.757。用户认为改善已明显，停止后续重复测试，不补第三对。位图增加约98KiB，RSS约4.43GiB；原模型及语料/posting布局不变。F/G2停止，I的commit直接模块及全训回退，停止；当前实现prepare候选J。见 [H对照](results/optimization-weight-stability.summary.md)；DE之前的九次组合选型保留在 [DE比较](results/optimization-radix-combination-stability.summary.md)。
+当前选择J `376363d2`（H+规则邻居目录聚合）。原48tests/静态审查通过，一次H→J关键对照prepare8.400→7.723秒（-8.1%），train27.790→24.613秒（-11.4%），elapsed31.762→28.701秒；初始化也快2.011秒，不能把全量差额归因J。新增scratch capacity汇总峰约2.01MiB，RSS约4.43GiB，模型与corpus/posting容量不变。n=1筛选支持当前选择，不保证稳定复现，见[J对照](results/optimization-rule-aggregate.summary.md)。
+
+H `00216d91`是保存的已验证基点：两个交错pair初始group/prepare及全训均改善，train中位32.397→25.577秒，位图增加约98KiB。用户认为改善明显，取消第三对。F/G2/I停止；K的两对清理改善未兑现完整收益，停止，不叠加到J。见[H对照](results/optimization-weight-stability.summary.md)、[K两对](results/optimization-owner-parallel-drop.aggregate-n2.md)；DE之前的九次组合选型保留在[DE比较](results/optimization-radix-combination-stability.summary.md)。
 
 兼容优化组合仍须实测：CPU缓存、带宽、分配与任务调度共享，使各项收益不能直接相加。表中“可叠加”表示算法与表示可以共存，“依赖”表示须一起落实协议，“替代”表示同一操作选择不同策略。
 
@@ -31,13 +33,13 @@
 | M3 | 每256位置一个pivot目录，桶内权重精确查询 | 稀疏weight查询 | B2 `a0832c48`，3.07MiB | 与M2可叠加；可复用到I6；也可适配M1远跳，但该组合未测 |
 | M4 | selected head/tail按ID直接表，重复符号小hash回退 | 同批最终邻居查询 | B2 | 与M2耦合；原有序Plan可直接看相邻Plan，无需叠加此表 |
 | I6 | 初始pair/位置按owner稳定radix排序，连续分组频率，精确预留posting；低频先过滤再建map | 初始count及posting分配 | D `d15c18cc`，45tests/复核通过；三对D/B2 train比中位1.0002，独立D收益不稳定，DE组合已胜出 | 替代I1的逐位置哈希计数；复用I2–I5和M3，与C或B2 merge理论兼容 |
-| M5 | 预留posting批量逆序直填，省push检查与后续reverse | owner commit；组合D时也影响初始posting install | E `35eaf03c`，DE `c8702374` 测试/审查/计时完成；推荐DE实际组合，E单独无明确收益 | 与I6正交；共同SmallPosting接口，组合仍须端到端测量 |
-
+| M5 | 预留posting批量逆序直填，省push检查与后续reverse | owner commit；组合D时也影响初始posting install | E `35eaf03c`，DE `c8702374` 测试/审查/计时完成，继承到H/J；E单独无明确收益 | 与I6正交；共同SmallPosting接口，组合仍须端到端测量 |
 | M6 | singleton birth直接放group，第二次才物化node | prepare/delta及commit | F `4a2f148a`：46tests与审查通过；两个直接模块screen变慢，停止；DEF `7504cbfd`仅留源码 | 与M5兼容但无收益证据，不纳入推荐 |
 | M7 | join后的只读非原子corpus视图，128项连续端点比较 | prepare | G1 `cbb935b2` / G2 `2f238505`：47/48tests与审查通过；G2确有自动SIMD，但三对prepare/elapsed比中位1.0195/1.0018，停止 | 从DE派生；与查询独立，块化替代原过滤循环 |
-| M8 | 每256位置认证全权重1，位图命中直接返回1 | 初始group与prepare权重查询 | H `00216d91` 从DE派生；47tests/审查通过；screen及两个pair的group/prepare/train明显改善，选择H | 与I6/M2/M3/M5兼容；混合桶保留精确目录查询，额外约100KiB |
-
+| M8 | 每256位置认证全权重1，位图命中直接返回1 | 初始group与prepare权重查询 | H `00216d91` 从DE派生；47tests/审查通过；screen及两个pair改善，继承到J | 与I6/M2/M3/M5兼容；混合桶保留精确目录查询，额外约100KiB |
 | M9 | 聚合来源组后直接组装posting，最后一次owner安装 | flat owner commit | I `e3a1954c` 从H派生；48tests/审查通过，screen commit+15.2%，停止 | 与M8兼容；临时16B/来源组，减少逐组ledger hash查找 |
+| M10 | Task内左右neighbor ID目录累计，按组flush到route | flat非AA prepare | J `376363d2` 从H派生；48tests/审查通过，一次prepare-8.1%/train-11.4%，当前选择 | 与M8/M5兼容；目录域上界65,536，超出走原路径 |
+| P5 | 结果构造后既有pool并行销毁各owner | cleanup | K `288ad858` 从H派生；47tests通过，两对清理平均-32.1%但全训未胜出，停止 | 与M10理论兼容，未组合，不纳入J |
 
 AtomicU32是M2共享引用写入的实现条件，本轮不再当作一个独立速度优化点重复计时。u32与AtomicU32槽位大小相同已核对。原Plan使用split_at_mut独占区间；融合使用prepare join→独立Atomic writes join→commit的屏障，两种调度策略互为替代。
 
@@ -74,9 +76,10 @@ flowchart LR
   Count --> Bulk[M5 bulk posting：DE]
   Count --> Singleton[M6 singleton：F 已停止]
   Bulk --> Views[M7 read view / blocks：G2 已停止]
-  Bulk --> Weight[M8 权重1认证：H 当前推荐]
+  Bulk --> Weight[M8 权重1认证：H 已验证基点]
   Weight --> Commit[M9 直接组装posting：I 已停止]
-  Weight --> Aggregate[M10 规则邻居ID聚合：J 实现中]
+  Weight --> Aggregate[M10 规则邻居ID聚合：J 当前选择]
+  Weight --> Drop[P5 owner并行销毁：K 已停止]
 ```
 
 I6分支实现已从B2 `a0832c48` 派生，提交 `d15c18cc`，初始pair key可用两个u16 canonical ID编码且flat位置可用u32时启用；其余配置沿用旧计数。入口仍公开原Trainer接口、u32 corpus和u32 posting，不把内部临时pair code误写成语料ID宽度改变。
@@ -89,7 +92,7 @@ I6分支实现已从B2 `a0832c48` 派生，提交 `d15c18cc`，初始pair key可
 2. **完成B2/D/DE选型**：九次交错运行与完整模型gate通过，当前推荐DE。E对install/commit的直接影响单列，不把未改阶段波动归因E。
 3. **完成F及G筛选**：F直接模块回退；G2确认自动SIMD但prepare/端到端三对无稳定改善，停止两方向。
 4. **完成H选型**：32MiB DE perf的WeightLookup top-IP样本占8.16%，同时参与初始化group和prepare；DE/H screen及两个pair直接group/prepare及全训均改善，选择H；按用户要求停止追加复测。不给未实现候选列性能收益。
-5. **后续局部筛选**：I commit回退停止，J按规则邻居ID聚合正在实现；只做关键一次对照。
+5. **完成详细H诊断与J/K筛选**：debug binary与实际地址核验，独立phase/count定位；K直接清理改善但两对全训未胜出，停止。J通过48tests/审查，一次prepare与全训同向改善，当前选择；不把未改init的变动归因J。
 
 ## 当前具体组合与收益证据
 
@@ -105,6 +108,8 @@ I6分支实现已从B2 `a0832c48` 派生，提交 `d15c18cc`，初始pair key可
 | G2 `2f238505` | G1+128项端点缓冲比较 | 全48tests；三对prepare比中位1.0195、elapsed1.0018，无稳定改善，停止 |
 | H `00216d91` | DE+M8全权重1认证 | 全47tests/审查通过；两个pair train中位25.577s，选择H |
 | I `e3a1954c` | H+M9 | 48tests/审查通过；一次commit+15.2%、全训+9.0%，停止 |
+| J `376363d2` | H+M10 | 48tests/审查通过；一次prepare8.400→7.723s、train27.790→24.613s，当前选择；n=1非稳定性保证 |
+| K `288ad858` | H+P5 | 47tests通过；两对清理平均少1.280s，全train/elapsed未胜出，停止 |
 
 每个阶段的计时包括该阶段新增的工作和内存释放。fused_prepare包含在delta内，两项不能相加；initial与merge的WeightLookup是同一分配，两项bytes不能相加。模块未改并不保证每次进程模块耗时相同：默认AHash随机seed改变物理词顺序及hash布局，现有比较保持原API但没有固定内部物理快照。
 
