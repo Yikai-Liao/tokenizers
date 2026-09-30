@@ -1,0 +1,62 @@
+{
+  "source_worktree": "/root/code/tokenizers-worktrees/weight-one-buckets",
+  "source_commit": "00216d914186e42458d45e72276b13c700749c6a",
+  "manifest": "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-weight-one-buckets/runner/Cargo.toml",
+  "binary": "/root/code/tokenizers/benchmarks/hf-bpe/.build/h-debug-target/release/hf-bpe-native-weight-one-buckets",
+  "binary_sha256": "b712704589be5228a7ba1295d39f989993ac1d987b8f96197f9504c30b701d34",
+  "build_id": "e80ac816f0da8a7b8019205f97b665ba08d13045",
+  "formal_binary": "/root/code/tokenizers/benchmarks/hf-bpe/target/release/hf-bpe-native-weight-one-buckets",
+  "formal_binary_sha256": "97d890912374da73ab5f70f4c14ab6a296cfd395053b21817494302cf04f0cfd",
+  "formal_binary_unchanged": true,
+  "build_env": {
+    "CARGO_TARGET_DIR": "/root/code/tokenizers/benchmarks/hf-bpe/.build/h-debug-target",
+    "CARGO_PROFILE_RELEASE_DEBUG": "2",
+    "CARGO_PROFILE_RELEASE_STRIP": "none"
+  },
+  "cargo_command": [
+    "/root/.cargo/bin/cargo",
+    "build",
+    "--offline",
+    "--release",
+    "--manifest-path",
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-weight-one-buckets/runner/Cargo.toml"
+  ],
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "profile": {
+    "opt_level": 3,
+    "debug_info": 2,
+    "strip": "none",
+    "isa_flags": "default; no target-cpu override"
+  },
+  "debug_sections_verified": [
+    ".debug_info",
+    ".debug_line",
+    ".debug_abbrev",
+    ".debug_str"
+  ],
+  "address_checks": [
+    {
+      "address": "0x394d70",
+      "location": "parallel/weight_lookup.rs:68"
+    },
+    {
+      "address": "0x394d90",
+      "location": "parallel/weight_lookup.rs:74"
+    },
+    {
+      "address": "0x394e00",
+      "location": "parallel/weight_lookup.rs:79",
+      "inline": "core::slice::partition_point"
+    }
+  ],
+  "address_check_command": [
+    "addr2line",
+    "-afiC",
+    "-e",
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/h-debug-target/release/hf-bpe-native-weight-one-buckets",
+    "0x394d70",
+    "0x394d90",
+    "0x394e00"
+  ],
+  "interpretation": "Separate optimized diagnostic build with full DWARF; timings do not rank against formal binaries. Old formal binary addresses must not be mapped to this binary."
+}

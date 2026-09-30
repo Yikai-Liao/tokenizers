@@ -181,3 +181,20 @@ J从H派生，只改变flat非AA融合prepare的局部输出累计。每条规�
 先对当前最快H的实际512MiB工作集做一次cycles/cache-misses双事件、call graph与top-IP/实际binary disassembly映射的诊断。硬件事件可用性用perf stat true已确认，J构建已结束，采样期间无CPU重任务。分开记录CPU周期样本与cache-miss样本的损失/未解析/归因限制；不要将宽泛cache事件或有skid的指令点当作精确load归因。查询hash、节点遍历、corpus/length随机读取、分配/resize应有实际证据与成本占比；必要时补针对性操作计数，不能把静态源码语句数量当动态占比。
 
 只有分析支持的大项才继续J或其它候选；新增缓存/分组/数组清零成本要一起计入。保留一次关键对照和完整语义gate，明显结果不重复多组。最终停在最快有效组合及明确剩余成本，而不宣称全局最优或无证据的翻倍空间。
+
+
+## 诊断前补齐实际debug信息
+
+用户指出perf输出Rust编码符号并询问debug信息。readelf核对H正式binary97d890...：只有.symtab/.strtab，无.debug_info/.debug_line。编码名称可由c++filt Rust demangle还原为Output<u32,2>::birth，不能据此证明行号信息存在；perf --call-graph dwarf只采集用户栈，也不会补源码DWARF。已有15775样本H512诊断仅作为函数/符号偏移证据，暂停以它推断精确源码操作成本。
+
+单独构建相同H probe源码的release opt3、debug2、strip none到.build/h-debug-target；正式baseline binary不覆盖。先readelf验证debug段、addr2line验证实际新binary地址/inline链，再对该诊断版本执行一次H512周期/cache采样。记录新hash/Build ID和flags，不把旧地址映射到新binary，也不把诊断耗时参与排名。
+
+## 候选K：并行释放owner账本
+
+独立H cost/count诊断定位到合并后的4.780秒缺口：post-merge实测4.777秒，其中owner销毁4.752秒，占99.5%；词表/merge字符串转换合计21.3毫秒。销毁前尚有10,572,128条ledger entry与14,225,344个heap item。计数另显示173,155,595次birth和同量remove，理论按output去重后约57.84M组，但该下限不是J实际flush次数。
+
+先从H00216d91派生`bpe/owner-parallel-drop`，仅在训练结束时用当前Rayon池并行消费和销毁各owner。可省的是串行析构路径的等待；所有分配仍须正常释放，实际allocator竞争和worker分配决定是否更快。无新增索引、清零或堆内存；调度一次join，owner之间的条目和posting所有权独立。最后一次commit及所有读者已join，结果只依赖ids/strings/merges，不借用owner存储；公共API和阶段统计边界不变。
+
+预算为一次H→K512MiB关键对照，核对完整模型与资源gate。直接指标用`train-initialize-merge`区间，诊断已确定该区间主要为owner释放；同时比较train和elapsed。若直接区间与全训明显改善则选K；若无收益则停止该简单方案，不扩大线程或allocator矩阵。J暂不构建/测量，待K决策后再用已取得的hash成本与重复计数判断。
+
+临时skill performance-optimization-draft已创建并验证，指导成本证据、动态计数、完整收益、预算和自主停止；已把实际debug段与地址解析的预检加入。独立轻量行为审查支持按有价值的定位→最小关键对照推进，并建议每轮明确预算和决策条件，已纳入。

@@ -215,4 +215,17 @@ H独立审查通过，DE→H screen完整模型gate通过：group2.640→0.328�
 
 用户要求明显改善时停止多组复测、继续优化。已取消第三对，当时p2.de在运行，完成后保留两个完整pair，n=2。H/DE配对group比0.120/0.085、prepare0.687/0.666、train0.821/0.757、elapsed0.834/0.789，完整模型及实际N/E/pairs/语料posting容量均匹配。H train中位25.577、elapsed29.838秒；额外bitmap100,632B、RSS约4.43GiB。选择H源码00216d91作为后续parent，不把小kernel SIMD作为目标。
 
-I源码e3a1954c，worktree commit-direct-assemble，branch bpe/commit-direct-assemble。flat commit聚合来源Group的同时以16B描述项prepend来源链，accepted key直接一次reserve+反向bulk填最终posting，再一次插入ledger/heap；省原来的第二遍逐key ledger查询/逐group bulk调用。全来源floor、owner路由与producer顺序不改，非flat旧路径。新增peak_commit_descriptor_bytes记录所有owner的临时Vec capacity，独立审查与48tests/构建进行中，完成后仅H/I各一次关键对照。
+I源码e3a1954c，worktree commit-direct-assemble，branch bpe/commit-direct-assemble。flat commit聚合来源Group的同时以16B描述项prepend来源链，accepted key直接一次reserve+反向bulk填最终posting，再一次插入ledger/heap；省原来的第二遍逐key ledger查询/逐group bulk调用。全来源floor、owner路由与producer顺序不改，非flat旧路径。新增peak_commit_descriptor_bytes记录所有owner的临时Vec capacity，独立审查与48tests通过，完成H/I各一次关键对照。
+
+I直接commit5.971→6.876秒、train26.187→28.538秒，完整模型gate通过，descriptor容量峰2,097,152B。直接模块与整体均回退，停止I，保留H。J源码376363d2保存每rule/task左右neighbor目录聚合的原型；尚未通过测试和性能筛选。用户要求先详查H成本，因此暂停J推进，不列为已验证候选。
+
+
+用户进一步要求先形成临时skill，再自主迭代至无明显收益。已在标准skills目录创建performance-optimization-draft，主指引和H/I/G2/DE案例引用，格式校验通过；轻量行为审查后的测量预算要求已纳入。随后用户质疑perf binary debug，readelf确认实际H release没有DWARF line/info。暂停J并补独立release/debug2诊断构建，正式H不覆盖；已有函数/偏移采样保留原证据范围。源码级分析必须核验新binary的地址/行映射后重新采样。
+
+## 2026-10-01：H源码采样与生命周期诊断
+
+同H源码的独立opt3/debug2 binary经readelf和addr2line核验后，仅一次512MiB cycles/cache双事件采样。8,084/7,813样本，lost0；事件分别按period加权，top-IP未解析份额9.55%/9.63%。birth/remove的self周期合计10.81%，其中实际inline hot IP落在route entry的hashbrown桶探测，但函数也包括group和Node操作，不将全部称为hash。RawTable self另为3.40%/7.41%，约96–97%来自reserve_rehash，不能称为纯probe。训练worker与prepare的inclusive份额不相加。详见[debug采样](results/optimization-h-debug-profile.md)。
+
+一次独立H cost/count probe保持原算法，额外group扫描开销653ms单列，诊断不参与排名。计时定位train-init-merge缺口4.780秒，显式post-merge4.777秒，其中owner销毁4.752秒（99.48%），结果字符串转换21.3ms。终点仍有10.57M entry/14.23M heap item。实际birth/remove各173.16M，局部delta group57.84M只是按output去重下限，不等于J实际flush数。模型签名和N/E/pairs/载荷一致，RSS4.43GiB、min available3.33GiB、VmSwap0。见[成本诊断](results/optimization-h-cost-probe.md)。
+
+该证据支持先做K：H派生owner-parallel-drop/288ad858，最后一次commit及所有读者join后，输出持有独立字符串，既有pool并行消费drop各owner。新增一次调度，无unsafe、无额外索引或公开Stats字段。正常释放全部对象，allocator竞争仍须测量。正确性检查和release构建进行中；随后仅H→K一次关键对照，J继续暂存。

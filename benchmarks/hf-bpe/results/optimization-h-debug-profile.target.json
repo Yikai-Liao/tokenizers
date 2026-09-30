@@ -1,0 +1,16 @@
+{
+  "target_binary": "/root/code/tokenizers/benchmarks/hf-bpe/.build/h-debug-target/release/hf-bpe-native-weight-one-buckets",
+  "sha256": "b712704589be5228a7ba1295d39f989993ac1d987b8f96197f9504c30b701d34",
+  "perf_data": "/root/code/tokenizers/benchmarks/hf-bpe/.build/optimization-h-debug-profile.perf",
+  "perf_args": [
+    "record",
+    "-F",
+    "99",
+    "-e",
+    "cycles:u",
+    "-e",
+    "cache-misses:u",
+    "--call-graph",
+    "dwarf,16384"
+  ]
+}
