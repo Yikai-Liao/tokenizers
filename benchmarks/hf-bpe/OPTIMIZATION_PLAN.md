@@ -117,3 +117,11 @@ E影响owner commit，不改变规则选择、频率聚合、出生准备、语�
 
 - D `d15c18cc` 完整45项测试通过，独立复核通过，原接口512MiB screening train33.265/init9.617/merge19.267秒。新增route2.563秒（compact1.327），sort2.045/group2.683/install1.037秒，初始count整段5.764秒；这些成本已包含在完整初始化，非只挑hash子项。RSS4.43GiB、最低可用3.39GiB、VmSwap0，完整模型签名一致。最终posting802,967,868B、owner表138,412,096B，corpus849,691,660B不变；count3仍heap最小4槽。单次约5%全训改善仅作候选筛选，尚不替换稳定B2。
 - E已独立提交 `35eaf03c`（B2+bulk commit），DE组合提交 `c8702374`（D+同接口bulk commit/install），分别worktree `posting-bulk`/`radix-posting-bulk`。构建和测试中，独立review只检查bulk内存发布、panic、反向顺序及两个调用；复用已有D/B2协议。固定当前组合B2，比较E与DE的完整工作后，只给有希望的组合做稳定端到端确认。
+
+## 候选F：单次出生直接保存在group
+
+E/DE分别通过45/46项库测试，独立bulk审查通过。512MiB单次筛选E train37.082/init13.173/merge19.842/commit6.687秒；DE train33.053/init8.589/merge19.984/commit6.385秒。E没有显示commit收益，DE与D的全训差距小且sort/compact也波动，不把差异全部归因bulk。正在以三个循环块B2/D/DE交错复测选择真实组合。
+
+计时同期仅编辑下一候选源码，F从D `d15c18cc`派生 `bpe/singleton-birth`，不预先加入尚未确认有收益的E。flat route每个key只有一次出生时，将position直接保存在既有Group.head，occurrences=1标识，不分配Node。第二次出生才把第一次及当前position物化为两节点，后续沿用链；occurrences=0仍表示remove。这不改变Group大小、频率、global floor聚合、posting顺序、owner路由或初始化。commit读取singleton直接push，多次组沿用旧链及reverse。AA也覆盖，非flat仍旧路径。
+
+影响模块为delta/融合prepare中的birth以及owner commit读取出生记录；full init/radix/source布局不改。预期减少局部单例Node分配与读取，是否足够占比须实测。新增统计记录累计局部singleton数量、nodes实际长度/容量峰值，不把它解释成全局唯一pair数。测试覆盖remove→singleton→两次/多次、position/sentinel、跨worker floor；已有1500-case逐轮差分继续执行。review和关键性能并行；正式计时开始前结束CPU构建/测试。若D/DE选型相近，不将兼容性当成收益相加。

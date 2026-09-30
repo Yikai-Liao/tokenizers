@@ -84,7 +84,9 @@ I6分支实现已从B2 `a0832c48` 派生，提交 `d15c18cc`，初始pair key可
 |---|---|---|
 | B2 `a0832c48` | 基础优化+I2–I5+M2–M4 | C/B2三对端到端胜出，train median34.942s |
 | D `d15c18cc` | B2把I1替换为I6 | 单次33.265s，内存4.43GiB；待稳定选型 |
-| E `35eaf03c` | B2+M5，应用在commit | 源码独立，测试/计时待完成 |
-| DE `c8702374` | D+M5，应用在install及commit | 源码组合，测试/计时待完成 |
+| E `35eaf03c` | B2+M5，应用在commit | 45测试及审查通过；单次37.082s，commit6.687s，无明确收益 |
+| DE `c8702374` | D+M5，应用在install及commit | 46测试及审查通过；单次33.053s，待三组合稳定选型 |
 
 D与E从共同数据接口看可组合，DE明确应用同一个bulk方法于两个调用点；实际收益可能共享cache/分配效应，不把D筛选的差值与E差值简单相加。选择依据是组合完整端到端及资源约束。
+
+下一热路径候选F：D+局部singleton birth直接存head；第二次才物化Node，Group大小不变。影响prepare/delta及commit，初始radix不改。可与bulk接口共存，但本次先以D为parent隔离评估；不默认叠加E。计划见OPTIMIZATION_PLAN末节。
