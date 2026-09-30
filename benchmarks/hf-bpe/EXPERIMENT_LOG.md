@@ -180,3 +180,9 @@ C选作B起点；从C分叉Atomic控制27dc7fd0保留旧Plan算法，融合候�
 `fused-direct-atomic/c1ee2019` 从C Atomic入口27dc7fd0派生，flat非AA一次遍历过滤/delta，连续规则posting任务维持每个出生key有序，join后共享原子端点写入。初始化代码未改，AA/多块/generic不改。43项测试通过，新增1500-case Atomic32逐轮差分及相邻批次/长度/跨worker出生顺序案例。按用户要求取消重复Atomic对照计时。
 
 512MiB唯一测量：prepare22.858、plan0.040、delta23.142、commit7.481、merge31.887、init13.251、train49.697秒；RSS3.42GiB、最低可用4.40GiB、VmSwap0，完整签名一致。Plan排序成本省下但prepare成本抵消收益，C仍最快。相同初始化源码的count变11.370秒，不能声称融合影响了初始化算法。原始信息见 [B报告](results/optimization-b-512.summary.md)。当前不把regression归因Atomic，继续聚焦按规则遍历改变的权重查询局部性与新增selected边界查询。
+
+## 2026-09-30 完整组合稳定性与优化目录
+
+用户纠正：B是失败方案，以B比较不能选最快组合。已完成B/B2三组只留作查询修复诊断（prepare median22.301/11.704秒，CV5.62/3.91%），不作为最终竞争基线。随后C/B2三组交错实际比较端到端，B2每组train/elapsed/merge都更快；train median42.887/34.942秒、CV4.46/.85%，elapsed median47.701/38.965秒、CV4.21/.47%。配对中位比例train.815、elapsed.817、merge.699；等价prewrite median18.928/12.124秒（B2目录建立含在内，fusedprepare不另加）。签名全一致，VmSwap0。现在选B2作为当前完整组合，取代按历史单点选择C。见 [组合稳定性](results/optimization-combination-stability.summary.md)。
+
+用户明确最终目标为发现多个可组合优化并选稳定最快端到端。已提交 [完整清单](OPTIMIZATION_CATALOG.md)，标注正交/依赖/互斥、未融合项、配置条件、失败项和下一队列。测量期间同步编写初始计数D：稳定radix分组替代逐边hash、低频先裁剪、精确预留posting和owner表，公开ID/位置仍u32；从B2分叉d15c18cc。新增route/sort成本、约3.03GiB record+scratch临时量全部计入，性能待测；不能只比较省掉的hash工作。后续具体候选是批量posting填充，省每node push检查和再次reverse，可能同时作用于D安装与owner commit；先保持热点集中。

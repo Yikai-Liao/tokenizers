@@ -1,6 +1,6 @@
 # HF BPE 兼容适配原型
 
-新增热点优化见 [OPTIMIZATION_REPORT.md](OPTIMIZATION_REPORT.md)：C初始化直接构造与B/B2融合查询均有独立分支、原接口测量和正确性复核。当前C全训单次最快，B2 merge热点有收益；查询模块正在补公平的B/B2交错稳定性测量。计划见 [OPTIMIZATION_PLAN.md](OPTIMIZATION_PLAN.md)。
+新增热点优化见 [OPTIMIZATION_REPORT.md](OPTIMIZATION_REPORT.md)：C初始化直接构造与B/B2融合查询均有独立分支、原接口测量和正确性复核。C/B2三组配对端到端比较选出B2（训练中位34.942秒）；当前继续初始计数优化。全部优化及组合关系见 [OPTIMIZATION_CATALOG.md](OPTIMIZATION_CATALOG.md)。计划见 [OPTIMIZATION_PLAN.md](OPTIMIZATION_PLAN.md)。
 
 本次交付按实现拆成独立 worktree 和本地分支：HF reference、固定 PR、串行 endpoint、fused、串行初始化并行 merge、并行初始化、原子访问对照。五个新实现都直接接入原始 `BpeTrainer::do_train/train_vocab` 和 `Trainer::train`，公共 Trainer 字段与序列化格式保持一致。完整路径、提交与调用示例见 [WORKTREES.md](WORKTREES.md)。
 

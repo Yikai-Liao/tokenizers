@@ -1,6 +1,14 @@
 # BPE 热点优化：并行构造与融合查询
 
-## 本轮结果与选择
+## 当前完整组合选型
+
+C/B2三组交错配对已完成，主指标端到端支持选择 **B2 `a0832c48`**：train中位42.887→34.942秒，feed+train elapsed47.701→38.965秒；B2每组均更快。样本CV分别为C train4.46%/B2 0.85%，elapsed4.21%/0.47%。三组配对的中位B2/C比例为train0.815、elapsed0.817、merge0.699。不是按历史单次最小值选型。
+
+共同pre-write准备定义为C plan+delta、B2 plan+delta+目录构建，中位18.928→12.124秒；fused_prepare已经在delta中，不再次相加。详细每对数据与方差见 [组合稳定性](results/optimization-combination-stability.summary.md)。三组样本用于解决本轮单次选型问题，不刻画尾部总体分布。B/B2另三组只保留作失败修复的诊断，不决定最佳组合。
+
+[OPTIMIZATION_CATALOG.md](OPTIMIZATION_CATALOG.md)列出全部优化与可叠加/依赖/替代关系。当前从B2继续初始radix计数候选D `d15c18cc`，不把当前最优当作全局最优或结束点。
+
+## 首轮单次记录
 
 固定512MiB中文 Wikipedia、none预处理、目标50,000/min2、串行feed、4线程初始化与merge，u32 corpus/posting；全部通过原Trainer接口。模型完整摘要、50,000词表、29,243规则和1,429,915个唯一片段一致。每候选只做关键计时；A的追加同期诊断用于解决实际merge回退，未展开矩阵。
 
@@ -13,9 +21,9 @@
 | [B融合首版](results/optimization-b-512.jsonl) | 13.251 | 31.887 | 49.697 | 3.418 | 4.398 | `c1ee2019` |
 | [B2查询优化](results/optimization-b2-512.jsonl) | 14.399 | 21.386 | 40.265 | 3.386 | 4.415 | `a0832c48` |
 
-当前实测训练最快为 **C：39.805秒**，相比初始并行版54.760秒快1.38倍；初始化从22.975降到9.767秒，快2.35倍。C分支作为当前训练入口推荐，保留简单的原merge协议。
+首轮单次训练最小值为 **C：39.805秒**，相比初始并行版54.760秒快1.38倍；初始化从22.975降到9.767秒，快2.35倍。此单次值不再用于选型；当前推荐由上述同期配对决定。
 
-**B2是有效的merge热点候选**：相对C merge从26.092降到21.386秒，耗时减少18.04%；相对B首版31.887秒减少32.93%。B2整次训练40.265秒，较C多1.16%，尚未证明全训收益，因此不凭merge局部结果取代当前训练推荐。B2保留作后续merge起点。
+**B2是有效的merge热点候选**：相对C merge从26.092降到21.386秒，耗时减少18.04%；相对B首版31.887秒减少32.93%。B2整次训练40.265秒，较C多1.16%，尚未证明全训收益，当时未按局部结果取代C；随后同期配对确认整个B2组合更快，已选择B2。
 
 所有采样进程VmSwap峰值为0；停止条件仅MemAvailable≤1GiB。系统换页属于主机范围，完整记录保留在jsonl。计时与静态正确性复核并行；本轮B2计时时CPU测试已经结束，没有并发构建/测试/下载。按用户最新要求，后续构建完成后性能与正确性检查同步推进，失败的正确性结果会使该候选性能记录作废。
 
@@ -82,4 +90,4 @@ python3 run_native_fair.py --case fused-lookup-reproduction \
 
 每次environment JSON锁定实际worktree源码、临时探针副本、runner/Cargo.lock、二进制、输入和脚本hash；probe只在原do_train返回前输出私有统计。实际调用原train_vocab，未增加公有Trainer选算法API。计时原始数据与阶段解释见 [C结果](results/optimization-c-512.summary.md)、[B结果](results/optimization-b-512.summary.md)、[B2结果](results/optimization-b2-512.summary.md)。旧PR/native公平四项见 [PARALLEL_REPORT.md](PARALLEL_REPORT.md)。
 
-当前以C作为总训练推荐、B2作为merge后续起点。用户追加模块公平性与方差要求后，正在补三组B/B2查询模块交错测量；不追加Atomic对照或宽度/线程矩阵。下一轮若继续，应集中在初始pair计数或owner commit，先按源码确定访问/分配热点再改；当前没有证据选择更具体的实现。
+当前推荐完整B2组合，并继续初始计数D。失败B的比较仅作诊断，完整组合用C/B2三组配对选型；不追加Atomic对照或宽度/线程矩阵。下一轮若继续，应集中在初始pair计数或owner commit，先按源码确定访问/分配热点再改；当前没有证据选择更具体的实现。

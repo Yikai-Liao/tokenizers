@@ -119,3 +119,20 @@ selected 每批分配两个 u64 表，容量合计按 8 字节计；fallback pai
 新增测试源码逐一检查 p=0..9999 的目录查询与 `Block::weight`，覆盖桶边界前后、等于 pivot、稀疏空桶及最后不满的桶，并另查空 pivots。原 B 的相邻合并、共享 head/tail、reserved、长度限制和 1500 case 差分测试继续保留。主任务报告 44 项库测试通过；本次复核没有重跑。
 
 改变桶界的 `<`/查询的 `<=`、使 pivots 在 merge 中变化、扩大 flat 地址域，或改变哨兵编码与 duplicate fallback 收集条件时，需要重新复核本附节。
+
+## 八、模块公平比较边界
+
+本次只读审计与三对稳定性计时并行进行，没有构建、执行测试或等待其余测量。公平的查询模块对照是 B `c1ee2019` 与 B2 `a0832c48`。两者的 `bpe/mod.rs`、alphabet、corpus 内容完全相同；`parallel.rs` 从文件开头直到 initialize 返回后的 merge 入口也逐字相同，该前缀 SHA256 为 `9a3621b0928a2e15a67139fc78e1bfe0db2fb195355426d1c370154909e4691e`。两者均使用原 API、AtomicU32、flat32、同一私有配置、串行 feed 及初始化/merge 各 4 worker。差分只涉及热点查询、一次目录建立、统计字段与对应测试。
+
+两版 `fused_prepare_ms` 都从同一批次准备入口计到 prepare 返回及少量统计更新，覆盖 selected 构造、任务切分、只读过滤、权重/邻居查询、delta 和出生记录生成、collect 与返回时的局部释放；在 drop 源 posting 和 apply 之前截断，均不包含 apply 或 owner commit。B2 的一次权重目录建立在 merge 计时开始后、批次循环之前，单独记录为 `weight_lookup_build_ms`，已经包含在 `merge_ms` 中。比较应同时报告 prepare 与目录建立成本；prepare 的差异不能拆成单独某一种查询的收益。
+
+既有单轮 B/B2 与稳定性首对的四条已完成记录均为 1550 个 batch，其中融合 1435 个、最大 75 条规则；posting visits 均为 125,409,599，initial slots、edges、symbols 及剪枝数量也一致。既有模型签名一致。初始化代码相同，其耗时波动不能计作查询模块收益；全训耗时只能描述整个版本的观察，查询模块的判断以相同 prepare 边界及包含目录建立的 merge 指标为依据，方差由正在进行的重复配对测量汇总。
+
+已核对 `optimization-b-512`、`optimization-b2-512` 及 `optimization-lookup-stability.p1.b/p1.b2` 的 environment 记录：提交、源 hash、参数、线程、输入字节数及输入 SHA 口径一致。两构建快照各 22 项 tk-train/runner 源码的实际 hash 均与记录相符；生成的 runner 源码和 stats probe 相同，Cargo.toml 仅 package 名及源码路径 label 不同，Cargo.lock 仅 runner package 名不同，依赖版本一致。现有二进制实际 SHA 与原记录和首对稳定性记录均相符：
+
+| 版本 / binary（位于 `benchmarks/hf-bpe/target/release/`） | SHA256 |
+|---|---|
+| B / `hf-bpe-native-fused-direct` | `c23c02edeb11c14687c4f30695cc2d19475646c0e8fd75ee6755b9b440dcb330` |
+| B2 / `hf-bpe-native-fused-lookup` | `596200773ff413504d82aa4038b3c5e5902e835dff2bbdfb362e5d0818d208a5` |
+
+本审计确认比较对象与阶段边界；它不代替三对重复结果的统计汇总，也不把 B2 对 C 的整版比较当作查询模块的隔离证据。

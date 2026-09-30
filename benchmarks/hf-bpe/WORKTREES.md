@@ -19,7 +19,8 @@ worktree 均位于 `/root/code/tokenizers-worktrees/`。以下提交可直接 ch
 | `corpus-direct` | `bpe/corpus-direct` | `fbdc0b2b` | C：并行存在位图、字符直接表、最终数组直接初始化 | 512 MiB，39.805秒训练 |
 | `corpus-direct-atomic` | `bpe/corpus-direct-atomic` | `27dc7fd0` | C初始化，原Plan算法，只改Atomic入口 | 按用户要求取消计时 |
 | `fused-direct-atomic` | `bpe/fused-direct-atomic` | `c1ee2019` | B：C初始化，flat非AA过滤/delta融合、有效起点写入 | 回退：49.697秒训练、31.887秒merge |
-| `fused-lookup` | `bpe/fused-lookup` | `a0832c48` | B2：融合B增加稀疏权重目录与selected直接表 | 44项测试通过，prepare11.889秒/merge21.386秒；追加模块稳定性检查 |
+| `fused-lookup` | `bpe/fused-lookup` | `a0832c48` | B2：融合B增加稀疏权重目录与selected直接表 | C/B2配对胜出，train median34.942秒 |
+| `initial-radix` | `bpe/initial-radix` | `d15c18cc` | D：B2合入初始pair稳定radix计数与精确posting预留 | 构建/测试中，待关键计时 |
 | `corpus-atomic` | `bpe/corpus-atomic` | `082d2811` | 早先A初始化Atomic控制起点 | 未计时，保留历史候选 |
 | `fused-batch-atomic` | `bpe/fused-batch-atomic` | `082d2811` | 早先A融合候选空起点 | 未实现，后续改用C parent |
 

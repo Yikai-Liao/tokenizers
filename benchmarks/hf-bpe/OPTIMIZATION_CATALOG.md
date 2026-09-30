@@ -4,7 +4,7 @@
 
 最终目标是在同一原Trainer接口、语料和参数下选择**稳定的最快端到端组合**。主指标是feed到train_vocab返回的elapsed，以及其中完整train；模块计时用于解释组合为什么变快或变慢。已失败版本的前后比较只保留作诊断，胜出组合必须优于当前最快有效组合。
 
-当前候选为C `fbdc0b2b` 与B2 `a0832c48`，正在三组交错比较端到端稳定性。B首版 `c1ee2019` 已回退，不列为竞争基线。C单点39.805秒与B2单点40.265秒曾受不同初始化计时影响，不能据此选型；以此次配对完整运行判断。
+当前候选为C `fbdc0b2b` 与B2 `a0832c48`，三组交错端到端稳定性比较已完成：B2每组train/elapsed/merge更快，选B2。B首版 `c1ee2019` 已回退，不列为竞争基线。C单点39.805秒与B2单点40.265秒曾受不同初始化计时影响，不能据此选型；以此次配对完整运行判断。
 
 兼容优化组合仍须实测：CPU缓存、带宽、分配与任务调度共享，使各项收益不能直接相加。表中“可叠加”表示算法与表示可以共存，“依赖”表示须一起落实协议，“替代”表示同一操作选择不同策略。
 
@@ -30,7 +30,7 @@
 | M2 | flat非AA过滤/delta一遍融合，无全局16字节Plan排序 | merge prepare | B首版失败；B2保留融合但修正查询 | 依赖P2证书、共享Atomic端点写与出生顺序；M3/M4使组合有效 |
 | M3 | 每256位置一个pivot目录，桶内权重精确查询 | 稀疏weight查询 | B2 `a0832c48`，3.07MiB | 与M2可叠加；可复用到I6；也可适配M1远跳，但该组合未测 |
 | M4 | selected head/tail按ID直接表，重复符号小hash回退 | 同批最终邻居查询 | B2 | 与M2耦合；原有序Plan可直接看相邻Plan，无需叠加此表 |
-| I6 | 初始pair/位置按owner稳定radix排序，连续分组频率，精确预留posting；低频先过滤再建map | 初始count及posting分配 | 下一候选D，计划中 | 替代I1的逐位置哈希计数；复用I2–I5和M3，与C或B2 merge理论兼容 |
+| I6 | 初始pair/位置按owner稳定radix排序，连续分组频率，精确预留posting；低频先过滤再建map | 初始count及posting分配 | D `d15c18cc` 已实现，测试/构建中 | 替代I1的逐位置哈希计数；复用I2–I5和M3，与C或B2 merge理论兼容 |
 
 AtomicU32是M2共享引用写入的实现条件，本轮不再当作一个独立速度优化点重复计时。u32与AtomicU32槽位大小相同已核对。原Plan使用split_at_mut独占区间；融合使用prepare join→独立Atomic writes join→commit的屏障，两种调度策略互为替代。
 
@@ -38,7 +38,7 @@ AtomicU32是M2共享引用写入的实现条件，本轮不再当作一个独立
 
 | 优化点 | 适用范围/关系 | 状态与优先级 |
 |---|---|---|
-| owner commit减少临时born map/二次hash，复用route/group结构 | 与I6及C/B2初始化兼容；须保留全worker阈值聚合和posting有序 | commit约6–8秒，I6后优先定位；尚无具体已验证内核 |
+| owner commit减少临时born map/二次hash，复用route/group结构 | 与I6及C/B2初始化兼容；须保留全worker阈值聚合和posting有序 | commit约6–8秒。下一具体候选：预留posting按出生链逆序直接填最终区间，省逐node push的标签/容量检查及填完再reverse；D安装初始posting也可复用批量填充，未实现/验证。 |
 | route/node/有效起点容量复用 | 可与M2/M3/M4共存；保留容量可能抬高常驻RSS | 待profiling确认实际分配热点，不先造框架 |
 | M1远跳使用M3目录 | C排序Plan查询策略的局部替换 | 尚未实现/测量；若B2端到端胜出暂不展开旧路径新组合 |
 | u16 corpus完整ID域证明 | 与u32 posting地址独立，限制完整可能ID域及separator | 已有原型和测试；当前公平工作集固定u32，不重开宽度矩阵 |
@@ -66,13 +66,13 @@ flowchart LR
   Lookup --> Count
 ```
 
-I6分支实现将从B2出发，初始pair key可用两个u16 canonical ID编码且flat位置可用u32时启用；其余配置沿用旧计数。入口仍公开原Trainer接口、u32 corpus和u32 posting，不把内部临时pair code误写成语料ID宽度改变。
+I6分支实现已从B2 `a0832c48` 派生，提交 `d15c18cc`，初始pair key可用两个u16 canonical ID编码且flat位置可用u32时启用；其余配置沿用旧计数。入口仍公开原Trainer接口、u32 corpus和u32 posting，不把内部临时pair code误写成语料ID宽度改变。
 
 新route记录8字节/pair，radix scratch也8字节/pair，较旧4字节位置路由增加临时内存。先按当前203,230,114初始边核算：两份精确record约3.03GiB，另有corpus、输入与metadata；按实际MemAvailable≤1GiB停止。owner路由逐块精确预留，合并旧路由时及时释放原缓冲，sort scratch在posting分配前释放。记录临时峰值及最终posting/owner容量，收益必须包含route/sort/group/安装整段初始化和端到端，不能只挑hash被省掉的部分。
 
 ## 推进队列与完成标准
 
-1. **进行中：C/B2三组配对端到端选型**。比较完整train/elapsed及方差，同时记录等价prepare、rewrite/commit；B诊断不决定胜出组合。
+1. **已完成：C/B2三组配对端到端选型**。train中位C42.887/B2 34.942秒，elapsed47.701/38.965秒；B2每组更快，当前选择B2。
 2. **同步推进：I6初始pair计数候选D**。父组合保持固定，只换initial count；差分与性能并行处理，测完整初始化（新增route/sort不漏计）和端到端。
 3. **随后集中：owner commit**。先确认剩余热点和明确访问成本，选一个具体候选；不平铺实现理论上所有方案。
 4. 最后汇总最优有效组合及固定commit。组合兼容关系与收益证据分开记录；端到端稳定收益优先，慢组合保留原因但不推荐。
