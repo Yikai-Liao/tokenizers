@@ -174,3 +174,9 @@ GPT-6 Luna完成一项512MiB关键计时，四个新增计时字段强校验通�
 固定512MiB一次：init9.767、merge26.092、train39.805秒，tokenize1.090秒（alphabet0.347/measure0.187/allocate0.000046/fill0.555），初始route0.573/count8.015秒。RSS3.43GiB、minimum available4.38GiB、VmSwap0，模型完整签名一致。scratch11.57MiB，直接表4.25MiB，返回构造后释放。新增成本很小；当前初始化热点已转为pair计数。与历史结果相比route也发生明显变化，但未隔离first-touch/位置布局/运行环境，不给出单因果归因。原始信息与CPU/fault/host counters见 [C报告](results/optimization-c-512.summary.md)，安全条件见 [C复核](CORPUS_DIRECT_REVIEW.md)。
 
 C选作B起点；从C分叉Atomic控制27dc7fd0保留旧Plan算法，融合候选另分支，分别做一次关键比较。A上的Atomic起点继续保留但未测，不混用其结果。
+
+## 2026-09-30 merge 融合首版 B：回退
+
+`fused-direct-atomic/c1ee2019` 从C Atomic入口27dc7fd0派生，flat非AA一次遍历过滤/delta，连续规则posting任务维持每个出生key有序，join后共享原子端点写入。初始化代码未改，AA/多块/generic不改。43项测试通过，新增1500-case Atomic32逐轮差分及相邻批次/长度/跨worker出生顺序案例。按用户要求取消重复Atomic对照计时。
+
+512MiB唯一测量：prepare22.858、plan0.040、delta23.142、commit7.481、merge31.887、init13.251、train49.697秒；RSS3.42GiB、最低可用4.40GiB、VmSwap0，完整签名一致。Plan排序成本省下但prepare成本抵消收益，C仍最快。相同初始化源码的count变11.370秒，不能声称融合影响了初始化算法。原始信息见 [B报告](results/optimization-b-512.summary.md)。当前不把regression归因Atomic，继续聚焦按规则遍历改变的权重查询局部性与新增selected边界查询。
