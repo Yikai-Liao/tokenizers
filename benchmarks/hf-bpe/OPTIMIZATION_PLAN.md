@@ -18,13 +18,13 @@
 - [x] 初始lengths活跃标记用局部结果归并，避免多个worker写同一ID槽；保持special预留ID尚未活跃的0长度状态。
 - [x] 保留alphabet与canonical ID分配行为、有限limit_alphabet同频边界；本候选先沿用原alphabet实现。
 - [x] 覆盖空输入、全裁剪、重复权重、强制alphabet、预留special ID、原子/非原子slot和跨块边界；非空affix仍走原generic路径。
-- [ ] 通过差分与原接口测试，固定commit，构建再进行一次512MiB关键比较，报告分阶段耗时与RSS。
+- [x] 通过差分与原接口测试，固定commit，构建再进行一次512MiB关键比较，报告分阶段耗时与RSS。
 
 初始化执行并发由现有私有initialization_workers控制，merge workers保持原值。尽量只保存词引用及每块规划元数据，不构造每worker完整ID语料再复制，不能用新增4N临时数组换取时间。
 
 ## 候选B：减少Plan与delta重复走访
 
-在候选A测量完成后记录其局部与整体结果，再选新分叉起点，独立命名worktree/branch。A已确认初始化收益但整次训练尚无收益；B基于A组成联合候选，以相同构造方式的Atomic控制项判断融合收益，暂不把A推广为默认版本。
+在候选A测量完成后记录其局部与整体结果，再选新分叉起点，独立命名worktree/branch。同期复测确认A初始化与整次训练收益；B待C测量后选择构造起点，以相同构造方式的Atomic控制项判断融合收益。
 
 - [x] 逐段核对原型的有效位置检查、邻边delta、出生链和最终邻居判定，列出融合需要保持的协议。
 - [ ] 细分delta中的权重查找、哈希/出生记录与提交工作，避免把14.668秒全部归给一个操作。
@@ -53,9 +53,9 @@
 
 初始化候选C优先于B，分支 `bpe/corpus-direct` 从A `98ca7fc1` 派生：
 
-- [ ] 无limit_alphabet配置按worker统计字符出现位图，再按Unicode顺序分配canonical ID；频次在该配置不参与裁剪，因此无需保存完整频率。limit_alphabet继续原路径，保留同频裁剪行为。
-- [ ] 字符ID构造一次只读直接查询表，替代每位置UTF-8编码与字符串哈希；过滤计数与填充使用同一表。
-- [ ] 最终数组使用MaybeUninit分配，独占区域直接写入每个槽；完成join和精确覆盖检查后转成最终Vec。局部封装初始化安全证明，不保留第二份完整语料；每个字符/分隔槽必须初始化，异常路径不读取未初始化值。
+- [x] 无limit_alphabet配置按worker统计字符出现位图，再按Unicode顺序分配canonical ID；频次在该配置不参与裁剪，因此无需保存完整频率。limit_alphabet继续原路径，保留同频裁剪行为。
+- [x] 字符ID构造一次只读直接查询表，替代每位置UTF-8编码与字符串哈希；过滤计数与填充使用同一表。
+- [x] 最终数组使用MaybeUninit分配，独占区域直接写入每个槽；完成join和精确覆盖检查后转成最终Vec。局部封装初始化安全证明，不保留第二份完整语料；每个字符/分隔槽必须初始化，异常路径不读取未初始化值。
 - [ ] 保留初始化线程控制和阶段统计，补记直接查询表容量；独立审查未初始化内存转换与unicode/特殊ID/裁剪边界。
 - [ ] 完成正确性与构建后只测一次关键512MiB，报告初始化、整体、RSS及签名。选择C或A的具体parent后，再推进B及其匹配Atomic控制。
 
@@ -68,3 +68,5 @@
 - B的分叉parent为A `98ca7fc1`。新控制分支 `bpe/corpus-atomic` 只切Atomic；融合分支从该控制提交派生，计划名 `bpe/fused-batch-atomic`。读取/写入仍分阶段，flat非AA融合；每worker一份route，任务按posting数均分且连续有序，保持出生posting顺序。
 
 - 同期诊断：baseline/A init23.760/15.421秒、merge29.810/29.756秒、train57.982/49.737秒、RSS3.395/3.417GiB，签名一致。旧6.5秒差异未复现、成因仍未知；记录全部观察而不归因，结果在 `optimization-a-diagnostic.*`。
+
+- 候选C已提交 `fbdc0b2b`，完整42项测试通过，原接口release构建完成。独立复核与一次关键benchmark按用户要求并行进行；计时期间不运行构建、测试或下载，复核只读源码。候选C选择完成后再创建B及匹配Atomic控制的新分支，保留此前A控制分支。
