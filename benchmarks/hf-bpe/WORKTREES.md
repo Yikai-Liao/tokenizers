@@ -83,7 +83,9 @@ count4 对应初始化4线程；atomic 还需 `--atomic-corpus`。输入、工�
 后续候选：F `singleton-birth/bpe/singleton-birth/4a2f148a`，46测试及复核通过，screen prepare/commit回退，不推荐；DE+F `singleton-birth-bulk/bpe/singleton-birth-bulk/7504cbfd`仅源码，不构建/计时。G1 `read-phase/bpe/read-phase/cbb935b2`，47测试通过；G2 `prepare-blocks/bpe/prepare-blocks/2f238505`，48测试通过、实际自动向量化mask，但三对未有稳定收益。G1/G2要求Rust>=1.98。当前推荐DE `radix-posting-bulk/bpe/radix-posting-bulk/c8702374`。
 
 
-权重快路径H：`/root/code/tokenizers-worktrees/weight-one-buckets`，branch `bpe/weight-one-buckets`，source `00216d914186e42458d45e72276b13c700749c6a`，从DE派生。全47tests/独立审查通过；DE/H screen直接group/prepare及全训改善，三对交错稳定性进行中。保留原Trainer接口和序列化；仅WeightLookup认证位图及私有测量字段变化，实际总存储增加100,632B。构建与运行仍用上面的native脚本，label改为 `weight-one-buckets`，初始化4线程并加 `--atomic-corpus`。
+权重快路径H：`/root/code/tokenizers-worktrees/weight-one-buckets`，branch `bpe/weight-one-buckets`，source `00216d914186e42458d45e72276b13c700749c6a`，从DE派生。全47tests/独立审查通过；screen及两个交错pair的group/prepare及全训明显改善，选择H，按用户要求取消第三对。保留原Trainer接口和序列化；仅WeightLookup认证位图及私有测量字段变化，实际总存储增加100,632B。构建与运行仍用上面的native脚本，label改为 `weight-one-buckets`，初始化4线程并加 `--atomic-corpus`。
 
 
-后续I `commit-direct-assemble/bpe/commit-direct-assemble/e3a1954c` 从H派生，48tests/审查通过，但一次commit+15.2%、全训+9.0%，停止。J `prepare-rule-aggregate/bpe/prepare-rule-aggregate` 只保留按规则邻居ID聚合原型，尚未完成测试/构建/计时；待H详细成本分析支持后才推进。
+后续I `commit-direct-assemble/bpe/commit-direct-assemble/e3a1954c` 从H派生，48tests/审查通过，但一次commit+15.2%、全训+9.0%，停止。J `prepare-rule-aggregate/bpe/prepare-rule-aggregate/376363d2` 按规则邻居ID聚合；H源码采样与动态计数后恢复验证，48tests/独立静态审查/native release通过，正在一次H→J筛选。
+
+K `owner-parallel-drop/bpe/owner-parallel-drop/288ad858` 从H派生，仅用既有池并行释放owner。47tests通过，两对清理区间均缩短，平均少32.1%；但完整train/elapsed未建立收益，停止，不叠加到J。源码和首对/反向pair记录保留，见[两对汇总](results/optimization-owner-parallel-drop.aggregate-n2.md)。

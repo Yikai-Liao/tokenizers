@@ -229,3 +229,7 @@ I直接commit5.971→6.876秒、train26.187→28.538秒，完整模型gate通过
 一次独立H cost/count probe保持原算法，额外group扫描开销653ms单列，诊断不参与排名。计时定位train-init-merge缺口4.780秒，显式post-merge4.777秒，其中owner销毁4.752秒（99.48%），结果字符串转换21.3ms。终点仍有10.57M entry/14.23M heap item。实际birth/remove各173.16M，局部delta group57.84M只是按output去重下限，不等于J实际flush数。模型签名和N/E/pairs/载荷一致，RSS4.43GiB、min available3.33GiB、VmSwap0。见[成本诊断](results/optimization-h-cost-probe.md)。
 
 该证据支持先做K：H派生owner-parallel-drop/288ad858，最后一次commit及所有读者join后，输出持有独立字符串，既有pool并行消费drop各owner。新增一次调度，无unsafe、无额外索引或公开Stats字段。正常释放全部对象，allocator竞争仍须测量。正确性检查和release构建进行中；随后仅H→K一次关键对照，J继续暂存。
+
+K47tests通过后首对清理3.835→2.727秒（-28.9%），但未改merge多1.793秒、train+3.1%。为解决具体方向冲突，仅追加一对反向K→H；清理4.136→2.683秒（-35.1%），train-0.8%但elapsed+0.5%。n2平均清理少1.280秒/32.1%，完整train+1.2%、elapsed+1.1%，未兑现完整收益。停止K，保存两对及[汇总](results/optimization-owner-parallel-drop.aggregate-n2.md)，不扩大allocator/线程矩阵。
+
+J376363d2从H继续，未叠加K。已有inline route probe与173.16M次birth/remove计数支持重复工作方向；output group57.84M仍仅为理论下限。48tests和[独立静态审查](RULE_AGGREGATE_REVIEW.md)通过，native release完成；只做一次H→J512MiB筛选，scratch初始化/LocalGroup/flush全部纳入prepare及完整操作。

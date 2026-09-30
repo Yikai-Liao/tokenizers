@@ -197,4 +197,14 @@ J从H派生，只改变flat非AA融合prepare的局部输出累计。每条规�
 
 预算为一次H→K512MiB关键对照，核对完整模型与资源gate。直接指标用`train-initialize-merge`区间，诊断已确定该区间主要为owner释放；同时比较train和elapsed。若直接区间与全训明显改善则选K；若无收益则停止该简单方案，不扩大线程或allocator矩阵。J暂不构建/测量，待K决策后再用已取得的hash成本与重复计数判断。
 
+K288ad858原47tests通过，native release完成。首对H→K清理区间3.835→2.727秒（-28.9%），但未改merge15.439→17.232秒，完整train26.063→26.862秒（+3.1%）。直接改善与整体回退相冲突，预算仅追加一对反向K→H，区分当前完整收益；若仍混合则保留H并停止K，不展开矩阵。首对结果独立保存，不覆盖。
+
+反向pair完成；两对K清理均缩短（-28.9%/-35.1%），n2平均少1.280秒，但完整train平均+1.2%、elapsed+1.1%，方向未支持完整收益。停止K，保留源码和两对记录，不纳入推荐，也不改变J的H parent。
+
+## J恢复验证：重复route查询已有实际依据
+
+H调试采样确认birth/remove中实际inline桶探测，独立计数得到逐位置调用各173.16M、output去重delta组57.84M。前者支持重复工作存在，后者只给理论下限；J的Task×侧×neighbor聚合及flush可能多于该下限。J376363d2独立静态审查通过：左右旧/新邻居身份、unique producer/跨task逆链、零weight、有限长度、目录上界fallback和错误路径安全。新增8×ID域的目录初始化、LocalGroup容量、flush/reset与原Node追加都计入prepare。
+
+恢复原逐轮差分和定向测试、native release构建；通过后只H→J一次512MiB关键比较。直接prepare与完整train/elapsed决定去留；若直接模块无改善或完整结果混合且仅小差异，则放弃J，不继续低价值复测。来源继续H00216d91，不叠加未获完整收益的K。
+
 临时skill performance-optimization-draft已创建并验证，指导成本证据、动态计数、完整收益、预算和自主停止；已把实际debug段与地址解析的预检加入。独立轻量行为审查支持按有价值的定位→最小关键对照推进，并建议每轮明确预算和决策条件，已纳入。
