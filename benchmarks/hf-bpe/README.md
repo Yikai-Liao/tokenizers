@@ -1,5 +1,7 @@
 # HF BPE 兼容适配原型
 
+新增热点优化见 [OPTIMIZATION_REPORT.md](OPTIMIZATION_REPORT.md)：C初始化直接构造与B/B2融合查询均有独立分支、原接口测量和正确性复核。当前C全训单次最快，B2 merge热点有收益；查询模块正在补公平的B/B2交错稳定性测量。计划见 [OPTIMIZATION_PLAN.md](OPTIMIZATION_PLAN.md)。
+
 本次交付按实现拆成独立 worktree 和本地分支：HF reference、固定 PR、串行 endpoint、fused、串行初始化并行 merge、并行初始化、原子访问对照。五个新实现都直接接入原始 `BpeTrainer::do_train/train_vocab` 和 `Trainer::train`，公共 Trainer 字段与序列化格式保持一致。完整路径、提交与调用示例见 [WORKTREES.md](WORKTREES.md)。
 
 中央根目录 `bpe/experiments` 保存开发快照、历史实验接口和记录。以下布局与理论说明覆盖这些内部核心；根目录的外挂入口仅用于复现历史测量。当前公平比较固定 **u32 corpus ID、u32 posting**，串行初始化/4线程 merge 是与 PR 的控制项，4线程初始化另列为优化。

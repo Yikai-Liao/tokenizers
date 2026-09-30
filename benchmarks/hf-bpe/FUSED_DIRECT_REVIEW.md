@@ -74,3 +74,48 @@ owner 在全部 outputs 上先汇总出生频率和 occurrence 数，再应用 f
 新增热点测试按 1/4 worker 对比独立 greedy 的逐轮 trace、vocab 和 merges，包含连续合并、共享 head/tail、重复长串、Unicode、reserved 输出以及 None/3/7 的长度限制，并断言实际进入融合批次。1500 case HF 差分的公共 check 新增 Atomic32 路径，比较 trace 和完整模型内容。既有跨 worker 出生 floor 测试同时覆盖 flat32+atomic，继续核对聚合后门控。主任务报告 43 项库测试通过；本轮仅核对源码，没有独立执行。
 
 若改变 selected 邻居判断、允许部分 live 出现执行、取消 reserved 隔离、放宽 head/tail 或 AA 条件、改为无序任务归并、让多个规则共享 replacement，或让 read/apply/commit 重叠，需要重新审查相应推导。当前结论仅覆盖本报告锁定的合并源码；大语料签名与性能结果另按实际测量记录。
+
+## 七、B2 lookup 差分独立复核
+
+本次仅只读复核 B2 相对上述 B 的 lookup 差分，不重证初始化、出生或 apply 协议，没有构建或执行测试。结论：权重目录与 selected 的直接查询等价，没有发现阻塞问题；前六节的 birth/apply/commit 推导继续适用。
+
+worktree 为 `/root/code/tokenizers-worktrees/fused-lookup`，HEAD 为 `a0832c488a7ece429630c7d1493da5dd772c87aa`，父提交为 `c1ee201978aadd853d032621add6e056d1949a76`。核对时工作树干净。以下为 B2 的源码 SHA256：
+
+| 文件（相对 worktree） | SHA256 |
+|---|---|
+| `tokenizers/tk-train/src/trainers/bpe/indexed/parallel/fused_batch.rs` | `d78c7f5f0d6ab02bc04afac773e13c5531ce58db6394a29bac73c4556107ad21` |
+| `tokenizers/tk-train/src/trainers/bpe/indexed/parallel.rs` | `5628bab84261cbe72d966eb3cff3f6f41dac709efe29bbfab4e7463f3da0592e` |
+| `tokenizers/tk-train/src/trainers/bpe/indexed.rs` | `cb944820743836f06625b60375f7fb9c5d7f1c034a749f5a72446044bc160518` |
+
+### 权重目录的边界与等价性
+
+`WeightLookup::new` 对每个 256-slot 桶记录「严格小于桶起点的 pivot 数」，末项按 slots 截断。查询 p 所在桶 b 时，start 为小于 `256*b` 的 pivot 数，end 为小于 `min(256*(b+1),slots)` 的 pivot 数。
+
+由于 `256*b <= p < min(256*(b+1),slots)`，全部 `q <= p` 的 pivots 恰好等于 start 个前缀，加上 `pivots[start..end]` 中满足 `q <= p` 的数量。因此局部 `partition_point` 加 start 与原 `Block::weight` 全数组查询相同。等于桶边界的 pivot 属于新桶，等于 p 时计入当前权重；空桶仍从 start 的前一 pivot 取权重；第一个 pivot 之前和空 pivots 均返回 `previous_weight`。
+
+目录只在 flat32、共享 Slot、非 uniform 配置下建立，block base 为零，slots 最多为 `2^32`。任意实际查询 `p < slots` 都有 b 和 b+1 两项。每词最多一个互异 pivot，且起始 sentinel 独占槽零，所以 pivot 数最多 slots-1，u32 转换有效。桶号乘 256 的最大值为 `2^32`，在既有 64-bit usize 前提内安全。目录长度为 `ceil(slots/256)+1`，即使最后一个桶不满也包括右界项。
+
+merge 不改变词起点、pivots 或对应 weights，目录在初始化结束后构建一次即可覆盖全部批次。uniform 直接返回常数；没有目录时仍使用原 weight cursor。
+
+### selected 的唯一与重复 head/tail
+
+head 表的唯一项编码 `(tail,replacement)`，tail 表的唯一项编码 `(head,replacement)`。EMPTY 和 MULTIPLE 的高 32 位都为 NONE；合法规则输入 ID 均不为 NONE，所以合法编码不会碰撞这两个哨兵。
+
+第一次遇到某 head/tail 保存直接项，第二次及以后始终标为 MULTIPLE。第二遍将所有具有重复 head **或**重复 tail 的规则放入 pair map，包含首次出现的规则。因此：
+
+- 唯一 tail 直接比较前一 token 是否等于编码 head，等价于原 `(previous,prior)` membership。
+- 唯一 head 直接比较后一 token 是否等于编码 tail，匹配时返回编码 replacement，等价于原 `(next,following)` lookup。
+- 重复 tail/head 查询完整 pair map；额外存入的另一方向重复项不影响直接查询。
+- EMPTY 可提前返回；previous 或 following 为 NONE 时，直接比较不匹配，fallback map 也没有 separator pair，保持原分隔符行为。
+
+表长使用 `lengths.len()`，包含旧 IDs、本批 replacement 及预留 IDs。prior/next 已由调用者排除 NONE，规则输入与实际 token 均在该 ID 域内；新查询没有引入域外索引。
+
+### 大小、生命周期与测试证据
+
+`weight_lookup_bytes` 为目录 capacity×4；请求容量为 `4*(ceil(slots/256)+1)` 字节，约为 slot 数的 1/64，而不是逐 slot 的完整权重数组。它在整个 merge 阶段保留，不加入此前的 initial core 字节合计。构建位于 merge 起始计时之后，`weight_lookup_build_ms` 已包含在 `merge_ms` 中，不能再重复相加。
+
+selected 每批分配两个 u64 表，容量合计按 8 字节计；fallback pair map 用既有 `table_bytes(...,16)` 估算 bucket/control 大小。`peak_selected_lookup_bytes` 记录两表容量加该 map 估算，不含对象、线程栈或其它 prepare 数据。selected 在 prepare 返回前销毁，apply 仅保存它的字节统计；权重目录则持续到训练函数返回，累计 merge 计时的截点不含返回时释放目录的开销。
+
+新增测试源码逐一检查 p=0..9999 的目录查询与 `Block::weight`，覆盖桶边界前后、等于 pivot、稀疏空桶及最后不满的桶，并另查空 pivots。原 B 的相邻合并、共享 head/tail、reserved、长度限制和 1500 case 差分测试继续保留。主任务报告 44 项库测试通过；本次复核没有重跑。
+
+改变桶界的 `<`/查询的 `<=`、使 pivots 在 merge 中变化、扩大 flat 地址域，或改变哨兵编码与 duplicate fallback 收集条件时，需要重新复核本附节。
