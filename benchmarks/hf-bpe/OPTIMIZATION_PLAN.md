@@ -73,3 +73,9 @@
 
 - C一次512MiB完成：alphabet0.347、measure0.187、allocate0.000046、fill0.555、tokenize1.090、init9.767、merge26.092、train39.805秒；RSS3.43GiB、最低可用4.38GiB、VmSwap0。完整模型签名与此前七项一致，独立审查通过。字段与实际资源见 `optimization-c-512.*`。与同期旧版23.760/57.982秒对比初始化2.43倍、训练1.46倍；不同时间的一次测量不隔离环境影响。
 - B改用C parent，控制分支 `bpe/corpus-direct-atomic` 提交 `27dc7fd0`，融合分支 `bpe/fused-direct-atomic`。早先A控制/融合起点保留且未计时。新融合实现已完成并通过原42项测试，正在补充Atomic逐轮1500-case差分与相邻批次/跨worker出生顺序测试，再锁定提交复核。
+
+## 用户收窄范围：集中 hot path
+
+用户明确取消重复Atomic对照。此前已测过Atomic与普通slot差别不大，不再为每个初始化候选重复验证。`corpus-direct-atomic/27dc7fd0` 已保存源码与构建，但不计时；`fused-direct-atomic` 直接与已测C比较。只进行融合候选一次关键计时。
+
+改动影响：融合只用于flat非AA原子批次，替换filter、Plan全局排序、delta遍历与rewrite调度；owner提交代码不变，但出生顺序从全局空间顺序变为规则生产者/连续worker顺序，因此必须验证posting有序。初始化alphabet/直接构造、初始route/count、candidate选择、ID分配、AA与多块fallback、非空affix generic路径源码未改。无需重复初始化/Atomic对照。完整43项测试通过，包括把既有1500-case逐轮差分扩到新flat Atomic路径，以及相邻批次、共享头尾、有限长度、跨worker出生顺序的定向案例。后续复核集中于以上变化。

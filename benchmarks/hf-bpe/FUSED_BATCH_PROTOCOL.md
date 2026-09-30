@@ -32,4 +32,4 @@ AA继续使用原跨块奇偶协议与有序计划，预留canonical输出ID继�
 
 ## 验证与测量
 
-逐轮HF/独立greedy差分、相邻同批规则、有限长度限制、AA、预留ID、跨worker阈值与最终posting有序必须通过。独立审查锁定源码commit/hash。另设“相同并行语料构造、Atomic、原Plan算法”的控制分支，隔离融合方案的收益；每版本只做一次固定512MiB关键测量，记录训练/merge/阶段时间、RSS、余量、swap和完整签名。
+逐轮HF/独立greedy差分、相邻同批规则、有限长度限制、AA、预留ID、跨worker阈值与最终posting有序必须通过。独立审查锁定源码commit/hash。原计划的新增Atomic控制计时已按用户要求取消；已有Atomic结果只说明历史测试差别不大，不是本轮融合的严格隔离对照。融合候选直接与已测C比较，只做一次固定512MiB关键测量，记录训练/merge/阶段时间、RSS、余量、swap和完整签名。
