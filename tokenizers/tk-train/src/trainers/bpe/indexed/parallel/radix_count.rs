@@ -193,9 +193,13 @@ pub(super) fn initialize<C: Slot, O: Offset, const INLINE: usize>(
             for group in groups {
                 let count = group.end - group.start;
                 let mut positions = SmallPosting::with_capacity(count)?;
-                for &record in &records[group.start as usize..group.end as usize] {
-                    positions.push(record as u32)?;
-                }
+                let source = &records[group.start as usize..group.end as usize];
+                let mut next = source.len();
+                positions.append_reversed_reserved(count, || {
+                    next -= 1;
+                    source[next] as u32
+                })?;
+                debug_assert_eq!(next, 0);
                 debug_assert!(positions.as_slice().windows(2).all(|w| w[0] < w[1]));
                 ledger.entries.insert(
                     canonical(group.code),

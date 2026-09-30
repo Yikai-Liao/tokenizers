@@ -134,6 +134,49 @@ impl<T: Copy + Default, const INLINE: usize> PackedPosting<T, INLINE> {
         Ok(())
     }
 
+    /// Fill a pre-reserved suffix backwards. The producer visits values in
+    /// reverse order; its final physical suffix is forward ordered. Length is
+    /// published once after every new element has been initialized. A producer
+    /// panic leaves the old prefix valid and the allocation uniquely owned.
+    #[inline]
+    pub(super) fn append_reversed_reserved(
+        &mut self,
+        count: u32,
+        mut next: impl FnMut() -> T,
+    ) -> Result<()> {
+        let start = self.len;
+        let end = start
+            .checked_add(count)
+            .ok_or("posting length exceeds u32")?;
+        if self.is_inline() {
+            if end as usize > INLINE {
+                return Err("inline posting bulk fill exceeds reserved capacity".into());
+            }
+            for i in (start as usize..end as usize).rev() {
+                // SAFETY: inline is active, fully initialized by Default,
+                // and the checked final end is within its fixed capacity.
+                unsafe {
+                    self.payload.inline[i] = next();
+                }
+            }
+        } else {
+            if end > self.capacity {
+                return Err("heap posting bulk fill exceeds reserved capacity".into());
+            }
+            for i in (start as usize..end as usize).rev() {
+                let value = next();
+                // SAFETY: heap owns the allocation and end <= capacity. Each
+                // new suffix slot is written exactly once. If next panics, len
+                // is still start; Copy T has no destructor for written extras.
+                unsafe {
+                    self.payload.heap.add(i).write(value);
+                }
+            }
+        }
+        self.len = end;
+        Ok(())
+    }
+
     pub(super) fn push(&mut self, pos: T) -> Result<()> {
         let next_len = self
             .len
@@ -199,6 +242,54 @@ impl<T: Copy + Default, const INLINE: usize> Drop for PackedPosting<T, INLINE> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn reserved_reverse_fill_preserves_prefix_inline_heap_and_unwind() {
+        let mut inline = SmallPosting::with_capacity(2).unwrap();
+        let mut next = [9_u32, 3].into_iter();
+        inline
+            .append_reversed_reserved(2, || next.next().unwrap())
+            .unwrap();
+        assert_eq!(inline.as_slice(), &[3, 9]);
+        assert!(inline.append_reversed_reserved(1, || 17).is_err());
+        assert_eq!(inline.as_slice(), &[3, 9]);
+        inline
+            .append_reversed_reserved(0, || panic!("empty fill called producer"))
+            .unwrap();
+        let mut heap = SmallPosting::with_capacity(8).unwrap();
+        heap.push(1).unwrap();
+        let old_capacity = heap.allocated_capacity();
+        let mut reversed = [7_u32, 5, 3].into_iter();
+        heap.append_reversed_reserved(3, || reversed.next().unwrap())
+            .unwrap();
+        assert_eq!(heap.as_slice(), &[1, 3, 5, 7]);
+        assert_eq!(heap.allocated_capacity(), old_capacity);
+        let mut calls = 0;
+        assert!(
+            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                heap.append_reversed_reserved(3, || {
+                    calls += 1;
+                    if calls == 2 {
+                        panic!("interrupted producer");
+                    }
+                    19
+                })
+                .unwrap();
+            }))
+            .is_err()
+        );
+        assert_eq!(heap.as_slice(), &[1, 3, 5, 7]);
+        let mut reversed = [13_u32, 11, 9].into_iter();
+        heap.append_reversed_reserved(3, || reversed.next().unwrap())
+            .unwrap();
+        assert_eq!(heap.as_slice(), &[1, 3, 5, 7, 9, 11, 13]);
+        let mut short = PackedPosting::<u16, 4>::with_capacity(4).unwrap();
+        let mut reversed = [u16::MAX, 19, 7, 1].into_iter();
+        short
+            .append_reversed_reserved(4, || reversed.next().unwrap())
+            .unwrap();
+        assert_eq!(short.as_slice(), &[1, 7, 19, u16::MAX]);
+    }
 
     #[test]
     fn u16_offsets_inline_four_heap_growth_and_full_range() {

@@ -51,3 +51,7 @@ flat 非AA Atomic 批次按规则/位置连续分工，一次只读遍历完成�
 ## D 初始radix分组
 
 从B2 `a0832c48` 派生，仅更换flat且完整初始ID域<=65536的pair初始化；其它配置旧路径。两次顺序扫描精确路由8字节code/position记录，稳定radix按初始u16+u16 pair分组（公开corpus/posting仍u32），先加权/低频剪枝再精确预留最终posting与owner表。merge协议不变。weight目录提取为共享私有metadata模块，初始化计数构建后merge复用。新增临时route/scratch/group容量与全部阶段计时，峰值RSS实测为准。
+
+## DE组合
+
+D `d15c18cc` 合入E `35eaf03c` 的同一SmallPosting批量接口与owner提交改动，并将radix初始posting安装改为从record尾部读取、倒序直接填入预留区域。初始count/radix/频率/剪枝和merge prepare/rewrite不改；直接影响posting install与owner commit。slot/metadata内存表示保持D，全部发布len在写完后。count=3仍遵循SmallPosting最小4槽heap，capacity按实际报告。

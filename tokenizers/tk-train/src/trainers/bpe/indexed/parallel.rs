@@ -1232,14 +1232,14 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
                                 };
                                 let start = entry.blocks.len();
                                 let mut head = group.head;
-                                while head != NONE {
-                                    let node = &route.nodes[head as usize];
-                                    entry.blocks.push(node.position)?;
-                                    head = node.next;
-                                }
-                                // Chunks are ordered spatially; each chain is
-                                // reversed locally so AA keeps an ordered list.
-                                entry.blocks.as_mut_slice()[start..].reverse();
+                                entry
+                                    .blocks
+                                    .append_reversed_reserved(group.occurrences, || {
+                                        let node = &route.nodes[head as usize];
+                                        head = node.next;
+                                        node.position
+                                    })?;
+                                debug_assert_eq!(head, NONE);
                                 let positions = entry.blocks.as_slice();
                                 debug_assert!(
                                     positions[start.saturating_sub(1)..]
