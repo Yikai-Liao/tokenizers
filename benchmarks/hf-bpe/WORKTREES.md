@@ -76,8 +76,14 @@ count4 对应初始化4线程；atomic 还需 `--atomic-corpus`。输入、工�
 
 本轮计划与变更范围见 [OPTIMIZATION_PLAN.md](OPTIMIZATION_PLAN.md)，原始数据位于 `results/optimization-*`，独立审查见 [CORPUS_DIRECT_REVIEW.md](CORPUS_DIRECT_REVIEW.md)。新增Atomic对照已取消，不展开矩阵。
 
-新增独立posting候选：`/root/code/tokenizers-worktrees/posting-bulk`，分支 `bpe/posting-bulk`，提交 `35eaf03c`；新增组合：`/root/code/tokenizers-worktrees/radix-posting-bulk`，分支 `bpe/radix-posting-bulk`，提交 `c8702374`。前者只改B2的commit bulk写入；后者在D上同时用bulk写入初始posting安装及commit。测试/关键计时结果将更新完整组合报告。
+新增独立posting候选：`/root/code/tokenizers-worktrees/posting-bulk`，分支 `bpe/posting-bulk`，提交 `35eaf03c`；新增组合：`/root/code/tokenizers-worktrees/radix-posting-bulk`，分支 `bpe/radix-posting-bulk`，提交 `c8702374`。前者只改B2的commit bulk写入；后者在D上同时用bulk写入初始posting安装及commit。45/46tests及审查通过；B2/D/DE九次选型中DE成为推荐组合，见 [组合报告](results/optimization-radix-combination-stability.summary.md)。
 
-局部singleton birth候选：`/root/code/tokenizers-worktrees/singleton-birth`，分支 `bpe/singleton-birth`，提交 `4a2f148a`，从D `d15c18cc`派生，不含bulk候选E。仅flat prepare/delta出生记录及commit消费变化，Group维持16B，初始化不变。验证/计时待完成。E/DE保留复现，但不再推荐继续叠加E。
+局部singleton birth候选：`/root/code/tokenizers-worktrees/singleton-birth`，分支 `bpe/singleton-birth`，提交 `4a2f148a`，从D `d15c18cc`派生，不含bulk候选E。仅flat prepare/delta出生记录及commit消费变化，Group维持16B，初始化不变。46tests/审查通过；screen prepare与commit回退，停止F。DE随后由完整组合数据选为推荐基点。
 
 后续候选：F `singleton-birth/bpe/singleton-birth/4a2f148a`，46测试及复核通过，screen prepare/commit回退，不推荐；DE+F `singleton-birth-bulk/bpe/singleton-birth-bulk/7504cbfd`仅源码，不构建/计时。G1 `read-phase/bpe/read-phase/cbb935b2`，47测试通过；G2 `prepare-blocks/bpe/prepare-blocks/2f238505`，48测试通过、实际自动向量化mask，但三对未有稳定收益。G1/G2要求Rust>=1.98。当前推荐DE `radix-posting-bulk/bpe/radix-posting-bulk/c8702374`。
+
+
+权重快路径H：`/root/code/tokenizers-worktrees/weight-one-buckets`，branch `bpe/weight-one-buckets`，source `00216d914186e42458d45e72276b13c700749c6a`，从DE派生。全47tests/独立审查通过；DE/H screen直接group/prepare及全训改善，三对交错稳定性进行中。保留原Trainer接口和序列化；仅WeightLookup认证位图及私有测量字段变化，实际总存储增加100,632B。构建与运行仍用上面的native脚本，label改为 `weight-one-buckets`，初始化4线程并加 `--atomic-corpus`。
+
+
+后续I `commit-direct-assemble/bpe/commit-direct-assemble/e3a1954c` 从H派生，48tests/审查通过，但一次commit+15.2%、全训+9.0%，停止。J `prepare-rule-aggregate/bpe/prepare-rule-aggregate` 只保留按规则邻居ID聚合原型，尚未完成测试/构建/计时；待H详细成本分析支持后才推进。

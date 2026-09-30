@@ -209,3 +209,10 @@ H worktree weight-one-buckets，branch bpe/weight-one-buckets，00216d91从DE派
 
 
 H独立审查通过，DE→H screen完整模型gate通过：group2.640→0.328、prepare11.320→8.548、train32.860→26.538秒，RSS约4.43GiB均无进程swap；bitmap100,632B增加约98KiB，空间认证桶比例99.104%，语料/posting载荷相同。两个直接模块与全训支持继续三个交错pair；screen与复测分开报告，尚未替换DE推荐。见 [H screen](results/optimization-weight-screen.summary.md) 与 [H审查](WEIGHT_ONE_BUCKET_REVIEW.md)。
+
+
+## 2026-10-01：H选作新基点；推进commit候选I
+
+用户要求明显改善时停止多组复测、继续优化。已取消第三对，当时p2.de在运行，完成后保留两个完整pair，n=2。H/DE配对group比0.120/0.085、prepare0.687/0.666、train0.821/0.757、elapsed0.834/0.789，完整模型及实际N/E/pairs/语料posting容量均匹配。H train中位25.577、elapsed29.838秒；额外bitmap100,632B、RSS约4.43GiB。选择H源码00216d91作为后续parent，不把小kernel SIMD作为目标。
+
+I源码e3a1954c，worktree commit-direct-assemble，branch bpe/commit-direct-assemble。flat commit聚合来源Group的同时以16B描述项prepend来源链，accepted key直接一次reserve+反向bulk填最终posting，再一次插入ledger/heap；省原来的第二遍逐key ledger查询/逐group bulk调用。全来源floor、owner路由与producer顺序不改，非flat旧路径。新增peak_commit_descriptor_bytes记录所有owner的临时Vec capacity，独立审查与48tests/构建进行中，完成后仅H/I各一次关键对照。

@@ -1,6 +1,6 @@
 # HF BPE 兼容适配原型
 
-新增热点优化见 [OPTIMIZATION_REPORT.md](OPTIMIZATION_REPORT.md)：当前完整组合DE（直接构造+融合查询+radix+bulk posting）在B2/D/DE三组复测中每组胜B2，train中位31.332秒。F和G2未显示改动模块稳定收益，已停止推进；继续集中DE的prepare大块查询成本。全部优化及组合关系见 [OPTIMIZATION_CATALOG.md](OPTIMIZATION_CATALOG.md)，计划见 [OPTIMIZATION_PLAN.md](OPTIMIZATION_PLAN.md)。
+新增热点优化见 [OPTIMIZATION_REPORT.md](OPTIMIZATION_REPORT.md)：当前推荐H `00216d91`（直接构造+融合查询+radix+bulk posting+权重1认证）。512MiB原接口两个交错pair中train中位25.577秒，对照DE32.397秒；只增加约98KiB位图，RSS仍约4.43GiB。F/G2无直接模块稳定收益，已停止；后续I的commit筛选回退，停止；正在详查H的具体热点成本。全部组合关系见 [OPTIMIZATION_CATALOG.md](OPTIMIZATION_CATALOG.md)，计划见 [OPTIMIZATION_PLAN.md](OPTIMIZATION_PLAN.md)。
 
 本次交付按实现拆成独立 worktree 和本地分支：HF reference、固定 PR、串行 endpoint、fused、串行初始化并行 merge、并行初始化、原子访问对照。五个新实现都直接接入原始 `BpeTrainer::do_train/train_vocab` 和 `Trainer::train`，公共 Trainer 字段与序列化格式保持一致。完整路径、提交与调用示例见 [WORKTREES.md](WORKTREES.md)。
 

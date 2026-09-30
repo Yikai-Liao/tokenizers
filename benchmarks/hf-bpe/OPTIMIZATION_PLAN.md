@@ -154,3 +154,30 @@ DE32MiB实际perf中WeightLookup占8.16% top-IP samples（1776 samples，lost0�
 同期DE→H一次512MiB：group2.640→0.328、prepare11.320→8.548、完整train32.860→26.538、elapsed36.785→30.574秒；H bitmap100,632B（约98KiB），797,827/805,039桶认证为1。增加少量内存，语料/posting载荷保持相同，RSS均约4.43GiB。空间桶比例不等同实际查询命中率；sort/install源码未改但墙钟也变动，不把所有变化归因H。见 [筛选报告](results/optimization-weight-screen.summary.md)。
 
 筛选显示两个直接模块及完整训练同时改善，继续DE→H、H→DE、DE→H三个交错pair；screen不混入稳定性统计。要求完整签名、N/E/pairs与语料/posting容量相同，报告直接模块及train/elapsed配对比、中位、范围、sampleCV。候选选型保持原API及default AHash种子；不开展新矩阵或仅比较小kernel。测试和构建已经结束，正式计时期间仅编辑文档。
+
+
+## 用户停止额外复测；下一候选I：直接组装新posting后一次安装
+
+用户认为H直接模块及完整训练的改善足够明显，要求停止多组重复测试、推进后续优化。已通知计时agent不再启动下一call；当时p2.de已启动，完成该call后停止，共保留两个完整pair（n=2），不宣称执行n=3。H选作新基点。
+
+I从H 00216d91派生，只改变flat owner commit。原路径先在临时born map聚合，再插入owner ledger，再重走所有worker route、按key查ledger并逐group追加posting。候选在born map聚合时同时建立紧凑source-group描述链（output index/head/next，16B），按output顺序prepend，因此链按来源逆序；最终accepted key一次精确分配，并由group逆序+各group自身逆序的node链直接bulk反向填完整posting，最后一次插入ledger/heap。减少每个local birth group的owner hash查询，bulk检查从逐group降为逐accepted key；floor仍全来源聚合后判断，低频不分配posting。
+
+每key聚合仍16B（复用Group），新增临时descriptor Vec的容量必须记录；无unsafe、没有修改producer或频率/出生顺序。泛型非flat保持旧路径。保留连续来源及唯一规则producer的顺序证书，新增跨output、空output、同组多位置和全来源floor测试；完整逐轮差分/独立审查完成后，只做H→I各一次关键512MiB，直接commit及整体同时决定是否保留，不展开稳定性矩阵。
+
+
+## I筛选回退；候选J按规则邻居ID缓存聚合
+
+I全48tests与独立审查通过，H→I一次screen完整模型gate通过。直接commit5.971→6.876秒（+15.2%），train26.187→28.538秒，新增descriptor容量峰2,097,152B；未改prepare也波动，不据此推导唯一回退原因。按用户少重复原则停止I，保留H作为基点。
+
+J从H派生，只改变flat非AA融合prepare的局部输出累计。每条规则固定左/右侧token和replacement；worker用两张neighbor ID→局部group index的u32直接目录，将remove weight和birth weight/head/count暂存于紧凑group，born位置仍写入既有每owner Node数组。每task结束后按触及的group一次flush到原route hash表，拼接新旧逆链，不逐位置hash。floor与跨worker聚合仍由原commit完成，不进行提前低频裁剪，零weight出生仍保留位置。
+
+目录只在lengths.len<=65,536时启用（该阈值是scratch容量限制，不是语料ID/地址宽度），每worker两目录上界512KiB；更大域沿用原prepare。每task只重置触及的索引，不清整张表；目录第一次初始化、group容量、flush及每owner routing成本全部计入prepare。常量generic分派隔离fallback循环，不添加数据域宽度假设。新增统计peak_prepare_aggregate_bytes为各job scratch capacity总和再取跨batch最大；无需unsafe。顺序证书、左右cache键的身份、selected邻居与Node尾链拼接由独立审查和逐轮差分检验。全测试/构建完成后只H→J各一次512MiB关键对照，若明显改善按数据保留，不重复多组。
+
+
+## 用户调整范式：先详查H成本，再推进实现
+
+用户要求从具体性能分析得出优化，避免只见大函数占比后猜方案；授权自主迭代至没有明显优化空间时停止。当前I已screen回退，停止。J只保存原型源码，初次编译的right名称遮蔽已修正，尚未完成测试/构建/计时。暂停J筛选，不把它算作已验证实现。
+
+先对当前最快H的实际512MiB工作集做一次cycles/cache-misses双事件、call graph与top-IP/实际binary disassembly映射的诊断。硬件事件可用性用perf stat true已确认，J构建已结束，采样期间无CPU重任务。分开记录CPU周期样本与cache-miss样本的损失/未解析/归因限制；不要将宽泛cache事件或有skid的指令点当作精确load归因。查询hash、节点遍历、corpus/length随机读取、分配/resize应有实际证据与成本占比；必要时补针对性操作计数，不能把静态源码语句数量当动态占比。
+
+只有分析支持的大项才继续J或其它候选；新增缓存/分组/数组清零成本要一起计入。保留一次关键对照和完整语义gate，明显结果不重复多组。最终停在最快有效组合及明确剩余成本，而不宣称全局最优或无证据的翻倍空间。

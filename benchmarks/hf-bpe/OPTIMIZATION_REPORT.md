@@ -1,18 +1,37 @@
 # BPE 热点优化与完整组合选型
 
-## 当前完整组合选型
+## 当前完整组合选型：H权重快路径
 
-当前推荐 **DE `c8702374`**：基础endpoint/owner/posting/batch/pool，C直接语料构造，B2融合与查询目录，D初始radix，以及E批量posting安装/commit。512MiB中文none/50k/min2、u32、4线程原接口。B2/D/DE三个循环块复测，DE每块均胜B2；train中位31.332秒、elapsed35.493秒，配对中位比例0.8715/0.8840，sample CV6.91%/6.10%。详细运行见 [三组合报告](results/optimization-radix-combination-stability.summary.md)。
+当前推荐 **H `00216d91`**（DE+权重1空间桶认证）。每256位置只需一个bit，整桶权重为1时省掉pivot搜索；混合桶保留原精确搜索。在512MiB中文none/50k/min2、u32、初始化/merge各4线程的原Trainer接口下，两个交错pair的直接模块及完整训练都改善。用户要求收益明显时停止重复测试，因此完成n=2后取消第三对。
+
+| 两对中位 | DE | H |
+|---|---:|---:|
+| 初始分组统计 | 3.268 s | 0.327 s |
+| prepare（已含在delta） | 12.075 s | 8.170 s |
+| 完整初始化 | 8.585 s | 5.580 s |
+| owner commit | 5.986 s | 5.883 s |
+| 完整train | 32.397 s | 25.577 s |
+| feed+train elapsed | 36.766 s | 29.838 s |
+
+H/DE配对train比0.821/0.757，elapsed比0.834/0.789；两个直接模块和完整训练均同方向改善。完整模型签名、N/E/pairs、语料和posting容量一致；所有进程swap采样0，RSS约4.43GiB。统计为n=2描述值，范围与sampleCV保留在 [H对照](results/optimization-weight-stability.summary.md)，初次screen单列。
+
+**内存增加100,632B，约98KiB**，并非降低内存。该工作集约99.1%的空间桶全部权重1；这是空间覆盖，未测实际查询命中率。WeightLookup总容量由3,220,160增到3,320,792B，初始化/merge复用同一分配，bytes不能重复相加。全47tests与 [独立审查](WEIGHT_ONE_BUCKET_REVIEW.md) 通过；无显式SIMD。
+
+I `e3a1954c` 全48tests与审查通过，但一次H→I的commit5.971→6.876秒、train26.187→28.538秒，停止推进，见 [I筛选](results/optimization-commit-screen.summary.md)。J规则邻居聚合仅保存原型；按用户要求先补H实际512MiB的详细成本分析，再决定后续实现，不按函数占比猜收益。
+
+## 此前DE完整组合选型
+
+此前推荐 **DE `c8702374`**：基础endpoint/owner/posting/batch/pool，C直接语料构造，B2融合与查询目录，D初始radix，以及E批量posting安装/commit。512MiB中文none/50k/min2、u32、4线程原接口。B2/D/DE三个循环块复测，DE每块均胜B2；train中位31.332秒、elapsed35.493秒，配对中位比例0.8715/0.8840，sample CV6.91%/6.10%。详细运行见 [三组合报告](results/optimization-radix-combination-stability.summary.md)。
 
 B2和D的train中位35.952/35.442秒；D完整初始化11.058→9.147秒有明确改善，端到端逐组0.8501/1.0065/1.0002并未稳定胜B2。DE初始posting安装中位0.624秒（D0.931）；commit跨组会换号，不能把整个train差值都归因bulk。归因的限制不妨碍根据完整数据推进DE。
 
-随后G2的自动向量化尝试：与DE三对的prepare比中位1.0195、elapsed比中位1.0018，未有稳定收益，停止推进。F单例出生的两个直接模块也在screen回退，停止推进；未把未改init变快算作F/G的收益。当前正在定位DE剩余大块prepare成本，自动SIMD只作为可能手段，不按是否出现向量指令选方案。见 [自动向量化检查](AUTO_VECTORIZATION.md)。
+随后G2的自动向量化尝试：与DE三对的prepare比中位1.0195、elapsed比中位1.0018，未有稳定收益，停止推进。F单例出生的两个直接模块也在screen回退，停止推进；未把未改init变快算作F/G的收益。随后由DE热点采样定位权重查询并实施H，自动SIMD只作为可能手段，不按是否出现向量指令选方案。见 [自动向量化检查](AUTO_VECTORIZATION.md)。
 
 ### 相比建立worktree制度之前
 
 之前同512MiB/4线程的u16 corpus、u32 posting train56.430秒，当前DE三次中位31.332秒：历史观测少44.5%、快1.80倍；旧RSS3.005GiB、现在约4.43GiB。输入与模型签名一致，但ID宽度和测量时间改变，因此不是严格同期隔离加速比。统一u32后最早count4 train54.760秒，相比DE观测少42.8%、快1.75倍。
 
-### 当前剩余热点（上述三组合样本中位）
+### DE历史热点（上述三组合样本中位）
 
 | DE阶段 | 秒 |
 |---|---:|
