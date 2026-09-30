@@ -166,3 +166,11 @@ GPT-6 Luna完成一项512MiB关键计时，四个新增计时字段强校验通�
 新worktree `/root/code/tokenizers-worktrees/corpus-direct`，branch `bpe/corpus-direct` 从A `98ca7fc1` 分叉。无limit_alphabet时，字符频次不参与筛选，只需出现集合；候选用每worker Unicode位图归并，再保持字符排序/特殊ID分配。启用limit继续原HF频率与同频边界逻辑。只读字符ID查询表替代逐位置UTF-8字符串哈希。最终数组MaybeUninit由独占区域完整写入，完成join与精确覆盖检查后才转换为Vec；避免串行预先写零和第二份语料数组。该局部unsafe转换需要专门边界测试与独立审查。
 
 候选C尚未测量；测试、源码commit、审查与最终计时将补在此处。B融合方案与同构造Atomic控制仍保留，先完成C再选择联合候选的parent。
+
+## 2026-09-30 初始化候选 C
+
+源码 `bpe/corpus-direct/fbdc0b2b` 从A `98ca7fc1` 派生：None alphabet按worker字符存在位图统计，Some仍调用原频率裁剪；每字符只读Unicode→canonical ID直接表；MaybeUninit最终数组由独占worker直接写入，join和完整覆盖断言后原allocation转换，无第二份完整语料。原公开接口与merge源码不变。完整42项测试与独立静态审查通过，证明和计时按用户要求并行。
+
+固定512MiB一次：init9.767、merge26.092、train39.805秒，tokenize1.090秒（alphabet0.347/measure0.187/allocate0.000046/fill0.555），初始route0.573/count8.015秒。RSS3.43GiB、minimum available4.38GiB、VmSwap0，模型完整签名一致。scratch11.57MiB，直接表4.25MiB，返回构造后释放。新增成本很小；当前初始化热点已转为pair计数。与历史结果相比route也发生明显变化，但未隔离first-touch/位置布局/运行环境，不给出单因果归因。原始信息与CPU/fault/host counters见 [C报告](results/optimization-c-512.summary.md)，安全条件见 [C复核](CORPUS_DIRECT_REVIEW.md)。
+
+C选作B起点；从C分叉Atomic控制27dc7fd0保留旧Plan算法，融合候选另分支，分别做一次关键比较。A上的Atomic起点继续保留但未测，不混用其结果。
