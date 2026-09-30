@@ -143,3 +143,26 @@ alphabet频率统计也可按worker局部表归并，再保留原字符排序及
 GPT-6 Luna完成一项512MiB关键计时，四个新增计时字段强校验通过。alpha2.322秒、区域测量0.228秒、最终数组分配0.876秒、并行填充及归并2.371秒；tokenize合计5.799秒，初始化16.090秒、merge33.964秒、train55.207秒、RSS3.397GiB、最低MemAvailable4.257GiB、进程VmSwap采样0，系统pswpin147页/pswpout10,164页。core槽/posting容量及四项模型签名均与基线一致，完整来源在 [optimization-a-512.summary.md](results/optimization-a-512.summary.md)。
 
 结论：相对旧非原子4线程版本，tokenize约2.25×，整个初始化约1.43×；但merge从27.457升至33.964秒，整次训练略慢0.82%。merge算法源码未变，差异原因尚未隔离，不能只报局部加速便宣称整次获益。A暂保留候选，下一步从它派生匹配Atomic控制与融合候选，测量实际组合效果。
+
+## 2026-09-30：同期诊断没有复现A的merge回退
+
+用户指出只改初始化却出现merge多6.5秒，要求查清。源码核对显示A与基线从merge主循环开始逐字相同，Trainer路由、compact/AA/posting相同；输入、实际线程、布局、N/E/pairs、批次数、posting访问数与pruned数一致。随后先提交诊断计划/脚本 `94ed8412`、Linux CPU计数修正 `48dcb25d`，GPT-6 Luna连续跑旧版与A各一次。
+
+| 同期配置 | Init s | Merge s | Train s | RSS GiB | 最低可用GiB |
+|---|---:|---:|---:|---:|---:|
+| 旧非原子初始化4/merge4 | 23.760 | 29.810 | 57.982 | 3.395 | 4.390 |
+| 候选A | 15.421 | 29.756 | 49.737 | 3.417 | 4.337 |
+
+此次初始化1.54×、整次训练1.17×；merge只差0.054秒。plan4.275/4.261、delta15.856/15.979、rewrite0.732/0.727、commit8.554/8.431秒，逐阶段均相近。先前6.5秒差异没有复现，具体原因仍未知；缺少先前运行的CPU/缺页记录，不能断言是负载、NUMA、allocator或compiler造成。
+
+新增进程user/sys CPU分别149.061/6.792秒与149.369/5.218秒；minor faults543,902/458,511、major faults0/1；voluntary context switches35,212/35,515、involuntary38,378/37,572。主机busy约48.2%/54.1%，load变化与steal原始ticks单独保存，这些背景值不证明成因。两次进程VmSwap采样0、完整模型签名一致。完整数据见 [optimization-a-diagnostic.summary.md](results/optimization-a-diagnostic.summary.md)。
+
+结论：有同期证据支持A降低初始化及总训练时间；没有证据支持“初始化并行导致merge算法退化”。初次A和此次诊断都保留，避免用后来较好的结果覆盖先前观测。以后对局部改动的整体收益与回退，采用同期基线并保存进程资源数据。
+
+## 正在实现：候选C继续降低初始化串行与哈希成本
+
+用户要求提高A的构造加速比。拆分显示初次A的alphabet2.322秒与最终数组默认初始化0.876秒仍串行；后者在同期诊断降到0.266秒，说明单次墙钟值本身也有变动。
+
+新worktree `/root/code/tokenizers-worktrees/corpus-direct`，branch `bpe/corpus-direct` 从A `98ca7fc1` 分叉。无limit_alphabet时，字符频次不参与筛选，只需出现集合；候选用每worker Unicode位图归并，再保持字符排序/特殊ID分配。启用limit继续原HF频率与同频边界逻辑。只读字符ID查询表替代逐位置UTF-8字符串哈希。最终数组MaybeUninit由独占区域完整写入，完成join与精确覆盖检查后才转换为Vec；避免串行预先写零和第二份语料数组。该局部unsafe转换需要专门边界测试与独立审查。
+
+候选C尚未测量；测试、源码commit、审查与最终计时将补在此处。B融合方案与同构造Atomic控制仍保留，先完成C再选择联合候选的parent。

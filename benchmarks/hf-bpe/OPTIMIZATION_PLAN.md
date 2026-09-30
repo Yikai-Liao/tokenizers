@@ -48,8 +48,8 @@
 
 用户指出A仅改变初始化却有merge回退，需要先查清。已核对：A与基线从merge主循环开始的源码逐字相同；Trainer公开路由、compact/AA/posting文件相同；实际线程、输入摘要、N/E/pairs、批次数、posting访问数及pruned数全部相同。原因尚未确定，不能把差异直接归因于波动、NUMA或编译器。
 
-- [ ] 同环境连续测旧非原子4线程版与A各一次，补记child user/system CPU、wall time、缺页与上下文切换、主机CPU ticks和loadavg。只为解释具体未决回退，不展开矩阵。
-- [ ] 比较同期merge阶段与CPU/缺页数据，记录能确认的结论及仍未确定的原因；缺少证据时不宣称整体提速。
+- [x] 同环境连续测旧非原子4线程版与A各一次，补记child user/system CPU、wall time、缺页与上下文切换、主机CPU ticks和loadavg。只为解释具体未决回退，不展开矩阵。
+- [x] 比较同期merge阶段与CPU/缺页数据，记录能确认的结论及仍未确定的原因；缺少证据时不宣称整体提速。
 
 初始化候选C优先于B，分支 `bpe/corpus-direct` 从A `98ca7fc1` 派生：
 
@@ -66,3 +66,5 @@
 - runner新增可重复的 `--require-stats`，防止候选阶段字段缺失时静默继续。
 - 候选A独立审查通过；512MiB实测tokenize 5.799秒（alpha2.322、measure0.228、allocate0.876、fill2.371）、init16.090秒、merge33.964秒、train55.207秒、RSS3.397GiB、最低可用4.257GiB，VmSwap采样0。旧版tokenize13.068秒、init22.975秒、merge27.457秒、train54.760秒。因此初始化已加快，整次训练单次结果没有加速，保留候选而不宣称整体收益。完整签名一致，来源见 `results/optimization-a-512.*`。
 - B的分叉parent为A `98ca7fc1`。新控制分支 `bpe/corpus-atomic` 只切Atomic；融合分支从该控制提交派生，计划名 `bpe/fused-batch-atomic`。读取/写入仍分阶段，flat非AA融合；每worker一份route，任务按posting数均分且连续有序，保持出生posting顺序。
+
+- 同期诊断：baseline/A init23.760/15.421秒、merge29.810/29.756秒、train57.982/49.737秒、RSS3.395/3.417GiB，签名一致。旧6.5秒差异未复现、成因仍未知；记录全部观察而不归因，结果在 `optimization-a-diagnostic.*`。
