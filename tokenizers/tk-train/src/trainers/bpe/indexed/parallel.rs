@@ -863,6 +863,9 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
     });
     stats.weight_lookup_build_ms = lookup_begin.elapsed().as_secs_f64() * 1000.0;
     stats.weight_lookup_bytes = weight_lookup.as_ref().map_or(0, |l| l.bytes());
+    stats.weight_one_bucket_count = weight_lookup.as_ref().map_or(0, |l| l.one_bucket_count());
+    stats.weight_bucket_count = weight_lookup.as_ref().map_or(0, |l| l.bucket_count());
+    stats.weight_one_bucket_bytes = weight_lookup.as_ref().map_or(0, |l| l.one_bucket_bytes());
     while ids.len() < trainer.vocab_size {
         let stage = Instant::now();
         let cap = config.batch_size.min(trainer.vocab_size - ids.len());
