@@ -90,3 +90,5 @@ B `c1ee2019` 正确性通过，但512MiB实测prepare22.858、merge31.887、trai
 - 当前按rule排序访问让weight游标频繁跳过大量词，原全局空间排序的近邻性丢失。新增稀疏桶目录：每256个corpus位置一个u32 pivot下界，桶内二分恢复精确词索引；额外约3.1MiB，避免大范围二分。仅flat融合路径消费，uniform直接返回。
 - selected邻居以ID域直接表表示唯一head/tail映射；重复head/tail通过原pair hash表回退。避免每个边界都做hash，并可在ID未选择时跳过额外corpus读取。
 - 不改初始化算法、候选选择、出生协议或owner commit；测试沿用B差分，仅为新查询等价性加定向检查。候选通过后只做一次512MiB关键比较，不重复Atomic控制。
+
+- B独立审查通过；热点采样与限制已保存 `results/optimization-b-hot-profile.md`。B2已提交 `a0832c48`，44项测试通过，release构建中；复核只检查新查询，复用已完成的融合协议证明。

@@ -44,6 +44,6 @@ This run matches the PR and all prior native runs on model SHA-256 `d50fb836e342
 
 ## Comparison limits and artifacts
 
-The combined fused-direct-atomic result cannot isolate the atomic-corpus contribution because no matched fused-direct non-atomic control was timed. Comparisons with non-fused Optimization C combine changes to corpus construction, batch preparation, and atomic storage and should be read as whole-variant observations.
+The combined fused-direct-atomic result cannot isolate the atomic-corpus contribution because no matched fused-direct non-atomic control was timed. Compared with non-fused Optimization C, initialization source is unchanged. The variant changes batch preparation, write scheduling and atomic storage; measured differences are whole-variant observations.
 
 Raw result, phase stats, RSS and diagnostic counters are in `optimization-b-512.jsonl`; stderr and full provenance are in the matching `.stderr` and `.environment.json` files.
