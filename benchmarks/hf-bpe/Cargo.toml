@@ -4,10 +4,6 @@ version = "0.1.0"
 edition = "2024"
 publish = false
 
-[features]
-default = []
-indexed = []
-
 [dependencies]
 tk-train = { path = "../../tokenizers/tk-train", default-features = false }
 serde_json = "1"

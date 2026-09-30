@@ -12,3 +12,5 @@ Entry points: original `BpeTrainer::train_vocab()`, `do_train()` and `Trainer::t
 - Base snapshot: 8c968e10; fixed PR comparator: 6ac0de5359d9e0e1ed0608422575a360ef91b908.
 
 Experiments and provenance: central `/root/code/tokenizers/benchmarks/hf-bpe/EXPERIMENT_LOG.md`.
+
+The local benchmark supports only the original `reference` API route; legacy indexed features remain in the historical snapshot.

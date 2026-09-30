@@ -1,4 +1,4 @@
-//! Both backends share the same feed, parameters, build and process boundaries.
+//! Benchmark the fixed worktree trainer through its original public API.
 use hf_front_end::pre_tokenizers::byte_level::ByteLevel;
 use hf_front_end::{OffsetReferential, OffsetType, PreTokenizedString, PreTokenizer};
 use serde_json::json;
@@ -9,8 +9,6 @@ use std::{
     io::{BufRead, BufReader},
     time::Instant,
 };
-#[cfg(feature = "indexed")]
-use tk_train::IndexedParallelConfig;
 use tk_train::{BpeTrainer, Trainer};
 
 struct Lines<R>(R);
@@ -65,51 +63,6 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         "reference" => {
             let (v, m, _) = trainer.train_vocab()?;
             (v, m, None::<serde_json::Value>)
-        }
-        #[cfg(feature = "indexed")]
-        "indexed" | "fused" => {
-            let out = if backend == "fused" {
-                trainer.train_vocab_fused()?
-            } else {
-                trainer.train_vocab_indexed()?
-            };
-            (
-                out.vocab,
-                out.merges,
-                Some(serde_json::to_value(out.stats)?),
-            )
-        }
-        #[cfg(feature = "indexed")]
-        "parallel1" | "parallel4" | "dict16" | "narrow16" | "narrow32par1" | "narrow32par4"
-        | "atomic32par4" | "count1par4" => {
-            let out = trainer.train_vocab_indexed_parallel(IndexedParallelConfig {
-                workers: if matches!(backend.as_str(), "parallel1" | "narrow32par1") {
-                    1
-                } else {
-                    4
-                },
-                initialization_workers: if backend == "count1par4" {
-                    Some(1)
-                } else {
-                    None
-                },
-                posting_block_bits: if matches!(backend.as_str(), "dict16" | "narrow16") {
-                    16
-                } else {
-                    32
-                },
-                narrow_corpus: matches!(
-                    backend.as_str(),
-                    "narrow16" | "narrow32par1" | "narrow32par4" | "atomic32par4"
-                ),
-                atomic_corpus: backend == "atomic32par4",
-                batch_size: 256,
-            })?;
-            (
-                out.vocab,
-                out.merges,
-                Some(serde_json::to_value(out.stats)?),
-            )
         }
         _ => panic!("unknown backend"),
     };
