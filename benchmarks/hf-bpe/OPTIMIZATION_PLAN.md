@@ -125,3 +125,13 @@ E/DE分别通过45/46项库测试，独立bulk审查通过。512MiB单次筛选E
 计时同期仅编辑下一候选源码，F从D `d15c18cc`派生 `bpe/singleton-birth`，不预先加入尚未确认有收益的E。flat route每个key只有一次出生时，将position直接保存在既有Group.head，occurrences=1标识，不分配Node。第二次出生才把第一次及当前position物化为两节点，后续沿用链；occurrences=0仍表示remove。这不改变Group大小、频率、global floor聚合、posting顺序、owner路由或初始化。commit读取singleton直接push，多次组沿用旧链及reverse。AA也覆盖，非flat仍旧路径。
 
 影响模块为delta/融合prepare中的birth以及owner commit读取出生记录；full init/radix/source布局不改。预期减少局部单例Node分配与读取，是否足够占比须实测。新增统计记录累计局部singleton数量、nodes实际长度/容量峰值，不把它解释成全局唯一pair数。测试覆盖remove→singleton→两次/多次、position/sentinel、跨worker floor；已有1500-case逐轮差分继续执行。review和关键性能并行；正式计时开始前结束CPU构建/测试。若D/DE选型相近，不将兼容性当成收益相加。
+
+用户进一步指出E没有实用收益。E不进入推荐组合，不再新增E/DE计时；已经开始的三组合复测完成留档，用于D/B2选型和公平模块分析。E影响commit，DE额外影响install：其余阶段波动不记作E的收益。F明确以D为parent。F源码完成于 `4a2f148a`，直接头/延迟建链，独立审查与九次比较并行；测试/构建待计时结束后执行。
+
+## 数据选型与自动向量化方向
+
+用户进一步纠正：应相信完整数据推进DE。九次完成后DE train中位31.332、elapsed35.493秒，每组三次均胜B2，中位配对train比0.8715/elapsed0.8840；当前最快已测组合为DE。D与DE之间会换号不足以证明E没有用，归因不明确也不能据此丢掉整版数据。此前排除E/DE的决定撤销；完整结果和sample CV见radix-combination-stability.summary。
+
+F已完成46项测试、release与并行审查，现在按D→F各一次筛选，衡量prepare/delta及commit；不因继续设计而搁置已完成候选。同步在DE上移植同一singleton表示改动为DEF（新worktree singleton-birth-bulk），保留bulk append调用，多次出生消费不变；先保存源码，D/F计时结束后再构建。之后有收益才做针对当前最好组合的稳定比较。
+
+用户提出自动SIMD，不希望显式SIMD代码。当前先以同release opt-level3/default target生成LLVM vectorizer remarks、IR和assembly，定位实际热点的未向量化原因，不把查到几条SIMD指令当作整循环成功。普通Rust重构方向优先考察prepare的只读阶段能否安全使用普通slice（当前Atomic Relaxed仍产生atomic LLVM load），以及把固定块的纯映射/比较与hash插入、Vec增长、间接累计分开。初始化radix histogram/scatter有真实同桶写依赖，不能假设简单改成iterator就会SIMD。仅CPU诊断编译与正式计时错开；计时期间只读/编辑；公开接口、target flags和算法语义保持公平对照，不写intrinsics。

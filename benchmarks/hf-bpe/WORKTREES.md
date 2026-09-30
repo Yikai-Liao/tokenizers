@@ -77,3 +77,5 @@ count4 对应初始化4线程；atomic 还需 `--atomic-corpus`。输入、工�
 本轮计划与变更范围见 [OPTIMIZATION_PLAN.md](OPTIMIZATION_PLAN.md)，原始数据位于 `results/optimization-*`，独立审查见 [CORPUS_DIRECT_REVIEW.md](CORPUS_DIRECT_REVIEW.md)。新增Atomic对照已取消，不展开矩阵。
 
 新增独立posting候选：`/root/code/tokenizers-worktrees/posting-bulk`，分支 `bpe/posting-bulk`，提交 `35eaf03c`；新增组合：`/root/code/tokenizers-worktrees/radix-posting-bulk`，分支 `bpe/radix-posting-bulk`，提交 `c8702374`。前者只改B2的commit bulk写入；后者在D上同时用bulk写入初始posting安装及commit。测试/关键计时结果将更新完整组合报告。
+
+局部singleton birth候选：`/root/code/tokenizers-worktrees/singleton-birth`，分支 `bpe/singleton-birth`，提交 `4a2f148a`，从D `d15c18cc`派生，不含bulk候选E。仅flat prepare/delta出生记录及commit消费变化，Group维持16B，初始化不变。验证/计时待完成。E/DE保留复现，但不再推荐继续叠加E。
