@@ -21,7 +21,7 @@ const NONE: u32 = u32::MAX;
 
 /// Measurements for the experimental sequential occurrence-index trainer.
 #[derive(Debug, Default, Clone, Serialize)]
-pub struct IndexedTrainingStats {
+pub(super) struct IndexedTrainingStats {
     pub initialize_ms: f64,
     pub merge_ms: f64,
     pub initial_symbols: usize,
@@ -68,7 +68,7 @@ pub struct IndexedTrainingStats {
 
 /// Explicit controls for the experimental parallel occurrence trainer.
 #[derive(Debug, Clone, Copy)]
-pub struct IndexedParallelConfig {
+pub(super) struct IndexedParallelConfig {
     pub workers: usize,
     /// Optional initialization pool for controlled comparisons; merges keep workers.
     pub initialization_workers: Option<usize>,
@@ -96,7 +96,7 @@ impl Default for IndexedParallelConfig {
 }
 
 /// Raw HF model parts and measurements; build a `PipelineBPE` using the trainer's affixes.
-pub struct IndexedTraining {
+pub(super) struct IndexedTraining {
     pub vocab: Vocab,
     pub merges: Merges,
     pub special_tokens: Vec<AddedToken>,
@@ -551,7 +551,7 @@ impl Index {
 }
 
 impl BpeTrainer {
-    pub fn train_vocab_indexed_parallel(
+    pub(super) fn train_vocab_indexed_parallel(
         &self,
         config: IndexedParallelConfig,
     ) -> Result<IndexedTraining> {
@@ -560,7 +560,7 @@ impl BpeTrainer {
 
     /// Nonempty affixes retain the serial HF cohort engine.
     /// Workers are explicit and independent of the global Rayon pool.
-    pub fn do_train_indexed_parallel(
+    pub(super) fn do_train_indexed_parallel(
         &self,
         word_counts: &AHashMap<CompactString, u64>,
         config: IndexedParallelConfig,
@@ -582,17 +582,17 @@ impl BpeTrainer {
     /// Experimental sequential position-index trainer. The ordinary `train_vocab`
     /// remains the reference backend. Initialization preserves HF's token identities
     /// while writing directly into Efficient BPE's flat endpoint layout.
-    pub fn train_vocab_indexed(&self) -> Result<IndexedTraining> {
+    pub(super) fn train_vocab_indexed(&self) -> Result<IndexedTraining> {
         self.do_train_indexed(&self.words)
     }
 
     /// Combine stable endpoint indexing for long pieces with the PR's compact
     /// word arena and forward rewrite for short pieces. Affixes keep HF handling.
-    pub fn train_vocab_fused(&self) -> Result<IndexedTraining> {
+    pub(super) fn train_vocab_fused(&self) -> Result<IndexedTraining> {
         self.do_train_fused(&self.words)
     }
 
-    pub fn do_train_fused(
+    pub(super) fn do_train_fused(
         &self,
         word_counts: &AHashMap<CompactString, u64>,
     ) -> Result<IndexedTraining> {
@@ -606,7 +606,7 @@ impl BpeTrainer {
     /// Train weighted pretokenized words with the experimental occurrence index.
     /// Nonempty affixes retain HF word-cohort handling. Ordinary character BPE
     /// uses the proven monotone-pair path, including reserved IDs and length gates.
-    pub fn do_train_indexed(
+    pub(super) fn do_train_indexed(
         &self,
         word_counts: &AHashMap<CompactString, u64>,
     ) -> Result<IndexedTraining> {

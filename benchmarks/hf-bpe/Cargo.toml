@@ -5,7 +5,7 @@ edition = "2024"
 publish = false
 
 [features]
-default = ["indexed"]
+default = []
 indexed = []
 
 [dependencies]
