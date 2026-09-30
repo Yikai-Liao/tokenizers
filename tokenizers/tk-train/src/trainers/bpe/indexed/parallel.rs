@@ -9,6 +9,8 @@ use std::sync::atomic::{AtomicU16, AtomicU32, Ordering as AtomicOrdering};
 mod alphabet;
 mod corpus;
 mod fused_batch;
+mod radix_count;
+mod weight_lookup;
 
 trait Slot: Default + Send + Sync {
     const NARROW: bool;
@@ -573,11 +575,32 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
     let mut owners: Vec<Owner> = (0..config.workers).map(|_| Owner::default()).collect();
     let tokenize_ms = begin.elapsed().as_secs_f64() * 1000.0;
     let floor = trainer.min_frequency.max(1);
+    let radix_eligible = flat && lengths.len() <= u16::MAX as usize + 1;
+    let mut initial_weight_lookup = None;
     let mut initialize = || -> Result<IndexedTrainingStats> {
         let initial_begin = Instant::now();
         let initial_route_ms;
         let initial_count_ms;
-        if flat {
+        let mut radix_metrics = radix_count::Metrics::default();
+        let mut initial_weight_lookup_ms = 0.0;
+        if radix_eligible {
+            let lookup_begin = Instant::now();
+            initial_weight_lookup = uniform
+                .is_none()
+                .then(|| weight_lookup::WeightLookup::new(&blocks[0], corpus.len()));
+            initial_weight_lookup_ms = lookup_begin.elapsed().as_secs_f64() * 1000.0;
+            radix_metrics = radix_count::initialize(
+                &corpus,
+                &blocks[0],
+                uniform,
+                initial_weight_lookup.as_ref(),
+                config.workers,
+                floor,
+                &mut owners,
+            )?;
+            initial_route_ms = radix_metrics.route_ms;
+            initial_count_ms = radix_metrics.count_ms;
+        } else if flat {
             // Prototype's two-stage initialization: route compact positions, then
             // let each owner count and build its own lists. Unicode lookup and the
             // much larger pair hash tables no longer interleave on every character.
@@ -715,6 +738,23 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
             corpus_fill_ms: timings.fill_ms,
             initial_route_ms,
             initial_count_ms,
+            initial_count_backend: if radix_eligible {
+                "stable_radix16"
+            } else {
+                "spatial_owner_hash"
+            },
+            initial_weight_lookup_ms,
+            initial_weight_lookup_bytes: initial_weight_lookup.as_ref().map_or(0, |l| l.bytes()),
+            initial_route_compact_ms: radix_metrics.compact_ms,
+            initial_radix_sort_ms: radix_metrics.sort_ms,
+            initial_group_count_ms: radix_metrics.group_ms,
+            initial_posting_install_ms: radix_metrics.install_ms,
+            initial_route_buffer_bytes: radix_metrics.route_bytes,
+            peak_initial_route_buffer_bytes: radix_metrics.peak_route_bytes,
+            initial_radix_scratch_bytes: radix_metrics.scratch_bytes,
+            initial_group_buffer_bytes: radix_metrics.group_bytes,
+            pruned_pairs: radix_metrics.pruned,
+
             monotone_pairs: true,
             workers: config.workers,
             initialization_workers: config.initialization_workers.unwrap_or(config.workers),
@@ -817,8 +857,10 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
     #[cfg(test)]
     let mut trace = Vec::new();
     let lookup_begin = Instant::now();
-    let weight_lookup = (flat && C::SHARED && uniform.is_none())
-        .then(|| fused_batch::WeightLookup::new(&blocks[0], corpus.len()));
+    let weight_lookup = initial_weight_lookup.or_else(|| {
+        (flat && C::SHARED && uniform.is_none())
+            .then(|| weight_lookup::WeightLookup::new(&blocks[0], corpus.len()))
+    });
     stats.weight_lookup_build_ms = lookup_begin.elapsed().as_secs_f64() * 1000.0;
     stats.weight_lookup_bytes = weight_lookup.as_ref().map_or(0, |l| l.bytes());
     while ids.len() < trainer.vocab_size {

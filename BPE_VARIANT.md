@@ -47,3 +47,7 @@ flat 非AA Atomic 批次按规则/位置连续分工，一次只读遍历完成�
 ## B2 查询热点
 
 从融合B派生，权重查询增加每256位置一个u32 pivot下界目录，桶内精确查询；selected边界增加head/tail直接表，重复符号通过小哈希表回退。字母表/语料构造、初始pair计数、选择和提交算法均保持父版本。目录在初始化结束后、merge计时中创建一次，内存单列统计；Selected是每批临时表。
+
+## D 初始radix分组
+
+从B2 `a0832c48` 派生，仅更换flat且完整初始ID域<=65536的pair初始化；其它配置旧路径。两次顺序扫描精确路由8字节code/position记录，稳定radix按初始u16+u16 pair分组（公开corpus/posting仍u32），先加权/低频剪枝再精确预留最终posting与owner表。merge协议不变。weight目录提取为共享私有metadata模块，初始化计数构建后merge复用。新增临时route/scratch/group容量与全部阶段计时，峰值RSS实测为准。
