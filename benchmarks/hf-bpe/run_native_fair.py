@@ -33,14 +33,18 @@ def diagnostic_delta(before, after):
     fields = ('user_seconds', 'system_seconds', 'minor_faults', 'major_faults',
               'voluntary_context_switches', 'involuntary_context_switches')
     cpu_ticks = [right-left for left, right in zip(before['host']['cpu_ticks'], after['host']['cpu_ticks'])]
-    total = sum(cpu_ticks)
+    # guest/guest_nice are already included in user/nice, so count only
+    # the first eight Linux counters in the total.
+    total = sum(cpu_ticks[:8])
     idle = sum(cpu_ticks[3:5])
+    steal = cpu_ticks[7]
     return dict(child_usage_before=before['children'], child_usage_after=after['children'],
                 child_usage_delta={key: after['children'][key]-before['children'][key] for key in fields},
                 child_wall_seconds=after['child_wall_seconds'],
                 host_before=before['host'], host_after=after['host'],
                 host_cpu_tick_delta=cpu_ticks,
-                host_cpu_busy_fraction=(1-idle/total) if total else None,
+                host_cpu_busy_fraction=((total-idle-steal)/total) if total else None,
+                host_cpu_steal_fraction=(steal/total) if total else None,
                 host_loadavg_delta=[right-left for left, right in
                                     zip(before['host']['loadavg_1_5_15'], after['host']['loadavg_1_5_15'])])
 
