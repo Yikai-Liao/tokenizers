@@ -135,3 +135,9 @@ E/DE分别通过45/46项库测试，独立bulk审查通过。512MiB单次筛选E
 F已完成46项测试、release与并行审查，现在按D→F各一次筛选，衡量prepare/delta及commit；不因继续设计而搁置已完成候选。同步在DE上移植同一singleton表示改动为DEF（新worktree singleton-birth-bulk），保留bulk append调用，多次出生消费不变；先保存源码，D/F计时结束后再构建。之后有收益才做针对当前最好组合的稳定比较。
 
 用户提出自动SIMD，不希望显式SIMD代码。当前先以同release opt-level3/default target生成LLVM vectorizer remarks、IR和assembly，定位实际热点的未向量化原因，不把查到几条SIMD指令当作整循环成功。普通Rust重构方向优先考察prepare的只读阶段能否安全使用普通slice（当前Atomic Relaxed仍产生atomic LLVM load），以及把固定块的纯映射/比较与hash插入、Vec增长、间接累计分开。初始化radix histogram/scatter有真实同桶写依赖，不能假设简单改成iterator就会SIMD。仅CPU诊断编译与正式计时错开；计时期间只读/编辑；公开接口、target flags和算法语义保持公平对照，不写intrinsics。
+
+F screen D/F完整签名一致。D prepare11.472/commit6.362/merge19.276/init9.479/train33.125秒；F12.062/6.543/20.135/7.907/32.468秒。直接修改的prepare与commit都回退，未改init变快不能归因F。停止F推进；DE+F源码 `7504cbfd`保留但不构建/计时。F的17,124,772局部singletons不是全局pair计数，node容量峰46,137,344B，不影响初始化RSS主峰。
+
+自动向量化候选G1（branch bpe/read-phase, parent DEc8702374）：只为融合prepare的读阶段通过 &mut [C] 建立普通 &[u16/u32]，Slot私有associated Read类型和read_phase方法；Atomic实现使用当前Rust1.98安全标准库get_mut_slice，不写unsafe cast。pool.prepare join完成后普通view已释放，后续apply仍Atomic共享写/同屏障。初始化、AA fallback、delta/出生/commit算法不改；单独评估prepare、其余模块只描述实际观测。此候选要求Rust>=1.98；当前工具链满足，仓库没有显式更低MSRV声明。
+
+G2（branch bpe/prepare-blocks, parent G1）只重组融合prepare过滤：每worker复用固定128位置的端点/valid数组，逐块收集端点（保留left失败时跳过right读取），用普通slice zip循环计算valid mask，再按原posting顺序查询权重/selected并更新输出。纯比较循环不含atomic/hash/Vec.push/错误退出，可由LLVM成本模型自动向量化；新增短暂固定栈缓冲与第二遍mask消费必须全部计入prepare，是否更快由实测决定。不写intrinsics、不强制vector-width，不改变target-cpu。完整差分与静态阶段借用/顺序审查并行处理；构建完立即安排DE/G1/G2各一次筛选，在计时中只做静态检查。
