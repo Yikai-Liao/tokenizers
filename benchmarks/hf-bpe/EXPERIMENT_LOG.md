@@ -33,8 +33,30 @@ PR #2348 head `6ac0de5359d9e0e1ed0608422575a360ef91b908`。WordArena每Symbol为
 
 按用户纠正后的>1GiB余量规则，GPT-6 Luna完成同一512MiB PR4测试：Train约308.111秒，峰值RSS约6.57GiB，最低可用约1.52GiB，完整模型摘要与旧三项一致。最终数值、各阶段与采样记录在 [pr-fair-512.jsonl](results/pr-fair-512.jsonl) 及 environment JSON。此处不将PR与u16版本的内存差直接解释为算法收益；新的公平控制会使用u32。
 
-## 正在进行：原接口、worktree 与公平控制
+## 2026-09-30：原接口 worktree 与统一 u32 比较完成
 
-计划版本：HF reference、固定PR、串行endpoint、fused，以及u32并行串行初始化控制、u32并行初始化优化、u32原子访问对照。每个版本一个worktree/branch，原始BpeTrainer接口保持一致； benchmark驱动不需要外挂trainer方法。
+七种实现分别建本地branch/worktree：未改HF reference、固定PR、串行endpoint、fused，以及u32串行初始化并行merge、u32并行初始化、u32原子访问。五个新实现的 `do_train/train_vocab/Trainer::train` 直接选固定内部引擎；公开字段、builder与serde schema保持原样，实验配置与结果类型改为模块私有。中央根目录 `bpe/experiments` 继续保存历史接口以复现旧记录，开发基点 `bpe/migration-base` 固定为 `8c968e10`。源码索引见 [WORKTREES.md](WORKTREES.md)。
 
-主agent实现新的初始化线程控制与delta权重热点优化，GPT-6 Luna独立负责关键计时与数据。新增权重游标利用空间有序plans，同词复用、近邻最多前进8项、远间隔二分，避免稀疏批次完整线扫。完成后会记录源码commit、原接口验证和新的u32控制项结果。
+增加 `initialization_workers: Some(1)` 控制项，owner划分和merge线程数仍为4；初始化专池与merge池每次训练各建一次并复用，初始化完成屏障之后才merge。delta权重查询改为有序Plan游标：同词复用、近邻最多8项、远距离二分剩余pivot；等价性经测试与独立审查，本次没有单独隔离其速度收益。
+
+GPT-6 Luna按count1→count4→atomic串行完成以下关键计时，父agent只编辑文本、读取源码；先前PR已完成，无重复计时。相同536,870,289字节真实语料，u32 ID/u32 posting，feed1/merge4，none、vocab50,000、min2；三个native batch cap256，无affix/special/max-length。
+
+| 版本 | 测量commit | 初始化s | Merge s | Train s | RSS GiB | 最低可用GiB | 进程swap采样MiB |
+|---|---|---:|---:|---:|---:|---:|---:|
+| 固定PR串行计数 | `6ac0de53` | 110.979 | 188.533 | 308.111 | 6.569 | 1.521 | 0 |
+| u32初始化1/merge4 | `63e384b8` | 61.722 | 30.859 | 96.906 | 3.626 | 4.281 | 0 |
+| u32初始化4/merge4 | `c07a6e39` | 22.975 | 27.457 | 54.760 | 3.390 | 4.424 | 0 |
+| AtomicU32初始化4/merge4 | `f2c5415f` | 22.365 | 26.342 | 52.240 | 3.391 | 4.453 | 0 |
+
+PR初始化是special/alphabet/tokenize/count四阶段和，阶段边界与native不同。四项完整(model SHA256、vocab数、merges数、unique_words)签名全部通过：digest `d50fb836…62cd`，50,000词、29,243规则、1,429,915片段。native都是1,550批、最大75规则/批、125,409,599 posting访问。统计与实际编译源码、runner、依赖锁、输入、二进制摘要固定在中央提交 `1396274f`；原始数据及签名见 [native-fair-512.summary.md](results/native-fair-512.summary.md)。
+
+### 本轮收获
+
+1. 在统一u32宽度下，串行初始化控制相对PR训练快3.18倍、RSS少44.8%；并行初始化版快5.63倍、RSS少48.4%。这是该语料的一次进程测量，不能推成所有预处理/affix配置的收益。
+2. 我方单次初始化并发1→4使训练快1.77倍；merge两者都是4线程。计数子阶段超线性差异包含缓存与工作调度状态，不称为纯4核加速。
+3. 原子版这次训练少4.60%、merge少4.06%，RSS相近；旧u16两项只有约0.2%差异。本轮没有重复样本，无法证明原子或非原子普遍更快。实际写入约0.68秒，管理delta/posting的成本更大。
+4. 初始化结构容量约2.158GiB，实测峰值3.39–3.63GiB；两者口径不同。PR的8字节Symbol与我方4字节slot只解释约0.76GiB，剩余约3.18GiB总RSS差距还没有逐结构峰值归因。系统swap存量与页计数单独记录，不能把后台换页归给训练；各次VmSwap采样均为0。
+5. 原型以外的16字节全局Plan、混合规则拼接/排序和第二次delta走访仍存在。当前delta+commit约22.36秒；Plan子计时包含其它工作，不能全部归给排序。Halfword/H2.5/H3仍未迁入这些版本。
+6. 独立审查复核了新游标、init专池屏障、原tuple API/serde和同算法u32/AtomicU32，见 [WORKTREE_REVIEW.md](WORKTREE_REVIEW.md)。审查发现leaf benchmark残留 `indexed` feature引用私有API；随后删除这项feature及条件分支，追加只涉及runner/docs的提交，引擎源码和测量结果保持对应。中央runner也明确将merge-workers限定为4；原测量脚本可在 `1396274f` 取出。
+
+完整RSS、系统换页、阶段耗时、初始化结构容量与来源见 [PARALLEL_REPORT.md](PARALLEL_REPORT.md)。本次按用户要求只做关键单次比较，串行endpoint/fused/HF reference没有新增512MiB矩阵。

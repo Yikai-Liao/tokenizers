@@ -1,6 +1,6 @@
 # PR#2348 fair-run record (512 MiB)
 
-This is the pinned PR implementation run on the 512 MiB corpus used by the existing three-run comparison. The native `count1-parallel-worktree` and `count4-parallel-worktree` runs requested for the revised comparison are pending; this PR-only result does not close their digest gate.
+This is the pinned PR implementation run on the 512 MiB corpus used by the existing three-run comparison. The revised u32 native comparison has completed; see [native-fair-512.summary.md](native-fair-512.summary.md) for its results and signature gate.
 
 ## Locked inputs and build
 
@@ -44,7 +44,7 @@ The pre-run sizing formula predicted 4.57 GiB, while measured peak RSS was 6.57 
 
 ## Comparison status and artifacts
 
-The complete model signature is recorded in `pr-fair-512.jsonl`. Its digest matches the older `parallel-key-512-final.jsonl` result (`d50fb836…`), but that historical native runner used the prior token-width implementation and is retained only as background; it is not the revised fair comparison. The equality gate for the new `u32` count1/count4 native worktrees remains pending.
+The complete model signature is recorded in `pr-fair-512.jsonl`. Its digest matches the older `parallel-key-512-final.jsonl` result (`d50fb836…`), but that historical native runner used the prior token-width implementation and is retained only as background; it is not the revised fair comparison. The new u32 count1/count4/atomic worktrees completed; their full signatures are compared in the native summary and signature artifact.
 
 The previous `pr-key-512.jsonl` attempt was aborted by its now-superseded policy that treated any process swap as a stop condition. This successful rerun used the corrected policy: stop only when `MemAvailable <= 1 GiB`, while recording process and host swap.
 

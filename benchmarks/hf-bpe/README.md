@@ -1,8 +1,10 @@
 # HF BPE 兼容适配原型
 
-当前实现包含串行 [`indexed/compact.rs`](../../tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs) 与并行 [`indexed/parallel.rs`](../../tokenizers/tk-train/src/trainers/bpe/indexed/parallel.rs)，共同入口位于 [`indexed.rs`](../../tokenizers/tk-train/src/trainers/bpe/indexed.rs)。并行入口 `BpeTrainer::train_vocab_indexed_parallel(IndexedParallelConfig)` 已迁入唯一 pair owner、精确规则批次、8 字节出生链、SmallPosting 和持久 Rayon pool。默认 HF trainer 保留为差分参考；`train_vocab_indexed()` 提供紧凑串行核心，`train_vocab_fused()` 保留融合试验。
+本次交付按实现拆成独立 worktree 和本地分支：HF reference、固定 PR、串行 endpoint、fused、串行初始化并行 merge、并行初始化、原子访问对照。五个新实现都直接接入原始 `BpeTrainer::do_train/train_vocab` 和 `Trainer::train`，公共 Trainer 字段与序列化格式保持一致。完整路径、提交与调用示例见 [WORKTREES.md](WORKTREES.md)。
 
-开发清单见 [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)，两轮独立审查见 [REVIEW.md](REVIEW.md)，关键并行测量见 [PARALLEL_REPORT.md](PARALLEL_REPORT.md)。指定初始化时点的源码内存核算见 [MEMORY_LAYOUT.md](MEMORY_LAYOUT.md)。[COMPACT_REPORT.md](COMPACT_REPORT.md) 和 [REPORT.md](REPORT.md) 保存之前版本的数据，不能套用到当前并行实现。
+中央根目录 `bpe/experiments` 保存开发快照、历史实验接口和记录。以下布局与理论说明覆盖这些内部核心；根目录的外挂入口仅用于复现历史测量。当前公平比较固定 **u32 corpus ID、u32 posting**，串行初始化/4线程 merge 是与 PR 的控制项，4线程初始化另列为优化。
+
+开发过程见 [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)，迁移机制审查见 [REVIEW.md](REVIEW.md)，原接口分支复核见 [WORKTREE_REVIEW.md](WORKTREE_REVIEW.md)。最终计时见 [PARALLEL_REPORT.md](PARALLEL_REPORT.md)，历次取舍见 [EXPERIMENT_LOG.md](EXPERIMENT_LOG.md)。指定初始化时点的源码空间核算见 [MEMORY_LAYOUT.md](MEMORY_LAYOUT.md)。[COMPACT_REPORT.md](COMPACT_REPORT.md) 和 [REPORT.md](REPORT.md) 保存此前版本数据。
 
 固定 affix 和长度限制的进一步理论证书分别见 [AFFIX_PRUNING.md](AFFIX_PRUNING.md)、[LENGTH_PRUNING.md](LENGTH_PRUNING.md)，其中额外优化尚未接入代码。
 
@@ -46,50 +48,15 @@
 
 ## 使用
 
-```rust
-use tk_train::{BpeTrainer, Trainer};
-use tk_encode::models::bpe::{BpeConfig, PipelineBPE};
+选定实现 worktree 后，使用原始 Trainer 接口，示例与构建步骤见 [WORKTREES.md](WORKTREES.md)。算法由该分支固定，不需要调用 indexed/fused 外挂方法。
 
-let mut trainer = BpeTrainer::builder()
-    .show_progress(false)
-    .vocab_size(8000)
-    .min_frequency(2)
-    .continuing_subword_prefix("##".into())
-    .end_of_word_suffix("</w>".into())
-    .build();
-trainer.feed(["hello world", "hello"].into_iter(), |line| {
-    Ok(line.split_whitespace().map(str::to_owned).collect())
-})?;
-let trained = trainer.train_vocab_indexed()?;
-let model = PipelineBPE::from_config(BpeConfig {
-    vocab: trained.vocab,
-    merges: trained.merges,
-    continuing_subword_prefix: trainer.continuing_subword_prefix.clone(),
-    end_of_word_suffix: trainer.end_of_word_suffix.clone(),
-    ..Default::default()
-})?;
-// trained.special_tokens 仍需由调用者加入 tokenizer。
-```
-
-普通字符配置可用以下并行调用。非空 affix 仍由入口转入既有串行 cohort 引擎。
-
-```rust
-use tk_train::IndexedParallelConfig;
-let trained = trainer.train_vocab_indexed_parallel(IndexedParallelConfig {
-    workers: 4,
-    posting_block_bits: 32,
-    narrow_corpus: true,
-    ..Default::default()
-})?;
-```
-
-训练记录可能包含重复 pair；HF 模型构造器保留同一个 pair 的最后一次 rank。`train_vocab_indexed()` 与当前 `train_vocab()` 都返回完整、有序的原始 merge 列表；对照 HF 0.23.2 最终 JSON 时按模型构造器的规则去重。
+训练记录可能包含重复 pair；HF 模型构造器保留同一个 pair 的最后一次 rank。各实现的 `train_vocab()` 返回完整、有序的原始 merge 列表；对照 HF 0.23.2 最终 JSON 时按模型构造器的规则去重。
 
 本轮还修复了 v1 编码器的一个前后缀问题：单字符词表项在存在 affix 时也需要经过编码证明，不能直接认为其自身 ID 就是编码结果。否则输入 `b` 会命中裸 `b`，跳过应输出的 `b</w>`。修正在 [`model.rs`](../../tokenizers/tk-encode/src/models/bpe/model.rs)，回归测试覆盖 ASCII、中文、prefix 与 suffix 同时设置、空 token 和重复缓存调用。
 
 ## 已完成的正确性检查
 
-当前并行改动后，`cargo test --manifest-path tokenizers/tk-train/Cargo.toml --no-default-features --lib indexed` 的 26 项索引测试通过，包括 1,500 个逐轮 HF 随机差分、独立 greedy oracle、跨 worker 出生阈值聚合、四种地址/ID 存储布局的原子与非原子对照、跨块 AA、65535/65536 ID 门槛、真实 suffix 增频回归和 SmallPosting 所有权检查。以下默认配置及稳定版核验是此前版本的记录，保留其原来的测量范围。
+并行初始化分支与原子分支的 `cargo test --offline --locked --no-default-features --lib` 各40项通过；串行初始化分支的原始 `do_train` 测试通过，串行endpoint/fused分支各3项原始BPE及长度限制测试通过。检查包括1,500个逐轮 HF 随机差分、独立 greedy oracle、原始 Trainer wrapper、有限长度限制、跨 worker 出生阈值聚合、原子与非原子的存储布局、跨块 AA、65535/65536 ID 门槛、跨2³²地址的切片写入、权重游标和真实 suffix 增频回归。以下默认配置及稳定版核验是此前版本的记录，保留其原来的测量范围。
 
 - `tk-train` 默认配置的 21 项库测试全部通过，其中 1,500 个随机配置逐轮比较 pair、频率、输出 ID 及最终原始 merge 列表。
 - 250 组普通配置通过独立的全量重算 greedy oracle；专门测试覆盖加权重复、同频、`AA`、Unicode、超过 255 的跨度、特殊 token 冲突、空输入、前后缀和长度边界。
@@ -101,7 +68,7 @@ let trained = trainer.train_vocab_indexed_parallel(IndexedParallelConfig {
 
 ## 性能结果与测量范围
 
-当前只做关键测量：固定 Wikipedia 真实语料、同一 u16 语料/u32 posting 布局、非原子 1/4 worker 与原子 4 worker，各一次。可用内存须保持大于 1 GiB，并检查训练进程 VmSwap；系统既有 swap 存量和后台换页另记。全部算法定下后再运行完整矩阵。具体耗时、初始化容量与剩余成本见 [PARALLEL_REPORT.md](PARALLEL_REPORT.md)。
+当前关键测量固定512 MiB真实 Wikipedia 中文语料，统一u32布局，PR串行初始化/4线程 merge，我方串行初始化/4线程 merge、4线程初始化/merge、同算法原子访问各一次。仅 MemAvailable ≤1 GiB 时停止，并记录进程 swap 与系统换页。全部算法确定后再运行完整矩阵。各项结果、实际源码与剩余成本见 [PARALLEL_REPORT.md](PARALLEL_REPORT.md)。
 
 以下是首轮串行原型的历史记录。
 
@@ -109,15 +76,15 @@ let trained = trainer.train_vocab_indexed_parallel(IndexedParallelConfig {
 
 `REPORT.md` 和 `runs.*` 对应布局调整前的节点版本；当前端点布局的 12 次有限对比记录在 `COMPACT_REPORT.md` 和 `compact-focused.*`，不能混用两个版本的数据。
 
-首轮历史矩阵运行 126 次正式训练，用时约 288 秒。`run.py` 后续默认四组小样本、每个实现一次，共 12 次训练；完整矩阵仅由显式选择 profile 和重复次数触发。当前关键测试由独立的 `run_parallel_key.py` 执行，固定三次调用。
+首轮历史矩阵运行 126 次正式训练，用时约 288 秒。`run.py` 后续默认四组小样本、每个实现一次，共 12 次训练；完整矩阵仅由显式选择 profile 和重复次数触发。新的原接口关键测试由 `run_native_fair.py` 执行；`run_parallel_key.py` 复现旧u16访问对照。
 
 三个实现是当前 HF 主分支 `bbccb051` 的参考 trainer、该提交上的索引原型，以及 PR #2348 的固定 head `6ac0de53`。同一份 runner 源码和同一预处理配置分别构建。`none` 保留每行全文及换行，`whitespace_split` 使用 `split_whitespace()`；`bytelevel` 使用官方 `tokenizers 0.23.2` 的 `ByteLevel(false, true, true)` 和 `PreTokenizedString`。
 
-`total` 从 `feed` 开始到 `train_vocab` 返回为止，包括读取、预分词、词频汇总、初始化、合并和输出；不包括进程启动、结果 JSON 与摘要计算。它是相同 feed/train API 工作负载的总耗时，不是 v1 尚未提供的 Python `Tokenizer.train()` 入口。峰值 RSS 为进程 `VmHWM`。阶段探针仅在临时源码副本中插入六个 `Instant` 边界日志，不更改算法。
+`total` 从 `feed` 开始到 `train_vocab` 返回为止，包括读取、预分词、词频汇总、初始化、合并和输出；不包括进程启动、结果 JSON 与摘要计算。它是相同 feed/train API 工作负载的总耗时，不是 v1 尚未提供的 Python `Tokenizer.train()` 入口。峰值 RSS 为进程 `VmHWM`。PR阶段探针在临时源码副本插入六个 `Instant` 边界日志；新的分支内部已有阶段统计，临时副本仅追加一个统计输出。
 
-语料复用相邻 `tokenizers-bpe-benchmark` 项目的固定 Wikimedia Wikipedia 样本，其下载脚本和许可说明见该项目 README；本目录不再分发原文。真实语料 benchmark 未设置前后缀、特殊 token 或长度限制，ID 复用次数为零；这些参数的正确性由上述差分检查覆盖，本轮不宣称其性能与普通配置相同。
+历史小样本复用相邻项目的固定 Wikimedia Wikipedia 样本；本次大语料由 `prepare_gb_corpus.py` 从固定 revision 的前两份中文 shard 独立准备，来源清单与摘要随结果保存，本目录不提交原文。真实语料 benchmark 未设置前后缀、特殊 token 或长度限制，ID 复用次数为零；这些参数的正确性由上述差分检查覆盖，本轮不宣称其性能与普通配置相同。
 
-## 复现
+## 历史实验复现
 
 在本目录执行，先准备固定源码的独立 checkout；不会写入之前的 benchmark 项目。
 

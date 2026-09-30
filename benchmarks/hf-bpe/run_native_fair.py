@@ -25,7 +25,8 @@ def main():
     parser.add_argument('--vocab', type=int, default=50000)
     parser.add_argument('--min-frequency', type=int, default=2)
     parser.add_argument('--initialization-workers', type=int, choices=[1, 4], required=True)
-    parser.add_argument('--merge-workers', type=int, default=4)
+    parser.add_argument('--merge-workers', type=int, choices=[4], default=4,
+                        help='the generated fair-comparison runner fixes training to four workers')
     parser.add_argument('--atomic-corpus', action='store_true')
     args = parser.parse_args()
     worktree = args.worktree.resolve()
