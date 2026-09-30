@@ -4,11 +4,45 @@ import argparse
 import json
 import os
 from pathlib import Path
+import resource
 import subprocess
 import time
 
 from run import sha256
 from run_parallel_key import system
+
+
+def host_diagnostics():
+    cpu_line = next(line for line in Path('/proc/stat').read_text().splitlines()
+                    if line.startswith('cpu '))
+    cpu = [int(value) for value in cpu_line.split()[1:]]
+    load = [float(value) for value in Path('/proc/loadavg').read_text().split()[:3]]
+    return dict(cpu_ticks=cpu, loadavg_1_5_15=load)
+
+
+def children_usage():
+    usage = resource.getrusage(resource.RUSAGE_CHILDREN)
+    return dict(user_seconds=usage.ru_utime, system_seconds=usage.ru_stime,
+                minor_faults=usage.ru_minflt, major_faults=usage.ru_majflt,
+                voluntary_context_switches=usage.ru_nvcsw,
+                involuntary_context_switches=usage.ru_nivcsw,
+                maxrss_kib=usage.ru_maxrss)
+
+
+def diagnostic_delta(before, after):
+    fields = ('user_seconds', 'system_seconds', 'minor_faults', 'major_faults',
+              'voluntary_context_switches', 'involuntary_context_switches')
+    cpu_ticks = [right-left for left, right in zip(before['host']['cpu_ticks'], after['host']['cpu_ticks'])]
+    total = sum(cpu_ticks)
+    idle = sum(cpu_ticks[3:5])
+    return dict(child_usage_before=before['children'], child_usage_after=after['children'],
+                child_usage_delta={key: after['children'][key]-before['children'][key] for key in fields},
+                child_wall_seconds=after['child_wall_seconds'],
+                host_before=before['host'], host_after=after['host'],
+                host_cpu_tick_delta=cpu_ticks,
+                host_cpu_busy_fraction=(1-idle/total) if total else None,
+                host_loadavg_delta=[right-left for left, right in
+                                    zip(before['host']['loadavg_1_5_15'], after['host']['loadavg_1_5_15'])])
 
 
 def main():
@@ -85,7 +119,9 @@ def main():
     min_available = before['available']
     peak_rss = peak_swap = 0
     fault = None
+    diagnostic_before = dict(children=children_usage(), host=host_diagnostics())
     with stdout.open('w') as out, stderr.open('w') as err:
+        child_begin = time.monotonic()
         process = subprocess.Popen(command, env=env, stdout=out, stderr=err)
         print(f'{args.case}: pid {process.pid}; MemAvailable {before["available"]/(1<<30):.2f} GiB', flush=True)
         while process.poll() is None:
@@ -106,26 +142,33 @@ def main():
                 break
             time.sleep(0.5)
         returncode = process.wait()
+        child_wall_seconds = time.monotonic() - child_begin
+    diagnostic_after = dict(children=children_usage(), host=host_diagnostics(),
+                             child_wall_seconds=child_wall_seconds)
+    diagnostics = diagnostic_delta(diagnostic_before, diagnostic_after)
     finish = system()
     memory = dict(system_before=before, system_after=finish, minimum_available_bytes=min_available,
                   sampled_peak_rss_bytes=peak_rss, sampled_peak_process_swap_bytes=peak_swap,
                   pswpin_delta=finish['pswpin']-before['pswpin'], pswpout_delta=finish['pswpout']-before['pswpout'])
     if fault or returncode:
-        args.output.write_text(json.dumps(dict(engine=args.case, failure=fault or str(returncode), memory=memory)) + '\n')
+        args.output.write_text(json.dumps(dict(engine=args.case, failure=fault or str(returncode),
+                                               memory=memory, diagnostics=diagnostics)) + '\n')
         raise SystemExit(f'{args.case} failed: {fault or returncode}; failure retained in {args.output}')
     row = json.loads(stdout.read_text())
     stats_rows = [v['bench_indexed_stats'] for s in stderr.read_text().splitlines()
                   if s.startswith('{') and 'bench_indexed_stats' in (v := json.loads(s))]
     if len(stats_rows) != 1:
         args.output.write_text(json.dumps(dict(engine=args.case, failure='indexed stats record count mismatch',
-                                               observed_count=len(stats_rows), memory=memory)) + '\n')
+                                               observed_count=len(stats_rows), memory=memory,
+                                               diagnostics=diagnostics)) + '\n')
         raise SystemExit(f'expected exactly one bench_indexed_stats record, found {len(stats_rows)}')
     stats = stats_rows[0]
     missing_stats = [key for key in args.require_stats
                      if key not in stats or not isinstance(stats[key], (int, float))]
     if missing_stats:
         args.output.write_text(json.dumps(dict(engine=args.case, failure='required indexed stats missing',
-                                               missing=missing_stats, observed=stats, memory=memory),
+                                               missing=missing_stats, observed=stats, memory=memory,
+                                               diagnostics=diagnostics),
                                           ensure_ascii=False) + '\n')
         raise SystemExit(f'{args.case}: required numeric indexed stats missing: {missing_stats}')
     expected = dict(workers=args.merge_workers, initialization_workers=args.initialization_workers,
@@ -133,17 +176,19 @@ def main():
     mismatches = {key: (stats.get(key), value) for key, value in expected.items() if stats.get(key) != value}
     if mismatches:
         args.output.write_text(json.dumps(dict(engine=args.case, failure='indexed stats mismatch',
-                                               observed=stats, expected=expected, memory=memory),
+                                               observed=stats, expected=expected, memory=memory,
+                                               diagnostics=diagnostics),
                                           ensure_ascii=False) + '\n')
         raise SystemExit(f'{args.case}: indexed stats mismatch: {mismatches}')
     if row.get('indexed_stats') is not None:
         args.output.write_text(json.dumps(dict(engine=args.case, failure='stdout indexed_stats was not null',
-                                               observed=row.get('indexed_stats'), memory=memory),
+                                               observed=row.get('indexed_stats'), memory=memory,
+                                               diagnostics=diagnostics),
                                           ensure_ascii=False) + '\n')
         raise SystemExit(f'{args.case}: expected reference runner stdout indexed_stats=null')
     row.update(engine=args.case, commit=commit, source_sha256=locked, command=command,
                indexed_stats=stats, initialize_ms=stats['initialize_ms'], merge_ms=stats['merge_ms'],
-               memory=memory, provenance_sha256=sha256(env_path))
+               memory=memory, diagnostics=diagnostics, provenance_sha256=sha256(env_path))
     args.output.write_text(json.dumps(row, ensure_ascii=False) + '\n')
     print(f'{args.case}: init {stats["initialize_ms"]/1000:.3f}s + merge {stats["merge_ms"]/1000:.3f}s; '
           f'train {row["train_ms"]/1000:.3f}s, peak RSS {row["maxrss_kib"]/1048576:.2f} GiB, '
