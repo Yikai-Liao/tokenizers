@@ -1,0 +1,84 @@
+{
+  "pr_head": "6ac0de5359d9e0e1ed0608422575a360ef91b908",
+  "input_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/gb-corpus/zh-512m.txt",
+  "input_sha256": "a0d40d4102cba1e933f25e5ccd17552d2eaebaec4ef770bc39d8e46e740b4d4f",
+  "binary_path": "/root/code/tokenizers/benchmarks/hf-bpe/target/release/hf-bpe-profiled-pr4",
+  "binary_sha256": "65280aba2ba180ab03a9d2e6c8fc898dff37daed19624d87e68da5f8e9e00c8c",
+  "preflight_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/gb-corpus/preflight-512.json",
+  "preflight_sha256": "ff38d0a4501109598d789a9391e6a0e494e797eb14277a7a029984711bfc7404",
+  "preflight": {
+    "bytes": 536870289,
+    "lines_upper": 1445902,
+    "slots_upper": 206866593,
+    "edges_upper": 203974788,
+    "pairs_upper": 4302752,
+    "alphabet": 20757
+  },
+  "estimated_rss_peak_bytes": 4907716481,
+  "symbol_virtual_capacity_upper_bytes": 4294962312,
+  "corpus_manifest": {
+    "dataset": "wikimedia/wikipedia",
+    "revision": "b04c8d1ceb2f5cd4588862100d08de323dccfbaa",
+    "selection": "shard order, article order, normalized paragraphs; no replication or synthetic additions",
+    "line_byte_range": [
+      32,
+      8192
+    ],
+    "sources": [
+      {
+        "shard": "train-00000-of-00006.parquet",
+        "url": "https://huggingface.co/datasets/wikimedia/wikipedia/resolve/b04c8d1ceb2f5cd4588862100d08de323dccfbaa/20231101.zh/train-00000-of-00006.parquet",
+        "bytes": 587109027,
+        "sha256": "853ddf4a138c792ad7386d6de831788f96326c03e1e3349f7a315498392e8b56"
+      },
+      {
+        "shard": "train-00001-of-00006.parquet",
+        "url": "https://huggingface.co/datasets/wikimedia/wikipedia/resolve/b04c8d1ceb2f5cd4588862100d08de323dccfbaa/20231101.zh/train-00001-of-00006.parquet",
+        "bytes": 263629009,
+        "sha256": "038b08e5aae38b5a1671794cee3fa0d4952c0d00fa0890a903d2de3f3fe5f703"
+      }
+    ],
+    "articles_visited": 336509,
+    "output": {
+      "path": "zh-1024m.txt",
+      "bytes": 1073741749,
+      "lines": 3159381,
+      "sha256": "4f375a10f171be4e9903fe0040538da5051235eb119a6bb07e3f3d06c004b248"
+    }
+  },
+  "system_before": {
+    "available": 7812313088,
+    "swap_used": 5965090816,
+    "pswpin": 214697,
+    "pswpout": 1714599
+  },
+  "workers": 4,
+  "feed_workers": 1,
+  "memory_policy": "stop only if MemAvailable <= 1 GiB; record process VmSwap and global paging",
+  "parallel_merge_threshold": 1000,
+  "heap": "OctonaryHeap",
+  "algorithm": "WordArena Symbol{u32 ID,u32 length}; historical word cohorts; one rule per round; conditional parallel word scans",
+  "source_sha256": {
+    ".build/profiled-pr4/source/tokenizers/tk-train/src/trainers/bpe/mod.rs": "7a62368952076e98399f920c6ced1dce1990c7af09a5748ccf56e513fc674bf9",
+    ".build/profiled-pr4/source/tokenizers/tk-train/src/trainers/bpe/word.rs": "0f831f1b96c94ec322d4c4f9f12e62ecec1bf88ee921dd9c17a2fea55fbb2784",
+    ".build/profiled-pr4/source/tokenizers/tk-encode/src/utils/parallelism.rs": "10a4af59e51e3047c80a192c30e1c15eb954da4ad2addf4a57c417c07cadedc9",
+    ".build/profiled-pr4/runner/src/main.rs": "16f4a61339d30a77c5cfb03a8d2b676387513ff284f064bf1269dbe300c2b0e0",
+    ".build/profiled-pr4/runner/Cargo.toml": "6e69f854867ab58ca6f81c7786e3c67aaaa6fa22ca863a9c91f6f9b115219fe2",
+    ".build/profiled-pr4/runner/Cargo.lock": "9738a172152aef44716a1bd42433d2b12bd3c1b35ef5d45097d2dc3ed6d2118d",
+    "build_pr_compare.py": "20731f6a52d41460f60a4b177d06347bb093c5d1dfbf020953f586100dbcd132",
+    "build_profiled.py": "de5af81f8aaffc896011525ca40695ad28c65ff9fd8598c5419494c222cd957e",
+    "run_pr_fair.py": "f977f39b4a62c65211a9ac96201ff6896dfd5244061630c8579e7fcda93a70a4",
+    "run_parallel_key.py": "8328957966921982510fbcefabf1f77391712bf78643f1d933b023fac82bcc10"
+  },
+  "env_overrides": {
+    "TOKENIZERS_PARALLELISM": "false",
+    "RAYON_NUM_THREADS": "4",
+    "TOKENIZERS_TRAIN_PARALLEL_MIN": "1000"
+  },
+  "runner_override": "set_num_threads(4), set_parallelism(false) before feed; set_parallelism(true) after feed",
+  "parameters": {
+    "split": "none",
+    "vocab_size": 50000,
+    "min_frequency": 2
+  }
+}

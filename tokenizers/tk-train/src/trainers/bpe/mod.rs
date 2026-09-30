@@ -1,8 +1,10 @@
 #![allow(clippy::map_entry)]
 
+mod indexed;
 #[cfg(feature = "parity-aware-bpe")]
 pub mod parity_trainer;
 mod word;
+pub use indexed::{IndexedParallelConfig, IndexedTraining, IndexedTrainingStats};
 #[cfg(feature = "parity-aware-bpe")]
 pub use parity_trainer::{ParityBpeTrainer, ParityBpeTrainerBuilder, ParityVariant};
 
@@ -21,10 +23,9 @@ use tk_encode::vocab::bucket_added_vocabulary::AddedToken;
 use word::{WithFirstLastIterator, Word};
 
 use tk_encode::Result;
-use tk_encode::models::bpe::{Merges, Pair, PipelineBPE, BpeConfig, Vocab};
+use tk_encode::models::bpe::{BpeConfig, Merges, Pair, PipelineBPE, Vocab};
 use tk_encode::parallelism::*;
 use tk_encode::utils::progress::{ProgressBar, ProgressFormat, ProgressStyle};
-use tk_encode::vocab::bucket_vocab_store::BucketVocabStore;
 
 #[derive(Debug, Eq)]
 struct Merge {
@@ -506,6 +507,14 @@ impl BpeTrainer {
         &self,
         word_counts: &AHashMap<CompactString, u64>,
     ) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
+        self.do_train_observed(word_counts, |_, _, _| {})
+    }
+
+    fn do_train_observed(
+        &self,
+        word_counts: &AHashMap<CompactString, u64>,
+        mut observe: impl FnMut(Pair, u64, u32),
+    ) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
         let mut word_to_id: AHashMap<CompactString, u32> = AHashMap::with_capacity(self.vocab_size);
         let mut id_to_word: Vec<CompactString> = Vec::with_capacity(self.vocab_size);
         let max_token_length: usize = self.max_token_length.unwrap_or(usize::MAX);
@@ -595,6 +604,7 @@ impl BpeTrainer {
                 word_to_id.insert(CompactString::from(&new_token), new_token_id);
             }
             merges.push((top.pair, new_token_id));
+            observe(top.pair, top.count, new_token_id);
 
             // Merge the new pair in every words
             // Safety: This is just a type assertion, the code below may no longer be safe
@@ -687,7 +697,11 @@ impl Trainer for BpeTrainer {
     /// Train a BPE model
     fn train(&self, model: &mut PipelineBPE) -> Result<Vec<AddedToken>> {
         let (vocab, merges, special_tokens) = self.do_train(&self.words)?;
-        *model = PipelineBPE::from_config(BpeConfig { vocab: vocab, merges: merges, ..self.model_options() })?;
+        *model = PipelineBPE::from_config(BpeConfig {
+            vocab: vocab,
+            merges: merges,
+            ..self.model_options()
+        })?;
         Ok(special_tokens)
     }
 

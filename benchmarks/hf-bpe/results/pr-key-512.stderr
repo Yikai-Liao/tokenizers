@@ -1,0 +1,4 @@
+{"bench_stage":"special_tokens","ms":0.000206}
+{"bench_stage":"alphabet","ms":2571.776272}
+{"bench_stage":"tokenize_words","ms":16913.706024}
+{"bench_stage":"count_pairs","ms":138982.691921}

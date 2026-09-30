@@ -1,0 +1,48 @@
+{
+  "pr_head": "6ac0de5359d9e0e1ed0608422575a360ef91b908",
+  "baseline_path": "/root/code/tokenizers/benchmarks/hf-bpe/results/parallel-key-512-final.jsonl",
+  "baseline_sha256": "1c2eaddc1955e7c8b61fd1a2f70841a2716b61259261b0af9d62eb9ac7d11a57",
+  "input_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/gb-corpus/zh-512m.txt",
+  "input_sha256": "a0d40d4102cba1e933f25e5ccd17552d2eaebaec4ef770bc39d8e46e740b4d4f",
+  "binary_path": "/root/code/tokenizers/benchmarks/hf-bpe/target/release/hf-bpe-profiled-pr4",
+  "binary_sha256": "65280aba2ba180ab03a9d2e6c8fc898dff37daed19624d87e68da5f8e9e00c8c",
+  "preflight": {
+    "bytes": 536870289,
+    "lines_upper": 1445902,
+    "slots_upper": 206866593,
+    "edges_upper": 203974788,
+    "pairs_upper": 4302752,
+    "alphabet": 20757
+  },
+  "estimated_rss_peak_bytes": 4907716481,
+  "symbol_virtual_capacity_upper_bytes": 4294962312,
+  "system_before": {
+    "available": 6546857984,
+    "swap_used": 4719673344,
+    "pswpin": 204513,
+    "pswpout": 1377020
+  },
+  "workers": 4,
+  "feed_workers": 1,
+  "parallel_merge_threshold": 1000,
+  "heap": "OctonaryHeap",
+  "algorithm": "WordArena Symbol{u32 ID,u32 length}; historical word cohorts; one rule per round; conditional parallel word scans",
+  "source_sha256": {
+    ".build/profiled-pr4/source/tokenizers/tk-train/src/trainers/bpe/mod.rs": "7a62368952076e98399f920c6ced1dce1990c7af09a5748ccf56e513fc674bf9",
+    ".build/profiled-pr4/source/tokenizers/tk-train/src/trainers/bpe/word.rs": "0f831f1b96c94ec322d4c4f9f12e62ecec1bf88ee921dd9c17a2fea55fbb2784",
+    ".build/profiled-pr4/source/tokenizers/tk-encode/src/utils/parallelism.rs": "10a4af59e51e3047c80a192c30e1c15eb954da4ad2addf4a57c417c07cadedc9",
+    ".build/profiled-pr4/runner/src/main.rs": "16f4a61339d30a77c5cfb03a8d2b676387513ff284f064bf1269dbe300c2b0e0",
+    ".build/profiled-pr4/runner/Cargo.toml": "6e69f854867ab58ca6f81c7786e3c67aaaa6fa22ca863a9c91f6f9b115219fe2",
+    ".build/profiled-pr4/runner/Cargo.lock": "9738a172152aef44716a1bd42433d2b12bd3c1b35ef5d45097d2dc3ed6d2118d",
+    "build_pr_compare.py": "20731f6a52d41460f60a4b177d06347bb093c5d1dfbf020953f586100dbcd132",
+    "build_profiled.py": "de5af81f8aaffc896011525ca40695ad28c65ff9fd8598c5419494c222cd957e",
+    "run_pr_key.py": "28797a38c2290cb27f29699d762720f1bfe56a6ef3dd14492070d7468374ac70",
+    "run_parallel_key.py": "8328957966921982510fbcefabf1f77391712bf78643f1d933b023fac82bcc10"
+  },
+  "env_overrides": {
+    "TOKENIZERS_PARALLELISM": "false",
+    "RAYON_NUM_THREADS": "4",
+    "TOKENIZERS_TRAIN_PARALLEL_MIN": "1000"
+  },
+  "runner_override": "set_num_threads(4), set_parallelism(false) before feed; set_parallelism(true) after feed"
+}

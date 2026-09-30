@@ -1,0 +1,5 @@
+pattern,binary_ns,linear_ns,hybrid8_ns,hybrid16_ns
+one_run,5.63,5.58,5.43,4.33
+short_tail,96.86,10.67,7.57,8.61
+long_tail,218.56,8455.47,193.35,249.36
+mixed_tail,251.41,7524.77,254.95,304.17
