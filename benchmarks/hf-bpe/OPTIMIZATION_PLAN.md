@@ -141,3 +141,7 @@ F screen D/F完整签名一致。D prepare11.472/commit6.362/merge19.276/init9.4
 自动向量化候选G1（branch bpe/read-phase, parent DEc8702374）：只为融合prepare的读阶段通过 &mut [C] 建立普通 &[u16/u32]，Slot私有associated Read类型和read_phase方法；Atomic实现使用当前Rust1.98安全标准库get_mut_slice，不写unsafe cast。pool.prepare join完成后普通view已释放，后续apply仍Atomic共享写/同屏障。初始化、AA fallback、delta/出生/commit算法不改；单独评估prepare、其余模块只描述实际观测。此候选要求Rust>=1.98；当前工具链满足，仓库没有显式更低MSRV声明。
 
 G2（branch bpe/prepare-blocks, parent G1）只重组融合prepare过滤：每worker复用固定128位置的端点/valid数组，逐块收集端点（保留left失败时跳过right读取），用普通slice zip循环计算valid mask，再按原posting顺序查询权重/selected并更新输出。纯比较循环不含atomic/hash/Vec.push/错误退出，可由LLVM成本模型自动向量化；新增短暂固定栈缓冲与第二遍mask消费必须全部计入prepare，是否更快由实测决定。不写intrinsics、不强制vector-width，不改变target-cpu。完整差分与静态阶段借用/顺序审查并行处理；构建完立即安排DE/G1/G2各一次筛选，在计时中只做静态检查。
+
+用户再次收窄：真正SIMD小kernel不是优先级。已取消拟议mask标量/向量微基准（未实现、未运行），停止G1/G2推进。三对G2/DE prepare中位比1.0195、elapsed1.0018、方向混合，未有稳定收益。选择DE为当前基点。正在做一次DE32MiB perf定位，绝不从出现几条SIMD指令猜整个12秒热块的收益。
+
+候选H仅在profiling支持后实施：WeightLookup新增每256位置桶的保守'全部weight=1'位图，额外约100KiB。默认所有桶为one，再按previous_weight和每个pivot interval将weight!=1覆盖的桶清除；混合桶沿用原目录精确搜索。有效位置weight1的桶直接return1，省pivot/weights随机访问。这是同一权重查询模块，两个读者为初始radix group和融合prepare；build时间/bytes、桶覆盖计入，不改变频率、语料/selected、批次/出生/commit。源码与证书包括empty、zero、gapped、重复pivot、256边界、末桶与超大weight；新增stats one_buckets/total_buckets只是空间覆盖，不误称实际query命中率。若DE profile显示它不是大头，不机械实现此候选。

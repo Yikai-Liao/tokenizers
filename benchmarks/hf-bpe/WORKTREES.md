@@ -79,3 +79,5 @@ count4 对应初始化4线程；atomic 还需 `--atomic-corpus`。输入、工�
 新增独立posting候选：`/root/code/tokenizers-worktrees/posting-bulk`，分支 `bpe/posting-bulk`，提交 `35eaf03c`；新增组合：`/root/code/tokenizers-worktrees/radix-posting-bulk`，分支 `bpe/radix-posting-bulk`，提交 `c8702374`。前者只改B2的commit bulk写入；后者在D上同时用bulk写入初始posting安装及commit。测试/关键计时结果将更新完整组合报告。
 
 局部singleton birth候选：`/root/code/tokenizers-worktrees/singleton-birth`，分支 `bpe/singleton-birth`，提交 `4a2f148a`，从D `d15c18cc`派生，不含bulk候选E。仅flat prepare/delta出生记录及commit消费变化，Group维持16B，初始化不变。验证/计时待完成。E/DE保留复现，但不再推荐继续叠加E。
+
+后续候选：F `singleton-birth/bpe/singleton-birth/4a2f148a`，46测试及复核通过，screen prepare/commit回退，不推荐；DE+F `singleton-birth-bulk/bpe/singleton-birth-bulk/7504cbfd`仅源码，不构建/计时。G1 `read-phase/bpe/read-phase/cbb935b2`，47测试通过；G2 `prepare-blocks/bpe/prepare-blocks/2f238505`，48测试通过、实际自动向量化mask，但三对未有稳定收益。G1/G2要求Rust>=1.98。当前推荐DE `radix-posting-bulk/bpe/radix-posting-bulk/c8702374`。

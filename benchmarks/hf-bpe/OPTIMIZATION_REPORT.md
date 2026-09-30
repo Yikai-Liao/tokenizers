@@ -1,12 +1,34 @@
-# BPE 热点优化：并行构造与融合查询
+# BPE 热点优化与完整组合选型
 
 ## 当前完整组合选型
 
-C/B2三组交错配对已完成，主指标端到端支持选择 **B2 `a0832c48`**：train中位42.887→34.942秒，feed+train elapsed47.701→38.965秒；B2每组均更快。样本CV分别为C train4.46%/B2 0.85%，elapsed4.21%/0.47%。三组配对的中位B2/C比例为train0.815、elapsed0.817、merge0.699。不是按历史单次最小值选型。
+当前推荐 **DE `c8702374`**：基础endpoint/owner/posting/batch/pool，C直接语料构造，B2融合与查询目录，D初始radix，以及E批量posting安装/commit。512MiB中文none/50k/min2、u32、4线程原接口。B2/D/DE三个循环块复测，DE每块均胜B2；train中位31.332秒、elapsed35.493秒，配对中位比例0.8715/0.8840，sample CV6.91%/6.10%。详细运行见 [三组合报告](results/optimization-radix-combination-stability.summary.md)。
 
-共同pre-write准备定义为C plan+delta、B2 plan+delta+目录构建，中位18.928→12.124秒；fused_prepare已经在delta中，不再次相加。详细每对数据与方差见 [组合稳定性](results/optimization-combination-stability.summary.md)。三组样本用于解决本轮单次选型问题，不刻画尾部总体分布。B/B2另三组只保留作失败修复的诊断，不决定最佳组合。
+B2和D的train中位35.952/35.442秒；D完整初始化11.058→9.147秒有明确改善，端到端逐组0.8501/1.0065/1.0002并未稳定胜B2。DE初始posting安装中位0.624秒（D0.931）；commit跨组会换号，不能把整个train差值都归因bulk。归因的限制不妨碍根据完整数据推进DE。
 
-[OPTIMIZATION_CATALOG.md](OPTIMIZATION_CATALOG.md)列出全部优化与可叠加/依赖/替代关系。当前从B2继续初始radix计数候选D `d15c18cc`，不把当前最优当作全局最优或结束点。
+随后G2的自动向量化尝试：与DE三对的prepare比中位1.0195、elapsed比中位1.0018，未有稳定收益，停止推进。F单例出生的两个直接模块也在screen回退，停止推进；未把未改init变快算作F/G的收益。当前正在定位DE剩余大块prepare成本，自动SIMD只作为可能手段，不按是否出现向量指令选方案。见 [自动向量化检查](AUTO_VECTORIZATION.md)。
+
+### 相比建立worktree制度之前
+
+之前同512MiB/4线程的u16 corpus、u32 posting train56.430秒，当前DE三次中位31.332秒：历史观测少44.5%、快1.80倍；旧RSS3.005GiB、现在约4.43GiB。输入与模型签名一致，但ID宽度和测量时间改变，因此不是严格同期隔离加速比。统一u32后最早count4 train54.760秒，相比DE观测少42.8%、快1.75倍。
+
+### 当前剩余热点（上述三组合样本中位）
+
+| DE阶段 | 秒 |
+|---|---:|
+| prepare（包含在delta中） | 11.880 |
+| owner commit | 5.955 |
+| 初始分组/权重频率 | 2.907 |
+| 初始radix排序 | 1.902 |
+| 初始route（含compact） | 1.478 |
+| corpus构造 | 1.110 |
+| 初始posting安装 | 0.624 |
+
+prepare与commit仍占merge大头。DE/G2同期的DE prepare中位11.330秒，绝对值有波动；优先优化每有效posting上的查询/索引管理。全部source与组合依赖在 [OPTIMIZATION_CATALOG.md](OPTIMIZATION_CATALOG.md)。
+
+## 历史C/B2选型
+
+C/B2三对train中位42.887→34.942秒、elapsed47.701→38.965秒，B2每对胜出，成为后续D/E的parent。共同pre-write定义为C plan+delta、B2 plan+delta+目录构建，中位18.928→12.124秒，fused_prepare不再与delta相加。见 [C/B2组合稳定性](results/optimization-combination-stability.summary.md)。失败B与B2比较只作诊断。
 
 ## 首轮单次记录
 
@@ -64,7 +86,7 @@ A最初同样有一次merge变慢，而原版/A同期诊断merge29.810/29.756秒
 
 ## 内存与正确性
 
-全部native的初始化核心容量仍相同：slots824,359,780字节、length166,056字节、词权重25,165,824字节、posting1,147,872,496字节，另有owner哈希表/heap。它不是进程RSS，空间口径沿用 [MEMORY_LAYOUT.md](MEMORY_LAYOUT.md)。
+历史A/C/B/B2的初始化核心容量相同：slots824,359,780字节、length166,056字节、词权重25,165,824字节、posting1,147,872,496字节，另有owner哈希表/heap。它不是进程RSS，空间口径沿用 [MEMORY_LAYOUT.md](MEMORY_LAYOUT.md)。
 
 C的alphabet临时数组11.57MiB、字符直接表4.25MiB，构造返回后释放；无第二份完整corpus。B2在merge常驻权重目录3,220,160字节（3.07MiB），建立11.784ms；每批selected表峰值800,128字节（0.76MiB），有效起点缓冲峰值17,301,504字节（16.50MiB）。后两项按分配capacity计，不包含allocator开销。RSS实测仍约3.39GiB。
 
@@ -90,4 +112,4 @@ python3 run_native_fair.py --case fused-lookup-reproduction \
 
 每次environment JSON锁定实际worktree源码、临时探针副本、runner/Cargo.lock、二进制、输入和脚本hash；probe只在原do_train返回前输出私有统计。实际调用原train_vocab，未增加公有Trainer选算法API。计时原始数据与阶段解释见 [C结果](results/optimization-c-512.summary.md)、[B结果](results/optimization-b-512.summary.md)、[B2结果](results/optimization-b2-512.summary.md)。旧PR/native公平四项见 [PARALLEL_REPORT.md](PARALLEL_REPORT.md)。
 
-当前推荐完整B2组合，并继续初始计数D。失败B的比较仅作诊断，完整组合用C/B2三组配对选型；不追加Atomic对照或宽度/线程矩阵。下一轮若继续，应集中在初始pair计数或owner commit，先按源码确定访问/分配热点再改；当前没有证据选择更具体的实现。
+当前推荐完整DE组合，当前大块prepare诊断继续进行。失败B的比较仅作诊断，完整组合用C/B2三组配对选型；不追加Atomic对照或宽度/线程矩阵。下一轮若继续，应集中在初始pair计数或owner commit，先按源码确定访问/分配热点再改；后续以实际热点和改变模块的公平计时选型。
