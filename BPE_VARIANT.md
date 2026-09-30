@@ -43,3 +43,7 @@ and tested. Alphabet temporary arrays and ID table capacity are measured separat
 ## 融合候选
 
 flat 非AA Atomic 批次按规则/位置连续分工，一次只读遍历完成校验与邻边 delta，保存4字节有效位置；所有读取 join 后并行共享 Atomic 写入。AA、多块及非原子配置保持旧路径。出生key唯一规则生产者与任务次序维持 posting 有序；提交阶段加 debug 验证。计时 fused_prepare_ms 同时覆盖 filter/delta，不能直接和旧 delta_ms 比较。
+
+## B2 查询热点
+
+从融合B派生，权重查询增加每256位置一个u32 pivot下界目录，桶内精确查询；selected边界增加head/tail直接表，重复符号通过小哈希表回退。字母表/语料构造、初始pair计数、选择和提交算法均保持父版本。目录在初始化结束后、merge计时中创建一次，内存单列统计；Selected是每批临时表。

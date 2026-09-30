@@ -3,6 +3,116 @@
 //! birth key's unique producer also supplies ordered positions across jobs.
 use super::*;
 
+// Directory narrows a spatial lookup to at most 256 word boundaries. This
+// restores cheap weight queries when different rules visit sparse positions.
+pub(super) struct WeightLookup {
+    bounds: Vec<u32>,
+}
+impl WeightLookup {
+    pub(super) fn new<O: Offset, const INLINE: usize>(
+        block: &Block<O, INLINE>,
+        slots: usize,
+    ) -> Self {
+        debug_assert_eq!(block.base, 0);
+        let mut bounds = Vec::with_capacity(slots.div_ceil(256) + 1);
+        let mut pivot = 0;
+        for bucket in 0..=slots.div_ceil(256) {
+            let before = (bucket * 256).min(slots);
+            while pivot < block.pivots.len() && (block.pivots[pivot] as usize) < before {
+                pivot += 1;
+            }
+            bounds.push(u32::try_from(pivot).expect("flat pivot count fits u32"));
+        }
+        Self { bounds }
+    }
+    pub(super) fn bytes(&self) -> usize {
+        self.bounds.capacity() * 4
+    }
+    fn weight<O: Offset, const INLINE: usize>(&self, block: &Block<O, INLINE>, p: u32) -> u64 {
+        let bucket = p as usize / 256;
+        let start = self.bounds[bucket] as usize;
+        let end = self.bounds[bucket + 1] as usize;
+        let pivot = start + block.pivots[start..end].partition_point(|&q| q <= p);
+        if pivot == 0 {
+            block.previous_weight
+        } else {
+            block.weights[pivot - 1]
+        }
+    }
+}
+
+const EMPTY: u64 = u64::MAX;
+const MULTIPLE: u64 = u64::MAX - 1;
+struct Selected {
+    heads: Vec<u64>,
+    tails: Vec<u64>,
+    multiple: AHashMap<u64, u32>,
+}
+impl Selected {
+    fn new(rules: &[Rule], identities: usize) -> Self {
+        let mut heads = vec![EMPTY; identities];
+        let mut tails = vec![EMPTY; identities];
+        let mut multiple = AHashMap::new();
+        for r in rules {
+            let head = &mut heads[r.edge.0 as usize];
+            *head = if *head == EMPTY {
+                key(r.edge.1, r.replacement)
+            } else {
+                MULTIPLE
+            };
+            let tail = &mut tails[r.edge.1 as usize];
+            *tail = if *tail == EMPTY {
+                key(r.edge.0, r.replacement)
+            } else {
+                MULTIPLE
+            };
+        }
+        for r in rules {
+            if heads[r.edge.0 as usize] == MULTIPLE || tails[r.edge.1 as usize] == MULTIPLE {
+                multiple.insert(key(r.edge.0, r.edge.1), r.replacement);
+            }
+        }
+        Self {
+            heads,
+            tails,
+            multiple,
+        }
+    }
+    fn bytes(&self) -> usize {
+        (self.heads.capacity() + self.tails.capacity()) * 8
+            + table_bytes(self.multiple.capacity(), 16)
+    }
+    fn left_selected<C: Slot>(&self, corpus: &[C], before: usize, prior: u32) -> bool {
+        let tail = self.tails[prior as usize];
+        if tail == EMPTY {
+            return false;
+        }
+        let previous = corpus[before - 1].token();
+        if tail == MULTIPLE {
+            self.multiple.contains_key(&key(previous, prior))
+        } else {
+            (tail >> 32) as u32 == previous
+        }
+    }
+    fn final_next<C: Slot>(&self, corpus: &[C], after: usize, next: u32, lengths: &[usize]) -> u32 {
+        let head = self.heads[next as usize];
+        if head == EMPTY {
+            return next;
+        }
+        let following = corpus[after + lengths[next as usize]].token();
+        if head == MULTIPLE {
+            self.multiple
+                .get(&key(next, following))
+                .copied()
+                .unwrap_or(next)
+        } else if (head >> 32) as u32 == following {
+            head as u32
+        } else {
+            next
+        }
+    }
+}
+
 struct Task<'a> {
     rank: usize,
     positions: &'a [u32],
@@ -15,6 +125,7 @@ pub(super) struct Prepared<O: Offset, const INLINE: usize> {
     valid: Vec<Vec<Valid>>,
     pub(super) outputs: Vec<Output<O, INLINE>>,
     pub(super) valid_bytes: usize,
+    pub(super) selected_bytes: usize,
 }
 
 pub(super) fn prepare<C: Slot, O: Offset, const INLINE: usize>(
@@ -24,15 +135,13 @@ pub(super) fn prepare<C: Slot, O: Offset, const INLINE: usize>(
     block: &Block<O, INLINE>,
     lengths: &[usize],
     uniform: Option<u64>,
+    weight_lookup: Option<&WeightLookup>,
     max_length: usize,
     workers: usize,
 ) -> Result<Prepared<O, INLINE>> {
     debug_assert!(C::SHARED);
     debug_assert!(rules.iter().all(|r| r.edge.0 != r.edge.1));
-    let selected: AHashMap<u64, u32> = rules
-        .iter()
-        .map(|r| (key(r.edge.0, r.edge.1), r.replacement))
-        .collect();
+    let selected = Selected::new(rules, lengths.len());
     let total: usize = postings.iter().map(SmallPosting::len).sum();
     let chunk = total.div_ceil(workers).max(1);
     // Each job owns one route set, even when a batch contains many tiny rules.
@@ -74,15 +183,19 @@ pub(super) fn prepare<C: Slot, O: Offset, const INLINE: usize>(
                     }
                     positions.push(position);
                     let after = right + rule.right_len;
-                    let weight = block.weight_forward(p, uniform, &mut cursor);
+                    let weight = if let Some(weight) = uniform {
+                        weight
+                    } else if let Some(lookup) = weight_lookup {
+                        lookup.weight(block, position)
+                    } else {
+                        block.weight_forward(p, None, &mut cursor)
+                    };
                     let prior = corpus[p - 1].token();
                     if prior != NONE {
                         let before = p - lengths[prior as usize];
-                        let previous = corpus[before - 1].token();
                         // If the left neighbor is itself selected, its right delta
                         // accounts for this boundary using the final two outputs.
-                        let left_selected =
-                            previous != NONE && selected.contains_key(&key(previous, prior));
+                        let left_selected = selected.left_selected(corpus, before, prior);
                         if !left_selected {
                             output.remove(key(prior, rule.edge.0), weight);
                             if lengths[prior as usize] + rule.length() < max_length {
@@ -93,12 +206,7 @@ pub(super) fn prepare<C: Slot, O: Offset, const INLINE: usize>(
                     let next = corpus[after].token();
                     if next != NONE {
                         output.remove(key(rule.edge.1, next), weight);
-                        let following = corpus[after + lengths[next as usize]].token();
-                        let final_next = if following == NONE {
-                            next
-                        } else {
-                            selected.get(&key(next, following)).copied().unwrap_or(next)
-                        };
+                        let final_next = selected.final_next(corpus, after, next, lengths);
                         if rule.length() + lengths[final_next as usize] < max_length {
                             output.birth(key(rule.replacement, final_next), p, weight, 32)?;
                         }
@@ -124,6 +232,7 @@ pub(super) fn prepare<C: Slot, O: Offset, const INLINE: usize>(
         valid,
         outputs,
         valid_bytes,
+        selected_bytes: selected.bytes(),
     })
 }
 
@@ -149,5 +258,25 @@ impl<O: Offset, const INLINE: usize> Prepared<O, INLINE> {
                 }
             }
         });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn bucket_weights_match_full_search_before_on_and_between_pivots() {
+        let mut block = Block::<u32, 2>::new(0, 17);
+        block.pivots = vec![1, 2, 255, 256, 257, 511, 1023, 2048, 8191];
+        block.weights = vec![2, 3, 5, 7, 11, 13, 19, 23, 29];
+        let lookup = WeightLookup::new(&block, 10000);
+        for p in 0..10000 {
+            assert_eq!(lookup.weight(&block, p as u32), block.weight(p, None));
+        }
+        let empty = Block::<u32, 2>::new(0, 37);
+        let lookup = WeightLookup::new(&empty, 10000);
+        for p in [0, 255, 256, 9999] {
+            assert_eq!(lookup.weight(&empty, p), 37);
+        }
     }
 }

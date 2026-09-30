@@ -816,6 +816,11 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
     let mut merges = Vec::new();
     #[cfg(test)]
     let mut trace = Vec::new();
+    let lookup_begin = Instant::now();
+    let weight_lookup = (flat && C::SHARED && uniform.is_none())
+        .then(|| fused_batch::WeightLookup::new(&blocks[0], corpus.len()));
+    stats.weight_lookup_build_ms = lookup_begin.elapsed().as_secs_f64() * 1000.0;
+    stats.weight_lookup_bytes = weight_lookup.as_ref().map_or(0, |l| l.bytes());
     while ids.len() < trainer.vocab_size {
         let stage = Instant::now();
         let cap = config.batch_size.min(trainer.vocab_size - ids.len());
@@ -921,11 +926,15 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
                     &blocks[0],
                     &lengths,
                     uniform,
+                    weight_lookup.as_ref(),
                     max_length,
                     config.workers,
                 )
             })?;
             stats.fused_batches += 1;
+            stats.peak_selected_lookup_bytes = stats
+                .peak_selected_lookup_bytes
+                .max(prepared.selected_bytes);
             stats.peak_valid_start_bytes = stats.peak_valid_start_bytes.max(prepared.valid_bytes);
             let elapsed = stage.elapsed().as_secs_f64() * 1000.0;
             // Filter and neighbor deltas share this phase in the fused path.
