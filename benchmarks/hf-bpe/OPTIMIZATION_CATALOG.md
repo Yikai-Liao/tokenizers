@@ -30,8 +30,8 @@
 | M2 | flat非AA过滤/delta一遍融合，无全局16字节Plan排序 | merge prepare | B首版失败；B2保留融合但修正查询 | 依赖P2证书、共享Atomic端点写与出生顺序；M3/M4使组合有效 |
 | M3 | 每256位置一个pivot目录，桶内权重精确查询 | 稀疏weight查询 | B2 `a0832c48`，3.07MiB | 与M2可叠加；可复用到I6；也可适配M1远跳，但该组合未测 |
 | M4 | selected head/tail按ID直接表，重复符号小hash回退 | 同批最终邻居查询 | B2 | 与M2耦合；原有序Plan可直接看相邻Plan，无需叠加此表 |
-| I6 | 初始pair/位置按owner稳定radix排序，连续分组频率，精确预留posting；低频先过滤再建map | 初始count及posting分配 | D `d15c18cc` 已实现，测试/构建中 | 替代I1的逐位置哈希计数；复用I2–I5和M3，与C或B2 merge理论兼容 |
-| M5 | 预留posting批量逆序直填，省push检查与后续reverse | owner commit；组合D时也影响初始posting install | 候选E实现中 | 与I6正交；共同SmallPosting接口，组合仍须端到端测量 |
+| I6 | 初始pair/位置按owner稳定radix排序，连续分组频率，精确预留posting；低频先过滤再建map | 初始count及posting分配 | D `d15c18cc`，45tests/复核通过；screen train33.265s、RSS4.43GiB，稳定收益待组合确认 | 替代I1的逐位置哈希计数；复用I2–I5和M3，与C或B2 merge理论兼容 |
+| M5 | 预留posting批量逆序直填，省push检查与后续reverse | owner commit；组合D时也影响初始posting install | E `35eaf03c`，DE `c8702374` 已实现，测试/构建中 | 与I6正交；共同SmallPosting接口，组合仍须端到端测量 |
 
 AtomicU32是M2共享引用写入的实现条件，本轮不再当作一个独立速度优化点重复计时。u32与AtomicU32槽位大小相同已核对。原Plan使用split_at_mut独占区间；融合使用prepare join→独立Atomic writes join→commit的屏障，两种调度策略互为替代。
 
@@ -39,7 +39,7 @@ AtomicU32是M2共享引用写入的实现条件，本轮不再当作一个独立
 
 | 优化点 | 适用范围/关系 | 状态与优先级 |
 |---|---|---|
-| owner commit减少临时born map/二次hash，复用route/group结构 | 与I6及C/B2初始化兼容；须保留全worker阈值聚合和posting有序 | commit约6–8秒。下一具体候选：预留posting按出生链逆序直接填最终区间，省逐node push的标签/容量检查及填完再reverse；D安装初始posting也可复用批量填充，候选E正在实现/验证。 |
+| owner commit减少临时born map/二次hash，复用route/group结构 | 与I6及C/B2初始化兼容；须保留全worker阈值聚合和posting有序 | commit约6–8秒。下一具体候选：预留posting按出生链逆序直接填最终区间，省逐node push的标签/容量检查及填完再reverse；D安装初始posting也可复用批量填充，E/DE已实现，正在验证。 |
 | route/node/有效起点容量复用 | 可与M2/M3/M4共存；保留容量可能抬高常驻RSS | 待profiling确认实际分配热点，不先造框架 |
 | M1远跳使用M3目录 | C排序Plan查询策略的局部替换 | 尚未实现/测量；若B2端到端胜出暂不展开旧路径新组合 |
 | u16 corpus完整ID域证明 | 与u32 posting地址独立，限制完整可能ID域及separator | 已有原型和测试；当前公平工作集固定u32，不重开宽度矩阵 |
@@ -77,3 +77,14 @@ I6分支实现已从B2 `a0832c48` 派生，提交 `d15c18cc`，初始pair key可
 2. **同步推进：I6初始pair计数候选D**。父组合保持固定，只换initial count；差分与性能并行处理，测完整初始化（新增route/sort不漏计）和端到端。
 3. **随后集中：owner commit**。先确认剩余热点和明确访问成本，选一个具体候选；不平铺实现理论上所有方案。
 4. 最后汇总最优有效组合及固定commit。组合兼容关系与收益证据分开记录；端到端稳定收益优先，慢组合保留原因但不推荐。
+
+## 当前具体组合与尚未确认的关系
+
+| 组合 | 组成差异 | 当前证据 |
+|---|---|---|
+| B2 `a0832c48` | 基础优化+I2–I5+M2–M4 | C/B2三对端到端胜出，train median34.942s |
+| D `d15c18cc` | B2把I1替换为I6 | 单次33.265s，内存4.43GiB；待稳定选型 |
+| E `35eaf03c` | B2+M5，应用在commit | 源码独立，测试/计时待完成 |
+| DE `c8702374` | D+M5，应用在install及commit | 源码组合，测试/计时待完成 |
+
+D与E从共同数据接口看可组合，DE明确应用同一个bulk方法于两个调用点；实际收益可能共享cache/分配效应，不把D筛选的差值与E差值简单相加。选择依据是组合完整端到端及资源约束。

@@ -186,3 +186,9 @@ C选作B起点；从C分叉Atomic控制27dc7fd0保留旧Plan算法，融合候�
 用户纠正：B是失败方案，以B比较不能选最快组合。已完成B/B2三组只留作查询修复诊断（prepare median22.301/11.704秒，CV5.62/3.91%），不作为最终竞争基线。随后C/B2三组交错实际比较端到端，B2每组train/elapsed/merge都更快；train median42.887/34.942秒、CV4.46/.85%，elapsed median47.701/38.965秒、CV4.21/.47%。配对中位比例train.815、elapsed.817、merge.699；等价prewrite median18.928/12.124秒（B2目录建立含在内，fusedprepare不另加）。签名全一致，VmSwap0。现在选B2作为当前完整组合，取代按历史单点选择C。见 [组合稳定性](results/optimization-combination-stability.summary.md)。
 
 用户明确最终目标为发现多个可组合优化并选稳定最快端到端。已提交 [完整清单](OPTIMIZATION_CATALOG.md)，标注正交/依赖/互斥、未融合项、配置条件、失败项和下一队列。测量期间同步编写初始计数D：稳定radix分组替代逐边hash、低频先裁剪、精确预留posting和owner表，公开ID/位置仍u32；从B2分叉d15c18cc。新增route/sort成本、约3.03GiB record+scratch临时量全部计入，性能待测；不能只比较省掉的hash工作。后续具体候选是批量posting填充，省每node push检查和再次reverse，可能同时作用于D安装与owner commit；先保持热点集中。
+
+## 2026-10-01 初始计数D筛选与正交posting组合
+
+D `d15c18cc` 完整45项测试与独立审查通过，固定512MiB screening：train33.265/init9.617/merge19.267秒，route2.563、sort2.045、group2.683、posting install1.037秒，initial count包括后3项及释放共5.764秒。稳定B2 train34.942秒作为当前已证快组合；D单次差距不充分确证更快，继续组合后同期验证。内存暂态成本兑现：RSS4.43GiB、最低可用3.39GiB、VmSwap0；最终posting从1147.872MB到802.968MB、owner估计从276.824MB到138.412MB，corpus不变。重复initial/merge weight_lookup_bytes是同一分配，不能相加。见 [D报告](results/optimization-d-512.summary.md) 和 [初始化审查](INITIAL_RADIX_REVIEW.md)。
+
+同步实现E `35eaf03c`：只在flat commit已预留posting的suffix倒序直接填，len全部初始化后一次发布；由SmallPosting私有模块封装容量/内联/heap/panic所有权。D与E可组合；DE `c8702374` 使用同方法从初始record尾部填sorted posting，再用于commit。明确改动模块为install与commit，而原子、alphabet/构造、radix频率、prepare/rewrite不再改。候选分别有worktree/commit，性能和正确性复核并行。

@@ -20,7 +20,7 @@ worktree 均位于 `/root/code/tokenizers-worktrees/`。以下提交可直接 ch
 | `corpus-direct-atomic` | `bpe/corpus-direct-atomic` | `27dc7fd0` | C初始化，原Plan算法，只改Atomic入口 | 按用户要求取消计时 |
 | `fused-direct-atomic` | `bpe/fused-direct-atomic` | `c1ee2019` | B：C初始化，flat非AA过滤/delta融合、有效起点写入 | 回退：49.697秒训练、31.887秒merge |
 | `fused-lookup` | `bpe/fused-lookup` | `a0832c48` | B2：融合B增加稀疏权重目录与selected直接表 | C/B2配对胜出，train median34.942秒 |
-| `initial-radix` | `bpe/initial-radix` | `d15c18cc` | D：B2合入初始pair稳定radix计数与精确posting预留 | 构建/测试中，待关键计时 |
+| `initial-radix` | `bpe/initial-radix` | `d15c18cc` | D：B2合入初始pair稳定radix计数与精确posting预留 | 45项测试/复核通过，screen train33.265秒 |
 | `corpus-atomic` | `bpe/corpus-atomic` | `082d2811` | 早先A初始化Atomic控制起点 | 未计时，保留历史候选 |
 | `fused-batch-atomic` | `bpe/fused-batch-atomic` | `082d2811` | 早先A融合候选空起点 | 未实现，后续改用C parent |
 
@@ -75,3 +75,5 @@ count4 对应初始化4线程；atomic 还需 `--atomic-corpus`。输入、工�
 新增候选保持统一u32/32、4线程初始化与merge、batch256，原接口服从相同parallelism控制。A/C没有修改merge源码；C的字母表None按存在集合并行统计、Some沿用原裁剪。B修改flat非AA的filter/plan/delta/rewrite组织；AA、多块及非空affix保留原路径，owner提交接受按唯一规则生产者生成的有序posting。融合源码没有修改初始化模块。
 
 本轮计划与变更范围见 [OPTIMIZATION_PLAN.md](OPTIMIZATION_PLAN.md)，原始数据位于 `results/optimization-*`，独立审查见 [CORPUS_DIRECT_REVIEW.md](CORPUS_DIRECT_REVIEW.md)。新增Atomic对照已取消，不展开矩阵。
+
+新增独立posting候选：`/root/code/tokenizers-worktrees/posting-bulk`，分支 `bpe/posting-bulk`，提交 `35eaf03c`；新增组合：`/root/code/tokenizers-worktrees/radix-posting-bulk`，分支 `bpe/radix-posting-bulk`，提交 `c8702374`。前者只改B2的commit bulk写入；后者在D上同时用bulk写入初始posting安装及commit。测试/关键计时结果将更新完整组合报告。

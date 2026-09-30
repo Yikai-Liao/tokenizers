@@ -114,3 +114,6 @@ B `c1ee2019` 正确性通过，但512MiB实测prepare22.858、merge31.887、trai
 D计时期间同步推进E，分支 `bpe/posting-bulk` 从已选B2派生。当前flat owner commit逐node调用SmallPosting::push，再反转刚写区间；已精确知道每个group的occurrences和最终reserved capacity。新增私有bulk接口，先一次验证len/capacity，将链从head读取并倒序直接填入最终区间，全部初始化后才发布新len。scope仅已预留posting，保留原push供普通增量/初始哈希计数。
 
 E影响owner commit，不改变规则选择、频率聚合、出生准备、语料写入或初始化计数。与D兼容；若D胜出，在D安装初始posting时也用同一bulk接口从record尾部读，省逐位置push，组合DE影响posting安装及commit两个模块。heap/inline边界、追加、部分panic后len与allocation有效性必须验证。只做有希望组合的关键测量，最终与当前最快端到端组合配对，不展开2^N组合枚举。
+
+- D `d15c18cc` 完整45项测试通过，独立复核通过，原接口512MiB screening train33.265/init9.617/merge19.267秒。新增route2.563秒（compact1.327），sort2.045/group2.683/install1.037秒，初始count整段5.764秒；这些成本已包含在完整初始化，非只挑hash子项。RSS4.43GiB、最低可用3.39GiB、VmSwap0，完整模型签名一致。最终posting802,967,868B、owner表138,412,096B，corpus849,691,660B不变；count3仍heap最小4槽。单次约5%全训改善仅作候选筛选，尚不替换稳定B2。
+- E已独立提交 `35eaf03c`（B2+bulk commit），DE组合提交 `c8702374`（D+同接口bulk commit/install），分别worktree `posting-bulk`/`radix-posting-bulk`。构建和测试中，独立review只检查bulk内存发布、panic、反向顺序及两个调用；复用已有D/B2协议。固定当前组合B2，比较E与DE的完整工作后，只给有希望的组合做稳定端到端确认。
