@@ -102,3 +102,9 @@ B `c1ee2019` 正确性通过，但512MiB实测prepare22.858、merge31.887、trai
 用户要求“改哪个模块，评估哪个模块”，并指出单次运行可能方差很高。此前B2 vs C merge及全训只描述整版观察，不作为查询模块的隔离证据。本次查询模块公平控制为B `c1ee2019` 与B2 `a0832c48`：相同C初始化、AtomicU32、filter/delta融合、写入协议、owner commit，只改变权重/selected查询和一次目录建立。
 
 追加三组交错关键比较，顺序B→B2、B2→B、B→B2，固定同一512MiB和全部配置。只用prepare中位数、范围、sample CV及逐组差值评估query改动；B2目录建立时间/内存另计。初始化与whole-train作为观察数据保存，不解释为查询影响。每项记录并发活动、CPU/fault/RSS/换页与来源，签名一致方能纳入。三个样本用于检查明显不稳定，不声称刻画尾延迟或建立可靠总体分布。完成后若模块收益各组都明确，不继续增加运行或矩阵。
+
+## 最终目标修正：最佳端到端组合
+
+用户指出B是失败方案，B/B2的改善无法证明最佳组合；已完成记录仅作诊断。正在进行C/B2三组交错端到端比较，主指标完整train与feed+train elapsed，模块等价prepare用于解释。用户要求不干等，已整理 [OPTIMIZATION_CATALOG.md](OPTIMIZATION_CATALOG.md)，列出已合入、未组合、正交/依赖/替代关系和下一队列。
+
+下一初始计数候选D从B2 `a0832c48` 分叉 `bpe/initial-radix`。当前owner初始化逐边hash并增长posting，约8–12秒。计划在flat且初始canonical ID可编码为两个u16时，用8字节(pair code, u32 position)记录稳定radix分组，先精确计数/剪枝，再一次预留最终posting和owner表；记录增加的route/sort成本与临时内存，不单独挑计数子阶段。其它配置fallback旧count，公开语料/地址仍u32。与构造和merge算法可叠加；构建与计时分别安排，正确性复核与计时并行。代码推进与C/B2测量同步，本段计时期间仅编辑源码，不编译。
