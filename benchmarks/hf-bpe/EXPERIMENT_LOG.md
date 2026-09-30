@@ -133,3 +133,13 @@ PR初始化是special/alphabet/tokenize/count四阶段和，阶段边界与nativ
 alphabet频率统计也可按worker局部表归并，再保留原字符排序及canonical ID分配步骤。有限limit_alphabet的同频裁剪继承HF哈希遍历细节，改变归并顺序可能改变边界保留字符，必须保持现有行为或对此配置保留既有初始化。非空affix走generic串行路径，其装饰token可能在遍历中新增ID，不把它直接纳入上述并行填充方案。
 
 这项方案尚未实现或测量。优先拆分alphabet、capacity与填充计时；优化后核对实际N/E、权重、vocab与完整merges签名，重新记录初始化时间和RSS。
+
+## 2026-09-30：候选A并行构造已实现并测量
+
+计划先提交 `832bf4c9`，候选worktree `/root/code/tokenizers-worktrees/corpus-parallel`、branch `bpe/corpus-parallel`，源码提交 `98ca7fc1`，parent `b6a28768`。新的私有corpus模块冻结原词遍历顺序，按连续词块计长、前缀和分割最终数组、独占并行填充；以局部bitset归并初始ID活跃标记，按词序重建跨块权重。alphabet与canonical分配保持原逻辑，affix走generic原路径。
+
+40项既有库测试和1项新增构造边界测试通过；独立只读审查无阻塞，详见 [CORPUS_PARALLEL_REVIEW.md](CORPUS_PARALLEL_REVIEW.md)。构造依然先串行default初始化最终数组，fill子计时含边界与长度元数据归并；新增临时元数据按词数及regions×ID位图增长，没有额外4N语料副本。
+
+GPT-6 Luna完成一项512MiB关键计时，四个新增计时字段强校验通过。alpha2.322秒、区域测量0.228秒、最终数组分配0.876秒、并行填充及归并2.371秒；tokenize合计5.799秒，初始化16.090秒、merge33.964秒、train55.207秒、RSS3.397GiB、最低MemAvailable4.257GiB、进程VmSwap采样0，系统pswpin147页/pswpout10,164页。core槽/posting容量及四项模型签名均与基线一致，完整来源在 [optimization-a-512.summary.md](results/optimization-a-512.summary.md)。
+
+结论：相对旧非原子4线程版本，tokenize约2.25×，整个初始化约1.43×；但merge从27.457升至33.964秒，整次训练略慢0.82%。merge算法源码未变，差异原因尚未隔离，不能只报局部加速便宣称整次获益。A暂保留候选，下一步从它派生匹配Atomic控制与融合候选，测量实际组合效果。
