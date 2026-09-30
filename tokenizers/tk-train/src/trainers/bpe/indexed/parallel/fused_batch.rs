@@ -2,6 +2,8 @@
 //! Jobs cover consecutive sections of (rule rank, ordered posting) so each
 //! birth key's unique producer also supplies ordered positions across jobs.
 use super::weight_lookup::WeightLookup;
+
+mod aggregate;
 use super::*;
 
 const EMPTY: u64 = u64::MAX;
@@ -89,9 +91,49 @@ pub(super) struct Prepared<O: Offset, const INLINE: usize> {
     pub(super) outputs: Vec<Output<O, INLINE>>,
     pub(super) valid_bytes: usize,
     pub(super) selected_bytes: usize,
+    pub(super) aggregate_bytes: usize,
 }
 
 pub(super) fn prepare<C: Slot, O: Offset, const INLINE: usize>(
+    corpus: &[C],
+    rules: &[Rule],
+    postings: &[SmallPosting],
+    block: &Block<O, INLINE>,
+    lengths: &[usize],
+    uniform: Option<u64>,
+    weight_lookup: Option<&WeightLookup>,
+    max_length: usize,
+    workers: usize,
+) -> Result<Prepared<O, INLINE>> {
+    // Cap per-job directory storage; this does not narrow canonical IDs.
+    if lengths.len() <= 65_536 {
+        prepare_with_mode::<C, O, INLINE, true>(
+            corpus,
+            rules,
+            postings,
+            block,
+            lengths,
+            uniform,
+            weight_lookup,
+            max_length,
+            workers,
+        )
+    } else {
+        prepare_with_mode::<C, O, INLINE, false>(
+            corpus,
+            rules,
+            postings,
+            block,
+            lengths,
+            uniform,
+            weight_lookup,
+            max_length,
+            workers,
+        )
+    }
+}
+
+fn prepare_with_mode<C: Slot, O: Offset, const INLINE: usize, const GROUPED: bool>(
     corpus: &[C],
     rules: &[Rule],
     postings: &[SmallPosting],
@@ -130,6 +172,8 @@ pub(super) fn prepare<C: Slot, O: Offset, const INLINE: usize>(
         .par_iter()
         .map(|tasks| -> Result<_> {
             let mut output = Output::new(workers, true);
+            let mut left_cache = aggregate::Scratch::new(if GROUPED { lengths.len() } else { 0 });
+            let mut right_cache = aggregate::Scratch::new(if GROUPED { lengths.len() } else { 0 });
             let mut valid = Vec::with_capacity(tasks.len());
             for task in tasks {
                 let rule = &rules[task.rank];
@@ -160,33 +204,72 @@ pub(super) fn prepare<C: Slot, O: Offset, const INLINE: usize>(
                         // accounts for this boundary using the final two outputs.
                         let left_selected = selected.left_selected(corpus, before, prior);
                         if !left_selected {
-                            output.remove(key(prior, rule.edge.0), weight);
+                            if GROUPED {
+                                left_cache.remove(prior, weight);
+                            } else {
+                                output.remove(key(prior, rule.edge.0), weight);
+                            }
                             if lengths[prior as usize] + rule.length() < max_length {
-                                output.birth(key(prior, rule.replacement), before, weight, 32)?;
+                                if GROUPED {
+                                    left_cache.birth(
+                                        &mut output,
+                                        prior,
+                                        key(prior, rule.replacement),
+                                        before,
+                                        weight,
+                                    )?;
+                                } else {
+                                    output.birth(
+                                        key(prior, rule.replacement),
+                                        before,
+                                        weight,
+                                        32,
+                                    )?;
+                                }
                             }
                         }
                     }
                     let next = corpus[after].token();
                     if next != NONE {
-                        output.remove(key(rule.edge.1, next), weight);
+                        if GROUPED {
+                            right_cache.remove(next, weight);
+                        } else {
+                            output.remove(key(rule.edge.1, next), weight);
+                        }
                         let final_next = selected.final_next(corpus, after, next, lengths);
                         if rule.length() + lengths[final_next as usize] < max_length {
-                            output.birth(key(rule.replacement, final_next), p, weight, 32)?;
+                            if GROUPED {
+                                right_cache.birth(
+                                    &mut output,
+                                    final_next,
+                                    key(rule.replacement, final_next),
+                                    p,
+                                    weight,
+                                )?;
+                            } else {
+                                output.birth(key(rule.replacement, final_next), p, weight, 32)?;
+                            }
                         }
                     }
+                }
+                if GROUPED {
+                    left_cache.flush(&mut output, rule, true)?;
+                    right_cache.flush(&mut output, rule, false)?;
                 }
                 valid.push(Valid {
                     rank: task.rank,
                     positions,
                 });
             }
-            Ok((valid, output))
+            Ok((valid, output, left_cache.bytes() + right_cache.bytes()))
         })
         .collect::<Result<Vec<_>>>()?;
     let mut valid = Vec::with_capacity(prepared.len());
     let mut outputs = Vec::with_capacity(prepared.len());
     let mut valid_bytes = 0;
-    for (v, output) in prepared {
+    let mut aggregate_bytes = 0;
+    for (v, output, bytes) in prepared {
+        aggregate_bytes += bytes;
         valid_bytes += v.iter().map(|v| v.positions.capacity() * 4).sum::<usize>();
         valid.push(v);
         outputs.push(output);
@@ -196,6 +279,7 @@ pub(super) fn prepare<C: Slot, O: Offset, const INLINE: usize>(
         outputs,
         valid_bytes,
         selected_bytes: selected.bytes(),
+        aggregate_bytes,
     })
 }
 

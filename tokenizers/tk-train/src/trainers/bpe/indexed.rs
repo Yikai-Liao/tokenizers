@@ -86,6 +86,7 @@ pub(super) struct IndexedTrainingStats {
     pub weight_bucket_count: usize,
     pub weight_one_bucket_bytes: usize,
     pub peak_selected_lookup_bytes: usize,
+    pub peak_prepare_aggregate_bytes: usize,
     pub delta_ms: f64,
     pub rewrite_ms: f64,
     pub commit_ms: f64,

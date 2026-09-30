@@ -981,6 +981,8 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
                 .peak_selected_lookup_bytes
                 .max(prepared.selected_bytes);
             stats.peak_valid_start_bytes = stats.peak_valid_start_bytes.max(prepared.valid_bytes);
+            stats.peak_prepare_aggregate_bytes = stats
+                .peak_prepare_aggregate_bytes.max(prepared.aggregate_bytes);
             let elapsed = stage.elapsed().as_secs_f64() * 1000.0;
             // Filter and neighbor deltas share this phase in the fused path.
             stats.fused_prepare_ms += elapsed;
