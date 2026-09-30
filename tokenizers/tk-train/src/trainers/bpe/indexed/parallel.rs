@@ -6,6 +6,8 @@ use super::*;
 use rayon::prelude::*;
 use std::sync::atomic::{AtomicU16, AtomicU32, Ordering as AtomicOrdering};
 
+mod corpus;
+
 trait Slot: Default + Send + Sync {
     const NARROW: bool;
     fn encode(id: u32) -> Self;
@@ -362,26 +364,36 @@ pub(super) fn train(
     let mut ids = AHashMap::with_capacity(trainer.vocab_size);
     let mut strings = Vec::with_capacity(trainer.vocab_size);
     trainer.add_special_tokens(&mut ids, &mut strings);
+    let alphabet_begin = Instant::now();
     trainer.compute_alphabet(wc, &mut ids, &mut strings);
+    let alphabet_ms = alphabet_begin.elapsed().as_secs_f64() * 1000.0;
     // Select the final slot type before emitting any corpus. Reserved IDs and
     // forced alphabet count towards this bound, not just the requested vocabulary.
     let narrow = config.narrow_corpus && strings.len().max(trainer.vocab_size) <= u16::MAX as usize;
     match (config.atomic_corpus, narrow, config.posting_block_bits) {
-        (false, true, 16) => train_typed::<u16, u16, 4>(trainer, wc, config, ids, strings, begin),
+        (false, true, 16) => {
+            train_typed::<u16, u16, 4>(trainer, wc, config, ids, strings, begin, alphabet_ms)
+        }
         (true, true, 16) => {
-            train_typed::<AtomicU16, u16, 4>(trainer, wc, config, ids, strings, begin)
+            train_typed::<AtomicU16, u16, 4>(trainer, wc, config, ids, strings, begin, alphabet_ms)
         }
-        (false, true, 32) => train_typed::<u16, u32, 2>(trainer, wc, config, ids, strings, begin),
+        (false, true, 32) => {
+            train_typed::<u16, u32, 2>(trainer, wc, config, ids, strings, begin, alphabet_ms)
+        }
         (true, true, 32) => {
-            train_typed::<AtomicU16, u32, 2>(trainer, wc, config, ids, strings, begin)
+            train_typed::<AtomicU16, u32, 2>(trainer, wc, config, ids, strings, begin, alphabet_ms)
         }
-        (false, false, 16) => train_typed::<u32, u16, 4>(trainer, wc, config, ids, strings, begin),
+        (false, false, 16) => {
+            train_typed::<u32, u16, 4>(trainer, wc, config, ids, strings, begin, alphabet_ms)
+        }
         (true, false, 16) => {
-            train_typed::<AtomicU32, u16, 4>(trainer, wc, config, ids, strings, begin)
+            train_typed::<AtomicU32, u16, 4>(trainer, wc, config, ids, strings, begin, alphabet_ms)
         }
-        (false, false, 32) => train_typed::<u32, u32, 2>(trainer, wc, config, ids, strings, begin),
+        (false, false, 32) => {
+            train_typed::<u32, u32, 2>(trainer, wc, config, ids, strings, begin, alphabet_ms)
+        }
         (true, false, 32) => {
-            train_typed::<AtomicU32, u32, 2>(trainer, wc, config, ids, strings, begin)
+            train_typed::<AtomicU32, u32, 2>(trainer, wc, config, ids, strings, begin, alphabet_ms)
         }
         _ => unreachable!("validated configuration"),
     }
@@ -394,6 +406,7 @@ fn train_typed<C: Slot, O: Offset, const INLINE: usize>(
     ids: AHashMap<CompactString, u32>,
     strings: Vec<CompactString>,
     begin: Instant,
+    alphabet_ms: f64,
 ) -> Result<IndexedTraining> {
     let pool = rayon::ThreadPoolBuilder::new()
         .num_threads(config.workers)
@@ -413,6 +426,7 @@ fn train_typed<C: Slot, O: Offset, const INLINE: usize>(
             ids,
             strings,
             begin,
+            alphabet_ms,
             &pool,
             initialization_pool.as_ref(),
         )
@@ -427,6 +441,7 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
     mut ids: AHashMap<CompactString, u32>,
     mut strings: Vec<CompactString>,
     begin: Instant,
+    alphabet_ms: f64,
     pool: &rayon::ThreadPool,
     initialization_pool: Option<&rayon::ThreadPool>,
 ) -> Result<IndexedTraining> {
@@ -434,73 +449,28 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
     let block_size = 1_usize
         .checked_shl(bits as u32)
         .ok_or("posting blocks require 64-bit usize")?;
-    let capacity = wc
-        .keys()
-        .try_fold(1_usize, |n, s| {
-            n.checked_add(s.chars().count())?.checked_add(1)
-        })
-        .ok_or("corpus size exceeds usize")?;
-    // One u32 address block needs no pair->block directory or second pair map.
-    // Its owner entry can hold the occurrence posting directly, like the prototype.
-    let flat = bits == 32 && capacity <= u32::MAX as usize + 1;
-    if capacity.div_ceil(block_size) > u32::MAX as usize {
-        return Err("posting block directory exceeds u32 blocks".into());
-    }
-    let uniform = wc
-        .values()
-        .next()
-        .copied()
-        .filter(|&n| wc.values().all(|&w| w == n));
-    let mut corpus = Vec::<C>::with_capacity(capacity);
-    corpus.push(C::encode(NONE));
-    let mut lengths = vec![0_usize; strings.len()];
-    let mut blocks = vec![Block::<O, INLINE>::new(0, 0)];
+    let constructing_pool = initialization_pool.unwrap_or(pool);
+    let prepared = constructing_pool.install(|| {
+        corpus::build::<C, O, INLINE>(
+            wc,
+            &ids,
+            strings.len(),
+            trainer.limit_alphabet.is_none(),
+            bits,
+            config.initialization_workers.unwrap_or(config.workers),
+        )
+    })?;
+    let corpus::Prepared {
+        slots: mut corpus,
+        mut lengths,
+        mut blocks,
+        uniform,
+        symbols: initial_symbols,
+        edges: initial_edges,
+        timings,
+    } = prepared;
+    let flat = bits == 32 && corpus.len() <= u32::MAX as usize + 1;
     let mut owners: Vec<Owner> = (0..config.workers).map(|_| Owner::default()).collect();
-    let mut weighted_edges = 0_i64;
-    let mut initial_symbols = 0;
-    let mut initial_edges = 0;
-    for (word, &weight) in wc {
-        let signed = i64::try_from(weight).map_err(|_| "indexed BPE weight exceeds i64::MAX")?;
-        let start = corpus.len();
-        while blocks.len() <= start >> bits {
-            blocks.push(Block::new(blocks.len() << bits, weight));
-        }
-        if uniform.is_none() {
-            let block = &mut blocks[start >> bits];
-            block.pivots.push((start - block.base) as u32);
-            block.weights.push(weight);
-        }
-        let mut retained = 0;
-        for c in word.chars() {
-            let mut utf8 = [0; 4];
-            let Some(&id) = ids.get(c.encode_utf8(&mut utf8) as &str) else {
-                continue;
-            };
-            let p = corpus.len();
-            while blocks.len() <= p >> bits {
-                blocks.push(Block::new(blocks.len() << bits, weight));
-            }
-            corpus.push(C::encode(id));
-            lengths[id as usize] = 1;
-            initial_symbols += 1;
-            retained += 1_usize;
-        }
-        let p = corpus.len();
-        while blocks.len() <= p >> bits {
-            blocks.push(Block::new(blocks.len() << bits, weight));
-        }
-        corpus.push(C::encode(NONE));
-        let edges = retained.saturating_sub(1);
-        initial_edges += edges;
-        let edges = i64::try_from(edges).map_err(|_| "word edge count exceeds i64")?;
-        weighted_edges = weighted_edges
-            .checked_add(
-                signed
-                    .checked_mul(edges)
-                    .ok_or("weighted pair counts exceed i64::MAX")?,
-            )
-            .ok_or("weighted pair counts exceed i64::MAX")?;
-    }
     let tokenize_ms = begin.elapsed().as_secs_f64() * 1000.0;
     let floor = trainer.min_frequency.max(1);
     let mut initialize = || -> Result<IndexedTrainingStats> {
@@ -637,6 +607,10 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
         let mut stats = IndexedTrainingStats {
             initial_symbols,
             tokenize_ms,
+            alphabet_ms,
+            corpus_measure_ms: timings.measure_ms,
+            corpus_allocate_ms: timings.allocate_ms,
+            corpus_fill_ms: timings.fill_ms,
             initial_route_ms,
             initial_count_ms,
             monotone_pairs: true,
