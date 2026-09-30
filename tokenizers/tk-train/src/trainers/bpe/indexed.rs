@@ -56,6 +56,8 @@ pub(super) struct IndexedTrainingStats {
     pub initial_weight_bytes: usize,
     pub tokenize_ms: f64,
     pub alphabet_ms: f64,
+    pub alphabet_scratch_bytes: usize,
+    pub character_table_bytes: usize,
     pub corpus_measure_ms: f64,
     pub corpus_allocate_ms: f64,
     pub corpus_fill_ms: f64,

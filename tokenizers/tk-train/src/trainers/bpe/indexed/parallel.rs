@@ -6,6 +6,7 @@ use super::*;
 use rayon::prelude::*;
 use std::sync::atomic::{AtomicU16, AtomicU32, Ordering as AtomicOrdering};
 
+mod alphabet;
 mod corpus;
 
 trait Slot: Default + Send + Sync {
@@ -364,37 +365,125 @@ pub(super) fn train(
     let mut ids = AHashMap::with_capacity(trainer.vocab_size);
     let mut strings = Vec::with_capacity(trainer.vocab_size);
     trainer.add_special_tokens(&mut ids, &mut strings);
+    let pool = rayon::ThreadPoolBuilder::new()
+        .num_threads(config.workers)
+        .build()?;
+    let initialization_pool = config
+        .initialization_workers
+        .filter(|&n| n != config.workers)
+        .map(|n| rayon::ThreadPoolBuilder::new().num_threads(n).build())
+        .transpose()?;
     let alphabet_begin = Instant::now();
-    trainer.compute_alphabet(wc, &mut ids, &mut strings);
+    let alphabet_scratch_bytes = initialization_pool.as_ref().unwrap_or(&pool).install(|| {
+        alphabet::initialize(
+            trainer,
+            wc,
+            &mut ids,
+            &mut strings,
+            config.initialization_workers.unwrap_or(config.workers),
+        )
+    });
     let alphabet_ms = alphabet_begin.elapsed().as_secs_f64() * 1000.0;
     // Select the final slot type before emitting any corpus. Reserved IDs and
     // forced alphabet count towards this bound, not just the requested vocabulary.
     let narrow = config.narrow_corpus && strings.len().max(trainer.vocab_size) <= u16::MAX as usize;
     match (config.atomic_corpus, narrow, config.posting_block_bits) {
-        (false, true, 16) => {
-            train_typed::<u16, u16, 4>(trainer, wc, config, ids, strings, begin, alphabet_ms)
-        }
-        (true, true, 16) => {
-            train_typed::<AtomicU16, u16, 4>(trainer, wc, config, ids, strings, begin, alphabet_ms)
-        }
-        (false, true, 32) => {
-            train_typed::<u16, u32, 2>(trainer, wc, config, ids, strings, begin, alphabet_ms)
-        }
-        (true, true, 32) => {
-            train_typed::<AtomicU16, u32, 2>(trainer, wc, config, ids, strings, begin, alphabet_ms)
-        }
-        (false, false, 16) => {
-            train_typed::<u32, u16, 4>(trainer, wc, config, ids, strings, begin, alphabet_ms)
-        }
-        (true, false, 16) => {
-            train_typed::<AtomicU32, u16, 4>(trainer, wc, config, ids, strings, begin, alphabet_ms)
-        }
-        (false, false, 32) => {
-            train_typed::<u32, u32, 2>(trainer, wc, config, ids, strings, begin, alphabet_ms)
-        }
-        (true, false, 32) => {
-            train_typed::<AtomicU32, u32, 2>(trainer, wc, config, ids, strings, begin, alphabet_ms)
-        }
+        (false, true, 16) => train_typed::<u16, u16, 4>(
+            trainer,
+            wc,
+            config,
+            ids,
+            strings,
+            begin,
+            alphabet_ms,
+            alphabet_scratch_bytes,
+            &pool,
+            initialization_pool.as_ref(),
+        ),
+        (true, true, 16) => train_typed::<AtomicU16, u16, 4>(
+            trainer,
+            wc,
+            config,
+            ids,
+            strings,
+            begin,
+            alphabet_ms,
+            alphabet_scratch_bytes,
+            &pool,
+            initialization_pool.as_ref(),
+        ),
+        (false, true, 32) => train_typed::<u16, u32, 2>(
+            trainer,
+            wc,
+            config,
+            ids,
+            strings,
+            begin,
+            alphabet_ms,
+            alphabet_scratch_bytes,
+            &pool,
+            initialization_pool.as_ref(),
+        ),
+        (true, true, 32) => train_typed::<AtomicU16, u32, 2>(
+            trainer,
+            wc,
+            config,
+            ids,
+            strings,
+            begin,
+            alphabet_ms,
+            alphabet_scratch_bytes,
+            &pool,
+            initialization_pool.as_ref(),
+        ),
+        (false, false, 16) => train_typed::<u32, u16, 4>(
+            trainer,
+            wc,
+            config,
+            ids,
+            strings,
+            begin,
+            alphabet_ms,
+            alphabet_scratch_bytes,
+            &pool,
+            initialization_pool.as_ref(),
+        ),
+        (true, false, 16) => train_typed::<AtomicU32, u16, 4>(
+            trainer,
+            wc,
+            config,
+            ids,
+            strings,
+            begin,
+            alphabet_ms,
+            alphabet_scratch_bytes,
+            &pool,
+            initialization_pool.as_ref(),
+        ),
+        (false, false, 32) => train_typed::<u32, u32, 2>(
+            trainer,
+            wc,
+            config,
+            ids,
+            strings,
+            begin,
+            alphabet_ms,
+            alphabet_scratch_bytes,
+            &pool,
+            initialization_pool.as_ref(),
+        ),
+        (true, false, 32) => train_typed::<AtomicU32, u32, 2>(
+            trainer,
+            wc,
+            config,
+            ids,
+            strings,
+            begin,
+            alphabet_ms,
+            alphabet_scratch_bytes,
+            &pool,
+            initialization_pool.as_ref(),
+        ),
         _ => unreachable!("validated configuration"),
     }
 }
@@ -407,15 +496,10 @@ fn train_typed<C: Slot, O: Offset, const INLINE: usize>(
     strings: Vec<CompactString>,
     begin: Instant,
     alphabet_ms: f64,
+    alphabet_scratch_bytes: usize,
+    pool: &rayon::ThreadPool,
+    initialization_pool: Option<&rayon::ThreadPool>,
 ) -> Result<IndexedTraining> {
-    let pool = rayon::ThreadPoolBuilder::new()
-        .num_threads(config.workers)
-        .build()?;
-    let initialization_pool = config
-        .initialization_workers
-        .filter(|&n| n != config.workers)
-        .map(|n| rayon::ThreadPoolBuilder::new().num_threads(n).build())
-        .transpose()?;
     // Keep the coordinator inside this pool too: small serial rounds then do
     // not pay a caller->worker handoff at every stage.
     pool.install(|| {
@@ -427,8 +511,9 @@ fn train_typed<C: Slot, O: Offset, const INLINE: usize>(
             strings,
             begin,
             alphabet_ms,
-            &pool,
-            initialization_pool.as_ref(),
+            alphabet_scratch_bytes,
+            pool,
+            initialization_pool,
         )
     })
 }
@@ -442,6 +527,7 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
     mut strings: Vec<CompactString>,
     begin: Instant,
     alphabet_ms: f64,
+    alphabet_scratch_bytes: usize,
     pool: &rayon::ThreadPool,
     initialization_pool: Option<&rayon::ThreadPool>,
 ) -> Result<IndexedTraining> {
@@ -468,6 +554,7 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
         symbols: initial_symbols,
         edges: initial_edges,
         timings,
+        character_table_bytes,
     } = prepared;
     let flat = bits == 32 && corpus.len() <= u32::MAX as usize + 1;
     let mut owners: Vec<Owner> = (0..config.workers).map(|_| Owner::default()).collect();
@@ -608,6 +695,8 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
             initial_symbols,
             tokenize_ms,
             alphabet_ms,
+            alphabet_scratch_bytes,
+            character_table_bytes,
             corpus_measure_ms: timings.measure_ms,
             corpus_allocate_ms: timings.allocate_ms,
             corpus_fill_ms: timings.fill_ms,

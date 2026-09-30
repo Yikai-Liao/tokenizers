@@ -1,5 +1,6 @@
 //! Build ordered corpus regions directly in their final allocation.
 use super::*;
+use std::mem::{ManuallyDrop, MaybeUninit};
 
 #[derive(Default)]
 pub(super) struct Timings {
@@ -16,6 +17,7 @@ pub(super) struct Prepared<C: Slot, O: Offset, const INLINE: usize> {
     pub symbols: usize,
     pub edges: usize,
     pub timings: Timings,
+    pub character_table_bytes: usize,
 }
 
 struct Region<'a> {
@@ -31,24 +33,21 @@ struct Filled {
     active: Vec<u64>,
 }
 
-fn retained(word: &str, ids: &AHashMap<CompactString, u32>, unfiltered: bool) -> usize {
+fn retained(word: &str, character_ids: &[u32], unfiltered: bool) -> usize {
     if unfiltered {
         word.chars().count()
     } else {
         word.chars()
-            .filter(|c| {
-                let mut utf8 = [0; 4];
-                ids.contains_key(c.encode_utf8(&mut utf8) as &str)
-            })
+            .filter(|&c| character_ids[c as usize] != NONE)
             .count()
     }
 }
 
 fn fill<C: Slot>(
-    slots: &mut [C],
+    slots: &mut [MaybeUninit<C>],
     base: usize,
     regions: &[Region<'_>],
-    ids: &AHashMap<CompactString, u32>,
+    character_ids: &[u32],
     identities: usize,
 ) -> Vec<Filled> {
     if regions.len() > 1 {
@@ -56,8 +55,16 @@ fn fill<C: Slot>(
         let cut = regions[..middle].iter().map(|r| r.slots).sum();
         let (left, right) = slots.split_at_mut(cut);
         let (mut a, mut b) = rayon::join(
-            || fill(left, base, &regions[..middle], ids, identities),
-            || fill(right, base + cut, &regions[middle..], ids, identities),
+            || fill(left, base, &regions[..middle], character_ids, identities),
+            || {
+                fill(
+                    right,
+                    base + cut,
+                    &regions[middle..],
+                    character_ids,
+                    identities,
+                )
+            },
         );
         a.append(&mut b);
         return a;
@@ -71,15 +78,15 @@ fn fill<C: Slot>(
     for &(word, weight) in region.words {
         result.starts.push((base + position, weight));
         for c in word.chars() {
-            let mut utf8 = [0; 4];
-            if let Some(&id) = ids.get(c.encode_utf8(&mut utf8) as &str) {
-                slots[position].set(id);
+            let id = character_ids[c as usize];
+            if id != NONE {
+                slots[position].write(C::encode(id));
                 position += 1;
                 let id = id as usize;
                 result.active[id / 64] |= 1_u64 << (id % 64);
             }
         }
-        slots[position].set(NONE);
+        slots[position].write(C::encode(NONE));
         position += 1;
     }
     assert_eq!(position, slots.len());
@@ -95,6 +102,8 @@ pub(super) fn build<C: Slot, O: Offset, const INLINE: usize>(
     workers: usize,
 ) -> Result<Prepared<C, O, INLINE>> {
     let measure = Instant::now();
+    let character_ids = alphabet::character_ids(ids);
+    let character_table_bytes = character_ids.capacity() * std::mem::size_of::<u32>();
     // Capture the original map traversal once; region scheduling cannot change
     // word order, canonical IDs, or left-to-right AA boundaries.
     let words: Vec<_> = wc.iter().map(|(word, &weight)| (word, weight)).collect();
@@ -115,7 +124,7 @@ pub(super) fn build<C: Slot, O: Offset, const INLINE: usize>(
             for &(word, weight) in words {
                 let signed =
                     i64::try_from(weight).map_err(|_| "indexed BPE weight exceeds i64::MAX")?;
-                let count = retained(word, ids, unfiltered);
+                let count = retained(word, &character_ids, unfiltered);
                 region.slots = region
                     .slots
                     .checked_add(count)
@@ -165,17 +174,30 @@ pub(super) fn build<C: Slot, O: Offset, const INLINE: usize>(
     let measure_ms = measure.elapsed().as_secs_f64() * 1000.0;
 
     let allocate = Instant::now();
-    // Initialize the final allocation once. There is no per-worker corpus copy.
+    // Reserve final storage without a serial zeroing pass. Disjoint workers
+    // initialize every slot directly; there is no per-worker corpus copy.
     let mut slots = Vec::with_capacity(capacity);
-    slots.resize_with(capacity, C::default);
-    slots[0].set(NONE);
+    slots.resize_with(capacity, MaybeUninit::uninit);
+    slots[0].write(C::encode(NONE));
     let allocate_ms = allocate.elapsed().as_secs_f64() * 1000.0;
 
     let filling = Instant::now();
     let outputs = if regions.is_empty() {
         Vec::new()
     } else {
-        fill(&mut slots[1..], 1, &regions, ids, identities)
+        fill(&mut slots[1..], 1, &regions, &character_ids, identities)
+    };
+    // SAFETY: slot zero was initialized above; fill covers exactly every other
+    // slot through disjoint regions, checks each region's exact length, and its
+    // joins complete before this conversion. MaybeUninit<C> has C's layout;
+    // the allocation/length/capacity are unchanged and ownership transfers once.
+    let mut initialized = ManuallyDrop::new(slots);
+    let slots = unsafe {
+        Vec::from_raw_parts(
+            initialized.as_mut_ptr().cast::<C>(),
+            initialized.len(),
+            initialized.capacity(),
+        )
     };
     let mut lengths = vec![0; identities];
     let mut blocks = vec![Block::new(0, 0)];
@@ -212,6 +234,7 @@ pub(super) fn build<C: Slot, O: Offset, const INLINE: usize>(
         uniform,
         symbols,
         edges,
+        character_table_bytes,
         timings: Timings {
             measure_ms,
             allocate_ms,

@@ -1,4 +1,4 @@
-# BPE trainer variant: corpus-parallel
+# BPE trainer variant: corpus-direct
 
 Entry points: original `BpeTrainer::train_vocab()`, `do_train()` and `Trainer::train()`.
 
@@ -26,3 +26,12 @@ apply to construction and pair counting. No additional full corpus is retained.
 Private statistics split alphabet, region measurement, final allocation and fill
 times. The current round plan and measurements are maintained centrally in
 `/root/code/tokenizers/benchmarks/hf-bpe/OPTIMIZATION_PLAN.md`.
+
+Candidate C parent: `98ca7fc1` (corpus-parallel).
+
+Unlimited alphabet collection uses worker Unicode presence bitmaps, followed by
+canonical character ordering; limited alphabets keep the original selector.
+A read-only Unicode-to-ID table removes per-position string hashing.
+MaybeUninit final storage is initialized by exclusive word regions and converted
+only after complete coverage and joins; its private unsafe conversion is documented
+and tested. Alphabet temporary arrays and ID table capacity are measured separately.
