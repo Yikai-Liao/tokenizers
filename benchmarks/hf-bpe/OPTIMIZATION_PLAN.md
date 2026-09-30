@@ -108,3 +108,9 @@ B `c1ee2019` 正确性通过，但512MiB实测prepare22.858、merge31.887、trai
 用户指出B是失败方案，B/B2的改善无法证明最佳组合；已完成记录仅作诊断。正在进行C/B2三组交错端到端比较，主指标完整train与feed+train elapsed，模块等价prepare用于解释。用户要求不干等，已整理 [OPTIMIZATION_CATALOG.md](OPTIMIZATION_CATALOG.md)，列出已合入、未组合、正交/依赖/替代关系和下一队列。
 
 下一初始计数候选D从B2 `a0832c48` 分叉 `bpe/initial-radix`。当前owner初始化逐边hash并增长posting，约8–12秒。计划在flat且初始canonical ID可编码为两个u16时，用8字节(pair code, u32 position)记录稳定radix分组，先精确计数/剪枝，再一次预留最终posting和owner表；记录增加的route/sort成本与临时内存，不单独挑计数子阶段。其它配置fallback旧count，公开语料/地址仍u32。与构造和merge算法可叠加；构建与计时分别安排，正确性复核与计时并行。代码推进与C/B2测量同步，本段计时期间仅编辑源码，不编译。
+
+## 候选E：posting批量填充，与D可组合
+
+D计时期间同步推进E，分支 `bpe/posting-bulk` 从已选B2派生。当前flat owner commit逐node调用SmallPosting::push，再反转刚写区间；已精确知道每个group的occurrences和最终reserved capacity。新增私有bulk接口，先一次验证len/capacity，将链从head读取并倒序直接填入最终区间，全部初始化后才发布新len。scope仅已预留posting，保留原push供普通增量/初始哈希计数。
+
+E影响owner commit，不改变规则选择、频率聚合、出生准备、语料写入或初始化计数。与D兼容；若D胜出，在D安装初始posting时也用同一bulk接口从record尾部读，省逐位置push，组合DE影响posting安装及commit两个模块。heap/inline边界、追加、部分panic后len与allocation有效性必须验证。只做有希望组合的关键测量，最终与当前最快端到端组合配对，不展开2^N组合枚举。
