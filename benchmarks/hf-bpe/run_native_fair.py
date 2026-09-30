@@ -28,6 +28,8 @@ def main():
     parser.add_argument('--merge-workers', type=int, choices=[4], default=4,
                         help='the generated fair-comparison runner fixes training to four workers')
     parser.add_argument('--atomic-corpus', action='store_true')
+    parser.add_argument('--require-stats', action='append', default=[],
+                        help='require this numeric field in bench_indexed_stats; may be repeated')
     args = parser.parse_args()
     worktree = args.worktree.resolve()
     build_root = args.build_root.resolve()
@@ -71,6 +73,7 @@ def main():
                                     min_frequency=args.min_frequency),
                     initialization_workers=args.initialization_workers, merge_workers=args.merge_workers,
                     expected_atomic_corpus=args.atomic_corpus,
+                    required_indexed_stats=args.require_stats,
                     env_overrides={k: env[k] for k in ('TOKENIZERS_PARALLELISM', 'RAYON_NUM_THREADS')},
                     memory_policy='stop only if MemAvailable <= 1 GiB; record sampled process VmSwap and global paging',
                     system_before=before)
@@ -118,6 +121,13 @@ def main():
                                                observed_count=len(stats_rows), memory=memory)) + '\n')
         raise SystemExit(f'expected exactly one bench_indexed_stats record, found {len(stats_rows)}')
     stats = stats_rows[0]
+    missing_stats = [key for key in args.require_stats
+                     if key not in stats or not isinstance(stats[key], (int, float))]
+    if missing_stats:
+        args.output.write_text(json.dumps(dict(engine=args.case, failure='required indexed stats missing',
+                                               missing=missing_stats, observed=stats, memory=memory),
+                                          ensure_ascii=False) + '\n')
+        raise SystemExit(f'{args.case}: required numeric indexed stats missing: {missing_stats}')
     expected = dict(workers=args.merge_workers, initialization_workers=args.initialization_workers,
                     atomic_corpus=args.atomic_corpus, layout='parallel_u32_flat32')
     mismatches = {key: (stats.get(key), value) for key, value in expected.items() if stats.get(key) != value}

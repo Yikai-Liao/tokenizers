@@ -12,12 +12,12 @@
 
 计划分支 `bpe/corpus-parallel`，worktree `/root/code/tokenizers-worktrees/corpus-parallel`，从非原子初始化4版本派生。
 
-- [ ] 拆分alphabet、容量/区间规划、最终数组分配、语料填充阶段计时；13.068秒现有总计不能全部算作填充。
-- [ ] 固定现有词遍历顺序，分成连续词块；并行统计每块保留字符数和边数。
-- [ ] 前缀和确定独占区间，一次分配最终corpus，各worker并行解码并写入最终布局，归并词边界/权重。
-- [ ] 初始lengths活跃标记用局部结果归并，避免多个worker写同一ID槽；保持special预留ID尚未活跃的0长度状态。
-- [ ] 保留alphabet与canonical ID分配行为、有限limit_alphabet同频边界；本候选先沿用原alphabet实现。
-- [ ] 覆盖空输入、全裁剪、重复权重、强制alphabet、预留special ID、原子/非原子slot和跨块边界；非空affix仍走原generic路径。
+- [x] 拆分alphabet、容量/区间规划、最终数组分配、语料填充阶段计时；13.068秒现有总计不能全部算作填充。
+- [x] 固定现有词遍历顺序，分成连续词块；并行统计每块保留字符数和边数。
+- [x] 前缀和确定独占区间，一次分配最终corpus，各worker并行解码并写入最终布局，归并词边界/权重。
+- [x] 初始lengths活跃标记用局部结果归并，避免多个worker写同一ID槽；保持special预留ID尚未活跃的0长度状态。
+- [x] 保留alphabet与canonical ID分配行为、有限limit_alphabet同频边界；本候选先沿用原alphabet实现。
+- [x] 覆盖空输入、全裁剪、重复权重、强制alphabet、预留special ID、原子/非原子slot和跨块边界；非空affix仍走原generic路径。
 - [ ] 通过差分与原接口测试，固定commit，构建再进行一次512MiB关键比较，报告分阶段耗时与RSS。
 
 初始化执行并发由现有私有initialization_workers控制，merge workers保持原值。尽量只保存词引用及每块规划元数据，不构造每worker完整ID语料再复制，不能用新增4N临时数组换取时间。
@@ -41,3 +41,9 @@
 - 原接口、完整模型签名及关键边界验证通过；独立审查结论持久化。
 - 汇总训练/merge/初始化加速比、RSS与余量、Atomic内存事实、热点变化、下一步建议和仍未验证的方案。
 - 完成本轮A及一个经过源码推导的B候选比较，选择有收益且可维护的实现；不展开完整benchmark矩阵。
+
+## 进展记录
+
+- 候选A已提交 `98ca7fc1`：新私有corpus模块按原词顺序建立连续区域，直接写最终分配，局部ID活跃bitset归并；无额外完整语料副本。alpha/区间测量/最终分配/填充阶段独立计时。
+- 40项既有库测试及1项新增构造边界测试通过；release原接口二进制 `hf-bpe-native-corpus-a` 已构建。独立审查和一次512MiB计时待完成。
+- runner新增可重复的 `--require-stats`，防止候选阶段字段缺失时静默继续。
