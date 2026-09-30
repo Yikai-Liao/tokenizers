@@ -145,3 +145,12 @@ G2（branch bpe/prepare-blocks, parent G1）只重组融合prepare过滤：每wo
 用户再次收窄：真正SIMD小kernel不是优先级。已取消拟议mask标量/向量微基准（未实现、未运行），停止G1/G2推进。三对G2/DE prepare中位比1.0195、elapsed1.0018、方向混合，未有稳定收益。选择DE为当前基点。正在做一次DE32MiB perf定位，绝不从出现几条SIMD指令猜整个12秒热块的收益。
 
 候选H仅在profiling支持后实施：WeightLookup新增每256位置桶的保守'全部weight=1'位图，额外约100KiB。默认所有桶为one，再按previous_weight和每个pivot interval将weight!=1覆盖的桶清除；混合桶沿用原目录精确搜索。有效位置weight1的桶直接return1，省pivot/weights随机访问。这是同一权重查询模块，两个读者为初始radix group和融合prepare；build时间/bytes、桶覆盖计入，不改变频率、语料/selected、批次/出生/commit。源码与证书包括empty、zero、gapped、重复pivot、256边界、末桶与超大weight；新增stats one_buckets/total_buckets只是空间覆盖，不误称实际query命中率。若DE profile显示它不是大头，不机械实现此候选。
+
+
+## H已实现及筛选；稳定性确认进行中
+
+DE32MiB实际perf中WeightLookup占8.16% top-IP samples（1776 samples，lost0），支持实施H。源码00216d91从DE派生，新增bitmap认证与3项覆盖/容量统计；全47tests及 [独立审查](WEIGHT_ONE_BUCKET_REVIEW.md) 通过。无显式SIMD、无target flags变化。
+
+同期DE→H一次512MiB：group2.640→0.328、prepare11.320→8.548、完整train32.860→26.538、elapsed36.785→30.574秒；H bitmap100,632B（约98KiB），797,827/805,039桶认证为1。增加少量内存，语料/posting载荷保持相同，RSS均约4.43GiB。空间桶比例不等同实际查询命中率；sort/install源码未改但墙钟也变动，不把所有变化归因H。见 [筛选报告](results/optimization-weight-screen.summary.md)。
+
+筛选显示两个直接模块及完整训练同时改善，继续DE→H、H→DE、DE→H三个交错pair；screen不混入稳定性统计。要求完整签名、N/E/pairs与语料/posting容量相同，报告直接模块及train/elapsed配对比、中位、范围、sampleCV。候选选型保持原API及default AHash种子；不开展新矩阵或仅比较小kernel。测试和构建已经结束，正式计时期间仅编辑文档。

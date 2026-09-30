@@ -192,3 +192,20 @@ C选作B起点；从C分叉Atomic控制27dc7fd0保留旧Plan算法，融合候�
 D `d15c18cc` 完整45项测试与独立审查通过，固定512MiB screening：train33.265/init9.617/merge19.267秒，route2.563、sort2.045、group2.683、posting install1.037秒，initial count包括后3项及释放共5.764秒。稳定B2 train34.942秒作为当前已证快组合；D单次差距不充分确证更快，继续组合后同期验证。内存暂态成本兑现：RSS4.43GiB、最低可用3.39GiB、VmSwap0；最终posting从1147.872MB到802.968MB、owner估计从276.824MB到138.412MB，corpus不变。重复initial/merge weight_lookup_bytes是同一分配，不能相加。见 [D报告](results/optimization-d-512.summary.md) 和 [初始化审查](INITIAL_RADIX_REVIEW.md)。
 
 同步实现E `35eaf03c`：只在flat commit已预留posting的suffix倒序直接填，len全部初始化后一次发布；由SmallPosting私有模块封装容量/内联/heap/panic所有权。D与E可组合；DE `c8702374` 使用同方法从初始record尾部填sorted posting，再用于commit。明确改动模块为install与commit，而原子、alphabet/构造、radix频率、prepare/rewrite不再改。候选分别有worktree/commit，性能和正确性复核并行。
+
+## 2026-10-01：DE完整组合胜出，停止F/G小收益方向
+
+B2/D/DE九次交错比较与完整模型签名gate完成：train中位35.952/35.442/31.332秒，elapsed40.151/39.740/35.493秒。DE/B2配对train中位比0.8715、三对均快；D/B2中位比1.0002，D独立收益不稳定。DE与D排名在第一对互换，install中位0.931→0.624秒、commit7.023→5.955秒，但差值不足解释整个训练差距。当前推荐实际DE组合c8702374。见 [九次比较](results/optimization-radix-combination-stability.summary.md)。
+
+F 4a2f148a从D派生，46tests与审查通过。D/F一次筛选的prepare11.472→12.062、commit6.362→6.543秒均回退；完整train33.125→32.468秒的改善伴随未改init9.479→7.907秒，因此没有直接模块支持。停止F，DE+F 7504cbfd仅保存源码，未构建/计时。
+
+G1 cbb935b2用join阶段屏障取得安全只读corpus切片；G2 2f238505按128项缓冲端点，纯比较循环由Rust/LLVM自动生成SSE2。全47/48tests与独立审查通过。DE/G2三对prepare比0.9783/1.0195/1.0409，elapsed比0.9572/1.0018/1.0528，无稳定收益；停止G方向。用户要求聚焦大块热点，取消仅隔离小比较kernel的后续microbenchmark，没有执行。详见 [向量化证据与取舍](AUTO_VECTORIZATION.md)。
+
+## 2026-10-01：从实测热点筛选权重快路径H
+
+DE仅一次32MiB perf：1776 cycles:u samples、lost0，WeightLookup占top-IP样本8.16%，prepare worker13.51%、owner commit15.65%；9.57%符号未解析另列。该诊断挑出同时影响初始group与prepare的权重查询，不能将采样占比当作可实现的墙钟收益。见 [热点来源](results/optimization-de-hot-profile.md)。
+
+H worktree weight-one-buckets，branch bpe/weight-one-buckets，00216d91从DE派生。每256槽一个认证bit，任何非1权重区间触及的桶清bit；命中直接返回1，混合桶沿用原精确pivot搜索。初始化已建lookup复用于merge，bitmap额外约100KiB；权重边界静态，不随token端点重写改变。新增测试逐位置对比旧全量搜索，涵盖重复pivot、空区间、256及64桶边界、尾桶、零和u64::MAX权重；完整47tests通过。审查及DE→H原接口512MiB筛选进行中，尚未计入推荐组合。
+
+
+H独立审查通过，DE→H screen完整模型gate通过：group2.640→0.328、prepare11.320→8.548、train32.860→26.538秒，RSS约4.43GiB均无进程swap；bitmap100,632B增加约98KiB，空间认证桶比例99.104%，语料/posting载荷相同。两个直接模块与全训支持继续三个交错pair；screen与复测分开报告，尚未替换DE推荐。见 [H screen](results/optimization-weight-screen.summary.md) 与 [H审查](WEIGHT_ONE_BUCKET_REVIEW.md)。
