@@ -66,6 +66,9 @@ pub(super) struct IndexedTrainingStats {
     pub initial_heap_ms: f64,
     pub select_ms: f64,
     pub plan_ms: f64,
+    pub fused_prepare_ms: f64,
+    pub fused_batches: usize,
+    pub peak_valid_start_bytes: usize,
     pub delta_ms: f64,
     pub rewrite_ms: f64,
     pub commit_ms: f64,
@@ -781,6 +784,26 @@ mod tests {
         assert_eq!(parallel.vocab, vocab);
         assert_eq!(parallel.merges, merges);
         assert_eq!(parallel.special_tokens, special);
+        let fused_parallel = trainer
+            .do_train_indexed_parallel(
+                wc,
+                IndexedParallelConfig {
+                    workers: 4,
+                    initialization_workers: None,
+                    posting_block_bits: 32,
+                    narrow_corpus: false,
+                    atomic_corpus: true,
+                    batch_size: 256,
+                },
+            )
+            .unwrap();
+        assert_eq!(
+            fused_parallel.trace, trace,
+            "fused parallel trace mismatch; words={wc:?}; trainer={trainer:?}"
+        );
+        assert_eq!(fused_parallel.vocab, vocab);
+        assert_eq!(fused_parallel.merges, merges);
+        assert_eq!(fused_parallel.special_tokens, special);
         indexed
     }
 

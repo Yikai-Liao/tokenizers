@@ -39,3 +39,7 @@ and tested. Alphabet temporary arrays and ID table capacity are measured separat
 ## 匹配控制项
 
 本分支从 corpus-direct `fbdc0b2b` 派生，仅把原接口 plain 路径的 `atomic_corpus` 改为 true。初始化仍采用 C 的并行 alphabet、直接查询和独占直接填充；merge 保留排序 Plan 与 delta 两阶段算法。用于与融合候选隔离算法收益。
+
+## 融合候选
+
+flat 非AA Atomic 批次按规则/位置连续分工，一次只读遍历完成校验与邻边 delta，保存4字节有效位置；所有读取 join 后并行共享 Atomic 写入。AA、多块及非原子配置保持旧路径。出生key唯一规则生产者与任务次序维持 posting 有序；提交阶段加 debug 验证。计时 fused_prepare_ms 同时覆盖 filter/delta，不能直接和旧 delta_ms 比较。

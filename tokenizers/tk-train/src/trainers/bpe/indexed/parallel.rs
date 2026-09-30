@@ -8,9 +8,14 @@ use std::sync::atomic::{AtomicU16, AtomicU32, Ordering as AtomicOrdering};
 
 mod alphabet;
 mod corpus;
+mod fused_batch;
 
 trait Slot: Default + Send + Sync {
     const NARROW: bool;
+    const SHARED: bool = false;
+    fn set_shared(&self, _id: u32) {
+        panic!("shared writes require atomic slots");
+    }
     fn encode(id: u32) -> Self;
     fn token(&self) -> u32;
     fn set(&mut self, id: u32);
@@ -45,6 +50,10 @@ impl Slot for u16 {
     }
 }
 impl Slot for AtomicU32 {
+    const SHARED: bool = true;
+    fn set_shared(&self, id: u32) {
+        self.store(id, AtomicOrdering::Relaxed);
+    }
     const NARROW: bool = false;
     fn encode(id: u32) -> Self {
         Self::new(id)
@@ -57,6 +66,10 @@ impl Slot for AtomicU32 {
     }
 }
 impl Slot for AtomicU16 {
+    const SHARED: bool = true;
+    fn set_shared(&self, id: u32) {
+        self.store(<u16 as Slot>::encode(id), AtomicOrdering::Relaxed);
+    }
     const NARROW: bool = true;
     fn encode(id: u32) -> Self {
         Self::new(<u16 as Slot>::encode(id))
@@ -896,177 +909,221 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
         let stage = Instant::now();
         stats.batch_rounds += 1;
         stats.max_batch_rules = stats.max_batch_rules.max(rules.len());
-        let chunks: Vec<Vec<Plan>> = if flat {
-            pool.install(|| {
-                flat_postings
-                    .par_iter()
-                    .enumerate()
-                    .map(|(rank, posting)| {
-                        let rule = &rules[rank];
-                        posting
-                            .as_slice()
-                            .par_iter()
-                            .filter_map(|&position| {
-                                let p = position as usize;
-                                let right = p + rule.left_len;
-                                (corpus[p].token() == rule.edge.0
-                                    && right < corpus.len()
-                                    && corpus[right].token() == rule.edge.1)
-                                    .then_some(Plan { position: p, rank })
-                            })
-                            .collect()
-                    })
-                    .collect()
-            })
+        let outputs: Vec<Output<O, INLINE>> = if flat
+            && C::SHARED
+            && rules[0].edge.0 != rules[0].edge.1
+        {
+            let prepared = pool.install(|| {
+                fused_batch::prepare(
+                    &corpus,
+                    &rules,
+                    &flat_postings,
+                    &blocks[0],
+                    &lengths,
+                    uniform,
+                    max_length,
+                    config.workers,
+                )
+            })?;
+            stats.fused_batches += 1;
+            stats.peak_valid_start_bytes = stats.peak_valid_start_bytes.max(prepared.valid_bytes);
+            let elapsed = stage.elapsed().as_secs_f64() * 1000.0;
+            // Filter and neighbor deltas share this phase in the fused path.
+            stats.fused_prepare_ms += elapsed;
+            stats.delta_ms += elapsed;
+            drop(flat_postings);
+            let stage = Instant::now();
+            pool.install(|| prepared.apply(&corpus, &rules));
+            stats.rewrite_ms += stage.elapsed().as_secs_f64() * 1000.0;
+            prepared.outputs
         } else {
-            pool.install(|| {
-                blocks
-                    .par_iter_mut()
-                    .enumerate()
-                    .map(|(b, block)| -> Vec<Plan> {
-                        let mut plans = Vec::new();
-                        if let Some(ranks) = block_rules.get(&b) {
-                            for &rank in ranks {
-                                let rule = &rules[rank];
-                                let posting = block
-                                    .postings
-                                    .remove(&key(rule.edge.0, rule.edge.1))
-                                    .unwrap();
-                                let valid: Vec<_> = posting
-                                    .as_slice()
-                                    .par_iter()
-                                    .filter_map(|&offset| {
-                                        let p = block.base + offset.index();
-                                        let right = p + rule.left_len;
-                                        if corpus[p].token() == rule.edge.0
-                                            && right < corpus.len()
-                                            && corpus[right].token() == rule.edge.1
-                                        {
-                                            Some(Plan { position: p, rank })
-                                        } else {
-                                            None
-                                        }
-                                    })
-                                    .collect();
-                                plans.extend(valid);
+            let chunks: Vec<Vec<Plan>> = if flat {
+                pool.install(|| {
+                    flat_postings
+                        .par_iter()
+                        .enumerate()
+                        .map(|(rank, posting)| {
+                            let rule = &rules[rank];
+                            posting
+                                .as_slice()
+                                .par_iter()
+                                .filter_map(|&position| {
+                                    let p = position as usize;
+                                    let right = p + rule.left_len;
+                                    (corpus[p].token() == rule.edge.0
+                                        && right < corpus.len()
+                                        && corpus[right].token() == rule.edge.1)
+                                        .then_some(Plan { position: p, rank })
+                                })
+                                .collect()
+                        })
+                        .collect()
+                })
+            } else {
+                pool.install(|| {
+                    blocks
+                        .par_iter_mut()
+                        .enumerate()
+                        .map(|(b, block)| -> Vec<Plan> {
+                            let mut plans = Vec::new();
+                            if let Some(ranks) = block_rules.get(&b) {
+                                for &rank in ranks {
+                                    let rule = &rules[rank];
+                                    let posting = block
+                                        .postings
+                                        .remove(&key(rule.edge.0, rule.edge.1))
+                                        .unwrap();
+                                    let valid: Vec<_> = posting
+                                        .as_slice()
+                                        .par_iter()
+                                        .filter_map(|&offset| {
+                                            let p = block.base + offset.index();
+                                            let right = p + rule.left_len;
+                                            if corpus[p].token() == rule.edge.0
+                                                && right < corpus.len()
+                                                && corpus[right].token() == rule.edge.1
+                                            {
+                                                Some(Plan { position: p, rank })
+                                            } else {
+                                                None
+                                            }
+                                        })
+                                        .collect();
+                                    plans.extend(valid);
+                                }
                             }
-                        }
-                        if block_rules.get(&b).is_some_and(|r| r.len() > 1) {
-                            plans.par_sort_unstable_by_key(|p| p.position);
-                        }
-                        plans
-                    })
-                    .collect()
-            })
-        };
-        drop(flat_postings);
-        let count: usize = chunks.iter().map(Vec::len).sum();
-        let mut plans = Vec::with_capacity(count);
-        for mut chunk in chunks {
-            plans.append(&mut chunk);
-        }
-        // Posting producers append ordered final boundary positions. A single
-        // rule keeps that order, including AA; only mixed rules need sorting.
-        if flat && rules.len() > 1 {
-            pool.install(|| plans.par_sort_unstable_by_key(|p| p.position));
-        }
-        // AA is the only self-overlapping rule, and always forms a single-rule
-        // batch. Only O(chunks) parity propagation is serial; summaries use logarithmic boundary checks and local selection runs
-        // in parallel, even when a long run spans address blocks or empty chunks.
-        if rules[0].edge.0 == rules[0].edge.1 {
-            let length = rules[0].left_len;
-            let summaries: Vec<_> = pool.install(|| {
-                plans
-                    .par_chunks(4096)
-                    .map(|chunk| {
-                        super::aa_parity::summarize_by(chunk.len(), |i| chunk[i].position, length)
-                    })
-                    .collect()
-            });
-            let incoming = super::aa_parity::incoming_parities(&summaries, length);
-            let selected: Vec<Vec<Plan>> = pool.install(|| {
-                plans
-                    .par_chunks(4096)
-                    .zip(incoming.par_iter())
-                    .map(|(chunk, &odd)| {
-                        let mut valid = Vec::with_capacity(chunk.len().div_ceil(2));
-                        super::aa_parity::for_each_selected(
-                            chunk.iter().map(|p| p.position),
-                            length,
-                            odd,
-                            |position| valid.push(Plan { position, rank: 0 }),
-                        );
-                        valid
-                    })
-                    .collect()
-            });
-            plans.clear();
-            for mut chunk in selected {
+                            if block_rules.get(&b).is_some_and(|r| r.len() > 1) {
+                                plans.par_sort_unstable_by_key(|p| p.position);
+                            }
+                            plans
+                        })
+                        .collect()
+                })
+            };
+            drop(flat_postings);
+            let count: usize = chunks.iter().map(Vec::len).sum();
+            let mut plans = Vec::with_capacity(count);
+            for mut chunk in chunks {
                 plans.append(&mut chunk);
             }
-        }
-        debug_assert!(
-            plans
-                .windows(2)
-                .all(|w| w[0].after(&rules) <= w[1].position)
-        );
-        stats.plan_ms += stage.elapsed().as_secs_f64() * 1000.0;
-        let stage = Instant::now();
-        // AA's overlapping occurrences are visited, but are not stale records.
-        // One route buffer per worker, as in the prototype. A posting task is
-        // not a route owner: returning a new map for every 4096 occurrences
-        // duplicates groups and allocations throughout a large batch.
-        let output_chunk = plans.len().div_ceil(config.workers).max(4096);
-        let outputs: Vec<Output<O, INLINE>> = pool.install(|| {
-            plans
-                .par_chunks(output_chunk)
-                .enumerate()
-                .map(|(chunk, local)| -> Result<_> {
-                    let mut output = Output::new(config.workers, flat);
-                    let mut weight_block = usize::MAX;
-                    let mut weight_cursor = 0;
-                    for (j, &plan) in local.iter().enumerate() {
-                        let i = chunk * output_chunk + j;
-                        let rule = &rules[plan.rank];
-                        let p = plan.position;
-                        let after = plan.after(&rules);
-                        let b = p >> bits;
-                        if b != weight_block {
-                            weight_block = b;
-                            weight_cursor = 0;
-                        }
-                        let weight = blocks[b].weight_forward(p, uniform, &mut weight_cursor);
-                        let prior = corpus[p - 1].token();
-                        let left_selected = i > 0 && plans[i - 1].after(&rules) == p;
-                        if prior != NONE && !left_selected {
-                            let before = p - lengths[prior as usize];
-                            output.remove(key(prior, rule.edge.0), weight);
-                            if lengths[prior as usize] + rule.length() < max_length {
-                                output.birth(key(prior, rule.replacement), before, weight, bits)?;
+            // Posting producers append ordered final boundary positions. A single
+            // rule keeps that order, including AA; only mixed rules need sorting.
+            if flat && rules.len() > 1 {
+                pool.install(|| plans.par_sort_unstable_by_key(|p| p.position));
+            }
+            // AA is the only self-overlapping rule, and always forms a single-rule
+            // batch. Only O(chunks) parity propagation is serial; summaries use logarithmic boundary checks and local selection runs
+            // in parallel, even when a long run spans address blocks or empty chunks.
+            if rules[0].edge.0 == rules[0].edge.1 {
+                let length = rules[0].left_len;
+                let summaries: Vec<_> = pool.install(|| {
+                    plans
+                        .par_chunks(4096)
+                        .map(|chunk| {
+                            super::aa_parity::summarize_by(
+                                chunk.len(),
+                                |i| chunk[i].position,
+                                length,
+                            )
+                        })
+                        .collect()
+                });
+                let incoming = super::aa_parity::incoming_parities(&summaries, length);
+                let selected: Vec<Vec<Plan>> = pool.install(|| {
+                    plans
+                        .par_chunks(4096)
+                        .zip(incoming.par_iter())
+                        .map(|(chunk, &odd)| {
+                            let mut valid = Vec::with_capacity(chunk.len().div_ceil(2));
+                            super::aa_parity::for_each_selected(
+                                chunk.iter().map(|p| p.position),
+                                length,
+                                odd,
+                                |position| valid.push(Plan { position, rank: 0 }),
+                            );
+                            valid
+                        })
+                        .collect()
+                });
+                plans.clear();
+                for mut chunk in selected {
+                    plans.append(&mut chunk);
+                }
+            }
+            debug_assert!(
+                plans
+                    .windows(2)
+                    .all(|w| w[0].after(&rules) <= w[1].position)
+            );
+            stats.plan_ms += stage.elapsed().as_secs_f64() * 1000.0;
+            let stage = Instant::now();
+            // AA's overlapping occurrences are visited, but are not stale records.
+            // One route buffer per worker, as in the prototype. A posting task is
+            // not a route owner: returning a new map for every 4096 occurrences
+            // duplicates groups and allocations throughout a large batch.
+            let output_chunk = plans.len().div_ceil(config.workers).max(4096);
+            let outputs: Vec<Output<O, INLINE>> = pool.install(|| {
+                plans
+                    .par_chunks(output_chunk)
+                    .enumerate()
+                    .map(|(chunk, local)| -> Result<_> {
+                        let mut output = Output::new(config.workers, flat);
+                        let mut weight_block = usize::MAX;
+                        let mut weight_cursor = 0;
+                        for (j, &plan) in local.iter().enumerate() {
+                            let i = chunk * output_chunk + j;
+                            let rule = &rules[plan.rank];
+                            let p = plan.position;
+                            let after = plan.after(&rules);
+                            let b = p >> bits;
+                            if b != weight_block {
+                                weight_block = b;
+                                weight_cursor = 0;
+                            }
+                            let weight = blocks[b].weight_forward(p, uniform, &mut weight_cursor);
+                            let prior = corpus[p - 1].token();
+                            let left_selected = i > 0 && plans[i - 1].after(&rules) == p;
+                            if prior != NONE && !left_selected {
+                                let before = p - lengths[prior as usize];
+                                output.remove(key(prior, rule.edge.0), weight);
+                                if lengths[prior as usize] + rule.length() < max_length {
+                                    output.birth(
+                                        key(prior, rule.replacement),
+                                        before,
+                                        weight,
+                                        bits,
+                                    )?;
+                                }
+                            }
+                            let next = corpus[after].token();
+                            if next != NONE {
+                                output.remove(key(rule.edge.1, next), weight);
+                                let final_next =
+                                    if plans.get(i + 1).is_some_and(|q| q.position == after) {
+                                        rules[plans[i + 1].rank].replacement
+                                    } else {
+                                        next
+                                    };
+                                if rule.length() + lengths[final_next as usize] < max_length {
+                                    output.birth(
+                                        key(rule.replacement, final_next),
+                                        p,
+                                        weight,
+                                        bits,
+                                    )?;
+                                }
                             }
                         }
-                        let next = corpus[after].token();
-                        if next != NONE {
-                            output.remove(key(rule.edge.1, next), weight);
-                            let final_next =
-                                if plans.get(i + 1).is_some_and(|q| q.position == after) {
-                                    rules[plans[i + 1].rank].replacement
-                                } else {
-                                    next
-                                };
-                            if rule.length() + lengths[final_next as usize] < max_length {
-                                output.birth(key(rule.replacement, final_next), p, weight, bits)?;
-                            }
-                        }
-                    }
-                    Ok(output)
-                })
-                .collect::<Result<Vec<_>>>()
-        })?;
-        stats.delta_ms += stage.elapsed().as_secs_f64() * 1000.0;
-        let stage = Instant::now();
-        pool.install(|| write_plans(&mut corpus, 0, &plans, &rules, config.workers));
-        stats.rewrite_ms += stage.elapsed().as_secs_f64() * 1000.0;
+                        Ok(output)
+                    })
+                    .collect::<Result<Vec<_>>>()
+            })?;
+            stats.delta_ms += stage.elapsed().as_secs_f64() * 1000.0;
+            let stage = Instant::now();
+            pool.install(|| write_plans(&mut corpus, 0, &plans, &rules, config.workers));
+            stats.rewrite_ms += stage.elapsed().as_secs_f64() * 1000.0;
+            outputs
+        };
         let stage = Instant::now();
         let commits: Vec<_> = pool.install(|| {
             owners
@@ -1132,6 +1189,13 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
                                 // Chunks are ordered spatially; each chain is
                                 // reversed locally so AA keeps an ordered list.
                                 entry.blocks.as_mut_slice()[start..].reverse();
+                                let positions = entry.blocks.as_slice();
+                                debug_assert!(
+                                    positions[start.saturating_sub(1)..]
+                                        .windows(2)
+                                        .all(|w| w[0] < w[1]),
+                                    "birth producer order must yield sorted unique postings"
+                                );
                             }
                         }
                         return Ok((retired, AHashSet::new(), dropped));
@@ -1291,6 +1355,48 @@ mod tests {
         assert_eq!(got.vocab, vocab);
         assert_eq!(got.merges, merges);
         got
+    }
+
+    #[test]
+    fn fused_flat_batches_keep_adjacent_and_shared_head_tail_births_ordered() {
+        let words = [
+            ("abcdxabcyabdz".repeat(3000), 2),
+            ("abefcdabghcd".repeat(2000), 5),
+            ("aaaabcdd".repeat(1000), 3),
+            ("中ab文cd中ef文".repeat(1000), 1),
+        ]
+        .into_iter()
+        .map(|(w, n)| (w.into(), n))
+        .collect();
+        for limit in [None, Some(3), Some(7)] {
+            let trainer = BpeTrainer::builder()
+                .vocab_size(120)
+                .show_progress(false)
+                .max_token_length(limit)
+                .special_tokens(vec![AddedToken::from("abcd", true)])
+                .build();
+            let expected = trainer.do_train_indexed(&words).unwrap();
+            for workers in [1, 4] {
+                let got = trainer
+                    .do_train_indexed_parallel(
+                        &words,
+                        IndexedParallelConfig {
+                            workers,
+                            initialization_workers: None,
+                            posting_block_bits: 32,
+                            narrow_corpus: false,
+                            atomic_corpus: true,
+                            batch_size: 256,
+                        },
+                    )
+                    .unwrap();
+                assert_eq!(got.trace, expected.trace);
+                assert_eq!(got.vocab, expected.vocab);
+                assert_eq!(got.merges, expected.merges);
+                assert!(got.stats.fused_batches > 0);
+                assert!(got.stats.peak_valid_start_bytes > 0);
+            }
+        }
     }
 
     #[test]
