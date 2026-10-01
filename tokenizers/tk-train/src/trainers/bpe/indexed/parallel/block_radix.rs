@@ -327,17 +327,32 @@ pub(in super::super) fn sort_wide(records: &mut [u128]) -> usize {
         <= SCRATCH * <u128 as Record>::BLOCK * 16
             + (records.len() / <u128 as Record>::BLOCK + SCRATCH) * 9
     {
-        sort_classic_wide(records, varying)
+        sort_classic(records, varying)
     } else {
         sort_digits(records, varying)
     }
 }
-fn sort_classic_wide(records: &mut [u128], varying: u64) -> usize {
+/// Bounded compact-key records use the smaller scatter implementation when
+/// it avoids the fixed scratch allocation. Constant key digits are skipped.
+pub(in super::super) fn sort_compact(records: &mut [u64]) -> usize {
+    let Some(&first) = records.first() else {
+        return 0;
+    };
+    let varying = records
+        .iter()
+        .fold(0, |bits, &r| bits | (r.key() ^ first.key()));
+    if records.len() * 8 <= SCRATCH * BLOCK * 8 + (records.len() / BLOCK + SCRATCH) * 9 {
+        sort_classic(records, varying)
+    } else {
+        sort_digits(records, varying)
+    }
+}
+fn sort_classic<T: Record>(records: &mut [T], varying: u64) -> usize {
     if records.len() < 2 || varying == 0 {
         return 0;
     }
-    let mut scratch = vec![0; records.len()];
-    let bytes = scratch.capacity() * 16;
+    let mut scratch = vec![T::default(); records.len()];
+    let bytes = scratch.capacity() * std::mem::size_of::<T>();
     let mut flipped = false;
     {
         let mut input = &mut records[..];
@@ -425,7 +440,7 @@ mod tests {
     fn stable_high32_at_block_boundaries_and_all_key_bits() {
         let mut seed = 371_u64;
         for n in [
-            0, 1, 2, 255, 256, 511, 512, 513, 1023, 1024, 1025, 8192, 131072, 131073,
+            0, 1, 2, 255, 256, 511, 512, 513, 1023, 1024, 1025, 8192, 131072, 131073, 300001,
         ] {
             for distribution in 0..6 {
                 let mut records = Vec::with_capacity(n);
@@ -452,6 +467,12 @@ mod tests {
                 }
                 let mut expected = records.clone();
                 expected.sort_by_key(|r| r >> 32);
+                let mut compact = records.clone();
+                sort_compact(&mut compact);
+                assert_eq!(
+                    compact, expected,
+                    "compact n={n}, distribution={distribution}"
+                );
                 sort(&mut records);
                 assert_eq!(records, expected, "n={n}, distribution={distribution}");
             }

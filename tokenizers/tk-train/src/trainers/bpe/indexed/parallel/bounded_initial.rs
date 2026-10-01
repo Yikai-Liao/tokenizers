@@ -13,7 +13,69 @@ pub(super) struct Initialized {
     pub(super) routes: Vec<Vec<(u64, u64)>>,
     pub(super) metrics: Metrics,
 }
+trait InitialRecord: Copy {
+    fn encode(key: u64, local: u32) -> Self;
+    fn key(self) -> u64;
+    fn local(self) -> usize;
+    fn sort(records: &mut Vec<Self>) -> usize;
+}
+impl InitialRecord for u128 {
+    fn encode(key: u64, local: u32) -> Self {
+        (u128::from(key) << 64) | u128::from(local)
+    }
+    fn key(self) -> u64 {
+        (self >> 64) as u64
+    }
+    fn local(self) -> usize {
+        self as u32 as usize
+    }
+    fn sort(records: &mut Vec<Self>) -> usize {
+        block_radix::sort_wide(records)
+    }
+}
+impl InitialRecord for u64 {
+    fn encode(key: u64, local: u32) -> Self {
+        debug_assert!(key >> 48 == 0 && key as u32 <= u16::MAX as u32);
+        let code = ((key >> 32) << 16) | (key & 0xffff);
+        (code << 32) | u64::from(local)
+    }
+    fn key(self) -> u64 {
+        let code = self >> 32;
+        ((code >> 16) << 32) | (code & 0xffff)
+    }
+    fn local(self) -> usize {
+        self as u32 as usize
+    }
+    fn sort(records: &mut Vec<Self>) -> usize {
+        block_radix::sort_compact(records)
+    }
+}
+// Compact records are selected only after checking the complete initial ID
+// domain. Canonical keys and global addresses retain their original widths.
 pub(super) fn initialize<C: Slot, O: Offset, const INLINE: usize>(
+    corpus: &[C],
+    block: &mut Block<O, INLINE>,
+    end: usize,
+    uniform: Option<u64>,
+    workers: usize,
+    identities: usize,
+) -> Result<Initialized> {
+    if identities <= u16::MAX as usize + 1 {
+        initialize_typed::<C, O, INLINE, u64>(corpus, block, end, uniform, workers)
+    } else {
+        initialize_wide(corpus, block, end, uniform, workers)
+    }
+}
+pub(super) fn initialize_wide<C: Slot, O: Offset, const INLINE: usize>(
+    corpus: &[C],
+    block: &mut Block<O, INLINE>,
+    end: usize,
+    uniform: Option<u64>,
+    workers: usize,
+) -> Result<Initialized> {
+    initialize_typed::<C, O, INLINE, u128>(corpus, block, end, uniform, workers)
+}
+fn initialize_typed<C: Slot, O: Offset, const INLINE: usize, R: InitialRecord>(
     corpus: &[C],
     block: &mut Block<O, INLINE>,
     end: usize,
@@ -55,18 +117,18 @@ pub(super) fn initialize<C: Slot, O: Offset, const INLINE: usize>(
                     .checked_add(delta)
                     .ok_or("initial weight correction exceeds i64")?;
             }
-            records.push((u128::from(k) << 64) | u128::from(local));
+            records.push(R::encode(k, local));
         }
-        let scratch = block_radix::sort_wide(&mut records);
+        let scratch = R::sort(&mut records);
         metrics.tiles += 1;
         metrics.buffer_bound_bytes = metrics
             .buffer_bound_bytes
-            .max(records.capacity() * 16 + scratch);
+            .max(records.capacity() * std::mem::size_of::<R>() + scratch);
         let mut begin = 0;
         while begin < records.len() {
-            let k = (records[begin] >> 64) as u64;
+            let k = records[begin].key();
             let mut after = begin + 1;
-            while after < records.len() && (records[after] >> 64) as u64 == k {
+            while after < records.len() && records[after].key() == k {
                 after += 1;
             }
             metrics.groups += 1;
@@ -74,7 +136,7 @@ pub(super) fn initialize<C: Slot, O: Offset, const INLINE: usize>(
             // Tiles visit ascending physical intervals; stable grouping keeps
             // equal keys in ascending local-address order within each tile.
             for &record in &records[begin..after] {
-                positions.push(O::encode(record as u32 as usize))?;
+                positions.push(O::encode(record.local()))?;
             }
             begin = after;
         }
@@ -103,6 +165,19 @@ pub(super) fn initialize<C: Slot, O: Offset, const INLINE: usize>(
 mod tests {
     use super::*;
     #[test]
+    fn compact_records_keep_both_ids_and_the_full_local_address() {
+        for left in [0, 1, 255, 256, u16::MAX as u32] {
+            for right in [0, 1, 255, 256, u16::MAX as u32] {
+                for local in [0, 1, 1 << 31, u32::MAX] {
+                    let canonical = key(left, right);
+                    let record = <u64 as InitialRecord>::encode(canonical, local);
+                    assert_eq!(record.key(), canonical);
+                    assert_eq!(record.local(), local as usize);
+                }
+            }
+        }
+    }
+    #[test]
     fn tile_boundaries_full_keys_zero_weights_and_sorted_postings() {
         let base = 37;
         let end = base + TILE_RECORDS * 2 + 513;
@@ -127,7 +202,7 @@ mod tests {
                 entry.0.push((p - base) as u32);
                 entry.1 += block.weight(p, uniform);
             }
-            let got = initialize(&corpus, &mut block, end, uniform, 4).unwrap();
+            let got = initialize(&corpus, &mut block, end, uniform, 4, u32::MAX as usize).unwrap();
             let counts: std::collections::BTreeMap<_, _> =
                 got.routes.into_iter().flatten().collect();
             assert_eq!(

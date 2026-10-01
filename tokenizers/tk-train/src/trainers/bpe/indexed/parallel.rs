@@ -694,7 +694,7 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
                     .par_iter_mut()
                     .map(|block| -> Result<_> {
                         let end = corpus.len().saturating_sub(1).min(block.base + block_size);
-                        bounded_initial::initialize(&corpus, block, end, uniform, config.workers)
+                        bounded_initial::initialize(&corpus, block, end, uniform, config.workers, lengths.len())
                     })
                     .collect::<Result<Vec<_>>>()?;
                 initial_bounded_tiles += initialized.iter().map(|b| b.metrics.tiles).sum::<usize>();
@@ -758,7 +758,9 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
             initial_count_backend: if radix_eligible {
                 "stable_radix16"
             } else if !flat {
-                "spatial_block_bounded_radix64"
+                if lengths.len() <= u16::MAX as usize + 1 {
+                    "spatial_block_bounded_radix16"
+                } else { "spatial_block_bounded_radix64" }
             } else {
                 "spatial_owner_hash"
             },
