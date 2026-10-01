@@ -13,6 +13,11 @@ pub(super) enum SelectionMode {
     Bulk(usize),
 }
 impl SelectionMode {
+    pub(super) fn for_workers(workers: usize) -> Self {
+        // With one owner the original local lazy heap already is the global
+        // queue. Neither another heap nor speculative validation saves work.
+        if workers == 1 { Self::Serial } else { Self::Bulk(4) }
+    }
     pub(super) fn label(self) -> &'static str {
         match self {
             Self::Serial => "serial",
@@ -47,14 +52,13 @@ pub(super) struct Frontier {
 }
 impl Frontier {
     pub(super) fn begin_epoch(&mut self, owners: &mut [Owner], mode: SelectionMode) {
+        if !mode.uses_leaders() { return; }
         let mut leaders = std::mem::take(&mut self.leaders).into_vec();
         leaders.clear();
-        if mode.uses_leaders() {
-            for (o, ledger) in owners.iter_mut().enumerate() {
-                self.owner_probes += 1;
-                if let Some(candidate) = ledger.window_upper() {
-                    leaders.push((candidate, o));
-                }
+        for (o, ledger) in owners.iter_mut().enumerate() {
+            self.owner_probes += 1;
+            if let Some(candidate) = ledger.window_upper() {
+                leaders.push((candidate, o));
             }
         }
         // Reuse backing storage and heapify all owner heads in O(owners).
@@ -79,6 +83,7 @@ impl Frontier {
             }
         } else {
             self.owner_probes += owners.len();
+            if owners.len() == 1 { return owners[0].window_top(mode).map(|c| (0, c)); }
             owners.iter_mut().enumerate()
                 .filter_map(|(o, ledger)| ledger.window_top(mode).map(|c| (o, c)))
                 .max_by_key(|(_, c)| *c)

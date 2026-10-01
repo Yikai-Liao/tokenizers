@@ -407,7 +407,7 @@ pub(super) fn train_with_policy(
     config: IndexedParallelConfig,
     policy: super::posting_arena::Policy,
 ) -> Result<IndexedTraining> {
-    train_with_selection(trainer, wc, config, policy, SelectionMode::Bulk(4))
+    train_with_selection(trainer, wc, config, policy, SelectionMode::for_workers(config.workers))
 }
 
 fn train_with_selection(
@@ -1041,8 +1041,10 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
                 break;
             }
         }
-        for ledger in &mut owners {
-            ledger.end_selection();
+        if !matches!(selection, SelectionMode::Serial) {
+            for ledger in &mut owners {
+                ledger.end_selection();
+            }
         }
         if rules.is_empty() {
             break;
