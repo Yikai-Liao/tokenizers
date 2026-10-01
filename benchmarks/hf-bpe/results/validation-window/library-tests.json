@@ -1,0 +1,18 @@
+{
+  "source_commit": "10e2a2e2",
+  "command": "CARGO_TARGET_DIR=/root/code/tokenizers-build/arena-dynamic-lib-target /root/.cargo/bin/cargo test --offline --manifest-path tokenizers/tk-train/Cargo.toml --no-default-features --lib",
+  "tests_passed": 66,
+  "tests_failed": 0,
+  "seconds": 57.02,
+  "protocol_shards": [
+    1,
+    4,
+    32,
+    64
+  ],
+  "actual_training_workers": [
+    1,
+    4,
+    32
+  ]
+}

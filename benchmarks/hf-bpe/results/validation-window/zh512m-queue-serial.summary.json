@@ -1,0 +1,12 @@
+{
+  "mode": "serial",
+  "diagnostic_only": false,
+  "bits": 32,
+  "train_ms": 19419.046592,
+  "initialize_ms": 5424.039508,
+  "merge_ms": 13550.587225,
+  "full_peak_rss_bytes": 3621847040,
+  "worker_task_occupancy": null,
+  "visits_balance_efficiency": null,
+  "model_lifetime_swap_gates": "PASS"
+}

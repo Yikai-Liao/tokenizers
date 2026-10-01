@@ -1,0 +1,13 @@
+{
+  "mode": "auto",
+  "workers": 4,
+  "diagnostic_only": false,
+  "bits": 32,
+  "train_ms": 1755.8682520000002,
+  "initialize_ms": 292.401798,
+  "merge_ms": 1439.086938,
+  "full_peak_rss_bytes": 291352576,
+  "worker_task_occupancy": null,
+  "visits_balance_efficiency": null,
+  "model_lifetime_swap_gates": "PASS"
+}

@@ -1,0 +1,12 @@
+{
+  "mode": "leader",
+  "diagnostic_only": false,
+  "bits": 32,
+  "train_ms": 18099.429570000004,
+  "initialize_ms": 4782.507143,
+  "merge_ms": 12974.467731,
+  "full_peak_rss_bytes": 3617083392,
+  "worker_task_occupancy": null,
+  "visits_balance_efficiency": null,
+  "model_lifetime_swap_gates": "PASS"
+}

@@ -1,0 +1,12 @@
+{
+  "mode": "bulk4",
+  "diagnostic_only": false,
+  "bits": 32,
+  "train_ms": 252.667386,
+  "initialize_ms": 39.025452,
+  "merge_ms": 202.013271,
+  "full_peak_rss_bytes": 31289344,
+  "worker_task_occupancy": null,
+  "visits_balance_efficiency": null,
+  "model_lifetime_swap_gates": "PASS"
+}
