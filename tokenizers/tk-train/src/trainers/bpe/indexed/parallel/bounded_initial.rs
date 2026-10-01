@@ -3,91 +3,47 @@
 use super::radix_count::block_radix;
 use super::*;
 const TILE_RECORDS: usize = 1 << 18;
+// The table's actual cardinality decides whether to pay for grouping. This
+// keeps the small-table spatial scanner while bounding large-table sort tiles.
+const SORT_MIN_KEYS: usize = 1 << 16;
 #[derive(Default)]
 pub(super) struct Metrics {
     pub(super) tiles: usize,
     pub(super) groups: usize,
+    pub(super) hash_edges: usize,
     pub(super) buffer_bound_bytes: usize,
 }
 pub(super) struct Initialized {
     pub(super) routes: Vec<Vec<(u64, u64)>>,
     pub(super) metrics: Metrics,
 }
-trait InitialRecord: Copy {
-    fn encode(key: u64, local: u32) -> Self;
-    fn key(self) -> u64;
-    fn local(self) -> usize;
-    fn sort(records: &mut Vec<Self>) -> usize;
-}
-impl InitialRecord for u128 {
-    fn encode(key: u64, local: u32) -> Self {
-        (u128::from(key) << 64) | u128::from(local)
-    }
-    fn key(self) -> u64 {
-        (self >> 64) as u64
-    }
-    fn local(self) -> usize {
-        self as u32 as usize
-    }
-    fn sort(records: &mut Vec<Self>) -> usize {
-        block_radix::sort_wide(records)
-    }
-}
-impl InitialRecord for u64 {
-    fn encode(key: u64, local: u32) -> Self {
-        debug_assert!(key >> 48 == 0 && key as u32 <= u16::MAX as u32);
-        let code = ((key >> 32) << 16) | (key & 0xffff);
-        (code << 32) | u64::from(local)
-    }
-    fn key(self) -> u64 {
-        let code = self >> 32;
-        ((code >> 16) << 32) | (code & 0xffff)
-    }
-    fn local(self) -> usize {
-        self as u32 as usize
-    }
-    fn sort(records: &mut Vec<Self>) -> usize {
-        block_radix::sort_compact(records)
-    }
-}
-// Compact records are selected only after checking the complete initial ID
-// domain. Canonical keys and global addresses retain their original widths.
 pub(super) fn initialize<C: Slot, O: Offset, const INLINE: usize>(
     corpus: &[C],
     block: &mut Block<O, INLINE>,
     end: usize,
     uniform: Option<u64>,
     workers: usize,
-    identities: usize,
 ) -> Result<Initialized> {
-    if identities <= u16::MAX as usize + 1 {
-        initialize_typed::<C, O, INLINE, u64>(corpus, block, end, uniform, workers)
-    } else {
-        initialize_wide(corpus, block, end, uniform, workers)
-    }
+    initialize_with_threshold(corpus, block, end, uniform, workers, SORT_MIN_KEYS)
 }
-pub(super) fn initialize_wide<C: Slot, O: Offset, const INLINE: usize>(
+pub(super) fn initialize_with_threshold<C: Slot, O: Offset, const INLINE: usize>(
     corpus: &[C],
     block: &mut Block<O, INLINE>,
     end: usize,
     uniform: Option<u64>,
     workers: usize,
-) -> Result<Initialized> {
-    initialize_typed::<C, O, INLINE, u128>(corpus, block, end, uniform, workers)
-}
-fn initialize_typed<C: Slot, O: Offset, const INLINE: usize, R: InitialRecord>(
-    corpus: &[C],
-    block: &mut Block<O, INLINE>,
-    end: usize,
-    uniform: Option<u64>,
-    workers: usize,
+    sort_min_keys: usize,
 ) -> Result<Initialized> {
     let mut metrics = Metrics::default();
     let mut extra_weights = AHashMap::<u64, i64>::new();
-    let mut records = Vec::with_capacity(TILE_RECORDS.min(end.saturating_sub(block.base)));
+    let mut records = Vec::new();
     let mut word = 0;
     for start in (block.base..end).step_by(TILE_RECORDS) {
+        let grouped = block.postings.len() >= sort_min_keys;
         records.clear();
+        if grouped && records.capacity() == 0 {
+            records.reserve_exact(TILE_RECORDS.min(end - start));
+        }
         for p in start..end.min(start + TILE_RECORDS) {
             let a = corpus[p].token();
             let b = corpus[p + 1].token();
@@ -117,18 +73,30 @@ fn initialize_typed<C: Slot, O: Offset, const INLINE: usize, R: InitialRecord>(
                     .checked_add(delta)
                     .ok_or("initial weight correction exceeds i64")?;
             }
-            records.push(R::encode(k, local));
+            if grouped {
+                records.push((u128::from(k) << 64) | u128::from(local));
+            } else {
+                metrics.hash_edges += 1;
+                block
+                    .postings
+                    .entry(k)
+                    .or_default()
+                    .push(O::encode(local as usize))?;
+            }
         }
-        let scratch = R::sort(&mut records);
+        if !grouped {
+            continue;
+        }
+        let scratch = block_radix::sort_wide(&mut records);
         metrics.tiles += 1;
         metrics.buffer_bound_bytes = metrics
             .buffer_bound_bytes
-            .max(records.capacity() * std::mem::size_of::<R>() + scratch);
+            .max(records.capacity() * 16 + scratch);
         let mut begin = 0;
         while begin < records.len() {
-            let k = records[begin].key();
+            let k = (records[begin] >> 64) as u64;
             let mut after = begin + 1;
-            while after < records.len() && records[after].key() == k {
+            while after < records.len() && (records[after] >> 64) as u64 == k {
                 after += 1;
             }
             metrics.groups += 1;
@@ -136,11 +104,13 @@ fn initialize_typed<C: Slot, O: Offset, const INLINE: usize, R: InitialRecord>(
             // Tiles visit ascending physical intervals; stable grouping keeps
             // equal keys in ascending local-address order within each tile.
             for &record in &records[begin..after] {
-                positions.push(O::encode(record.local()))?;
+                positions.push(O::encode(record as u32 as usize))?;
             }
             begin = after;
         }
     }
+    // Sorting storage is no longer needed when block-key summaries are built.
+    drop(records);
     let mut routed: Vec<Vec<(u64, u64)>> = (0..workers).map(|_| Vec::new()).collect();
     for (&k, positions) in &block.postings {
         let weight = if let Some(weight) = uniform {
@@ -165,18 +135,55 @@ fn initialize_typed<C: Slot, O: Offset, const INLINE: usize, R: InitialRecord>(
 mod tests {
     use super::*;
     #[test]
-    fn compact_records_keep_both_ids_and_the_full_local_address() {
-        for left in [0, 1, 255, 256, u16::MAX as u32] {
-            for right in [0, 1, 255, 256, u16::MAX as u32] {
-                for local in [0, 1, 1 << 31, u32::MAX] {
-                    let canonical = key(left, right);
-                    let record = <u64 as InitialRecord>::encode(canonical, local);
-                    assert_eq!(record.key(), canonical);
-                    assert_eq!(record.local(), local as usize);
+    fn adaptive_scan_switches_only_after_the_table_grows() {
+        let end = TILE_RECORDS * 2 + 513;
+        for large in [false, true] {
+            let corpus: Vec<u32> = (0..=end)
+                .map(|i| {
+                    if large && i % 131072 < 70000 {
+                        100_000 + (i % 131072) as u32
+                    } else {
+                        [7, 7, 7, 9, NONE][i % 5]
+                    }
+                })
+                .collect();
+            let mut block = Block::<u32, 2>::new(0, 1);
+            let got = initialize(&corpus, &mut block, end, Some(1), 4).unwrap();
+            let mut expected = AHashMap::<u64, Vec<u32>>::new();
+            for p in 0..end {
+                if corpus[p] != NONE && corpus[p + 1] != NONE {
+                    expected
+                        .entry(key(corpus[p], corpus[p + 1]))
+                        .or_default()
+                        .push(p as u32);
                 }
+            }
+            for (k, positions) in &expected {
+                assert_eq!(block.postings[k].as_slice(), positions);
+            }
+            assert_eq!(block.postings.len(), expected.len());
+            let frequencies: AHashMap<_, _> = got.routes.into_iter().flatten().collect();
+            assert_eq!(
+                frequencies,
+                expected.iter().map(|(&k, v)| (k, v.len() as u64)).collect()
+            );
+            assert!(got.metrics.hash_edges > 0);
+            if large {
+                assert_eq!(got.metrics.tiles, 2);
+                assert!(got.metrics.groups > 0);
+                assert!(got.metrics.buffer_bound_bytes > 0);
+            } else {
+                assert_eq!(
+                    got.metrics.hash_edges,
+                    expected.values().map(|v| v.len()).sum::<usize>()
+                );
+                assert_eq!(got.metrics.tiles, 0);
+                assert_eq!(got.metrics.groups, 0);
+                assert_eq!(got.metrics.buffer_bound_bytes, 0);
             }
         }
     }
+
     #[test]
     fn tile_boundaries_full_keys_zero_weights_and_sorted_postings() {
         let base = 37;
@@ -202,7 +209,7 @@ mod tests {
                 entry.0.push((p - base) as u32);
                 entry.1 += block.weight(p, uniform);
             }
-            let got = initialize(&corpus, &mut block, end, uniform, 4, u32::MAX as usize).unwrap();
+            let got = initialize_with_threshold(&corpus, &mut block, end, uniform, 4, 0).unwrap();
             let counts: std::collections::BTreeMap<_, _> =
                 got.routes.into_iter().flatten().collect();
             assert_eq!(

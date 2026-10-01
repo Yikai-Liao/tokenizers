@@ -599,6 +599,7 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
         let mut peak_initial_summary_buffer_bytes = 0;
         let mut initial_bounded_tiles = 0;
         let mut initial_bounded_groups = 0;
+        let mut initial_bounded_hash_edges = 0;
         let mut initial_bounded_sort_buffer_bound_bytes = 0;
         if radix_eligible {
             let lookup_begin = Instant::now();
@@ -694,11 +695,12 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
                     .par_iter_mut()
                     .map(|block| -> Result<_> {
                         let end = corpus.len().saturating_sub(1).min(block.base + block_size);
-                        bounded_initial::initialize(&corpus, block, end, uniform, config.workers, lengths.len())
+                        bounded_initial::initialize(&corpus, block, end, uniform, config.workers)
                     })
                     .collect::<Result<Vec<_>>>()?;
                 initial_bounded_tiles += initialized.iter().map(|b| b.metrics.tiles).sum::<usize>();
                 initial_bounded_groups += initialized.iter().map(|b| b.metrics.groups).sum::<usize>();
+                initial_bounded_hash_edges += initialized.iter().map(|b| b.metrics.hash_edges).sum::<usize>();
                 // Sum of each active block's maximum is an allocation bound,
                 // not an assertion that these maxima occur simultaneously.
                 initial_bounded_sort_buffer_bound_bytes = initial_bounded_sort_buffer_bound_bytes.max(
@@ -751,6 +753,7 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
             initial_count_ms,
             initial_bounded_tiles,
             initial_bounded_groups,
+            initial_bounded_hash_edges,
             initial_bounded_sort_buffer_bound_bytes,
             initial_summary_waves,
             initial_summary_buffer_bytes,
@@ -758,9 +761,7 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
             initial_count_backend: if radix_eligible {
                 "stable_radix16"
             } else if !flat {
-                if lengths.len() <= u16::MAX as usize + 1 {
-                    "spatial_block_bounded_radix16"
-                } else { "spatial_block_bounded_radix64" }
+                "spatial_block_adaptive_radix64"
             } else {
                 "spatial_owner_hash"
             },

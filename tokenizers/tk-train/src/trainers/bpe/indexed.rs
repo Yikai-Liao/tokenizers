@@ -65,6 +65,7 @@ pub(super) struct IndexedTrainingStats {
     pub initial_count_ms: f64,
     pub initial_bounded_tiles: usize,
     pub initial_bounded_groups: usize,
+    pub initial_bounded_hash_edges: usize,
     /// Sum of per-block sort maxima in the largest initialization wave.
     pub initial_bounded_sort_buffer_bound_bytes: usize,
     pub initial_summary_waves: usize,
