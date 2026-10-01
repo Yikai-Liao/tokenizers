@@ -11,6 +11,7 @@ mod candidate_heap;
 mod corpus;
 mod fused_batch;
 mod radix_count;
+mod bounded_initial;
 use candidate_heap::CandidateHeap;
 mod weight_lookup;
 
@@ -596,6 +597,9 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
         let mut initial_summary_waves = 0;
         let mut initial_summary_buffer_bytes = 0;
         let mut peak_initial_summary_buffer_bytes = 0;
+        let mut initial_bounded_tiles = 0;
+        let mut initial_bounded_groups = 0;
+        let mut initial_bounded_sort_buffer_bound_bytes = 0;
         if radix_eligible {
             let lookup_begin = Instant::now();
             initial_weight_lookup = uniform
@@ -686,66 +690,20 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
             let mut count_ms = 0.0;
             for (wave_index, wave_blocks) in blocks.chunks_mut(wave_size).enumerate() {
                 let route_begin = Instant::now();
-                let frequencies: Vec<Vec<Vec<(u64, u64)>>> = wave_blocks
+                let initialized: Vec<bounded_initial::Initialized> = wave_blocks
                     .par_iter_mut()
                     .map(|block| -> Result<_> {
-                        // Posting length supplies the physical count. Keep only nonunit
-                        // weight corrections; the checked corpus budget bounds signed sums.
-                        let mut extra_weights = AHashMap::<u64, i64>::new();
                         let end = corpus.len().saturating_sub(1).min(block.base + block_size);
-                        let mut word = 0;
-                        for p in block.base..end {
-                            let a = corpus[p].token();
-                            let b = corpus[p + 1].token();
-                            if a == NONE || b == NONE {
-                                continue;
-                            }
-                            let local = (p - block.base) as u32;
-                            let weight = if let Some(weight) = uniform {
-                                weight
-                            } else {
-                                while word < block.pivots.len() && block.pivots[word] <= local {
-                                    word += 1;
-                                }
-                                if word == 0 {
-                                    block.previous_weight
-                                } else {
-                                    block.weights[word - 1]
-                                }
-                            };
-                            let k = key(a, b);
-                            if uniform.is_none() && weight != 1 {
-                                let delta = i64::try_from(weight)
-                                    .map_err(|_| "indexed BPE weight exceeds i64::MAX")? - 1;
-                                let extra = extra_weights.entry(k).or_default();
-                                *extra = extra.checked_add(delta)
-                                    .ok_or("initial weight correction exceeds i64")?;
-                            }
-                            block
-                                .postings
-                                .entry(k)
-                                .or_default()
-                                .push(O::encode(p - block.base))?;
-                        }
-                        let mut routed: Vec<Vec<(u64, u64)>> =
-                            (0..config.workers).map(|_| Vec::new()).collect();
-                        for (&k, positions) in &block.postings {
-                            let weight = if let Some(weight) = uniform {
-                                (positions.len() as u64).checked_mul(weight)
-                                    .ok_or("initial frequency exceeds u64")?
-                            } else {
-                                let frequency = (positions.len() as i64)
-                                    .checked_add(extra_weights.get(&k).copied().unwrap_or(0))
-                                    .ok_or("initial frequency exceeds i64")?;
-                                u64::try_from(frequency)
-                                    .map_err(|_| "negative initial frequency")?
-                            };
-                            // Global floor filtering follows reduction across ALL blocks.
-                            routed[owner(k, config.workers)].push((k, weight));
-                        }
-                        Ok(routed)
+                        bounded_initial::initialize(&corpus, block, end, uniform, config.workers)
                     })
                     .collect::<Result<Vec<_>>>()?;
+                initial_bounded_tiles += initialized.iter().map(|b| b.metrics.tiles).sum::<usize>();
+                initial_bounded_groups += initialized.iter().map(|b| b.metrics.groups).sum::<usize>();
+                // Sum of each active block's maximum is an allocation bound,
+                // not an assertion that these maxima occur simultaneously.
+                initial_bounded_sort_buffer_bound_bytes = initial_bounded_sort_buffer_bound_bytes.max(
+                    initialized.iter().map(|b| b.metrics.buffer_bound_bytes).sum::<usize>());
+                let frequencies: Vec<_> = initialized.into_iter().map(|b| b.routes).collect();
                 route_ms += route_begin.elapsed().as_secs_f64() * 1000.0;
                 let summary_bytes = frequencies.capacity() * std::mem::size_of::<Vec<Vec<(u64, u64)>>>()
                     + frequencies.iter().map(|routes| {
@@ -791,13 +749,16 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
             corpus_fill_ms: timings.fill_ms,
             initial_route_ms,
             initial_count_ms,
+            initial_bounded_tiles,
+            initial_bounded_groups,
+            initial_bounded_sort_buffer_bound_bytes,
             initial_summary_waves,
             initial_summary_buffer_bytes,
             peak_initial_summary_buffer_bytes,
             initial_count_backend: if radix_eligible {
                 "stable_radix16"
             } else if !flat {
-                "spatial_block_sparse_weights"
+                "spatial_block_bounded_radix64"
             } else {
                 "spatial_owner_hash"
             },

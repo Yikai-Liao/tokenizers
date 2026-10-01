@@ -5,7 +5,7 @@ use super::weight_lookup::WeightLookup;
 use super::*;
 
 #[path = "block_radix.rs"]
-mod block_radix;
+pub(super) mod block_radix;
 #[path = "owner_route.rs"]
 mod owner_route;
 

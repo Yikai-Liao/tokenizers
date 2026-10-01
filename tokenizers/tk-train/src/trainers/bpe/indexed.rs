@@ -63,6 +63,10 @@ pub(super) struct IndexedTrainingStats {
     pub corpus_fill_ms: f64,
     pub initial_route_ms: f64,
     pub initial_count_ms: f64,
+    pub initial_bounded_tiles: usize,
+    pub initial_bounded_groups: usize,
+    /// Sum of per-block sort maxima in the largest initialization wave.
+    pub initial_bounded_sort_buffer_bound_bytes: usize,
     pub initial_summary_waves: usize,
     /// Sum of allocated summary Vec capacities across consumed waves.
     pub initial_summary_buffer_bytes: usize,

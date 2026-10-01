@@ -28,13 +28,31 @@
 //! Rust translation of Clausecker's BSD-2-Clause `radixsort_permuted.c`.
 //! Reference f69e816c3cd79d312cd67aea5b9cf1c338c1b371, July 2026 paper:
 //! https://arxiv.org/abs/2607.05302 ; full upstream license retained above.
-//! Sort only the HIGH 32 bits; retain LOW 32 bits in stable incoming order.
-//! Fixed 512-element blocks: 2 MiB scratch + 9 bytes per input block.
+//! Sort the key half; retain the payload half in stable incoming order.
+//! u64 records use 512-element blocks and 2 MiB scratch; u128 records
+//! use 128-element blocks and 1 MiB scratch. Metadata adds 9 bytes per block.
 //! Stable initial pair grouping with bounded block scratch.
 use std::{marker::PhantomData, ptr};
 const RADIX: usize = 256;
 const BLOCK: usize = 512;
 const SCRATCH: usize = 2 * RADIX;
+
+trait Record: Copy + Default {
+    const BLOCK: usize;
+    fn key(self) -> u64;
+}
+impl Record for u64 {
+    const BLOCK: usize = BLOCK;
+    fn key(self) -> u64 {
+        self >> 32
+    }
+}
+impl Record for u128 {
+    const BLOCK: usize = 128;
+    fn key(self) -> u64 {
+        (self >> 64) as u64
+    }
+}
 
 #[derive(Clone, Copy)]
 struct Partial {
@@ -42,25 +60,25 @@ struct Partial {
     length: usize,
 }
 #[derive(Clone, Copy)]
-struct Bucket {
-    next: *mut u64,
-    end: *mut u64,
+struct Bucket<T> {
+    next: *mut T,
+    end: *mut T,
 }
-struct Sorter<'a> {
-    records: *mut u64,
+struct Sorter<'a, T: Record> {
+    records: *mut T,
     length: usize,
-    _borrow: PhantomData<&'a mut [u64]>,
-    scratch: Vec<u64>,
-    scratch_base: *mut u64,
+    _borrow: PhantomData<&'a mut [T]>,
+    scratch: Vec<T>,
+    scratch_base: *mut T,
     perm: Vec<u32>,
     perm2: Vec<u32>,
     usage: Vec<u8>,
     partials: [Partial; RADIX],
     fill: usize,
 }
-impl<'a> Sorter<'a> {
-    fn new(records: &'a mut [u64]) -> Self {
-        let full = records.len() / BLOCK;
+impl<'a, T: Record> Sorter<'a, T> {
+    fn new(records: &'a mut [T]) -> Self {
+        let full = records.len() / T::BLOCK;
         let blocks = full + SCRATCH;
         assert!(blocks <= u32::MAX as usize);
         let fill = RADIX + full + 1;
@@ -74,9 +92,10 @@ impl<'a> Sorter<'a> {
                 i - (fill - 1) + RADIX
             } as u32;
         }
-        let mut scratch = vec![0; SCRATCH * BLOCK];
-        let tail = records.len() % BLOCK;
-        scratch[RADIX * BLOCK..RADIX * BLOCK + tail].copy_from_slice(&records[full * BLOCK..]);
+        let mut scratch = vec![T::default(); SCRATCH * T::BLOCK];
+        let tail = records.len() % T::BLOCK;
+        scratch[RADIX * T::BLOCK..RADIX * T::BLOCK + tail]
+            .copy_from_slice(&records[full * T::BLOCK..]);
         let mut partials = [Partial {
             index: blocks,
             length: 0,
@@ -101,16 +120,16 @@ impl<'a> Sorter<'a> {
             fill,
         }
     }
-    fn block(&mut self, physical: usize) -> *mut u64 {
+    fn block(&mut self, physical: usize) -> *mut T {
         assert!(physical < self.perm.len());
         // SAFETY: physical IDs below SCRATCH identify full scratch blocks.
-        // Other IDs identify exactly floor(n/BLOCK) full input blocks.
+        // Other IDs identify exactly floor(n/T::BLOCK) full input blocks.
         // Vec allocations are never resized while these pointers are in use.
         unsafe {
             if physical < SCRATCH {
-                self.scratch_base.add(physical * BLOCK)
+                self.scratch_base.add(physical * T::BLOCK)
             } else {
-                self.records.add((physical - SCRATCH) * BLOCK)
+                self.records.add((physical - SCRATCH) * T::BLOCK)
             }
         }
     }
@@ -120,7 +139,7 @@ impl<'a> Sorter<'a> {
             *partial += 1;
             length
         } else {
-            BLOCK
+            T::BLOCK
         }
     }
     #[cfg(debug_assertions)]
@@ -135,7 +154,7 @@ impl<'a> Sorter<'a> {
         assert!(
             self.partials
                 .iter()
-                .all(|p| p.index >= RADIX && p.index < self.fill && p.length < BLOCK)
+                .all(|p| p.index >= RADIX && p.index < self.fill && p.length < T::BLOCK)
         );
         let mut partial = 0;
         let total: usize = (RADIX..self.fill)
@@ -151,10 +170,10 @@ impl<'a> Sorter<'a> {
         let mut counts = [1_usize; RADIX];
         for (i, bucket) in buckets.iter_mut().enumerate() {
             let out = self.block(self.perm[i] as usize);
-            // SAFETY: block() returns exactly BLOCK valid elements.
+            // SAFETY: block() returns exactly T::BLOCK valid elements.
             *bucket = Bucket {
                 next: out,
-                end: unsafe { out.add(BLOCK) },
+                end: unsafe { out.add(T::BLOCK) },
             };
             self.usage[i] = i as u8;
         }
@@ -164,10 +183,10 @@ impl<'a> Sorter<'a> {
             let source = self.block(self.perm[input] as usize);
             let length = self.length(input, &mut partial);
             for j in 0..length {
-                // SAFETY: source is a valid block, length <= BLOCK. The stable
+                // SAFETY: source is a valid block, length <= T::BLOCK. The stable
                 // logical input traversal consumes each element exactly once.
                 let value = unsafe { source.add(j).read() };
-                let b = ((value >> shift) & 255) as usize;
+                let b = ((value.key() >> shift) & 255) as usize;
                 // SAFETY: bucket.next points at an unused cell in its current
                 // output block. It advances at most to end before reallocation.
                 // Input blocks are recycled only after consumption: the RADIX
@@ -188,7 +207,7 @@ impl<'a> Sorter<'a> {
                     let out = self.block(self.perm[output] as usize);
                     buckets[b] = Bucket {
                         next: out,
-                        end: unsafe { out.add(BLOCK) },
+                        end: unsafe { out.add(T::BLOCK) },
                     };
                     self.usage[output] = b as u8;
                     counts[b] += 1;
@@ -207,8 +226,8 @@ impl<'a> Sorter<'a> {
             starts[b] += 1;
             self.perm2[j] = self.perm[i];
             let base = self.block(self.perm[i] as usize);
-            // SAFETY: next/end belong to the same BLOCK-sized allocation.
-            if unsafe { base.add(BLOCK) } == buckets[b].end {
+            // SAFETY: next/end belong to the same T::BLOCK-sized allocation.
+            if unsafe { base.add(T::BLOCK) } == buckets[b].end {
                 self.partials[b] = Partial {
                     index: j,
                     length: unsafe { buckets[b].next.offset_from(base) as usize },
@@ -242,7 +261,7 @@ impl<'a> Sorter<'a> {
                 // SAFETY: both physical IDs are valid full blocks. Free block
                 // receives live output which would otherwise be overwritten.
                 unsafe {
-                    ptr::copy(from, to, BLOCK);
+                    ptr::copy(from, to, T::BLOCK);
                 }
                 self.perm[free_logical] = destination as u32;
                 self.perm[output] = free_physical as u32;
@@ -255,7 +274,7 @@ impl<'a> Sorter<'a> {
             let from = self.block(source);
             assert!(start + length <= self.length);
             // Completed partials can only shorten preceding output: start <=
-            // (destination - SCRATCH) * BLOCK, and start + length never exceeds
+            // (destination - SCRATCH) * T::BLOCK, and start + length never exceeds
             // this destination block's end. Any still-live destination block was
             // evacuated above; earlier physical destinations are already consumed.
             // SAFETY: length valid source elements are moved into the next
@@ -290,16 +309,80 @@ impl<'a> Sorter<'a> {
 /// Returns simultaneous allocated sorting scratch bytes. Mutates records in
 /// place; output is physically contiguous and stable within each high32 key.
 pub(super) fn sort(records: &mut [u64]) -> usize {
-    if records.len() < 2 {
+    sort_digits(records, 0xffff_ffff)
+}
+
+/// Sort the full canonical u64 key in the high half of each u128 record.
+/// The low half preserves the incoming local address. Constant key bytes
+/// need no scatter pass. Scratch is 1 MiB plus 9 bytes per 128 input records; small
+/// tiles use a simpler scatter when its allocation is smaller.
+pub(in super::super) fn sort_wide(records: &mut [u128]) -> usize {
+    let Some(&first) = records.first() else {
+        return 0;
+    };
+    let varying = records
+        .iter()
+        .fold(0, |bits, &r| bits | (r.key() ^ first.key()));
+    if records.len() * 16
+        <= SCRATCH * <u128 as Record>::BLOCK * 16
+            + (records.len() / <u128 as Record>::BLOCK + SCRATCH) * 9
+    {
+        sort_classic_wide(records, varying)
+    } else {
+        sort_digits(records, varying)
+    }
+}
+fn sort_classic_wide(records: &mut [u128], varying: u64) -> usize {
+    if records.len() < 2 || varying == 0 {
+        return 0;
+    }
+    let mut scratch = vec![0; records.len()];
+    let bytes = scratch.capacity() * 16;
+    let mut flipped = false;
+    {
+        let mut input = &mut records[..];
+        let mut output = scratch.as_mut_slice();
+        for shift in (0..64).step_by(8) {
+            if (varying >> shift) & 255 == 0 {
+                continue;
+            }
+            let mut counts = [0usize; RADIX];
+            for &r in input.iter() {
+                counts[((r.key() >> shift) & 255) as usize] += 1;
+            }
+            let mut offsets = [0usize; RADIX];
+            let mut sum = 0;
+            for (count, offset) in counts.iter().zip(offsets.iter_mut()) {
+                *offset = sum;
+                sum += count;
+            }
+            for &r in input.iter() {
+                let b = ((r.key() >> shift) & 255) as usize;
+                output[offsets[b]] = r;
+                offsets[b] += 1;
+            }
+            std::mem::swap(&mut input, &mut output);
+            flipped = !flipped;
+        }
+    }
+    if flipped {
+        records.copy_from_slice(&scratch);
+    }
+    bytes
+}
+fn sort_digits<T: Record>(records: &mut [T], varying: u64) -> usize {
+    if records.len() < 2 || varying == 0 {
         return 0;
     }
     let mut sorter = Sorter::new(records);
-    let bytes = sorter.scratch.capacity() * 8
+    let bytes = sorter.scratch.capacity() * std::mem::size_of::<T>()
         + sorter.perm.capacity() * 4
         + sorter.perm2.capacity() * 4
         + sorter.usage.capacity();
-    for shift in [32, 40, 48, 56] {
-        sorter.step(shift);
+    for shift in (0..64).step_by(8) {
+        if (varying >> shift) & 255 != 0 {
+            sorter.step(shift);
+        }
     }
     sorter.compact();
     bytes
@@ -308,6 +391,36 @@ pub(super) fn sort(records: &mut [u64]) -> usize {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn stable_full64_keys_and_local_u32_addresses() {
+        let mut seed = 371_u64;
+        for n in [0, 1, 2, 511, 512, 513, 1025, 8192, 262145] {
+            for distribution in 0..5 {
+                let mut records = Vec::with_capacity(n);
+                for p in 0..n {
+                    seed = seed.wrapping_mul(6364136223846793005).wrapping_add(1);
+                    let key = match distribution {
+                        0 => u64::MAX,
+                        1 => ((p % 3) as u64) << 32,
+                        2 => seed % 97 | ((seed % 19) << 48),
+                        3 => seed,
+                        _ => [0, u64::MAX, 1 << 63, 1 << 32][p % 4],
+                    };
+                    let payload = if p % 2 == 0 {
+                        u32::MAX - p as u32
+                    } else {
+                        p as u32
+                    };
+                    records.push((u128::from(key) << 64) | u128::from(payload));
+                }
+                let mut expected = records.clone();
+                expected.sort_by_key(|r| r >> 64);
+                sort_wide(&mut records);
+                assert_eq!(records, expected, "n={n}, distribution={distribution}");
+            }
+        }
+    }
+
     #[test]
     fn stable_high32_at_block_boundaries_and_all_key_bits() {
         let mut seed = 371_u64;
