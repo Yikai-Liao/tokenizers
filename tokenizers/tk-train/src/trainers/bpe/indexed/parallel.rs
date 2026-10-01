@@ -7,9 +7,11 @@ use rayon::prelude::*;
 use std::sync::atomic::{AtomicU16, AtomicU32, Ordering as AtomicOrdering};
 
 mod alphabet;
+mod candidate_heap;
 mod corpus;
 mod fused_batch;
 mod radix_count;
+use candidate_heap::CandidateHeap;
 mod weight_lookup;
 
 trait Slot: Default + Send + Sync {
@@ -146,12 +148,12 @@ struct Entry {
 #[derive(Default)]
 struct Owner {
     entries: AHashMap<u64, Entry>,
-    heap: OctonaryHeap<Candidate>,
+    heap: CandidateHeap,
 }
 impl Owner {
     fn peek_current(&mut self) -> Option<Candidate> {
         loop {
-            let top = *self.heap.peek()?;
+            let top = self.heap.peek()?;
             match self.entries.get(&top.key) {
                 None => {
                     self.heap.pop();
@@ -568,9 +570,15 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
         uniform,
         symbols: initial_symbols,
         edges: initial_edges,
+        weighted_edges,
         timings,
         character_table_bytes,
     } = prepared;
+    // Each merge deletes boundaries, so no historical pair frequency exceeds
+    // the checked initial weighted edge mass. Reserved and forced alphabet IDs
+    // are already included in strings; future IDs stop at the vocab target.
+    let packed_heap = weighted_edges <= u32::MAX as u64
+        && strings.len().max(trainer.vocab_size) <= u16::MAX as usize + 1;
     let flat = bits == 32 && corpus.len() <= u32::MAX as usize + 1;
     let mut owners: Vec<Owner> = (0..config.workers).map(|_| Owner::default()).collect();
     let tokenize_ms = begin.elapsed().as_secs_f64() * 1000.0;
@@ -775,14 +783,13 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
             .map(|ledger| {
                 let old = ledger.entries.len();
                 ledger.entries.retain(|_, entry| entry.frequency >= floor);
-                ledger.heap = ledger
-                    .entries
-                    .iter()
-                    .map(|(&key, e)| Candidate {
+                ledger.heap = CandidateHeap::new(
+                    ledger.entries.iter().map(|(&key, e)| Candidate {
                         key,
                         frequency: e.frequency,
-                    })
-                    .collect();
+                    }),
+                    packed_heap,
+                );
                 old - ledger.entries.len()
             })
             .sum::<usize>();
@@ -840,7 +847,7 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
                 .map(|e| e.blocks.allocated_capacity() * 4)
                 .sum()
         };
-        stats.initial_heap_bytes = owners.iter().map(|o| o.heap.capacity() * 16).sum();
+        stats.initial_heap_bytes = owners.iter().map(|o| o.heap.capacity_bytes()).sum();
         stats.corpus_bytes = stats.initial_corpus_bytes;
         stats.posting_bytes = stats.initial_posting_bytes;
         stats.initialize_ms = begin.elapsed().as_secs_f64() * 1000.0;
@@ -982,7 +989,8 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
                 .max(prepared.selected_bytes);
             stats.peak_valid_start_bytes = stats.peak_valid_start_bytes.max(prepared.valid_bytes);
             stats.peak_prepare_aggregate_bytes = stats
-                .peak_prepare_aggregate_bytes.max(prepared.aggregate_bytes);
+                .peak_prepare_aggregate_bytes
+                .max(prepared.aggregate_bytes);
             let elapsed = stage.elapsed().as_secs_f64() * 1000.0;
             // Filter and neighbor deltas share this phase in the fused path.
             stats.fused_prepare_ms += elapsed;
@@ -1689,6 +1697,30 @@ mod tests {
         );
         let empty = Block::<u16, 4>::new(base, 27);
         assert_eq!(empty.weight_forward(base + 65535, None, &mut 0), 27);
+    }
+
+    #[test]
+    fn candidate_heap_range_fallback_keeps_weighted_greedy_semantics() {
+        let run = |weight, vocab| {
+            let words = [(CompactString::from("aaaababa"), weight)].into_iter().collect();
+            let trainer = BpeTrainer::builder().vocab_size(vocab).min_frequency(2)
+                .show_progress(false).build();
+            // The legacy HF oracle casts weights to i32; the wide indexed
+            // serial oracle keeps u64 frequencies for this range test.
+            let expected = trainer.do_train_indexed(&words).unwrap();
+            let got = trainer.do_train_indexed_parallel(&words, IndexedParallelConfig::default()).unwrap();
+            assert_eq!(got.trace, expected.trace);
+            assert_eq!(got.vocab, expected.vocab);
+            assert_eq!(got.merges, expected.merges);
+            got
+        };
+        let packed = run(3, 32);
+        let large_weight = run(u32::MAX as u64 + 1, 32);
+        let large_id_domain = run(3, 70000);
+        assert_eq!(packed.stats.initial_pairs, large_weight.stats.initial_pairs);
+        assert_eq!(packed.stats.initial_pairs, large_id_domain.stats.initial_pairs);
+        assert_eq!(large_weight.stats.initial_heap_bytes, packed.stats.initial_heap_bytes * 2);
+        assert_eq!(large_id_domain.stats.initial_heap_bytes, packed.stats.initial_heap_bytes * 2);
     }
 
     #[test]

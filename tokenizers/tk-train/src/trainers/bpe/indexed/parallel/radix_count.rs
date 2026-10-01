@@ -6,6 +6,8 @@ use super::*;
 
 #[path = "block_radix.rs"]
 mod block_radix;
+#[path = "owner_route.rs"]
+mod owner_route;
 
 #[derive(Default)]
 pub(super) struct Metrics {
@@ -140,70 +142,10 @@ fn initialize_with_widths<C: Slot, O: Offset, const INLINE: usize>(
     debug_assert_eq!(owners.len(), workers);
     let owner_width = owner_width.min(workers);
     let begin = Instant::now();
-    let chunk = corpus.len().div_ceil(workers).max(1);
-    let mut routes: Vec<Vec<Vec<u64>>> = corpus
-        .par_chunks(chunk)
-        .enumerate()
-        .map(|(c, slots)| {
-            let base = c * chunk;
-            let mut counts = vec![0_usize; workers];
-            // Two sequential scans give exact buffers instead of geometric growth
-            // of the larger 8-byte records. Owner assignment matches the old path.
-            for (i, slot) in slots.iter().enumerate() {
-                let p = base + i;
-                if p + 1 == corpus.len() {
-                    break;
-                }
-                let a = slot.token();
-                let b = corpus[p + 1].token();
-                if a != NONE && b != NONE {
-                    counts[owner(key(a, b), workers)] += 1;
-                }
-            }
-            let mut routed: Vec<Vec<u64>> = counts.into_iter().map(Vec::with_capacity).collect();
-            for (i, slot) in slots.iter().enumerate() {
-                let p = base + i;
-                if p + 1 == corpus.len() {
-                    break;
-                }
-                let a = slot.token();
-                let b = corpus[p + 1].token();
-                if a != NONE && b != NONE {
-                    debug_assert!(a <= u16::MAX as u32 && b <= u16::MAX as u32);
-                    let code = (a << 16) | b;
-                    routed[owner(key(a, b), workers)].push((u64::from(code) << 32) | p as u64);
-                }
-            }
-            routed
-        })
-        .collect();
-    let mut old_bytes: usize = routes
-        .iter()
-        .flat_map(|r| r.iter())
-        .map(|r| r.capacity() * 8)
-        .sum();
-    let mut peak = old_bytes;
-    let compact_begin = Instant::now();
-    let mut routed = Vec::with_capacity(workers);
-    let mut final_bytes = 0;
-    // Compact owners one at a time, releasing every old buffer as it is moved.
-    // Avoid retaining all original routes plus all final owner streams at once.
-    for o in 0..workers {
-        let len = routes.iter().map(|r| r[o].len()).sum();
-        let mut records = Vec::with_capacity(len);
-        let bytes = records.capacity() * 8;
-        peak = peak.max(old_bytes + final_bytes + bytes);
-        for route in &mut routes {
-            let mut part = std::mem::take(&mut route[o]);
-            let part_bytes = part.capacity() * 8;
-            records.append(&mut part);
-            old_bytes -= part_bytes;
-        }
-        final_bytes += records.capacity() * 8;
-        routed.push(records);
-    }
-    drop(routes);
-    let compact_ms = compact_begin.elapsed().as_secs_f64() * 1000.0;
+    let mut routed = owner_route::direct(corpus, workers);
+    let final_bytes: usize = routed.iter().map(|r| r.capacity() * 8).sum();
+    let mut peak = final_bytes;
+    let compact_ms = 0.0;
     let route_ms = begin.elapsed().as_secs_f64() * 1000.0;
     let count_begin = Instant::now();
     let mut remaining_record_bytes = final_bytes;

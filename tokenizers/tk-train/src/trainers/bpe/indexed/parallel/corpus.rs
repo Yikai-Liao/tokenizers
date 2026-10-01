@@ -16,6 +16,7 @@ pub(super) struct Prepared<C: Slot, O: Offset, const INLINE: usize> {
     pub uniform: Option<u64>,
     pub symbols: usize,
     pub edges: usize,
+    pub weighted_edges: u64,
     pub timings: Timings,
     pub character_table_bytes: usize,
 }
@@ -234,6 +235,7 @@ pub(super) fn build<C: Slot, O: Offset, const INLINE: usize>(
         uniform,
         symbols,
         edges,
+        weighted_edges: weighted_edges as u64,
         character_table_bytes,
         timings: Timings {
             measure_ms,
@@ -300,6 +302,13 @@ mod tests {
         assert_eq!(got.lengths, lengths);
         assert_eq!(got.symbols, symbols);
         assert_eq!(got.edges, edges);
+        let expected_weighted: u64 = expected
+            .windows(2)
+            .zip(&weights)
+            .filter(|(pair, _)| pair[0] != NONE && pair[1] != NONE)
+            .map(|(_, weight)| *weight)
+            .sum();
+        assert_eq!(got.weighted_edges, expected_weighted);
         assert_eq!(got.slots.capacity(), got.slots.len());
         for (p, &weight) in weights.iter().enumerate().skip(1) {
             assert_eq!(got.blocks[p >> 4].weight(p, got.uniform), weight);
