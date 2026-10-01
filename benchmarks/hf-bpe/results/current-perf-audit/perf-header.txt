@@ -1,0 +1,57 @@
+# ========
+# captured on    : Thu Oct  1 13:12:08 2026
+# header version : 1
+# data offset    : 504
+# data size      : 296916392
+# feat offset    : 296916896
+# hostname : us-agent
+# os release : 6.12.101+deb13-amd64
+# perf version : 6.12.111
+# arch : x86_64
+# nrcpus online : 6
+# nrcpus avail : 6
+# cpudesc : Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz
+# cpuid : GenuineIntel,6,85,4
+# total memory : 16344940 kB
+# cmdline : /usr/bin/perf record -F 99 -e cycles:u -e cache-misses:u --call-graph dwarf,16384 -o /root/code/tokenizers/benchmarks/hf-bpe/.build/native-j-current-perf.perf -- /root/code/tokenizers/benchmarks/hf-bpe/.build/native-j-current-perf-target/release/hf-bpe-native-j-current-perf /root/code/tokenizers/benchmarks/hf-bpe/.build/gb-corpus/zh-512m.txt none reference 50000 2 
+# event : name = cycles:u, , id = { 634, 635, 636, 637, 638, 639 }, type = 0 (PERF_TYPE_HARDWARE), size = 136, config = 0 (PERF_COUNT_HW_CPU_CYCLES), { sample_period, sample_freq } = 99, sample_type = IP|TID|TIME|ADDR|CALLCHAIN|ID|PERIOD|REGS_USER|STACK_USER|DATA_SRC, read_format = ID|LOST, disabled = 1, inherit = 1, exclude_kernel = 1, exclude_hv = 1, mmap = 1, comm = 1, freq = 1, enable_on_exec = 1, task = 1, mmap_data = 1, sample_id_all = 1, exclude_guest = 1, exclude_callchain_user = 1, mmap2 = 1, comm_exec = 1, ksymbol = 1, bpf_event = 1, sample_regs_user = 0xff0fff, sample_stack_user = 16384
+# event : name = cache-misses:u, , id = { 640, 641, 642, 643, 644, 645 }, type = 0 (PERF_TYPE_HARDWARE), size = 136, config = 0x3 (PERF_COUNT_HW_CACHE_MISSES), { sample_period, sample_freq } = 99, sample_type = IP|TID|TIME|ADDR|CALLCHAIN|ID|PERIOD|REGS_USER|STACK_USER|DATA_SRC, read_format = ID|LOST, disabled = 1, inherit = 1, exclude_kernel = 1, exclude_hv = 1, freq = 1, enable_on_exec = 1, sample_id_all = 1, exclude_guest = 1, exclude_callchain_user = 1, sample_regs_user = 0xff0fff, sample_stack_user = 16384
+# CPU_TOPOLOGY info available, use -I to display
+# NUMA_TOPOLOGY info available, use -I to display
+# pmu mappings: cpu = 4, breakpoint = 5, kprobe = 8, msr = 10, power = 11, software = 1, tracepoint = 2, uprobe = 9
+# CACHE info available, use -I to display
+# time of first sample : 219777.754505
+# time of last sample : 219814.888850
+# sample duration :  37134.344 ms
+# MEM_TOPOLOGY info available, use -I to display
+# bpf_prog_info 21: bpf_prog_e8932b6bae2b9745_restrict_filesystems addr 0xffffffffc035f64c size 309
+# bpf_prog_info 52: bpf_prog_ab4bc4523b7fe6b4 addr 0xffffffffc036f2f8 size 369
+# bpf_prog_info 66: bpf_prog_ab4bc4523b7fe6b4 addr 0xffffffffc036fbec size 369
+# bpf_prog_info 76: bpf_prog_ab4bc4523b7fe6b4 addr 0xffffffffc0370274 size 369
+# bpf_prog_info 86: bpf_prog_ab4bc4523b7fe6b4 addr 0xffffffffc037386c size 369
+# bpf_prog_info 96: bpf_prog_ab4bc4523b7fe6b4 addr 0xffffffffc0379c64 size 369
+# bpf_prog_info 156: bpf_prog_ab4bc4523b7fe6b4 addr 0xffffffffc038b82c size 369
+# bpf_prog_info 190: bpf_prog_ab4bc4523b7fe6b4 addr 0xffffffffc0362530 size 369
+# bpf_prog_info 195: bpf_prog_ab4bc4523b7fe6b4 addr 0xffffffffc036b964 size 369
+# bpf_prog_info 196: bpf_prog_5b66259bfca5c6d7_sd_devices addr 0xffffffffc036ef28 size 307
+# bpf_prog_info 197: bpf_prog_ee0e253c78993a24_sd_devices addr 0xffffffffc036f168 size 271
+# bpf_prog_info 198: bpf_prog_5b66259bfca5c6d7_sd_devices addr 0xffffffffc036f510 size 307
+# bpf_prog_info 199: bpf_prog_5b66259bfca5c6d7_sd_devices addr 0xffffffffc036f8b4 size 307
+# bpf_prog_info 200: bpf_prog_5b66259bfca5c6d7_sd_devices addr 0xffffffffc036fa08 size 307
+# bpf_prog_info 201: bpf_prog_6deef7357e7b4530_sd_fw_egress addr 0xffffffffc035fb88 size 67
+# bpf_prog_info 202: bpf_prog_6deef7357e7b4530_sd_fw_ingress addr 0xffffffffc035fc38 size 67
+# bpf_prog_info 203: bpf_prog_5b66259bfca5c6d7_sd_devices addr 0xffffffffc036fd98 size 307
+# bpf_prog_info 204: bpf_prog_f932a0f9579e0b8b_sd_devices addr 0xffffffffc036ff2c size 493
+# bpf_prog_info 205: bpf_prog_6deef7357e7b4530_sd_fw_egress addr 0xffffffffc03626d8 size 67
+# bpf_prog_info 206: bpf_prog_6deef7357e7b4530_sd_fw_ingress addr 0xffffffffc036f6ac size 67
+# bpf_prog_info 207: bpf_prog_a42d275341448247_sd_devices addr 0xffffffffc0370410 size 322
+# bpf_prog_info 208: bpf_prog_6deef7357e7b4530_sd_fw_egress addr 0xffffffffc037015c size 67
+# bpf_prog_info 209: bpf_prog_6deef7357e7b4530_sd_fw_ingress addr 0xffffffffc03701ec size 67
+# bpf_prog_info 210: bpf_prog_5b66259bfca5c6d7_sd_devices addr 0xffffffffc037063c size 307
+# bpf_prog_info 211: bpf_prog_5b66259bfca5c6d7_sd_devices addr 0xffffffffc0373b90 size 307
+# bpf_prog_info 212: bpf_prog_5b66259bfca5c6d7_sd_devices addr 0xffffffffc0379aec size 307
+# btf info of id 60
+# cpu pmu capabilities: max_precise=0, pmu_name=skylake
+# missing features: TRACING_DATA BRANCH_STACK GROUP_DESC AUXTRACE STAT CLOCKID DIR_FORMAT COMPRESSED CLOCK_DATA HYBRID_TOPOLOGY 
+# ========
+#

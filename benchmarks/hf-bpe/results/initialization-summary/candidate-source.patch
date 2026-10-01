@@ -1,11 +1,16 @@
 diff --git a/tokenizers/tk-train/src/trainers/bpe/indexed.rs b/tokenizers/tk-train/src/trainers/bpe/indexed.rs
-index 263e9a5b..4f8ce7b3 100644
+index 263e9a5b..75f36b34 100644
 --- a/tokenizers/tk-train/src/trainers/bpe/indexed.rs
 +++ b/tokenizers/tk-train/src/trainers/bpe/indexed.rs
-@@ -63,6 +63,11 @@ pub(super) struct IndexedTrainingStats {
+@@ -63,6 +63,16 @@ pub(super) struct IndexedTrainingStats {
      pub corpus_fill_ms: f64,
      pub initial_route_ms: f64,
      pub initial_count_ms: f64,
++    pub initial_bounded_tiles: usize,
++    pub initial_bounded_groups: usize,
++    pub initial_bounded_hash_edges: usize,
++    /// Sum of per-block sort maxima in the largest initialization wave.
++    pub initial_bounded_sort_buffer_bound_bytes: usize,
 +    pub initial_summary_waves: usize,
 +    /// Sum of allocated summary Vec capacities across consumed waves.
 +    pub initial_summary_buffer_bytes: usize,
@@ -15,10 +20,10 @@ index 263e9a5b..4f8ce7b3 100644
      pub initial_weight_lookup_ms: f64,
      pub initial_weight_lookup_bytes: usize,
 diff --git a/tokenizers/tk-train/src/trainers/bpe/indexed/parallel.rs b/tokenizers/tk-train/src/trainers/bpe/indexed/parallel.rs
-index ad5aefba..54b79053 100644
+index ad5aefba..2da700e4 100644
 --- a/tokenizers/tk-train/src/trainers/bpe/indexed/parallel.rs
 +++ b/tokenizers/tk-train/src/trainers/bpe/indexed/parallel.rs
-@@ -7,9 +7,11 @@ use rayon::prelude::*;
+@@ -7,9 +7,12 @@ use rayon::prelude::*;
  use std::sync::atomic::{AtomicU16, AtomicU32, Ordering as AtomicOrdering};
  
  mod alphabet;
@@ -26,11 +31,12 @@ index ad5aefba..54b79053 100644
  mod corpus;
  mod fused_batch;
  mod radix_count;
++mod bounded_initial;
 +use candidate_heap::CandidateHeap;
  mod weight_lookup;
  
  trait Slot: Default + Send + Sync {
-@@ -146,12 +148,12 @@ struct Entry {
+@@ -146,12 +149,12 @@ struct Entry {
  #[derive(Default)]
  struct Owner {
      entries: AHashMap<u64, Entry>,
@@ -45,7 +51,7 @@ index ad5aefba..54b79053 100644
              match self.entries.get(&top.key) {
                  None => {
                      self.heap.pop();
-@@ -568,9 +570,17 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
+@@ -568,9 +571,17 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
          uniform,
          symbols: initial_symbols,
          edges: initial_edges,
@@ -63,17 +69,21 @@ index ad5aefba..54b79053 100644
      let flat = bits == 32 && corpus.len() <= u32::MAX as usize + 1;
      let mut owners: Vec<Owner> = (0..config.workers).map(|_| Owner::default()).collect();
      let tokenize_ms = begin.elapsed().as_secs_f64() * 1000.0;
-@@ -583,6 +593,9 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
+@@ -583,6 +594,13 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
          let initial_count_ms;
          let mut radix_metrics = radix_count::Metrics::default();
          let mut initial_weight_lookup_ms = 0.0;
 +        let mut initial_summary_waves = 0;
 +        let mut initial_summary_buffer_bytes = 0;
 +        let mut peak_initial_summary_buffer_bytes = 0;
++        let mut initial_bounded_tiles = 0;
++        let mut initial_bounded_groups = 0;
++        let mut initial_bounded_hash_edges = 0;
++        let mut initial_bounded_sort_buffer_bound_bytes = 0;
          if radix_eligible {
              let lookup_begin = Instant::now();
              initial_weight_lookup = uniform
-@@ -665,67 +678,107 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
+@@ -665,67 +683,62 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
          } else {
              // Local dictionaries are built by physical block owners. Only key-level
              // frequencies and block directories are reduced globally, not positions.
@@ -95,6 +105,11 @@ index ad5aefba..54b79053 100644
 -                        } else {
 -                            while word < block.pivots.len() && block.pivots[word] <= local {
 -                                word += 1;
+-                            }
+-                            if word == 0 {
+-                                block.previous_weight
+-                            } else {
+-                                block.weights[word - 1]
 +            // Bound transient block-key summaries by initialization concurrency.
 +            // Earlier owner directories stay in ascending physical block order;
 +            // no key is filtered until every wave has contributed its frequency.
@@ -103,43 +118,43 @@ index ad5aefba..54b79053 100644
 +            let mut count_ms = 0.0;
 +            for (wave_index, wave_blocks) in blocks.chunks_mut(wave_size).enumerate() {
 +                let route_begin = Instant::now();
-+                let frequencies: Vec<Vec<Vec<(u64, u64)>>> = wave_blocks
++                let initialized: Vec<bounded_initial::Initialized> = wave_blocks
 +                    .par_iter_mut()
 +                    .map(|block| -> Result<_> {
-+                        // Posting length supplies the physical count. Keep only nonunit
-+                        // weight corrections; the checked corpus budget bounds signed sums.
-+                        let mut extra_weights = AHashMap::<u64, i64>::new();
 +                        let end = corpus.len().saturating_sub(1).min(block.base + block_size);
-+                        let mut word = 0;
-+                        for p in block.base..end {
-+                            let a = corpus[p].token();
-+                            let b = corpus[p + 1].token();
-+                            if a == NONE || b == NONE {
-+                                continue;
-                             }
--                            if word == 0 {
--                                block.previous_weight
-+                            let local = (p - block.base) as u32;
-+                            let weight = if let Some(weight) = uniform {
-+                                weight
-                             } else {
--                                block.weights[word - 1]
-+                                while word < block.pivots.len() && block.pivots[word] <= local {
-+                                    word += 1;
-+                                }
-+                                if word == 0 {
-+                                    block.previous_weight
-+                                } else {
-+                                    block.weights[word - 1]
-+                                }
-+                            };
-+                            let k = key(a, b);
-+                            if uniform.is_none() && weight != 1 {
-+                                let delta = i64::try_from(weight)
-+                                    .map_err(|_| "indexed BPE weight exceeds i64::MAX")? - 1;
-+                                let extra = extra_weights.entry(k).or_default();
-+                                *extra = extra.checked_add(delta)
-+                                    .ok_or("initial weight correction exceeds i64")?;
++                        bounded_initial::initialize(&corpus, block, end, uniform, config.workers)
++                    })
++                    .collect::<Result<Vec<_>>>()?;
++                initial_bounded_tiles += initialized.iter().map(|b| b.metrics.tiles).sum::<usize>();
++                initial_bounded_groups += initialized.iter().map(|b| b.metrics.groups).sum::<usize>();
++                initial_bounded_hash_edges += initialized.iter().map(|b| b.metrics.hash_edges).sum::<usize>();
++                // Sum of each active block's maximum is an allocation bound,
++                // not an assertion that these maxima occur simultaneously.
++                initial_bounded_sort_buffer_bound_bytes = initial_bounded_sort_buffer_bound_bytes.max(
++                    initialized.iter().map(|b| b.metrics.buffer_bound_bytes).sum::<usize>());
++                let frequencies: Vec<_> = initialized.into_iter().map(|b| b.routes).collect();
++                route_ms += route_begin.elapsed().as_secs_f64() * 1000.0;
++                let summary_bytes = frequencies.capacity() * std::mem::size_of::<Vec<Vec<(u64, u64)>>>()
++                    + frequencies.iter().map(|routes| {
++                        routes.capacity() * std::mem::size_of::<Vec<(u64, u64)>>()
++                            + routes.iter().map(|items| items.capacity() * 16).sum::<usize>()
++                    }).sum::<usize>();
++                initial_summary_buffer_bytes += summary_bytes;
++                peak_initial_summary_buffer_bytes = peak_initial_summary_buffer_bytes.max(summary_bytes);
++                initial_summary_waves += 1;
++                let count_begin = Instant::now();
++                owners
++                    .par_iter_mut()
++                    .enumerate()
++                    .map(|(o, ledger)| -> Result<()> {
++                        for (b, counts) in frequencies.iter().enumerate() {
++                            for &(k, weight) in &counts[o] {
++                                let entry = ledger.entries.entry(k).or_insert_with(|| Entry {
++                                    frequency: 0,
++                                    blocks: SmallPosting::default(),
++                                });
++                                entry.frequency += weight;
++                                entry.blocks.push((wave_index * wave_size + b) as u32)?;
                              }
 -                        };
 -                        let k = key(a, b);
@@ -172,60 +187,12 @@ index ad5aefba..54b79053 100644
 -                            });
 -                            entry.frequency += weight;
 -                            entry.blocks.push(b as u32)?;
-+                            block
-+                                .postings
-+                                .entry(k)
-+                                .or_default()
-+                                .push(O::encode(p - block.base))?;
                          }
 -                    }
 -                    Ok(())
 -                })
 -                .collect::<Result<Vec<_>>>()?;
 -            initial_count_ms = count_begin.elapsed().as_secs_f64() * 1000.0;
-+                        let mut routed: Vec<Vec<(u64, u64)>> =
-+                            (0..config.workers).map(|_| Vec::new()).collect();
-+                        for (&k, positions) in &block.postings {
-+                            let weight = if let Some(weight) = uniform {
-+                                (positions.len() as u64).checked_mul(weight)
-+                                    .ok_or("initial frequency exceeds u64")?
-+                            } else {
-+                                let frequency = (positions.len() as i64)
-+                                    .checked_add(extra_weights.get(&k).copied().unwrap_or(0))
-+                                    .ok_or("initial frequency exceeds i64")?;
-+                                u64::try_from(frequency)
-+                                    .map_err(|_| "negative initial frequency")?
-+                            };
-+                            // Global floor filtering follows reduction across ALL blocks.
-+                            routed[owner(k, config.workers)].push((k, weight));
-+                        }
-+                        Ok(routed)
-+                    })
-+                    .collect::<Result<Vec<_>>>()?;
-+                route_ms += route_begin.elapsed().as_secs_f64() * 1000.0;
-+                let summary_bytes = frequencies.capacity() * std::mem::size_of::<Vec<Vec<(u64, u64)>>>()
-+                    + frequencies.iter().map(|routes| {
-+                        routes.capacity() * std::mem::size_of::<Vec<(u64, u64)>>()
-+                            + routes.iter().map(|items| items.capacity() * 16).sum::<usize>()
-+                    }).sum::<usize>();
-+                initial_summary_buffer_bytes += summary_bytes;
-+                peak_initial_summary_buffer_bytes = peak_initial_summary_buffer_bytes.max(summary_bytes);
-+                initial_summary_waves += 1;
-+                let count_begin = Instant::now();
-+                owners
-+                    .par_iter_mut()
-+                    .enumerate()
-+                    .map(|(o, ledger)| -> Result<()> {
-+                        for (b, counts) in frequencies.iter().enumerate() {
-+                            for &(k, weight) in &counts[o] {
-+                                let entry = ledger.entries.entry(k).or_insert_with(|| Entry {
-+                                    frequency: 0,
-+                                    blocks: SmallPosting::default(),
-+                                });
-+                                entry.frequency += weight;
-+                                entry.blocks.push((wave_index * wave_size + b) as u32)?;
-+                            }
-+                        }
 +                        Ok(())
 +                    })
 +                    .collect::<Result<Vec<_>>>()?;
@@ -238,21 +205,25 @@ index ad5aefba..54b79053 100644
          }
          let mut stats = IndexedTrainingStats {
              initial_symbols,
-@@ -738,8 +791,13 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
+@@ -738,8 +751,17 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
              corpus_fill_ms: timings.fill_ms,
              initial_route_ms,
              initial_count_ms,
++            initial_bounded_tiles,
++            initial_bounded_groups,
++            initial_bounded_hash_edges,
++            initial_bounded_sort_buffer_bound_bytes,
 +            initial_summary_waves,
 +            initial_summary_buffer_bytes,
 +            peak_initial_summary_buffer_bytes,
              initial_count_backend: if radix_eligible {
                  "stable_radix16"
 +            } else if !flat {
-+                "spatial_block_sparse_weights"
++                "spatial_block_adaptive_radix64"
              } else {
                  "spatial_owner_hash"
              },
-@@ -775,14 +833,13 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
+@@ -775,14 +797,13 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
              .map(|ledger| {
                  let old = ledger.entries.len();
                  ledger.entries.retain(|_, entry| entry.frequency >= floor);
@@ -272,7 +243,7 @@ index ad5aefba..54b79053 100644
                  old - ledger.entries.len()
              })
              .sum::<usize>();
-@@ -840,7 +897,7 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
+@@ -840,7 +861,7 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
                  .map(|e| e.blocks.allocated_capacity() * 4)
                  .sum()
          };
@@ -281,7 +252,7 @@ index ad5aefba..54b79053 100644
          stats.corpus_bytes = stats.initial_corpus_bytes;
          stats.posting_bytes = stats.initial_posting_bytes;
          stats.initialize_ms = begin.elapsed().as_secs_f64() * 1000.0;
-@@ -982,7 +1039,8 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
+@@ -982,7 +1003,8 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
                  .max(prepared.selected_bytes);
              stats.peak_valid_start_bytes = stats.peak_valid_start_bytes.max(prepared.valid_bytes);
              stats.peak_prepare_aggregate_bytes = stats
@@ -291,7 +262,7 @@ index ad5aefba..54b79053 100644
              let elapsed = stage.elapsed().as_secs_f64() * 1000.0;
              // Filter and neighbor deltas share this phase in the fused path.
              stats.fused_prepare_ms += elapsed;
-@@ -1691,6 +1749,97 @@ mod tests {
+@@ -1691,6 +1713,97 @@ mod tests {
          assert_eq!(empty.weight_forward(base + 65535, None, &mut 0), 27);
      }
  
@@ -391,10 +362,10 @@ index ad5aefba..54b79053 100644
          let words = [("xabq".repeat(2100), 3), ("中文中文abcdef".repeat(1300), 7)]
 diff --git a/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/block_radix.rs b/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/block_radix.rs
 new file mode 100644
-index 00000000..82e26088
+index 00000000..afe721df
 --- /dev/null
 +++ b/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/block_radix.rs
-@@ -0,0 +1,347 @@
+@@ -0,0 +1,460 @@
 +// SPDX-License-Identifier: BSD-2-Clause
 +// Copyright (c) 2025, 2026 Robert Clausecker <clausecker@zib.de>
 +//
@@ -425,13 +396,31 @@ index 00000000..82e26088
 +//! Rust translation of Clausecker's BSD-2-Clause `radixsort_permuted.c`.
 +//! Reference f69e816c3cd79d312cd67aea5b9cf1c338c1b371, July 2026 paper:
 +//! https://arxiv.org/abs/2607.05302 ; full upstream license retained above.
-+//! Sort only the HIGH 32 bits; retain LOW 32 bits in stable incoming order.
-+//! Fixed 512-element blocks: 2 MiB scratch + 9 bytes per input block.
++//! Sort the key half; retain the payload half in stable incoming order.
++//! u64 records use 512-element blocks and 2 MiB scratch; u128 records
++//! use 128-element blocks and 1 MiB scratch. Metadata adds 9 bytes per block.
 +//! Stable initial pair grouping with bounded block scratch.
 +use std::{marker::PhantomData, ptr};
 +const RADIX: usize = 256;
 +const BLOCK: usize = 512;
 +const SCRATCH: usize = 2 * RADIX;
++
++trait Record: Copy + Default {
++    const BLOCK: usize;
++    fn key(self) -> u64;
++}
++impl Record for u64 {
++    const BLOCK: usize = BLOCK;
++    fn key(self) -> u64 {
++        self >> 32
++    }
++}
++impl Record for u128 {
++    const BLOCK: usize = 128;
++    fn key(self) -> u64 {
++        (self >> 64) as u64
++    }
++}
 +
 +#[derive(Clone, Copy)]
 +struct Partial {
@@ -439,25 +428,25 @@ index 00000000..82e26088
 +    length: usize,
 +}
 +#[derive(Clone, Copy)]
-+struct Bucket {
-+    next: *mut u64,
-+    end: *mut u64,
++struct Bucket<T> {
++    next: *mut T,
++    end: *mut T,
 +}
-+struct Sorter<'a> {
-+    records: *mut u64,
++struct Sorter<'a, T: Record> {
++    records: *mut T,
 +    length: usize,
-+    _borrow: PhantomData<&'a mut [u64]>,
-+    scratch: Vec<u64>,
-+    scratch_base: *mut u64,
++    _borrow: PhantomData<&'a mut [T]>,
++    scratch: Vec<T>,
++    scratch_base: *mut T,
 +    perm: Vec<u32>,
 +    perm2: Vec<u32>,
 +    usage: Vec<u8>,
 +    partials: [Partial; RADIX],
 +    fill: usize,
 +}
-+impl<'a> Sorter<'a> {
-+    fn new(records: &'a mut [u64]) -> Self {
-+        let full = records.len() / BLOCK;
++impl<'a, T: Record> Sorter<'a, T> {
++    fn new(records: &'a mut [T]) -> Self {
++        let full = records.len() / T::BLOCK;
 +        let blocks = full + SCRATCH;
 +        assert!(blocks <= u32::MAX as usize);
 +        let fill = RADIX + full + 1;
@@ -471,9 +460,10 @@ index 00000000..82e26088
 +                i - (fill - 1) + RADIX
 +            } as u32;
 +        }
-+        let mut scratch = vec![0; SCRATCH * BLOCK];
-+        let tail = records.len() % BLOCK;
-+        scratch[RADIX * BLOCK..RADIX * BLOCK + tail].copy_from_slice(&records[full * BLOCK..]);
++        let mut scratch = vec![T::default(); SCRATCH * T::BLOCK];
++        let tail = records.len() % T::BLOCK;
++        scratch[RADIX * T::BLOCK..RADIX * T::BLOCK + tail]
++            .copy_from_slice(&records[full * T::BLOCK..]);
 +        let mut partials = [Partial {
 +            index: blocks,
 +            length: 0,
@@ -498,16 +488,16 @@ index 00000000..82e26088
 +            fill,
 +        }
 +    }
-+    fn block(&mut self, physical: usize) -> *mut u64 {
++    fn block(&mut self, physical: usize) -> *mut T {
 +        assert!(physical < self.perm.len());
 +        // SAFETY: physical IDs below SCRATCH identify full scratch blocks.
-+        // Other IDs identify exactly floor(n/BLOCK) full input blocks.
++        // Other IDs identify exactly floor(n/T::BLOCK) full input blocks.
 +        // Vec allocations are never resized while these pointers are in use.
 +        unsafe {
 +            if physical < SCRATCH {
-+                self.scratch_base.add(physical * BLOCK)
++                self.scratch_base.add(physical * T::BLOCK)
 +            } else {
-+                self.records.add((physical - SCRATCH) * BLOCK)
++                self.records.add((physical - SCRATCH) * T::BLOCK)
 +            }
 +        }
 +    }
@@ -517,7 +507,7 @@ index 00000000..82e26088
 +            *partial += 1;
 +            length
 +        } else {
-+            BLOCK
++            T::BLOCK
 +        }
 +    }
 +    #[cfg(debug_assertions)]
@@ -532,7 +522,7 @@ index 00000000..82e26088
 +        assert!(
 +            self.partials
 +                .iter()
-+                .all(|p| p.index >= RADIX && p.index < self.fill && p.length < BLOCK)
++                .all(|p| p.index >= RADIX && p.index < self.fill && p.length < T::BLOCK)
 +        );
 +        let mut partial = 0;
 +        let total: usize = (RADIX..self.fill)
@@ -548,10 +538,10 @@ index 00000000..82e26088
 +        let mut counts = [1_usize; RADIX];
 +        for (i, bucket) in buckets.iter_mut().enumerate() {
 +            let out = self.block(self.perm[i] as usize);
-+            // SAFETY: block() returns exactly BLOCK valid elements.
++            // SAFETY: block() returns exactly T::BLOCK valid elements.
 +            *bucket = Bucket {
 +                next: out,
-+                end: unsafe { out.add(BLOCK) },
++                end: unsafe { out.add(T::BLOCK) },
 +            };
 +            self.usage[i] = i as u8;
 +        }
@@ -561,10 +551,10 @@ index 00000000..82e26088
 +            let source = self.block(self.perm[input] as usize);
 +            let length = self.length(input, &mut partial);
 +            for j in 0..length {
-+                // SAFETY: source is a valid block, length <= BLOCK. The stable
++                // SAFETY: source is a valid block, length <= T::BLOCK. The stable
 +                // logical input traversal consumes each element exactly once.
 +                let value = unsafe { source.add(j).read() };
-+                let b = ((value >> shift) & 255) as usize;
++                let b = ((value.key() >> shift) & 255) as usize;
 +                // SAFETY: bucket.next points at an unused cell in its current
 +                // output block. It advances at most to end before reallocation.
 +                // Input blocks are recycled only after consumption: the RADIX
@@ -585,7 +575,7 @@ index 00000000..82e26088
 +                    let out = self.block(self.perm[output] as usize);
 +                    buckets[b] = Bucket {
 +                        next: out,
-+                        end: unsafe { out.add(BLOCK) },
++                        end: unsafe { out.add(T::BLOCK) },
 +                    };
 +                    self.usage[output] = b as u8;
 +                    counts[b] += 1;
@@ -604,8 +594,8 @@ index 00000000..82e26088
 +            starts[b] += 1;
 +            self.perm2[j] = self.perm[i];
 +            let base = self.block(self.perm[i] as usize);
-+            // SAFETY: next/end belong to the same BLOCK-sized allocation.
-+            if unsafe { base.add(BLOCK) } == buckets[b].end {
++            // SAFETY: next/end belong to the same T::BLOCK-sized allocation.
++            if unsafe { base.add(T::BLOCK) } == buckets[b].end {
 +                self.partials[b] = Partial {
 +                    index: j,
 +                    length: unsafe { buckets[b].next.offset_from(base) as usize },
@@ -639,7 +629,7 @@ index 00000000..82e26088
 +                // SAFETY: both physical IDs are valid full blocks. Free block
 +                // receives live output which would otherwise be overwritten.
 +                unsafe {
-+                    ptr::copy(from, to, BLOCK);
++                    ptr::copy(from, to, T::BLOCK);
 +                }
 +                self.perm[free_logical] = destination as u32;
 +                self.perm[output] = free_physical as u32;
@@ -652,7 +642,7 @@ index 00000000..82e26088
 +            let from = self.block(source);
 +            assert!(start + length <= self.length);
 +            // Completed partials can only shorten preceding output: start <=
-+            // (destination - SCRATCH) * BLOCK, and start + length never exceeds
++            // (destination - SCRATCH) * T::BLOCK, and start + length never exceeds
 +            // this destination block's end. Any still-live destination block was
 +            // evacuated above; earlier physical destinations are already consumed.
 +            // SAFETY: length valid source elements are moved into the next
@@ -687,16 +677,80 @@ index 00000000..82e26088
 +/// Returns simultaneous allocated sorting scratch bytes. Mutates records in
 +/// place; output is physically contiguous and stable within each high32 key.
 +pub(super) fn sort(records: &mut [u64]) -> usize {
-+    if records.len() < 2 {
++    sort_digits(records, 0xffff_ffff)
++}
++
++/// Sort the full canonical u64 key in the high half of each u128 record.
++/// The low half preserves the incoming local address. Constant key bytes
++/// need no scatter pass. Scratch is 1 MiB plus 9 bytes per 128 input records; small
++/// tiles use a simpler scatter when its allocation is smaller.
++pub(in super::super) fn sort_wide(records: &mut [u128]) -> usize {
++    let Some(&first) = records.first() else {
++        return 0;
++    };
++    let varying = records
++        .iter()
++        .fold(0, |bits, &r| bits | (r.key() ^ first.key()));
++    if records.len() * 16
++        <= SCRATCH * <u128 as Record>::BLOCK * 16
++            + (records.len() / <u128 as Record>::BLOCK + SCRATCH) * 9
++    {
++        sort_classic_wide(records, varying)
++    } else {
++        sort_digits(records, varying)
++    }
++}
++fn sort_classic_wide(records: &mut [u128], varying: u64) -> usize {
++    if records.len() < 2 || varying == 0 {
++        return 0;
++    }
++    let mut scratch = vec![0; records.len()];
++    let bytes = scratch.capacity() * 16;
++    let mut flipped = false;
++    {
++        let mut input = &mut records[..];
++        let mut output = scratch.as_mut_slice();
++        for shift in (0..64).step_by(8) {
++            if (varying >> shift) & 255 == 0 {
++                continue;
++            }
++            let mut counts = [0usize; RADIX];
++            for &r in input.iter() {
++                counts[((r.key() >> shift) & 255) as usize] += 1;
++            }
++            let mut offsets = [0usize; RADIX];
++            let mut sum = 0;
++            for (count, offset) in counts.iter().zip(offsets.iter_mut()) {
++                *offset = sum;
++                sum += count;
++            }
++            for &r in input.iter() {
++                let b = ((r.key() >> shift) & 255) as usize;
++                output[offsets[b]] = r;
++                offsets[b] += 1;
++            }
++            std::mem::swap(&mut input, &mut output);
++            flipped = !flipped;
++        }
++    }
++    if flipped {
++        records.copy_from_slice(&scratch);
++    }
++    bytes
++}
++fn sort_digits<T: Record>(records: &mut [T], varying: u64) -> usize {
++    if records.len() < 2 || varying == 0 {
 +        return 0;
 +    }
 +    let mut sorter = Sorter::new(records);
-+    let bytes = sorter.scratch.capacity() * 8
++    let bytes = sorter.scratch.capacity() * std::mem::size_of::<T>()
 +        + sorter.perm.capacity() * 4
 +        + sorter.perm2.capacity() * 4
 +        + sorter.usage.capacity();
-+    for shift in [32, 40, 48, 56] {
-+        sorter.step(shift);
++    for shift in (0..64).step_by(8) {
++        if (varying >> shift) & 255 != 0 {
++            sorter.step(shift);
++        }
 +    }
 +    sorter.compact();
 +    bytes
@@ -705,6 +759,36 @@ index 00000000..82e26088
 +#[cfg(test)]
 +mod tests {
 +    use super::*;
++    #[test]
++    fn stable_full64_keys_and_local_u32_addresses() {
++        let mut seed = 371_u64;
++        for n in [0, 1, 2, 511, 512, 513, 1025, 8192, 262145] {
++            for distribution in 0..5 {
++                let mut records = Vec::with_capacity(n);
++                for p in 0..n {
++                    seed = seed.wrapping_mul(6364136223846793005).wrapping_add(1);
++                    let key = match distribution {
++                        0 => u64::MAX,
++                        1 => ((p % 3) as u64) << 32,
++                        2 => seed % 97 | ((seed % 19) << 48),
++                        3 => seed,
++                        _ => [0, u64::MAX, 1 << 63, 1 << 32][p % 4],
++                    };
++                    let payload = if p % 2 == 0 {
++                        u32::MAX - p as u32
++                    } else {
++                        p as u32
++                    };
++                    records.push((u128::from(key) << 64) | u128::from(payload));
++                }
++                let mut expected = records.clone();
++                expected.sort_by_key(|r| r >> 64);
++                sort_wide(&mut records);
++                assert_eq!(records, expected, "n={n}, distribution={distribution}");
++            }
++        }
++    }
++
 +    #[test]
 +    fn stable_high32_at_block_boundaries_and_all_key_bits() {
 +        let mut seed = 371_u64;
@@ -739,6 +823,240 @@ index 00000000..82e26088
 +                sort(&mut records);
 +                assert_eq!(records, expected, "n={n}, distribution={distribution}");
 +            }
++        }
++    }
++}
+diff --git a/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/bounded_initial.rs b/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/bounded_initial.rs
+new file mode 100644
+index 00000000..cc1e0c69
+--- /dev/null
++++ b/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/bounded_initial.rs
+@@ -0,0 +1,228 @@
++//! Stable full-key grouping in spatial tiles; transient occurrence storage is
++//! bounded independently of a physical block's size. Final postings remain.
++use super::radix_count::block_radix;
++use super::*;
++const TILE_RECORDS: usize = 1 << 18;
++// The table's actual cardinality decides whether to pay for grouping. This
++// keeps the small-table spatial scanner while bounding large-table sort tiles.
++const SORT_MIN_KEYS: usize = 1 << 16;
++#[derive(Default)]
++pub(super) struct Metrics {
++    pub(super) tiles: usize,
++    pub(super) groups: usize,
++    pub(super) hash_edges: usize,
++    pub(super) buffer_bound_bytes: usize,
++}
++pub(super) struct Initialized {
++    pub(super) routes: Vec<Vec<(u64, u64)>>,
++    pub(super) metrics: Metrics,
++}
++pub(super) fn initialize<C: Slot, O: Offset, const INLINE: usize>(
++    corpus: &[C],
++    block: &mut Block<O, INLINE>,
++    end: usize,
++    uniform: Option<u64>,
++    workers: usize,
++) -> Result<Initialized> {
++    initialize_with_threshold(corpus, block, end, uniform, workers, SORT_MIN_KEYS)
++}
++pub(super) fn initialize_with_threshold<C: Slot, O: Offset, const INLINE: usize>(
++    corpus: &[C],
++    block: &mut Block<O, INLINE>,
++    end: usize,
++    uniform: Option<u64>,
++    workers: usize,
++    sort_min_keys: usize,
++) -> Result<Initialized> {
++    let mut metrics = Metrics::default();
++    let mut extra_weights = AHashMap::<u64, i64>::new();
++    let mut records = Vec::new();
++    let mut word = 0;
++    for start in (block.base..end).step_by(TILE_RECORDS) {
++        let grouped = block.postings.len() >= sort_min_keys;
++        records.clear();
++        if grouped && records.capacity() == 0 {
++            records.reserve_exact(TILE_RECORDS.min(end - start));
++        }
++        for p in start..end.min(start + TILE_RECORDS) {
++            let a = corpus[p].token();
++            let b = corpus[p + 1].token();
++            if a == NONE || b == NONE {
++                continue;
++            }
++            let local = (p - block.base) as u32;
++            let weight = if let Some(weight) = uniform {
++                weight
++            } else {
++                while word < block.pivots.len() && block.pivots[word] <= local {
++                    word += 1;
++                }
++                if word == 0 {
++                    block.previous_weight
++                } else {
++                    block.weights[word - 1]
++                }
++            };
++            let k = key(a, b);
++            // Zero-weight edges still generate postings and global summaries.
++            if uniform.is_none() && weight != 1 {
++                let delta =
++                    i64::try_from(weight).map_err(|_| "indexed BPE weight exceeds i64::MAX")? - 1;
++                let extra = extra_weights.entry(k).or_default();
++                *extra = extra
++                    .checked_add(delta)
++                    .ok_or("initial weight correction exceeds i64")?;
++            }
++            if grouped {
++                records.push((u128::from(k) << 64) | u128::from(local));
++            } else {
++                metrics.hash_edges += 1;
++                block
++                    .postings
++                    .entry(k)
++                    .or_default()
++                    .push(O::encode(local as usize))?;
++            }
++        }
++        if !grouped {
++            continue;
++        }
++        let scratch = block_radix::sort_wide(&mut records);
++        metrics.tiles += 1;
++        metrics.buffer_bound_bytes = metrics
++            .buffer_bound_bytes
++            .max(records.capacity() * 16 + scratch);
++        let mut begin = 0;
++        while begin < records.len() {
++            let k = (records[begin] >> 64) as u64;
++            let mut after = begin + 1;
++            while after < records.len() && (records[after] >> 64) as u64 == k {
++                after += 1;
++            }
++            metrics.groups += 1;
++            let positions = block.postings.entry(k).or_default();
++            // Tiles visit ascending physical intervals; stable grouping keeps
++            // equal keys in ascending local-address order within each tile.
++            for &record in &records[begin..after] {
++                positions.push(O::encode(record as u32 as usize))?;
++            }
++            begin = after;
++        }
++    }
++    // Sorting storage is no longer needed when block-key summaries are built.
++    drop(records);
++    let mut routed: Vec<Vec<(u64, u64)>> = (0..workers).map(|_| Vec::new()).collect();
++    for (&k, positions) in &block.postings {
++        let weight = if let Some(weight) = uniform {
++            (positions.len() as u64)
++                .checked_mul(weight)
++                .ok_or("initial frequency exceeds u64")?
++        } else {
++            let frequency = (positions.len() as i64)
++                .checked_add(extra_weights.get(&k).copied().unwrap_or(0))
++                .ok_or("initial frequency exceeds i64")?;
++            u64::try_from(frequency).map_err(|_| "negative initial frequency")?
++        };
++        routed[owner(k, workers)].push((k, weight));
++    }
++    Ok(Initialized {
++        routes: routed,
++        metrics,
++    })
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++    #[test]
++    fn adaptive_scan_switches_only_after_the_table_grows() {
++        let end = TILE_RECORDS * 2 + 513;
++        for large in [false, true] {
++            let corpus: Vec<u32> = (0..=end)
++                .map(|i| {
++                    if large && i % 131072 < 70000 {
++                        100_000 + (i % 131072) as u32
++                    } else {
++                        [7, 7, 7, 9, NONE][i % 5]
++                    }
++                })
++                .collect();
++            let mut block = Block::<u32, 2>::new(0, 1);
++            let got = initialize(&corpus, &mut block, end, Some(1), 4).unwrap();
++            let mut expected = AHashMap::<u64, Vec<u32>>::new();
++            for p in 0..end {
++                if corpus[p] != NONE && corpus[p + 1] != NONE {
++                    expected
++                        .entry(key(corpus[p], corpus[p + 1]))
++                        .or_default()
++                        .push(p as u32);
++                }
++            }
++            for (k, positions) in &expected {
++                assert_eq!(block.postings[k].as_slice(), positions);
++            }
++            assert_eq!(block.postings.len(), expected.len());
++            let frequencies: AHashMap<_, _> = got.routes.into_iter().flatten().collect();
++            assert_eq!(
++                frequencies,
++                expected.iter().map(|(&k, v)| (k, v.len() as u64)).collect()
++            );
++            assert!(got.metrics.hash_edges > 0);
++            if large {
++                assert_eq!(got.metrics.tiles, 2);
++                assert!(got.metrics.groups > 0);
++                assert!(got.metrics.buffer_bound_bytes > 0);
++            } else {
++                assert_eq!(
++                    got.metrics.hash_edges,
++                    expected.values().map(|v| v.len()).sum::<usize>()
++                );
++                assert_eq!(got.metrics.tiles, 0);
++                assert_eq!(got.metrics.groups, 0);
++                assert_eq!(got.metrics.buffer_bound_bytes, 0);
++            }
++        }
++    }
++
++    #[test]
++    fn tile_boundaries_full_keys_zero_weights_and_sorted_postings() {
++        let base = 37;
++        let end = base + TILE_RECORDS * 2 + 513;
++        let corpus: Vec<u32> = (0..=end)
++            .map(|i| match i % 11 {
++                0 => NONE,
++                1..=5 => 100_003,
++                6 => u32::MAX - 1,
++                _ => 7,
++            })
++            .collect();
++        for uniform in [None, Some(0), Some(1), Some(7)] {
++            let mut block = Block::<u32, 2>::new(base, 1);
++            block.pivots = vec![91, TILE_RECORDS as u32 - 1, TILE_RECORDS as u32 + 2];
++            block.weights = vec![0, (u32::MAX as u64) + 3, 1];
++            let mut expected = std::collections::BTreeMap::<u64, (Vec<u32>, u64)>::new();
++            for p in base..end {
++                if corpus[p] == NONE || corpus[p + 1] == NONE {
++                    continue;
++                }
++                let entry = expected.entry(key(corpus[p], corpus[p + 1])).or_default();
++                entry.0.push((p - base) as u32);
++                entry.1 += block.weight(p, uniform);
++            }
++            let got = initialize_with_threshold(&corpus, &mut block, end, uniform, 4, 0).unwrap();
++            let counts: std::collections::BTreeMap<_, _> =
++                got.routes.into_iter().flatten().collect();
++            assert_eq!(
++                counts,
++                expected.iter().map(|(&k, (_, f))| (k, *f)).collect()
++            );
++            assert_eq!(block.postings.len(), expected.len());
++            for (k, (positions, _)) in expected {
++                assert_eq!(block.postings[&k].as_slice(), positions);
++            }
++            assert_eq!(got.metrics.tiles, 3);
++            let maximum = TILE_RECORDS * 16 + 512 * 128 * 16 + (TILE_RECORDS / 128 + 512) * 9;
++            assert!(got.metrics.buffer_bound_bytes <= maximum);
 +        }
 +    }
 +}
@@ -1071,7 +1389,7 @@ index 00000000..6438a263
 +    }
 +}
 diff --git a/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/radix_count.rs b/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/radix_count.rs
-index 89412142..9b9a9cfa 100644
+index 89412142..84615981 100644
 --- a/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/radix_count.rs
 +++ b/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/radix_count.rs
 @@ -4,6 +4,11 @@
@@ -1079,7 +1397,7 @@ index 89412142..9b9a9cfa 100644
  use super::*;
  
 +#[path = "block_radix.rs"]
-+mod block_radix;
++pub(super) mod block_radix;
 +#[path = "owner_route.rs"]
 +mod owner_route;
 +

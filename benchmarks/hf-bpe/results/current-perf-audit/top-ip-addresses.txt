@@ -1,0 +1,64 @@
+0x0000000000232758
+<alloc::vec::Vec<tk_train::trainers::bpe::indexed::parallel::Route> as core::ops::index::Index<usize>>::index
+/rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/slice/index.rs:?
+tk_train::trainers::bpe::indexed::parallel::train_in_pool::<core::sync::atomic::Atomic<u32>, u32, 2>::{closure#21}::{closure#0}
+/root/code/tokenizers/benchmarks/hf-bpe/.build/native-j-current-perf/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel.rs:1215
+<&tk_train::trainers::bpe::indexed::parallel::train_in_pool<core::sync::atomic::Atomic<u32>, u32, 2>::{closure#21}::{closure#0} as core::ops::function::FnMut<((usize, &mut tk_train::trainers::bpe::indexed::parallel::Owner),)>>::call_mut
+/rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/ops/function.rs:274
+0x00000000002327c0
+<u64 as core::cmp::PartialEq>::eq
+/rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/cmp.rs:1878
+<&u64 as core::cmp::PartialEq>::eq
+/rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/cmp.rs:2123
+<u64 as hashbrown::Equivalent<u64>>::equivalent
+/rust/deps/hashbrown-0.17.1/src/lib.rs:157
+hashbrown::map::equivalent_key::<u64, u64, tk_train::trainers::bpe::indexed::parallel::Entry>::{closure#0}
+/rust/deps/hashbrown-0.17.1/src/map.rs:221
+<hashbrown::raw::RawTable<(u64, tk_train::trainers::bpe::indexed::parallel::Entry)>>::find::<hashbrown::map::equivalent_key<u64, u64, tk_train::trainers::bpe::indexed::parallel::Entry>::{closure#0}>::{closure#0}
+/rust/deps/hashbrown-0.17.1/src/raw.rs:1202
+<hashbrown::raw::RawTableInner>::find_inner
+/rust/deps/hashbrown-0.17.1/src/raw.rs:2034
+<hashbrown::raw::RawTable<(u64, tk_train::trainers::bpe::indexed::parallel::Entry)>>::find::<hashbrown::map::equivalent_key<u64, u64, tk_train::trainers::bpe::indexed::parallel::Entry>::{closure#0}>
+/rust/deps/hashbrown-0.17.1/src/raw.rs:1202
+<hashbrown::raw::RawTable<(u64, tk_train::trainers::bpe::indexed::parallel::Entry)>>::get_mut::<hashbrown::map::equivalent_key<u64, u64, tk_train::trainers::bpe::indexed::parallel::Entry>::{closure#0}>
+/rust/deps/hashbrown-0.17.1/src/raw.rs:1227
+<hashbrown::map::HashMap<u64, tk_train::trainers::bpe::indexed::parallel::Entry, ahash::random_state::RandomState>>::get_mut::<u64>
+/rust/deps/hashbrown-0.17.1/src/map.rs:1424
+<std::collections::hash::map::HashMap<u64, tk_train::trainers::bpe::indexed::parallel::Entry, ahash::random_state::RandomState>>::get_mut::<u64>
+/rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/collections/hash/map.rs:1302
+<ahash::hash_map::AHashMap<u64, tk_train::trainers::bpe::indexed::parallel::Entry>>::get_mut::<u64>
+/root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ahash-0.8.12/src/hash_map.rs:159
+tk_train::trainers::bpe::indexed::parallel::train_in_pool::<core::sync::atomic::Atomic<u32>, u32, 2>::{closure#21}::{closure#0}
+/root/code/tokenizers/benchmarks/hf-bpe/.build/native-j-current-perf/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel.rs:1223
+<&tk_train::trainers::bpe::indexed::parallel::train_in_pool<core::sync::atomic::Atomic<u32>, u32, 2>::{closure#21}::{closure#0} as core::ops::function::FnMut<((usize, &mut tk_train::trainers::bpe::indexed::parallel::Owner),)>>::call_mut
+/rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/ops/function.rs:274
+0x000000000023280f
+tk_train::trainers::bpe::indexed::parallel::train_in_pool::<core::sync::atomic::Atomic<u32>, u32, 2>::{closure#21}::{closure#0}
+/root/code/tokenizers/benchmarks/hf-bpe/.build/native-j-current-perf/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel.rs:1228
+<&tk_train::trainers::bpe::indexed::parallel::train_in_pool<core::sync::atomic::Atomic<u32>, u32, 2>::{closure#21}::{closure#0} as core::ops::function::FnMut<((usize, &mut tk_train::trainers::bpe::indexed::parallel::Owner),)>>::call_mut
+/rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/ops/function.rs:274
+0x00000000002328e0
+<*const u8>::add
+/rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/ptr/const_ptr.rs:872
+<hashbrown::raw::RawIterRange<(u64, tk_train::trainers::bpe::indexed::parallel::Group)>>::next_impl::<false>
+/rust/deps/hashbrown-0.17.1/src/raw.rs:3667
+<hashbrown::raw::RawIter<(u64, tk_train::trainers::bpe::indexed::parallel::Group)> as core::iter::traits::iterator::Iterator>::next
+/rust/deps/hashbrown-0.17.1/src/raw.rs:3859
+<hashbrown::map::Iter<u64, tk_train::trainers::bpe::indexed::parallel::Group> as core::iter::traits::iterator::Iterator>::next
+/rust/deps/hashbrown-0.17.1/src/map.rs:3147
+<std::collections::hash::map::Iter<u64, tk_train::trainers::bpe::indexed::parallel::Group> as core::iter::traits::iterator::Iterator>::next
+/rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/collections/hash/map.rs:2107
+tk_train::trainers::bpe::indexed::parallel::train_in_pool::<core::sync::atomic::Atomic<u32>, u32, 2>::{closure#21}::{closure#0}
+/root/code/tokenizers/benchmarks/hf-bpe/.build/native-j-current-perf/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel.rs:1215
+<&tk_train::trainers::bpe::indexed::parallel::train_in_pool<core::sync::atomic::Atomic<u32>, u32, 2>::{closure#21}::{closure#0} as core::ops::function::FnMut<((usize, &mut tk_train::trainers::bpe::indexed::parallel::Owner),)>>::call_mut
+/rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/ops/function.rs:274
+0x00000000001a1b0b
+tk_train::trainers::bpe::indexed::parallel::fused_batch::prepare_with_mode::<core::sync::atomic::Atomic<u32>, u32, 2, false>::{closure#0}
+/root/code/tokenizers/benchmarks/hf-bpe/.build/native-j-current-perf/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/fused_batch.rs:?
+<&tk_train::trainers::bpe::indexed::parallel::fused_batch::prepare_with_mode<core::sync::atomic::Atomic<u32>, u32, 2, false>::{closure#0} as core::ops::function::FnMut<(&alloc::vec::Vec<tk_train::trainers::bpe::indexed::parallel::fused_batch::Task>,)>>::call_mut
+/rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/ops/function.rs:274
+0x00000000001a18a2
+<tk_train::trainers::bpe::indexed::parallel::fused_batch::Prepared<u32, 2>>::apply::<core::sync::atomic::Atomic<u16>>::{closure#0}
+/root/code/tokenizers/benchmarks/hf-bpe/.build/native-j-current-perf/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/fused_batch.rs:300
+<&<tk_train::trainers::bpe::indexed::parallel::fused_batch::Prepared<u32, 2>>::apply<core::sync::atomic::Atomic<u16>>::{closure#0} as core::ops::function::FnMut<(&alloc::vec::Vec<tk_train::trainers::bpe::indexed::parallel::fused_batch::Valid>,)>>::call_mut
+/rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/ops/function.rs:274

@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parent
 WORKTREE = Path('/root/code/tokenizers-worktrees/initial-owner-waves')
 GROUPS = ['initial-owner-waves', 'block-radix', 'block-radix-stages',
           'frontier', 'frontier-sort-cost', 'block-count', 'block-count-stable',
-          'block-summary-waves']
+          'block-summary-waves', 'bounded-fullkey', 'bounded-compact', 'bounded-adaptive']
 GIB = 2**30
 
 
@@ -74,6 +74,13 @@ def main():
                 summary_waves=stats.get('initial_summary_waves', 0),
                 summary_capacity_sum=stats.get('initial_summary_buffer_bytes', 0),
                 summary_capacity_peak=stats.get('peak_initial_summary_buffer_bytes', 0),
+                bounded_tiles=stats.get('initial_bounded_tiles', 0),
+                bounded_groups=stats.get('initial_bounded_groups', 0),
+                bounded_hash_edges=stats.get('initial_bounded_hash_edges', 0),
+                bounded_sort_buffer_bound_bytes=stats.get('initial_bounded_sort_buffer_bound_bytes', 0),
+                posting_dictionary_queries=(None if not group.startswith('bounded-') else (
+                    stats['initial_edges'] if stats['initial_count_backend'] == 'spatial_block_sparse_weights'
+                    else stats.get('initial_bounded_hash_edges', 0) + stats['initial_bounded_groups'])),
                 probe=probe, input_sha256=sig['input'], model_sha256=sig['model']))
         assert len(binaries) == len(commits) == 1, group
         assert all(s == sources[0] for s in sources), group
@@ -112,6 +119,23 @@ def main():
         provenance[group] = dict(source_commit=commit, binary_sha256=next(iter(binaries)),
             overlay_patch_sha256=sha(overlay_patch), build_log_sha256=sha(directory/'build.log'),
             source_file_count=len(sources[0]), source_hashes=sources[0], formal_calls=len(paths))
+    # Fixed lexical word order must retain identical physical block partitions
+    # within each same-layout key initialization comparison.
+    for group in ['bounded-fullkey', 'bounded-compact', 'bounded-adaptive']:
+        raw = [read(p) for p in (ROOT/'results'/group).glob('*.jsonl') if not p.name.startswith('smoke')]
+        physical = {}
+        for row in raw:
+            stats = row['indexed_stats']
+            signature = (row['input'], stats['initial_blocks'], stats['initial_summary_waves'])
+            values = {k: stats[k] for k in ['initial_edges','initial_block_pairs','initial_posting_bytes',
+                'initial_block_table_bytes','initial_pair_table_bytes','initial_summary_buffer_bytes']}
+            if signature in physical:
+                assert values == physical[signature], (group, row['engine'])
+            else:
+                physical[signature] = values
+            if stats['initial_count_backend'] != 'spatial_block_sparse_weights':
+                assert stats.get('initial_bounded_hash_edges',0) + stats['initial_bounded_groups'] <= stats['initial_edges']
+                assert stats['initial_bounded_sort_buffer_bound_bytes'] <= 4*(262144*16+512*128*16+(262144//128+512)*9)
     # Only the lexical-order proxy promises identical physical address blocks.
     stable = [r for r in rows if r['group'] == 'block-count-stable']
     for language in ['en', 'zh']:
@@ -136,7 +160,7 @@ def main():
              for p in (ROOT/'results'/group).iterdir() if p.suffix in ['.json', '.jsonl']}
     (output/'bundle.summary.json').write_text(json.dumps(dict(checks='PASS', rows=rows,
         provenance=provenance, signatures=signatures, saved_data_hashes=files,
-        scope='diagnostic runs; n=1 except two frontier configurations n=2; block proxy, not >2^32 allocation'),
+        scope='diagnostic runs; n=1 except two frontier configurations and adaptive zh32m b24 n=2; block proxy, not >2^32 allocation'),
         indent=2)+'\n')
     print(f'PASS: {len(rows)} formal calls, {len(signatures)} input/model signatures; exact source hashes')
     for r in stable:

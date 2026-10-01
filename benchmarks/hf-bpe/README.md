@@ -108,3 +108,10 @@ python3 run.py /path/to/tokenizers-bpe-benchmark/data/text --output results/smok
 
 
 补充内存内分块摘要wave：候选7e794db1通过57项完整tests与同binary对照，13block摘要峰48→16MiB、进程峰479.94→431.57MiB；初始化+12%、全训+0.55%（各n=1）。本轮累计35次正式调用，主报告 [INITIALIZATION_MEMORY_REPORT.md](INITIALIZATION_MEMORY_REPORT.md)。外存路线仅预研，26项一手研究与条件容量模型见 [EXTERNAL_MEMORY_BPE.md](EXTERNAL_MEMORY_BPE.md)。
+
+
+## 通用有界排序：实测、撤回与自适应候选（2026-10-01）
+
+新增16次正式完整Trainer调用，本轮累计51次；当前候选029ab45b、60lib tests与完整model/工作/source gates通过。始终16B排序和8B临时记录在英文初始化回退25–30%；8B记录按用户要求撤回。最终候选按实际block pair数选择：小字典空间扫描，达到65,536项后才排序后续262,144位置tile，完整u64 key/u32 local/64位base保留。中文单block初始化两次约3.6–4.1%，四块并行约5%；英文不分配排序缓冲，未再出现前述回退。收益有限，未承诺whitespace或数十GiB表现。源码无新增字典库或FFI，生产J376保留。详情及失败版本见 [INITIALIZATION_MEMORY_REPORT.md](INITIALIZATION_MEMORY_REPORT.md)。
+
+正式端到端已明显提速：两对DE→H的train中位32.397→25.577s，feed+train中位36.766→29.838s；后续H→J筛选也继续改善。GPT-6 Luna已完成当前512MiB flat主路径的完整PERF独立审计，按各自binary与DWARF核对旧H00216d91和当前源码。当前主成本是posting校验、邻边统计与owner提交；未发现高占比且明确可删除的重复工作，本轮停止继续优化和追加训练。该结论限于已测flat路径，通用分块与数十GiB仍按单独证据解释。详见 [当前PERF审计](CURRENT_PERF_AUDIT.md)。外存仅预研，arena通用阈值尚未选定。

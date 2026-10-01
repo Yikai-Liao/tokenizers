@@ -1,0 +1,82 @@
+{
+  "source_commit": "029ab45bd0b0f446035f71acbd247c804bea60b8",
+  "binary": "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-j-current-perf-target/release/hf-bpe-native-j-current-perf",
+  "binary_sha256": "45d0147acc733cf9d66e593916495ff164aec115f5de68bdbcf9d35107059b52",
+  "build_id": "7faa1d5a8f37cd203ba61fb94200d5ba80ebfa42",
+  "input": "/root/code/tokenizers/benchmarks/hf-bpe/.build/gb-corpus/zh-512m.txt",
+  "input_sha256": "a0d40d4102cba1e933f25e5ccd17552d2eaebaec4ef770bc39d8e46e740b4d4f",
+  "input_bytes": 536870289,
+  "parameters": {
+    "split": "none",
+    "backend": "reference",
+    "vocab_size": 50000,
+    "min_frequency": 2,
+    "initialization_workers": 4,
+    "merge_workers": 4,
+    "atomic_corpus": true,
+    "expected_layout": "parallel_u32_flat32",
+    "allocator": "system default Rust allocator"
+  },
+  "environment": {
+    "TOKENIZERS_PARALLELISM": "false",
+    "RAYON_NUM_THREADS": "4",
+    "HF_BPE_BENCH_WORKERS": "4"
+  },
+  "perf_command": [
+    "perf",
+    "record",
+    "-F",
+    "99",
+    "-e",
+    "cycles:u",
+    "-e",
+    "cache-misses:u",
+    "--call-graph",
+    "dwarf,16384",
+    "-o",
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-j-current-perf.perf",
+    "--",
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-j-current-perf-target/release/hf-bpe-native-j-current-perf",
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/gb-corpus/zh-512m.txt",
+    "none",
+    "reference",
+    "50000",
+    "2"
+  ],
+  "perf_event_paranoid": "3",
+  "system_before": {
+    "mem_available_bytes": 7995576320,
+    "swap_free_bytes": 6415663104,
+    "pswpin": 0,
+    "pswpout": 0
+  },
+  "perf_returncode": 0,
+  "profiling_wall_seconds": 38.741750567016425,
+  "monitor_samples": 77,
+  "target_pids_seen": [
+    2701435,
+    2701436
+  ],
+  "min_mem_available_bytes": 4598497280,
+  "target_sampled_peak_rss_bytes": 3480395776,
+  "target_observed_vmhwm_bytes": 3627216896,
+  "target_sampled_peak_vmswap_bytes": 0,
+  "system_after": {
+    "mem_available_bytes": 7850975232,
+    "swap_free_bytes": 6341738496,
+    "pswpin": 0,
+    "pswpout": 0
+  },
+  "cpu_ticks_delta": [
+    9013,
+    0,
+    1937,
+    11902,
+    35,
+    0,
+    188,
+    11
+  ],
+  "stop_reason": null,
+  "perf_data_sha256": "1b8ec30aa074de3b238929477faedffaec7c679ed2ab0b7a7c936441857beaa3"
+}

@@ -1,0 +1,31 @@
+--- candidate/tokenizers/tk-train/src/trainers/bpe/mod.rs
++++ overlay/tokenizers/tk-train/src/trainers/bpe/mod.rs
+@@ -523,6 +523,7 @@
+                 batch_size: 256,
+             },
+         )?;
++        eprintln!("{}", serde_json::json!({"bench_indexed_stats": trained.stats}));
+         Ok((trained.vocab, trained.merges, trained.special_tokens))
+     }
+ 
+--- benchmarks/hf-bpe/src/main.rs
++++ runner/src/main.rs
+@@ -41,6 +41,10 @@
+         .vocab_size(args[4].parse()?)
+         .min_frequency(args[5].parse()?)
+         .build();
++    let bench_workers = env::var("HF_BPE_BENCH_WORKERS").map(|v| v.parse::<usize>().expect("invalid workers")).unwrap_or(4);
++    assert!(matches!(bench_workers, 1 | 4));
++    tk_encode::parallelism::set_num_threads(bench_workers);
++    tk_encode::parallelism::set_parallelism(false);
+     let reader = BufReader::new(File::open(input)?);
+     let begin = Instant::now();
+     let bytelevel = ByteLevel::new(false, true, true);
+@@ -61,6 +65,7 @@
+         })
+     })?;
+     let feed_ms = begin.elapsed().as_secs_f64() * 1000.0;
++    tk_encode::parallelism::set_parallelism(true);
+     let (vocab, merges, stats) = match backend.as_str() {
+         "reference" => {
+             let (v, m, _) = trainer.train_vocab()?;

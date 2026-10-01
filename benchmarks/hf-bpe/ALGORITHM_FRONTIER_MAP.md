@@ -5,7 +5,7 @@
 当前已收获按 chunk 前缀直接填最终 owner 路由数组，以及有范围证书的 8 字节候选记录。最新方向是**数十 GiB 及以上规模的通用算法优先**：先处理超过 `2^32` corpus slots 时的 block-dictionary 初始化、完整 key/频率宽度与历史 posting 生命周期，再考虑小范围特化。单独的 [SCALE_UP_ANALYSIS.md](SCALE_UP_ANALYSIS.md) 给出源码分支、条件容量表和 bounded 初始化提案；本机没有运行数十 GiB，不能把当前 flat 分支收益推给超界 fallback。
 
 两项局部替换已集成，源码 tip 为 `8bd048f6`（六次正式计时 binary 对应 `56dd3227`）；主任务报告 52 项 Trainer tests、2 项针对性测试、4 个小模型 smoke case，以及新增非空 affix fallback test 通过。六次正式调用均通过 D50。candidate 压缩须为普通、无非空 affix，且 `V_bound≤65,536`、`E_0≤u32::MAX`；wide fallback保持完整 u64 frequency/pair。arena all两组较快，但repeat超过历史B2峰值预算；阈值选择按最新要求留到算法完成。
-最新论文确实提供了可用原语：Radsort 已进入主任务；SimdQuickHeap 适合后续比较，TPHT 和 Zombie Hashing 提供更大范围的字典替换路线。但当前负载并不支持立即把整个 owner 表或候选队列换掉。以下按实际成本和接口条件说明原因。
+最新论文确实提供了可用原语：Radsort 已进入主任务并扩展到full-key有界批次；SimdQuickHeap 适合后续比较，TPHT 和 Zombie Hashing 提供字典替换路线；因现有Rust库与PR接受成本降优先级。但当前负载并不支持立即把整个 owner 表或候选队列换掉。以下按实际成本和接口条件说明原因。
 
 ## 1. 统一问题、语义与证据口径
 
@@ -72,7 +72,7 @@ all 在 repeat 对内 train 少 4.23%，HWM 增加 129.0625 MiB，**峰值已经
 | I2/I5 corpus 构造 | 分段长度 scan + 稳定 scatter + 独占 first-touch | 连续片段区间、checked 长度、最终 MaybeUninit 区域一次写入 | 标准 prefix/disjoint scatter；SIMD UTF 解码可讨论，但过滤与 ID 映射仍需逐字符工作 |
 | S1 endpoint 表示 | 动态路径图的边收缩；稳定物理地址 | 起点/终点保存 token ID，跨度表找邻居；不搬移整片段 | 已省 per-position prev/next/word_id；Halfword 是替代表示，需新并发/跨度证书 |
 | 初始 owner 路由 | 稳定 partition，映射 `position→owner(pair)` | chunk 内递增位置，chunk 间按物理顺序拼接 | 直接 count-prefix-scatter 可以省 compact；详见 §4 |
-| I6 pair 初始化 | 稀疏关系转置：key→有序 occurrence；exact weighted group-by | 8 字节 record，稳定四轮 LSD，floor 后才装字典 | Radsort 已接入；hash2/rank3 原型较慢，不重开；逻辑块直接消费可省 finalize |
+| I6 pair 初始化 | 稀疏关系转置：key→有序 occurrence；exact weighted group-by | 8 字节 record，稳定四轮 LSD，floor 后才装字典 | Radsort已接入；full-key adaptive batches已做完整Trainer对照，中文初始化约3.6–5%；hash2/rank3原型慢；finalize重写机会小 |
 | S4 owner 字典 | 可变 exact map，唯一写所有权 | AHashMap<u64, Entry>，Entry 为 frequency + posting | 当前已有 SwissTable/SIMD 探测；TPHT 值宽度不匹配，Zombie 需要完整替换 |
 | S2 候选堆 | 动态 exact argmax，旧上界 lazy repair | 8 叉堆；频率减小只在 top 被观察时 pop/reinsert | 8 字节条件表示是局部替换；SimdQuickHeap 是后续候选；radix heap 无现成 owner 局部单调证书 |
 | 跨 owner 选择 | 少量已校正局部最大值的 tournament | coordinator 比较所有 owner heads，仍使用 canonical tie | P=4 时扫描很小；大 P 可缓存头或 tournament，但需新 P 的实际成本证据 |
@@ -237,7 +237,7 @@ Rust迁移最重要的依赖是：本轮每个worker持有互斥physical blocks�
 | 5 | 长冷posting压缩 | delta codec减payload与访存 | as_slice、AA随机索引、block目录、解码scratch；真实gap/寿命样本 | 未实现；比低范围heap更面向大规模 |
 | 6 | block summary分wave消费 | 已消费频率vectors立即释放；从全体Q降到Q_wave临时量 | owner独占汇总、递增block directory、稳定producer顺序 | 已实现57tests通过；13block同binary摘要48→16MiB，进程峰值479.94→431.57MiB；初始化+12%、全训+0.55%，各n=1 |
 | 7 | route map容量复用/reserve | 减少BirthGroup rehash/分配 | retainedcapacity抬RSS、job几何变化；先观测当前J增长 | H有growth证据，J尚缺当前证据 |
-| 8 | owner dictionary TPHT/Zombie | key/metadata压缩与高load更新 | TPHTvalue宽度不符、handle arena与真实32Bentry trace | 研究候选，未实现 |
+| 8 | owner dictionary TPHT/Zombie | key/metadata压缩与高load更新 | TPHTvalue宽度不符、Rust依赖/PR成本；adapter准备未测Trainer | 研究候选，降优先级 |
 | 9 | 额外kernel并行/P>W/pipeline | 降重owner/job尾部 | hotpair不因P增大而拆分；更多scratch/routes与带宽竞争 | 用户已降优先级；仅偏斜/idlecore数据支持时做 |
 | 10 | 逻辑block消费者省finalize | 跳过排序后block恢复到连续数组 | 跨blockgroup、两遍访问与iterator；独立成本证据 | 最新fixedT256 probe四owner compact CPU总492.5ms、max134.76ms；train21.280s，理想wall机会约0.63%，降后排 |
 | 条件优化，11 | packed8B candidate +wide fallback | 候选backing同capacity减半 | ordinaryaffix +32bitmass+16bitID证书；超界用wide | 已集成、backing实测减半，独立train略慢；为范围内存收益 |
@@ -249,3 +249,9 @@ Rust迁移最重要的依赖是：本轮每个worker持有互斥physical blocks�
 未采用项也属于调研结果：F singleton birth延迟物化、G2自动SIMDblock验证、I直接ownerposting组装、Kparallel drop均有本项目失败证据；它们没有因为换成新论文术语而重新成为优先候选。下一次测量从当前最快有效组合派生，一项局部假设决定一项保留/丢弃，不把与历史慢版本的比较当当前收益。
 
 本报告没有修改Trainer、efficient_bpe或其它agent文件，没有运行构建与大样本计时。新增文件包括此报告、[规模分析](SCALE_UP_ANALYSIS.md)、[候选JSON](results/algorithm-frontier-map/ranked_candidates.json)、[固定实现来源](results/algorithm-frontier-map/primary_implementation_provenance.json)和bounded编码oracle；提出的空间数字是表示推导，正式性能由完整调用决定。
+
+## 本轮从调研到实测的补充（2026-10-01）
+
+full-key有界排序已扩展稳定Radsort到u128记录，不再要求初始alphabet16位。始终排序在英文回退25.2%；8B临时记录仍回退30.3%且中文整训未获益，用户要求撤回。当前029ab45b按实际block字典大小选择：小字典hash扫描，达到65,536项后后续tile稳定分组；中文初始化3.58%/4.09%，13block四块并行4.95%，英文不分配排序缓冲。新增16次完整Trainer调用、最终60lib tests与完整模型/工作gate通过。与flat已有的8B heap条件分支是不同改动。见 [初始化报告5.2](INITIALIZATION_MEMORY_REPORT.md)。
+
+正式端到端已明显提速，DE→H的两对中位train32.397→25.577s、feed+train36.766→29.838s，随后H→J筛选也改善。GPT-6 Luna随后完成当前512MiB flat主路径的完整PERF独立审计。上次完整DWARF PERF来自H00216d91，两版本分别核对各自binary与源码。当前大项是posting校验、邻边统计和owner提交；未发现高占比且明确可删除的重复工作，按用户要求停止本轮优化。采样未进入generic adaptive分支，不据此判断数十GiB。详见 [当前PERF审计](CURRENT_PERF_AUDIT.md)。

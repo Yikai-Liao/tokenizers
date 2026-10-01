@@ -1,0 +1,436 @@
+{
+  "input_perf": "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-j-current-perf.perf",
+  "sample_rows": 17166,
+  "events": {
+    "cycles:u": {
+      "samples": 8719,
+      "period_total": 221481049753,
+      "top_ip_unresolved_samples": 807,
+      "top_ip_unresolved_period": 21403559719,
+      "top_ip_unresolved_pct": 9.663833426322329,
+      "top_symbols": [
+        {
+          "symbol": "<&tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::train_in_pool<core[c0acaeba6ab4c2e0]::sync::atomic::Atomic<u32>, u32, 2: usize>::{closure#21}::{closure#0} as core[c0acaeba6ab4c2e0]::ops::function::FnMut<((usize, &mut tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::Owner),)>>::call_mut",
+          "mangled": "_RNvXs_NtNtNtCsgxBkk5gSRhY_4core3ops8function5implsRNCNCINvNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallel13train_in_poolINtNtNtBa_4sync6atomic6AtomicmEmKj2_Esj_00INtB6_5FnMutTTjQNtBU_5OwnerEEE8call_mutB12_",
+          "samples": 1922,
+          "period": 51725351085,
+          "pct": 23.354301030578068
+        },
+        {
+          "symbol": "<&tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::fused_batch::prepare_with_mode<core[c0acaeba6ab4c2e0]::sync::atomic::Atomic<u32>, u32, 2: usize, true: bool>::{closure#0} as core[c0acaeba6ab4c2e0]::ops::function::FnMut<(&alloc[12e961f32105355]::vec::Vec<tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::fused_batch::Task>,)>>::call_mut",
+          "mangled": "_RNvXs_NtNtNtCsgxBkk5gSRhY_4core3ops8function5implsRNCINvNtNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallel11fused_batch17prepare_with_modeINtNtNtBa_4sync6atomic6AtomicmEmKj2_Kb1_E0INtB6_5FnMutTRINtNtCs6i54tJFfzR_5alloc3vec3VecNtBS_4TaskEEE8call_mutB12_",
+          "samples": 1803,
+          "period": 49010536545,
+          "pct": 22.128546256963073
+        },
+        {
+          "symbol": "[unknown]",
+          "mangled": "[unknown]",
+          "samples": 807,
+          "period": 21403559719,
+          "pct": 9.663833426322329
+        },
+        {
+          "symbol": "<&tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::radix_count::sort as core[c0acaeba6ab4c2e0]::ops::function::FnMut<(&mut alloc[12e961f32105355]::vec::Vec<u64>,)>>::call_mut",
+          "mangled": "_RNvXs_NtNtNtCsgxBkk5gSRhY_4core3ops8function5implsRNvNtNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallel11radix_count4sortINtB6_5FnMutTQINtNtCs6i54tJFfzR_5alloc3vec3VecyEEE8call_mutBZ_",
+          "samples": 441,
+          "period": 11616429288,
+          "pct": 5.244886323662846
+        },
+        {
+          "symbol": "<hashbrown[b5c94476ffc33875]::map::HashMap<u64, tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::Entry, ahash[b18d6e5614061fa9]::random_state::RandomState>>::insert",
+          "mangled": "_RNvMs1_NtCsfBDUjroi3FF_9hashbrown3mapINtB5_7HashMapyNtNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallel5EntryNtNtCsff6FD4wVhPh_5ahash12random_state11RandomStateE6insertBY_",
+          "samples": 425,
+          "period": 10520374979,
+          "pct": 4.750011339901327
+        },
+        {
+          "symbol": "cfree",
+          "mangled": "cfree",
+          "samples": 274,
+          "period": 7468164720,
+          "pct": 3.3719204095919917
+        },
+        {
+          "symbol": "<&<tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::fused_batch::Prepared<u32, 2: usize>>::apply<core[c0acaeba6ab4c2e0]::sync::atomic::Atomic<u32>>::{closure#0} as core[c0acaeba6ab4c2e0]::ops::function::FnMut<(&alloc[12e961f32105355]::vec::Vec<tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::fused_batch::Valid>,)>>::call_mut",
+          "mangled": "_RNvXs_NtNtNtCsgxBkk5gSRhY_4core3ops8function5implsRNCINvMs_NtNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallel11fused_batchINtBV_8PreparedmKj2_E5applyINtNtNtBa_4sync6atomic6AtomicmEE0INtB6_5FnMutTRINtNtCs6i54tJFfzR_5alloc3vec3VecNtBV_5ValidEEE8call_mutB15_",
+          "samples": 213,
+          "period": 5870977468,
+          "pct": 2.650780946969246
+        },
+        {
+          "symbol": "<tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::fused_batch::aggregate::Scratch>::birth::<u32, 2: usize>",
+          "mangled": "_RINvMNtNtNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallel11fused_batch9aggregateNtB3_7Scratch5birthmKj2_EBf_",
+          "samples": 200,
+          "period": 5478027533,
+          "pct": 2.473361734157032
+        },
+        {
+          "symbol": "tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::corpus::fill::<core[c0acaeba6ab4c2e0]::sync::atomic::Atomic<u32>>",
+          "mangled": "_RINvNtNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallel6corpus4fillINtNtNtCsgxBkk5gSRhY_4core4sync6atomic6AtomicmEEBc_",
+          "samples": 254,
+          "period": 5270217529,
+          "pct": 2.3795342919303706
+        },
+        {
+          "symbol": "<&tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::radix_count::owner_route::direct<core[c0acaeba6ab4c2e0]::sync::atomic::Atomic<u32>>::{closure#3} as core[c0acaeba6ab4c2e0]::ops::function::FnMut<(((usize, &[core[c0acaeba6ab4c2e0]::sync::atomic::Atomic<u32>]), alloc[12e961f32105355]::vec::Vec<&mut [core[c0acaeba6ab4c2e0]::mem::maybe_uninit::MaybeUninit<u64>]>),)>>::call_mut",
+          "mangled": "_RNvXs_NtNtNtCsgxBkk5gSRhY_4core3ops8function5implsRNCINvNtNtNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallel11radix_count11owner_route6directINtNtNtBa_4sync6atomic6AtomicmEEs1_0INtB6_5FnMutTTTjRSB2s_EINtNtCs6i54tJFfzR_5alloc3vec3VecQSINtNtNtBa_3mem12maybe_uninit11MaybeUninityEEEEE8call_mutB14_",
+          "samples": 357,
+          "period": 4315439322,
+          "pct": 1.9484463013032773
+        },
+        {
+          "symbol": "<&tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::alphabet::initialize::{closure#0} as core[c0acaeba6ab4c2e0]::ops::function::FnMut<(&[&compact_str[a5c8eabb74d70c86]::CompactString],)>>::call_mut",
+          "mangled": "_RNvXs_NtNtNtCsgxBkk5gSRhY_4core3ops8function5implsRNCNvNtNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallel8alphabet10initialize0INtB6_5FnMutTRSRNtCseet3WOyuNEw_11compact_str13CompactStringEE8call_mutB11_",
+          "samples": 159,
+          "period": 4166060929,
+          "pct": 1.8810010760045037
+        },
+        {
+          "symbol": "<&tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::radix_count::initialize_with_widths<core[c0acaeba6ab4c2e0]::sync::atomic::Atomic<u32>, u32, 2: usize>::{closure#2} as core[c0acaeba6ab4c2e0]::ops::function::FnMut<(&alloc[12e961f32105355]::vec::Vec<u64>,)>>::call_mut",
+          "mangled": "_RNvXs_NtNtNtCsgxBkk5gSRhY_4core3ops8function5implsRNCINvNtNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallel11radix_count22initialize_with_widthsINtNtNtBa_4sync6atomic6AtomicmEmKj2_Es0_0INtB6_5FnMutTRINtNtCs6i54tJFfzR_5alloc3vec3VecyEEE8call_mutB12_",
+          "samples": 147,
+          "period": 3801423602,
+          "pct": 1.7163651726589801
+        },
+        {
+          "symbol": "<tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::fused_batch::aggregate::Scratch>::flush::<u32, 2: usize>",
+          "mangled": "_RINvMNtNtNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallel11fused_batch9aggregateNtB3_7Scratch5flushmKj2_EBf_",
+          "samples": 132,
+          "period": 3554561847,
+          "pct": 1.6049056345742072
+        },
+        {
+          "symbol": "malloc",
+          "mangled": "malloc",
+          "samples": 155,
+          "period": 3543708562,
+          "pct": 1.6000053123967097
+        },
+        {
+          "symbol": "<hashbrown[b5c94476ffc33875]::raw::RawTable<(u64, tk_train[a27b9d11321026d0]::trainers::bpe::indexed::compact::BirthGroup)>>::reserve_rehash::<hashbrown[b5c94476ffc33875]::map::make_hasher<u64, tk_train[a27b9d11321026d0]::trainers::bpe::indexed::compact::BirthGroup, ahash[b18d6e5614061fa9]::random_state::RandomState>::{closure#0}>",
+          "mangled": "_RINvMs6_NtCsfBDUjroi3FF_9hashbrown3rawINtB6_8RawTableTyNtNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed7compact10BirthGroupEE14reserve_rehashNCINvNtB8_3map11make_hasheryBR_NtNtCsff6FD4wVhPh_5ahash12random_state11RandomStateE0EB11_",
+          "samples": 125,
+          "period": 3401970137,
+          "pct": 1.5360095777015432
+        },
+        {
+          "symbol": "<tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::Output<u32, 2: usize>>::remove",
+          "mangled": "_RNvMsb_NtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallelINtB5_6OutputmKj2_E6removeBd_",
+          "samples": 126,
+          "period": 3392411136,
+          "pct": 1.531693632382221
+        },
+        {
+          "symbol": "core[c0acaeba6ab4c2e0]::str::converts::from_utf8",
+          "mangled": "_RNvNtNtCsgxBkk5gSRhY_4core3str8converts9from_utf8",
+          "samples": 159,
+          "period": 3228679859,
+          "pct": 1.457767995320903
+        },
+        {
+          "symbol": "<ahash[b18d6e5614061fa9]::random_state::RandomState as core[c0acaeba6ab4c2e0]::hash::BuildHasher>::hash_one::<&compact_str[a5c8eabb74d70c86]::CompactString>",
+          "mangled": "_RINvYNtNtCsff6FD4wVhPh_5ahash12random_state11RandomStateNtNtCsgxBkk5gSRhY_4core4hash11BuildHasher8hash_oneRNtCseet3WOyuNEw_11compact_str13CompactStringECsaoDurvc9f8R_28hf_bpe_native_j_current_perf",
+          "samples": 126,
+          "period": 3053184944,
+          "pct": 1.3785310063343892
+        },
+        {
+          "symbol": "<&tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::radix_count::initialize_with_widths<core[c0acaeba6ab4c2e0]::sync::atomic::Atomic<u32>, u32, 2: usize>::{closure#5} as core[c0acaeba6ab4c2e0]::ops::function::FnMut<(((&mut tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::Owner, &mut alloc[12e961f32105355]::vec::Vec<u64>), (alloc[12e961f32105355]::vec::Vec<tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::radix_count::Group>, usize)),)>>::call_mut",
+          "mangled": "_RNvXs_NtNtNtCsgxBkk5gSRhY_4core3ops8function5implsRNCINvNtNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallel11radix_count22initialize_with_widthsINtNtNtBa_4sync6atomic6AtomicmEmKj2_Es3_0INtB6_5FnMutTTTQNtBU_5OwnerQINtNtCs6i54tJFfzR_5alloc3vec3VecyEETIB3C_NtBS_5GroupEjEEEE8call_mutB12_",
+          "samples": 142,
+          "period": 2193080499,
+          "pct": 0.9901887775255563
+        },
+        {
+          "symbol": "core[c0acaeba6ab4c2e0]::str::count::do_count_chars",
+          "mangled": "_RNvNtNtCsgxBkk5gSRhY_4core3str5count14do_count_chars",
+          "samples": 66,
+          "period": 1908665716,
+          "pct": 0.8617738258548898
+        },
+        {
+          "symbol": "<&tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::radix_count::owner_route::direct<core[c0acaeba6ab4c2e0]::sync::atomic::Atomic<u32>>::{closure#0} as core[c0acaeba6ab4c2e0]::ops::function::FnMut<((usize, &[core[c0acaeba6ab4c2e0]::sync::atomic::Atomic<u32>]),)>>::call_mut",
+          "mangled": "_RNvXs_NtNtNtCsgxBkk5gSRhY_4core3ops8function5implsRNCINvNtNtNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallel11radix_count11owner_route6directINtNtNtBa_4sync6atomic6AtomicmEE0INtB6_5FnMutTTjRSB2s_EEE8call_mutB14_",
+          "samples": 67,
+          "period": 1867572601,
+          "pct": 0.8432200421131981
+        },
+        {
+          "symbol": "<tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::weight_lookup::WeightLookup>::weight::<u32, 2: usize>",
+          "mangled": "_RINvMNtNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallel13weight_lookupNtB3_12WeightLookup6weightmKj2_EBd_",
+          "samples": 62,
+          "period": 1654576630,
+          "pct": 0.7470511052052607
+        },
+        {
+          "symbol": "<hashbrown[b5c94476ffc33875]::raw::RawTable<(u64, (u64, u32))>>::reserve_rehash::<hashbrown[b5c94476ffc33875]::map::make_hasher<u64, (u64, u32), ahash[b18d6e5614061fa9]::random_state::RandomState>::{closure#0}>",
+          "mangled": "_RINvMs6_NtCsfBDUjroi3FF_9hashbrown3rawINtB6_8RawTableTyTymEEE14reserve_rehashNCINvNtB8_3map11make_hasheryBR_NtNtCsff6FD4wVhPh_5ahash12random_state11RandomStateE0ECsdWTkGWHwd6S_8tk_train",
+          "samples": 59,
+          "period": 1556358340,
+          "pct": 0.7027049680935147
+        },
+        {
+          "symbol": "<tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::fused_batch::Selected>::final_next::<core[c0acaeba6ab4c2e0]::sync::atomic::Atomic<u32>>",
+          "mangled": "_RINvMNtNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallel11fused_batchNtB3_8Selected10final_nextINtNtNtCsgxBkk5gSRhY_4core4sync6atomic6AtomicmEEBd_",
+          "samples": 51,
+          "period": 1402291021,
+          "pct": 0.6331426650559325
+        },
+        {
+          "symbol": "<&tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::train_in_pool<core[c0acaeba6ab4c2e0]::sync::atomic::Atomic<u32>, u32, 2: usize>::{closure#19}::{closure#0} as core[c0acaeba6ab4c2e0]::ops::function::FnMut<((usize, &[tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::Plan]),)>>::call_mut",
+          "mangled": "_RNvXs_NtNtNtCsgxBkk5gSRhY_4core3ops8function5implsRNCNCINvNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallel13train_in_poolINtNtNtBa_4sync6atomic6AtomicmEmKj2_Esh_00INtB6_5FnMutTTjRSNtBU_4PlanEEE8call_mutB12_",
+          "samples": 47,
+          "period": 1296052116,
+          "pct": 0.585175172975468
+        }
+      ],
+      "reserve_rehash_total_pct": 2.5454304037691773,
+      "reserve_rehash_symbols": [
+        {
+          "symbol": "<hashbrown[b5c94476ffc33875]::raw::RawTable<(u64, tk_train[a27b9d11321026d0]::trainers::bpe::indexed::compact::BirthGroup)>>::reserve_rehash::<hashbrown[b5c94476ffc33875]::map::make_hasher<u64, tk_train[a27b9d11321026d0]::trainers::bpe::indexed::compact::BirthGroup, ahash[b18d6e5614061fa9]::random_state::RandomState>::{closure#0}>",
+          "mangled": "_RINvMs6_NtCsfBDUjroi3FF_9hashbrown3rawINtB6_8RawTableTyNtNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed7compact10BirthGroupEE14reserve_rehashNCINvNtB8_3map11make_hasheryBR_NtNtCsff6FD4wVhPh_5ahash12random_state11RandomStateE0EB11_",
+          "samples": 125,
+          "period": 3401970137,
+          "pct": 1.5360095777015432
+        },
+        {
+          "symbol": "<hashbrown[b5c94476ffc33875]::raw::RawTable<(u64, (u64, u32))>>::reserve_rehash::<hashbrown[b5c94476ffc33875]::map::make_hasher<u64, (u64, u32), ahash[b18d6e5614061fa9]::random_state::RandomState>::{closure#0}>",
+          "mangled": "_RINvMs6_NtCsfBDUjroi3FF_9hashbrown3rawINtB6_8RawTableTyTymEEE14reserve_rehashNCINvNtB8_3map11make_hasheryBR_NtNtCsff6FD4wVhPh_5ahash12random_state11RandomStateE0ECsdWTkGWHwd6S_8tk_train",
+          "samples": 59,
+          "period": 1556358340,
+          "pct": 0.7027049680935147
+        },
+        {
+          "symbol": "<hashbrown[b5c94476ffc33875]::raw::RawTable<(u64, tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::Entry)>>::reserve_rehash::<hashbrown[b5c94476ffc33875]::map::make_hasher<u64, tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::Entry, ahash[b18d6e5614061fa9]::random_state::RandomState>::{closure#0}>",
+          "mangled": "_RINvMs6_NtCsfBDUjroi3FF_9hashbrown3rawINtB6_8RawTableTyNtNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallel5EntryEE14reserve_rehashNCINvNtB8_3map11make_hasheryBR_NtNtCsff6FD4wVhPh_5ahash12random_state11RandomStateE0EB11_",
+          "samples": 55,
+          "period": 530124094,
+          "pct": 0.23935415449367103
+        },
+        {
+          "symbol": "<hashbrown[b5c94476ffc33875]::raw::RawTable<(compact_str[a5c8eabb74d70c86]::CompactString, u64)>>::reserve_rehash::<hashbrown[b5c94476ffc33875]::map::make_hasher<compact_str[a5c8eabb74d70c86]::CompactString, u64, ahash[b18d6e5614061fa9]::random_state::RandomState>::{closure#0}>",
+          "mangled": "_RINvMs6_NtCsfBDUjroi3FF_9hashbrown3rawINtB6_8RawTableTNtCseet3WOyuNEw_11compact_str13CompactStringyEE14reserve_rehashNCINvNtB8_3map11make_hasherBQ_yNtNtCsff6FD4wVhPh_5ahash12random_state11RandomStateE0ECsaoDurvc9f8R_28hf_bpe_native_j_current_perf.llvm.4466768554071143393",
+          "samples": 7,
+          "period": 149193408,
+          "pct": 0.06736170348044829
+        }
+      ]
+    },
+    "cache-misses:u": {
+      "samples": 8447,
+      "period_total": 1376613550,
+      "top_ip_unresolved_samples": 821,
+      "top_ip_unresolved_period": 178348687,
+      "top_ip_unresolved_pct": 12.95561030908057,
+      "top_symbols": [
+        {
+          "symbol": "<&tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::train_in_pool<core[c0acaeba6ab4c2e0]::sync::atomic::Atomic<u32>, u32, 2: usize>::{closure#21}::{closure#0} as core[c0acaeba6ab4c2e0]::ops::function::FnMut<((usize, &mut tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::Owner),)>>::call_mut",
+          "mangled": "_RNvXs_NtNtNtCsgxBkk5gSRhY_4core3ops8function5implsRNCNCINvNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallel13train_in_poolINtNtNtBa_4sync6atomic6AtomicmEmKj2_Esj_00INtB6_5FnMutTTjQNtBU_5OwnerEEE8call_mutB12_",
+          "samples": 1667,
+          "period": 264259442,
+          "pct": 19.19634177652835
+        },
+        {
+          "symbol": "<&tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::fused_batch::prepare_with_mode<core[c0acaeba6ab4c2e0]::sync::atomic::Atomic<u32>, u32, 2: usize, true: bool>::{closure#0} as core[c0acaeba6ab4c2e0]::ops::function::FnMut<(&alloc[12e961f32105355]::vec::Vec<tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::fused_batch::Task>,)>>::call_mut",
+          "mangled": "_RNvXs_NtNtNtCsgxBkk5gSRhY_4core3ops8function5implsRNCINvNtNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallel11fused_batch17prepare_with_modeINtNtNtBa_4sync6atomic6AtomicmEmKj2_Kb1_E0INtB6_5FnMutTRINtNtCs6i54tJFfzR_5alloc3vec3VecNtBS_4TaskEEE8call_mutB12_",
+          "samples": 1467,
+          "period": 236765420,
+          "pct": 17.19912026145609
+        },
+        {
+          "symbol": "[unknown]",
+          "mangled": "[unknown]",
+          "samples": 821,
+          "period": 178348687,
+          "pct": 12.95561030908057
+        },
+        {
+          "symbol": "<&tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::radix_count::sort as core[c0acaeba6ab4c2e0]::ops::function::FnMut<(&mut alloc[12e961f32105355]::vec::Vec<u64>,)>>::call_mut",
+          "mangled": "_RNvXs_NtNtNtCsgxBkk5gSRhY_4core3ops8function5implsRNvNtNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallel11radix_count4sortINtB6_5FnMutTQINtNtCs6i54tJFfzR_5alloc3vec3VecyEEE8call_mutBZ_",
+          "samples": 444,
+          "period": 135626344,
+          "pct": 9.85217267402315
+        },
+        {
+          "symbol": "<&<tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::fused_batch::Prepared<u32, 2: usize>>::apply<core[c0acaeba6ab4c2e0]::sync::atomic::Atomic<u32>>::{closure#0} as core[c0acaeba6ab4c2e0]::ops::function::FnMut<(&alloc[12e961f32105355]::vec::Vec<tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::fused_batch::Valid>,)>>::call_mut",
+          "mangled": "_RNvXs_NtNtNtCsgxBkk5gSRhY_4core3ops8function5implsRNCINvMs_NtNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallel11fused_batchINtBV_8PreparedmKj2_E5applyINtNtNtBa_4sync6atomic6AtomicmEE0INtB6_5FnMutTRINtNtCs6i54tJFfzR_5alloc3vec3VecNtBV_5ValidEEE8call_mutB15_",
+          "samples": 586,
+          "period": 96843144,
+          "pct": 7.034882374941028
+        },
+        {
+          "symbol": "<hashbrown[b5c94476ffc33875]::raw::RawTable<(u64, tk_train[a27b9d11321026d0]::trainers::bpe::indexed::compact::BirthGroup)>>::reserve_rehash::<hashbrown[b5c94476ffc33875]::map::make_hasher<u64, tk_train[a27b9d11321026d0]::trainers::bpe::indexed::compact::BirthGroup, ahash[b18d6e5614061fa9]::random_state::RandomState>::{closure#0}>",
+          "mangled": "_RINvMs6_NtCsfBDUjroi3FF_9hashbrown3rawINtB6_8RawTableTyNtNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed7compact10BirthGroupEE14reserve_rehashNCINvNtB8_3map11make_hasheryBR_NtNtCsff6FD4wVhPh_5ahash12random_state11RandomStateE0EB11_",
+          "samples": 425,
+          "period": 63625807,
+          "pct": 4.6219076515700435
+        },
+        {
+          "symbol": "<hashbrown[b5c94476ffc33875]::map::HashMap<u64, tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::Entry, ahash[b18d6e5614061fa9]::random_state::RandomState>>::insert",
+          "mangled": "_RNvMs1_NtCsfBDUjroi3FF_9hashbrown3mapINtB5_7HashMapyNtNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallel5EntryNtNtCsff6FD4wVhPh_5ahash12random_state11RandomStateE6insertBY_",
+          "samples": 253,
+          "period": 38180579,
+          "pct": 2.7735146875461165
+        },
+        {
+          "symbol": "<hashbrown[b5c94476ffc33875]::raw::RawTable<(u64, (u64, u32))>>::reserve_rehash::<hashbrown[b5c94476ffc33875]::map::make_hasher<u64, (u64, u32), ahash[b18d6e5614061fa9]::random_state::RandomState>::{closure#0}>",
+          "mangled": "_RINvMs6_NtCsfBDUjroi3FF_9hashbrown3rawINtB6_8RawTableTyTymEEE14reserve_rehashNCINvNtB8_3map11make_hasheryBR_NtNtCsff6FD4wVhPh_5ahash12random_state11RandomStateE0ECsdWTkGWHwd6S_8tk_train",
+          "samples": 207,
+          "period": 32134147,
+          "pct": 2.3342896050965067
+        },
+        {
+          "symbol": "<tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::fused_batch::aggregate::Scratch>::birth::<u32, 2: usize>",
+          "mangled": "_RINvMNtNtNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallel11fused_batch9aggregateNtB3_7Scratch5birthmKj2_EBf_",
+          "samples": 180,
+          "period": 29247644,
+          "pct": 2.1246081734412683
+        },
+        {
+          "symbol": "<&tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::radix_count::initialize_with_widths<core[c0acaeba6ab4c2e0]::sync::atomic::Atomic<u32>, u32, 2: usize>::{closure#2} as core[c0acaeba6ab4c2e0]::ops::function::FnMut<(&alloc[12e961f32105355]::vec::Vec<u64>,)>>::call_mut",
+          "mangled": "_RNvXs_NtNtNtCsgxBkk5gSRhY_4core3ops8function5implsRNCINvNtNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallel11radix_count22initialize_with_widthsINtNtNtBa_4sync6atomic6AtomicmEmKj2_Es0_0INtB6_5FnMutTRINtNtCs6i54tJFfzR_5alloc3vec3VecyEEE8call_mutB12_",
+          "samples": 128,
+          "period": 28971798,
+          "pct": 2.104570160594453
+        },
+        {
+          "symbol": "tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::corpus::fill::<core[c0acaeba6ab4c2e0]::sync::atomic::Atomic<u32>>",
+          "mangled": "_RINvNtNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallel6corpus4fillINtNtNtCsgxBkk5gSRhY_4core4sync6atomic6AtomicmEEBc_",
+          "samples": 237,
+          "period": 28449997,
+          "pct": 2.066665477758809
+        },
+        {
+          "symbol": "<&tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::radix_count::initialize_with_widths<core[c0acaeba6ab4c2e0]::sync::atomic::Atomic<u32>, u32, 2: usize>::{closure#5} as core[c0acaeba6ab4c2e0]::ops::function::FnMut<(((&mut tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::Owner, &mut alloc[12e961f32105355]::vec::Vec<u64>), (alloc[12e961f32105355]::vec::Vec<tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::radix_count::Group>, usize)),)>>::call_mut",
+          "mangled": "_RNvXs_NtNtNtCsgxBkk5gSRhY_4core3ops8function5implsRNCINvNtNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallel11radix_count22initialize_with_widthsINtNtNtBa_4sync6atomic6AtomicmEmKj2_Es3_0INtB6_5FnMutTTTQNtBU_5OwnerQINtNtCs6i54tJFfzR_5alloc3vec3VecyEETIB3C_NtBS_5GroupEjEEEE8call_mutB12_",
+          "samples": 217,
+          "period": 27261875,
+          "pct": 1.9803578862056095
+        },
+        {
+          "symbol": "<ahash[b18d6e5614061fa9]::random_state::RandomState as core[c0acaeba6ab4c2e0]::hash::BuildHasher>::hash_one::<&compact_str[a5c8eabb74d70c86]::CompactString>",
+          "mangled": "_RINvYNtNtCsff6FD4wVhPh_5ahash12random_state11RandomStateNtNtCsgxBkk5gSRhY_4core4hash11BuildHasher8hash_oneRNtCseet3WOyuNEw_11compact_str13CompactStringECsaoDurvc9f8R_28hf_bpe_native_j_current_perf",
+          "samples": 119,
+          "period": 25207764,
+          "pct": 1.8311430974945728
+        },
+        {
+          "symbol": "cfree",
+          "mangled": "cfree",
+          "samples": 138,
+          "period": 21825628,
+          "pct": 1.5854578795915528
+        },
+        {
+          "symbol": "<&tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::alphabet::initialize::{closure#0} as core[c0acaeba6ab4c2e0]::ops::function::FnMut<(&[&compact_str[a5c8eabb74d70c86]::CompactString],)>>::call_mut",
+          "mangled": "_RNvXs_NtNtNtCsgxBkk5gSRhY_4core3ops8function5implsRNCNvNtNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallel8alphabet10initialize0INtB6_5FnMutTRSRNtCseet3WOyuNEw_11compact_str13CompactStringEE8call_mutB11_",
+          "samples": 138,
+          "period": 17639081,
+          "pct": 1.281338615328899
+        },
+        {
+          "symbol": "malloc",
+          "mangled": "malloc",
+          "samples": 147,
+          "period": 17540848,
+          "pct": 1.2742027709955346
+        },
+        {
+          "symbol": "core[c0acaeba6ab4c2e0]::str::count::do_count_chars",
+          "mangled": "_RNvNtNtCsgxBkk5gSRhY_4core3str5count14do_count_chars",
+          "samples": 71,
+          "period": 16627805,
+          "pct": 1.2078774758536992
+        },
+        {
+          "symbol": "<tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::fused_batch::aggregate::Scratch>::flush::<u32, 2: usize>",
+          "mangled": "_RINvMNtNtNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallel11fused_batch9aggregateNtB3_7Scratch5flushmKj2_EBf_",
+          "samples": 101,
+          "period": 15504312,
+          "pct": 1.1262646659260327
+        },
+        {
+          "symbol": "<&tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::radix_count::owner_route::direct<core[c0acaeba6ab4c2e0]::sync::atomic::Atomic<u32>>::{closure#3} as core[c0acaeba6ab4c2e0]::ops::function::FnMut<(((usize, &[core[c0acaeba6ab4c2e0]::sync::atomic::Atomic<u32>]), alloc[12e961f32105355]::vec::Vec<&mut [core[c0acaeba6ab4c2e0]::mem::maybe_uninit::MaybeUninit<u64>]>),)>>::call_mut",
+          "mangled": "_RNvXs_NtNtNtCsgxBkk5gSRhY_4core3ops8function5implsRNCINvNtNtNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallel11radix_count11owner_route6directINtNtNtBa_4sync6atomic6AtomicmEEs1_0INtB6_5FnMutTTTjRSB2s_EINtNtCs6i54tJFfzR_5alloc3vec3VecQSINtNtNtBa_3mem12maybe_uninit11MaybeUninityEEEEE8call_mutB14_",
+          "samples": 338,
+          "period": 13541275,
+          "pct": 0.9836656772701388
+        },
+        {
+          "symbol": "<&tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::radix_count::owner_route::direct<core[c0acaeba6ab4c2e0]::sync::atomic::Atomic<u32>>::{closure#0} as core[c0acaeba6ab4c2e0]::ops::function::FnMut<((usize, &[core[c0acaeba6ab4c2e0]::sync::atomic::Atomic<u32>]),)>>::call_mut",
+          "mangled": "_RNvXs_NtNtNtCsgxBkk5gSRhY_4core3ops8function5implsRNCINvNtNtNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallel11radix_count11owner_route6directINtNtNtBa_4sync6atomic6AtomicmEE0INtB6_5FnMutTTjRSB2s_EEE8call_mutB14_",
+          "samples": 65,
+          "period": 13070894,
+          "pct": 0.9494962475126008
+        },
+        {
+          "symbol": "<tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::Output<u32, 2: usize>>::remove",
+          "mangled": "_RNvMsb_NtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallelINtB5_6OutputmKj2_E6removeBd_",
+          "samples": 74,
+          "period": 11058917,
+          "pct": 0.8033421580079609
+        },
+        {
+          "symbol": "<tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::weight_lookup::WeightLookup>::weight::<u32, 2: usize>",
+          "mangled": "_RINvMNtNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallel13weight_lookupNtB3_12WeightLookup6weightmKj2_EBd_",
+          "samples": 69,
+          "period": 10765929,
+          "pct": 0.782058915517721
+        },
+        {
+          "symbol": "<hashbrown[b5c94476ffc33875]::raw::RawTable<(u64, tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::Entry)>>::reserve_rehash::<hashbrown[b5c94476ffc33875]::map::make_hasher<u64, tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::Entry, ahash[b18d6e5614061fa9]::random_state::RandomState>::{closure#0}>",
+          "mangled": "_RINvMs6_NtCsfBDUjroi3FF_9hashbrown3rawINtB6_8RawTableTyNtNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallel5EntryEE14reserve_rehashNCINvNtB8_3map11make_hasheryBR_NtNtCsff6FD4wVhPh_5ahash12random_state11RandomStateE0EB11_",
+          "samples": 73,
+          "period": 6169920,
+          "pct": 0.44819550119930174
+        },
+        {
+          "symbol": "<&tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::train_in_pool<core[c0acaeba6ab4c2e0]::sync::atomic::Atomic<u32>, u32, 2: usize>::{closure#19}::{closure#0} as core[c0acaeba6ab4c2e0]::ops::function::FnMut<((usize, &[tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::Plan]),)>>::call_mut",
+          "mangled": "_RNvXs_NtNtNtCsgxBkk5gSRhY_4core3ops8function5implsRNCNCINvNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallel13train_in_poolINtNtNtBa_4sync6atomic6AtomicmEmKj2_Esh_00INtB6_5FnMutTTjRSNtBU_4PlanEEE8call_mutB12_",
+          "samples": 25,
+          "period": 4078169,
+          "pct": 0.29624646655555587
+        },
+        {
+          "symbol": "<tk_train[a27b9d11321026d0]::trainers::bpe::indexed::small_posting::PackedPosting<u32, 2: usize>>::with_capacity",
+          "mangled": "_RNvMs1_NtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed13small_postingINtB5_13PackedPostingmKj2_E13with_capacityBd_",
+          "samples": 25,
+          "period": 3880411,
+          "pct": 0.28188092438869283
+        }
+      ],
+      "reserve_rehash_total_pct": 7.493898995836559,
+      "reserve_rehash_symbols": [
+        {
+          "symbol": "<hashbrown[b5c94476ffc33875]::raw::RawTable<(u64, tk_train[a27b9d11321026d0]::trainers::bpe::indexed::compact::BirthGroup)>>::reserve_rehash::<hashbrown[b5c94476ffc33875]::map::make_hasher<u64, tk_train[a27b9d11321026d0]::trainers::bpe::indexed::compact::BirthGroup, ahash[b18d6e5614061fa9]::random_state::RandomState>::{closure#0}>",
+          "mangled": "_RINvMs6_NtCsfBDUjroi3FF_9hashbrown3rawINtB6_8RawTableTyNtNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed7compact10BirthGroupEE14reserve_rehashNCINvNtB8_3map11make_hasheryBR_NtNtCsff6FD4wVhPh_5ahash12random_state11RandomStateE0EB11_",
+          "samples": 425,
+          "period": 63625807,
+          "pct": 4.6219076515700435
+        },
+        {
+          "symbol": "<hashbrown[b5c94476ffc33875]::raw::RawTable<(u64, (u64, u32))>>::reserve_rehash::<hashbrown[b5c94476ffc33875]::map::make_hasher<u64, (u64, u32), ahash[b18d6e5614061fa9]::random_state::RandomState>::{closure#0}>",
+          "mangled": "_RINvMs6_NtCsfBDUjroi3FF_9hashbrown3rawINtB6_8RawTableTyTymEEE14reserve_rehashNCINvNtB8_3map11make_hasheryBR_NtNtCsff6FD4wVhPh_5ahash12random_state11RandomStateE0ECsdWTkGWHwd6S_8tk_train",
+          "samples": 207,
+          "period": 32134147,
+          "pct": 2.3342896050965067
+        },
+        {
+          "symbol": "<hashbrown[b5c94476ffc33875]::raw::RawTable<(u64, tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::Entry)>>::reserve_rehash::<hashbrown[b5c94476ffc33875]::map::make_hasher<u64, tk_train[a27b9d11321026d0]::trainers::bpe::indexed::parallel::Entry, ahash[b18d6e5614061fa9]::random_state::RandomState>::{closure#0}>",
+          "mangled": "_RINvMs6_NtCsfBDUjroi3FF_9hashbrown3rawINtB6_8RawTableTyNtNtNtNtNtCsdWTkGWHwd6S_8tk_train8trainers3bpe7indexed8parallel5EntryEE14reserve_rehashNCINvNtB8_3map11make_hasheryBR_NtNtCsff6FD4wVhPh_5ahash12random_state11RandomStateE0EB11_",
+          "samples": 73,
+          "period": 6169920,
+          "pct": 0.44819550119930174
+        },
+        {
+          "symbol": "<hashbrown[b5c94476ffc33875]::raw::RawTable<(compact_str[a5c8eabb74d70c86]::CompactString, u64)>>::reserve_rehash::<hashbrown[b5c94476ffc33875]::map::make_hasher<compact_str[a5c8eabb74d70c86]::CompactString, u64, ahash[b18d6e5614061fa9]::random_state::RandomState>::{closure#0}>",
+          "mangled": "_RINvMs6_NtCsfBDUjroi3FF_9hashbrown3rawINtB6_8RawTableTNtCseet3WOyuNEw_11compact_str13CompactStringyEE14reserve_rehashNCINvNtB8_3map11make_hasherBQ_yNtNtCsff6FD4wVhPh_5ahash12random_state11RandomStateE0ECsaoDurvc9f8R_28hf_bpe_native_j_current_perf.llvm.4466768554071143393",
+          "samples": 5,
+          "period": 1232155,
+          "pct": 0.08950623797070717
+        }
+      ]
+    }
+  }
+}

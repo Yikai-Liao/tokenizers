@@ -1,0 +1,79 @@
+{
+  "candidate_commit": "029ab45bd0b0f446035f71acbd247c804bea60b8",
+  "candidate_base": "376363d2",
+  "candidate_patch_sha256": "063463efa22e3fcc6b0b1ef68ce49c5b5e6b0fc0508d83bac70dba32577ce362",
+  "candidate_patch_gate": "PASS",
+  "overlay_checks": [
+    {
+      "group": "initial-owner-waves",
+      "source_commit": "012b8f62b2be9f7b5c21adf7ec65ab6cace31c1d",
+      "patch_sha256": "9760e33af10c3bedeb85dc961e10dab69635d60d0e30103436acd2ca8db66e3f",
+      "gate": "PASS"
+    },
+    {
+      "group": "block-radix",
+      "source_commit": "1740479c28debc765914467f3fe02f43711bf2b0",
+      "patch_sha256": "f5d1bc379f0dd4b097fe6754cb5d765a4709485ae6b53923fcbc31a57f637260",
+      "gate": "PASS"
+    },
+    {
+      "group": "block-radix-stages",
+      "source_commit": "32a78a0869138d6effcb6fdaaed39cdeeff6690d",
+      "patch_sha256": "3d867d19aa58b0a9f106d80d94e353690e625b417b7fb6c2f267ea31ca37381d",
+      "gate": "PASS"
+    },
+    {
+      "group": "frontier",
+      "source_commit": "56dd32273b195339cfae9d64c5d469db61badb96",
+      "patch_sha256": "9acf41ccbc043c6ccf5bd1d6e5218bdcd6f8802cde9a0231fe567ec7c10782ea",
+      "gate": "PASS"
+    },
+    {
+      "group": "frontier-sort-cost",
+      "source_commit": "8bd048f67a6fb88e37753818d66624ad147aeba0",
+      "patch_sha256": "2bb9921365f3949688440b4cb0539f4a27cea177e97188e957cf6aea5e0b322e",
+      "gate": "PASS"
+    },
+    {
+      "group": "block-count",
+      "source_commit": "add44e14d793c31a7595bb40f8321d0ec038a6aa",
+      "patch_sha256": "c15724e4fa73323eaf43ab33a4c535747d9eb3106a0709f4dd3e62ecd827645c",
+      "gate": "PASS"
+    },
+    {
+      "group": "block-count-stable",
+      "source_commit": "add44e14d793c31a7595bb40f8321d0ec038a6aa",
+      "patch_sha256": "5a02f2750f1db75edac59803fc78470390453495f75800644a66e81d78f32f42",
+      "gate": "PASS"
+    },
+    {
+      "group": "block-summary-waves",
+      "source_commit": "7e794db186ffbaa1adf1ee2a6a9202b72f4d50ee",
+      "patch_sha256": "5831fffb36d76d8d22fe097ebddb2bbd83fafd8b176ae56cc984bfcbdd249820",
+      "gate": "PASS"
+    },
+    {
+      "group": "bounded-fullkey",
+      "source_commit": "2b1b5c6c94a35b07fb271b8096373290853810fb",
+      "patch_sha256": "e505d024141420b10ece9864a0d9a79ee00a0a257a667e21801abdc1dfa8f2c9",
+      "gate": "PASS"
+    },
+    {
+      "group": "bounded-compact",
+      "source_commit": "137ab89d2bae2d42591047b065caa70bdbc4b37d",
+      "patch_sha256": "3b1537a6c850d484f5f24470bcc19a526f4993dc298762f9e7256f93b87e1adf",
+      "gate": "PASS"
+    },
+    {
+      "group": "bounded-adaptive",
+      "source_commit": "029ab45bd0b0f446035f71acbd247c804bea60b8",
+      "patch_sha256": "eae9cc66f0c6509b95e20ab5788d5e55a87b2f8ce290bcd409a64b1697f8f114",
+      "gate": "PASS"
+    }
+  ],
+  "tests": {
+    "fullkey": 59,
+    "compact_discarded": 60,
+    "adaptive_final": 60
+  }
+}

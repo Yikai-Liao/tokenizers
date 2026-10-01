@@ -1,6 +1,6 @@
 # 初始化峰值、算法改进与大语料边界
 
-日期：2026-10-01。候选实现位于 `bpe/initial-owner-waves`，工作树 `/root/code/tokenizers-worktrees/initial-owner-waves`；最终代码 `7e794db1`。生产基点 J `376363d2` 保留。本文汇总已完成的 35 次正式调用；磁盘/流式训练仅预研，见 [EXTERNAL_MEMORY_BPE.md](EXTERNAL_MEMORY_BPE.md)。
+日期：2026-10-01。候选实现位于 `bpe/initial-owner-waves`，工作树 `/root/code/tokenizers-worktrees/initial-owner-waves`；当前代码 `029ab45b`。生产基点 J `376363d2` 保留。本文汇总已完成的 51 次正式调用；磁盘/流式训练仅预研，见 [EXTERNAL_MEMORY_BPE.md](EXTERNAL_MEMORY_BPE.md)。
 
 ## 1. 已完成的变化
 
@@ -14,6 +14,7 @@
 | 排序并发独立于安装 wave | 避免为了限制最终 postings 重叠而串行化排序 | 4 owner 可同时排序，随后按两 owner 安装；merge workers 未缩减 |
 | count-prefix 直接 scatter 到最终 streams | 旧 chunk route 后的全量 compact 读写 | 两遍扫描、exact owner counts、互不相交写入切片；当前 radix 分支 |
 | 8B candidate heap | heap backing 从 329.29 MiB 降到 164.64 MiB | 普通配置、完整 ID 域 ≤65,536、初始加权边质量 ≤u32::MAX；否则16B fallback |
+| 按实际块内pair数切换有界排序 | 大字典下逐occurrence的posting查询 | 完整u64 key、u32 local、64位base；小字典继续空间扫描，见5.2 |
 | 分块 posting 长度 + 稀疏权重修正 | generic block 初始化的重复频率表 | u32 local offset + 64 位 base、完整 pair key/频率；与 flat 优化独立 |
 
 8B heap 属于条件优化，按照用户的大规模目标后排。通用分块、有界初始化和生命周期回收优先。arena 阈值留待算法路线确定后再选，本轮没有给数十 GiB 宣布一个最佳阈值。
@@ -111,7 +112,34 @@ uniform不建频率表；mixed只为非单位权重边更新signed delta表。�
 
 模型、global floor、物理边、非unit边、Q和最终工作量一致。摘要Vec峰值减约2/3，进程峰值少48.38MiB（约10.1%）；初始化多12.17%，完整train多0.55%。保留为减少大规模临时存储的候选，不承诺无速度损失。owner ledger提前存在，会与后续block扫描重叠；数据量/分布变化仍可能改变RSS收益。
 
-其额外摘要容量由一个wave的Q决定，而不是全部Q；当blocks≤init workers时只有一wave，没有这个容量收益。一个address block依然可很大，因此这一步不是按固定RAM字节预算的完整bounded初始化。前述两遍full-key/batch方案仍待设计验证。新增跨3waves、AA和混合/零权重的oracle纳入57项完整库测试。
+其额外摘要容量由一个wave的Q决定，而不是全部Q；当blocks≤init workers时只有一wave，没有这个容量收益。一个address block依然可很大，因此这一步不是按固定RAM字节预算的完整bounded初始化。当前5.2已实现有界full-key排序批次；最终postings、block字典、稀疏权重修正仍随数据增长。新增跨3waves、AA和混合/零权重的oracle纳入57项完整库测试。
+
+## 5.2. 现代排序推进到通用路径：三轮完整Trainer实验
+
+这轮沿用原Trainer接口、STD allocator、固定lexical词序、4 initialization/merge workers与Atomic u32 corpus。诊断版在选择u32 local类型后覆盖block跨度，输入仍是32MiB；不据此声称已训练超过2³²位置。u64 pair key由两个u32 token ID组成，u32 local是块内偏移，全局地址为64位usize base加local。
+
+先把Radsort扩展到16B u128记录：高64位保留完整canonical pair key，低位存local u32位置。空间扫描每次最多262,144个位置，稳定分组后每个 `(key,tile)` 只查询一次posting字典；tile递增、同key内稳定次序，保证posting位置递增。权重仍在空间扫描时累积signed稀疏修正，零权重posting/摘要保留，global floor在全部wave归并之后。
+
+| 轮次 | 英文初始化（秒） | 中文初始化（秒） | 决定 |
+|---|---:|---:|---|
+| 始终16B有界排序 | 0.817→1.023 | 1.961→1.600 | 英文回退25.2%，不直接默认 |
+| 初始ID适用时压到8B记录 | 0.777→1.013 | 1.785→1.706 | 英文回退30.3%；中文整训5.525→5.658，按用户要求撤回 |
+| 按实际字典大小选择 | 0.780→0.754 | 1.913→1.845 | 保留候选，补中文反序与并行对照 |
+
+前三项各n=1、各轮分别是同一binary内对照。8B记录方案源码137ab89d保留在实验历史，当前029ab45b已删除该分支。最终算法不添加初始ID16位限制，也不引入外部字典或FFI。
+
+最终候选先hash扫描；一个block的实际pair字典达到65,536项后，后续tile改用full-key排序。这是当前实验选择值，不是证明出的最佳阈值。排序记录按需分配：英文两block的K分别不足阈值，排序缓冲为零；中文大字典会切换。Radsort宽记录使用128元素block、1MiB固定scratch；小tile改用分配更少的普通稳定scatter。每活跃block的record+scratch上界5,265,920B，4block上界约20.09MiB；记录在构建该block摘要前释放。该上界只计新增排序存储，最终corpus/posting/K/Q不在此预算内。
+
+| 最终adaptive对照 | block数 / 每波并发上限 | 初始化秒 hash→adaptive | 全训秒 hash→adaptive | 峰值MiB hash→adaptive |
+|---|---:|---:|---:|---:|
+| en32MiB none | 2 / 4 | 0.780→0.754 | 8.027→8.179 | 584.10→580.12 |
+| zh32MiB none | 1 / 4 | 1.913→1.845 | 5.772→5.583 | 368.36→369.15 |
+| zh32MiB none，反序 | 1 / 4 | 1.869→1.793 | 5.722→5.475 | 367.05→369.51 |
+| zh32MiB none，小跨度并行 | 13 / 4 | 0.864→0.821 | 5.035→4.685 | 448.48→443.71 |
+
+中文单block两次的初始化收益3.58%/4.09%；实际四block并行对照4.95%，分别为n=2与n=1。单block posting字典查询12,704,752→3,870,264（先hash的258,313条边+3,611,951个排序group），约少69.5%；13block对照降至6,721,149，约少47.1%。英文仍有33,136,193次查询，较前两版未再出现25–30%的初始化回退；未改merge阶段的时间变化不能归因于初始化。RSS没有统一下降趋势。保留为大字典的适度收益候选，未测adaptive whitespace配置与数十GiB，不承诺通用稳定加速。
+
+16次新增正式call的完整model与既有holdout一致，同跨度的物理边、Q、posting/table容量、summary容量相同。源码60lib tests覆盖full64键、u32最大offset、跨tile有序posting、0/1/大于u32的权重和实际hash→sort切换；原HF逐轮差分与跨wave AA检查继续通过。全部raw和失败统计probe smoke见 [full-key](results/bounded-fullkey)、[8B撤回试验](results/bounded-compact)、[最终adaptive](results/bounded-adaptive)。
 
 ## 6. 数十GiB需要继续解决什么
 
@@ -119,8 +147,8 @@ uniform不建频率表；mixed只为非单位权重边更新signed delta表。�
 
 当前候选降低了本机初始化峰值，尚未让整个Trainer成为小内存外存算法。通用后续顺序：
 
-1. 已按wave消费summary；继续将scan batch与额外records限制到明确字节预算，global floor仍须等精确全局汇总。
-2. full u64 pair key和local offset的有界排序/初始化；scan batch与address block分别定义，核对跨batch posting汇总。
+1. summary已按wave消费，新增排序records已按tile限制；最终block字典、稀疏权重修正与postings仍随数据增长。global floor在全部wave精确汇总后执行。
+2. full u64 pair key与local offset的有界排序已实现，跨tile posting顺序已核验；数十GiB的实际容量与吞吐尚未测量。
 3. posting长度/容量仍u32。单个热pair接近2³²项时，几何扩容可能先触碰容量界；选择较小address blocks、精确预留或分段posting，不能只靠64位base解决。
 4. 可回收posting池和冷热posting压缩，计入生命周期、size-class rounding与解码scratch；随后再决定arena策略。
 5. 磁盘/流式精确训练另需去重、语料随机改写、全局候选与posting外存设计，不能把mmap当成已兑现的RAM边界。
@@ -129,25 +157,25 @@ uniform不建频率表；mixed只为非单位权重边更新signed delta表。�
 
 ## 7. 核验与复现
 
-最终功能源码 `7e794db1` 的57项lib测试全部通过；此前 `f16dee08`只修正文档引用。包括原逐轮HF随机差分、independent greedy oracle，新增stable low32任意payload、边界block、owner widths、Atomic/nonAtomic、global floor、0/1/7混合权重、均匀0/2、高于u32的频率、大ID与affix fallback。独立Radsort审查单列。首次大权重测试误用HF i32 oracle的失败日志保留，改为既有wide serial oracle后通过。
+当前功能源码 `029ab45b` 的60项lib测试全部通过；此前 `f16dee08`只修正文档引用。包括原逐轮HF随机差分、independent greedy oracle，新增stable low32任意payload、边界block、owner widths、Atomic/nonAtomic、global floor、0/1/7混合权重、均匀0/2、高于u32的频率、大ID与affix fallback。独立Radsort审查单列。首次大权重测试误用HF i32 oracle的失败日志保留，改为既有wide serial oracle后通过。
 
-[归档摘要](results/initialization-summary/bundle.summary.json) 验证35次正式调用的9组输入/模型签名、同binary组全部源码hash一致、实际binary/hash、posting visits与剪枝量、库存物理位置、heap精确容量、process swap=0和MemAvailable>1GiB。固定词序proxy另核对block数、物理边、非unit边与Q完全一致。失败smoke保留原stdout/stderr，不计为正式成功调用。
+[归档摘要](results/initialization-summary/bundle.summary.json) 验证51次正式调用的9组输入/模型签名、同binary组全部源码hash一致、实际binary/hash、posting visits与剪枝量、库存物理位置、heap精确容量、process swap=0和MemAvailable>1GiB。固定词序proxy另核对block数、物理边、非unit边与Q完全一致。失败smoke保留原stdout/stderr，不计为正式成功调用。
 
-每组results目录保存control、environment、JSONL、stdout、stderr、summary、build.log与相对该组source commit的完整 `instrumentation.patch`；八份patch在临时git index中对各自基点 `git apply --cached --check` 通过。总候选补丁：[candidate-source.patch](results/initialization-summary/candidate-source.patch)。测试日志在同目录，full源码还在独立候选分支。图有PNG/SVG；可执行：
+每组results目录保存control、environment、JSONL、stdout、stderr、summary、build.log与相对该组source commit的完整 `instrumentation.patch`；十一份patch在临时git index中对各自基点 `git apply --cached --check` 通过。总候选补丁：[candidate-source.patch](results/initialization-summary/candidate-source.patch)。测试日志在同目录，full源码还在独立候选分支。图有PNG/SVG；可执行：
 
 ```bash
 python3 analyze_initialization.py
 uv run --no-project --with matplotlib python analyze_initialization.py --plot
 ```
 
-聚合不重新训练。各 `run_block_summary_waves.py`、`run_initial_owner_waves.py`、`run_block_radix*.py`、`run_frontier*.py`、`run_block_count*.py` 保留本机benchmark调用；smoke与正式结果分开。本次未写原efficient_bpe项目，生产J不叠加未测的大规模外存接口。
+聚合不重新训练。各 `run_bounded_*.py`、`run_block_summary_waves.py`、`run_initial_owner_waves.py`、`run_block_radix*.py`、`run_frontier*.py`、`run_block_count*.py` 保留本机benchmark调用；smoke与正式结果分开。本次未写原efficient_bpe项目，生产J不叠加未测的大规模外存接口。
 
 
 ## 8. 现代算法哪些已用，哪些实验无收获
 
 | 路线 | 实验层级与结论 |
 |---|---|
-| Radsort稳定块复用 | C/Rust原型与完整Trainer已测并接入；主要明确收获是低scratch，配合directroute/安装wave降低完整峰值 |
+| Radsort稳定块复用 | C/Rust原型与完整Trainer已测并接入；低scratch配合directroute/安装wave降低峰值；本轮扩展full-key有界排序并测自适应大字典路径 |
 | count-prefix/directscatter | 完整Trainer已测并接入；同binary route对照完整train19.730→17.893s，n=1 |
 | 两遍hash直接posting | 已做真实1/4/16MiB独立索引原型；16MiB320.6→1116.6ms，约3.48倍耗时，空间更小；未接入Trainer |
 | bitmap+rank三遍posting | 同上；16MiB1083.6ms，约classicradix3.38倍，空间更小；未接入Trainer |
@@ -155,9 +183,11 @@ uv run --no-project --with matplotlib python analyze_initialization.py --plot
 | Radsort逻辑块consumer省finalize | 只做实际成本探针，未重写；最大owner134.76ms/全训21.280s的理想机会约0.63%，降优先级 |
 | packed8B heap | 已接入条件分支、容量精确减半；一次直接对照train17.893→18.105s，未体现速度收益，不据小差异宣布稳定负收益 |
 | generic sparse delta与summarywaves | 已接入通用候选；容量/summary/RSS有收获，速度分布混合和wave屏障代价单列 |
-| SimdQuickHeap、TPHT、ZombieHash | 尚未做本Trainer性能实验；当前select机会小、Entry宽度/生命周期不符或churn成本未隔离。保持调研候选，不能称负收益 |
+| TPHT、ZombieHash | 源码/API及C/C++ adapter准备过，未运行Trainer实验；用户指出Rust库与PR接受成本后降优先级，不能称性能负收益 |
+| SimdQuickHeap | 尚未做本Trainer实验；当前select机会小，作者u64接口与通用128位priority不直接匹配，保留研究状态 |
 | PARADIS、GoParallel/其它排序与冷热混合 | 尚未整合实验；需先保持stablepayload、宽key/位置与并发内存证书；论文headline不当作本项目收益 |
-| StreamVByte/Elias–Fano冷posting、可回收pool、full-key boundedbatch | 尚未实现；属于后续通用存储/初始化候选，需要真实访问与生命周期gate |
+| full-key boundedbatch | 已完成16B/8B/adaptive三轮完整Trainer实验；始终排序与8B压缩未采用，自适应中文有约3.6–5%初始化收益，范围见5.2 |
+| StreamVByte/Elias–Fano冷posting、可回收pool | 尚未实现；需真实访问与生命周期证据 |
 | 外存PQ/图系统/压缩域RePair | 按用户要求仅预研，与当前内存内算法工作分开推进 |
 
-SwissTable/AHashMap、按预分词片段加权去重已在基线采用；本轮没有把它们记为新的论文收获。35次正式调用均已结束，目前没有训练计时正在运行。全部原型正确性、负收益和未测状态均保留，避免只报告成功方案。
+SwissTable/AHashMap、按预分词片段加权去重已在基线采用；本轮没有把它们记为新的论文收获。51次正式调用已结束。正式端到端已有明显收益：两对DE→H的train中位32.397→25.577s、feed+train中位36.766→29.838s，后续H→J筛选也改善。GPT-6 Luna随后完成512MiB flat路径的独立完整PERF；当前大项是posting校验、邻边统计和owner提交，没有找到高占比且明确可删除的重复工作，按用户要求停止本轮优化和追加训练。该采样未进入generic adaptive路径，也不能推及数十GiB。详见 [当前PERF审计](CURRENT_PERF_AUDIT.md)。全部原型正确性、负收益和未测状态均保留。
