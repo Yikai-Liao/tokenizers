@@ -254,4 +254,4 @@ Rust迁移最重要的依赖是：本轮每个worker持有互斥physical blocks�
 
 full-key有界排序已扩展稳定Radsort到u128记录，不再要求初始alphabet16位。始终排序在英文回退25.2%；8B临时记录仍回退30.3%且中文整训未获益，用户要求撤回。当前029ab45b按实际block字典大小选择：小字典hash扫描，达到65,536项后后续tile稳定分组；中文初始化3.58%/4.09%，13block四块并行4.95%，英文不分配排序缓冲。新增16次完整Trainer调用、最终60lib tests与完整模型/工作gate通过。与flat已有的8B heap条件分支是不同改动。见 [初始化报告5.2](INITIALIZATION_MEMORY_REPORT.md)。
 
-正式端到端已明显提速，DE→H的两对中位train32.397→25.577s、feed+train36.766→29.838s，随后H→J筛选也改善。GPT-6 Luna随后完成当前512MiB flat主路径的完整PERF独立审计。上次完整DWARF PERF来自H00216d91，两版本分别核对各自binary与源码。当前大项是posting校验、邻边统计和owner提交；未发现高占比且明确可删除的重复工作，按用户要求停止本轮优化。采样未进入generic adaptive分支，不据此判断数十GiB。详见 [当前PERF审计](CURRENT_PERF_AUDIT.md)。
+早期DE→H的train中位32.397→25.577s、feed+train中位36.766→29.838s；随后J全量arena已测train19.126s、feed+train23.105s。后续低峰值候选的arena配置已测train16.470–20.954s、峰值约3.33–3.46GiB；历史25.577s不代表当前成绩。GPT-6 Luna随后完成当前512MiB flat主路径的完整PERF独立审计。上次完整DWARF PERF来自H00216d91，两版本分别核对各自binary与源码。当前大项是posting校验、邻边统计和owner提交；未发现高占比且明确可删除的重复工作，按用户要求停止本轮优化。采样未进入generic adaptive分支，不据此判断数十GiB。详见 [当前PERF审计](CURRENT_PERF_AUDIT.md)。

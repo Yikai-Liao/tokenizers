@@ -190,4 +190,4 @@ uv run --no-project --with matplotlib python analyze_initialization.py --plot
 | StreamVByte/Elias–Fano冷posting、可回收pool | 尚未实现；需真实访问与生命周期证据 |
 | 外存PQ/图系统/压缩域RePair | 按用户要求仅预研，与当前内存内算法工作分开推进 |
 
-SwissTable/AHashMap、按预分词片段加权去重已在基线采用；本轮没有把它们记为新的论文收获。51次正式调用已结束。正式端到端已有明显收益：两对DE→H的train中位32.397→25.577s、feed+train中位36.766→29.838s，后续H→J筛选也改善。GPT-6 Luna随后完成512MiB flat路径的独立完整PERF；当前大项是posting校验、邻边统计和owner提交，没有找到高占比且明确可删除的重复工作，按用户要求停止本轮优化和追加训练。该采样未进入generic adaptive路径，也不能推及数十GiB。详见 [当前PERF审计](CURRENT_PERF_AUDIT.md)。全部原型正确性、负收益和未测状态均保留。
+SwissTable/AHashMap、按预分词片段加权去重已在基线采用；本轮没有把它们记为新的论文收获。51次正式调用已结束。早期DE→H的train中位32.397→25.577s、feed+train中位36.766→29.838s；随后J全量arena已测train19.126s、feed+train23.105s。后续低峰值候选的arena配置已测train16.470–20.954s、峰值约3.33–3.46GiB；历史25.577s不代表当前成绩。GPT-6 Luna随后完成512MiB flat路径的独立完整PERF；当前大项是posting校验、邻边统计和owner提交，没有找到高占比且明确可删除的重复工作，按用户要求停止本轮优化和追加训练。该采样未进入generic adaptive路径，也不能推及数十GiB。详见 [当前PERF审计](CURRENT_PERF_AUDIT.md)。全部原型正确性、负收益和未测状态均保留。

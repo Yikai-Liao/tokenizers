@@ -60,4 +60,4 @@
 
 新增16次正式完整Trainer调用，本轮累计51次；当前候选029ab45b、60lib tests与完整model/工作/source gates通过。始终16B排序和8B临时记录在英文初始化回退25–30%；8B记录按用户要求撤回。最终候选按实际block pair数选择：小字典空间扫描，达到65,536项后才排序后续262,144位置tile，完整u64 key/u32 local/64位base保留。中文单block初始化两次约3.6–4.1%，四块并行约5%；英文不分配排序缓冲，未再出现前述回退。收益有限，未承诺whitespace或数十GiB表现。源码无新增字典库或FFI，生产J376保留。详情及失败版本见 [INITIALIZATION_MEMORY_REPORT.md](INITIALIZATION_MEMORY_REPORT.md)。
 
-正式端到端已明显提速：两对DE→H的train中位32.397→25.577s，feed+train中位36.766→29.838s；后续H→J筛选也继续改善。GPT-6 Luna已完成当前512MiB flat主路径的完整PERF独立审计，按各自binary与DWARF核对旧H00216d91和当前源码。当前主成本是posting校验、邻边统计与owner提交；未发现高占比且明确可删除的重复工作，本轮停止继续优化和追加训练。该结论限于已测flat路径，通用分块与数十GiB仍按单独证据解释。详见 [当前PERF审计](CURRENT_PERF_AUDIT.md)。外存仅预研，arena通用阈值尚未选定。
+早期DE→H的train中位32.397→25.577s、feed+train中位36.766→29.838s；随后J全量arena已测train19.126s、feed+train23.105s。后续低峰值候选的arena配置已测train16.470–20.954s、峰值约3.33–3.46GiB；历史25.577s不代表当前成绩。GPT-6 Luna已完成当前512MiB flat主路径的完整PERF独立审计，按各自binary与DWARF核对旧H00216d91和当前源码。当前主成本是posting校验、邻边统计与owner提交；未发现高占比且明确可删除的重复工作，本轮停止继续优化和追加训练。该结论限于已测flat路径，通用分块与数十GiB仍按单独证据解释。详见 [当前PERF审计](CURRENT_PERF_AUDIT.md)。外存仅预研，arena通用阈值尚未选定。
