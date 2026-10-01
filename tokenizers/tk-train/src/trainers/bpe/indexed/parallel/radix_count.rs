@@ -4,6 +4,9 @@
 use super::weight_lookup::WeightLookup;
 use super::*;
 
+#[path = "block_radix.rs"]
+mod block_radix;
+
 #[derive(Default)]
 pub(super) struct Metrics {
     pub(super) route_ms: f64,
@@ -31,7 +34,7 @@ fn canonical(code: u32) -> u64 {
 
 // Only the upper pair-code half is sorted. Stable scatters retain the incoming
 // spatial order within each key, so final posting positions remain increasing.
-fn sort(records: &mut Vec<u64>) -> usize {
+fn sort_classic(records: &mut Vec<u64>) -> usize {
     if records.len() < 2 {
         return 0;
     }
@@ -57,6 +60,23 @@ fn sort(records: &mut Vec<u64>) -> usize {
     }
     // All sorting scratch is freed before any final posting allocation starts.
     bytes
+}
+
+// Prefer the simpler full-buffer scatter when its scratch is smaller than
+// the fixed block implementation. The comparison follows allocation sizes.
+#[cfg(test)]
+fn sorting_scratch(length: usize) -> usize {
+    if length < 2 {
+        return 0;
+    }
+    (length * 8).min(2 * 256 * 512 * 8 + (length / 512 + 512) * 9)
+}
+fn sort(records: &mut Vec<u64>) -> usize {
+    if records.len() * 8 <= 2 * 256 * 512 * 8 + (records.len() / 512 + 512) * 9 {
+        sort_classic(records)
+    } else {
+        block_radix::sort(records)
+    }
 }
 
 pub(super) fn initialize<C: Slot, O: Offset, const INLINE: usize>(
@@ -330,7 +350,7 @@ mod tests {
                         assert_eq!(metrics.route_bytes, routed_counts.iter().sum::<usize>() * 8);
                         let scratch_peak = routed_counts
                             .chunks(width.min(workers))
-                            .map(|wave| wave.iter().filter(|&&n| n >= 2).sum::<usize>() * 8)
+                            .map(|wave| wave.iter().map(|&n| sorting_scratch(n)).sum::<usize>())
                             .max()
                             .unwrap();
                         assert_eq!(metrics.scratch_bytes, scratch_peak);
