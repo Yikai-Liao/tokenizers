@@ -1,0 +1,25 @@
+{
+  "source_commit": "bf5bd673fb363820b001325165100b63a967ca9d",
+  "source_worktree": "/root/code/tokenizers-worktrees/weight-sorted-intervals",
+  "binary": "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-validation-window/target/release/hf-bpe-native-weight-intervals",
+  "binary_sha256": "0991694578be421489db37986dd21a36f73cb18779acc598373e7c0198444f13",
+  "build_command": "python3 benchmarks/hf-bpe/build_weight_intervals.py /root/code/tokenizers-worktrees/weight-sorted-intervals --label weight-intervals",
+  "target_cache": "shared dependency cache from native-validation-window; unique runner package preserves existing native binaries",
+  "tests": [
+    {
+      "command": "CARGO_TARGET_DIR=/root/code/tokenizers-build/arena-dynamic-lib-target /root/.cargo/bin/cargo test --offline --manifest-path tokenizers/tk-train/Cargo.toml --no-default-features --lib",
+      "passed": 67,
+      "failed": 0
+    },
+    {
+      "command": "same command with equal_weight_words_coalesce filter",
+      "passed": 1,
+      "failed": 0
+    }
+  ],
+  "seed_scope": "serial feed maps (11,13,17,19); owner entry hash map seeds not fixed",
+  "same_binary_controls": [
+    "original: word starts + bitmap",
+    "sorted: coalesced weight boundaries + single one interval, zero index backing bytes"
+  ]
+}

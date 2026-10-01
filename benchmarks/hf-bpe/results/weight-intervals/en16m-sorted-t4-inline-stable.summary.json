@@ -1,0 +1,18 @@
+{
+  "mode": "stable",
+  "workers": 4,
+  "diagnostic_only": false,
+  "bits": 32,
+  "train_ms": 1788.052422,
+  "initialize_ms": 232.53600699999998,
+  "merge_ms": 1530.819548,
+  "sort_ms": 0.717536,
+  "weight_interval_count": 17,
+  "weight_bytes": 384,
+  "lookup_bytes": 0,
+  "temporary_weight_bytes": 2496,
+  "full_peak_rss_bytes": 288288768,
+  "worker_task_occupancy": null,
+  "visits_balance_efficiency": null,
+  "model_lifetime_swap_gates": "PASS"
+}

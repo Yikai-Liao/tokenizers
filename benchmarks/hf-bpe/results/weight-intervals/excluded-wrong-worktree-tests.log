@@ -1,0 +1,18 @@
+   Compiling bitcannon v0.1.0-dev.0 (/root/code/tokenizers/tokenizers/bitcannon)
+   Compiling tk-encode v0.1.0-dev.0 (/root/code/tokenizers/tokenizers/tk-encode)
+   Compiling tk-convert v0.1.0-dev.0 (/root/code/tokenizers/tokenizers/tk-convert)
+   Compiling tk-train v0.1.0-dev.0 (/root/code/tokenizers/tokenizers/tk-train)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 22.11s
+     Running unittests src/lib.rs (/root/code/tokenizers-build/arena-dynamic-lib-target/debug/deps/tk_train-cad9c1e1eced7cfc)
+
+running 7 tests
+test trainers::bpe::indexed::parallel::tests::forward_weight_cursor_handles_near_words_and_sparse_gaps ... ok
+test trainers::bpe::indexed::parallel::tests::exclusive_writes_use_full_global_addresses ... ok
+test trainers::bpe::indexed::parallel::tests::disjoint_batches_and_reserved_identity_ties ... ok
+test trainers::bpe::indexed::parallel::tests::serial_initialization_keeps_parallel_greedy_order ... ok
+test trainers::bpe::indexed::parallel::tests::target_and_reserved_alphabet_guard_narrow_corpus ... ok
+test trainers::bpe::indexed::parallel::tests::birth_floor_is_applied_after_all_worker_counts ... ok
+test trainers::bpe::indexed::parallel::tests::cross_block_aa_and_weighted_words_in_all_storage_widths ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 33 filtered out; finished in 10.02s
+

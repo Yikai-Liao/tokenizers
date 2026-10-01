@@ -1,0 +1,119 @@
+{
+  "validation-window-v3": {
+    "binary": "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-validation-window/target/release/hf-bpe-native-validation-window-v3",
+    "weight_symbols": [
+      "0x315750"
+    ],
+    "direct_callsites": 8,
+    "radix_count_callsites": 0,
+    "calls": [
+      {
+        "address": "3ed3fd",
+        "caller_address": "0x3ed100",
+        "caller": "<&tk_train::trainers::bpe::indexed::parallel::fused_batch::prepare_with_mode<core::sync::atomic::Atomic<u32>, u32, 2, false>::{closure#0} as core::ops::function::FnMut<(&alloc::vec::Vec<tk_train::trainers::bpe::indexed::parallel::fused_batch::Task>,)>>::call_mut"
+      },
+      {
+        "address": "3ede5a",
+        "caller_address": "0x3ed990",
+        "caller": "<&tk_train::trainers::bpe::indexed::parallel::fused_batch::prepare_with_mode<core::sync::atomic::Atomic<u32>, u32, 2, true>::{closure#0} as core::ops::function::FnMut<(&alloc::vec::Vec<tk_train::trainers::bpe::indexed::parallel::fused_batch::Task>,)>>::call_mut"
+      },
+      {
+        "address": "3eeb6d",
+        "caller_address": "0x3ee870",
+        "caller": "<&tk_train::trainers::bpe::indexed::parallel::fused_batch::prepare_with_mode<core::sync::atomic::Atomic<u32>, u16, 4, false>::{closure#0} as core::ops::function::FnMut<(&alloc::vec::Vec<tk_train::trainers::bpe::indexed::parallel::fused_batch::Task>,)>>::call_mut"
+      },
+      {
+        "address": "3ef5ca",
+        "caller_address": "0x3ef100",
+        "caller": "<&tk_train::trainers::bpe::indexed::parallel::fused_batch::prepare_with_mode<core::sync::atomic::Atomic<u32>, u16, 4, true>::{closure#0} as core::ops::function::FnMut<(&alloc::vec::Vec<tk_train::trainers::bpe::indexed::parallel::fused_batch::Task>,)>>::call_mut"
+      },
+      {
+        "address": "3f0302",
+        "caller_address": "0x3effe0",
+        "caller": "<&tk_train::trainers::bpe::indexed::parallel::fused_batch::prepare_with_mode<core::sync::atomic::Atomic<u16>, u32, 2, false>::{closure#0} as core::ops::function::FnMut<(&alloc::vec::Vec<tk_train::trainers::bpe::indexed::parallel::fused_batch::Task>,)>>::call_mut"
+      },
+      {
+        "address": "3f0e00",
+        "caller_address": "0x3f0920",
+        "caller": "<&tk_train::trainers::bpe::indexed::parallel::fused_batch::prepare_with_mode<core::sync::atomic::Atomic<u16>, u32, 2, true>::{closure#0} as core::ops::function::FnMut<(&alloc::vec::Vec<tk_train::trainers::bpe::indexed::parallel::fused_batch::Task>,)>>::call_mut"
+      },
+      {
+        "address": "3f1b12",
+        "caller_address": "0x3f17f0",
+        "caller": "<&tk_train::trainers::bpe::indexed::parallel::fused_batch::prepare_with_mode<core::sync::atomic::Atomic<u16>, u16, 4, false>::{closure#0} as core::ops::function::FnMut<(&alloc::vec::Vec<tk_train::trainers::bpe::indexed::parallel::fused_batch::Task>,)>>::call_mut"
+      },
+      {
+        "address": "3f2610",
+        "caller_address": "0x3f2130",
+        "caller": "<&tk_train::trainers::bpe::indexed::parallel::fused_batch::prepare_with_mode<core::sync::atomic::Atomic<u16>, u16, 4, true>::{closure#0} as core::ops::function::FnMut<(&alloc::vec::Vec<tk_train::trainers::bpe::indexed::parallel::fused_batch::Task>,)>>::call_mut"
+      }
+    ]
+  },
+  "weight-intervals": {
+    "binary": "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-validation-window/target/release/hf-bpe-native-weight-intervals",
+    "weight_symbols": [
+      "0x3fa150"
+    ],
+    "direct_callsites": 10,
+    "radix_count_callsites": 2,
+    "calls": [
+      {
+        "address": "321b31",
+        "caller_address": "0x3219d0",
+        "caller": "<&tk_train::trainers::bpe::indexed::parallel::radix_count::initialize_with_widths<u16, u32, 2>::{closure#2} as core::ops::function::FnMut<(&alloc::vec::Vec<u64>,)>>::call_mut"
+      },
+      {
+        "address": "3227e1",
+        "caller_address": "0x322680",
+        "caller": "<&tk_train::trainers::bpe::indexed::parallel::radix_count::initialize_with_widths<u16, u16, 4>::{closure#2} as core::ops::function::FnMut<(&alloc::vec::Vec<u64>,)>>::call_mut"
+      },
+      {
+        "address": "396050",
+        "caller_address": "0x395cf0",
+        "caller": "<&tk_train::trainers::bpe::indexed::parallel::fused_batch::prepare_with_mode<core::sync::atomic::Atomic<u32>, u32, 2, false>::{closure#0} as core::ops::function::FnMut<(&alloc::vec::Vec<tk_train::trainers::bpe::indexed::parallel::fused_batch::Task>,)>>::call_mut"
+      },
+      {
+        "address": "396a94",
+        "caller_address": "0x3965f0",
+        "caller": "<&tk_train::trainers::bpe::indexed::parallel::fused_batch::prepare_with_mode<core::sync::atomic::Atomic<u32>, u32, 2, true>::{closure#0} as core::ops::function::FnMut<(&alloc::vec::Vec<tk_train::trainers::bpe::indexed::parallel::fused_batch::Task>,)>>::call_mut"
+      },
+      {
+        "address": "397720",
+        "caller_address": "0x3973c0",
+        "caller": "<&tk_train::trainers::bpe::indexed::parallel::fused_batch::prepare_with_mode<core::sync::atomic::Atomic<u32>, u16, 4, false>::{closure#0} as core::ops::function::FnMut<(&alloc::vec::Vec<tk_train::trainers::bpe::indexed::parallel::fused_batch::Task>,)>>::call_mut"
+      },
+      {
+        "address": "398164",
+        "caller_address": "0x397cc0",
+        "caller": "<&tk_train::trainers::bpe::indexed::parallel::fused_batch::prepare_with_mode<core::sync::atomic::Atomic<u32>, u16, 4, true>::{closure#0} as core::ops::function::FnMut<(&alloc::vec::Vec<tk_train::trainers::bpe::indexed::parallel::fused_batch::Task>,)>>::call_mut"
+      },
+      {
+        "address": "398df8",
+        "caller_address": "0x398a90",
+        "caller": "<&tk_train::trainers::bpe::indexed::parallel::fused_batch::prepare_with_mode<core::sync::atomic::Atomic<u16>, u32, 2, false>::{closure#0} as core::ops::function::FnMut<(&alloc::vec::Vec<tk_train::trainers::bpe::indexed::parallel::fused_batch::Task>,)>>::call_mut"
+      },
+      {
+        "address": "3998d0",
+        "caller_address": "0x399420",
+        "caller": "<&tk_train::trainers::bpe::indexed::parallel::fused_batch::prepare_with_mode<core::sync::atomic::Atomic<u16>, u32, 2, true>::{closure#0} as core::ops::function::FnMut<(&alloc::vec::Vec<tk_train::trainers::bpe::indexed::parallel::fused_batch::Task>,)>>::call_mut"
+      },
+      {
+        "address": "39a568",
+        "caller_address": "0x39a200",
+        "caller": "<&tk_train::trainers::bpe::indexed::parallel::fused_batch::prepare_with_mode<core::sync::atomic::Atomic<u16>, u16, 4, false>::{closure#0} as core::ops::function::FnMut<(&alloc::vec::Vec<tk_train::trainers::bpe::indexed::parallel::fused_batch::Task>,)>>::call_mut"
+      },
+      {
+        "address": "39b040",
+        "caller_address": "0x39ab90",
+        "caller": "<&tk_train::trainers::bpe::indexed::parallel::fused_batch::prepare_with_mode<core::sync::atomic::Atomic<u16>, u16, 4, true>::{closure#0} as core::ops::function::FnMut<(&alloc::vec::Vec<tk_train::trainers::bpe::indexed::parallel::fused_batch::Task>,)>>::call_mut"
+      }
+    ]
+  },
+  "weight-intervals-inline": {
+    "binary": "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-validation-window/target/release/hf-bpe-native-weight-intervals-inline",
+    "weight_symbols": [],
+    "direct_callsites": 0,
+    "radix_count_callsites": 0,
+    "calls": []
+  }
+}
