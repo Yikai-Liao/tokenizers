@@ -1,6 +1,6 @@
 # BPE 出生频率与 posting 汇总
 
-本分支从 `adb219cda4600e52ea2809d2537ac551c168dd27` 派生，在现有 prepare、rewrite、commit 阶段中采用出生分桶与邻居 ID 直接汇总。旧任务切分、读取旧状态、有效位置表及 rewrite 屏障继续提供原有并发语义。
+分支 `bpe/dense-birth-commit` 从 `adb219cda4600e52ea2809d2537ac551c168dd27` 派生，在现有 prepare、rewrite、commit 阶段中采用出生分桶与邻居 ID 直接汇总。旧任务切分、读取旧状态、有效位置表及 rewrite 屏障继续提供原有并发语义。
 
 ## 数据流
 
@@ -22,6 +22,6 @@ AA 原路径、generic 多 block、超过目录身份上限，以及现有非 sh
 
 ## 核验
 
-本分支全部 64 个库测试通过，覆盖 HF 逐轮随机差分、独立 greedy oracle、全局出生门槛、特殊 token 激活、大权重、长度限制、AA、跨 block 与不同存储宽度。完整语料对照还校验模型签名及 posting arena 的分配/退休闭合。
+该代码全部 64 个库测试通过，覆盖 HF 逐轮随机差分、独立 greedy oracle、全局出生门槛、特殊 token 激活、大权重、长度限制、AA、跨 block 与不同存储宽度。完整语料对照还校验模型签名及 posting arena 的分配/退休闭合。
 
-独立对照使用 `build_arena_dynamic.py` 的固定 feed 哈希种子和原 Trainer API；融合实验的同二进制三种组合及诊断记录在主实验目录 `results/fused-rewrite/`。最终选型和实际运行次数以 `FUSED_REWRITE_REPORT.md` 为准。
+独立对照使用 `build_standalone_bpe.py` 的固定 feed 哈希种子和原 Trainer API；融合实验的同二进制三种组合及诊断记录在主实验目录 `results/fused-rewrite/`。最终选型和实际运行次数以 `FUSED_REWRITE_REPORT.md` 为准。
