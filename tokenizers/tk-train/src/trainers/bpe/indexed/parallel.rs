@@ -678,7 +678,9 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
             let frequencies: Vec<Vec<Vec<(u64, u64)>>> = blocks
                 .par_iter_mut()
                 .map(|block| -> Result<_> {
-                    let mut counts = AHashMap::new();
+                    // Posting length supplies the physical count. Keep only nonunit
+                    // weight corrections; the checked corpus budget bounds signed sums.
+                    let mut extra_weights = AHashMap::<u64, i64>::new();
                     let end = corpus.len().saturating_sub(1).min(block.base + block_size);
                     let mut word = 0;
                     for p in block.base..end {
@@ -701,7 +703,13 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
                             }
                         };
                         let k = key(a, b);
-                        *counts.entry(k).or_default() += weight;
+                        if uniform.is_none() && weight != 1 {
+                            let delta = i64::try_from(weight)
+                                .map_err(|_| "indexed BPE weight exceeds i64::MAX")? - 1;
+                            let extra = extra_weights.entry(k).or_default();
+                            *extra = extra.checked_add(delta)
+                                .ok_or("initial weight correction exceeds i64")?;
+                        }
                         block
                             .postings
                             .entry(k)
@@ -710,7 +718,18 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
                     }
                     let mut routed: Vec<Vec<(u64, u64)>> =
                         (0..config.workers).map(|_| Vec::new()).collect();
-                    for (k, weight) in counts {
+                    for (&k, positions) in &block.postings {
+                        let weight = if let Some(weight) = uniform {
+                            (positions.len() as u64).checked_mul(weight)
+                                .ok_or("initial frequency exceeds u64")?
+                        } else {
+                            let frequency = (positions.len() as i64)
+                                .checked_add(extra_weights.get(&k).copied().unwrap_or(0))
+                                .ok_or("initial frequency exceeds i64")?;
+                            u64::try_from(frequency)
+                                .map_err(|_| "negative initial frequency")?
+                        };
+                        // Global floor filtering follows reduction across ALL blocks.
                         routed[owner(k, config.workers)].push((k, weight));
                     }
                     Ok(routed)
@@ -750,6 +769,8 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
             initial_count_ms,
             initial_count_backend: if radix_eligible {
                 "stable_radix16"
+            } else if !flat {
+                "spatial_block_sparse_weights"
             } else {
                 "spatial_owner_hash"
             },
@@ -1742,6 +1763,28 @@ mod tests {
             if suffix==Some("a") {
                 assert_eq!(got.trace[1],((1,2),2,3));
                 assert!(!got.stats.monotone_pairs);
+            }
+        }
+    }
+
+    #[test]
+    fn block_counts_keep_uniform_zero_and_sparse_nonunit_weights_exact() {
+        let texts = ["xabq".repeat(18000), "ab中中".repeat(19000), "中文aab".repeat(15000)];
+        for weights in [[1,1,1], [2,2,2], [0,0,0], [0,1,7], [3,u32::MAX as u64 + 1,1]] {
+            let words = texts.iter().zip(weights).map(|(text,weight)|
+                (CompactString::from(text.as_str()),weight)).collect();
+            let trainer = BpeTrainer::builder().vocab_size(96).min_frequency(2)
+                .show_progress(false).build();
+            let expected=trainer.do_train_indexed(&words).unwrap();
+            for atomic in [false,true] {
+                let got=trainer.do_train_indexed_parallel(&words,IndexedParallelConfig {
+                    posting_block_bits:16, atomic_corpus:atomic, narrow_corpus:false,
+                    ..Default::default()
+                }).unwrap();
+                assert!(got.stats.initial_blocks>1);
+                assert_eq!(got.trace,expected.trace);
+                assert_eq!(got.vocab,expected.vocab);
+                assert_eq!(got.merges,expected.merges);
             }
         }
     }
