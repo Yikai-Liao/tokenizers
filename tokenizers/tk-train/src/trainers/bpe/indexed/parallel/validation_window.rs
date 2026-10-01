@@ -13,11 +13,6 @@ pub(super) enum SelectionMode {
     Bulk(usize),
 }
 impl SelectionMode {
-    pub(super) fn for_workers(workers: usize) -> Self {
-        // With one owner the original local lazy heap already is the global
-        // queue. Neither another heap nor speculative validation saves work.
-        if workers == 1 { Self::Serial } else { Self::Bulk(4) }
-    }
     pub(super) fn label(self) -> &'static str {
         match self {
             Self::Serial => "serial",
@@ -83,7 +78,6 @@ impl Frontier {
             }
         } else {
             self.owner_probes += owners.len();
-            if owners.len() == 1 { return owners[0].window_top(mode).map(|c| (0, c)); }
             owners.iter_mut().enumerate()
                 .filter_map(|(o, ledger)| ledger.window_top(mode).map(|c| (o, c)))
                 .max_by_key(|(_, c)| *c)

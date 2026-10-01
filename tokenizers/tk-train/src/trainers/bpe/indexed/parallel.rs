@@ -407,7 +407,7 @@ pub(super) fn train_with_policy(
     config: IndexedParallelConfig,
     policy: super::posting_arena::Policy,
 ) -> Result<IndexedTraining> {
-    train_with_selection(trainer, wc, config, policy, SelectionMode::for_workers(config.workers))
+    train_with_selection(trainer, wc, config, policy, SelectionMode::Bulk(4))
 }
 
 fn train_with_selection(
