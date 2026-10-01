@@ -1,0 +1,12 @@
+{
+  "mode": "native-dense",
+  "diagnostic_only": false,
+  "bits": 32,
+  "train_ms": 1952.8946739999997,
+  "initialize_ms": 282.458371,
+  "merge_ms": 1644.1320560000001,
+  "full_peak_rss_bytes": 276320256,
+  "worker_task_occupancy": null,
+  "visits_balance_efficiency": null,
+  "model_lifetime_swap_gates": "PASS"
+}

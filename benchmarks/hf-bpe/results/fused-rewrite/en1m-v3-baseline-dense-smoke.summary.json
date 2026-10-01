@@ -1,0 +1,13 @@
+{
+  "train_ms": 259.971323,
+  "initialize_ms": 28.713829,
+  "merge_ms": 220.482215,
+  "full_peak_rss_bytes": 31694848,
+  "model_lifetime_swap_gates": "PASS",
+  "mode": "baseline-dense",
+  "bits": 32,
+  "diagnostic_only": false,
+  "partition_ms": 0.0,
+  "worker_task_occupancy": null,
+  "visits_balance_efficiency": null
+}

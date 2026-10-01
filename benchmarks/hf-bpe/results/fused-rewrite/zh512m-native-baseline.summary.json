@@ -1,0 +1,12 @@
+{
+  "mode": "native-baseline",
+  "diagnostic_only": false,
+  "bits": 32,
+  "train_ms": 21028.962892,
+  "initialize_ms": 5332.219053,
+  "merge_ms": 15352.245019,
+  "full_peak_rss_bytes": 3632246784,
+  "worker_task_occupancy": null,
+  "visits_balance_efficiency": null,
+  "model_lifetime_swap_gates": "PASS"
+}

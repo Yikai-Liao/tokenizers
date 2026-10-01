@@ -1,0 +1,43 @@
+{
+  "command": [
+    "/usr/bin/python3",
+    "/root/code/tokenizers/benchmarks/hf-bpe/run_native_fair.py",
+    "--case",
+    "en1m-v3-atomic-smoke",
+    "--worktree",
+    "/root/code/tokenizers-worktrees/fused-aa-rewrite",
+    "--build-root",
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-fused-rewrite-v3",
+    "--binary",
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-fused-rewrite-v3/target/release/hf-bpe-native-fused-rewrite-v3",
+    "--corpus",
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/posting-distribution-inputs/en-1m-none-r16000/input.txt",
+    "--output",
+    "/root/code/tokenizers/benchmarks/hf-bpe/results/fused-rewrite/en1m-v3-atomic-smoke.jsonl",
+    "--split",
+    "none",
+    "--vocab",
+    "16486",
+    "--initialization-workers",
+    "4",
+    "--merge-workers",
+    "4",
+    "--expected-layout",
+    "parallel_u32_flat32",
+    "--require-stats",
+    "fused_partition_ms",
+    "--atomic-corpus"
+  ],
+  "extra_environment": {
+    "HF_BPE_FUSED_MODE": "fused",
+    "HF_BPE_DENSE_COMMIT": "0",
+    "HF_BPE_FUSED_ATOMIC": "1",
+    "HF_BPE_FUSED_BLOCK_BITS": "32",
+    "HF_BPE_ARENA_MODE": "auto",
+    "HF_BPE_FUSED_DIAGNOSTICS": "0"
+  },
+  "expected_model": "ece74188f0b6566ab9eecd14f73b2cce6d1f48cc5b6ae9d4f89078ceb810a67a",
+  "word_order": "serial feed; hash seeds (11,13,17,19)",
+  "count": 1,
+  "diagnostic_only": false
+}

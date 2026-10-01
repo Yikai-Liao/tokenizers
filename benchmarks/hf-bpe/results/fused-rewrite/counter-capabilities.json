@@ -1,0 +1,9 @@
+{
+  "cpu": "KVM guest, Intel Xeon Gold 6140, 6 vCPUs",
+  "perf_event_paranoid": 3,
+  "cycles_gate": "UNUSABLE: CPU-bound Python sum(range(5000000)) returned 0 cycles:u with 891861381 instructions:u and 250.730 ms user CPU",
+  "discarded_smoke_ipc": 1529.69,
+  "cache_gate": "Load and miss events produce nonzero plausible counts; retain running fractions and matched workload checks; no cycle or IPC conclusions",
+  "formal_diagnostic_events": ["instructions:u", "L1-dcache-loads:u", "L1-dcache-load-misses:u", "cache-references:u", "cache-misses:u"],
+  "scope": "merge-only perf control FIFO, acknowledged enable/disable; trace runs separate from timing rank"
+}
