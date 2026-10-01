@@ -574,10 +574,12 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
         timings,
         character_table_bytes,
     } = prepared;
+    // Only the ordinary no-affix compact path has this certificate.
     // Each merge deletes boundaries, so no historical pair frequency exceeds
     // the checked initial weighted edge mass. Reserved and forced alphabet IDs
     // are already included in strings; future IDs stop at the vocab target.
-    let packed_heap = weighted_edges <= u32::MAX as u64
+    let packed_heap = supports_compact(trainer)
+        && weighted_edges <= u32::MAX as u64
         && strings.len().max(trainer.vocab_size) <= u16::MAX as usize + 1;
     let flat = bits == 32 && corpus.len() <= u32::MAX as usize + 1;
     let mut owners: Vec<Owner> = (0..config.workers).map(|_| Owner::default()).collect();
@@ -1721,6 +1723,27 @@ mod tests {
         assert_eq!(packed.stats.initial_pairs, large_id_domain.stats.initial_pairs);
         assert_eq!(large_weight.stats.initial_heap_bytes, packed.stats.initial_heap_bytes * 2);
         assert_eq!(large_id_domain.stats.initial_heap_bytes, packed.stats.initial_heap_bytes * 2);
+    }
+
+    #[test]
+    fn nonempty_alias_affixes_keep_the_serial_cohort_path() {
+        for (prefix,suffix,text) in [(None,Some("a"),"baaba"),
+            (Some("ab"),None,"abaa"), (Some("##"),Some("</w>"),"aaaababa")] {
+            let mut trainer=BpeTrainer::builder().vocab_size(24).show_progress(false).build();
+            trainer.continuing_subword_prefix=prefix.map(str::to_owned);
+            trainer.end_of_word_suffix=suffix.map(str::to_owned);
+            let words=[(CompactString::from(text),1)].into_iter().collect();
+            let expected=trainer.do_train_indexed(&words).unwrap();
+            let got=trainer.do_train_indexed_parallel(&words,IndexedParallelConfig::default()).unwrap();
+            assert_eq!(got.trace,expected.trace);
+            assert_eq!(got.vocab,expected.vocab);
+            assert_eq!(got.merges,expected.merges);
+            assert_eq!(got.stats.workers,0);
+            if suffix==Some("a") {
+                assert_eq!(got.trace[1],((1,2),2,3));
+                assert!(!got.stats.monotone_pairs);
+            }
+        }
     }
 
     #[test]
