@@ -1,0 +1,359 @@
+--- a/source/tokenizers/tk-train/Cargo.toml
++++ b/source/tokenizers/tk-train/Cargo.toml
+@@ -22,6 +22,7 @@
+ path = "src/lib.rs"
+ 
+ [dependencies]
++bumpalo = "=3.20.3"
+ # Every trainer needs its model, and the training extension goes through `Tokenizer`, so the
+ # training half wants the full inference surface -- `tk-encode`'s slim defaults are for consumers
+ # that only encode.
+--- a/source/tokenizers/tk-train/src/trainers/bpe/indexed/small_posting.rs
++++ b/source/tokenizers/tk-train/src/trainers/bpe/indexed/small_posting.rs
+@@ -1,8 +1,96 @@
+ //! Eight inline payload bytes: two u32 or four u16 local offsets.
+ //! Raw-part reconstruction is private to this module.
+ 
+-use std::mem::{self, ManuallyDrop};
++use std::mem;
+ use std::slice;
++
++// Diagnostic only: each dedicated training worker owns an arena. All posting
++// buffers survive through the training call, including retired buffers. The
++// caller releases arenas only after train_typed returns and every posting
++// owner has been dropped. The pool is alive throughout all pointer access.
++#[derive(Default)]
++struct PostingArena {
++    bump: bumpalo::Bump,
++    allocations: u64,
++    requested_bytes: u64,
++    grows: u64,
++    system_allocations: u64,
++    system_requested_bytes: u64,
++    system_frees: u64,
++    system_freed_bytes: u64,
++}
++static ARENA_LIMIT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(usize::MAX);
++pub(super) fn arena_configure(limit: usize) {
++    ARENA_LIMIT.store(limit, std::sync::atomic::Ordering::Relaxed);
++}
++pub(super) fn arena_cutoff() -> usize { ARENA_LIMIT.load(std::sync::atomic::Ordering::Relaxed) }
++fn arena_owns(bytes: usize) -> bool {
++    bytes <= ARENA_LIMIT.load(std::sync::atomic::Ordering::Relaxed)
++}
++pub(super) fn phase_memory() -> serde_json::Value {
++    let text = std::fs::read_to_string("/proc/self/status").unwrap();
++    let mut result = serde_json::Map::new();
++    for line in text.lines() {
++        if line.starts_with("VmRSS:") || line.starts_with("VmHWM:") || line.starts_with("VmSwap:") {
++            let (key,value) = line.split_once(':').unwrap();
++            result.insert(key.to_owned(), serde_json::json!(value.split_whitespace().next().unwrap().parse::<u64>().unwrap()*1024));
++        }
++    }
++    serde_json::Value::Object(result)
++}
++thread_local! {
++    static POSTING_ARENA: std::cell::RefCell<PostingArena> =
++        std::cell::RefCell::new(PostingArena::default());
++}
++fn arena_allocate<T>(capacity: usize, growth: bool) -> Result<*mut T> {
++    let layout = std::alloc::Layout::array::<T>(capacity)
++        .map_err(|_| "posting arena layout overflow")?;
++    POSTING_ARENA.with(|cell| {
++        let mut arena = cell.borrow_mut();
++        if !arena_owns(layout.size()) {
++            // SAFETY: nonzero checked layout, global allocator origin matches
++            // the Vec::from_raw_parts release path below. No initialized value
++            // is exposed until the caller fills the reserved prefix.
++            let pointer = unsafe { std::alloc::alloc(layout) };
++            if pointer.is_null() { return Err("system posting allocation failed".into()); }
++            arena.system_allocations += 1;
++            arena.system_requested_bytes += layout.size() as u64;
++            arena.grows += u64::from(growth);
++            return Ok(pointer.cast::<T>());
++        }
++        let pointer = arena.bump.try_alloc_layout(layout)
++            .map_err(|_| "posting arena allocation failed")?;
++        arena.allocations += 1;
++        arena.requested_bytes += layout.size() as u64;
++        arena.grows += u64::from(growth);
++        Ok(pointer.as_ptr().cast::<T>())
++    })
++}
++pub(super) fn arena_snapshot() -> serde_json::Value {
++    POSTING_ARENA.with(|cell| {
++        let mut arena = cell.borrow_mut();
++        let chunks = arena.bump.iter_allocated_chunks().count();
++        serde_json::json!({
++            "allocations": arena.allocations,
++            "requested_bytes": arena.requested_bytes,
++            "grows": arena.grows,
++            "system_allocations":arena.system_allocations,
++            "system_requested_bytes":arena.system_requested_bytes,
++            "system_frees":arena.system_frees,
++            "system_freed_bytes":arena.system_freed_bytes,
++            "backing_bytes": arena.bump.allocated_bytes(),
++            "backing_bytes_including_metadata": arena.bump.allocated_bytes_including_metadata(),
++            "chunks": chunks
++        })
++    })
++}
++pub(super) fn arena_release() {
++    POSTING_ARENA.with(|cell| {
++        let old = std::mem::take(&mut *cell.borrow_mut());
++        drop(old);
++    });
++}
++
+ use tk_encode::Result;
+ 
+ #[repr(C)]
+@@ -46,9 +134,12 @@
+         if count as usize <= INLINE {
+             return Ok(Self::default());
+         }
+-        let mut posting = Self::default();
+-        posting.install_heap(Vec::with_capacity((count as usize).max(INLINE * 2)))?;
+-        Ok(posting)
++        let capacity = (count as usize).max(INLINE * 2);
++        Ok(Self {
++            len: 0,
++            capacity: u32::try_from(capacity).map_err(|_| "posting capacity exceeds u32")?,
++            payload: Payload { heap: arena_allocate::<T>(capacity, false)? },
++        })
+     }
+ 
+     #[inline]
+@@ -115,25 +206,6 @@
+         mem::take(self)
+     }
+ 
+-    fn install_heap(&mut self, vec: Vec<T>) -> Result<()> {
+-        // Both callers either still hold inline data or used mem::take first.
+-        debug_assert!(self.is_inline());
+-        let len = u32::try_from(vec.len()).map_err(|_| "posting length exceeds u32")?;
+-        let capacity = u32::try_from(vec.capacity()).map_err(|_| "posting capacity exceeds u32")?;
+-        if (capacity as usize) < INLINE * 2 || len > capacity {
+-            return Err("invalid heap posting Vec".into());
+-        }
+-        // Conversion cannot fail beyond this point. Suppress Vec's destructor
+-        // only after checking both fields, then transfer its allocation.
+-        let mut vec = ManuallyDrop::new(vec);
+-        self.payload = Payload {
+-            heap: vec.as_mut_ptr(),
+-        };
+-        self.len = len;
+-        self.capacity = capacity;
+-        Ok(())
+-    }
+-
+     /// Fill a pre-reserved suffix backwards. The producer visits values in
+     /// reverse order; its final physical suffix is forward ordered. Length is
+     /// published once after every new element has been initialized. A producer
+@@ -178,62 +250,50 @@
+     }
+ 
+     pub(super) fn push(&mut self, pos: T) -> Result<()> {
+-        let next_len = self
+-            .len
+-            .checked_add(1)
+-            .ok_or("posting length exceeds u32")?;
+-        if self.is_inline() {
+-            if (self.len as usize) < INLINE {
+-                // SAFETY: active inline array is initialized; index < INLINE.
+-                unsafe {
+-                    self.payload.inline[self.len as usize] = pos;
+-                }
+-                self.len = next_len;
+-                return Ok(());
+-            }
+-            let mut vec = Vec::with_capacity(INLINE * 2);
+-            vec.extend_from_slice(self.as_slice());
+-            vec.push(pos);
+-            return self.install_heap(vec);
+-        }
+-        if self.len < self.capacity {
+-            // SAFETY: ptr is Vec allocation; len < capacity leaves one spare
+-            // uninitialized slot and &mut self is its unique owner.
+-            unsafe {
+-                self.payload.heap.add(self.len as usize).write(pos);
+-            }
++        let next_len = self.len.checked_add(1).ok_or("posting length exceeds u32")?;
++        if self.is_inline() && (self.len as usize) < INLINE {
++            unsafe { self.payload.inline[self.len as usize] = pos; }
+             self.len = next_len;
+             return Ok(());
+         }
+-        let requested = (self.capacity as usize)
+-            .saturating_mul(2)
+-            .min(u32::MAX as usize)
+-            .max(next_len as usize);
+-        // The destination is empty before a Vec can reallocate or unwind.
+-        // The old raw pointer is owned only by the reconstructed Vec below.
+-        let old = ManuallyDrop::new(mem::take(self));
+-        // SAFETY: old is heap mode, and ptr/len/cap are the exact raw parts
+-        // recorded when its unique Vec allocation was last installed.
+-        let mut vec = unsafe {
+-            Vec::from_raw_parts(old.payload.heap, old.len as usize, old.capacity as usize)
+-        };
+-        vec.reserve_exact(requested - vec.len());
+-        vec.push(pos);
+-        self.install_heap(vec)
+-    }
++        if self.is_inline() || self.len == self.capacity {
++            let requested = if self.is_inline() { INLINE * 2 } else {
++                (self.capacity as usize).saturating_mul(2)
++                    .min(u32::MAX as usize).max(next_len as usize)
++            };
++            let pointer = arena_allocate::<T>(requested, !self.is_inline())?;
++            // SAFETY: distinct arena allocations; copy only the initialized
++            // prefix. Its old arena buffer remains alive until final release.
++            unsafe { std::ptr::copy_nonoverlapping(self.as_slice().as_ptr(), pointer, self.len()); }
++            if !self.is_inline() && !arena_owns(self.capacity as usize * std::mem::size_of::<T>()) {
++                unsafe { drop(Vec::from_raw_parts(self.payload.heap, self.len as usize, self.capacity as usize)); }
++            }
++            self.payload = Payload { heap: pointer };
++            self.capacity = u32::try_from(requested).map_err(|_| "posting capacity exceeds u32")?;
++        }
++        // SAFETY: the allocation has spare capacity and &mut self excludes
++        // another writer. Arenas do not move or reclaim buffers during train.
++        unsafe { self.payload.heap.add(self.len as usize).write(pos); }
++        self.len = next_len;
++        Ok(())
++    }
++
+ }
+ 
+ impl<T: Copy + Default, const INLINE: usize> Drop for PackedPosting<T, INLINE> {
+     fn drop(&mut self) {
+         if self.capacity != 0 {
+-            // SAFETY: heap mode uniquely owns a Vec allocation whose exact
+-            // raw pointer, initialized length, and capacity are stored here.
+-            unsafe {
+-                drop(Vec::from_raw_parts(
+-                    self.payload.heap,
+-                    self.len as usize,
+-                    self.capacity as usize,
+-                ));
++            let bytes = self.capacity as usize * std::mem::size_of::<T>();
++            if !arena_owns(bytes) {
++                POSTING_ARENA.with(|cell| {
++                    let mut arena = cell.borrow_mut();
++                    arena.system_frees += 1;
++                    arena.system_freed_bytes += bytes as u64;
++                });
++                // SAFETY: immutable per-call cutoff selected allocator origin.
++                // Above-cutoff buffers were allocated with this exact global
++                // Layout, and their initialized prefix consists of Copy values.
++                unsafe { drop(Vec::from_raw_parts(self.payload.heap, self.len as usize, self.capacity as usize)); }
+             }
+         }
+     }
+--- a/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel.rs
++++ b/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel.rs
+@@ -376,6 +376,12 @@
+     wc: &AHashMap<CompactString, u64>,
+     config: IndexedParallelConfig,
+ ) -> Result<IndexedTraining> {
++    assert_eq!(config.workers, 4, "arena diagnostic uses one four-worker training pool");
++    assert!(config.initialization_workers.is_none() || config.initialization_workers == Some(4));
++    assert!(!config.narrow_corpus && config.atomic_corpus && config.posting_block_bits == 32);
++    let arena_limit = std::env::var("HF_BPE_ARENA_MAX_BYTES")
++        .map(|s|s.parse::<usize>().expect("invalid arena cutoff")).unwrap_or(usize::MAX);
++    super::small_posting::arena_configure(arena_limit);
+     let begin = Instant::now();
+     let mut ids = AHashMap::with_capacity(trainer.vocab_size);
+     let mut strings = Vec::with_capacity(trainer.vocab_size);
+@@ -402,7 +408,7 @@
+     // Select the final slot type before emitting any corpus. Reserved IDs and
+     // forced alphabet count towards this bound, not just the requested vocabulary.
+     let narrow = config.narrow_corpus && strings.len().max(trainer.vocab_size) <= u16::MAX as usize;
+-    match (config.atomic_corpus, narrow, config.posting_block_bits) {
++    let result = match (config.atomic_corpus, narrow, config.posting_block_bits) {
+         (false, true, 16) => train_typed::<u16, u16, 4>(
+             trainer,
+             wc,
+@@ -500,7 +506,19 @@
+             initialization_pool.as_ref(),
+         ),
+         _ => unreachable!("validated configuration"),
+-    }
++    };
++    // train_typed has returned: every posting owner, slice and iterator is gone.
++    // Dedicated worker threads still own their arenas; collect then release.
++    let collect_begin = Instant::now();
++    let arenas = pool.broadcast(|_| super::small_posting::arena_snapshot());
++    let collect_ms = collect_begin.elapsed().as_secs_f64() * 1000.0;
++    let release_begin = Instant::now();
++    pool.broadcast(|_| super::small_posting::arena_release());
++    let release_ms = release_begin.elapsed().as_secs_f64() * 1000.0;
++    eprintln!("{}", serde_json::json!({"bench_arena_stats": {
++        "arenas": arenas, "collect_ms": collect_ms, "release_ms": release_ms, "cutoff_bytes":arena_limit
++    }}));
++    result
+ }
+ 
+ fn train_typed<C: Slot, O: Offset, const INLINE: usize>(
+@@ -866,6 +884,8 @@
+     stats.weight_one_bucket_count = weight_lookup.as_ref().map_or(0, |l| l.one_bucket_count());
+     stats.weight_bucket_count = weight_lookup.as_ref().map_or(0, |l| l.bucket_count());
+     stats.weight_one_bucket_bytes = weight_lookup.as_ref().map_or(0, |l| l.one_bucket_bytes());
++    let mut phase_trace = vec![serde_json::json!({"label":"initialize_return", "rules":0,
++        "memory":super::small_posting::phase_memory()})];
+     while ids.len() < trainer.vocab_size {
+         let stage = Instant::now();
+         let cap = config.batch_size.min(trainer.vocab_size - ids.len());
+@@ -1373,8 +1393,16 @@
+                 .collect::<Result<Vec<_>>>()?;
+         }
+         stats.route_ms += stage.elapsed().as_secs_f64() * 1000.0;
++        if stats.batch_rounds % 64 == 0 {
++            phase_trace.push(serde_json::json!({"label":"merge", "rules":merges.len(),
++                "memory":super::small_posting::phase_memory()}));
++        }
+     }
+     stats.merge_ms = begin.elapsed().as_secs_f64() * 1000.0;
++    phase_trace.push(serde_json::json!({"label":"merge_end_before_inventory", "rules":merges.len(),
++        "memory":super::small_posting::phase_memory()}));
++    eprintln!("{}", serde_json::json!({"bench_arena_phase":{
++        "cutoff_bytes":super::small_posting::arena_cutoff(),"trace":phase_trace}}));
+     let inventory_begin = Instant::now();
+     let mut inline_postings = 0_u64;
+     let mut heap_postings = 0_u64;
+--- a/runner/Cargo.toml
++++ b/runner/Cargo.toml
+@@ -1,12 +1,12 @@
+ [package]
+-name = "hf-bpe-native-j-posting-inventory"
++name = "hf-bpe-native-j-arena-threshold"
+ version = "0.1.0"
+ edition = "2024"
+ [features]
+ indexed = []
+ [dependencies]
+-tk-train = { path = "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-j-posting-inventory/source/tokenizers/tk-train", default-features = false }
+-tk-encode = { path = "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-j-posting-inventory/source/tokenizers/tk-encode", default-features = false }
++tk-train = { path = "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-j-arena-threshold/source/tokenizers/tk-train", default-features = false }
++tk-encode = { path = "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-j-arena-threshold/source/tokenizers/tk-encode", default-features = false }
+ serde_json = "1"
+ sha2 = "0.10"
+ hf-front-end = { package = "tokenizers", version = "=0.23.2", default-features = false, features = ["fancy-regex"] }
+--- a/runner/Cargo.lock
++++ b/runner/Cargo.lock
+@@ -616,7 +616,7 @@
+ checksum = "e17592d60ebacc7d5e169f4663c5f84f9161cc90328abcfe8456f41e4dfcb284"
+ 
+ [[package]]
+-name = "hf-bpe-native-j-posting-inventory"
++name = "hf-bpe-native-j-arena-threshold"
+ version = "0.1.0"
+ dependencies = [
+  "serde_json",
+@@ -1346,6 +1346,7 @@
+ version = "0.1.0-dev.0"
+ dependencies = [
+  "ahash",
++ "bumpalo",
+  "compact_str",
+  "dary_heap",
+  "esaxx-rs",

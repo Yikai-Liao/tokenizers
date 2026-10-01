@@ -1,6 +1,8 @@
 # HF BPE 兼容适配原型
 
-新增热点优化见 [OPTIMIZATION_REPORT.md](OPTIMIZATION_REPORT.md)：当前推荐H `00216d91`（直接构造+融合查询+radix+bulk posting+权重1认证）。512MiB原接口两个交错pair中train中位25.577秒，对照DE32.397秒；只增加约98KiB位图，RSS仍约4.43GiB。F/G2无直接模块稳定收益，已停止；后续I的commit筛选回退，停止；正在详查H的具体热点成本。全部组合关系见 [OPTIMIZATION_CATALOG.md](OPTIMIZATION_CATALOG.md)，计划见 [OPTIMIZATION_PLAN.md](OPTIMIZATION_PLAN.md)。
+新增热点优化见 [OPTIMIZATION_REPORT.md](OPTIMIZATION_REPORT.md)：当前推荐 J `376363d2`（H+规则邻居聚合），原接口 512 MiB 筛选 train24.613秒、RSS约4.43GiB。H 的历史交错对照、各候选范围与证据保留在报告中。全部组合关系见 [OPTIMIZATION_CATALOG.md](OPTIMIZATION_CATALOG.md)，计划见 [OPTIMIZATION_PLAN.md](OPTIMIZATION_PLAN.md)。
+
+追加 [posting arena 阈值与阶段峰值分析](POSTING_ARENA_THRESHOLD_REPORT.md)：43 次多语言生命周期诊断、12 次同 binary 阈值计时；中文 512 MiB full Bump 没有增峰、train 少约22%，英文小样本的阶段预算与速度不同。阈值按全程资源预算选择，实验尚未迁入生产 J。
 
 本次交付按实现拆成独立 worktree 和本地分支：HF reference、固定 PR、串行 endpoint、fused、串行初始化并行 merge、并行初始化、原子访问对照。五个新实现都直接接入原始 `BpeTrainer::do_train/train_vocab` 和 `Trainer::train`，公共 Trainer 字段与序列化格式保持一致。完整路径、提交与调用示例见 [WORKTREES.md](WORKTREES.md)。
 

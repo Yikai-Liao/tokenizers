@@ -1,0 +1,256 @@
+{
+  "control": {
+    "command": [
+      "/usr/bin/python3",
+      "/root/code/tokenizers/benchmarks/hf-bpe/run_native_fair.py",
+      "--case",
+      "en16m-none-t256",
+      "--worktree",
+      "/root/code/tokenizers-worktrees/prepare-rule-aggregate",
+      "--build-root",
+      "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-j-arena-threshold",
+      "--binary",
+      "/root/code/tokenizers/benchmarks/hf-bpe/target/release/hf-bpe-native-j-arena-threshold",
+      "--corpus",
+      ".build/posting-distribution-inputs/en-16m-none-r16000/input.txt",
+      "--output",
+      "/root/code/tokenizers/benchmarks/hf-bpe/results/arena-threshold/en16m-none-t256.jsonl",
+      "--split",
+      "none",
+      "--vocab",
+      "18124",
+      "--initialization-workers",
+      "4",
+      "--merge-workers",
+      "4",
+      "--atomic-corpus"
+    ],
+    "extra_environment": {
+      "HF_BPE_ARENA_MAX_BYTES": "256"
+    },
+    "cutoff_bytes": 256,
+    "cutoff_label": "256",
+    "count": 1,
+    "scope": "same binary cutoff sensitivity; no concurrent CPU tasks"
+  },
+  "arena": {
+    "arenas": [
+      {
+        "allocations": 132165,
+        "backing_bytes": 8387200,
+        "backing_bytes_including_metadata": 8387872,
+        "chunks": 14,
+        "grows": 0,
+        "requested_bytes": 5160336,
+        "system_allocations": 9564,
+        "system_freed_bytes": 131275496,
+        "system_frees": 31952,
+        "system_requested_bytes": 33654016
+      },
+      {
+        "allocations": 123683,
+        "backing_bytes": 8387200,
+        "backing_bytes_including_metadata": 8387872,
+        "chunks": 14,
+        "grows": 0,
+        "requested_bytes": 4852720,
+        "system_allocations": 9082,
+        "system_freed_bytes": 2988624,
+        "system_frees": 1698,
+        "system_requested_bytes": 36512616
+      },
+      {
+        "allocations": 125003,
+        "backing_bytes": 8387200,
+        "backing_bytes_including_metadata": 8387872,
+        "chunks": 14,
+        "grows": 0,
+        "requested_bytes": 4911600,
+        "system_allocations": 9166,
+        "system_freed_bytes": 3227640,
+        "system_frees": 1723,
+        "system_requested_bytes": 36699972
+      },
+      {
+        "allocations": 128045,
+        "backing_bytes": 8387200,
+        "backing_bytes_including_metadata": 8387872,
+        "chunks": 14,
+        "grows": 0,
+        "requested_bytes": 5016424,
+        "system_allocations": 9420,
+        "system_freed_bytes": 4272444,
+        "system_frees": 1859,
+        "system_requested_bytes": 34897600
+      }
+    ],
+    "collect_ms": 0.140318,
+    "cutoff_bytes": 256,
+    "release_ms": 0.037683
+  },
+  "totals": {
+    "allocations": 508896,
+    "backing_bytes": 33548800,
+    "backing_bytes_including_metadata": 33551488,
+    "chunks": 56,
+    "grows": 0,
+    "requested_bytes": 19941080,
+    "system_allocations": 37232,
+    "system_freed_bytes": 141764204,
+    "system_frees": 37232,
+    "system_requested_bytes": 141764204
+  },
+  "phase": {
+    "cutoff_bytes": 256,
+    "trace": [
+      {
+        "label": "initialize_return",
+        "memory": {
+          "VmHWM": 359034880,
+          "VmRSS": 159739904,
+          "VmSwap": 0
+        },
+        "rules": 0
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 359034880,
+          "VmRSS": 212889600,
+          "VmSwap": 0
+        },
+        "rules": 403
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 359034880,
+          "VmRSS": 225603584,
+          "VmSwap": 0
+        },
+        "rules": 1148
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 359034880,
+          "VmRSS": 253165568,
+          "VmSwap": 0
+        },
+        "rules": 1999
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 359034880,
+          "VmRSS": 256991232,
+          "VmSwap": 0
+        },
+        "rules": 3246
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 359034880,
+          "VmRSS": 263368704,
+          "VmSwap": 0
+        },
+        "rules": 4528
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 359034880,
+          "VmRSS": 302821376,
+          "VmSwap": 0
+        },
+        "rules": 5987
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 359034880,
+          "VmRSS": 304033792,
+          "VmSwap": 0
+        },
+        "rules": 7604
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 359034880,
+          "VmRSS": 304861184,
+          "VmSwap": 0
+        },
+        "rules": 9104
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 359034880,
+          "VmRSS": 305577984,
+          "VmSwap": 0
+        },
+        "rules": 10826
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 359034880,
+          "VmRSS": 306143232,
+          "VmSwap": 0
+        },
+        "rules": 12482
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 359034880,
+          "VmRSS": 306737152,
+          "VmSwap": 0
+        },
+        "rules": 14746
+      },
+      {
+        "label": "merge_end_before_inventory",
+        "memory": {
+          "VmHWM": 359034880,
+          "VmRSS": 306991104,
+          "VmSwap": 0
+        },
+        "rules": 16000
+      }
+    ]
+  },
+  "inventory": {
+    "heap_bytes_histogram": [
+      1940560,
+      2013012,
+      2463224,
+      2933728,
+      3088684,
+      5641516,
+      6255700,
+      25019984
+    ],
+    "heap_capacity_histogram": [
+      121285,
+      81727,
+      52401,
+      31975,
+      17477,
+      11702,
+      3244,
+      1287
+    ],
+    "heap_payload_bytes": 49356408,
+    "heap_postings": 321098,
+    "inline_postings": 161215,
+    "inventory_ms": 11.060306,
+    "owner_heap_capacity_bytes": 18249728,
+    "owner_heap_items": 835917,
+    "owner_table_capacity_bytes": 34603072,
+    "stored_positions": 12584940
+  },
+  "allocator_origin_checks": "PASS"
+}

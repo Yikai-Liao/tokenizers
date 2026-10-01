@@ -1,0 +1,34 @@
+{
+  "command": [
+    "/usr/bin/python3",
+    "/root/code/tokenizers/benchmarks/hf-bpe/run_native_fair.py",
+    "--case",
+    "en16m-whitespace_split-tall",
+    "--worktree",
+    "/root/code/tokenizers-worktrees/prepare-rule-aggregate",
+    "--build-root",
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-j-arena-threshold",
+    "--binary",
+    "/root/code/tokenizers/benchmarks/hf-bpe/target/release/hf-bpe-native-j-arena-threshold",
+    "--corpus",
+    ".build/posting-distribution-inputs/en-16m-whitespace_split-r16000/input.txt",
+    "--output",
+    "/root/code/tokenizers/benchmarks/hf-bpe/results/arena-threshold/en16m-whitespace_split-tall.jsonl",
+    "--split",
+    "whitespace_split",
+    "--vocab",
+    "18122",
+    "--initialization-workers",
+    "4",
+    "--merge-workers",
+    "4",
+    "--atomic-corpus"
+  ],
+  "extra_environment": {
+    "HF_BPE_ARENA_MAX_BYTES": "18446744073709551615"
+  },
+  "cutoff_bytes": 18446744073709551615,
+  "cutoff_label": "all",
+  "count": 1,
+  "scope": "same binary cutoff sensitivity; no concurrent CPU tasks"
+}

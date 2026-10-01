@@ -1,0 +1,36 @@
+zh512m-t0: pid 2296082; MemAvailable 7.44 GiB
+zh512m-t0: init 5.501s + merge 12.295s; train 21.593s, peak RSS 4.43 GiB, min available 2.98 GiB, VmSwap 0.0 MiB, model d50fb836e342e1a301bb56d5ab53c0b79fae38f51a03051c6d6b02ab6cf862cd
+zh512m-t0: cutoff 0, allocator-origin checks PASS
+zh512m-t32: pid 2296975; MemAvailable 7.41 GiB
+zh512m-t32: init 4.900s + merge 12.523s; train 19.255s, peak RSS 4.43 GiB, min available 3.00 GiB, VmSwap 0.0 MiB, model d50fb836e342e1a301bb56d5ab53c0b79fae38f51a03051c6d6b02ab6cf862cd
+zh512m-t32: cutoff 32, allocator-origin checks PASS
+zh512m-t256: pid 2298189; MemAvailable 7.40 GiB
+zh512m-t256: init 5.200s + merge 12.802s; train 18.706s, peak RSS 4.43 GiB, min available 3.02 GiB, VmSwap 0.0 MiB, model d50fb836e342e1a301bb56d5ab53c0b79fae38f51a03051c6d6b02ab6cf862cd
+zh512m-t256: cutoff 256, allocator-origin checks PASS
+zh512m-tall: pid 2298708; MemAvailable 7.45 GiB
+zh512m-tall: init 4.888s + merge 11.584s; train 16.865s, peak RSS 4.43 GiB, min available 3.01 GiB, VmSwap 0.0 MiB, model d50fb836e342e1a301bb56d5ab53c0b79fae38f51a03051c6d6b02ab6cf862cd
+zh512m-tall: cutoff all, allocator-origin checks PASS
+en16m-none-t0: pid 2299188; MemAvailable 7.41 GiB
+en16m-none-t0: init 0.364s + merge 1.507s; train 1.980s, peak RSS 0.33 GiB, min available 7.14 GiB, VmSwap 0.0 MiB, model 854e76eae8d379f8f2cb26f22363c55c56b6429c595649b31f05c29a55ed7d9e
+en16m-none-t0: cutoff 0, allocator-origin checks PASS
+en16m-none-tall: pid 2299244; MemAvailable 7.36 GiB
+en16m-none-tall: init 0.326s + merge 1.462s; train 1.820s, peak RSS 0.34 GiB, min available 7.06 GiB, VmSwap 0.0 MiB, model 854e76eae8d379f8f2cb26f22363c55c56b6429c595649b31f05c29a55ed7d9e
+en16m-none-tall: cutoff all, allocator-origin checks PASS
+en16m-whitespace_split-t0: pid 2299306; MemAvailable 7.32 GiB
+en16m-whitespace_split-t0: init 0.123s + merge 0.336s; train 0.484s, peak RSS 0.07 GiB, min available 7.30 GiB, VmSwap 0.0 MiB, model b73a543b2ff6b2098280069ecd129495d9e171b5187e1ebd98cfdc785c4e3e06
+en16m-whitespace_split-t0: cutoff 0, allocator-origin checks PASS
+en16m-whitespace_split-tall: pid 2299358; MemAvailable 7.32 GiB
+en16m-whitespace_split-tall: init 0.124s + merge 0.347s; train 0.488s, peak RSS 0.08 GiB, min available 7.29 GiB, VmSwap 0.0 MiB, model b73a543b2ff6b2098280069ecd129495d9e171b5187e1ebd98cfdc785c4e3e06
+en16m-whitespace_split-tall: cutoff all, allocator-origin checks PASS
+en16m-none-t32: pid 2302737; MemAvailable 7.43 GiB
+en16m-none-t32: init 0.396s + merge 1.626s; train 2.086s, peak RSS 0.33 GiB, min available 7.08 GiB, VmSwap 0.0 MiB, model 854e76eae8d379f8f2cb26f22363c55c56b6429c595649b31f05c29a55ed7d9e
+en16m-none-t32: cutoff 32, allocator-origin checks PASS
+en16m-none-t256: pid 2302790; MemAvailable 7.32 GiB
+en16m-none-t256: init 0.342s + merge 1.537s; train 1.917s, peak RSS 0.33 GiB, min available 6.99 GiB, VmSwap 0.0 MiB, model 854e76eae8d379f8f2cb26f22363c55c56b6429c595649b31f05c29a55ed7d9e
+en16m-none-t256: cutoff 256, allocator-origin checks PASS
+en16m-whitespace_split-t32: pid 2302850; MemAvailable 7.23 GiB
+en16m-whitespace_split-t32: init 0.107s + merge 0.384s; train 0.511s, peak RSS 0.07 GiB, min available 7.22 GiB, VmSwap 0.0 MiB, model b73a543b2ff6b2098280069ecd129495d9e171b5187e1ebd98cfdc785c4e3e06
+en16m-whitespace_split-t32: cutoff 32, allocator-origin checks PASS
+en16m-whitespace_split-t256: pid 2302939; MemAvailable 7.25 GiB
+en16m-whitespace_split-t256: init 0.127s + merge 0.399s; train 0.543s, peak RSS 0.08 GiB, min available 7.23 GiB, VmSwap 0.0 MiB, model b73a543b2ff6b2098280069ecd129495d9e171b5187e1ebd98cfdc785c4e3e06
+en16m-whitespace_split-t256: cutoff 256, allocator-origin checks PASS

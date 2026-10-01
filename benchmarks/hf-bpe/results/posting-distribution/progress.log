@@ -1,0 +1,127 @@
+en-1m-none-r4000: rules=4000; E=1039317; alloc=9303232; live=2700008; checked
+en-1m-none-r16000: pid 2282239; MemAvailable 7.26 GiB
+en-1m-none-r16000: init 0.044s + merge 0.325s; train 0.781s, peak RSS 0.03 GiB, min available 7.24 GiB, VmSwap 0.0 MiB, model ece74188f0b6566ab9eecd14f73b2cce6d1f48cc5b6ae9d4f89078ceb810a67a
+en-1m-none-r16000: rules=16000; E=1039317; alloc=9450448; live=580268; checked
+en-4m-none-r4000: pid 2282315; MemAvailable 7.24 GiB
+en-4m-none-r4000: init 0.115s + merge 0.488s; train 0.855s, peak RSS 0.10 GiB, min available 7.18 GiB, VmSwap 0.0 MiB, model 681ebae5497487e27847ebee5234996acae8ecf936f82dddba3b1e378a63a7cd
+en-4m-none-r4000: rules=4000; E=4159161; alloc=38451352; live=15920392; checked
+en-4m-none-r16000: pid 2282330; MemAvailable 7.22 GiB
+en-4m-none-r16000: init 0.103s + merge 0.738s; train 1.258s, peak RSS 0.10 GiB, min available 7.16 GiB, VmSwap 0.0 MiB, model 981e294feabe0751a2712d243358d8c0042bccd0dc92cd634e18ce06e2268820
+en-4m-none-r16000: rules=16000; E=4159161; alloc=39363696; live=7391212; checked
+en-16m-none-r4000: pid 2282444; MemAvailable 7.16 GiB
+en-16m-none-r4000: init 0.352s + merge 1.528s; train 2.178s, peak RSS 0.33 GiB, min available 6.85 GiB, VmSwap 0.0 MiB, model 8cf301793853cd8c8d12d2c78f5e95ac1af0530c1c2c3e95ae5e7d4544f1b240
+en-16m-none-r4000: rules=4000; E=16597180; alloc=156450596; live=73676588; checked
+en-16m-none-r16000: pid 2282615; MemAvailable 7.12 GiB
+en-16m-none-r16000: init 0.326s + merge 2.261s; train 3.164s, peak RSS 0.34 GiB, min available 6.77 GiB, VmSwap 0.0 MiB, model 854e76eae8d379f8f2cb26f22363c55c56b6429c595649b31f05c29a55ed7d9e
+en-16m-none-r16000: rules=16000; E=16597180; alloc=161705284; live=49356408; checked
+zh-1m-none-r4000: pid 2282721; MemAvailable 7.11 GiB
+zh-1m-none-r4000: init 0.042s + merge 0.094s; train 0.333s, peak RSS 0.02 GiB, min available 7.11 GiB, VmSwap 0.0 MiB, model a511d7a186087d34e6995655241ca2568622bc4fe32d9e9618e3cb4b791bc562
+zh-1m-none-r4000: rules=4000; E=409080; alloc=2044836; live=696312; checked
+zh-1m-none-r16000: pid 2282732; MemAvailable 7.14 GiB
+zh-1m-none-r16000: init 0.047s + merge 0.203s; train 0.698s, peak RSS 0.02 GiB, min available 7.13 GiB, VmSwap 0.0 MiB, model a7d5a98812938f91f7e61b0bb5d4c7b8ad9a0bffd84063368d984051b4a35473
+zh-1m-none-r16000: rules=16000; E=409080; alloc=2131232; live=142260; checked
+zh-4m-none-r4000: pid 2282797; MemAvailable 7.16 GiB
+zh-4m-none-r4000: init 0.149s + merge 0.231s; train 0.633s, peak RSS 0.05 GiB, min available 7.10 GiB, VmSwap 0.0 MiB, model 5ed9578b907c3c01343b9fce9b227de787635d05f75eec2292d96c48ff63f665
+zh-4m-none-r4000: rules=4000; E=1611517; alloc=9107836; live=4228320; checked
+zh-4m-none-r16000: pid 2282845; MemAvailable 7.21 GiB
+zh-4m-none-r16000: init 0.143s + merge 0.440s; train 1.102s, peak RSS 0.05 GiB, min available 7.19 GiB, VmSwap 0.0 MiB, model 22c97850bfe161897dfdf039193ba62a941c8e3888a489a2647aa3cbbe7cffd7
+zh-4m-none-r16000: rules=16000; E=1611517; alloc=9576000; live=2404052; checked
+zh-16m-none-r4000: pid 2282895; MemAvailable 7.21 GiB
+zh-16m-none-r4000: init 0.410s + merge 0.603s; train 1.344s, peak RSS 0.16 GiB, min available 7.00 GiB, VmSwap 0.0 MiB, model 4243e68a79094a032b216d5caf0012139637af216cd98abcc8d027a6e3784889
+zh-16m-none-r4000: rules=4000; E=6377695; alloc=38806112; live=21836172; checked
+zh-16m-none-r16000: pid 2282986; MemAvailable 7.14 GiB
+zh-16m-none-r16000: init 0.421s + merge 1.052s; train 2.151s, peak RSS 0.17 GiB, min available 6.99 GiB, VmSwap 0.0 MiB, model 3a7b3943d1ea72aa6a5e76b34f72c981bc0dfe08d446876f1751c89236dbb325
+zh-16m-none-r16000: rules=16000; E=6377695; alloc=41422004; live=16095432; checked
+de-1m-none-r4000: pid 2283113; MemAvailable 7.08 GiB
+de-1m-none-r4000: init 0.042s + merge 0.267s; train 0.492s, peak RSS 0.03 GiB, min available 7.08 GiB, VmSwap 0.0 MiB, model b94d6f4e2e1ee62420e59c30d2b9a683168a7aba767f002a775c291dddaf8bd4
+de-1m-none-r4000: rules=4000; E=1027121; alloc=9181548; live=2740740; checked
+de-1m-none-r16000: pid 2283143; MemAvailable 7.13 GiB
+de-1m-none-r16000: init 0.037s + merge 0.311s; train 0.689s, peak RSS 0.03 GiB, min available 7.13 GiB, VmSwap 0.0 MiB, model 63ea83756ed66cc20ca75cbf6b4447ee9eaf3219977fdf6cdf27afef29de8c6b
+de-1m-none-r16000: rules=16000; E=1027121; alloc=9333328; live=635304; checked
+de-4m-none-r4000: pid 2283154; MemAvailable 7.12 GiB
+de-4m-none-r4000: init 0.103s + merge 0.486s; train 0.808s, peak RSS 0.10 GiB, min available 7.03 GiB, VmSwap 0.0 MiB, model 872e5e046966c6116f07860a365f0188e604681fa54bd0ce4db9c4de01b9b605
+de-4m-none-r4000: rules=4000; E=4106318; alloc=37990072; live=15261016; checked
+de-4m-none-r16000: pid 2283245; MemAvailable 7.05 GiB
+de-4m-none-r16000: init 0.123s + merge 0.783s; train 1.323s, peak RSS 0.10 GiB, min available 6.98 GiB, VmSwap 0.0 MiB, model db1ca0d189e677ddc9dbe0e7dfa48fdffce48a3346b5aaec4101d248b15ab379
+de-4m-none-r16000: rules=16000; E=4106318; alloc=38994336; live=7922312; checked
+de-16m-none-r4000: pid 2283288; MemAvailable 7.03 GiB
+de-16m-none-r4000: init 0.359s + merge 1.442s; train 2.153s, peak RSS 0.33 GiB, min available 6.69 GiB, VmSwap 0.0 MiB, model adbd3e0c1c207b78458d15fc33071f7e55c7c297cebf0fb50d83799fbf7f4b50
+de-16m-none-r4000: rules=4000; E=16394999; alloc=154462408; live=70760608; checked
+de-16m-none-r16000: pid 2283372; MemAvailable 6.85 GiB
+de-16m-none-r16000: init 0.368s + merge 2.060s; train 2.973s, peak RSS 0.33 GiB, min available 6.61 GiB, VmSwap 0.0 MiB, model 62de460121ac80d3e4af2414e404d78abfd7549a081807edb2e1b2e74dc18e2c
+de-16m-none-r16000: rules=16000; E=16394999; alloc=160183172; live=50738412; checked
+ja-1m-none-r4000: pid 2283473; MemAvailable 6.89 GiB
+ja-1m-none-r4000: init 0.036s + merge 0.102s; train 0.311s, peak RSS 0.02 GiB, min available 6.89 GiB, VmSwap 0.0 MiB, model db067d3ffa9813c1be7cce9f9847a9b5d541c310a09235cbb2dcffdd71f88371
+ja-1m-none-r4000: rules=4000; E=400076; alloc=2171428; live=776532; checked
+ja-1m-none-r16000: pid 2283488; MemAvailable 7.14 GiB
+ja-1m-none-r16000: init 0.044s + merge 0.210s; train 0.751s, peak RSS 0.02 GiB, min available 7.14 GiB, VmSwap 0.0 MiB, model 7fe6d6c43f0d00dadaa9c6d46a49438e5d7f92731dd0cae40691da49a6920cb0
+ja-1m-none-r16000: rules=16000; E=400076; alloc=2232880; live=123888; checked
+ja-4m-none-r4000: pid 2283537; MemAvailable 7.20 GiB
+ja-4m-none-r4000: init 0.108s + merge 0.255s; train 0.573s, peak RSS 0.05 GiB, min available 7.18 GiB, VmSwap 0.0 MiB, model 9a999b423b71223e2348c235ab8b0c67f9aeed25f354a476790b9dc1524eae18
+ja-4m-none-r4000: rules=4000; E=1598221; alloc=9790172; live=4889684; checked
+ja-4m-none-r16000: pid 2283567; MemAvailable 7.25 GiB
+ja-4m-none-r16000: init 0.123s + merge 0.449s; train 1.039s, peak RSS 0.05 GiB, min available 7.21 GiB, VmSwap 0.0 MiB, model f606554b54517f1581ec152c3e940f741ffba8fa26183861bb3d1cfabe4b99e1
+ja-4m-none-r16000: rules=16000; E=1598221; alloc=10238300; live=2730736; checked
+ja-16m-none-r4000: pid 2283621; MemAvailable 7.25 GiB
+ja-16m-none-r4000: init 0.364s + merge 0.700s; train 1.359s, peak RSS 0.15 GiB, min available 7.04 GiB, VmSwap 0.0 MiB, model 5cbb3aab0709a69a41f5e27bac7baa82c56b66e5dba8f31ca692ae05170a06fb
+ja-16m-none-r4000: rules=4000; E=6400664; alloc=42308008; live=24399484; checked
+ja-16m-none-r16000: pid 2283736; MemAvailable 7.13 GiB
+ja-16m-none-r16000: init 0.297s + merge 1.170s; train 2.080s, peak RSS 0.18 GiB, min available 6.99 GiB, VmSwap 0.0 MiB, model cc346742e94adf54516d286976f9d40e5b3f68c771d746982ee21eb98b19dd62
+ja-16m-none-r16000: rules=16000; E=6400664; alloc=45030096; live=17849040; checked
+en-1m-whitespace_split-r4000: pid 2283795; MemAvailable 7.16 GiB
+en-1m-whitespace_split-r4000: init 0.019s + merge 0.081s; train 0.300s, peak RSS 0.02 GiB, min available 7.16 GiB, VmSwap 0.0 MiB, model 0c5f598681325676bd380474ce6a785a01138a4baa45c6828c46585839a2f92f
+en-1m-whitespace_split-r4000: rules=4000; E=257044; alloc=1900528; live=501984; checked
+en-1m-whitespace_split-r16000: pid 2283806; MemAvailable 7.16 GiB
+en-1m-whitespace_split-r16000: init 0.020s + merge 0.164s; train 0.577s, peak RSS 0.02 GiB, min available 7.15 GiB, VmSwap 0.0 MiB, model ac8322d3e15a02d96692db5ce308be1660c2c22d327e668f98cdb0231174760d
+en-1m-whitespace_split-r16000: rules=16000; E=257044; alloc=1912484; live=51312; checked
+en-4m-whitespace_split-r4000: pid 2283870; MemAvailable 7.16 GiB
+en-4m-whitespace_split-r4000: init 0.045s + merge 0.162s; train 0.457s, peak RSS 0.03 GiB, min available 7.16 GiB, VmSwap 0.0 MiB, model 6201896c31fbc1609842ee60557ae6719d5728c9ccc0c3f7e5485f01c8f6163a
+en-4m-whitespace_split-r4000: rules=4000; E=720520; alloc=5467176; live=1887216; checked
+en-4m-whitespace_split-r16000: pid 2283882; MemAvailable 7.16 GiB
+en-4m-whitespace_split-r16000: init 0.048s + merge 0.319s; train 0.801s, peak RSS 0.03 GiB, min available 7.15 GiB, VmSwap 0.0 MiB, model d9a0e48e5a3d8459ecbf1eb17da474df820d2cd10c0ee198362935e3902e4dda
+en-4m-whitespace_split-r16000: rules=16000; E=720520; alloc=5540932; live=773084; checked
+en-16m-whitespace_split-r4000: pid 2283981; MemAvailable 7.15 GiB
+en-16m-whitespace_split-r4000: init 0.121s + merge 0.337s; train 0.675s, peak RSS 0.08 GiB, min available 7.12 GiB, VmSwap 0.0 MiB, model 5b921cb17d82ac7164dc6a11e6c8176fe6d2000a745ae91ef3f22d371817946e
+en-16m-whitespace_split-r4000: rules=4000; E=1973606; alloc=15164008; live=6165224; checked
+en-16m-whitespace_split-r16000: pid 2284044; MemAvailable 7.16 GiB
+en-16m-whitespace_split-r16000: init 0.099s + merge 0.500s; train 1.095s, peak RSS 0.08 GiB, min available 7.09 GiB, VmSwap 0.0 MiB, model b73a543b2ff6b2098280069ecd129495d9e171b5187e1ebd98cfdc785c4e3e06
+en-16m-whitespace_split-r16000: rules=16000; E=1973606; alloc=15515688; live=3535856; checked
+zh-1m-whitespace_split-r4000: pid 2284118; MemAvailable 7.18 GiB
+zh-1m-whitespace_split-r4000: init 0.047s + merge 0.091s; train 0.348s, peak RSS 0.02 GiB, min available 7.18 GiB, VmSwap 0.0 MiB, model 2cc2e811b6dcbe57f37bc055ea3b1240fc0c0d507389c0b31bf1e89c459175a7
+zh-1m-whitespace_split-r4000: rules=4000; E=354109; alloc=1601712; live=545004; checked
+zh-1m-whitespace_split-r16000: pid 2284131; MemAvailable 7.18 GiB
+zh-1m-whitespace_split-r16000: init 0.040s + merge 0.186s; train 0.669s, peak RSS 0.02 GiB, min available 7.17 GiB, VmSwap 0.0 MiB, model 621ef3ba1f6f163a5ca4b48fe6e767768a8c0f111531c5aee3b184dfad3b9f28
+zh-1m-whitespace_split-r16000: rules=16000; E=354109; alloc=1666256; live=99144; checked
+zh-4m-whitespace_split-r4000: pid 2284163; MemAvailable 7.17 GiB
+zh-4m-whitespace_split-r4000: init 0.134s + merge 0.197s; train 0.570s, peak RSS 0.05 GiB, min available 7.15 GiB, VmSwap 0.0 MiB, model 5982235bbef8402ca5f46f9d5384f1466e1c2783b3da447b174636d175eee734
+zh-4m-whitespace_split-r4000: rules=4000; E=1368179; alloc=7019940; live=3368108; checked
+zh-4m-whitespace_split-r16000: pid 2284257; MemAvailable 7.21 GiB
+zh-4m-whitespace_split-r16000: init 0.144s + merge 0.382s; train 1.051s, peak RSS 0.05 GiB, min available 7.19 GiB, VmSwap 0.0 MiB, model 81ecc06f8bf84d843b01717773206fbbc691535913b319c2279887d2f40c1e09
+zh-4m-whitespace_split-r16000: rules=16000; E=1368179; alloc=7390112; live=1910240; checked
+zh-16m-whitespace_split-r4000: pid 2284316; MemAvailable 7.24 GiB
+zh-16m-whitespace_split-r4000: init 0.436s + merge 0.609s; train 1.378s, peak RSS 0.14 GiB, min available 7.08 GiB, VmSwap 0.0 MiB, model 291726cc1c8043410848e397d504e67700d4ac7bda9de5a29602005b177e18d9
+zh-16m-whitespace_split-r4000: rules=4000; E=5383769; alloc=30373516; live=17570628; checked
+zh-16m-whitespace_split-r16000: pid 2284399; MemAvailable 7.18 GiB
+zh-16m-whitespace_split-r16000: init 0.468s + merge 0.953s; train 2.113s, peak RSS 0.16 GiB, min available 7.01 GiB, VmSwap 0.0 MiB, model 520903989ed07218a369c2fd1469dbd5c5bbc300071dc236443e83a0853d83f4
+zh-16m-whitespace_split-r16000: rules=16000; E=5383769; alloc=32428144; live=12678432; checked
+en-32m-none-r16000: pid 2284516; MemAvailable 7.05 GiB
+en-32m-none-r16000: init 0.716s + merge 3.798s; train 5.277s, peak RSS 0.66 GiB, min available 6.55 GiB, VmSwap 0.0 MiB, model df93a06222179df624566dbb648df91b561186078772597b9a6e0776e9957bab
+en-32m-none-r16000: rules=16000; E=33136193; alloc=326431412; live=117444268; checked
+zh-32m-none-r16000: pid 2284684; MemAvailable 6.97 GiB
+zh-32m-none-r16000: init 0.691s + merge 1.741s; train 3.267s, peak RSS 0.32 GiB, min available 6.72 GiB, VmSwap 0.0 MiB, model 458f67e432cd41ab7941c195fe135a36bfcd298517ca217ed680658b204681b7
+zh-32m-none-r16000: rules=16000; E=12704752; alloc=85838972; live=38064592; checked
+de-32m-none-r16000: pid 2284831; MemAvailable 6.98 GiB
+de-32m-none-r16000: init 0.638s + merge 3.571s; train 4.946s, peak RSS 0.66 GiB, min available 6.69 GiB, VmSwap 0.0 MiB, model 3f0e4708ce8d892fec64622b79de20a82c545dac0a714f0cdfc2ba9d5fc153e3
+de-32m-none-r16000: rules=16000; E=32732764; alloc=323401780; live=116048384; checked
+ja-32m-none-r16000: pid 2284995; MemAvailable 7.22 GiB
+ja-32m-none-r16000: init 0.489s + merge 1.851s; train 3.046s, peak RSS 0.29 GiB, min available 6.94 GiB, VmSwap 0.0 MiB, model 28311c69883d0a60d8b7132a5ad11af777190df4d9b5c0424c3a68fd8c8d9683
+ja-32m-none-r16000: rules=16000; E=12822090; alloc=93582384; live=41243140; checked
+en-32m-whitespace_split-r16000: pid 2285083; MemAvailable 7.22 GiB
+en-32m-whitespace_split-r16000: init 0.183s + merge 0.727s; train 1.441s, peak RSS 0.12 GiB, min available 7.17 GiB, VmSwap 0.0 MiB, model f52ab52af6ba4c7ef1005eb714b7282146976296cd21aa7fe1f4fbdd57ff2689
+en-32m-whitespace_split-r16000: rules=16000; E=3234403; alloc=25649640; live=6650648; checked
+zh-32m-whitespace_split-r16000: pid 2285226; MemAvailable 7.25 GiB
+zh-32m-whitespace_split-r16000: init 0.749s + merge 1.580s; train 3.125s, peak RSS 0.28 GiB, min available 7.02 GiB, VmSwap 0.0 MiB, model 9171397ff2ee6b749bdbfcfd1804216a93b2d21c2028f42449fb708b71546738
+zh-32m-whitespace_split-r16000: rules=16000; E=10666867; alloc=67382584; live=29882016; checked
+zh-512m-none-r16000: pid 2285993; MemAvailable 6.43 GiB
+zh-512m-none-r16000: init 8.241s + merge 16.598s; train 30.187s, peak RSS 4.44 GiB, min available 2.27 GiB, VmSwap 0.0 MiB, model 19f35b3bf7b037dfa5418a29e08b84af6a39bc3151e2d570e24cf6e899878345
+zh-512m-none-r16000: rules=16000; E=203230114; alloc=1361236364; live=861028908; checked

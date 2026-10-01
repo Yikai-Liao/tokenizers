@@ -1,0 +1,256 @@
+{
+  "control": {
+    "command": [
+      "/usr/bin/python3",
+      "/root/code/tokenizers/benchmarks/hf-bpe/run_native_fair.py",
+      "--case",
+      "en16m-none-t0",
+      "--worktree",
+      "/root/code/tokenizers-worktrees/prepare-rule-aggregate",
+      "--build-root",
+      "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-j-arena-threshold",
+      "--binary",
+      "/root/code/tokenizers/benchmarks/hf-bpe/target/release/hf-bpe-native-j-arena-threshold",
+      "--corpus",
+      ".build/posting-distribution-inputs/en-16m-none-r16000/input.txt",
+      "--output",
+      "/root/code/tokenizers/benchmarks/hf-bpe/results/arena-threshold/en16m-none-t0.jsonl",
+      "--split",
+      "none",
+      "--vocab",
+      "18124",
+      "--initialization-workers",
+      "4",
+      "--merge-workers",
+      "4",
+      "--atomic-corpus"
+    ],
+    "extra_environment": {
+      "HF_BPE_ARENA_MAX_BYTES": "0"
+    },
+    "cutoff_bytes": 0,
+    "cutoff_label": "0",
+    "count": 1,
+    "scope": "same binary cutoff sensitivity; no concurrent CPU tasks"
+  },
+  "arena": {
+    "arenas": [
+      {
+        "allocations": 0,
+        "backing_bytes": 0,
+        "backing_bytes_including_metadata": 0,
+        "chunks": 0,
+        "grows": 0,
+        "requested_bytes": 0,
+        "system_allocations": 141857,
+        "system_freed_bytes": 145917712,
+        "system_frees": 390356,
+        "system_requested_bytes": 39155980
+      },
+      {
+        "allocations": 0,
+        "backing_bytes": 0,
+        "backing_bytes_including_metadata": 0,
+        "chunks": 0,
+        "grows": 0,
+        "requested_bytes": 0,
+        "system_allocations": 131776,
+        "system_freed_bytes": 4801708,
+        "system_frees": 51218,
+        "system_requested_bytes": 41568480
+      },
+      {
+        "allocations": 0,
+        "backing_bytes": 0,
+        "backing_bytes_including_metadata": 0,
+        "chunks": 0,
+        "grows": 0,
+        "requested_bytes": 0,
+        "system_allocations": 136993,
+        "system_freed_bytes": 5781204,
+        "system_frees": 52485,
+        "system_requested_bytes": 42314540
+      },
+      {
+        "allocations": 0,
+        "backing_bytes": 0,
+        "backing_bytes_including_metadata": 0,
+        "chunks": 0,
+        "grows": 0,
+        "requested_bytes": 0,
+        "system_allocations": 135502,
+        "system_freed_bytes": 5204660,
+        "system_frees": 52069,
+        "system_requested_bytes": 38666284
+      }
+    ],
+    "collect_ms": 1.410074,
+    "cutoff_bytes": 0,
+    "release_ms": 0.039942
+  },
+  "totals": {
+    "allocations": 0,
+    "backing_bytes": 0,
+    "backing_bytes_including_metadata": 0,
+    "chunks": 0,
+    "grows": 0,
+    "requested_bytes": 0,
+    "system_allocations": 546128,
+    "system_freed_bytes": 161705284,
+    "system_frees": 546128,
+    "system_requested_bytes": 161705284
+  },
+  "phase": {
+    "cutoff_bytes": 0,
+    "trace": [
+      {
+        "label": "initialize_return",
+        "memory": {
+          "VmHWM": 359096320,
+          "VmRSS": 159883264,
+          "VmSwap": 0
+        },
+        "rules": 0
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 359096320,
+          "VmRSS": 207183872,
+          "VmSwap": 0
+        },
+        "rules": 403
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 359096320,
+          "VmRSS": 211902464,
+          "VmSwap": 0
+        },
+        "rules": 1148
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 359096320,
+          "VmRSS": 225808384,
+          "VmSwap": 0
+        },
+        "rules": 1999
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 359096320,
+          "VmRSS": 226353152,
+          "VmSwap": 0
+        },
+        "rules": 3246
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 359096320,
+          "VmRSS": 226725888,
+          "VmSwap": 0
+        },
+        "rules": 4528
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 359096320,
+          "VmRSS": 262107136,
+          "VmSwap": 0
+        },
+        "rules": 5987
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 359096320,
+          "VmRSS": 262369280,
+          "VmSwap": 0
+        },
+        "rules": 7604
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 359096320,
+          "VmRSS": 262565888,
+          "VmSwap": 0
+        },
+        "rules": 9104
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 359096320,
+          "VmRSS": 262750208,
+          "VmSwap": 0
+        },
+        "rules": 10826
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 359096320,
+          "VmRSS": 262893568,
+          "VmSwap": 0
+        },
+        "rules": 12482
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 359096320,
+          "VmRSS": 263057408,
+          "VmSwap": 0
+        },
+        "rules": 14746
+      },
+      {
+        "label": "merge_end_before_inventory",
+        "memory": {
+          "VmHWM": 359096320,
+          "VmRSS": 263131136,
+          "VmSwap": 0
+        },
+        "rules": 16000
+      }
+    ]
+  },
+  "inventory": {
+    "heap_bytes_histogram": [
+      1940560,
+      2013012,
+      2463224,
+      2933728,
+      3088684,
+      5641516,
+      6255700,
+      25019984
+    ],
+    "heap_capacity_histogram": [
+      121285,
+      81727,
+      52401,
+      31975,
+      17477,
+      11702,
+      3244,
+      1287
+    ],
+    "heap_payload_bytes": 49356408,
+    "heap_postings": 321098,
+    "inline_postings": 161215,
+    "inventory_ms": 9.845505,
+    "owner_heap_capacity_bytes": 18249728,
+    "owner_heap_items": 835917,
+    "owner_table_capacity_bytes": 34603072,
+    "stored_positions": 12584940
+  },
+  "allocator_origin_checks": "PASS"
+}

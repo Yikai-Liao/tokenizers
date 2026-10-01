@@ -1,0 +1,373 @@
+{
+  "control": {
+    "command": [
+      "/usr/bin/python3",
+      "/root/code/tokenizers/benchmarks/hf-bpe/run_native_fair.py",
+      "--case",
+      "zh512m-t32",
+      "--worktree",
+      "/root/code/tokenizers-worktrees/prepare-rule-aggregate",
+      "--build-root",
+      "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-j-arena-threshold",
+      "--binary",
+      "/root/code/tokenizers/benchmarks/hf-bpe/target/release/hf-bpe-native-j-arena-threshold",
+      "--corpus",
+      "/root/code/tokenizers/benchmarks/hf-bpe/.build/gb-corpus/zh-512m.txt",
+      "--output",
+      "/root/code/tokenizers/benchmarks/hf-bpe/results/arena-threshold/zh512m-t32.jsonl",
+      "--split",
+      "none",
+      "--vocab",
+      "50000",
+      "--initialization-workers",
+      "4",
+      "--merge-workers",
+      "4",
+      "--atomic-corpus"
+    ],
+    "extra_environment": {
+      "HF_BPE_ARENA_MAX_BYTES": "32"
+    },
+    "cutoff_bytes": 32,
+    "cutoff_label": "32",
+    "count": 1,
+    "scope": "same binary cutoff sensitivity; no concurrent CPU tasks"
+  },
+  "arena": {
+    "arenas": [
+      {
+        "allocations": 1496834,
+        "backing_bytes": 33552896,
+        "backing_bytes_including_metadata": 33553664,
+        "chunks": 16,
+        "grows": 0,
+        "requested_bytes": 29033176,
+        "system_allocations": 838406,
+        "system_freed_bytes": 1239875748,
+        "system_frees": 2981107,
+        "system_requested_bytes": 315969292
+      },
+      {
+        "allocations": 1489484,
+        "backing_bytes": 33552896,
+        "backing_bytes_including_metadata": 33553664,
+        "chunks": 16,
+        "grows": 0,
+        "requested_bytes": 28879852,
+        "system_allocations": 837579,
+        "system_freed_bytes": 16242364,
+        "system_frees": 124017,
+        "system_requested_bytes": 327983920
+      },
+      {
+        "allocations": 1492866,
+        "backing_bytes": 33552896,
+        "backing_bytes_including_metadata": 33553664,
+        "chunks": 16,
+        "grows": 0,
+        "requested_bytes": 28967612,
+        "system_allocations": 839451,
+        "system_freed_bytes": 16027960,
+        "system_frees": 124147,
+        "system_requested_bytes": 325959572
+      },
+      {
+        "allocations": 1490695,
+        "backing_bytes": 33552896,
+        "backing_bytes_including_metadata": 33553664,
+        "chunks": 16,
+        "grows": 0,
+        "requested_bytes": 28909152,
+        "system_allocations": 838397,
+        "system_freed_bytes": 15869572,
+        "system_frees": 124562,
+        "system_requested_bytes": 318102860
+      }
+    ],
+    "collect_ms": 4.570853,
+    "cutoff_bytes": 32,
+    "release_ms": 0.946426
+  },
+  "totals": {
+    "allocations": 5969879,
+    "backing_bytes": 134211584,
+    "backing_bytes_including_metadata": 134214656,
+    "chunks": 64,
+    "grows": 0,
+    "requested_bytes": 115789792,
+    "system_allocations": 3353833,
+    "system_freed_bytes": 1288015644,
+    "system_frees": 3353833,
+    "system_requested_bytes": 1288015644
+  },
+  "phase": {
+    "cutoff_bytes": 32,
+    "trace": [
+      {
+        "label": "initialize_return",
+        "memory": {
+          "VmHWM": 4759977984,
+          "VmRSS": 2485272576,
+          "VmSwap": 0
+        },
+        "rules": 0
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 4759977984,
+          "VmRSS": 2651242496,
+          "VmSwap": 0
+        },
+        "rules": 587
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 4759977984,
+          "VmRSS": 2831773696,
+          "VmSwap": 0
+        },
+        "rules": 1435
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 4759977984,
+          "VmRSS": 2943815680,
+          "VmSwap": 0
+        },
+        "rules": 2392
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 4759977984,
+          "VmRSS": 2959720448,
+          "VmSwap": 0
+        },
+        "rules": 3302
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 4759977984,
+          "VmRSS": 2972860416,
+          "VmSwap": 0
+        },
+        "rules": 4260
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 4759977984,
+          "VmRSS": 2988019712,
+          "VmSwap": 0
+        },
+        "rules": 5431
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 4759977984,
+          "VmRSS": 3273265152,
+          "VmSwap": 0
+        },
+        "rules": 6570
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 4759977984,
+          "VmRSS": 3283791872,
+          "VmSwap": 0
+        },
+        "rules": 7741
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 4759977984,
+          "VmRSS": 3292221440,
+          "VmSwap": 0
+        },
+        "rules": 9025
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 4759977984,
+          "VmRSS": 3300986880,
+          "VmSwap": 0
+        },
+        "rules": 10149
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 4759977984,
+          "VmRSS": 3304316928,
+          "VmSwap": 0
+        },
+        "rules": 11437
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 4759977984,
+          "VmRSS": 3315683328,
+          "VmSwap": 0
+        },
+        "rules": 12784
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 4759977984,
+          "VmRSS": 3320000512,
+          "VmSwap": 0
+        },
+        "rules": 13968
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 4759977984,
+          "VmRSS": 3328421888,
+          "VmSwap": 0
+        },
+        "rules": 15107
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 4759977984,
+          "VmRSS": 3330560000,
+          "VmSwap": 0
+        },
+        "rules": 16388
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 4759977984,
+          "VmRSS": 3338989568,
+          "VmSwap": 0
+        },
+        "rules": 17633
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 4759977984,
+          "VmRSS": 3341127680,
+          "VmSwap": 0
+        },
+        "rules": 18943
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 4759977984,
+          "VmRSS": 3347460096,
+          "VmSwap": 0
+        },
+        "rules": 20161
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 4759977984,
+          "VmRSS": 3347496960,
+          "VmSwap": 0
+        },
+        "rules": 21724
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 4759977984,
+          "VmRSS": 3355918336,
+          "VmSwap": 0
+        },
+        "rules": 23100
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 4759977984,
+          "VmRSS": 3358048256,
+          "VmSwap": 0
+        },
+        "rules": 24527
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 4759977984,
+          "VmRSS": 3364380672,
+          "VmSwap": 0
+        },
+        "rules": 26177
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 4759977984,
+          "VmRSS": 3366514688,
+          "VmSwap": 0
+        },
+        "rules": 27670
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 4759977984,
+          "VmRSS": 3366543360,
+          "VmSwap": 0
+        },
+        "rules": 28956
+      },
+      {
+        "label": "merge_end_before_inventory",
+        "memory": {
+          "VmHWM": 4759977984,
+          "VmRSS": 3366547456,
+          "VmSwap": 0
+        },
+        "rules": 29243
+      }
+    ]
+  },
+  "inventory": {
+    "heap_bytes_histogram": [
+      41918368,
+      45042140,
+      55601488,
+      66479800,
+      77133916,
+      183064668,
+      181840484,
+      158019560
+    ],
+    "heap_capacity_histogram": [
+      2619898,
+      1827227,
+      1183000,
+      725296,
+      426426,
+      377094,
+      100724,
+      14966
+    ],
+    "heap_payload_bytes": 809100424,
+    "heap_postings": 7274631,
+    "inline_postings": 3297497,
+    "inventory_ms": 192.204679,
+    "owner_heap_capacity_bytes": 345282176,
+    "owner_heap_items": 14225344,
+    "owner_table_capacity_bytes": 553648192,
+    "stored_positions": 207224101
+  },
+  "allocator_origin_checks": "PASS"
+}

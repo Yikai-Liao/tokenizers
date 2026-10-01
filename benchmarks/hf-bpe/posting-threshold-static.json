@@ -1,0 +1,1836 @@
+{
+  "kind": "initial-character-pair-static-only",
+  "split": "Actual runner custom Lines uses BufRead::read_line and preserves LF/CR; Rust char::is_whitespace Unicode White_Space equivalent for whitespace_split; no normalization, no alphabet restriction",
+  "revision": "b04c8d1ceb2f5cd4588862100d08de323dccfbaa",
+  "runs": [
+    {
+      "language": "en",
+      "size_mib_label": 1,
+      "bytes": 1048035,
+      "sha256": "830150d2e68195b12a2ef93dd07abae1626453668eb9c09eeb6ca946228426d6",
+      "nested_prefix": true,
+      "split": "none",
+      "pieces_unique": 3279,
+      "pieces_weighted": 3291,
+      "N_unique": 1042596,
+      "E_unique": 1039317,
+      "N_weighted": 1043783,
+      "E_weighted": 1040492,
+      "piece_length_unique_quantiles": {
+        "0.5": 209,
+        "0.9": 683,
+        "0.95": 908,
+        "0.99": 1589,
+        "1.0": 6556
+      },
+      "weight_quantiles": {
+        "0.5": 1,
+        "0.9": 1,
+        "0.95": 1,
+        "0.99": 1,
+        "1.0": 3
+      },
+      "ESS_piece": 3265.2037986132045,
+      "initial_pair_types_all": 4641,
+      "initial_pair_types_floor2": 3048,
+      "initial_pair_physical_length_quantiles_floor2": {
+        "0.5": 11,
+        "0.9": 564,
+        "0.95": 1722,
+        "0.99": 6828,
+        "1.0": 24715
+      },
+      "initial_heap_allocations_floor2": 2545,
+      "initial_heap_capacity_bytes_floor2": 4148016,
+      "initial_heap_thresholds_bytes": {
+        "16": {
+          "allocations": 477,
+          "capacity_bytes": 7632
+        },
+        "32": {
+          "allocations": 907,
+          "capacity_bytes": 18296
+        },
+        "64": {
+          "allocations": 1224,
+          "capacity_bytes": 33484
+        },
+        "128": {
+          "allocations": 1513,
+          "capacity_bytes": 60164
+        },
+        "256": {
+          "allocations": 1743,
+          "capacity_bytes": 103152
+        },
+        "512": {
+          "allocations": 1931,
+          "capacity_bytes": 170776
+        },
+        "1024": {
+          "allocations": 2098,
+          "capacity_bytes": 296040
+        },
+        "4096": {
+          "allocations": 2326,
+          "capacity_bytes": 794208
+        }
+      },
+      "seconds_static": 1.0651549310132395,
+      "corrected_line_endings": true
+    },
+    {
+      "language": "en",
+      "size_mib_label": 1,
+      "bytes": 1048035,
+      "sha256": "830150d2e68195b12a2ef93dd07abae1626453668eb9c09eeb6ca946228426d6",
+      "nested_prefix": true,
+      "split": "whitespace_split",
+      "pieces_unique": 39688,
+      "pieces_weighted": 166010,
+      "N_unique": 296732,
+      "E_unique": 257044,
+      "N_weighted": 877773,
+      "E_weighted": 711763,
+      "piece_length_unique_quantiles": {
+        "0.5": 7,
+        "0.9": 11,
+        "0.95": 12,
+        "0.99": 16,
+        "1.0": 169
+      },
+      "weight_quantiles": {
+        "0.5": 1,
+        "0.9": 5,
+        "0.95": 9,
+        "0.99": 36,
+        "1.0": 8936
+      },
+      "ESS_piece": 146.25272540398853,
+      "initial_pair_types_all": 4300,
+      "initial_pair_types_floor2": 2781,
+      "initial_pair_physical_length_quantiles_floor2": {
+        "0.5": 7,
+        "0.9": 180,
+        "0.95": 442,
+        "0.99": 1545,
+        "1.0": 4710
+      },
+      "initial_heap_allocations_floor2": 2156,
+      "initial_heap_capacity_bytes_floor2": 1018804,
+      "initial_heap_thresholds_bytes": {
+        "16": {
+          "allocations": 476,
+          "capacity_bytes": 7616
+        },
+        "32": {
+          "allocations": 852,
+          "capacity_bytes": 16880
+        },
+        "64": {
+          "allocations": 1182,
+          "capacity_bytes": 32388
+        },
+        "128": {
+          "allocations": 1445,
+          "capacity_bytes": 57404
+        },
+        "256": {
+          "allocations": 1651,
+          "capacity_bytes": 96516
+        },
+        "512": {
+          "allocations": 1811,
+          "capacity_bytes": 154832
+        },
+        "1024": {
+          "allocations": 1937,
+          "capacity_bytes": 247860
+        },
+        "4096": {
+          "allocations": 2091,
+          "capacity_bytes": 552020
+        }
+      },
+      "seconds_static": 1.074278965999838,
+      "line_ending_correction_dictionary_verified": true
+    },
+    {
+      "language": "en",
+      "size_mib_label": 4,
+      "bytes": 4194232,
+      "sha256": "dc4c81cebdc0b7ef3ebd1326d214a22823b7f55829370cf27afe02c453d4fbbc",
+      "nested_prefix": true,
+      "split": "none",
+      "pieces_unique": 13182,
+      "pieces_weighted": 13269,
+      "N_unique": 4172343,
+      "E_unique": 4159161,
+      "N_weighted": 4177991,
+      "E_weighted": 4164722,
+      "piece_length_unique_quantiles": {
+        "0.5": 214,
+        "0.9": 674,
+        "0.95": 900,
+        "0.99": 1537,
+        "1.0": 6556
+      },
+      "weight_quantiles": {
+        "0.5": 1,
+        "0.9": 1,
+        "0.95": 1,
+        "0.99": 1,
+        "1.0": 11
+      },
+      "ESS_piece": 12869.407280169578,
+      "initial_pair_types_all": 8281,
+      "initial_pair_types_floor2": 5138,
+      "initial_pair_physical_length_quantiles_floor2": {
+        "0.5": 10,
+        "0.9": 804,
+        "0.95": 3200,
+        "0.99": 19148,
+        "1.0": 99619
+      },
+      "initial_heap_allocations_floor2": 4264,
+      "initial_heap_capacity_bytes_floor2": 16619308,
+      "initial_heap_thresholds_bytes": {
+        "16": {
+          "allocations": 882,
+          "capacity_bytes": 14112
+        },
+        "32": {
+          "allocations": 1564,
+          "capacity_bytes": 30896
+        },
+        "64": {
+          "allocations": 2120,
+          "capacity_bytes": 57620
+        },
+        "128": {
+          "allocations": 2579,
+          "capacity_bytes": 100252
+        },
+        "256": {
+          "allocations": 2935,
+          "capacity_bytes": 165568
+        },
+        "512": {
+          "allocations": 3227,
+          "capacity_bytes": 270968
+        },
+        "1024": {
+          "allocations": 3463,
+          "capacity_bytes": 442588
+        },
+        "4096": {
+          "allocations": 3813,
+          "capacity_bytes": 1199780
+        }
+      },
+      "seconds_static": 4.246950897999341,
+      "corrected_line_endings": true
+    },
+    {
+      "language": "en",
+      "size_mib_label": 4,
+      "bytes": 4194232,
+      "sha256": "dc4c81cebdc0b7ef3ebd1326d214a22823b7f55829370cf27afe02c453d4fbbc",
+      "nested_prefix": true,
+      "split": "whitespace_split",
+      "pieces_unique": 106898,
+      "pieces_weighted": 665298,
+      "N_unique": 827418,
+      "E_unique": 720520,
+      "N_weighted": 3512693,
+      "E_weighted": 2847395,
+      "piece_length_unique_quantiles": {
+        "0.5": 7,
+        "0.9": 11,
+        "0.95": 13,
+        "0.99": 17,
+        "1.0": 169
+      },
+      "weight_quantiles": {
+        "0.5": 1,
+        "0.9": 6,
+        "0.95": 13,
+        "0.99": 60,
+        "1.0": 35836
+      },
+      "ESS_piece": 148.32950070850046,
+      "initial_pair_types_all": 7633,
+      "initial_pair_types_floor2": 4722,
+      "initial_pair_physical_length_quantiles_floor2": {
+        "0.5": 7,
+        "0.9": 220,
+        "0.95": 673,
+        "0.99": 3276,
+        "1.0": 12563
+      },
+      "initial_heap_allocations_floor2": 3681,
+      "initial_heap_capacity_bytes_floor2": 2864980,
+      "initial_heap_thresholds_bytes": {
+        "16": {
+          "allocations": 860,
+          "capacity_bytes": 13760
+        },
+        "32": {
+          "allocations": 1510,
+          "capacity_bytes": 29868
+        },
+        "64": {
+          "allocations": 2019,
+          "capacity_bytes": 54488
+        },
+        "128": {
+          "allocations": 2453,
+          "capacity_bytes": 95160
+        },
+        "256": {
+          "allocations": 2768,
+          "capacity_bytes": 152884
+        },
+        "512": {
+          "allocations": 3034,
+          "capacity_bytes": 248688
+        },
+        "1024": {
+          "allocations": 3250,
+          "capacity_bytes": 407008
+        },
+        "4096": {
+          "allocations": 3517,
+          "capacity_bytes": 980488
+        }
+      },
+      "seconds_static": 2.925489279004978,
+      "line_ending_correction_dictionary_verified": true
+    },
+    {
+      "language": "en",
+      "size_mib_label": 16,
+      "bytes": 16776969,
+      "sha256": "41b20e33253a4db8c66b95536cbadc86c79072e81eb9e5cd59ef136490abdec9",
+      "nested_prefix": true,
+      "split": "none",
+      "pieces_unique": 52453,
+      "pieces_weighted": 53285,
+      "N_unique": 16649633,
+      "E_unique": 16597180,
+      "N_weighted": 16709038,
+      "E_weighted": 16655753,
+      "piece_length_unique_quantiles": {
+        "0.5": 215,
+        "0.9": 676,
+        "0.95": 892,
+        "0.99": 1510,
+        "1.0": 7992
+      },
+      "weight_quantiles": {
+        "0.5": 1,
+        "0.9": 1,
+        "0.95": 1,
+        "0.99": 1,
+        "1.0": 59
+      },
+      "ESS_piece": 45642.63226003505,
+      "initial_pair_types_all": 15451,
+      "initial_pair_types_floor2": 8911,
+      "initial_pair_physical_length_quantiles_floor2": {
+        "0.5": 8,
+        "0.9": 768,
+        "0.95": 4286,
+        "0.99": 48763,
+        "1.0": 394771
+      },
+      "initial_heap_allocations_floor2": 7159,
+      "initial_heap_capacity_bytes_floor2": 66352028,
+      "initial_heap_thresholds_bytes": {
+        "16": {
+          "allocations": 1475,
+          "capacity_bytes": 23600
+        },
+        "32": {
+          "allocations": 2756,
+          "capacity_bytes": 55432
+        },
+        "64": {
+          "allocations": 3703,
+          "capacity_bytes": 100312
+        },
+        "128": {
+          "allocations": 4443,
+          "capacity_bytes": 169044
+        },
+        "256": {
+          "allocations": 4994,
+          "capacity_bytes": 270780
+        },
+        "512": {
+          "allocations": 5467,
+          "capacity_bytes": 443836
+        },
+        "1024": {
+          "allocations": 5836,
+          "capacity_bytes": 714600
+        },
+        "4096": {
+          "allocations": 6360,
+          "capacity_bytes": 1831212
+        }
+      },
+      "seconds_static": 17.50648374701268,
+      "corrected_line_endings": true
+    },
+    {
+      "language": "en",
+      "size_mib_label": 16,
+      "bytes": 16776969,
+      "sha256": "41b20e33253a4db8c66b95536cbadc86c79072e81eb9e5cd59ef136490abdec9",
+      "nested_prefix": true,
+      "split": "whitespace_split",
+      "pieces_unique": 281149,
+      "pieces_weighted": 2658265,
+      "N_unique": 2254755,
+      "E_unique": 1973606,
+      "N_weighted": 14050773,
+      "E_weighted": 11392508,
+      "piece_length_unique_quantiles": {
+        "0.5": 8,
+        "0.9": 12,
+        "0.95": 13,
+        "0.99": 17,
+        "1.0": 222
+      },
+      "weight_quantiles": {
+        "0.5": 1,
+        "0.9": 7,
+        "0.95": 16,
+        "0.99": 98,
+        "1.0": 142485
+      },
+      "ESS_piece": 149.24174489455064,
+      "initial_pair_types_all": 14170,
+      "initial_pair_types_floor2": 8165,
+      "initial_pair_physical_length_quantiles_floor2": {
+        "0.5": 6,
+        "0.9": 265,
+        "0.95": 815,
+        "0.99": 5746,
+        "1.0": 32448
+      },
+      "initial_heap_allocations_floor2": 6147,
+      "initial_heap_capacity_bytes_floor2": 7858924,
+      "initial_heap_thresholds_bytes": {
+        "16": {
+          "allocations": 1395,
+          "capacity_bytes": 22320
+        },
+        "32": {
+          "allocations": 2603,
+          "capacity_bytes": 52332
+        },
+        "64": {
+          "allocations": 3464,
+          "capacity_bytes": 93432
+        },
+        "128": {
+          "allocations": 4087,
+          "capacity_bytes": 151164
+        },
+        "256": {
+          "allocations": 4606,
+          "capacity_bytes": 247028
+        },
+        "512": {
+          "allocations": 5026,
+          "capacity_bytes": 400220
+        },
+        "1024": {
+          "allocations": 5312,
+          "capacity_bytes": 606952
+        },
+        "4096": {
+          "allocations": 5782,
+          "capacity_bytes": 1544704
+        }
+      },
+      "seconds_static": 9.012469992012484,
+      "line_ending_correction_dictionary_verified": true
+    },
+    {
+      "language": "zh",
+      "size_mib_label": 1,
+      "bytes": 1048535,
+      "sha256": "06f507d1c4a4f5183d6eb03ff289588091553f1170aab92bcaee8a7860079c5b",
+      "nested_prefix": true,
+      "split": "none",
+      "pieces_unique": 4318,
+      "pieces_weighted": 5075,
+      "N_unique": 413398,
+      "E_unique": 409080,
+      "N_weighted": 430682,
+      "E_weighted": 425607,
+      "piece_length_unique_quantiles": {
+        "0.5": 64,
+        "0.9": 187,
+        "0.95": 259,
+        "0.99": 520,
+        "1.0": 5123
+      },
+      "weight_quantiles": {
+        "0.5": 1,
+        "0.9": 1,
+        "0.95": 1,
+        "0.99": 3,
+        "1.0": 136
+      },
+      "ESS_piece": 363.39506172839504,
+      "initial_pair_types_all": 111546,
+      "initial_pair_types_floor2": 37911,
+      "initial_pair_physical_length_quantiles_floor2": {
+        "0.5": 3,
+        "0.9": 13,
+        "0.95": 26,
+        "0.99": 108,
+        "1.0": 3133
+      },
+      "initial_heap_allocations_floor2": 21724,
+      "initial_heap_capacity_bytes_floor2": 1238636,
+      "initial_heap_thresholds_bytes": {
+        "16": {
+          "allocations": 10051,
+          "capacity_bytes": 160816
+        },
+        "32": {
+          "allocations": 15805,
+          "capacity_bytes": 301052
+        },
+        "64": {
+          "allocations": 18732,
+          "capacity_bytes": 437504
+        },
+        "128": {
+          "allocations": 20206,
+          "capacity_bytes": 571136
+        },
+        "256": {
+          "allocations": 21009,
+          "capacity_bytes": 712608
+        },
+        "512": {
+          "allocations": 21427,
+          "capacity_bytes": 866496
+        },
+        "1024": {
+          "allocations": 21604,
+          "capacity_bytes": 990900
+        },
+        "4096": {
+          "allocations": 21716,
+          "capacity_bytes": 1176336
+        }
+      },
+      "seconds_static": 1.0428198740119115,
+      "corrected_line_endings": true
+    },
+    {
+      "language": "zh",
+      "size_mib_label": 1,
+      "bytes": 1048535,
+      "sha256": "06f507d1c4a4f5183d6eb03ff289588091553f1170aab92bcaee8a7860079c5b",
+      "nested_prefix": true,
+      "split": "whitespace_split",
+      "pieces_unique": 13856,
+      "pieces_weighted": 22081,
+      "N_unique": 367965,
+      "E_unique": 354109,
+      "N_weighted": 408601,
+      "E_weighted": 386520,
+      "piece_length_unique_quantiles": {
+        "0.5": 10,
+        "0.9": 74,
+        "0.95": 104,
+        "0.99": 214,
+        "1.0": 712
+      },
+      "weight_quantiles": {
+        "0.5": 1,
+        "0.9": 1,
+        "0.95": 2,
+        "0.99": 7,
+        "1.0": 1270
+      },
+      "ESS_piece": 202.05379654904763,
+      "initial_pair_types_all": 108694,
+      "initial_pair_types_floor2": 36403,
+      "initial_pair_physical_length_quantiles_floor2": {
+        "0.5": 3,
+        "0.9": 12,
+        "0.95": 23,
+        "0.99": 94,
+        "1.0": 2312
+      },
+      "initial_heap_allocations_floor2": 20444,
+      "initial_heap_capacity_bytes_floor2": 1026064,
+      "initial_heap_thresholds_bytes": {
+        "16": {
+          "allocations": 9638,
+          "capacity_bytes": 154208
+        },
+        "32": {
+          "allocations": 15094,
+          "capacity_bytes": 287036
+        },
+        "64": {
+          "allocations": 17802,
+          "capacity_bytes": 413532
+        },
+        "128": {
+          "allocations": 19186,
+          "capacity_bytes": 538784
+        },
+        "256": {
+          "allocations": 19885,
+          "capacity_bytes": 661040
+        },
+        "512": {
+          "allocations": 20224,
+          "capacity_bytes": 784040
+        },
+        "1024": {
+          "allocations": 20369,
+          "capacity_bytes": 884872
+        },
+        "4096": {
+          "allocations": 20440,
+          "capacity_bytes": 1000272
+        }
+      },
+      "seconds_static": 1.0623703559977002,
+      "line_ending_correction_dictionary_verified": true
+    },
+    {
+      "language": "zh",
+      "size_mib_label": 4,
+      "bytes": 4188394,
+      "sha256": "8e73ef2774b7ff8810c57e05348fd809daff3c8db0711d45b19aa5420369c497",
+      "nested_prefix": true,
+      "split": "none",
+      "pieces_unique": 16138,
+      "pieces_weighted": 19542,
+      "N_unique": 1627655,
+      "E_unique": 1611517,
+      "N_weighted": 1711754,
+      "E_weighted": 1692212,
+      "piece_length_unique_quantiles": {
+        "0.5": 65,
+        "0.9": 198,
+        "0.95": 275,
+        "0.99": 547,
+        "1.0": 5123
+      },
+      "weight_quantiles": {
+        "0.5": 1,
+        "0.9": 1,
+        "0.95": 1,
+        "0.99": 3,
+        "1.0": 460
+      },
+      "ESS_piece": 379.42200329059796,
+      "initial_pair_types_all": 289019,
+      "initial_pair_types_floor2": 114436,
+      "initial_pair_physical_length_quantiles_floor2": {
+        "0.5": 3,
+        "0.9": 16,
+        "0.95": 32,
+        "0.99": 153,
+        "1.0": 13949
+      },
+      "initial_heap_allocations_floor2": 70551,
+      "initial_heap_capacity_bytes_floor2": 5475080,
+      "initial_heap_thresholds_bytes": {
+        "16": {
+          "allocations": 30661,
+          "capacity_bytes": 490576
+        },
+        "32": {
+          "allocations": 49149,
+          "capacity_bytes": 943164
+        },
+        "64": {
+          "allocations": 59375,
+          "capacity_bytes": 1419112
+        },
+        "128": {
+          "allocations": 64880,
+          "capacity_bytes": 1920496
+        },
+        "256": {
+          "allocations": 67680,
+          "capacity_bytes": 2422916
+        },
+        "512": {
+          "allocations": 69139,
+          "capacity_bytes": 2949720
+        },
+        "1024": {
+          "allocations": 69888,
+          "capacity_bytes": 3474016
+        },
+        "4096": {
+          "allocations": 70451,
+          "capacity_bytes": 4561644
+        }
+      },
+      "seconds_static": 4.194154258992057,
+      "corrected_line_endings": true
+    },
+    {
+      "language": "zh",
+      "size_mib_label": 4,
+      "bytes": 4188394,
+      "sha256": "8e73ef2774b7ff8810c57e05348fd809daff3c8db0711d45b19aa5420369c497",
+      "nested_prefix": true,
+      "split": "whitespace_split",
+      "pieces_unique": 50083,
+      "pieces_weighted": 90718,
+      "N_unique": 1418262,
+      "E_unique": 1368179,
+      "N_weighted": 1621036,
+      "E_weighted": 1530318,
+      "piece_length_unique_quantiles": {
+        "0.5": 10,
+        "0.9": 77,
+        "0.95": 110,
+        "0.99": 228,
+        "1.0": 728
+      },
+      "weight_quantiles": {
+        "0.5": 1,
+        "0.9": 1,
+        "0.95": 2,
+        "0.99": 8,
+        "1.0": 8393
+      },
+      "ESS_piece": 92.24105003785134,
+      "initial_pair_types_all": 283658,
+      "initial_pair_types_floor2": 111113,
+      "initial_pair_physical_length_quantiles_floor2": {
+        "0.5": 3,
+        "0.9": 15,
+        "0.95": 30,
+        "0.99": 130,
+        "1.0": 8462
+      },
+      "initial_heap_allocations_floor2": 67441,
+      "initial_heap_capacity_bytes_floor2": 4512008,
+      "initial_heap_thresholds_bytes": {
+        "16": {
+          "allocations": 29743,
+          "capacity_bytes": 475888
+        },
+        "32": {
+          "allocations": 47524,
+          "capacity_bytes": 910420
+        },
+        "64": {
+          "allocations": 57192,
+          "capacity_bytes": 1359928
+        },
+        "128": {
+          "allocations": 62391,
+          "capacity_bytes": 1832624
+        },
+        "256": {
+          "allocations": 64955,
+          "capacity_bytes": 2293140
+        },
+        "512": {
+          "allocations": 66309,
+          "capacity_bytes": 2780176
+        },
+        "1024": {
+          "allocations": 66940,
+          "capacity_bytes": 3220084
+        },
+        "4096": {
+          "allocations": 67373,
+          "capacity_bytes": 4017548
+        }
+      },
+      "seconds_static": 4.387259495997569,
+      "line_ending_correction_dictionary_verified": true
+    },
+    {
+      "language": "zh",
+      "size_mib_label": 16,
+      "bytes": 16777136,
+      "sha256": "cdee18c95c05586054cfd8e364d3391bb4ca0c2e46cc89d6e4e159d2c0794dc9",
+      "nested_prefix": true,
+      "split": "none",
+      "pieces_unique": 62704,
+      "pieces_weighted": 76964,
+      "N_unique": 6440399,
+      "E_unique": 6377695,
+      "N_weighted": 6806759,
+      "E_weighted": 6729795,
+      "piece_length_unique_quantiles": {
+        "0.5": 66,
+        "0.9": 202,
+        "0.95": 282,
+        "0.99": 569,
+        "1.0": 6972
+      },
+      "weight_quantiles": {
+        "0.5": 1,
+        "0.9": 1,
+        "0.95": 1,
+        "0.99": 1,
+        "1.0": 1710
+      },
+      "ESS_piece": 409.31287981862545,
+      "initial_pair_types_all": 687323,
+      "initial_pair_types_floor2": 317575,
+      "initial_pair_physical_length_quantiles_floor2": {
+        "0.5": 3,
+        "0.9": 21,
+        "0.95": 45,
+        "0.99": 229,
+        "1.0": 47248
+      },
+      "initial_heap_allocations_floor2": 209552,
+      "initial_heap_capacity_bytes_floor2": 23374188,
+      "initial_heap_thresholds_bytes": {
+        "16": {
+          "allocations": 82178,
+          "capacity_bytes": 1314848
+        },
+        "32": {
+          "allocations": 136765,
+          "capacity_bytes": 2655304
+        },
+        "64": {
+          "allocations": 169632,
+          "capacity_bytes": 4194380
+        },
+        "128": {
+          "allocations": 188164,
+          "capacity_bytes": 5887108
+        },
+        "256": {
+          "allocations": 198409,
+          "capacity_bytes": 7737012
+        },
+        "512": {
+          "allocations": 203970,
+          "capacity_bytes": 9730528
+        },
+        "1024": {
+          "allocations": 206723,
+          "capacity_bytes": 11696640
+        },
+        "4096": {
+          "allocations": 208903,
+          "capacity_bytes": 15797300
+        }
+      },
+      "seconds_static": 17.18564501099172,
+      "corrected_line_endings": true
+    },
+    {
+      "language": "zh",
+      "size_mib_label": 16,
+      "bytes": 16777136,
+      "sha256": "cdee18c95c05586054cfd8e364d3391bb4ca0c2e46cc89d6e4e159d2c0794dc9",
+      "nested_prefix": true,
+      "split": "whitespace_split",
+      "pieces_unique": 178878,
+      "pieces_weighted": 345216,
+      "N_unique": 5562647,
+      "E_unique": 5383769,
+      "N_weighted": 6461543,
+      "E_weighted": 6116327,
+      "piece_length_unique_quantiles": {
+        "0.5": 11,
+        "0.9": 82,
+        "0.95": 119,
+        "0.99": 242,
+        "1.0": 1541
+      },
+      "weight_quantiles": {
+        "0.5": 1,
+        "0.9": 1,
+        "0.95": 2,
+        "0.99": 9,
+        "1.0": 29292
+      },
+      "ESS_piece": 109.23733037629334,
+      "initial_pair_types_all": 678375,
+      "initial_pair_types_floor2": 311426,
+      "initial_pair_physical_length_quantiles_floor2": {
+        "0.5": 3,
+        "0.9": 20,
+        "0.95": 41,
+        "0.99": 203,
+        "1.0": 31539
+      },
+      "initial_heap_allocations_floor2": 202887,
+      "initial_heap_capacity_bytes_floor2": 19409048,
+      "initial_heap_thresholds_bytes": {
+        "16": {
+          "allocations": 80745,
+          "capacity_bytes": 1291920
+        },
+        "32": {
+          "allocations": 134057,
+          "capacity_bytes": 2600592
+        },
+        "64": {
+          "allocations": 165526,
+          "capacity_bytes": 4073292
+        },
+        "128": {
+          "allocations": 183173,
+          "capacity_bytes": 5683692
+        },
+        "256": {
+          "allocations": 192804,
+          "capacity_bytes": 7422776
+        },
+        "512": {
+          "allocations": 197974,
+          "capacity_bytes": 9272612
+        },
+        "1024": {
+          "allocations": 200473,
+          "capacity_bytes": 11056416
+        },
+        "4096": {
+          "allocations": 202414,
+          "capacity_bytes": 14645536
+        }
+      },
+      "seconds_static": 17.577289689012105,
+      "line_ending_correction_dictionary_verified": true
+    },
+    {
+      "language": "de",
+      "size_mib_label": 1,
+      "bytes": 1047960,
+      "sha256": "bae531e4140a53098b97389964100fe7215a72356200d4102de80e86243db5c3",
+      "nested_prefix": true,
+      "split": "none",
+      "pieces_unique": 3005,
+      "pieces_weighted": 3017,
+      "N_unique": 1030126,
+      "E_unique": 1027121,
+      "N_weighted": 1031108,
+      "E_weighted": 1028091,
+      "piece_length_unique_quantiles": {
+        "0.5": 223,
+        "0.9": 743,
+        "0.95": 990,
+        "0.99": 1591,
+        "1.0": 7602
+      },
+      "weight_quantiles": {
+        "0.5": 1,
+        "0.9": 1,
+        "0.95": 1,
+        "0.99": 1,
+        "1.0": 5
+      },
+      "ESS_piece": 2969.7517128874388,
+      "initial_pair_types_all": 4466,
+      "initial_pair_types_floor2": 3157,
+      "initial_pair_physical_length_quantiles_floor2": {
+        "0.5": 12,
+        "0.9": 568,
+        "0.95": 1507,
+        "0.99": 6176,
+        "1.0": 29604
+      },
+      "initial_heap_allocations_floor2": 2660,
+      "initial_heap_capacity_bytes_floor2": 4100436,
+      "initial_heap_thresholds_bytes": {
+        "16": {
+          "allocations": 490,
+          "capacity_bytes": 7840
+        },
+        "32": {
+          "allocations": 894,
+          "capacity_bytes": 18000
+        },
+        "64": {
+          "allocations": 1214,
+          "capacity_bytes": 33228
+        },
+        "128": {
+          "allocations": 1480,
+          "capacity_bytes": 57636
+        },
+        "256": {
+          "allocations": 1709,
+          "capacity_bytes": 100652
+        },
+        "512": {
+          "allocations": 1980,
+          "capacity_bytes": 197632
+        },
+        "1024": {
+          "allocations": 2152,
+          "capacity_bytes": 321948
+        },
+        "4096": {
+          "allocations": 2455,
+          "capacity_bytes": 963884
+        }
+      },
+      "seconds_static": 1.2491915520222392,
+      "corrected_line_endings": true
+    },
+    {
+      "language": "de",
+      "size_mib_label": 1,
+      "bytes": 1047960,
+      "sha256": "bae531e4140a53098b97389964100fe7215a72356200d4102de80e86243db5c3",
+      "nested_prefix": true,
+      "split": "whitespace_split",
+      "pieces_unique": 43687,
+      "pieces_weighted": 142566,
+      "N_unique": 402166,
+      "E_unique": 358479,
+      "N_weighted": 888542,
+      "E_weighted": 745976,
+      "piece_length_unique_quantiles": {
+        "0.5": 9,
+        "0.9": 15,
+        "0.95": 17,
+        "0.99": 23,
+        "1.0": 96
+      },
+      "weight_quantiles": {
+        "0.5": 1,
+        "0.9": 3,
+        "0.95": 6,
+        "0.99": 27,
+        "1.0": 4694
+      },
+      "ESS_piece": 263.487248670583,
+      "initial_pair_types_all": 4079,
+      "initial_pair_types_floor2": 2862,
+      "initial_pair_physical_length_quantiles_floor2": {
+        "0.5": 8,
+        "0.9": 256,
+        "0.95": 547,
+        "0.99": 2414,
+        "1.0": 11281
+      },
+      "initial_heap_allocations_floor2": 2250,
+      "initial_heap_capacity_bytes_floor2": 1425748,
+      "initial_heap_thresholds_bytes": {
+        "16": {
+          "allocations": 452,
+          "capacity_bytes": 7232
+        },
+        "32": {
+          "allocations": 835,
+          "capacity_bytes": 16608
+        },
+        "64": {
+          "allocations": 1111,
+          "capacity_bytes": 29720
+        },
+        "128": {
+          "allocations": 1330,
+          "capacity_bytes": 50280
+        },
+        "256": {
+          "allocations": 1621,
+          "capacity_bytes": 104956
+        },
+        "512": {
+          "allocations": 1810,
+          "capacity_bytes": 173652
+        },
+        "1024": {
+          "allocations": 1967,
+          "capacity_bytes": 290512
+        },
+        "4096": {
+          "allocations": 2181,
+          "capacity_bytes": 713192
+        }
+      },
+      "seconds_static": 1.132380169001408,
+      "line_ending_correction_dictionary_verified": true
+    },
+    {
+      "language": "de",
+      "size_mib_label": 4,
+      "bytes": 4194304,
+      "sha256": "b80ff8eea9c3ccbc499fc47204e4b79810c3c594833509d9abd47ad1418d1f20",
+      "nested_prefix": true,
+      "split": "none",
+      "pieces_unique": 12053,
+      "pieces_weighted": 12173,
+      "N_unique": 4118371,
+      "E_unique": 4106318,
+      "N_weighted": 4127620,
+      "E_weighted": 4115447,
+      "piece_length_unique_quantiles": {
+        "0.5": 224,
+        "0.9": 753,
+        "0.95": 990,
+        "0.99": 1641,
+        "1.0": 7602
+      },
+      "weight_quantiles": {
+        "0.5": 1,
+        "0.9": 1,
+        "0.95": 1,
+        "0.99": 1,
+        "1.0": 15
+      },
+      "ESS_piece": 11566.773007571619,
+      "initial_pair_types_all": 7276,
+      "initial_pair_types_floor2": 4965,
+      "initial_pair_physical_length_quantiles_floor2": {
+        "0.5": 11,
+        "0.9": 1058,
+        "0.95": 3240,
+        "0.99": 17433,
+        "1.0": 118409
+      },
+      "initial_heap_allocations_floor2": 4080,
+      "initial_heap_capacity_bytes_floor2": 16410632,
+      "initial_heap_thresholds_bytes": {
+        "16": {
+          "allocations": 709,
+          "capacity_bytes": 11344
+        },
+        "32": {
+          "allocations": 1370,
+          "capacity_bytes": 27596
+        },
+        "64": {
+          "allocations": 1891,
+          "capacity_bytes": 52676
+        },
+        "128": {
+          "allocations": 2293,
+          "capacity_bytes": 89652
+        },
+        "256": {
+          "allocations": 2650,
+          "capacity_bytes": 155812
+        },
+        "512": {
+          "allocations": 2883,
+          "capacity_bytes": 239672
+        },
+        "1024": {
+          "allocations": 3121,
+          "capacity_bytes": 411576
+        },
+        "4096": {
+          "allocations": 3573,
+          "capacity_bytes": 1309308
+        }
+      },
+      "seconds_static": 4.244622861995595,
+      "corrected_line_endings": true
+    },
+    {
+      "language": "de",
+      "size_mib_label": 4,
+      "bytes": 4194304,
+      "sha256": "b80ff8eea9c3ccbc499fc47204e4b79810c3c594833509d9abd47ad1418d1f20",
+      "nested_prefix": true,
+      "split": "whitespace_split",
+      "pieces_unique": 124235,
+      "pieces_weighted": 570978,
+      "N_unique": 1200312,
+      "E_unique": 1076077,
+      "N_weighted": 3556642,
+      "E_weighted": 2985664,
+      "piece_length_unique_quantiles": {
+        "0.5": 9,
+        "0.9": 15,
+        "0.95": 18,
+        "0.99": 23,
+        "1.0": 128
+      },
+      "weight_quantiles": {
+        "0.5": 1,
+        "0.9": 4,
+        "0.95": 8,
+        "0.99": 40,
+        "1.0": 18953
+      },
+      "ESS_piece": 263.20302345222694,
+      "initial_pair_types_all": 6705,
+      "initial_pair_types_floor2": 4543,
+      "initial_pair_physical_length_quantiles_floor2": {
+        "0.5": 8,
+        "0.9": 376,
+        "0.95": 988,
+        "0.99": 4680,
+        "1.0": 32634
+      },
+      "initial_heap_allocations_floor2": 3489,
+      "initial_heap_capacity_bytes_floor2": 4289740,
+      "initial_heap_thresholds_bytes": {
+        "16": {
+          "allocations": 698,
+          "capacity_bytes": 11168
+        },
+        "32": {
+          "allocations": 1264,
+          "capacity_bytes": 25200
+        },
+        "64": {
+          "allocations": 1759,
+          "capacity_bytes": 48888
+        },
+        "128": {
+          "allocations": 2122,
+          "capacity_bytes": 82396
+        },
+        "256": {
+          "allocations": 2420,
+          "capacity_bytes": 135716
+        },
+        "512": {
+          "allocations": 2631,
+          "capacity_bytes": 213524
+        },
+        "1024": {
+          "allocations": 2925,
+          "capacity_bytes": 423008
+        },
+        "4096": {
+          "allocations": 3273,
+          "capacity_bytes": 1178504
+        }
+      },
+      "seconds_static": 3.6629747500119265,
+      "line_ending_correction_dictionary_verified": true
+    },
+    {
+      "language": "de",
+      "size_mib_label": 16,
+      "bytes": 16777205,
+      "sha256": "65d0cfa04d14f5e32a39c51acbf660f4a6bc2b6718d5967587a639e806a06fc7",
+      "nested_prefix": true,
+      "split": "none",
+      "pieces_unique": 47570,
+      "pieces_weighted": 48356,
+      "N_unique": 16442569,
+      "E_unique": 16394999,
+      "N_weighted": 16506992,
+      "E_weighted": 16458636,
+      "piece_length_unique_quantiles": {
+        "0.5": 230,
+        "0.9": 758,
+        "0.95": 1002,
+        "0.99": 1671,
+        "1.0": 7819
+      },
+      "weight_quantiles": {
+        "0.5": 1,
+        "0.9": 1,
+        "0.95": 1,
+        "0.99": 1,
+        "1.0": 57
+      },
+      "ESS_piece": 40512.53917322153,
+      "initial_pair_types_all": 12560,
+      "initial_pair_types_floor2": 8319,
+      "initial_pair_physical_length_quantiles_floor2": {
+        "0.5": 10,
+        "0.9": 1303,
+        "0.95": 6136,
+        "0.99": 45096,
+        "1.0": 472284
+      },
+      "initial_heap_allocations_floor2": 6870,
+      "initial_heap_capacity_bytes_floor2": 65554592,
+      "initial_heap_thresholds_bytes": {
+        "16": {
+          "allocations": 1310,
+          "capacity_bytes": 20960
+        },
+        "32": {
+          "allocations": 2500,
+          "capacity_bytes": 51056
+        },
+        "64": {
+          "allocations": 3436,
+          "capacity_bytes": 95880
+        },
+        "128": {
+          "allocations": 4111,
+          "capacity_bytes": 157880
+        },
+        "256": {
+          "allocations": 4650,
+          "capacity_bytes": 255984
+        },
+        "512": {
+          "allocations": 5093,
+          "capacity_bytes": 416908
+        },
+        "1024": {
+          "allocations": 5440,
+          "capacity_bytes": 670412
+        },
+        "4096": {
+          "allocations": 5916,
+          "capacity_bytes": 1712092
+        }
+      },
+      "seconds_static": 17.697280502005015,
+      "corrected_line_endings": true
+    },
+    {
+      "language": "de",
+      "size_mib_label": 16,
+      "bytes": 16777205,
+      "sha256": "65d0cfa04d14f5e32a39c51acbf660f4a6bc2b6718d5967587a639e806a06fc7",
+      "nested_prefix": true,
+      "split": "whitespace_split",
+      "pieces_unique": 346332,
+      "pieces_weighted": 2283522,
+      "N_unique": 3506733,
+      "E_unique": 3160401,
+      "N_weighted": 14223470,
+      "E_weighted": 11939948,
+      "piece_length_unique_quantiles": {
+        "0.5": 9,
+        "0.9": 16,
+        "0.95": 19,
+        "0.99": 24,
+        "1.0": 183
+      },
+      "weight_quantiles": {
+        "0.5": 1,
+        "0.9": 5,
+        "0.95": 11,
+        "0.99": 57,
+        "1.0": 76729
+      },
+      "ESS_piece": 262.02968601211495,
+      "initial_pair_types_all": 11658,
+      "initial_pair_types_floor2": 7682,
+      "initial_pair_physical_length_quantiles_floor2": {
+        "0.5": 7,
+        "0.9": 498,
+        "0.95": 1551,
+        "0.99": 8205,
+        "1.0": 91356
+      },
+      "initial_heap_allocations_floor2": 5964,
+      "initial_heap_capacity_bytes_floor2": 12616264,
+      "initial_heap_thresholds_bytes": {
+        "16": {
+          "allocations": 1270,
+          "capacity_bytes": 20320
+        },
+        "32": {
+          "allocations": 2411,
+          "capacity_bytes": 48632
+        },
+        "64": {
+          "allocations": 3251,
+          "capacity_bytes": 88364
+        },
+        "128": {
+          "allocations": 3831,
+          "capacity_bytes": 142488
+        },
+        "256": {
+          "allocations": 4354,
+          "capacity_bytes": 238892
+        },
+        "512": {
+          "allocations": 4714,
+          "capacity_bytes": 370352
+        },
+        "1024": {
+          "allocations": 4981,
+          "capacity_bytes": 564868
+        },
+        "4096": {
+          "allocations": 5478,
+          "capacity_bytes": 1673240
+        }
+      },
+      "seconds_static": 11.223754145001294,
+      "line_ending_correction_dictionary_verified": true
+    },
+    {
+      "language": "ja",
+      "size_mib_label": 1,
+      "bytes": 1048272,
+      "sha256": "9ddc4a422bbd1ae98bdb468cb529ed5fb284103529a89874b0392c3c8b4b4aa3",
+      "nested_prefix": true,
+      "split": "none",
+      "pieces_unique": 3216,
+      "pieces_weighted": 3236,
+      "N_unique": 403292,
+      "E_unique": 400076,
+      "N_weighted": 403959,
+      "E_weighted": 400723,
+      "piece_length_unique_quantiles": {
+        "0.5": 82,
+        "0.9": 265,
+        "0.95": 361,
+        "0.99": 679,
+        "1.0": 3417
+      },
+      "weight_quantiles": {
+        "0.5": 1,
+        "0.9": 1,
+        "0.95": 1,
+        "0.99": 1,
+        "1.0": 3
+      },
+      "ESS_piece": 3186.760803408399,
+      "initial_pair_types_all": 69048,
+      "initial_pair_types_floor2": 31899,
+      "initial_pair_physical_length_quantiles_floor2": {
+        "0.5": 3,
+        "0.9": 19,
+        "0.95": 37,
+        "0.99": 134,
+        "1.0": 2137
+      },
+      "initial_heap_allocations_floor2": 21139,
+      "initial_heap_capacity_bytes_floor2": 1386468,
+      "initial_heap_thresholds_bytes": {
+        "16": {
+          "allocations": 8409,
+          "capacity_bytes": 134544
+        },
+        "32": {
+          "allocations": 13870,
+          "capacity_bytes": 268736
+        },
+        "64": {
+          "allocations": 17357,
+          "capacity_bytes": 430884
+        },
+        "128": {
+          "allocations": 19252,
+          "capacity_bytes": 603584
+        },
+        "256": {
+          "allocations": 20304,
+          "capacity_bytes": 790524
+        },
+        "512": {
+          "allocations": 20793,
+          "capacity_bytes": 964880
+        },
+        "1024": {
+          "allocations": 21010,
+          "capacity_bytes": 1114692
+        },
+        "4096": {
+          "allocations": 21126,
+          "capacity_bytes": 1308196
+        }
+      },
+      "seconds_static": 0.9765706080070231,
+      "corrected_line_endings": true
+    },
+    {
+      "language": "ja",
+      "size_mib_label": 1,
+      "bytes": 1048272,
+      "sha256": "9ddc4a422bbd1ae98bdb468cb529ed5fb284103529a89874b0392c3c8b4b4aa3",
+      "nested_prefix": true,
+      "split": "whitespace_split",
+      "pieces_unique": 13575,
+      "pieces_weighted": 17547,
+      "N_unique": 373042,
+      "E_unique": 359467,
+      "N_weighted": 386412,
+      "E_weighted": 368865,
+      "piece_length_unique_quantiles": {
+        "0.5": 10,
+        "0.9": 72,
+        "0.95": 124,
+        "0.99": 255,
+        "1.0": 674
+      },
+      "weight_quantiles": {
+        "0.5": 1,
+        "0.9": 1,
+        "0.95": 2,
+        "0.99": 5,
+        "1.0": 978
+      },
+      "ESS_piece": 292.5280763943189,
+      "initial_pair_types_all": 66669,
+      "initial_pair_types_floor2": 30445,
+      "initial_pair_physical_length_quantiles_floor2": {
+        "0.5": 3,
+        "0.9": 18,
+        "0.95": 35,
+        "0.99": 123,
+        "1.0": 1989
+      },
+      "initial_heap_allocations_floor2": 19833,
+      "initial_heap_capacity_bytes_floor2": 1228676,
+      "initial_heap_thresholds_bytes": {
+        "16": {
+          "allocations": 7996,
+          "capacity_bytes": 127936
+        },
+        "32": {
+          "allocations": 13190,
+          "capacity_bytes": 255564
+        },
+        "64": {
+          "allocations": 16426,
+          "capacity_bytes": 405700
+        },
+        "128": {
+          "allocations": 18178,
+          "capacity_bytes": 564828
+        },
+        "256": {
+          "allocations": 19125,
+          "capacity_bytes": 731944
+        },
+        "512": {
+          "allocations": 19540,
+          "capacity_bytes": 879612
+        },
+        "1024": {
+          "allocations": 19724,
+          "capacity_bytes": 1005308
+        },
+        "4096": {
+          "allocations": 19822,
+          "capacity_bytes": 1163872
+        }
+      },
+      "seconds_static": 1.1160188819922041,
+      "line_ending_correction_dictionary_verified": true
+    },
+    {
+      "language": "ja",
+      "size_mib_label": 4,
+      "bytes": 4194250,
+      "sha256": "4cc0fe57088707474c509be666a3d1eece615e97ff7b4e360ac4f171bf70d509",
+      "nested_prefix": true,
+      "split": "none",
+      "pieces_unique": 12419,
+      "pieces_weighted": 12550,
+      "N_unique": 1610640,
+      "E_unique": 1598221,
+      "N_weighted": 1614482,
+      "E_weighted": 1601932,
+      "piece_length_unique_quantiles": {
+        "0.5": 83,
+        "0.9": 270,
+        "0.95": 376,
+        "0.99": 771,
+        "1.0": 3417
+      },
+      "weight_quantiles": {
+        "0.5": 1,
+        "0.9": 1,
+        "0.95": 1,
+        "0.99": 1,
+        "1.0": 10
+      },
+      "ESS_piece": 11932.007575757576,
+      "initial_pair_types_all": 150962,
+      "initial_pair_types_floor2": 77853,
+      "initial_pair_physical_length_quantiles_floor2": {
+        "0.5": 4,
+        "0.9": 30,
+        "0.95": 62,
+        "0.99": 264,
+        "1.0": 8216
+      },
+      "initial_heap_allocations_floor2": 54668,
+      "initial_heap_capacity_bytes_floor2": 5961724,
+      "initial_heap_thresholds_bytes": {
+        "16": {
+          "allocations": 18981,
+          "capacity_bytes": 303696
+        },
+        "32": {
+          "allocations": 32433,
+          "capacity_bytes": 636344
+        },
+        "64": {
+          "allocations": 41522,
+          "capacity_bytes": 1064652
+        },
+        "128": {
+          "allocations": 47420,
+          "capacity_bytes": 1606308
+        },
+        "256": {
+          "allocations": 50934,
+          "capacity_bytes": 2243032
+        },
+        "512": {
+          "allocations": 52848,
+          "capacity_bytes": 2937540
+        },
+        "1024": {
+          "allocations": 53859,
+          "capacity_bytes": 3655632
+        },
+        "4096": {
+          "allocations": 54546,
+          "capacity_bytes": 4916564
+        }
+      },
+      "seconds_static": 4.166822140978184,
+      "corrected_line_endings": true
+    },
+    {
+      "language": "ja",
+      "size_mib_label": 4,
+      "bytes": 4194250,
+      "sha256": "4cc0fe57088707474c509be666a3d1eece615e97ff7b4e360ac4f171bf70d509",
+      "nested_prefix": true,
+      "split": "whitespace_split",
+      "pieces_unique": 48900,
+      "pieces_weighted": 68629,
+      "N_unique": 1471015,
+      "E_unique": 1422115,
+      "N_weighted": 1545853,
+      "E_weighted": 1477224,
+      "piece_length_unique_quantiles": {
+        "0.5": 11,
+        "0.9": 78,
+        "0.95": 131,
+        "0.99": 273,
+        "1.0": 1018
+      },
+      "weight_quantiles": {
+        "0.5": 1,
+        "0.9": 1,
+        "0.95": 2,
+        "0.99": 6,
+        "1.0": 3995
+      },
+      "ESS_piece": 274.4631621719883,
+      "initial_pair_types_all": 146885,
+      "initial_pair_types_floor2": 75072,
+      "initial_pair_physical_length_quantiles_floor2": {
+        "0.5": 4,
+        "0.9": 28,
+        "0.95": 58,
+        "0.99": 237,
+        "1.0": 8128
+      },
+      "initial_heap_allocations_floor2": 51872,
+      "initial_heap_capacity_bytes_floor2": 5263320,
+      "initial_heap_thresholds_bytes": {
+        "16": {
+          "allocations": 18335,
+          "capacity_bytes": 293360
+        },
+        "32": {
+          "allocations": 31134,
+          "capacity_bytes": 609932
+        },
+        "64": {
+          "allocations": 39741,
+          "capacity_bytes": 1015544
+        },
+        "128": {
+          "allocations": 45308,
+          "capacity_bytes": 1527192
+        },
+        "256": {
+          "allocations": 48561,
+          "capacity_bytes": 2117472
+        },
+        "512": {
+          "allocations": 50301,
+          "capacity_bytes": 2745128
+        },
+        "1024": {
+          "allocations": 51196,
+          "capacity_bytes": 3377648
+        },
+        "4096": {
+          "allocations": 51770,
+          "capacity_bytes": 4418236
+        }
+      },
+      "seconds_static": 4.4767018490238115,
+      "line_ending_correction_dictionary_verified": true
+    },
+    {
+      "language": "ja",
+      "size_mib_label": 16,
+      "bytes": 16776986,
+      "sha256": "caae111a0306cfdd0a4a0038b45f699a02daefcd5cfa96df2fa9e75894f5fe06",
+      "nested_prefix": true,
+      "split": "none",
+      "pieces_unique": 49463,
+      "pieces_weighted": 50391,
+      "N_unique": 6450127,
+      "E_unique": 6400664,
+      "N_weighted": 6477348,
+      "E_weighted": 6426957,
+      "piece_length_unique_quantiles": {
+        "0.5": 82,
+        "0.9": 273,
+        "0.95": 379,
+        "0.99": 781,
+        "1.0": 4137
+      },
+      "weight_quantiles": {
+        "0.5": 1,
+        "0.9": 1,
+        "0.95": 1,
+        "0.99": 1,
+        "1.0": 40
+      },
+      "ESS_piece": 41253.11326824038,
+      "initial_pair_types_all": 308338,
+      "initial_pair_types_floor2": 172599,
+      "initial_pair_physical_length_quantiles_floor2": {
+        "0.5": 5,
+        "0.9": 46,
+        "0.95": 105,
+        "0.99": 536,
+        "1.0": 32826
+      },
+      "initial_heap_allocations_floor2": 126707,
+      "initial_heap_capacity_bytes_floor2": 24789984,
+      "initial_heap_thresholds_bytes": {
+        "16": {
+          "allocations": 39711,
+          "capacity_bytes": 635376
+        },
+        "32": {
+          "allocations": 69417,
+          "capacity_bytes": 1370860
+        },
+        "64": {
+          "allocations": 90200,
+          "capacity_bytes": 2352184
+        },
+        "128": {
+          "allocations": 104390,
+          "capacity_bytes": 3657596
+        },
+        "256": {
+          "allocations": 113589,
+          "capacity_bytes": 5332436
+        },
+        "512": {
+          "allocations": 119448,
+          "capacity_bytes": 7442168
+        },
+        "1024": {
+          "allocations": 122953,
+          "capacity_bytes": 9947536
+        },
+        "4096": {
+          "allocations": 125896,
+          "capacity_bytes": 15549540
+        }
+      },
+      "seconds_static": 17.1776105449826,
+      "corrected_line_endings": true
+    },
+    {
+      "language": "ja",
+      "size_mib_label": 16,
+      "bytes": 16776986,
+      "sha256": "caae111a0306cfdd0a4a0038b45f699a02daefcd5cfa96df2fa9e75894f5fe06",
+      "nested_prefix": true,
+      "split": "whitespace_split",
+      "pieces_unique": 181545,
+      "pieces_weighted": 283590,
+      "N_unique": 5750028,
+      "E_unique": 5568483,
+      "N_weighted": 6193758,
+      "E_weighted": 5910168,
+      "piece_length_unique_quantiles": {
+        "0.5": 12,
+        "0.9": 82,
+        "0.95": 137,
+        "0.99": 280,
+        "1.0": 1574
+      },
+      "weight_quantiles": {
+        "0.5": 1,
+        "0.9": 2,
+        "0.95": 2,
+        "0.99": 8,
+        "1.0": 17416
+      },
+      "ESS_piece": 250.89904759221199,
+      "initial_pair_types_all": 301946,
+      "initial_pair_types_floor2": 167902,
+      "initial_pair_physical_length_quantiles_floor2": {
+        "0.5": 4,
+        "0.9": 42,
+        "0.95": 96,
+        "0.99": 470,
+        "1.0": 31555
+      },
+      "initial_heap_allocations_floor2": 121225,
+      "initial_heap_capacity_bytes_floor2": 21465404,
+      "initial_heap_thresholds_bytes": {
+        "16": {
+          "allocations": 38750,
+          "capacity_bytes": 620000
+        },
+        "32": {
+          "allocations": 67452,
+          "capacity_bytes": 1330476
+        },
+        "64": {
+          "allocations": 87210,
+          "capacity_bytes": 2264600
+        },
+        "128": {
+          "allocations": 100617,
+          "capacity_bytes": 3498772
+        },
+        "256": {
+          "allocations": 109231,
+          "capacity_bytes": 5066364
+        },
+        "512": {
+          "allocations": 114740,
+          "capacity_bytes": 7045164
+        },
+        "1024": {
+          "allocations": 117987,
+          "capacity_bytes": 9370308
+        },
+        "4096": {
+          "allocations": 120571,
+          "capacity_bytes": 14239744
+        }
+      },
+      "seconds_static": 17.481481180002447,
+      "line_ending_correction_dictionary_verified": true
+    }
+  ],
+  "correction": {
+    "reason": "First uncommitted analysis incorrectly stripped line endings for none. All 12 none runs replaced using exact custom iterator semantics. Whitespace split piece dictionaries checked unchanged for all 12 inputs.",
+    "old_json_sha256": "52b341ddbe5f1e7370253cda0b195eb7ebe42df588ee77c5b0a7aa53792a67e7",
+    "elapsed_seconds": 114.22782209399156
+  }
+}

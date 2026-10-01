@@ -253,3 +253,13 @@ J376363d2从H继续，未叠加K。已有inline route probe与173.16M次birth/re
 用户要求把退休posting也保留到底实际测峰值。独立J副本添加纯Rust bumpalo3.20.3、每专用Rayon worker TLS arena，所有指针存活至train_typed返回，owner/任务结束后统一broadcast释放，原算法不变。16MiB smoke gate通过，随后512MiB同期标准J→Bump各一次：HWM只多936KiB（4.4337→4.4346GiB），train24.351→19.126秒。累计payload1.307GiB/live.754GiB，退休buffer保留567.155MiB，arena chunks实际1.860GiB/51块，growth0，最终release65.341ms。模型、操作量及资源gate通过。诊断统计开销单列，不将n1当稳定排名或推广其它库配置；[完整报告](results/j-bump-retain.summary.md)。
 
 用户继而要求独立subagent推导posting/阈值随Wikipedia规模、merge数量、语言、去重权重、物理数据量和片段长度变化的关系；已明确授权独立分析。并强调只需回收影响全程峰值的部分，初始化临时工作集释放后可允许更大arena保留。当前全量方案已经满足资源门槛，不预设必须有规模增长超参；继续数学推导、跨语言固定规则诊断与阈值敏感性分析。
+
+## 2026-10-01：posting 分布、寿命与预算阈值完成
+
+按用户明确授权使用一个独立分析 agent；主线程在 J 独立副本采集 43 次生命周期诊断：en/zh/de/ja none、en/zh whitespace，1/4/16MiB 与实际4k/16k rules 36组，32MiB留出6组，512MiB中文留出1组。全部达到实际M、growth0，birth≤E_u+2S、累计requested≤16E_u、allocation−retired=live等不变量通过。静态解析初版误删none行尾，依据runner自定义read_line语义校正全部12个none组合；36组N/E/U与真实runner精确相同，未提交错误旧统计。原始数据、source patch、拟合与留出预测保留。
+
+局部物理边幂律预测32MiB p50/p90/p99 MAPE19.4/22.0/17.1%，但512MiB中文p90预测91.84实际31、max预测1,567,308实际158,054；另有源抽样范围变化。因此不建议通用raw-N幂次cutoff。跨语言none/16k的p90 MAPE从raw bytes24.5%降为E_u8.2%，尾部仍有差异。权重、unique片段长度及M/S进度单列。生命周期副本布局24B和hot counters影响time/RSS，不用于allocator排名。
+
+同一16B布局arena/heap诊断binary，在阈值0/32/256/all完成中文512MiB、英文16MiB none/whitespace各一次，共12次，无并发CPU任务。中文实际29,243rules，train21.593/19.255/18.706/16.865秒；all比heap少21.90%，HWM全部约4.43GiB，在初始化返回前建立，merge期间未刷新。all终点RSS3.55GiB低于HWM约903MiB；仍是9.324M requests/1.307GiB payload/1.860GiB chunks，release66.228ms。英文none all增峰10.65MiB，256B未明显增峰、train少3.19%；英文whitespace未测到收益。每配置n1，实际时间没有必然单调性，不宣称连续阈值精确最优。
+
+全部12次按组模型/输入/完整工作集/terminal inventory/累计分配量精确相同；系统分配来源与free闭合、VmSwap0、最低MemAvailable2.98GiB。另3个1MiB allocator smoke gate通过；helper py_compile、汇总及sourcehash gate通过，图表独立导出。使用预算内最大T筛候选并核验完整train；不将requested-retired直接加成RSS预测。不迁入通用生产J、不改原efficient_bpe。见 [阈值与阶段报告](POSTING_ARENA_THRESHOLD_REPORT.md)、[独立理论](POSTING_THRESHOLD_THEORY.md)、[多语言实测](POSTING_THRESHOLD_EMPIRICAL.md)。

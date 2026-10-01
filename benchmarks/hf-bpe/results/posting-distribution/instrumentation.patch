@@ -1,0 +1,342 @@
+--- a/source/tokenizers/tk-train/src/trainers/bpe/indexed/small_posting.rs
++++ b/source/tokenizers/tk-train/src/trainers/bpe/indexed/small_posting.rs
+@@ -3,6 +3,8 @@
+ 
+ use std::mem::{self, ManuallyDrop};
+ use std::slice;
++#[path = "posting_probe.rs"]
++pub(super) mod posting_probe;
+ use tk_encode::Result;
+ 
+ #[repr(C)]
+@@ -19,6 +21,8 @@
+     // Zero tags inline mode. Heap mode records Vec's actual allocation capacity.
+     capacity: u32,
+     payload: Payload<T, INLINE>,
++    born_rule: u32,
++    retire_reason: u8,
+ }
+ 
+ // SAFETY: every heap allocation has one SmallPosting owner; mutation requires
+@@ -35,6 +39,8 @@
+             payload: Payload {
+                 inline: [T::default(); INLINE],
+             },
++            born_rule: posting_probe::round(),
++            retire_reason: 0,
+         }
+     }
+ }
+@@ -43,6 +49,7 @@
+     /// Reserve for a freshly counted key. A heap posting may initially be empty:
+     /// its allocation is owned even while no position has been initialized.
+     pub(super) fn with_capacity(count: u32) -> Result<Self> {
++        posting_probe::birth_slots(count);
+         if count as usize <= INLINE {
+             return Ok(Self::default());
+         }
+@@ -52,6 +59,9 @@
+     }
+ 
+     #[inline]
++    pub(super) fn probe_birth_rule(&self) -> u32 { self.born_rule }
++    pub(super) fn probe_retire_reason(&mut self, reason: u8) { self.retire_reason = reason; }
++
+     pub(super) fn len(&self) -> usize {
+         self.len as usize
+     }
+@@ -131,6 +141,7 @@
+         };
+         self.len = len;
+         self.capacity = capacity;
++        self.born_rule = posting_probe::allocated(capacity, std::mem::size_of::<T>());
+         Ok(())
+     }
+ 
+@@ -211,6 +222,8 @@
+             .max(next_len as usize);
+         // The destination is empty before a Vec can reallocate or unwind.
+         // The old raw pointer is owned only by the reconstructed Vec below.
++        posting_probe::grew();
++        posting_probe::retired(self.capacity, std::mem::size_of::<T>(), self.born_rule, self.retire_reason);
+         let old = ManuallyDrop::new(mem::take(self));
+         // SAFETY: old is heap mode, and ptr/len/cap are the exact raw parts
+         // recorded when its unique Vec allocation was last installed.
+@@ -226,6 +239,7 @@
+ impl<T: Copy + Default, const INLINE: usize> Drop for PackedPosting<T, INLINE> {
+     fn drop(&mut self) {
+         if self.capacity != 0 {
++            posting_probe::retired(self.capacity, std::mem::size_of::<T>(), self.born_rule, self.retire_reason);
+             // SAFETY: heap mode uniquely owns a Vec allocation whose exact
+             // raw pointer, initialized length, and capacity are stored here.
+             unsafe {
+--- a/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel.rs
++++ b/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel.rs
+@@ -774,7 +774,11 @@
+             .par_iter_mut()
+             .map(|ledger| {
+                 let old = ledger.entries.len();
+-                ledger.entries.retain(|_, entry| entry.frequency >= floor);
++                ledger.entries.retain(|_, entry| {
++                    let keep = entry.frequency >= floor;
++                    if !keep { entry.blocks.probe_retire_reason(2); }
++                    keep
++                });
+                 ledger.heap = ledger
+                     .entries
+                     .iter()
+@@ -866,6 +870,7 @@
+     stats.weight_one_bucket_count = weight_lookup.as_ref().map_or(0, |l| l.one_bucket_count());
+     stats.weight_bucket_count = weight_lookup.as_ref().map_or(0, |l| l.bucket_count());
+     stats.weight_one_bucket_bytes = weight_lookup.as_ref().map_or(0, |l| l.one_bucket_bytes());
++    let mut probe_trace = vec![super::small_posting::posting_probe::snapshot("initialize", merges.len())];
+     while ids.len() < trainer.vocab_size {
+         let stage = Instant::now();
+         let cap = config.batch_size.min(trainer.vocab_size - ids.len());
+@@ -901,7 +906,8 @@
+                 break;
+             }
+             owners[o].heap.pop();
+-            let entry = owners[o].entries.remove(&top.key).unwrap();
++            let mut entry = owners[o].entries.remove(&top.key).unwrap();
++            entry.blocks.probe_retire_reason(1);
+             let length = lengths[edge.0 as usize]
+                 .checked_add(lengths[edge.1 as usize])
+                 .ok_or("token span exceeds usize")?;
+@@ -957,6 +963,7 @@
+         }
+         stats.select_ms += stage.elapsed().as_secs_f64() * 1000.0;
+         let stage = Instant::now();
++        super::small_posting::posting_probe::set_round(merges.len());
+         stats.batch_rounds += 1;
+         stats.max_batch_rules = stats.max_batch_rules.max(rules.len());
+         let outputs: Vec<Output<O, INLINE>> = if flat
+@@ -987,6 +994,7 @@
+             // Filter and neighbor deltas share this phase in the fused path.
+             stats.fused_prepare_ms += elapsed;
+             stats.delta_ms += elapsed;
++            super::small_posting::posting_probe::rewrites(prepared.probe_rewrite_count());
+             drop(flat_postings);
+             let stage = Instant::now();
+             pool.install(|| prepared.apply(&corpus, &rules));
+@@ -1176,6 +1184,7 @@
+             })?;
+             stats.delta_ms += stage.elapsed().as_secs_f64() * 1000.0;
+             let stage = Instant::now();
++            super::small_posting::posting_probe::rewrites(plans.len());
+             pool.install(|| write_plans(&mut corpus, 0, &plans, &rules, config.workers));
+             stats.rewrite_ms += stage.elapsed().as_secs_f64() * 1000.0;
+             outputs
+@@ -1204,7 +1213,7 @@
+                                         .checked_sub(group.weight)
+                                         .ok_or("old pair frequency underflow")?;
+                                     if entry.frequency < floor {
+-                                        ledger.entries.remove(&k);
++                                        ledger.entries.remove(&k).map(|mut entry| { entry.blocks.probe_retire_reason(2); entry });
+                                         retired.push((k, SmallPosting::default()));
+                                     }
+                                 }
+@@ -1265,7 +1274,8 @@
+                                     .checked_sub(weight)
+                                     .ok_or("old pair frequency underflow")?;
+                                 if entry.frequency < floor {
+-                                    let entry = ledger.entries.remove(&k).unwrap();
++                                    let mut entry = ledger.entries.remove(&k).unwrap();
++                                    entry.blocks.probe_retire_reason(2);
+                                     if flat {
+                                         drop(entry);
+                                         retired.push((k, SmallPosting::default()));
+@@ -1373,9 +1383,17 @@
+                 .collect::<Result<Vec<_>>>()?;
+         }
+         stats.route_ms += stage.elapsed().as_secs_f64() * 1000.0;
++        probe_trace.push(super::small_posting::posting_probe::snapshot("merge", merges.len()));
+     }
+     stats.merge_ms = begin.elapsed().as_secs_f64() * 1000.0;
+     let inventory_begin = Instant::now();
++    let mut live_lengths = Vec::<u32>::new();
++    let mut live_capacities = Vec::<u32>::new();
++    let mut heap_lengths = Vec::<u32>::new();
++    let mut weighted_frequencies = Vec::<u64>::new();
++    let mut survivor_age_counts = vec![0_u64; 14 * 17];
++    let mut survivor_age_bytes = vec![0_u64; 14 * 17];
++
+     let mut inline_postings = 0_u64;
+     let mut heap_postings = 0_u64;
+     let mut stored_positions = 0_u64;
+@@ -1384,12 +1402,21 @@
+     let mut heap_bytes_histogram = [0_u64; 8];
+     for ledger in &owners {
+         for entry in ledger.entries.values() {
++            live_lengths.push(entry.blocks.len() as u32);
++            live_capacities.push(entry.blocks.allocated_capacity() as u32);
++            weighted_frequencies.push(entry.frequency);
+             stored_positions += entry.blocks.len() as u64;
+             let capacity = entry.blocks.allocated_capacity();
+             if capacity == 0 {
+                 inline_postings += 1;
+             } else {
+                 heap_postings += 1;
++                heap_lengths.push(entry.blocks.len() as u32);
++                let class = super::small_posting::posting_probe::class(capacity as u32);
++                let age = super::small_posting::posting_probe::age_bin(
++                    merges.len() as u32 - entry.blocks.probe_birth_rule());
++                survivor_age_counts[class*17+age] += 1;
++                survivor_age_bytes[class*17+age] += capacity as u64 * 4;
+                 let bytes = (capacity * 4) as u64;
+                 heap_payload_bytes += bytes;
+                 let bucket = if capacity <= 4 { 0 } else if capacity <= 8 { 1 }
+@@ -1404,7 +1431,7 @@
+     let owner_heap_items: usize = owners.iter().map(|o| o.heap.len()).sum();
+     let owner_heap_capacity_bytes: usize = owners.iter().map(|o| o.heap.capacity() * 16).sum();
+     let owner_table_capacity_bytes: usize = owners.iter()
+-        .map(|o| table_bytes(o.entries.capacity(), 32)).sum();
++        .map(|o| table_bytes(o.entries.capacity(), std::mem::size_of::<(u64, Entry)>())).sum();
+     let inventory_ms = inventory_begin.elapsed().as_secs_f64() * 1000.0;
+     eprintln!("{}", serde_json::json!({"bench_posting_inventory": {
+         "inline_postings": inline_postings,
+@@ -1418,6 +1445,35 @@
+         "owner_table_capacity_bytes": owner_table_capacity_bytes,
+         "inventory_ms": inventory_ms
+     }}));
++    live_lengths.sort_unstable();
++    heap_lengths.sort_unstable();
++    let exact_length_histogram: Vec<(u32,u64)> = live_lengths.iter().fold(Vec::new(), |mut values, &length| {
++        if let Some((last,count)) = values.last_mut() {
++            if *last == length { *count += 1; return values; }
++        }
++        values.push((length,1)); values
++    });
++    let heap_length_quantiles: Vec<u32> = [0.0,0.25,0.5,0.75,0.9,0.95,0.99,1.0].iter()
++        .map(|&q| heap_lengths.get(((heap_lengths.len().saturating_sub(1)) as f64*q) as usize).copied().unwrap_or(0)).collect();
++    live_capacities.sort_unstable();
++    weighted_frequencies.sort_unstable();
++    let length_quantiles: Vec<u32> = [0.0,0.25,0.5,0.75,0.9,0.95,0.99,1.0].iter()
++        .map(|&q| live_lengths.get(((live_lengths.len().saturating_sub(1)) as f64*q) as usize).copied().unwrap_or(0)).collect();
++    let capacity_quantiles: Vec<u32> = [0.0,0.25,0.5,0.75,0.9,0.95,0.99,1.0].iter()
++        .map(|&q| live_capacities.get(((live_capacities.len().saturating_sub(1)) as f64*q) as usize).copied().unwrap_or(0)).collect();
++    let frequency_quantiles: Vec<u64> = [0.0,0.25,0.5,0.75,0.9,0.95,0.99,1.0].iter()
++        .map(|&q| weighted_frequencies.get(((weighted_frequencies.len().saturating_sub(1)) as f64*q) as usize).copied().unwrap_or(0)).collect();
++    probe_trace.push(super::small_posting::posting_probe::snapshot("terminal", merges.len()));
++    eprintln!("{}", serde_json::json!({"bench_posting_probe": {
++        "summary": super::small_posting::posting_probe::summary(), "trace":probe_trace,
++        "live_length_quantiles": length_quantiles, "heap_length_quantiles":heap_length_quantiles,
++        "exact_live_length_histogram":exact_length_histogram, "live_capacity_quantiles":capacity_quantiles,
++        "live_weighted_frequency_quantiles":frequency_quantiles,
++        "survivor_age_counts":survivor_age_counts,"survivor_age_bytes":survivor_age_bytes,
++        "quantiles":[0.0,0.25,0.5,0.75,0.9,0.95,0.99,1.0],
++        "physical_entry_bytes":std::mem::size_of::<(u64, Entry)>()
++    }}));
++    super::small_posting::posting_probe::finish();
+     Ok(IndexedTraining {
+         vocab: ids.into_iter().map(|(s, id)| (s.to_string(), id)).collect(),
+         merges: merges
+--- a/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/fused_batch.rs
++++ b/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/fused_batch.rs
+@@ -284,6 +284,10 @@
+ }
+ 
+ impl<O: Offset, const INLINE: usize> Prepared<O, INLINE> {
++    pub(super) fn probe_rewrite_count(&self) -> usize {
++        self.valid.iter().flat_map(|job|job.iter()).map(|valid| valid.positions.len()).sum()
++    }
++
+     pub(super) fn apply<C: Slot>(&self, corpus: &[C], rules: &[Rule]) {
+         // All prepare reads have joined. Non-AA certificate gives disjoint
+         // merged spans. Atomic stores permit mutation through shared references;
+--- /dev/null
++++ b/source/tokenizers/tk-train/src/trainers/bpe/indexed/posting_probe.rs
+@@ -0,0 +1,93 @@
++//! Intrusive diagnostic counters. These are never used for runtime ranking.
++use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering::Relaxed};
++use serde_json::{json, Value};
++
++pub(crate) const BINS: usize = 14;
++pub(crate) const BOUNDS: [u32; BINS] = [4,8,16,32,64,128,256,512,1024,2048,4096,16384,65536,u32::MAX];
++const AGE_BINS: usize = 17;
++static LIVE_BYTES: AtomicU64 = AtomicU64::new(0);
++static LIVE_PEAK: AtomicU64 = AtomicU64::new(0);
++static ROUND: AtomicU32 = AtomicU32::new(0);
++static FINISHED: AtomicBool = AtomicBool::new(false);
++static ALLOC_COUNT: [AtomicU64; BINS] = [const {AtomicU64::new(0)}; BINS];
++static ALLOC_BYTES: [AtomicU64; BINS] = [const {AtomicU64::new(0)}; BINS];
++static FREE_COUNT: [AtomicU64; BINS] = [const {AtomicU64::new(0)}; BINS];
++static FREE_BYTES: [AtomicU64; BINS] = [const {AtomicU64::new(0)}; BINS];
++static POLICY_CURRENT: [AtomicU64; BINS] = [const {AtomicU64::new(0)}; BINS];
++static POLICY_PEAK: [AtomicU64; BINS] = [const {AtomicU64::new(0)}; BINS];
++static RETIRED_AGES: [AtomicU64; BINS * AGE_BINS] = [const {AtomicU64::new(0)}; BINS * AGE_BINS];
++static RETIRED_BYTE_AGES: [AtomicU64; BINS * AGE_BINS] = [const {AtomicU64::new(0)}; BINS * AGE_BINS];
++static CHOSEN_BYTES: [AtomicU64; BINS] = [const {AtomicU64::new(0)}; BINS];
++static FLOOR_BYTES: [AtomicU64; BINS] = [const {AtomicU64::new(0)}; BINS];
++static BIRTH_SLOTS: AtomicU64 = AtomicU64::new(0);
++static REWRITES: AtomicU64 = AtomicU64::new(0);
++static GROWS: AtomicU64 = AtomicU64::new(0);
++
++pub(crate) fn round() -> u32 { ROUND.load(Relaxed) }
++pub(crate) fn set_round(rules: usize) { ROUND.store(rules as u32, Relaxed); }
++pub(crate) fn finish() { FINISHED.store(true, Relaxed); }
++pub(crate) fn birth_slots(count: u32) { BIRTH_SLOTS.fetch_add(count as u64, Relaxed); }
++pub(crate) fn rewrites(count: usize) { REWRITES.fetch_add(count as u64, Relaxed); }
++pub(crate) fn grew() { GROWS.fetch_add(1, Relaxed); }
++pub(crate) fn class(capacity: u32) -> usize {
++    BOUNDS.iter().position(|&bound| capacity <= bound).unwrap()
++}
++pub(crate) fn age_bin(age: u32) -> usize {
++    if age == 0 { 0 } else { (32 - age.leading_zeros()) as usize }.min(AGE_BINS - 1)
++}
++pub(crate) fn allocated(capacity: u32, element_bytes: usize) -> u32 {
++    let i = class(capacity);
++    let bytes = capacity as u64 * element_bytes as u64;
++    let live = LIVE_BYTES.fetch_add(bytes, Relaxed) + bytes;
++    LIVE_PEAK.fetch_max(live, Relaxed);
++    ALLOC_COUNT[i].fetch_add(1, Relaxed);
++    ALLOC_BYTES[i].fetch_add(bytes, Relaxed);
++    for j in 0..BINS {
++        let current = POLICY_CURRENT[j].fetch_add(bytes, Relaxed) + bytes;
++        POLICY_PEAK[j].fetch_max(current, Relaxed);
++    }
++    round()
++}
++pub(crate) fn retired(capacity: u32, element_bytes: usize, born: u32, reason: u8) {
++    if FINISHED.load(Relaxed) { return; } // terminal survivors are censored
++    let i = class(capacity);
++    let bytes = capacity as u64 * element_bytes as u64;
++    LIVE_BYTES.fetch_sub(bytes, Relaxed);
++    FREE_COUNT[i].fetch_add(1, Relaxed);
++    FREE_BYTES[i].fetch_add(bytes, Relaxed);
++    let age = age_bin(round().saturating_sub(born));
++    RETIRED_AGES[i*AGE_BINS+age].fetch_add(1, Relaxed);
++    RETIRED_BYTE_AGES[i*AGE_BINS+age].fetch_add(bytes, Relaxed);
++    if reason == 1 { CHOSEN_BYTES[i].fetch_add(bytes, Relaxed); }
++    if reason == 2 { FLOOR_BYTES[i].fetch_add(bytes, Relaxed); }
++    // Policy j retains classes <=j in arena, frees all larger classes normally.
++    for j in 0..i { POLICY_CURRENT[j].fetch_sub(bytes, Relaxed); }
++}
++fn values<const N: usize>(a: &[AtomicU64; N]) -> Vec<u64> {
++    a.iter().map(|x|x.load(Relaxed)).collect()
++}
++pub(crate) fn memory() -> Value {
++    let text = std::fs::read_to_string("/proc/self/status").unwrap();
++    let mut result = serde_json::Map::new();
++    for line in text.lines() {
++        if line.starts_with("VmRSS:") || line.starts_with("VmHWM:") || line.starts_with("VmSwap:") {
++            let (key,value) = line.split_once(':').unwrap();
++            result.insert(key.to_owned(), json!(value.split_whitespace().next().unwrap().parse::<u64>().unwrap()*1024));
++        }
++    }
++    Value::Object(result)
++}
++pub(crate) fn snapshot(label: &str, rules: usize) -> Value {
++    json!({"label":label,"rules":rules,"memory":memory(),
++      "baseline_payload_live":LIVE_BYTES.load(Relaxed),"baseline_payload_peak":LIVE_PEAK.load(Relaxed),
++      "allocated_count":values(&ALLOC_COUNT),"allocated_bytes":values(&ALLOC_BYTES),
++      "retired_count":values(&FREE_COUNT),"retired_bytes":values(&FREE_BYTES),
++      "policy_payload_current":values(&POLICY_CURRENT),"policy_payload_peak":values(&POLICY_PEAK)})
++}
++pub(crate) fn summary() -> Value {
++    json!({"capacity_bounds":BOUNDS,"birth_slots":BIRTH_SLOTS.load(Relaxed),
++      "grows":GROWS.load(Relaxed),"physical_rewrites":REWRITES.load(Relaxed),"retired_age_counts":values(&RETIRED_AGES),
++      "retired_byte_age_sums":values(&RETIRED_BYTE_AGES),
++      "chosen_bytes":values(&CHOSEN_BYTES),"floor_bytes":values(&FLOOR_BYTES),
++      "retired_age_bucket_upper_bounds_rules":[0,1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,null]})
++}

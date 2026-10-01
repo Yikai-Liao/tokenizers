@@ -240,3 +240,15 @@ native benchmark runner新增仅测量用HF_BPE_BENCH_WORKERS配置，默认4，
 每次heap分配仅在线程局部累计请求capacity字节/次数/growth；末尾读取arena backing/chunk数与live posting inventory。初始与birth分配全部保留到结束，不假设小对象阈值。额外统计开销明确作为诊断。验证一份16MiB模型/工作量smoke；通过后512MiB同期标准分配J→Bump各一次，沿用模型、N/E/pair/work量与MemAvailable1GiB门槛。峰值RSS/HWM、实际arena backing与完整train回答用户问题；不给尚未实现的pool虚构收益。
 
 生命周期静态核对：train_typed的pool.install在返回前完成全部Rayon任务，函数局部owner/block posting已销毁；专用pool的各worker arena仅在此后broadcast释放。空Drop不释放缓冲区，元素为Copy；分配失败/producer panic仍保持已有初始化前缀。初始和merge均同一4worker pool，无第二初始化pool。临时RAW pointer所有权来自arena，不调用旧Vec::from_raw_parts路径。
+
+## 用户追加：N/M、多语言、寿命与全程峰值阈值（已完成）
+
+- [x] 一个独立agent推导理论并审视拟合，主线程执行真实J诊断；不预设word Zipf可直接用于物理posting。
+- [x] 记录unique/weighted N/E、片段长度/权重、实际M/S进度；校正none保留LF/CR的语义，36拟合输入N/E/U精确对齐。
+- [x] 36拟合+6规模留出+1超大中文留出，全部growth0且资源不变量通过；静态初始与终点存活分布分别记录，survivor寿命标右删失。
+- [x] 局部常数/线性/幂律与跨语言预测比较；512MiB外推失败，不采用通用规模指数或语言魔法系数。
+- [x] 每allocation/retire维护分桶逻辑capacity peak与coverage，结合阶段RSS/HWM筛选资源候选；不把payload直接当RSS。
+- [x] 同binary 0/32/256/all，中文512MiB与英文16MiB none/whitespace各一次，共12计时；另3个allocator smoke。英文all增峰后只补测会改变选择的32/256，不加重复排名。
+- [x] 模型/工作集/分配来源与resource gates、源码/二进制/输入hash、原始数据、standalone PNG/SVG、helper和报告保存。
+
+结论：中文512MiB all不增峰、train少21.90%；英文none256B可作为原峰值预算候选，whitespace保留heap。T以整次峰值预算筛选，分配覆盖单调不等于时间必然单调。当前只完成限定配置诊断选型，生产J376363d2保持不变。详情 [POSTING_ARENA_THRESHOLD_REPORT.md](POSTING_ARENA_THRESHOLD_REPORT.md)。

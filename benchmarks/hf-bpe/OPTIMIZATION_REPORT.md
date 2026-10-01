@@ -28,7 +28,9 @@ K `288ad858`仅并行释放owner，47tests通过；两对清理区间平均少32
 
 用户要求测全部posting退休后仍保留到最后的内存代价，使用真实bumpalo3.20.3、专用worker TLS arena执行同512MiB关键对照。同期J标准allocator→Bump各一次：train24.351→19.126秒（-21.46%），feed+train28.957→23.105秒（-20.21%），HWM4.4337→4.4346GiB（只多936KiB）。全部9,323,712次heap posting分配累计请求1.307GiB，其中退休buffer容量567.155MiB；arena实际51chunks/backing1.860GiB，最终release65.341ms，growth0。16MiB smoke及512MiB模型/工作量和resource gate通过。
 
-[实测报告与证据边界](results/j-bump-retain.summary.md)。这是范围限定、带计数的独立诊断，生产J源码及选型暂未改动。全量arena在此工作负载已可运行且有直接收尾和完整改善，不根据潜在退休容量独自否决；跨语言/预分词/不同规模与规则数的阈值及阶段峰值分析按用户追加要求进行。
+[实测报告与证据边界](results/j-bump-retain.summary.md)。这是范围限定、带计数的独立诊断，生产J源码及选型暂未改动。全量arena在此工作负载已可运行且有直接收尾和完整改善，不根据潜在退休容量独自否决。
+
+后续 [posting 阈值与阶段峰值报告](POSTING_ARENA_THRESHOLD_REPORT.md) 已完成：43 次跨语言/规模/PT/实际规则数生命周期诊断，另用同一 binary 做 12 次 allocator 阈值计时。中文 512 MiB 的 0/32/256/all train 为 21.593/19.255/18.706/16.865 秒，全量保留没有增峰，HWM 在初始化阶段建立；英文 16 MiB all 会增峰，whitespace 组未测到速度收益。候选按全程峰值预算选择，局部幂律不支持通用 cutoff。诊断源码和原始结果保留，未迁入生产 J。
 
 ### 停止依据与剩余成本
 
