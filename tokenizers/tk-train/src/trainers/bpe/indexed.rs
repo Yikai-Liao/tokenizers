@@ -63,6 +63,11 @@ pub(super) struct IndexedTrainingStats {
     pub corpus_fill_ms: f64,
     pub initial_route_ms: f64,
     pub initial_count_ms: f64,
+    pub initial_summary_waves: usize,
+    /// Sum of allocated summary Vec capacities across consumed waves.
+    pub initial_summary_buffer_bytes: usize,
+    /// Maximum simultaneous summary Vec backing (including nested Vec metadata).
+    pub peak_initial_summary_buffer_bytes: usize,
     pub initial_count_backend: &'static str,
     pub initial_weight_lookup_ms: f64,
     pub initial_weight_lookup_bytes: usize,

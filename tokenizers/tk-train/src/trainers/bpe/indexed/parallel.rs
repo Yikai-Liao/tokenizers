@@ -593,6 +593,9 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
         let initial_count_ms;
         let mut radix_metrics = radix_count::Metrics::default();
         let mut initial_weight_lookup_ms = 0.0;
+        let mut initial_summary_waves = 0;
+        let mut initial_summary_buffer_bytes = 0;
+        let mut peak_initial_summary_buffer_bytes = 0;
         if radix_eligible {
             let lookup_begin = Instant::now();
             initial_weight_lookup = uniform
@@ -675,86 +678,107 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
         } else {
             // Local dictionaries are built by physical block owners. Only key-level
             // frequencies and block directories are reduced globally, not positions.
-            let frequencies: Vec<Vec<Vec<(u64, u64)>>> = blocks
-                .par_iter_mut()
-                .map(|block| -> Result<_> {
-                    // Posting length supplies the physical count. Keep only nonunit
-                    // weight corrections; the checked corpus budget bounds signed sums.
-                    let mut extra_weights = AHashMap::<u64, i64>::new();
-                    let end = corpus.len().saturating_sub(1).min(block.base + block_size);
-                    let mut word = 0;
-                    for p in block.base..end {
-                        let a = corpus[p].token();
-                        let b = corpus[p + 1].token();
-                        if a == NONE || b == NONE {
-                            continue;
-                        }
-                        let local = (p - block.base) as u32;
-                        let weight = if let Some(weight) = uniform {
-                            weight
-                        } else {
-                            while word < block.pivots.len() && block.pivots[word] <= local {
-                                word += 1;
+            // Bound transient block-key summaries by initialization concurrency.
+            // Earlier owner directories stay in ascending physical block order;
+            // no key is filtered until every wave has contributed its frequency.
+            let wave_size = config.initialization_workers.unwrap_or(config.workers).max(1);
+            let mut route_ms = 0.0;
+            let mut count_ms = 0.0;
+            for (wave_index, wave_blocks) in blocks.chunks_mut(wave_size).enumerate() {
+                let route_begin = Instant::now();
+                let frequencies: Vec<Vec<Vec<(u64, u64)>>> = wave_blocks
+                    .par_iter_mut()
+                    .map(|block| -> Result<_> {
+                        // Posting length supplies the physical count. Keep only nonunit
+                        // weight corrections; the checked corpus budget bounds signed sums.
+                        let mut extra_weights = AHashMap::<u64, i64>::new();
+                        let end = corpus.len().saturating_sub(1).min(block.base + block_size);
+                        let mut word = 0;
+                        for p in block.base..end {
+                            let a = corpus[p].token();
+                            let b = corpus[p + 1].token();
+                            if a == NONE || b == NONE {
+                                continue;
                             }
-                            if word == 0 {
-                                block.previous_weight
+                            let local = (p - block.base) as u32;
+                            let weight = if let Some(weight) = uniform {
+                                weight
                             } else {
-                                block.weights[word - 1]
+                                while word < block.pivots.len() && block.pivots[word] <= local {
+                                    word += 1;
+                                }
+                                if word == 0 {
+                                    block.previous_weight
+                                } else {
+                                    block.weights[word - 1]
+                                }
+                            };
+                            let k = key(a, b);
+                            if uniform.is_none() && weight != 1 {
+                                let delta = i64::try_from(weight)
+                                    .map_err(|_| "indexed BPE weight exceeds i64::MAX")? - 1;
+                                let extra = extra_weights.entry(k).or_default();
+                                *extra = extra.checked_add(delta)
+                                    .ok_or("initial weight correction exceeds i64")?;
                             }
-                        };
-                        let k = key(a, b);
-                        if uniform.is_none() && weight != 1 {
-                            let delta = i64::try_from(weight)
-                                .map_err(|_| "indexed BPE weight exceeds i64::MAX")? - 1;
-                            let extra = extra_weights.entry(k).or_default();
-                            *extra = extra.checked_add(delta)
-                                .ok_or("initial weight correction exceeds i64")?;
+                            block
+                                .postings
+                                .entry(k)
+                                .or_default()
+                                .push(O::encode(p - block.base))?;
                         }
-                        block
-                            .postings
-                            .entry(k)
-                            .or_default()
-                            .push(O::encode(p - block.base))?;
-                    }
-                    let mut routed: Vec<Vec<(u64, u64)>> =
-                        (0..config.workers).map(|_| Vec::new()).collect();
-                    for (&k, positions) in &block.postings {
-                        let weight = if let Some(weight) = uniform {
-                            (positions.len() as u64).checked_mul(weight)
-                                .ok_or("initial frequency exceeds u64")?
-                        } else {
-                            let frequency = (positions.len() as i64)
-                                .checked_add(extra_weights.get(&k).copied().unwrap_or(0))
-                                .ok_or("initial frequency exceeds i64")?;
-                            u64::try_from(frequency)
-                                .map_err(|_| "negative initial frequency")?
-                        };
-                        // Global floor filtering follows reduction across ALL blocks.
-                        routed[owner(k, config.workers)].push((k, weight));
-                    }
-                    Ok(routed)
-                })
-                .collect::<Result<Vec<_>>>()?;
-            initial_route_ms = initial_begin.elapsed().as_secs_f64() * 1000.0;
-            let count_begin = Instant::now();
-            owners
-                .par_iter_mut()
-                .enumerate()
-                .map(|(o, ledger)| -> Result<()> {
-                    for (b, counts) in frequencies.iter().enumerate() {
-                        for &(k, weight) in &counts[o] {
-                            let entry = ledger.entries.entry(k).or_insert_with(|| Entry {
-                                frequency: 0,
-                                blocks: SmallPosting::default(),
-                            });
-                            entry.frequency += weight;
-                            entry.blocks.push(b as u32)?;
+                        let mut routed: Vec<Vec<(u64, u64)>> =
+                            (0..config.workers).map(|_| Vec::new()).collect();
+                        for (&k, positions) in &block.postings {
+                            let weight = if let Some(weight) = uniform {
+                                (positions.len() as u64).checked_mul(weight)
+                                    .ok_or("initial frequency exceeds u64")?
+                            } else {
+                                let frequency = (positions.len() as i64)
+                                    .checked_add(extra_weights.get(&k).copied().unwrap_or(0))
+                                    .ok_or("initial frequency exceeds i64")?;
+                                u64::try_from(frequency)
+                                    .map_err(|_| "negative initial frequency")?
+                            };
+                            // Global floor filtering follows reduction across ALL blocks.
+                            routed[owner(k, config.workers)].push((k, weight));
                         }
-                    }
-                    Ok(())
-                })
-                .collect::<Result<Vec<_>>>()?;
-            initial_count_ms = count_begin.elapsed().as_secs_f64() * 1000.0;
+                        Ok(routed)
+                    })
+                    .collect::<Result<Vec<_>>>()?;
+                route_ms += route_begin.elapsed().as_secs_f64() * 1000.0;
+                let summary_bytes = frequencies.capacity() * std::mem::size_of::<Vec<Vec<(u64, u64)>>>()
+                    + frequencies.iter().map(|routes| {
+                        routes.capacity() * std::mem::size_of::<Vec<(u64, u64)>>()
+                            + routes.iter().map(|items| items.capacity() * 16).sum::<usize>()
+                    }).sum::<usize>();
+                initial_summary_buffer_bytes += summary_bytes;
+                peak_initial_summary_buffer_bytes = peak_initial_summary_buffer_bytes.max(summary_bytes);
+                initial_summary_waves += 1;
+                let count_begin = Instant::now();
+                owners
+                    .par_iter_mut()
+                    .enumerate()
+                    .map(|(o, ledger)| -> Result<()> {
+                        for (b, counts) in frequencies.iter().enumerate() {
+                            for &(k, weight) in &counts[o] {
+                                let entry = ledger.entries.entry(k).or_insert_with(|| Entry {
+                                    frequency: 0,
+                                    blocks: SmallPosting::default(),
+                                });
+                                entry.frequency += weight;
+                                entry.blocks.push((wave_index * wave_size + b) as u32)?;
+                            }
+                        }
+                        Ok(())
+                    })
+                    .collect::<Result<Vec<_>>>()?;
+                count_ms += count_begin.elapsed().as_secs_f64() * 1000.0;
+                // All reducers have joined. Drop this wave's summary vectors
+                // before allocating the next wave; final block postings remain.
+            }
+            initial_route_ms = route_ms;
+            initial_count_ms = count_ms;
         }
         let mut stats = IndexedTrainingStats {
             initial_symbols,
@@ -767,6 +791,9 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
             corpus_fill_ms: timings.fill_ms,
             initial_route_ms,
             initial_count_ms,
+            initial_summary_waves,
+            initial_summary_buffer_bytes,
+            peak_initial_summary_buffer_bytes,
             initial_count_backend: if radix_eligible {
                 "stable_radix16"
             } else if !flat {
@@ -1785,6 +1812,30 @@ mod tests {
                 assert_eq!(got.trace,expected.trace);
                 assert_eq!(got.vocab,expected.vocab);
                 assert_eq!(got.merges,expected.merges);
+            }
+        }
+    }
+
+    #[test]
+    fn block_summary_waves_keep_global_floor_and_cross_wave_aa_order() {
+        let words = [("aaab".repeat(25000), 0), ("aaab中".repeat(21000), 3),
+            ("中aaab".repeat(24000), 1)].into_iter()
+            .map(|(text, weight)| (CompactString::from(text), weight)).collect();
+        let trainer = BpeTrainer::builder().vocab_size(48).min_frequency(2)
+            .show_progress(false).build();
+        let expected = trainer.do_train_indexed(&words).unwrap();
+        for workers in [1, 2, 4] {
+            for atomic in [false, true] {
+                let got = trainer.do_train_indexed_parallel(&words, IndexedParallelConfig {
+                    workers, initialization_workers: Some(2), posting_block_bits: 16,
+                    narrow_corpus: false, atomic_corpus: atomic, ..Default::default()
+                }).unwrap();
+                assert!(got.stats.initial_blocks > 4);
+                assert_eq!(got.stats.initial_summary_waves, got.stats.initial_blocks.div_ceil(2));
+                assert!(got.stats.peak_initial_summary_buffer_bytes < got.stats.initial_summary_buffer_bytes);
+                assert_eq!(got.trace, expected.trace);
+                assert_eq!(got.vocab, expected.vocab);
+                assert_eq!(got.merges, expected.merges);
             }
         }
     }
