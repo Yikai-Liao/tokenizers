@@ -24,6 +24,12 @@ K `288ad858`仅并行释放owner，47tests通过；两对清理区间平均少32
 - [J posting分配统计](results/j-posting-inventory.summary.md)：terminal独立堆posting7,274,631个，61.13%容量≤8个u32，inline3,297,497个。诊断扫描191ms，不参与排名；此前H精确计时将大额收尾归于owner drop，词表/merges构造约21ms。
 - [原efficient_bpe Rust粗略对照](results/efficient-rough.summary.md)：同约16MiB文本前缀、逐行权重、四线程、40,759规则，J train1.478s，原Rust ebpe call2.155s，约1.46×。各一次，无模型一致性检查；输入API与release profile差异明示，不能外推512MiB。
 
+### 全量arena实测（独立诊断候选）
+
+用户要求测全部posting退休后仍保留到最后的内存代价，使用真实bumpalo3.20.3、专用worker TLS arena执行同512MiB关键对照。同期J标准allocator→Bump各一次：train24.351→19.126秒（-21.46%），feed+train28.957→23.105秒（-20.21%），HWM4.4337→4.4346GiB（只多936KiB）。全部9,323,712次heap posting分配累计请求1.307GiB，其中退休buffer容量567.155MiB；arena实际51chunks/backing1.860GiB，最终release65.341ms，growth0。16MiB smoke及512MiB模型/工作量和resource gate通过。
+
+[实测报告与证据边界](results/j-bump-retain.summary.md)。这是范围限定、带计数的独立诊断，生产J源码及选型暂未改动。全量arena在此工作负载已可运行且有直接收尾和完整改善，不根据潜在退休容量独自否决；跨语言/预分词/不同规模与规则数的阈值及阶段峰值分析按用户追加要求进行。
+
 ### 停止依据与剩余成本
 
 最后复用已有完整H采样，按真实owner commit符号的IP核对源码和反汇编，未新增训练。主要热点是旧pair ledger probe和frequency载荷更新、出生ledger probe、posting长度读取与Node链逆序填充。采样属于H，J改变prepare后模块份额可能变化；具体地址的cycles/cache份额不等于精确load或整数减法成本，详见[owner具体操作](results/optimization-h-debug-owner-commit.md)。

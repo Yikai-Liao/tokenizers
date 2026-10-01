@@ -247,3 +247,9 @@ J376363d2从H继续，未叠加K。已有inline route probe与173.16M次birth/re
 独立对象诊断一次：10,572,128 terminal entries里7,274,631个posting堆分配、3,297,497个inline；堆分配61.13%容量≤8个u32。新增191ms扫描不参与排名，模型gate通过。此前H post-merge99.48%在owner drop；本次计数支持小对象释放机制，尚未单独计时map扫描和allocator。[分配统计与补丁](results/j-posting-inventory.summary.md)。
 
 原efficient_bpe当前选中Rust ebpe 8eb3cc6c，same16MiB prefix逐行权重，4线程/max40,759rules/min2，各一次：J train1.477984s，Rust call2.155127s，约1.46×。按用户要求不查模型一致，N/E/rule数/posting visits对齐；J字符前端/输出构造与Rust Prepared输入、LTO等profile差异明示。[粗略对照](results/efficient-rough.summary.md)。原仓库未编辑。
+
+## 2026-10-01：全量arena实际内存代价
+
+用户要求把退休posting也保留到底实际测峰值。独立J副本添加纯Rust bumpalo3.20.3、每专用Rayon worker TLS arena，所有指针存活至train_typed返回，owner/任务结束后统一broadcast释放，原算法不变。16MiB smoke gate通过，随后512MiB同期标准J→Bump各一次：HWM只多936KiB（4.4337→4.4346GiB），train24.351→19.126秒。累计payload1.307GiB/live.754GiB，退休buffer保留567.155MiB，arena chunks实际1.860GiB/51块，growth0，最终release65.341ms。模型、操作量及资源gate通过。诊断统计开销单列，不将n1当稳定排名或推广其它库配置；[完整报告](results/j-bump-retain.summary.md)。
+
+用户继而要求独立subagent推导posting/阈值随Wikipedia规模、merge数量、语言、去重权重、物理数据量和片段长度变化的关系；已明确授权独立分析。并强调只需回收影响全程峰值的部分，初始化临时工作集释放后可允许更大arena保留。当前全量方案已经满足资源门槛，不预设必须有规模增长超参；继续数学推导、跨语言固定规则诊断与阈值敏感性分析。

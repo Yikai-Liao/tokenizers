@@ -232,3 +232,11 @@ native benchmark runner新增仅测量用HF_BPE_BENCH_WORKERS配置，默认4，
 用户要求与原efficient_bpe Rust只粗略比速度，不要求模型一致。预算同16MiB完整行前缀、逐行去重/权重、4线程各一次；HF50k vocab对应原Rust40,759 rules。训练API J1.478s/Rust2.155s；输入Prepared和字符前端、编译profile及输出范围差异保留。无额外benchmark矩阵。
 
 用户追问feed是否并行：核对生产maybe_par_bridge/map/reduce路径，说明benchmark显式关闭feed并行、train前开启；本轮扩展结果仅代表此配置。
+
+## 用户要求：实际测量全生命周期Bump保留的内存与总体影响
+
+用户要求先测全部中途不释放、最后统一释放时的峰值与总体影响。预算为独立诊断副本J、实际bumpalo3.20.3替换posting backing分配、保留所有退休buffer，每个专用训练worker一个TLS arena；所有posting owner销毁后broadcast释放整块arena。pool在全部指针访问期间存活；不共享Bump，不将arena指针交给std Vec释放。实验限定u32/AtomicU32/flat32/init4/merge4，生产源码不变。
+
+每次heap分配仅在线程局部累计请求capacity字节/次数/growth；末尾读取arena backing/chunk数与live posting inventory。初始与birth分配全部保留到结束，不假设小对象阈值。额外统计开销明确作为诊断。验证一份16MiB模型/工作量smoke；通过后512MiB同期标准分配J→Bump各一次，沿用模型、N/E/pair/work量与MemAvailable1GiB门槛。峰值RSS/HWM、实际arena backing与完整train回答用户问题；不给尚未实现的pool虚构收益。
+
+生命周期静态核对：train_typed的pool.install在返回前完成全部Rayon任务，函数局部owner/block posting已销毁；专用pool的各worker arena仅在此后broadcast释放。空Drop不释放缓冲区，元素为Copy；分配失败/producer panic仍保持已有初始化前缀。初始和merge均同一4worker pool，无第二初始化pool。临时RAW pointer所有权来自arena，不调用旧Vec::from_raw_parts路径。

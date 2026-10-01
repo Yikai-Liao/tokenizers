@@ -1,0 +1,28 @@
+{
+  "source_commit": "376363d25b6b1de917b9b8f68c11c0394ca37bb2",
+  "model_sha256": "d50fb836e342e1a301bb56d5ab53c0b79fae38f51a03051c6d6b02ab6cf862cd",
+  "model_and_workload_equal": true,
+  "terminal_inventory_equal": true,
+  "arena": {
+    "allocations": 9323712,
+    "backing_bytes": 1996817216,
+    "backing_bytes_including_metadata": 1996819664,
+    "chunks": 51,
+    "grows": 0,
+    "requested_bytes": 1403805436
+  },
+  "retired_payload_capacity_bytes": 594705012,
+  "train_reduction_fraction": 0.2145604048803661,
+  "elapsed_reduction_fraction": 0.20207306016386106,
+  "hwm_bytes_baseline": 4760666112,
+  "hwm_bytes_arena": 4761624576,
+  "hwm_delta_bytes": 958464,
+  "residual_ms_baseline": 4259.949644999999,
+  "residual_ms_arena": 363.57376100000147,
+  "residual_without_inventory_ms_baseline": 4072.2359869999987,
+  "residual_without_inventory_ms_arena": 106.62849500000146,
+  "capacity_le_32b_heap_allocation_fraction_16m": 0.7601408246778483,
+  "capacity_le_32b_heap_allocation_fraction_512m": 0.6113196669356837,
+  "repetitions_per_implementation": 1,
+  "diagnostic_only": true
+}
