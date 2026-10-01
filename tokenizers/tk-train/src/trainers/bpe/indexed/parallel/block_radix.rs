@@ -27,7 +27,7 @@
 
 //! Rust translation of Clausecker's BSD-2-Clause `radixsort_permuted.c`.
 //! Reference f69e816c3cd79d312cd67aea5b9cf1c338c1b371, July 2026 paper:
-//! https://arxiv.org/abs/2607.05302 ; source/license in ../vendor.
+//! https://arxiv.org/abs/2607.05302 ; full upstream license retained above.
 //! Sort only the HIGH 32 bits; retain LOW 32 bits in stable incoming order.
 //! Fixed 512-element blocks: 2 MiB scratch + 9 bytes per input block.
 //! Stable initial pair grouping with bounded block scratch.
