@@ -1,0 +1,14 @@
+{
+  "source_commit": "0196aea1",
+  "binary": "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-validation-window/target/release/hf-bpe-native-weight-intervals-stable",
+  "binary_sha256": "5f542bf19e6c36d9a393503d0232fff5c933cdb4f38d134025bf72e38d2a4a38",
+  "build_command": "python3 benchmarks/hf-bpe/build_weight_intervals.py /root/code/tokenizers-worktrees/weight-sorted-intervals --label weight-intervals-stable",
+  "tests": {
+    "corpus_tests": 2,
+    "full_ordered_trace_test": 1,
+    "failed": 0
+  },
+  "comparison": "same binary, original metadata vs stable descending weight sort with intervals",
+  "previous_unstable_binary_unchanged": true,
+  "sort_buffer_measurement": "len * size_of::<(&CompactString,u64)>() above Rayon 1.12 insertion threshold; excludes small chunk metadata, whole process RSS measures actual total"
+}

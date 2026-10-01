@@ -1,0 +1,107 @@
+   Compiling bitcannon v0.1.0-dev.0 (/root/code/tokenizers/benchmarks/hf-bpe/.build/native-weight-intervals-stable/source/tokenizers/bitcannon)
+   Compiling tk-encode v0.1.0-dev.0 (/root/code/tokenizers/benchmarks/hf-bpe/.build/native-weight-intervals-stable/source/tokenizers/tk-encode)
+   Compiling tk-convert v0.1.0-dev.0 (/root/code/tokenizers/benchmarks/hf-bpe/.build/native-weight-intervals-stable/source/tokenizers/tk-convert)
+   Compiling tk-train v0.1.0-dev.0 (/root/code/tokenizers/benchmarks/hf-bpe/.build/native-weight-intervals-stable/source/tokenizers/tk-train)
+warning: struct `Merge` is never constructed
+  --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-weight-intervals-stable/source/tokenizers/tk-train/src/trainers/bpe/mod.rs:31:8
+   |
+31 | struct Merge {
+   |        ^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: methods `tokenize_words`, `count_pairs`, and `do_train_observed` are never used
+   --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-weight-intervals-stable/source/tokenizers/tk-train/src/trainers/bpe/mod.rs:389:8
+    |
+254 | impl BpeTrainer {
+    | --------------- methods in this implementation
+...
+389 |     fn tokenize_words(
+    |        ^^^^^^^^^^^^^^
+...
+435 |     fn count_pairs(
+    |        ^^^^^^^^^^^
+...
+530 |     fn do_train_observed(
+    |        ^^^^^^^^^^^^^^^^^
+
+warning: methods `train_vocab_indexed_parallel`, `train_vocab_indexed`, `train_vocab_fused`, and `do_train_fused` are never used
+   --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-weight-intervals-stable/source/tokenizers/tk-train/src/trainers/bpe/indexed.rs:613:19
+    |
+612 | impl BpeTrainer {
+    | --------------- methods in this implementation
+613 |     pub(super) fn train_vocab_indexed_parallel(
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+644 |     pub(super) fn train_vocab_indexed(&self) -> Result<IndexedTraining> {
+    |                   ^^^^^^^^^^^^^^^^^^^
+...
+650 |     pub(super) fn train_vocab_fused(&self) -> Result<IndexedTraining> {
+    |                   ^^^^^^^^^^^^^^^^^
+...
+654 |     pub(super) fn do_train_fused(
+    |                   ^^^^^^^^^^^^^^
+
+warning: method `weight` is never used
+   --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-weight-intervals-stable/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel.rs:205:8
+    |
+194 | impl<O: Offset, const INLINE: usize> Block<O, INLINE> {
+    | ----------------------------------------------------- method in this implementation
+...
+205 |     fn weight(&self, position: usize, uniform: Option<u64>) -> u64 {
+    |        ^^^^^^
+
+warning: method `len` is never used
+  --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-weight-intervals-stable/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/candidate_heap.rs:80:19
+   |
+32 | impl CandidateHeap {
+   | ------------------ method in this implementation
+...
+80 |     pub(super) fn len(&self) -> usize {
+   |                   ^^^
+
+warning: method `flush` is never used
+  --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-weight-intervals-stable/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/fused_batch/aggregate.rs:72:29
+   |
+15 | impl Scratch {
+   | ------------ method in this implementation
+...
+72 |     pub(in super::super) fn flush<O: Offset, const INLINE: usize>(
+   |                             ^^^^^
+
+warning: struct `Symbol` is never constructed
+  --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-weight-intervals-stable/source/tokenizers/tk-train/src/trainers/bpe/word.rs:46:19
+   |
+46 | pub(crate) struct Symbol {
+   |                   ^^^^^^
+
+warning: struct `Word` is never constructed
+  --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-weight-intervals-stable/source/tokenizers/tk-train/src/trainers/bpe/word.rs:53:12
+   |
+53 | pub struct Word {
+   |            ^^^^
+
+warning: associated items `new`, `add`, `merge`, `get_chars`, and `get_chars_iter` are never used
+   --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-weight-intervals-stable/source/tokenizers/tk-train/src/trainers/bpe/word.rs:75:12
+    |
+ 74 | impl Word {
+    | --------- associated items in this implementation
+ 75 |     pub fn new() -> Self {
+    |            ^^^
+...
+ 79 |     pub fn add(&mut self, c: u32, byte_len: usize) {
+    |            ^^^
+...
+ 99 |     pub fn merge(
+    |            ^^^^^
+...
+154 |     pub fn get_chars(&self) -> Vec<u32> {
+    |            ^^^^^^^^^
+...
+158 |     pub fn get_chars_iter(&self) -> impl ExactSizeIterator<Item = u32> + '_ {
+    |            ^^^^^^^^^^^^^^
+
+warning: `tk-train` (lib) generated 9 warnings
+   Compiling hf-bpe-native-weight-intervals-stable v0.1.0 (/root/code/tokenizers/benchmarks/hf-bpe/.build/native-weight-intervals-stable/runner)
+    Finished `release` profile [optimized] target(s) in 45.51s
+/root/code/tokenizers/benchmarks/hf-bpe/.build/native-weight-intervals-stable/target/release/hf-bpe-native-weight-intervals-stable

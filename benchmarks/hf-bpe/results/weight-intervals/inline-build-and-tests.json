@@ -1,0 +1,18 @@
+{
+  "source_commit": "c9af0cf2e5d81b89147f555d6d9693f504aab1dc",
+  "binary": "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-validation-window/target/release/hf-bpe-native-weight-intervals-inline",
+  "binary_sha256": "9cd06c0d9fcacf945316b4d2f1ae75b288b173564601a855d45fad9c71589b4c",
+  "build_command": "python3 benchmarks/hf-bpe/build_weight_intervals.py /root/code/tokenizers-worktrees/weight-sorted-intervals --label weight-intervals-inline",
+  "tests": {
+    "parallel_tests_passed": 31,
+    "failed": 0,
+    "command": "cargo test --offline --manifest-path tokenizers/tk-train/Cargo.toml --no-default-features --lib trainers::bpe::indexed::parallel",
+    "worktree": "/root/code/tokenizers-worktrees/weight-sorted-intervals"
+  },
+  "excluded_wrong_worktree_test_run": "7 earlier-root tests; not candidate validation",
+  "same_binary_controls": [
+    "original",
+    "sorted: unstable",
+    "stable: preserve equal-weight order"
+  ]
+}
