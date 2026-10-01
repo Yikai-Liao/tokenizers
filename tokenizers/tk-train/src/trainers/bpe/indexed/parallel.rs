@@ -10,6 +10,7 @@ mod alphabet;
 mod candidate_heap;
 mod corpus;
 mod fused_batch;
+mod flat_commit;
 mod radix_count;
 mod bounded_initial;
 use candidate_heap::CandidateHeap;
@@ -252,6 +253,9 @@ struct Output<O: Offset, const INLINE: usize> {
     born: Vec<AHashMap<u64, u64>>,
     blocks: AHashMap<usize, AHashMap<u64, PackedPosting<O, INLINE>>>,
     flat_routes: Vec<Route>,
+    // [owner][rule * 2 + direction]. A birth's new identity determines its
+    // unique bucket; only its neighbor needs to be reduced inside that bucket.
+    flat_births: Vec<Vec<Vec<(u32, Group)>>>,
 }
 struct Group {
     weight: u64,
@@ -289,7 +293,13 @@ impl<O: Offset, const INLINE: usize> Output<O, INLINE> {
             flat_routes: (0..if flat { workers } else { 0 })
                 .map(|_| Route::default())
                 .collect(),
+            flat_births: Vec::new(),
         }
+    }
+    fn enable_dense_births(&mut self, rules: usize) {
+        self.flat_births = (0..self.flat_routes.len())
+            .map(|_| (0..rules * 2).map(|_| Vec::new()).collect())
+            .collect();
     }
     fn remove(&mut self, k: u64, weight: u64) {
         if !self.flat_routes.is_empty() {
@@ -1238,6 +1248,9 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
                 .enumerate()
                 .map(|(o, ledger)| -> Result<_> {
                     let mut retired = Vec::new();
+                    if flat && !outputs[0].flat_births.is_empty() {
+                        return flat_commit::dense(&outputs, o, ledger, &rules, lengths.len(), floor);
+                    }
                     if flat {
                         let mut born = AHashMap::<u64, (u64, u32)>::new();
                         for output in &outputs {

@@ -172,6 +172,7 @@ fn prepare_with_mode<C: Slot, O: Offset, const INLINE: usize, const GROUPED: boo
         .par_iter()
         .map(|tasks| -> Result<_> {
             let mut output = Output::new(workers, true);
+            if GROUPED { output.enable_dense_births(rules.len()); }
             let mut left_cache = aggregate::Scratch::new(if GROUPED { lengths.len() } else { 0 });
             let mut right_cache = aggregate::Scratch::new(if GROUPED { lengths.len() } else { 0 });
             let mut valid = Vec::with_capacity(tasks.len());
@@ -253,8 +254,8 @@ fn prepare_with_mode<C: Slot, O: Offset, const INLINE: usize, const GROUPED: boo
                     }
                 }
                 if GROUPED {
-                    left_cache.flush(&mut output, rule, true)?;
-                    right_cache.flush(&mut output, rule, false)?;
+                    left_cache.flush_dense(&mut output, rule, true, task.rank)?;
+                    right_cache.flush_dense(&mut output, rule, false, task.rank)?;
                 }
                 valid.push(Valid {
                     rank: task.rank,

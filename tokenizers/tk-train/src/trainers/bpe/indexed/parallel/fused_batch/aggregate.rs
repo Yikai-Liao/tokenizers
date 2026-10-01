@@ -8,12 +8,12 @@ struct LocalGroup {
     tail: u32,
 }
 
-pub(super) struct Scratch {
+pub(in super::super) struct Scratch {
     indices: Vec<u32>,
     groups: Vec<LocalGroup>,
 }
 impl Scratch {
-    pub(super) fn new(identities: usize) -> Self {
+    pub(in super::super) fn new(identities: usize) -> Self {
         Self {
             indices: vec![NONE; identities],
             groups: Vec::new(),
@@ -33,10 +33,10 @@ impl Scratch {
         }
         &mut self.groups[*index as usize]
     }
-    pub(super) fn remove(&mut self, neighbor: u32, weight: u64) {
+    pub(in super::super) fn remove(&mut self, neighbor: u32, weight: u64) {
         self.group(neighbor).removed_weight += weight;
     }
-    pub(super) fn birth<O: Offset, const INLINE: usize>(
+    pub(in super::super) fn birth<O: Offset, const INLINE: usize>(
         &mut self,
         output: &mut Output<O, INLINE>,
         neighbor: u32,
@@ -69,11 +69,29 @@ impl Scratch {
         record.born.weight += weight;
         Ok(())
     }
-    pub(super) fn flush<O: Offset, const INLINE: usize>(
+    pub(in super::super) fn flush<O: Offset, const INLINE: usize>(
         &mut self,
         output: &mut Output<O, INLINE>,
         rule: &Rule,
         left: bool,
+    ) -> Result<()> {
+        self.flush_into(output, rule, left, None)
+    }
+    pub(in super::super) fn flush_dense<O: Offset, const INLINE: usize>(
+        &mut self,
+        output: &mut Output<O, INLINE>,
+        rule: &Rule,
+        left: bool,
+        rank: usize,
+    ) -> Result<()> {
+        self.flush_into(output, rule, left, Some(rank * 2 + usize::from(!left)))
+    }
+    fn flush_into<O: Offset, const INLINE: usize>(
+        &mut self,
+        output: &mut Output<O, INLINE>,
+        rule: &Rule,
+        left: bool,
+        bucket: Option<usize>,
     ) -> Result<()> {
         for record in self.groups.drain(..) {
             self.indices[record.neighbor as usize] = NONE;
@@ -96,6 +114,13 @@ impl Scratch {
                 key(rule.replacement, record.neighbor)
             };
             let o = owner(k, output.flat_routes.len());
+            if let Some(bucket) = bucket {
+                // One flush per rule/direction/job; the node chain is already
+                // ordered and never needs a task-local birth hash entry.
+                debug_assert_eq!(output.flat_routes[o].nodes[record.tail as usize].next, NONE);
+                output.flat_births[o][bucket].push((record.neighbor, record.born));
+                continue;
+            }
             let route = &mut output.flat_routes[o];
             let group = route.delta.entry(k).or_default();
             let count = group
@@ -113,7 +138,7 @@ impl Scratch {
         }
         Ok(())
     }
-    pub(super) fn bytes(&self) -> usize {
+    pub(in super::super) fn bytes(&self) -> usize {
         self.indices.capacity() * 4 + self.groups.capacity() * std::mem::size_of::<LocalGroup>()
     }
 }
