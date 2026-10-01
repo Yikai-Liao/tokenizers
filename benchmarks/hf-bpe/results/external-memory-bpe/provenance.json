@@ -1,0 +1,263 @@
+{
+  "research_date": "2026-10-01",
+  "scope": "research only: literature, architecture, conditional arithmetic; no external Trainer implementation",
+  "acceptance_target": "same actual HF vocabulary, merge order and model signature for same input/configuration; no new RePair semantics",
+  "source_worktree_head_at_inspection": "add44e14d793c31a7595bb40f8321d0ec038a6aa",
+  "source_worktree_head_now": "f16dee0848db565b178df199febce60496251192",
+  "capacity_reference_commit": "56dd32273b195339cfae9d64c5d469db61badb96",
+  "not_measured": [
+    "32GiB or 100GiB corpus training",
+    "bounded RSS of proposed external Trainer",
+    "SSD throughput or random IOPS",
+    "disk PQ/ledger/endpoint correctness",
+    "HF equivalence of compressed-domain research"
+  ],
+  "local_inputs_and_artifacts": [
+    {
+      "path": "/root/code/tokenizers/benchmarks/hf-bpe/SCALE_UP_ANALYSIS.md",
+      "sha256": "d7c670ea1d19420bf10b4e235cbfb7a535ce73966ae560dec111fcffedde3791"
+    },
+    {
+      "path": "/root/code/tokenizers/benchmarks/hf-bpe/ALGORITHM_FRONTIER_MAP.md",
+      "sha256": "3c742ba834cacf653390d6b28c033bd9829ad7f732503d6fc59022e8422fcd7f"
+    },
+    {
+      "path": "/root/code/tokenizers/benchmarks/hf-bpe/PAIR_MONOTONICITY.md",
+      "sha256": "e8bd1322917b8b3c488582e0ee092cfb08bea2f3a6122bf8ed2fe82e6669e53f"
+    },
+    {
+      "path": "/root/code/tokenizers/benchmarks/hf-bpe/results/frontier/zh512m-direct-auto-t256.jsonl",
+      "sha256": "8bb40ecf4c241c88c8eb2b19056a3896d8907d477a55b19c0d5f57a90975fd93"
+    },
+    {
+      "path": "/root/code/tokenizers/benchmarks/hf-bpe/results/external-memory-bpe/capacity_model.py",
+      "sha256": "a6ab75dad138b54c60eca91766e9df1bff397440e34a8426967381dcec1a8f34"
+    },
+    {
+      "path": "/root/code/tokenizers/benchmarks/hf-bpe/results/external-memory-bpe/capacity_model.json",
+      "sha256": "4522a7c8503d56e133949841085a775c3f0e7324d5154d0d81cae2dcc3ee1bc0"
+    },
+    {
+      "path": "/root/code/tokenizers/benchmarks/hf-bpe/EXTERNAL_MEMORY_BPE.md",
+      "sha256": "04e47b33148eed4bbdd8c965549407de0f367bce56780431986511790aa67229"
+    },
+    {
+      "path": "/root/code/tokenizers-worktrees/initial-owner-waves/tokenizers/tk-train/src/trainers/bpe/indexed.rs",
+      "sha256": "10dec01836fac9249f92f80de8c943d026f2c08c55b94e1d6f1903ab20296393"
+    },
+    {
+      "path": "/root/code/tokenizers-worktrees/initial-owner-waves/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs",
+      "sha256": "d86ba57e35a87ac6561a92c5e93304702d002e4e6eeb5c3fe26c937ce32577c8"
+    },
+    {
+      "path": "/root/code/tokenizers-worktrees/initial-owner-waves/tokenizers/tk-train/src/trainers/bpe/indexed/parallel.rs",
+      "sha256": "690a8e482db5b4e7232d8bcfb95cbd4fef7389cdf3b05825cc1903555477682e"
+    },
+    {
+      "path": "/root/code/tokenizers-worktrees/initial-owner-waves/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/corpus.rs",
+      "sha256": "04a706fd6412b5cfd1bd955330c45e2e6dc438c0693e2f8ae68b45d3c5126bf6"
+    }
+  ],
+  "primary_sources": [
+    {
+      "title_in_report": "作者 PDF，§1.3 与 §6",
+      "url": "https://koeppl.github.io/bin/paper/algorithms21repair.pdf",
+      "accessed": "2026-10-01",
+      "source_type": "primary_research",
+      "verification": "web search/open of primary source; no external performance reproduced",
+      "transfer_limit": "Author PDF: sections 1.3 and 6 checked; counts non-overlapping AA, arbitrary ties. Theorem 4 retains per-turn Scan(n). HF output semantics differ."
+    },
+    {
+      "title_in_report": "Space-Efficient Re-Pair Compression",
+      "url": "https://arxiv.org/abs/1611.01479",
+      "accessed": "2026-10-01",
+      "source_type": "primary_research",
+      "verification": "web search/open of primary source; no external performance reproduced",
+      "transfer_limit": "Expected RAM-space/time results, re-writable input; not fixed RAM external Trainer."
+    },
+    {
+      "title_in_report": "RePair in Compressed Space and Time",
+      "url": "https://arxiv.org/abs/1811.01472",
+      "accessed": "2026-10-01",
+      "source_type": "primary_research",
+      "verification": "web search/open of primary source; no external performance reproduced",
+      "transfer_limit": "DCC 2019 compressed-domain exact RePair; bound depends on input grammar size and output variables."
+    },
+    {
+      "title_in_report": "Efficient Grammar Compression via RLZ-based RePair，2025 preprint",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12330530/",
+      "accessed": "2026-10-01",
+      "source_type": "primary_research",
+      "verification": "web search/open of primary source; no external performance reproduced",
+      "transfer_limit": "2025 preprint. Search returned primary abstract/conclusion; later direct open met CAPTCHA. Authors report tie/order variation; no HF output equivalence."
+    },
+    {
+      "title_in_report": "Re²Pair 的算法描述",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11275962/",
+      "accessed": "2026-10-01",
+      "source_type": "primary_research",
+      "verification": "web search/open of primary source; no external performance reproduced",
+      "transfer_limit": "Recursive PFP dictionary/parse construction; no canonical HF greedy equivalence claimed."
+    },
+    {
+      "title_in_report": "Arge buffer tree，1996",
+      "url": "https://www.brics.dk/DS/96/3/BRICS-DS-96-3.pdf",
+      "accessed": "2026-10-01",
+      "source_type": "primary_research",
+      "verification": "web search/open of primary source; no external performance reproduced"
+    },
+    {
+      "title_in_report": "DecreaseKeys are Expensive，STOC 2017",
+      "url": "https://arxiv.org/abs/1611.00911",
+      "accessed": "2026-10-01",
+      "source_type": "primary_research",
+      "verification": "web search/open of primary source; no external performance reproduced",
+      "transfer_limit": "STOC 2017 external decrease-key lower bound; operation-model result, not BPE lower bound."
+    },
+    {
+      "title_in_report": "Jiang–Larsen，2018",
+      "url": "https://arxiv.org/abs/1806.07598",
+      "accessed": "2026-10-01",
+      "source_type": "primary_research",
+      "verification": "web search/open of primary source; no external performance reproduced",
+      "transfer_limit": "2018 expected amortized external PQ decrease-key result; priority direction/API must match."
+    },
+    {
+      "title_in_report": "Iacono–Jacob–Tsakalidis，ESA 2019",
+      "url": "https://drops.dagstuhl.de/entities/document/10.4230/LIPIcs.ESA.2019.60",
+      "accessed": "2026-10-01",
+      "source_type": "primary_research",
+      "verification": "web search/open of primary source; no external performance reproduced",
+      "transfer_limit": "External-memory Update/ExtractMin/Delete tradeoff and space overhead; not free arbitrary updates."
+    },
+    {
+      "title_in_report": "Brodal 等，ESA 2025",
+      "url": "https://drops.dagstuhl.de/entities/document/10.4230/LIPIcs.ESA.2025.5",
+      "accessed": "2026-10-01",
+      "source_type": "primary_research",
+      "verification": "web search/open of primary source; no external performance reproduced",
+      "transfer_limit": "2025 amortized Insert/DeleteMin result, M>=2B. Does not itself include keyed frequency repair."
+    },
+    {
+      "title_in_report": "Lazy B-Trees，MFCS 2025 作者页及 erratum",
+      "url": "https://www2.wild-inter.net/publications/rysgaard-wild-2025",
+      "accessed": "2026-10-01",
+      "source_type": "official_implementation_documentation",
+      "verification": "web search/open of primary source; no external performance reproduced",
+      "transfer_limit": "Author erratum supersedes optimistic conference pointer-based PQ claim. Pointer maintenance missing; straightforward delete-min may cost O(log N) I/O."
+    },
+    {
+      "title_in_report": "STXXL priority_queue，固定 1.4.1 文档",
+      "url": "https://stxxl.org/tags/1.4.1/classstxxl_1_1priority__queue.html",
+      "accessed": "2026-10-01",
+      "source_type": "official_implementation_documentation",
+      "verification": "web search/open of primary source; no external performance reproduced"
+    },
+    {
+      "title_in_report": "External-memory dictionaries with worst-case update cost",
+      "url": "https://arxiv.org/abs/2211.06044",
+      "accessed": "2026-10-01",
+      "source_type": "primary_research",
+      "verification": "web search/open of primary source; no external performance reproduced",
+      "transfer_limit": "2022 external dictionary worst-case update result; no exact max selection provided."
+    },
+    {
+      "title_in_report": "Bε-tree upsert 的原始实践介绍",
+      "url": "https://www.usenix.org/system/files/login/issues/login_oct15_issue.pdf",
+      "accessed": "2026-10-01",
+      "source_type": "primary_research",
+      "verification": "web search/open of primary source; no external performance reproduced"
+    },
+    {
+      "title_in_report": "RocksDB Merge Operator",
+      "url": "https://github.com/facebook/rocksdb/wiki/Merge-Operator",
+      "accessed": "2026-10-01",
+      "source_type": "official_implementation_documentation",
+      "verification": "web search/open of primary source; no external performance reproduced",
+      "transfer_limit": "Official RocksDB deferred merge semantics; supplied checked signed-counter implementation still required."
+    },
+    {
+      "title_in_report": "WiscKey，FAST 2016",
+      "url": "https://www.usenix.org/system/files/conference/fast16/fast16-papers-lu.pdf",
+      "accessed": "2026-10-01",
+      "source_type": "primary_research",
+      "verification": "web search/open of primary source; no external performance reproduced",
+      "transfer_limit": "WiscKey key/value separation is transferable mechanism; no BPE speedup extrapolated."
+    },
+    {
+      "title_in_report": "Lucene segment 说明",
+      "url": "https://lucene.apache.org/core/9_12_0/core/org/apache/lucene/index/package-summary.html",
+      "accessed": "2026-10-01",
+      "source_type": "official_implementation_documentation",
+      "verification": "web search/open of primary source; no external performance reproduced"
+    },
+    {
+      "title_in_report": "Lucene912 posting 格式",
+      "url": "https://lucene.apache.org/core/9_12_2/core/org/apache/lucene/codecs/lucene912/Lucene912PostingsFormat.html",
+      "accessed": "2026-10-01",
+      "source_type": "official_implementation_documentation",
+      "verification": "web search/open of primary source; no external performance reproduced"
+    },
+    {
+      "title_in_report": "RocksDB memory accounting",
+      "url": "https://github.com/facebook/rocksdb/wiki/Memory-usage-in-RocksDB",
+      "accessed": "2026-10-01",
+      "source_type": "official_implementation_documentation",
+      "verification": "web search/open of primary source; no external performance reproduced",
+      "transfer_limit": "Official cache/memtable/index/filter/iterator accounting; OS page cache separate."
+    },
+    {
+      "title_in_report": "GraphChi，OSDI 2012",
+      "url": "https://www.usenix.org/conference/osdi12/technical-sessions/presentation/kyrola",
+      "accessed": "2026-10-01",
+      "source_type": "primary_research",
+      "verification": "web search/open of primary source; no external performance reproduced"
+    },
+    {
+      "title_in_report": "X-Stream，SOSP 2013",
+      "url": "https://www.cl.cam.ac.uk/~ey204/teaching/ACS/R244_2021_2022/papers/roy_SOSP_2013.pdf",
+      "accessed": "2026-10-01",
+      "source_type": "primary_research",
+      "verification": "web search/open of primary source; no external performance reproduced",
+      "transfer_limit": "X-Stream edge-centric partitions; no graph benchmark speed extrapolation."
+    },
+    {
+      "title_in_report": "GridGraph，ATC 2015",
+      "url": "https://www.usenix.org/conference/atc15/technical-session/presentation/zhu",
+      "accessed": "2026-10-01",
+      "source_type": "primary_research",
+      "verification": "web search/open of primary source; no external performance reproduced",
+      "transfer_limit": "GridGraph active block skipping; HF AA/boundary state still required."
+    },
+    {
+      "title_in_report": "GraphMP，2018",
+      "url": "https://arxiv.org/abs/1810.04334",
+      "accessed": "2026-10-01",
+      "source_type": "primary_research",
+      "verification": "web search/open of primary source; no external performance reproduced",
+      "transfer_limit": "GraphMP semi-external vertex RAM assumption does not solve N-slot RAM overflow by itself."
+    },
+    {
+      "title_in_report": "STXXL sort 文档",
+      "url": "https://stxxl.org/tags/1.4.1/design_algo_sort.html",
+      "accessed": "2026-10-01",
+      "source_type": "official_implementation_documentation",
+      "verification": "web search/open of primary source; no external performance reproduced"
+    },
+    {
+      "title_in_report": "DuckDB 2025 sorting redesign",
+      "url": "https://duckdb.org/2025/09/24/sorting-again",
+      "accessed": "2026-10-01",
+      "source_type": "official_implementation_documentation",
+      "verification": "web search/open of primary source; no external performance reproduced",
+      "transfer_limit": "2025 official DuckDB sort redesign; spillable representation relevant to bounded run implementation."
+    },
+    {
+      "title_in_report": "Vitter 外存算法原始综述",
+      "url": "https://users.cs.duke.edu/~reif/courses/alglectures/vitter.papers/Vit.IO_survey.pdf",
+      "accessed": "2026-10-01",
+      "source_type": "primary_research",
+      "verification": "web search/open of primary source; no external performance reproduced"
+    }
+  ]
+}

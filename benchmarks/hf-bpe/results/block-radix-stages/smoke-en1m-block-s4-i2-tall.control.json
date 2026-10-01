@@ -1,0 +1,40 @@
+{
+  "command": [
+    "/usr/bin/python3",
+    "/root/code/tokenizers/benchmarks/hf-bpe/run_native_fair.py",
+    "--case",
+    "smoke-en1m-block-s4-i2-tall",
+    "--worktree",
+    "/root/code/tokenizers-worktrees/initial-owner-waves",
+    "--build-root",
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-j-block-radix-stages",
+    "--binary",
+    "/root/code/tokenizers/benchmarks/hf-bpe/target/release/hf-bpe-native-j-block-radix-stages",
+    "--corpus",
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/posting-distribution-inputs/en-1m-none-r4000/input.txt",
+    "--output",
+    "/root/code/tokenizers/benchmarks/hf-bpe/results/block-radix-stages/smoke-en1m-block-s4-i2-tall.jsonl",
+    "--split",
+    "none",
+    "--vocab",
+    "4486",
+    "--initialization-workers",
+    "4",
+    "--merge-workers",
+    "4",
+    "--atomic-corpus"
+  ],
+  "extra_environment": {
+    "HF_BPE_ARENA_MAX_BYTES": "18446744073709551615",
+    "HF_BPE_INITIAL_OWNER_WIDTH": "2",
+    "HF_BPE_INITIAL_SORT": "block",
+    "HF_BPE_INITIAL_SORT_WIDTH": "4"
+  },
+  "cutoff_bytes": 18446744073709551615,
+  "cutoff_label": "all",
+  "owner_width": 2,
+  "backend": "block",
+  "sort_width": 4,
+  "count": 1,
+  "scope": "same binary owner-wave/cutoff sensitivity; no concurrent CPU tasks"
+}

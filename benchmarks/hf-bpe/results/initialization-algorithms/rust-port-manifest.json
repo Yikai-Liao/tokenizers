@@ -1,0 +1,96 @@
+{
+  "binary_sha256": "c9209e7cb5ef10b911d513160c8f35165771c65bc335eb301241eb477f653157",
+  "sources": {
+    "prototype/src/main.rs": "83072121f7abffbc52fc25650292dd772851b879823eb37609c0dd517f52efea",
+    "prototype/src/radsort_u64.rs": "359cd5beb16e001cb1d118115de95fabface187b6dcce9bf009f8d98c52da9b4"
+  },
+  "runs": [
+    {
+      "mode": "radsort-rust",
+      "alphabet": 5416,
+      "words": 4318,
+      "slots": 417717,
+      "edges": 409080,
+      "pairs": 37911,
+      "retained_edges": 335445,
+      "index_ms": 14.164,
+      "before_index_rss_bytes": 6057984,
+      "before_index_hwm_bytes": 10444800,
+      "rss_bytes": 13139968,
+      "hwm_bytes": 13139968,
+      "modeled_index_peak_bytes": 7014868,
+      "final_index_bytes": 2693652,
+      "checksum": "89e9530bf5b9e342",
+      "floor": 2,
+      "command": [
+        "/root/code/tokenizers/benchmarks/hf-bpe/results/initialization-algorithms/prototype/target/release/initialization-algorithm-prototype",
+        "radsort-rust",
+        "/tmp/tokenizers-bpe-bench/data/text/zh-1m.txt",
+        "2",
+        "verify"
+      ],
+      "input_sha256": "06f507d1c4a4f5183d6eb03ff289588091553f1170aab92bcaee8a7860079c5b",
+      "process_user_seconds": 0.07967199999999999,
+      "process_system_seconds": 0.019899,
+      "process_seconds_with_preprocessing_and_oracle": 0.10857748985290527
+    },
+    {
+      "mode": "radsort-rust",
+      "alphabet": 7308,
+      "words": 16138,
+      "slots": 1643794,
+      "edges": 1611517,
+      "pairs": 114436,
+      "retained_edges": 1436934,
+      "index_ms": 56.873,
+      "before_index_rss_bytes": 17760256,
+      "before_index_hwm_bytes": 22614016,
+      "rss_bytes": 29081600,
+      "hwm_bytes": 41754624,
+      "modeled_index_peak_bytes": 23749672,
+      "final_index_bytes": 8760384,
+      "checksum": "87a0337db9fbb0ed",
+      "floor": 2,
+      "command": [
+        "/root/code/tokenizers/benchmarks/hf-bpe/results/initialization-algorithms/prototype/target/release/initialization-algorithm-prototype",
+        "radsort-rust",
+        "/tmp/tokenizers-bpe-bench/data/text/zh-4m.txt",
+        "2",
+        "verify"
+      ],
+      "input_sha256": "8e73ef2774b7ff8810c57e05348fd809daff3c8db0711d45b19aa5420369c497",
+      "process_user_seconds": 0.33268999999999993,
+      "process_system_seconds": 0.079221,
+      "process_seconds_with_preprocessing_and_oracle": 0.43717384338378906
+    },
+    {
+      "mode": "radsort-rust",
+      "alphabet": 9834,
+      "words": 62704,
+      "slots": 6503104,
+      "edges": 6377695,
+      "pairs": 317575,
+      "retained_edges": 6007947,
+      "index_ms": 196.122,
+      "before_index_rss_bytes": 63430656,
+      "before_index_hwm_bytes": 69664768,
+      "rss_bytes": 102064128,
+      "hwm_bytes": 159272960,
+      "modeled_index_peak_bytes": 94371172,
+      "final_index_bytes": 34961004,
+      "checksum": "68a2c94a39e5f36f",
+      "floor": 2,
+      "command": [
+        "/root/code/tokenizers/benchmarks/hf-bpe/results/initialization-algorithms/prototype/target/release/initialization-algorithm-prototype",
+        "radsort-rust",
+        "/tmp/tokenizers-bpe-bench/data/text/zh-16m.txt",
+        "2",
+        "verify"
+      ],
+      "input_sha256": "cdee18c95c05586054cfd8e364d3391bb4ca0c2e46cc89d6e4e159d2c0794dc9",
+      "process_user_seconds": 1.2839329999999998,
+      "process_system_seconds": 0.25676199999999993,
+      "process_seconds_with_preprocessing_and_oracle": 1.627525806427002
+    }
+  ]
+}

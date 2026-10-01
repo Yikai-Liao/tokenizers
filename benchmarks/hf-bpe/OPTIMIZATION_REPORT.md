@@ -171,3 +171,17 @@ python3 run_native_fair.py --case rule-aggregate-reproduction \
 每次environment JSON锁定实际worktree源码、临时探针副本、runner/Cargo.lock、二进制、输入和脚本hash；probe只在原do_train返回前输出私有统计。实际调用原train_vocab，未增加公有Trainer选算法API。计时原始数据与阶段解释见 [C结果](results/optimization-c-512.summary.md)、[B结果](results/optimization-b-512.summary.md)、[B2结果](results/optimization-b2-512.summary.md)。旧PR/native公平四项见 [PARALLEL_REPORT.md](PARALLEL_REPORT.md)。
 
 当前选择J；H两对完整组合证据作为保留基线。失败B/F/G/I/K均保存来源与结果，不纳入推荐。没有追加Atomic对照或宽度/线程矩阵。各新增候选由实际采样、阶段边界与动态计数支持，完整收益与归因边界分开记录。
+
+
+## 初始化峰值与大规模算法候选（2026-10-01）
+
+用户明确要求降低4.43GiB初始化峰值、保留实际并行收益，并将数十GiB以上的通用优化排在小范围特化之前。`bpe/initial-owner-waves` 从J376363d2派生，最终f16dee08；独立算法代理给出Radsort/prototypes、数学审查与全路径前沿算法地图。
+
+完成33次正式调用：owner waves3、block radix3、排序/安装分阶段4、direct route/packed heap6、排序成本probe1、generic block计数16。各组同binary，全部模型/工作量与资源gate通过；56libtests通过。4owner经典scratch1.51GiB降到4owner block scratch11.42MiB；直接填最终streams省去旧compact。已测最终组合峰值3.33–3.46GiB，时间存在显著host波动；packed heap容量精确减半、没有独立速度结论。该条件优化在大规模优先级中后排。
+
+通用分块保留u32-local posting+64位base。posting.len+稀疏signed权重delta已实现，固定STD allocator、物理词序控制后容量下降但时间混合，未宣布通用最快。没有测几十GiB，也没有线性外推速度。下一步有界batch/waves、完整pair key与单表容量边界、可回收posting、磁盘/流式精确训练研究。按用户要求停止arena阈值调优，生产J保留。
+
+主报告 [INITIALIZATION_MEMORY_REPORT.md](INITIALIZATION_MEMORY_REPORT.md)，扩容 [SCALE_UP_ANALYSIS.md](SCALE_UP_ANALYSIS.md)，算法地图 [ALGORITHM_FRONTIER_MAP.md](ALGORITHM_FRONTIER_MAP.md)。七份实际overlay补丁对各自source commit apply-check通过，源码/binary/输入hash、33次raw、测试/构建日志与独立PNG/SVG完整归档。
+
+
+补充内存内分块摘要wave：候选7e794db1通过57项完整tests与同binary对照，13block摘要峰48→16MiB、进程峰479.94→431.57MiB；初始化+12%、全训+0.55%（各n=1）。本轮累计35次正式调用，主报告 [INITIALIZATION_MEMORY_REPORT.md](INITIALIZATION_MEMORY_REPORT.md)。外存路线仅预研，26项一手研究与条件容量模型见 [EXTERNAL_MEMORY_BPE.md](EXTERNAL_MEMORY_BPE.md)。

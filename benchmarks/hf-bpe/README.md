@@ -4,6 +4,8 @@
 
 追加 [posting arena 阈值与阶段峰值分析](POSTING_ARENA_THRESHOLD_REPORT.md)：43 次多语言生命周期诊断、12 次同 binary 阈值计时；中文 512 MiB full Bump 没有增峰、train 少约22%，英文小样本的阶段预算与速度不同。阈值按全程资源预算选择，实验尚未迁入生产 J。
 
+追加 [初始化峰值与扩容报告](INITIALIZATION_MEMORY_REPORT.md)：低 scratch block radix、排序/安装分阶段与direct route已核验，512MiB已测组合峰值约3.33–3.46GiB；generic block稀疏计数减少临时表容量，速度混合。数十GiB目标与完整地址/频率边界见 [SCALE_UP_ANALYSIS.md](SCALE_UP_ANALYSIS.md)，全路径论文与实践见 [ALGORITHM_FRONTIER_MAP.md](ALGORITHM_FRONTIER_MAP.md)。新候选在 `bpe/initial-owner-waves`；arena阈值待算法路线确定后再选。
+
 本次交付按实现拆成独立 worktree 和本地分支：HF reference、固定 PR、串行 endpoint、fused、串行初始化并行 merge、并行初始化、原子访问对照。五个新实现都直接接入原始 `BpeTrainer::do_train/train_vocab` 和 `Trainer::train`，公共 Trainer 字段与序列化格式保持一致。完整路径、提交与调用示例见 [WORKTREES.md](WORKTREES.md)。
 
 中央根目录 `bpe/experiments` 保存开发快照、历史实验接口和记录。以下布局与理论说明覆盖这些内部核心；根目录的外挂入口仅用于复现历史测量。当前公平比较固定 **u32 corpus ID、u32 posting**，串行初始化/4线程 merge 是与 PR 的控制项，4线程初始化另列为优化。
@@ -103,3 +105,6 @@ python3 run.py /path/to/tokenizers-bpe-benchmark/data/text --output results/smok
 ```
 
 `build_profiled.py` 检查 PR checkout 的提交和清洁状态，将源码复制到 `.build/profiled-*` 后才加入计时。`run.py` 固定单线程，按固定种子交错调用，每次训练使用独立进程，逐条核对完整模型摘要；遇到差异即停止。首次保存的正式矩阵对应 `--profile representative --repeats 3`；通常无需复跑这一矩阵。
+
+
+补充内存内分块摘要wave：候选7e794db1通过57项完整tests与同binary对照，13block摘要峰48→16MiB、进程峰479.94→431.57MiB；初始化+12%、全训+0.55%（各n=1）。本轮累计35次正式调用，主报告 [INITIALIZATION_MEMORY_REPORT.md](INITIALIZATION_MEMORY_REPORT.md)。外存路线仅预研，26项一手研究与条件容量模型见 [EXTERNAL_MEMORY_BPE.md](EXTERNAL_MEMORY_BPE.md)。

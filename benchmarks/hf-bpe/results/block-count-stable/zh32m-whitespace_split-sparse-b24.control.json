@@ -1,0 +1,39 @@
+{
+  "command": [
+    "/usr/bin/python3",
+    "/root/code/tokenizers/benchmarks/hf-bpe/run_native_fair.py",
+    "--case",
+    "zh32m-whitespace_split-sparse-b24",
+    "--worktree",
+    "/root/code/tokenizers-worktrees/initial-owner-waves",
+    "--build-root",
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-j-block-count-stable",
+    "--binary",
+    "/root/code/tokenizers/benchmarks/hf-bpe/target/release/hf-bpe-native-j-block-count-stable",
+    "--corpus",
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/posting-distribution-inputs/zh-32m-whitespace_split-r16000/input.txt",
+    "--output",
+    "/root/code/tokenizers/benchmarks/hf-bpe/results/block-count-stable/zh32m-whitespace_split-sparse-b24.jsonl",
+    "--split",
+    "whitespace_split",
+    "--vocab",
+    "27095",
+    "--initialization-workers",
+    "4",
+    "--merge-workers",
+    "4",
+    "--atomic-corpus",
+    "--expected-layout",
+    "parallel_u32_dict32"
+  ],
+  "extra_environment": {
+    "HF_BPE_BLOCK_COUNT_MODE": "sparse",
+    "HF_BPE_BLOCK_PROXY_BITS": "24"
+  },
+  "mode": "sparse",
+  "block_bits": 24,
+  "local_offset_bytes": 4,
+  "word_order": "lexical (diagnostic only)",
+  "count": 1,
+  "scope": "same binary block initialization; fixed system allocator; small block span proxy, not large corpus measurement"
+}

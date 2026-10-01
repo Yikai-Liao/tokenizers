@@ -1,0 +1,7 @@
+{
+  "status": "passed",
+  "roundtrip_and_order_records": 10064,
+  "seed": 376363,
+  "eligibility_boundaries": 6,
+  "scope": "mathematical encoding only; no Trainer test or benchmark"
+}

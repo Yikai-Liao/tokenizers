@@ -1,0 +1,6 @@
+{
+  "process_user_seconds": 0.14515499999999998,
+  "process_system_seconds": 0.013608999999999996,
+  "process_minor_faults": 4835,
+  "scope": "entire process including corpus preprocessing and oracle; maxrss excluded"
+}

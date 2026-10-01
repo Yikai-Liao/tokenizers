@@ -1,0 +1,15 @@
+{
+  "base": "376363d2",
+  "source_tip": "7e794db186ffbaa1adf1ee2a6a9202b72f4d50ee",
+  "overlay_apply_checks": {
+    "initial-owner-waves": "PASS",
+    "block-radix": "PASS",
+    "block-radix-stages": "PASS",
+    "frontier": "PASS",
+    "frontier-sort-cost": "PASS",
+    "block-count": "PASS",
+    "block-count-stable": "PASS",
+    "block-summary-waves": "PASS"
+  },
+  "candidate_source_apply_check": "PASS"
+}

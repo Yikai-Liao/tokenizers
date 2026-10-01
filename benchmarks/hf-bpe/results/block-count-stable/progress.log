@@ -1,0 +1,24 @@
+en32m-none-legacy-b24: pid 2515722; MemAvailable 7.48 GiB
+en32m-none-legacy-b24: init 1.012s + merge 7.204s; train 8.475s, peak RSS 0.59 GiB, min available 6.89 GiB, VmSwap 0.0 MiB, model df93a06222179df624566dbb648df91b561186078772597b9a6e0776e9957bab
+en32m-none-legacy-b24: u32 local offsets, dictionary path, model gate PASS
+en32m-none-sparse-b24: pid 2515939; MemAvailable 7.47 GiB
+en32m-none-sparse-b24: init 0.826s + merge 7.365s; train 8.472s, peak RSS 0.58 GiB, min available 6.85 GiB, VmSwap 0.0 MiB, model df93a06222179df624566dbb648df91b561186078772597b9a6e0776e9957bab
+en32m-none-sparse-b24: u32 local offsets, dictionary path, model gate PASS
+zh32m-none-legacy-b24: pid 2516204; MemAvailable 7.40 GiB
+zh32m-none-legacy-b24: init 2.416s + merge 3.880s; train 6.563s, peak RSS 0.36 GiB, min available 7.06 GiB, VmSwap 0.0 MiB, model 458f67e432cd41ab7941c195fe135a36bfcd298517ca217ed680658b204681b7
+zh32m-none-legacy-b24: u32 local offsets, dictionary path, model gate PASS
+zh32m-none-sparse-b24: pid 2516365; MemAvailable 7.40 GiB
+zh32m-none-sparse-b24: init 2.045s + merge 3.643s; train 5.947s, peak RSS 0.36 GiB, min available 7.06 GiB, VmSwap 0.0 MiB, model 458f67e432cd41ab7941c195fe135a36bfcd298517ca217ed680658b204681b7
+zh32m-none-sparse-b24: u32 local offsets, dictionary path, model gate PASS
+en32m-whitespace_split-legacy-b24: pid 2516549; MemAvailable 7.43 GiB
+en32m-whitespace_split-legacy-b24: init 0.398s + merge 1.686s; train 2.130s, peak RSS 0.11 GiB, min available 7.34 GiB, VmSwap 0.0 MiB, model f52ab52af6ba4c7ef1005eb714b7282146976296cd21aa7fe1f4fbdd57ff2689
+en32m-whitespace_split-legacy-b24: u32 local offsets, dictionary path, model gate PASS
+en32m-whitespace_split-sparse-b24: pid 2516724; MemAvailable 7.39 GiB
+en32m-whitespace_split-sparse-b24: init 0.382s + merge 1.637s; train 2.064s, peak RSS 0.11 GiB, min available 7.31 GiB, VmSwap 0.0 MiB, model f52ab52af6ba4c7ef1005eb714b7282146976296cd21aa7fe1f4fbdd57ff2689
+en32m-whitespace_split-sparse-b24: u32 local offsets, dictionary path, model gate PASS
+zh32m-whitespace_split-legacy-b24: pid 2516814; MemAvailable 7.40 GiB
+zh32m-whitespace_split-legacy-b24: init 2.070s + merge 3.391s; train 5.721s, peak RSS 0.35 GiB, min available 7.03 GiB, VmSwap 0.0 MiB, model 9171397ff2ee6b749bdbfcfd1804216a93b2d21c2028f42449fb708b71546738
+zh32m-whitespace_split-legacy-b24: u32 local offsets, dictionary path, model gate PASS
+zh32m-whitespace_split-sparse-b24: pid 2517060; MemAvailable 7.38 GiB
+zh32m-whitespace_split-sparse-b24: init 2.147s + merge 3.975s; train 6.323s, peak RSS 0.35 GiB, min available 7.08 GiB, VmSwap 0.0 MiB, model 9171397ff2ee6b749bdbfcfd1804216a93b2d21c2028f42449fb708b71546738
+zh32m-whitespace_split-sparse-b24: u32 local offsets, dictionary path, model gate PASS

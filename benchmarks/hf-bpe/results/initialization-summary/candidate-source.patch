@@ -1,0 +1,1540 @@
+diff --git a/tokenizers/tk-train/src/trainers/bpe/indexed.rs b/tokenizers/tk-train/src/trainers/bpe/indexed.rs
+index 263e9a5b..4f8ce7b3 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/indexed.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/indexed.rs
+@@ -63,6 +63,11 @@ pub(super) struct IndexedTrainingStats {
+     pub corpus_fill_ms: f64,
+     pub initial_route_ms: f64,
+     pub initial_count_ms: f64,
++    pub initial_summary_waves: usize,
++    /// Sum of allocated summary Vec capacities across consumed waves.
++    pub initial_summary_buffer_bytes: usize,
++    /// Maximum simultaneous summary Vec backing (including nested Vec metadata).
++    pub peak_initial_summary_buffer_bytes: usize,
+     pub initial_count_backend: &'static str,
+     pub initial_weight_lookup_ms: f64,
+     pub initial_weight_lookup_bytes: usize,
+diff --git a/tokenizers/tk-train/src/trainers/bpe/indexed/parallel.rs b/tokenizers/tk-train/src/trainers/bpe/indexed/parallel.rs
+index ad5aefba..54b79053 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/indexed/parallel.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/indexed/parallel.rs
+@@ -7,9 +7,11 @@ use rayon::prelude::*;
+ use std::sync::atomic::{AtomicU16, AtomicU32, Ordering as AtomicOrdering};
+ 
+ mod alphabet;
++mod candidate_heap;
+ mod corpus;
+ mod fused_batch;
+ mod radix_count;
++use candidate_heap::CandidateHeap;
+ mod weight_lookup;
+ 
+ trait Slot: Default + Send + Sync {
+@@ -146,12 +148,12 @@ struct Entry {
+ #[derive(Default)]
+ struct Owner {
+     entries: AHashMap<u64, Entry>,
+-    heap: OctonaryHeap<Candidate>,
++    heap: CandidateHeap,
+ }
+ impl Owner {
+     fn peek_current(&mut self) -> Option<Candidate> {
+         loop {
+-            let top = *self.heap.peek()?;
++            let top = self.heap.peek()?;
+             match self.entries.get(&top.key) {
+                 None => {
+                     self.heap.pop();
+@@ -568,9 +570,17 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
+         uniform,
+         symbols: initial_symbols,
+         edges: initial_edges,
++        weighted_edges,
+         timings,
+         character_table_bytes,
+     } = prepared;
++    // Only the ordinary no-affix compact path has this certificate.
++    // Each merge deletes boundaries, so no historical pair frequency exceeds
++    // the checked initial weighted edge mass. Reserved and forced alphabet IDs
++    // are already included in strings; future IDs stop at the vocab target.
++    let packed_heap = supports_compact(trainer)
++        && weighted_edges <= u32::MAX as u64
++        && strings.len().max(trainer.vocab_size) <= u16::MAX as usize + 1;
+     let flat = bits == 32 && corpus.len() <= u32::MAX as usize + 1;
+     let mut owners: Vec<Owner> = (0..config.workers).map(|_| Owner::default()).collect();
+     let tokenize_ms = begin.elapsed().as_secs_f64() * 1000.0;
+@@ -583,6 +593,9 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
+         let initial_count_ms;
+         let mut radix_metrics = radix_count::Metrics::default();
+         let mut initial_weight_lookup_ms = 0.0;
++        let mut initial_summary_waves = 0;
++        let mut initial_summary_buffer_bytes = 0;
++        let mut peak_initial_summary_buffer_bytes = 0;
+         if radix_eligible {
+             let lookup_begin = Instant::now();
+             initial_weight_lookup = uniform
+@@ -665,67 +678,107 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
+         } else {
+             // Local dictionaries are built by physical block owners. Only key-level
+             // frequencies and block directories are reduced globally, not positions.
+-            let frequencies: Vec<Vec<Vec<(u64, u64)>>> = blocks
+-                .par_iter_mut()
+-                .map(|block| -> Result<_> {
+-                    let mut counts = AHashMap::new();
+-                    let end = corpus.len().saturating_sub(1).min(block.base + block_size);
+-                    let mut word = 0;
+-                    for p in block.base..end {
+-                        let a = corpus[p].token();
+-                        let b = corpus[p + 1].token();
+-                        if a == NONE || b == NONE {
+-                            continue;
+-                        }
+-                        let local = (p - block.base) as u32;
+-                        let weight = if let Some(weight) = uniform {
+-                            weight
+-                        } else {
+-                            while word < block.pivots.len() && block.pivots[word] <= local {
+-                                word += 1;
++            // Bound transient block-key summaries by initialization concurrency.
++            // Earlier owner directories stay in ascending physical block order;
++            // no key is filtered until every wave has contributed its frequency.
++            let wave_size = config.initialization_workers.unwrap_or(config.workers).max(1);
++            let mut route_ms = 0.0;
++            let mut count_ms = 0.0;
++            for (wave_index, wave_blocks) in blocks.chunks_mut(wave_size).enumerate() {
++                let route_begin = Instant::now();
++                let frequencies: Vec<Vec<Vec<(u64, u64)>>> = wave_blocks
++                    .par_iter_mut()
++                    .map(|block| -> Result<_> {
++                        // Posting length supplies the physical count. Keep only nonunit
++                        // weight corrections; the checked corpus budget bounds signed sums.
++                        let mut extra_weights = AHashMap::<u64, i64>::new();
++                        let end = corpus.len().saturating_sub(1).min(block.base + block_size);
++                        let mut word = 0;
++                        for p in block.base..end {
++                            let a = corpus[p].token();
++                            let b = corpus[p + 1].token();
++                            if a == NONE || b == NONE {
++                                continue;
+                             }
+-                            if word == 0 {
+-                                block.previous_weight
++                            let local = (p - block.base) as u32;
++                            let weight = if let Some(weight) = uniform {
++                                weight
+                             } else {
+-                                block.weights[word - 1]
++                                while word < block.pivots.len() && block.pivots[word] <= local {
++                                    word += 1;
++                                }
++                                if word == 0 {
++                                    block.previous_weight
++                                } else {
++                                    block.weights[word - 1]
++                                }
++                            };
++                            let k = key(a, b);
++                            if uniform.is_none() && weight != 1 {
++                                let delta = i64::try_from(weight)
++                                    .map_err(|_| "indexed BPE weight exceeds i64::MAX")? - 1;
++                                let extra = extra_weights.entry(k).or_default();
++                                *extra = extra.checked_add(delta)
++                                    .ok_or("initial weight correction exceeds i64")?;
+                             }
+-                        };
+-                        let k = key(a, b);
+-                        *counts.entry(k).or_default() += weight;
+-                        block
+-                            .postings
+-                            .entry(k)
+-                            .or_default()
+-                            .push(O::encode(p - block.base))?;
+-                    }
+-                    let mut routed: Vec<Vec<(u64, u64)>> =
+-                        (0..config.workers).map(|_| Vec::new()).collect();
+-                    for (k, weight) in counts {
+-                        routed[owner(k, config.workers)].push((k, weight));
+-                    }
+-                    Ok(routed)
+-                })
+-                .collect::<Result<Vec<_>>>()?;
+-            initial_route_ms = initial_begin.elapsed().as_secs_f64() * 1000.0;
+-            let count_begin = Instant::now();
+-            owners
+-                .par_iter_mut()
+-                .enumerate()
+-                .map(|(o, ledger)| -> Result<()> {
+-                    for (b, counts) in frequencies.iter().enumerate() {
+-                        for &(k, weight) in &counts[o] {
+-                            let entry = ledger.entries.entry(k).or_insert_with(|| Entry {
+-                                frequency: 0,
+-                                blocks: SmallPosting::default(),
+-                            });
+-                            entry.frequency += weight;
+-                            entry.blocks.push(b as u32)?;
++                            block
++                                .postings
++                                .entry(k)
++                                .or_default()
++                                .push(O::encode(p - block.base))?;
+                         }
+-                    }
+-                    Ok(())
+-                })
+-                .collect::<Result<Vec<_>>>()?;
+-            initial_count_ms = count_begin.elapsed().as_secs_f64() * 1000.0;
++                        let mut routed: Vec<Vec<(u64, u64)>> =
++                            (0..config.workers).map(|_| Vec::new()).collect();
++                        for (&k, positions) in &block.postings {
++                            let weight = if let Some(weight) = uniform {
++                                (positions.len() as u64).checked_mul(weight)
++                                    .ok_or("initial frequency exceeds u64")?
++                            } else {
++                                let frequency = (positions.len() as i64)
++                                    .checked_add(extra_weights.get(&k).copied().unwrap_or(0))
++                                    .ok_or("initial frequency exceeds i64")?;
++                                u64::try_from(frequency)
++                                    .map_err(|_| "negative initial frequency")?
++                            };
++                            // Global floor filtering follows reduction across ALL blocks.
++                            routed[owner(k, config.workers)].push((k, weight));
++                        }
++                        Ok(routed)
++                    })
++                    .collect::<Result<Vec<_>>>()?;
++                route_ms += route_begin.elapsed().as_secs_f64() * 1000.0;
++                let summary_bytes = frequencies.capacity() * std::mem::size_of::<Vec<Vec<(u64, u64)>>>()
++                    + frequencies.iter().map(|routes| {
++                        routes.capacity() * std::mem::size_of::<Vec<(u64, u64)>>()
++                            + routes.iter().map(|items| items.capacity() * 16).sum::<usize>()
++                    }).sum::<usize>();
++                initial_summary_buffer_bytes += summary_bytes;
++                peak_initial_summary_buffer_bytes = peak_initial_summary_buffer_bytes.max(summary_bytes);
++                initial_summary_waves += 1;
++                let count_begin = Instant::now();
++                owners
++                    .par_iter_mut()
++                    .enumerate()
++                    .map(|(o, ledger)| -> Result<()> {
++                        for (b, counts) in frequencies.iter().enumerate() {
++                            for &(k, weight) in &counts[o] {
++                                let entry = ledger.entries.entry(k).or_insert_with(|| Entry {
++                                    frequency: 0,
++                                    blocks: SmallPosting::default(),
++                                });
++                                entry.frequency += weight;
++                                entry.blocks.push((wave_index * wave_size + b) as u32)?;
++                            }
++                        }
++                        Ok(())
++                    })
++                    .collect::<Result<Vec<_>>>()?;
++                count_ms += count_begin.elapsed().as_secs_f64() * 1000.0;
++                // All reducers have joined. Drop this wave's summary vectors
++                // before allocating the next wave; final block postings remain.
++            }
++            initial_route_ms = route_ms;
++            initial_count_ms = count_ms;
+         }
+         let mut stats = IndexedTrainingStats {
+             initial_symbols,
+@@ -738,8 +791,13 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
+             corpus_fill_ms: timings.fill_ms,
+             initial_route_ms,
+             initial_count_ms,
++            initial_summary_waves,
++            initial_summary_buffer_bytes,
++            peak_initial_summary_buffer_bytes,
+             initial_count_backend: if radix_eligible {
+                 "stable_radix16"
++            } else if !flat {
++                "spatial_block_sparse_weights"
+             } else {
+                 "spatial_owner_hash"
+             },
+@@ -775,14 +833,13 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
+             .map(|ledger| {
+                 let old = ledger.entries.len();
+                 ledger.entries.retain(|_, entry| entry.frequency >= floor);
+-                ledger.heap = ledger
+-                    .entries
+-                    .iter()
+-                    .map(|(&key, e)| Candidate {
++                ledger.heap = CandidateHeap::new(
++                    ledger.entries.iter().map(|(&key, e)| Candidate {
+                         key,
+                         frequency: e.frequency,
+-                    })
+-                    .collect();
++                    }),
++                    packed_heap,
++                );
+                 old - ledger.entries.len()
+             })
+             .sum::<usize>();
+@@ -840,7 +897,7 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
+                 .map(|e| e.blocks.allocated_capacity() * 4)
+                 .sum()
+         };
+-        stats.initial_heap_bytes = owners.iter().map(|o| o.heap.capacity() * 16).sum();
++        stats.initial_heap_bytes = owners.iter().map(|o| o.heap.capacity_bytes()).sum();
+         stats.corpus_bytes = stats.initial_corpus_bytes;
+         stats.posting_bytes = stats.initial_posting_bytes;
+         stats.initialize_ms = begin.elapsed().as_secs_f64() * 1000.0;
+@@ -982,7 +1039,8 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
+                 .max(prepared.selected_bytes);
+             stats.peak_valid_start_bytes = stats.peak_valid_start_bytes.max(prepared.valid_bytes);
+             stats.peak_prepare_aggregate_bytes = stats
+-                .peak_prepare_aggregate_bytes.max(prepared.aggregate_bytes);
++                .peak_prepare_aggregate_bytes
++                .max(prepared.aggregate_bytes);
+             let elapsed = stage.elapsed().as_secs_f64() * 1000.0;
+             // Filter and neighbor deltas share this phase in the fused path.
+             stats.fused_prepare_ms += elapsed;
+@@ -1691,6 +1749,97 @@ mod tests {
+         assert_eq!(empty.weight_forward(base + 65535, None, &mut 0), 27);
+     }
+ 
++    #[test]
++    fn candidate_heap_range_fallback_keeps_weighted_greedy_semantics() {
++        let run = |weight, vocab| {
++            let words = [(CompactString::from("aaaababa"), weight)].into_iter().collect();
++            let trainer = BpeTrainer::builder().vocab_size(vocab).min_frequency(2)
++                .show_progress(false).build();
++            // The legacy HF oracle casts weights to i32; the wide indexed
++            // serial oracle keeps u64 frequencies for this range test.
++            let expected = trainer.do_train_indexed(&words).unwrap();
++            let got = trainer.do_train_indexed_parallel(&words, IndexedParallelConfig::default()).unwrap();
++            assert_eq!(got.trace, expected.trace);
++            assert_eq!(got.vocab, expected.vocab);
++            assert_eq!(got.merges, expected.merges);
++            got
++        };
++        let packed = run(3, 32);
++        let large_weight = run(u32::MAX as u64 + 1, 32);
++        let large_id_domain = run(3, 70000);
++        assert_eq!(packed.stats.initial_pairs, large_weight.stats.initial_pairs);
++        assert_eq!(packed.stats.initial_pairs, large_id_domain.stats.initial_pairs);
++        assert_eq!(large_weight.stats.initial_heap_bytes, packed.stats.initial_heap_bytes * 2);
++        assert_eq!(large_id_domain.stats.initial_heap_bytes, packed.stats.initial_heap_bytes * 2);
++    }
++
++    #[test]
++    fn nonempty_alias_affixes_keep_the_serial_cohort_path() {
++        for (prefix,suffix,text) in [(None,Some("a"),"baaba"),
++            (Some("ab"),None,"abaa"), (Some("##"),Some("</w>"),"aaaababa")] {
++            let mut trainer=BpeTrainer::builder().vocab_size(24).show_progress(false).build();
++            trainer.continuing_subword_prefix=prefix.map(str::to_owned);
++            trainer.end_of_word_suffix=suffix.map(str::to_owned);
++            let words=[(CompactString::from(text),1)].into_iter().collect();
++            let expected=trainer.do_train_indexed(&words).unwrap();
++            let got=trainer.do_train_indexed_parallel(&words,IndexedParallelConfig::default()).unwrap();
++            assert_eq!(got.trace,expected.trace);
++            assert_eq!(got.vocab,expected.vocab);
++            assert_eq!(got.merges,expected.merges);
++            assert_eq!(got.stats.workers,0);
++            if suffix==Some("a") {
++                assert_eq!(got.trace[1],((1,2),2,3));
++                assert!(!got.stats.monotone_pairs);
++            }
++        }
++    }
++
++    #[test]
++    fn block_counts_keep_uniform_zero_and_sparse_nonunit_weights_exact() {
++        let texts = ["xabq".repeat(18000), "ab中中".repeat(19000), "中文aab".repeat(15000)];
++        for weights in [[1,1,1], [2,2,2], [0,0,0], [0,1,7], [3,u32::MAX as u64 + 1,1]] {
++            let words = texts.iter().zip(weights).map(|(text,weight)|
++                (CompactString::from(text.as_str()),weight)).collect();
++            let trainer = BpeTrainer::builder().vocab_size(96).min_frequency(2)
++                .show_progress(false).build();
++            let expected=trainer.do_train_indexed(&words).unwrap();
++            for atomic in [false,true] {
++                let got=trainer.do_train_indexed_parallel(&words,IndexedParallelConfig {
++                    posting_block_bits:16, atomic_corpus:atomic, narrow_corpus:false,
++                    ..Default::default()
++                }).unwrap();
++                assert!(got.stats.initial_blocks>1);
++                assert_eq!(got.trace,expected.trace);
++                assert_eq!(got.vocab,expected.vocab);
++                assert_eq!(got.merges,expected.merges);
++            }
++        }
++    }
++
++    #[test]
++    fn block_summary_waves_keep_global_floor_and_cross_wave_aa_order() {
++        let words = [("aaab".repeat(25000), 0), ("aaab中".repeat(21000), 3),
++            ("中aaab".repeat(24000), 1)].into_iter()
++            .map(|(text, weight)| (CompactString::from(text), weight)).collect();
++        let trainer = BpeTrainer::builder().vocab_size(48).min_frequency(2)
++            .show_progress(false).build();
++        let expected = trainer.do_train_indexed(&words).unwrap();
++        for workers in [1, 2, 4] {
++            for atomic in [false, true] {
++                let got = trainer.do_train_indexed_parallel(&words, IndexedParallelConfig {
++                    workers, initialization_workers: Some(2), posting_block_bits: 16,
++                    narrow_corpus: false, atomic_corpus: atomic, ..Default::default()
++                }).unwrap();
++                assert!(got.stats.initial_blocks > 4);
++                assert_eq!(got.stats.initial_summary_waves, got.stats.initial_blocks.div_ceil(2));
++                assert!(got.stats.peak_initial_summary_buffer_bytes < got.stats.initial_summary_buffer_bytes);
++                assert_eq!(got.trace, expected.trace);
++                assert_eq!(got.vocab, expected.vocab);
++                assert_eq!(got.merges, expected.merges);
++            }
++        }
++    }
++
+     #[test]
+     fn serial_initialization_keeps_parallel_greedy_order() {
+         let words = [("xabq".repeat(2100), 3), ("中文中文abcdef".repeat(1300), 7)]
+diff --git a/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/block_radix.rs b/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/block_radix.rs
+new file mode 100644
+index 00000000..82e26088
+--- /dev/null
++++ b/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/block_radix.rs
+@@ -0,0 +1,347 @@
++// SPDX-License-Identifier: BSD-2-Clause
++// Copyright (c) 2025, 2026 Robert Clausecker <clausecker@zib.de>
++//
++// Redistribution and use in source and binary forms, with or without
++// modification, are permitted provided that the following conditions are
++// met:
++//
++// 1. Redistributions of source code must retain the above copyright
++//    notice, this list of conditions and the following disclaimer.
++//
++// 2. Redistributions in binary form must reproduce the above copyright
++//    notice, this list of conditions and the following disclaimer in the
++//    documentation and/or other materials provided with the distribution.
++//
++// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
++// IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
++// TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
++// PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
++// HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
++// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
++// TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
++// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
++// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
++// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
++// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++//
++
++//! Rust translation of Clausecker's BSD-2-Clause `radixsort_permuted.c`.
++//! Reference f69e816c3cd79d312cd67aea5b9cf1c338c1b371, July 2026 paper:
++//! https://arxiv.org/abs/2607.05302 ; full upstream license retained above.
++//! Sort only the HIGH 32 bits; retain LOW 32 bits in stable incoming order.
++//! Fixed 512-element blocks: 2 MiB scratch + 9 bytes per input block.
++//! Stable initial pair grouping with bounded block scratch.
++use std::{marker::PhantomData, ptr};
++const RADIX: usize = 256;
++const BLOCK: usize = 512;
++const SCRATCH: usize = 2 * RADIX;
++
++#[derive(Clone, Copy)]
++struct Partial {
++    index: usize,
++    length: usize,
++}
++#[derive(Clone, Copy)]
++struct Bucket {
++    next: *mut u64,
++    end: *mut u64,
++}
++struct Sorter<'a> {
++    records: *mut u64,
++    length: usize,
++    _borrow: PhantomData<&'a mut [u64]>,
++    scratch: Vec<u64>,
++    scratch_base: *mut u64,
++    perm: Vec<u32>,
++    perm2: Vec<u32>,
++    usage: Vec<u8>,
++    partials: [Partial; RADIX],
++    fill: usize,
++}
++impl<'a> Sorter<'a> {
++    fn new(records: &'a mut [u64]) -> Self {
++        let full = records.len() / BLOCK;
++        let blocks = full + SCRATCH;
++        assert!(blocks <= u32::MAX as usize);
++        let fill = RADIX + full + 1;
++        let mut perm = vec![0; blocks];
++        for (i, p) in perm.iter_mut().enumerate() {
++            *p = if i < RADIX {
++                i
++            } else if i < fill - 1 {
++                i + RADIX
++            } else {
++                i - (fill - 1) + RADIX
++            } as u32;
++        }
++        let mut scratch = vec![0; SCRATCH * BLOCK];
++        let tail = records.len() % BLOCK;
++        scratch[RADIX * BLOCK..RADIX * BLOCK + tail].copy_from_slice(&records[full * BLOCK..]);
++        let mut partials = [Partial {
++            index: blocks,
++            length: 0,
++        }; RADIX];
++        partials[0] = Partial {
++            index: fill - 1,
++            length: tail,
++        };
++        let length = records.len();
++        let records = records.as_mut_ptr();
++        let scratch_base = scratch.as_mut_ptr();
++        Self {
++            records,
++            length,
++            _borrow: PhantomData,
++            scratch,
++            scratch_base,
++            perm,
++            perm2: vec![0; blocks],
++            usage: vec![0; blocks],
++            partials,
++            fill,
++        }
++    }
++    fn block(&mut self, physical: usize) -> *mut u64 {
++        assert!(physical < self.perm.len());
++        // SAFETY: physical IDs below SCRATCH identify full scratch blocks.
++        // Other IDs identify exactly floor(n/BLOCK) full input blocks.
++        // Vec allocations are never resized while these pointers are in use.
++        unsafe {
++            if physical < SCRATCH {
++                self.scratch_base.add(physical * BLOCK)
++            } else {
++                self.records.add((physical - SCRATCH) * BLOCK)
++            }
++        }
++    }
++    fn length(&self, logical: usize, partial: &mut usize) -> usize {
++        if *partial < RADIX && self.partials[*partial].index == logical {
++            let length = self.partials[*partial].length;
++            *partial += 1;
++            length
++        } else {
++            BLOCK
++        }
++    }
++    #[cfg(debug_assertions)]
++    fn validate(&self) {
++        let mut seen = vec![false; self.perm.len()];
++        for &physical in &self.perm {
++            assert!(!seen[physical as usize]);
++            seen[physical as usize] = true;
++        }
++        assert!(self.fill <= self.perm.len());
++        assert!(self.partials.windows(2).all(|p| p[0].index < p[1].index));
++        assert!(
++            self.partials
++                .iter()
++                .all(|p| p.index >= RADIX && p.index < self.fill && p.length < BLOCK)
++        );
++        let mut partial = 0;
++        let total: usize = (RADIX..self.fill)
++            .map(|i| self.length(i, &mut partial))
++            .sum();
++        assert_eq!(total, self.length);
++    }
++    fn step(&mut self, shift: u32) {
++        let mut buckets = [Bucket {
++            next: ptr::null_mut(),
++            end: ptr::null_mut(),
++        }; RADIX];
++        let mut counts = [1_usize; RADIX];
++        for (i, bucket) in buckets.iter_mut().enumerate() {
++            let out = self.block(self.perm[i] as usize);
++            // SAFETY: block() returns exactly BLOCK valid elements.
++            *bucket = Bucket {
++                next: out,
++                end: unsafe { out.add(BLOCK) },
++            };
++            self.usage[i] = i as u8;
++        }
++        let mut output = RADIX;
++        let mut partial = 0;
++        for input in RADIX..self.fill {
++            let source = self.block(self.perm[input] as usize);
++            let length = self.length(input, &mut partial);
++            for j in 0..length {
++                // SAFETY: source is a valid block, length <= BLOCK. The stable
++                // logical input traversal consumes each element exactly once.
++                let value = unsafe { source.add(j).read() };
++                let b = ((value >> shift) & 255) as usize;
++                // SAFETY: bucket.next points at an unused cell in its current
++                // output block. It advances at most to end before reallocation.
++                // Input blocks are recycled only after consumption: the RADIX
++                // block head start establishes output <= input. If equality
++                // occurs, allocation follows the last consumed source element;
++                // the newly allocated block is written on a subsequent element.
++                // More precisely, after J consumed values the newly reserved
++                // logical block is R + sum(floor(count[b]/B)) - 1 <=
++                // R + floor(J/B) - 1 <= current input. Equality requires
++                // J to end a full input block, so no unread value is overwritten.
++                // This adapts paper Lemma 1 to the reference C allocation timing.
++                unsafe {
++                    buckets[b].next.write(value);
++                    buckets[b].next = buckets[b].next.add(1);
++                }
++                if buckets[b].next == buckets[b].end {
++                    debug_assert!(output <= input);
++                    let out = self.block(self.perm[output] as usize);
++                    buckets[b] = Bucket {
++                        next: out,
++                        end: unsafe { out.add(BLOCK) },
++                    };
++                    self.usage[output] = b as u8;
++                    counts[b] += 1;
++                    output += 1;
++                }
++            }
++        }
++        self.fill = output;
++        let mut starts = [RADIX; RADIX];
++        for b in 1..RADIX {
++            starts[b] = starts[b - 1] + counts[b - 1];
++        }
++        for i in 0..self.fill {
++            let b = self.usage[i] as usize;
++            let j = starts[b];
++            starts[b] += 1;
++            self.perm2[j] = self.perm[i];
++            let base = self.block(self.perm[i] as usize);
++            // SAFETY: next/end belong to the same BLOCK-sized allocation.
++            if unsafe { base.add(BLOCK) } == buckets[b].end {
++                self.partials[b] = Partial {
++                    index: j,
++                    length: unsafe { buckets[b].next.offset_from(base) as usize },
++                };
++            }
++        }
++        assert!(self.fill + RADIX <= self.perm.len());
++        self.perm2[..RADIX].copy_from_slice(&self.perm[self.fill..self.fill + RADIX]);
++        self.perm2[self.fill + RADIX..].copy_from_slice(&self.perm[self.fill + RADIX..]);
++        self.fill += RADIX;
++        std::mem::swap(&mut self.perm, &mut self.perm2);
++        #[cfg(debug_assertions)]
++        self.validate();
++    }
++    fn compact(&mut self) {
++        for i in 0..self.perm.len() {
++            self.perm2[self.perm[i] as usize] = i as u32;
++        }
++        let mut start = 0;
++        let mut partial = 0;
++        let mut free_logical = 0;
++        let mut free_physical = self.perm[0] as usize;
++        for destination in SCRATCH..self.perm.len() {
++            let input = destination - RADIX;
++            let mut output = self.perm2[destination] as usize;
++            let source = self.perm[input] as usize;
++            if output > input && output < self.fill {
++                debug_assert!(free_logical < RADIX || free_logical >= self.fill);
++                let from = self.block(destination);
++                let to = self.block(free_physical);
++                // SAFETY: both physical IDs are valid full blocks. Free block
++                // receives live output which would otherwise be overwritten.
++                unsafe {
++                    ptr::copy(from, to, BLOCK);
++                }
++                self.perm[free_logical] = destination as u32;
++                self.perm[output] = free_physical as u32;
++                self.perm2[free_physical] = output as u32;
++                self.perm2[destination] = free_logical as u32;
++                free_logical = output;
++                output = self.perm2[destination] as usize;
++            }
++            let length = self.length(input, &mut partial);
++            let from = self.block(source);
++            assert!(start + length <= self.length);
++            // Completed partials can only shorten preceding output: start <=
++            // (destination - SCRATCH) * BLOCK, and start + length never exceeds
++            // this destination block's end. Any still-live destination block was
++            // evacuated above; earlier physical destinations are already consumed.
++            // SAFETY: length valid source elements are moved into the next
++            // logical output interval. ptr::copy permits overlap as memmove.
++            unsafe {
++                ptr::copy(from, self.records.add(start), length);
++            }
++            self.perm[input] = destination as u32;
++            self.perm[output] = source as u32;
++            self.perm2[source] = output as u32;
++            self.perm2[destination] = input as u32;
++            start += length;
++            if input != output {
++                free_physical = source;
++                free_logical = output;
++            }
++        }
++        for input in self.perm.len() - RADIX..self.fill {
++            let source = self.perm[input] as usize;
++            assert!(source < SCRATCH);
++            let length = self.length(input, &mut partial);
++            let from = self.block(source);
++            assert!(start + length <= self.length);
++            unsafe {
++                ptr::copy(from, self.records.add(start), length);
++            }
++            start += length;
++        }
++        assert_eq!(start, self.length);
++    }
++}
++/// Returns simultaneous allocated sorting scratch bytes. Mutates records in
++/// place; output is physically contiguous and stable within each high32 key.
++pub(super) fn sort(records: &mut [u64]) -> usize {
++    if records.len() < 2 {
++        return 0;
++    }
++    let mut sorter = Sorter::new(records);
++    let bytes = sorter.scratch.capacity() * 8
++        + sorter.perm.capacity() * 4
++        + sorter.perm2.capacity() * 4
++        + sorter.usage.capacity();
++    for shift in [32, 40, 48, 56] {
++        sorter.step(shift);
++    }
++    sorter.compact();
++    bytes
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++    #[test]
++    fn stable_high32_at_block_boundaries_and_all_key_bits() {
++        let mut seed = 371_u64;
++        for n in [
++            0, 1, 2, 255, 256, 511, 512, 513, 1023, 1024, 1025, 8192, 131072, 131073,
++        ] {
++            for distribution in 0..6 {
++                let mut records = Vec::with_capacity(n);
++                for p in 0..n {
++                    seed = seed.wrapping_mul(6364136223846793005).wrapping_add(1);
++                    let key = match distribution {
++                        0 => u32::MAX,
++                        1 => (p % 2) as u32,
++                        2 => match p % 4 {
++                            0 => 0,
++                            1 => u32::MAX,
++                            2 => 1 << 31,
++                            _ => 1,
++                        },
++                        3 => (seed >> 32) as u32 % 97,
++                        _ => (seed >> 32) as u32,
++                    };
++                    let payload = if distribution == 5 {
++                        seed as u32
++                    } else {
++                        p as u32
++                    };
++                    records.push((u64::from(key) << 32) | u64::from(payload));
++                }
++                let mut expected = records.clone();
++                expected.sort_by_key(|r| r >> 32);
++                sort(&mut records);
++                assert_eq!(records, expected, "n={n}, distribution={distribution}");
++            }
++        }
++    }
++}
+diff --git a/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/candidate_heap.rs b/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/candidate_heap.rs
+new file mode 100644
+index 00000000..2d21c71e
+--- /dev/null
++++ b/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/candidate_heap.rs
+@@ -0,0 +1,157 @@
++//! Range-checked compact candidates; wide candidates preserve the general path.
++use super::{Candidate, OctonaryHeap, key};
++
++#[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
++pub(super) struct PackedCandidate(u64);
++impl PackedCandidate {
++    fn encode(candidate: Candidate) -> Option<Self> {
++        let frequency = u32::try_from(candidate.frequency).ok()?;
++        let a = u16::try_from(candidate.key >> 32).ok()?;
++        let b = u16::try_from(candidate.key as u32).ok()?;
++        let code = (u32::from(a) << 16) | u32::from(b);
++        Some(Self((u64::from(frequency) << 32) | u64::from(!code)))
++    }
++    fn decode(self) -> Candidate {
++        let code = !(self.0 as u32);
++        Candidate {
++            frequency: self.0 >> 32,
++            key: key(code >> 16, code & 0xffff),
++        }
++    }
++}
++
++pub(super) enum CandidateHeap {
++    Packed(OctonaryHeap<PackedCandidate>),
++    Wide(OctonaryHeap<Candidate>),
++}
++impl Default for CandidateHeap {
++    fn default() -> Self {
++        Self::Wide(OctonaryHeap::new())
++    }
++}
++impl CandidateHeap {
++    pub(super) fn new(candidates: impl Iterator<Item = Candidate>, packed: bool) -> Self {
++        if packed {
++            // Initial edge mass and the complete ID domain were checked before
++            // constructing this heap. Build the narrow heap directly: no wide copy.
++            Self::Packed(
++                candidates
++                    .map(|c| PackedCandidate::encode(c).expect("checked initial candidate range"))
++                    .collect(),
++            )
++        } else {
++            Self::Wide(candidates.collect())
++        }
++    }
++    pub(super) fn peek(&self) -> Option<Candidate> {
++        match self {
++            Self::Packed(h) => h.peek().copied().map(PackedCandidate::decode),
++            Self::Wide(h) => h.peek().copied(),
++        }
++    }
++    pub(super) fn pop(&mut self) -> Option<Candidate> {
++        match self {
++            Self::Packed(h) => h.pop().map(PackedCandidate::decode),
++            Self::Wide(h) => h.pop(),
++        }
++    }
++    pub(super) fn push(&mut self, candidate: Candidate) {
++        match self {
++            Self::Packed(h) => {
++                if let Some(packed) = PackedCandidate::encode(candidate) {
++                    h.push(packed);
++                } else {
++                    // Defensive promotion also preserves semantics if a future
++                    // caller adds IDs or frequencies beyond the proven domain.
++                    let old = std::mem::take(h);
++                    *self = Self::Wide(old.into_iter().map(PackedCandidate::decode).collect());
++                    self.push(candidate);
++                }
++            }
++            Self::Wide(h) => h.push(candidate),
++        }
++    }
++    pub(super) fn capacity_bytes(&self) -> usize {
++        match self {
++            Self::Packed(h) => h.capacity() * 8,
++            Self::Wide(h) => h.capacity() * 16,
++        }
++    }
++    pub(super) fn len(&self) -> usize {
++        match self {
++            Self::Packed(h) => h.len(),
++            Self::Wide(h) => h.len(),
++        }
++    }
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++    #[test]
++    fn packing_preserves_full_priority_and_arbitrary_id_bits() {
++        let mut seed = 391_u64;
++        let mut candidates = Vec::new();
++        for i in 0..8192 {
++            seed = seed.wrapping_mul(6364136223846793005).wrapping_add(1);
++            let a = [0, 1, 32768, 65535, seed as u16 as u32][i % 5];
++            let b = [65535, 32768, 1, 0, (seed >> 16) as u16 as u32][i % 5];
++            let frequency = [0, 1, u32::MAX as u64, (seed >> 32) % 97][i % 4];
++            candidates.push(Candidate {
++                key: key(a, b),
++                frequency,
++            });
++        }
++        let mut wide = CandidateHeap::new(candidates.iter().copied(), false);
++        let mut packed = CandidateHeap::new(candidates.iter().copied(), true);
++        assert_eq!(packed.capacity_bytes() * 2, wide.capacity_bytes());
++        while let Some(expected) = wide.pop() {
++            let actual = packed.pop().unwrap();
++            assert_eq!(
++                (actual.key, actual.frequency),
++                (expected.key, expected.frequency)
++            );
++        }
++        assert!(packed.pop().is_none());
++    }
++    #[test]
++    fn out_of_range_insert_promotes_without_losing_old_candidates() {
++        for extra in [
++            Candidate {
++                key: key(1, 1),
++                frequency: u32::MAX as u64 + 1,
++            },
++            Candidate {
++                key: key(65536, 1),
++                frequency: 9,
++            },
++            Candidate {
++                key: key(1, 65536),
++                frequency: 9,
++            },
++        ] {
++            let mut candidates = vec![
++                Candidate {
++                    key: key(1, 2),
++                    frequency: 8,
++                },
++                Candidate {
++                    key: key(2, 1),
++                    frequency: 8,
++                },
++            ];
++            let mut packed = CandidateHeap::new(candidates.iter().copied(), true);
++            packed.push(extra);
++            candidates.push(extra);
++            assert!(matches!(packed, CandidateHeap::Wide(_)));
++            let mut wide = CandidateHeap::new(candidates.into_iter(), false);
++            while let Some(expected) = wide.pop() {
++                let actual = packed.pop().unwrap();
++                assert_eq!(
++                    (actual.key, actual.frequency),
++                    (expected.key, expected.frequency)
++                );
++            }
++        }
++    }
++}
+diff --git a/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/corpus.rs b/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/corpus.rs
+index 9420f474..4f8e3b58 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/corpus.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/corpus.rs
+@@ -16,6 +16,7 @@ pub(super) struct Prepared<C: Slot, O: Offset, const INLINE: usize> {
+     pub uniform: Option<u64>,
+     pub symbols: usize,
+     pub edges: usize,
++    pub weighted_edges: u64,
+     pub timings: Timings,
+     pub character_table_bytes: usize,
+ }
+@@ -234,6 +235,7 @@ pub(super) fn build<C: Slot, O: Offset, const INLINE: usize>(
+         uniform,
+         symbols,
+         edges,
++        weighted_edges: weighted_edges as u64,
+         character_table_bytes,
+         timings: Timings {
+             measure_ms,
+@@ -300,6 +302,13 @@ mod tests {
+         assert_eq!(got.lengths, lengths);
+         assert_eq!(got.symbols, symbols);
+         assert_eq!(got.edges, edges);
++        let expected_weighted: u64 = expected
++            .windows(2)
++            .zip(&weights)
++            .filter(|(pair, _)| pair[0] != NONE && pair[1] != NONE)
++            .map(|(_, weight)| *weight)
++            .sum();
++        assert_eq!(got.weighted_edges, expected_weighted);
+         assert_eq!(got.slots.capacity(), got.slots.len());
+         for (p, &weight) in weights.iter().enumerate().skip(1) {
+             assert_eq!(got.blocks[p >> 4].weight(p, got.uniform), weight);
+diff --git a/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/owner_route.rs b/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/owner_route.rs
+new file mode 100644
+index 00000000..6438a263
+--- /dev/null
++++ b/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/owner_route.rs
+@@ -0,0 +1,125 @@
++//! Prefix each chunk's owner counts, then fill disjoint final owner streams.
++use super::*;
++use std::mem::{ManuallyDrop, MaybeUninit};
++
++pub(super) fn direct<C: Slot>(corpus: &[C], workers: usize) -> Vec<Vec<u64>> {
++    let chunk = corpus.len().div_ceil(workers).max(1);
++    let counts: Vec<Vec<usize>> = corpus
++        .par_chunks(chunk)
++        .enumerate()
++        .map(|(c, slots)| {
++            let base = c * chunk;
++            let mut counts = vec![0; workers];
++            for (i, slot) in slots.iter().enumerate() {
++                let p = base + i;
++                if p + 1 == corpus.len() {
++                    break;
++                }
++                let (a, b) = (slot.token(), corpus[p + 1].token());
++                if a != NONE && b != NONE {
++                    counts[owner(key(a, b), workers)] += 1;
++                }
++            }
++            counts
++        })
++        .collect();
++    let mut routed: Vec<Vec<MaybeUninit<u64>>> = (0..workers)
++        .map(|o| {
++            let count = counts.iter().map(|c| c[o]).sum();
++            let mut records = Vec::with_capacity(count);
++            records.resize_with(count, MaybeUninit::uninit);
++            records
++        })
++        .collect();
++    // Split each owner's final allocation in increasing physical chunk order.
++    // The type system keeps all emitted ranges mutually exclusive across jobs.
++    let mut destinations: Vec<Vec<&mut [MaybeUninit<u64>]>> = (0..counts.len())
++        .map(|_| Vec::with_capacity(workers))
++        .collect();
++    for (o, records) in routed.iter_mut().enumerate() {
++        let mut rest = records.as_mut_slice();
++        for (c, destinations) in destinations.iter_mut().enumerate() {
++            let (part, next) = rest.split_at_mut(counts[c][o]);
++            destinations.push(part);
++            rest = next;
++        }
++        assert!(rest.is_empty());
++    }
++    corpus
++        .par_chunks(chunk)
++        .enumerate()
++        .zip(destinations.into_par_iter())
++        .for_each(|((c, slots), mut destinations)| {
++            let base = c * chunk;
++            let mut next = vec![0; workers];
++            for (i, slot) in slots.iter().enumerate() {
++                let p = base + i;
++                if p + 1 == corpus.len() {
++                    break;
++                }
++                let (a, b) = (slot.token(), corpus[p + 1].token());
++                if a != NONE && b != NONE {
++                    debug_assert!(a <= u16::MAX as u32 && b <= u16::MAX as u32);
++                    let o = owner(key(a, b), workers);
++                    let code = (a << 16) | b;
++                    destinations[o][next[o]].write((u64::from(code) << 32) | p as u64);
++                    next[o] += 1;
++                }
++            }
++            for (o, destination) in destinations.iter().enumerate() {
++                assert_eq!(next[o], destination.len());
++            }
++        });
++    routed
++        .into_iter()
++        .map(|records| {
++            // SAFETY: count and emit use identical valid-edge/owner predicates on
++            // the unchanged corpus. Disjoint safe slices cover each allocation;
++            // every job checks its write count, and the parallel join completed.
++            // MaybeUninit<u64> has u64's layout; transfer allocation ownership once.
++            let mut records = ManuallyDrop::new(records);
++            unsafe {
++                Vec::from_raw_parts(
++                    records.as_mut_ptr().cast::<u64>(),
++                    records.len(),
++                    records.capacity(),
++                )
++            }
++        })
++        .collect()
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++    #[test]
++    fn direct_owner_streams_match_physical_scan_before_floor_filtering() {
++        let pool = rayon::ThreadPoolBuilder::new()
++            .num_threads(4)
++            .build()
++            .unwrap();
++        let cases = [
++            Vec::new(),
++            vec![NONE; 19],
++            vec![65535; 73],
++            (0..173)
++                .map(|p| [NONE, 0, 65535, 32768, 1, 2, 91][(p * p + 3 * p) % 7])
++                .collect(),
++        ];
++        for raw in cases {
++            for workers in [1, 2, 3, 4, 7] {
++                let mut expected = vec![Vec::new(); workers];
++                for p in 0..raw.len().saturating_sub(1) {
++                    let (a, b) = (raw[p], raw[p + 1]);
++                    if a != NONE && b != NONE {
++                        expected[owner(key(a, b), workers)]
++                            .push((u64::from((a << 16) | b) << 32) | p as u64);
++                    }
++                }
++                assert_eq!(pool.install(|| direct(&raw, workers)), expected);
++                let atomic: Vec<_> = raw.iter().copied().map(AtomicU32::new).collect();
++                assert_eq!(pool.install(|| direct(&atomic, workers)), expected);
++            }
++        }
++    }
++}
+diff --git a/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/radix_count.rs b/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/radix_count.rs
+index 89412142..9b9a9cfa 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/radix_count.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/radix_count.rs
+@@ -4,6 +4,11 @@
+ use super::weight_lookup::WeightLookup;
+ use super::*;
+ 
++#[path = "block_radix.rs"]
++mod block_radix;
++#[path = "owner_route.rs"]
++mod owner_route;
++
+ #[derive(Default)]
+ pub(super) struct Metrics {
+     pub(super) route_ms: f64,
+@@ -14,6 +19,7 @@ pub(super) struct Metrics {
+     pub(super) install_ms: f64,
+     pub(super) route_bytes: usize,
+     pub(super) peak_route_bytes: usize,
++    // Largest wave's allocation capacity; neither value is measured RSS.
+     pub(super) scratch_bytes: usize,
+     pub(super) group_bytes: usize,
+     pub(super) pruned: usize,
+@@ -30,7 +36,7 @@ fn canonical(code: u32) -> u64 {
+ 
+ // Only the upper pair-code half is sorted. Stable scatters retain the incoming
+ // spatial order within each key, so final posting positions remain increasing.
+-fn sort(records: &mut Vec<u64>) -> usize {
++fn sort_classic(records: &mut Vec<u64>) -> usize {
+     if records.len() < 2 {
+         return 0;
+     }
+@@ -58,6 +64,23 @@ fn sort(records: &mut Vec<u64>) -> usize {
+     bytes
+ }
+ 
++// Prefer the simpler full-buffer scatter when its scratch is smaller than
++// the fixed block implementation. The comparison follows allocation sizes.
++#[cfg(test)]
++fn sorting_scratch(length: usize) -> usize {
++    if length < 2 {
++        return 0;
++    }
++    (length * 8).min(2 * 256 * 512 * 8 + (length / 512 + 512) * 9)
++}
++fn sort(records: &mut Vec<u64>) -> usize {
++    if records.len() * 8 <= 2 * 256 * 512 * 8 + (records.len() / 512 + 512) * 9 {
++        sort_classic(records)
++    } else {
++        block_radix::sort(records)
++    }
++}
++
+ pub(super) fn initialize<C: Slot, O: Offset, const INLINE: usize>(
+     corpus: &[C],
+     block: &Block<O, INLINE>,
+@@ -67,152 +90,165 @@ pub(super) fn initialize<C: Slot, O: Offset, const INLINE: usize>(
+     floor: u64,
+     owners: &mut [Owner],
+ ) -> Result<Metrics> {
++    initialize_with_owner_width(
++        corpus,
++        block,
++        uniform,
++        lookup,
++        workers,
++        floor,
++        owners,
++        workers.min(2),
++    )
++}
++
++fn initialize_with_owner_width<C: Slot, O: Offset, const INLINE: usize>(
++    corpus: &[C],
++    block: &Block<O, INLINE>,
++    uniform: Option<u64>,
++    lookup: Option<&WeightLookup>,
++    workers: usize,
++    floor: u64,
++    owners: &mut [Owner],
++    owner_width: usize,
++) -> Result<Metrics> {
++    initialize_with_widths(
++        corpus,
++        block,
++        uniform,
++        lookup,
++        workers,
++        floor,
++        owners,
++        owner_width,
++        workers,
++    )
++}
++
++// Keep a bounded number of sorting buffers alive. Finish each wave's postings
++// before starting the next wave, so consumed owner records are released early.
++fn initialize_with_widths<C: Slot, O: Offset, const INLINE: usize>(
++    corpus: &[C],
++    block: &Block<O, INLINE>,
++    uniform: Option<u64>,
++    lookup: Option<&WeightLookup>,
++    workers: usize,
++    floor: u64,
++    owners: &mut [Owner],
++    owner_width: usize,
++    sort_width: usize,
++) -> Result<Metrics> {
++    assert!(owner_width > 0 && sort_width > 0);
++    debug_assert_eq!(owners.len(), workers);
++    let owner_width = owner_width.min(workers);
+     let begin = Instant::now();
+-    let chunk = corpus.len().div_ceil(workers).max(1);
+-    let mut routes: Vec<Vec<Vec<u64>>> = corpus
+-        .par_chunks(chunk)
+-        .enumerate()
+-        .map(|(c, slots)| {
+-            let base = c * chunk;
+-            let mut counts = vec![0_usize; workers];
+-            // Two sequential scans give exact buffers instead of geometric growth
+-            // of the larger 8-byte records. Owner assignment matches the old path.
+-            for (i, slot) in slots.iter().enumerate() {
+-                let p = base + i;
+-                if p + 1 == corpus.len() {
+-                    break;
+-                }
+-                let a = slot.token();
+-                let b = corpus[p + 1].token();
+-                if a != NONE && b != NONE {
+-                    counts[owner(key(a, b), workers)] += 1;
+-                }
+-            }
+-            let mut routed: Vec<Vec<u64>> = counts.into_iter().map(Vec::with_capacity).collect();
+-            for (i, slot) in slots.iter().enumerate() {
+-                let p = base + i;
+-                if p + 1 == corpus.len() {
+-                    break;
+-                }
+-                let a = slot.token();
+-                let b = corpus[p + 1].token();
+-                if a != NONE && b != NONE {
+-                    debug_assert!(a <= u16::MAX as u32 && b <= u16::MAX as u32);
+-                    let code = (a << 16) | b;
+-                    routed[owner(key(a, b), workers)].push((u64::from(code) << 32) | p as u64);
+-                }
+-            }
+-            routed
+-        })
+-        .collect();
+-    let mut old_bytes: usize = routes
+-        .iter()
+-        .flat_map(|r| r.iter())
+-        .map(|r| r.capacity() * 8)
+-        .sum();
+-    let mut peak = old_bytes;
+-    let compact_begin = Instant::now();
+-    let mut routed = Vec::with_capacity(workers);
+-    let mut final_bytes = 0;
+-    // Compact owners one at a time, releasing every old buffer as it is moved.
+-    // Avoid retaining all original routes plus all final owner streams at once.
+-    for o in 0..workers {
+-        let len = routes.iter().map(|r| r[o].len()).sum();
+-        let mut records = Vec::with_capacity(len);
+-        let bytes = records.capacity() * 8;
+-        peak = peak.max(old_bytes + final_bytes + bytes);
+-        for route in &mut routes {
+-            let mut part = std::mem::take(&mut route[o]);
+-            let part_bytes = part.capacity() * 8;
+-            records.append(&mut part);
+-            old_bytes -= part_bytes;
+-        }
+-        final_bytes += records.capacity() * 8;
+-        routed.push(records);
+-    }
+-    drop(routes);
+-    let compact_ms = compact_begin.elapsed().as_secs_f64() * 1000.0;
++    let mut routed = owner_route::direct(corpus, workers);
++    let final_bytes: usize = routed.iter().map(|r| r.capacity() * 8).sum();
++    let mut peak = final_bytes;
++    let compact_ms = 0.0;
+     let route_ms = begin.elapsed().as_secs_f64() * 1000.0;
+     let count_begin = Instant::now();
+-    let sorting = Instant::now();
+-    let scratch_bytes = routed.par_iter_mut().map(sort).sum();
+-    let sort_ms = sorting.elapsed().as_secs_f64() * 1000.0;
+-    peak = peak.max(final_bytes + scratch_bytes); // capacity bound, not sampled RSS
+-    let grouping = Instant::now();
+-    let grouped: Vec<_> = routed
+-        .par_iter()
+-        .map(|records| -> Result<_> {
+-            let mut groups = Vec::new();
+-            let mut pruned = 0;
+-            let mut start = 0;
+-            while start < records.len() {
+-                let code = (records[start] >> 32) as u32;
+-                let mut end = start + 1;
+-                while end < records.len() && (records[end] >> 32) as u32 == code {
+-                    end += 1;
++    let mut remaining_record_bytes = final_bytes;
++    let mut scratch_bytes = 0;
++    let mut group_bytes = 0;
++    let mut sort_ms = 0.0;
++    let mut group_ms = 0.0;
++    let mut install_ms = 0.0;
++    let mut pruned = 0;
++    // Block scratch is small enough for every owner to sort concurrently.
++    // Bound installation independently: final postings overlap remaining records.
++    for records_wave in routed.chunks_mut(sort_width.min(workers)) {
++        let sorting = Instant::now();
++        let wave_scratch_bytes = records_wave.par_iter_mut().map(sort).sum();
++        sort_ms += sorting.elapsed().as_secs_f64() * 1000.0;
++        scratch_bytes = scratch_bytes.max(wave_scratch_bytes);
++        peak = peak.max(remaining_record_bytes + wave_scratch_bytes);
++    }
++    for (owner_wave, records_wave) in owners
++        .chunks_mut(owner_width)
++        .zip(routed.chunks_mut(owner_width))
++    {
++        let wave_record_bytes: usize = records_wave.iter().map(|r| r.capacity() * 8).sum();
++        let grouping = Instant::now();
++        let grouped: Vec<_> = records_wave
++            .par_iter()
++            .map(|records| -> Result<_> {
++                let mut groups = Vec::new();
++                let mut discarded = 0;
++                let mut start = 0;
++                while start < records.len() {
++                    let code = (records[start] >> 32) as u32;
++                    let mut end = start + 1;
++                    while end < records.len() && (records[end] >> 32) as u32 == code {
++                        end += 1;
++                    }
++                    let frequency = if let Some(weight) = uniform {
++                        weight
++                            .checked_mul((end - start) as u64)
++                            .ok_or("initial frequency exceeds u64")?
++                    } else {
++                        let lookup = lookup.ok_or("radix count needs flat word metadata")?;
++                        records[start..end]
++                            .iter()
++                            .map(|&r| lookup.weight(block, r as u32))
++                            .sum()
++                    };
++                    if frequency >= floor {
++                        groups.push(Group {
++                            code,
++                            start: u32::try_from(start).map_err(|_| "owner route exceeds u32")?,
++                            end: u32::try_from(end).map_err(|_| "owner route exceeds u32")?,
++                            frequency,
++                        });
++                    } else {
++                        discarded += 1;
++                    }
++                    start = end;
+                 }
+-                let frequency = if let Some(weight) = uniform {
+-                    weight
+-                        .checked_mul((end - start) as u64)
+-                        .ok_or("initial frequency exceeds u64")?
+-                } else {
+-                    let lookup = lookup.ok_or("radix count needs flat word metadata")?;
+-                    records[start..end]
+-                        .iter()
+-                        .map(|&r| lookup.weight(block, r as u32))
+-                        .sum()
+-                };
+-                if frequency >= floor {
+-                    groups.push(Group {
+-                        code,
+-                        start: u32::try_from(start).map_err(|_| "owner route exceeds u32")?,
+-                        end: u32::try_from(end).map_err(|_| "owner route exceeds u32")?,
+-                        frequency,
+-                    });
+-                } else {
+-                    pruned += 1;
++                Ok((groups, discarded))
++            })
++            .collect::<Result<Vec<_>>>()?;
++        group_ms += grouping.elapsed().as_secs_f64() * 1000.0;
++        let wave_group_bytes = grouped
++            .iter()
++            .map(|g| g.0.capacity() * std::mem::size_of::<Group>())
++            .sum();
++        group_bytes = group_bytes.max(wave_group_bytes);
++        pruned += grouped.iter().map(|g| g.1).sum::<usize>();
++        let installing = Instant::now();
++        owner_wave
++            .par_iter_mut()
++            .zip(records_wave.par_iter_mut())
++            .zip(grouped.into_par_iter())
++            .map(|((ledger, records), (groups, _))| -> Result<()> {
++                let records = std::mem::take(records);
++                ledger.entries = AHashMap::with_capacity(groups.len());
++                for group in groups {
++                    let count = group.end - group.start;
++                    let mut positions = SmallPosting::with_capacity(count)?;
++                    let source = &records[group.start as usize..group.end as usize];
++                    let mut next = source.len();
++                    positions.append_reversed_reserved(count, || {
++                        next -= 1;
++                        source[next] as u32
++                    })?;
++                    debug_assert!(positions.as_slice().windows(2).all(|w| w[0] < w[1]));
++                    ledger.entries.insert(
++                        canonical(group.code),
++                        Entry {
++                            frequency: group.frequency,
++                            blocks: positions,
++                        },
++                    );
+                 }
+-                start = end;
+-            }
+-            Ok((groups, pruned))
+-        })
+-        .collect::<Result<Vec<_>>>()?;
+-    let group_ms = grouping.elapsed().as_secs_f64() * 1000.0;
+-    let group_bytes = grouped
+-        .iter()
+-        .map(|g| g.0.capacity() * std::mem::size_of::<Group>())
+-        .sum();
+-    let pruned = grouped.iter().map(|g| g.1).sum();
+-    let installing = Instant::now();
+-    owners
+-        .par_iter_mut()
+-        .zip(routed.into_par_iter())
+-        .zip(grouped.into_par_iter())
+-        .map(|((ledger, records), (groups, _))| -> Result<()> {
+-            ledger.entries = AHashMap::with_capacity(groups.len());
+-            for group in groups {
+-                let count = group.end - group.start;
+-                let mut positions = SmallPosting::with_capacity(count)?;
+-                let source = &records[group.start as usize..group.end as usize];
+-                let mut next = source.len();
+-                positions.append_reversed_reserved(count, || {
+-                    next -= 1;
+-                    source[next] as u32
+-                })?;
+-                debug_assert_eq!(next, 0);
+-                debug_assert!(positions.as_slice().windows(2).all(|w| w[0] < w[1]));
+-                ledger.entries.insert(
+-                    canonical(group.code),
+-                    Entry {
+-                        frequency: group.frequency,
+-                        blocks: positions,
+-                    },
+-                );
+-            }
+-            Ok(())
+-        })
+-        .collect::<Result<Vec<_>>>()?;
+-    let install_ms = installing.elapsed().as_secs_f64() * 1000.0;
++                // Drop this owner's pair stream before the next wave allocates scratch.
++                Ok(())
++            })
++            .collect::<Result<Vec<_>>>()?;
++        install_ms += installing.elapsed().as_secs_f64() * 1000.0;
++        remaining_record_bytes -= wave_record_bytes;
++    }
++    debug_assert_eq!(remaining_record_bytes, 0);
+     Ok(Metrics {
+         route_ms,
+         compact_ms,
+@@ -231,6 +267,103 @@ pub(super) fn initialize<C: Slot, O: Offset, const INLINE: usize>(
+ #[cfg(test)]
+ mod tests {
+     use super::*;
++
++    fn check_wave_oracle<C: Slot>(raw: &[u32], block: &Block<u32, 2>) {
++        let corpus: Vec<C> = raw.iter().copied().map(C::encode).collect();
++        for uniform in [None, Some(3)] {
++            let lookup = uniform
++                .is_none()
++                .then(|| WeightLookup::new(block, corpus.len()));
++            for workers in [1, 4] {
++                for floor in [1, 7] {
++                    let mut expected = std::collections::BTreeMap::<u64, (u64, Vec<u32>)>::new();
++                    let mut routed_counts = vec![0_usize; workers];
++                    for p in 0..raw.len().saturating_sub(1) {
++                        let (a, b) = (raw[p], raw[p + 1]);
++                        if a == NONE || b == NONE {
++                            continue;
++                        }
++                        let k = key(a, b);
++                        routed_counts[owner(k, workers)] += 1;
++                        let entry = expected.entry(k).or_default();
++                        entry.0 += block.weight(p, uniform);
++                        entry.1.push(p as u32);
++                    }
++                    let discarded = expected.values().filter(|e| e.0 < floor).count();
++                    expected.retain(|_, e| e.0 >= floor);
++                    for width in [1, 2, 3, 4] {
++                        let mut owners: Vec<_> = (0..workers).map(|_| Owner::default()).collect();
++                        let metrics = initialize_with_owner_width(
++                            &corpus,
++                            block,
++                            uniform,
++                            lookup.as_ref(),
++                            workers,
++                            floor,
++                            &mut owners,
++                            width,
++                        )
++                        .unwrap();
++                        let actual: std::collections::BTreeMap<_, _> = owners
++                            .iter()
++                            .flat_map(|o| {
++                                o.entries
++                                    .iter()
++                                    .map(|(&k, e)| (k, (e.frequency, e.blocks.as_slice().to_vec())))
++                            })
++                            .collect();
++                        assert_eq!(
++                            actual, expected,
++                            "workers={workers}, width={width}, floor={floor}"
++                        );
++                        assert_eq!(metrics.pruned, discarded);
++                        assert_eq!(metrics.route_bytes, routed_counts.iter().sum::<usize>() * 8);
++                        let scratch_peak = routed_counts
++                            .chunks(workers)
++                            .map(|wave| wave.iter().map(|&n| sorting_scratch(n)).sum::<usize>())
++                            .max()
++                            .unwrap();
++                        assert_eq!(metrics.scratch_bytes, scratch_peak);
++                    }
++                }
++            }
++        }
++    }
++
++    #[test]
++    fn owner_waves_preserve_weighted_frequencies_and_ordered_positions() {
++        let mut raw = Vec::new();
++        let mut block = Block::<u32, 2>::new(0, 1);
++        let mut seed = 917_u64;
++        for word in 0..96 {
++            block.pivots.push(raw.len() as u32);
++            block.weights.push(1 + word % 5);
++            let length = 1 + (word * 7) % 23;
++            for p in 0..length {
++                seed = seed.wrapping_mul(6364136223846793005).wrapping_add(1);
++                let mut id = [0, 1, 65535, 2000, 32768, 42][(seed >> 32) as usize % 6];
++                if word % 7 == 0 {
++                    id = 0;
++                }
++                if word % 9 == 0 && p == length / 2 {
++                    id = 3000 + word as u32;
++                }
++                raw.push(id);
++            }
++            raw.push(NONE);
++        }
++        rayon::ThreadPoolBuilder::new()
++            .num_threads(4)
++            .build()
++            .unwrap()
++            .install(|| {
++                check_wave_oracle::<u32>(&raw, &block);
++                check_wave_oracle::<AtomicU32>(&raw, &block);
++                check_wave_oracle::<u32>(&[], &Block::new(0, 1));
++                check_wave_oracle::<u32>(&[NONE], &Block::new(0, 1));
++            });
++    }
++
+     #[test]
+     fn radix_codes_use_all_bits_and_preserve_order_within_a_key() {
+         let mut seed = 371_u64;

@@ -1,0 +1,56 @@
+{
+  "kind": "conditional-arithmetic-not-measurement",
+  "reference": "results/frontier/zh512m-direct-auto-t256.jsonl",
+  "reference_input_bytes": 536870289,
+  "assumptions": [
+    "same unique-word/slot/edge density as reference",
+    "u32 corpus, 4-byte local posting",
+    "12-byte logical mixed-weight word metadata",
+    "all initial postings retained",
+    "2 full sort payloads temporarily coexist",
+    "raw source retained",
+    "pair/PQ/directory/dedup/log overhead excluded"
+  ],
+  "rows": [
+    {
+      "raw_gib": 32,
+      "slots": 13189771785.779545,
+      "initial_edges": 13006742389.387121,
+      "unique_words": 91514666.19617449,
+      "corpus_gib": 49.135728872491214,
+      "initial_postings_gib": 48.45389123777718,
+      "word_metadata_gib": 1.0227560944427678,
+      "sort16_gib": 193.8155649511087,
+      "sort24_gib": 290.72334742666305,
+      "corpus_postings_metadata_gib": 98.61237620471115,
+      "init_peak16_including_raw_gib": 518.2435061069285,
+      "init_peak24_including_raw_gib": 712.0590710580373,
+      "historical_postings_3E_gib": 145.36167371333153,
+      "full_corpus_read_per_30000_rules_tib": 1439.5233068112661,
+      "one_read_one_write_per_rule_30000_tib": 2879.0466136225323
+    },
+    {
+      "raw_gib": 100,
+      "slots": 41218036830.56107,
+      "initial_edges": 40646069966.834755,
+      "unique_words": 285983331.8630452,
+      "corpus_gib": 153.54915272653503,
+      "initial_postings_gib": 151.41841011805369,
+      "word_metadata_gib": 3.196112795133649,
+      "sort16_gib": 605.6736404722147,
+      "sort24_gib": 908.5104607083222,
+      "corpus_postings_metadata_gib": 308.1636756397224,
+      "init_peak16_including_raw_gib": 1619.510956584152,
+      "init_peak24_including_raw_gib": 2225.184597056367,
+      "historical_postings_3E_gib": 454.2552303541611,
+      "full_corpus_read_per_30000_rules_tib": 4498.510333785206,
+      "one_read_one_write_per_rule_30000_tib": 8997.020667570412
+    }
+  ],
+  "dense_32byte_ledger_16byte_queue_equal_cardinality_gib": {
+    "10000000": 0.4470348358154297,
+    "100000000": 4.470348358154297,
+    "430853049": 19.260632202029228
+  },
+  "initial_pair_universe_fixed_V0": 430853049
+}

@@ -1,0 +1,45 @@
+   Compiling tk-train v0.1.0-dev.0 (/root/code/tokenizers-worktrees/initial-owner-waves/tokenizers/tk-train)
+warning: type `PackedCandidate` is more private than the item `candidate_heap::CandidateHeap::Packed::0`
+  --> src/trainers/bpe/indexed/parallel/candidate_heap.rs:24:12
+   |
+24 |     Packed(OctonaryHeap<PackedCandidate>),
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ field `candidate_heap::CandidateHeap::Packed::0` is reachable at visibility `pub(in crate::trainers::bpe::indexed::parallel)`
+   |
+note: but type `PackedCandidate` is only usable at visibility `pub(self)`
+  --> src/trainers/bpe/indexed/parallel/candidate_heap.rs:5:1
+   |
+ 5 | struct PackedCandidate(u64);
+   | ^^^^^^^^^^^^^^^^^^^^^^
+   = note: `#[warn(private_interfaces)]` on by default
+
+warning: methods `train_vocab_indexed_parallel` and `train_vocab_fused` are never used
+   --> src/trainers/bpe/indexed.rs:581:19
+    |
+580 | impl BpeTrainer {
+    | --------------- methods in this implementation
+581 |     pub(super) fn train_vocab_indexed_parallel(
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+618 |     pub(super) fn train_vocab_fused(&self) -> Result<IndexedTraining> {
+    |                   ^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: method `len` is never used
+  --> src/trainers/bpe/indexed/parallel/candidate_heap.rs:80:19
+   |
+32 | impl CandidateHeap {
+   | ------------------ method in this implementation
+...
+80 |     pub(super) fn len(&self) -> usize {
+   |                   ^^^
+
+warning: `tk-train` (lib test) generated 3 warnings
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.26s
+     Running unittests src/lib.rs (/root/code/tokenizers/benchmarks/hf-bpe/target/debug/deps/tk_train-b5c6ccf5f1dd66b7)
+
+running 1 test
+test trainers::bpe::indexed::parallel::tests::candidate_heap_range_fallback_keeps_weighted_greedy_semantics ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 52 filtered out; finished in 0.05s
+

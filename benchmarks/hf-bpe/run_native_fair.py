@@ -66,6 +66,8 @@ def main():
     parser.add_argument('--merge-workers', type=int, choices=[1, 4], default=4,
                         help='training worker count; verified against actual indexed stats')
     parser.add_argument('--atomic-corpus', action='store_true')
+    parser.add_argument('--expected-layout', default='parallel_u32_flat32',
+                        choices=['parallel_u32_flat32', 'parallel_u32_dict16', 'parallel_u32_dict32'])
     parser.add_argument('--require-stats', action='append', default=[],
                         help='require this numeric field in bench_indexed_stats; may be repeated')
     args = parser.parse_args()
@@ -111,7 +113,7 @@ def main():
                     parameters=dict(split=args.split, backend=args.backend, vocab_size=args.vocab,
                                     min_frequency=args.min_frequency),
                     initialization_workers=args.initialization_workers, merge_workers=args.merge_workers,
-                    expected_atomic_corpus=args.atomic_corpus,
+                    expected_atomic_corpus=args.atomic_corpus, expected_layout=args.expected_layout,
                     required_indexed_stats=args.require_stats,
                     env_overrides={k: env[k] for k in ('TOKENIZERS_PARALLELISM', 'RAYON_NUM_THREADS',
                                                      'HF_BPE_BENCH_WORKERS')},
@@ -178,7 +180,7 @@ def main():
                                           ensure_ascii=False) + '\n')
         raise SystemExit(f'{args.case}: required numeric indexed stats missing: {missing_stats}')
     expected = dict(workers=args.merge_workers, initialization_workers=args.initialization_workers,
-                    atomic_corpus=args.atomic_corpus, layout='parallel_u32_flat32')
+                    atomic_corpus=args.atomic_corpus, layout=args.expected_layout)
     mismatches = {key: (stats.get(key), value) for key, value in expected.items() if stats.get(key) != value}
     if mismatches:
         args.output.write_text(json.dumps(dict(engine=args.case, failure='indexed stats mismatch',

@@ -1,0 +1,57 @@
+{
+  "control": {
+    "command": [
+      "/usr/bin/python3",
+      "/root/code/tokenizers/benchmarks/hf-bpe/run_native_fair.py",
+      "--case",
+      "zh32m-none-sparse-waveall-b20",
+      "--worktree",
+      "/root/code/tokenizers-worktrees/initial-owner-waves",
+      "--build-root",
+      "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-j-block-summary-waves",
+      "--binary",
+      "/root/code/tokenizers/benchmarks/hf-bpe/target/release/hf-bpe-native-j-block-summary-waves",
+      "--corpus",
+      "/root/code/tokenizers/benchmarks/hf-bpe/.build/posting-distribution-inputs/zh-32m-none-r16000/input.txt",
+      "--output",
+      "/root/code/tokenizers/benchmarks/hf-bpe/results/block-summary-waves/zh32m-none-sparse-waveall-b20.jsonl",
+      "--split",
+      "none",
+      "--vocab",
+      "27097",
+      "--initialization-workers",
+      "4",
+      "--merge-workers",
+      "4",
+      "--atomic-corpus",
+      "--expected-layout",
+      "parallel_u32_dict32"
+    ],
+    "extra_environment": {
+      "HF_BPE_BLOCK_COUNT_MODE": "sparse",
+      "HF_BPE_BLOCK_PROXY_BITS": "20",
+      "HF_BPE_BLOCK_SUMMARY_WAVE": "all"
+    },
+    "mode": "sparse",
+    "block_bits": 20,
+    "wave": "all",
+    "local_offset_bytes": 4,
+    "word_order": "lexical (diagnostic only)",
+    "count": 1,
+    "scope": "same binary block initialization; fixed system allocator; small block span proxy, not large corpus measurement"
+  },
+  "probe": {
+    "block_bits": 20,
+    "block_distinct_keys": 2596451,
+    "blocks": 13,
+    "count_capacity_bytes_sum_estimate": 365776,
+    "count_keys": 12047,
+    "global_frequency_floor_after_reduction": true,
+    "local_offset_bytes": 4,
+    "mode": "sparse",
+    "nonunit_edges": 29974,
+    "physical_edges": 12704752
+  },
+  "model_gate": "PASS",
+  "expected_model_sha256": "458f67e432cd41ab7941c195fe135a36bfcd298517ca217ed680658b204681b7"
+}

@@ -1,0 +1,9 @@
+zh512m-classic-w2-all: pid 2398210; MemAvailable 7.55 GiB
+zh512m-classic-w2-all: init 7.754s + merge 14.672s; train 22.905s, peak RSS 3.67 GiB, min available 3.86 GiB, VmSwap 0.0 MiB, model d50fb836e342e1a301bb56d5ab53c0b79fae38f51a03051c6d6b02ab6cf862cd
+zh512m-classic-w2-all: width/cutoff/allocator origin checks PASS
+zh512m-block-w4-all: pid 2398967; MemAvailable 7.52 GiB
+zh512m-block-w4-all: init 4.752s + merge 14.113s; train 19.268s, peak RSS 3.80 GiB, min available 3.80 GiB, VmSwap 0.0 MiB, model d50fb836e342e1a301bb56d5ab53c0b79fae38f51a03051c6d6b02ab6cf862cd
+zh512m-block-w4-all: width/cutoff/allocator origin checks PASS
+zh512m-block-w2-all: pid 2399590; MemAvailable 7.15 GiB
+zh512m-block-w2-all: init 6.071s + merge 13.693s; train 20.145s, peak RSS 3.56 GiB, min available 4.05 GiB, VmSwap 0.0 MiB, model d50fb836e342e1a301bb56d5ab53c0b79fae38f51a03051c6d6b02ab6cf862cd
+zh512m-block-w2-all: width/cutoff/allocator origin checks PASS

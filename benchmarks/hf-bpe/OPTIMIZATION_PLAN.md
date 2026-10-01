@@ -252,3 +252,33 @@ native benchmark runner新增仅测量用HF_BPE_BENCH_WORKERS配置，默认4，
 - [x] 模型/工作集/分配来源与resource gates、源码/二进制/输入hash、原始数据、standalone PNG/SVG、helper和报告保存。
 
 结论：中文512MiB all不增峰、train少21.90%；英文none256B可作为原峰值预算候选，whitespace保留heap。T以整次峰值预算筛选，分配覆盖单调不等于时间必然单调。当前只完成限定配置诊断选型，生产J376363d2保持不变。详情 [POSTING_ARENA_THRESHOLD_REPORT.md](POSTING_ARENA_THRESHOLD_REPORT.md)。
+
+## 用户新约束：降低初始化峰值，寻找时间/空间甜点
+
+用户认为 radix 初始化把峰值从 B2 约3.44GiB抬至4.43GiB不可接受，要求权衡速度和内存；另明确授权一个独立 sub-agent 抽象算法/数学问题、调研论文和实践并做更激进原型。主线程保留 J 基线，从376363d2派生 `bpe/initial-owner-waves`；独立研究单独保留代码/报告，不修改基线。正式计时与其它CPU作业协调错开。
+
+第一假设：现有四owner同时排序，scratch容量合计1.514GiB；全部初始pair records另1.514GiB。按1/2/4个owner分波完成sort/group/install，每波结束释放对应records，减少同时存活scratch及后续records/postings重叠。保留每owner原稳定radix、权重查询、floor筛选、精确一次预留和严格递增positions，不增加逐位置hash。代价是sort/group/install并行度下降；route仍4worker，merge不改，性能决定是否采用。
+
+核验覆盖1/4workers、1/2/3/4owner宽度、非均匀/均匀权重、floor、分隔符、完整u16初始ID与位置顺序；复用现有逐轮HF差分及AA边界测试。初步预算为三种owner宽度各一次512MiB完整训练，使用同binary和同arena策略；确认具体峰值后只补会改变甜点选择的allocator阈值，不默认重复矩阵。新初始化低峰下重新评估Arena预算，不再以旧4.43GiB峰值提供余量。论文原型只有核对真实完整工作/内存后才能称Trainer收益。
+
+
+### 初始化/通用分块阶段完成
+
+- [x] owner wave、Radsort Rust port、安全/稳定性审查，排序并发与安装wave分别配置。
+- [x] direct prefix scatter；8B heap证书、wide与affix fallback，但按大规模目标降优先级。
+- [x] 33次正式模型/工作/资源/source gates；56lib tests；实际patch、raw与图表归档。
+- [x] generic block的posting.len+signed sparse delta与固定物理词序对照；容量改善、时间混合如实保留。
+- [x] 全路径算法抽象、最新一手研究与有条件数十GiB容量分析；没有把flat收益写成wide实测。
+- [x] 新独立代理：磁盘/流式精确训练的外存抽象、26项一手实践/研究、I/O模型完成；按用户要求仅预研，见EXTERNAL_MEMORY_BPE.md。
+
+后续arena阈值按用户要求延后。当前算法阶段结果见 [INITIALIZATION_MEMORY_REPORT.md](INITIALIZATION_MEMORY_REPORT.md)。有界初始化/summary waves和全外存Trainer仍是待实现方向，不因本机proxy通过而标成数十GiB已验证。
+
+
+## 继续内存内算法：按wave归并block摘要
+
+实际源码generic路径把全体Q的 `(key,frequency)` Vec collect后才建owner ledger。假设按初始化worker数W逐wave扫描并立即归并，释放已消费Vec，可把这份临时存储从全体Q降为Q_wave，保持每波block并行度W。代价是wave屏障、owner ledger提前与后续block构建重叠；RSS与时间不由摘要容量单独保证。global floor仍在所有wave之后，directory按原递增block顺序，跨块AA与权重语义保持。
+
+新增57项完整lib测试通过，包括跨3个wave、0/非unit权重、AA、1/2/4merge workers、2init workers的逐轮wide serial oracle。最小测量预算：固定STD allocator/lexical词序、u32local+base、zh32MiB none强制2²⁰槽block，同binary all summaries→4-block waves各一次。直接初始化、完整train、summary容量与RSS决定是否采用；若收益只在容量且性能混合，如实保留候选，不展开默认矩阵。
+
+
+分wave源码7e794db1、57tests与2个模型smoke、2个正式对照完成：13block摘要Vec48.001→16.000MiB，进程峰值479.94→431.57MiB，init.704→.790s，train4.266→4.289s。按大规模内存目标保留候选，速度损失明确单列；不展开矩阵。源码/overlay/binary/输入hash和模型/工作gate全部通过。当前汇总35次正式调用、8份overlay与源码总补丁；完整bounded字节预算与可回收pool仍是下一轮结构性候选，当前不宣布全局最优。

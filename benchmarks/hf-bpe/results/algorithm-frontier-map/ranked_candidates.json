@@ -1,0 +1,364 @@
+{
+  "survey_date": "2026-10-01",
+  "base": "376363d2",
+  "report": "ALGORITHM_FRONTIER_MAP.md",
+  "scope": "Whole exact BPE pipeline; priority tens of GiB and beyond; source gates and conditional capacity analysis; no heavy jobs or Trainer edits by survey agent",
+  "measured_speedup_claims": true,
+  "candidates": [
+    {
+      "id": "block_sparse_weight_count",
+      "rank": 1,
+      "status": "proposed_root_bounded_fallback_experiment",
+      "stage": "physical_block_hash_initialization",
+      "mechanism": "Uniform uses posting.len*w without counts table; nonuniform stores signed delta=sum(w-1) only for nonunit-weight valid edges, then frequency=posting.len+delta. Preserve 16-byte posting map value.",
+      "risk": "low_local_exact_count_replacement",
+      "arithmetic_audit": "Existing weights and global E0 fit i64. Per-block negative delta >=-2^32, positive delta<=E0. Use checked i64 delta and reconstruction, nonnegative u64 conversion; uniform checked u64 multiplication. Zero weight contributes -1, not omitted positions.",
+      "memory": "Exception key table is a subset of old counts key table; uniform needs none. Final global owner/block/posting state unchanged.",
+      "speed": "Expected fewer count-map probes only when unit valid edges dominate; worst mixed nonunit case retains per-edge probes and adds Q key lookups/branches. Unmeasured.",
+      "gate": "Unit valid-edge fraction, exception key/capacity, legacy/sparse same binary forced-multiblock model equality; 0/nonunit weights, AA, global floor and full call/RSS.",
+      "sources": []
+    },
+    {
+      "id": "bounded_block_stream_initialization",
+      "rank": 2,
+      "status": "proposed_not_implemented",
+      "stage": "initial_count_partition_posting",
+      "mechanism": "Batch local positions strictly below2^32, usize descriptor base and complete u64 key fallback; first bounded pass exact global weighted count, then retained postings with stable per-address-block assembly.",
+      "risk": "medium_address_count_and_storage_protocol",
+      "memory": "Additional record buffers O(W*M) rather than O(Eu); corpus/word/global key/block key/final postings remain O(N+K+Q+P). Total Q counts may still scale; not an out-of-core Trainer.",
+      "speed": "Extra scans/grouping versus smaller peak and sequential traffic; no speed extrapolation.",
+      "gate": "Global floor after all producer sums, block/AA/weight boundaries, full key order, posting u32 len bound, sorted unique local positions and block directories, batch budget and conditional capacity table.",
+      "sources": [
+        "https://arxiv.org/html/2607.05302v1",
+        "https://stxxl.org/tags/1.4.0/classstxxl_1_1sorter.html"
+      ]
+    },
+    {
+      "id": "direct_owner_route",
+      "rank": 3,
+      "status": "integrated_first_formal_n1_route_and_train_improved",
+      "stage": "initial_owner_partition",
+      "mechanism": "Two existing corpus scans; per chunk-owner counts and prefixes allocate exclusive final slices, removing intermediate Vec compact.",
+      "risk": "low_with_existing_maybeuninit_review",
+      "memory": "HWM3.368232728 ->3.376522064 GiB in n=1; removed temporary overlap does not establish RSS reduction.",
+      "speed": "Same binary wide/T256 route1.747130 ->0.724478s, train19.730086 ->17.893389s; n=1. Unchanged merge noise not attributed to route.",
+      "evidence": [
+        "results/rule-aggregate-scaling.summary.md",
+        "source_review_in_ALGORITHM_FRONTIER_MAP.md"
+      ],
+      "gate": "Elementwise physical stream oracle, retained weighted posting oracle, full train/init/route/HWM",
+      "sources": [
+        "https://arxiv.org/html/2607.05302v1"
+      ],
+      "current_branch_gate": "bits=32 && corpus.len<=2^32 && initial_identity_count<=65536; extension required beyond this range",
+      "large_scale_status": "Stable scatter is general; current 8-byte record source supports only local u32 positions/u16 pairs. No current radix/direct-route gain on >2^32 slot block-dictionary fallback."
+    },
+    {
+      "id": "recyclable_small_posting_pool",
+      "rank": 4,
+      "status": "proposed_not_implemented",
+      "stage": "posting_lifecycle",
+      "mechanism": "Per allocator/owner size-class free lists recycle retired fixed-capacity payload; release chunks in bulk.",
+      "risk": "medium_ownership_and_reclamation",
+      "memory": "Can reduce cumulative-retired arena storage; class rounding and per-owner maxima must be counted.",
+      "speed": "Preserve allocation/drop amortization, add free-list operations and return routing; unmeasured.",
+      "gate": "Retired bytes by class, reuse opportunity, panic/owner/lifetime review, full train/HWM",
+      "sources": [
+        "https://docs.rs/bumpalo/latest/bumpalo/",
+        "https://eel.is/c++draft/mem.res.pool.overview"
+      ]
+    },
+    {
+      "id": "compressed_long_cold_posting",
+      "rank": 5,
+      "status": "proposed_not_implemented",
+      "stage": "posting_representation",
+      "mechanism": "Delta + StreamVByte or succinct monotone encoding for immutable long historical cohorts; keep inline short postings.",
+      "risk": "medium_api_and_decode",
+      "memory": "Potential payload reduction offset by headers, block directories and decode scratch.",
+      "speed": "Lower traffic versus repeated decoding and AA/random index queries; unknown break-even.",
+      "gate": "Real gap/length/lifetime samples, block oracle, AA and parallel range slicing, full train/HWM",
+      "sources": [
+        "https://arxiv.org/abs/1709.08990",
+        "https://github.com/fast-pack/streamvbyte",
+        "https://arxiv.org/abs/2602.05445"
+      ]
+    },
+    {
+      "id": "consume_block_summaries_in_waves",
+      "rank": 6,
+      "status": "proposed_not_implemented",
+      "stage": "physical_block_frequency_reduce",
+      "mechanism": "Reduce completed block frequency summaries into unique owner ledgers in physical block waves and immediately release vectors; ordered directory append.",
+      "risk": "low_to_medium_ordered_reduction",
+      "memory": "Summary buffer limited to Q_wave rather than all Q, final owner/block tables unchanged. Current branch-end release already exists and is not a new saving.",
+      "speed": "Same arithmetic and fewer simultaneous vectors; scheduling and barriers need measurement.",
+      "gate": "Block IDs increasing and unique, global floor delayed until full sums, owner exclusive writes and forced multiblock oracle.",
+      "sources": []
+    },
+    {
+      "id": "reuse_route_map_capacity",
+      "rank": 7,
+      "status": "evidence_gap_current_j",
+      "stage": "prepare_commit",
+      "mechanism": "Reuse local group maps or reserve from prior batch to reduce rehashing.",
+      "risk": "low_to_medium_retained_rss",
+      "memory": "Capacity retention can raise RSS and old batch geometry can overreserve.",
+      "speed": "H profile proves growth cost; current J aggregate changes work and lacks equivalent breakdown.",
+      "gate": "Current J growth counts and retained capacities, full train/HWM",
+      "sources": [
+        "https://github.com/rust-lang/hashbrown",
+        "https://abseil.io/about/design/swisstables"
+      ]
+    },
+    {
+      "id": "tpht_or_zombie_owner_dictionary",
+      "rank": 8,
+      "status": "research_not_plug_compatible",
+      "stage": "owner_dictionary",
+      "mechanism": "Compact tiny-pointer/quotiented table or bounded tombstone redistribution at high occupancy.",
+      "risk": "high_data_structure_migration",
+      "memory": "TPHT direct value max8B vs current24B value requires Entry arena and handles.",
+      "speed": "Author YCSB/high-churn results cannot predict 32-byte BPE entry behavior.",
+      "gate": "Actual owner operation trace, complete memory accounting and generic correctness",
+      "sources": [
+        "https://arxiv.org/abs/2607.28892",
+        "https://github.com/Xilinion/TPHT",
+        "https://users.cs.utah.edu/~jeffp/papers/zombieht.pdf",
+        "https://github.com/saltsystemslab/ZombieHT"
+      ]
+    },
+    {
+      "id": "extra_parallelism_shards_pipeline",
+      "rank": 9,
+      "status": "deferred_per_latest_user_steering",
+      "stage": "scheduling",
+      "mechanism": "Parallel block-chunk Radsort, P>W virtual shards, J>W ordered prepare jobs or bounded owner pipeline.",
+      "risk": "medium_to_high_protocol_and_memory",
+      "memory": "Scratch and job-owner matrices increase; bandwidth contention may dominate.",
+      "speed": "Requires measured owner skew or worker tail idle time; current four owner sorts already concurrent.",
+      "gate": "Per-owner work/timing, ordered prefix/output guarantees, memory budget, full train",
+      "sources": [
+        "https://arxiv.org/html/2607.05302v1",
+        "https://github.com/klauspost/radsort/blob/0341b6e9caa4ac560058144dcca8c6cd6a281026/parallel.go",
+        "https://github.com/rayon-rs/rayon"
+      ]
+    },
+    {
+      "id": "logical_block_group_install",
+      "rank": 10,
+      "status": "proposed_deferred_measured_small_critical_path",
+      "stage": "radix_finalize_and_install",
+      "mechanism": "Iterate logical sorted blocks directly, retaining key groups across partial block boundaries, avoiding continuous finalize.",
+      "risk": "medium",
+      "memory": "No new full record copy; directory and scratch retained through consumer lifetime.",
+      "speed": "FixedT256 probe: four-owner finalize CPU sum492.5ms, max134.76ms; full train21.280s. Ideal max-owner critical-path opportunity ~0.63%, not CPU sum/train.",
+      "gate": "Measure finalize, cross-block group oracle, full init/train/HWM",
+      "sources": [
+        "https://arxiv.org/html/2607.05302v1",
+        "https://github.com/klauspost/radsort"
+      ],
+      "evidence": [
+        "results/frontier-sort-cost/zh512m-sort-cost-t256.summary.json"
+      ]
+    },
+    {
+      "id": "packed_candidate_8b",
+      "rank": 11,
+      "status": "integrated_first_formal_n1_memory_reduction_confirmed_no_speed_improvement",
+      "stage": "candidate_queue",
+      "mechanism": "Guarded u32 frequency plus packed u16/u16 pair in an 8-byte heap record; wide fallback.",
+      "eligibility": "supports_compact(trainer) [prefix and suffix each None or empty] && max(V0, requested_vocab_size)<=65536 && checked E0<=u32::MAX",
+      "risk": "low",
+      "memory": "Measured candidate backing capacity329.2867432 ->164.6433716 MiB with same14,225,344 records; exact half, not RSS guarantee.",
+      "speed": "Direct/T256 control train17.893389 ->18.105217s; n=1, no independent speed benefit.",
+      "evidence": [
+        "results/j-posting-inventory.summary.md",
+        "results/rule-aggregate-scaling.summary.md",
+        "results/algorithm-frontier-map/packed_candidate_oracle.json"
+      ],
+      "gate": "Full model signature, high-weight and >65536-ID fallback, same-binary train/HWM comparison; explicit supports_compact guard and nonempty-affix general-ledger fallback",
+      "sources": [],
+      "certificate_scope": "Ordinary/no nonempty-affix compact ledger only. No frequency-bound certificate for the nonempty-affix alias/cohort general ledger.",
+      "implementation_status": "Parallel entry and packed eligibility both explicitly gate supports_compact in 8bd048f6. End-to-end nonempty-affix fallback test covers suffix alias, prefix alias and prefix+suffix; PASS, one test zero failures.",
+      "priority_scope": "Conditional range specialization, ranked after broad scale improvements."
+    },
+    {
+      "id": "simdquickheap_packed_u64",
+      "rank": 12,
+      "status": "proposed_not_implemented_deprioritized",
+      "stage": "candidate_queue",
+      "mechanism": "SIMD bucket partition and adjacent pivot classification for packed scalar priority.",
+      "risk": "medium_isa_and_dependency",
+      "memory": "Multiple bucket Vec capacity/slack requires measurement.",
+      "speed": "Paper comparisons include an 8-ary queue, but Trainer select wall cost is small.",
+      "gate": "Packed priority oracle, actual operation trace against current dary_heap, ISA fallback and full train",
+      "sources": [
+        "https://arxiv.org/html/2604.25681v1",
+        "https://github.com/RagnarGrootKoerkamp/quickheap"
+      ],
+      "priority_scope": "Conditional range specialization, ranked after broad scale improvements."
+    }
+  ],
+  "integration_source_tip": "8bd048f6",
+  "integration_validation_reported_by_root": {
+    "trainer_tests": 52,
+    "targeted_tests": 2,
+    "small_model_smokes": 4,
+    "large_weight_oracle": "selected J wide indexed serial; legacy HF i32 weights are unsuitable",
+    "affix_fallback_explicit_guard_test": "PASS: .build/affix-heap-fallback.tests.log; one test, zero failures; source 8bd048f6"
+  },
+  "formal_measurement_status": "Six same-binary full calls passed D50; four first configurations n=1 and reverse all-to-T256 repeat completed. Arena all faster within both pairs but reverse repeat exceeds historical B2 memory budget; T256 under budget in both calls.",
+  "formal_first_four": [
+    {
+      "route": "legacy",
+      "heap": "wide",
+      "arena": "256",
+      "initialize_s": 5.740548,
+      "train_s": 19.730086,
+      "route_s": 1.74713,
+      "compact_s": 0.883248,
+      "hwm_gib": 3.368232728
+    },
+    {
+      "route": "direct",
+      "heap": "wide",
+      "arena": "256",
+      "initialize_s": 4.356681,
+      "train_s": 17.893389,
+      "route_s": 0.724478,
+      "compact_s": 0,
+      "hwm_gib": 3.376522064
+    },
+    {
+      "route": "direct",
+      "heap": "auto",
+      "arena": "256",
+      "initialize_s": 4.327508,
+      "train_s": 18.105217,
+      "hwm_gib": 3.359176636
+    },
+    {
+      "route": "direct",
+      "heap": "auto",
+      "arena": "all",
+      "initialize_s": 3.922882,
+      "train_s": 16.469754,
+      "hwm_gib": 3.439247131
+    }
+  ],
+  "formal_reverse_repeat": [
+    {
+      "route": "direct",
+      "heap": "auto",
+      "arena": "all",
+      "initialize_s": 4.891774771,
+      "train_s": 20.067068822,
+      "hwm_gib": 3.4586639404296875,
+      "model_signature": "D50",
+      "summary": "results/frontier/zh512m-direct-auto-tall-repeat.summary.json"
+    },
+    {
+      "route": "direct",
+      "heap": "auto",
+      "arena": "256",
+      "initialize_s": 4.974043181,
+      "train_s": 20.953533481,
+      "hwm_gib": 3.3326263427734375,
+      "model_signature": "D50",
+      "summary": "results/frontier/zh512m-direct-auto-t256-repeat.summary.json"
+    }
+  ],
+  "arena_threshold_conclusion": {
+    "samples_per_threshold": 2,
+    "reverse_repeat_all_train_reduction_percent": 4.230621340328187,
+    "reverse_repeat_all_extra_hwm_mib": 129.0625,
+    "historical_b2_budget_gib_approx": 3.442,
+    "all_budget_pass": "first pass, reverse repeat exceeds budget",
+    "t256_budget_pass": "both pass",
+    "recommendation": "Threshold decision provisional and deferred until general algorithm work completes, per latest user steering; T256 fixed control only, all not guaranteed to meet historical B2 peak."
+  },
+  "formal_measurement_binary_source_tip": "56dd3227",
+  "scale_report": "SCALE_UP_ANALYSIS.md",
+  "scale_up_gates": {
+    "flat": "bits32 && Ns<=2^32",
+    "initial_radix": "flat && V0<=65536",
+    "candidate_packed": "ordinary affix && max(V0,vocab)<=65536 && E0<=u32MAX",
+    "wide_weight_existing_limit": "each weight and global weighted initial mass checked <=i64MAX",
+    "global_addresses": "usize; per-block local u16/u32 offsets; u32 block directories; single posting len/capacity u32",
+    "large_raw_size_alone": "insufficient: dedup, weights, pretoken boundaries and language determine physical storage"
+  },
+  "scale_up_scenario": {
+    "status": "conditional arithmetic only, no large benchmark or timing extrapolation",
+    "baseline_raw_bytes": 536870289,
+    "baseline_Nu": 204660029,
+    "baseline_Ns": 206089945,
+    "baseline_Eu": 203230114,
+    "baseline_E0": 203974788,
+    "baseline_U": 1429915,
+    "baseline_V0": 20757,
+    "flat_boundary_raw_gib_if_same_density": 10.42011610998295,
+    "packed_mass_boundary_raw_gib_if_same_density": 10.528169567211418,
+    "raw_gib": [
+      10,
+      32,
+      64,
+      128
+    ],
+    "note": "See SCALE_UP_ANALYSIS.md table. Holds N/E densities and weight distribution conditionally; K/Q/H/G/arena lifetime not assumed linear.",
+    "conditional_capacity_rows": [
+      {
+        "raw_gib": 10,
+        "conditional_Nu": 4093205329.86978,
+        "conditional_Ns": 4121803683.0561075,
+        "conditional_Eu": 4064606996.6834755,
+        "conditional_E0": 4079500493.9663057,
+        "current_address_blocks32": 1,
+        "u32_corpus_gib": 15.354915272653503,
+        "u32_logical_initial_positions_gib": 15.141841011805369,
+        "hypothetical_all_8byte_records_gib": 30.283682023610737,
+        "current_radix_possible_from_slot_gate": true,
+        "note": "Logical capacity scenario; posting backing, K/Q/H/G, raw dedup memory, RSS and timing not predicted."
+      },
+      {
+        "raw_gib": 32,
+        "conditional_Nu": 13098257055.583296,
+        "conditional_Ns": 13189771785.779545,
+        "conditional_Eu": 13006742389.387121,
+        "conditional_E0": 13054401580.692179,
+        "current_address_blocks32": 4,
+        "u32_corpus_gib": 49.135728872491214,
+        "u32_logical_initial_positions_gib": 48.45389123777718,
+        "hypothetical_all_8byte_records_gib": 96.90778247555436,
+        "current_radix_possible_from_slot_gate": false,
+        "note": "Logical capacity scenario; posting backing, K/Q/H/G, raw dedup memory, RSS and timing not predicted."
+      },
+      {
+        "raw_gib": 64,
+        "conditional_Nu": 26196514111.16659,
+        "conditional_Ns": 26379543571.55909,
+        "conditional_Eu": 26013484778.774242,
+        "conditional_E0": 26108803161.384357,
+        "current_address_blocks32": 7,
+        "u32_corpus_gib": 98.27145774498243,
+        "u32_logical_initial_positions_gib": 96.90778247555436,
+        "hypothetical_all_8byte_records_gib": 193.8155649511087,
+        "current_radix_possible_from_slot_gate": false,
+        "note": "Logical capacity scenario; posting backing, K/Q/H/G, raw dedup memory, RSS and timing not predicted."
+      },
+      {
+        "raw_gib": 128,
+        "conditional_Nu": 52393028222.33318,
+        "conditional_Ns": 52759087143.11818,
+        "conditional_Eu": 52026969557.548485,
+        "conditional_E0": 52217606322.768715,
+        "current_address_blocks32": 13,
+        "u32_corpus_gib": 196.54291548996486,
+        "u32_logical_initial_positions_gib": 193.8155649511087,
+        "hypothetical_all_8byte_records_gib": 387.6311299022174,
+        "current_radix_possible_from_slot_gate": false,
+        "note": "Logical capacity scenario; posting backing, K/Q/H/G, raw dedup memory, RSS and timing not predicted."
+      }
+    ]
+  }
+}

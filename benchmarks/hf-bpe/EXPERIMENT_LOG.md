@@ -263,3 +263,17 @@ J376363d2从H继续，未叠加K。已有inline route probe与173.16M次birth/re
 同一16B布局arena/heap诊断binary，在阈值0/32/256/all完成中文512MiB、英文16MiB none/whitespace各一次，共12次，无并发CPU任务。中文实际29,243rules，train21.593/19.255/18.706/16.865秒；all比heap少21.90%，HWM全部约4.43GiB，在初始化返回前建立，merge期间未刷新。all终点RSS3.55GiB低于HWM约903MiB；仍是9.324M requests/1.307GiB payload/1.860GiB chunks，release66.228ms。英文none all增峰10.65MiB，256B未明显增峰、train少3.19%；英文whitespace未测到收益。每配置n1，实际时间没有必然单调性，不宣称连续阈值精确最优。
 
 全部12次按组模型/输入/完整工作集/terminal inventory/累计分配量精确相同；系统分配来源与free闭合、VmSwap0、最低MemAvailable2.98GiB。另3个1MiB allocator smoke gate通过；helper py_compile、汇总及sourcehash gate通过，图表独立导出。使用预算内最大T筛候选并核验完整train；不将requested-retired直接加成RSS预测。不迁入通用生产J、不改原efficient_bpe。见 [阈值与阶段报告](POSTING_ARENA_THRESHOLD_REPORT.md)、[独立理论](POSTING_THRESHOLD_THEORY.md)、[多语言实测](POSTING_THRESHOLD_EMPIRICAL.md)。
+
+
+## 初始化峰值与大规模算法候选（2026-10-01）
+
+用户明确要求降低4.43GiB初始化峰值、保留实际并行收益，并将数十GiB以上的通用优化排在小范围特化之前。`bpe/initial-owner-waves` 从J376363d2派生，最终f16dee08；独立算法代理给出Radsort/prototypes、数学审查与全路径前沿算法地图。
+
+完成33次正式调用：owner waves3、block radix3、排序/安装分阶段4、direct route/packed heap6、排序成本probe1、generic block计数16。各组同binary，全部模型/工作量与资源gate通过；56libtests通过。4owner经典scratch1.51GiB降到4owner block scratch11.42MiB；直接填最终streams省去旧compact。已测最终组合峰值3.33–3.46GiB，时间存在显著host波动；packed heap容量精确减半、没有独立速度结论。该条件优化在大规模优先级中后排。
+
+通用分块保留u32-local posting+64位base。posting.len+稀疏signed权重delta已实现，固定STD allocator、物理词序控制后容量下降但时间混合，未宣布通用最快。没有测几十GiB，也没有线性外推速度。下一步有界batch/waves、完整pair key与单表容量边界、可回收posting、磁盘/流式精确训练研究。按用户要求停止arena阈值调优，生产J保留。
+
+主报告 [INITIALIZATION_MEMORY_REPORT.md](INITIALIZATION_MEMORY_REPORT.md)，扩容 [SCALE_UP_ANALYSIS.md](SCALE_UP_ANALYSIS.md)，算法地图 [ALGORITHM_FRONTIER_MAP.md](ALGORITHM_FRONTIER_MAP.md)。七份实际overlay补丁对各自source commit apply-check通过，源码/binary/输入hash、33次raw、测试/构建日志与独立PNG/SVG完整归档。
+
+
+补充内存内分块摘要wave：候选7e794db1通过57项完整tests与同binary对照，13block摘要峰48→16MiB、进程峰479.94→431.57MiB；初始化+12%、全训+0.55%（各n=1）。本轮累计35次正式调用，主报告 [INITIALIZATION_MEMORY_REPORT.md](INITIALIZATION_MEMORY_REPORT.md)。外存路线仅预研，26项一手研究与条件容量模型见 [EXTERNAL_MEMORY_BPE.md](EXTERNAL_MEMORY_BPE.md)。

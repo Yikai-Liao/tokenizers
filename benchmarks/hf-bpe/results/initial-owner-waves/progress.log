@@ -1,0 +1,19 @@
+smoke-en1m-w4-all: pid 2367028; MemAvailable 7.38 GiB
+smoke-en1m-w4-all: init 0.043s + merge 0.132s; train 0.181s, peak RSS 0.02 GiB, min available 7.37 GiB, VmSwap 0.0 MiB, model c15fc28e5a32b0385fe07bfc9ff34e48ca315021a8b0575b36b79c0b5a373ca9
+smoke-en1m-w4-all: width/cutoff/allocator origin checks PASS
+smoke-en1m-w2-all: pid 2367074; MemAvailable 7.34 GiB
+smoke-en1m-w2-all: init 0.038s + merge 0.109s; train 0.155s, peak RSS 0.03 GiB, min available 7.34 GiB, VmSwap 0.0 MiB, model c15fc28e5a32b0385fe07bfc9ff34e48ca315021a8b0575b36b79c0b5a373ca9
+smoke-en1m-w2-all: width/cutoff/allocator origin checks PASS
+smoke-en1m-w1-all: pid 2367087; MemAvailable 7.34 GiB
+smoke-en1m-w1-all: init 0.061s + merge 0.116s; train 0.185s, peak RSS 0.03 GiB, min available 7.34 GiB, VmSwap 0.0 MiB, model c15fc28e5a32b0385fe07bfc9ff34e48ca315021a8b0575b36b79c0b5a373ca9
+smoke-en1m-w1-all: width/cutoff/allocator origin checks PASS
+3 smoke gates PASS
+zh512m-w4-all: pid 2367110; MemAvailable 7.34 GiB
+zh512m-w4-all: init 6.880s + merge 12.562s; train 19.869s, peak RSS 4.43 GiB, min available 3.19 GiB, VmSwap 0.0 MiB, model d50fb836e342e1a301bb56d5ab53c0b79fae38f51a03051c6d6b02ab6cf862cd
+zh512m-w4-all: width/cutoff/allocator origin checks PASS
+zh512m-w2-all: pid 2367716; MemAvailable 7.60 GiB
+zh512m-w2-all: init 6.778s + merge 12.314s; train 19.468s, peak RSS 3.67 GiB, min available 3.93 GiB, VmSwap 0.0 MiB, model d50fb836e342e1a301bb56d5ab53c0b79fae38f51a03051c6d6b02ab6cf862cd
+zh512m-w2-all: width/cutoff/allocator origin checks PASS
+zh512m-w1-all: pid 2368251; MemAvailable 7.60 GiB
+zh512m-w1-all: init 10.455s + merge 13.365s; train 24.184s, peak RSS 3.60 GiB, min available 4.02 GiB, VmSwap 0.0 MiB, model d50fb836e342e1a301bb56d5ab53c0b79fae38f51a03051c6d6b02ab6cf862cd
+zh512m-w1-all: width/cutoff/allocator origin checks PASS

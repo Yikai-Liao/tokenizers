@@ -1,0 +1,12 @@
+zh512m-classic-s2-i2-tall: pid 2413915; MemAvailable 7.55 GiB
+zh512m-classic-s2-i2-tall: init 7.820s + merge 12.932s; train 21.127s, peak RSS 3.68 GiB, min available 3.85 GiB, VmSwap 0.0 MiB, model d50fb836e342e1a301bb56d5ab53c0b79fae38f51a03051c6d6b02ab6cf862cd
+zh512m-classic-s2-i2-tall: width/cutoff/allocator origin checks PASS
+zh512m-block-s4-i2-tall: pid 2414628; MemAvailable 7.28 GiB
+zh512m-block-s4-i2-tall: init 6.023s + merge 13.616s; train 20.021s, peak RSS 3.55 GiB, min available 4.00 GiB, VmSwap 0.0 MiB, model d50fb836e342e1a301bb56d5ab53c0b79fae38f51a03051c6d6b02ab6cf862cd
+zh512m-block-s4-i2-tall: width/cutoff/allocator origin checks PASS
+zh512m-block-s4-i2-t256: pid 2415288; MemAvailable 7.52 GiB
+zh512m-block-s4-i2-t256: init 5.507s + merge 13.908s; train 20.003s, peak RSS 3.38 GiB, min available 4.08 GiB, VmSwap 0.0 MiB, model d50fb836e342e1a301bb56d5ab53c0b79fae38f51a03051c6d6b02ab6cf862cd
+zh512m-block-s4-i2-t256: width/cutoff/allocator origin checks PASS
+zh512m-block-s4-i2-t0: pid 2415977; MemAvailable 7.40 GiB
+zh512m-block-s4-i2-t0: init 5.447s + merge 13.636s; train 23.065s, peak RSS 3.38 GiB, min available 4.26 GiB, VmSwap 0.0 MiB, model d50fb836e342e1a301bb56d5ab53c0b79fae38f51a03051c6d6b02ab6cf862cd
+zh512m-block-s4-i2-t0: width/cutoff/allocator origin checks PASS

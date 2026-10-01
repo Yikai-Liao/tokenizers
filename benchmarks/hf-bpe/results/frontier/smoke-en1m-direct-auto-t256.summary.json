@@ -1,0 +1,217 @@
+{
+  "control": {
+    "command": [
+      "/usr/bin/python3",
+      "/root/code/tokenizers/benchmarks/hf-bpe/run_native_fair.py",
+      "--case",
+      "smoke-en1m-direct-auto-t256",
+      "--worktree",
+      "/root/code/tokenizers-worktrees/initial-owner-waves",
+      "--build-root",
+      "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-j-frontier",
+      "--binary",
+      "/root/code/tokenizers/benchmarks/hf-bpe/target/release/hf-bpe-native-j-frontier",
+      "--corpus",
+      "/root/code/tokenizers/benchmarks/hf-bpe/.build/posting-distribution-inputs/en-1m-none-r4000/input.txt",
+      "--output",
+      "/root/code/tokenizers/benchmarks/hf-bpe/results/frontier/smoke-en1m-direct-auto-t256.jsonl",
+      "--split",
+      "none",
+      "--vocab",
+      "4486",
+      "--initialization-workers",
+      "4",
+      "--merge-workers",
+      "4",
+      "--atomic-corpus"
+    ],
+    "extra_environment": {
+      "HF_BPE_ARENA_MAX_BYTES": "256",
+      "HF_BPE_INITIAL_OWNER_WIDTH": "2",
+      "HF_BPE_INITIAL_SORT": "block",
+      "HF_BPE_INITIAL_SORT_WIDTH": "4",
+      "HF_BPE_DIRECT_OWNER_ROUTE": "1",
+      "HF_BPE_PACKED_HEAP": "1"
+    },
+    "cutoff_bytes": 256,
+    "cutoff_label": "256",
+    "owner_width": 2,
+    "backend": "block",
+    "sort_width": 4,
+    "route": "direct",
+    "heap": "auto",
+    "count": 1,
+    "scope": "same binary owner-wave/cutoff sensitivity; no concurrent CPU tasks"
+  },
+  "waves": {
+    "backend": "block",
+    "initialization_workers": 4,
+    "owner_width": 2,
+    "sort_width": 4
+  },
+  "candidate_heap": {
+    "direct_route": "1",
+    "eligible": true,
+    "enabled": true,
+    "id_bound": 4486,
+    "requested": "1",
+    "weighted_initial_edges": 1040492
+  },
+  "arena": {
+    "arenas": [
+      {
+        "allocations": 14280,
+        "backing_bytes": 1047360,
+        "backing_bytes_including_metadata": 1047888,
+        "chunks": 11,
+        "grows": 0,
+        "requested_bytes": 589228,
+        "system_allocations": 1180,
+        "system_freed_bytes": 6226968,
+        "system_frees": 3409,
+        "system_requested_bytes": 2600104
+      },
+      {
+        "allocations": 13199,
+        "backing_bytes": 1047360,
+        "backing_bytes_including_metadata": 1047888,
+        "chunks": 11,
+        "grows": 0,
+        "requested_bytes": 538300,
+        "system_allocations": 1027,
+        "system_freed_bytes": 221920,
+        "system_frees": 198,
+        "system_requested_bytes": 1893688
+      },
+      {
+        "allocations": 13096,
+        "backing_bytes": 523136,
+        "backing_bytes_including_metadata": 523616,
+        "chunks": 10,
+        "grows": 0,
+        "requested_bytes": 519144,
+        "system_allocations": 999,
+        "system_freed_bytes": 305612,
+        "system_frees": 205,
+        "system_requested_bytes": 1926376
+      },
+      {
+        "allocations": 13475,
+        "backing_bytes": 1047360,
+        "backing_bytes_including_metadata": 1047888,
+        "chunks": 11,
+        "grows": 0,
+        "requested_bytes": 534980,
+        "system_allocations": 797,
+        "system_freed_bytes": 367080,
+        "system_frees": 191,
+        "system_requested_bytes": 701412
+      }
+    ],
+    "collect_ms": 0.081847,
+    "cutoff_bytes": 256,
+    "release_ms": 0.028401000000000003
+  },
+  "totals": {
+    "allocations": 54050,
+    "backing_bytes": 3665216,
+    "backing_bytes_including_metadata": 3667280,
+    "chunks": 43,
+    "grows": 0,
+    "requested_bytes": 2181652,
+    "system_allocations": 4003,
+    "system_freed_bytes": 7121580,
+    "system_frees": 4003,
+    "system_requested_bytes": 7121580
+  },
+  "phase": {
+    "cutoff_bytes": 256,
+    "trace": [
+      {
+        "label": "initialize_return",
+        "memory": {
+          "VmHWM": 24207360,
+          "VmRSS": 24207360,
+          "VmSwap": 0
+        },
+        "rules": 0
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 28667904,
+          "VmRSS": 28667904,
+          "VmSwap": 0
+        },
+        "rules": 422
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 29011968,
+          "VmRSS": 29011968,
+          "VmSwap": 0
+        },
+        "rules": 1089
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 29184000,
+          "VmRSS": 29184000,
+          "VmSwap": 0
+        },
+        "rules": 1890
+      },
+      {
+        "label": "merge",
+        "memory": {
+          "VmHWM": 29302784,
+          "VmRSS": 29302784,
+          "VmSwap": 0
+        },
+        "rules": 3047
+      },
+      {
+        "label": "merge_end_before_inventory",
+        "memory": {
+          "VmHWM": 29372416,
+          "VmRSS": 29372416,
+          "VmSwap": 0
+        },
+        "rules": 4000
+      }
+    ]
+  },
+  "inventory": {
+    "heap_bytes_histogram": [
+      196176,
+      214656,
+      274636,
+      229952,
+      222420,
+      510436,
+      438728,
+      613004
+    ],
+    "heap_capacity_histogram": [
+      12261,
+      8684,
+      5837,
+      2575,
+      1235,
+      1055,
+      238,
+      61
+    ],
+    "heap_payload_bytes": 2700008,
+    "heap_postings": 31946,
+    "inline_postings": 15914,
+    "inventory_ms": 0.840476,
+    "owner_heap_capacity_bytes": 780288,
+    "owner_heap_items": 83126,
+    "owner_table_capacity_bytes": 2162752,
+    "stored_positions": 699205
+  },
+  "allocator_origin_checks": "PASS"
+}

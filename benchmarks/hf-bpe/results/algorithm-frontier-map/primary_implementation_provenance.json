@@ -1,0 +1,57 @@
+{
+  "checked_date": "2026-10-01",
+  "implementations": [
+    {
+      "repo": "clausecker/radsort",
+      "sha": "f69e816c3cd79d312cd67aea5b9cf1c338c1b371",
+      "license": "BSD-2-Clause",
+      "language": "C",
+      "role": "root-integrated Rust port provenance"
+    },
+    {
+      "repo": "klauspost/radsort",
+      "sha": "0341b6e9caa4ac560058144dcca8c6cd6a281026",
+      "license": "BSD two-clause text; GitHub metadata NOASSERTION",
+      "language": "Go",
+      "role": "parallel protocol reference"
+    },
+    {
+      "repo": "RagnarGrootKoerkamp/quickheap",
+      "sha": "fdc1de6a6899c4a89aa494f5daa855a42a4fca74",
+      "license": "MIT declared Cargo.toml; API license null; complete notice audit pending vendoring",
+      "language": "Rust2024",
+      "role": "scalar u32/u64 min queue AVX2/512"
+    },
+    {
+      "repo": "Xilinion/TPHT",
+      "sha": "d021bf85cfba8241f0e01804785e52c8067dcaaf",
+      "license": "BSD-2-Clause + embedded XXH3 notices",
+      "language": "C11",
+      "role": "not direct24B value replacement"
+    },
+    {
+      "repo": "saltsystemslab/ZombieHT",
+      "sha": "5064a381fd3b7a540594fadd6f7595fdcc748a6c",
+      "license": "BSD-3-Clause repository metadata; variants/submodules need audit",
+      "role": "high-load churn artifact"
+    },
+    {
+      "repo": "mpdn/radix-heap",
+      "sha": "8d3ccc17789ca0717b2520bbb19486c2c96f0d04",
+      "license": "MIT",
+      "role": "excluded from direct owner replacement: monotone queue contract"
+    },
+    {
+      "repo": "orxfun/orx-priority-queue",
+      "sha": "1caf7b8c5771ef526aefdebe3f97d81e1028c0c5",
+      "license": "Apache-2.0",
+      "role": "paper8-ary comparator; Trainer uses dary_heap0.3.6"
+    },
+    {
+      "repo": "simdutf/simdutf",
+      "sha": "cf8715fad4d55c87aad3006a9a82531f740605b8",
+      "license": "Apache-2.0 OR MIT official text",
+      "role": "deferred UTF decode"
+    }
+  ]
+}

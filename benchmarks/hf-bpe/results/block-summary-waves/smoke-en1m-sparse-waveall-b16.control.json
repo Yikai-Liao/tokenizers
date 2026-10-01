@@ -1,0 +1,41 @@
+{
+  "command": [
+    "/usr/bin/python3",
+    "/root/code/tokenizers/benchmarks/hf-bpe/run_native_fair.py",
+    "--case",
+    "smoke-en1m-sparse-waveall-b16",
+    "--worktree",
+    "/root/code/tokenizers-worktrees/initial-owner-waves",
+    "--build-root",
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-j-block-summary-waves",
+    "--binary",
+    "/root/code/tokenizers/benchmarks/hf-bpe/target/release/hf-bpe-native-j-block-summary-waves",
+    "--corpus",
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/posting-distribution-inputs/en-1m-none-r16000/input.txt",
+    "--output",
+    "/root/code/tokenizers/benchmarks/hf-bpe/results/block-summary-waves/smoke-en1m-sparse-waveall-b16.jsonl",
+    "--split",
+    "none",
+    "--vocab",
+    "16486",
+    "--initialization-workers",
+    "4",
+    "--merge-workers",
+    "4",
+    "--atomic-corpus",
+    "--expected-layout",
+    "parallel_u32_dict16"
+  ],
+  "extra_environment": {
+    "HF_BPE_BLOCK_COUNT_MODE": "sparse",
+    "HF_BPE_BLOCK_PROXY_BITS": "16",
+    "HF_BPE_BLOCK_SUMMARY_WAVE": "all"
+  },
+  "mode": "sparse",
+  "block_bits": 16,
+  "wave": "all",
+  "local_offset_bytes": 4,
+  "word_order": "lexical (diagnostic only)",
+  "count": 1,
+  "scope": "same binary block initialization; fixed system allocator; small block span proxy, not large corpus measurement"
+}

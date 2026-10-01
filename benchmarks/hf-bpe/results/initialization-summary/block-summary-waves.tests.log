@@ -1,0 +1,177 @@
+   Compiling proc-macro2 v1.0.107
+   Compiling unicode-ident v1.0.26
+   Compiling quote v1.0.47
+   Compiling cfg-if v1.0.5
+   Compiling libc v0.2.189
+   Compiling serde_core v1.0.229
+   Compiling crossbeam-utils v0.8.23
+   Compiling crossbeam-epoch v0.9.21
+   Compiling serde v1.0.229
+   Compiling zerocopy v0.8.59
+   Compiling crossbeam-deque v0.8.8
+   Compiling either v1.18.0
+   Compiling syn v3.0.6
+   Compiling rayon-core v1.13.0
+   Compiling rand_core v0.10.1
+   Compiling getrandom v0.4.3
+   Compiling getrandom v0.3.4
+   Compiling once_cell v1.21.4
+   Compiling version_check v0.9.5
+   Compiling rustix v1.1.5
+   Compiling ahash v0.8.12
+   Compiling bitflags v2.13.2
+   Compiling radium v0.7.0
+   Compiling memchr v2.8.3
+   Compiling rayon v1.12.0
+   Compiling syn v2.0.119
+   Compiling foldhash v0.2.0
+   Compiling rustversion v1.0.23
+   Compiling allocator-api2 v0.2.21
+   Compiling linux-raw-sys v0.12.1
+   Compiling equivalent v1.0.2
+   Compiling zmij v1.0.23
+   Compiling cpufeatures v0.3.1
+   Compiling tap v1.0.1
+   Compiling thiserror v2.0.21
+   Compiling wyz v0.5.1
+   Compiling serde_derive v1.0.229
+   Compiling thiserror-impl v2.0.21
+   Compiling chacha20 v0.10.2
+   Compiling ppv-lite86 v0.2.21
+   Compiling hashbrown v0.16.1
+   Compiling byteorder v1.5.0
+   Compiling fastrand v2.5.0
+   Compiling arbitrary-chunks v0.4.1
+   Compiling minimal-lexical v0.2.1
+   Compiling paste v1.0.15
+   Compiling mem_dbg-derive v0.3.4
+   Compiling serde_json v1.0.151
+   Compiling bytemuck v1.25.2
+   Compiling funty v2.0.0
+   Compiling partition v0.1.2
+   Compiling itoa v1.0.18
+   Compiling safe_arch v1.2.0
+   Compiling rdst v0.20.14
+   Compiling mem_dbg v0.4.4
+   Compiling tempfile v3.27.0
+   Compiling bitvec v1.1.1
+   Compiling nom v7.1.3
+   Compiling fxhash v0.2.1
+   Compiling rand_chacha v0.10.0
+   Compiling rand v0.10.3
+   Compiling itertools v0.15.0
+   Compiling itertools v0.14.0
+   Compiling prefetch-index v0.2.1
+   Compiling smallvec v1.16.2
+   Compiling log v0.4.34
+   Compiling bitcannon v0.1.0-dev.0 (/root/code/tokenizers-worktrees/initial-owner-waves/tokenizers/bitcannon)
+   Compiling tinyvec v1.13.3
+   Compiling base64 v0.13.1
+   Compiling unicode-segmentation v1.13.3
+   Compiling colored v3.1.1
+   Compiling xxhash-rust v0.8.19
+   Compiling esaxx-rs v0.1.10
+   Compiling spm_precompiled v0.1.4
+   Compiling unicode-normalization v0.1.25
+   Compiling unicode-normalization-alignments v0.1.12
+   Compiling rayon-cond v0.4.0
+   Compiling ptr_hash v2.1.2
+   Compiling dary_heap v0.3.9
+   Compiling castaway v0.2.4
+   Compiling wide v1.7.1
+   Compiling static_assertions v1.1.0
+   Compiling yada v0.7.0
+   Compiling unicode_categories v0.1.1
+   Compiling ryu v1.0.23
+   Compiling compact_str v0.9.1
+   Compiling assert_approx_eq v1.1.0
+   Compiling tk-convert v0.1.0-dev.0 (/root/code/tokenizers-worktrees/initial-owner-waves/tokenizers/tk-convert)
+   Compiling tk-encode v0.1.0-dev.0 (/root/code/tokenizers-worktrees/initial-owner-waves/tokenizers/tk-encode)
+   Compiling tk-train v0.1.0-dev.0 (/root/code/tokenizers-worktrees/initial-owner-waves/tokenizers/tk-train)
+warning: methods `train_vocab_indexed_parallel` and `train_vocab_fused` are never used
+   --> src/trainers/bpe/indexed.rs:586:19
+    |
+585 | impl BpeTrainer {
+    | --------------- methods in this implementation
+586 |     pub(super) fn train_vocab_indexed_parallel(
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+623 |     pub(super) fn train_vocab_fused(&self) -> Result<IndexedTraining> {
+    |                   ^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: method `len` is never used
+  --> src/trainers/bpe/indexed/parallel/candidate_heap.rs:80:19
+   |
+32 | impl CandidateHeap {
+   | ------------------ method in this implementation
+...
+80 |     pub(super) fn len(&self) -> usize {
+   |                   ^^^
+
+warning: `tk-train` (lib test) generated 2 warnings
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 46.35s
+     Running unittests src/lib.rs (tokenizers/tk-train/target/debug/deps/tk_train-b5c6ccf5f1dd66b7)
+
+running 57 tests
+test trainers::bpe::indexed::aa_parity::tests::long_tokens_and_large_positions_do_not_wrap ... ok
+test trainers::bpe::indexed::aa_parity::tests::preserves_runs_over_empty_chunks_and_restarts_after_gaps ... ok
+test trainers::bpe::indexed::compact::tests::prototype_metadata_layout ... ok
+test trainers::bpe::indexed::lifecycle_tests::reused_id_resurrects_low_frequency_pair_and_keeps_hf_cohorts ... ok
+test trainers::bpe::indexed::aa_parity::tests::long_mixed_runs_match_linear_summary ... ok
+test trainers::bpe::indexed::parallel::candidate_heap::tests::out_of_range_insert_promotes_without_losing_old_candidates ... ok
+test trainers::bpe::indexed::parallel::fused_batch::aggregate::tests::flush_links_multiple_tasks_and_preserves_zero_weight_births ... ok
+test trainers::bpe::indexed::parallel::candidate_heap::tests::packing_preserves_full_priority_and_arbitrary_id_bits ... ok
+test trainers::bpe::indexed::parallel::radix_count::owner_route::tests::direct_owner_streams_match_physical_scan_before_floor_filtering ... ok
+test trainers::bpe::indexed::parallel::alphabet::tests::parallel_presence_preserves_forced_alphabet_special_ids_and_zero_weight_words ... ok
+test trainers::bpe::indexed::parallel::radix_count::tests::radix_codes_use_all_bits_and_preserve_order_within_a_key ... ok
+test trainers::bpe::indexed::parallel::radix_count::tests::owner_waves_preserve_weighted_frequencies_and_ordered_positions ... ok
+test trainers::bpe::indexed::aa_parity::tests::all_partitions_of_small_valid_edge_patterns_match_greedy ... ok
+test trainers::bpe::indexed::parallel::corpus::tests::ordered_regions_preserve_filtered_slots_weights_and_reserved_id_activation ... ok
+test trainers::bpe::indexed::parallel::tests::candidate_heap_range_fallback_keeps_weighted_greedy_semantics ... ok
+test trainers::bpe::indexed::parallel::tests::birth_floor_is_applied_after_all_worker_counts ... ok
+test trainers::bpe::indexed::parallel::tests::disjoint_batches_and_reserved_identity_ties ... ok
+test trainers::bpe::indexed::parallel::tests::exclusive_writes_use_full_global_addresses ... ok
+test trainers::bpe::indexed::parallel::tests::forward_weight_cursor_handles_near_words_and_sparse_gaps ... ok
+test trainers::bpe::indexed::parallel::radix_count::block_radix::tests::stable_high32_at_block_boundaries_and_all_key_bits ... ok
+test trainers::bpe::indexed::parallel::tests::nonempty_alias_affixes_keep_the_serial_cohort_path ... ok
+test trainers::bpe::indexed::parallel::tests::serial_initialization_keeps_parallel_greedy_order ... ok
+test trainers::bpe::indexed::parallel::tests::target_and_reserved_alphabet_guard_narrow_corpus ... ok
+test trainers::bpe::indexed::parallel::weight_lookup::tests::bucket_weights_match_full_search_before_on_and_between_pivots ... ok
+test trainers::bpe::indexed::parallel::weight_lookup::tests::one_bucket_certificate_matches_every_position_including_empty_intervals ... ok
+test trainers::bpe::indexed::small_posting::tests::counted_reservation_empty_heap_fill_growth_and_take ... ok
+test trainers::bpe::indexed::small_posting::tests::grown_posting_can_move_between_threads ... ok
+test trainers::bpe::indexed::small_posting::tests::layout_inline_growth_move_and_drop ... ok
+test trainers::bpe::indexed::small_posting::tests::position_payload_uses_all_u32_bits_across_inline_heap_and_take ... ok
+test trainers::bpe::indexed::small_posting::tests::reserved_reverse_fill_preserves_prefix_inline_heap_and_unwind ... ok
+test trainers::bpe::indexed::small_posting::tests::u16_offsets_inline_four_heap_growth_and_full_range ... ok
+test trainers::bpe::indexed::parallel::tests::fused_flat_batches_keep_adjacent_and_shared_head_tail_births_ordered ... ok
+test trainers::bpe::indexed::tests::encode_and_json_reload_match_reference ... ok
+test trainers::bpe::indexed::tests::fed_input_and_thread_counts_match ... ok
+test trainers::bpe::indexed::tests::monotone_pruning_waits_for_global_birth_count ... ok
+test trainers::bpe::indexed::greedy_tests::recomputing_greedy_oracle_without_affixes_or_length_filter ... ok
+test trainers::bpe::indexed::tests::special_token_identity_reuse_and_duplicate_specials ... ok
+test trainers::bpe::indexed::tests::suffix_alias_really_increases_an_old_pair ... ok
+test trainers::bpe::indexed::tests::weighted_ties_overlap_empty_unicode_and_long_spans ... ok
+test trainers::bpe::indexed::tests::wide_weights_and_overflow_guard ... ok
+test trainers::bpe::tests::bpe_test_max_token_length_16 ... ok
+test trainers::bpe::tests::bpe_test_max_token_length_direct_assert ... ok
+test trainers::bpe::tests::test_train ... ok
+test trainers::bpe::word::tests::test_merge ... ok
+test trainers::bpe::word::tests::test_merge_max_length ... ok
+test trainers::tests::trainer_wrapper_train_model_wrapper ... ok
+test trainers::unigram::tests::test_initial_alphabet ... ok
+test trainers::bpe::indexed::tests::affixes_alphabet_and_length_boundaries ... ok
+test trainers::unigram::tests::test_to_log_prob ... ok
+test trainers::unigram::tests::test_special_tokens ... ok
+test trainers::unigram::tests::test_unigram_chars ... ok
+test trainers::wordlevel::tests::test_train ... ok
+test trainers::unigram::tests::test_unk_token ... ok
+test trainers::bpe::indexed::parallel::tests::block_summary_waves_keep_global_floor_and_cross_wave_aa_order ... ok
+test trainers::bpe::indexed::parallel::tests::block_counts_keep_uniform_zero_and_sparse_nonunit_weights_exact ... ok
+test trainers::bpe::indexed::parallel::tests::cross_block_aa_and_weighted_words_in_all_storage_widths ... ok
+test trainers::bpe::indexed::tests::randomized_round_by_round_hf_differential ... ok
+
+test result: ok. 57 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 46.97s
+

@@ -1,0 +1,54 @@
+{
+  "control": {
+    "command": [
+      "/usr/bin/python3",
+      "/root/code/tokenizers/benchmarks/hf-bpe/run_native_fair.py",
+      "--case",
+      "smoke-en1m-sparse-b16-layout",
+      "--worktree",
+      "/root/code/tokenizers-worktrees/initial-owner-waves",
+      "--build-root",
+      "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-j-block-count",
+      "--binary",
+      "/root/code/tokenizers/benchmarks/hf-bpe/target/release/hf-bpe-native-j-block-count",
+      "--corpus",
+      "/root/code/tokenizers/benchmarks/hf-bpe/.build/posting-distribution-inputs/en-1m-none-r4000/input.txt",
+      "--output",
+      "/root/code/tokenizers/benchmarks/hf-bpe/results/block-count/smoke-en1m-sparse-b16-layout.jsonl",
+      "--split",
+      "none",
+      "--vocab",
+      "4486",
+      "--initialization-workers",
+      "4",
+      "--merge-workers",
+      "4",
+      "--atomic-corpus",
+      "--expected-layout",
+      "parallel_u32_dict16"
+    ],
+    "extra_environment": {
+      "HF_BPE_BLOCK_COUNT_MODE": "sparse",
+      "HF_BPE_BLOCK_PROXY_BITS": "16"
+    },
+    "mode": "sparse",
+    "block_bits": 16,
+    "local_offset_bytes": 4,
+    "count": 1,
+    "scope": "same binary block initialization; fixed system allocator; small block span proxy, not large corpus measurement"
+  },
+  "probe": {
+    "block_bits": 16,
+    "block_distinct_keys": 26379,
+    "blocks": 16,
+    "count_capacity_bytes_sum_estimate": 19712,
+    "count_keys": 732,
+    "global_frequency_floor_after_reduction": true,
+    "local_offset_bytes": 4,
+    "mode": "sparse",
+    "nonunit_edges": 1143,
+    "physical_edges": 1039317
+  },
+  "model_gate": "PASS",
+  "expected_model_sha256": "c15fc28e5a32b0385fe07bfc9ff34e48ca315021a8b0575b36b79c0b5a373ca9"
+}

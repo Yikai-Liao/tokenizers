@@ -1,0 +1,12 @@
+smoke-en1m-sparse-waveall-b16: pid 2550050; MemAvailable 7.45 GiB
+smoke-en1m-sparse-waveall-b16: init 0.033s + merge 0.592s; train 0.642s, peak RSS 0.04 GiB, min available 7.43 GiB, VmSwap 0.0 MiB, model ece74188f0b6566ab9eecd14f73b2cce6d1f48cc5b6ae9d4f89078ceb810a67a
+smoke-en1m-sparse-waveall-b16: u32 local offsets, dictionary path, model gate PASS
+smoke-en1m-sparse-wave4-b16: pid 2550064; MemAvailable 7.45 GiB
+smoke-en1m-sparse-wave4-b16: init 0.030s + merge 0.664s; train 0.713s, peak RSS 0.04 GiB, min available 7.43 GiB, VmSwap 0.0 MiB, model ece74188f0b6566ab9eecd14f73b2cce6d1f48cc5b6ae9d4f89078ceb810a67a
+smoke-en1m-sparse-wave4-b16: u32 local offsets, dictionary path, model gate PASS
+zh32m-none-sparse-waveall-b20: pid 2550093; MemAvailable 7.47 GiB
+zh32m-none-sparse-waveall-b20: init 0.704s + merge 3.206s; train 4.266s, peak RSS 0.47 GiB, min available 6.96 GiB, VmSwap 0.0 MiB, model 458f67e432cd41ab7941c195fe135a36bfcd298517ca217ed680658b204681b7
+zh32m-none-sparse-waveall-b20: u32 local offsets, dictionary path, model gate PASS
+zh32m-none-sparse-wave4-b20: pid 2550269; MemAvailable 7.43 GiB
+zh32m-none-sparse-wave4-b20: init 0.790s + merge 3.128s; train 4.289s, peak RSS 0.42 GiB, min available 7.00 GiB, VmSwap 0.0 MiB, model 458f67e432cd41ab7941c195fe135a36bfcd298517ca217ed680658b204681b7
+zh32m-none-sparse-wave4-b20: u32 local offsets, dictionary path, model gate PASS
