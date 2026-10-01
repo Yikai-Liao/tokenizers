@@ -844,6 +844,8 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
             character_table_bytes,
             corpus_measure_ms: timings.measure_ms,
             corpus_sort_ms: timings.sort_ms,
+            corpus_sort_buffer_bytes: timings.sort_buffer_bytes,
+            corpus_stable_weight_sort: order == corpus::Order::WeightSorted,
             corpus_weight_order: if order == corpus::Order::Original { "original" } else { "weight_sorted" },
             corpus_word_reference_bytes: word_reference_bytes,
             corpus_temporary_weight_bytes: temporary_weight_bytes,

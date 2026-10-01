@@ -65,6 +65,8 @@ pub(super) struct IndexedTrainingStats {
     pub corpus_measure_ms: f64,
     /// Sorting is included in corpus_measure_ms and initialize_ms.
     pub corpus_sort_ms: f64,
+    pub corpus_sort_buffer_bytes: usize,
+    pub corpus_stable_weight_sort: bool,
     pub corpus_weight_order: &'static str,
     pub corpus_word_reference_bytes: usize,
     pub corpus_temporary_weight_bytes: usize,
