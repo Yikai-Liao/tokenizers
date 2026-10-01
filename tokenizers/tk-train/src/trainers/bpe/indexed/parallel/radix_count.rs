@@ -100,8 +100,6 @@ pub(super) fn initialize<C: Slot, O: Offset, const INLINE: usize>(
     )
 }
 
-// Keep a bounded number of sorting buffers alive. Finish each wave's postings
-// before starting the next wave, so consumed owner records are released early.
 fn initialize_with_owner_width<C: Slot, O: Offset, const INLINE: usize>(
     corpus: &[C],
     block: &Block<O, INLINE>,
@@ -112,7 +110,33 @@ fn initialize_with_owner_width<C: Slot, O: Offset, const INLINE: usize>(
     owners: &mut [Owner],
     owner_width: usize,
 ) -> Result<Metrics> {
-    assert!(owner_width > 0);
+    initialize_with_widths(
+        corpus,
+        block,
+        uniform,
+        lookup,
+        workers,
+        floor,
+        owners,
+        owner_width,
+        workers,
+    )
+}
+
+// Keep a bounded number of sorting buffers alive. Finish each wave's postings
+// before starting the next wave, so consumed owner records are released early.
+fn initialize_with_widths<C: Slot, O: Offset, const INLINE: usize>(
+    corpus: &[C],
+    block: &Block<O, INLINE>,
+    uniform: Option<u64>,
+    lookup: Option<&WeightLookup>,
+    workers: usize,
+    floor: u64,
+    owners: &mut [Owner],
+    owner_width: usize,
+    sort_width: usize,
+) -> Result<Metrics> {
+    assert!(owner_width > 0 && sort_width > 0);
     debug_assert_eq!(owners.len(), workers);
     let owner_width = owner_width.min(workers);
     let begin = Instant::now();
@@ -189,16 +213,20 @@ fn initialize_with_owner_width<C: Slot, O: Offset, const INLINE: usize>(
     let mut group_ms = 0.0;
     let mut install_ms = 0.0;
     let mut pruned = 0;
-    for (owner_wave, records_wave) in owners
-        .chunks_mut(owner_width)
-        .zip(routed.chunks_mut(owner_width))
-    {
-        let wave_record_bytes: usize = records_wave.iter().map(|r| r.capacity() * 8).sum();
+    // Block scratch is small enough for every owner to sort concurrently.
+    // Bound installation independently: final postings overlap remaining records.
+    for records_wave in routed.chunks_mut(sort_width.min(workers)) {
         let sorting = Instant::now();
         let wave_scratch_bytes = records_wave.par_iter_mut().map(sort).sum();
         sort_ms += sorting.elapsed().as_secs_f64() * 1000.0;
         scratch_bytes = scratch_bytes.max(wave_scratch_bytes);
         peak = peak.max(remaining_record_bytes + wave_scratch_bytes);
+    }
+    for (owner_wave, records_wave) in owners
+        .chunks_mut(owner_width)
+        .zip(routed.chunks_mut(owner_width))
+    {
+        let wave_record_bytes: usize = records_wave.iter().map(|r| r.capacity() * 8).sum();
         let grouping = Instant::now();
         let grouped: Vec<_> = records_wave
             .par_iter()
@@ -349,7 +377,7 @@ mod tests {
                         assert_eq!(metrics.pruned, discarded);
                         assert_eq!(metrics.route_bytes, routed_counts.iter().sum::<usize>() * 8);
                         let scratch_peak = routed_counts
-                            .chunks(width.min(workers))
+                            .chunks(workers)
                             .map(|wave| wave.iter().map(|&n| sorting_scratch(n)).sum::<usize>())
                             .max()
                             .unwrap();
