@@ -1,0 +1,36 @@
+{
+  "pass": true,
+  "worktree_commit": "376363d25b6b1de917b9b8f68c11c0394ca37bb2",
+  "binary_sha256": "7ef9b90385e373d420c78e73ae73f371d9c2aae53d080b95cec65b6006849ea3",
+  "input_sha256": "a0d40d4102cba1e933f25e5ccd17552d2eaebaec4ef770bc39d8e46e740b4d4f",
+  "row_equal": {
+    "model_sha256": "d50fb836e342e1a301bb56d5ab53c0b79fae38f51a03051c6d6b02ab6cf862cd",
+    "actual_vocab": 50000,
+    "actual_merges": 29243,
+    "unique_words": 1429915,
+    "input_bytes": 536870289,
+    "vocab_size": 50000,
+    "min_frequency": 2,
+    "split": "none",
+    "backend": "reference"
+  },
+  "stats_equal": {
+    "initial_count_backend": "stable_radix16",
+    "layout": "parallel_u32_flat32",
+    "atomic_corpus": true,
+    "initial_symbols": 204660029,
+    "initial_edges": 203230114,
+    "initial_pairs": 2697517,
+    "initial_corpus_bytes": 849691660,
+    "initial_posting_bytes": 802967868,
+    "batch_rounds": 1550,
+    "fused_batches": 1435,
+    "posting_visits": 125409599
+  },
+  "workers": [
+    1,
+    4
+  ],
+  "thread_setting_variable": "HF_BPE_BENCH_WORKERS",
+  "calls_per_version": 1
+}

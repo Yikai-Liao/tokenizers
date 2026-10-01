@@ -239,3 +239,11 @@ J376363d2从H继续，未叠加K。已有inline route probe与173.16M次birth/re
 最后仅离线复用原完整H事件，对实际owner commit符号的15个热点IP批量addr2line；root另以30地址核对并用有界objdump确认频率load、control-byte probe、posting长度与Node-next读取/逆序循环。closure direct self18.94%cycles/15.76%cache，但临时born聚合未单独定量，通用cache/skid与CPU→wall限制保留，见[具体操作](results/optimization-h-debug-owner-commit.md)。原callchain export与全15,897条IP记录逐项event/period一致，inclusive份额只在此完整覆盖依据下保留。
 
 本轮停止：剩余具体大项涉及账本访问/更新、posting链读取和正常释放；I/K简单方向未兑现收益，J之后未找到代价明确的下一项大幅局部改善。保存全部分支、原始结果、正确性证据与复现入口。没有宣称全局最优，也没有把尚未实现的布局或allocator改造计为收益。
+
+## 2026-10-01：J扩展、posting对象统计与原Rust粗略对照
+
+用户追加三个报告，当前J源码保持376363d2。仅benchmark runner支持实际1/4 workers，默认4，保留旧binary与源码副本。同J512MiB单线程→四线程各一次：init19.027→5.547s，merge46.630→13.528s，train70.539→23.626s，feed+train74.307→27.541s。模型、工作量和resource gate通过；[完整阶段与限制](results/rule-aggregate-scaling.summary.md)。生产feed已有并行路径，本benchmark显式关闭feed并行以沿用历史口径。
+
+独立对象诊断一次：10,572,128 terminal entries里7,274,631个posting堆分配、3,297,497个inline；堆分配61.13%容量≤8个u32。新增191ms扫描不参与排名，模型gate通过。此前H post-merge99.48%在owner drop；本次计数支持小对象释放机制，尚未单独计时map扫描和allocator。[分配统计与补丁](results/j-posting-inventory.summary.md)。
+
+原efficient_bpe当前选中Rust ebpe 8eb3cc6c，same16MiB prefix逐行权重，4线程/max40,759rules/min2，各一次：J train1.477984s，Rust call2.155127s，约1.46×。按用户要求不查模型一致，N/E/rule数/posting visits对齐；J字符前端/输出构造与Rust Prepared输入、LTO等profile差异明示。[粗略对照](results/efficient-rough.summary.md)。原仓库未编辑。

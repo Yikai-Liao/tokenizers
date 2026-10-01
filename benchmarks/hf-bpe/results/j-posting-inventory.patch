@@ -1,0 +1,52 @@
+--- a/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel.rs
++++ b/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel.rs
+@@ -1375,6 +1375,49 @@
+         stats.route_ms += stage.elapsed().as_secs_f64() * 1000.0;
+     }
+     stats.merge_ms = begin.elapsed().as_secs_f64() * 1000.0;
++    let inventory_begin = Instant::now();
++    let mut inline_postings = 0_u64;
++    let mut heap_postings = 0_u64;
++    let mut stored_positions = 0_u64;
++    let mut heap_payload_bytes = 0_u64;
++    let mut heap_capacity_histogram = [0_u64; 8];
++    let mut heap_bytes_histogram = [0_u64; 8];
++    for ledger in &owners {
++        for entry in ledger.entries.values() {
++            stored_positions += entry.blocks.len() as u64;
++            let capacity = entry.blocks.allocated_capacity();
++            if capacity == 0 {
++                inline_postings += 1;
++            } else {
++                heap_postings += 1;
++                let bytes = (capacity * 4) as u64;
++                heap_payload_bytes += bytes;
++                let bucket = if capacity <= 4 { 0 } else if capacity <= 8 { 1 }
++                    else if capacity <= 16 { 2 } else if capacity <= 32 { 3 }
++                    else if capacity <= 64 { 4 } else if capacity <= 256 { 5 }
++                    else if capacity <= 1024 { 6 } else { 7 };
++                heap_capacity_histogram[bucket] += 1;
++                heap_bytes_histogram[bucket] += bytes;
++            }
++        }
++    }
++    let owner_heap_items: usize = owners.iter().map(|o| o.heap.len()).sum();
++    let owner_heap_capacity_bytes: usize = owners.iter().map(|o| o.heap.capacity() * 16).sum();
++    let owner_table_capacity_bytes: usize = owners.iter()
++        .map(|o| table_bytes(o.entries.capacity(), 32)).sum();
++    let inventory_ms = inventory_begin.elapsed().as_secs_f64() * 1000.0;
++    eprintln!("{}", serde_json::json!({"bench_posting_inventory": {
++        "inline_postings": inline_postings,
++        "heap_postings": heap_postings,
++        "stored_positions": stored_positions,
++        "heap_payload_bytes": heap_payload_bytes,
++        "heap_capacity_histogram": heap_capacity_histogram,
++        "heap_bytes_histogram": heap_bytes_histogram,
++        "owner_heap_items": owner_heap_items,
++        "owner_heap_capacity_bytes": owner_heap_capacity_bytes,
++        "owner_table_capacity_bytes": owner_table_capacity_bytes,
++        "inventory_ms": inventory_ms
++    }}));
+     Ok(IndexedTraining {
+         vocab: ids.into_iter().map(|(s, id)| (s.to_string(), id)).collect(),
+         merges: merges

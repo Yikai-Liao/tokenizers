@@ -216,3 +216,19 @@ J全48tests/独立审查通过，一次H→J完整签名与资源gate通过：pr
 剩余大项的简单方案I/K已筛掉；J减少重复route查询后，此固定u32/原接口工作负载内尚未找到代价清楚、能大幅减少剩余工作的局部方案。停止本轮，保留J为当前选择与H已验证基点，所有失败源码/原始结果可复查。语料表示、allocator或owner数据结构的大改均尚未验证，不能作为已兑现收益。停止不意味着全局最优。
 
 临时skill performance-optimization-draft已创建并验证，指导成本证据、动态计数、完整收益、预算和自主停止；已把实际debug段与地址解析的预检加入。独立轻量行为审查支持按有价值的定位→最小关键对照推进，并建议每轮明确预算和决策条件，已纳入。
+
+## 追加报告：J单线程/四线程加速比
+
+用户要求汇报当前J各阶段与端到端相对单线程的四线程加速比。现有J只有四线程screen，历史单线程属于较早版本，不能拼成J线程对照。预算为同一J376363d2、同一release binary、同一512MiB/none/50k/min2/u32输入，初始化和merge分别1/1与4/4各一次，feed均串行；不测试2线程或重复矩阵。
+
+native benchmark runner新增仅测量用HF_BPE_BENCH_WORKERS配置，默认4，允许1/4；run_native_fair记录该变量并以实际workers/initialization_workers统计核验，生产J源码不变。新label/build-root保留原Jscreen binary及源码副本。完整模型、工作集和载荷门槛保持；内存政策沿用MemAvailable≤1GiB停止。阶段加速比为T1/T4，嵌套计时不相加，零/极短区间不推导性能机制。
+
+线程对照已完成，完整模型/工作量相同，初始化3.43×、merge3.45×、完整train2.99×、含串行feed2.70×；各一次，不追加重复。
+
+## 追加：收尾对象数量与原Rust粗略速度
+
+用户追问结果构造/清理是否由小对象引起。预算一次独立J诊断，在merge后扫描owner对象分布，不改循环或模型，额外扫描191ms单列。实际7.275M堆posting、3.297M inline posting；小容量≤8个u32占堆分配61.13%。结合H精确drop区间说明清理路径，同时保留map扫描与allocator成本未分离的限制。
+
+用户要求与原efficient_bpe Rust只粗略比速度，不要求模型一致。预算同16MiB完整行前缀、逐行去重/权重、4线程各一次；HF50k vocab对应原Rust40,759 rules。训练API J1.478s/Rust2.155s；输入Prepared和字符前端、编译profile及输出范围差异保留。无额外benchmark矩阵。
+
+用户追问feed是否并行：核对生产maybe_par_bridge/map/reduce路径，说明benchmark显式关闭feed并行、train前开启；本轮扩展结果仅代表此配置。

@@ -1,0 +1,42 @@
+{
+  "heap_bytes_histogram": [
+    41918368,
+    45042140,
+    55601488,
+    66479800,
+    77133916,
+    183064668,
+    181840484,
+    158019560
+  ],
+  "heap_capacity_histogram": [
+    2619898,
+    1827227,
+    1183000,
+    725296,
+    426426,
+    377094,
+    100724,
+    14966
+  ],
+  "heap_payload_bytes": 809100424,
+  "heap_postings": 7274631,
+  "inline_postings": 3297497,
+  "inventory_ms": 191.301383,
+  "owner_heap_capacity_bytes": 345282176,
+  "owner_heap_items": 14225344,
+  "owner_table_capacity_bytes": 553648192,
+  "stored_positions": 207224101,
+  "histogram_capacity_upper_bounds_u32": [
+    4,
+    8,
+    16,
+    32,
+    64,
+    256,
+    1024,
+    null
+  ],
+  "model_sha256": "d50fb836e342e1a301bb56d5ab53c0b79fae38f51a03051c6d6b02ab6cf862cd",
+  "diagnostic_only": true
+}

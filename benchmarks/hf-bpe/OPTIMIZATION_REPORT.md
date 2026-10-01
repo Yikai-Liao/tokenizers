@@ -18,6 +18,12 @@ prepare少8.1%，train少11.4%，elapsed少9.6%。**未改初始化也快2.011�
 
 K `288ad858`仅并行释放owner，47tests通过；两对清理区间平均少32.1%，但完整train/elapsed未建立收益，停止，不加入J。诊断定位到owner销毁占post-merge缺口99.48%，说明大项存在，也说明单项优化仍须兑现完整结果，见[成本定位](results/optimization-h-cost-probe.md)与[K两对结果](results/optimization-owner-parallel-drop.aggregate-n2.md)。
 
+### 用户追加测量
+
+- [J单线程/四线程](results/rule-aggregate-scaling.summary.md)：512MiB同binary各一次，初始化3.43×、merge3.45×、train2.99×、feed+train2.70×；模型/工作量一致。feed由benchmark显式关闭并行，生产实现已有并行路径。
+- [J posting分配统计](results/j-posting-inventory.summary.md)：terminal独立堆posting7,274,631个，61.13%容量≤8个u32，inline3,297,497个。诊断扫描191ms，不参与排名；此前H精确计时将大额收尾归于owner drop，词表/merges构造约21ms。
+- [原efficient_bpe Rust粗略对照](results/efficient-rough.summary.md)：同约16MiB文本前缀、逐行权重、四线程、40,759规则，J train1.478s，原Rust ebpe call2.155s，约1.46×。各一次，无模型一致性检查；输入API与release profile差异明示，不能外推512MiB。
+
 ### 停止依据与剩余成本
 
 最后复用已有完整H采样，按真实owner commit符号的IP核对源码和反汇编，未新增训练。主要热点是旧pair ledger probe和frequency载荷更新、出生ledger probe、posting长度读取与Node链逆序填充。采样属于H，J改变prepare后模块份额可能变化；具体地址的cycles/cache份额不等于精确load或整数减法成本，详见[owner具体操作](results/optimization-h-debug-owner-commit.md)。

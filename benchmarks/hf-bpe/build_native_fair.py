@@ -32,7 +32,11 @@ def main():
     text=(ROOT/'src/main.rs').read_text()
     anchor='    let reader = BufReader::new(File::open(input)?);'
     assert text.count(anchor)==1
-    text=text.replace(anchor,'    tk_encode::parallelism::set_num_threads(4);\n'
+    text=text.replace(anchor,'    let bench_workers = env::var("HF_BPE_BENCH_WORKERS")\n'
+                            '        .map(|value| value.parse::<usize>().expect("invalid benchmark worker count"))\n'
+                            '        .unwrap_or(4);\n'
+                            '    assert!(matches!(bench_workers, 1 | 4), "benchmark workers must be 1 or 4");\n'
+                            '    tk_encode::parallelism::set_num_threads(bench_workers);\n'
                             '    tk_encode::parallelism::set_parallelism(false);\n'+anchor)
     anchor='    let feed_ms = begin.elapsed().as_secs_f64() * 1000.0;'
     assert text.count(anchor)==1

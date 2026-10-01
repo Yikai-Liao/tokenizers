@@ -63,8 +63,8 @@ def main():
     parser.add_argument('--vocab', type=int, default=50000)
     parser.add_argument('--min-frequency', type=int, default=2)
     parser.add_argument('--initialization-workers', type=int, choices=[1, 4], required=True)
-    parser.add_argument('--merge-workers', type=int, choices=[4], default=4,
-                        help='the generated fair-comparison runner fixes training to four workers')
+    parser.add_argument('--merge-workers', type=int, choices=[1, 4], default=4,
+                        help='training worker count; verified against actual indexed stats')
     parser.add_argument('--atomic-corpus', action='store_true')
     parser.add_argument('--require-stats', action='append', default=[],
                         help='require this numeric field in bench_indexed_stats; may be repeated')
@@ -90,7 +90,8 @@ def main():
     before = system()
     if before['available'] <= (1 << 30):
         raise SystemExit(f'MemAvailable {before["available"]} is at/below 1 GiB; not starting')
-    env = dict(os.environ, TOKENIZERS_PARALLELISM='false', RAYON_NUM_THREADS=str(args.merge_workers))
+    env = dict(os.environ, TOKENIZERS_PARALLELISM='false', RAYON_NUM_THREADS=str(args.merge_workers),
+               HF_BPE_BENCH_WORKERS=str(args.merge_workers))
     built_source = {}
     source_root = build_root / 'source/tokenizers'
     for path in source_root.rglob('*'):
@@ -112,7 +113,8 @@ def main():
                     initialization_workers=args.initialization_workers, merge_workers=args.merge_workers,
                     expected_atomic_corpus=args.atomic_corpus,
                     required_indexed_stats=args.require_stats,
-                    env_overrides={k: env[k] for k in ('TOKENIZERS_PARALLELISM', 'RAYON_NUM_THREADS')},
+                    env_overrides={k: env[k] for k in ('TOKENIZERS_PARALLELISM', 'RAYON_NUM_THREADS',
+                                                     'HF_BPE_BENCH_WORKERS')},
                     memory_policy='stop only if MemAvailable <= 1 GiB; record sampled process VmSwap and global paging',
                     system_before=before)
     env_path = args.output.with_suffix('.environment.json')
