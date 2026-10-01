@@ -1,0 +1,18 @@
+{
+  "source_commit": "06d1be3f",
+  "tests_passed": 66,
+  "tests_failed": 0,
+  "seconds": 56.92,
+  "log": "final-library-tests.log",
+  "workers_in_real_trace_test": [
+    1,
+    4,
+    32
+  ],
+  "shards_in_queue_protocol_test": [
+    1,
+    4,
+    32,
+    64
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "source_commit": "10e2a2e25d82007881be743e6a85e31e36ae3c67",
+  "source_sha256": "3c7091f4c463e14a256f46e9613c5515a2f03f2609fa906bcfe2ffd653197b02",
+  "window_sha256": "1cffdd303bed7c44895fff67381a2877d78607db61c813e11832b8a88de42468",
+  "heap_sha256": "de8bec2a381cf88cdd740e85caa9628c7fdf6b85e5b86c08dea00d9def7268f6",
+  "driver_sha256": "e45b68512a0baf27c02cf96f0489bfd4e31824c6a7df9d0dddb385f287c1746d",
+  "generated_main_sha256": "6434edde2e85d26dfd5155b61fd10ca8864cba7ee2eb65860b413ec62f3abb73",
+  "binary_sha256": "8422b8aa17071e4618003ccb5efc9f2fdc0b7ae8f19007524106dfc3b987572c",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "empty_posting_stub_bytes": 16,
+  "actual_owner_ledger_and_heap": true
+}

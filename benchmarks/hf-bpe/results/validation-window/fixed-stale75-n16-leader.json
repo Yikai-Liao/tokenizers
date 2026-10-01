@@ -1,0 +1,46 @@
+{
+  "apply_ms": 45.97425499999999,
+  "batch_rounds": 624,
+  "entry_size": 24,
+  "heap_bytes": 16777216,
+  "initial_candidates": 1048576,
+  "initial_prefetch_ms": 0.18940600000000002,
+  "initial_stale_percent": 75,
+  "leader_updates": 28370,
+  "max_batch": 80,
+  "mode": "leader",
+  "owner_probes": 54963,
+  "physical_workers": 4,
+  "pipeline_ms": 94.49645299999999,
+  "prefetched": 0,
+  "select_ms": 41.007208000000055,
+  "selected": 16000,
+  "serial_refills": 22032,
+  "setup_ms": 199.955187,
+  "shards": 16,
+  "stale_corrections": 52023,
+  "trace_sha256": "8ddf20b281b1905b4915dc0a8ccac88bd2e147c4849a8dcbbb7be86cf2d2f8c0",
+  "truth_checks": 74055,
+  "unused_restored": 6032,
+  "worker_prefetch_ms": 0.0,
+  "memory": {
+    "maxrss_bytes": 92774400,
+    "sampled_peak_process_swap_bytes": 0,
+    "min_available_bytes": 7970197504
+  },
+  "process_usage": {
+    "user_seconds": 0.307789,
+    "system_seconds": 0.191362,
+    "voluntary_context_switches": 2525,
+    "involuntary_context_switches": 2588
+  },
+  "command": [
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/validation-window-sim/target/release/validation-window-sim",
+    "16",
+    "4",
+    "leader",
+    "75",
+    "1048576",
+    "16000"
+  ]
+}
