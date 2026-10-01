@@ -1,0 +1,13 @@
+{
+  "train_ms": 19984.440455000004,
+  "initialize_ms": 5244.7395989999995,
+  "merge_ms": 14387.881771,
+  "full_peak_rss_bytes": 3621957632,
+  "model_lifetime_swap_gates": "PASS",
+  "mode": "atomic",
+  "bits": 32,
+  "diagnostic_only": false,
+  "partition_ms": 515.3232960000004,
+  "worker_task_occupancy": 0.8551945742405812,
+  "visits_balance_efficiency": 0.963258058711354
+}

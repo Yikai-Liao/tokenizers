@@ -1,0 +1,7 @@
+# started on Thu Oct  1 23:08:06 2026
+
+14855195309;;instructions:u;20389235846;100.00;;
+3032406552;;L1-dcache-loads;20410906813;100.00;;
+688516018;;L1-dcache-load-misses;20415554197;100.00;22.71;of all L1-dcache accesses
+462667821;;cache-references:u;20416486567;100.00;;
+313181028;;cache-misses:u;20415523862;100.00;67.69;of all cache refs
