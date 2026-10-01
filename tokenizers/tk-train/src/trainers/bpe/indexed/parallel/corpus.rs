@@ -5,6 +5,8 @@ use std::mem::{ManuallyDrop, MaybeUninit};
 #[derive(Default)]
 pub(super) struct Timings {
     pub measure_ms: f64,
+    /// Nested inside measure_ms.
+    pub sort_ms: f64,
     pub allocate_ms: f64,
     pub fill_ms: f64,
 }
@@ -19,6 +21,14 @@ pub(super) struct Prepared<C: Slot, O: Offset, const INLINE: usize> {
     pub weighted_edges: u64,
     pub timings: Timings,
     pub character_table_bytes: usize,
+    pub word_reference_bytes: usize,
+    pub temporary_weight_bytes: usize,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(super) enum Order {
+    Original,
+    WeightSorted,
 }
 
 struct Region<'a> {
@@ -50,13 +60,23 @@ fn fill<C: Slot>(
     regions: &[Region<'_>],
     character_ids: &[u32],
     identities: usize,
+    order: Order,
 ) -> Vec<Filled> {
     if regions.len() > 1 {
         let middle = regions.len() / 2;
         let cut = regions[..middle].iter().map(|r| r.slots).sum();
         let (left, right) = slots.split_at_mut(cut);
         let (mut a, mut b) = rayon::join(
-            || fill(left, base, &regions[..middle], character_ids, identities),
+            || {
+                fill(
+                    left,
+                    base,
+                    &regions[..middle],
+                    character_ids,
+                    identities,
+                    order,
+                )
+            },
             || {
                 fill(
                     right,
@@ -64,6 +84,7 @@ fn fill<C: Slot>(
                     &regions[middle..],
                     character_ids,
                     identities,
+                    order,
                 )
             },
         );
@@ -72,12 +93,18 @@ fn fill<C: Slot>(
     }
     let region = &regions[0];
     let mut result = Filled {
-        starts: Vec::with_capacity(region.words.len()),
+        starts: if order == Order::Original {
+            Vec::with_capacity(region.words.len())
+        } else {
+            Vec::new()
+        },
         active: vec![0; identities.div_ceil(64)],
     };
     let mut position = 0;
     for &(word, weight) in region.words {
-        result.starts.push((base + position, weight));
+        if order == Order::Original || result.starts.last().is_none_or(|p| p.1 != weight) {
+            result.starts.push((base + position, weight));
+        }
         for c in word.chars() {
             let id = character_ids[c as usize];
             if id != NONE {
@@ -101,13 +128,20 @@ pub(super) fn build<C: Slot, O: Offset, const INLINE: usize>(
     unfiltered: bool,
     bits: u8,
     workers: usize,
+    order: Order,
 ) -> Result<Prepared<C, O, INLINE>> {
     let measure = Instant::now();
     let character_ids = alphabet::character_ids(ids);
     let character_table_bytes = character_ids.capacity() * std::mem::size_of::<u32>();
-    // Capture the original map traversal once; region scheduling cannot change
-    // word order, canonical IDs, or left-to-right AA boundaries.
-    let words: Vec<_> = wc.iter().map(|(word, &weight)| (word, weight)).collect();
+    // Canonical IDs are assigned before construction. Reordering complete words
+    // preserves pair counts and the left-to-right AA boundaries within each word.
+    let mut words: Vec<_> = wc.iter().map(|(word, &weight)| (word, weight)).collect();
+    let word_reference_bytes = words.capacity() * std::mem::size_of::<(&CompactString, u64)>();
+    let sorting = Instant::now();
+    if order == Order::WeightSorted {
+        words.par_sort_unstable_by(|a, b| b.1.cmp(&a.1));
+    }
+    let sort_ms = sorting.elapsed().as_secs_f64() * 1000.0;
     let chunk = words
         .len()
         .div_ceil(workers.saturating_mul(8).max(1))
@@ -186,7 +220,14 @@ pub(super) fn build<C: Slot, O: Offset, const INLINE: usize>(
     let outputs = if regions.is_empty() {
         Vec::new()
     } else {
-        fill(&mut slots[1..], 1, &regions, &character_ids, identities)
+        fill(
+            &mut slots[1..],
+            1,
+            &regions,
+            &character_ids,
+            identities,
+            order,
+        )
     };
     // SAFETY: slot zero was initialized above; fill covers exactly every other
     // slot through disjoint regions, checks each region's exact length, and its
@@ -205,20 +246,26 @@ pub(super) fn build<C: Slot, O: Offset, const INLINE: usize>(
     // Region order is stable. Rebuild only small boundary metadata after all
     // disjoint writes have joined; a long word keeps its weight across blocks.
     let starts = outputs.iter().flat_map(|o| o.starts.iter()).copied();
+    let temporary_weight_bytes = outputs.iter().map(|o| o.starts.capacity() * 16).sum();
     let mut starts = starts.peekable();
+    let mut previous_weight = None;
     while let Some((start, weight)) = starts.next() {
         while blocks.len() <= start >> bits {
             blocks.push(Block::new(blocks.len() << bits, weight));
         }
-        if uniform.is_none() {
+        if uniform.is_none() && (order == Order::Original || previous_weight != Some(weight)) {
             let block = &mut blocks[start >> bits];
             block.pivots.push((start - block.base) as u32);
             block.weights.push(weight);
         }
+        previous_weight = Some(weight);
         let end = starts.peek().map_or(capacity - 1, |p| p.0 - 1);
         while blocks.len() <= end >> bits {
             blocks.push(Block::new(blocks.len() << bits, weight));
         }
+    }
+    for block in &mut blocks {
+        block.weight_intervals = order == Order::WeightSorted;
     }
     for output in outputs {
         for (word, mut active) in output.active.into_iter().enumerate() {
@@ -237,8 +284,11 @@ pub(super) fn build<C: Slot, O: Offset, const INLINE: usize>(
         edges,
         weighted_edges: weighted_edges as u64,
         character_table_bytes,
+        word_reference_bytes,
+        temporary_weight_bytes,
         timings: Timings {
             measure_ms,
+            sort_ms,
             allocate_ms,
             fill_ms: filling.elapsed().as_secs_f64() * 1000.0,
         },
@@ -249,7 +299,7 @@ pub(super) fn build<C: Slot, O: Offset, const INLINE: usize>(
 mod tests {
     use super::*;
 
-    fn check<C: Slot>(pool: &rayon::ThreadPool, unfiltered: bool) {
+    fn check<C: Slot>(pool: &rayon::ThreadPool, unfiltered: bool, order: Order) {
         let words: AHashMap<CompactString, u64> = [
             ("", 3),
             ("aaa中🙂".repeat(37).as_str(), 7),
@@ -272,7 +322,11 @@ mod tests {
         let mut lengths = vec![0; 129];
         let mut edges = 0;
         let mut symbols = 0;
-        for (word, &weight) in &words {
+        let mut ordered: Vec<_> = words.iter().map(|(w, &n)| (w, n)).collect();
+        if order == Order::WeightSorted {
+            ordered.par_sort_unstable_by(|a, b| b.1.cmp(&a.1));
+        }
+        for (word, weight) in ordered {
             let start = expected.len();
             for c in word.chars() {
                 let mut utf8 = [0; 4];
@@ -292,7 +346,15 @@ mod tests {
         // blocks without allocating a multi-gigabyte corpus.
         let got = pool
             .install(|| {
-                build::<C, u16, 4>(&words, &ids, 129, unfiltered, 4, pool.current_num_threads())
+                build::<C, u16, 4>(
+                    &words,
+                    &ids,
+                    129,
+                    unfiltered,
+                    4,
+                    pool.current_num_threads(),
+                    order,
+                )
             })
             .unwrap();
         assert_eq!(
@@ -314,11 +376,60 @@ mod tests {
             assert_eq!(got.blocks[p >> 4].weight(p, got.uniform), weight);
         }
         let empty = pool
-            .install(|| build::<C, u16, 4>(&AHashMap::new(), &ids, 129, unfiltered, 4, 4))
+            .install(|| build::<C, u16, 4>(&AHashMap::new(), &ids, 129, unfiltered, 4, 4, order))
             .unwrap();
         assert_eq!(empty.slots.len(), 1);
         assert_eq!(empty.slots[0].token(), NONE);
         assert_eq!(empty.lengths, vec![0; 129]);
+    }
+
+    #[test]
+    fn equal_weight_words_coalesce_across_regions_and_address_blocks() {
+        let words: AHashMap<CompactString, u64> = (0..3000)
+            .map(|i| (format!("a{i:04}b").into(), [0, 1, 7][i / 1000]))
+            .collect();
+        let alphabet: Vec<char> = "0123456789ab".chars().collect();
+        let ids: AHashMap<CompactString, u32> = alphabet
+            .iter()
+            .enumerate()
+            .map(|(id, c)| (c.to_string().into(), id as u32))
+            .collect();
+        let pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(4)
+            .build()
+            .unwrap();
+        for bits in [4, 16] {
+            let got = pool
+                .install(|| {
+                    build::<u32, u16, 4>(
+                        &words,
+                        &ids,
+                        alphabet.len(),
+                        true,
+                        bits,
+                        4,
+                        Order::WeightSorted,
+                    )
+                })
+                .unwrap();
+            assert_eq!(got.blocks.iter().map(|b| b.pivots.len()).sum::<usize>(), 3);
+            assert!(got.temporary_weight_bytes < words.len() * 16 / 10);
+            let mut start = 1;
+            for end in 1..got.slots.len() {
+                if got.slots[end].token() != NONE {
+                    continue;
+                }
+                let word: String = got.slots[start..end]
+                    .iter()
+                    .map(|c| alphabet[c.token() as usize])
+                    .collect();
+                let weight = words[word.as_str()];
+                for p in start..=end {
+                    assert_eq!(got.blocks[p >> bits].weight(p, got.uniform), weight);
+                }
+                start = end + 1;
+            }
+        }
     }
 
     #[test]
@@ -328,11 +439,13 @@ mod tests {
                 .num_threads(workers)
                 .build()
                 .unwrap();
-            for unfiltered in [false, true] {
-                check::<u32>(&pool, unfiltered);
-                check::<u16>(&pool, unfiltered);
-                check::<AtomicU32>(&pool, unfiltered);
-                check::<AtomicU16>(&pool, unfiltered);
+            for order in [Order::Original, Order::WeightSorted] {
+                for unfiltered in [false, true] {
+                    check::<u32>(&pool, unfiltered, order);
+                    check::<u16>(&pool, unfiltered, order);
+                    check::<AtomicU32>(&pool, unfiltered, order);
+                    check::<AtomicU16>(&pool, unfiltered, order);
+                }
             }
         }
     }

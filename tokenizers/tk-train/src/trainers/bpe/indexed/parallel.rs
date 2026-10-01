@@ -185,10 +185,11 @@ impl Owner {
 struct Block<O: Offset, const INLINE: usize> {
     base: usize,
     postings: AHashMap<u64, PackedPosting<O, INLINE>>,
-    // Word starts are also local addresses; a long word can span several blocks.
+    // Weight boundaries are local addresses; equal-weight words can share a run.
     pivots: Vec<u32>,
     weights: Vec<u64>,
     previous_weight: u64,
+    weight_intervals: bool,
 }
 impl<O: Offset, const INLINE: usize> Block<O, INLINE> {
     fn new(base: usize, previous_weight: u64) -> Self {
@@ -198,6 +199,7 @@ impl<O: Offset, const INLINE: usize> Block<O, INLINE> {
             pivots: Vec::new(),
             weights: Vec::new(),
             previous_weight,
+            weight_intervals: false,
         }
     }
     fn weight(&self, position: usize, uniform: Option<u64>) -> u64 {
@@ -417,6 +419,17 @@ fn train_with_selection(
     policy: super::posting_arena::Policy,
     selection: SelectionMode,
 ) -> Result<IndexedTraining> {
+    train_with_corpus_order(trainer, wc, config, policy, selection, corpus::Order::WeightSorted)
+}
+
+fn train_with_corpus_order(
+    trainer: &BpeTrainer,
+    wc: &AHashMap<CompactString, u64>,
+    config: IndexedParallelConfig,
+    policy: super::posting_arena::Policy,
+    selection: SelectionMode,
+    order: corpus::Order,
+) -> Result<IndexedTraining> {
     let begin = Instant::now();
     let mut ids = AHashMap::with_capacity(trainer.vocab_size);
     let mut strings = Vec::with_capacity(trainer.vocab_size);
@@ -458,6 +471,7 @@ fn train_with_selection(
             initialization_pool.as_ref(),
             policy,
             selection,
+            order,
         ),
         (true, true, 16) => train_typed::<AtomicU16, u16, 4>(
             trainer,
@@ -472,6 +486,7 @@ fn train_with_selection(
             initialization_pool.as_ref(),
             policy,
             selection,
+            order,
         ),
         (false, true, 32) => train_typed::<u16, u32, 2>(
             trainer,
@@ -486,6 +501,7 @@ fn train_with_selection(
             initialization_pool.as_ref(),
             policy,
             selection,
+            order,
         ),
         (true, true, 32) => train_typed::<AtomicU16, u32, 2>(
             trainer,
@@ -500,6 +516,7 @@ fn train_with_selection(
             initialization_pool.as_ref(),
             policy,
             selection,
+            order,
         ),
         (false, false, 16) => train_typed::<u32, u16, 4>(
             trainer,
@@ -514,6 +531,7 @@ fn train_with_selection(
             initialization_pool.as_ref(),
             policy,
             selection,
+            order,
         ),
         (true, false, 16) => train_typed::<AtomicU32, u16, 4>(
             trainer,
@@ -528,6 +546,7 @@ fn train_with_selection(
             initialization_pool.as_ref(),
             policy,
             selection,
+            order,
         ),
         (false, false, 32) => train_typed::<u32, u32, 2>(
             trainer,
@@ -542,6 +561,7 @@ fn train_with_selection(
             initialization_pool.as_ref(),
             policy,
             selection,
+            order,
         ),
         (true, false, 32) => train_typed::<AtomicU32, u32, 2>(
             trainer,
@@ -556,6 +576,7 @@ fn train_with_selection(
             initialization_pool.as_ref(),
             policy,
             selection,
+            order,
         ),
         _ => unreachable!("validated configuration"),
     };
@@ -581,6 +602,7 @@ fn train_typed<C: Slot, O: Offset, const INLINE: usize>(
     initialization_pool: Option<&rayon::ThreadPool>,
     policy: super::posting_arena::Policy,
     selection: SelectionMode,
+    order: corpus::Order,
 ) -> Result<IndexedTraining> {
     // Keep the coordinator inside this pool too: small serial rounds then do
     // not pay a caller->worker handoff at every stage.
@@ -598,6 +620,7 @@ fn train_typed<C: Slot, O: Offset, const INLINE: usize>(
             initialization_pool,
             policy,
             selection,
+            order,
         )
     })
 }
@@ -616,6 +639,7 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
     initialization_pool: Option<&rayon::ThreadPool>,
     policy: super::posting_arena::Policy,
     selection: SelectionMode,
+    order: corpus::Order,
 ) -> Result<IndexedTraining> {
     let bits = config.posting_block_bits;
     let block_size = 1_usize
@@ -630,6 +654,7 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
             trainer.limit_alphabet.is_none(),
             bits,
             config.initialization_workers.unwrap_or(config.workers),
+            order,
         )
     })?;
     let corpus::Prepared {
@@ -642,6 +667,8 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
         weighted_edges,
         timings,
         character_table_bytes,
+        word_reference_bytes,
+        temporary_weight_bytes,
     } = prepared;
     super::posting_arena::configure(pool, initialization_pool, policy.cutoff(initial_edges));
     // Only the ordinary no-affix compact path has this certificate.
@@ -816,6 +843,11 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
             alphabet_scratch_bytes,
             character_table_bytes,
             corpus_measure_ms: timings.measure_ms,
+            corpus_sort_ms: timings.sort_ms,
+            corpus_weight_order: if order == corpus::Order::Original { "original" } else { "weight_sorted" },
+            corpus_word_reference_bytes: word_reference_bytes,
+            corpus_temporary_weight_bytes: temporary_weight_bytes,
+            weight_interval_count: blocks.iter().map(|b| b.pivots.len()).sum(),
             corpus_allocate_ms: timings.allocate_ms,
             corpus_fill_ms: timings.fill_ms,
             initial_route_ms,
@@ -1527,8 +1559,9 @@ mod tests {
                     posting_block_bits: bits, atomic_corpus: true,
                     narrow_corpus: false, ..Default::default()
                 };
-                let expected = train_with_selection(&trainer, &words, config,
-                    super::super::posting_arena::Policy::Auto, SelectionMode::Serial).unwrap();
+                let expected = train_with_corpus_order(&trainer, &words, config,
+                    super::super::posting_arena::Policy::Auto, SelectionMode::Serial,
+                    corpus::Order::Original).unwrap();
                 for mode in [SelectionMode::Cached, SelectionMode::Leader, SelectionMode::Bulk(4), SelectionMode::Bulk(16)] {
                     let got = train_with_selection(&trainer, &words, config,
                         super::super::posting_arena::Policy::Auto, mode).unwrap();
