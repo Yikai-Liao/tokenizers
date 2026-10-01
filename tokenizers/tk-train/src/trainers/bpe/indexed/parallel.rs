@@ -379,6 +379,15 @@ pub(super) fn train(
     wc: &AHashMap<CompactString, u64>,
     config: IndexedParallelConfig,
 ) -> Result<IndexedTraining> {
+    train_with_policy(trainer, wc, config, super::posting_arena::Policy::Auto)
+}
+
+pub(super) fn train_with_policy(
+    trainer: &BpeTrainer,
+    wc: &AHashMap<CompactString, u64>,
+    config: IndexedParallelConfig,
+    policy: super::posting_arena::Policy,
+) -> Result<IndexedTraining> {
     let begin = Instant::now();
     let mut ids = AHashMap::with_capacity(trainer.vocab_size);
     let mut strings = Vec::with_capacity(trainer.vocab_size);
@@ -405,7 +414,8 @@ pub(super) fn train(
     // Select the final slot type before emitting any corpus. Reserved IDs and
     // forced alphabet count towards this bound, not just the requested vocabulary.
     let narrow = config.narrow_corpus && strings.len().max(trainer.vocab_size) <= u16::MAX as usize;
-    match (config.atomic_corpus, narrow, config.posting_block_bits) {
+    let session = super::posting_arena::Session::new(&pool, initialization_pool.as_ref());
+    let mut result = match (config.atomic_corpus, narrow, config.posting_block_bits) {
         (false, true, 16) => train_typed::<u16, u16, 4>(
             trainer,
             wc,
@@ -417,6 +427,7 @@ pub(super) fn train(
             alphabet_scratch_bytes,
             &pool,
             initialization_pool.as_ref(),
+            policy,
         ),
         (true, true, 16) => train_typed::<AtomicU16, u16, 4>(
             trainer,
@@ -429,6 +440,7 @@ pub(super) fn train(
             alphabet_scratch_bytes,
             &pool,
             initialization_pool.as_ref(),
+            policy,
         ),
         (false, true, 32) => train_typed::<u16, u32, 2>(
             trainer,
@@ -441,6 +453,7 @@ pub(super) fn train(
             alphabet_scratch_bytes,
             &pool,
             initialization_pool.as_ref(),
+            policy,
         ),
         (true, true, 32) => train_typed::<AtomicU16, u32, 2>(
             trainer,
@@ -453,6 +466,7 @@ pub(super) fn train(
             alphabet_scratch_bytes,
             &pool,
             initialization_pool.as_ref(),
+            policy,
         ),
         (false, false, 16) => train_typed::<u32, u16, 4>(
             trainer,
@@ -465,6 +479,7 @@ pub(super) fn train(
             alphabet_scratch_bytes,
             &pool,
             initialization_pool.as_ref(),
+            policy,
         ),
         (true, false, 16) => train_typed::<AtomicU32, u16, 4>(
             trainer,
@@ -477,6 +492,7 @@ pub(super) fn train(
             alphabet_scratch_bytes,
             &pool,
             initialization_pool.as_ref(),
+            policy,
         ),
         (false, false, 32) => train_typed::<u32, u32, 2>(
             trainer,
@@ -489,6 +505,7 @@ pub(super) fn train(
             alphabet_scratch_bytes,
             &pool,
             initialization_pool.as_ref(),
+            policy,
         ),
         (true, false, 32) => train_typed::<AtomicU32, u32, 2>(
             trainer,
@@ -501,9 +518,17 @@ pub(super) fn train(
             alphabet_scratch_bytes,
             &pool,
             initialization_pool.as_ref(),
+            policy,
         ),
         _ => unreachable!("validated configuration"),
+    };
+    let allocations = session.finish();
+    if let Ok(training) = &mut result {
+        training.stats.posting_allocation_policy = policy.label();
+        training.stats.posting_arena_cutoff_bytes = policy.cutoff(training.stats.initial_edges);
+        training.stats.posting_allocations = allocations;
     }
+    result
 }
 
 fn train_typed<C: Slot, O: Offset, const INLINE: usize>(
@@ -517,6 +542,7 @@ fn train_typed<C: Slot, O: Offset, const INLINE: usize>(
     alphabet_scratch_bytes: usize,
     pool: &rayon::ThreadPool,
     initialization_pool: Option<&rayon::ThreadPool>,
+    policy: super::posting_arena::Policy,
 ) -> Result<IndexedTraining> {
     // Keep the coordinator inside this pool too: small serial rounds then do
     // not pay a caller->worker handoff at every stage.
@@ -532,6 +558,7 @@ fn train_typed<C: Slot, O: Offset, const INLINE: usize>(
             alphabet_scratch_bytes,
             pool,
             initialization_pool,
+            policy,
         )
     })
 }
@@ -548,6 +575,7 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
     alphabet_scratch_bytes: usize,
     pool: &rayon::ThreadPool,
     initialization_pool: Option<&rayon::ThreadPool>,
+    policy: super::posting_arena::Policy,
 ) -> Result<IndexedTraining> {
     let bits = config.posting_block_bits;
     let block_size = 1_usize
@@ -575,6 +603,7 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
         timings,
         character_table_bytes,
     } = prepared;
+    super::posting_arena::configure(pool, initialization_pool, policy.cutoff(initial_edges));
     // Only the ordinary no-affix compact path has this certificate.
     // Each merge deletes boundaries, so no historical pair frequency exceeds
     // the checked initial weighted edge mass. Reserved and forced alphabet IDs
@@ -1417,6 +1446,51 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn simultaneous_arena_policies_preserve_training_results() {
+        use super::super::posting_arena::Policy;
+        let words: AHashMap<CompactString, u64> = [
+            ("xab中abq".repeat(10000), 3),
+            ("中文aaabc".repeat(9000), u32::MAX as u64 + 1),
+            ("zeroabab".repeat(8000), 0),
+        ].into_iter().map(|(text, weight)| (text.into(), weight)).collect();
+        let trainer = BpeTrainer::builder().vocab_size(96).min_frequency(2)
+            .show_progress(false).build();
+        let expected = trainer.do_train_indexed(&words).unwrap();
+        std::thread::scope(|scope| {
+            let jobs: Vec<_> = [Policy::System, Policy::Fixed(32), Policy::Auto]
+                .into_iter().map(|policy| {
+                    let trainer = &trainer;
+                    let words = &words;
+                    scope.spawn(move || {
+                        let mut results = Vec::new();
+                        for bits in [16, 32] {
+                            let got = train_with_policy(trainer, words, IndexedParallelConfig {
+                                workers: 2, initialization_workers: Some(1),
+                                posting_block_bits: bits, atomic_corpus: true,
+                                narrow_corpus: false, ..Default::default()
+                            }, policy).unwrap();
+                            assert_eq!(got.stats.posting_arena_cutoff_bytes,
+                                policy.cutoff(got.stats.initial_edges));
+                            assert_eq!(got.stats.posting_allocations.arena_requested_bytes,
+                                got.stats.posting_allocations.arena_retired_bytes);
+                            if matches!(policy, Policy::System) {
+                                assert_eq!(got.stats.posting_allocations.arena_buffers, 0);
+                            }
+                            results.push(got);
+                        }
+                        results
+                    })
+                }).collect();
+            for job in jobs {
+                for got in job.join().unwrap() {
+                    assert_eq!(got.trace, expected.trace);
+                    assert_eq!(got.vocab, expected.vocab);
+                    assert_eq!(got.merges, expected.merges);
+                }
+            }
+        });
+    }
     use super::*;
 
     fn verify(

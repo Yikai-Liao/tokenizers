@@ -15,6 +15,7 @@ use std::time::Instant;
 mod aa_parity;
 mod compact;
 mod parallel;
+mod posting_arena;
 mod small_posting;
 
 const NONE: u32 = u32::MAX;
@@ -22,6 +23,9 @@ const NONE: u32 = u32::MAX;
 /// Measurements for the experimental sequential occurrence-index trainer.
 #[derive(Debug, Default, Clone, Serialize)]
 pub(super) struct IndexedTrainingStats {
+    pub posting_allocation_policy: &'static str,
+    pub posting_arena_cutoff_bytes: usize,
+    pub posting_allocations: posting_arena::Counters,
     pub initialize_ms: f64,
     pub merge_ms: f64,
     pub initial_symbols: usize,

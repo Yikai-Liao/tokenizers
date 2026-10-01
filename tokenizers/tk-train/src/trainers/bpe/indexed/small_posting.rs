@@ -1,6 +1,7 @@
 //! Eight inline payload bytes: two u32 or four u16 local offsets.
 //! Raw-part reconstruction is private to this module.
 
+use super::posting_arena;
 use std::mem::{self, ManuallyDrop};
 use std::slice;
 use tk_encode::Result;
@@ -16,12 +17,14 @@ pub(super) type SmallPosting = PackedPosting<u32, 2>;
 #[repr(C)]
 pub(super) struct PackedPosting<T: Copy + Default, const INLINE: usize> {
     len: u32,
-    // Zero tags inline mode. Heap mode records Vec's actual allocation capacity.
+    // Zero tags inline mode; otherwise the full u32 capacity is preserved.
+    // For align >= 2, the pointer low bit tags arena ownership.
     capacity: u32,
     payload: Payload<T, INLINE>,
 }
 
-// SAFETY: every heap allocation has one SmallPosting owner; mutation requires
+// SAFETY: every allocation has one posting owner; an arena session outlives
+// all posting owners and joins its dedicated worker pools. Mutation requires
 // &mut self, and shared slices contain only initialized Copy values.
 unsafe impl<T: Copy + Default + Send, const INLINE: usize> Send for PackedPosting<T, INLINE> {}
 // SAFETY: immutable access never mutates the allocation or the union tag.
@@ -43,12 +46,45 @@ impl<T: Copy + Default, const INLINE: usize> PackedPosting<T, INLINE> {
     /// Reserve for a freshly counted key. A heap posting may initially be empty:
     /// its allocation is owned even while no position has been initialized.
     pub(super) fn with_capacity(count: u32) -> Result<Self> {
+        Self::reserve(count, false)
+    }
+
+    fn reserve(count: u32, growth: bool) -> Result<Self> {
         if count as usize <= INLINE {
             return Ok(Self::default());
         }
         let mut posting = Self::default();
-        posting.install_heap(Vec::with_capacity((count as usize).max(INLINE * 2)))?;
+        let capacity = (count as usize).max(INLINE * 2);
+        let checked = u32::try_from(capacity).map_err(|_| "posting capacity exceeds u32")?;
+        if let Some(pointer) = posting_arena::allocate::<T>(capacity, growth)? {
+            posting.payload = Payload {
+                heap: pointer.as_ptr().map_addr(|addr| addr | 1),
+            };
+            posting.capacity = checked;
+        } else {
+            posting.install_heap(Vec::with_capacity(capacity), growth)?;
+        }
         Ok(posting)
+    }
+
+    #[inline]
+    fn is_arena(&self) -> bool {
+        !self.is_inline() && mem::align_of::<T>() >= 2
+            // SAFETY: capacity != 0 identifies the active pointer field.
+            && unsafe { self.payload.heap.addr() & 1 != 0 }
+    }
+
+    #[inline]
+    fn pointer(&self) -> *mut T {
+        debug_assert!(!self.is_inline());
+        // SAFETY: capacity != 0 identifies the active pointer field. map_addr
+        // preserves provenance; align-1 pointers may legally have an odd address.
+        let pointer = unsafe { self.payload.heap };
+        if mem::align_of::<T>() >= 2 {
+            pointer.map_addr(|addr| addr & !1)
+        } else {
+            pointer
+        }
     }
 
     #[inline]
@@ -87,9 +123,9 @@ impl<T: Copy + Default, const INLINE: usize> PackedPosting<T, INLINE> {
             &inline[..self.len()]
         } else {
             debug_assert!(self.len <= self.capacity && self.capacity as usize >= INLINE * 2);
-            // SAFETY: heap came from a Vec<T> allocation of capacity at
+            // SAFETY: pointer refers to a Vec or session-owned arena allocation of capacity at
             // least len; its first len elements were initialized by push.
-            unsafe { slice::from_raw_parts(self.payload.heap, self.len()) }
+            unsafe { slice::from_raw_parts(self.pointer(), self.len()) }
         }
     }
 
@@ -105,7 +141,7 @@ impl<T: Copy + Default, const INLINE: usize> PackedPosting<T, INLINE> {
             debug_assert!(self.len <= self.capacity && self.capacity as usize >= INLINE * 2);
             // SAFETY: the allocation is uniquely owned and first len items
             // initialized; &mut self excludes other aliases.
-            unsafe { slice::from_raw_parts_mut(self.payload.heap, self.len()) }
+            unsafe { slice::from_raw_parts_mut(self.pointer(), self.len()) }
         }
     }
 
@@ -115,7 +151,7 @@ impl<T: Copy + Default, const INLINE: usize> PackedPosting<T, INLINE> {
         mem::take(self)
     }
 
-    fn install_heap(&mut self, vec: Vec<T>) -> Result<()> {
+    fn install_heap(&mut self, vec: Vec<T>, growth: bool) -> Result<()> {
         // Both callers either still hold inline data or used mem::take first.
         debug_assert!(self.is_inline());
         let len = u32::try_from(vec.len()).map_err(|_| "posting length exceeds u32")?;
@@ -125,6 +161,7 @@ impl<T: Copy + Default, const INLINE: usize> PackedPosting<T, INLINE> {
         }
         // Conversion cannot fail beyond this point. Suppress Vec's destructor
         // only after checking both fields, then transfer its allocation.
+        posting_arena::heap_allocation::<T>(vec.capacity(), growth);
         let mut vec = ManuallyDrop::new(vec);
         self.payload = Payload {
             heap: vec.as_mut_ptr(),
@@ -169,7 +206,7 @@ impl<T: Copy + Default, const INLINE: usize> PackedPosting<T, INLINE> {
                 // new suffix slot is written exactly once. If next panics, len
                 // is still start; Copy T has no destructor for written extras.
                 unsafe {
-                    self.payload.heap.add(i).write(value);
+                    self.pointer().add(i).write(value);
                 }
             }
         }
@@ -191,16 +228,17 @@ impl<T: Copy + Default, const INLINE: usize> PackedPosting<T, INLINE> {
                 self.len = next_len;
                 return Ok(());
             }
-            let mut vec = Vec::with_capacity(INLINE * 2);
-            vec.extend_from_slice(self.as_slice());
-            vec.push(pos);
-            return self.install_heap(vec);
+            let mut replacement = Self::reserve(next_len, true)?;
+            replacement.copy_reserved_prefix(self.as_slice());
+            replacement.push(pos)?;
+            *self = replacement;
+            return Ok(());
         }
         if self.len < self.capacity {
-            // SAFETY: ptr is Vec allocation; len < capacity leaves one spare
+            // SAFETY: the owned allocation has len < capacity, leaving one spare
             // uninitialized slot and &mut self is its unique owner.
             unsafe {
-                self.payload.heap.add(self.len as usize).write(pos);
+                self.pointer().add(self.len as usize).write(pos);
             }
             self.len = next_len;
             return Ok(());
@@ -209,28 +247,53 @@ impl<T: Copy + Default, const INLINE: usize> PackedPosting<T, INLINE> {
             .saturating_mul(2)
             .min(u32::MAX as usize)
             .max(next_len as usize);
+        if self.is_arena() || posting_arena::eligible::<T>(requested) {
+            let mut replacement = Self::reserve(
+                u32::try_from(requested).map_err(|_| "posting capacity exceeds u32")?,
+                true,
+            )?;
+            replacement.copy_reserved_prefix(self.as_slice());
+            replacement.push(pos)?;
+            *self = replacement;
+            return Ok(());
+        }
         // The destination is empty before a Vec can reallocate or unwind.
         // The old raw pointer is owned only by the reconstructed Vec below.
         let old = ManuallyDrop::new(mem::take(self));
         // SAFETY: old is heap mode, and ptr/len/cap are the exact raw parts
         // recorded when its unique Vec allocation was last installed.
-        let mut vec = unsafe {
-            Vec::from_raw_parts(old.payload.heap, old.len as usize, old.capacity as usize)
-        };
+        let mut vec =
+            unsafe { Vec::from_raw_parts(old.pointer(), old.len as usize, old.capacity as usize) };
+        posting_arena::retirement::<T>(old.capacity as usize, false);
         vec.reserve_exact(requested - vec.len());
         vec.push(pos);
-        self.install_heap(vec)
+        self.install_heap(vec, true)
+    }
+    fn copy_reserved_prefix(&mut self, prefix: &[T]) {
+        debug_assert!(!self.is_inline() && prefix.len() <= self.capacity as usize);
+        // SAFETY: destination is a fresh nonoverlapping allocation with enough
+        // capacity, and only the initialized Copy prefix is published.
+        unsafe {
+            self.pointer()
+                .copy_from_nonoverlapping(prefix.as_ptr(), prefix.len());
+        }
+        self.len = prefix.len() as u32;
     }
 }
 
 impl<T: Copy + Default, const INLINE: usize> Drop for PackedPosting<T, INLINE> {
     fn drop(&mut self) {
         if self.capacity != 0 {
+            let arena = self.is_arena();
+            posting_arena::retirement::<T>(self.capacity as usize, arena);
+            if arena {
+                return;
+            }
             // SAFETY: heap mode uniquely owns a Vec allocation whose exact
             // raw pointer, initialized length, and capacity are stored here.
             unsafe {
                 drop(Vec::from_raw_parts(
-                    self.payload.heap,
+                    self.pointer(),
                     self.len as usize,
                     self.capacity as usize,
                 ));
@@ -242,6 +305,62 @@ impl<T: Copy + Default, const INLINE: usize> Drop for PackedPosting<T, INLINE> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn arena_growth_migration_origin_and_fallback() {
+        let pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(2)
+            .build()
+            .unwrap();
+        let init = rayon::ThreadPoolBuilder::new()
+            .num_threads(1)
+            .build()
+            .unwrap();
+        let session = posting_arena::Session::new(&pool, Some(&init));
+        posting_arena::configure(&pool, Some(&init), 32);
+        let posting = init.install(|| {
+            let mut posting = SmallPosting::default();
+            for value in 0..8 {
+                posting.push(value).unwrap();
+            }
+            assert!(posting.is_arena());
+            posting
+        });
+        let mut posting = pool.install(move || {
+            let mut posting = posting;
+            for value in 8..17 {
+                posting.push(value).unwrap();
+            }
+            assert!(!posting.is_arena());
+            assert_eq!(posting.as_slice(), (0..17).collect::<Vec<_>>());
+            posting
+        });
+        // The policy changes only here as a test of origin independence. A real
+        // training computes one immutable threshold before allocating postings.
+        posting_arena::configure(&pool, Some(&init), 256);
+        pool.install(move || {
+            for value in 17..33 {
+                posting.push(value).unwrap();
+            }
+            assert!(posting.is_arena());
+            posting.as_mut_slice().reverse();
+            assert_eq!(posting.as_slice()[0], 32);
+            let mut bytes = PackedPosting::<u8, 8>::default();
+            for value in 0..64 {
+                bytes.push(value).unwrap();
+            }
+            assert!(!bytes.is_arena());
+            assert_eq!(bytes.as_slice(), (0..64).collect::<Vec<_>>());
+            assert!(PackedPosting::<(), 2>::with_capacity(3).is_err());
+            drop(posting);
+        });
+        let stats = session.finish();
+        assert!(stats.arena_buffers >= 3 && stats.heap_buffers >= 1);
+        assert_eq!(stats.arena_requested_bytes, stats.arena_retired_bytes);
+        assert_eq!(stats.heap_requested_bytes, stats.heap_freed_bytes);
+        assert_eq!(stats.heap_buffers, stats.heap_frees);
+        assert!(stats.grows > 0 && stats.backing_bytes >= stats.arena_requested_bytes);
+    }
 
     #[test]
     fn reserved_reverse_fill_preserves_prefix_inline_heap_and_unwind() {
