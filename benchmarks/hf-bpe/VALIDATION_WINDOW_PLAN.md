@@ -1,0 +1,38 @@
+# 分片 lazy heap 的并行校验窗口与扩展性实验
+
+## 目标与基点
+
+用户要求尝试 bulk priority queue、并行 lazy validation 和 ordered commit 的组合；随后强调几十线程机器上的堆结构扩展性。基点是 `bpe/dense-birth-commit` 的 `37f7599e`，保留已有出生提交优化、posting Arena、排序和 corpus 内核。
+
+要验证的成本有两项：原代码每个候选扫描 N 个 owner 并重复查询 N 个频率账本；stale 候选的校正和重新入堆也由协调线程执行。原中文 512 MiB 结果的选择阶段约 0.25 秒，当前机器有 6 个逻辑 CPU，因此完整训练收益与未来分片扩展性分别测量。
+
+## 四类实现
+
+- serial：原有 N 个堆逐个 `peek_current`，精确全局 max。
+- cached：在当前 batch 内缓存每个分片的精确 top，消费后只刷新该分片，仍扫描 N 个 top。
+- leader：全局八叉堆保存每个分片的 top 上界。校验全局最高上界对应的分片；若下降，则修正 leader 并重新比较。消费后只更新获胜分片的上界。
+- bulk4 / bulk16：在现有 owner 提交任务末尾，各自校验 4 / 16 个局部候选，随后使用相同 leader 协议。窗口耗尽时协调线程按需继续校验；未消费候选在频率更新前归还。
+
+复用已经存在的 Rayon worker 与提交阶段；不为每个 pop 调度 N 个任务。leader 每个 batch 从 N 个 top 在 O(N) 时间 heapify，复用原 backing；每次 leader 修正与消费为 O(log N)。局部堆维护及真值查询的成本另外计入。
+
+## 精确性条件
+
+1. owner 频率账本只在 batch 提交阶段修改，选择阶段冻结。旧 pair 频率只下降，出生 pair 在提交结束后才进入下一轮。
+2. `peek_current` 返回局部精确最大值：未检验项的频率上界不优于它；比较同时使用完整频率与 pair ID 同频顺序。
+3. 取出的局部窗口是精确、有序前缀；剩余堆 top 上界不优于窗口最后一项。窗口候选、原堆候选与已选候选分别持有唯一候选身份。
+4. leader 保留所有非空分片的 top 上界。当全局最高 leader 与该分片经校验的精确 top 相等，它优于其它所有上界，因此是精确全局 top。下降后必须重新比较，不能立即输出。
+5. 冲突、AA、预留 ID、词表容量与长度规则沿用原来的串行决策。提前停止时不消费冲突项。
+6. 每次更新账本前，将未消费窗口项全部归还，清除本轮认证。worker 对单个 owner 独占写入；校验不与下一次账本更新并行，没有新增共享原子状态。
+
+## 最小实验与改变选择的证据
+
+- 现有完整库测试，以及新增队列协议差分；队列差分含 1/4/32/64 分片、packed/wide、下降/缺失/出生/提前停止。真实 BPE 差分含 1/4/32 worker、16/32 offset、非均匀及宽权重、预留 ID、长度限制。
+- 队列模拟固定 1,048,576 初始候选，选取 16,000 项；4/16/32/64 分片，4 个实际 worker，两种初始 stale 比例，五种队列模式。预计最多 40 次模拟，每种输入的完整有序 `(pair,frequency)` SHA256 必须相等。该模拟测局部账本、实际堆和协调协议，不含 corpus rewrite，不声称等于几十核机器的速度。
+- 中文 512 MiB 原 Trainer：同一 release binary，serial / leader / 模拟中值得保留的 bulk 一次。对照完整模型、初始物理工作、posting visits、batch rounds、分配生命周期、VmSwap 与 peak RSS。只有具体不确定性影响选择时才补对照。
+- 英文 16 MiB：serial / 保留实现各一次。所有编译、库测试、模拟与完整语料计时串行错开。
+
+`select_ms` 的下降不能单独代表收益：bulk 的 worker 校验嵌入初始化或 commit，完整训练与模拟 pipeline 时间必须包含这部分。`queue_worker_prefetch_ms` 是 worker 时间之和，不能与嵌套阶段重复相加。
+
+## 研究来源
+
+[Bingmann、Keh、Sanders 的 bulk/limit PQ](https://arxiv.org/abs/1504.00545) 提供批量提取接口的背景；本实现采用现有内存分片与频率账本，不复刻论文的 external-memory 存储结构。[Parallel Local Lazy Greedy 作者实现](https://github.com/ECP-ExaGraph/Submodular-b-matching) 提供局部 lazy heap 的结构参考。BPE 真值单调性的适用范围沿用 [本项目证明](PAIR_MONOTONICITY.md)。

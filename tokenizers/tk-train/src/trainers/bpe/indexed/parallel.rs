@@ -8,6 +8,8 @@ use std::sync::atomic::{AtomicU16, AtomicU32, Ordering as AtomicOrdering};
 
 mod alphabet;
 mod candidate_heap;
+mod validation_window;
+use validation_window::{Frontier, SelectionMode, Window};
 mod corpus;
 mod fused_batch;
 mod flat_commit;
@@ -151,16 +153,23 @@ struct Entry {
 struct Owner {
     entries: AHashMap<u64, Entry>,
     heap: CandidateHeap,
+    window: Window,
+    truth_checks: usize,
+    stale_corrections: usize,
 }
 impl Owner {
     fn peek_current(&mut self) -> Option<Candidate> {
         loop {
             let top = self.heap.peek()?;
+            self.truth_checks += 1;
             match self.entries.get(&top.key) {
+
                 None => {
+                    self.stale_corrections += 1;
                     self.heap.pop();
                 }
                 Some(entry) if entry.frequency != top.frequency => {
+                    self.stale_corrections += 1;
                     self.heap.pop();
                     self.heap.push(Candidate {
                         frequency: entry.frequency,
@@ -398,6 +407,16 @@ pub(super) fn train_with_policy(
     config: IndexedParallelConfig,
     policy: super::posting_arena::Policy,
 ) -> Result<IndexedTraining> {
+    train_with_selection(trainer, wc, config, policy, SelectionMode::Bulk(4))
+}
+
+fn train_with_selection(
+    trainer: &BpeTrainer,
+    wc: &AHashMap<CompactString, u64>,
+    config: IndexedParallelConfig,
+    policy: super::posting_arena::Policy,
+    selection: SelectionMode,
+) -> Result<IndexedTraining> {
     let begin = Instant::now();
     let mut ids = AHashMap::with_capacity(trainer.vocab_size);
     let mut strings = Vec::with_capacity(trainer.vocab_size);
@@ -438,6 +457,7 @@ pub(super) fn train_with_policy(
             &pool,
             initialization_pool.as_ref(),
             policy,
+            selection,
         ),
         (true, true, 16) => train_typed::<AtomicU16, u16, 4>(
             trainer,
@@ -451,6 +471,7 @@ pub(super) fn train_with_policy(
             &pool,
             initialization_pool.as_ref(),
             policy,
+            selection,
         ),
         (false, true, 32) => train_typed::<u16, u32, 2>(
             trainer,
@@ -464,6 +485,7 @@ pub(super) fn train_with_policy(
             &pool,
             initialization_pool.as_ref(),
             policy,
+            selection,
         ),
         (true, true, 32) => train_typed::<AtomicU16, u32, 2>(
             trainer,
@@ -477,6 +499,7 @@ pub(super) fn train_with_policy(
             &pool,
             initialization_pool.as_ref(),
             policy,
+            selection,
         ),
         (false, false, 16) => train_typed::<u32, u16, 4>(
             trainer,
@@ -490,6 +513,7 @@ pub(super) fn train_with_policy(
             &pool,
             initialization_pool.as_ref(),
             policy,
+            selection,
         ),
         (true, false, 16) => train_typed::<AtomicU32, u16, 4>(
             trainer,
@@ -503,6 +527,7 @@ pub(super) fn train_with_policy(
             &pool,
             initialization_pool.as_ref(),
             policy,
+            selection,
         ),
         (false, false, 32) => train_typed::<u32, u32, 2>(
             trainer,
@@ -516,6 +541,7 @@ pub(super) fn train_with_policy(
             &pool,
             initialization_pool.as_ref(),
             policy,
+            selection,
         ),
         (true, false, 32) => train_typed::<AtomicU32, u32, 2>(
             trainer,
@@ -529,6 +555,7 @@ pub(super) fn train_with_policy(
             &pool,
             initialization_pool.as_ref(),
             policy,
+            selection,
         ),
         _ => unreachable!("validated configuration"),
     };
@@ -553,6 +580,7 @@ fn train_typed<C: Slot, O: Offset, const INLINE: usize>(
     pool: &rayon::ThreadPool,
     initialization_pool: Option<&rayon::ThreadPool>,
     policy: super::posting_arena::Policy,
+    selection: SelectionMode,
 ) -> Result<IndexedTraining> {
     // Keep the coordinator inside this pool too: small serial rounds then do
     // not pay a caller->worker handoff at every stage.
@@ -569,6 +597,7 @@ fn train_typed<C: Slot, O: Offset, const INLINE: usize>(
             pool,
             initialization_pool,
             policy,
+            selection,
         )
     })
 }
@@ -586,6 +615,7 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
     pool: &rayon::ThreadPool,
     initialization_pool: Option<&rayon::ThreadPool>,
     policy: super::posting_arena::Policy,
+    selection: SelectionMode,
 ) -> Result<IndexedTraining> {
     let bits = config.posting_block_bits;
     let block_size = 1_usize
@@ -843,6 +873,7 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
                     }),
                     packed_heap,
                 );
+                ledger.prepare_window(selection);
                 old - ledger.entries.len()
             })
             .sum::<usize>();
@@ -926,6 +957,7 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
     stats.weight_one_bucket_count = weight_lookup.as_ref().map_or(0, |l| l.one_bucket_count());
     stats.weight_bucket_count = weight_lookup.as_ref().map_or(0, |l| l.bucket_count());
     stats.weight_one_bucket_bytes = weight_lookup.as_ref().map_or(0, |l| l.one_bucket_bytes());
+    let mut frontier = Frontier::default();
     while ids.len() < trainer.vocab_size {
         let stage = Instant::now();
         let cap = config.batch_size.min(trainer.vocab_size - ids.len());
@@ -934,12 +966,9 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
         let mut tails = AHashSet::new();
         let mut block_rules = AHashMap::<usize, Vec<usize>>::new();
         let mut flat_postings = Vec::new();
+        frontier.begin_epoch(&mut owners, selection);
         while rules.len() < cap {
-            let best = owners
-                .iter_mut()
-                .enumerate()
-                .filter_map(|(i, o)| o.peek_current().map(|c| (i, c)))
-                .max_by_key(|(_, c)| *c);
+            let best = frontier.best(&mut owners, selection);
             let Some((o, top)) = best else {
                 break;
             };
@@ -960,7 +989,7 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
             if reserved.is_some() && !rules.is_empty() {
                 break;
             }
-            owners[o].heap.pop();
+            frontier.consume(&mut owners, o, selection);
             let entry = owners[o].entries.remove(&top.key).unwrap();
             let length = lengths[edge.0 as usize]
                 .checked_add(lengths[edge.1 as usize])
@@ -1011,6 +1040,9 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
             if edge.0 == edge.1 || reserved.is_some() {
                 break;
             }
+        }
+        for ledger in &mut owners {
+            ledger.end_selection();
         }
         if rules.is_empty() {
             break;
@@ -1249,7 +1281,9 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
                 .map(|(o, ledger)| -> Result<_> {
                     let mut retired = Vec::new();
                     if flat && !outputs[0].flat_births.is_empty() {
-                        return flat_commit::dense(&outputs, o, ledger, &rules, lengths.len(), floor);
+                        let result = flat_commit::dense(&outputs, o, ledger, &rules, lengths.len(), floor)?;
+                        ledger.prepare_window(selection);
+                        return Ok(result);
                     }
                     if flat {
                         let mut born = AHashMap::<u64, (u64, u32)>::new();
@@ -1318,6 +1352,7 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
                                 );
                             }
                         }
+                        ledger.prepare_window(selection);
                         return Ok((retired, AHashSet::new(), dropped));
                     }
                     let mut sums = AHashMap::<u64, u64>::new();
@@ -1364,6 +1399,7 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
                         ledger.heap.push(Candidate { key: k, frequency });
                         accepted.insert(k);
                     }
+                    ledger.prepare_window(selection);
                     Ok((retired, accepted, dropped))
                 })
                 .collect::<Result<Vec<_>>>()
@@ -1438,6 +1474,17 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
         }
         stats.route_ms += stage.elapsed().as_secs_f64() * 1000.0;
     }
+    stats.queue_selection_mode = selection.label();
+    stats.queue_owner_probes = frontier.owner_probes;
+    stats.queue_leader_updates = frontier.leader_updates;
+    for ledger in &owners {
+        stats.queue_truth_checks += ledger.truth_checks;
+        stats.queue_stale_corrections += ledger.stale_corrections;
+        stats.queue_prefetched += ledger.window.prefetched;
+        stats.queue_unused_restored += ledger.window.restored;
+        stats.queue_serial_refills += ledger.window.serial_refills;
+        stats.queue_worker_prefetch_ms += ledger.window.worker_ms;
+    }
     stats.merge_ms = begin.elapsed().as_secs_f64() * 1000.0;
     Ok(IndexedTraining {
         vocab: ids.into_iter().map(|(s, id)| (s.to_string(), id)).collect(),
@@ -1459,6 +1506,39 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn selection_modes_keep_weighted_reserved_and_length_limited_full_traces() {
+        let words = [
+            ("ababcd中aa".repeat(300), 3),
+            ("cdab文abab".repeat(250), u32::MAX as u64 + 1),
+            ("aaaaabbbb中".repeat(200), 0),
+            ("abcdabcdef".repeat(220), 1),
+        ].into_iter().map(|(w, n)| (w.into(), n)).collect();
+        let trainer = BpeTrainer::builder().vocab_size(100).min_frequency(2)
+            .max_token_length(Some(8)).show_progress(false)
+            .special_tokens(vec![AddedToken::from("ab", true)])
+            .build();
+        for bits in [16, 32] {
+            for workers in [1, 4, 32] {
+                let config = IndexedParallelConfig {
+                    workers, initialization_workers: Some(1),
+                    posting_block_bits: bits, atomic_corpus: true,
+                    narrow_corpus: false, ..Default::default()
+                };
+                let expected = train_with_selection(&trainer, &words, config,
+                    super::super::posting_arena::Policy::Auto, SelectionMode::Serial).unwrap();
+                for mode in [SelectionMode::Cached, SelectionMode::Leader, SelectionMode::Bulk(4), SelectionMode::Bulk(16)] {
+                    let got = train_with_selection(&trainer, &words, config,
+                        super::super::posting_arena::Policy::Auto, mode).unwrap();
+                    assert_eq!(got.trace, expected.trace);
+                    assert_eq!(got.vocab, expected.vocab);
+                    assert_eq!(got.merges, expected.merges);
+                    assert_eq!(got.stats.batch_rounds, expected.stats.batch_rounds);
+                    assert_eq!(got.stats.posting_visits, expected.stats.posting_visits);
+                }
+            }
+        }
+    }
     #[test]
     fn simultaneous_arena_policies_preserve_training_results() {
         use super::super::posting_arena::Policy;
