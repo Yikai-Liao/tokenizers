@@ -87,6 +87,10 @@ impl WeightLookup {
     pub(super) fn bytes(&self) -> usize {
         self.bounds.capacity() * 4 + self.one_bucket_bytes()
     }
+    // Keep the common one-weight test inside each grouping/rewrite loop.
+    // Without this hint the combined diagnostic paths exceeded the compiler's
+    // inline budget and introduced a call at every initial posting position.
+    #[inline(always)]
     pub(super) fn weight<O: Offset, const INLINE: usize>(
         &self,
         block: &Block<O, INLINE>,

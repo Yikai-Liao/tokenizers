@@ -845,7 +845,7 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
             corpus_measure_ms: timings.measure_ms,
             corpus_sort_ms: timings.sort_ms,
             corpus_sort_buffer_bytes: timings.sort_buffer_bytes,
-            corpus_stable_weight_sort: order == corpus::Order::WeightSorted,
+            corpus_stable_weight_sort: order == corpus::Order::WeightStable,
             corpus_weight_order: if order == corpus::Order::Original { "original" } else { "weight_sorted" },
             corpus_word_reference_bytes: word_reference_bytes,
             corpus_temporary_weight_bytes: temporary_weight_bytes,
@@ -1564,6 +1564,12 @@ mod tests {
                 let expected = train_with_corpus_order(&trainer, &words, config,
                     super::super::posting_arena::Policy::Auto, SelectionMode::Serial,
                     corpus::Order::Original).unwrap();
+                let stable = train_with_corpus_order(&trainer, &words, config,
+                    super::super::posting_arena::Policy::Auto, SelectionMode::Bulk(4),
+                    corpus::Order::WeightStable).unwrap();
+                assert_eq!(stable.trace, expected.trace);
+                assert_eq!(stable.vocab, expected.vocab);
+                assert_eq!(stable.merges, expected.merges);
                 for mode in [SelectionMode::Cached, SelectionMode::Leader, SelectionMode::Bulk(4), SelectionMode::Bulk(16)] {
                     let got = train_with_selection(&trainer, &words, config,
                         super::super::posting_arena::Policy::Auto, mode).unwrap();

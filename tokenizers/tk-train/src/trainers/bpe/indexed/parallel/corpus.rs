@@ -30,6 +30,7 @@ pub(super) struct Prepared<C: Slot, O: Offset, const INLINE: usize> {
 pub(super) enum Order {
     Original,
     WeightSorted,
+    WeightStable,
 }
 
 struct Region<'a> {
@@ -139,15 +140,17 @@ pub(super) fn build<C: Slot, O: Offset, const INLINE: usize>(
     let mut words: Vec<_> = wc.iter().map(|(word, &weight)| (word, weight)).collect();
     let word_reference_bytes = words.capacity() * std::mem::size_of::<(&CompactString, u64)>();
     let sorting = Instant::now();
-    if order == Order::WeightSorted {
+    if order == Order::WeightStable {
         // Preserve the physical order of equal-weight words. Stable sorting
         // borrows a temporary buffer which is released before slot allocation.
         words.par_sort_by(|a, b| b.1.cmp(&a.1));
+    } else if order == Order::WeightSorted {
+        words.par_sort_unstable_by(|a, b| b.1.cmp(&a.1));
     }
     let sort_ms = sorting.elapsed().as_secs_f64() * 1000.0;
     // Rayon 1.12's stable merge sort allocates len * size_of::<T>() scratch
     // above its insertion-sort threshold. This is allocated capacity, not RSS.
-    let sort_buffer_bytes = if order == Order::WeightSorted && words.len() > 20 {
+    let sort_buffer_bytes = if order == Order::WeightStable && words.len() > 20 {
         words.len() * std::mem::size_of::<(&CompactString, u64)>()
     } else {
         0
@@ -275,7 +278,7 @@ pub(super) fn build<C: Slot, O: Offset, const INLINE: usize>(
         }
     }
     for block in &mut blocks {
-        block.weight_intervals = order == Order::WeightSorted;
+        block.weight_intervals = order != Order::Original;
     }
     for output in outputs {
         for (word, mut active) in output.active.into_iter().enumerate() {
@@ -334,8 +337,10 @@ mod tests {
         let mut edges = 0;
         let mut symbols = 0;
         let mut ordered: Vec<_> = words.iter().map(|(w, &n)| (w, n)).collect();
-        if order == Order::WeightSorted {
+        if order == Order::WeightStable {
             ordered.par_sort_by(|a, b| b.1.cmp(&a.1));
+        } else if order == Order::WeightSorted {
+            ordered.par_sort_unstable_by(|a, b| b.1.cmp(&a.1));
         }
         for (word, weight) in ordered {
             let start = expected.len();
@@ -450,7 +455,7 @@ mod tests {
                 .num_threads(workers)
                 .build()
                 .unwrap();
-            for order in [Order::Original, Order::WeightSorted] {
+            for order in [Order::Original, Order::WeightSorted, Order::WeightStable] {
                 for unfiltered in [false, true] {
                     check::<u32>(&pool, unfiltered, order);
                     check::<u16>(&pool, unfiltered, order);
