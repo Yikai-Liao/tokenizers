@@ -225,6 +225,143 @@ fn initialize_with_widths<C: Slot, O: Offset, const INLINE: usize>(
     owner_width: usize,
     sort_width: usize,
 ) -> Result<Metrics> {
+    initialize_core(
+        corpus,
+        workers,
+        floor,
+        owners,
+        owner_width,
+        sort_width,
+        32,
+        0,
+        |p| {
+            uniform.unwrap_or_else(|| {
+                lookup.map_or_else(|| block.weight(p, None), |l| l.weight(block, p as u32))
+            })
+        },
+    )
+}
+
+pub(super) fn initialize_segmented<C: Slot, O: Offset, const INLINE: usize>(
+    corpus: &[C],
+    blocks: &[Block<O, INLINE>],
+    uniform: Option<u64>,
+    lookups: Option<&[WeightLookup]>,
+    workers: usize,
+    floor: u64,
+    owners: &mut [Owner],
+    bits: u8,
+) -> Result<Metrics> {
+    initialize_segmented_waves(
+        corpus,
+        blocks,
+        uniform,
+        lookups,
+        workers,
+        floor,
+        owners,
+        bits,
+        1 << 28,
+    )
+}
+
+fn initialize_segmented_waves<C: Slot, O: Offset, const INLINE: usize>(
+    corpus: &[C],
+    blocks: &[Block<O, INLINE>],
+    uniform: Option<u64>,
+    lookups: Option<&[WeightLookup]>,
+    workers: usize,
+    floor: u64,
+    owners: &mut [Owner],
+    bits: u8,
+    wave_slots: usize,
+) -> Result<Metrics> {
+    assert!(wave_slots > 1 && wave_slots <= (1usize << 32));
+    let mut total = Metrics::default();
+    for base in (0..corpus.len()).step_by(wave_slots) {
+        // Include a one-slot read halo, so a word crossing a wave is counted once.
+        let end = corpus
+            .len()
+            .min(base.saturating_add(wave_slots).saturating_add(1));
+        let mut wave = (0..workers).map(|_| Owner::default()).collect::<Vec<_>>();
+        let m = initialize_core(
+            &corpus[base..end],
+            workers,
+            if corpus.len() <= wave_slots { floor } else { 1 },
+            &mut wave,
+            workers.min(2),
+            workers,
+            bits,
+            base,
+            |p| {
+                uniform.unwrap_or_else(|| {
+                    let b = p >> bits;
+                    lookups.map_or_else(
+                        || blocks[b].weight(p, None),
+                        |l| l[b].weight(&blocks[b], (p - blocks[b].base) as u32),
+                    )
+                })
+            },
+        )?;
+        total.route_ms += m.route_ms;
+        total.count_ms += m.count_ms;
+        total.sort_ms += m.sort_ms;
+        total.group_ms += m.group_ms;
+        total.install_ms += m.install_ms;
+        total.route_bytes = total.route_bytes.max(m.route_bytes);
+        total.peak_route_bytes = total.peak_route_bytes.max(m.peak_route_bytes);
+        total.scratch_bytes = total.scratch_bytes.max(m.scratch_bytes);
+        total.group_bytes = total.group_bytes.max(m.group_bytes);
+        let install = Instant::now();
+        owners
+            .par_iter_mut()
+            .zip(wave.into_par_iter())
+            .map(|(ledger, wave)| -> Result<()> {
+                if ledger.entries.is_empty() {
+                    ledger.entries = wave.entries;
+                    return Ok(());
+                }
+                for (k, e) in wave.entries {
+                    match ledger.entries.entry(k) {
+                        std::collections::hash_map::Entry::Vacant(v) => {
+                            v.insert(e);
+                        }
+                        std::collections::hash_map::Entry::Occupied(mut v) => {
+                            let old = v.get_mut();
+                            old.frequency = old
+                                .frequency
+                                .checked_add(e.frequency)
+                                .ok_or("initial frequency exceeds u64")?;
+                            old.blocks.append(e.blocks)?;
+                        }
+                    }
+                }
+                Ok(())
+            })
+            .collect::<Result<Vec<_>>>()?;
+        let ms = install.elapsed().as_secs_f64() * 1000.0;
+        total.count_ms += ms;
+        total.install_ms += ms;
+    }
+    for ledger in owners {
+        let before = ledger.entries.len();
+        ledger.entries.retain(|_, e| e.frequency >= floor);
+        total.pruned += before - ledger.entries.len();
+    }
+    Ok(total)
+}
+
+fn initialize_core<C: Slot>(
+    corpus: &[C],
+    workers: usize,
+    floor: u64,
+    owners: &mut [Owner],
+    owner_width: usize,
+    sort_width: usize,
+    bits: u8,
+    base: usize,
+    weight: impl Fn(usize) -> u64 + Sync,
+) -> Result<Metrics> {
     assert!(owner_width > 0 && sort_width > 0);
     debug_assert_eq!(owners.len(), workers);
     let owner_width = owner_width.min(workers);
@@ -269,21 +406,10 @@ fn initialize_with_widths<C: Slot, O: Offset, const INLINE: usize>(
                     while end < records.len() && (records[end] >> 32) as u32 == code {
                         end += 1;
                     }
-                    let frequency = if let Some(weight) = uniform {
-                        weight
-                            .checked_mul((end - start) as u64)
-                            .ok_or("initial frequency exceeds u64")?
-                    } else {
-                        records[start..end]
-                            .iter()
-                            .map(|&r| {
-                                lookup.map_or_else(
-                                    || block.weight(r as u32 as usize, None),
-                                    |lookup| lookup.weight(block, r as u32),
-                                )
-                            })
-                            .sum()
-                    };
+                    let frequency = records[start..end]
+                        .iter()
+                        .map(|&r| weight(base + r as u32 as usize))
+                        .sum::<u64>();
                     if frequency >= floor {
                         groups.push(Group {
                             code,
@@ -316,14 +442,26 @@ fn initialize_with_widths<C: Slot, O: Offset, const INLINE: usize>(
                 ledger.entries = AHashMap::with_capacity(groups.len());
                 for group in groups {
                     let count = group.end - group.start;
-                    let mut positions = SmallPosting::with_capacity(count)?;
                     let source = &records[group.start as usize..group.end as usize];
                     let mut next = source.len();
-                    positions.append_reversed_reserved(count, || {
+                    let first = (base + source[0] as u32 as usize) >> bits;
+                    let last = (base + source[source.len() - 1] as u32 as usize) >> bits;
+                    let next = move || {
                         next -= 1;
-                        source[next] as u32
-                    })?;
-                    debug_assert!(positions.as_slice().windows(2).all(|w| w[0] < w[1]));
+                        base + source[next] as u32 as usize
+                    };
+                    let positions = if first == last {
+                        BlockPosting::from_reversed_in_block(count, first as u32, bits, next)?
+                    } else {
+                        BlockPosting::from_reversed(count, bits, next)?
+                    };
+                    debug_assert!(
+                        positions
+                            .iter(bits)
+                            .collect::<Vec<_>>()
+                            .windows(2)
+                            .all(|w| w[0] < w[1])
+                    );
                     ledger.entries.insert(
                         canonical(group.code),
                         Entry {
@@ -358,6 +496,48 @@ fn initialize_with_widths<C: Slot, O: Offset, const INLINE: usize>(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn segmented_waves_preserve_cross_wave_edges_and_global_frequency_floor() {
+        let raw = (0..515)
+            .map(|i| if i % 23 == 0 { NONE } else { (i % 7) as u32 })
+            .collect::<Vec<_>>();
+        let mut expected = std::collections::BTreeMap::<u64, Vec<usize>>::new();
+        for p in 0..raw.len() - 1 {
+            if raw[p] != NONE && raw[p + 1] != NONE {
+                expected.entry(key(raw[p], raw[p + 1])).or_default().push(p);
+            }
+        }
+        for bits in [4, 32] {
+            let blocks = (0..raw.len().div_ceil(1usize << bits))
+                .map(|b| Block::<u32, 2>::new(b << bits, 1))
+                .collect::<Vec<_>>();
+            for wave in [17, 64, 1024] {
+                let mut owners = (0..4).map(|_| Owner::default()).collect::<Vec<_>>();
+                initialize_segmented_waves(
+                    &raw,
+                    &blocks,
+                    Some(3),
+                    None,
+                    4,
+                    10,
+                    &mut owners,
+                    bits,
+                    wave,
+                )
+                .unwrap();
+                let got = owners
+                    .iter()
+                    .flat_map(|o| o.entries.iter())
+                    .map(|(&k, e)| (k, (e.frequency, e.blocks.iter(bits).collect::<Vec<_>>())))
+                    .collect::<std::collections::BTreeMap<_, _>>();
+                assert_eq!(got.len(), expected.len());
+                for (k, p) in &expected {
+                    assert_eq!(&got[k], &(p.len() as u64 * 3, p.clone()));
+                }
+            }
+        }
+    }
 
     fn check_wave_oracle<C: Slot>(raw: &[u32], block: &Block<u32, 2>) {
         let corpus: Vec<C> = raw.iter().copied().map(C::encode).collect();

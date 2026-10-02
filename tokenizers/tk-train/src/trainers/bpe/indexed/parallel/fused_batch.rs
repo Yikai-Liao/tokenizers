@@ -81,11 +81,13 @@ impl Selected {
 
 struct Task<'a> {
     rank: usize,
-    positions: &'a [u32],
+    posting: &'a BlockPosting,
+    begin: usize,
+    end: usize,
 }
 struct Valid {
     rank: usize,
-    positions: Vec<u32>,
+    positions: Vec<usize>,
 }
 pub(super) struct Prepared<O: Offset, const INLINE: usize> {
     valid: Vec<Vec<Valid>>,
@@ -98,14 +100,15 @@ pub(super) struct Prepared<O: Offset, const INLINE: usize> {
 pub(super) fn prepare_with_grouping<C: Slot, O: Offset, const INLINE: usize>(
     corpus: &[C],
     rules: &[Rule],
-    postings: &[SmallPosting],
-    block: &Block<O, INLINE>,
+    postings: &[BlockPosting],
+    blocks: &[Block<O, INLINE>],
     lengths: &[usize],
     uniform: Option<u64>,
-    weight_lookup: Option<&WeightLookup>,
+    weight_lookup: Option<&[WeightLookup]>,
     max_length: usize,
     workers: usize,
     grouped: bool,
+    bits: u8,
 ) -> Result<Prepared<O, INLINE>> {
     // Cap per-job directory storage; this does not narrow canonical IDs.
     if grouped && lengths.len() <= 65_536 {
@@ -113,24 +116,26 @@ pub(super) fn prepare_with_grouping<C: Slot, O: Offset, const INLINE: usize>(
             corpus,
             rules,
             postings,
-            block,
+            blocks,
             lengths,
             uniform,
             weight_lookup,
             max_length,
             workers,
+            bits,
         )
     } else {
         prepare_with_mode::<C, O, INLINE, false>(
             corpus,
             rules,
             postings,
-            block,
+            blocks,
             lengths,
             uniform,
             weight_lookup,
             max_length,
             workers,
+            bits,
         )
     }
 }
@@ -138,36 +143,39 @@ pub(super) fn prepare_with_grouping<C: Slot, O: Offset, const INLINE: usize>(
 fn prepare_with_mode<C: Slot, O: Offset, const INLINE: usize, const GROUPED: bool>(
     corpus: &[C],
     rules: &[Rule],
-    postings: &[SmallPosting],
-    block: &Block<O, INLINE>,
+    postings: &[BlockPosting],
+    blocks: &[Block<O, INLINE>],
     lengths: &[usize],
     uniform: Option<u64>,
-    weight_lookup: Option<&WeightLookup>,
+    weight_lookup: Option<&[WeightLookup]>,
     max_length: usize,
     workers: usize,
+    bits: u8,
 ) -> Result<Prepared<O, INLINE>> {
     debug_assert!(C::SHARED);
     debug_assert!(rules.iter().all(|r| r.edge.0 != r.edge.1));
     let selected = Selected::new(rules, lengths.len());
-    let total: usize = postings.iter().map(SmallPosting::len).sum();
+    let total: usize = postings.iter().map(BlockPosting::len).sum();
     let chunk = total.div_ceil(workers).max(1);
     // Each job owns one route set, even when a batch contains many tiny rules.
     let mut jobs: Vec<Vec<Task<'_>>> = Vec::new();
     let mut visited = 0;
     for (rank, posting) in postings.iter().enumerate() {
-        let mut positions = posting.as_slice();
-        while !positions.is_empty() {
+        let mut begin = 0;
+        while begin < posting.len() {
             let job = visited / chunk;
             if jobs.len() == job {
                 jobs.push(Vec::new());
             }
-            let take = (chunk - visited % chunk).min(positions.len());
+            let take = (chunk - visited % chunk).min(posting.len() - begin);
             jobs[job].push(Task {
                 rank,
-                positions: &positions[..take],
+                posting,
+                begin,
+                end: begin + take,
             });
             visited += take;
-            positions = &positions[take..];
+            begin += take;
         }
     }
     let prepared: Vec<_> = jobs
@@ -183,76 +191,84 @@ fn prepare_with_mode<C: Slot, O: Offset, const INLINE: usize, const GROUPED: boo
             for task in tasks {
                 let rule = &rules[task.rank];
                 let mut positions = Vec::new();
-                let mut cursor = 0;
-                for &position in task.positions {
-                    let p = position as usize;
-                    let right = p + rule.left_len;
-                    if corpus[p].token() != rule.edge.0
-                        || right >= corpus.len()
-                        || corpus[right].token() != rule.edge.1
-                    {
-                        continue;
-                    }
-                    positions.push(position);
-                    let after = right + rule.right_len;
-                    let weight = if let Some(weight) = uniform {
-                        weight
-                    } else if let Some(lookup) = weight_lookup {
-                        lookup.weight(block, position)
-                    } else {
-                        block.weight_forward(p, None, &mut cursor)
-                    };
-                    let prior = corpus[p - 1].token();
-                    if prior != NONE {
-                        let before = p - lengths[prior as usize];
-                        // If the left neighbor is itself selected, its right delta
-                        // accounts for this boundary using the final two outputs.
-                        let left_selected = selected.left_selected(corpus, before, prior);
-                        if !left_selected {
-                            if GROUPED {
-                                left_cache.remove(prior, weight);
-                            } else {
-                                output.remove(key(prior, rule.edge.0), weight);
-                            }
-                            if lengths[prior as usize] + rule.length() < max_length {
+                for (base, offsets) in task.posting.segments_range(bits, task.begin, task.end) {
+                    let block = &blocks[base >> bits];
+                    let mut cursor = 0;
+                    for &position in offsets {
+                        let p = base | position as usize;
+                        let right = p + rule.left_len;
+                        if corpus[p].token() != rule.edge.0
+                            || right >= corpus.len()
+                            || corpus[right].token() != rule.edge.1
+                        {
+                            continue;
+                        }
+                        positions.push(p);
+                        let after = right + rule.right_len;
+                        let weight = if let Some(weight) = uniform {
+                            weight
+                        } else if let Some(lookup) = weight_lookup {
+                            lookup[base >> bits].weight(block, position)
+                        } else {
+                            block.weight_forward(p, None, &mut cursor)
+                        };
+                        let prior = corpus[p - 1].token();
+                        if prior != NONE {
+                            let before = p - lengths[prior as usize];
+                            // If the left neighbor is itself selected, its right delta
+                            // accounts for this boundary using the final two outputs.
+                            let left_selected = selected.left_selected(corpus, before, prior);
+                            if !left_selected {
                                 if GROUPED {
-                                    left_cache.birth(
+                                    left_cache.remove(prior, weight);
+                                } else {
+                                    output.remove(key(prior, rule.edge.0), weight);
+                                }
+                                if lengths[prior as usize] + rule.length() < max_length {
+                                    if GROUPED {
+                                        left_cache.birth(
+                                            &mut output,
+                                            prior,
+                                            key(prior, rule.replacement),
+                                            before,
+                                            weight,
+                                        )?;
+                                    } else {
+                                        output.birth(
+                                            key(prior, rule.replacement),
+                                            before,
+                                            weight,
+                                            32,
+                                        )?;
+                                    }
+                                }
+                            }
+                        }
+                        let next = corpus[after].token();
+                        if next != NONE {
+                            if GROUPED {
+                                right_cache.remove(next, weight);
+                            } else {
+                                output.remove(key(rule.edge.1, next), weight);
+                            }
+                            let final_next = selected.final_next(corpus, after, next, lengths);
+                            if rule.length() + lengths[final_next as usize] < max_length {
+                                if GROUPED {
+                                    right_cache.birth(
                                         &mut output,
-                                        prior,
-                                        key(prior, rule.replacement),
-                                        before,
+                                        final_next,
+                                        key(rule.replacement, final_next),
+                                        p,
                                         weight,
                                     )?;
                                 } else {
                                     output.birth(
-                                        key(prior, rule.replacement),
-                                        before,
+                                        key(rule.replacement, final_next),
+                                        p,
                                         weight,
                                         32,
                                     )?;
                                 }
-                            }
-                        }
-                    }
-                    let next = corpus[after].token();
-                    if next != NONE {
-                        if GROUPED {
-                            right_cache.remove(next, weight);
-                        } else {
-                            output.remove(key(rule.edge.1, next), weight);
-                        }
-                        let final_next = selected.final_next(corpus, after, next, lengths);
-                        if rule.length() + lengths[final_next as usize] < max_length {
-                            if GROUPED {
-                                right_cache.birth(
-                                    &mut output,
-                                    final_next,
-                                    key(rule.replacement, final_next),
-                                    p,
-                                    weight,
-                                )?;
-                            } else {
-                                output.birth(key(rule.replacement, final_next), p, weight, 32)?;
                             }
                         }
                     }
@@ -275,7 +291,10 @@ fn prepare_with_mode<C: Slot, O: Offset, const INLINE: usize, const GROUPED: boo
     let mut aggregate_bytes = 0;
     for (v, output, bytes) in prepared {
         aggregate_bytes += bytes;
-        valid_bytes += v.iter().map(|v| v.positions.capacity() * 4).sum::<usize>();
+        valid_bytes += v
+            .iter()
+            .map(|v| v.positions.capacity() * std::mem::size_of::<usize>())
+            .sum::<usize>();
         valid.push(v);
         outputs.push(output);
     }
@@ -298,7 +317,7 @@ impl<O: Offset, const INLINE: usize> Prepared<O, INLINE> {
             for valid in job {
                 let rule = &rules[valid.rank];
                 for &position in &valid.positions {
-                    let p = position as usize;
+                    let p = position;
                     let right = p + rule.left_len;
                     corpus[p].set_shared(rule.replacement);
                     if rule.right_len == 1 {

@@ -19,9 +19,11 @@ pub(super) fn initialize_alphabet(
 mod candidate_heap;
 mod validation_window;
 use validation_window::{Frontier, SelectionMode, Window};
+mod block_posting;
 mod bounded_initial;
 mod corpus;
 mod flat_commit;
+use block_posting::BlockPosting;
 mod fused_batch;
 mod radix_count;
 use candidate_heap::CandidateHeap;
@@ -231,7 +233,7 @@ impl PartialOrd for Candidate {
 }
 struct Entry {
     frequency: u64,
-    blocks: SmallPosting,
+    blocks: BlockPosting,
 }
 #[derive(Default)]
 struct Owner {
@@ -366,7 +368,7 @@ impl Default for Group {
     }
 }
 struct Node {
-    position: u32,
+    position: usize,
     next: u32,
 }
 #[derive(Default)]
@@ -416,7 +418,7 @@ impl<O: Offset, const INLINE: usize> Output<O, INLINE> {
             group.weight += weight;
             group.occurrences += 1;
             route.nodes.push(Node {
-                position: u32::try_from(position).map_err(|_| "flat birth position exceeds u32")?,
+                position,
                 next: group.head,
             });
             group.head = head;
@@ -849,7 +851,7 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
     let corpus::Prepared {
         slots: mut corpus,
         mut lengths,
-        mut blocks,
+        blocks,
         uniform,
         symbols: initial_symbols,
         edges: initial_edges,
@@ -872,183 +874,90 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
         && options.is_none_or(|o| o.packed_queue)
         && weighted_edges <= u32::MAX as u64
         && strings.len().max(trainer.vocab_size) <= u16::MAX as usize + 1;
-    let flat = bits == 32 && corpus.len() <= u32::MAX as usize + 1;
+    let flat = true; // One shared owner pipeline, including forced small address blocks.
     let mut owners: Vec<Owner> = (0..config.workers).map(|_| Owner::default()).collect();
     let tokenize_ms = begin.elapsed().as_secs_f64() * 1000.0;
     let floor = trainer.min_frequency.max(1);
     let radix_eligible =
-        options.is_none_or(|o| o.initial_grouped) && flat && lengths.len() <= u16::MAX as usize + 1;
-    let mut initial_weight_lookup = None;
+        options.is_none_or(|o| o.initial_grouped) && lengths.len() <= u16::MAX as usize + 1;
+    let mut initial_weight_lookup: Option<Vec<weight_lookup::WeightLookup>> = None;
     let mut initialize = || -> Result<IndexedTrainingStats> {
-        let initial_begin = Instant::now();
         let initial_route_ms;
         let initial_count_ms;
         let mut radix_metrics = radix_count::Metrics::default();
         let mut initial_weight_lookup_ms = 0.0;
-        let mut initial_summary_waves = 0;
-        let mut initial_summary_buffer_bytes = 0;
-        let mut peak_initial_summary_buffer_bytes = 0;
-        let mut initial_bounded_tiles = 0;
-        let mut initial_bounded_groups = 0;
-        let mut initial_bounded_hash_edges = 0;
-        let mut initial_bounded_sort_buffer_bound_bytes = 0;
+        let initial_summary_waves = 0;
+        let initial_summary_buffer_bytes = 0;
+        let peak_initial_summary_buffer_bytes = 0;
+        let initial_bounded_tiles = 0;
+        let initial_bounded_groups = 0;
+        let initial_bounded_hash_edges = 0;
+        let initial_bounded_sort_buffer_bound_bytes = 0;
         if radix_eligible {
             let lookup_begin = Instant::now();
             initial_weight_lookup = (uniform.is_none() && options.is_none_or(|o| o.weight_lookup))
-                .then(|| weight_lookup::WeightLookup::new(&blocks[0], corpus.len()));
+                .then(|| {
+                    blocks
+                        .iter()
+                        .map(|block| {
+                            weight_lookup::WeightLookup::from_parts(
+                                &block.pivots,
+                                &block.weights,
+                                block.previous_weight,
+                                block.weight_intervals,
+                                (corpus.len() - block.base).min(block_size),
+                            )
+                        })
+                        .collect()
+                });
             initial_weight_lookup_ms = lookup_begin.elapsed().as_secs_f64() * 1000.0;
-            radix_metrics = radix_count::initialize(
+            radix_metrics = radix_count::initialize_segmented(
                 &corpus,
-                &blocks[0],
+                &blocks,
                 uniform,
-                initial_weight_lookup.as_ref(),
+                initial_weight_lookup.as_deref(),
                 config.workers,
                 floor,
                 &mut owners,
+                bits,
             )?;
             initial_route_ms = radix_metrics.route_ms;
             initial_count_ms = radix_metrics.count_ms;
-        } else if flat {
-            // Prototype's two-stage initialization: route compact positions, then
-            // let each owner count and build its own lists. Unicode lookup and the
-            // much larger pair hash tables no longer interleave on every character.
-            // One reusable route buffer per worker. Contiguous ranges keep each
-            // owner's incoming positions ordered, allowing a linear weight cursor.
-            let route_chunk = corpus.len().div_ceil(config.workers).max(1);
-            let routes: Vec<Vec<Vec<u32>>> = corpus
-                .par_chunks(route_chunk)
-                .enumerate()
-                .map(|(chunk, slots)| {
-                    let base = chunk * route_chunk;
-                    let mut routed: Vec<Vec<u32>> =
-                        (0..config.workers).map(|_| Vec::new()).collect();
-                    for (i, slot) in slots.iter().enumerate() {
-                        let p = base + i;
-                        if p + 1 == corpus.len() {
-                            break;
-                        }
-                        let a = slot.token();
-                        let b = corpus[p + 1].token();
-                        if a != NONE && b != NONE {
-                            routed[owner(key(a, b), config.workers)].push(p as u32);
-                        }
-                    }
-                    routed
-                })
-                .collect();
-            initial_route_ms = initial_begin.elapsed().as_secs_f64() * 1000.0;
-            let count_begin = Instant::now();
-            owners
-                .par_iter_mut()
-                .enumerate()
-                .map(|(o, ledger)| -> Result<()> {
-                    let block = &blocks[0];
-                    let mut word = 0;
-                    for routed in &routes {
-                        for &position in &routed[o] {
-                            let p = position as usize;
-                            let weight = if let Some(weight) = uniform {
-                                weight
-                            } else {
-                                while word + 1 < block.pivots.len()
-                                    && block.pivots[word + 1] <= position
-                                {
-                                    word += 1;
-                                }
-                                block.weights[word]
-                            };
-                            let k = key(corpus[p].token(), corpus[p + 1].token());
-                            let entry = ledger.entries.entry(k).or_insert_with(|| Entry {
-                                frequency: 0,
-                                blocks: SmallPosting::default(),
-                            });
-                            entry.frequency += weight; // checked weighted total bounds every key
-                            entry.blocks.push(position)?;
-                        }
-                    }
-                    Ok(())
-                })
-                .collect::<Result<Vec<_>>>()?;
-            initial_count_ms = count_begin.elapsed().as_secs_f64() * 1000.0;
         } else {
-            // Local dictionaries are built by physical block owners. Only key-level
-            // frequencies and block directories are reduced globally, not positions.
-            // Bound transient block-key summaries by initialization concurrency.
-            // Earlier owner directories stay in ascending physical block order;
-            // no key is filtered until every wave has contributed its frequency.
-            let wave_size = config
-                .initialization_workers
-                .unwrap_or(config.workers)
-                .max(1);
-            let mut route_ms = 0.0;
-            let mut count_ms = 0.0;
-            for (wave_index, wave_blocks) in blocks.chunks_mut(wave_size).enumerate() {
-                let route_begin = Instant::now();
-                let initialized: Vec<bounded_initial::Initialized> = wave_blocks
-                    .par_iter_mut()
-                    .map(|block| -> Result<_> {
-                        let end = corpus.len().saturating_sub(1).min(block.base + block_size);
-                        bounded_initial::initialize(&corpus, block, end, uniform, config.workers)
-                    })
-                    .collect::<Result<Vec<_>>>()?;
-                initial_bounded_tiles += initialized.iter().map(|b| b.metrics.tiles).sum::<usize>();
-                initial_bounded_groups +=
-                    initialized.iter().map(|b| b.metrics.groups).sum::<usize>();
-                initial_bounded_hash_edges += initialized
-                    .iter()
-                    .map(|b| b.metrics.hash_edges)
-                    .sum::<usize>();
-                // Sum of each active block's maximum is an allocation bound,
-                // not an assertion that these maxima occur simultaneously.
-                initial_bounded_sort_buffer_bound_bytes = initial_bounded_sort_buffer_bound_bytes
-                    .max(
-                        initialized
-                            .iter()
-                            .map(|b| b.metrics.buffer_bound_bytes)
-                            .sum::<usize>(),
-                    );
-                let frequencies: Vec<_> = initialized.into_iter().map(|b| b.routes).collect();
-                route_ms += route_begin.elapsed().as_secs_f64() * 1000.0;
-                let summary_bytes = frequencies.capacity()
-                    * std::mem::size_of::<Vec<Vec<(u64, u64)>>>()
-                    + frequencies
-                        .iter()
-                        .map(|routes| {
-                            routes.capacity() * std::mem::size_of::<Vec<(u64, u64)>>()
-                                + routes
-                                    .iter()
-                                    .map(|items| items.capacity() * 16)
-                                    .sum::<usize>()
-                        })
-                        .sum::<usize>();
-                initial_summary_buffer_bytes += summary_bytes;
-                peak_initial_summary_buffer_bytes =
-                    peak_initial_summary_buffer_bytes.max(summary_bytes);
-                initial_summary_waves += 1;
-                let count_begin = Instant::now();
+            let route_begin = Instant::now();
+            // Bounded spatial waves avoid a whole-corpus u64 occurrence buffer.
+            for (wave, slots) in corpus.chunks(1 << 20).enumerate() {
+                let base = wave * (1 << 20);
+                let mut routes = (0..config.workers).map(|_| Vec::new()).collect::<Vec<_>>();
+                for (i, slot) in slots.iter().enumerate() {
+                    let p = base + i;
+                    if p + 1 == corpus.len() {
+                        break;
+                    }
+                    let a = slot.token();
+                    let b = corpus[p + 1].token();
+                    if a != NONE && b != NONE {
+                        routes[owner(key(a, b), config.workers)].push((key(a, b), p));
+                    }
+                }
                 owners
                     .par_iter_mut()
-                    .enumerate()
-                    .map(|(o, ledger)| -> Result<()> {
-                        for (b, counts) in frequencies.iter().enumerate() {
-                            for &(k, weight) in &counts[o] {
-                                let entry = ledger.entries.entry(k).or_insert_with(|| Entry {
-                                    frequency: 0,
-                                    blocks: SmallPosting::default(),
-                                });
-                                entry.frequency += weight;
-                                entry.blocks.push((wave_index * wave_size + b) as u32)?;
-                            }
+                    .zip(routes.into_par_iter())
+                    .map(|(ledger, records)| -> Result<()> {
+                        for (k, p) in records {
+                            let e = ledger.entries.entry(k).or_insert_with(|| Entry {
+                                frequency: 0,
+                                blocks: BlockPosting::default(),
+                            });
+                            e.frequency += blocks[p >> bits].weight(p, uniform);
+                            e.blocks.push_address(p, bits)?;
                         }
                         Ok(())
                     })
                     .collect::<Result<Vec<_>>>()?;
-                count_ms += count_begin.elapsed().as_secs_f64() * 1000.0;
-                // All reducers have joined. Drop this wave's summary vectors
-                // before allocating the next wave; final block postings remain.
             }
-            initial_route_ms = route_ms;
-            initial_count_ms = count_ms;
+            initial_route_ms = route_begin.elapsed().as_secs_f64() * 1000.0;
+            initial_count_ms = 0.0;
         }
         let mut stats = IndexedTrainingStats {
             initial_symbols,
@@ -1090,7 +999,9 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
                 "spatial_owner_hash"
             },
             initial_weight_lookup_ms,
-            initial_weight_lookup_bytes: initial_weight_lookup.as_ref().map_or(0, |l| l.bytes()),
+            initial_weight_lookup_bytes: initial_weight_lookup
+                .as_ref()
+                .map_or(0, |l| l.iter().map(|v| v.bytes()).sum()),
             initial_route_compact_ms: radix_metrics.compact_ms,
             initial_radix_sort_ms: radix_metrics.sort_ms,
             initial_group_count_ms: radix_metrics.group_ms,
@@ -1107,13 +1018,10 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
             workers: config.workers,
             initialization_workers: config.initialization_workers.unwrap_or(config.workers),
             atomic_corpus: config.atomic_corpus,
-            layout: match (C::NARROW, bits, flat) {
-                (true, 16, _) => "parallel_u16_dict16_word_aligned",
-                (true, 32, true) => "parallel_u16_flat32",
-                (true, 32, false) => "parallel_u16_dict32",
-                (false, 16, _) => "parallel_u32_dict16_word_aligned",
-                (false, 32, true) => "parallel_u32_flat32",
-                _ => "parallel_u32_dict32",
+            layout: if bits == 32 {
+                "parallel_u32_segments32"
+            } else {
+                "parallel_u32_segments16"
             },
             ..Default::default()
         };
@@ -1134,13 +1042,6 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
                 old - ledger.entries.len()
             })
             .sum::<usize>();
-        if !flat {
-            blocks.par_iter_mut().for_each(|block| {
-                block
-                    .postings
-                    .retain(|k, _| owners[owner(*k, config.workers)].entries.contains_key(k));
-            });
-        }
         stats.initial_heap_ms = heap_begin.elapsed().as_secs_f64() * 1000.0;
         stats.initial_corpus_bytes = corpus.capacity() * std::mem::size_of::<C>()
             + lengths.capacity() * std::mem::size_of::<usize>()
@@ -1152,42 +1053,31 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
         stats.initial_edges = initial_edges;
         stats.initial_pairs = owners.iter().map(|o| o.entries.len()).sum();
         stats.initial_blocks = blocks.len();
-        stats.initial_block_pairs = blocks.iter().map(|b| b.postings.len()).sum();
+        stats.initial_block_pairs = owners
+            .iter()
+            .flat_map(|o| o.entries.values())
+            .map(|e| e.blocks.run_count())
+            .sum();
         stats.initial_slot_bytes = corpus.capacity() * std::mem::size_of::<C>();
         stats.initial_length_bytes = lengths.capacity() * std::mem::size_of::<usize>();
         stats.initial_weight_bytes =
             stats.initial_corpus_bytes - stats.initial_slot_bytes - stats.initial_length_bytes;
-        stats.initial_posting_bytes = if flat {
-            owners
-                .iter()
-                .flat_map(|o| o.entries.values())
-                .map(|e| e.blocks.allocated_capacity() * 4)
-                .sum()
-        } else {
-            blocks
-                .iter()
-                .flat_map(|b| b.postings.values())
-                .map(|p| p.allocated_capacity() * std::mem::size_of::<O>())
-                .sum()
-        };
+        stats.initial_posting_bytes = owners
+            .iter()
+            .flat_map(|o| o.entries.values())
+            .map(|e| e.blocks.allocated_capacity() * 4)
+            .sum();
         stats.initial_pair_table_bytes = owners
             .iter()
-            .map(|o| table_bytes(o.entries.capacity(), 32))
+            .map(|o| table_bytes(o.entries.capacity(), 8 + std::mem::size_of::<Entry>()))
             .sum();
-        stats.initial_block_table_bytes = blocks
+        stats.initial_block_table_bytes =
+            blocks.capacity() * std::mem::size_of::<Block<O, INLINE>>();
+        stats.initial_directory_bytes = owners
             .iter()
-            .map(|b| table_bytes(b.postings.capacity(), 24))
-            .sum::<usize>()
-            + blocks.capacity() * std::mem::size_of::<Block<O, INLINE>>();
-        stats.initial_directory_bytes = if flat {
-            0
-        } else {
-            owners
-                .iter()
-                .flat_map(|o| o.entries.values())
-                .map(|e| e.blocks.allocated_capacity() * 4)
-                .sum()
-        };
+            .flat_map(|o| o.entries.values())
+            .map(|e| e.blocks.directory_bytes())
+            .sum();
         stats.initial_heap_bytes = owners.iter().map(|o| o.heap.capacity_bytes()).sum();
         stats.corpus_bytes = stats.initial_corpus_bytes;
         stats.posting_bytes = stats.initial_posting_bytes;
@@ -1205,15 +1095,20 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
     #[cfg(test)]
     let mut trace = Vec::new();
     let lookup_begin = Instant::now();
-    let weight_lookup = initial_weight_lookup.or_else(|| {
-        (flat && C::SHARED && uniform.is_none() && options.is_none_or(|o| o.weight_lookup))
-            .then(|| weight_lookup::WeightLookup::new(&blocks[0], corpus.len()))
-    });
+    let weight_lookup = initial_weight_lookup;
     stats.weight_lookup_build_ms = lookup_begin.elapsed().as_secs_f64() * 1000.0;
-    stats.weight_lookup_bytes = weight_lookup.as_ref().map_or(0, |l| l.bytes());
-    stats.weight_one_bucket_count = weight_lookup.as_ref().map_or(0, |l| l.one_bucket_count());
-    stats.weight_bucket_count = weight_lookup.as_ref().map_or(0, |l| l.bucket_count());
-    stats.weight_one_bucket_bytes = weight_lookup.as_ref().map_or(0, |l| l.one_bucket_bytes());
+    stats.weight_lookup_bytes = weight_lookup
+        .as_ref()
+        .map_or(0, |l| l.iter().map(|v| v.bytes()).sum());
+    stats.weight_one_bucket_count = weight_lookup
+        .as_ref()
+        .map_or(0, |l| l.iter().map(|v| v.one_bucket_count()).sum());
+    stats.weight_bucket_count = weight_lookup
+        .as_ref()
+        .map_or(0, |l| l.iter().map(|v| v.bucket_count()).sum());
+    stats.weight_one_bucket_bytes = weight_lookup
+        .as_ref()
+        .map_or(0, |l| l.iter().map(|v| v.one_bucket_bytes()).sum());
     let mut frontier = Frontier::default();
     let mut committed_merges = 0;
     while ids.len() < trainer.vocab_size {
@@ -1222,7 +1117,6 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
         let mut rules = Vec::<Rule>::new();
         let mut heads = AHashSet::new();
         let mut tails = AHashSet::new();
-        let mut block_rules = AHashMap::<usize, Vec<usize>>::new();
         let mut flat_postings = Vec::new();
         frontier.begin_epoch(&mut owners, selection);
         while rules.len() < cap {
@@ -1288,23 +1182,10 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
                 lengths.push(length);
                 id
             };
-            let rank = rules.len();
             // Directory ownership ends here. Selected local postings are freed
             // during planning, before allocating the next generation's postings.
-            if flat {
-                stats.posting_visits += entry.blocks.len();
-                flat_postings.push(entry.blocks);
-            } else {
-                for &b in entry.blocks.as_slice() {
-                    block_rules.entry(b as usize).or_default().push(rank);
-                }
-                stats.posting_visits += entry
-                    .blocks
-                    .as_slice()
-                    .iter()
-                    .map(|&b| blocks[b as usize].postings[&top.key].len())
-                    .sum::<usize>();
-            }
+            stats.posting_visits += entry.blocks.len();
+            flat_postings.push(entry.blocks);
             rules.push(Rule {
                 edge,
                 replacement,
@@ -1332,7 +1213,6 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
         let stage = Instant::now();
         stats.batch_rounds += 1;
         stats.max_batch_rules = stats.max_batch_rules.max(rules.len());
-        let mut block_prepared = None;
         let outputs: Vec<Output<O, INLINE>> = if flat
             && options.is_none_or(|o| o.fused_batch)
             && C::SHARED
@@ -1343,13 +1223,14 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
                     &corpus,
                     &rules,
                     &flat_postings,
-                    &blocks[0],
+                    &blocks,
                     &lengths,
                     uniform,
-                    weight_lookup.as_ref(),
+                    weight_lookup.as_deref(),
                     max_length,
                     config.workers,
                     options.is_none_or(|o| o.grouped_tail),
+                    bits,
                 )
             })?;
             stats.fused_batches += 1;
@@ -1369,111 +1250,30 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
             pool.install(|| prepared.apply(&corpus, &rules));
             stats.rewrite_ms += stage.elapsed().as_secs_f64() * 1000.0;
             prepared.outputs
-        } else if !flat
-            && C::SHARED
-            && rules[0].edge.0 != rules[0].edge.1
-            && options.is_none_or(|o| o.fused_batch)
-        {
-            let mut prepared = pool.install(|| {
-                fused_batch::block::prepare(
-                    &corpus,
-                    &rules,
-                    &mut blocks,
-                    &block_rules,
-                    &lengths,
-                    uniform,
-                    max_length,
-                    bits,
-                    config.workers,
-                )
-            })?;
-            stats.fused_block_batches += 1;
-            stats.peak_selected_lookup_bytes = stats
-                .peak_selected_lookup_bytes
-                .max(prepared.selected_bytes);
-            stats.peak_valid_start_bytes = stats.peak_valid_start_bytes.max(prepared.valid_bytes);
-            stats.peak_block_birth_node_bytes =
-                stats.peak_block_birth_node_bytes.max(prepared.node_bytes);
-            stats.peak_block_birth_fragment_bytes = stats
-                .peak_block_birth_fragment_bytes
-                .max(prepared.fragment_bytes);
-            stats.peak_block_task_bytes = stats.peak_block_task_bytes.max(prepared.task_bytes);
-            stats.peak_block_scratch_bound_bytes = stats
-                .peak_block_scratch_bound_bytes
-                .max(prepared.scratch_bound_bytes);
-            let elapsed = stage.elapsed().as_secs_f64() * 1000.0;
-            stats.fused_prepare_ms += elapsed;
-            stats.delta_ms += elapsed;
-            let stage = Instant::now();
-            pool.install(|| prepared.apply(&corpus, &rules, bits));
-            stats.rewrite_ms += stage.elapsed().as_secs_f64() * 1000.0;
-            let outputs = std::mem::take(&mut prepared.outputs);
-            block_prepared = Some(prepared);
-            outputs
         } else {
-            let chunks: Vec<Vec<Plan>> = if flat {
-                pool.install(|| {
-                    flat_postings
-                        .par_iter()
-                        .enumerate()
-                        .map(|(rank, posting)| {
-                            let rule = &rules[rank];
-                            posting
-                                .as_slice()
-                                .par_iter()
-                                .filter_map(|&position| {
-                                    let p = position as usize;
+            let chunks: Vec<Vec<Plan>> = pool.install(|| {
+                let corpus = &corpus;
+                flat_postings
+                    .par_iter()
+                    .enumerate()
+                    .map(|(rank, posting)| {
+                        let rule = &rules[rank];
+                        posting
+                            .segments(bits)
+                            .flat_map(|(base, offsets)| {
+                                offsets.iter().filter_map(move |&offset| {
+                                    let p = base | offset as usize;
                                     let right = p + rule.left_len;
                                     (corpus[p].token() == rule.edge.0
                                         && right < corpus.len()
                                         && corpus[right].token() == rule.edge.1)
                                         .then_some(Plan { position: p, rank })
                                 })
-                                .collect()
-                        })
-                        .collect()
-                })
-            } else {
-                pool.install(|| {
-                    blocks
-                        .par_iter_mut()
-                        .enumerate()
-                        .map(|(b, block)| -> Vec<Plan> {
-                            let mut plans = Vec::new();
-                            if let Some(ranks) = block_rules.get(&b) {
-                                for &rank in ranks {
-                                    let rule = &rules[rank];
-                                    let posting = block
-                                        .postings
-                                        .remove(&key(rule.edge.0, rule.edge.1))
-                                        .unwrap();
-                                    let valid: Vec<_> = posting
-                                        .as_slice()
-                                        .par_iter()
-                                        .filter_map(|&offset| {
-                                            let p = block.base + offset.index();
-                                            let right = p + rule.left_len;
-                                            if corpus[p].token() == rule.edge.0
-                                                && right < corpus.len()
-                                                && corpus[right].token() == rule.edge.1
-                                            {
-                                                Some(Plan { position: p, rank })
-                                            } else {
-                                                None
-                                            }
-                                        })
-                                        .collect();
-                                    plans.extend(valid);
-                                }
-                            }
-                            if block_rules.get(&b).is_some_and(|r| r.len() > 1) {
-                                plans.par_sort_unstable_by_key(|p| p.position);
-                            }
-                            plans
-                        })
-                        .collect()
-                })
-            };
+                            })
+                            .collect()
+                    })
+                    .collect()
+            });
             drop(flat_postings);
             let count: usize = chunks.iter().map(Vec::len).sum();
             let mut plans = Vec::with_capacity(count);
@@ -1606,8 +1406,16 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
                 .map(|(o, ledger)| -> Result<_> {
                     let mut retired = Vec::new();
                     if flat && !outputs[0].flat_births.is_empty() {
-                        let result =
-                            flat_commit::dense(&outputs, o, ledger, &rules, lengths.len(), floor)?;
+                        let result = flat_commit::dense(
+                            &outputs,
+                            o,
+                            ledger,
+                            &rules,
+                            lengths.len(),
+                            floor,
+                            bits,
+                            blocks.len() == 1,
+                        )?;
                         ledger.prepare_window(selection);
                         return Ok(result);
                     }
@@ -1645,7 +1453,7 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
                                 k,
                                 Entry {
                                     frequency,
-                                    blocks: SmallPosting::with_capacity(count)?,
+                                    blocks: BlockPosting::with_capacity(count)?,
                                 },
                             );
                             ledger.heap.push(Candidate { key: k, frequency });
@@ -1661,154 +1469,38 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
                                 };
                                 let start = entry.blocks.len();
                                 let mut head = group.head;
-                                entry
-                                    .blocks
-                                    .append_reversed_reserved(group.occurrences, || {
+                                entry.blocks.append_reversed_reserved_at(
+                                    group.occurrences,
+                                    bits,
+                                    || {
                                         let node = &route.nodes[head as usize];
                                         head = node.next;
                                         node.position
-                                    })?;
+                                    },
+                                )?;
                                 debug_assert_eq!(head, NONE);
-                                let positions = entry.blocks.as_slice();
                                 debug_assert!(
-                                    positions[start.saturating_sub(1)..]
+                                    entry
+                                        .blocks
+                                        .iter(bits)
+                                        .skip(start.saturating_sub(1))
+                                        .collect::<Vec<_>>()
                                         .windows(2)
-                                        .all(|w| w[0] < w[1]),
-                                    "birth producer order must yield sorted unique postings"
+                                        .all(|w| w[0] < w[1])
                                 );
                             }
                         }
                         ledger.prepare_window(selection);
                         return Ok((retired, AHashSet::new(), dropped));
                     }
-                    let mut sums = AHashMap::<u64, u64>::new();
-                    for output in &outputs {
-                        for (&k, &weight) in &output.removed[o] {
-                            if let Some(entry) = ledger.entries.get_mut(&k) {
-                                entry.frequency = entry
-                                    .frequency
-                                    .checked_sub(weight)
-                                    .ok_or("old pair frequency underflow")?;
-                                if entry.frequency < floor {
-                                    let entry = ledger.entries.remove(&k).unwrap();
-                                    if flat {
-                                        drop(entry);
-                                        retired.push((k, SmallPosting::default()));
-                                    } else {
-                                        retired.push((k, entry.blocks));
-                                    }
-                                }
-                            }
-                        }
-                        for (&k, &weight) in &output.born[o] {
-                            *sums.entry(k).or_default() += weight;
-                        }
-                    }
-                    let mut accepted = AHashSet::new();
-                    let mut dropped = 0;
-                    for (k, frequency) in sums {
-                        if frequency < floor {
-                            dropped += 1;
-                            continue;
-                        }
-                        debug_assert!(
-                            !ledger.entries.contains_key(&k),
-                            "a birth contains a newly activated identity"
-                        );
-                        ledger.entries.insert(
-                            k,
-                            Entry {
-                                frequency,
-                                blocks: SmallPosting::default(),
-                            },
-                        );
-                        ledger.heap.push(Candidate { key: k, frequency });
-                        accepted.insert(k);
-                    }
-                    ledger.prepare_window(selection);
-                    Ok((retired, accepted, dropped))
+                    unreachable!("shared owner pipeline");
                 })
                 .collect::<Result<Vec<_>>>()
         })?;
         stats.commit_ms += stage.elapsed().as_secs_f64() * 1000.0;
         let stage = Instant::now();
-        let mut retired_blocks = AHashMap::<usize, Vec<u64>>::new();
         for (retired, _, dropped) in &commits {
             stats.pruned_pairs += retired.len() + dropped;
-            for (k, directory) in retired {
-                for &b in directory.as_slice() {
-                    retired_blocks.entry(b as usize).or_default().push(*k);
-                }
-            }
-        }
-        if !flat {
-            // Dictionaries install their own births. Count once and reserve the
-            // final list, rather than copying via a coordinator's routed map.
-            let directories: Vec<Vec<Vec<(u64, u32)>>> = if let Some(prepared) = &block_prepared {
-                pool.install(|| {
-                    prepared.install(
-                        &mut blocks,
-                        |k| commits[owner(k, config.workers)].1.contains(&k),
-                        &retired_blocks,
-                        config.workers,
-                    )
-                })?
-            } else {
-                blocks
-                    .par_iter_mut()
-                    .enumerate()
-                    .map(|(b, block)| -> Result<_> {
-                        if let Some(keys) = retired_blocks.get(&b) {
-                            for k in keys {
-                                block.postings.remove(k);
-                            }
-                        }
-                        let mut counts = AHashMap::<u64, usize>::new();
-                        for output in &outputs {
-                            if let Some(births) = output.blocks.get(&b) {
-                                for (&k, positions) in births {
-                                    if commits[owner(k, config.workers)].1.contains(&k) {
-                                        *counts.entry(k).or_default() += positions.len();
-                                    }
-                                }
-                            }
-                        }
-                        let mut directory: Vec<Vec<(u64, u32)>> =
-                            (0..config.workers).map(|_| Vec::new()).collect();
-                        for (k, count) in counts {
-                            let mut positions = PackedPosting::<O, INLINE>::with_capacity(
-                                u32::try_from(count)
-                                    .map_err(|_| "block posting count exceeds u32")?,
-                            )?;
-                            for output in &outputs {
-                                if let Some(source) =
-                                    output.blocks.get(&b).and_then(|births| births.get(&k))
-                                {
-                                    for &offset in source.as_slice() {
-                                        positions.push(offset)?;
-                                    }
-                                }
-                            }
-                            debug_assert!(!block.postings.contains_key(&k));
-                            block.postings.insert(k, positions);
-                            directory[owner(k, config.workers)].push((k, b as u32));
-                        }
-                        Ok(directory)
-                    })
-                    .collect::<Result<Vec<_>>>()?
-            };
-            owners
-                .par_iter_mut()
-                .enumerate()
-                .map(|(o, ledger)| -> Result<()> {
-                    for directory in &directories {
-                        for &(k, b) in &directory[o] {
-                            ledger.entries.get_mut(&k).unwrap().blocks.push(b)?;
-                        }
-                    }
-                    Ok(())
-                })
-                .collect::<Result<Vec<_>>>()?;
         }
         stats.route_ms += stage.elapsed().as_secs_f64() * 1000.0;
         committed_merges = merges.len();
@@ -2118,7 +1810,7 @@ mod tests {
                 assert_eq!(got.trace, expected.trace);
                 assert_eq!(got.vocab, expected.vocab);
                 assert_eq!(got.merges, expected.merges);
-                assert_eq!(got.stats.layout.starts_with("parallel_u16"), narrow);
+                assert_eq!(got.stats.corpus_slot_bytes == 2, narrow);
             }
         }
     }
@@ -2165,8 +1857,8 @@ mod tests {
             .map(|(w, n)| (w.into(), n))
             .collect();
         for (size, layout) in [
-            (65535, "parallel_u16_flat32"),
-            (65536, "parallel_u32_flat32"),
+            (65535, "parallel_u32_segments32"),
+            (65536, "parallel_u32_segments32"),
         ] {
             let trainer = BpeTrainer::builder()
                 .vocab_size(size)
@@ -2191,7 +1883,7 @@ mod tests {
         let got = trainer
             .do_train_indexed_parallel(&words, IndexedParallelConfig::default())
             .unwrap();
-        assert_eq!(got.stats.layout, "parallel_u32_flat32");
+        assert_eq!(got.stats.layout, "parallel_u32_segments32");
         assert!(got.vocab["b"] >= 65535);
     }
 
@@ -2255,7 +1947,7 @@ mod tests {
         let block = Block::<u16, 4>::new(base, 13);
         assert_eq!(block.weight(base + 65535, None), 13);
         assert_eq!(<u16 as Offset>::encode(65535_usize), 65535);
-        assert_eq!(std::mem::size_of::<Entry>(), 24);
+        assert_eq!(std::mem::size_of::<Entry>(), 40);
     }
 
     #[test]
@@ -2426,14 +2118,9 @@ mod tests {
                     )
                     .unwrap();
                 assert!(got.stats.initial_blocks > 4);
-                assert_eq!(
-                    got.stats.initial_summary_waves,
-                    got.stats.initial_blocks.div_ceil(2)
-                );
-                assert!(
-                    got.stats.peak_initial_summary_buffer_bytes
-                        < got.stats.initial_summary_buffer_bytes
-                );
+                assert_eq!(got.stats.initial_summary_waves, 0);
+                assert!(got.stats.initial_route_buffer_bytes > 0);
+                assert_eq!(got.stats.initial_count_backend, "stable_radix16");
                 assert_eq!(got.trace, expected.trace);
                 assert_eq!(got.vocab, expected.vocab);
                 assert_eq!(got.merges, expected.merges);

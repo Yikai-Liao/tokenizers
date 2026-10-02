@@ -101,9 +101,9 @@ mod tests {
                         assert_eq!(got.vocab, vocab);
                         assert_eq!(got.merges, merges);
                     }
-                    assert!(a.stats.fused_block_batches > 0);
-                    assert!(b.stats.fused_block_batches > 0);
-                    assert_eq!(old.stats.fused_block_batches, 0);
+                    assert!(a.stats.fused_batches > 0);
+                    assert!(b.stats.fused_batches > 0);
+                    assert_eq!(old.stats.fused_batches, 0);
                 }
             }
         }
@@ -139,7 +139,7 @@ mod tests {
             assert_eq!(local.vocab, flat.vocab);
             assert_eq!(local.merges, flat.merges);
             assert!(local.stats.corpus_padding_slots > 0);
-            assert!(local.stats.fused_block_batches > 0);
+            assert!(local.stats.fused_batches > 0);
         }
     }
 
@@ -379,7 +379,7 @@ impl Scratch {
         let fragment = &mut job.fragments[group.last as usize];
         debug_assert_eq!(fragment.key, k);
         job.nodes.push(Node {
-            position: offset,
+            position: offset as usize,
             next: fragment.head,
         });
         fragment.head = head;

@@ -51,7 +51,6 @@ impl Scratch {
         if head == NONE {
             return Err("birth chain sentinel collision".into());
         }
-        let position = u32::try_from(position).map_err(|_| "flat birth position exceeds u32")?;
         let count = record
             .born
             .occurrences
@@ -147,7 +146,7 @@ impl Scratch {
 mod tests {
     use super::*;
 
-    fn chain(route: &Route, k: u64) -> Vec<u32> {
+    fn chain(route: &Route, k: u64) -> Vec<usize> {
         let mut head = route.delta[&k].head;
         let mut positions = Vec::new();
         while head != NONE {
