@@ -943,8 +943,9 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
                             group.1.push(p);
                         }
                         for (k, (frequency, positions)) in grouped {
+                            let positions = positions.as_slice();
                             let mut cursor = positions.len();
-                            let posting = BlockPosting::from_reversed(cursor, bits, || {
+                            let posting = BlockPosting::from_reversed(cursor, bits, move || {
                                 cursor -= 1;
                                 positions[cursor]
                             })?;
@@ -1072,7 +1073,7 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
         stats.initial_posting_bytes = owners
             .iter()
             .flat_map(|o| o.entries.values())
-            .map(|e| e.blocks.allocated_capacity() * 4)
+            .map(|e| e.blocks.payload_bytes())
             .sum();
         stats.initial_pair_table_bytes = owners
             .iter()
@@ -1482,14 +1483,13 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
                                 entry.blocks.append_reversed_reserved_at(
                                     group.occurrences as usize,
                                     bits,
-                                    || {
+                                    move || {
                                         let index = head as usize;
                                         let node = &route.nodes[index];
                                         head = node.next;
                                         route.high.address(index, node.position)
                                     },
                                 )?;
-                                debug_assert_eq!(head, NONE);
                                 debug_assert!(
                                     entry
                                         .blocks

@@ -13,6 +13,10 @@ const PREFETCH: bool = match option_env!("TK_POSTING_PREFETCH") {
     Some(s) => s.as_bytes().len() == 1 && s.as_bytes()[0] == b'1',
     None => true,
 };
+const FUSED_DECODE: bool = match option_env!("TK_POSTING_FUSED_DECODE") {
+    Some(s) => s.as_bytes().len() == 1 && s.as_bytes()[0] == b'1',
+    None => false,
+};
 const DECODE_BATCH: usize = 128;
 const PREFETCH_DISTANCE: usize = 16;
 #[inline]
@@ -218,20 +222,9 @@ fn prepare_with_mode<C: Slot, O: Offset, const INLINE: usize, const GROUPED: boo
                 let rule = &rules[task.rank];
                 let mut positions = address_scratch::Positions::default();
                 let mut weight_cursor = weight_lookup::Cursor::default();
-                let mut begin = task.begin;
-                while begin < task.end {
-                    let count = (task.end - begin).min(DECODE_BATCH);
-                    task.posting
-                        .decode_into(bits, begin, &mut decoded[..count])?;
-                    if PREFETCH {
-                        for &p in &decoded[..count.min(PREFETCH_DISTANCE)] {
-                            prefetch_position(corpus, p);
-                        }
-                    }
-                    for (i, &p) in decoded[..count].iter().enumerate() {
-                        if PREFETCH && i + PREFETCH_DISTANCE < count {
-                            prefetch_position(corpus, decoded[i + PREFETCH_DISTANCE]);
-                        }
+                macro_rules! consume {
+                    ($position:expr) => {{
+                        let p = $position;
                         let right = p + rule.left_len;
                         if corpus[p].token() != rule.edge.0
                             || right >= corpus.len()
@@ -307,8 +300,51 @@ fn prepare_with_mode<C: Slot, O: Offset, const INLINE: usize, const GROUPED: boo
                                 }
                             }
                         }
+                    }};
+                }
+                let mut decoder = task.posting.decoder(bits, task.begin, task.end);
+                if FUSED_DECODE {
+                    // Interleave decoding with consumption; retain the same
+                    // 16-position prefetch distance as the batched variant.
+                    let mut ring = [0usize; PREFETCH_DISTANCE];
+                    let mut active = decoder.fill(&mut ring);
+                    if PREFETCH {
+                        for &p in &ring[..active] {
+                            prefetch_position(corpus, p);
+                        }
                     }
-                    begin += count;
+                    let mut index = 0;
+                    while active != 0 {
+                        let p = ring[index];
+                        if let Some(next) = decoder.next() {
+                            ring[index] = next;
+                            if PREFETCH {
+                                prefetch_position(corpus, next);
+                            }
+                        } else {
+                            active -= 1;
+                        }
+                        index = (index + 1) % PREFETCH_DISTANCE;
+                        consume!(p);
+                    }
+                } else {
+                    loop {
+                        let count = decoder.fill(&mut decoded);
+                        if count == 0 {
+                            break;
+                        }
+                        if PREFETCH {
+                            for &p in &decoded[..count.min(PREFETCH_DISTANCE)] {
+                                prefetch_position(corpus, p);
+                            }
+                        }
+                        for (i, &p) in decoded[..count].iter().enumerate() {
+                            if PREFETCH && i + PREFETCH_DISTANCE < count {
+                                prefetch_position(corpus, decoded[i + PREFETCH_DISTANCE]);
+                            }
+                            consume!(p);
+                        }
+                    }
                 }
                 if GROUPED {
                     left_cache.flush_dense(&mut output, rule, true, task.rank)?;
