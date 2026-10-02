@@ -1,0 +1,8 @@
+{
+  "source_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/gb-corpus/zh-512m.txt",
+  "derived_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/block-corpus/zh-256m.txt",
+  "selection": "complete-line prefix, at most 256 MiB",
+  "bytes": 268435162,
+  "lines": 666896,
+  "sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98"
+}

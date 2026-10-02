@@ -1,0 +1,86 @@
+{
+  "case": "zh16m-none-workers4",
+  "command": [
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-analysis-workers4/target/release/hf-bpe-native-affix-analysis-workers4",
+    "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/zh-16m-from-512m.txt",
+    "none",
+    "reference",
+    "30000",
+    "2"
+  ],
+  "env_overrides": {
+    "TOKENIZERS_PARALLELISM": "false",
+    "RAYON_NUM_THREADS": "4",
+    "HF_BPE_BENCH_WORKERS": "4"
+  },
+  "corpus": "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/zh-16m-from-512m.txt",
+  "corpus_bytes": 16776351,
+  "corpus_sha256": "ebd64699a917bb0982e9b64d302d94cc08057f43d16bcb5efc041594684c12a6",
+  "prefix": null,
+  "suffix": null,
+  "require_absent_affixes": false,
+  "oracle": false,
+  "requested_threads": 4,
+  "vocab_size": 30000,
+  "min_frequency": 2,
+  "label": "affix-analysis-workers4",
+  "source_commit": "c9af0cf2e5d81b89147f555d6d9693f504aab1dc",
+  "binary_sha256": "27f3c2f6bb22932657d9ba3f2176ffda3aa355c067fc47a6c9758e00f7a72267",
+  "instrumentation_sha256": "e751f99e36f583e16119396a725962f6828c77c0563a970d3bee6fee197308e6",
+  "system_before": {
+    "MemAvailable": 7436398592,
+    "SwapFree": 6276288512
+  },
+  "host_before": {
+    "cpu": [
+      "18334674",
+      "28765",
+      "5537477",
+      "154619885",
+      "56676",
+      "0",
+      "1792949",
+      "67410",
+      "0",
+      "0"
+    ],
+    "loadavg": [
+      "3.02",
+      "2.76",
+      "2.13"
+    ]
+  },
+  "system_after": {
+    "MemAvailable": 7442513920,
+    "SwapFree": 6276288512
+  },
+  "host_after": {
+    "cpu": [
+      "18334930",
+      "28765",
+      "5537535",
+      "154620362",
+      "56678",
+      "0",
+      "1792963",
+      "67410",
+      "0",
+      "0"
+    ],
+    "loadavg": [
+      "3.02",
+      "2.76",
+      "2.13"
+    ]
+  },
+  "wall_seconds": 1.2537483389605768,
+  "min_memavailable": 7307427840,
+  "peak_rss_bytes": 153432064,
+  "peak_vmswap_bytes": 0,
+  "pswpin_delta": null,
+  "child_user_seconds": 2.22936,
+  "child_system_seconds": 0.430868,
+  "child_maxrss_kib": 150384,
+  "returncode": 0,
+  "failure": null
+}

@@ -1,0 +1,132 @@
+{
+  "case": "zh512m-suffix-w1-vocab50k",
+  "label": "affix-general-v1",
+  "command": [
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-general-v1/target/release/hf-bpe-native-affix-general-v1",
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/gb-corpus/zh-512m.txt",
+    "none",
+    "reference",
+    "50000",
+    "2"
+  ],
+  "worktree_commit": "d7d67475bd858f6eeddffc528a792acd9ee51349",
+  "build_manifest_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-general-v1/build_manifest.json",
+  "build_manifest_sha256": "da38374961d90242158232a250f6bc58c9b3953d41a6e1406054193e828e2124",
+  "binary_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-general-v1/target/release/hf-bpe-native-affix-general-v1",
+  "binary_sha256": "447a95dcd4296298cabe0b392a0408c3056faf362d5be03cd8e48e55904c2647",
+  "build_script_sha256": "6f42ac8e76f7e953a345c40451b7c5d9315ad1c609dccdbe232b0457279462d9",
+  "run_script_sha256": "bb2b889eaf543c614c63e95b72b6ca642dc990b92572bc0dd10e75a2d08e1152",
+  "instrumentation_patch_sha256": "17d213af3abd3cea4ca637f47f4052647c2142ac49b1dbc4437795478054e133",
+  "runner_source_sha256": "c030e60213aa927afc9d5b1d687bf391ea8e099c7a100a9bd55fdbdbaa8d13c8",
+  "runner_lock_sha256": "ed6171e24ed18b758fa7f03b3255105a3cbd682d7a3b41cd05a5a28b086ccbaf",
+  "corpus_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/gb-corpus/zh-512m.txt",
+  "corpus_bytes": 536870289,
+  "corpus_sha256": "a0d40d4102cba1e933f25e5ccd17552d2eaebaec4ef770bc39d8e46e740b4d4f",
+  "prefix": null,
+  "suffix": "</w>",
+  "oracle": false,
+  "max_token_length": null,
+  "require_absent_affixes": false,
+  "expected_model_sha256": null,
+  "threads_requested": 1,
+  "vocab_size": 50000,
+  "min_frequency": 2,
+  "env_overrides": {
+    "TOKENIZERS_PARALLELISM": "false",
+    "RAYON_NUM_THREADS": "1",
+    "HF_BPE_BENCH_WORKERS": "1",
+    "HF_BPE_SUFFIX": "</w>"
+  },
+  "mem_before": {
+    "MemAvailable": 7681298432,
+    "SwapFree": 5971398656,
+    "pswpin": 614146,
+    "pswpout": 2370966
+  },
+  "host_before": {
+    "cpu_ticks": [
+      18468873,
+      28765,
+      5565843,
+      155290770,
+      57074,
+      0,
+      1801442,
+      67660,
+      0,
+      0
+    ],
+    "loadavg": [
+      "1.14",
+      "1.77",
+      "1.74"
+    ]
+  },
+  "input_manifest_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/gb-corpus/manifest.json",
+  "input_manifest": {
+    "dataset": "wikimedia/wikipedia",
+    "revision": "b04c8d1ceb2f5cd4588862100d08de323dccfbaa",
+    "selection": "shard order, article order, normalized paragraphs; no replication or synthetic additions",
+    "line_byte_range": [
+      32,
+      8192
+    ],
+    "sources": [
+      {
+        "shard": "train-00000-of-00006.parquet",
+        "url": "https://huggingface.co/datasets/wikimedia/wikipedia/resolve/b04c8d1ceb2f5cd4588862100d08de323dccfbaa/20231101.zh/train-00000-of-00006.parquet",
+        "bytes": 587109027,
+        "sha256": "853ddf4a138c792ad7386d6de831788f96326c03e1e3349f7a315498392e8b56"
+      },
+      {
+        "shard": "train-00001-of-00006.parquet",
+        "url": "https://huggingface.co/datasets/wikimedia/wikipedia/resolve/b04c8d1ceb2f5cd4588862100d08de323dccfbaa/20231101.zh/train-00001-of-00006.parquet",
+        "bytes": 263629009,
+        "sha256": "038b08e5aae38b5a1671794cee3fa0d4952c0d00fa0890a903d2de3f3fe5f703"
+      }
+    ],
+    "articles_visited": 336509,
+    "output": {
+      "path": "zh-1024m.txt",
+      "bytes": 1073741749,
+      "lines": 3159381,
+      "sha256": "4f375a10f171be4e9903fe0040538da5051235eb119a6bb07e3f3d06c004b248"
+    }
+  },
+  "mem_after": {
+    "MemAvailable": 8015499264,
+    "SwapFree": 5699190784,
+    "pswpin": 614638,
+    "pswpout": 2436384
+  },
+  "host_after": {
+    "cpu_ticks": [
+      18491372,
+      28765,
+      5570006,
+      155371862,
+      57137,
+      0,
+      1802837,
+      67697,
+      0,
+      0
+    ],
+    "loadavg": [
+      "2.07",
+      "1.89",
+      "1.79"
+    ]
+  },
+  "wall_seconds": 180.56280496099498,
+  "min_memavailable_bytes": 2736783360,
+  "peak_rss_bytes": 5276102656,
+  "peak_vmswap_bytes": 0,
+  "max_process_threads": 1,
+  "pswpin_delta": 492,
+  "pswpout_delta": 65418,
+  "child_user_seconds": 172.093289,
+  "child_system_seconds": 7.2940439999999995,
+  "returncode": -15,
+  "failure": "timeout"
+}

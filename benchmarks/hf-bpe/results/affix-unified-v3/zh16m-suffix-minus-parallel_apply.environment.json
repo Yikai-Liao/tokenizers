@@ -1,0 +1,129 @@
+{
+  "case": "zh16m-suffix-minus-parallel_apply",
+  "label": "affix-unified-v3-final",
+  "command": [
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-unified-v3-final/target/release/hf-bpe-native-affix-unified-v3-final",
+    "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/zh-16m-from-512m.txt",
+    "none",
+    "reference",
+    "30000",
+    "2"
+  ],
+  "worktree_commit": "8454618fe61f8391222248c0fb069ed5e95c3f94",
+  "build_manifest_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-unified-v3-final/build_manifest.json",
+  "build_manifest_sha256": "859e6d193c1dab4cd529dab77a42d4ca2279800b90b52a567c988994ea5ba645",
+  "binary_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-unified-v3-final/target/release/hf-bpe-native-affix-unified-v3-final",
+  "binary_sha256": "2782e90cef64c8c307dcc2bc2148c24656ee88e462b0bbe80d126501586a8cf8",
+  "build_script_sha256": "8e0451651c8135c5cc8fd836e47bb3c26bc6b73b1e80cfad87d876254b7ea375",
+  "run_script_sha256": "8a64c58e4bddee79b1ca9d116fa277166ee2b65243cb92f190b80504296db850",
+  "instrumentation_patch_sha256": "138dba0b1579d71137677635ca17226ff62b47fa2502b3ef651dff65f0ac5358",
+  "runner_source_sha256": "c030e60213aa927afc9d5b1d687bf391ea8e099c7a100a9bd55fdbdbaa8d13c8",
+  "runner_lock_sha256": "ed6171e24ed18b758fa7f03b3255105a3cbd682d7a3b41cd05a5a28b086ccbaf",
+  "corpus_path": "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/zh-16m-from-512m.txt",
+  "corpus_bytes": 16776351,
+  "corpus_sha256": "ebd64699a917bb0982e9b64d302d94cc08057f43d16bcb5efc041594684c12a6",
+  "expected_corpus_sha256": "ebd64699a917bb0982e9b64d302d94cc08057f43d16bcb5efc041594684c12a6",
+  "baseline_pair": {
+    "case": "zh16m-suffix-t4",
+    "environment_path": "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-parallel-v2/zh16m-suffix-t4.environment.json",
+    "corpus_path": "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/zh-16m-from-512m.txt",
+    "corpus_sha256": "ebd64699a917bb0982e9b64d302d94cc08057f43d16bcb5efc041594684c12a6",
+    "vocab_size": 30000,
+    "min_frequency": 2,
+    "prefix": null,
+    "suffix": "</w>",
+    "threads_requested": 4,
+    "thread_policy": "match"
+  },
+  "prefix": null,
+  "suffix": "</w>",
+  "oracle": false,
+  "baseline": false,
+  "max_token_length": null,
+  "require_absent_affixes": false,
+  "expected_model_sha256": "371c508f2451af8459b66baada6089b286e9bd70dde13fea4371d58cd235ef8c",
+  "threads_requested": 4,
+  "allow_short_process": false,
+  "vocab_size": 30000,
+  "min_frequency": 2,
+  "env_overrides": {
+    "TOKENIZERS_PARALLELISM": "false",
+    "RAYON_NUM_THREADS": "4",
+    "HF_BPE_BENCH_WORKERS": "4",
+    "HF_BPE_SUFFIX": "</w>",
+    "HF_BPE_COHORT_DISABLE": "parallel_apply"
+  },
+  "mem_before": {
+    "MemAvailable": 7790641152,
+    "SwapFree": 5763457024,
+    "pswpin": 633256,
+    "pswpout": 2441024
+  },
+  "host_before": {
+    "cpu_ticks": [
+      18978624,
+      28765,
+      5681900,
+      158289045,
+      58853,
+      0,
+      1837174,
+      68742,
+      0,
+      0
+    ],
+    "loadavg": [
+      "1.40",
+      "1.39",
+      "1.50"
+    ]
+  },
+  "cohort_disable": [
+    "parallel_apply"
+  ],
+  "input_manifest_path": "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/zh-16m-from-512m.manifest.json",
+  "input_manifest": {
+    "source": "/root/code/tokenizers/benchmarks/hf-bpe/.build/gb-corpus/zh-512m.txt",
+    "source_manifest": "/root/code/tokenizers/benchmarks/hf-bpe/.build/gb-corpus/manifest.json",
+    "selection": "whole-line prefix, stop before next line would exceed 16 MiB",
+    "target_bytes": 16777216,
+    "bytes": 16776351,
+    "sha256": "ebd64699a917bb0982e9b64d302d94cc08057f43d16bcb5efc041594684c12a6"
+  },
+  "mem_after": {
+    "MemAvailable": 7828135936,
+    "SwapFree": 5763457024,
+    "pswpin": 633256,
+    "pswpout": 2441024
+  },
+  "host_after": {
+    "cpu_ticks": [
+      18978917,
+      28765,
+      5681955,
+      158290045,
+      58853,
+      0,
+      1837187,
+      68742,
+      0,
+      0
+    ],
+    "loadavg": [
+      "1.40",
+      "1.39",
+      "1.50"
+    ]
+  },
+  "wall_seconds": 2.260657882958185,
+  "min_memavailable_bytes": 7539781632,
+  "peak_rss_bytes": 306929664,
+  "peak_vmswap_bytes": 0,
+  "max_process_threads": 5,
+  "pswpin_delta": 0,
+  "pswpout_delta": 0,
+  "child_user_seconds": 2.263862,
+  "child_system_seconds": 0.148263,
+  "returncode": 0,
+  "failure": null
+}

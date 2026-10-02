@@ -1,0 +1,147 @@
+{
+  "case": "zh512m-suffix-t4-vocab50k",
+  "label": "affix-parallel-v2",
+  "command": [
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-parallel-v2/target/release/hf-bpe-native-affix-parallel-v2",
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/gb-corpus/zh-512m.txt",
+    "none",
+    "reference",
+    "50000",
+    "2"
+  ],
+  "worktree_commit": "65524228234acdc44ce870848632719ad20220c5",
+  "build_manifest_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-parallel-v2/build_manifest.json",
+  "build_manifest_sha256": "7277f709beb05d3bf9c777cf923264d6630f9247c692ed2c699334fb3bc8c96a",
+  "binary_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-parallel-v2/target/release/hf-bpe-native-affix-parallel-v2",
+  "binary_sha256": "a5186f76f35f2c5e08cd294d34e35ab88d50ef14bafa268854d183703dec86e7",
+  "build_script_sha256": "b0bcf9ce1859911d2f8c4333dac4842a650470bfce1aa2f0bb4db8545a0f9562",
+  "run_script_sha256": "8019220527ea3ae4cd3f3dce418921f64670b1eda6c1074fea2a3c81eb3195e3",
+  "instrumentation_patch_sha256": "5e33f75e2a33a8c1b693dea1d3bcf1b0bafd0119997a1530e7aca01faf04be45",
+  "runner_source_sha256": "c030e60213aa927afc9d5b1d687bf391ea8e099c7a100a9bd55fdbdbaa8d13c8",
+  "runner_lock_sha256": "ed6171e24ed18b758fa7f03b3255105a3cbd682d7a3b41cd05a5a28b086ccbaf",
+  "corpus_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/gb-corpus/zh-512m.txt",
+  "corpus_bytes": 536870289,
+  "corpus_sha256": "a0d40d4102cba1e933f25e5ccd17552d2eaebaec4ef770bc39d8e46e740b4d4f",
+  "expected_corpus_sha256": "a0d40d4102cba1e933f25e5ccd17552d2eaebaec4ef770bc39d8e46e740b4d4f",
+  "baseline_pair": {
+    "case": "zh512m-suffix-w1-vocab50k",
+    "environment_path": "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/zh512m-suffix-w1-vocab50k.environment.json",
+    "corpus_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/gb-corpus/zh-512m.txt",
+    "corpus_sha256": "a0d40d4102cba1e933f25e5ccd17552d2eaebaec4ef770bc39d8e46e740b4d4f",
+    "vocab_size": 50000,
+    "min_frequency": 2,
+    "prefix": null,
+    "suffix": "</w>",
+    "threads_requested": 1,
+    "thread_policy": "ignore"
+  },
+  "prefix": null,
+  "suffix": "</w>",
+  "oracle": false,
+  "baseline": false,
+  "max_token_length": null,
+  "require_absent_affixes": false,
+  "expected_model_sha256": null,
+  "threads_requested": 4,
+  "allow_short_process": false,
+  "vocab_size": 50000,
+  "min_frequency": 2,
+  "env_overrides": {
+    "TOKENIZERS_PARALLELISM": "false",
+    "RAYON_NUM_THREADS": "4",
+    "HF_BPE_BENCH_WORKERS": "4",
+    "HF_BPE_SUFFIX": "</w>"
+  },
+  "mem_before": {
+    "MemAvailable": 7848968192,
+    "SwapFree": 5759836160,
+    "pswpin": 627864,
+    "pswpout": 2436384
+  },
+  "host_before": {
+    "cpu_ticks": [
+      18688323,
+      28765,
+      5618612,
+      156724667,
+      57834,
+      0,
+      1817804,
+      68168,
+      0,
+      0
+    ],
+    "loadavg": [
+      "1.01",
+      "1.33",
+      "1.35"
+    ]
+  },
+  "input_manifest_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/gb-corpus/manifest.json",
+  "input_manifest": {
+    "dataset": "wikimedia/wikipedia",
+    "revision": "b04c8d1ceb2f5cd4588862100d08de323dccfbaa",
+    "selection": "shard order, article order, normalized paragraphs; no replication or synthetic additions",
+    "line_byte_range": [
+      32,
+      8192
+    ],
+    "sources": [
+      {
+        "shard": "train-00000-of-00006.parquet",
+        "url": "https://huggingface.co/datasets/wikimedia/wikipedia/resolve/b04c8d1ceb2f5cd4588862100d08de323dccfbaa/20231101.zh/train-00000-of-00006.parquet",
+        "bytes": 587109027,
+        "sha256": "853ddf4a138c792ad7386d6de831788f96326c03e1e3349f7a315498392e8b56"
+      },
+      {
+        "shard": "train-00001-of-00006.parquet",
+        "url": "https://huggingface.co/datasets/wikimedia/wikipedia/resolve/b04c8d1ceb2f5cd4588862100d08de323dccfbaa/20231101.zh/train-00001-of-00006.parquet",
+        "bytes": 263629009,
+        "sha256": "038b08e5aae38b5a1671794cee3fa0d4952c0d00fa0890a903d2de3f3fe5f703"
+      }
+    ],
+    "articles_visited": 336509,
+    "output": {
+      "path": "zh-1024m.txt",
+      "bytes": 1073741749,
+      "lines": 3159381,
+      "sha256": "4f375a10f171be4e9903fe0040538da5051235eb119a6bb07e3f3d06c004b248"
+    }
+  },
+  "mem_after": {
+    "MemAvailable": 7916802048,
+    "SwapFree": 5740699648,
+    "pswpin": 628169,
+    "pswpout": 2441024
+  },
+  "host_after": {
+    "cpu_ticks": [
+      18702339,
+      28765,
+      5621402,
+      156761748,
+      57951,
+      0,
+      1818547,
+      68189,
+      0,
+      0
+    ],
+    "loadavg": [
+      "1.63",
+      "1.52",
+      "1.42"
+    ]
+  },
+  "wall_seconds": 91.39596561598592,
+  "min_memavailable_bytes": 2448334848,
+  "peak_rss_bytes": 5474045952,
+  "peak_vmswap_bytes": 0,
+  "max_process_threads": 5,
+  "pswpin_delta": 305,
+  "pswpout_delta": 4640,
+  "child_user_seconds": 114.378165,
+  "child_system_seconds": 10.659447,
+  "returncode": 0,
+  "failure": null
+}

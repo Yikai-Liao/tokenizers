@@ -1,0 +1,122 @@
+{
+  "case": "en16m-prefix-t4",
+  "label": "affix-parallel-v2",
+  "command": [
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-parallel-v2/target/release/hf-bpe-native-affix-parallel-v2",
+    "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/en-16m.txt",
+    "none",
+    "reference",
+    "30000",
+    "2"
+  ],
+  "worktree_commit": "65524228234acdc44ce870848632719ad20220c5",
+  "build_manifest_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-parallel-v2/build_manifest.json",
+  "build_manifest_sha256": "7277f709beb05d3bf9c777cf923264d6630f9247c692ed2c699334fb3bc8c96a",
+  "binary_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-parallel-v2/target/release/hf-bpe-native-affix-parallel-v2",
+  "binary_sha256": "a5186f76f35f2c5e08cd294d34e35ab88d50ef14bafa268854d183703dec86e7",
+  "build_script_sha256": "b0bcf9ce1859911d2f8c4333dac4842a650470bfce1aa2f0bb4db8545a0f9562",
+  "run_script_sha256": "5bef890837092a2732989d764cbbfad86cca207c9ad848e10daed1868abe815e",
+  "instrumentation_patch_sha256": "5e33f75e2a33a8c1b693dea1d3bcf1b0bafd0119997a1530e7aca01faf04be45",
+  "runner_source_sha256": "c030e60213aa927afc9d5b1d687bf391ea8e099c7a100a9bd55fdbdbaa8d13c8",
+  "runner_lock_sha256": "ed6171e24ed18b758fa7f03b3255105a3cbd682d7a3b41cd05a5a28b086ccbaf",
+  "corpus_path": "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/en-16m.txt",
+  "corpus_bytes": 16776969,
+  "corpus_sha256": "41b20e33253a4db8c66b95536cbadc86c79072e81eb9e5cd59ef136490abdec9",
+  "expected_corpus_sha256": "41b20e33253a4db8c66b95536cbadc86c79072e81eb9e5cd59ef136490abdec9",
+  "baseline_pair": {
+    "case": "en16m-prefix",
+    "environment_path": "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/en16m-prefix.environment.json",
+    "corpus_path": "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/en-16m.txt",
+    "corpus_sha256": "41b20e33253a4db8c66b95536cbadc86c79072e81eb9e5cd59ef136490abdec9",
+    "vocab_size": 30000,
+    "min_frequency": 2,
+    "prefix": "##",
+    "suffix": null,
+    "threads_requested": 1,
+    "thread_policy": "ignore"
+  },
+  "prefix": "##",
+  "suffix": null,
+  "oracle": false,
+  "baseline": false,
+  "max_token_length": null,
+  "require_absent_affixes": false,
+  "expected_model_sha256": "0639f94986bd85ba3bcd9cd316558f29b4d19ec10051c05103f2057e38aa821e",
+  "threads_requested": 4,
+  "vocab_size": 30000,
+  "min_frequency": 2,
+  "env_overrides": {
+    "TOKENIZERS_PARALLELISM": "false",
+    "RAYON_NUM_THREADS": "4",
+    "HF_BPE_BENCH_WORKERS": "4",
+    "HF_BPE_PREFIX": "##"
+  },
+  "mem_before": {
+    "MemAvailable": 7900770304,
+    "SwapFree": 5756887040,
+    "pswpin": 627376,
+    "pswpout": 2436384
+  },
+  "host_before": {
+    "cpu_ticks": [
+      18674239,
+      28765,
+      5612946,
+      156559717,
+      57756,
+      0,
+      1815863,
+      68105,
+      0,
+      0
+    ],
+    "loadavg": [
+      "2.57",
+      "1.91",
+      "1.48"
+    ]
+  },
+  "input_manifest_path": "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/en-16m.manifest.json",
+  "input_manifest": {
+    "source": "/root/code/tokenizers/benchmarks/hf-bpe/.build/posting-distribution-inputs/en-16m-none-r16000/input.txt",
+    "input": "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/en-16m.txt",
+    "bytes": 16776969,
+    "sha256": "41b20e33253a4db8c66b95536cbadc86c79072e81eb9e5cd59ef136490abdec9"
+  },
+  "mem_after": {
+    "MemAvailable": 7776985088,
+    "SwapFree": 5756887040,
+    "pswpin": 627379,
+    "pswpout": 2436384
+  },
+  "host_after": {
+    "cpu_ticks": [
+      18675040,
+      28765,
+      5613086,
+      156561604,
+      57756,
+      0,
+      1815906,
+      68106,
+      0,
+      0
+    ],
+    "loadavg": [
+      "2.44",
+      "1.89",
+      "1.47"
+    ]
+  },
+  "wall_seconds": 4.771715682989452,
+  "min_memavailable_bytes": 7370334208,
+  "peak_rss_bytes": 432951296,
+  "peak_vmswap_bytes": 0,
+  "max_process_threads": 5,
+  "pswpin_delta": 3,
+  "pswpout_delta": 0,
+  "child_user_seconds": 6.103189,
+  "child_system_seconds": 0.514801,
+  "returncode": 0,
+  "failure": null
+}

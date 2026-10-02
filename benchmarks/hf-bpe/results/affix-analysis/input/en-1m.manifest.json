@@ -1,0 +1,6 @@
+{
+  "source": "/root/code/tokenizers/benchmarks/hf-bpe/.build/posting-distribution-inputs/en-1m-none-r16000/input.txt",
+  "input": "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/en-1m.txt",
+  "bytes": 1048035,
+  "sha256": "830150d2e68195b12a2ef93dd07abae1626453668eb9c09eeb6ca946228426d6"
+}

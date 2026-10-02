@@ -1,0 +1,106 @@
+{
+  "case": "alias-prefix-ab-probe-v2",
+  "label": "affix-parallel-v2",
+  "command": [
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-parallel-v2/target/release/hf-bpe-native-affix-parallel-v2",
+    "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-parallel-v2/input/alias-prefix-ab-1024.txt",
+    "none",
+    "reference",
+    "128",
+    "2"
+  ],
+  "worktree_commit": "65524228234acdc44ce870848632719ad20220c5",
+  "build_manifest_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-parallel-v2/build_manifest.json",
+  "build_manifest_sha256": "7277f709beb05d3bf9c777cf923264d6630f9247c692ed2c699334fb3bc8c96a",
+  "binary_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-parallel-v2/target/release/hf-bpe-native-affix-parallel-v2",
+  "binary_sha256": "a5186f76f35f2c5e08cd294d34e35ab88d50ef14bafa268854d183703dec86e7",
+  "build_script_sha256": "b0bcf9ce1859911d2f8c4333dac4842a650470bfce1aa2f0bb4db8545a0f9562",
+  "run_script_sha256": "5bef890837092a2732989d764cbbfad86cca207c9ad848e10daed1868abe815e",
+  "instrumentation_patch_sha256": "5e33f75e2a33a8c1b693dea1d3bcf1b0bafd0119997a1530e7aca01faf04be45",
+  "runner_source_sha256": "c030e60213aa927afc9d5b1d687bf391ea8e099c7a100a9bd55fdbdbaa8d13c8",
+  "runner_lock_sha256": "ed6171e24ed18b758fa7f03b3255105a3cbd682d7a3b41cd05a5a28b086ccbaf",
+  "corpus_path": "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-parallel-v2/input/alias-prefix-ab-1024.txt",
+  "corpus_bytes": 266154,
+  "corpus_sha256": "9e841c05746a3cabe0c466efa5f180ad13f03e5230baa3981a481710c728ac3a",
+  "expected_corpus_sha256": "9e841c05746a3cabe0c466efa5f180ad13f03e5230baa3981a481710c728ac3a",
+  "baseline_pair": null,
+  "prefix": "ab",
+  "suffix": null,
+  "oracle": false,
+  "baseline": false,
+  "max_token_length": null,
+  "require_absent_affixes": false,
+  "expected_model_sha256": null,
+  "threads_requested": 4,
+  "vocab_size": 128,
+  "min_frequency": 2,
+  "env_overrides": {
+    "TOKENIZERS_PARALLELISM": "false",
+    "RAYON_NUM_THREADS": "4",
+    "HF_BPE_BENCH_WORKERS": "4",
+    "HF_BPE_PREFIX": "ab"
+  },
+  "mem_before": {
+    "MemAvailable": 7863201792,
+    "SwapFree": 5759049728,
+    "pswpin": 627724,
+    "pswpout": 2436384
+  },
+  "host_before": {
+    "cpu_ticks": [
+      18684965,
+      28765,
+      5616951,
+      156676043,
+      57815,
+      0,
+      1817192,
+      68144,
+      0,
+      0
+    ],
+    "loadavg": [
+      "1.14",
+      "1.53",
+      "1.42"
+    ]
+  },
+  "input_manifest_path": null,
+  "input_manifest": null,
+  "mem_after": {
+    "MemAvailable": 7879917568,
+    "SwapFree": 5759049728,
+    "pswpin": 627724,
+    "pswpout": 2436384
+  },
+  "host_after": {
+    "cpu_ticks": [
+      18684983,
+      28765,
+      5616957,
+      156676187,
+      57816,
+      0,
+      1817196,
+      68144,
+      0,
+      0
+    ],
+    "loadavg": [
+      "1.14",
+      "1.53",
+      "1.42"
+    ]
+  },
+  "wall_seconds": 0.2515723599935882,
+  "min_memavailable_bytes": 7863201792,
+  "peak_rss_bytes": 446464,
+  "peak_vmswap_bytes": 0,
+  "max_process_threads": 1,
+  "pswpin_delta": 0,
+  "pswpout_delta": 0,
+  "child_user_seconds": 0.043942999999999996,
+  "child_system_seconds": 0.019974,
+  "returncode": 0,
+  "failure": null
+}

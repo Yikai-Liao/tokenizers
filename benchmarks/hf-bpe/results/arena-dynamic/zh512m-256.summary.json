@@ -1,0 +1,60 @@
+{
+  "control": {
+    "command": [
+      "/usr/bin/python3",
+      "/root/code/tokenizers/benchmarks/hf-bpe/run_native_fair.py",
+      "--case",
+      "zh512m-256",
+      "--worktree",
+      "/root/code/tokenizers-worktrees/arena-dynamic-threshold",
+      "--build-root",
+      "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-arena-dynamic",
+      "--binary",
+      "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-arena-dynamic/target/release/hf-bpe-native-arena-dynamic",
+      "--corpus",
+      "/root/code/tokenizers/benchmarks/hf-bpe/.build/gb-corpus/zh-512m.txt",
+      "--output",
+      "/root/code/tokenizers/benchmarks/hf-bpe/results/arena-dynamic/zh512m-256.jsonl",
+      "--split",
+      "none",
+      "--vocab",
+      "50000",
+      "--initialization-workers",
+      "4",
+      "--merge-workers",
+      "4",
+      "--atomic-corpus",
+      "--require-stats",
+      "posting_arena_cutoff_bytes"
+    ],
+    "extra_environment": {
+      "HF_BPE_ARENA_MODE": "256"
+    },
+    "count": 1,
+    "expected_model_sha256": "d50fb836e342e1a301bb56d5ab53c0b79fae38f51a03051c6d6b02ab6cf862cd",
+    "word_order": "lexical; same diagnostic binary for every policy",
+    "scope": "full train API includes posting drop and final arena release; no concurrent CPU tasks"
+  },
+  "cutoff_bytes": 256,
+  "allocator_origin_gate": "PASS",
+  "model_gate": "PASS",
+  "no_process_swap_gate": "PASS",
+  "allocations": {
+    "arena_buffers": 8761620,
+    "arena_requested_bytes": 349552452,
+    "arena_retired_bytes": 349552452,
+    "backing_bytes": 469755456,
+    "backing_bytes_including_metadata": 469758864,
+    "chunks": 71,
+    "grows": 0,
+    "heap_buffers": 562092,
+    "heap_freed_bytes": 1054252984,
+    "heap_frees": 562092,
+    "heap_requested_bytes": 1054252984
+  },
+  "arena_buffer_fraction": 0.9397137105908033,
+  "train_ms": 33270.996526,
+  "initialize_ms": 11564.933729,
+  "merge_ms": 20913.907241,
+  "full_peak_rss_bytes": 3624714240
+}

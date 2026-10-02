@@ -1,0 +1,133 @@
+{
+  "planned_calls": 4,
+  "cases": [
+    {
+      "case": "en16m-plan",
+      "mode": "plan",
+      "command": [
+        "/usr/bin/python3",
+        "/root/code/tokenizers/benchmarks/hf-bpe/run_affix_analysis.py",
+        "--label",
+        "block-plan-baseline",
+        "--case",
+        "en16m-plan",
+        "--corpus",
+        "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/en-16m.txt",
+        "--result-dir",
+        "/root/code/tokenizers/benchmarks/hf-bpe/results/block-fused-prepare",
+        "--threads",
+        "4",
+        "--vocab",
+        "30000",
+        "--min-frequency",
+        "2",
+        "--require-absent-affixes",
+        "--baseline-case",
+        "en16m-none4",
+        "--baseline-result-dir",
+        "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-all-fast-v4",
+        "--expected-corpus-sha",
+        "41b20e33253a4db8c66b95536cbadc86c79072e81eb9e5cd59ef136490abdec9"
+      ]
+    },
+    {
+      "case": "en16m-fragments",
+      "mode": "fragments",
+      "command": [
+        "/usr/bin/python3",
+        "/root/code/tokenizers/benchmarks/hf-bpe/run_affix_analysis.py",
+        "--label",
+        "block-fragments-candidate",
+        "--case",
+        "en16m-fragments",
+        "--corpus",
+        "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/en-16m.txt",
+        "--result-dir",
+        "/root/code/tokenizers/benchmarks/hf-bpe/results/block-fused-prepare",
+        "--threads",
+        "4",
+        "--vocab",
+        "30000",
+        "--min-frequency",
+        "2",
+        "--require-absent-affixes",
+        "--baseline-case",
+        "en16m-none4",
+        "--baseline-result-dir",
+        "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-all-fast-v4",
+        "--expected-corpus-sha",
+        "41b20e33253a4db8c66b95536cbadc86c79072e81eb9e5cd59ef136490abdec9",
+        "--require-block-fused"
+      ]
+    },
+    {
+      "case": "zh512m-plan",
+      "mode": "plan",
+      "command": [
+        "/usr/bin/python3",
+        "/root/code/tokenizers/benchmarks/hf-bpe/run_affix_analysis.py",
+        "--label",
+        "block-plan-baseline",
+        "--case",
+        "zh512m-plan",
+        "--corpus",
+        "/root/code/tokenizers/benchmarks/hf-bpe/.build/gb-corpus/zh-512m.txt",
+        "--result-dir",
+        "/root/code/tokenizers/benchmarks/hf-bpe/results/block-fused-prepare",
+        "--threads",
+        "4",
+        "--vocab",
+        "50000",
+        "--min-frequency",
+        "2",
+        "--require-absent-affixes",
+        "--baseline-case",
+        "zh512m-none4",
+        "--baseline-result-dir",
+        "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-all-fast-v4",
+        "--expected-corpus-sha",
+        "a0d40d4102cba1e933f25e5ccd17552d2eaebaec4ef770bc39d8e46e740b4d4f"
+      ]
+    },
+    {
+      "case": "zh512m-fragments",
+      "mode": "fragments",
+      "command": [
+        "/usr/bin/python3",
+        "/root/code/tokenizers/benchmarks/hf-bpe/run_affix_analysis.py",
+        "--label",
+        "block-fragments-candidate",
+        "--case",
+        "zh512m-fragments",
+        "--corpus",
+        "/root/code/tokenizers/benchmarks/hf-bpe/.build/gb-corpus/zh-512m.txt",
+        "--result-dir",
+        "/root/code/tokenizers/benchmarks/hf-bpe/results/block-fused-prepare",
+        "--threads",
+        "4",
+        "--vocab",
+        "50000",
+        "--min-frequency",
+        "2",
+        "--require-absent-affixes",
+        "--baseline-case",
+        "zh512m-none4",
+        "--baseline-result-dir",
+        "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-all-fast-v4",
+        "--expected-corpus-sha",
+        "a0d40d4102cba1e933f25e5ccd17552d2eaebaec4ef770bc39d8e46e740b4d4f",
+        "--require-block-fused"
+      ]
+    }
+  ],
+  "completed": [
+    "en16m-plan",
+    "en16m-fragments"
+  ],
+  "failures": [
+    {
+      "case": "zh512m-plan",
+      "returncode": 1
+    }
+  ]
+}

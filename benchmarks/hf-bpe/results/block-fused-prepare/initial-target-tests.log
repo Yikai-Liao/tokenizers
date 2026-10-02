@@ -1,0 +1,36 @@
+   Compiling bitcannon v0.1.0-dev.0 (/root/code/tokenizers-worktrees/block-fused-prepare/tokenizers/bitcannon)
+   Compiling tk-encode v0.1.0-dev.0 (/root/code/tokenizers-worktrees/block-fused-prepare/tokenizers/tk-encode)
+   Compiling tk-convert v0.1.0-dev.0 (/root/code/tokenizers-worktrees/block-fused-prepare/tokenizers/tk-convert)
+   Compiling tk-train v0.1.0-dev.0 (/root/code/tokenizers-worktrees/block-fused-prepare/tokenizers/tk-train)
+warning: methods `train_vocab_indexed_parallel` and `train_vocab_fused` are never used
+    --> src/trainers/bpe/indexed.rs:991:19
+     |
+ 990 | impl BpeTrainer {
+     | --------------- methods in this implementation
+ 991 |     pub(super) fn train_vocab_indexed_parallel(
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+1066 |     pub(super) fn train_vocab_fused(&self) -> Result<IndexedTraining> {
+     |                   ^^^^^^^^^^^^^^^^^
+     |
+     = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: method `len` is never used
+  --> src/trainers/bpe/indexed/parallel/candidate_heap.rs:80:19
+   |
+32 | impl CandidateHeap {
+   | ------------------ method in this implementation
+...
+80 |     pub(super) fn len(&self) -> usize {
+   |                   ^^^
+
+warning: `tk-train` (lib test) generated 2 warnings
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 36.79s
+     Running unittests src/lib.rs (/root/code/tokenizers/tokenizers/target/debug/deps/tk_train-7531a1c8f1ad5ab7)
+
+running 2 tests
+test trainers::bpe::indexed::parallel::fused_batch::block::tests::block_fragments_route_long_left_tokens_adjacent_crossings_and_zero_weights ... ok
+test trainers::bpe::indexed::parallel::fused_batch::block::tests::block_fused_full_traces_cover_adjacent_rules_aa_weights_reserved_and_limits ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 84 filtered out; finished in 1.62s
+

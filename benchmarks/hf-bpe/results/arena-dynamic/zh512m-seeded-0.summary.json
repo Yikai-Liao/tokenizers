@@ -1,0 +1,60 @@
+{
+  "control": {
+    "command": [
+      "/usr/bin/python3",
+      "/root/code/tokenizers/benchmarks/hf-bpe/run_native_fair.py",
+      "--case",
+      "zh512m-seeded-0",
+      "--worktree",
+      "/root/code/tokenizers-worktrees/arena-dynamic-threshold",
+      "--build-root",
+      "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-arena-dynamic-seeded",
+      "--binary",
+      "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-arena-dynamic-seeded/target/release/hf-bpe-native-arena-dynamic-seeded",
+      "--corpus",
+      "/root/code/tokenizers/benchmarks/hf-bpe/.build/gb-corpus/zh-512m.txt",
+      "--output",
+      "/root/code/tokenizers/benchmarks/hf-bpe/results/arena-dynamic/zh512m-seeded-0.jsonl",
+      "--split",
+      "none",
+      "--vocab",
+      "50000",
+      "--initialization-workers",
+      "4",
+      "--merge-workers",
+      "4",
+      "--atomic-corpus",
+      "--require-stats",
+      "posting_arena_cutoff_bytes"
+    ],
+    "extra_environment": {
+      "HF_BPE_ARENA_MODE": "0"
+    },
+    "count": 1,
+    "expected_model_sha256": "d50fb836e342e1a301bb56d5ab53c0b79fae38f51a03051c6d6b02ab6cf862cd",
+    "word_order": "fixed feed hash seeds (11, 13, 17, 19); serial feed; same diagnostic binary for every policy",
+    "scope": "full train API includes posting drop and final arena release; no concurrent CPU tasks"
+  },
+  "cutoff_bytes": 0,
+  "allocator_origin_gate": "PASS",
+  "model_gate": "PASS",
+  "no_process_swap_gate": "PASS",
+  "allocations": {
+    "arena_buffers": 0,
+    "arena_requested_bytes": 0,
+    "arena_retired_bytes": 0,
+    "backing_bytes": 0,
+    "backing_bytes_including_metadata": 0,
+    "chunks": 0,
+    "grows": 0,
+    "heap_buffers": 9323712,
+    "heap_freed_bytes": 1403805436,
+    "heap_frees": 9323712,
+    "heap_requested_bytes": 1403805436
+  },
+  "arena_buffer_fraction": 0.0,
+  "train_ms": 28038.673095,
+  "initialize_ms": 5854.597556,
+  "merge_ms": 17492.812945,
+  "full_peak_rss_bytes": 3640487936
+}

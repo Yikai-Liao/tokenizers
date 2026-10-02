@@ -1,0 +1,105 @@
+   Compiling tk-train v0.1.0-dev.0 (/root/code/tokenizers-worktrees/affix-parallel/tokenizers/tk-train)
+warning: methods `train_vocab_indexed_parallel` and `train_vocab_fused` are never used
+   --> src/trainers/bpe/indexed.rs:815:19
+    |
+814 | impl BpeTrainer {
+    | --------------- methods in this implementation
+815 |     pub(super) fn train_vocab_indexed_parallel(
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+852 |     pub(super) fn train_vocab_fused(&self) -> Result<IndexedTraining> {
+    |                   ^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: method `len` is never used
+  --> src/trainers/bpe/indexed/parallel/candidate_heap.rs:80:19
+   |
+32 | impl CandidateHeap {
+   | ------------------ method in this implementation
+...
+80 |     pub(super) fn len(&self) -> usize {
+   |                   ^^^
+
+warning: `tk-train` (lib test) generated 2 warnings
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.97s
+     Running unittests src/lib.rs (/root/code/tokenizers/tokenizers/target/debug/deps/tk_train-c709caa9759f7b2d)
+
+running 73 tests
+test trainers::bpe::indexed::aa_parity::tests::preserves_runs_over_empty_chunks_and_restarts_after_gaps ... ok
+test trainers::bpe::indexed::aa_parity::tests::long_tokens_and_large_positions_do_not_wrap ... ok
+test trainers::bpe::indexed::compact::tests::prototype_metadata_layout ... ok
+test trainers::bpe::indexed::aa_parity::tests::long_mixed_runs_match_linear_summary ... ok
+test trainers::bpe::indexed::lifecycle_tests::reused_id_resurrects_low_frequency_pair_and_keeps_hf_cohorts ... ok
+test trainers::bpe::indexed::parallel::alphabet::tests::parallel_presence_preserves_forced_alphabet_special_ids_and_zero_weight_words ... ok
+test trainers::bpe::indexed::aa_parity::tests::all_partitions_of_small_valid_edge_patterns_match_greedy ... ok
+test trainers::bpe::indexed::cohort_parallel::tests::parallel_cohorts_keep_full_u64_weights_beyond_the_hf_reference_i32_domain ... ok
+test trainers::bpe::indexed::parallel::candidate_heap::tests::out_of_range_insert_promotes_without_losing_old_candidates ... ok
+test trainers::bpe::indexed::parallel::candidate_heap::tests::packing_preserves_full_priority_and_arbitrary_id_bits ... ok
+test trainers::bpe::indexed::parallel::corpus::tests::equal_weight_words_coalesce_across_regions_and_address_blocks ... ok
+test trainers::bpe::indexed::parallel::bounded_initial::tests::adaptive_scan_switches_only_after_the_table_grows ... ok
+test trainers::bpe::indexed::parallel::fused_batch::aggregate::tests::flush_links_multiple_tasks_and_preserves_zero_weight_births ... ok
+test trainers::bpe::indexed::cohort_parallel::tests::wide_initial_ids_keep_general_hash_counts_and_parallel_cohorts ... ok
+test trainers::bpe::indexed::parallel::corpus::tests::ordered_regions_preserve_filtered_slots_weights_and_reserved_id_activation ... ok
+test trainers::bpe::indexed::parallel::radix_count::owner_route::tests::direct_owner_streams_match_physical_scan_before_floor_filtering ... ok
+test trainers::bpe::indexed::parallel::radix_count::tests::owner_waves_preserve_weighted_frequencies_and_ordered_positions ... ok
+test trainers::bpe::indexed::parallel::radix_count::tests::radix_codes_use_all_bits_and_preserve_order_within_a_key ... ok
+test trainers::bpe::indexed::parallel::bounded_initial::tests::tile_boundaries_full_keys_zero_weights_and_sorted_postings ... ok
+test trainers::bpe::indexed::parallel::radix_count::block_radix::tests::stable_full64_keys_and_local_u32_addresses ... ok
+test trainers::bpe::indexed::parallel::tests::birth_floor_is_applied_after_all_worker_counts ... ok
+test trainers::bpe::indexed::parallel::radix_count::block_radix::tests::stable_high32_at_block_boundaries_and_all_key_bits ... ok
+test trainers::bpe::indexed::parallel::tests::candidate_heap_range_fallback_keeps_weighted_greedy_semantics ... ok
+test trainers::bpe::indexed::parallel::tests::disjoint_batches_and_reserved_identity_ties ... ok
+test trainers::bpe::indexed::parallel::tests::exclusive_writes_use_full_global_addresses ... ok
+test trainers::bpe::indexed::parallel::tests::forward_weight_cursor_handles_near_words_and_sparse_gaps ... ok
+test trainers::bpe::indexed::greedy_tests::recomputing_greedy_oracle_without_affixes_or_length_filter ... ok
+test trainers::bpe::indexed::parallel::tests::nonempty_alias_affixes_keep_exact_cohorts ... ok
+test trainers::bpe::indexed::parallel::tests::fused_flat_batches_keep_adjacent_and_shared_head_tail_births_ordered ... ok
+test trainers::bpe::indexed::parallel::tests::serial_initialization_keeps_parallel_greedy_order ... ok
+test trainers::bpe::indexed::cohort_parallel::tests::word_partitioning_preserves_hf_aliases_lengths_aa_and_zero_weights ... ok
+test trainers::bpe::indexed::parallel::tests::target_and_reserved_alphabet_guard_narrow_corpus ... ok
+test trainers::bpe::indexed::parallel::tests::selection_modes_keep_weighted_reserved_and_length_limited_full_traces ... ok
+test trainers::bpe::indexed::parallel::weight_lookup::tests::bucket_weights_match_full_search_before_on_and_between_pivots ... ok
+test trainers::bpe::indexed::parallel::weight_lookup::tests::one_bucket_certificate_matches_every_position_including_empty_intervals ... ok
+test trainers::bpe::indexed::parallel::weight_lookup::tests::sorted_intervals_match_boundaries_zero_large_weights_and_full_u32_domain ... ok
+test trainers::bpe::indexed::posting_arena::tests::local_session_postings_drop_on_success_error_and_unwind ... ok
+test trainers::bpe::indexed::posting_arena::tests::session_cleans_up_after_error_and_worker_unwind ... ok
+test trainers::bpe::indexed::posting_arena::tests::threshold_floor_growth_and_full_address_domain ... ok
+test trainers::bpe::indexed::small_posting::tests::arena_growth_migration_origin_and_fallback ... ok
+test trainers::bpe::indexed::small_posting::tests::counted_reservation_empty_heap_fill_growth_and_take ... ok
+test trainers::bpe::indexed::small_posting::tests::grown_posting_can_move_between_threads ... ok
+test trainers::bpe::indexed::small_posting::tests::layout_inline_growth_move_and_drop ... ok
+test trainers::bpe::indexed::small_posting::tests::position_payload_uses_all_u32_bits_across_inline_heap_and_take ... ok
+test trainers::bpe::indexed::small_posting::tests::reserved_reverse_fill_preserves_prefix_inline_heap_and_unwind ... ok
+test trainers::bpe::indexed::small_posting::tests::u16_offsets_inline_four_heap_growth_and_full_range ... ok
+test trainers::bpe::indexed::parallel::tests::simultaneous_arena_policies_preserve_training_results ... ok
+test trainers::bpe::indexed::tests::encode_and_json_reload_match_reference ... ok
+test trainers::bpe::indexed::tests::fed_input_and_thread_counts_match ... ok
+test trainers::bpe::indexed::tests::general_reserved_first_activation_keeps_exact_cohorts_without_alias_scan ... ok
+test trainers::bpe::indexed::tests::monotone_pruning_waits_for_global_birth_count ... ok
+test trainers::bpe::indexed::parallel::tests::block_summary_waves_keep_global_floor_and_cross_wave_aa_order ... ok
+test trainers::bpe::indexed::tests::special_token_identity_reuse_and_duplicate_specials ... ok
+test trainers::bpe::indexed::tests::suffix_alias_really_increases_an_old_pair ... ok
+test trainers::bpe::indexed::tests::weighted_ties_overlap_empty_unicode_and_long_spans ... ok
+test trainers::bpe::indexed::tests::wide_weights_and_overflow_guard ... ok
+test trainers::bpe::tests::bpe_test_max_token_length_16 ... ok
+test trainers::bpe::tests::bpe_test_max_token_length_direct_assert ... ok
+test trainers::bpe::tests::test_train ... ok
+test trainers::bpe::word::tests::test_merge ... ok
+test trainers::bpe::word::tests::test_merge_max_length ... ok
+test trainers::tests::trainer_wrapper_train_model_wrapper ... ok
+test trainers::unigram::tests::test_initial_alphabet ... ok
+test trainers::unigram::tests::test_special_tokens ... ok
+test trainers::unigram::tests::test_to_log_prob ... ok
+test trainers::bpe::indexed::parallel::tests::block_counts_keep_uniform_zero_and_sparse_nonunit_weights_exact ... ok
+test trainers::unigram::tests::test_unigram_chars ... ok
+test trainers::wordlevel::tests::test_train ... ok
+test trainers::unigram::tests::test_unk_token ... ok
+test trainers::bpe::indexed::parallel::tests::cross_block_aa_and_weighted_words_in_all_storage_widths ... ok
+test trainers::bpe::indexed::parallel::validation_window::tests::prefixes_preserve_order_across_stops_stale_decreases_deletions_and_births ... ok
+test trainers::bpe::indexed::tests::affixes_alphabet_and_length_boundaries ... ok
+test trainers::bpe::indexed::tests::randomized_round_by_round_hf_differential has been running for over 60 seconds
+test trainers::bpe::indexed::tests::randomized_round_by_round_hf_differential ... ok
+
+test result: ok. 73 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 87.74s
+

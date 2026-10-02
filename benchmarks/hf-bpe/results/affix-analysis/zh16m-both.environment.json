@@ -1,0 +1,85 @@
+{
+  "case": "zh16m-both",
+  "command": [
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-analysis/target/release/hf-bpe-native-affix-analysis",
+    "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/zh-16m-from-512m.txt",
+    "none",
+    "reference",
+    "30000",
+    "2"
+  ],
+  "env_overrides": {
+    "TOKENIZERS_PARALLELISM": "false",
+    "RAYON_NUM_THREADS": "1",
+    "HF_BPE_BENCH_WORKERS": "1",
+    "HF_BPE_PREFIX": "##",
+    "HF_BPE_SUFFIX": "</w>"
+  },
+  "corpus": "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/zh-16m-from-512m.txt",
+  "corpus_bytes": 16776351,
+  "corpus_sha256": "ebd64699a917bb0982e9b64d302d94cc08057f43d16bcb5efc041594684c12a6",
+  "prefix": "##",
+  "suffix": "</w>",
+  "oracle": false,
+  "vocab_size": 30000,
+  "min_frequency": 2,
+  "source_commit": "c9af0cf2e5d81b89147f555d6d9693f504aab1dc",
+  "binary_sha256": "7824be6f26f5eeef143cdb21d9c90a260aa37c92c379a05ba26580ccfd223038",
+  "instrumentation_sha256": "a1f1c461a7ddbe96b4a343bb064d58698d2ad68a17864a4671bad678f89e4edf",
+  "system_before": {
+    "MemAvailable": 7379279872,
+    "SwapFree": 6280982528
+  },
+  "host_before": {
+    "cpu": [
+      "18271879",
+      "28765",
+      "5530936",
+      "154540096",
+      "56596",
+      "0",
+      "1791635",
+      "67371",
+      "0",
+      "0"
+    ],
+    "loadavg": [
+      "1.48",
+      "1.97",
+      "1.76"
+    ]
+  },
+  "system_after": {
+    "MemAvailable": 7384895488,
+    "SwapFree": 6280982528
+  },
+  "host_after": {
+    "cpu": [
+      "18272522",
+      "28765",
+      "5531060",
+      "154542339",
+      "56597",
+      "0",
+      "1791680",
+      "67372",
+      "0",
+      "0"
+    ],
+    "loadavg": [
+      "1.44",
+      "1.96",
+      "1.75"
+    ]
+  },
+  "wall_seconds": 5.0146230239770375,
+  "min_memavailable": 7070343168,
+  "peak_rss_bytes": 311758848,
+  "peak_vmswap_bytes": 0,
+  "pswpin_delta": null,
+  "child_user_seconds": 4.4283909999999995,
+  "child_system_seconds": 0.31948099999999996,
+  "child_maxrss_kib": 324260,
+  "returncode": 0,
+  "failure": null
+}

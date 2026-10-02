@@ -1,0 +1,22 @@
+Captured tool output tail of the first full lib test run; not a complete raw log.
+test trainers::bpe::indexed::tests::randomized_round_by_round_hf_differential has been running for over 60 seconds
+test trainers::bpe::indexed::tests::randomized_round_by_round_hf_differential ... ok
+
+failures:
+
+---- trainers::bpe::indexed::parallel::tests::nonempty_alias_affixes_keep_the_serial_cohort_path stdout ----
+
+thread 'trainers::bpe::indexed::parallel::tests::nonempty_alias_affixes_keep_the_serial_cohort_path' (447751) panicked at src/trainers/bpe/indexed/parallel.rs:1963:13:
+assertion `left == right` failed
+  left: 1
+ right: 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    trainers::bpe::indexed::parallel::tests::nonempty_alias_affixes_keep_the_serial_cohort_path
+
+test result: FAILED. 69 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 82.51s
+
+error: test failed, to rerun pass `--lib`
+

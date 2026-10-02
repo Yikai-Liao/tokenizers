@@ -1,0 +1,86 @@
+[
+  {
+    "id": "hf_bpe_trainer_current",
+    "url": "https://raw.githubusercontent.com/huggingface/tokenizers/v0.23.2/tokenizers/src/models/bpe/trainer.rs",
+    "accessed": "2026-10-02",
+    "type": "official source",
+    "supports": "Pinned Tokenizers 0.23.2 BpeTrainer Config defaults both affix options to None; setters explicitly configure them."
+  },
+  {
+    "id": "hf_quicktour",
+    "url": "https://huggingface.co/docs/tokenizers/python/latest/quicktour.html",
+    "accessed": "2026-10-02",
+    "type": "official documentation",
+    "supports": "Quicktour's BPE examples train without either affix; </w> is described as an optional end_of_word_suffix; GPT-2 byte-level setup is demonstrated."
+  },
+  {
+    "id": "hf_trainer_api",
+    "url": "https://huggingface.co/docs/tokenizers/python/latest/api/reference.html",
+    "accessed": "2026-10-02",
+    "type": "official API documentation",
+    "supports": "Legacy official Python API describes optional BpeTrainer prefix/suffix and WordPieceTrainer continuing_subword_prefix default ##."
+  },
+  {
+    "id": "hf_wordpiece_course",
+    "url": "https://huggingface.co/learn/llm-course/chapter6/6?fw=pt",
+    "accessed": "2026-10-02",
+    "type": "official course",
+    "supports": "WordPiece course shows ## continuation pieces and says train_new_from_iterator uses BPE internally because WordPiece training is not implemented."
+  },
+  {
+    "id": "hf_char_bpe_v0133",
+    "url": "https://raw.githubusercontent.com/huggingface/tokenizers/v0.23.2/bindings/python/py_src/tokenizers/implementations/char_level_bpe.py",
+    "accessed": "2026-10-02",
+    "type": "official versioned source",
+    "supports": "Tokenizers 0.23.2 CharBPETokenizer train/train_from_iterator wrapper defaults suffix=</w> and passes it as end_of_word_suffix; wrapper default differs from lower-level BpeTrainer default."
+  },
+  {
+    "id": "subword_nmt_learn_bpe",
+    "url": "https://github.com/rsennrich/subword-nmt/blob/master/subword_nmt/learn_bpe.py",
+    "accessed": "2026-10-02",
+    "type": "original implementation",
+    "supports": "Classic subword-nmt represents the end boundary with </w> in its word symbols."
+  },
+  {
+    "id": "gpt2_encoder",
+    "url": "https://github.com/openai/gpt-2/blob/master/src/encoder.py",
+    "accessed": "2026-10-02",
+    "type": "official implementation",
+    "supports": "GPT-2 byte-to-Unicode encoding and byte-level BPE merge implementation; demonstrates a distinct byte-level representation."
+  },
+  {
+    "id": "roberta_paper",
+    "url": "https://arxiv.org/abs/1907.11692",
+    "accessed": "2026-10-02",
+    "type": "original paper",
+    "supports": "RoBERTa uses byte-level BPE; supports describing this as a separate byte-level tokenizer setup, not a continuation-affix example."
+  },
+  {
+    "id": "sentencepiece_normalization",
+    "url": "https://github.com/google/sentencepiece/blob/master/doc/normalization.md",
+    "accessed": "2026-10-02",
+    "type": "official documentation",
+    "supports": "▁ (U+2581) represents escaped whitespace and dummy prefix through normalization/whitespace handling."
+  },
+  {
+    "id": "sentencepiece_constraints",
+    "url": "https://github.com/google/sentencepiece/blob/master/doc/piece_constraints.md",
+    "accessed": "2026-10-02",
+    "type": "official documentation",
+    "supports": "Whitespace meta-symbol boundary constraints are controlled by SentencePiece whitespace settings, distinct from BPE trainer affix parameters."
+  },
+  {
+    "id": "hf_bert_tokenizer_json",
+    "url": "https://huggingface.co/bert-base-uncased/raw/main/tokenizer.json",
+    "accessed": "2026-10-02",
+    "type": "official Hub artifact",
+    "supports": "Serialized model example: WordPiece and continuing_subword_prefix=##; illustrates stored runtime model configuration only."
+  },
+  {
+    "id": "hf_gpt2_tokenizer_json",
+    "url": "https://huggingface.co/gpt2/raw/main/tokenizer.json",
+    "accessed": "2026-10-02",
+    "type": "official Hub artifact",
+    "supports": "Serialized model example: BPE with empty affix fields; illustrates stored runtime model configuration only."
+  }
+]

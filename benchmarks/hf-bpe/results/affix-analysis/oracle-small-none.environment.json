@@ -1,0 +1,84 @@
+{
+  "case": "oracle-small-none",
+  "command": [
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-analysis/target/release/hf-bpe-native-affix-analysis",
+    "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/en-small-oracle.txt",
+    "none",
+    "reference",
+    "30000",
+    "2"
+  ],
+  "env_overrides": {
+    "TOKENIZERS_PARALLELISM": "false",
+    "RAYON_NUM_THREADS": "1",
+    "HF_BPE_BENCH_WORKERS": "1",
+    "HF_BPE_ORACLE": "1"
+  },
+  "corpus": "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/en-small-oracle.txt",
+  "corpus_bytes": 63767,
+  "corpus_sha256": "3fcbfeb9f1d2cf2118140cde4f4b4c09b795216ac825f35341352b69b57f6104",
+  "prefix": null,
+  "suffix": null,
+  "oracle": true,
+  "vocab_size": 30000,
+  "min_frequency": 2,
+  "source_commit": "c9af0cf2e5d81b89147f555d6d9693f504aab1dc",
+  "binary_sha256": "7824be6f26f5eeef143cdb21d9c90a260aa37c92c379a05ba26580ccfd223038",
+  "instrumentation_sha256": "a1f1c461a7ddbe96b4a343bb064d58698d2ad68a17864a4671bad678f89e4edf",
+  "system_before": {
+    "MemAvailable": 7401787392,
+    "SwapFree": 6276001792
+  },
+  "host_before": {
+    "cpu": [
+      "18262435",
+      "28765",
+      "5528114",
+      "154471208",
+      "56574",
+      "0",
+      "1790600",
+      "67343",
+      "0",
+      "0"
+    ],
+    "loadavg": [
+      "2.16",
+      "2.41",
+      "1.85"
+    ]
+  },
+  "system_after": {
+    "MemAvailable": 7403499520,
+    "SwapFree": 6276001792
+  },
+  "host_after": {
+    "cpu": [
+      "18262469",
+      "28765",
+      "5528131",
+      "154471321",
+      "56574",
+      "0",
+      "1790602",
+      "67343",
+      "0",
+      "0"
+    ],
+    "loadavg": [
+      "2.16",
+      "2.41",
+      "1.85"
+    ]
+  },
+  "wall_seconds": 0.2514237959985621,
+  "min_memavailable": 7401787392,
+  "peak_rss_bytes": 352256,
+  "peak_vmswap_bytes": 0,
+  "pswpin_delta": null,
+  "child_user_seconds": 0.149137,
+  "child_system_seconds": 0.019119999999999998,
+  "child_maxrss_kib": 19712,
+  "returncode": 0,
+  "failure": null
+}

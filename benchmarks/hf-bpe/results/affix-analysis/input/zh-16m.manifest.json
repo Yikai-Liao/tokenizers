@@ -1,0 +1,7 @@
+{
+  "path": "/root/code/efficient_bpe/benchmarks/bpe_core_comparison/data/zh-16m.txt",
+  "input": "zh-16m.txt",
+  "input_sha256": "cdee18c95c05586054cfd8e364d3391bb4ca0c2e46cc89d6e4e159d2c0794dc9",
+  "input_bytes": 16777136,
+  "source_manifest": "/root/code/efficient_bpe/benchmarks/bpe_core_comparison/data/zh-manifest.json"
+}

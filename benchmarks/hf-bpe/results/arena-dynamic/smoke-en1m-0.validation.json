@@ -1,0 +1,7 @@
+{
+  "model_gate": "PASS",
+  "allocator_origin_gate": "PASS",
+  "expected_model_sha256": "ece74188f0b6566ab9eecd14f73b2cce6d1f48cc5b6ae9d4f89078ceb810a67a",
+  "expected_source": "results/posting-distribution/en-1m-none-r16000.jsonl",
+  "initial_gate_error": "initial checker referenced 4k-rule model while this smoke used 16k rules; raw run and original control retained"
+}

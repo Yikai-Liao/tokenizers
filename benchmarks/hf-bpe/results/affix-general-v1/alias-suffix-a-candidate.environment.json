@@ -1,0 +1,103 @@
+{
+  "case": "alias-suffix-a-candidate",
+  "label": "affix-general-v1",
+  "command": [
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-general-v1/target/release/hf-bpe-native-affix-general-v1",
+    "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/alias-baaba-1m.txt",
+    "none",
+    "reference",
+    "10",
+    "1"
+  ],
+  "worktree_commit": "d7d67475bd858f6eeddffc528a792acd9ee51349",
+  "build_manifest_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-general-v1/build_manifest.json",
+  "build_manifest_sha256": "da38374961d90242158232a250f6bc58c9b3953d41a6e1406054193e828e2124",
+  "binary_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-general-v1/target/release/hf-bpe-native-affix-general-v1",
+  "binary_sha256": "447a95dcd4296298cabe0b392a0408c3056faf362d5be03cd8e48e55904c2647",
+  "build_script_sha256": "6f42ac8e76f7e953a345c40451b7c5d9315ad1c609dccdbe232b0457279462d9",
+  "run_script_sha256": "bb2b889eaf543c614c63e95b72b6ca642dc990b92572bc0dd10e75a2d08e1152",
+  "instrumentation_patch_sha256": "17d213af3abd3cea4ca637f47f4052647c2142ac49b1dbc4437795478054e133",
+  "runner_source_sha256": "c030e60213aa927afc9d5b1d687bf391ea8e099c7a100a9bd55fdbdbaa8d13c8",
+  "runner_lock_sha256": "ed6171e24ed18b758fa7f03b3255105a3cbd682d7a3b41cd05a5a28b086ccbaf",
+  "corpus_path": "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/alias-baaba-1m.txt",
+  "corpus_bytes": 6000,
+  "corpus_sha256": "5b50861d7157bb35e5bf524d11e215770b859d2a1d68fb1aacbcc4bee5e643f7",
+  "prefix": null,
+  "suffix": "a",
+  "oracle": false,
+  "max_token_length": null,
+  "require_absent_affixes": false,
+  "expected_model_sha256": null,
+  "threads_requested": 1,
+  "vocab_size": 10,
+  "min_frequency": 1,
+  "env_overrides": {
+    "TOKENIZERS_PARALLELISM": "false",
+    "RAYON_NUM_THREADS": "1",
+    "HF_BPE_BENCH_WORKERS": "1",
+    "HF_BPE_SUFFIX": "a"
+  },
+  "mem_before": {
+    "MemAvailable": 8000430080,
+    "SwapFree": 5701918720,
+    "pswpin": 615129,
+    "pswpout": 2436384
+  },
+  "host_before": {
+    "cpu_ticks": [
+      18534198,
+      28765,
+      5574292,
+      155416534,
+      57296,
+      0,
+      1803484,
+      67715,
+      0,
+      0
+    ],
+    "loadavg": [
+      "2.55",
+      "2.47",
+      "2.03"
+    ]
+  },
+  "input_manifest_path": null,
+  "input_manifest": null,
+  "mem_after": {
+    "MemAvailable": 8006524928,
+    "SwapFree": 5701918720,
+    "pswpin": 615129,
+    "pswpout": 2436384
+  },
+  "host_after": {
+    "cpu_ticks": [
+      18534208,
+      28765,
+      5574296,
+      155416684,
+      57296,
+      0,
+      1803486,
+      67715,
+      0,
+      0
+    ],
+    "loadavg": [
+      "2.55",
+      "2.47",
+      "2.03"
+    ]
+  },
+  "wall_seconds": 0.25144497101427987,
+  "min_memavailable_bytes": 8000430080,
+  "peak_rss_bytes": 352256,
+  "peak_vmswap_bytes": 0,
+  "max_process_threads": 1,
+  "pswpin_delta": 0,
+  "pswpout_delta": 0,
+  "child_user_seconds": 0.0,
+  "child_system_seconds": 0.008995,
+  "returncode": 0,
+  "failure": null
+}

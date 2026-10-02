@@ -1,0 +1,86 @@
+{
+  "case": "en16m-none-workers4",
+  "command": [
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-analysis-workers4/target/release/hf-bpe-native-affix-analysis-workers4",
+    "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/en-16m.txt",
+    "none",
+    "reference",
+    "30000",
+    "2"
+  ],
+  "env_overrides": {
+    "TOKENIZERS_PARALLELISM": "false",
+    "RAYON_NUM_THREADS": "4",
+    "HF_BPE_BENCH_WORKERS": "4"
+  },
+  "corpus": "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/en-16m.txt",
+  "corpus_bytes": 16776969,
+  "corpus_sha256": "41b20e33253a4db8c66b95536cbadc86c79072e81eb9e5cd59ef136490abdec9",
+  "prefix": null,
+  "suffix": null,
+  "require_absent_affixes": false,
+  "oracle": false,
+  "requested_threads": 4,
+  "vocab_size": 30000,
+  "min_frequency": 2,
+  "label": "affix-analysis-workers4",
+  "source_commit": "c9af0cf2e5d81b89147f555d6d9693f504aab1dc",
+  "binary_sha256": "27f3c2f6bb22932657d9ba3f2176ffda3aa355c067fc47a6c9758e00f7a72267",
+  "instrumentation_sha256": "e751f99e36f583e16119396a725962f6828c77c0563a970d3bee6fee197308e6",
+  "system_before": {
+    "MemAvailable": 7420301312,
+    "SwapFree": 6276288512
+  },
+  "host_before": {
+    "cpu": [
+      "18333745",
+      "28765",
+      "5537212",
+      "154614320",
+      "56675",
+      "0",
+      "1792860",
+      "67407",
+      "0",
+      "0"
+    ],
+    "loadavg": [
+      "3.57",
+      "2.86",
+      "2.15"
+    ]
+  },
+  "system_after": {
+    "MemAvailable": 7391391744,
+    "SwapFree": 6276288512
+  },
+  "host_after": {
+    "cpu": [
+      "18334333",
+      "28765",
+      "5537316",
+      "154615011",
+      "56675",
+      "0",
+      "1792886",
+      "67408",
+      "0",
+      "0"
+    ],
+    "loadavg": [
+      "3.57",
+      "2.86",
+      "2.15"
+    ]
+  },
+  "wall_seconds": 2.2580306149902754,
+  "min_memavailable": 7121510400,
+  "peak_rss_bytes": 291348480,
+  "peak_vmswap_bytes": 0,
+  "pswpin_delta": null,
+  "child_user_seconds": 5.158845,
+  "child_system_seconds": 0.6445919999999999,
+  "child_maxrss_kib": 284252,
+  "returncode": 0,
+  "failure": null
+}

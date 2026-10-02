@@ -1,6 +1,6 @@
 # 固定 prefix/suffix 的剪枝证书
 
-这是用户要求的独立 subagent 数学推导结果。下面的 affix 证书尚未接入实现；当前代码仍仅对空 affix 使用 compact 内核。普通字符 BPE 与有限长度门控的证明见 [PAIR_MONOTONICITY.md](PAIR_MONOTONICITY.md)。
+这是用户要求的独立 subagent 数学推导结果。下面的静态 affix 证书尚未接入实现。本轮采用运行时激活检查，在实际 ID 复用前使用完整快速引擎，复用时从原始词重建 HF cohorts，详见 [AFFIX_FAST_PATH_MIGRATIONS.md](AFFIX_FAST_PATH_MIGRATIONS.md)。普通字符 BPE 与有限长度门控的证明见 [PAIR_MONOTONICITY.md](PAIR_MONOTONICITY.md)。
 
 ## 固定装饰保留的结构
 

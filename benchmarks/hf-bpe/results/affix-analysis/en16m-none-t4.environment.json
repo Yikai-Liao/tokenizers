@@ -1,0 +1,84 @@
+{
+  "case": "en16m-none-t4",
+  "command": [
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-analysis/target/release/hf-bpe-native-affix-analysis",
+    "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/en-16m.txt",
+    "none",
+    "reference",
+    "30000",
+    "2"
+  ],
+  "env_overrides": {
+    "TOKENIZERS_PARALLELISM": "false",
+    "RAYON_NUM_THREADS": "4",
+    "HF_BPE_BENCH_WORKERS": "4"
+  },
+  "corpus": "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/en-16m.txt",
+  "corpus_bytes": 16776969,
+  "corpus_sha256": "41b20e33253a4db8c66b95536cbadc86c79072e81eb9e5cd59ef136490abdec9",
+  "prefix": null,
+  "suffix": null,
+  "oracle": false,
+  "requested_threads": 4,
+  "vocab_size": 30000,
+  "min_frequency": 2,
+  "source_commit": "c9af0cf2e5d81b89147f555d6d9693f504aab1dc",
+  "binary_sha256": "7824be6f26f5eeef143cdb21d9c90a260aa37c92c379a05ba26580ccfd223038",
+  "instrumentation_sha256": "a1f1c461a7ddbe96b4a343bb064d58698d2ad68a17864a4671bad678f89e4edf",
+  "system_before": {
+    "MemAvailable": 7394516992,
+    "SwapFree": 6280982528
+  },
+  "host_before": {
+    "cpu": [
+      "18272765",
+      "28765",
+      "5531169",
+      "154545981",
+      "56598",
+      "0",
+      "1791729",
+      "67373",
+      "0",
+      "0"
+    ],
+    "loadavg": [
+      "1.32",
+      "1.92",
+      "1.74"
+    ]
+  },
+  "system_after": {
+    "MemAvailable": 7353409536,
+    "SwapFree": 6280982528
+  },
+  "host_after": {
+    "cpu": [
+      "18273379",
+      "28765",
+      "5531290",
+      "154548106",
+      "56599",
+      "0",
+      "1791764",
+      "67374",
+      "0",
+      "0"
+    ],
+    "loadavg": [
+      "1.30",
+      "1.91",
+      "1.74"
+    ]
+  },
+  "wall_seconds": 4.765582060033921,
+  "min_memavailable": 7100329984,
+  "peak_rss_bytes": 271286272,
+  "peak_vmswap_bytes": 0,
+  "pswpin_delta": null,
+  "child_user_seconds": 4.341414,
+  "child_system_seconds": 0.275101,
+  "child_maxrss_kib": 286228,
+  "returncode": 0,
+  "failure": null
+}

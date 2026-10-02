@@ -1,0 +1,120 @@
+{
+  "case": "zh512m-suffix-w1-vocab50k",
+  "command": [
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-analysis/target/release/hf-bpe-native-affix-analysis",
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/gb-corpus/zh-512m.txt",
+    "none",
+    "reference",
+    "50000",
+    "2"
+  ],
+  "env_overrides": {
+    "TOKENIZERS_PARALLELISM": "false",
+    "RAYON_NUM_THREADS": "1",
+    "HF_BPE_BENCH_WORKERS": "1",
+    "HF_BPE_SUFFIX": "</w>"
+  },
+  "corpus": "/root/code/tokenizers/benchmarks/hf-bpe/.build/gb-corpus/zh-512m.txt",
+  "corpus_bytes": 536870289,
+  "corpus_sha256": "a0d40d4102cba1e933f25e5ccd17552d2eaebaec4ef770bc39d8e46e740b4d4f",
+  "prefix": null,
+  "suffix": "</w>",
+  "require_absent_affixes": false,
+  "oracle": false,
+  "requested_threads": 1,
+  "vocab_size": 50000,
+  "min_frequency": 2,
+  "label": "affix-analysis",
+  "source_commit": "c9af0cf2e5d81b89147f555d6d9693f504aab1dc",
+  "binary_sha256": "57f3eb76cb5305dfce72bddf746f921d41ad2baaa15719b1f383849301682b5f",
+  "instrumentation_sha256": "a1f1c461a7ddbe96b4a343bb064d58698d2ad68a17864a4671bad678f89e4edf",
+  "system_before": {
+    "MemAvailable": 7681429504,
+    "SwapFree": 5960499200
+  },
+  "host_before": {
+    "cpu": [
+      "18347570",
+      "28765",
+      "5541091",
+      "154674924",
+      "56715",
+      "0",
+      "1793751",
+      "67433",
+      "0",
+      "0"
+    ],
+    "loadavg": [
+      "2.29",
+      "2.56",
+      "2.13"
+    ]
+  },
+  "corpus_manifest_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/gb-corpus/manifest.json",
+  "corpus_manifest": {
+    "dataset": "wikimedia/wikipedia",
+    "revision": "b04c8d1ceb2f5cd4588862100d08de323dccfbaa",
+    "selection": "shard order, article order, normalized paragraphs; no replication or synthetic additions",
+    "line_byte_range": [
+      32,
+      8192
+    ],
+    "sources": [
+      {
+        "shard": "train-00000-of-00006.parquet",
+        "url": "https://huggingface.co/datasets/wikimedia/wikipedia/resolve/b04c8d1ceb2f5cd4588862100d08de323dccfbaa/20231101.zh/train-00000-of-00006.parquet",
+        "bytes": 587109027,
+        "sha256": "853ddf4a138c792ad7386d6de831788f96326c03e1e3349f7a315498392e8b56"
+      },
+      {
+        "shard": "train-00001-of-00006.parquet",
+        "url": "https://huggingface.co/datasets/wikimedia/wikipedia/resolve/b04c8d1ceb2f5cd4588862100d08de323dccfbaa/20231101.zh/train-00001-of-00006.parquet",
+        "bytes": 263629009,
+        "sha256": "038b08e5aae38b5a1671794cee3fa0d4952c0d00fa0890a903d2de3f3fe5f703"
+      }
+    ],
+    "articles_visited": 336509,
+    "output": {
+      "path": "zh-1024m.txt",
+      "bytes": 1073741749,
+      "lines": 3159381,
+      "sha256": "4f375a10f171be4e9903fe0040538da5051235eb119a6bb07e3f3d06c004b248"
+    }
+  },
+  "runner_script_sha256": "c218c0526c531b16bc2a044d012cd1e1853d173826fcf80c99ddb9fd3a68d09e",
+  "system_after": {
+    "MemAvailable": 7674392576,
+    "SwapFree": 5962596352
+  },
+  "host_after": {
+    "cpu": [
+      "18370731",
+      "28765",
+      "5544752",
+      "154755917",
+      "56784",
+      "0",
+      "1795000",
+      "67465",
+      "0",
+      "0"
+    ],
+    "loadavg": [
+      "1.48",
+      "2.16",
+      "2.06"
+    ]
+  },
+  "wall_seconds": 180.3781810690416,
+  "min_memavailable": 4086276096,
+  "peak_rss_bytes": 3603292160,
+  "peak_vmswap_bytes": 0,
+  "max_process_threads": 1,
+  "pswpin_delta": null,
+  "child_user_seconds": 174.353496,
+  "child_system_seconds": 4.97167,
+  "child_maxrss_kib": 3527852,
+  "returncode": -15,
+  "failure": "timeout"
+}

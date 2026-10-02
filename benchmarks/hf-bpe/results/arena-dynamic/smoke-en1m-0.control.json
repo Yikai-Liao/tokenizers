@@ -1,0 +1,36 @@
+{
+  "command": [
+    "/usr/bin/python3",
+    "/root/code/tokenizers/benchmarks/hf-bpe/run_native_fair.py",
+    "--case",
+    "smoke-en1m-0",
+    "--worktree",
+    "/root/code/tokenizers-worktrees/arena-dynamic-threshold",
+    "--build-root",
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-arena-dynamic",
+    "--binary",
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-arena-dynamic/target/release/hf-bpe-native-arena-dynamic",
+    "--corpus",
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/posting-distribution-inputs/en-1m-none-r16000/input.txt",
+    "--output",
+    "/root/code/tokenizers/benchmarks/hf-bpe/results/arena-dynamic/smoke-en1m-0.jsonl",
+    "--split",
+    "none",
+    "--vocab",
+    "16486",
+    "--initialization-workers",
+    "4",
+    "--merge-workers",
+    "4",
+    "--atomic-corpus",
+    "--require-stats",
+    "posting_arena_cutoff_bytes"
+  ],
+  "extra_environment": {
+    "HF_BPE_ARENA_MODE": "0"
+  },
+  "count": 1,
+  "expected_model_sha256": "c15fc28e5a32b0385fe07bfc9ff34e48ca315021a8b0575b36b79c0b5a373ca9",
+  "word_order": "lexical; same diagnostic binary for every policy",
+  "scope": "full train API includes posting drop and final arena release; no concurrent CPU tasks"
+}

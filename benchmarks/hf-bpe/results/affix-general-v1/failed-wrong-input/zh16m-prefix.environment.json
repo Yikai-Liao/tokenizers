@@ -1,0 +1,109 @@
+{
+  "case": "zh16m-prefix",
+  "label": "affix-general-v1",
+  "command": [
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-general-v1/target/release/hf-bpe-native-affix-general-v1",
+    "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/zh-16m.txt",
+    "none",
+    "reference",
+    "30000",
+    "2"
+  ],
+  "worktree_commit": "d7d67475bd858f6eeddffc528a792acd9ee51349",
+  "build_manifest_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-general-v1/build_manifest.json",
+  "build_manifest_sha256": "da38374961d90242158232a250f6bc58c9b3953d41a6e1406054193e828e2124",
+  "binary_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-general-v1/target/release/hf-bpe-native-affix-general-v1",
+  "binary_sha256": "447a95dcd4296298cabe0b392a0408c3056faf362d5be03cd8e48e55904c2647",
+  "build_script_sha256": "6f42ac8e76f7e953a345c40451b7c5d9315ad1c609dccdbe232b0457279462d9",
+  "run_script_sha256": "bb2b889eaf543c614c63e95b72b6ca642dc990b92572bc0dd10e75a2d08e1152",
+  "instrumentation_patch_sha256": "17d213af3abd3cea4ca637f47f4052647c2142ac49b1dbc4437795478054e133",
+  "runner_source_sha256": "c030e60213aa927afc9d5b1d687bf391ea8e099c7a100a9bd55fdbdbaa8d13c8",
+  "runner_lock_sha256": "ed6171e24ed18b758fa7f03b3255105a3cbd682d7a3b41cd05a5a28b086ccbaf",
+  "corpus_path": "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/zh-16m.txt",
+  "corpus_bytes": 16777136,
+  "corpus_sha256": "cdee18c95c05586054cfd8e364d3391bb4ca0c2e46cc89d6e4e159d2c0794dc9",
+  "prefix": "##",
+  "suffix": null,
+  "oracle": false,
+  "max_token_length": null,
+  "require_absent_affixes": false,
+  "expected_model_sha256": "cc971b3f521e716dd1bcb5c400e4da760a82cd05333b1b8de2dfc94d665ccc27",
+  "threads_requested": 1,
+  "vocab_size": 30000,
+  "min_frequency": 2,
+  "env_overrides": {
+    "TOKENIZERS_PARALLELISM": "false",
+    "RAYON_NUM_THREADS": "1",
+    "HF_BPE_BENCH_WORKERS": "1",
+    "HF_BPE_PREFIX": "##"
+  },
+  "mem_before": {
+    "MemAvailable": 7529246720,
+    "SwapFree": 5969768448,
+    "pswpin": 613873,
+    "pswpout": 2370966
+  },
+  "host_before": {
+    "cpu_ticks": [
+      18463215,
+      28765,
+      5563600,
+      155235448,
+      57059,
+      0,
+      1800769,
+      67642,
+      0,
+      0
+    ],
+    "loadavg": [
+      "2.47",
+      "2.13",
+      "1.84"
+    ]
+  },
+  "input_manifest_path": "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/zh-16m.manifest.json",
+  "input_manifest": {
+    "path": "/root/code/efficient_bpe/benchmarks/bpe_core_comparison/data/zh-16m.txt",
+    "input": "zh-16m.txt",
+    "input_sha256": "cdee18c95c05586054cfd8e364d3391bb4ca0c2e46cc89d6e4e159d2c0794dc9",
+    "input_bytes": 16777136,
+    "source_manifest": "/root/code/efficient_bpe/benchmarks/bpe_core_comparison/data/zh-manifest.json"
+  },
+  "mem_after": {
+    "MemAvailable": 7514464256,
+    "SwapFree": 5969768448,
+    "pswpin": 613873,
+    "pswpout": 2370966
+  },
+  "host_after": {
+    "cpu_ticks": [
+      18463565,
+      28765,
+      5563667,
+      155236724,
+      57059,
+      0,
+      1800790,
+      67642,
+      0,
+      0
+    ],
+    "loadavg": [
+      "2.47",
+      "2.13",
+      "1.84"
+    ]
+  },
+  "wall_seconds": 2.7614859170280397,
+  "min_memavailable_bytes": 7259869184,
+  "peak_rss_bytes": 271028224,
+  "peak_vmswap_bytes": 0,
+  "max_process_threads": 1,
+  "pswpin_delta": 0,
+  "pswpout_delta": 0,
+  "child_user_seconds": 2.491044,
+  "child_system_seconds": 0.155696,
+  "returncode": 0,
+  "failure": null
+}

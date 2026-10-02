@@ -4,7 +4,7 @@ mod indexed;
 #[cfg(feature = "parity-aware-bpe")]
 pub mod parity_trainer;
 mod word;
-pub use indexed::{IndexedParallelConfig, IndexedTraining, IndexedTrainingStats};
+use indexed::IndexedParallelConfig;
 #[cfg(feature = "parity-aware-bpe")]
 pub use parity_trainer::{ParityBpeTrainer, ParityBpeTrainerBuilder, ParityVariant};
 
@@ -507,7 +507,25 @@ impl BpeTrainer {
         &self,
         word_counts: &AHashMap<CompactString, u64>,
     ) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
-        self.do_train_observed(word_counts, |_, _, _| {})
+        let workers = if get_parallelism() {
+            num_threads().max(1)
+        } else {
+            1
+        };
+        let trained = self.do_train_indexed_parallel(
+            word_counts,
+            IndexedParallelConfig {
+                workers,
+                initialization_workers: None,
+                posting_block_bits: 32,
+                // Ordinary BPE keeps its measured wide-slot default. General
+                // cohorts narrow when their actual decorated ID domain fits.
+                narrow_corpus: !indexed::supports_compact(self),
+                atomic_corpus: true,
+                batch_size: 256,
+            },
+        )?;
+        Ok((trained.vocab, trained.merges, trained.special_tokens))
     }
 
     fn do_train_observed(

@@ -1,0 +1,60 @@
+{
+  "control": {
+    "command": [
+      "/usr/bin/python3",
+      "/root/code/tokenizers/benchmarks/hf-bpe/run_native_fair.py",
+      "--case",
+      "smoke-en1m-seeded-auto",
+      "--worktree",
+      "/root/code/tokenizers-worktrees/arena-dynamic-threshold",
+      "--build-root",
+      "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-arena-dynamic-seeded",
+      "--binary",
+      "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-arena-dynamic-seeded/target/release/hf-bpe-native-arena-dynamic-seeded",
+      "--corpus",
+      "/root/code/tokenizers/benchmarks/hf-bpe/.build/posting-distribution-inputs/en-1m-none-r16000/input.txt",
+      "--output",
+      "/root/code/tokenizers/benchmarks/hf-bpe/results/arena-dynamic/smoke-en1m-seeded-auto.jsonl",
+      "--split",
+      "none",
+      "--vocab",
+      "16486",
+      "--initialization-workers",
+      "4",
+      "--merge-workers",
+      "4",
+      "--atomic-corpus",
+      "--require-stats",
+      "posting_arena_cutoff_bytes"
+    ],
+    "extra_environment": {
+      "HF_BPE_ARENA_MODE": "auto"
+    },
+    "count": 1,
+    "expected_model_sha256": "ece74188f0b6566ab9eecd14f73b2cce6d1f48cc5b6ae9d4f89078ceb810a67a",
+    "word_order": "fixed feed hash seeds (11, 13, 17, 19); serial feed; same diagnostic binary for every policy",
+    "scope": "full train API includes posting drop and final arena release; no concurrent CPU tasks"
+  },
+  "cutoff_bytes": 256,
+  "allocator_origin_gate": "PASS",
+  "model_gate": "PASS",
+  "no_process_swap_gate": "PASS",
+  "allocations": {
+    "arena_buffers": 61713,
+    "arena_requested_bytes": 2328868,
+    "arena_retired_bytes": 2328868,
+    "backing_bytes": 3665216,
+    "backing_bytes_including_metadata": 3667280,
+    "chunks": 43,
+    "grows": 0,
+    "heap_buffers": 4003,
+    "heap_freed_bytes": 7121580,
+    "heap_frees": 4003,
+    "heap_requested_bytes": 7121580
+  },
+  "arena_buffer_fraction": 0.9390863716598697,
+  "train_ms": 263.12693499999995,
+  "initialize_ms": 31.091442999999998,
+  "merge_ms": 220.4392,
+  "full_peak_rss_bytes": 30998528
+}

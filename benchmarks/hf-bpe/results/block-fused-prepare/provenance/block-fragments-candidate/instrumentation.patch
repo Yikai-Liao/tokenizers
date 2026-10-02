@@ -1,0 +1,107 @@
+--- /root/code/tokenizers-worktrees/block-fused-prepare/tokenizers/tk-train/src/trainers/bpe/indexed.rs
++++ /root/code/tokenizers/benchmarks/hf-bpe/.build/native-block-fragments-candidate/source/tokenizers/tk-train/src/trainers/bpe/indexed.rs
+@@ -1013,7 +1013,7 @@
+         if supports_compact(self) {
+             parallel::train(self, word_counts, config)
+         } else {
+-            let options = cohort_parallel::Options::default();
++            let options = cohort_parallel::Options::from_bench_env();
+             self.train_affixed_options(word_counts, config, options)
+         }
+     }
+--- /root/code/tokenizers-worktrees/block-fused-prepare/tokenizers/tk-train/src/trainers/bpe/mod.rs
++++ /root/code/tokenizers/benchmarks/hf-bpe/.build/native-block-fragments-candidate/source/tokenizers/tk-train/src/trainers/bpe/mod.rs
+@@ -512,12 +512,15 @@
+         } else {
+             1
+         };
++        if std::env::var("HF_BPE_ORACLE").as_deref() == Ok("1") {
++            return self.do_train_observed(word_counts, |_, _, _| {});
++        }
+         let trained = self.do_train_indexed_parallel(
+             word_counts,
+             IndexedParallelConfig {
+                 workers,
+                 initialization_workers: None,
+-                posting_block_bits: 32,
++                posting_block_bits: 16,
+                 // Ordinary BPE keeps its measured wide-slot default. General
+                 // cohorts narrow when their actual decorated ID domain fits.
+                 narrow_corpus: !indexed::supports_compact(self),
+@@ -525,6 +528,7 @@
+                 batch_size: 256,
+             },
+         )?;
++        eprintln!("{}", serde_json::json!({"bench_indexed_stats": trained.stats}));
+         Ok((trained.vocab, trained.merges, trained.special_tokens))
+     }
+ 
+@@ -738,14 +742,14 @@
+             .maybe_par_bridge()
+             .map(|sequence| {
+                 let words = process(sequence.as_ref())?;
+-                let mut map = AHashMap::new();
++                let mut map = AHashMap::with_hasher(ahash::RandomState::with_seeds(11, 13, 17, 19));
+                 for word in words {
+                     *map.entry(CompactString::from(word)).or_default() += 1;
+                 }
+                 Ok(map)
+             })
+             .reduce(
+-                || Ok(AHashMap::new()),
++                || Ok(AHashMap::with_hasher(ahash::RandomState::with_seeds(11, 13, 17, 19))),
+                 |acc, ws| {
+                     let mut acc = acc?;
+                     for (k, v) in ws? {
+--- /root/code/tokenizers-worktrees/block-fused-prepare/tokenizers/tk-train/src/trainers/bpe/indexed/cohort_parallel.rs
++++ /root/code/tokenizers/benchmarks/hf-bpe/.build/native-block-fragments-candidate/source/tokenizers/tk-train/src/trainers/bpe/indexed/cohort_parallel.rs
+@@ -1057,3 +1057,49 @@
+         assert!(got.stats.cohort_parallel_rounds > 0);
+     }
+ }
++
++impl Options {
++    pub(super) fn from_bench_env() -> Self {
++        let mut options = Self::default();
++        let disabled = std::env::var("HF_BPE_COHORT_DISABLE").unwrap_or_default();
++        for name in disabled.split(',').map(str::trim).filter(|name| !name.is_empty()) {
++            match name {
++                "all" => return Self { sort_weights: false,
++            narrow_corpus: false,
++            weight_lookup: false,
++            initial_grouped: false,
++            parallel_apply: false,
++            grouped_tail: false,
++            scratch_cache: false,
++            character_cache: false,
++            packed_queue: false,
++            parallel_measure: false,
++            guarded_fast: false,
++            parallel_alphabet: false,
++            arena_allocator: false,
++            batch_execution: false,
++            queue_prefetch: false,
++            fused_batch: false },
++                "sort_weights" => options.sort_weights = false,
++                "narrow_corpus" => options.narrow_corpus = false,
++                "weight_lookup" => options.weight_lookup = false,
++                "initial_grouped" => options.initial_grouped = false,
++                "parallel_apply" => options.parallel_apply = false,
++                "grouped_tail" => options.grouped_tail = false,
++                "scratch_cache" => options.scratch_cache = false,
++                "character_cache" => options.character_cache = false,
++                "packed_queue" => options.packed_queue = false,
++                "parallel_measure" => options.parallel_measure = false,
++                "guarded_fast" => options.guarded_fast = false,
++                "parallel_alphabet" => options.parallel_alphabet = false,
++                "arena_allocator" => options.arena_allocator = false,
++                "batch_execution" => options.batch_execution = false,
++                "queue_prefetch" => options.queue_prefetch = false,
++                "fused_batch" => options.fused_batch = false,
++                other => panic!("unknown HF_BPE_COHORT_DISABLE option: {other}"),
++            }
++        }
++        options
++    }
++}
++

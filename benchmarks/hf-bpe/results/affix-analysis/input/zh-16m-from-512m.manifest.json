@@ -1,0 +1,8 @@
+{
+  "source": "/root/code/tokenizers/benchmarks/hf-bpe/.build/gb-corpus/zh-512m.txt",
+  "source_manifest": "/root/code/tokenizers/benchmarks/hf-bpe/.build/gb-corpus/manifest.json",
+  "selection": "whole-line prefix, stop before next line would exceed 16 MiB",
+  "target_bytes": 16777216,
+  "bytes": 16776351,
+  "sha256": "ebd64699a917bb0982e9b64d302d94cc08057f43d16bcb5efc041594684c12a6"
+}

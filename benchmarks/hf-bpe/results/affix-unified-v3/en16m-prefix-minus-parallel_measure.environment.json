@@ -1,0 +1,127 @@
+{
+  "case": "en16m-prefix-minus-parallel_measure",
+  "label": "affix-unified-v3-final",
+  "command": [
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-unified-v3-final/target/release/hf-bpe-native-affix-unified-v3-final",
+    "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/en-16m.txt",
+    "none",
+    "reference",
+    "30000",
+    "2"
+  ],
+  "worktree_commit": "8454618fe61f8391222248c0fb069ed5e95c3f94",
+  "build_manifest_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-unified-v3-final/build_manifest.json",
+  "build_manifest_sha256": "859e6d193c1dab4cd529dab77a42d4ca2279800b90b52a567c988994ea5ba645",
+  "binary_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-unified-v3-final/target/release/hf-bpe-native-affix-unified-v3-final",
+  "binary_sha256": "2782e90cef64c8c307dcc2bc2148c24656ee88e462b0bbe80d126501586a8cf8",
+  "build_script_sha256": "8e0451651c8135c5cc8fd836e47bb3c26bc6b73b1e80cfad87d876254b7ea375",
+  "run_script_sha256": "8a64c58e4bddee79b1ca9d116fa277166ee2b65243cb92f190b80504296db850",
+  "instrumentation_patch_sha256": "138dba0b1579d71137677635ca17226ff62b47fa2502b3ef651dff65f0ac5358",
+  "runner_source_sha256": "c030e60213aa927afc9d5b1d687bf391ea8e099c7a100a9bd55fdbdbaa8d13c8",
+  "runner_lock_sha256": "ed6171e24ed18b758fa7f03b3255105a3cbd682d7a3b41cd05a5a28b086ccbaf",
+  "corpus_path": "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/en-16m.txt",
+  "corpus_bytes": 16776969,
+  "corpus_sha256": "41b20e33253a4db8c66b95536cbadc86c79072e81eb9e5cd59ef136490abdec9",
+  "expected_corpus_sha256": "41b20e33253a4db8c66b95536cbadc86c79072e81eb9e5cd59ef136490abdec9",
+  "baseline_pair": {
+    "case": "en16m-prefix-t4",
+    "environment_path": "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-parallel-v2/en16m-prefix-t4.environment.json",
+    "corpus_path": "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/en-16m.txt",
+    "corpus_sha256": "41b20e33253a4db8c66b95536cbadc86c79072e81eb9e5cd59ef136490abdec9",
+    "vocab_size": 30000,
+    "min_frequency": 2,
+    "prefix": "##",
+    "suffix": null,
+    "threads_requested": 4,
+    "thread_policy": "match"
+  },
+  "prefix": "##",
+  "suffix": null,
+  "oracle": false,
+  "baseline": false,
+  "max_token_length": null,
+  "require_absent_affixes": false,
+  "expected_model_sha256": "0639f94986bd85ba3bcd9cd316558f29b4d19ec10051c05103f2057e38aa821e",
+  "threads_requested": 4,
+  "allow_short_process": false,
+  "vocab_size": 30000,
+  "min_frequency": 2,
+  "env_overrides": {
+    "TOKENIZERS_PARALLELISM": "false",
+    "RAYON_NUM_THREADS": "4",
+    "HF_BPE_BENCH_WORKERS": "4",
+    "HF_BPE_PREFIX": "##",
+    "HF_BPE_COHORT_DISABLE": "parallel_measure"
+  },
+  "mem_before": {
+    "MemAvailable": 7828623360,
+    "SwapFree": 5763457024,
+    "pswpin": 633259,
+    "pswpout": 2441024
+  },
+  "host_before": {
+    "cpu_ticks": [
+      18981401,
+      28765,
+      5682434,
+      158296438,
+      58855,
+      0,
+      1837339,
+      68745,
+      0,
+      0
+    ],
+    "loadavg": [
+      "1.77",
+      "1.48",
+      "1.53"
+    ]
+  },
+  "cohort_disable": [
+    "parallel_measure"
+  ],
+  "input_manifest_path": "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/en-16m.manifest.json",
+  "input_manifest": {
+    "source": "/root/code/tokenizers/benchmarks/hf-bpe/.build/posting-distribution-inputs/en-16m-none-r16000/input.txt",
+    "input": "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/en-16m.txt",
+    "bytes": 16776969,
+    "sha256": "41b20e33253a4db8c66b95536cbadc86c79072e81eb9e5cd59ef136490abdec9"
+  },
+  "mem_after": {
+    "MemAvailable": 7807709184,
+    "SwapFree": 5763457024,
+    "pswpin": 633259,
+    "pswpout": 2441024
+  },
+  "host_after": {
+    "cpu_ticks": [
+      18982047,
+      28765,
+      5682525,
+      158298227,
+      58855,
+      0,
+      1837398,
+      68746,
+      0,
+      0
+    ],
+    "loadavg": [
+      "1.77",
+      "1.48",
+      "1.53"
+    ]
+  },
+  "wall_seconds": 4.267030921007972,
+  "min_memavailable_bytes": 7446130688,
+  "peak_rss_bytes": 373170176,
+  "peak_vmswap_bytes": 0,
+  "max_process_threads": 5,
+  "pswpin_delta": 0,
+  "pswpout_delta": 0,
+  "child_user_seconds": 5.253172,
+  "child_system_seconds": 0.5941759999999999,
+  "returncode": 0,
+  "failure": null
+}

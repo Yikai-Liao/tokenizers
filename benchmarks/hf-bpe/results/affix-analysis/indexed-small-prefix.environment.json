@@ -1,0 +1,84 @@
+{
+  "case": "indexed-small-prefix",
+  "command": [
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-analysis/target/release/hf-bpe-native-affix-analysis",
+    "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/en-small-oracle.txt",
+    "none",
+    "reference",
+    "30000",
+    "2"
+  ],
+  "env_overrides": {
+    "TOKENIZERS_PARALLELISM": "false",
+    "RAYON_NUM_THREADS": "1",
+    "HF_BPE_BENCH_WORKERS": "1",
+    "HF_BPE_PREFIX": "##"
+  },
+  "corpus": "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/en-small-oracle.txt",
+  "corpus_bytes": 63767,
+  "corpus_sha256": "3fcbfeb9f1d2cf2118140cde4f4b4c09b795216ac825f35341352b69b57f6104",
+  "prefix": "##",
+  "suffix": null,
+  "oracle": false,
+  "vocab_size": 30000,
+  "min_frequency": 2,
+  "source_commit": "c9af0cf2e5d81b89147f555d6d9693f504aab1dc",
+  "binary_sha256": "7824be6f26f5eeef143cdb21d9c90a260aa37c92c379a05ba26580ccfd223038",
+  "instrumentation_sha256": "a1f1c461a7ddbe96b4a343bb064d58698d2ad68a17864a4671bad678f89e4edf",
+  "system_before": {
+    "MemAvailable": 7385153536,
+    "SwapFree": 6276001792
+  },
+  "host_before": {
+    "cpu": [
+      "18263084",
+      "28765",
+      "5528392",
+      "154476774",
+      "56575",
+      "0",
+      "1790685",
+      "67345",
+      "0",
+      "0"
+    ],
+    "loadavg": [
+      "1.98",
+      "2.37",
+      "1.84"
+    ]
+  },
+  "system_after": {
+    "MemAvailable": 7385001984,
+    "SwapFree": 6276001792
+  },
+  "host_after": {
+    "cpu": [
+      "18263105",
+      "28765",
+      "5528396",
+      "154476914",
+      "56576",
+      "0",
+      "1790686",
+      "67345",
+      "0",
+      "0"
+    ],
+    "loadavg": [
+      "1.98",
+      "2.37",
+      "1.84"
+    ]
+  },
+  "wall_seconds": 0.25141459703445435,
+  "min_memavailable": 7384952832,
+  "peak_rss_bytes": 327680,
+  "peak_vmswap_bytes": 0,
+  "pswpin_delta": null,
+  "child_user_seconds": 0.057337,
+  "child_system_seconds": 0.003822,
+  "child_maxrss_kib": 19688,
+  "returncode": 0,
+  "failure": null
+}

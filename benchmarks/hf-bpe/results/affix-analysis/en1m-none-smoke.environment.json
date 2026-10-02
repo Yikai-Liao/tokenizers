@@ -1,0 +1,83 @@
+{
+  "case": "en1m-none-smoke",
+  "command": [
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-analysis/target/release/hf-bpe-native-affix-analysis",
+    "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/en-1m.txt",
+    "none",
+    "reference",
+    "30000",
+    "2"
+  ],
+  "env_overrides": {
+    "TOKENIZERS_PARALLELISM": "false",
+    "RAYON_NUM_THREADS": "1",
+    "HF_BPE_BENCH_WORKERS": "1"
+  },
+  "corpus": "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/en-1m.txt",
+  "corpus_bytes": 1048035,
+  "corpus_sha256": "830150d2e68195b12a2ef93dd07abae1626453668eb9c09eeb6ca946228426d6",
+  "prefix": null,
+  "suffix": null,
+  "oracle": false,
+  "vocab_size": 30000,
+  "min_frequency": 2,
+  "source_commit": "c9af0cf2e5d81b89147f555d6d9693f504aab1dc",
+  "binary_sha256": "7824be6f26f5eeef143cdb21d9c90a260aa37c92c379a05ba26580ccfd223038",
+  "instrumentation_sha256": "a1f1c461a7ddbe96b4a343bb064d58698d2ad68a17864a4671bad678f89e4edf",
+  "system_before": {
+    "MemAvailable": 7406489600,
+    "SwapFree": 6276001792
+  },
+  "host_before": {
+    "cpu": [
+      "18261157",
+      "28765",
+      "5527659",
+      "154460338",
+      "56571",
+      "0",
+      "1790427",
+      "67338",
+      "0",
+      "0"
+    ],
+    "loadavg": [
+      "2.53",
+      "2.50",
+      "1.86"
+    ]
+  },
+  "system_after": {
+    "MemAvailable": 7412011008,
+    "SwapFree": 6276001792
+  },
+  "host_after": {
+    "cpu": [
+      "18261224",
+      "28765",
+      "5527676",
+      "154460717",
+      "56571",
+      "0",
+      "1790432",
+      "67338",
+      "0",
+      "0"
+    ],
+    "loadavg": [
+      "2.53",
+      "2.50",
+      "1.86"
+    ]
+  },
+  "wall_seconds": 0.7528943509678356,
+  "min_memavailable": 7389896704,
+  "peak_rss_bytes": 23674880,
+  "peak_vmswap_bytes": 0,
+  "pswpin_delta": null,
+  "child_user_seconds": 0.47276799999999997,
+  "child_system_seconds": 0.040059,
+  "child_maxrss_kib": 25804,
+  "returncode": 0,
+  "failure": null
+}

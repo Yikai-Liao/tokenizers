@@ -1,0 +1,26 @@
+{
+  "requested_bytes": 67108864,
+  "touched_bytes": 33554432,
+  "before": {
+    "VmSize": 19898368,
+    "VmRSS": 11968512,
+    "RssAnon": 5062656
+  },
+  "after_reserve": {
+    "VmSize": 87011328,
+    "VmRSS": 11976704,
+    "RssAnon": 5070848
+  },
+  "after_touch": {
+    "VmSize": 87011328,
+    "VmRSS": 45740032,
+    "RssAnon": 38834176
+  },
+  "after_free": {
+    "VmSize": 19898368,
+    "VmRSS": 11972608,
+    "RssAnon": 5066752
+  },
+  "overcommit_memory": "0",
+  "scope": "local malloc anonymous-page residency check; no full training; unused reservation is not equated to RSS"
+}

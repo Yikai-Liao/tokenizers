@@ -1,0 +1,191 @@
+{
+  "case": "zh512m-suffix-minus-weight_lookup",
+  "label": "affix-all-fast-v4",
+  "command": [
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-all-fast-v4/target/release/hf-bpe-native-affix-all-fast-v4",
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/gb-corpus/zh-512m.txt",
+    "none",
+    "reference",
+    "50000",
+    "2"
+  ],
+  "worktree_commit": "438fbca3fb49f7604eeff76e43ebbe7ed7c8604e",
+  "build_manifest_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-all-fast-v4/build_manifest.json",
+  "build_manifest_sha256": "b706b514e11828707287923bfd68f01e9ec0716b63d805a4963c52a3ea98e4af",
+  "binary_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-all-fast-v4/target/release/hf-bpe-native-affix-all-fast-v4",
+  "binary_sha256": "38308624a5a621dd3b921d6193f3fe08fbec6ffd257a36f7368d84c829301d8f",
+  "build_script_sha256": "fdbeb13fbd5914f6e95a5788f749003f0fa23ebf100101eb6e0a64ca67ada6b5",
+  "run_script_sha256": "c17eab9eb6cb2b7019cf5505273f80df4baa168535f05d87140ee3426b7de561",
+  "instrumentation_patch_sha256": "efa61a0c17440e0a6e5f93d45531ffd0417a17a89f67cb17bf31005d8571647b",
+  "runner_source_sha256": "c030e60213aa927afc9d5b1d687bf391ea8e099c7a100a9bd55fdbdbaa8d13c8",
+  "runner_lock_sha256": "ed6171e24ed18b758fa7f03b3255105a3cbd682d7a3b41cd05a5a28b086ccbaf",
+  "corpus_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/gb-corpus/zh-512m.txt",
+  "corpus_bytes": 536870289,
+  "corpus_sha256": "a0d40d4102cba1e933f25e5ccd17552d2eaebaec4ef770bc39d8e46e740b4d4f",
+  "expected_corpus_sha256": "a0d40d4102cba1e933f25e5ccd17552d2eaebaec4ef770bc39d8e46e740b4d4f",
+  "baseline_pair": {
+    "case": "zh512m-suffix-t4-vocab50k",
+    "environment_path": "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-parallel-v2/zh512m-suffix-t4-vocab50k.environment.json",
+    "result_path": "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-parallel-v2/zh512m-suffix-t4-vocab50k.jsonl",
+    "model_sha256": "9e7dd5f1d28beaabcbae59df61b574595e7bb6e38facaeb76d77bab95b68c056",
+    "corpus_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/gb-corpus/zh-512m.txt",
+    "corpus_sha256": "a0d40d4102cba1e933f25e5ccd17552d2eaebaec4ef770bc39d8e46e740b4d4f",
+    "vocab_size": 50000,
+    "min_frequency": 2,
+    "prefix": null,
+    "suffix": "</w>",
+    "threads_requested": 4,
+    "thread_policy": "match"
+  },
+  "prefix": null,
+  "suffix": "</w>",
+  "oracle": false,
+  "baseline": false,
+  "max_token_length": null,
+  "require_absent_affixes": false,
+  "expected_model_sha256": "9e7dd5f1d28beaabcbae59df61b574595e7bb6e38facaeb76d77bab95b68c056",
+  "threads_requested": 4,
+  "allow_short_process": false,
+  "vocab_size": 50000,
+  "min_frequency": 2,
+  "env_overrides": {
+    "TOKENIZERS_PARALLELISM": "false",
+    "RAYON_NUM_THREADS": "4",
+    "HF_BPE_BENCH_WORKERS": "4",
+    "HF_BPE_SUFFIX": "</w>",
+    "HF_BPE_COHORT_DISABLE": "weight_lookup"
+  },
+  "mem_before": {
+    "MemAvailable": 7957397504,
+    "SwapFree": 5723770880,
+    "pswpin": 635836,
+    "pswpout": 2453526
+  },
+  "host_before": {
+    "cpu_ticks": [
+      19175999,
+      28765,
+      5740896,
+      159982942,
+      59360,
+      0,
+      1856851,
+      69336,
+      0,
+      0
+    ],
+    "loadavg": [
+      "1.84",
+      "1.66",
+      "1.47"
+    ]
+  },
+  "cohort_disable": [
+    "weight_lookup"
+  ],
+  "cohort_options_available": [
+    "arena_allocator",
+    "batch_execution",
+    "character_cache",
+    "fused_batch",
+    "grouped_tail",
+    "guarded_fast",
+    "initial_grouped",
+    "narrow_corpus",
+    "packed_queue",
+    "parallel_alphabet",
+    "parallel_apply",
+    "parallel_measure",
+    "queue_prefetch",
+    "scratch_cache",
+    "sort_weights",
+    "weight_lookup"
+  ],
+  "cohort_option_defaults": {
+    "sort_weights": true,
+    "narrow_corpus": true,
+    "weight_lookup": true,
+    "initial_grouped": true,
+    "parallel_apply": true,
+    "grouped_tail": true,
+    "scratch_cache": true,
+    "character_cache": true,
+    "packed_queue": true,
+    "parallel_measure": true,
+    "guarded_fast": true,
+    "parallel_alphabet": true,
+    "arena_allocator": true,
+    "batch_execution": true,
+    "queue_prefetch": true,
+    "fused_batch": true
+  },
+  "extended_diagnostics_expected": true,
+  "require_extended_diagnostics": true,
+  "input_manifest_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/gb-corpus/manifest.json",
+  "input_manifest": {
+    "dataset": "wikimedia/wikipedia",
+    "revision": "b04c8d1ceb2f5cd4588862100d08de323dccfbaa",
+    "selection": "shard order, article order, normalized paragraphs; no replication or synthetic additions",
+    "line_byte_range": [
+      32,
+      8192
+    ],
+    "sources": [
+      {
+        "shard": "train-00000-of-00006.parquet",
+        "url": "https://huggingface.co/datasets/wikimedia/wikipedia/resolve/b04c8d1ceb2f5cd4588862100d08de323dccfbaa/20231101.zh/train-00000-of-00006.parquet",
+        "bytes": 587109027,
+        "sha256": "853ddf4a138c792ad7386d6de831788f96326c03e1e3349f7a315498392e8b56"
+      },
+      {
+        "shard": "train-00001-of-00006.parquet",
+        "url": "https://huggingface.co/datasets/wikimedia/wikipedia/resolve/b04c8d1ceb2f5cd4588862100d08de323dccfbaa/20231101.zh/train-00001-of-00006.parquet",
+        "bytes": 263629009,
+        "sha256": "038b08e5aae38b5a1671794cee3fa0d4952c0d00fa0890a903d2de3f3fe5f703"
+      }
+    ],
+    "articles_visited": 336509,
+    "output": {
+      "path": "zh-1024m.txt",
+      "bytes": 1073741749,
+      "lines": 3159381,
+      "sha256": "4f375a10f171be4e9903fe0040538da5051235eb119a6bb07e3f3d06c004b248"
+    }
+  },
+  "mem_after": {
+    "MemAvailable": 7937077248,
+    "SwapFree": 5723770880,
+    "pswpin": 635845,
+    "pswpout": 2453526
+  },
+  "host_after": {
+    "cpu_ticks": [
+      19182671,
+      28765,
+      5741880,
+      159991787,
+      59365,
+      0,
+      1857079,
+      69341,
+      0,
+      0
+    ],
+    "loadavg": [
+      "2.18",
+      "1.76",
+      "1.51"
+    ]
+  },
+  "wall_seconds": 27.884124721982516,
+  "min_memavailable_bytes": 4829204480,
+  "peak_rss_bytes": 3148140544,
+  "peak_vmswap_bytes": 0,
+  "max_process_threads": 5,
+  "pswpin_delta": 9,
+  "pswpout_delta": 0,
+  "child_user_seconds": 59.34516,
+  "child_system_seconds": 4.637978,
+  "returncode": 0,
+  "failure": null
+}

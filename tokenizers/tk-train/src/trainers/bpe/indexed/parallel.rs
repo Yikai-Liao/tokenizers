@@ -6,13 +6,106 @@ use super::*;
 use rayon::prelude::*;
 use std::sync::atomic::{AtomicU16, AtomicU32, Ordering as AtomicOrdering};
 
-trait Slot: Default + Send + Sync {
+mod alphabet;
+pub(super) fn initialize_alphabet(
+    trainer: &BpeTrainer,
+    wc: &AHashMap<CompactString, u64>,
+    ids: &mut AHashMap<CompactString, u32>,
+    strings: &mut Vec<CompactString>,
+    workers: usize,
+) -> usize {
+    alphabet::initialize(trainer, wc, ids, strings, workers)
+}
+mod candidate_heap;
+mod validation_window;
+use validation_window::{Frontier, SelectionMode, Window};
+mod bounded_initial;
+mod corpus;
+mod flat_commit;
+mod fused_batch;
+mod radix_count;
+use candidate_heap::CandidateHeap;
+pub(super) mod weight_lookup;
+
+/// Fast execution can discard low-frequency history while replacements are
+/// newly activated identities. Stop before the first active collision, so the
+/// caller can reconstruct the full HF cohorts from the unchanged input words.
+#[derive(Debug)]
+pub(super) struct AliasCollision {
+    pub(super) stats: Box<IndexedTrainingStats>,
+}
+impl std::fmt::Display for AliasCollision {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("active affix identity requires HF cohort reconstruction")
+    }
+}
+impl std::error::Error for AliasCollision {}
+
+pub(super) fn train_affixed(
+    trainer: &BpeTrainer,
+    wc: &AHashMap<CompactString, u64>,
+    mut config: IndexedParallelConfig,
+    options: cohort_parallel::Options,
+) -> Result<IndexedTraining> {
+    config.narrow_corpus &= options.narrow_corpus;
+    if !options.parallel_apply {
+        config.initialization_workers =
+            Some(config.initialization_workers.unwrap_or(config.workers));
+        config.workers = 1;
+    }
+    if !options.batch_execution {
+        config.batch_size = 1;
+    }
+    let policy = if options.arena_allocator {
+        posting_arena::Policy::Auto
+    } else {
+        posting_arena::Policy::System
+    };
+    let selection = if options.queue_prefetch {
+        SelectionMode::Bulk(4)
+    } else {
+        SelectionMode::Serial
+    };
+    let order = if options.sort_weights {
+        corpus::Order::WeightSorted
+    } else {
+        corpus::Order::Original
+    };
+    train_with_corpus_options(trainer, wc, config, policy, selection, order, Some(options))
+}
+
+// General cohorts reuse the same stable pair grouping without its monotone
+// ledger pruning. The resulting queue still owns every historical cohort.
+pub(super) fn initial_cohorts<C: Slot>(
+    corpus: &[C],
+    pivots: &[u32],
+    weights: &[u64],
+    workers: usize,
+    sorted_weights: bool,
+) -> Result<(AHashMap<Pair, i64>, OctonaryHeap<super::Candidate>)> {
+    radix_count::cohorts(corpus, pivots, weights, workers, sorted_weights)
+}
+
+pub(super) trait Slot: Default + Send + Sync {
     const NARROW: bool;
+    const SHARED: bool = false;
+    fn set_shared(&self, _id: u32) {
+        panic!("shared writes require atomic slots");
+    }
     fn encode(id: u32) -> Self;
+    fn from_u32(corpus: Vec<u32>) -> Vec<Self>
+    where
+        Self: Sized,
+    {
+        corpus.into_iter().map(Self::encode).collect()
+    }
     fn token(&self) -> u32;
     fn set(&mut self, id: u32);
 }
 impl Slot for u32 {
+    fn from_u32(corpus: Vec<u32>) -> Vec<Self> {
+        corpus
+    }
     const NARROW: bool = false;
     fn encode(id: u32) -> Self {
         id
@@ -25,6 +118,13 @@ impl Slot for u32 {
     }
 }
 impl Slot for u16 {
+    fn from_u32(corpus: Vec<u32>) -> Vec<Self> {
+        // Vec's in-place collect may retain the original wide allocation.
+        // Allocate the exact narrow payload so the unsorted path also releases it.
+        let mut narrow = Vec::with_capacity(corpus.len());
+        narrow.extend(corpus.iter().map(|&id| <Self as Slot>::encode(id)));
+        narrow
+    }
     const NARROW: bool = true;
     fn encode(id: u32) -> Self {
         debug_assert!(id == NONE || id < u16::MAX as u32);
@@ -42,6 +142,10 @@ impl Slot for u16 {
     }
 }
 impl Slot for AtomicU32 {
+    const SHARED: bool = true;
+    fn set_shared(&self, id: u32) {
+        self.store(id, AtomicOrdering::Relaxed);
+    }
     const NARROW: bool = false;
     fn encode(id: u32) -> Self {
         Self::new(id)
@@ -54,6 +158,10 @@ impl Slot for AtomicU32 {
     }
 }
 impl Slot for AtomicU16 {
+    const SHARED: bool = true;
+    fn set_shared(&self, id: u32) {
+        self.store(<u16 as Slot>::encode(id), AtomicOrdering::Relaxed);
+    }
     const NARROW: bool = true;
     fn encode(id: u32) -> Self {
         Self::new(<u16 as Slot>::encode(id))
@@ -128,17 +236,23 @@ struct Entry {
 #[derive(Default)]
 struct Owner {
     entries: AHashMap<u64, Entry>,
-    heap: OctonaryHeap<Candidate>,
+    heap: CandidateHeap,
+    window: Window,
+    truth_checks: usize,
+    stale_corrections: usize,
 }
 impl Owner {
     fn peek_current(&mut self) -> Option<Candidate> {
         loop {
-            let top = *self.heap.peek()?;
+            let top = self.heap.peek()?;
+            self.truth_checks += 1;
             match self.entries.get(&top.key) {
                 None => {
+                    self.stale_corrections += 1;
                     self.heap.pop();
                 }
                 Some(entry) if entry.frequency != top.frequency => {
+                    self.stale_corrections += 1;
                     self.heap.pop();
                     self.heap.push(Candidate {
                         frequency: entry.frequency,
@@ -154,10 +268,11 @@ impl Owner {
 struct Block<O: Offset, const INLINE: usize> {
     base: usize,
     postings: AHashMap<u64, PackedPosting<O, INLINE>>,
-    // Word starts are also local addresses; a long word can span several blocks.
+    // Weight boundaries are local addresses; equal-weight words can share a run.
     pivots: Vec<u32>,
     weights: Vec<u64>,
     previous_weight: u64,
+    weight_intervals: bool,
 }
 impl<O: Offset, const INLINE: usize> Block<O, INLINE> {
     fn new(base: usize, previous_weight: u64) -> Self {
@@ -167,6 +282,7 @@ impl<O: Offset, const INLINE: usize> Block<O, INLINE> {
             pivots: Vec::new(),
             weights: Vec::new(),
             previous_weight,
+            weight_intervals: false,
         }
     }
     fn weight(&self, position: usize, uniform: Option<u64>) -> u64 {
@@ -231,6 +347,9 @@ struct Output<O: Offset, const INLINE: usize> {
     born: Vec<AHashMap<u64, u64>>,
     blocks: AHashMap<usize, AHashMap<u64, PackedPosting<O, INLINE>>>,
     flat_routes: Vec<Route>,
+    // [owner][rule * 2 + direction]. A birth's new identity determines its
+    // unique bucket; only its neighbor needs to be reduced inside that bucket.
+    flat_births: Vec<Vec<Vec<(u32, Group)>>>,
 }
 struct Group {
     weight: u64,
@@ -268,7 +387,13 @@ impl<O: Offset, const INLINE: usize> Output<O, INLINE> {
             flat_routes: (0..if flat { workers } else { 0 })
                 .map(|_| Route::default())
                 .collect(),
+            flat_births: Vec::new(),
         }
+    }
+    fn enable_dense_births(&mut self, rules: usize) {
+        self.flat_births = (0..self.flat_routes.len())
+            .map(|_| (0..rules * 2).map(|_| Vec::new()).collect())
+            .collect();
     }
     fn remove(&mut self, k: u64, weight: u64) {
         if !self.flat_routes.is_empty() {
@@ -358,33 +483,254 @@ pub(super) fn train(
     wc: &AHashMap<CompactString, u64>,
     config: IndexedParallelConfig,
 ) -> Result<IndexedTraining> {
+    train_with_policy(trainer, wc, config, super::posting_arena::Policy::Auto)
+}
+
+pub(super) fn train_with_policy(
+    trainer: &BpeTrainer,
+    wc: &AHashMap<CompactString, u64>,
+    config: IndexedParallelConfig,
+    policy: super::posting_arena::Policy,
+) -> Result<IndexedTraining> {
+    train_with_selection(trainer, wc, config, policy, SelectionMode::Bulk(4))
+}
+
+fn train_with_selection(
+    trainer: &BpeTrainer,
+    wc: &AHashMap<CompactString, u64>,
+    config: IndexedParallelConfig,
+    policy: super::posting_arena::Policy,
+    selection: SelectionMode,
+) -> Result<IndexedTraining> {
+    train_with_corpus_order(
+        trainer,
+        wc,
+        config,
+        policy,
+        selection,
+        corpus::Order::WeightSorted,
+    )
+}
+
+fn train_with_corpus_order(
+    trainer: &BpeTrainer,
+    wc: &AHashMap<CompactString, u64>,
+    config: IndexedParallelConfig,
+    policy: super::posting_arena::Policy,
+    selection: SelectionMode,
+    order: corpus::Order,
+) -> Result<IndexedTraining> {
+    train_with_corpus_options(trainer, wc, config, policy, selection, order, None)
+}
+fn train_with_corpus_options(
+    trainer: &BpeTrainer,
+    wc: &AHashMap<CompactString, u64>,
+    config: IndexedParallelConfig,
+    policy: posting_arena::Policy,
+    selection: SelectionMode,
+    order: corpus::Order,
+    options: Option<cohort_parallel::Options>,
+) -> Result<IndexedTraining> {
     let begin = Instant::now();
     let mut ids = AHashMap::with_capacity(trainer.vocab_size);
     let mut strings = Vec::with_capacity(trainer.vocab_size);
     trainer.add_special_tokens(&mut ids, &mut strings);
-    trainer.compute_alphabet(wc, &mut ids, &mut strings);
+    let pool = rayon::ThreadPoolBuilder::new()
+        .num_threads(config.workers)
+        .build()?;
+    let initialization_pool = config
+        .initialization_workers
+        .filter(|&n| n != config.workers)
+        .map(|n| rayon::ThreadPoolBuilder::new().num_threads(n).build())
+        .transpose()?;
+    let alphabet_begin = Instant::now();
+    let alphabet_scratch_bytes = if options.is_some_and(|o| !o.parallel_alphabet) {
+        trainer.compute_alphabet(wc, &mut ids, &mut strings);
+        0
+    } else {
+        initialization_pool.as_ref().unwrap_or(&pool).install(|| {
+            alphabet::initialize(
+                trainer,
+                wc,
+                &mut ids,
+                &mut strings,
+                config.initialization_workers.unwrap_or(config.workers),
+            )
+        })
+    };
+    let alphabet_ms = alphabet_begin.elapsed().as_secs_f64() * 1000.0;
+    let decorated = if let Some(options) = options {
+        Some(PreparedCorpus::tokenize_with_cache(
+            trainer,
+            wc,
+            &mut ids,
+            &mut strings,
+            &None,
+            options.character_cache,
+            options
+                .parallel_measure
+                .then_some(initialization_pool.as_ref().unwrap_or(&pool)),
+        )?)
+    } else {
+        None
+    };
     // Select the final slot type before emitting any corpus. Reserved IDs and
     // forced alphabet count towards this bound, not just the requested vocabulary.
     let narrow = config.narrow_corpus && strings.len().max(trainer.vocab_size) <= u16::MAX as usize;
-    match (config.atomic_corpus, narrow, config.posting_block_bits) {
-        (false, true, 16) => train_typed::<u16, u16, 4>(trainer, wc, config, ids, strings, begin),
-        (true, true, 16) => {
-            train_typed::<AtomicU16, u16, 4>(trainer, wc, config, ids, strings, begin)
-        }
-        (false, true, 32) => train_typed::<u16, u32, 2>(trainer, wc, config, ids, strings, begin),
-        (true, true, 32) => {
-            train_typed::<AtomicU16, u32, 2>(trainer, wc, config, ids, strings, begin)
-        }
-        (false, false, 16) => train_typed::<u32, u16, 4>(trainer, wc, config, ids, strings, begin),
-        (true, false, 16) => {
-            train_typed::<AtomicU32, u16, 4>(trainer, wc, config, ids, strings, begin)
-        }
-        (false, false, 32) => train_typed::<u32, u32, 2>(trainer, wc, config, ids, strings, begin),
-        (true, false, 32) => {
-            train_typed::<AtomicU32, u32, 2>(trainer, wc, config, ids, strings, begin)
-        }
+    let session = super::posting_arena::Session::new(&pool, initialization_pool.as_ref());
+    let mut result = match (config.atomic_corpus, narrow, config.posting_block_bits) {
+        (false, true, 16) => train_typed::<u16, u16, 4>(
+            trainer,
+            wc,
+            config,
+            ids,
+            strings,
+            begin,
+            alphabet_ms,
+            alphabet_scratch_bytes,
+            &pool,
+            initialization_pool.as_ref(),
+            policy,
+            selection,
+            order,
+            decorated,
+            options,
+        ),
+        (true, true, 16) => train_typed::<AtomicU16, u16, 4>(
+            trainer,
+            wc,
+            config,
+            ids,
+            strings,
+            begin,
+            alphabet_ms,
+            alphabet_scratch_bytes,
+            &pool,
+            initialization_pool.as_ref(),
+            policy,
+            selection,
+            order,
+            decorated,
+            options,
+        ),
+        (false, true, 32) => train_typed::<u16, u32, 2>(
+            trainer,
+            wc,
+            config,
+            ids,
+            strings,
+            begin,
+            alphabet_ms,
+            alphabet_scratch_bytes,
+            &pool,
+            initialization_pool.as_ref(),
+            policy,
+            selection,
+            order,
+            decorated,
+            options,
+        ),
+        (true, true, 32) => train_typed::<AtomicU16, u32, 2>(
+            trainer,
+            wc,
+            config,
+            ids,
+            strings,
+            begin,
+            alphabet_ms,
+            alphabet_scratch_bytes,
+            &pool,
+            initialization_pool.as_ref(),
+            policy,
+            selection,
+            order,
+            decorated,
+            options,
+        ),
+        (false, false, 16) => train_typed::<u32, u16, 4>(
+            trainer,
+            wc,
+            config,
+            ids,
+            strings,
+            begin,
+            alphabet_ms,
+            alphabet_scratch_bytes,
+            &pool,
+            initialization_pool.as_ref(),
+            policy,
+            selection,
+            order,
+            decorated,
+            options,
+        ),
+        (true, false, 16) => train_typed::<AtomicU32, u16, 4>(
+            trainer,
+            wc,
+            config,
+            ids,
+            strings,
+            begin,
+            alphabet_ms,
+            alphabet_scratch_bytes,
+            &pool,
+            initialization_pool.as_ref(),
+            policy,
+            selection,
+            order,
+            decorated,
+            options,
+        ),
+        (false, false, 32) => train_typed::<u32, u32, 2>(
+            trainer,
+            wc,
+            config,
+            ids,
+            strings,
+            begin,
+            alphabet_ms,
+            alphabet_scratch_bytes,
+            &pool,
+            initialization_pool.as_ref(),
+            policy,
+            selection,
+            order,
+            decorated,
+            options,
+        ),
+        (true, false, 32) => train_typed::<AtomicU32, u32, 2>(
+            trainer,
+            wc,
+            config,
+            ids,
+            strings,
+            begin,
+            alphabet_ms,
+            alphabet_scratch_bytes,
+            &pool,
+            initialization_pool.as_ref(),
+            policy,
+            selection,
+            order,
+            decorated,
+            options,
+        ),
         _ => unreachable!("validated configuration"),
+    };
+    let allocations = session.finish();
+    if let Ok(training) = &mut result {
+        training.stats.posting_allocation_policy = policy.label();
+        training.stats.posting_arena_cutoff_bytes = policy.cutoff(training.stats.initial_edges);
+        training.stats.posting_allocations = allocations;
+    } else if let Err(error) = &mut result {
+        if let Some(collision) = error.downcast_mut::<AliasCollision>() {
+            collision.stats.posting_allocation_policy = policy.label();
+            collision.stats.posting_arena_cutoff_bytes =
+                policy.cutoff(collision.stats.initial_edges);
+            collision.stats.posting_allocations = allocations;
+        }
     }
+    result
 }
 
 fn train_typed<C: Slot, O: Offset, const INLINE: usize>(
@@ -394,27 +740,35 @@ fn train_typed<C: Slot, O: Offset, const INLINE: usize>(
     ids: AHashMap<CompactString, u32>,
     strings: Vec<CompactString>,
     begin: Instant,
+    alphabet_ms: f64,
+    alphabet_scratch_bytes: usize,
+    pool: &rayon::ThreadPool,
+    initialization_pool: Option<&rayon::ThreadPool>,
+    policy: super::posting_arena::Policy,
+    selection: SelectionMode,
+    order: corpus::Order,
+    decorated: Option<PreparedCorpus>,
+    options: Option<cohort_parallel::Options>,
 ) -> Result<IndexedTraining> {
-    let pool = rayon::ThreadPoolBuilder::new()
-        .num_threads(config.workers)
-        .build()?;
-    let initialization_pool = config
-        .initialization_workers
-        .filter(|&n| n != config.workers)
-        .map(|n| rayon::ThreadPoolBuilder::new().num_threads(n).build())
-        .transpose()?;
     // Keep the coordinator inside this pool too: small serial rounds then do
     // not pay a caller->worker handoff at every stage.
     pool.install(|| {
-        train_in_pool::<C, O, INLINE>(
+        train_in_pool_options::<C, O, INLINE>(
             trainer,
             wc,
             config,
             ids,
             strings,
             begin,
-            &pool,
-            initialization_pool.as_ref(),
+            alphabet_ms,
+            alphabet_scratch_bytes,
+            pool,
+            initialization_pool,
+            policy,
+            selection,
+            order,
+            decorated,
+            options,
         )
     })
 }
@@ -424,90 +778,134 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
     trainer: &BpeTrainer,
     wc: &AHashMap<CompactString, u64>,
     config: IndexedParallelConfig,
+    ids: AHashMap<CompactString, u32>,
+    strings: Vec<CompactString>,
+    begin: Instant,
+    alphabet_ms: f64,
+    alphabet_scratch_bytes: usize,
+    pool: &rayon::ThreadPool,
+    initialization_pool: Option<&rayon::ThreadPool>,
+    policy: super::posting_arena::Policy,
+    selection: SelectionMode,
+    order: corpus::Order,
+) -> Result<IndexedTraining> {
+    train_in_pool_options::<C, O, INLINE>(
+        trainer,
+        wc,
+        config,
+        ids,
+        strings,
+        begin,
+        alphabet_ms,
+        alphabet_scratch_bytes,
+        pool,
+        initialization_pool,
+        policy,
+        selection,
+        order,
+        None,
+        None,
+    )
+}
+#[allow(clippy::too_many_arguments)]
+fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
+    trainer: &BpeTrainer,
+    wc: &AHashMap<CompactString, u64>,
+    config: IndexedParallelConfig,
     mut ids: AHashMap<CompactString, u32>,
     mut strings: Vec<CompactString>,
     begin: Instant,
+    alphabet_ms: f64,
+    alphabet_scratch_bytes: usize,
     pool: &rayon::ThreadPool,
     initialization_pool: Option<&rayon::ThreadPool>,
+    policy: super::posting_arena::Policy,
+    selection: SelectionMode,
+    order: corpus::Order,
+    decorated: Option<PreparedCorpus>,
+    options: Option<cohort_parallel::Options>,
 ) -> Result<IndexedTraining> {
     let bits = config.posting_block_bits;
     let block_size = 1_usize
         .checked_shl(bits as u32)
         .ok_or("posting blocks require 64-bit usize")?;
-    let capacity = wc
-        .keys()
-        .try_fold(1_usize, |n, s| {
-            n.checked_add(s.chars().count())?.checked_add(1)
-        })
-        .ok_or("corpus size exceeds usize")?;
-    // One u32 address block needs no pair->block directory or second pair map.
-    // Its owner entry can hold the occurrence posting directly, like the prototype.
-    let flat = bits == 32 && capacity <= u32::MAX as usize + 1;
-    if capacity.div_ceil(block_size) > u32::MAX as usize {
-        return Err("posting block directory exceeds u32 blocks".into());
-    }
-    let uniform = wc
-        .values()
-        .next()
-        .copied()
-        .filter(|&n| wc.values().all(|&w| w == n));
-    let mut corpus = Vec::<C>::with_capacity(capacity);
-    corpus.push(C::encode(NONE));
-    let mut lengths = vec![0_usize; strings.len()];
-    let mut blocks = vec![Block::<O, INLINE>::new(0, 0)];
-    let mut owners: Vec<Owner> = (0..config.workers).map(|_| Owner::default()).collect();
-    let mut weighted_edges = 0_i64;
-    let mut initial_symbols = 0;
-    let mut initial_edges = 0;
-    for (word, &weight) in wc {
-        let signed = i64::try_from(weight).map_err(|_| "indexed BPE weight exceeds i64::MAX")?;
-        let start = corpus.len();
-        while blocks.len() <= start >> bits {
-            blocks.push(Block::new(blocks.len() << bits, weight));
-        }
-        if uniform.is_none() {
-            let block = &mut blocks[start >> bits];
-            block.pivots.push((start - block.base) as u32);
-            block.weights.push(weight);
-        }
-        let mut retained = 0;
-        for c in word.chars() {
-            let mut utf8 = [0; 4];
-            let Some(&id) = ids.get(c.encode_utf8(&mut utf8) as &str) else {
-                continue;
-            };
-            let p = corpus.len();
-            while blocks.len() <= p >> bits {
-                blocks.push(Block::new(blocks.len() << bits, weight));
-            }
-            corpus.push(C::encode(id));
-            lengths[id as usize] = 1;
-            initial_symbols += 1;
-            retained += 1_usize;
-        }
-        let p = corpus.len();
-        while blocks.len() <= p >> bits {
-            blocks.push(Block::new(blocks.len() << bits, weight));
-        }
-        corpus.push(C::encode(NONE));
-        let edges = retained.saturating_sub(1);
-        initial_edges += edges;
-        let edges = i64::try_from(edges).map_err(|_| "word edge count exceeds i64")?;
-        weighted_edges = weighted_edges
-            .checked_add(
-                signed
-                    .checked_mul(edges)
-                    .ok_or("weighted pair counts exceed i64::MAX")?,
+    let constructing_pool = initialization_pool.unwrap_or(pool);
+    let guarded = decorated.is_some();
+    let prepared = if let Some(input) = decorated {
+        constructing_pool.install(|| corpus::from_decorated::<C, O, INLINE>(input, bits, order))?
+    } else {
+        constructing_pool.install(|| {
+            corpus::build::<C, O, INLINE>(
+                wc,
+                &ids,
+                strings.len(),
+                trainer.limit_alphabet.is_none(),
+                bits,
+                config.initialization_workers.unwrap_or(config.workers),
+                order,
             )
-            .ok_or("weighted pair counts exceed i64::MAX")?;
-    }
+        })?
+    };
+    let corpus::Prepared {
+        slots: mut corpus,
+        mut lengths,
+        mut blocks,
+        uniform,
+        symbols: initial_symbols,
+        edges: initial_edges,
+        weighted_edges,
+        timings,
+        character_table_bytes,
+        word_reference_bytes,
+        temporary_weight_bytes,
+    } = prepared;
+    super::posting_arena::configure(pool, initialization_pool, policy.cutoff(initial_edges));
+    // Fresh activation holds throughout a guarded epoch: an active canonical
+    // collision returns before consuming the candidate or writing its batch.
+    // Each merge deletes boundaries, so no historical pair frequency exceeds
+    // the checked initial weighted edge mass. Reserved and forced alphabet IDs
+    // are already included in strings; future IDs stop at the vocab target.
+    let packed_heap = (supports_compact(trainer) || guarded)
+        && options.is_none_or(|o| o.packed_queue)
+        && weighted_edges <= u32::MAX as u64
+        && strings.len().max(trainer.vocab_size) <= u16::MAX as usize + 1;
+    let flat = bits == 32 && corpus.len() <= u32::MAX as usize + 1;
+    let mut owners: Vec<Owner> = (0..config.workers).map(|_| Owner::default()).collect();
     let tokenize_ms = begin.elapsed().as_secs_f64() * 1000.0;
     let floor = trainer.min_frequency.max(1);
+    let radix_eligible =
+        options.is_none_or(|o| o.initial_grouped) && flat && lengths.len() <= u16::MAX as usize + 1;
+    let mut initial_weight_lookup = None;
     let mut initialize = || -> Result<IndexedTrainingStats> {
         let initial_begin = Instant::now();
         let initial_route_ms;
         let initial_count_ms;
-        if flat {
+        let mut radix_metrics = radix_count::Metrics::default();
+        let mut initial_weight_lookup_ms = 0.0;
+        let mut initial_summary_waves = 0;
+        let mut initial_summary_buffer_bytes = 0;
+        let mut peak_initial_summary_buffer_bytes = 0;
+        let mut initial_bounded_tiles = 0;
+        let mut initial_bounded_groups = 0;
+        let mut initial_bounded_hash_edges = 0;
+        let mut initial_bounded_sort_buffer_bound_bytes = 0;
+        if radix_eligible {
+            let lookup_begin = Instant::now();
+            initial_weight_lookup = (uniform.is_none() && options.is_none_or(|o| o.weight_lookup))
+                .then(|| weight_lookup::WeightLookup::new(&blocks[0], corpus.len()));
+            initial_weight_lookup_ms = lookup_begin.elapsed().as_secs_f64() * 1000.0;
+            radix_metrics = radix_count::initialize(
+                &corpus,
+                &blocks[0],
+                uniform,
+                initial_weight_lookup.as_ref(),
+                config.workers,
+                floor,
+                &mut owners,
+            )?;
+            initial_route_ms = radix_metrics.route_ms;
+            initial_count_ms = radix_metrics.count_ms;
+        } else if flat {
             // Prototype's two-stage initialization: route compact positions, then
             // let each owner count and build its own lists. Unicode lookup and the
             // much larger pair hash tables no longer interleave on every character.
@@ -572,74 +970,134 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
         } else {
             // Local dictionaries are built by physical block owners. Only key-level
             // frequencies and block directories are reduced globally, not positions.
-            let frequencies: Vec<Vec<Vec<(u64, u64)>>> = blocks
-                .par_iter_mut()
-                .map(|block| -> Result<_> {
-                    let mut counts = AHashMap::new();
-                    let end = corpus.len().saturating_sub(1).min(block.base + block_size);
-                    let mut word = 0;
-                    for p in block.base..end {
-                        let a = corpus[p].token();
-                        let b = corpus[p + 1].token();
-                        if a == NONE || b == NONE {
-                            continue;
-                        }
-                        let local = (p - block.base) as u32;
-                        let weight = if let Some(weight) = uniform {
-                            weight
-                        } else {
-                            while word < block.pivots.len() && block.pivots[word] <= local {
-                                word += 1;
+            // Bound transient block-key summaries by initialization concurrency.
+            // Earlier owner directories stay in ascending physical block order;
+            // no key is filtered until every wave has contributed its frequency.
+            let wave_size = config
+                .initialization_workers
+                .unwrap_or(config.workers)
+                .max(1);
+            let mut route_ms = 0.0;
+            let mut count_ms = 0.0;
+            for (wave_index, wave_blocks) in blocks.chunks_mut(wave_size).enumerate() {
+                let route_begin = Instant::now();
+                let initialized: Vec<bounded_initial::Initialized> = wave_blocks
+                    .par_iter_mut()
+                    .map(|block| -> Result<_> {
+                        let end = corpus.len().saturating_sub(1).min(block.base + block_size);
+                        bounded_initial::initialize(&corpus, block, end, uniform, config.workers)
+                    })
+                    .collect::<Result<Vec<_>>>()?;
+                initial_bounded_tiles += initialized.iter().map(|b| b.metrics.tiles).sum::<usize>();
+                initial_bounded_groups +=
+                    initialized.iter().map(|b| b.metrics.groups).sum::<usize>();
+                initial_bounded_hash_edges += initialized
+                    .iter()
+                    .map(|b| b.metrics.hash_edges)
+                    .sum::<usize>();
+                // Sum of each active block's maximum is an allocation bound,
+                // not an assertion that these maxima occur simultaneously.
+                initial_bounded_sort_buffer_bound_bytes = initial_bounded_sort_buffer_bound_bytes
+                    .max(
+                        initialized
+                            .iter()
+                            .map(|b| b.metrics.buffer_bound_bytes)
+                            .sum::<usize>(),
+                    );
+                let frequencies: Vec<_> = initialized.into_iter().map(|b| b.routes).collect();
+                route_ms += route_begin.elapsed().as_secs_f64() * 1000.0;
+                let summary_bytes = frequencies.capacity()
+                    * std::mem::size_of::<Vec<Vec<(u64, u64)>>>()
+                    + frequencies
+                        .iter()
+                        .map(|routes| {
+                            routes.capacity() * std::mem::size_of::<Vec<(u64, u64)>>()
+                                + routes
+                                    .iter()
+                                    .map(|items| items.capacity() * 16)
+                                    .sum::<usize>()
+                        })
+                        .sum::<usize>();
+                initial_summary_buffer_bytes += summary_bytes;
+                peak_initial_summary_buffer_bytes =
+                    peak_initial_summary_buffer_bytes.max(summary_bytes);
+                initial_summary_waves += 1;
+                let count_begin = Instant::now();
+                owners
+                    .par_iter_mut()
+                    .enumerate()
+                    .map(|(o, ledger)| -> Result<()> {
+                        for (b, counts) in frequencies.iter().enumerate() {
+                            for &(k, weight) in &counts[o] {
+                                let entry = ledger.entries.entry(k).or_insert_with(|| Entry {
+                                    frequency: 0,
+                                    blocks: SmallPosting::default(),
+                                });
+                                entry.frequency += weight;
+                                entry.blocks.push((wave_index * wave_size + b) as u32)?;
                             }
-                            if word == 0 {
-                                block.previous_weight
-                            } else {
-                                block.weights[word - 1]
-                            }
-                        };
-                        let k = key(a, b);
-                        *counts.entry(k).or_default() += weight;
-                        block
-                            .postings
-                            .entry(k)
-                            .or_default()
-                            .push(O::encode(p - block.base))?;
-                    }
-                    let mut routed: Vec<Vec<(u64, u64)>> =
-                        (0..config.workers).map(|_| Vec::new()).collect();
-                    for (k, weight) in counts {
-                        routed[owner(k, config.workers)].push((k, weight));
-                    }
-                    Ok(routed)
-                })
-                .collect::<Result<Vec<_>>>()?;
-            initial_route_ms = initial_begin.elapsed().as_secs_f64() * 1000.0;
-            let count_begin = Instant::now();
-            owners
-                .par_iter_mut()
-                .enumerate()
-                .map(|(o, ledger)| -> Result<()> {
-                    for (b, counts) in frequencies.iter().enumerate() {
-                        for &(k, weight) in &counts[o] {
-                            let entry = ledger.entries.entry(k).or_insert_with(|| Entry {
-                                frequency: 0,
-                                blocks: SmallPosting::default(),
-                            });
-                            entry.frequency += weight;
-                            entry.blocks.push(b as u32)?;
                         }
-                    }
-                    Ok(())
-                })
-                .collect::<Result<Vec<_>>>()?;
-            initial_count_ms = count_begin.elapsed().as_secs_f64() * 1000.0;
+                        Ok(())
+                    })
+                    .collect::<Result<Vec<_>>>()?;
+                count_ms += count_begin.elapsed().as_secs_f64() * 1000.0;
+                // All reducers have joined. Drop this wave's summary vectors
+                // before allocating the next wave; final block postings remain.
+            }
+            initial_route_ms = route_ms;
+            initial_count_ms = count_ms;
         }
         let mut stats = IndexedTrainingStats {
             initial_symbols,
             tokenize_ms,
+            alphabet_ms,
+            alphabet_scratch_bytes,
+            character_table_bytes,
+            corpus_measure_ms: timings.measure_ms,
+            corpus_sort_ms: timings.sort_ms,
+            corpus_sort_buffer_bytes: timings.sort_buffer_bytes,
+            corpus_stable_weight_sort: order == corpus::Order::WeightStable,
+            corpus_weight_order: if order == corpus::Order::Original {
+                "original"
+            } else {
+                "weight_sorted"
+            },
+            corpus_word_reference_bytes: word_reference_bytes,
+            corpus_temporary_weight_bytes: temporary_weight_bytes,
+            weight_interval_count: blocks.iter().map(|b| b.pivots.len()).sum(),
+            corpus_allocate_ms: timings.allocate_ms,
+            corpus_fill_ms: timings.fill_ms,
             initial_route_ms,
             initial_count_ms,
+            initial_bounded_tiles,
+            initial_bounded_groups,
+            initial_bounded_hash_edges,
+            initial_bounded_sort_buffer_bound_bytes,
+            initial_summary_waves,
+            initial_summary_buffer_bytes,
+            peak_initial_summary_buffer_bytes,
+            initial_count_backend: if radix_eligible {
+                "stable_radix16"
+            } else if !flat {
+                "spatial_block_adaptive_radix64"
+            } else {
+                "spatial_owner_hash"
+            },
+            initial_weight_lookup_ms,
+            initial_weight_lookup_bytes: initial_weight_lookup.as_ref().map_or(0, |l| l.bytes()),
+            initial_route_compact_ms: radix_metrics.compact_ms,
+            initial_radix_sort_ms: radix_metrics.sort_ms,
+            initial_group_count_ms: radix_metrics.group_ms,
+            initial_posting_install_ms: radix_metrics.install_ms,
+            initial_route_buffer_bytes: radix_metrics.route_bytes,
+            peak_initial_route_buffer_bytes: radix_metrics.peak_route_bytes,
+            initial_radix_scratch_bytes: radix_metrics.scratch_bytes,
+            initial_group_buffer_bytes: radix_metrics.group_bytes,
+            pruned_pairs: radix_metrics.pruned,
+
             monotone_pairs: true,
+            alias_guarded: guarded,
+            corpus_slot_bytes: std::mem::size_of::<C>(),
             workers: config.workers,
             initialization_workers: config.initialization_workers.unwrap_or(config.workers),
             atomic_corpus: config.atomic_corpus,
@@ -659,14 +1117,14 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
             .map(|ledger| {
                 let old = ledger.entries.len();
                 ledger.entries.retain(|_, entry| entry.frequency >= floor);
-                ledger.heap = ledger
-                    .entries
-                    .iter()
-                    .map(|(&key, e)| Candidate {
+                ledger.heap = CandidateHeap::new(
+                    ledger.entries.iter().map(|(&key, e)| Candidate {
                         key,
                         frequency: e.frequency,
-                    })
-                    .collect();
+                    }),
+                    packed_heap,
+                );
+                ledger.prepare_window(selection);
                 old - ledger.entries.len()
             })
             .sum::<usize>();
@@ -724,7 +1182,7 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
                 .map(|e| e.blocks.allocated_capacity() * 4)
                 .sum()
         };
-        stats.initial_heap_bytes = owners.iter().map(|o| o.heap.capacity() * 16).sum();
+        stats.initial_heap_bytes = owners.iter().map(|o| o.heap.capacity_bytes()).sum();
         stats.corpus_bytes = stats.initial_corpus_bytes;
         stats.posting_bytes = stats.initial_posting_bytes;
         stats.initialize_ms = begin.elapsed().as_secs_f64() * 1000.0;
@@ -740,6 +1198,18 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
     let mut merges = Vec::new();
     #[cfg(test)]
     let mut trace = Vec::new();
+    let lookup_begin = Instant::now();
+    let weight_lookup = initial_weight_lookup.or_else(|| {
+        (flat && C::SHARED && uniform.is_none() && options.is_none_or(|o| o.weight_lookup))
+            .then(|| weight_lookup::WeightLookup::new(&blocks[0], corpus.len()))
+    });
+    stats.weight_lookup_build_ms = lookup_begin.elapsed().as_secs_f64() * 1000.0;
+    stats.weight_lookup_bytes = weight_lookup.as_ref().map_or(0, |l| l.bytes());
+    stats.weight_one_bucket_count = weight_lookup.as_ref().map_or(0, |l| l.one_bucket_count());
+    stats.weight_bucket_count = weight_lookup.as_ref().map_or(0, |l| l.bucket_count());
+    stats.weight_one_bucket_bytes = weight_lookup.as_ref().map_or(0, |l| l.one_bucket_bytes());
+    let mut frontier = Frontier::default();
+    let mut committed_merges = 0;
     while ids.len() < trainer.vocab_size {
         let stage = Instant::now();
         let cap = config.batch_size.min(trainer.vocab_size - ids.len());
@@ -748,12 +1218,9 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
         let mut tails = AHashSet::new();
         let mut block_rules = AHashMap::<usize, Vec<usize>>::new();
         let mut flat_postings = Vec::new();
+        frontier.begin_epoch(&mut owners, selection);
         while rules.len() < cap {
-            let best = owners
-                .iter_mut()
-                .enumerate()
-                .filter_map(|(i, o)| o.peek_current().map(|c| (i, c)))
-                .max_by_key(|(_, c)| *c);
+            let best = frontier.best(&mut owners, selection);
             let Some((o, top)) = best else {
                 break;
             };
@@ -767,14 +1234,35 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
                 strings[edge.0 as usize].len() + strings[edge.1 as usize].len(),
             );
             token.push_str(&strings[edge.0 as usize]);
-            token.push_str(&strings[edge.1 as usize]);
+            let right = strings[edge.1 as usize].as_str();
+            let right = if guarded {
+                trainer
+                    .continuing_subword_prefix
+                    .as_deref()
+                    .and_then(|prefix| right.strip_prefix(prefix))
+                    .unwrap_or(right)
+            } else {
+                right
+            };
+            token.push_str(right);
             let reserved = ids.get(&token).copied();
+            if guarded && reserved.is_some_and(|id| lengths[id as usize] != 0) {
+                // No rewrite involving this reused live ID has occurred. Every
+                // completed fast batch used newly activated identities only.
+                stats.merge_ms = begin.elapsed().as_secs_f64() * 1000.0;
+                stats.speculative_selected_merges = merges.len();
+                stats.speculative_applied_merges = committed_merges;
+                return Err(AliasCollision {
+                    stats: Box::new(stats),
+                }
+                .into());
+            }
             // A reserved canonical ID can win an equal-frequency birth tie
             // before its old witness. Use one rule for that activation.
             if reserved.is_some() && !rules.is_empty() {
                 break;
             }
-            owners[o].heap.pop();
+            frontier.consume(&mut owners, o, selection);
             let entry = owners[o].entries.remove(&top.key).unwrap();
             let length = lengths[edge.0 as usize]
                 .checked_add(lengths[edge.1 as usize])
@@ -826,6 +1314,11 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
                 break;
             }
         }
+        if !matches!(selection, SelectionMode::Serial) {
+            for ledger in &mut owners {
+                ledger.end_selection();
+            }
+        }
         if rules.is_empty() {
             break;
         }
@@ -833,177 +1326,272 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
         let stage = Instant::now();
         stats.batch_rounds += 1;
         stats.max_batch_rules = stats.max_batch_rules.max(rules.len());
-        let chunks: Vec<Vec<Plan>> = if flat {
-            pool.install(|| {
-                flat_postings
-                    .par_iter()
-                    .enumerate()
-                    .map(|(rank, posting)| {
-                        let rule = &rules[rank];
-                        posting
-                            .as_slice()
-                            .par_iter()
-                            .filter_map(|&position| {
-                                let p = position as usize;
-                                let right = p + rule.left_len;
-                                (corpus[p].token() == rule.edge.0
-                                    && right < corpus.len()
-                                    && corpus[right].token() == rule.edge.1)
-                                    .then_some(Plan { position: p, rank })
-                            })
-                            .collect()
-                    })
-                    .collect()
-            })
+        let mut block_prepared = None;
+        let outputs: Vec<Output<O, INLINE>> = if flat
+            && options.is_none_or(|o| o.fused_batch)
+            && C::SHARED
+            && rules[0].edge.0 != rules[0].edge.1
+        {
+            let prepared = pool.install(|| {
+                fused_batch::prepare_with_grouping(
+                    &corpus,
+                    &rules,
+                    &flat_postings,
+                    &blocks[0],
+                    &lengths,
+                    uniform,
+                    weight_lookup.as_ref(),
+                    max_length,
+                    config.workers,
+                    options.is_none_or(|o| o.grouped_tail),
+                )
+            })?;
+            stats.fused_batches += 1;
+            stats.peak_selected_lookup_bytes = stats
+                .peak_selected_lookup_bytes
+                .max(prepared.selected_bytes);
+            stats.peak_valid_start_bytes = stats.peak_valid_start_bytes.max(prepared.valid_bytes);
+            stats.peak_prepare_aggregate_bytes = stats
+                .peak_prepare_aggregate_bytes
+                .max(prepared.aggregate_bytes);
+            let elapsed = stage.elapsed().as_secs_f64() * 1000.0;
+            // Filter and neighbor deltas share this phase in the fused path.
+            stats.fused_prepare_ms += elapsed;
+            stats.delta_ms += elapsed;
+            drop(flat_postings);
+            let stage = Instant::now();
+            pool.install(|| prepared.apply(&corpus, &rules));
+            stats.rewrite_ms += stage.elapsed().as_secs_f64() * 1000.0;
+            prepared.outputs
+        } else if !flat
+            && C::SHARED
+            && rules[0].edge.0 != rules[0].edge.1
+            && options.is_none_or(|o| o.fused_batch)
+        {
+            let mut prepared = pool.install(|| {
+                fused_batch::block::prepare(
+                    &corpus,
+                    &rules,
+                    &mut blocks,
+                    &block_rules,
+                    &lengths,
+                    uniform,
+                    max_length,
+                    bits,
+                    config.workers,
+                )
+            })?;
+            stats.fused_block_batches += 1;
+            stats.peak_selected_lookup_bytes = stats
+                .peak_selected_lookup_bytes
+                .max(prepared.selected_bytes);
+            stats.peak_valid_start_bytes = stats.peak_valid_start_bytes.max(prepared.valid_bytes);
+            stats.peak_block_birth_node_bytes =
+                stats.peak_block_birth_node_bytes.max(prepared.node_bytes);
+            stats.peak_block_birth_fragment_bytes = stats
+                .peak_block_birth_fragment_bytes
+                .max(prepared.fragment_bytes);
+            stats.peak_block_task_bytes = stats.peak_block_task_bytes.max(prepared.task_bytes);
+            stats.peak_block_scratch_bound_bytes = stats
+                .peak_block_scratch_bound_bytes
+                .max(prepared.scratch_bound_bytes);
+            let elapsed = stage.elapsed().as_secs_f64() * 1000.0;
+            stats.fused_prepare_ms += elapsed;
+            stats.delta_ms += elapsed;
+            let stage = Instant::now();
+            pool.install(|| prepared.apply(&corpus, &rules, bits));
+            stats.rewrite_ms += stage.elapsed().as_secs_f64() * 1000.0;
+            let outputs = std::mem::take(&mut prepared.outputs);
+            block_prepared = Some(prepared);
+            outputs
         } else {
-            pool.install(|| {
-                blocks
-                    .par_iter_mut()
-                    .enumerate()
-                    .map(|(b, block)| -> Vec<Plan> {
-                        let mut plans = Vec::new();
-                        if let Some(ranks) = block_rules.get(&b) {
-                            for &rank in ranks {
-                                let rule = &rules[rank];
-                                let posting = block
-                                    .postings
-                                    .remove(&key(rule.edge.0, rule.edge.1))
-                                    .unwrap();
-                                let valid: Vec<_> = posting
-                                    .as_slice()
-                                    .par_iter()
-                                    .filter_map(|&offset| {
-                                        let p = block.base + offset.index();
-                                        let right = p + rule.left_len;
-                                        if corpus[p].token() == rule.edge.0
-                                            && right < corpus.len()
-                                            && corpus[right].token() == rule.edge.1
-                                        {
-                                            Some(Plan { position: p, rank })
-                                        } else {
-                                            None
-                                        }
-                                    })
-                                    .collect();
-                                plans.extend(valid);
+            let chunks: Vec<Vec<Plan>> = if flat {
+                pool.install(|| {
+                    flat_postings
+                        .par_iter()
+                        .enumerate()
+                        .map(|(rank, posting)| {
+                            let rule = &rules[rank];
+                            posting
+                                .as_slice()
+                                .par_iter()
+                                .filter_map(|&position| {
+                                    let p = position as usize;
+                                    let right = p + rule.left_len;
+                                    (corpus[p].token() == rule.edge.0
+                                        && right < corpus.len()
+                                        && corpus[right].token() == rule.edge.1)
+                                        .then_some(Plan { position: p, rank })
+                                })
+                                .collect()
+                        })
+                        .collect()
+                })
+            } else {
+                pool.install(|| {
+                    blocks
+                        .par_iter_mut()
+                        .enumerate()
+                        .map(|(b, block)| -> Vec<Plan> {
+                            let mut plans = Vec::new();
+                            if let Some(ranks) = block_rules.get(&b) {
+                                for &rank in ranks {
+                                    let rule = &rules[rank];
+                                    let posting = block
+                                        .postings
+                                        .remove(&key(rule.edge.0, rule.edge.1))
+                                        .unwrap();
+                                    let valid: Vec<_> = posting
+                                        .as_slice()
+                                        .par_iter()
+                                        .filter_map(|&offset| {
+                                            let p = block.base + offset.index();
+                                            let right = p + rule.left_len;
+                                            if corpus[p].token() == rule.edge.0
+                                                && right < corpus.len()
+                                                && corpus[right].token() == rule.edge.1
+                                            {
+                                                Some(Plan { position: p, rank })
+                                            } else {
+                                                None
+                                            }
+                                        })
+                                        .collect();
+                                    plans.extend(valid);
+                                }
                             }
-                        }
-                        if block_rules.get(&b).is_some_and(|r| r.len() > 1) {
-                            plans.par_sort_unstable_by_key(|p| p.position);
-                        }
-                        plans
-                    })
-                    .collect()
-            })
-        };
-        drop(flat_postings);
-        let count: usize = chunks.iter().map(Vec::len).sum();
-        let mut plans = Vec::with_capacity(count);
-        for mut chunk in chunks {
-            plans.append(&mut chunk);
-        }
-        // Posting producers append ordered final boundary positions. A single
-        // rule keeps that order, including AA; only mixed rules need sorting.
-        if flat && rules.len() > 1 {
-            pool.install(|| plans.par_sort_unstable_by_key(|p| p.position));
-        }
-        // AA is the only self-overlapping rule, and always forms a single-rule
-        // batch. Only O(chunks) parity propagation is serial; summaries use logarithmic boundary checks and local selection runs
-        // in parallel, even when a long run spans address blocks or empty chunks.
-        if rules[0].edge.0 == rules[0].edge.1 {
-            let length = rules[0].left_len;
-            let summaries: Vec<_> = pool.install(|| {
-                plans
-                    .par_chunks(4096)
-                    .map(|chunk| {
-                        super::aa_parity::summarize_by(chunk.len(), |i| chunk[i].position, length)
-                    })
-                    .collect()
-            });
-            let incoming = super::aa_parity::incoming_parities(&summaries, length);
-            let selected: Vec<Vec<Plan>> = pool.install(|| {
-                plans
-                    .par_chunks(4096)
-                    .zip(incoming.par_iter())
-                    .map(|(chunk, &odd)| {
-                        let mut valid = Vec::with_capacity(chunk.len().div_ceil(2));
-                        super::aa_parity::for_each_selected(
-                            chunk.iter().map(|p| p.position),
-                            length,
-                            odd,
-                            |position| valid.push(Plan { position, rank: 0 }),
-                        );
-                        valid
-                    })
-                    .collect()
-            });
-            plans.clear();
-            for mut chunk in selected {
+                            if block_rules.get(&b).is_some_and(|r| r.len() > 1) {
+                                plans.par_sort_unstable_by_key(|p| p.position);
+                            }
+                            plans
+                        })
+                        .collect()
+                })
+            };
+            drop(flat_postings);
+            let count: usize = chunks.iter().map(Vec::len).sum();
+            let mut plans = Vec::with_capacity(count);
+            for mut chunk in chunks {
                 plans.append(&mut chunk);
             }
-        }
-        debug_assert!(
-            plans
-                .windows(2)
-                .all(|w| w[0].after(&rules) <= w[1].position)
-        );
-        stats.plan_ms += stage.elapsed().as_secs_f64() * 1000.0;
-        let stage = Instant::now();
-        // AA's overlapping occurrences are visited, but are not stale records.
-        // One route buffer per worker, as in the prototype. A posting task is
-        // not a route owner: returning a new map for every 4096 occurrences
-        // duplicates groups and allocations throughout a large batch.
-        let output_chunk = plans.len().div_ceil(config.workers).max(4096);
-        let outputs: Vec<Output<O, INLINE>> = pool.install(|| {
-            plans
-                .par_chunks(output_chunk)
-                .enumerate()
-                .map(|(chunk, local)| -> Result<_> {
-                    let mut output = Output::new(config.workers, flat);
-                    let mut weight_block = usize::MAX;
-                    let mut weight_cursor = 0;
-                    for (j, &plan) in local.iter().enumerate() {
-                        let i = chunk * output_chunk + j;
-                        let rule = &rules[plan.rank];
-                        let p = plan.position;
-                        let after = plan.after(&rules);
-                        let b = p >> bits;
-                        if b != weight_block {
-                            weight_block = b;
-                            weight_cursor = 0;
-                        }
-                        let weight = blocks[b].weight_forward(p, uniform, &mut weight_cursor);
-                        let prior = corpus[p - 1].token();
-                        let left_selected = i > 0 && plans[i - 1].after(&rules) == p;
-                        if prior != NONE && !left_selected {
-                            let before = p - lengths[prior as usize];
-                            output.remove(key(prior, rule.edge.0), weight);
-                            if lengths[prior as usize] + rule.length() < max_length {
-                                output.birth(key(prior, rule.replacement), before, weight, bits)?;
+            // Posting producers append ordered final boundary positions. A single
+            // rule keeps that order, including AA; only mixed rules need sorting.
+            if flat && rules.len() > 1 {
+                pool.install(|| plans.par_sort_unstable_by_key(|p| p.position));
+            }
+            // AA is the only self-overlapping rule, and always forms a single-rule
+            // batch. Only O(chunks) parity propagation is serial; summaries use logarithmic boundary checks and local selection runs
+            // in parallel, even when a long run spans address blocks or empty chunks.
+            if rules[0].edge.0 == rules[0].edge.1 {
+                let length = rules[0].left_len;
+                let summaries: Vec<_> = pool.install(|| {
+                    plans
+                        .par_chunks(4096)
+                        .map(|chunk| {
+                            super::aa_parity::summarize_by(
+                                chunk.len(),
+                                |i| chunk[i].position,
+                                length,
+                            )
+                        })
+                        .collect()
+                });
+                let incoming = super::aa_parity::incoming_parities(&summaries, length);
+                let selected: Vec<Vec<Plan>> = pool.install(|| {
+                    plans
+                        .par_chunks(4096)
+                        .zip(incoming.par_iter())
+                        .map(|(chunk, &odd)| {
+                            let mut valid = Vec::with_capacity(chunk.len().div_ceil(2));
+                            super::aa_parity::for_each_selected(
+                                chunk.iter().map(|p| p.position),
+                                length,
+                                odd,
+                                |position| valid.push(Plan { position, rank: 0 }),
+                            );
+                            valid
+                        })
+                        .collect()
+                });
+                plans.clear();
+                for mut chunk in selected {
+                    plans.append(&mut chunk);
+                }
+            }
+            debug_assert!(
+                plans
+                    .windows(2)
+                    .all(|w| w[0].after(&rules) <= w[1].position)
+            );
+            stats.plan_ms += stage.elapsed().as_secs_f64() * 1000.0;
+            let stage = Instant::now();
+            // AA's overlapping occurrences are visited, but are not stale records.
+            // One route buffer per worker, as in the prototype. A posting task is
+            // not a route owner: returning a new map for every 4096 occurrences
+            // duplicates groups and allocations throughout a large batch.
+            let output_chunk = plans.len().div_ceil(config.workers).max(4096);
+            let outputs: Vec<Output<O, INLINE>> = pool.install(|| {
+                plans
+                    .par_chunks(output_chunk)
+                    .enumerate()
+                    .map(|(chunk, local)| -> Result<_> {
+                        let mut output = Output::new(config.workers, flat);
+                        let mut weight_block = usize::MAX;
+                        let mut weight_cursor = 0;
+                        for (j, &plan) in local.iter().enumerate() {
+                            let i = chunk * output_chunk + j;
+                            let rule = &rules[plan.rank];
+                            let p = plan.position;
+                            let after = plan.after(&rules);
+                            let b = p >> bits;
+                            if b != weight_block {
+                                weight_block = b;
+                                weight_cursor = 0;
+                            }
+                            let weight = blocks[b].weight_forward(p, uniform, &mut weight_cursor);
+                            let prior = corpus[p - 1].token();
+                            let left_selected = i > 0 && plans[i - 1].after(&rules) == p;
+                            if prior != NONE && !left_selected {
+                                let before = p - lengths[prior as usize];
+                                output.remove(key(prior, rule.edge.0), weight);
+                                if lengths[prior as usize] + rule.length() < max_length {
+                                    output.birth(
+                                        key(prior, rule.replacement),
+                                        before,
+                                        weight,
+                                        bits,
+                                    )?;
+                                }
+                            }
+                            let next = corpus[after].token();
+                            if next != NONE {
+                                output.remove(key(rule.edge.1, next), weight);
+                                let final_next =
+                                    if plans.get(i + 1).is_some_and(|q| q.position == after) {
+                                        rules[plans[i + 1].rank].replacement
+                                    } else {
+                                        next
+                                    };
+                                if rule.length() + lengths[final_next as usize] < max_length {
+                                    output.birth(
+                                        key(rule.replacement, final_next),
+                                        p,
+                                        weight,
+                                        bits,
+                                    )?;
+                                }
                             }
                         }
-                        let next = corpus[after].token();
-                        if next != NONE {
-                            output.remove(key(rule.edge.1, next), weight);
-                            let final_next =
-                                if plans.get(i + 1).is_some_and(|q| q.position == after) {
-                                    rules[plans[i + 1].rank].replacement
-                                } else {
-                                    next
-                                };
-                            if rule.length() + lengths[final_next as usize] < max_length {
-                                output.birth(key(rule.replacement, final_next), p, weight, bits)?;
-                            }
-                        }
-                    }
-                    Ok(output)
-                })
-                .collect::<Result<Vec<_>>>()
-        })?;
-        stats.delta_ms += stage.elapsed().as_secs_f64() * 1000.0;
-        let stage = Instant::now();
-        pool.install(|| write_plans(&mut corpus, 0, &plans, &rules, config.workers));
-        stats.rewrite_ms += stage.elapsed().as_secs_f64() * 1000.0;
+                        Ok(output)
+                    })
+                    .collect::<Result<Vec<_>>>()
+            })?;
+            stats.delta_ms += stage.elapsed().as_secs_f64() * 1000.0;
+            let stage = Instant::now();
+            pool.install(|| write_plans(&mut corpus, 0, &plans, &rules, config.workers));
+            stats.rewrite_ms += stage.elapsed().as_secs_f64() * 1000.0;
+            outputs
+        };
         let stage = Instant::now();
         let commits: Vec<_> = pool.install(|| {
             owners
@@ -1011,6 +1599,12 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
                 .enumerate()
                 .map(|(o, ledger)| -> Result<_> {
                     let mut retired = Vec::new();
+                    if flat && !outputs[0].flat_births.is_empty() {
+                        let result =
+                            flat_commit::dense(&outputs, o, ledger, &rules, lengths.len(), floor)?;
+                        ledger.prepare_window(selection);
+                        return Ok(result);
+                    }
                     if flat {
                         let mut born = AHashMap::<u64, (u64, u32)>::new();
                         for output in &outputs {
@@ -1061,16 +1655,24 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
                                 };
                                 let start = entry.blocks.len();
                                 let mut head = group.head;
-                                while head != NONE {
-                                    let node = &route.nodes[head as usize];
-                                    entry.blocks.push(node.position)?;
-                                    head = node.next;
-                                }
-                                // Chunks are ordered spatially; each chain is
-                                // reversed locally so AA keeps an ordered list.
-                                entry.blocks.as_mut_slice()[start..].reverse();
+                                entry
+                                    .blocks
+                                    .append_reversed_reserved(group.occurrences, || {
+                                        let node = &route.nodes[head as usize];
+                                        head = node.next;
+                                        node.position
+                                    })?;
+                                debug_assert_eq!(head, NONE);
+                                let positions = entry.blocks.as_slice();
+                                debug_assert!(
+                                    positions[start.saturating_sub(1)..]
+                                        .windows(2)
+                                        .all(|w| w[0] < w[1]),
+                                    "birth producer order must yield sorted unique postings"
+                                );
                             }
                         }
+                        ledger.prepare_window(selection);
                         return Ok((retired, AHashSet::new(), dropped));
                     }
                     let mut sums = AHashMap::<u64, u64>::new();
@@ -1117,6 +1719,7 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
                         ledger.heap.push(Candidate { key: k, frequency });
                         accepted.insert(k);
                     }
+                    ledger.prepare_window(selection);
                     Ok((retired, accepted, dropped))
                 })
                 .collect::<Result<Vec<_>>>()
@@ -1135,47 +1738,59 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
         if !flat {
             // Dictionaries install their own births. Count once and reserve the
             // final list, rather than copying via a coordinator's routed map.
-            let directories: Vec<Vec<Vec<(u64, u32)>>> = blocks
-                .par_iter_mut()
-                .enumerate()
-                .map(|(b, block)| -> Result<_> {
-                    if let Some(keys) = retired_blocks.get(&b) {
-                        for k in keys {
-                            block.postings.remove(k);
-                        }
-                    }
-                    let mut counts = AHashMap::<u64, usize>::new();
-                    for output in &outputs {
-                        if let Some(births) = output.blocks.get(&b) {
-                            for (&k, positions) in births {
-                                if commits[owner(k, config.workers)].1.contains(&k) {
-                                    *counts.entry(k).or_default() += positions.len();
-                                }
+            let directories: Vec<Vec<Vec<(u64, u32)>>> = if let Some(prepared) = &block_prepared {
+                pool.install(|| {
+                    prepared.install(
+                        &mut blocks,
+                        |k| commits[owner(k, config.workers)].1.contains(&k),
+                        &retired_blocks,
+                        config.workers,
+                    )
+                })?
+            } else {
+                blocks
+                    .par_iter_mut()
+                    .enumerate()
+                    .map(|(b, block)| -> Result<_> {
+                        if let Some(keys) = retired_blocks.get(&b) {
+                            for k in keys {
+                                block.postings.remove(k);
                             }
                         }
-                    }
-                    let mut directory: Vec<Vec<(u64, u32)>> =
-                        (0..config.workers).map(|_| Vec::new()).collect();
-                    for (k, count) in counts {
-                        let mut positions = PackedPosting::<O, INLINE>::with_capacity(
-                            u32::try_from(count).map_err(|_| "block posting count exceeds u32")?,
-                        )?;
+                        let mut counts = AHashMap::<u64, usize>::new();
                         for output in &outputs {
-                            if let Some(source) =
-                                output.blocks.get(&b).and_then(|births| births.get(&k))
-                            {
-                                for &offset in source.as_slice() {
-                                    positions.push(offset)?;
+                            if let Some(births) = output.blocks.get(&b) {
+                                for (&k, positions) in births {
+                                    if commits[owner(k, config.workers)].1.contains(&k) {
+                                        *counts.entry(k).or_default() += positions.len();
+                                    }
                                 }
                             }
                         }
-                        debug_assert!(!block.postings.contains_key(&k));
-                        block.postings.insert(k, positions);
-                        directory[owner(k, config.workers)].push((k, b as u32));
-                    }
-                    Ok(directory)
-                })
-                .collect::<Result<Vec<_>>>()?;
+                        let mut directory: Vec<Vec<(u64, u32)>> =
+                            (0..config.workers).map(|_| Vec::new()).collect();
+                        for (k, count) in counts {
+                            let mut positions = PackedPosting::<O, INLINE>::with_capacity(
+                                u32::try_from(count)
+                                    .map_err(|_| "block posting count exceeds u32")?,
+                            )?;
+                            for output in &outputs {
+                                if let Some(source) =
+                                    output.blocks.get(&b).and_then(|births| births.get(&k))
+                                {
+                                    for &offset in source.as_slice() {
+                                        positions.push(offset)?;
+                                    }
+                                }
+                            }
+                            debug_assert!(!block.postings.contains_key(&k));
+                            block.postings.insert(k, positions);
+                            directory[owner(k, config.workers)].push((k, b as u32));
+                        }
+                        Ok(directory)
+                    })
+                    .collect::<Result<Vec<_>>>()?
+            };
             owners
                 .par_iter_mut()
                 .enumerate()
@@ -1190,6 +1805,18 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
                 .collect::<Result<Vec<_>>>()?;
         }
         stats.route_ms += stage.elapsed().as_secs_f64() * 1000.0;
+        committed_merges = merges.len();
+    }
+    stats.queue_selection_mode = selection.label();
+    stats.queue_owner_probes = frontier.owner_probes;
+    stats.queue_leader_updates = frontier.leader_updates;
+    for ledger in &owners {
+        stats.queue_truth_checks += ledger.truth_checks;
+        stats.queue_stale_corrections += ledger.stale_corrections;
+        stats.queue_prefetched += ledger.window.prefetched;
+        stats.queue_unused_restored += ledger.window.restored;
+        stats.queue_serial_refills += ledger.window.serial_refills;
+        stats.queue_worker_prefetch_ms += ledger.window.worker_ms;
     }
     stats.merge_ms = begin.elapsed().as_secs_f64() * 1000.0;
     Ok(IndexedTraining {
@@ -1212,6 +1839,144 @@ fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn selection_modes_keep_weighted_reserved_and_length_limited_full_traces() {
+        let words = [
+            ("ababcd中aa".repeat(300), 3),
+            ("cdab文abab".repeat(250), u32::MAX as u64 + 1),
+            ("aaaaabbbb中".repeat(200), 0),
+            ("abcdabcdef".repeat(220), 1),
+        ]
+        .into_iter()
+        .map(|(w, n)| (w.into(), n))
+        .collect();
+        let trainer = BpeTrainer::builder()
+            .vocab_size(100)
+            .min_frequency(2)
+            .max_token_length(Some(8))
+            .show_progress(false)
+            .special_tokens(vec![AddedToken::from("ab", true)])
+            .build();
+        for bits in [16, 32] {
+            for workers in [1, 4, 32] {
+                let config = IndexedParallelConfig {
+                    workers,
+                    initialization_workers: Some(1),
+                    posting_block_bits: bits,
+                    atomic_corpus: true,
+                    narrow_corpus: false,
+                    ..Default::default()
+                };
+                let expected = train_with_corpus_order(
+                    &trainer,
+                    &words,
+                    config,
+                    super::super::posting_arena::Policy::Auto,
+                    SelectionMode::Serial,
+                    corpus::Order::Original,
+                )
+                .unwrap();
+                let stable = train_with_corpus_order(
+                    &trainer,
+                    &words,
+                    config,
+                    super::super::posting_arena::Policy::Auto,
+                    SelectionMode::Bulk(4),
+                    corpus::Order::WeightStable,
+                )
+                .unwrap();
+                assert_eq!(stable.trace, expected.trace);
+                assert_eq!(stable.vocab, expected.vocab);
+                assert_eq!(stable.merges, expected.merges);
+                for mode in [
+                    SelectionMode::Cached,
+                    SelectionMode::Leader,
+                    SelectionMode::Bulk(4),
+                    SelectionMode::Bulk(16),
+                ] {
+                    let got = train_with_selection(
+                        &trainer,
+                        &words,
+                        config,
+                        super::super::posting_arena::Policy::Auto,
+                        mode,
+                    )
+                    .unwrap();
+                    assert_eq!(got.trace, expected.trace);
+                    assert_eq!(got.vocab, expected.vocab);
+                    assert_eq!(got.merges, expected.merges);
+                    assert_eq!(got.stats.batch_rounds, expected.stats.batch_rounds);
+                    assert_eq!(got.stats.posting_visits, expected.stats.posting_visits);
+                }
+            }
+        }
+    }
+    #[test]
+    fn simultaneous_arena_policies_preserve_training_results() {
+        use super::super::posting_arena::Policy;
+        let words: AHashMap<CompactString, u64> = [
+            ("xab中abq".repeat(10000), 3),
+            ("中文aaabc".repeat(9000), u32::MAX as u64 + 1),
+            ("zeroabab".repeat(8000), 0),
+        ]
+        .into_iter()
+        .map(|(text, weight)| (text.into(), weight))
+        .collect();
+        let trainer = BpeTrainer::builder()
+            .vocab_size(96)
+            .min_frequency(2)
+            .show_progress(false)
+            .build();
+        let expected = trainer.do_train_indexed(&words).unwrap();
+        std::thread::scope(|scope| {
+            let jobs: Vec<_> = [Policy::System, Policy::Fixed(32), Policy::Auto]
+                .into_iter()
+                .map(|policy| {
+                    let trainer = &trainer;
+                    let words = &words;
+                    scope.spawn(move || {
+                        let mut results = Vec::new();
+                        for bits in [16, 32] {
+                            let got = train_with_policy(
+                                trainer,
+                                words,
+                                IndexedParallelConfig {
+                                    workers: 2,
+                                    initialization_workers: Some(1),
+                                    posting_block_bits: bits,
+                                    atomic_corpus: true,
+                                    narrow_corpus: false,
+                                    ..Default::default()
+                                },
+                                policy,
+                            )
+                            .unwrap();
+                            assert_eq!(
+                                got.stats.posting_arena_cutoff_bytes,
+                                policy.cutoff(got.stats.initial_edges)
+                            );
+                            assert_eq!(
+                                got.stats.posting_allocations.arena_requested_bytes,
+                                got.stats.posting_allocations.arena_retired_bytes
+                            );
+                            if matches!(policy, Policy::System) {
+                                assert_eq!(got.stats.posting_allocations.arena_buffers, 0);
+                            }
+                            results.push(got);
+                        }
+                        results
+                    })
+                })
+                .collect();
+            for job in jobs {
+                for got in job.join().unwrap() {
+                    assert_eq!(got.trace, expected.trace);
+                    assert_eq!(got.vocab, expected.vocab);
+                    assert_eq!(got.merges, expected.merges);
+                }
+            }
+        });
+    }
     use super::*;
 
     fn verify(
@@ -1228,6 +1993,48 @@ mod tests {
         assert_eq!(got.vocab, vocab);
         assert_eq!(got.merges, merges);
         got
+    }
+
+    #[test]
+    fn fused_flat_batches_keep_adjacent_and_shared_head_tail_births_ordered() {
+        let words = [
+            ("abcdxabcyabdz".repeat(3000), 2),
+            ("abefcdabghcd".repeat(2000), 5),
+            ("aaaabcdd".repeat(1000), 3),
+            ("中ab文cd中ef文".repeat(1000), 1),
+        ]
+        .into_iter()
+        .map(|(w, n)| (w.into(), n))
+        .collect();
+        for limit in [None, Some(3), Some(7)] {
+            let trainer = BpeTrainer::builder()
+                .vocab_size(120)
+                .show_progress(false)
+                .max_token_length(limit)
+                .special_tokens(vec![AddedToken::from("abcd", true)])
+                .build();
+            let expected = trainer.do_train_indexed(&words).unwrap();
+            for workers in [1, 4] {
+                let got = trainer
+                    .do_train_indexed_parallel(
+                        &words,
+                        IndexedParallelConfig {
+                            workers,
+                            initialization_workers: None,
+                            posting_block_bits: 32,
+                            narrow_corpus: false,
+                            atomic_corpus: true,
+                            batch_size: 256,
+                        },
+                    )
+                    .unwrap();
+                assert_eq!(got.trace, expected.trace);
+                assert_eq!(got.vocab, expected.vocab);
+                assert_eq!(got.merges, expected.merges);
+                assert!(got.stats.fused_batches > 0);
+                assert!(got.stats.peak_valid_start_bytes > 0);
+            }
+        }
     }
 
     #[test]
@@ -1464,6 +2271,168 @@ mod tests {
         );
         let empty = Block::<u16, 4>::new(base, 27);
         assert_eq!(empty.weight_forward(base + 65535, None, &mut 0), 27);
+    }
+
+    #[test]
+    fn candidate_heap_range_fallback_keeps_weighted_greedy_semantics() {
+        let run = |weight, vocab| {
+            let words = [(CompactString::from("aaaababa"), weight)]
+                .into_iter()
+                .collect();
+            let trainer = BpeTrainer::builder()
+                .vocab_size(vocab)
+                .min_frequency(2)
+                .show_progress(false)
+                .build();
+            // The legacy HF oracle casts weights to i32; the wide indexed
+            // serial oracle keeps u64 frequencies for this range test.
+            let expected = trainer.do_train_indexed(&words).unwrap();
+            let got = trainer
+                .do_train_indexed_parallel(&words, IndexedParallelConfig::default())
+                .unwrap();
+            assert_eq!(got.trace, expected.trace);
+            assert_eq!(got.vocab, expected.vocab);
+            assert_eq!(got.merges, expected.merges);
+            got
+        };
+        let packed = run(3, 32);
+        let large_weight = run(u32::MAX as u64 + 1, 32);
+        let large_id_domain = run(3, 70000);
+        assert_eq!(packed.stats.initial_pairs, large_weight.stats.initial_pairs);
+        assert_eq!(
+            packed.stats.initial_pairs,
+            large_id_domain.stats.initial_pairs
+        );
+        assert_eq!(
+            large_weight.stats.initial_heap_bytes,
+            packed.stats.initial_heap_bytes * 2
+        );
+        assert_eq!(
+            large_id_domain.stats.initial_heap_bytes,
+            packed.stats.initial_heap_bytes * 2
+        );
+    }
+
+    #[test]
+    fn nonempty_alias_affixes_keep_exact_cohorts() {
+        for (prefix, suffix, text) in [
+            (None, Some("a"), "baaba"),
+            (Some("ab"), None, "abaa"),
+            (Some("##"), Some("</w>"), "aaaababa"),
+        ] {
+            let mut trainer = BpeTrainer::builder()
+                .vocab_size(24)
+                .show_progress(false)
+                .build();
+            trainer.continuing_subword_prefix = prefix.map(str::to_owned);
+            trainer.end_of_word_suffix = suffix.map(str::to_owned);
+            let words = [(CompactString::from(text), 1)].into_iter().collect();
+            let expected = trainer.do_train_indexed(&words).unwrap();
+            let got = trainer
+                .do_train_indexed_parallel(&words, IndexedParallelConfig::default())
+                .unwrap();
+            assert_eq!(got.trace, expected.trace);
+            assert_eq!(got.vocab, expected.vocab);
+            assert_eq!(got.merges, expected.merges);
+            assert_eq!(got.stats.workers, 4);
+            assert_eq!(got.stats.initialization_workers, 4);
+            if suffix == Some("a") {
+                assert_eq!(got.trace[1], ((1, 2), 2, 3));
+                assert!(!got.stats.monotone_pairs);
+            }
+        }
+    }
+
+    #[test]
+    fn block_counts_keep_uniform_zero_and_sparse_nonunit_weights_exact() {
+        let texts = [
+            "xabq".repeat(18000),
+            "ab中中".repeat(19000),
+            "中文aab".repeat(15000),
+        ];
+        for weights in [
+            [1, 1, 1],
+            [2, 2, 2],
+            [0, 0, 0],
+            [0, 1, 7],
+            [3, u32::MAX as u64 + 1, 1],
+        ] {
+            let words = texts
+                .iter()
+                .zip(weights)
+                .map(|(text, weight)| (CompactString::from(text.as_str()), weight))
+                .collect();
+            let trainer = BpeTrainer::builder()
+                .vocab_size(96)
+                .min_frequency(2)
+                .show_progress(false)
+                .build();
+            let expected = trainer.do_train_indexed(&words).unwrap();
+            for atomic in [false, true] {
+                let got = trainer
+                    .do_train_indexed_parallel(
+                        &words,
+                        IndexedParallelConfig {
+                            posting_block_bits: 16,
+                            atomic_corpus: atomic,
+                            narrow_corpus: false,
+                            ..Default::default()
+                        },
+                    )
+                    .unwrap();
+                assert!(got.stats.initial_blocks > 1);
+                assert_eq!(got.trace, expected.trace);
+                assert_eq!(got.vocab, expected.vocab);
+                assert_eq!(got.merges, expected.merges);
+            }
+        }
+    }
+
+    #[test]
+    fn block_summary_waves_keep_global_floor_and_cross_wave_aa_order() {
+        let words = [
+            ("aaab".repeat(25000), 0),
+            ("aaab中".repeat(21000), 3),
+            ("中aaab".repeat(24000), 1),
+        ]
+        .into_iter()
+        .map(|(text, weight)| (CompactString::from(text), weight))
+        .collect();
+        let trainer = BpeTrainer::builder()
+            .vocab_size(48)
+            .min_frequency(2)
+            .show_progress(false)
+            .build();
+        let expected = trainer.do_train_indexed(&words).unwrap();
+        for workers in [1, 2, 4] {
+            for atomic in [false, true] {
+                let got = trainer
+                    .do_train_indexed_parallel(
+                        &words,
+                        IndexedParallelConfig {
+                            workers,
+                            initialization_workers: Some(2),
+                            posting_block_bits: 16,
+                            narrow_corpus: false,
+                            atomic_corpus: atomic,
+                            ..Default::default()
+                        },
+                    )
+                    .unwrap();
+                assert!(got.stats.initial_blocks > 4);
+                assert_eq!(
+                    got.stats.initial_summary_waves,
+                    got.stats.initial_blocks.div_ceil(2)
+                );
+                assert!(
+                    got.stats.peak_initial_summary_buffer_bytes
+                        < got.stats.initial_summary_buffer_bytes
+                );
+                assert_eq!(got.trace, expected.trace);
+                assert_eq!(got.vocab, expected.vocab);
+                assert_eq!(got.merges, expected.merges);
+            }
+        }
     }
 
     #[test]

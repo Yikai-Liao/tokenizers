@@ -1,0 +1,107 @@
+{
+  "case": "alias-prefix-ab-baseline4",
+  "label": "affix-baseline-48223",
+  "command": [
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-baseline-48223/target/release/hf-bpe-native-affix-baseline-48223",
+    "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-parallel-v2/input/alias-prefix-ab-1024.txt",
+    "none",
+    "reference",
+    "128",
+    "2"
+  ],
+  "worktree_commit": "48223a5898a144874f6b48e3b437fd3ce75adb08",
+  "build_manifest_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-baseline-48223/build_manifest.json",
+  "build_manifest_sha256": "b892108845dbebee77d010db61ee60036b32cc348e10ac6c27738630c2041b21",
+  "binary_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-baseline-48223/target/release/hf-bpe-native-affix-baseline-48223",
+  "binary_sha256": "913b061f22553dffaf2b62aeac66a505df036831f04b42d696baec78ed29bdaf",
+  "build_script_sha256": "6f42ac8e76f7e953a345c40451b7c5d9315ad1c609dccdbe232b0457279462d9",
+  "run_script_sha256": "8019220527ea3ae4cd3f3dce418921f64670b1eda6c1074fea2a3c81eb3195e3",
+  "instrumentation_patch_sha256": "b175a3bf6f3f53f063c2ad83c99f97810df2de1cf7ff9ec458f51a19a34df0eb",
+  "runner_source_sha256": "c030e60213aa927afc9d5b1d687bf391ea8e099c7a100a9bd55fdbdbaa8d13c8",
+  "runner_lock_sha256": "ed6171e24ed18b758fa7f03b3255105a3cbd682d7a3b41cd05a5a28b086ccbaf",
+  "corpus_path": "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-parallel-v2/input/alias-prefix-ab-1024.txt",
+  "corpus_bytes": 266154,
+  "corpus_sha256": "9e841c05746a3cabe0c466efa5f180ad13f03e5230baa3981a481710c728ac3a",
+  "expected_corpus_sha256": "9e841c05746a3cabe0c466efa5f180ad13f03e5230baa3981a481710c728ac3a",
+  "baseline_pair": null,
+  "prefix": "ab",
+  "suffix": null,
+  "oracle": false,
+  "baseline": true,
+  "max_token_length": null,
+  "require_absent_affixes": false,
+  "expected_model_sha256": "a6579a913bc0055fcc421d58f76a97340c4a25b272facbb4b5c4f3b00494d8cd",
+  "threads_requested": 4,
+  "allow_short_process": false,
+  "vocab_size": 128,
+  "min_frequency": 2,
+  "env_overrides": {
+    "TOKENIZERS_PARALLELISM": "false",
+    "RAYON_NUM_THREADS": "4",
+    "HF_BPE_BENCH_WORKERS": "4",
+    "HF_BPE_PREFIX": "ab"
+  },
+  "mem_before": {
+    "MemAvailable": 7898800128,
+    "SwapFree": 5759574016,
+    "pswpin": 627789,
+    "pswpout": 2436384
+  },
+  "host_before": {
+    "cpu_ticks": [
+      18686488,
+      28765,
+      5617767,
+      156701955,
+      57822,
+      0,
+      1817549,
+      68158,
+      0,
+      0
+    ],
+    "loadavg": [
+      "0.55",
+      "1.31",
+      "1.35"
+    ]
+  },
+  "input_manifest_path": null,
+  "input_manifest": null,
+  "mem_after": {
+    "MemAvailable": 7896506368,
+    "SwapFree": 5759574016,
+    "pswpin": 627790,
+    "pswpout": 2436384
+  },
+  "host_after": {
+    "cpu_ticks": [
+      18686502,
+      28765,
+      5617772,
+      156702101,
+      57822,
+      0,
+      1817550,
+      68158,
+      0,
+      0
+    ],
+    "loadavg": [
+      "0.55",
+      "1.31",
+      "1.35"
+    ]
+  },
+  "wall_seconds": 0.25159305799752474,
+  "min_memavailable_bytes": 7898800128,
+  "peak_rss_bytes": 405504,
+  "peak_vmswap_bytes": 0,
+  "max_process_threads": 1,
+  "pswpin_delta": 1,
+  "pswpout_delta": 0,
+  "child_user_seconds": 0.06312,
+  "child_system_seconds": 0.01971,
+  "returncode": 0,
+  "failure": null
+}

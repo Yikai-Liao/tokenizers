@@ -14,7 +14,7 @@
 
 `special_tokens` 可以预先占用长字符串的 ID。HF 的训练初始化仍逐字符处理词，不把这些长字符串作为初始原子。因此，ID 已分配与身份已在语料中出现是两件事。
 
-当前代码在 prefix、suffix 均为 `None` 或空字符串时启用证明支持的优化，包括有限 `max_token_length`。有限门控的证明见下节；非空 affix 的可扩展条件另见 [AFFIX_PRUNING.md](AFFIX_PRUNING.md)。
+prefix、suffix 均为 `None` 或空字符串时，这个证明静态支持普通路径，包括有限 `max_token_length`。非空 affix 的新路径以运行时检查保证 replacement 首次激活，在首次实际 ID 复用时重建通用 HF 账本，协议见 [AFFIX_FAST_PATH_MIGRATIONS.md](AFFIX_FAST_PATH_MIGRATIONS.md)。有限门控的证明见下节；静态 affix 证书的研究另见 [AFFIX_PRUNING.md](AFFIX_PRUNING.md)。
 
 ## 定义
 

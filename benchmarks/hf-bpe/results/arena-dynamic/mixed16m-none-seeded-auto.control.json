@@ -1,0 +1,36 @@
+{
+  "command": [
+    "/usr/bin/python3",
+    "/root/code/tokenizers/benchmarks/hf-bpe/run_native_fair.py",
+    "--case",
+    "mixed16m-none-seeded-auto",
+    "--worktree",
+    "/root/code/tokenizers-worktrees/arena-dynamic-threshold",
+    "--build-root",
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-arena-dynamic-seeded",
+    "--binary",
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-arena-dynamic-seeded/target/release/hf-bpe-native-arena-dynamic-seeded",
+    "--corpus",
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/arena-dynamic-inputs/mixed-en-zh-16m/input.txt",
+    "--output",
+    "/root/code/tokenizers/benchmarks/hf-bpe/results/arena-dynamic/mixed16m-none-seeded-auto.jsonl",
+    "--split",
+    "none",
+    "--vocab",
+    "24885",
+    "--initialization-workers",
+    "4",
+    "--merge-workers",
+    "4",
+    "--atomic-corpus",
+    "--require-stats",
+    "posting_arena_cutoff_bytes"
+  ],
+  "extra_environment": {
+    "HF_BPE_ARENA_MODE": "auto"
+  },
+  "count": 1,
+  "expected_model_sha256": "13ee5d626c18f4cdd32ed959ba323f9c37b190f44e6d8c4fe638ed92b5d0ca0a",
+  "word_order": "fixed feed hash seeds (11, 13, 17, 19); serial feed; same diagnostic binary for every policy",
+  "scope": "full train API includes posting drop and final arena release; no concurrent CPU tasks"
+}

@@ -1,0 +1,84 @@
+{
+  "case": "en16m-suffix",
+  "command": [
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-affix-analysis/target/release/hf-bpe-native-affix-analysis",
+    "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/en-16m.txt",
+    "none",
+    "reference",
+    "30000",
+    "2"
+  ],
+  "env_overrides": {
+    "TOKENIZERS_PARALLELISM": "false",
+    "RAYON_NUM_THREADS": "1",
+    "HF_BPE_BENCH_WORKERS": "1",
+    "HF_BPE_SUFFIX": "</w>"
+  },
+  "corpus": "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/en-16m.txt",
+  "corpus_bytes": 16776969,
+  "corpus_sha256": "41b20e33253a4db8c66b95536cbadc86c79072e81eb9e5cd59ef136490abdec9",
+  "prefix": null,
+  "suffix": "</w>",
+  "oracle": false,
+  "vocab_size": 30000,
+  "min_frequency": 2,
+  "source_commit": "c9af0cf2e5d81b89147f555d6d9693f504aab1dc",
+  "binary_sha256": "7824be6f26f5eeef143cdb21d9c90a260aa37c92c379a05ba26580ccfd223038",
+  "instrumentation_sha256": "a1f1c461a7ddbe96b4a343bb064d58698d2ad68a17864a4671bad678f89e4edf",
+  "system_before": {
+    "MemAvailable": 7397351424,
+    "SwapFree": 6280458240
+  },
+  "host_before": {
+    "cpu": [
+      "18266392",
+      "28765",
+      "5529373",
+      "154499928",
+      "56583",
+      "0",
+      "1791053",
+      "67356",
+      "0",
+      "0"
+    ],
+    "loadavg": [
+      "1.47",
+      "2.17",
+      "1.80"
+    ]
+  },
+  "system_after": {
+    "MemAvailable": 7381929984,
+    "SwapFree": 6280458240
+  },
+  "host_after": {
+    "cpu": [
+      "18267374",
+      "28765",
+      "5529546",
+      "154503569",
+      "56585",
+      "0",
+      "1791118",
+      "67357",
+      "0",
+      "0"
+    ],
+    "loadavg": [
+      "1.59",
+      "2.18",
+      "1.81"
+    ]
+  },
+  "wall_seconds": 8.025919407024048,
+  "min_memavailable": 6963732480,
+  "peak_rss_bytes": 429580288,
+  "peak_vmswap_bytes": 0,
+  "pswpin_delta": null,
+  "child_user_seconds": 7.306503,
+  "child_system_seconds": 0.36667299999999997,
+  "child_maxrss_kib": 430152,
+  "returncode": 0,
+  "failure": null
+}
