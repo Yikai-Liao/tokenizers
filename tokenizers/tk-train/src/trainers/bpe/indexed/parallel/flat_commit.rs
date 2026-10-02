@@ -1,10 +1,17 @@
 //! Reduce births by their selected rule and neighbor, without a temporary key table.
 use super::*;
 
+#[derive(Default)]
+struct Total {
+    weight: u64,
+    head: usize,
+    occurrences: usize,
+}
+
 struct Fragment {
     output: usize,
     head: u32,
-    next: u32,
+    next: usize,
 }
 
 pub(super) fn dense<O: Offset, const INLINE: usize>(
@@ -35,7 +42,7 @@ pub(super) fn dense<O: Offset, const INLINE: usize>(
     // Reuse a single vocabulary-sized directory for all rule/direction buckets.
     // Only touched neighbors are reset between buckets; no rules × vocabulary table.
     let mut indices = vec![NONE; identities];
-    let mut totals = Vec::<(u32, Group)>::new();
+    let mut totals = Vec::<(u32, Total)>::new();
     let mut fragments = Vec::<Fragment>::new();
     let mut dropped = 0;
     for (rank, rule) in rules.iter().enumerate() {
@@ -47,14 +54,16 @@ pub(super) fn dense<O: Offset, const INLINE: usize>(
                     if *index == NONE {
                         *index =
                             u32::try_from(totals.len()).map_err(|_| "birth groups exceed u32")?;
-                        totals.push((*neighbor, Group::default()));
+                        totals.push((
+                            *neighbor,
+                            Total {
+                                head: usize::MAX,
+                                ..Total::default()
+                            },
+                        ));
                     }
                     let total = &mut totals[*index as usize].1;
-                    let fragment =
-                        u32::try_from(fragments.len()).map_err(|_| "birth fragments exceed u32")?;
-                    if fragment == NONE {
-                        return Err("birth fragment sentinel collision".into());
-                    }
+                    let fragment = fragments.len();
                     fragments.push(Fragment {
                         output: job,
                         head: group.head,
@@ -64,8 +73,8 @@ pub(super) fn dense<O: Offset, const INLINE: usize>(
                     total.weight += group.weight;
                     total.occurrences = total
                         .occurrences
-                        .checked_add(group.occurrences)
-                        .ok_or("birth posting count exceeds u32")?;
+                        .checked_add(group.occurrences as usize)
+                        .ok_or("birth posting count exceeds usize")?;
                 }
             }
             for (neighbor, group) in totals.drain(..) {

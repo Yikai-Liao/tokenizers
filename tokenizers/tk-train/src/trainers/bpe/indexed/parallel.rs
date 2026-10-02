@@ -954,15 +954,10 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
                         }
                         for (k, (frequency, positions)) in grouped {
                             let mut cursor = positions.len();
-                            let posting = BlockPosting::from_reversed(
-                                u32::try_from(cursor)
-                                    .map_err(|_| "initial wave posting exceeds u32")?,
-                                bits,
-                                || {
-                                    cursor -= 1;
-                                    positions[cursor]
-                                },
-                            )?;
+                            let posting = BlockPosting::from_reversed(cursor, bits, || {
+                                cursor -= 1;
+                                positions[cursor]
+                            })?;
                             match ledger.entries.entry(k) {
                                 std::collections::hash_map::Entry::Vacant(e) => {
                                     e.insert(Entry {
@@ -1041,9 +1036,9 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
             initialization_workers: config.initialization_workers.unwrap_or(config.workers),
             atomic_corpus: config.atomic_corpus,
             layout: if bits == 32 {
-                "parallel_u32_segments32"
+                "parallel_u32_planes32"
             } else {
-                "parallel_u32_segments16"
+                "parallel_u32_planes16"
             },
             ..Default::default()
         };
@@ -1280,16 +1275,13 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
                     .map(|(rank, posting)| {
                         let rule = &rules[rank];
                         posting
-                            .segments(bits)
-                            .flat_map(|(base, offsets)| {
-                                offsets.iter().filter_map(move |&offset| {
-                                    let p = base | offset as usize;
-                                    let right = p + rule.left_len;
-                                    (corpus[p].token() == rule.edge.0
-                                        && right < corpus.len()
-                                        && corpus[right].token() == rule.edge.1)
-                                        .then_some(Plan { position: p, rank })
-                                })
+                            .iter(bits)
+                            .filter_map(|p| {
+                                let right = p + rule.left_len;
+                                (corpus[p].token() == rule.edge.0
+                                    && right < corpus.len()
+                                    && corpus[right].token() == rule.edge.1)
+                                    .then_some(Plan { position: p, rank })
                             })
                             .collect()
                     })
@@ -1356,7 +1348,8 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
             // One route buffer per worker, as in the prototype. A posting task is
             // not a route owner: returning a new map for every 4096 occurrences
             // duplicates groups and allocations throughout a large batch.
-            let output_chunk = plans.len().div_ceil(config.workers).max(4096);
+            // At most two birth nodes per plan; local u32 links stay bounded.
+            let output_chunk = plans.len().div_ceil(config.workers).clamp(4096, 1 << 26);
             let outputs: Vec<Output<O, INLINE>> = pool.install(|| {
                 plans
                     .par_chunks(output_chunk)
@@ -1447,7 +1440,7 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
                         return Ok(result);
                     }
                     {
-                        let mut born = AHashMap::<u64, (u64, u32)>::new();
+                        let mut born = AHashMap::<u64, (u64, usize)>::new();
                         for output in &outputs {
                             for (&k, group) in &output.flat_routes[o].delta {
                                 if group.occurrences != 0 {
@@ -1455,8 +1448,8 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
                                     entry.0 += group.weight;
                                     entry.1 = entry
                                         .1
-                                        .checked_add(group.occurrences)
-                                        .ok_or("birth posting count exceeds u32")?;
+                                        .checked_add(group.occurrences as usize)
+                                        .ok_or("birth posting count exceeds usize")?;
                                 } else if let Some(entry) = ledger.entries.get_mut(&k) {
                                     entry.frequency = entry
                                         .frequency
@@ -1497,7 +1490,7 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
                                 let start = entry.blocks.len();
                                 let mut head = group.head;
                                 entry.blocks.append_reversed_reserved_at(
-                                    group.occurrences,
+                                    group.occurrences as usize,
                                     bits,
                                     || {
                                         let index = head as usize;
@@ -1884,8 +1877,8 @@ mod tests {
             .map(|(w, n)| (w.into(), n))
             .collect();
         for (size, layout) in [
-            (65535, "parallel_u32_segments32"),
-            (65536, "parallel_u32_segments32"),
+            (65535, "parallel_u32_planes32"),
+            (65536, "parallel_u32_planes32"),
         ] {
             let trainer = BpeTrainer::builder()
                 .vocab_size(size)
@@ -1910,7 +1903,7 @@ mod tests {
         let got = trainer
             .do_train_indexed_parallel(&words, IndexedParallelConfig::default())
             .unwrap();
-        assert_eq!(got.stats.layout, "parallel_u32_segments32");
+        assert_eq!(got.stats.layout, "parallel_u32_planes32");
         assert!(got.vocab["b"] >= 65535);
     }
 
@@ -1974,7 +1967,7 @@ mod tests {
         let block = Block::<u16, 4>::new(base, 13);
         assert_eq!(block.weight(base + 65535, None), 13);
         assert_eq!(<u16 as Offset>::encode(65535_usize), 65535);
-        assert_eq!(std::mem::size_of::<Entry>(), 40);
+        assert_eq!(std::mem::size_of::<Entry>(), 32);
     }
 
     #[test]

@@ -292,9 +292,6 @@ pub(super) fn build<C: Slot, O: Offset, const INLINE: usize>(
     } else {
         0
     };
-    if capacity.div_ceil(block_size) > u32::MAX as usize {
-        return Err("posting block directory exceeds u32 blocks".into());
-    }
     let uniform = words
         .first()
         .map(|w| w.1)

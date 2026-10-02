@@ -444,7 +444,7 @@ fn initialize_core<C: Slot>(
                     let count = group.end - group.start;
                     let source = &records[group.start as usize..group.end as usize];
                     let mut next = source.len();
-                    let positions = BlockPosting::from_reversed(count, bits, move || {
+                    let positions = BlockPosting::from_reversed(count as usize, bits, move || {
                         next -= 1;
                         base + source[next] as u32 as usize
                     })?;

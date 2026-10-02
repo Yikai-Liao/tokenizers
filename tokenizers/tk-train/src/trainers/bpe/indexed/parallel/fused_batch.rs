@@ -156,7 +156,7 @@ fn prepare_with_mode<C: Slot, O: Offset, const INLINE: usize, const GROUPED: boo
     debug_assert!(rules.iter().all(|r| r.edge.0 != r.edge.1));
     let selected = Selected::new(rules, lengths.len());
     let total: usize = postings.iter().map(BlockPosting::len).sum();
-    let chunk = total.div_ceil(workers).max(1);
+    let chunk = total.div_ceil(workers).clamp(1, 1 << 26);
     // Each job owns one route set, even when a batch contains many tiny rules.
     let mut jobs: Vec<Vec<Task<'_>>> = Vec::new();
     let mut visited = 0;
@@ -191,24 +191,30 @@ fn prepare_with_mode<C: Slot, O: Offset, const INLINE: usize, const GROUPED: boo
             for task in tasks {
                 let rule = &rules[task.rank];
                 let mut positions = address_scratch::Positions::default();
-                for (base, offsets) in task.posting.segments_range(bits, task.begin, task.end) {
-                    let block = &blocks[base >> bits];
-                    let mut cursor = 0;
-                    for &position in offsets {
-                        let p = base | position as usize;
+                let mut previous_block = usize::MAX;
+                let mut cursor = 0;
+                task.posting
+                    .try_for_each_range(bits, task.begin, task.end, |p| -> Result<()> {
+                        let block_id = p >> bits;
+                        let block = &blocks[block_id];
+                        if block_id != previous_block {
+                            previous_block = block_id;
+                            cursor = 0;
+                        }
+                        let position = (p & ((1usize << bits) - 1)) as u32;
                         let right = p + rule.left_len;
                         if corpus[p].token() != rule.edge.0
                             || right >= corpus.len()
                             || corpus[right].token() != rule.edge.1
                         {
-                            continue;
+                            return Ok(());
                         }
                         positions.push(p);
                         let after = right + rule.right_len;
                         let weight = if let Some(weight) = uniform {
                             weight
                         } else if let Some(lookup) = weight_lookup {
-                            lookup[base >> bits].weight(block, position)
+                            lookup[block_id].weight(block, position)
                         } else {
                             block.weight_forward(p, None, &mut cursor)
                         };
@@ -271,8 +277,8 @@ fn prepare_with_mode<C: Slot, O: Offset, const INLINE: usize, const GROUPED: boo
                                 }
                             }
                         }
-                    }
-                }
+                        Ok(())
+                    })?;
                 if GROUPED {
                     left_cache.flush_dense(&mut output, rule, true, task.rank)?;
                     right_cache.flush_dense(&mut output, rule, false, task.rank)?;

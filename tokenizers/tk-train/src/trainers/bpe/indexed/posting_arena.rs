@@ -227,6 +227,9 @@ pub(super) fn allocate<T>(capacity: usize, growth: bool) -> Result<Option<NonNul
         return Ok(None);
     }
     let layout = Layout::array::<T>(capacity).map_err(|_| "posting allocation layout overflow")?;
+    Ok(allocate_layout(layout, growth)?.map(|p| p.cast::<T>()))
+}
+pub(super) fn allocate_layout(layout: Layout, growth: bool) -> Result<Option<NonNull<u8>>> {
     ACTIVE.with(|cell| {
         let mut active = cell.borrow_mut();
         let Some(arena) = active.as_mut() else {
@@ -242,7 +245,7 @@ pub(super) fn allocate<T>(capacity: usize, growth: bool) -> Result<Option<NonNul
         arena.counters.arena_buffers += 1;
         arena.counters.arena_requested_bytes += layout.size();
         arena.counters.grows += usize::from(growth);
-        Ok(Some(pointer.cast::<T>()))
+        Ok(Some(pointer))
     })
 }
 pub(super) fn heap_allocation<T>(capacity: usize, growth: bool) {

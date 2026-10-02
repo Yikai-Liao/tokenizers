@@ -1,280 +1,396 @@
-//! Local u32 offsets and a compact directory of (block ID, count) runs.
-//! Both directory integers use 15 data bits per u16, with one continuation bit.
-//! This keeps arena alignment, supports every u32 block ID, and avoids per-run
-//! objects. All corpus geometries use this exact representation and builder.
+//! Split address planes: raw low u32 plus 0..4 bytes of upper address per item.
+//! There is no segment directory. A list dispatches once on its upper width.
+//! Length and capacity are machine-sized; narrow birth links are job-local only.
 use super::*;
-use smallvec::SmallVec;
+use std::alloc::{Layout, alloc, dealloc};
 
-#[derive(Clone, Copy, Default)]
-struct Run {
-    block: u32,
-    count: u32,
-}
 #[derive(Default)]
 pub(super) struct BlockPosting {
-    positions: SmallPosting,
-    runs: PackedPosting<u16, 4>,
+    len: usize,
+    capacity: usize,
+    // Inline full u64 singleton, two low-u32 values, or a 16-aligned pointer.
+    // Pointer low bits: width (0..4) and arena origin (8).
+    payload: usize,
 }
-fn units(mut value: u32) -> usize {
-    let mut n = 1;
-    while value >= 0x8000 {
-        value >>= 15;
-        n += 1;
-    }
-    n
+// Unique ownership; arena sessions outlive postings moved between workers.
+unsafe impl Send for BlockPosting {}
+unsafe impl Sync for BlockPosting {}
+fn width(value: u64) -> usize {
+    (64 - value.leading_zeros()).saturating_sub(32).div_ceil(8) as usize
 }
-fn emit(out: &mut PackedPosting<u16, 4>, mut value: u32) -> Result<()> {
-    while value >= 0x8000 {
-        out.push((value as u16 & 0x7fff) | 0x8000)?;
-        value >>= 15;
-    }
-    out.push(value as u16)
+fn canonical(p: usize, bits: u8) -> u64 {
+    ((p as u64 >> bits) << 32) | (p as u64 & ((1u64 << bits) - 1))
 }
-fn read(input: &[u16], cursor: &mut usize) -> u32 {
-    let first = input[*cursor];
-    *cursor += 1;
-    if first < 0x8000 {
-        return first as u32;
-    }
-    let second = input[*cursor];
-    *cursor += 1;
-    let mut value = (first as u32 & 0x7fff) | ((second as u32 & 0x7fff) << 15);
-    if second >= 0x8000 {
-        value |= (input[*cursor] as u32) << 30;
-        *cursor += 1;
-    }
-    value
+fn address(p: u64, bits: u8) -> usize {
+    (((p >> 32) << bits) | (p & u32::MAX as u64)) as usize
+}
+fn layout(capacity: usize, high: usize) -> Result<Layout> {
+    Layout::from_size_align(
+        capacity
+            .checked_mul(4 + high)
+            .ok_or("posting size overflow")?,
+        16,
+    )
+    .map_err(|_| "posting allocation layout overflow".into())
 }
 impl BlockPosting {
-    pub(super) fn with_capacity(count: u32) -> Result<Self> {
-        Ok(Self {
-            positions: SmallPosting::with_capacity(count)?,
-            runs: Default::default(),
-        })
+    pub(super) fn with_capacity(_count: usize) -> Result<Self> {
+        Ok(Self::default())
     }
     pub(super) fn len(&self) -> usize {
-        self.positions.len()
+        self.len
+    }
+    fn high(&self) -> usize {
+        self.payload & 7
+    }
+    fn ptr(&self) -> *mut u8 {
+        (self.payload & !15) as *mut u8
     }
     pub(super) fn allocated_capacity(&self) -> usize {
-        self.positions.allocated_capacity()
+        self.capacity
     }
     pub(super) fn directory_bytes(&self) -> usize {
-        self.runs.allocated_capacity() * 2
+        if self.capacity == 0 {
+            0
+        } else {
+            self.capacity * self.high()
+        }
     }
     pub(super) fn run_count(&self) -> usize {
-        let mut cursor = 0;
-        let mut count = 0;
-        while cursor < self.runs.len() {
-            read(self.runs.as_slice(), &mut cursor);
-            read(self.runs.as_slice(), &mut cursor);
-            count += 1;
+        usize::from(self.len != 0)
+    }
+    fn get(&self, i: usize) -> u64 {
+        debug_assert!(i < self.len);
+        if self.capacity == 0 {
+            return if self.len == 1 {
+                self.payload as u64
+            } else {
+                ((self.payload >> (i * 32)) as u32) as u64
+            };
         }
-        count
+        unsafe {
+            let low = self.ptr().cast::<u32>().add(i).read() as u64;
+            let p = self.ptr().add(4 * self.capacity);
+            let high = match self.high() {
+                0 => 0,
+                1 => p.add(i).read() as u32,
+                2 => p.cast::<u16>().add(i).read() as u32,
+                3 => {
+                    p.cast::<u16>().add(i).read() as u32
+                        | ((p.add(2 * self.capacity + i).read() as u32) << 16)
+                }
+                4 => p.cast::<u32>().add(i).read(),
+                _ => unreachable!(),
+            };
+            low | ((high as u64) << 32)
+        }
     }
-    pub(super) fn segments(&self, bits: u8) -> impl Iterator<Item = (usize, &[u32])> {
-        let mut cursor = 0;
-        let mut start = 0;
-        std::iter::from_fn(move || {
-            if start == self.len() {
-                return None;
+    unsafe fn put(&mut self, i: usize, value: u64) {
+        // SAFETY: reserve established aligned planes with capacity > i.
+        unsafe {
+            self.ptr().cast::<u32>().add(i).write(value as u32);
+            let high = (value >> 32) as u32;
+            let p = self.ptr().add(4 * self.capacity);
+            match self.high() {
+                0 => debug_assert_eq!(high, 0),
+                1 => p.add(i).write(high as u8),
+                2 => p.cast::<u16>().add(i).write(high as u16),
+                3 => {
+                    p.cast::<u16>().add(i).write(high as u16);
+                    p.add(2 * self.capacity + i).write((high >> 16) as u8);
+                }
+                4 => p.cast::<u32>().add(i).write(high),
+                _ => unreachable!(),
             }
-            let block = read(self.runs.as_slice(), &mut cursor);
-            let count = read(self.runs.as_slice(), &mut cursor) as usize;
-            let end = start + count;
-            let positions = &self.positions.as_slice()[start..end];
-            start = end;
-            Some(((block as usize) << bits, positions))
-        })
+        }
     }
-    pub(super) fn segments_range(
-        &self,
+    fn reserve(&mut self, count: usize, high: usize) -> Result<()> {
+        if self.capacity >= count && self.high() >= high {
+            return Ok(());
+        }
+        let high = high.max(if self.capacity == 0 {
+            if self.len == 1 {
+                width(self.payload as u64)
+            } else {
+                0
+            }
+        } else {
+            self.high()
+        });
+        let capacity = if self.capacity == 0 {
+            count
+        } else {
+            count.max(self.capacity.saturating_mul(2))
+        };
+        let allocation = layout(capacity, high)?;
+        let growth = self.capacity != 0;
+        let (ptr, arena) =
+            if let Some(p) = super::super::posting_arena::allocate_layout(allocation, growth)? {
+                (p.as_ptr(), true)
+            } else {
+                let p = unsafe { alloc(allocation) };
+                if p.is_null() {
+                    return Err("posting allocation failed".into());
+                }
+                super::super::posting_arena::heap_allocation::<u8>(allocation.size(), growth);
+                (p, false)
+            };
+        let mut result = Self {
+            len: self.len,
+            capacity,
+            payload: ptr as usize | high | if arena { 8 } else { 0 },
+        };
+        for i in 0..self.len {
+            unsafe {
+                result.put(i, self.get(i));
+            }
+        }
+        std::mem::swap(self, &mut result);
+        Ok(())
+    }
+    pub(super) fn from_reversed(
+        count: usize,
         bits: u8,
-        begin: usize,
-        end: usize,
-    ) -> impl Iterator<Item = (usize, &[u32])> {
-        let mut segments = self.segments(bits);
-        let mut cursor = 0;
-        std::iter::from_fn(move || {
-            loop {
-                if cursor >= end {
-                    return None;
-                }
-                let (base, values) = segments.next()?;
-                let start = cursor;
-                cursor += values.len();
-                if cursor <= begin {
-                    continue;
-                }
-                return Some((
-                    base,
-                    &values[begin.saturating_sub(start)..(end - start).min(values.len())],
-                ));
-            }
-        })
-    }
-    pub(super) fn iter(&self, bits: u8) -> impl Iterator<Item = usize> {
-        self.segments(bits)
-            .flat_map(|(base, values)| values.iter().map(move |&p| base | p as usize))
-    }
-    pub(super) fn from_reversed(count: u32, bits: u8, next: impl FnMut() -> usize) -> Result<Self> {
-        let mut result = Self::with_capacity(count)?;
+        next: impl FnMut() -> usize,
+    ) -> Result<Self> {
+        let mut result = Self::default();
         result.append_reversed_reserved_at(count, bits, next)?;
         Ok(result)
     }
     pub(super) fn append_reversed_reserved_at(
         &mut self,
-        count: u32,
+        count: usize,
         bits: u8,
         mut next: impl FnMut() -> usize,
     ) -> Result<()> {
-        // Collect only per-run metadata while writing final offsets exactly once.
-        // This temporary is per key, never per corpus or per owner wave.
-        let mut reverse = SmallVec::<[Run; 4]>::new();
-        let mut overflow = false;
-        self.positions.append_reversed_reserved(count, || {
-            let p = next();
-            let high = p >> bits;
-            if high > u32::MAX as usize {
-                overflow = true;
+        if count == 0 {
+            return Ok(());
+        }
+        let last = canonical(next(), bits); // Sorted reverse producer: maximum is available immediately.
+        let end = self
+            .len
+            .checked_add(count)
+            .ok_or("posting length overflow")?;
+        if end == 1 {
+            self.payload = last as usize;
+            self.len = 1;
+            return Ok(());
+        }
+        if end == 2
+            && width(last) == 0
+            && self.capacity == 0
+            && (self.len == 0 || width(self.payload as u64) == 0)
+        {
+            let first = if self.len == 0 {
+                canonical(next(), bits)
+            } else {
+                self.payload as u64
+            };
+            self.payload = (first | (last << 32)) as usize;
+            self.len = 2;
+            return Ok(());
+        }
+        self.reserve(end, width(last))?;
+        unsafe {
+            self.put(end - 1, last);
+        }
+        for i in (self.len..end - 1).rev() {
+            unsafe {
+                self.put(i, canonical(next(), bits));
             }
-            let block = high as u32;
-            match reverse.last_mut() {
-                Some(run) if run.block == block => run.count += 1,
-                _ => reverse.push(Run { block, count: 1 }),
-            }
-            (p & ((1usize << bits) - 1)) as u32
-        })?;
-        if overflow {
-            return Err("block directory exceeds u32".into());
         }
-        if self.runs.len() == 0 {
-            let size = reverse
-                .iter()
-                .map(|r| units(r.block) + units(r.count))
-                .sum::<usize>();
-            self.runs = PackedPosting::with_capacity(
-                u32::try_from(size).map_err(|_| "posting directory exceeds u32")?,
-            )?;
-        }
-        for run in reverse.iter().rev() {
-            emit(&mut self.runs, run.block)?;
-            emit(&mut self.runs, run.count)?;
-        }
+        self.len = end;
         Ok(())
     }
     pub(super) fn append(&mut self, other: Self) -> Result<()> {
-        let _ = (self.len() as u32)
-            .checked_add(other.len() as u32)
-            .ok_or("posting length exceeds u32")?;
-        for &p in other.positions.as_slice() {
-            self.positions.push(p)?;
+        if other.len == 0 {
+            return Ok(());
         }
-        // Absolute block IDs permit concatenation without scanning older runs.
-        for &unit in other.runs.as_slice() {
-            self.runs.push(unit)?;
+        if self.len == 0 {
+            *self = other;
+            return Ok(());
+        }
+        let end = self
+            .len
+            .checked_add(other.len)
+            .ok_or("posting length overflow")?;
+        self.reserve(end, width(other.get(other.len - 1)))?;
+        for i in 0..other.len {
+            unsafe {
+                self.put(self.len + i, other.get(i));
+            }
+        }
+        self.len = end;
+        Ok(())
+    }
+    pub(super) fn iter(&self, bits: u8) -> impl Iterator<Item = usize> + '_ {
+        (0..self.len).map(move |i| address(self.get(i), bits))
+    }
+    #[inline]
+    pub(super) fn try_for_each_range(
+        &self,
+        bits: u8,
+        begin: usize,
+        end: usize,
+        mut f: impl FnMut(usize) -> Result<()>,
+    ) -> Result<()> {
+        assert!(begin <= end && end <= self.len);
+        if self.capacity == 0 {
+            for i in begin..end {
+                f(address(self.get(i), bits))?;
+            }
+            return Ok(());
+        }
+        unsafe {
+            let lows = std::slice::from_raw_parts(self.ptr().cast::<u32>(), self.len);
+            let high = self.ptr().add(4 * self.capacity);
+            macro_rules! scan {
+                ($h:expr) => {
+                    for i in begin..end {
+                        let upper: u32 = ($h)(i);
+                        f(((upper as usize) << bits) | lows[i] as usize)?;
+                    }
+                };
+            }
+            match self.high() {
+                0 => {
+                    for &low in &lows[begin..end] {
+                        f(low as usize)?;
+                    }
+                }
+                1 => scan!(|i| high.add(i).read() as u32),
+                2 => scan!(|i| high.cast::<u16>().add(i).read() as u32),
+                3 => scan!(|i| high.cast::<u16>().add(i).read() as u32
+                    | ((high.add(2 * self.capacity + i).read() as u32) << 16)),
+                4 => scan!(|i| high.cast::<u32>().add(i).read()),
+                _ => unreachable!(),
+            }
         }
         Ok(())
     }
     #[cfg(test)]
-    pub(super) fn as_slice(&self) -> &[u32] {
-        self.positions.as_slice()
+    pub(super) fn as_slice(&self) -> Vec<u32> {
+        self.iter(32).map(|p| p as u32).collect()
+    }
+}
+impl Drop for BlockPosting {
+    fn drop(&mut self) {
+        if self.capacity != 0 {
+            let allocation = layout(self.capacity, self.high()).expect("validated posting layout");
+            let arena = self.payload & 8 != 0;
+            super::super::posting_arena::retirement::<u8>(allocation.size(), arena);
+            if !arena {
+                unsafe {
+                    dealloc(self.ptr(), allocation);
+                }
+            }
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    #[test]
-    fn directory_words_cover_full_u32_values_and_keep_arena_alignment() {
-        let values = [0, 1, 32767, 32768, (1 << 30) - 1, 1 << 30, u32::MAX];
-        let mut encoded = PackedPosting::<u16, 4>::default();
-        for v in values {
-            emit(&mut encoded, v).unwrap();
-        }
-        let mut cursor = 0;
-        for v in values {
-            assert_eq!(read(encoded.as_slice(), &mut cursor), v);
-        }
-        assert_eq!(cursor, encoded.len());
-        assert_eq!(std::mem::align_of::<u16>(), 2);
+    fn make(v: &[u64]) -> BlockPosting {
+        let mut i = v.len();
+        BlockPosting::from_reversed(v.len(), 32, || {
+            i -= 1;
+            v[i] as usize
+        })
+        .unwrap()
     }
     #[test]
-    fn full_u64_address_domain_and_scaled_geometry() {
-        for bits in [16, 32] {
-            let max = if bits == 32 {
-                u64::MAX
-            } else {
-                (1u64 << 48) - 1
-            };
-            let values = [
-                0,
-                1,
-                (1u64 << bits) - 1,
-                1u64 << bits,
-                (1u64 << bits) + 1,
-                max - 1,
-                max,
-            ];
-            let mut p = BlockPosting::with_capacity(values.len() as u32).unwrap();
-            let mut i = values.len();
-            p.append_reversed_reserved_at(values.len() as u32, bits, || {
-                i -= 1;
-                values[i] as usize
-            })
-            .unwrap();
-            assert_eq!(p.iter(bits).map(|p| p as u64).collect::<Vec<_>>(), values);
-            assert_eq!(p.run_count(), 3);
-            assert_eq!(std::mem::size_of::<Run>(), 8);
+    fn full_range_widths_slices_and_growth() {
+        let mut values = vec![0, 1, u32::MAX as u64];
+        for bit in 32..64 {
+            values.extend([(1u64 << bit) - 1, 1u64 << bit, (1u64 << bit) + 1]);
         }
-    }
-    #[test]
-    fn randomized_full_domain_roundtrip_and_wave_append() {
-        let mut seed = 17u64;
-        let mut values = vec![0, u64::MAX];
-        for _ in 0..2048 {
-            seed = seed.wrapping_mul(6364136223846793005).wrapping_add(1);
-            values.push(seed);
-        }
+        values.push(u64::MAX);
         values.sort_unstable();
         values.dedup();
-        let make = |v: &[u64]| {
-            let mut i = v.len();
-            BlockPosting::from_reversed(v.len() as u32, 32, move || {
-                i -= 1;
-                v[i] as usize
-            })
-            .unwrap()
-        };
-        let mut p = make(&values[..500]);
-        p.append(make(&values[500..])).unwrap();
-        assert_eq!(p.iter(32).map(|p| p as u64).collect::<Vec<_>>(), values);
-        for (begin, end) in [(0, values.len()), (3, 7), (498, 502), (700, values.len())] {
-            let got = p
-                .segments_range(32, begin, end)
-                .flat_map(|(base, v)| v.iter().map(move |&p| (base | p as usize) as u64))
-                .collect::<Vec<_>>();
-            assert_eq!(got, values[begin..end]);
+        for n in 0..=values.len() {
+            let mut p = make(&values[..n]);
+            p.append(make(&values[n..])).unwrap();
+            assert_eq!(p.iter(32).map(|p| p as u64).collect::<Vec<_>>(), values);
+            for (begin, end) in [
+                (0, values.len()),
+                (1, 2),
+                (3, 9),
+                (values.len() - 1, values.len()),
+            ] {
+                let mut actual = Vec::new();
+                p.try_for_each_range(32, begin, end, |v| {
+                    actual.push(v as u64);
+                    Ok(())
+                })
+                .unwrap();
+                assert_eq!(actual, values[begin..end]);
+            }
         }
     }
     #[test]
-    fn append_fragments_preserves_adjacent_runs_without_rewriting_prefixes() {
-        let mut p = BlockPosting::with_capacity(8).unwrap();
-        for values in [
-            vec![1, 17, 65535],
-            vec![65536, 65541],
-            vec![65550, 131072, 262145],
-        ] {
-            let mut i = values.len();
-            p.append_reversed_reserved_at(values.len() as u32, 16, || {
-                i -= 1;
-                values[i]
-            })
-            .unwrap();
+    fn every_plane_width_and_odd_capacity_decode() {
+        for high in [0, 1, 255, 256, 65535, 65536, 16777215, 16777216, u32::MAX] {
+            for len in [1, 2, 3, 7, 128, 129] {
+                let values: Vec<_> = (0..len)
+                    .map(|i| ((high as u64) << 32) | (i * 17) as u64)
+                    .collect();
+                let p = make(&values);
+                if p.capacity != 0 {
+                    assert_eq!(p.high(), width(*values.last().unwrap()));
+                }
+                let mut decoded = Vec::new();
+                p.try_for_each_range(32, 0, len, |v| {
+                    decoded.push(v as u64);
+                    Ok(())
+                })
+                .unwrap();
+                assert_eq!(decoded, values);
+                assert_eq!(p.iter(32).map(|v| v as u64).collect::<Vec<_>>(), values);
+            }
         }
+    }
+    #[test]
+    fn arena_and_heap_layout_accounting() {
+        let session = super::super::super::posting_arena::LocalSession::new();
+        session.configure(256);
+        for high in [0, 1, 256, 65536, 16777216] {
+            for len in [3, 129] {
+                let values: Vec<_> = (0..len).map(|i| ((high as u64) << 32) | i as u64).collect();
+                let mut p = make(&values);
+                p.append(make(&values)).unwrap();
+            }
+        }
+        let counters = session.finish();
+        assert!(counters.arena_buffers >= 5);
+        assert!(counters.heap_buffers >= 5);
+        assert_eq!(counters.arena_requested_bytes, counters.arena_retired_bytes);
+        assert_eq!(counters.heap_requested_bytes, counters.heap_freed_bytes);
+    }
+    #[test]
+    fn no_u32_count_limit_and_overflow_is_checked() {
+        assert_eq!(std::mem::size_of::<BlockPosting>(), 24);
         assert_eq!(
-            p.iter(16).collect::<Vec<_>>(),
-            [1, 17, 65535, 65536, 65541, 65550, 131072, 262145]
+            layout(u32::MAX as usize + 1, 4).unwrap().size(),
+            1usize << 35
         );
-        assert_eq!(p.run_count(), 5);
+        assert!(layout(usize::MAX, 4).is_err());
+    }
+    #[test]
+    fn forced_geometry_and_amortized_append() {
+        let values: Vec<_> = (0..4097).map(|i| i * 65537usize).collect();
+        let mut p = BlockPosting::default();
+        for &v in &values {
+            p.append_reversed_reserved_at(1, 16, || v).unwrap();
+        }
+        assert_eq!(p.iter(16).collect::<Vec<_>>(), values);
+        assert!(p.capacity < 2 * values.len());
+        let mut actual = Vec::new();
+        p.try_for_each_range(16, 127, 258, |v| {
+            actual.push(v);
+            Ok(())
+        })
+        .unwrap();
+        assert_eq!(actual, values[127..258]);
     }
 }
