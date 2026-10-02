@@ -76,39 +76,34 @@ unsafe fn read_varint(source: &mut *const u8) -> u64 {
 }
 
 // Producers are replayable cursors over immutable input. A clone must yield
-// the same values from its current position. The bounded buffer reverses one
-// restart group; neither pass materializes a whole posting in temporary U64s.
-fn reverse_groups(
+// the same values from its current position. Walking backward exposes each gap
+// after one lookahead; seeds and varints can be placed backward without a group
+// reversal buffer or another scan of the group's values.
+#[inline]
+fn reverse_codes(
     start: usize,
     end: usize,
+    previous: u64,
     mut next: impl FnMut() -> u64,
-    mut visit: impl FnMut(usize, &[u64]) -> Result<()>,
+    mut visit: impl FnMut(usize, u64) -> Result<()>,
 ) -> Result<()> {
-    let mut cursor = end;
-    let mut buffer = [0u64; GROUP];
-    while cursor > start {
-        let begin = (((cursor - 1) / GROUP) * GROUP).max(start);
-        let len = cursor - begin;
-        for i in (0..len).rev() {
-            buffer[i] = next();
-        }
-        visit(begin, &buffer[..len])?;
-        cursor = begin;
+    if start == end {
+        return Ok(());
+    }
+    let mut value = next();
+    for index in (start..end).rev() {
+        let lower = if index > start { next() } else { previous };
+        let code = if index % GROUP == 0 {
+            value
+        } else {
+            value
+                .checked_sub(lower)
+                .ok_or("posting positions are not sorted")?
+        };
+        visit(index, code)?;
+        value = lower;
     }
     Ok(())
-}
-fn group_bytes(begin: usize, values: &[u64], previous: u64) -> Result<usize> {
-    let restart = begin % GROUP == 0;
-    let mut size = if restart { 8 } else { 0 };
-    let mut prior = if restart { values[0] } else { previous };
-    for &p in &values[usize::from(restart)..] {
-        let gap = p
-            .checked_sub(prior)
-            .ok_or("posting positions are not sorted")?;
-        size += varint_bytes(gap);
-        prior = p;
-    }
-    Ok(size)
 }
 fn suffix_bytes(
     start: usize,
@@ -117,9 +112,14 @@ fn suffix_bytes(
     next: impl FnMut() -> u64,
 ) -> Result<usize> {
     let mut bytes = 0usize;
-    reverse_groups(start, end, next, |begin, values| {
+    reverse_codes(start, end, previous, next, |index, code| {
+        let size = if index % GROUP == 0 {
+            8
+        } else {
+            varint_bytes(code)
+        };
         bytes = bytes
-            .checked_add(group_bytes(begin, values, previous)?)
+            .checked_add(size)
             .ok_or("posting stream size overflow")?;
         Ok(())
     })?;
@@ -267,27 +267,22 @@ impl BlockPosting {
         let mut cursor = used;
         let old_end = if start == 0 { 0 } else { self.stream_len() };
         let data = self.data_ptr();
-        reverse_groups(start, end, next, |begin, values| {
-            let size = group_bytes(begin, values, previous)?;
+        reverse_codes(start, end, previous, next, |index, code| {
+            let restart = index % GROUP == 0;
+            let size = if restart { 8 } else { varint_bytes(code) };
             cursor = cursor
                 .checked_sub(size)
                 .filter(|&offset| offset >= old_end)
                 .ok_or("posting producer changed during replay")?;
             unsafe {
-                let mut target = data.add(cursor);
-                let restart = begin % GROUP == 0;
-                let mut prior = previous;
+                let target = data.add(cursor);
                 if restart {
-                    self.set_group_offset(begin / GROUP, cursor);
-                    target.cast::<u64>().write_unaligned(values[0]);
-                    target = target.add(8);
-                    prior = values[0];
+                    self.set_group_offset(index / GROUP, cursor);
+                    target.cast::<u64>().write_unaligned(code);
+                } else {
+                    let end = write_varint(target, code);
+                    debug_assert_eq!(end, target.add(size));
                 }
-                for &p in &values[usize::from(restart)..] {
-                    target = write_varint(target, p - prior);
-                    prior = p;
-                }
-                debug_assert_eq!(target, data.add(cursor + size));
             }
             Ok(())
         })?;

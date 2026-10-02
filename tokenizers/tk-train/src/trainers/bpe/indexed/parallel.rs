@@ -1027,9 +1027,9 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
             initialization_workers: config.initialization_workers.unwrap_or(config.workers),
             atomic_corpus: config.atomic_corpus,
             layout: if bits == 32 {
-                "parallel_u32_planes32"
+                "parallel_d1_restart128_addr32"
             } else {
-                "parallel_u32_planes16"
+                "parallel_d1_restart128_addr16"
             },
             ..Default::default()
         };
@@ -1867,8 +1867,8 @@ mod tests {
             .map(|(w, n)| (w.into(), n))
             .collect();
         for (size, layout) in [
-            (65535, "parallel_u32_planes32"),
-            (65536, "parallel_u32_planes32"),
+            (65535, "parallel_d1_restart128_addr32"),
+            (65536, "parallel_d1_restart128_addr32"),
         ] {
             let trainer = BpeTrainer::builder()
                 .vocab_size(size)
@@ -1893,7 +1893,7 @@ mod tests {
         let got = trainer
             .do_train_indexed_parallel(&words, IndexedParallelConfig::default())
             .unwrap();
-        assert_eq!(got.stats.layout, "parallel_u32_planes32");
+        assert_eq!(got.stats.layout, "parallel_d1_restart128_addr32");
         assert!(got.vocab["b"] >= 65535);
     }
 
