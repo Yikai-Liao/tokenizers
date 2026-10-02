@@ -7,11 +7,11 @@ mod aggregate;
 pub(super) mod block;
 use super::*;
 
-// Experiment control: no per-position runtime configuration lookup. Compare
-// plain batched decoding against prefetching with otherwise identical code.
+// Compile-time ablation switch for benchmarks; normal builds prefetch. There
+// is no environment lookup in the posting loop.
 const PREFETCH: bool = match option_env!("TK_POSTING_PREFETCH") {
     Some(s) => s.as_bytes().len() == 1 && s.as_bytes()[0] == b'1',
-    None => false,
+    None => true,
 };
 const DECODE_BATCH: usize = 128;
 const PREFETCH_DISTANCE: usize = 16;
