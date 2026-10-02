@@ -1,6 +1,86 @@
 //! Immutable flat word metadata shared by sparse merge and initial grouping.
 use super::*;
 
+// Link the next actual boundary, which may be many address blocks away.
+// Empty blocks inherit weight and do not terminate a cached interval.
+pub(super) fn link_intervals<O: Offset, const INLINE: usize>(blocks: &mut [Block<O, INLINE>]) {
+    let mut next = usize::MAX;
+    for block in blocks.iter_mut().rev() {
+        block.next_weight_change = next;
+        if let Some(&local) = block.pivots.first() {
+            next = block.base + local as usize;
+        }
+    }
+}
+
+#[derive(Default)]
+pub(super) struct Cursor {
+    end: usize,
+    weight: u64,
+}
+impl Cursor {
+    // Callers visit sorted positions and reset the cursor for each posting list.
+    #[inline]
+    pub(super) fn weight<O: Offset, const INLINE: usize>(
+        &mut self,
+        position: usize,
+        blocks: &[Block<O, INLINE>],
+        bits: u8,
+    ) -> u64 {
+        if position < self.end {
+            return self.weight;
+        }
+        let block = &blocks[position >> bits];
+        let local = (position - block.base) as u32;
+        let index = block.pivots.partition_point(|&p| p <= local);
+        self.weight = if index == 0 {
+            block.previous_weight
+        } else {
+            block.weights[index - 1]
+        };
+        self.end = block.pivots.get(index).map_or_else(
+            || {
+                if block.next_weight_change == 0 {
+                    // Standalone/unlinked test blocks remain correct at their boundary.
+                    block.base.saturating_add(1usize << bits)
+                } else {
+                    block.next_weight_change
+                }
+            },
+            |&p| block.base + p as usize,
+        );
+        self.weight
+    }
+}
+
+pub(super) fn sum_records<O: Offset, const INLINE: usize>(
+    records: &[u64],
+    base: usize,
+    blocks: &[Block<O, INLINE>],
+    bits: u8,
+    uniform: Option<u64>,
+    lookups: Option<&[WeightLookup]>,
+) -> Result<u64> {
+    if let Some(weight) = uniform {
+        return weight
+            .checked_mul(records.len() as u64)
+            .ok_or_else(|| "initial frequency exceeds u64".into());
+    }
+    let mut cursor = Cursor::default();
+    Ok(records
+        .iter()
+        .map(|&record| {
+            let p = base + record as u32 as usize;
+            if let Some(lookups) = lookups {
+                let block_id = p >> bits;
+                lookups[block_id].weight(&blocks[block_id], (p - blocks[block_id].base) as u32)
+            } else {
+                cursor.weight(p, blocks, bits)
+            }
+        })
+        .sum())
+}
+
 // Directory narrows a spatial lookup to at most 256 word boundaries. This
 // restores cheap weight queries when different rules visit sparse positions.
 pub(in super::super) struct WeightLookup {
@@ -150,6 +230,42 @@ impl WeightLookup {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn cursor_keeps_weights_across_empty_blocks_and_sparse_jumps() {
+        let mut blocks: Vec<Block<u32, 2>> = (0..8)
+            .map(|i| Block::new(i * 16, if i < 3 { 7 } else { 11 }))
+            .collect();
+        blocks[0].pivots = vec![3, 7];
+        blocks[0].weights = vec![0, 7];
+        blocks[3].pivots = vec![2, 2, 9];
+        blocks[3].weights = vec![9, 11, 11];
+        // Carry the final weight of each preceding block.
+        blocks[1].previous_weight = 7;
+        blocks[2].previous_weight = 7;
+        blocks[3].previous_weight = 7;
+        link_intervals(&mut blocks);
+        for positions in [
+            (0..128).collect::<Vec<_>>(),
+            vec![0, 3, 6, 7, 31, 49, 50, 57, 127],
+        ] {
+            let mut cursor = Cursor::default();
+            for p in positions {
+                assert_eq!(cursor.weight(p, &blocks, 4), blocks[p >> 4].weight(p, None));
+            }
+        }
+        let records: Vec<_> = (0..128u64).map(|p| (99 << 32) | p).collect();
+        assert_eq!(
+            sum_records(&records, 0, &blocks, 4, None, None).unwrap(),
+            (0..128)
+                .map(|p| blocks[p >> 4].weight(p, None))
+                .sum::<u64>()
+        );
+    }
+    #[test]
+    fn record_sum_checks_uniform_overflow() {
+        let blocks = [Block::<u32, 2>::new(0, 1)];
+        assert!(sum_records(&[0, 1], 0, &blocks, 32, Some(u64::MAX), None).is_err());
+    }
     #[test]
     fn sorted_intervals_match_boundaries_zero_large_weights_and_full_u32_domain() {
         for (slots, previous, pivots, weights) in [

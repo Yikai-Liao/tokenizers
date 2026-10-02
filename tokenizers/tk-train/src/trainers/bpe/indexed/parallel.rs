@@ -275,6 +275,7 @@ struct Block<O: Offset, const INLINE: usize> {
     pivots: Vec<u32>,
     weights: Vec<u64>,
     previous_weight: u64,
+    next_weight_change: usize,
     weight_intervals: bool,
 }
 impl<O: Offset, const INLINE: usize> Block<O, INLINE> {
@@ -285,6 +286,7 @@ impl<O: Offset, const INLINE: usize> Block<O, INLINE> {
             pivots: Vec::new(),
             weights: Vec::new(),
             previous_weight,
+            next_weight_change: 0,
             weight_intervals: false,
         }
     }
@@ -854,7 +856,7 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
     let corpus::Prepared {
         slots: mut corpus,
         mut lengths,
-        blocks,
+        mut blocks,
         uniform,
         symbols: initial_symbols,
         edges: initial_edges,
@@ -867,6 +869,7 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
         oversized_words: prepared_oversized_words,
         padding_plan_bytes: prepared_padding_plan_bytes,
     } = prepared;
+    weight_lookup::link_intervals(&mut blocks);
     super::posting_arena::configure(pool, initialization_pool, policy.cutoff(initial_edges));
     // Fresh activation holds throughout a guarded epoch: an active canonical
     // collision returns before consuming the candidate or writing its batch.

@@ -191,17 +191,9 @@ fn prepare_with_mode<C: Slot, O: Offset, const INLINE: usize, const GROUPED: boo
             for task in tasks {
                 let rule = &rules[task.rank];
                 let mut positions = address_scratch::Positions::default();
-                let mut previous_block = usize::MAX;
-                let mut cursor = 0;
+                let mut weight_cursor = weight_lookup::Cursor::default();
                 task.posting
                     .try_for_each_range(bits, task.begin, task.end, |p| -> Result<()> {
-                        let block_id = p >> bits;
-                        let block = &blocks[block_id];
-                        if block_id != previous_block {
-                            previous_block = block_id;
-                            cursor = 0;
-                        }
-                        let position = (p & ((1usize << bits) - 1)) as u32;
                         let right = p + rule.left_len;
                         if corpus[p].token() != rule.edge.0
                             || right >= corpus.len()
@@ -214,9 +206,11 @@ fn prepare_with_mode<C: Slot, O: Offset, const INLINE: usize, const GROUPED: boo
                         let weight = if let Some(weight) = uniform {
                             weight
                         } else if let Some(lookup) = weight_lookup {
-                            lookup[block_id].weight(block, position)
+                            let block_id = p >> bits;
+                            lookup[block_id]
+                                .weight(&blocks[block_id], (p - blocks[block_id].base) as u32)
                         } else {
-                            block.weight_forward(p, None, &mut cursor)
+                            weight_cursor.weight(p, blocks, bits)
                         };
                         let prior = corpus[p - 1].token();
                         if prior != NONE {

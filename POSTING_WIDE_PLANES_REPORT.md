@@ -42,3 +42,24 @@ Artifacts: `/root/code/tokenizers-workspaces/posting-experiment-results/countpos
 ## More complete scaling in v2
 
 `TK_POSTING_SCRATCH_BITS=16` is a compile-time simulation control. The production default remains 32, preserving the complete U64 address domain. The scaled mode makes temporary birth and valid-position high planes vary across small physical intervals as well. Const-generic unit tests independently cover true 32-bit halves and scaled 16-bit halves. The next screen pairs fresh Flat with planes32/scratch32, planes16/scratch32 and planes16/scratch16 to separate persistent and temporary representation costs. No giant U64 Flat run is planned.
+
+## Second native screen (8080f281, one invocation each)
+
+| Variant | Train ms | Peak RSS B | Initial install ms | Delta ms | Commit ms |
+|---|---:|---:|---:|---:|---:|
+| Fresh U32 Flat | 16,728.487 | 3,538,821,120 | 1,292.436 | 6,853.302 | 3,973.412 |
+| Planes32 / scratch32 | 18,109.875 | 3,664,441,344 | 1,215.910 | 7,384.647 | 4,112.749 |
+| Planes16 / scratch32 | 20,917.040 | 4,185,767,936 | 1,379.819 | 8,506.633 | 5,517.015 |
+| Planes16 / scratch16 | 20,480.189 | 4,211,580,928 | 1,466.752 | 8,668.853 | 4,718.213 |
+
+Models and merge counts match. The two forced variants have identical persistent allocation counts and 400,800,218 B of upper-plane capacity. Forced scratch increases peak valid-position buffers from 17,301,504 to 33,234,944 B and birth buffers from 46,137,344 to 68,444,160 B, proving that the extra temporary planes are actually exercised. The lower total time for scratch16 does not establish an optimization; the one-shot commit timings differ substantially, so repeat before attributing small differences.
+
+Initial construction overhead is removed at this checkpoint, while initial group counting is 680.782 ms versus Flat's 334.739 ms and merge delta also remains slower. Natural alignment and full-width pair inline reduce Planes16 arena allocations to 9,084,676, requested bytes to 688,220,022 and backing to 939,516,800 B. Full-run RSS remains the comparison metric.
+
+Artifacts: `/root/code/tokenizers-workspaces/posting-experiment-results/countposting-wide-planes-v2/`.
+
+## Weight-interval cache revision
+
+The current revision caches `(next actual weight boundary, weight)` during sorted posting scans, across any number of physical address blocks. Each block links to the next actual boundary, so an empty block does not force a lookup. This replaces per-position block resolution in the default weight path. Initial grouping uses the same cursor and restores checked multiplication for uniform weights. There is no corpus-single-block branch or language-tuned cutoff. Auxiliary block metadata increases by one usize per block; posting representation is unchanged.
+
+All 101 library tests pass with scratch16 (`/tmp/posting-wide-v3-all-tests.log`), including sparse jumps, empty blocks, repeated pivots, zero weights, uniform count overflow and existing randomized training traces. This revision has not yet been benchmarked.

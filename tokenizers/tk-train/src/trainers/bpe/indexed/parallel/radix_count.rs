@@ -234,10 +234,15 @@ fn initialize_with_widths<C: Slot, O: Offset, const INLINE: usize>(
         sort_width,
         32,
         0,
-        |p| {
-            uniform.unwrap_or_else(|| {
-                lookup.map_or_else(|| block.weight(p, None), |l| l.weight(block, p as u32))
-            })
+        |records| {
+            weight_lookup::sum_records(
+                records,
+                0,
+                std::slice::from_ref(block),
+                32,
+                uniform,
+                lookup.map(std::slice::from_ref),
+            )
         },
     )
 }
@@ -293,15 +298,7 @@ fn initialize_segmented_waves<C: Slot, O: Offset, const INLINE: usize>(
             workers,
             bits,
             base,
-            |p| {
-                uniform.unwrap_or_else(|| {
-                    let b = p >> bits;
-                    lookups.map_or_else(
-                        || blocks[b].weight(p, None),
-                        |l| l[b].weight(&blocks[b], (p - blocks[b].base) as u32),
-                    )
-                })
-            },
+            |records| weight_lookup::sum_records(records, base, blocks, bits, uniform, lookups),
         )?;
         total.route_ms += m.route_ms;
         total.count_ms += m.count_ms;
@@ -360,7 +357,7 @@ fn initialize_core<C: Slot>(
     sort_width: usize,
     bits: u8,
     base: usize,
-    weight: impl Fn(usize) -> u64 + Sync,
+    frequency: impl Fn(&[u64]) -> Result<u64> + Sync,
 ) -> Result<Metrics> {
     assert!(owner_width > 0 && sort_width > 0);
     debug_assert_eq!(owners.len(), workers);
@@ -406,10 +403,7 @@ fn initialize_core<C: Slot>(
                     while end < records.len() && (records[end] >> 32) as u32 == code {
                         end += 1;
                     }
-                    let frequency = records[start..end]
-                        .iter()
-                        .map(|&r| weight(base + r as u32 as usize))
-                        .sum::<u64>();
+                    let frequency = frequency(&records[start..end])?;
                     if frequency >= floor {
                         groups.push(Group {
                             code,
