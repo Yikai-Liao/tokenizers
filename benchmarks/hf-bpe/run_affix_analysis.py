@@ -361,6 +361,8 @@ def main():
                 stats, build_manifest.get('benchmark_extended_diagnostics', False))
             if mismatch:
                 raise SystemExit(f'postings allocation lifetime gate failed: {mismatch}; outputs retained')
+        else:
+            stats = row['indexed_stats']
         expose_diagnostics(row, stats, require_extended)
     else:
         row['indexed_stats'] = None
