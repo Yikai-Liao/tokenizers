@@ -235,14 +235,20 @@ fn initialize_with_widths<C: Slot, O: Offset, const INLINE: usize>(
         32,
         0,
         |records| {
-            weight_lookup::sum_records(
-                records,
-                0,
-                std::slice::from_ref(block),
-                32,
-                uniform,
-                lookup.map(std::slice::from_ref),
-            )
+            if let Some(weight) = uniform {
+                return weight
+                    .checked_mul(records.len() as u64)
+                    .ok_or_else(|| "initial frequency exceeds u64".into());
+            }
+            Ok(records
+                .iter()
+                .map(|&r| {
+                    lookup.map_or_else(
+                        || block.weight(r as u32 as usize, None),
+                        |l| l.weight(block, r as u32),
+                    )
+                })
+                .sum())
         },
     )
 }
@@ -251,7 +257,7 @@ pub(super) fn initialize_segmented<C: Slot, O: Offset, const INLINE: usize>(
     corpus: &[C],
     blocks: &[Block<O, INLINE>],
     uniform: Option<u64>,
-    lookups: Option<&[WeightLookup]>,
+    lookups: Option<&weight_lookup::WeightLookups>,
     workers: usize,
     floor: u64,
     owners: &mut [Owner],
@@ -274,7 +280,7 @@ fn initialize_segmented_waves<C: Slot, O: Offset, const INLINE: usize>(
     corpus: &[C],
     blocks: &[Block<O, INLINE>],
     uniform: Option<u64>,
-    lookups: Option<&[WeightLookup]>,
+    lookups: Option<&weight_lookup::WeightLookups>,
     workers: usize,
     floor: u64,
     owners: &mut [Owner],

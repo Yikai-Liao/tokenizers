@@ -885,7 +885,7 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
     let floor = trainer.min_frequency.max(1);
     let radix_eligible =
         options.is_none_or(|o| o.initial_grouped) && lengths.len() <= u16::MAX as usize + 1;
-    let mut initial_weight_lookup: Option<Vec<weight_lookup::WeightLookup>> = None;
+    let mut initial_weight_lookup: Option<weight_lookup::WeightLookups> = None;
     let mut initialize = || -> Result<IndexedTrainingStats> {
         let initial_route_ms;
         let initial_count_ms;
@@ -901,26 +901,13 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
         if radix_eligible {
             let lookup_begin = Instant::now();
             initial_weight_lookup = (uniform.is_none() && options.is_none_or(|o| o.weight_lookup))
-                .then(|| {
-                    blocks
-                        .iter()
-                        .map(|block| {
-                            weight_lookup::WeightLookup::from_parts(
-                                &block.pivots,
-                                &block.weights,
-                                block.previous_weight,
-                                block.weight_intervals,
-                                (corpus.len() - block.base).min(block_size),
-                            )
-                        })
-                        .collect()
-                });
+                .then(|| weight_lookup::WeightLookups::new(&blocks, corpus.len(), bits));
             initial_weight_lookup_ms = lookup_begin.elapsed().as_secs_f64() * 1000.0;
             radix_metrics = radix_count::initialize_segmented(
                 &corpus,
                 &blocks,
                 uniform,
-                initial_weight_lookup.as_deref(),
+                initial_weight_lookup.as_ref(),
                 config.workers,
                 floor,
                 &mut owners,
@@ -1245,7 +1232,7 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
                     &blocks,
                     &lengths,
                     uniform,
-                    weight_lookup.as_deref(),
+                    weight_lookup.as_ref(),
                     max_length,
                     config.workers,
                     options.is_none_or(|o| o.grouped_tail),

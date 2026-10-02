@@ -53,13 +53,90 @@ impl Cursor {
     }
 }
 
+/// The shared index carries global fast ranges separately from block-local
+/// fallback metadata, so crossing a physical block does not defeat the range.
+pub(super) struct WeightLookups {
+    blocks: Vec<WeightLookup>,
+    one: Option<(usize, usize)>,
+    ordered_intervals: bool,
+}
+impl WeightLookups {
+    pub(super) fn new<O: Offset, const INLINE: usize>(
+        blocks: &[Block<O, INLINE>],
+        slots: usize,
+        bits: u8,
+    ) -> Self {
+        let local: Vec<_> = blocks
+            .iter()
+            .map(|b| {
+                WeightLookup::from_parts(
+                    &b.pivots,
+                    &b.weights,
+                    b.previous_weight,
+                    b.weight_intervals,
+                    (slots - b.base).min(1usize << bits),
+                )
+            })
+            .collect();
+        let ordered_intervals = blocks.iter().all(|b| b.weight_intervals);
+        let mut one: Option<(usize, usize)> = None;
+        if ordered_intervals {
+            for (b, l) in blocks.iter().zip(&local) {
+                if let Some((start, len)) = l.interval_one.filter(|&(_, len)| len != 0) {
+                    let start = b.base + start;
+                    match one {
+                        None => one = Some((start, len)),
+                        Some((begin, size)) if begin + size == start => {
+                            one = Some((begin, size + len))
+                        }
+                        // Never join disconnected ranges, even if a caller's
+                        // declared ordering fails to yield a global single run.
+                        _ => {
+                            one = None;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        Self {
+            blocks: local,
+            one,
+            ordered_intervals,
+        }
+    }
+    pub(super) fn iter(&self) -> impl Iterator<Item = &WeightLookup> {
+        self.blocks.iter()
+    }
+    #[inline]
+    pub(super) fn weight<O: Offset, const INLINE: usize>(
+        &self,
+        p: usize,
+        blocks: &[Block<O, INLINE>],
+        bits: u8,
+        cursor: &mut Cursor,
+    ) -> u64 {
+        if self
+            .one
+            .is_some_and(|(start, len)| p.wrapping_sub(start) < len)
+        {
+            return 1;
+        }
+        if self.ordered_intervals {
+            return cursor.weight(p, blocks, bits);
+        }
+        let id = p >> bits;
+        self.blocks[id].weight(&blocks[id], (p - blocks[id].base) as u32)
+    }
+}
+
 pub(super) fn sum_records<O: Offset, const INLINE: usize>(
     records: &[u64],
     base: usize,
     blocks: &[Block<O, INLINE>],
     bits: u8,
     uniform: Option<u64>,
-    lookups: Option<&[WeightLookup]>,
+    lookups: Option<&WeightLookups>,
 ) -> Result<u64> {
     if let Some(weight) = uniform {
         return weight
@@ -72,8 +149,7 @@ pub(super) fn sum_records<O: Offset, const INLINE: usize>(
         .map(|&record| {
             let p = base + record as u32 as usize;
             if let Some(lookups) = lookups {
-                let block_id = p >> bits;
-                lookups[block_id].weight(&blocks[block_id], (p - blocks[block_id].base) as u32)
+                lookups.weight(p, blocks, bits, &mut cursor)
             } else {
                 cursor.weight(p, blocks, bits)
             }
@@ -230,6 +306,59 @@ impl WeightLookup {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn default_index_joins_weight_one_across_physical_blocks() {
+        let mut blocks: Vec<Block<u32, 2>> = (0..8)
+            .map(|i| {
+                Block::new(
+                    i * 16,
+                    if i == 0 {
+                        7
+                    } else if i <= 6 {
+                        1
+                    } else {
+                        9
+                    },
+                )
+            })
+            .collect();
+        blocks[0].pivots = vec![5];
+        blocks[0].weights = vec![1];
+        blocks[6].pivots = vec![3];
+        blocks[6].weights = vec![9];
+        for b in &mut blocks {
+            b.weight_intervals = true;
+        }
+        link_intervals(&mut blocks);
+        let lookup = WeightLookups::new(&blocks, 128, 4);
+        assert_eq!(lookup.one, Some((5, 94)));
+        let mut cursor = Cursor::default();
+        for p in 0..128 {
+            assert_eq!(
+                lookup.weight(p, &blocks, 4, &mut cursor),
+                blocks[p >> 4].weight(p, None)
+            );
+        }
+        let records: Vec<_> = (0..128u64).collect();
+        assert_eq!(
+            sum_records(&records, 0, &blocks, 4, None, Some(&lookup)).unwrap(),
+            (0..128)
+                .map(|p| blocks[p >> 4].weight(p, None))
+                .sum::<u64>()
+        );
+        for b in &mut blocks {
+            b.weight_intervals = false;
+        }
+        let lookup = WeightLookups::new(&blocks, 128, 4);
+        assert_eq!(lookup.one, None);
+        let mut cursor = Cursor::default();
+        for p in (0..128).rev() {
+            assert_eq!(
+                lookup.weight(p, &blocks, 4, &mut cursor),
+                blocks[p >> 4].weight(p, None)
+            );
+        }
+    }
     #[test]
     fn cursor_keeps_weights_across_empty_blocks_and_sparse_jumps() {
         let mut blocks: Vec<Block<u32, 2>> = (0..8)

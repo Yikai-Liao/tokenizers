@@ -104,7 +104,7 @@ pub(super) fn prepare_with_grouping<C: Slot, O: Offset, const INLINE: usize>(
     blocks: &[Block<O, INLINE>],
     lengths: &[usize],
     uniform: Option<u64>,
-    weight_lookup: Option<&[WeightLookup]>,
+    weight_lookup: Option<&weight_lookup::WeightLookups>,
     max_length: usize,
     workers: usize,
     grouped: bool,
@@ -147,7 +147,7 @@ fn prepare_with_mode<C: Slot, O: Offset, const INLINE: usize, const GROUPED: boo
     blocks: &[Block<O, INLINE>],
     lengths: &[usize],
     uniform: Option<u64>,
-    weight_lookup: Option<&[WeightLookup]>,
+    weight_lookup: Option<&weight_lookup::WeightLookups>,
     max_length: usize,
     workers: usize,
     bits: u8,
@@ -206,9 +206,7 @@ fn prepare_with_mode<C: Slot, O: Offset, const INLINE: usize, const GROUPED: boo
                         let weight = if let Some(weight) = uniform {
                             weight
                         } else if let Some(lookup) = weight_lookup {
-                            let block_id = p >> bits;
-                            lookup[block_id]
-                                .weight(&blocks[block_id], (p - blocks[block_id].base) as u32)
+                            lookup.weight(p, blocks, bits, &mut weight_cursor)
                         } else {
                             weight_cursor.weight(p, blocks, bits)
                         };
