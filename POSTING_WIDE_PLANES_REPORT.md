@@ -62,7 +62,7 @@ Artifacts: `/root/code/tokenizers-workspaces/posting-experiment-results/countpos
 
 The current revision caches `(next actual weight boundary, weight)` during sorted posting scans, across any number of physical address blocks. Each block links to the next actual boundary, so an empty block does not force a lookup. This replaces per-position block resolution in the default weight path. Initial grouping uses the same cursor and restores checked multiplication for uniform weights. There is no corpus-single-block branch or language-tuned cutoff. Auxiliary block metadata increases by one usize per block; posting representation is unchanged.
 
-All 101 library tests pass with scratch16 (`/tmp/posting-wide-v3-all-tests.log`), including sparse jumps, empty blocks, repeated pivots, zero weights, uniform count overflow and existing randomized training traces. This revision has not yet been benchmarked.
+All 101 library tests pass with scratch16 (`/tmp/posting-wide-v3-all-tests.log`), including sparse jumps, empty blocks, repeated pivots, zero weights, uniform count overflow and existing randomized training traces. Its later measurements and active-path limitation are recorded below.
 
 ## Third screen and active-path correction
 
@@ -72,4 +72,12 @@ Source inspection explains why this was not a strong improvement: default `weigh
 
 V4 introduces a shared WeightLookups object: local fallback indexes plus a coalesced exact global weight-one interval. The existing range optimization now crosses arbitrary physical blocks without selecting a block first. Sorted weights outside that range use the exact cursor; unsorted weights retain the local bucket lookup. One shared metadata object is built per training call; no extra per-posting state, no global single-block branch, and no language-fitted parameter.
 
-Validation: all 102 library tests passed with `TK_POSTING_SCRATCH_BITS=16` (`/tmp/posting-wide-v4-all-tests.log`), including a new test that explicitly exercises the default shared index across multiple empty blocks and both ordered/unordered weight modes. V4 native screening is pending.
+Validation: all 102 library tests passed with `TK_POSTING_SCRATCH_BITS=16` (`/tmp/posting-wide-v4-all-tests.log`), including a new test that explicitly exercises the default shared index across multiple empty blocks and both ordered/unordered weight modes. V4 native screening is recorded below.
+
+## Fourth screen and interval counting follow-up
+
+V4 `78c37db9`, one invocation each: Flat train 16,002.441 ms / RSS 3,526,742,016 B; planes32/scratch32 17,231.775 ms / 3,634,294,784 B; planes16/scratch16 19,371.728 ms / 4,209,328,128 B. All model hashes match; child VmSwap is zero. Artifacts: `posting-experiment-results/countposting-wide-planes-v4/`. These are screening observations, not repeated medians or an acceptance decision.
+
+Initial group counting remains 837.627 / 836.719 ms for the candidates versus Flat 313.518 ms. The follow-up counts sorted records by actual weight intervals: obtain the next boundary once, locate the end of the occupied run with galloping search, then checked-multiply its cardinality by weight. The final remaining run needs only an endpoint check. Empty address blocks do not split runs. Runtime depends on occupied weight ranges, without a language-specific threshold, physical-block specialization or extra posting metadata. Unordered weight metadata retains its previous point lookup; overflow is now checked in that sum as well.
+
+Implementation is isolated on `exp/posting-range-count`; all 104 library tests passed with scratch16 (104.03 s, `/tmp/posting-range-v5-all-tests.log`), including sparse/dense/repeated records, wave bases, duplicate boundaries and checked multiply/add overflow. `git diff --check` passed. Performance validation is pending. V4 multilingual screening uses the unchanged parent commit.

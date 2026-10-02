@@ -144,17 +144,40 @@ pub(super) fn sum_records<O: Offset, const INLINE: usize>(
             .ok_or_else(|| "initial frequency exceeds u64".into());
     }
     let mut cursor = Cursor::default();
-    Ok(records
-        .iter()
-        .map(|&record| {
+    if let Some(lookups) = lookups.filter(|l| !l.ordered_intervals) {
+        return records.iter().try_fold(0u64, |sum, &record| {
             let p = base + record as u32 as usize;
-            if let Some(lookups) = lookups {
-                lookups.weight(p, blocks, bits, &mut cursor)
-            } else {
-                cursor.weight(p, blocks, bits)
+            sum.checked_add(lookups.weight(p, blocks, bits, &mut cursor))
+                .ok_or_else(|| "initial frequency exceeds u64".into())
+        });
+    }
+    // Stable radix groups retain spatial order. Count all records before the
+    // next actual weight boundary together, including across empty blocks.
+    // Galloping bounds the search by each occupied run, so short runs cannot
+    // turn into a full binary search over the remaining posting each time.
+    let mut remaining = records;
+    let mut sum = 0u64;
+    while let Some(&first) = remaining.first() {
+        let weight = cursor.weight(base + first as u32 as usize, blocks, bits);
+        let before_end = |record: &u64| base + (*record as u32 as usize) < cursor.end;
+        let count = if before_end(remaining.last().unwrap()) {
+            remaining.len()
+        } else {
+            let mut low = 1;
+            let mut high = 2.min(remaining.len());
+            while high < remaining.len() && before_end(&remaining[high - 1]) {
+                low = high;
+                high = high.saturating_mul(2).min(remaining.len());
             }
-        })
-        .sum())
+            low + remaining[low..high].partition_point(before_end)
+        };
+        sum = weight
+            .checked_mul(count as u64)
+            .and_then(|part| sum.checked_add(part))
+            .ok_or("initial frequency exceeds u64")?;
+        remaining = &remaining[count..];
+    }
+    Ok(sum)
 }
 
 // Directory narrows a spatial lookup to at most 256 word boundaries. This
@@ -388,6 +411,71 @@ mod tests {
             (0..128)
                 .map(|p| blocks[p >> 4].weight(p, None))
                 .sum::<u64>()
+        );
+    }
+    #[test]
+    fn interval_record_sum_matches_scalar_for_sparse_dense_and_repeated_positions() {
+        let mut blocks: Vec<Block<u32, 2>> = (0..8).map(|i| Block::new(i * 16, 0)).collect();
+        let mut previous = 0;
+        for (i, block) in blocks.iter_mut().enumerate() {
+            block.previous_weight = previous;
+            block.weight_intervals = true;
+            if i % 3 != 1 {
+                block.pivots = vec![0, 2, 2, 7, 15];
+                block.weights = vec![0, 8, 3, 5, 2];
+                previous = 2;
+            }
+        }
+        link_intervals(&mut blocks);
+        // Both lookup settings must count exact runs, including empty slices.
+        let lookup = WeightLookups::new(&blocks, 128, 4);
+        for stride in 1..20 {
+            for start in 0..128 {
+                let records: Vec<u64> = (start..128)
+                    .step_by(stride)
+                    .flat_map(|p| std::iter::repeat_n((77u64 << 32) | p as u64, p % 3))
+                    .collect();
+                let expected: u64 = records
+                    .iter()
+                    .map(|&r| {
+                        let p = r as u32 as usize;
+                        blocks[p >> 4].weight(p, None)
+                    })
+                    .sum();
+                for option in [None, Some(&lookup)] {
+                    assert_eq!(
+                        sum_records(&records, 0, &blocks, 4, None, option).unwrap(),
+                        expected
+                    );
+                }
+            }
+        }
+        // Wave-relative offsets must retain the machine-sized base.
+        let records = [0, 1, 2, 7, 15, 16, 31, 63];
+        let expected = records
+            .iter()
+            .map(|&r| {
+                let p = 64 + r as usize;
+                blocks[p >> 4].weight(p, None)
+            })
+            .sum::<u64>();
+        assert_eq!(
+            sum_records(&records, 64, &blocks, 4, None, Some(&lookup)).unwrap(),
+            expected
+        );
+    }
+    #[test]
+    fn interval_record_sum_checks_multiply_and_accumulate_overflow() {
+        let mut block = Block::<u32, 2>::new(0, u64::MAX);
+        block.pivots = vec![2];
+        block.weights = vec![1];
+        block.weight_intervals = true;
+        let blocks = [block];
+        assert!(sum_records(&[0, 1], 0, &blocks, 32, None, None).is_err());
+        assert!(sum_records(&[0, 2], 0, &blocks, 32, None, None).is_err());
+        assert_eq!(
+            sum_records(&[0], 0, &blocks, 32, None, None).unwrap(),
+            u64::MAX
         );
     }
     #[test]
