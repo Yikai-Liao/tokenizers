@@ -1,0 +1,10 @@
+# started on Fri Oct  2 16:14:02 2026
+
+14180409192;;cycles:u;6420085954;100.00;;
+12417986280;;instructions:u;6420085954;100.00;0.88;insn per cycle
+164767878;;cache-references:u;6420085954;100.00;;
+105681834;;cache-misses:u;6420085954;100.00;64.14;of all cache refs
+6420.09;msec;task-clock;6420085954;100.00;2.567;CPUs utilized
+16021;;context-switches;6420085954;100.00;2.495;K/sec
+26;;cpu-migrations;6420085954;100.00;4.050;/sec
+48228;;page-faults;6420085954;100.00;7.512;K/sec

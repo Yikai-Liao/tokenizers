@@ -1,0 +1,123 @@
+{
+  "status": "passed",
+  "scope": "small JSON, Python syntax and report-link validation; no corpus reread, binary hashing, perf decoding or native execution",
+  "block_freeze": "1959202f30673fc21e68ab2868ba40213062c409",
+  "native_calls_completed": 8,
+  "formal_timings_used": 2,
+  "excluded_timings": 1,
+  "checks": [
+    "all eight metadata records: source/manifest/environment/model/config/runtime/resources/allocation gates",
+    "census totals/provenance, bounded perf metadata, sample/period agreement, recorded losses and event runtime",
+    "four owned Python scripts parse successfully",
+    "all report local links exist"
+  ],
+  "calls": [
+    {
+      "case": "en-final-formal",
+      "result_sha256": "86a71296aa3845678a4ee3c58998aa36d454e55db6529c4a8719a64b45eba448",
+      "environment_sha256": "2e8ab39d98af945d36c890507d65f98c1e0f7f40cee386bfbebab81ec597206a",
+      "binary_sha256": "3499c17aabf1fa09b2df5ceb0de019f0b15436116249e9461ddf286d18e80214",
+      "train_ms": 2091.371259,
+      "excluded_from_formal_comparison": true,
+      "exclusion_reason": "overlap with final diagnostic compilation",
+      "model_gate": true,
+      "runtime_gate": true,
+      "memory_gate": true,
+      "allocation_balance_gate": true
+    },
+    {
+      "case": "en-final-formal-clean",
+      "result_sha256": "f94e2fe262c575fb1f1c547fde33d82b333565e8584386b4330e09bfce7b7edc",
+      "environment_sha256": "7907cc4fa7a46a7edbaaf77e6122a31cf2c3ae776771698f7140dd977f6b4357",
+      "binary_sha256": "3499c17aabf1fa09b2df5ceb0de019f0b15436116249e9461ddf286d18e80214",
+      "train_ms": 2118.011137,
+      "excluded_from_formal_comparison": false,
+      "exclusion_reason": null,
+      "model_gate": true,
+      "runtime_gate": true,
+      "memory_gate": true,
+      "allocation_balance_gate": true
+    },
+    {
+      "case": "zh-final-formal",
+      "result_sha256": "c3607cfe5f18f30cc9856edccdf4c18a7c88cac093b5c5787f37cf35e2241c09",
+      "environment_sha256": "cefee2b2f6b4acab9bff9678728201bf978518204e6003b12f5e433108233831",
+      "binary_sha256": "3499c17aabf1fa09b2df5ceb0de019f0b15436116249e9461ddf286d18e80214",
+      "train_ms": 950.0192589999999,
+      "excluded_from_formal_comparison": false,
+      "exclusion_reason": null,
+      "model_gate": true,
+      "runtime_gate": true,
+      "memory_gate": true,
+      "allocation_balance_gate": true
+    },
+    {
+      "case": "zh-final-diagnostic-control",
+      "result_sha256": "0acdd51d5abea0795ce534dd32924ddac15e72a41ab9cb86f3a49d498f36d66c",
+      "environment_sha256": "2ec15f595ea74b5c4ac691919d5b4cda9cce6c55be026ba58957a7815f915201",
+      "binary_sha256": "caa86aa235299af143fe324210f94625652d4b27bfea840fafdc91fd61cc0823",
+      "train_ms": 886.106931,
+      "excluded_from_formal_comparison": false,
+      "exclusion_reason": null,
+      "model_gate": true,
+      "runtime_gate": true,
+      "memory_gate": true,
+      "allocation_balance_gate": true
+    },
+    {
+      "case": "en-final-stat",
+      "result_sha256": "d56f0d016049a840ac465184742ce8cbe45fbf81a85286f90f2147b38d749ba7",
+      "environment_sha256": "12ac15d2fda6c38537f59f3b40e4df00c15a9d0648b6ec2020413093df3133e4",
+      "binary_sha256": "caa86aa235299af143fe324210f94625652d4b27bfea840fafdc91fd61cc0823",
+      "train_ms": 2314.960119,
+      "excluded_from_formal_comparison": false,
+      "exclusion_reason": null,
+      "model_gate": true,
+      "runtime_gate": true,
+      "memory_gate": true,
+      "allocation_balance_gate": true
+    },
+    {
+      "case": "zh-final-stat",
+      "result_sha256": "baa62c1f839ff1c6e91a4c50747f707bd2e326dcf0875fef394e27d1c7e763ed",
+      "environment_sha256": "ccf6f68bd521c4d902f7a46031ef7fdda9fed9091d10a6a9fa5930dbadef8a99",
+      "binary_sha256": "caa86aa235299af143fe324210f94625652d4b27bfea840fafdc91fd61cc0823",
+      "train_ms": 1066.31064,
+      "excluded_from_formal_comparison": false,
+      "exclusion_reason": null,
+      "model_gate": true,
+      "runtime_gate": true,
+      "memory_gate": true,
+      "allocation_balance_gate": true
+    },
+    {
+      "case": "en-final-record",
+      "result_sha256": "5d3ee9f88076390a56426764262fd7ad3f08000a2e9fe5b6fe7ea2b9a36974ef",
+      "environment_sha256": "7a02033423c231e295cec2e2c101044e5b44a1983596e4381678a068ffb1c168",
+      "binary_sha256": "caa86aa235299af143fe324210f94625652d4b27bfea840fafdc91fd61cc0823",
+      "train_ms": 2181.863421,
+      "excluded_from_formal_comparison": false,
+      "exclusion_reason": null,
+      "model_gate": true,
+      "runtime_gate": true,
+      "memory_gate": true,
+      "allocation_balance_gate": true
+    },
+    {
+      "case": "zh-final-record",
+      "result_sha256": "eec1c86e87822ad9126a6d37e445761a29b9f205aa0d13c0a927c9a019639114",
+      "environment_sha256": "318f167c9ec76515794649628de3af9553357d9a2f7e7d6d0b30cfd70d63934e",
+      "binary_sha256": "caa86aa235299af143fe324210f94625652d4b27bfea840fafdc91fd61cc0823",
+      "train_ms": 1092.915192,
+      "excluded_from_formal_comparison": false,
+      "exclusion_reason": null,
+      "model_gate": true,
+      "runtime_gate": true,
+      "memory_gate": true,
+      "allocation_balance_gate": true
+    }
+  ],
+  "summary_sha256": "84eb1820a966264b0fa35f4be67d9e411204c8da8618abfb352986a824c8a80a",
+  "perf_summary_sha256": "9cb90c63c686ebf1627da822f28eb17e02819d37911ae2d1349c462d1093924d",
+  "report_sha256": "eef3c518655293032b42ac237cd2f0231a5cb8c5dad72cdf24e1f81857efb8a7"
+}

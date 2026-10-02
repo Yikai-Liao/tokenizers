@@ -1,0 +1,91 @@
+{
+  "case": "zh-final-stat",
+  "mode": "stat",
+  "command": [
+    "perf",
+    "stat",
+    "--no-big-num",
+    "--no-scale",
+    "-x",
+    ";",
+    "-o",
+    "/root/code/tokenizers/benchmarks/hf-bpe/results/language-training-gap/zh-final-stat.perf-stat.csv",
+    "-e",
+    "cycles:u,instructions:u,cache-references:u,cache-misses:u,task-clock,context-switches,cpu-migrations,page-faults",
+    "--",
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/target/release/hf-bpe-native-language-gap-dwarf32",
+    "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/zh-16m-from-512m.txt",
+    "none",
+    "reference",
+    "30000",
+    "2"
+  ],
+  "native_command": [
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/target/release/hf-bpe-native-language-gap-dwarf32",
+    "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/zh-16m-from-512m.txt",
+    "none",
+    "reference",
+    "30000",
+    "2"
+  ],
+  "worktree_commit": "1959202f30673fc21e68ab2868ba40213062c409",
+  "binary_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/target/release/hf-bpe-native-language-gap-dwarf32",
+  "binary_sha256": "caa86aa235299af143fe324210f94625652d4b27bfea840fafdc91fd61cc0823",
+  "build_manifest_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/build_manifest.json",
+  "build_manifest_sha256": "7eb7b3ac38e5c16bdcb491491c240ae1fae1a80e937b6d91ef6a370edfe5bef4",
+  "run_script_sha256": "6f04f77e3b16c0fa29c2352edb481de33fe5401ff5c28659a06a836feed3f72e",
+  "corpus_path": "/root/code/tokenizers/benchmarks/hf-bpe/results/affix-analysis/input/zh-16m-from-512m.txt",
+  "corpus_sha256": "ebd64699a917bb0982e9b64d302d94cc08057f43d16bcb5efc041594684c12a6",
+  "corpus_bytes": 16776351,
+  "env_overrides": {
+    "TOKENIZERS_PARALLELISM": "false",
+    "RAYON_NUM_THREADS": "4",
+    "HF_BPE_BENCH_WORKERS": "4"
+  },
+  "expected_model_sha256": "e19702e3a081378577aba1e140fb7b9ac91b8d97d2f5e679b9d9ec14603d1899",
+  "posting_block_bits": 32,
+  "threads_requested": 4,
+  "vocab_size": 30000,
+  "min_frequency": 2,
+  "host_before": {
+    "MemAvailable": 7790247936,
+    "SwapFree": 5515583488,
+    "pswpin": 745478,
+    "pswpout": 2703677,
+    "loadavg": [
+      "0.62",
+      "1.59",
+      "2.03"
+    ]
+  },
+  "formal_control": "zh-final-formal",
+  "event_scope": "whole native command and inherited workers; hardware user mode; task-clock includes system CPU",
+  "cache_event_selection_reason": "large posting/corpus and heap-byte disparity requires aggregate cache evidence; four hardware events, no branch event",
+  "returncode": 0,
+  "failure": null,
+  "wall_seconds": 1.3326862180256285,
+  "host_after": {
+    "MemAvailable": 7761784832,
+    "SwapFree": 5515583488,
+    "pswpin": 745485,
+    "pswpout": 2703677,
+    "loadavg": [
+      "0.73",
+      "1.60",
+      "2.03"
+    ]
+  },
+  "min_memavailable_bytes": 7647023104,
+  "peak_rss_bytes": 155090944,
+  "peak_vmswap_bytes": 0,
+  "max_process_threads": 5,
+  "target_pids": [
+    874850
+  ],
+  "wrapper_child_user_seconds": 2.428456,
+  "wrapper_child_system_seconds": 0.791777,
+  "wrapper_child_minor_faults": 26866,
+  "wrapper_child_major_faults": 0,
+  "wrapper_child_voluntary_switches": 8766,
+  "wrapper_child_involuntary_switches": 649
+}

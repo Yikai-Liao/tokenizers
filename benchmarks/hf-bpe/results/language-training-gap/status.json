@@ -1,0 +1,92 @@
+{
+  "status": "completed",
+  "parent_agent_id": "b7a1c2c3-fadb-449c-be69-6100d2f71377",
+  "block_freeze": "1959202f30673fc21e68ab2868ba40213062c409",
+  "cpu_released": true,
+  "heavy_work_started": true,
+  "completed": [
+    "clean BLOCK freeze source and isolated formal/diagnostic builds",
+    "one census pass per existing 16MiB input",
+    "optimized ELF debug/symbol/address verification",
+    "two accepted formal NONE timings",
+    "one ZH unsampled diagnostic control; two perf stat and two perf record runs",
+    "bounded top20 and 200 native IP per language analysis with real instructions and call-stack quality",
+    "owned final report and structured provenance/work-count/perf outputs",
+    "small JSON, syntax and report-link validation"
+  ],
+  "pending": [],
+  "initial_budget": {
+    "formal_control_runs_per_language_if_missing": 1,
+    "diagnostic_control_runs_per_language_if_distinct_binary": 1,
+    "perf_stat_runs_per_language": 1,
+    "perf_record_runs_per_language": 1,
+    "record_event": "cycles:u",
+    "record_frequency_hz": 199,
+    "dwarf_stack_bytes": 8192,
+    "max_samples_to_parse_per_language": 40000,
+    "max_perf_data_bytes_per_language": 134217728,
+    "top_symbols_per_language": 20,
+    "max_instruction_addresses_per_language": 200,
+    "corpus_census": "one pass per existing 16MiB fixture only after start gate"
+  },
+  "extension_rule": "Only extend measurement for a concrete unresolved evidence gap.",
+  "measurement_deviation": {
+    "case": "en-final-formal",
+    "reason": "started while final diagnostic compilation was still active; binary/manifest timestamps confirm overlap",
+    "classification": "retained but excluded from formal timing comparison",
+    "native_calls_completed": 8,
+    "budget_reallocation": "one replacement EN formal timing; EN unsampled diagnostic control omitted; eight calls total; EN sampling overhead not independently isolated"
+  },
+  "heavy_work_active": false,
+  "native_calls_completed": 8,
+  "native_calls_remaining": 0,
+  "final_report": "/root/code/tokenizers/benchmarks/hf-bpe/LANGUAGE_TRAINING_GAP_ANALYSIS.md",
+  "final_summary": "/root/code/tokenizers/benchmarks/hf-bpe/results/language-training-gap/final-none32.json",
+  "final_perf_summary": "/root/code/tokenizers/benchmarks/hf-bpe/results/language-training-gap/final-perf-analysis.json",
+  "final_validation": "/root/code/tokenizers/benchmarks/hf-bpe/results/language-training-gap/final-validation.json",
+  "formal_binary_label": "language-gap-formal32",
+  "formal_manifest": "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-formal32/build_manifest.json",
+  "cpu_released_after_analysis": true,
+  "native_call_ledger": [
+    {
+      "case": "en-final-formal",
+      "train_ms": 2091.371259,
+      "excluded_from_formal_comparison": true
+    },
+    {
+      "case": "en-final-formal-clean",
+      "train_ms": 2118.011137,
+      "excluded_from_formal_comparison": false
+    },
+    {
+      "case": "zh-final-formal",
+      "train_ms": 950.0192589999999,
+      "excluded_from_formal_comparison": false
+    },
+    {
+      "case": "zh-final-diagnostic-control",
+      "train_ms": 886.106931,
+      "excluded_from_formal_comparison": false
+    },
+    {
+      "case": "en-final-stat",
+      "train_ms": 2314.960119,
+      "excluded_from_formal_comparison": false
+    },
+    {
+      "case": "zh-final-stat",
+      "train_ms": 1066.31064,
+      "excluded_from_formal_comparison": false
+    },
+    {
+      "case": "en-final-record",
+      "train_ms": 2181.863421,
+      "excluded_from_formal_comparison": false
+    },
+    {
+      "case": "zh-final-record",
+      "train_ms": 1092.915192,
+      "excluded_from_formal_comparison": false
+    }
+  ]
+}

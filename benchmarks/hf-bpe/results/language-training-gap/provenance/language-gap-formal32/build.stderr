@@ -1,0 +1,216 @@
+   Compiling bitcannon v0.1.0-dev.0 (/root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-formal32/source/tokenizers/bitcannon)
+   Compiling tk-convert v0.1.0-dev.0 (/root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-formal32/source/tokenizers/tk-convert)
+   Compiling tk-encode v0.1.0-dev.0 (/root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-formal32/source/tokenizers/tk-encode)
+   Compiling tk-train v0.1.0-dev.0 (/root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-formal32/source/tokenizers/tk-train)
+warning: associated function `tokenize` is never used
+   --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-formal32/source/tokenizers/tk-train/src/trainers/bpe/indexed.rs:314:8
+    |
+313 | impl PreparedCorpus {
+    | ------------------- associated function in this implementation
+314 |     fn tokenize(
+    |        ^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: multiple methods are never used
+    --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-formal32/source/tokenizers/tk-train/src/trainers/bpe/indexed.rs:991:19
+     |
+ 990 | impl BpeTrainer {
+     | --------------- methods in this implementation
+ 991 |     pub(super) fn train_vocab_indexed_parallel(
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+1060 |     pub(super) fn train_vocab_indexed(&self) -> Result<IndexedTraining> {
+     |                   ^^^^^^^^^^^^^^^^^^^
+...
+1066 |     pub(super) fn train_vocab_fused(&self) -> Result<IndexedTraining> {
+     |                   ^^^^^^^^^^^^^^^^^
+...
+1070 |     pub(super) fn do_train_fused(
+     |                   ^^^^^^^^^^^^^^
+...
+1084 |     pub(super) fn do_train_indexed(
+     |                   ^^^^^^^^^^^^^^^^
+...
+1094 |     fn train_cohorts_with_policy(
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+1126 |     fn train_cohorts_parallel(
+     |        ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: type alias `Entries` is never used
+ --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-formal32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:7:6
+  |
+7 | type Entries = AHashMap<u64, Entry>;
+  |      ^^^^^^^
+
+warning: function `key` is never used
+  --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-formal32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:10:4
+   |
+10 | fn key(pair: Pair) -> u64 {
+   |    ^^^
+
+warning: function `pair` is never used
+  --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-formal32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:15:4
+   |
+15 | fn pair(key: u64) -> Pair {
+   |    ^^^^
+
+warning: struct `Entry` is never constructed
+  --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-formal32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:19:8
+   |
+19 | struct Entry {
+   |        ^^^^^
+
+warning: struct `HeapItem` is never constructed
+  --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-formal32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:25:8
+   |
+25 | struct HeapItem {
+   |        ^^^^^^^^
+
+warning: struct `BirthGroup` is never constructed
+  --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-formal32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:44:8
+   |
+44 | struct BirthGroup {
+   |        ^^^^^^^^^^
+
+warning: struct `BirthNode` is never constructed
+  --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-formal32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:50:8
+   |
+50 | struct BirthNode {
+   |        ^^^^^^^^^
+
+warning: struct `Births` is never constructed
+  --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-formal32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:56:8
+   |
+56 | struct Births {
+   |        ^^^^^^
+
+warning: struct `Changes` is never constructed
+  --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-formal32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:61:8
+   |
+61 | struct Changes<'a> {
+   |        ^^^^^^^
+
+warning: function `posting_bytes` is never used
+  --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-formal32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:70:4
+   |
+70 | fn posting_bytes(entry: &Entry) -> usize {
+   |    ^^^^^^^^^^^^^
+
+warning: methods `remove` and `add` are never used
+   --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-formal32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:76:8
+    |
+ 74 | impl Changes<'_> {
+    | ---------------- methods in this implementation
+ 75 |     #[inline]
+ 76 |     fn remove(&mut self, edge: Pair, weight: u64) -> Result<()> {
+    |        ^^^^^^
+...
+103 |     fn add(&mut self, edge: Pair, position: u32, weight: u64) -> Result<()> {
+    |        ^^^
+
+warning: trait `Storage` is never used
+   --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-formal32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:131:7
+    |
+131 | trait Storage {
+    |       ^^^^^^^
+
+warning: struct `Endpoints` is never constructed
+   --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-formal32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:150:8
+    |
+150 | struct Endpoints {
+    |        ^^^^^^^^^
+
+warning: struct `Symbol` is never constructed
+   --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-formal32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:243:8
+    |
+243 | struct Symbol {
+    |        ^^^^^^
+
+warning: struct `WordArena` is never constructed
+   --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-formal32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:248:8
+    |
+248 | struct WordArena {
+    |        ^^^^^^^^^
+
+warning: associated function `from_input` is never used
+   --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-formal32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:256:8
+    |
+255 | impl WordArena {
+    | -------------- associated function in this implementation
+256 |     fn from_input(input: PreparedCorpus) -> Self {
+    |        ^^^^^^^^^^
+
+warning: function `train` is never used
+   --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-formal32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:367:15
+    |
+367 | pub(super) fn train(
+    |               ^^^^^
+
+warning: function `train_storage` is never used
+   --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-formal32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:422:4
+    |
+422 | fn train_storage<S: Storage>(
+    |    ^^^^^^^^^^^^^
+
+warning: function `train_in_pool` is never used
+   --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-formal32/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel.rs:777:4
+    |
+777 | fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
+    |    ^^^^^^^^^^^^^
+
+warning: method `len` is never used
+  --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-formal32/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/candidate_heap.rs:80:19
+   |
+32 | impl CandidateHeap {
+   | ------------------ method in this implementation
+...
+80 |     pub(super) fn len(&self) -> usize {
+   |                   ^^^
+
+warning: variants `Cached` and `Leader` are never constructed
+  --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-formal32/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/validation_window.rs:11:5
+   |
+ 9 | pub(super) enum SelectionMode {
+   |                 ------------- variants in this enum
+10 |     Serial,
+11 |     Cached,
+   |     ^^^^^^
+12 |     Leader,
+   |     ^^^^^^
+   |
+   = note: `SelectionMode` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+warning: method `flush` is never used
+  --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-formal32/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/fused_batch/aggregate.rs:72:29
+   |
+15 | impl Scratch {
+   | ------------ method in this implementation
+...
+72 |     pub(in super::super) fn flush<O: Offset, const INLINE: usize>(
+   |                             ^^^^^
+
+warning: variant `Fixed` is never constructed
+  --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-formal32/source/tokenizers/tk-train/src/trainers/bpe/indexed/posting_arena.rs:15:5
+   |
+13 | pub(super) enum Policy {
+   |                 ------ variant in this enum
+14 |     System,
+15 |     Fixed(usize),
+   |     ^^^^^
+   |
+   = note: `Policy` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
+
+warning: method `configure` is never used
+   --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-formal32/source/tokenizers/tk-train/src/trainers/bpe/indexed/posting_arena.rs:101:19
+    |
+ 93 | impl LocalSession {
+    | ----------------- method in this implementation
+...
+101 |     pub(super) fn configure(&self, cutoff: usize) {
+    |                   ^^^^^^^^^
+
+warning: `tk-train` (lib) generated 26 warnings
+   Compiling hf-bpe-native-language-gap-formal32 v0.1.0 (/root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-formal32/runner)
+    Finished `release` profile [optimized] target(s) in 58.05s

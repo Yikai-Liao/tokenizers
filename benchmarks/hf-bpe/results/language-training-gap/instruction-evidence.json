@@ -1,0 +1,185 @@
+{
+  "binary_sha256": "caa86aa235299af143fe324210f94625652d4b27bfea840fafdc91fd61cc0823",
+  "elf_build_id": "32b7e7e78c061158e1681e47bb3fe06655b5e2ae",
+  "event": "cycles:u",
+  "denominator": "whole-command period-weighted user-cycle samples; inclusive paths overlap",
+  "points": [
+    {
+      "elf_address": "0x44f434",
+      "en": {
+        "runtime_ip": "0x55bcc24be434",
+        "sample_period_sum": 3897681650,
+        "samples": 342,
+        "percent_of_all_command_periods": 26.364905745367928,
+        "symbol_offset": "0x424",
+        "dwarf_inline_functions_and_locations": [
+          "core::sync::atomic::atomic_load::<u32>",
+          "/rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/sync/atomic.rs:3890",
+          "<core::sync::atomic::Atomic<u32>>::load",
+          "/rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/sync/atomic.rs:2856",
+          "<core::sync::atomic::Atomic<u32> as tk_train::trainers::bpe::indexed::parallel::Slot>::token",
+          "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel.rs:154",
+          "tk_train::trainers::bpe::indexed::parallel::fused_batch::prepare_with_mode::<core::sync::atomic::Atomic<u32>, u32, 2, true>::{closure#0}",
+          "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/fused_batch.rs:190",
+          "<&tk_train::trainers::bpe::indexed::parallel::fused_batch::prepare_with_mode<core::sync::atomic::Atomic<u32>, u32, 2, true>::{closure#0} as core::ops::function::FnMut<(&alloc::vec::Vec<tk_train::trainers::bpe::indexed::parallel::fused_batch::Task>,)>>::call_mut",
+          "/rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/ops/function.rs:274"
+        ]
+      },
+      "zh": {
+        "runtime_ip": "0x557f786e6434",
+        "sample_period_sum": 744682626,
+        "samples": 80,
+        "percent_of_all_command_periods": 11.32130452061054,
+        "symbol_offset": "0x424",
+        "dwarf_inline_functions_and_locations": [
+          "core::sync::atomic::atomic_load::<u32>",
+          "/rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/sync/atomic.rs:3890",
+          "<core::sync::atomic::Atomic<u32>>::load",
+          "/rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/sync/atomic.rs:2856",
+          "<core::sync::atomic::Atomic<u32> as tk_train::trainers::bpe::indexed::parallel::Slot>::token",
+          "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel.rs:154",
+          "tk_train::trainers::bpe::indexed::parallel::fused_batch::prepare_with_mode::<core::sync::atomic::Atomic<u32>, u32, 2, true>::{closure#0}",
+          "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/fused_batch.rs:190",
+          "<&tk_train::trainers::bpe::indexed::parallel::fused_batch::prepare_with_mode<core::sync::atomic::Atomic<u32>, u32, 2, true>::{closure#0} as core::ops::function::FnMut<(&alloc::vec::Vec<tk_train::trainers::bpe::indexed::parallel::fused_batch::Task>,)>>::call_mut",
+          "/rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/ops/function.rs:274"
+        ]
+      },
+      "instruction": "cmp %rcx,%rbx",
+      "nearby": [
+        "0x44f431: mov (%rax,%rbp,4),%eax",
+        "0x44f437: jae 0x44f400",
+        "0x44f439: cmp (%r11),%eax",
+        "0x44f443: mov (%rax,%rbx,4),%eax",
+        "0x44f446: cmp 0x4(%r11),%eax"
+      ],
+      "interpretation": "endpoint validation loop; DWARF atomic load location spans a following bounds comparison; cycle IP does not identify exact load miss cost"
+    },
+    {
+      "elf_address": "0x2cd368",
+      "en": {
+        "runtime_ip": "0x55bcc233c368",
+        "sample_period_sum": 119115559,
+        "samples": 14,
+        "percent_of_all_command_periods": 0.8057278063850629,
+        "symbol_offset": "0x108",
+        "dwarf_inline_functions_and_locations": [
+          "core::core_arch::x86::sse2::_mm_movemask_epi8",
+          "/rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/../../stdarch/crates/core_arch/src/x86/sse2.rs:1621",
+          "<hashbrown::control::group::sse2::Group>::match_tag",
+          "/rust/deps/hashbrown-0.17.1/src/control/group/sse2.rs:84",
+          "<hashbrown::raw::RawTableInner>::find_inner",
+          "/rust/deps/hashbrown-0.17.1/src/raw.rs:2029",
+          "<hashbrown::raw::RawTable<(u64, tk_train::trainers::bpe::indexed::parallel::Entry)>>::find::<hashbrown::map::equivalent_key<u64, u64, tk_train::trainers::bpe::indexed::parallel::Entry>::{closure#0}>",
+          "/rust/deps/hashbrown-0.17.1/src/raw.rs:1202",
+          "<hashbrown::raw::RawTable<(u64, tk_train::trainers::bpe::indexed::parallel::Entry)>>::get_mut::<hashbrown::map::equivalent_key<u64, u64, tk_train::trainers::bpe::indexed::parallel::Entry>::{closure#0}>",
+          "/rust/deps/hashbrown-0.17.1/src/raw.rs:1227",
+          "<hashbrown::map::HashMap<u64, tk_train::trainers::bpe::indexed::parallel::Entry, ahash::random_state::RandomState>>::get_mut::<u64>",
+          "/rust/deps/hashbrown-0.17.1/src/map.rs:1424",
+          "<std::collections::hash::map::HashMap<u64, tk_train::trainers::bpe::indexed::parallel::Entry, ahash::random_state::RandomState>>::get_mut::<u64>",
+          "/rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/collections/hash/map.rs:1302",
+          "<ahash::hash_map::AHashMap<u64, tk_train::trainers::bpe::indexed::parallel::Entry>>::get_mut::<u64>",
+          "/root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ahash-0.8.12/src/hash_map.rs:159",
+          "tk_train::trainers::bpe::indexed::parallel::flat_commit::dense::<u32, 2>",
+          "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/flat_commit.rs:22"
+        ]
+      },
+      "zh": {
+        "runtime_ip": "0x557f78564368",
+        "sample_period_sum": 131652194,
+        "samples": 16,
+        "percent_of_all_command_periods": 2.001489664243215,
+        "symbol_offset": "0x108",
+        "dwarf_inline_functions_and_locations": [
+          "core::core_arch::x86::sse2::_mm_movemask_epi8",
+          "/rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/../../stdarch/crates/core_arch/src/x86/sse2.rs:1621",
+          "<hashbrown::control::group::sse2::Group>::match_tag",
+          "/rust/deps/hashbrown-0.17.1/src/control/group/sse2.rs:84",
+          "<hashbrown::raw::RawTableInner>::find_inner",
+          "/rust/deps/hashbrown-0.17.1/src/raw.rs:2029",
+          "<hashbrown::raw::RawTable<(u64, tk_train::trainers::bpe::indexed::parallel::Entry)>>::find::<hashbrown::map::equivalent_key<u64, u64, tk_train::trainers::bpe::indexed::parallel::Entry>::{closure#0}>",
+          "/rust/deps/hashbrown-0.17.1/src/raw.rs:1202",
+          "<hashbrown::raw::RawTable<(u64, tk_train::trainers::bpe::indexed::parallel::Entry)>>::get_mut::<hashbrown::map::equivalent_key<u64, u64, tk_train::trainers::bpe::indexed::parallel::Entry>::{closure#0}>",
+          "/rust/deps/hashbrown-0.17.1/src/raw.rs:1227",
+          "<hashbrown::map::HashMap<u64, tk_train::trainers::bpe::indexed::parallel::Entry, ahash::random_state::RandomState>>::get_mut::<u64>",
+          "/rust/deps/hashbrown-0.17.1/src/map.rs:1424",
+          "<std::collections::hash::map::HashMap<u64, tk_train::trainers::bpe::indexed::parallel::Entry, ahash::random_state::RandomState>>::get_mut::<u64>",
+          "/rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/collections/hash/map.rs:1302",
+          "<ahash::hash_map::AHashMap<u64, tk_train::trainers::bpe::indexed::parallel::Entry>>::get_mut::<u64>",
+          "/root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ahash-0.8.12/src/hash_map.rs:159",
+          "tk_train::trainers::bpe::indexed::parallel::flat_commit::dense::<u32, 2>",
+          "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/flat_commit.rs:22"
+        ]
+      },
+      "instruction": "movdqa %xmm1,%xmm2",
+      "nearby": [
+        "0x2cd363: movdqu (%rax,%rdx,1),%xmm1",
+        "0x2cd36c: pcmpeqb %xmm0,%xmm2",
+        "0x2cd370: pmovmskb %xmm2,%r8d"
+      ],
+      "interpretation": "hash table control-byte probe in ledger.get_mut"
+    },
+    {
+      "elf_address": "0x2cd3e0",
+      "en": {
+        "runtime_ip": "0x55bcc233c3e0",
+        "sample_period_sum": 410673952,
+        "samples": 42,
+        "percent_of_all_command_periods": 2.777902612071397,
+        "symbol_offset": "0x180",
+        "dwarf_inline_functions_and_locations": [
+          "tk_train::trainers::bpe::indexed::parallel::flat_commit::dense::<u32, 2>",
+          "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/flat_commit.rs:23"
+        ]
+      },
+      "zh": {
+        "runtime_ip": "0x557f785643e0",
+        "sample_period_sum": 272138733,
+        "samples": 30,
+        "percent_of_all_command_periods": 4.137286624632658,
+        "symbol_offset": "0x180",
+        "dwarf_inline_functions_and_locations": [
+          "tk_train::trainers::bpe::indexed::parallel::flat_commit::dense::<u32, 2>",
+          "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/flat_commit.rs:23"
+        ]
+      },
+      "instruction": "mov -0x8(%r9),%rax",
+      "nearby": [
+        "0x2cd3e4: sub -0x10(%rsi),%rax",
+        "0x2cd3e8: jb 0x2cd5d6"
+      ],
+      "interpretation": "read ledger frequency payload before checked subtraction; not all samples are arithmetic cost"
+    },
+    {
+      "elf_address": "0x2d64df",
+      "en": {
+        "runtime_ip": "0x55bcc23454df",
+        "sample_period_sum": 378461565,
+        "samples": 34,
+        "percent_of_all_command_periods": 2.5600098688073816,
+        "symbol_offset": "0xbf",
+        "dwarf_inline_functions_and_locations": [
+          "tk_train::trainers::bpe::indexed::parallel::flat_commit::dense::<u32, 2>::{closure#2}",
+          "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/flat_commit.rs:80"
+        ]
+      },
+      "zh": {
+        "runtime_ip": "0x557f7856d4df",
+        "sample_period_sum": 118460288,
+        "samples": 12,
+        "percent_of_all_command_periods": 1.8009349852177514,
+        "symbol_offset": "0xbf",
+        "dwarf_inline_functions_and_locations": [
+          "tk_train::trainers::bpe::indexed::parallel::flat_commit::dense::<u32, 2>::{closure#2}",
+          "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/flat_commit.rs:80"
+        ]
+      },
+      "instruction": "mov %edx,(%rcx)",
+      "nearby": [
+        "0x2d64db: mov 0x4(%rax,%rdi,8),%edx",
+        "0x2d64e1: mov (%rax,%rdi,8),%eax"
+      ],
+      "interpretation": "advance birth chain head and return posting position from Node; sampled store is in a dependent traversal region"
+    }
+  ],
+  "provenance": "bounded objdump ranges inspected after sampling and before parent restarted the 512MiB timings; no new disassembly during those timings"
+}

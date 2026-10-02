@@ -1,0 +1,172 @@
+--- /root/code/tokenizers-worktrees/block-fused-prepare/tokenizers/tk-train/src/trainers/bpe/indexed.rs
++++ /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed.rs
+@@ -67,6 +67,13 @@
+     pub atomic_corpus: bool,
+     pub initialization_workers: usize,
+     pub batch_rounds: usize,
++    pub diagnostic_aa_batches: usize,
++    pub diagnostic_aa_visits: usize,
++    pub diagnostic_aa_rewrites: usize,
++    pub diagnostic_non_aa_single_batches: usize,
++    pub diagnostic_effective_rewrites: usize,
++    pub diagnostic_batch_sizes: Vec<usize>,
++
+     pub max_batch_rules: usize,
+     pub initial_corpus_bytes: usize,
+     pub initial_posting_bytes: usize,
+@@ -1013,7 +1020,7 @@
+         if supports_compact(self) {
+             parallel::train(self, word_counts, config)
+         } else {
+-            let options = cohort_parallel::Options::default();
++            let options = cohort_parallel::Options::from_bench_env();
+             self.train_affixed_options(word_counts, config, options)
+         }
+     }
+--- /root/code/tokenizers-worktrees/block-fused-prepare/tokenizers/tk-train/src/trainers/bpe/mod.rs
++++ /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/mod.rs
+@@ -512,6 +512,9 @@
+         } else {
+             1
+         };
++        if std::env::var("HF_BPE_ORACLE").as_deref() == Ok("1") {
++            return self.do_train_observed(word_counts, |_, _, _| {});
++        }
+         let trained = self.do_train_indexed_parallel(
+             word_counts,
+             IndexedParallelConfig {
+@@ -525,6 +528,7 @@
+                 batch_size: 256,
+             },
+         )?;
++        eprintln!("{}", serde_json::json!({"bench_indexed_stats": trained.stats}));
+         Ok((trained.vocab, trained.merges, trained.special_tokens))
+     }
+ 
+@@ -738,14 +742,14 @@
+             .maybe_par_bridge()
+             .map(|sequence| {
+                 let words = process(sequence.as_ref())?;
+-                let mut map = AHashMap::new();
++                let mut map = AHashMap::with_hasher(ahash::RandomState::with_seeds(11, 13, 17, 19));
+                 for word in words {
+                     *map.entry(CompactString::from(word)).or_default() += 1;
+                 }
+                 Ok(map)
+             })
+             .reduce(
+-                || Ok(AHashMap::new()),
++                || Ok(AHashMap::with_hasher(ahash::RandomState::with_seeds(11, 13, 17, 19))),
+                 |acc, ws| {
+                     let mut acc = acc?;
+                     for (k, v) in ws? {
+--- /root/code/tokenizers-worktrees/block-fused-prepare/tokenizers/tk-train/src/trainers/bpe/indexed/parallel.rs
++++ /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel.rs
+@@ -1211,6 +1211,7 @@
+     let mut frontier = Frontier::default();
+     let mut committed_merges = 0;
+     while ids.len() < trainer.vocab_size {
++        let diagnostic_visits_before = stats.posting_visits;
+         let stage = Instant::now();
+         let cap = config.batch_size.min(trainer.vocab_size - ids.len());
+         let mut rules = Vec::<Rule>::new();
+@@ -1325,6 +1326,16 @@
+         stats.select_ms += stage.elapsed().as_secs_f64() * 1000.0;
+         let stage = Instant::now();
+         stats.batch_rounds += 1;
++        if stats.diagnostic_batch_sizes.len() <= rules.len() {
++            stats.diagnostic_batch_sizes.resize(rules.len() + 1, 0);
++        }
++        stats.diagnostic_batch_sizes[rules.len()] += 1;
++        if rules[0].edge.0 == rules[0].edge.1 {
++            stats.diagnostic_aa_batches += 1;
++            stats.diagnostic_aa_visits += stats.posting_visits - diagnostic_visits_before;
++        } else if rules.len() == 1 {
++            stats.diagnostic_non_aa_single_batches += 1;
++        }
+         stats.max_batch_rules = stats.max_batch_rules.max(rules.len());
+         let mut block_prepared = None;
+         let outputs: Vec<Output<O, INLINE>> = if flat
+@@ -1347,6 +1358,7 @@
+                 )
+             })?;
+             stats.fused_batches += 1;
++            stats.diagnostic_effective_rewrites += prepared.diagnostic_rewrites();
+             stats.peak_selected_lookup_bytes = stats
+                 .peak_selected_lookup_bytes
+                 .max(prepared.selected_bytes);
+@@ -1523,6 +1535,10 @@
+                     .windows(2)
+                     .all(|w| w[0].after(&rules) <= w[1].position)
+             );
++            stats.diagnostic_effective_rewrites += plans.len();
++            if rules[0].edge.0 == rules[0].edge.1 {
++                stats.diagnostic_aa_rewrites += plans.len();
++            }
+             stats.plan_ms += stage.elapsed().as_secs_f64() * 1000.0;
+             let stage = Instant::now();
+             // AA's overlapping occurrences are visited, but are not stale records.
+--- /root/code/tokenizers-worktrees/block-fused-prepare/tokenizers/tk-train/src/trainers/bpe/indexed/cohort_parallel.rs
++++ /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/cohort_parallel.rs
+@@ -1057,3 +1057,49 @@
+         assert!(got.stats.cohort_parallel_rounds > 0);
+     }
+ }
++
++impl Options {
++    pub(super) fn from_bench_env() -> Self {
++        let mut options = Self::default();
++        let disabled = std::env::var("HF_BPE_COHORT_DISABLE").unwrap_or_default();
++        for name in disabled.split(',').map(str::trim).filter(|name| !name.is_empty()) {
++            match name {
++                "all" => return Self { sort_weights: false,
++            narrow_corpus: false,
++            weight_lookup: false,
++            initial_grouped: false,
++            parallel_apply: false,
++            grouped_tail: false,
++            scratch_cache: false,
++            character_cache: false,
++            packed_queue: false,
++            parallel_measure: false,
++            guarded_fast: false,
++            parallel_alphabet: false,
++            arena_allocator: false,
++            batch_execution: false,
++            queue_prefetch: false,
++            fused_batch: false },
++                "sort_weights" => options.sort_weights = false,
++                "narrow_corpus" => options.narrow_corpus = false,
++                "weight_lookup" => options.weight_lookup = false,
++                "initial_grouped" => options.initial_grouped = false,
++                "parallel_apply" => options.parallel_apply = false,
++                "grouped_tail" => options.grouped_tail = false,
++                "scratch_cache" => options.scratch_cache = false,
++                "character_cache" => options.character_cache = false,
++                "packed_queue" => options.packed_queue = false,
++                "parallel_measure" => options.parallel_measure = false,
++                "guarded_fast" => options.guarded_fast = false,
++                "parallel_alphabet" => options.parallel_alphabet = false,
++                "arena_allocator" => options.arena_allocator = false,
++                "batch_execution" => options.batch_execution = false,
++                "queue_prefetch" => options.queue_prefetch = false,
++                "fused_batch" => options.fused_batch = false,
++                other => panic!("unknown HF_BPE_COHORT_DISABLE option: {other}"),
++            }
++        }
++        options
++    }
++}
++
+--- /root/code/tokenizers-worktrees/block-fused-prepare/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/fused_batch.rs
++++ /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/fused_batch.rs
+@@ -312,3 +312,9 @@
+         });
+     }
+ }
++
++impl<O: Offset, const INLINE: usize> Prepared<O, INLINE> {
++    pub(super) fn diagnostic_rewrites(&self) -> usize {
++        self.valid.iter().flat_map(|job| job.iter()).map(|v| v.positions.len()).sum()
++    }
++}

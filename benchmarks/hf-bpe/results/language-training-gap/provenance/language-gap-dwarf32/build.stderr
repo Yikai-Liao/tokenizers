@@ -1,0 +1,335 @@
+   Compiling proc-macro2 v1.0.107
+   Compiling quote v1.0.47
+   Compiling unicode-ident v1.0.26
+   Compiling cfg-if v1.0.5
+   Compiling libc v0.2.189
+   Compiling version_check v0.9.5
+   Compiling serde_core v1.0.229
+   Compiling zerocopy v0.8.59
+   Compiling crossbeam-utils v0.8.23
+   Compiling memchr v2.8.3
+   Compiling getrandom v0.3.4
+   Compiling crossbeam-epoch v0.9.21
+   Compiling syn v2.0.119
+   Compiling syn v3.0.6
+   Compiling serde v1.0.229
+   Compiling crossbeam-deque v0.8.8
+   Compiling either v1.18.0
+   Compiling rayon-core v1.13.0
+   Compiling once_cell v1.21.4
+   Compiling rand_core v0.10.1
+   Compiling ahash v0.8.12
+   Compiling fnv v1.0.7
+   Compiling ident_case v1.0.1
+   Compiling getrandom v0.4.3
+   Compiling strsim v0.11.1
+   Compiling generic-array v0.14.7
+   Compiling serde_derive v1.0.229
+   Compiling rayon v1.12.0
+   Compiling bitflags v2.13.2
+   Compiling darling_core v0.20.11
+   Compiling ppv-lite86 v0.2.21
+   Compiling radium v0.7.0
+   Compiling zmij v1.0.23
+   Compiling rustix v1.1.5
+   Compiling rustversion v1.0.23
+   Compiling thiserror v2.0.21
+   Compiling thiserror-impl v2.0.21
+   Compiling allocator-api2 v0.2.21
+   Compiling foldhash v0.2.0
+   Compiling itoa v1.0.18
+   Compiling typenum v1.20.1
+   Compiling cpufeatures v0.3.1
+   Compiling equivalent v1.0.2
+   Compiling minimal-lexical v0.2.1
+   Compiling tap v1.0.1
+   Compiling serde_json v1.0.151
+   Compiling linux-raw-sys v0.12.1
+   Compiling paste v1.0.15
+   Compiling darling_macro v0.20.11
+   Compiling nom v7.1.3
+   Compiling wyz v0.5.1
+   Compiling darling v0.20.11
+   Compiling hashbrown v0.16.1
+   Compiling chacha20 v0.10.2
+   Compiling mem_dbg-derive v0.3.4
+   Compiling itertools v0.14.0
+   Compiling aho-corasick v1.1.5
+   Compiling base64 v0.13.1
+   Compiling unicode-segmentation v1.13.3
+   Compiling funty v2.0.0
+   Compiling log v0.4.34
+   Compiling fastrand v2.5.0
+   Compiling partition v0.1.2
+   Compiling arbitrary-chunks v0.4.1
+   Compiling smallvec v1.16.2
+   Compiling esaxx-rs v0.1.10
+   Compiling byteorder v1.5.0
+   Compiling regex-syntax v0.8.11
+   Compiling bytemuck v1.25.2
+   Compiling fxhash v0.2.1
+   Compiling safe_arch v1.2.0
+   Compiling rayon-cond v0.4.0
+   Compiling unicode-normalization-alignments v0.1.12
+   Compiling tempfile v3.27.0
+   Compiling rdst v0.20.14
+   Compiling bitvec v1.1.1
+   Compiling spm_precompiled v0.1.4
+   Compiling castaway v0.2.4
+   Compiling mem_dbg v0.4.4
+   Compiling regex-automata v0.4.18
+   Compiling bitcannon v0.1.0-dev.0 (/root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/bitcannon)
+   Compiling dary_heap v0.3.9
+   Compiling rand v0.10.3
+   Compiling derive_builder_core v0.20.2
+   Compiling rand_chacha v0.10.0
+   Compiling itertools v0.15.0
+   Compiling rand_core v0.9.5
+   Compiling xxhash-rust v0.8.19
+   Compiling ryu v1.0.23
+   Compiling colored v3.1.1
+   Compiling prefetch-index v0.2.1
+   Compiling unicode_categories v0.1.1
+   Compiling bit-vec v0.8.0
+   Compiling static_assertions v1.1.0
+   Compiling tinyvec v1.13.3
+   Compiling compact_str v0.9.1
+   Compiling ptr_hash v2.1.2
+   Compiling unicode-normalization v0.1.25
+   Compiling bit-set v0.8.0
+   Compiling rand_chacha v0.9.0
+   Compiling derive_builder_macro v0.20.2
+   Compiling wide v1.7.1
+   Compiling crypto-common v0.1.7
+   Compiling block-buffer v0.10.4
+   Compiling monostate-impl v0.1.18
+   Compiling macro_rules_attribute-proc_macro v0.2.3
+   Compiling pastey v0.2.3
+   Compiling yada v0.7.0
+   Compiling macro_rules_attribute v0.2.3
+   Compiling monostate v0.1.18
+   Compiling digest v0.10.7
+   Compiling derive_builder v0.20.2
+   Compiling rand v0.9.5
+   Compiling fancy-regex v0.17.0
+   Compiling regex v1.13.1
+   Compiling tk-convert v0.1.0-dev.0 (/root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-convert)
+   Compiling bumpalo v3.20.3
+   Compiling cpufeatures v0.2.17
+   Compiling daachorse v3.0.3
+   Compiling tokenizers v0.23.2
+   Compiling sha2 v0.10.9
+   Compiling tk-encode v0.1.0-dev.0 (/root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-encode)
+   Compiling tk-train v0.1.0-dev.0 (/root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train)
+warning: associated function `tokenize` is never used
+   --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed.rs:321:8
+    |
+320 | impl PreparedCorpus {
+    | ------------------- associated function in this implementation
+321 |     fn tokenize(
+    |        ^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: multiple methods are never used
+    --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed.rs:998:19
+     |
+ 997 | impl BpeTrainer {
+     | --------------- methods in this implementation
+ 998 |     pub(super) fn train_vocab_indexed_parallel(
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+1067 |     pub(super) fn train_vocab_indexed(&self) -> Result<IndexedTraining> {
+     |                   ^^^^^^^^^^^^^^^^^^^
+...
+1073 |     pub(super) fn train_vocab_fused(&self) -> Result<IndexedTraining> {
+     |                   ^^^^^^^^^^^^^^^^^
+...
+1077 |     pub(super) fn do_train_fused(
+     |                   ^^^^^^^^^^^^^^
+...
+1091 |     pub(super) fn do_train_indexed(
+     |                   ^^^^^^^^^^^^^^^^
+...
+1101 |     fn train_cohorts_with_policy(
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+1133 |     fn train_cohorts_parallel(
+     |        ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: type alias `Entries` is never used
+ --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:7:6
+  |
+7 | type Entries = AHashMap<u64, Entry>;
+  |      ^^^^^^^
+
+warning: function `key` is never used
+  --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:10:4
+   |
+10 | fn key(pair: Pair) -> u64 {
+   |    ^^^
+
+warning: function `pair` is never used
+  --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:15:4
+   |
+15 | fn pair(key: u64) -> Pair {
+   |    ^^^^
+
+warning: struct `Entry` is never constructed
+  --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:19:8
+   |
+19 | struct Entry {
+   |        ^^^^^
+
+warning: struct `HeapItem` is never constructed
+  --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:25:8
+   |
+25 | struct HeapItem {
+   |        ^^^^^^^^
+
+warning: struct `BirthGroup` is never constructed
+  --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:44:8
+   |
+44 | struct BirthGroup {
+   |        ^^^^^^^^^^
+
+warning: struct `BirthNode` is never constructed
+  --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:50:8
+   |
+50 | struct BirthNode {
+   |        ^^^^^^^^^
+
+warning: struct `Births` is never constructed
+  --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:56:8
+   |
+56 | struct Births {
+   |        ^^^^^^
+
+warning: struct `Changes` is never constructed
+  --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:61:8
+   |
+61 | struct Changes<'a> {
+   |        ^^^^^^^
+
+warning: function `posting_bytes` is never used
+  --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:70:4
+   |
+70 | fn posting_bytes(entry: &Entry) -> usize {
+   |    ^^^^^^^^^^^^^
+
+warning: methods `remove` and `add` are never used
+   --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:76:8
+    |
+ 74 | impl Changes<'_> {
+    | ---------------- methods in this implementation
+ 75 |     #[inline]
+ 76 |     fn remove(&mut self, edge: Pair, weight: u64) -> Result<()> {
+    |        ^^^^^^
+...
+103 |     fn add(&mut self, edge: Pair, position: u32, weight: u64) -> Result<()> {
+    |        ^^^
+
+warning: trait `Storage` is never used
+   --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:131:7
+    |
+131 | trait Storage {
+    |       ^^^^^^^
+
+warning: struct `Endpoints` is never constructed
+   --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:150:8
+    |
+150 | struct Endpoints {
+    |        ^^^^^^^^^
+
+warning: struct `Symbol` is never constructed
+   --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:243:8
+    |
+243 | struct Symbol {
+    |        ^^^^^^
+
+warning: struct `WordArena` is never constructed
+   --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:248:8
+    |
+248 | struct WordArena {
+    |        ^^^^^^^^^
+
+warning: associated function `from_input` is never used
+   --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:256:8
+    |
+255 | impl WordArena {
+    | -------------- associated function in this implementation
+256 |     fn from_input(input: PreparedCorpus) -> Self {
+    |        ^^^^^^^^^^
+
+warning: function `train` is never used
+   --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:367:15
+    |
+367 | pub(super) fn train(
+    |               ^^^^^
+
+warning: function `train_storage` is never used
+   --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/compact.rs:422:4
+    |
+422 | fn train_storage<S: Storage>(
+    |    ^^^^^^^^^^^^^
+
+warning: function `train_in_pool` is never used
+   --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel.rs:777:4
+    |
+777 | fn train_in_pool<C: Slot, O: Offset, const INLINE: usize>(
+    |    ^^^^^^^^^^^^^
+
+warning: method `len` is never used
+  --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/candidate_heap.rs:80:19
+   |
+32 | impl CandidateHeap {
+   | ------------------ method in this implementation
+...
+80 |     pub(super) fn len(&self) -> usize {
+   |                   ^^^
+
+warning: variants `Cached` and `Leader` are never constructed
+  --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/validation_window.rs:11:5
+   |
+ 9 | pub(super) enum SelectionMode {
+   |                 ------------- variants in this enum
+10 |     Serial,
+11 |     Cached,
+   |     ^^^^^^
+12 |     Leader,
+   |     ^^^^^^
+   |
+   = note: `SelectionMode` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+warning: method `flush` is never used
+  --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel/fused_batch/aggregate.rs:72:29
+   |
+15 | impl Scratch {
+   | ------------ method in this implementation
+...
+72 |     pub(in super::super) fn flush<O: Offset, const INLINE: usize>(
+   |                             ^^^^^
+
+warning: variant `Fixed` is never constructed
+  --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/posting_arena.rs:15:5
+   |
+13 | pub(super) enum Policy {
+   |                 ------ variant in this enum
+14 |     System,
+15 |     Fixed(usize),
+   |     ^^^^^
+   |
+   = note: `Policy` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
+
+warning: method `configure` is never used
+   --> /root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/source/tokenizers/tk-train/src/trainers/bpe/indexed/posting_arena.rs:101:19
+    |
+ 93 | impl LocalSession {
+    | ----------------- method in this implementation
+...
+101 |     pub(super) fn configure(&self, cutoff: usize) {
+    |                   ^^^^^^^^^
+
+warning: `tk-train` (lib) generated 26 warnings
+   Compiling hf-bpe-native-language-gap-dwarf32 v0.1.0 (/root/code/tokenizers/benchmarks/hf-bpe/.build/native-language-gap-dwarf32/runner)
+    Finished `release` profile [optimized + debuginfo] target(s) in 2m 05s

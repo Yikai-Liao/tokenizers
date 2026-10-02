@@ -1,0 +1,48 @@
+{
+  "status": "passed",
+  "scope": "Small delivery files only; no corpus scan, native execution, binary hashing, compilation or perf reanalysis.",
+  "checks": [
+    "19 original report/summary/result/environment SHA256 records match",
+    "8 recorded gate sets passed",
+    "4 owned Python scripts parse",
+    "all report and handoff local links exist",
+    "all 8 environments match archived build manifest hashes, binary SHA256 and source freeze",
+    "2 instrumentation patch hashes match their archived manifests"
+  ],
+  "original_report_sha256": "eef3c518655293032b42ac237cd2f0231a5cb8c5dad72cdf24e1f81857efb8a7",
+  "original_validation_sha256": "59ad20e70b1fd29351a4f13b24aee67ed05660990de5a934c32846d4a639e93c",
+  "archived_provenance": [
+    {
+      "path": "provenance/language-gap-formal32/build_manifest.json",
+      "sha256": "22b9620e15c2ec23499a40cef369ff441c54a81939b8209c650ed467b61138df"
+    },
+    {
+      "path": "provenance/language-gap-formal32/instrumentation.patch",
+      "sha256": "98ee605d2f57b0c4c4c269847ded66927a5ab2cf12b61d3990bd2023dac75443"
+    },
+    {
+      "path": "provenance/language-gap-formal32/build.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "provenance/language-gap-formal32/build.stderr",
+      "sha256": "5e1fae89b6c4a20ddfb98534cf93f736718d24eb110ec1e41f4f8e13f5733b11"
+    },
+    {
+      "path": "provenance/language-gap-dwarf32/build_manifest.json",
+      "sha256": "7eb7b3ac38e5c16bdcb491491c240ae1fae1a80e937b6d91ef6a370edfe5bef4"
+    },
+    {
+      "path": "provenance/language-gap-dwarf32/instrumentation.patch",
+      "sha256": "92542e060f38bb6d69b541eb7cfbff9c0b4d765379d63551d45cdd5f5501f665"
+    },
+    {
+      "path": "provenance/language-gap-dwarf32/build.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "provenance/language-gap-dwarf32/build.stderr",
+      "sha256": "60f6a978a3629bef208f94af79625737efcffa387315b30658256470166b5716"
+    }
+  ]
+}
