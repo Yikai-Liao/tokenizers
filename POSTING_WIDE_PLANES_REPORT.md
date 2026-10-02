@@ -1,6 +1,34 @@
 # Wide address planes experiment
 
-Status: isolated prototype; not merged and not yet accepted on performance.
+Status: selected as this experiment's speed/memory tradeoff; isolated and not merged. Measured implementation commit: `847a791a904a08deb3c839464b50a683bbcbca29`. Later report-only commits do not change the measured implementation.
+
+## Final validation and decision
+
+The frozen candidate combines directory-free low32/upper planes, exact weight-interval counting, bounded 128-coordinate decode batches, and x86_64 corpus prefetch 16 coordinates ahead. Other architectures use ordinary batch consumption. The prefetch-on code passed all 104 library tests with scratch16; the final default-on revision additionally passed all 14 parallel-training tests. Legacy paths remain explicitly deferred.
+
+Eighteen native calls completed without reruns: Chinese 512 MiB/vocab50000, four workers, three repetitions per variant in F/N/S, N/S/F, S/F/N order; then English/Japanese/German 32 MiB/vocab16000 once per variant. All model digests match their language's Flat control. Chinese produces 29,243 merges. Source/binary/configuration gates pass, all child VmSwap peaks are zero, and MemAvailable stays above 1 GiB. Host-wide counters are separate: Chinese full r1 records a raw pswpout counter delta of 5; the other calls record zero host swap deltas.
+
+| Chinese, n=3 | Train median (range), s | Versus Flat | Process VmHWM median, B | Sampled RSS median, B |
+|---|---:|---:|---:|---:|
+| U32 Flat | 16.414 (15.863–16.850) | — | 3,587,665,920 | 3,540,127,744 |
+| Normal32 / scratch32 | 15.278 (15.271–16.888) | −6.9% | 3,665,559,552 | 3,664,396,288 |
+| Full-scaled16 / scratch16 | 17.131 (16.739–18.027) | +4.4% | 4,240,949,248 | 4,241,408,000 |
+
+VmHWM rises 2.2% in normal mode and 18.2% in full-scaled mode relative to the U32 control. Process-reported VmHWM and external sampled RSS cover different observation windows; preserve both. Three repetitions describe the observed variation, not statistical significance.
+
+| One-shot language screen | Flat / normal / full-scaled train, ms | Normal / full versus Flat |
+|---|---:|---:|
+| en | 3064.638 / 2688.231 / 2822.431 | −12.3% / −7.9% |
+| ja | 1142.306 / 1098.141 / 1216.979 | −3.9% / +6.5% |
+| de | 2981.754 / 2628.875 / 3108.102 | −11.8% / +4.2% |
+
+The candidate is retained because the normal-range probe has small memory overhead and full scaling now has modest observed time overhead without a segment directory or language-specific thresholds. Prefetch is a general corpus-access optimization that may also benefit Flat; this does not establish that compression itself accelerates decoding. Cross-version percentages use separate contemporaneous Flat controls, so are not paired estimates of version-to-version speedup.
+
+For normal geometry, 40/48/56/64-bit address ranges need 5/6/7/8 payload bytes per item: theoretical savings against an 8-byte payload are 37.5%/25%/12.5%/0%. Headers, capacity slack and Arena retention are additional. Full-scaled Chinese initial low/high capacities are 801,613,532/400,800,218 B, Arena backing ranges from 805,299,136 to 939,516,800 B across the three calls, peak valid/birth buffers 33,234,944/68,444,160 B. Normal has zero high-plane bytes, Arena backing 805,299,136 B, and valid/birth 17,301,504/46,137,344 B. These counters belong to different phases and must not be added to explain RSS. Flat's zero birth metric means that field does not instrument the old flat birth buffers; it is not evidence of zero birth memory.
+
+No real workload above 2^32 slots or true U64 Flat baseline was run on this machine. Full-domain address tests, wide-cardinality layout checks and forced persistent/temporary crossings verify boundaries; they do not measure huge-workload time or RSS. The current parallel path is the selected scope, and the legacy restrictions documented below remain deferred.
+
+Artifacts, raw repetitions, source/binary hashes and environment records: `/root/code/tokenizers-workspaces/posting-experiment-results/countposting-prefetch-final/`. The user subsequently requested reducing the 18.2% peak-memory overhead; this frozen candidate remains the control for the next memory-focused iteration. The chronological sections below preserve historical states; this section supersedes pending/acceptance statements in them.
 
 Goal: support 64-bit corpus coordinates and find a speed/memory balance close to flat address arrays. U32 is not a datatype requirement. Local experiments retain the U32 Flat baseline and force 16-bit address-block geometry while storing low components as U32, because this machine cannot establish a giant U64 Flat baseline.
 
