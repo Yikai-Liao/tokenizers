@@ -1,0 +1,12 @@
+{
+  "algorithms": [
+    "hot256"
+  ],
+  "workers": 4,
+  "unchanged_reference": false,
+  "train_ms": 20091.805986,
+  "initialize_ms": 6383.578836,
+  "merge_ms": 13341.376307,
+  "full_peak_rss_bytes": 3548610560,
+  "gates": "PASS"
+}

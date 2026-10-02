@@ -1,0 +1,12 @@
+{
+  "algorithms": [
+    "boundaries"
+  ],
+  "workers": 4,
+  "unchanged_reference": false,
+  "train_ms": 242.845531,
+  "initialize_ms": 26.559153,
+  "merge_ms": 202.355941,
+  "full_peak_rss_bytes": 30924800,
+  "gates": "PASS"
+}

@@ -1,0 +1,47 @@
+{
+  "command": [
+    "/usr/bin/python3",
+    "/root/code/tokenizers/benchmarks/hf-bpe/run_native_fair.py",
+    "--case",
+    "zh512m-lazy-counts-r16000-formal",
+    "--worktree",
+    "/root/code/tokenizers-worktrees/permanent-boundaries",
+    "--build-root",
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-algorithmic-ablation",
+    "--binary",
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-algorithmic-ablation/target/release/hf-bpe-native-algorithmic-ablation",
+    "--corpus",
+    "/root/code/tokenizers/benchmarks/hf-bpe/.build/gb-corpus/zh-512m.txt",
+    "--output",
+    "/root/code/tokenizers/benchmarks/hf-bpe/results/algorithmic-ablation/zh512m-lazy-counts-r16000-formal.jsonl",
+    "--split",
+    "none",
+    "--vocab",
+    "50000",
+    "--initialization-workers",
+    "4",
+    "--merge-workers",
+    "4",
+    "--atomic-corpus",
+    "--expected-layout",
+    "parallel_u32_flat32",
+    "--require-stats",
+    "posting_arena_cutoff_bytes"
+  ],
+  "extra_environment": {
+    "HF_BPE_ARENA_MODE": "auto",
+    "HF_BPE_QUEUE_MODE": "auto",
+    "HF_BPE_WEIGHT_ORDER": "sorted",
+    "HF_BPE_ALGORITHMS": "lazy-counts"
+  },
+  "expected_model": "d50fb836e342e1a301bb56d5ab53c0b79fae38f51a03051c6d6b02ab6cf862cd",
+  "count": 1,
+  "diagnostic_only": false,
+  "workers": 4,
+  "algorithms": [
+    "lazy-counts"
+  ],
+  "unchanged_reference": false,
+  "word_order": "serial seeded feed (11,13,17,19)",
+  "scope": "complete train includes candidate setup, scans, certification and reconstruction"
+}

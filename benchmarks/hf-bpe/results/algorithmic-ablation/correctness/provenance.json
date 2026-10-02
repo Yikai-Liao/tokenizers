@@ -1,0 +1,19 @@
+{
+  "source_commit": "9d81ffb1b1a1e08ff064155224701ef124588158",
+  "full_library_command": "CARGO_TARGET_DIR=/root/code/tokenizers/tokenizers/target ~/.cargo/bin/cargo test --offline --manifest-path tokenizers/tk-train/Cargo.toml --no-default-features --lib",
+  "cwd": "/root/code/tokenizers-worktrees/permanent-boundaries",
+  "result": "75 passed, 0 failed",
+  "elapsed_seconds": 83.72,
+  "full_trace_test": "trainers::bpe::indexed::parallel::tests::six_algorithm_controls_keep_hf_full_trace_under_combinations",
+  "full_trace_case_count": 64,
+  "full_trace_switch_combinations": 64,
+  "full_trace_comparisons": 4096,
+  "checked": [
+    "pair",
+    "weighted frequency",
+    "replacement ID",
+    "ordered merges",
+    "vocab"
+  ],
+  "source_change_after_tests": "rustfmt whitespace only in four added modules; frozen commit retains tested behavior"
+}

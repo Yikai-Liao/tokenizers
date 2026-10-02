@@ -1,0 +1,2 @@
+Command: python3 benchmarks/hf-bpe/build_algorithmic_ablation.py /root/code/tokenizers-worktrees/permanent-boundaries --label algorithmic-ablation
+Result: success; cargo release build finished in 54.42s; emitted dead_code warnings for unused alternate trainer paths.

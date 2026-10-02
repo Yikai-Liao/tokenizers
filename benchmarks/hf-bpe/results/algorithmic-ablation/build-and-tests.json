@@ -1,0 +1,27 @@
+{
+  "source_worktree": "/root/code/tokenizers-worktrees/permanent-boundaries",
+  "source_commit": "9d81ffb1b1a1e08ff064155224701ef124588158",
+  "source_clean": true,
+  "binary_path": "/root/code/tokenizers/benchmarks/hf-bpe/.build/native-algorithmic-ablation/target/release/hf-bpe-native-algorithmic-ablation",
+  "binary_sha256": "04af228849603a495168382eafcc8a2867548d7b4485718493797098dada14af",
+  "cargo_lock_path": "Cargo.lock",
+  "cargo_lock_sha256": "be78a42885138723557a13417a4c92bbc0ead9da3b08ee4aa60c1972225c6c55",
+  "instrumentation_patch_path": "instrumentation.patch",
+  "instrumentation_patch_sha256": "4d5876144f046175678178b08dae297755f3700a2b8a12a098c050d832074bb0",
+  "build_command": "python3 benchmarks/hf-bpe/build_algorithmic_ablation.py /root/code/tokenizers-worktrees/permanent-boundaries --label algorithmic-ablation",
+  "build_log_path": "build.log",
+  "build_elapsed_seconds": 54.42,
+  "correctness": {
+    "library_tests": "75 passed, 0 failed",
+    "full_hf_trace_comparisons": "4096 across all 64 six-switch configurations, reported PASS by the archived combination test",
+    "logs": [
+      "correctness/algorithmic-all-lib-tests.log",
+      "correctness/algorithmic-six-combinations-tests.log",
+      "correctness/algorithmic-incremental-tests.log",
+      "correctness/algorithmic-compile-tests.log",
+      "correctness/permanent-boundaries-enabled-tests.log",
+      "correctness/permanent-boundaries-initial-tests.log"
+    ],
+    "timing_agent_ran_no_tests": true
+  }
+}

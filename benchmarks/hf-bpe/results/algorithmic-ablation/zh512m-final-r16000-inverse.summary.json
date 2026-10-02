@@ -1,0 +1,12 @@
+{
+  "algorithms": [
+    "final"
+  ],
+  "workers": 4,
+  "unchanged_reference": false,
+  "train_ms": 17416.487041,
+  "initialize_ms": 4313.602416,
+  "merge_ms": 12735.057266,
+  "full_peak_rss_bytes": 3599560704,
+  "gates": "PASS"
+}

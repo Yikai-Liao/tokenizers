@@ -1,0 +1,12 @@
+{
+  "algorithms": [
+    "lazy-counts"
+  ],
+  "workers": 4,
+  "unchanged_reference": false,
+  "train_ms": 4236.105545,
+  "initialize_ms": 267.693461,
+  "merge_ms": 3936.982652,
+  "full_peak_rss_bytes": 279175168,
+  "gates": "PASS"
+}

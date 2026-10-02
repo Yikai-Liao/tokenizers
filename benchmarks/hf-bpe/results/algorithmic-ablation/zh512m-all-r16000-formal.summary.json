@@ -1,0 +1,17 @@
+{
+  "algorithms": [
+    "boundaries",
+    "final",
+    "hot256",
+    "lazy-births",
+    "lazy-counts",
+    "positions"
+  ],
+  "workers": 4,
+  "unchanged_reference": false,
+  "train_ms": 85185.045145,
+  "initialize_ms": 6144.006368,
+  "merge_ms": 78631.689494,
+  "full_peak_rss_bytes": 3801513984,
+  "gates": "PASS"
+}

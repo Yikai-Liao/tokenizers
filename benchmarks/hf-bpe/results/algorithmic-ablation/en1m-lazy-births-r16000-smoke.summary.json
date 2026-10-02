@@ -1,0 +1,12 @@
+{
+  "algorithms": [
+    "lazy-births"
+  ],
+  "workers": 4,
+  "unchanged_reference": false,
+  "train_ms": 538.95897,
+  "initialize_ms": 30.698079999999997,
+  "merge_ms": 497.050131,
+  "full_peak_rss_bytes": 32985088,
+  "gates": "PASS"
+}

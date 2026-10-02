@@ -1,0 +1,99 @@
+--- /root/code/tokenizers-worktrees/permanent-boundaries/tokenizers/tk-train/src/trainers/bpe/mod.rs
++++ /root/code/tokenizers/benchmarks/hf-bpe/.build/native-algorithmic-ablation/source/tokenizers/tk-train/src/trainers/bpe/mod.rs
+@@ -523,6 +523,7 @@
+                 batch_size: 256,
+             },
+         )?;
++        eprintln!("{}", serde_json::json!({"bench_indexed_stats": trained.stats}));
+         Ok((trained.vocab, trained.merges, trained.special_tokens))
+     }
+ 
+@@ -736,14 +737,14 @@
+             .maybe_par_bridge()
+             .map(|sequence| {
+                 let words = process(sequence.as_ref())?;
+-                let mut map = AHashMap::new();
++                let mut map = AHashMap::with_hasher(ahash::RandomState::with_seeds(11, 13, 17, 19));
+                 for word in words {
+                     *map.entry(CompactString::from(word)).or_default() += 1;
+                 }
+                 Ok(map)
+             })
+             .reduce(
+-                || Ok(AHashMap::new()),
++                || Ok(AHashMap::with_hasher(ahash::RandomState::with_seeds(11, 13, 17, 19))),
+                 |acc, ws| {
+                     let mut acc = acc?;
+                     for (k, v) in ws? {
+--- /root/code/tokenizers-worktrees/permanent-boundaries/tokenizers/tk-train/src/trainers/bpe/indexed/parallel.rs
++++ /root/code/tokenizers/benchmarks/hf-bpe/.build/native-algorithmic-ablation/source/tokenizers/tk-train/src/trainers/bpe/indexed/parallel.rs
+@@ -438,7 +438,13 @@
+     wc: &AHashMap<CompactString, u64>,
+     config: IndexedParallelConfig,
+ ) -> Result<IndexedTraining> {
+-    train_with_policy(trainer, wc, config, super::posting_arena::Policy::Auto)
++    let policy = match std::env::var("HF_BPE_ARENA_MODE").as_deref() {
++        Ok("0") => super::posting_arena::Policy::System,
++        Ok("256") => super::posting_arena::Policy::Fixed(256),
++        Ok("auto") | Err(_) => super::posting_arena::Policy::Auto,
++        _ => panic!("invalid diagnostic arena policy"),
++    };
++    train_with_policy(trainer, wc, config, policy)
+ }
+ 
+ pub(super) fn train_with_policy(
+@@ -447,7 +453,16 @@
+     config: IndexedParallelConfig,
+     policy: super::posting_arena::Policy,
+ ) -> Result<IndexedTraining> {
+-    train_with_selection(trainer, wc, config, policy, SelectionMode::Bulk(4))
++    let selection = match std::env::var("HF_BPE_QUEUE_MODE").as_deref() {
++        Ok("serial") => SelectionMode::Serial,
++        Ok("cached") => SelectionMode::Cached,
++        Ok("leader") => SelectionMode::Leader,
++        Ok("bulk4") => SelectionMode::Bulk(4),
++        Ok("auto") | Err(_) => SelectionMode::Bulk(4),
++        Ok("bulk16") => SelectionMode::Bulk(16),
++        _ => panic!("invalid diagnostic queue mode"),
++    };
++    train_with_selection(trainer, wc, config, policy, selection)
+ }
+ 
+ fn train_with_selection(
+@@ -457,7 +472,13 @@
+     policy: super::posting_arena::Policy,
+     selection: SelectionMode,
+ ) -> Result<IndexedTraining> {
+-    train_with_corpus_order(trainer, wc, config, policy, selection, corpus::Order::WeightSorted)
++    let order = match std::env::var("HF_BPE_WEIGHT_ORDER").as_deref() {
++        Ok("original") => corpus::Order::Original,
++        Ok("sorted") | Err(_) => corpus::Order::WeightSorted,
++        Ok("stable") => corpus::Order::WeightStable,
++        _ => panic!("invalid diagnostic weight order"),
++    };
++    train_with_corpus_order(trainer, wc, config, policy, selection, order)
+ }
+ 
+ fn train_with_corpus_order(
+@@ -468,7 +489,20 @@
+     selection: SelectionMode,
+     order: corpus::Order,
+ ) -> Result<IndexedTraining> {
+-    train_with_algorithms(trainer, wc, config, policy, selection, order, Algorithms::default())
++    let names = std::env::var("HF_BPE_ALGORITHMS").unwrap_or_else(|_| "none".into());
++    let flags: std::collections::HashSet<_> = names.split(',').collect();
++    assert!(flags.iter().all(|f| matches!(*f, "none"|"all"|"boundaries"|"lazy-counts"|"lazy-births"|"positions"|"hot256"|"hot512"|"hot1024"|"final")));
++    let all = flags.contains("all");
++    let algorithms = Algorithms {
++        permanent_boundaries: all || flags.contains("boundaries"),
++        lazy_counts: all || flags.contains("lazy-counts"),
++        lazy_births: all || flags.contains("lazy-births"),
++        positional_batches: all || flags.contains("positions"),
++        hot_initial: if flags.contains("hot1024") {1024} else if flags.contains("hot512") {512}
++            else if all || flags.contains("hot256") {256} else {0},
++        skip_final: all || flags.contains("final"),
++    };
++    train_with_algorithms(trainer, wc, config, policy, selection, order, algorithms)
+ }
+ 
+ fn train_with_algorithms(
