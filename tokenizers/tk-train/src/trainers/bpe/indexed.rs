@@ -61,6 +61,7 @@ pub(super) struct IndexedTrainingStats {
     pub pruned_pairs: usize,
     pub layout: &'static str,
     pub corpus_bytes: usize,
+    pub corpus_padding_slots: usize,
     pub posting_bytes: usize,
     pub peak_birth_bytes: usize,
     pub workers: usize,

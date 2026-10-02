@@ -24,6 +24,7 @@ pub(super) struct Prepared<C: Slot, O: Offset, const INLINE: usize> {
     pub character_table_bytes: usize,
     pub word_reference_bytes: usize,
     pub temporary_weight_bytes: usize,
+    pub padding_slots: usize,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -35,6 +36,9 @@ pub(super) enum Order {
 
 struct Region<'a> {
     words: &'a [(&'a CompactString, u64)],
+    // Only populated by the u16 experiment; saves a second Unicode scan while
+    // calculating whole-word block padding.
+    word_slots: Vec<usize>,
     slots: usize,
     symbols: usize,
     edges: usize,
@@ -63,6 +67,7 @@ fn fill<C: Slot>(
     character_ids: &[u32],
     identities: usize,
     order: Order,
+    bits: u8,
 ) -> Vec<Filled> {
     if regions.len() > 1 {
         let middle = regions.len() / 2;
@@ -77,6 +82,7 @@ fn fill<C: Slot>(
                     character_ids,
                     identities,
                     order,
+                    bits,
                 )
             },
             || {
@@ -87,6 +93,7 @@ fn fill<C: Slot>(
                     character_ids,
                     identities,
                     order,
+                    bits,
                 )
             },
         );
@@ -103,7 +110,24 @@ fn fill<C: Slot>(
         active: vec![0; identities.div_ceil(64)],
     };
     let mut position = 0;
+    let mut aligned_words = region.words.iter().zip(region.word_slots.iter());
     for &(word, weight) in region.words {
+        if bits == 16 {
+            let retained = aligned_words.next().unwrap().1 - 1;
+            let block_size = 1_usize << bits;
+            let local = (base + position) & (block_size - 1);
+            let padding = if local == 0 {
+                1
+            } else if local + retained + 1 > block_size {
+                block_size - local + 1
+            } else {
+                0
+            };
+            for _ in 0..padding {
+                slots[position].write(C::encode(NONE));
+                position += 1;
+            }
+        }
         if order == Order::Original || result.starts.last().is_none_or(|p| p.1 != weight) {
             result.starts.push((base + position, weight));
         }
@@ -159,11 +183,16 @@ pub(super) fn build<C: Slot, O: Offset, const INLINE: usize>(
         .len()
         .div_ceil(workers.saturating_mul(8).max(1))
         .max(1);
-    let regions: Vec<Region<'_>> = words
+    let mut regions: Vec<Region<'_>> = words
         .par_chunks(chunk)
         .map(|words| -> Result<_> {
             let mut region = Region {
                 words,
+                word_slots: if bits == 16 {
+                    Vec::with_capacity(words.len())
+                } else {
+                    Vec::new()
+                },
                 slots: 0,
                 symbols: 0,
                 edges: 0,
@@ -173,6 +202,9 @@ pub(super) fn build<C: Slot, O: Offset, const INLINE: usize>(
                 let signed =
                     i64::try_from(weight).map_err(|_| "indexed BPE weight exceeds i64::MAX")?;
                 let count = retained(word, &character_ids, unfiltered);
+                if bits == 16 {
+                    region.word_slots.push(count + 1);
+                }
                 region.slots = region
                     .slots
                     .checked_add(count)
@@ -200,9 +232,6 @@ pub(super) fn build<C: Slot, O: Offset, const INLINE: usize>(
     let mut symbols = 0;
     let mut edges = 0;
     for r in &regions {
-        capacity = capacity
-            .checked_add(r.slots)
-            .ok_or("corpus size exceeds usize")?;
         weighted_edges = weighted_edges
             .checked_add(r.weighted_edges)
             .ok_or("weighted pair counts exceed i64::MAX")?;
@@ -212,6 +241,43 @@ pub(super) fn build<C: Slot, O: Offset, const INLINE: usize>(
     let block_size = 1_usize
         .checked_shl(bits as u32)
         .ok_or("posting blocks require 64-bit usize")?;
+    if bits == 16 {
+        // Plan word boundaries in corpus order. Regions still fill independently
+        // once their padded lengths are known, so this small prefix pass does not
+        // serialize token emission or pair initialization.
+        capacity = 1;
+        for region in &mut regions {
+            let region_start = capacity;
+            for &word_slots in &region.word_slots {
+                if word_slots > block_size - 1 {
+                    return Err("word is too long for a guarded u16 posting block".into());
+                }
+                let local = capacity & (block_size - 1);
+                let padding = if local == 0 {
+                    1
+                } else if local + word_slots > block_size {
+                    block_size - local + 1
+                } else {
+                    0
+                };
+                capacity = capacity
+                    .checked_add(padding + word_slots)
+                    .ok_or("corpus size exceeds usize")?;
+            }
+            region.slots = capacity - region_start;
+        }
+    } else {
+        for r in &regions {
+            capacity = capacity
+                .checked_add(r.slots)
+                .ok_or("corpus size exceeds usize")?;
+        }
+    }
+    let padding_slots = if bits == 16 {
+        capacity - (1 + symbols + words.len())
+    } else {
+        0
+    };
     if capacity.div_ceil(block_size) > u32::MAX as usize {
         return Err("posting block directory exceeds u32 blocks".into());
     }
@@ -240,6 +306,7 @@ pub(super) fn build<C: Slot, O: Offset, const INLINE: usize>(
             &character_ids,
             identities,
             order,
+            bits,
         )
     };
     // SAFETY: slot zero was initialized above; fill covers exactly every other
@@ -299,6 +366,7 @@ pub(super) fn build<C: Slot, O: Offset, const INLINE: usize>(
         character_table_bytes,
         word_reference_bytes,
         temporary_weight_bytes,
+        padding_slots,
         timings: Timings {
             measure_ms,
             sort_ms,
@@ -328,15 +396,33 @@ pub(super) fn from_decorated<C: Slot, O: Offset, const INLINE: usize>(
     let mut starts = Vec::with_capacity(words.len());
     let mut capacity = 1_usize;
     let mut mass = 0_i64;
+    let block_size = 1_usize
+        .checked_shl(bits as u32)
+        .ok_or("posting blocks require 64-bit usize")?;
     for &word in &words {
         let start = input.pivots[word] as usize;
         let end = input
             .pivots
             .get(word + 1)
             .map_or(input.corpus.len(), |&p| p as usize);
+        let word_slots = end - start;
+        let local = capacity & (block_size - 1);
+        let padding = if bits == 16 && local == 0 {
+            1
+        } else if bits == 16 && local + word_slots > block_size {
+            block_size - local + 1
+        } else {
+            0
+        };
+        if bits == 16 && word_slots > block_size - 1 {
+            return Err("word is too long for a guarded u16 posting block".into());
+        }
+        capacity = capacity
+            .checked_add(padding)
+            .ok_or("corpus size exceeds usize")?;
         starts.push((capacity, input.weights[word], start, end));
         capacity = capacity
-            .checked_add(end - start)
+            .checked_add(word_slots)
             .ok_or("corpus size exceeds usize")?;
         let weight = i64::try_from(input.weights[word])
             .map_err(|_| "indexed BPE weight exceeds i64::MAX")?;
@@ -354,6 +440,11 @@ pub(super) fn from_decorated<C: Slot, O: Offset, const INLINE: usize>(
         .copied()
         .filter(|&w| input.weights.iter().all(|&n| n == w));
     let measure_ms = measure.elapsed().as_secs_f64() * 1000.0;
+    let padding_slots = if bits == 16 {
+        capacity - input.corpus.len()
+    } else {
+        0
+    };
     let mut blocks = vec![Block::new(0, 0)];
     let mut previous = None;
     for &(base, weight, start, end) in &starts {
@@ -380,7 +471,7 @@ pub(super) fn from_decorated<C: Slot, O: Offset, const INLINE: usize>(
     let mut slots = Vec::with_capacity(capacity);
     slots.resize_with(capacity, MaybeUninit::uninit);
     slots[0].write(C::encode(NONE));
-    fill_decorated::<C>(&mut slots[1..], &starts, &input.corpus);
+    fill_decorated::<C>(&mut slots[1..], 1, &starts, &input.corpus);
     // SAFETY: slot zero and every disjoint word range were initialized exactly
     // once. Both recursive branches join before ownership transfers; this is
     // the same final-allocation conversion used by the ordinary builder.
@@ -411,24 +502,30 @@ pub(super) fn from_decorated<C: Slot, O: Offset, const INLINE: usize>(
         word_reference_bytes: words.capacity() * std::mem::size_of::<usize>(),
         temporary_weight_bytes: starts.capacity()
             * std::mem::size_of::<(usize, u64, usize, usize)>(),
+        padding_slots,
     })
 }
 fn fill_decorated<C: Slot>(
     slots: &mut [MaybeUninit<C>],
+    base: usize,
     starts: &[(usize, u64, usize, usize)],
     source: &[u32],
 ) {
     if starts.len() > 64 && slots.len() > 16384 {
         let mid = starts.len() / 2;
-        let cut: usize = starts[..mid].iter().map(|s| s.3 - s.2).sum();
+        let cut = starts[mid].0 - base;
         let (left, right) = slots.split_at_mut(cut);
         rayon::join(
-            || fill_decorated(left, &starts[..mid], source),
-            || fill_decorated(right, &starts[mid..], source),
+            || fill_decorated(left, base, &starts[..mid], source),
+            || fill_decorated(right, base + cut, &starts[mid..], source),
         );
     } else {
         let mut cursor = 0;
-        for &(_, _, start, end) in starts {
+        for &(destination, _, start, end) in starts {
+            while base + cursor < destination {
+                slots[cursor].write(C::encode(NONE));
+                cursor += 1;
+            }
             for &id in &source[start..end] {
                 slots[cursor].write(C::encode(id));
                 cursor += 1;
@@ -446,6 +543,7 @@ mod tests {
         let mut words: AHashMap<CompactString, u64> = [
             (String::new(), 3),
             ("aaa中🙂".repeat(370), 7),
+            ("x".repeat(65_530), 9),
             ("中中bb".into(), 0),
             ("🙂".into(), 13),
         ]
@@ -484,15 +582,31 @@ mod tests {
             });
         }
         let mut expected = vec![NONE];
-        let mut weights = vec![0];
+        let mut weights = vec![Some(0)];
+        let mut expected_padding = 0;
         for i in word_order {
             let start = input.pivots[i] as usize;
             let end = input
                 .pivots
                 .get(i + 1)
                 .map_or(input.corpus.len(), |&p| p as usize);
+            if bits == 16 {
+                let block_size = 1 << bits;
+                let word_slots = end - start;
+                let local = expected.len() & (block_size - 1);
+                let padding = if local == 0 {
+                    1
+                } else if local + word_slots > block_size {
+                    block_size - local + 1
+                } else {
+                    0
+                };
+                expected.resize(expected.len() + padding, NONE);
+                weights.extend(std::iter::repeat_n(None, padding));
+                expected_padding += padding;
+            }
             expected.extend_from_slice(&input.corpus[start..end]);
-            weights.extend(std::iter::repeat_n(input.weights[i], end - start));
+            weights.extend(std::iter::repeat_n(Some(input.weights[i]), end - start));
         }
         let symbols = input.corpus.len() - input.pivots.len() - 1;
         let edges = input.edges;
@@ -507,17 +621,20 @@ mod tests {
         assert_eq!(got.lengths, lengths);
         assert_eq!(got.symbols, symbols);
         assert_eq!(got.edges, edges);
+        assert_eq!(got.padding_slots, expected_padding);
         assert_eq!(
             got.weighted_edges,
             expected
                 .windows(2)
                 .zip(&weights)
                 .filter(|(pair, _)| pair[0] != NONE && pair[1] != NONE)
-                .map(|(_, &weight)| weight)
+                .map(|(_, &weight)| weight.unwrap())
                 .sum::<u64>()
         );
-        for (p, &weight) in weights.iter().enumerate().skip(1) {
-            assert_eq!(got.blocks[p >> bits].weight(p, got.uniform), weight);
+        for (p, weight) in weights.iter().enumerate().skip(1) {
+            if let Some(weight) = weight {
+                assert_eq!(got.blocks[p >> bits].weight(p, got.uniform), *weight);
+            }
         }
         let empty =
             PreparedCorpus::tokenize(&trainer, &AHashMap::new(), &mut ids, &mut strings, &None)
@@ -700,5 +817,39 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn u16_layout_pads_whole_words_at_block_boundaries() {
+        let words: AHashMap<CompactString, u64> =
+            [("a".repeat(65_530).into(), 2), ("b".repeat(10).into(), 1)]
+                .into_iter()
+                .collect();
+        let ids: AHashMap<CompactString, u32> =
+            [("a".into(), 1), ("b".into(), 2)].into_iter().collect();
+        let pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(4)
+            .build()
+            .unwrap();
+        let got = pool
+            .install(|| build::<u32, u16, 4>(&words, &ids, 3, true, 16, 4, Order::WeightSorted))
+            .unwrap();
+
+        assert_eq!(got.padding_slots, 5);
+        assert_eq!(got.slots.len(), 65_548);
+        assert!(
+            got.slots[65_532..65_537]
+                .iter()
+                .all(|slot| slot.token() == NONE)
+        );
+        assert_eq!(got.slots[65_537].token(), 2);
+        assert!(
+            got.slots[65_537..65_547]
+                .iter()
+                .all(|slot| slot.token() == 2)
+        );
+        assert_eq!(got.slots[65_547].token(), NONE);
+        assert_eq!(got.blocks[0].base, 0);
+        assert_eq!(got.blocks[1].base, 65_536);
     }
 }

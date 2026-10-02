@@ -858,6 +858,7 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
         character_table_bytes,
         word_reference_bytes,
         temporary_weight_bytes,
+        padding_slots: prepared_padding_slots,
     } = prepared;
     super::posting_arena::configure(pool, initialization_pool, policy.cutoff(initial_edges));
     // Fresh activation holds throughout a guarded epoch: an active canonical
@@ -1062,6 +1063,7 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
             } else {
                 "weight_sorted"
             },
+            corpus_padding_slots: prepared_padding_slots,
             corpus_word_reference_bytes: word_reference_bytes,
             corpus_temporary_weight_bytes: temporary_weight_bytes,
             weight_interval_count: blocks.iter().map(|b| b.pivots.len()).sum(),
