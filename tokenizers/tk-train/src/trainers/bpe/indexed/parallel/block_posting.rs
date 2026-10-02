@@ -3,14 +3,20 @@
 //! Length and capacity are machine-sized; narrow birth links are job-local only.
 use super::*;
 use std::alloc::{Layout, alloc, dealloc};
+// Layout already bounds allocation byte size by isize::MAX, and every item
+// uses at least four bytes. Capacity therefore needs at most usize::BITS-3
+// bits; the otherwise unused top three bits hold the 0..4-byte upper width.
+// This introduces no capacity limit beyond the allocator's existing bound.
+const WIDTH_SHIFT: u32 = usize::BITS - 3;
+const CAPACITY_MASK: usize = (1usize << WIDTH_SHIFT) - 1;
 
 #[derive(Default)]
 pub(super) struct BlockPosting {
     len: usize,
     // For len <= 2 these two words hold full-width inline addresses.
     capacity: usize,
-    // Otherwise capacity is an allocation size, and payload a 16-aligned pointer.
-    // Pointer low bits: width (0..4) and arena origin (8).
+    // For heap storage, capacity also carries the upper width in its top bits.
+    // The low pointer bit carries arena origin; natural U32 alignment suffices.
     payload: usize,
 }
 // Unique ownership; arena sessions outlive postings moved between workers.
@@ -30,7 +36,7 @@ fn layout(capacity: usize, high: usize) -> Result<Layout> {
         capacity
             .checked_mul(4 + high)
             .ok_or("posting size overflow")?,
-        16,
+        4,
     )
     .map_err(|_| "posting allocation layout overflow".into())
 }
@@ -42,19 +48,26 @@ impl BlockPosting {
         self.len
     }
     fn high(&self) -> usize {
-        self.payload & 7
+        self.capacity >> WIDTH_SHIFT
     }
     fn ptr(&self) -> *mut u8 {
-        (self.payload & !15) as *mut u8
+        (self.payload & !1) as *mut u8
+    }
+    fn heap_capacity(&self) -> usize {
+        self.capacity & CAPACITY_MASK
     }
     pub(super) fn allocated_capacity(&self) -> usize {
-        if self.len <= 2 { 0 } else { self.capacity }
+        if self.len <= 2 {
+            0
+        } else {
+            self.heap_capacity()
+        }
     }
     pub(super) fn directory_bytes(&self) -> usize {
         if self.len <= 2 {
             0
         } else {
-            self.capacity * self.high()
+            self.heap_capacity() * self.high()
         }
     }
     pub(super) fn run_count(&self) -> usize {
@@ -71,14 +84,14 @@ impl BlockPosting {
         }
         unsafe {
             let low = self.ptr().cast::<u32>().add(i).read() as u64;
-            let p = self.ptr().add(4 * self.capacity);
+            let p = self.ptr().add(4 * self.heap_capacity());
             let high = match self.high() {
                 0 => 0,
                 1 => p.add(i).read() as u32,
                 2 => p.cast::<u16>().add(i).read() as u32,
                 3 => {
                     p.cast::<u16>().add(i).read() as u32
-                        | ((p.add(2 * self.capacity + i).read() as u32) << 16)
+                        | ((p.add(2 * self.heap_capacity() + i).read() as u32) << 16)
                 }
                 4 => p.cast::<u32>().add(i).read(),
                 _ => unreachable!(),
@@ -91,14 +104,15 @@ impl BlockPosting {
         unsafe {
             self.ptr().cast::<u32>().add(i).write(value as u32);
             let high = (value >> 32) as u32;
-            let p = self.ptr().add(4 * self.capacity);
+            let p = self.ptr().add(4 * self.heap_capacity());
             match self.high() {
                 0 => debug_assert_eq!(high, 0),
                 1 => p.add(i).write(high as u8),
                 2 => p.cast::<u16>().add(i).write(high as u16),
                 3 => {
                     p.cast::<u16>().add(i).write(high as u16);
-                    p.add(2 * self.capacity + i).write((high >> 16) as u8);
+                    p.add(2 * self.heap_capacity() + i)
+                        .write((high >> 16) as u8);
                 }
                 4 => p.cast::<u32>().add(i).write(high),
                 _ => unreachable!(),
@@ -111,6 +125,7 @@ impl BlockPosting {
     fn allocate(capacity: usize, high: usize, len: usize, growth: bool) -> Result<Self> {
         debug_assert!(len > 2 && capacity >= len);
         let allocation = layout(capacity, high)?;
+        debug_assert!(capacity <= CAPACITY_MASK);
         let (ptr, arena) =
             if let Some(p) = super::super::posting_arena::allocate_layout(allocation, growth)? {
                 (p.as_ptr(), true)
@@ -124,21 +139,21 @@ impl BlockPosting {
             };
         Ok(Self {
             len,
-            capacity,
-            payload: ptr as usize | high | if arena { 8 } else { 0 },
+            capacity: capacity | (high << WIDTH_SHIFT),
+            payload: ptr as usize | usize::from(arena),
         })
     }
     fn copy_prefix(&self, result: &mut Self) {
         if self.len > 2 && self.high() == result.high() {
             unsafe {
                 std::ptr::copy_nonoverlapping(self.ptr(), result.ptr(), self.len * 4);
-                let source = self.ptr().add(self.capacity * 4);
-                let target = result.ptr().add(result.capacity * 4);
+                let source = self.ptr().add(self.heap_capacity() * 4);
+                let target = result.ptr().add(result.heap_capacity() * 4);
                 if self.high() == 3 {
                     std::ptr::copy_nonoverlapping(source, target, self.len * 2);
                     std::ptr::copy_nonoverlapping(
-                        source.add(self.capacity * 2),
-                        target.add(result.capacity * 2),
+                        source.add(self.heap_capacity() * 2),
+                        target.add(result.heap_capacity() * 2),
                         self.len,
                     );
                 } else {
@@ -159,7 +174,7 @@ impl BlockPosting {
         unsafe {
             self.put(end - 1, last);
             let low = self.ptr().cast::<u32>();
-            let high = self.ptr().add(self.capacity * 4);
+            let high = self.ptr().add(self.heap_capacity() * 4);
             macro_rules! fill {
                 ($put_high:expr) => {
                     for i in (start..end - 1).rev() {
@@ -175,7 +190,8 @@ impl BlockPosting {
                 2 => fill!(|i, h| high.cast::<u16>().add(i).write(h as u16)),
                 3 => fill!(|i, h| {
                     high.cast::<u16>().add(i).write(h as u16);
-                    high.add(self.capacity * 2 + i).write((h >> 16) as u8);
+                    high.add(self.heap_capacity() * 2 + i)
+                        .write((h >> 16) as u8);
                 }),
                 4 => fill!(|i, h| high.cast::<u32>().add(i).write(h)),
                 _ => unreachable!(),
@@ -282,7 +298,7 @@ impl BlockPosting {
         }
         unsafe {
             let lows = std::slice::from_raw_parts(self.ptr().cast::<u32>(), self.len);
-            let high = self.ptr().add(4 * self.capacity);
+            let high = self.ptr().add(4 * self.heap_capacity());
             macro_rules! scan {
                 ($h:expr) => {
                     for i in begin..end {
@@ -300,7 +316,7 @@ impl BlockPosting {
                 1 => scan!(|i| high.add(i).read() as u32),
                 2 => scan!(|i| high.cast::<u16>().add(i).read() as u32),
                 3 => scan!(|i| high.cast::<u16>().add(i).read() as u32
-                    | ((high.add(2 * self.capacity + i).read() as u32) << 16)),
+                    | ((high.add(2 * self.heap_capacity() + i).read() as u32) << 16)),
                 4 => scan!(|i| high.cast::<u32>().add(i).read()),
                 _ => unreachable!(),
             }
@@ -315,8 +331,9 @@ impl BlockPosting {
 impl Drop for BlockPosting {
     fn drop(&mut self) {
         if self.len > 2 {
-            let allocation = layout(self.capacity, self.high()).expect("validated posting layout");
-            let arena = self.payload & 8 != 0;
+            let allocation =
+                layout(self.heap_capacity(), self.high()).expect("validated posting layout");
+            let arena = self.payload & 1 != 0;
             super::super::posting_arena::retirement::<u8>(allocation.size(), arena);
             if !arena {
                 unsafe {
@@ -442,9 +459,9 @@ mod tests {
     fn widening_address_does_not_double_unused_capacity() {
         let mut p = make(&[0, 1, 2]);
         p.append(make(&[3])).unwrap();
-        assert_eq!(p.capacity, 6);
+        assert_eq!(p.allocated_capacity(), 6);
         p.append(make(&[1u64 << 40])).unwrap();
-        assert_eq!(p.capacity, 6);
+        assert_eq!(p.allocated_capacity(), 6);
         assert_eq!(
             p.iter(32).map(|v| v as u64).collect::<Vec<_>>(),
             [0, 1, 2, 3, 1u64 << 40]
@@ -467,7 +484,7 @@ mod tests {
             p.append_reversed_reserved_at(1, 16, || v).unwrap();
         }
         assert_eq!(p.iter(16).collect::<Vec<_>>(), values);
-        assert!(p.capacity < 2 * values.len());
+        assert!(p.allocated_capacity() < 2 * values.len());
         let mut actual = Vec::new();
         p.try_for_each_range(16, 127, 258, |v| {
             actual.push(v);
