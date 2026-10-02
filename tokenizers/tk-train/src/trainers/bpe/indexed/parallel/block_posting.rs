@@ -7,8 +7,9 @@ use std::alloc::{Layout, alloc, dealloc};
 #[derive(Default)]
 pub(super) struct BlockPosting {
     len: usize,
+    // For len <= 2 these two words hold full-width inline addresses.
     capacity: usize,
-    // Inline full u64 singleton, two low-u32 values, or a 16-aligned pointer.
+    // Otherwise capacity is an allocation size, and payload a 16-aligned pointer.
     // Pointer low bits: width (0..4) and arena origin (8).
     payload: usize,
 }
@@ -47,10 +48,10 @@ impl BlockPosting {
         (self.payload & !15) as *mut u8
     }
     pub(super) fn allocated_capacity(&self) -> usize {
-        self.capacity
+        if self.len <= 2 { 0 } else { self.capacity }
     }
     pub(super) fn directory_bytes(&self) -> usize {
-        if self.capacity == 0 {
+        if self.len <= 2 {
             0
         } else {
             self.capacity * self.high()
@@ -61,11 +62,11 @@ impl BlockPosting {
     }
     fn get(&self, i: usize) -> u64 {
         debug_assert!(i < self.len);
-        if self.capacity == 0 {
-            return if self.len == 1 {
+        if self.len <= 2 {
+            return if self.len == 1 || i == 1 {
                 self.payload as u64
             } else {
-                ((self.payload >> (i * 32)) as u32) as u64
+                self.capacity as u64
             };
         }
         unsafe {
@@ -104,26 +105,12 @@ impl BlockPosting {
             }
         }
     }
-    fn reserve(&mut self, count: usize, high: usize) -> Result<()> {
-        if self.capacity >= count && self.high() >= high {
-            return Ok(());
-        }
-        let high = high.max(if self.capacity == 0 {
-            if self.len == 1 {
-                width(self.payload as u64)
-            } else {
-                0
-            }
-        } else {
-            self.high()
-        });
-        let capacity = if self.capacity == 0 {
-            count
-        } else {
-            count.max(self.capacity.saturating_mul(2))
-        };
+    // The temporary may contain uninitialized elements until its builder finishes.
+    // Drop only releases primitive storage, so callback panic/error does not read
+    // those elements, and the caller's old list is unchanged until installation.
+    fn allocate(capacity: usize, high: usize, len: usize, growth: bool) -> Result<Self> {
+        debug_assert!(len > 2 && capacity >= len);
         let allocation = layout(capacity, high)?;
-        let growth = self.capacity != 0;
         let (ptr, arena) =
             if let Some(p) = super::super::posting_arena::allocate_layout(allocation, growth)? {
                 (p.as_ptr(), true)
@@ -135,18 +122,65 @@ impl BlockPosting {
                 super::super::posting_arena::heap_allocation::<u8>(allocation.size(), growth);
                 (p, false)
             };
-        let mut result = Self {
-            len: self.len,
+        Ok(Self {
+            len,
             capacity,
             payload: ptr as usize | high | if arena { 8 } else { 0 },
-        };
-        for i in 0..self.len {
+        })
+    }
+    fn copy_prefix(&self, result: &mut Self) {
+        if self.len > 2 && self.high() == result.high() {
             unsafe {
-                result.put(i, self.get(i));
+                std::ptr::copy_nonoverlapping(self.ptr(), result.ptr(), self.len * 4);
+                let source = self.ptr().add(self.capacity * 4);
+                let target = result.ptr().add(result.capacity * 4);
+                if self.high() == 3 {
+                    std::ptr::copy_nonoverlapping(source, target, self.len * 2);
+                    std::ptr::copy_nonoverlapping(
+                        source.add(self.capacity * 2),
+                        target.add(result.capacity * 2),
+                        self.len,
+                    );
+                } else {
+                    std::ptr::copy_nonoverlapping(source, target, self.len * self.high());
+                }
+            }
+        } else {
+            for i in 0..self.len {
+                unsafe {
+                    result.put(i, self.get(i));
+                }
             }
         }
-        std::mem::swap(self, &mut result);
-        Ok(())
+    }
+    // Dispatch once for the entire fill, rather than inspecting the format at
+    // each birth-chain node. Producer returns canonical addresses in reverse.
+    fn fill_reverse(&mut self, start: usize, end: usize, last: u64, mut next: impl FnMut() -> u64) {
+        unsafe {
+            self.put(end - 1, last);
+            let low = self.ptr().cast::<u32>();
+            let high = self.ptr().add(self.capacity * 4);
+            macro_rules! fill {
+                ($put_high:expr) => {
+                    for i in (start..end - 1).rev() {
+                        let p = next();
+                        low.add(i).write(p as u32);
+                        ($put_high)(i, (p >> 32) as u32);
+                    }
+                };
+            }
+            match self.high() {
+                0 => fill!(|_: usize, _: u32| {}),
+                1 => fill!(|i, h| high.add(i).write(h as u8)),
+                2 => fill!(|i, h| high.cast::<u16>().add(i).write(h as u16)),
+                3 => fill!(|i, h| {
+                    high.cast::<u16>().add(i).write(h as u16);
+                    high.add(self.capacity * 2 + i).write((h >> 16) as u8);
+                }),
+                4 => fill!(|i, h| high.cast::<u32>().add(i).write(h)),
+                _ => unreachable!(),
+            }
+        }
     }
     pub(super) fn from_reversed(
         count: usize,
@@ -163,65 +197,70 @@ impl BlockPosting {
         bits: u8,
         mut next: impl FnMut() -> usize,
     ) -> Result<()> {
+        self.extend_reverse(count, || canonical(next(), bits))
+    }
+    fn extend_reverse(&mut self, count: usize, mut next: impl FnMut() -> u64) -> Result<()> {
         if count == 0 {
             return Ok(());
         }
-        let last = canonical(next(), bits); // Sorted reverse producer: maximum is available immediately.
-        let end = self
-            .len
-            .checked_add(count)
-            .ok_or("posting length overflow")?;
+        let last = next();
+        let start = self.len;
+        let end = start.checked_add(count).ok_or("posting length overflow")?;
         if end == 1 {
             self.payload = last as usize;
             self.len = 1;
             return Ok(());
         }
-        if end == 2
-            && width(last) == 0
-            && self.capacity == 0
-            && (self.len == 0 || width(self.payload as u64) == 0)
-        {
-            let first = if self.len == 0 {
-                canonical(next(), bits)
+        if end == 2 {
+            let first = if start == 0 {
+                next()
             } else {
                 self.payload as u64
             };
-            self.payload = (first | (last << 32)) as usize;
+            self.capacity = first as usize;
+            self.payload = last as usize;
             self.len = 2;
             return Ok(());
         }
-        self.reserve(end, width(last))?;
-        unsafe {
-            self.put(end - 1, last);
-        }
-        for i in (self.len..end - 1).rev() {
-            unsafe {
-                self.put(i, canonical(next(), bits));
+        let old_capacity = self.allocated_capacity();
+        let old_high = if start <= 2 {
+            if start == 0 {
+                0
+            } else {
+                width(self.get(start - 1))
             }
+        } else {
+            self.high()
+        };
+        let high = width(last).max(old_high);
+        if old_capacity >= end && old_high >= high {
+            self.fill_reverse(start, end, last, next);
+            self.len = end;
+        } else {
+            let capacity = if old_capacity >= end {
+                old_capacity
+            } else if old_capacity == 0 {
+                end
+            } else {
+                end.max(old_capacity.saturating_mul(2))
+            };
+            let mut result = Self::allocate(capacity, high, end, old_capacity != 0)?;
+            self.copy_prefix(&mut result);
+            result.fill_reverse(start, end, last, next);
+            *self = result;
         }
-        self.len = end;
         Ok(())
     }
     pub(super) fn append(&mut self, other: Self) -> Result<()> {
-        if other.len == 0 {
-            return Ok(());
-        }
         if self.len == 0 {
             *self = other;
             return Ok(());
         }
-        let end = self
-            .len
-            .checked_add(other.len)
-            .ok_or("posting length overflow")?;
-        self.reserve(end, width(other.get(other.len - 1)))?;
-        for i in 0..other.len {
-            unsafe {
-                self.put(self.len + i, other.get(i));
-            }
-        }
-        self.len = end;
-        Ok(())
+        let mut i = other.len;
+        self.extend_reverse(other.len, || {
+            i -= 1;
+            other.get(i)
+        })
     }
     pub(super) fn iter(&self, bits: u8) -> impl Iterator<Item = usize> + '_ {
         (0..self.len).map(move |i| address(self.get(i), bits))
@@ -235,7 +274,7 @@ impl BlockPosting {
         mut f: impl FnMut(usize) -> Result<()>,
     ) -> Result<()> {
         assert!(begin <= end && end <= self.len);
-        if self.capacity == 0 {
+        if self.len <= 2 {
             for i in begin..end {
                 f(address(self.get(i), bits))?;
             }
@@ -275,7 +314,7 @@ impl BlockPosting {
 }
 impl Drop for BlockPosting {
     fn drop(&mut self) {
-        if self.capacity != 0 {
+        if self.len > 2 {
             let allocation = layout(self.capacity, self.high()).expect("validated posting layout");
             let arena = self.payload & 8 != 0;
             super::super::posting_arena::retirement::<u8>(allocation.size(), arena);
@@ -336,7 +375,7 @@ mod tests {
                     .map(|i| ((high as u64) << 32) | (i * 17) as u64)
                     .collect();
                 let p = make(&values);
-                if p.capacity != 0 {
+                if p.allocated_capacity() != 0 {
                     assert_eq!(p.high(), width(*values.last().unwrap()));
                 }
                 let mut decoded = Vec::new();
@@ -366,6 +405,50 @@ mod tests {
         assert!(counters.heap_buffers >= 5);
         assert_eq!(counters.arena_requested_bytes, counters.arena_retired_bytes);
         assert_eq!(counters.heap_requested_bytes, counters.heap_freed_bytes);
+    }
+    #[test]
+    fn two_full_width_addresses_are_inline_and_survive_growth() {
+        for values in [[0, u64::MAX], [1u64 << 40, (1u64 << 63) + 7]] {
+            let mut p = make(&values);
+            assert_eq!(p.allocated_capacity(), 0);
+            assert_eq!(p.directory_bytes(), 0);
+            p.append(make(&[u64::MAX])).unwrap();
+            assert_eq!(
+                p.iter(32).map(|v| v as u64).collect::<Vec<_>>(),
+                [values[0], values[1], u64::MAX]
+            );
+        }
+    }
+    #[test]
+    fn reverse_producer_panic_leaves_old_inline_or_heap_list_valid() {
+        for original in [vec![1], vec![1, 2], vec![1, 2, 3]] {
+            let mut p = make(&original);
+            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                let mut calls = 0;
+                p.append_reversed_reserved_at(3, 32, || {
+                    calls += 1;
+                    if calls == 2 {
+                        panic!("producer probe");
+                    }
+                    99
+                })
+                .unwrap();
+            }));
+            assert!(result.is_err());
+            assert_eq!(p.iter(32).map(|v| v as u64).collect::<Vec<_>>(), original);
+        }
+    }
+    #[test]
+    fn widening_address_does_not_double_unused_capacity() {
+        let mut p = make(&[0, 1, 2]);
+        p.append(make(&[3])).unwrap();
+        assert_eq!(p.capacity, 6);
+        p.append(make(&[1u64 << 40])).unwrap();
+        assert_eq!(p.capacity, 6);
+        assert_eq!(
+            p.iter(32).map(|v| v as u64).collect::<Vec<_>>(),
+            [0, 1, 2, 3, 1u64 << 40]
+        );
     }
     #[test]
     fn no_u32_count_limit_and_overflow_is_checked() {
