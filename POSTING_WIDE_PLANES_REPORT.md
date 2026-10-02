@@ -1,5 +1,15 @@
 # Wide address planes experiment
 
+## Compact-header candidate (not yet measured)
+
+The next experiment targets a difference from Flat U32: BlockPosting's 24-byte header versus SmallPosting's 16-byte header makes each owner-map bucket eight bytes larger. The scaled inventory grows from 2,697,517 lists at initialization to 10,572,128 at merge end. The same bucket count therefore amplifies this differential metadata cost. This is a source/layout argument, not complete attribution of the RSS curve; matched Flat diagnostics are in progress.
+
+The candidate restores a 16-byte header. Three bits that the allocator's size bound already makes unavailable to a heap length hold its upper-plane width or inline tag. Exactly sized initial/birth allocations infer capacity from length. Only allocations with spare storage keep an eight-byte capacity prefix, indicated by a low pointer tag; four-byte alignment is retained using unaligned prefix access. A filled formerly-reserved allocation keeps its prefix until replacement. Allocation, growth and drop reconstruct the same layout, including that prefix.
+
+Single full-U64 addresses remain inline. A pair is inline when its first canonical address fits 61 bits on this target; otherwise an ordinary two-element allocation preserves the complete U64 domain. This rule is per value, has no language threshold or whole-corpus single-block branch, and does not truncate high addresses. Unlike the previous header, it does not promise two arbitrary U64 addresses are always inline. Heap lengths remain bounded only by Layout's actual byte-allocation limit, not by U32.
+
+This changes the existing custom container, not Rust's Vec. Correctness risks are tag discrimination, exact-to-reserved transitions, width promotions, prefixed deallocation and callback panic safety. Added checks cover the inline boundary, arbitrary high U64 pairs, no-allocation wide-count headers, spare-capacity fills and panic recovery. All 106 library tests passed with scratch16 and default prefetch (99.18 s, `/tmp/posting-compact-header-tests.log`), including the added boundary/prefix/panic checks and existing randomized round-by-round oracle. `git diff --check` passed. Native time/RSS validation is pending. Arena policy, payload codec, prefetch and merge algorithm remain the frozen V7 behavior, so the test targets differential header cost.
+
 Status: selected as this experiment's speed/memory tradeoff; isolated and not merged. Measured implementation commit: `847a791a904a08deb3c839464b50a683bbcbca29`. Later report-only commits do not change the measured implementation.
 
 ## Final validation and decision

@@ -1957,7 +1957,7 @@ mod tests {
         let block = Block::<u16, 4>::new(base, 13);
         assert_eq!(block.weight(base + 65535, None), 13);
         assert_eq!(<u16 as Offset>::encode(65535_usize), 65535);
-        assert_eq!(std::mem::size_of::<Entry>(), 32);
+        assert_eq!(std::mem::size_of::<Entry>(), 24);
     }
 
     #[test]

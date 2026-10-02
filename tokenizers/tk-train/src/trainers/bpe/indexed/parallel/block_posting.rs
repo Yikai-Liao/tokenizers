@@ -3,20 +3,21 @@
 //! Length and capacity are machine-sized; narrow birth links are job-local only.
 use super::*;
 use std::alloc::{Layout, alloc, dealloc};
-// Layout already bounds allocation byte size by isize::MAX, and every item
-// uses at least four bytes. Capacity therefore needs at most usize::BITS-3
-// bits; the otherwise unused top three bits hold the 0..4-byte upper width.
-// This introduces no capacity limit beyond the allocator's existing bound.
+// Every allocation uses at least four bytes per item and Layout bounds its
+// byte size by isize::MAX, so heap lengths need at most usize::BITS-3 bits.
+// The upper three bits identify its high plane or one of two inline forms.
 const WIDTH_SHIFT: u32 = usize::BITS - 3;
-const CAPACITY_MASK: usize = (1usize << WIDTH_SHIFT) - 1;
+const LENGTH_MASK: usize = (1usize << WIDTH_SHIFT) - 1;
+const INLINE_ONE: usize = 6;
+const INLINE_TWO: usize = 7;
+const ARENA: usize = 1;
+const RESERVED: usize = 2;
 
 #[derive(Default)]
 pub(super) struct BlockPosting {
-    len: usize,
-    // For len <= 2 these two words hold full-width inline addresses.
-    capacity: usize,
-    // For heap storage, capacity also carries the upper width in its top bits.
-    // The low pointer bit carries arena origin; natural U32 alignment suffices.
+    // Heap: length plus high-plane width. Inline pair: first address plus tag.
+    meta: usize,
+    // Heap: pointer with allocator/reserved-capacity tags; inline: last address.
     payload: usize,
 }
 // Unique ownership; arena sessions outlive postings moved between workers.
@@ -31,10 +32,11 @@ fn canonical(p: usize, bits: u8) -> u64 {
 fn address(p: u64, bits: u8) -> usize {
     (((p >> 32) << bits) | (p & u32::MAX as u64)) as usize
 }
-fn layout(capacity: usize, high: usize) -> Result<Layout> {
+fn layout(capacity: usize, high: usize, reserved: bool) -> Result<Layout> {
     Layout::from_size_align(
         capacity
             .checked_mul(4 + high)
+            .and_then(|bytes| bytes.checked_add(usize::from(reserved) * 8))
             .ok_or("posting size overflow")?,
         4,
     )
@@ -45,41 +47,66 @@ impl BlockPosting {
         Ok(Self::default())
     }
     pub(super) fn len(&self) -> usize {
-        self.len
+        match self.high() {
+            INLINE_ONE => 1,
+            INLINE_TWO => 2,
+            _ => self.meta & LENGTH_MASK,
+        }
     }
     fn high(&self) -> usize {
-        self.capacity >> WIDTH_SHIFT
+        self.meta >> WIDTH_SHIFT
+    }
+    fn is_inline(&self) -> bool {
+        self.meta == 0 || self.high() >= INLINE_ONE
+    }
+    fn allocation_ptr(&self) -> *mut u8 {
+        (self.payload & !(ARENA | RESERVED)) as *mut u8
+    }
+    fn reserved(&self) -> bool {
+        self.payload & RESERVED != 0
     }
     fn ptr(&self) -> *mut u8 {
-        (self.payload & !1) as *mut u8
+        // Only growing allocations carry a capacity prefix. Exactly filled
+        // initial/birth lists infer capacity from length and have no prefix.
+        unsafe { self.allocation_ptr().add(usize::from(self.reserved()) * 8) }
     }
     fn heap_capacity(&self) -> usize {
-        self.capacity & CAPACITY_MASK
+        if self.reserved() {
+            // Keep the original four-byte allocation alignment. The usize
+            // prefix is intentionally accessed unaligned on 64-bit targets.
+            unsafe { self.allocation_ptr().cast::<usize>().read_unaligned() }
+        } else {
+            self.meta & LENGTH_MASK
+        }
+    }
+    fn set_heap_len(&mut self, len: usize) {
+        debug_assert!(len <= LENGTH_MASK);
+        self.meta = (self.high() << WIDTH_SHIFT) | len;
     }
     pub(super) fn allocated_capacity(&self) -> usize {
-        if self.len <= 2 {
+        if self.is_inline() {
             0
         } else {
             self.heap_capacity()
         }
     }
     pub(super) fn directory_bytes(&self) -> usize {
-        if self.len <= 2 {
+        if self.is_inline() {
             0
         } else {
             self.heap_capacity() * self.high()
         }
     }
     pub(super) fn run_count(&self) -> usize {
-        usize::from(self.len != 0)
+        usize::from(self.len() != 0)
     }
     fn get(&self, i: usize) -> u64 {
-        debug_assert!(i < self.len);
-        if self.len <= 2 {
-            return if self.len == 1 || i == 1 {
+        debug_assert!(i < self.len());
+        if self.is_inline() {
+            return if self.high() == INLINE_ONE || i == 1 {
                 self.payload as u64
             } else {
-                self.capacity as u64
+                (self.meta & LENGTH_MASK) as u64
             };
         }
         unsafe {
@@ -123,9 +150,10 @@ impl BlockPosting {
     // Drop only releases primitive storage, so callback panic/error does not read
     // those elements, and the caller's old list is unchanged until installation.
     fn allocate(capacity: usize, high: usize, len: usize, growth: bool) -> Result<Self> {
-        debug_assert!(len > 2 && capacity >= len);
-        let allocation = layout(capacity, high)?;
-        debug_assert!(capacity <= CAPACITY_MASK);
+        debug_assert!(len > 0 && capacity >= len && high <= 4);
+        let reserved = capacity != len;
+        let allocation = layout(capacity, high, reserved)?;
+        debug_assert!(capacity <= LENGTH_MASK);
         let (ptr, arena) =
             if let Some(p) = super::super::posting_arena::allocate_layout(allocation, growth)? {
                 (p.as_ptr(), true)
@@ -137,31 +165,35 @@ impl BlockPosting {
                 super::super::posting_arena::heap_allocation::<u8>(allocation.size(), growth);
                 (p, false)
             };
+        if reserved {
+            unsafe {
+                ptr.cast::<usize>().write_unaligned(capacity);
+            }
+        }
         Ok(Self {
-            len,
-            capacity: capacity | (high << WIDTH_SHIFT),
-            payload: ptr as usize | usize::from(arena),
+            meta: len | (high << WIDTH_SHIFT),
+            payload: ptr as usize | usize::from(arena) * ARENA | usize::from(reserved) * RESERVED,
         })
     }
     fn copy_prefix(&self, result: &mut Self) {
-        if self.len > 2 && self.high() == result.high() {
+        if !self.is_inline() && self.high() == result.high() {
             unsafe {
-                std::ptr::copy_nonoverlapping(self.ptr(), result.ptr(), self.len * 4);
+                std::ptr::copy_nonoverlapping(self.ptr(), result.ptr(), self.len() * 4);
                 let source = self.ptr().add(self.heap_capacity() * 4);
                 let target = result.ptr().add(result.heap_capacity() * 4);
                 if self.high() == 3 {
-                    std::ptr::copy_nonoverlapping(source, target, self.len * 2);
+                    std::ptr::copy_nonoverlapping(source, target, self.len() * 2);
                     std::ptr::copy_nonoverlapping(
                         source.add(self.heap_capacity() * 2),
                         target.add(result.heap_capacity() * 2),
-                        self.len,
+                        self.len(),
                     );
                 } else {
-                    std::ptr::copy_nonoverlapping(source, target, self.len * self.high());
+                    std::ptr::copy_nonoverlapping(source, target, self.len() * self.high());
                 }
             }
         } else {
-            for i in 0..self.len {
+            for i in 0..self.len() {
                 unsafe {
                     result.put(i, self.get(i));
                 }
@@ -220,26 +252,33 @@ impl BlockPosting {
             return Ok(());
         }
         let last = next();
-        let start = self.len;
+        let start = self.len();
         let end = start.checked_add(count).ok_or("posting length overflow")?;
         if end == 1 {
             self.payload = last as usize;
-            self.len = 1;
+            self.meta = INLINE_ONE << WIDTH_SHIFT;
             return Ok(());
         }
         if end == 2 {
-            let first = if start == 0 {
-                next()
+            let first = if start == 0 { next() } else { self.get(0) };
+            // The first address fits alongside the tag for every physically
+            // allocatable corpus on this target. Arbitrary larger U64 pairs
+            // remain supported by the ordinary two-element heap form.
+            if first <= LENGTH_MASK as u64 {
+                self.meta = (INLINE_TWO << WIDTH_SHIFT) | first as usize;
+                self.payload = last as usize;
             } else {
-                self.payload as u64
-            };
-            self.capacity = first as usize;
-            self.payload = last as usize;
-            self.len = 2;
+                let mut result = Self::allocate(2, width(first).max(width(last)), 2, false)?;
+                unsafe {
+                    result.put(0, first);
+                    result.put(1, last);
+                }
+                *self = result;
+            }
             return Ok(());
         }
         let old_capacity = self.allocated_capacity();
-        let old_high = if start <= 2 {
+        let old_high = if self.is_inline() {
             if start == 0 {
                 0
             } else {
@@ -251,7 +290,7 @@ impl BlockPosting {
         let high = width(last).max(old_high);
         if old_capacity >= end && old_high >= high {
             self.fill_reverse(start, end, last, next);
-            self.len = end;
+            self.set_heap_len(end);
         } else {
             let capacity = if old_capacity >= end {
                 old_capacity
@@ -268,23 +307,23 @@ impl BlockPosting {
         Ok(())
     }
     pub(super) fn append(&mut self, other: Self) -> Result<()> {
-        if self.len == 0 {
+        if self.len() == 0 {
             *self = other;
             return Ok(());
         }
-        let mut i = other.len;
-        self.extend_reverse(other.len, || {
+        let mut i = other.len();
+        self.extend_reverse(other.len(), || {
             i -= 1;
             other.get(i)
         })
     }
     pub(super) fn iter(&self, bits: u8) -> impl Iterator<Item = usize> + '_ {
-        (0..self.len).map(move |i| address(self.get(i), bits))
+        (0..self.len()).map(move |i| address(self.get(i), bits))
     }
     // Decode a bounded caller-owned batch. The consumer can then use one
     // ordinary loop without keeping format-specific decode state live.
     pub(super) fn decode_into(&self, bits: u8, begin: usize, output: &mut [usize]) -> Result<()> {
-        assert!(begin <= self.len && output.len() <= self.len - begin);
+        assert!(begin <= self.len() && output.len() <= self.len() - begin);
         let end = begin + output.len();
         let mut destination = output.iter_mut();
         self.try_for_each_range(bits, begin, end, |p| {
@@ -300,15 +339,15 @@ impl BlockPosting {
         end: usize,
         mut f: impl FnMut(usize) -> Result<()>,
     ) -> Result<()> {
-        assert!(begin <= end && end <= self.len);
-        if self.len <= 2 {
+        assert!(begin <= end && end <= self.len());
+        if self.is_inline() {
             for i in begin..end {
                 f(address(self.get(i), bits))?;
             }
             return Ok(());
         }
         unsafe {
-            let lows = std::slice::from_raw_parts(self.ptr().cast::<u32>(), self.len);
+            let lows = std::slice::from_raw_parts(self.ptr().cast::<u32>(), self.len());
             let high = self.ptr().add(4 * self.heap_capacity());
             macro_rules! scan {
                 ($h:expr) => {
@@ -341,14 +380,14 @@ impl BlockPosting {
 }
 impl Drop for BlockPosting {
     fn drop(&mut self) {
-        if self.len > 2 {
-            let allocation =
-                layout(self.heap_capacity(), self.high()).expect("validated posting layout");
+        if !self.is_inline() {
+            let allocation = layout(self.heap_capacity(), self.high(), self.reserved())
+                .expect("validated posting layout");
             let arena = self.payload & 1 != 0;
             super::super::posting_arena::retirement::<u8>(allocation.size(), arena);
             if !arena {
                 unsafe {
-                    dealloc(self.ptr(), allocation);
+                    dealloc(self.allocation_ptr(), allocation);
                 }
             }
         }
@@ -460,6 +499,63 @@ mod tests {
         }
     }
     #[test]
+    fn pair_inline_boundary_keeps_the_complete_address_domain() {
+        for first in [
+            LENGTH_MASK as u64 - 1,
+            LENGTH_MASK as u64,
+            LENGTH_MASK as u64 + 1,
+            u64::MAX - 1,
+        ] {
+            let mut p = make(&[first, u64::MAX]);
+            assert_eq!(p.len(), 2);
+            assert_eq!(p.is_inline(), first <= LENGTH_MASK as u64);
+            assert_eq!(p.iter(32).collect::<Vec<_>>(), [first as usize, usize::MAX]);
+            let mut decoded = [0; 2];
+            p.decode_into(32, 0, &mut decoded).unwrap();
+            assert_eq!(decoded, [first as usize, usize::MAX]);
+            p.append(make(&[u64::MAX])).unwrap();
+            p.append(make(&[u64::MAX])).unwrap();
+            assert_eq!(
+                p.iter(32).collect::<Vec<_>>(),
+                [first as usize, usize::MAX, usize::MAX, usize::MAX]
+            );
+        }
+    }
+    #[test]
+    fn capacity_prefix_is_only_needed_for_spare_storage_and_survives_panic() {
+        let session = super::super::super::posting_arena::LocalSession::new();
+        session.configure(256);
+        {
+            let mut p = make(&[0, 1, 2]);
+            assert!(!p.reserved());
+            assert_eq!(p.allocated_capacity(), 3);
+            p.append(make(&[3])).unwrap();
+            assert!(p.reserved());
+            assert_eq!(p.allocated_capacity(), 6);
+            let failed = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                let mut calls = 0;
+                p.append_reversed_reserved_at(2, 32, || {
+                    calls += 1;
+                    if calls == 2 {
+                        panic!("reserved producer probe");
+                    }
+                    5
+                })
+                .unwrap();
+            }));
+            assert!(failed.is_err());
+            assert_eq!(p.iter(32).collect::<Vec<_>>(), [0, 1, 2, 3]);
+            p.append(make(&[4, 5])).unwrap();
+            assert_eq!(p.len(), 6);
+            assert!(p.reserved());
+            assert_eq!(p.allocated_capacity(), 6);
+            assert_eq!(p.iter(32).collect::<Vec<_>>(), [0, 1, 2, 3, 4, 5]);
+        }
+        let counters = session.finish();
+        assert_eq!(counters.arena_requested_bytes, 3 * 4 + 8 + 6 * 4);
+        assert_eq!(counters.arena_requested_bytes, counters.arena_retired_bytes);
+    }
+    #[test]
     fn reverse_producer_panic_leaves_old_inline_or_heap_list_valid() {
         for original in [vec![1], vec![1, 2], vec![1, 2, 3]] {
             let mut p = make(&original);
@@ -492,12 +588,20 @@ mod tests {
     }
     #[test]
     fn no_u32_count_limit_and_overflow_is_checked() {
-        assert_eq!(std::mem::size_of::<BlockPosting>(), 24);
+        assert_eq!(std::mem::size_of::<BlockPosting>(), 16);
         assert_eq!(
-            layout(u32::MAX as usize + 1, 4).unwrap().size(),
+            layout(u32::MAX as usize + 1, 4, false).unwrap().size(),
             1usize << 35
         );
-        assert!(layout(usize::MAX, 4).is_err());
+        assert!(layout(usize::MAX, 4, false).is_err());
+        assert!(layout(LENGTH_MASK, 0, false).is_ok());
+        assert!(layout(LENGTH_MASK, 0, true).is_err());
+        // No allocation is attempted: validate the header's count domain.
+        let p = std::mem::ManuallyDrop::new(BlockPosting {
+            meta: (4 << WIDTH_SHIFT) | (u32::MAX as usize + 1),
+            payload: 0,
+        });
+        assert_eq!(p.len(), u32::MAX as usize + 1);
     }
     #[test]
     fn forced_geometry_and_amortized_append() {
