@@ -25,6 +25,8 @@ pub(super) struct Prepared<C: Slot, O: Offset, const INLINE: usize> {
     pub word_reference_bytes: usize,
     pub temporary_weight_bytes: usize,
     pub padding_slots: usize,
+    pub oversized_words: usize,
+    pub padding_plan_bytes: usize,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -116,7 +118,11 @@ fn fill<C: Slot>(
             let retained = aligned_words.next().unwrap().1 - 1;
             let block_size = 1_usize << bits;
             let local = (base + position) & (block_size - 1);
-            let padding = if local == 0 {
+            // A word wider than one block keeps the previous split-word
+            // behavior; a one-slot guard is still written when it starts at 0.
+            let padding = if retained + 1 > block_size - 1 {
+                usize::from(local == 0)
+            } else if local == 0 {
                 1
             } else if local + retained + 1 > block_size {
                 block_size - local + 1
@@ -249,11 +255,10 @@ pub(super) fn build<C: Slot, O: Offset, const INLINE: usize>(
         for region in &mut regions {
             let region_start = capacity;
             for &word_slots in &region.word_slots {
-                if word_slots > block_size - 1 {
-                    return Err("word is too long for a guarded u16 posting block".into());
-                }
                 let local = capacity & (block_size - 1);
-                let padding = if local == 0 {
+                let padding = if word_slots > block_size - 1 {
+                    usize::from(local == 0)
+                } else if local == 0 {
                     1
                 } else if local + word_slots > block_size {
                     block_size - local + 1
@@ -275,6 +280,15 @@ pub(super) fn build<C: Slot, O: Offset, const INLINE: usize>(
     }
     let padding_slots = if bits == 16 {
         capacity - (1 + symbols + words.len())
+    } else {
+        0
+    };
+    let oversized_words = if bits == 16 {
+        regions
+            .iter()
+            .flat_map(|region| region.word_slots.iter())
+            .filter(|&&word_slots| word_slots > block_size - 1)
+            .count()
     } else {
         0
     };
@@ -309,6 +323,10 @@ pub(super) fn build<C: Slot, O: Offset, const INLINE: usize>(
             bits,
         )
     };
+    let padding_plan_bytes = regions
+        .iter()
+        .map(|region| region.word_slots.capacity() * std::mem::size_of::<usize>())
+        .sum();
     // SAFETY: slot zero was initialized above; fill covers exactly every other
     // slot through disjoint regions, checks each region's exact length, and its
     // joins complete before this conversion. MaybeUninit<C> has C's layout;
@@ -367,6 +385,8 @@ pub(super) fn build<C: Slot, O: Offset, const INLINE: usize>(
         word_reference_bytes,
         temporary_weight_bytes,
         padding_slots,
+        oversized_words,
+        padding_plan_bytes,
         timings: Timings {
             measure_ms,
             sort_ms,
@@ -407,16 +427,15 @@ pub(super) fn from_decorated<C: Slot, O: Offset, const INLINE: usize>(
             .map_or(input.corpus.len(), |&p| p as usize);
         let word_slots = end - start;
         let local = capacity & (block_size - 1);
-        let padding = if bits == 16 && local == 0 {
+        let padding = if bits == 16 && word_slots > block_size - 1 {
+            usize::from(local == 0)
+        } else if bits == 16 && local == 0 {
             1
         } else if bits == 16 && local + word_slots > block_size {
             block_size - local + 1
         } else {
             0
         };
-        if bits == 16 && word_slots > block_size - 1 {
-            return Err("word is too long for a guarded u16 posting block".into());
-        }
         capacity = capacity
             .checked_add(padding)
             .ok_or("corpus size exceeds usize")?;
@@ -442,6 +461,14 @@ pub(super) fn from_decorated<C: Slot, O: Offset, const INLINE: usize>(
     let measure_ms = measure.elapsed().as_secs_f64() * 1000.0;
     let padding_slots = if bits == 16 {
         capacity - input.corpus.len()
+    } else {
+        0
+    };
+    let oversized_words = if bits == 16 {
+        starts
+            .iter()
+            .filter(|&&(_, _, start, end)| end - start > block_size - 1)
+            .count()
     } else {
         0
     };
@@ -503,6 +530,8 @@ pub(super) fn from_decorated<C: Slot, O: Offset, const INLINE: usize>(
         temporary_weight_bytes: starts.capacity()
             * std::mem::size_of::<(usize, u64, usize, usize)>(),
         padding_slots,
+        oversized_words,
+        padding_plan_bytes: 0,
     })
 }
 fn fill_decorated<C: Slot>(

@@ -109,6 +109,40 @@ mod tests {
         }
     }
 
+    #[test]
+    fn word_aligned_u16_blocks_preserve_full_training_trace() {
+        let words: AHashMap<CompactString, u64> = [
+            ("a".repeat(60_000).into(), 3),
+            ("ab".repeat(5_000).into(), 2),
+            ("b".repeat(1_000).into(), 1),
+        ]
+        .into_iter()
+        .collect();
+        let trainer = BpeTrainer::builder()
+            .vocab_size(8)
+            .min_frequency(1)
+            .show_progress(false)
+            .build();
+        let mut reference_trace = Vec::new();
+        let (vocab, merges, _) = trainer
+            .do_train_observed(&words, |pair, frequency, id| {
+                reference_trace.push((pair, frequency, id));
+            })
+            .unwrap();
+        for workers in [1, 4] {
+            let flat = full_trace::<u32, u32, 2>(&trainer, &words, 32, workers);
+            let local = full_trace::<AtomicU16, u16, 4>(&trainer, &words, 16, workers);
+            assert_eq!(local.trace, reference_trace);
+            assert_eq!(local.vocab, vocab);
+            assert_eq!(local.merges, merges);
+            assert_eq!(local.trace, flat.trace);
+            assert_eq!(local.vocab, flat.vocab);
+            assert_eq!(local.merges, flat.merges);
+            assert!(local.stats.corpus_padding_slots > 0);
+            assert!(local.stats.fused_block_batches > 0);
+        }
+    }
+
     fn fixture<C: Slot, O: Offset, const INLINE: usize>(wide: bool) {
         let bits = 3;
         let (l, a, b, r) = if wide {

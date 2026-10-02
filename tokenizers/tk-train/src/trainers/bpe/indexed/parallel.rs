@@ -859,6 +859,8 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
         word_reference_bytes,
         temporary_weight_bytes,
         padding_slots: prepared_padding_slots,
+        oversized_words: prepared_oversized_words,
+        padding_plan_bytes: prepared_padding_plan_bytes,
     } = prepared;
     super::posting_arena::configure(pool, initialization_pool, policy.cutoff(initial_edges));
     // Fresh activation holds throughout a guarded epoch: an active canonical
@@ -1064,6 +1066,8 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
                 "weight_sorted"
             },
             corpus_padding_slots: prepared_padding_slots,
+            corpus_oversized_words: prepared_oversized_words,
+            corpus_padding_plan_bytes: prepared_padding_plan_bytes,
             corpus_word_reference_bytes: word_reference_bytes,
             corpus_temporary_weight_bytes: temporary_weight_bytes,
             weight_interval_count: blocks.iter().map(|b| b.pivots.len()).sum(),
@@ -1104,10 +1108,10 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
             initialization_workers: config.initialization_workers.unwrap_or(config.workers),
             atomic_corpus: config.atomic_corpus,
             layout: match (C::NARROW, bits, flat) {
-                (true, 16, _) => "parallel_u16_dict16",
+                (true, 16, _) => "parallel_u16_dict16_word_aligned",
                 (true, 32, true) => "parallel_u16_flat32",
                 (true, 32, false) => "parallel_u16_dict32",
-                (false, 16, _) => "parallel_u32_dict16",
+                (false, 16, _) => "parallel_u32_dict16_word_aligned",
                 (false, 32, true) => "parallel_u32_flat32",
                 _ => "parallel_u32_dict32",
             },

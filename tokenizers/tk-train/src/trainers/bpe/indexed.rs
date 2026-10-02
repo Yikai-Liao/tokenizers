@@ -62,6 +62,8 @@ pub(super) struct IndexedTrainingStats {
     pub layout: &'static str,
     pub corpus_bytes: usize,
     pub corpus_padding_slots: usize,
+    pub corpus_oversized_words: usize,
+    pub corpus_padding_plan_bytes: usize,
     pub posting_bytes: usize,
     pub peak_birth_bytes: usize,
     pub workers: usize,
