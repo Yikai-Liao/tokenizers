@@ -284,46 +284,25 @@ fn initialize_segmented_waves<C: Slot, O: Offset, const INLINE: usize>(
             .len()
             .min(base.saturating_add(wave_slots).saturating_add(1));
         let mut wave = (0..workers).map(|_| Owner::default()).collect::<Vec<_>>();
-        let m = if blocks.len() == 1 {
-            initialize_core(
-                &corpus[base..end],
-                workers,
-                if corpus.len() <= wave_slots { floor } else { 1 },
-                &mut wave,
-                workers.min(2),
-                workers,
-                bits,
-                base,
-                |p| {
-                    uniform.unwrap_or_else(|| {
-                        lookups.map_or_else(
-                            || blocks[0].weight(p, None),
-                            |l| l[0].weight(&blocks[0], p as u32),
-                        )
-                    })
-                },
-            )?
-        } else {
-            initialize_core(
-                &corpus[base..end],
-                workers,
-                if corpus.len() <= wave_slots { floor } else { 1 },
-                &mut wave,
-                workers.min(2),
-                workers,
-                bits,
-                base,
-                |p| {
-                    uniform.unwrap_or_else(|| {
-                        let b = p >> bits;
-                        lookups.map_or_else(
-                            || blocks[b].weight(p, None),
-                            |l| l[b].weight(&blocks[b], (p - blocks[b].base) as u32),
-                        )
-                    })
-                },
-            )?
-        };
+        let m = initialize_core(
+            &corpus[base..end],
+            workers,
+            if corpus.len() <= wave_slots { floor } else { 1 },
+            &mut wave,
+            workers.min(2),
+            workers,
+            bits,
+            base,
+            |p| {
+                uniform.unwrap_or_else(|| {
+                    let b = p >> bits;
+                    lookups.map_or_else(
+                        || blocks[b].weight(p, None),
+                        |l| l[b].weight(&blocks[b], (p - blocks[b].base) as u32),
+                    )
+                })
+            },
+        )?;
         total.route_ms += m.route_ms;
         total.count_ms += m.count_ms;
         total.sort_ms += m.sort_ms;
@@ -465,17 +444,10 @@ fn initialize_core<C: Slot>(
                     let count = group.end - group.start;
                     let source = &records[group.start as usize..group.end as usize];
                     let mut next = source.len();
-                    let first = (base + source[0] as u32 as usize) >> bits;
-                    let last = (base + source[source.len() - 1] as u32 as usize) >> bits;
-                    let next = move || {
+                    let positions = BlockPosting::from_reversed(count, bits, move || {
                         next -= 1;
                         base + source[next] as u32 as usize
-                    };
-                    let positions = if first == last {
-                        BlockPosting::from_reversed_in_block(count, first as u32, bits, next)?
-                    } else {
-                        BlockPosting::from_reversed(count, bits, next)?
-                    };
+                    })?;
                     debug_assert!(
                         positions
                             .iter(bits)

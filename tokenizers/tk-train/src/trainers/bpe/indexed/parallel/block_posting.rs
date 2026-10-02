@@ -1,18 +1,49 @@
-//! One owner, contiguous local u32 offsets, and runs sharing an address block.
-//! A run is two u32 values, never an address per occurrence. At bits=32 every
-//! u64 address is representable, including u64::MAX. bits=16 is the scaled
-//! experiment: offsets stay u32 so it isolates the cost of segmentation.
+//! Local u32 offsets and a compact directory of (block ID, count) runs.
+//! Both directory integers use 15 data bits per u16, with one continuation bit.
+//! This keeps arena alignment, supports every u32 block ID, and avoids per-run
+//! objects. All corpus geometries use this exact representation and builder.
 use super::*;
+use smallvec::SmallVec;
 
 #[derive(Clone, Copy, Default)]
 struct Run {
     block: u32,
-    end: u32,
+    count: u32,
 }
 #[derive(Default)]
 pub(super) struct BlockPosting {
     positions: SmallPosting,
-    runs: PackedPosting<Run, 1>,
+    runs: PackedPosting<u16, 4>,
+}
+fn units(mut value: u32) -> usize {
+    let mut n = 1;
+    while value >= 0x8000 {
+        value >>= 15;
+        n += 1;
+    }
+    n
+}
+fn emit(out: &mut PackedPosting<u16, 4>, mut value: u32) -> Result<()> {
+    while value >= 0x8000 {
+        out.push((value as u16 & 0x7fff) | 0x8000)?;
+        value >>= 15;
+    }
+    out.push(value as u16)
+}
+fn read(input: &[u16], cursor: &mut usize) -> u32 {
+    let first = input[*cursor];
+    *cursor += 1;
+    if first < 0x8000 {
+        return first as u32;
+    }
+    let second = input[*cursor];
+    *cursor += 1;
+    let mut value = (first as u32 & 0x7fff) | ((second as u32 & 0x7fff) << 15);
+    if second >= 0x8000 {
+        value |= (input[*cursor] as u32) << 30;
+        *cursor += 1;
+    }
+    value
 }
 impl BlockPosting {
     pub(super) fn with_capacity(count: u32) -> Result<Self> {
@@ -28,23 +59,31 @@ impl BlockPosting {
         self.positions.allocated_capacity()
     }
     pub(super) fn directory_bytes(&self) -> usize {
-        self.runs.allocated_capacity() * 8
+        self.runs.allocated_capacity() * 2
     }
     pub(super) fn run_count(&self) -> usize {
-        self.runs.len()
-    }
-    pub(super) fn reserve_runs(&mut self, count: u32) -> Result<()> {
-        debug_assert_eq!(self.runs.len(), 0);
-        self.runs = PackedPosting::with_capacity(count)?;
-        Ok(())
+        let mut cursor = 0;
+        let mut count = 0;
+        while cursor < self.runs.len() {
+            read(self.runs.as_slice(), &mut cursor);
+            read(self.runs.as_slice(), &mut cursor);
+            count += 1;
+        }
+        count
     }
     pub(super) fn segments(&self, bits: u8) -> impl Iterator<Item = (usize, &[u32])> {
+        let mut cursor = 0;
         let mut start = 0;
-        self.runs.as_slice().iter().map(move |run| {
-            let end = run.end as usize;
-            let values = &self.positions.as_slice()[start..end];
+        std::iter::from_fn(move || {
+            if start == self.len() {
+                return None;
+            }
+            let block = read(self.runs.as_slice(), &mut cursor);
+            let count = read(self.runs.as_slice(), &mut cursor) as usize;
+            let end = start + count;
+            let positions = &self.positions.as_slice()[start..end];
             start = end;
-            ((run.block as usize) << bits, values)
+            Some(((block as usize) << bits, positions))
         })
     }
     pub(super) fn segments_range(
@@ -53,113 +92,34 @@ impl BlockPosting {
         begin: usize,
         end: usize,
     ) -> impl Iterator<Item = (usize, &[u32])> {
-        let first = self
-            .runs
-            .as_slice()
-            .partition_point(|r| r.end as usize <= begin);
-        let mut start = begin;
-        self.runs.as_slice()[first..]
-            .iter()
-            .scan((), move |_, run| {
-                if start >= end {
+        let mut segments = self.segments(bits);
+        let mut cursor = 0;
+        std::iter::from_fn(move || {
+            loop {
+                if cursor >= end {
                     return None;
                 }
-                let stop = (run.end as usize).min(end);
-                let slice = &self.positions.as_slice()[start..stop];
-                start = stop;
-                Some(((run.block as usize) << bits, slice))
-            })
-    }
-    pub(super) fn from_reversed_in_block(
-        count: u32,
-        block: u32,
-        bits: u8,
-        mut next: impl FnMut() -> usize,
-    ) -> Result<Self> {
-        let mut result = Self::with_capacity(count)?;
-        result.positions.append_reversed_reserved(count, || {
-            let p = next();
-            debug_assert_eq!(p >> bits, block as usize);
-            (p & ((1usize << bits) - 1)) as u32
-        })?;
-        if count != 0 {
-            result.runs.push(Run { block, end: count })?;
-        }
-        Ok(result)
-    }
-    pub(super) fn from_reversed(
-        count: u32,
-        bits: u8,
-        mut next: impl FnMut() -> usize + Clone,
-    ) -> Result<Self> {
-        let mut counting = next.clone();
-        let mut previous = None;
-        let mut runs = 0u32;
-        for _ in 0..count {
-            let block =
-                u32::try_from(counting() >> bits).map_err(|_| "block directory exceeds u32")?;
-            if previous != Some(block) {
-                runs += 1;
-                previous = Some(block);
+                let (base, values) = segments.next()?;
+                let start = cursor;
+                cursor += values.len();
+                if cursor <= begin {
+                    continue;
+                }
+                return Some((
+                    base,
+                    &values[begin.saturating_sub(start)..(end - start).min(values.len())],
+                ));
             }
-        }
-        let mut result = Self::with_capacity(count)?;
-        result.reserve_runs(runs)?;
-        result.runs.append_reversed_reserved(runs, Run::default)?;
-        let directory = result.runs.as_mut_slice();
-        let mut ri = runs as usize;
-        let mut ordinal = count;
-        previous = None;
-        result.positions.append_reversed_reserved(count, || {
-            let p = next();
-            let block = (p >> bits) as u32;
-            if previous != Some(block) {
-                ri -= 1;
-                directory[ri] = Run {
-                    block,
-                    end: ordinal,
-                };
-                previous = Some(block);
-            }
-            ordinal -= 1;
-            (p & ((1usize << bits) - 1)) as u32
-        })?;
-        Ok(result)
+        })
     }
     pub(super) fn iter(&self, bits: u8) -> impl Iterator<Item = usize> {
         self.segments(bits)
             .flat_map(|(base, values)| values.iter().map(move |&p| base | p as usize))
     }
-    pub(super) fn append(&mut self, other: Self) -> Result<()> {
-        let prefix = u32::try_from(self.len()).map_err(|_| "posting length exceeds u32")?;
-        let _ = prefix
-            .checked_add(other.len() as u32)
-            .ok_or("posting length exceeds u32")?;
-        for &p in other.positions.as_slice() {
-            self.positions.push(p)?;
-        }
-        for run in other.runs.as_slice() {
-            let next = Run {
-                block: run.block,
-                end: prefix + run.end,
-            };
-            match self.runs.as_mut_slice().last_mut() {
-                Some(last) if last.block == next.block => last.end = next.end,
-                _ => self.runs.push(next)?,
-            }
-        }
-        Ok(())
-    }
-    pub(super) fn push_address(&mut self, position: usize, bits: u8) -> Result<()> {
-        let block = u32::try_from(position >> bits).map_err(|_| "block directory exceeds u32")?;
-        let local = (position & ((1usize << bits) - 1)) as u32;
-        self.positions.push(local)?;
-        let end = self.positions.len() as u32;
-        match self.runs.as_mut_slice().last_mut() {
-            Some(last) if last.block == block => last.end = end,
-            _ => self.runs.push(Run { block, end })?,
-        }
-        Ok(())
+    pub(super) fn from_reversed(count: u32, bits: u8, next: impl FnMut() -> usize) -> Result<Self> {
+        let mut result = Self::with_capacity(count)?;
+        result.append_reversed_reserved_at(count, bits, next)?;
+        Ok(result)
     }
     pub(super) fn append_reversed_reserved_at(
         &mut self,
@@ -167,50 +127,53 @@ impl BlockPosting {
         bits: u8,
         mut next: impl FnMut() -> usize,
     ) -> Result<()> {
-        let start = self.len();
-        let mut reverse = PackedPosting::<Run, 1>::default();
-        let mut index = start + count as usize;
-        // The source is already sorted backwards. Capture each run's end while
-        // writing the final low offsets directly into their reserved allocation.
-        let mut error = None;
+        // Collect only per-run metadata while writing final offsets exactly once.
+        // This temporary is per key, never per corpus or per owner wave.
+        let mut reverse = SmallVec::<[Run; 4]>::new();
+        let mut overflow = false;
         self.positions.append_reversed_reserved(count, || {
             let p = next();
-            let block = match u32::try_from(p >> bits) {
-                Ok(v) => v,
-                Err(_) => {
-                    error = Some("block directory exceeds u32");
-                    0
-                }
-            };
-            if reverse.as_slice().last().is_none_or(|r| r.block != block) {
-                if reverse
-                    .push(Run {
-                        block,
-                        end: index as u32,
-                    })
-                    .is_err()
-                {
-                    error = Some("could not allocate posting run directory");
-                }
+            let high = p >> bits;
+            if high > u32::MAX as usize {
+                overflow = true;
             }
-            index -= 1;
+            let block = high as u32;
+            match reverse.last_mut() {
+                Some(run) if run.block == block => run.count += 1,
+                _ => reverse.push(Run { block, count: 1 }),
+            }
             (p & ((1usize << bits) - 1)) as u32
         })?;
-        if let Some(error) = error {
-            return Err(error.into());
+        if overflow {
+            return Err("block directory exceeds u32".into());
         }
-        for &run in reverse.as_slice().iter().rev() {
-            match self.runs.as_mut_slice().last_mut() {
-                Some(last) if last.block == run.block => last.end = run.end,
-                _ => self.runs.push(run)?,
-            }
+        if self.runs.len() == 0 {
+            let size = reverse
+                .iter()
+                .map(|r| units(r.block) + units(r.count))
+                .sum::<usize>();
+            self.runs = PackedPosting::with_capacity(
+                u32::try_from(size).map_err(|_| "posting directory exceeds u32")?,
+            )?;
+        }
+        for run in reverse.iter().rev() {
+            emit(&mut self.runs, run.block)?;
+            emit(&mut self.runs, run.count)?;
         }
         Ok(())
     }
-    // Single-block compatibility for existing focused initialization tests.
-    #[cfg(test)]
-    pub(super) fn push(&mut self, p: u32) -> Result<()> {
-        self.push_address(p as usize, 32)
+    pub(super) fn append(&mut self, other: Self) -> Result<()> {
+        let _ = (self.len() as u32)
+            .checked_add(other.len() as u32)
+            .ok_or("posting length exceeds u32")?;
+        for &p in other.positions.as_slice() {
+            self.positions.push(p)?;
+        }
+        // Absolute block IDs permit concatenation without scanning older runs.
+        for &unit in other.runs.as_slice() {
+            self.runs.push(unit)?;
+        }
+        Ok(())
     }
     #[cfg(test)]
     pub(super) fn as_slice(&self) -> &[u32] {
@@ -221,6 +184,20 @@ impl BlockPosting {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn directory_words_cover_full_u32_values_and_keep_arena_alignment() {
+        let values = [0, 1, 32767, 32768, (1 << 30) - 1, 1 << 30, u32::MAX];
+        let mut encoded = PackedPosting::<u16, 4>::default();
+        for v in values {
+            emit(&mut encoded, v).unwrap();
+        }
+        let mut cursor = 0;
+        for v in values {
+            assert_eq!(read(encoded.as_slice(), &mut cursor), v);
+        }
+        assert_eq!(cursor, encoded.len());
+        assert_eq!(std::mem::align_of::<u16>(), 2);
+    }
     #[test]
     fn full_u64_address_domain_and_scaled_geometry() {
         for bits in [16, 32] {
@@ -280,7 +257,7 @@ mod tests {
         }
     }
     #[test]
-    fn append_fragments_coalesces_only_adjacent_equal_blocks() {
+    fn append_fragments_preserves_adjacent_runs_without_rewriting_prefixes() {
         let mut p = BlockPosting::with_capacity(8).unwrap();
         for values in [
             vec![1, 17, 65535],
@@ -298,6 +275,6 @@ mod tests {
             p.iter(16).collect::<Vec<_>>(),
             [1, 17, 65535, 65536, 65541, 65550, 131072, 262145]
         );
-        assert_eq!(p.run_count(), 4);
+        assert_eq!(p.run_count(), 5);
     }
 }

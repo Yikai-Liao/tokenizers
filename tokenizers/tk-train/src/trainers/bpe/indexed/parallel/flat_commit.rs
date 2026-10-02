@@ -15,7 +15,6 @@ pub(super) fn dense<O: Offset, const INLINE: usize>(
     identities: usize,
     floor: u64,
     bits: u8,
-    single_block: bool,
 ) -> Result<(Vec<(u64, SmallPosting)>, AHashSet<u64>, usize)> {
     let mut retired = Vec::new();
     for output in outputs {
@@ -99,11 +98,7 @@ pub(super) fn dense<O: Offset, const INLINE: usize>(
                     head = node.next;
                     route.high.address(index, node.position)
                 };
-                let positions = if single_block {
-                    BlockPosting::from_reversed_in_block(group.occurrences, 0, bits, next)?
-                } else {
-                    BlockPosting::from_reversed(group.occurrences, bits, next)?
-                };
+                let positions = BlockPosting::from_reversed(group.occurrences, bits, next)?;
                 debug_assert!(
                     positions
                         .iter(bits)

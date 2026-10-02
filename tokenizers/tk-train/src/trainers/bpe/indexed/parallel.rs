@@ -946,13 +946,35 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
                     .par_iter_mut()
                     .zip(routes.into_par_iter())
                     .map(|(ledger, records)| -> Result<()> {
+                        let mut grouped = AHashMap::<u64, (u64, Vec<usize>)>::new();
                         for (k, p) in records {
-                            let e = ledger.entries.entry(k).or_insert_with(|| Entry {
-                                frequency: 0,
-                                blocks: BlockPosting::default(),
-                            });
-                            e.frequency += blocks[p >> bits].weight(p, uniform);
-                            e.blocks.push_address(p, bits)?;
+                            let group = grouped.entry(k).or_default();
+                            group.0 += blocks[p >> bits].weight(p, uniform);
+                            group.1.push(p);
+                        }
+                        for (k, (frequency, positions)) in grouped {
+                            let mut cursor = positions.len();
+                            let posting = BlockPosting::from_reversed(
+                                u32::try_from(cursor)
+                                    .map_err(|_| "initial wave posting exceeds u32")?,
+                                bits,
+                                || {
+                                    cursor -= 1;
+                                    positions[cursor]
+                                },
+                            )?;
+                            match ledger.entries.entry(k) {
+                                std::collections::hash_map::Entry::Vacant(e) => {
+                                    e.insert(Entry {
+                                        frequency,
+                                        blocks: posting,
+                                    });
+                                }
+                                std::collections::hash_map::Entry::Occupied(mut e) => {
+                                    e.get_mut().frequency += frequency;
+                                    e.get_mut().blocks.append(posting)?;
+                                }
+                            }
                         }
                         Ok(())
                     })
@@ -1420,7 +1442,6 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
                             lengths.len(),
                             floor,
                             bits,
-                            blocks.len() == 1,
                         )?;
                         ledger.prepare_window(selection);
                         return Ok(result);

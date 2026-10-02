@@ -1,3 +1,13 @@
+# Status: discontinued by user direction
+
+2026-10-02: the user rejected further work on the `(pair, physical block)` segment directory and requested a different design. Do not run v3 benchmarks or revive this as the chosen approach. The measurements below refer to c69dbea3 only. Commit 021d3bf9 contained whole-corpus single-block specialization, which the user explicitly rejected. The current archived code removes that specialization, compresses directory fields into u16 continuation units and uses a single traversal to construct each posting; 94 library tests passed, but it has NOT been benchmarked. It is retained only as a reproducible abandoned experiment.
+
+c69dbea3 first native calls: Flat train 18.00993 s, RSS 3,536,371,712 B; segmented single block 18.83324 s, RSS 3,796,496,384 B; forced u32 multi-block 23.48772 s, RSS 5,419,520,000 B. All model hashes matched. The multi-block native process succeeded, but a legacy harness layout gate rejected its postprocessing; its artifacts retain that status. There were 103,719,281 initial runs and 829,236,464 allocated directory bytes. Single block Entry grew from 24 to 40 bytes. These costs did not satisfy the user.
+
+Next direction: evaluate count-bounded posting groups (e.g. 128 positions), delta coding, and integer codecs from the research document. First measure actual posting gap/span distributions and complete encoded sizes, including short lists and restart metadata. No dedicated single-block dispatch is acceptable.
+
+---
+
 # Shared owner posting experiment
 
 This branch tests research candidates 1 (shared high bits) and 14 (direct birth construction). The resident position stream is always `u32`, including the forced-small-block experiment. Each owner keeps one continuous local-offset array and a contiguous `(block: u32, end: u32)` run directory. There are no per-block pair dictionaries on the active training path.
