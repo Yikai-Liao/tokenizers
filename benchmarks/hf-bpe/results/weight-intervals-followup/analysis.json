@@ -1,0 +1,82 @@
+{
+  "purpose": "Explain English single-thread slowdown and sorting cost",
+  "new_native_calls": 2,
+  "pairs": [
+    {
+      "label": "first",
+      "reference_case": "en16m-unchanged-t1-inline",
+      "candidate_case": "en16m-sorted-t1-inline",
+      "reference_train_ms": 4303.765585000001,
+      "candidate_train_ms": 4392.244585,
+      "change_percent": 2.0558508183711632,
+      "sort_ms": 0.201048,
+      "phases": {
+        "initialize_ms": {
+          "reference_ms": 840.6329860000001,
+          "candidate_ms": 813.144633,
+          "delta_ms": -27.488353000000075
+        },
+        "merge_ms": {
+          "reference_ms": 3432.6728329999996,
+          "candidate_ms": 3549.79595,
+          "delta_ms": 117.12311700000055
+        },
+        "fused_prepare_ms": {
+          "reference_ms": 2301.9467809999974,
+          "candidate_ms": 2341.463827000003,
+          "delta_ms": 39.51704600000585
+        },
+        "commit_ms": {
+          "reference_ms": 797.4568760000003,
+          "candidate_ms": 881.289381,
+          "delta_ms": 83.83250499999974
+        },
+        "initial_group_count_ms": {
+          "reference_ms": 56.218649,
+          "candidate_ms": 42.095529,
+          "delta_ms": -14.12312
+        }
+      },
+      "semantic_work_gates": "PASS"
+    },
+    {
+      "label": "reverse",
+      "reference_case": "en16m-unchanged-t1-reverse",
+      "candidate_case": "en16m-sorted-t1-reverse",
+      "reference_train_ms": 3899.4763270000003,
+      "candidate_train_ms": 3873.8767599999996,
+      "change_percent": -0.6564873037630536,
+      "sort_ms": 0.280024,
+      "phases": {
+        "initialize_ms": {
+          "reference_ms": 722.4170049999999,
+          "candidate_ms": 753.4259,
+          "delta_ms": 31.008895000000052
+        },
+        "merge_ms": {
+          "reference_ms": 3153.2358999999997,
+          "candidate_ms": 3093.7011239999997,
+          "delta_ms": -59.534775999999965
+        },
+        "fused_prepare_ms": {
+          "reference_ms": 2116.661969000002,
+          "candidate_ms": 2062.6398629999976,
+          "delta_ms": -54.02210600000444
+        },
+        "commit_ms": {
+          "reference_ms": 743.8460700000004,
+          "candidate_ms": 741.1769380000001,
+          "delta_ms": -2.6691320000003316
+        },
+        "initial_group_count_ms": {
+          "reference_ms": 51.591151,
+          "candidate_ms": 47.245175,
+          "delta_ms": -4.345976
+        }
+      },
+      "semantic_work_gates": "PASS"
+    }
+  ],
+  "conclusion": "The first +2.1% difference reverses to -0.7%; stable regression and a causal cache explanation are not established. Sort cost is 0.20-0.28 ms, and cannot explain an 88 ms difference.",
+  "nested_timings": "sort_ms is nested in initialize_ms; fused_prepare_ms is nested in delta_ms"
+}
