@@ -92,11 +92,12 @@ pub(super) fn dense<O: Offset, const INLINE: usize>(
                         fragment = fragments[fragment as usize].next;
                         head = fragments[fragment as usize].head;
                     }
-                    let node = &outputs[fragments[fragment as usize].output].flat_routes
-                        [owner_index]
-                        .nodes[head as usize];
+                    let route =
+                        &outputs[fragments[fragment as usize].output].flat_routes[owner_index];
+                    let index = head as usize;
+                    let node = &route.nodes[index];
                     head = node.next;
-                    node.position
+                    route.high.address(index, node.position)
                 };
                 let positions = if single_block {
                     BlockPosting::from_reversed_in_block(group.occurrences, 0, bits, next)?

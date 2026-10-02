@@ -56,6 +56,7 @@ impl Scratch {
             .occurrences
             .checked_add(1)
             .ok_or("birth posting count exceeds u32")?;
+        let position = route.high.push(route.nodes.len(), position);
         route.nodes.push(Node {
             position,
             next: record.born.head,
@@ -151,7 +152,7 @@ mod tests {
         let mut positions = Vec::new();
         while head != NONE {
             let node = &route.nodes[head as usize];
-            positions.push(node.position);
+            positions.push(route.high.address(head as usize, node.position));
             head = node.next;
         }
         positions

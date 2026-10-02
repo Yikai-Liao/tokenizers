@@ -87,7 +87,7 @@ struct Task<'a> {
 }
 struct Valid {
     rank: usize,
-    positions: Vec<usize>,
+    positions: address_scratch::Positions,
 }
 pub(super) struct Prepared<O: Offset, const INLINE: usize> {
     valid: Vec<Vec<Valid>>,
@@ -190,7 +190,7 @@ fn prepare_with_mode<C: Slot, O: Offset, const INLINE: usize, const GROUPED: boo
             let mut valid = Vec::with_capacity(tasks.len());
             for task in tasks {
                 let rule = &rules[task.rank];
-                let mut positions = Vec::new();
+                let mut positions = address_scratch::Positions::default();
                 for (base, offsets) in task.posting.segments_range(bits, task.begin, task.end) {
                     let block = &blocks[base >> bits];
                     let mut cursor = 0;
@@ -291,10 +291,7 @@ fn prepare_with_mode<C: Slot, O: Offset, const INLINE: usize, const GROUPED: boo
     let mut aggregate_bytes = 0;
     for (v, output, bytes) in prepared {
         aggregate_bytes += bytes;
-        valid_bytes += v
-            .iter()
-            .map(|v| v.positions.capacity() * std::mem::size_of::<usize>())
-            .sum::<usize>();
+        valid_bytes += v.iter().map(|v| v.positions.bytes()).sum::<usize>();
         valid.push(v);
         outputs.push(output);
     }
@@ -316,8 +313,7 @@ impl<O: Offset, const INLINE: usize> Prepared<O, INLINE> {
         self.valid.par_iter().for_each(|job| {
             for valid in job {
                 let rule = &rules[valid.rank];
-                for &position in &valid.positions {
-                    let p = position;
+                valid.positions.for_each(|p| {
                     let right = p + rule.left_len;
                     corpus[p].set_shared(rule.replacement);
                     if rule.right_len == 1 {
@@ -326,7 +322,7 @@ impl<O: Offset, const INLINE: usize> Prepared<O, INLINE> {
                         corpus[right].set_shared(NONE);
                         corpus[right + rule.right_len - 1].set_shared(rule.replacement);
                     }
-                }
+                });
             }
         });
     }

@@ -1,6 +1,6 @@
-//! Certified batches with spatial posting dictionaries and exclusive corpus writes.
-//! Planning only borrows the old corpus. AA selection continues across dictionary
-//! boundaries. Sorted, disjoint plans then define safe split_at_mut boundaries.
+//! Global pair owners with segmented local-u32 posting streams.
+//! Address blocks share high bits; jobs split by occurrence count.
+//! Planning reads the old corpus before disjoint writes, including cross-block AA.
 use super::small_posting::{PackedPosting, SmallPosting};
 use super::*;
 use rayon::prelude::*;
@@ -19,6 +19,7 @@ pub(super) fn initialize_alphabet(
 mod candidate_heap;
 mod validation_window;
 use validation_window::{Frontier, SelectionMode, Window};
+mod address_scratch;
 mod block_posting;
 mod bounded_initial;
 mod corpus;
@@ -368,13 +369,14 @@ impl Default for Group {
     }
 }
 struct Node {
-    position: usize,
+    position: u32,
     next: u32,
 }
 #[derive(Default)]
 struct Route {
     delta: AHashMap<u64, Group>,
     nodes: Vec<Node>,
+    high: address_scratch::HighParts,
 }
 impl<O: Offset, const INLINE: usize> Output<O, INLINE> {
     fn new(workers: usize, flat: bool) -> Self {
@@ -417,6 +419,7 @@ impl<O: Offset, const INLINE: usize> Output<O, INLINE> {
             let group = route.delta.entry(k).or_default();
             group.weight += weight;
             group.occurrences += 1;
+            let position = route.high.push(route.nodes.len(), position);
             route.nodes.push(Node {
                 position,
                 next: group.head,
@@ -874,7 +877,6 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
         && options.is_none_or(|o| o.packed_queue)
         && weighted_edges <= u32::MAX as u64
         && strings.len().max(trainer.vocab_size) <= u16::MAX as usize + 1;
-    let flat = true; // One shared owner pipeline, including forced small address blocks.
     let mut owners: Vec<Owner> = (0..config.workers).map(|_| Owner::default()).collect();
     let tokenize_ms = begin.elapsed().as_secs_f64() * 1000.0;
     let floor = trainer.min_frequency.max(1);
@@ -993,8 +995,6 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
             peak_initial_summary_buffer_bytes,
             initial_count_backend: if radix_eligible {
                 "stable_radix16"
-            } else if !flat {
-                "spatial_block_adaptive_radix64"
             } else {
                 "spatial_owner_hash"
             },
@@ -1117,7 +1117,7 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
         let mut rules = Vec::<Rule>::new();
         let mut heads = AHashSet::new();
         let mut tails = AHashSet::new();
-        let mut flat_postings = Vec::new();
+        let mut selected_postings = Vec::new();
         frontier.begin_epoch(&mut owners, selection);
         while rules.len() < cap {
             let best = frontier.best(&mut owners, selection);
@@ -1185,7 +1185,7 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
             // Directory ownership ends here. Selected local postings are freed
             // during planning, before allocating the next generation's postings.
             stats.posting_visits += entry.blocks.len();
-            flat_postings.push(entry.blocks);
+            selected_postings.push(entry.blocks);
             rules.push(Rule {
                 edge,
                 replacement,
@@ -1213,8 +1213,7 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
         let stage = Instant::now();
         stats.batch_rounds += 1;
         stats.max_batch_rules = stats.max_batch_rules.max(rules.len());
-        let outputs: Vec<Output<O, INLINE>> = if flat
-            && options.is_none_or(|o| o.fused_batch)
+        let outputs: Vec<Output<O, INLINE>> = if options.is_none_or(|o| o.fused_batch)
             && C::SHARED
             && rules[0].edge.0 != rules[0].edge.1
         {
@@ -1222,7 +1221,7 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
                 fused_batch::prepare_with_grouping(
                     &corpus,
                     &rules,
-                    &flat_postings,
+                    &selected_postings,
                     &blocks,
                     &lengths,
                     uniform,
@@ -1245,7 +1244,7 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
             // Filter and neighbor deltas share this phase in the fused path.
             stats.fused_prepare_ms += elapsed;
             stats.delta_ms += elapsed;
-            drop(flat_postings);
+            drop(selected_postings);
             let stage = Instant::now();
             pool.install(|| prepared.apply(&corpus, &rules));
             stats.rewrite_ms += stage.elapsed().as_secs_f64() * 1000.0;
@@ -1253,7 +1252,7 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
         } else {
             let chunks: Vec<Vec<Plan>> = pool.install(|| {
                 let corpus = &corpus;
-                flat_postings
+                selected_postings
                     .par_iter()
                     .enumerate()
                     .map(|(rank, posting)| {
@@ -1274,7 +1273,7 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
                     })
                     .collect()
             });
-            drop(flat_postings);
+            drop(selected_postings);
             let count: usize = chunks.iter().map(Vec::len).sum();
             let mut plans = Vec::with_capacity(count);
             for mut chunk in chunks {
@@ -1282,7 +1281,7 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
             }
             // Posting producers append ordered final boundary positions. A single
             // rule keeps that order, including AA; only mixed rules need sorting.
-            if flat && rules.len() > 1 {
+            if rules.len() > 1 {
                 pool.install(|| plans.par_sort_unstable_by_key(|p| p.position));
             }
             // AA is the only self-overlapping rule, and always forms a single-rule
@@ -1341,7 +1340,7 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
                     .par_chunks(output_chunk)
                     .enumerate()
                     .map(|(chunk, local)| -> Result<_> {
-                        let mut output = Output::new(config.workers, flat);
+                        let mut output = Output::new(config.workers, true);
                         let mut weight_block = usize::MAX;
                         let mut weight_cursor = 0;
                         for (j, &plan) in local.iter().enumerate() {
@@ -1398,6 +1397,13 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
             stats.rewrite_ms += stage.elapsed().as_secs_f64() * 1000.0;
             outputs
         };
+        stats.peak_birth_bytes = stats.peak_birth_bytes.max(
+            outputs
+                .iter()
+                .flat_map(|o| &o.flat_routes)
+                .map(|r| r.nodes.capacity() * std::mem::size_of::<Node>() + r.high.bytes())
+                .sum(),
+        );
         let stage = Instant::now();
         let commits: Vec<_> = pool.install(|| {
             owners
@@ -1405,7 +1411,7 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
                 .enumerate()
                 .map(|(o, ledger)| -> Result<_> {
                     let mut retired = Vec::new();
-                    if flat && !outputs[0].flat_births.is_empty() {
+                    if !outputs[0].flat_births.is_empty() {
                         let result = flat_commit::dense(
                             &outputs,
                             o,
@@ -1419,7 +1425,7 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
                         ledger.prepare_window(selection);
                         return Ok(result);
                     }
-                    if flat {
+                    {
                         let mut born = AHashMap::<u64, (u64, u32)>::new();
                         for output in &outputs {
                             for (&k, group) in &output.flat_routes[o].delta {
@@ -1473,9 +1479,10 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
                                     group.occurrences,
                                     bits,
                                     || {
-                                        let node = &route.nodes[head as usize];
+                                        let index = head as usize;
+                                        let node = &route.nodes[index];
                                         head = node.next;
-                                        node.position
+                                        route.high.address(index, node.position)
                                     },
                                 )?;
                                 debug_assert_eq!(head, NONE);
@@ -1491,9 +1498,8 @@ fn train_in_pool_options<C: Slot, O: Offset, const INLINE: usize>(
                             }
                         }
                         ledger.prepare_window(selection);
-                        return Ok((retired, AHashSet::new(), dropped));
+                        Ok((retired, AHashSet::new(), dropped))
                     }
-                    unreachable!("shared owner pipeline");
                 })
                 .collect::<Result<Vec<_>>>()
         })?;

@@ -379,7 +379,7 @@ impl Scratch {
         let fragment = &mut job.fragments[group.last as usize];
         debug_assert_eq!(fragment.key, k);
         job.nodes.push(Node {
-            position: offset as usize,
+            position: offset,
             next: fragment.head,
         });
         fragment.head = head;
