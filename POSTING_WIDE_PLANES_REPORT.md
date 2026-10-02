@@ -81,3 +81,17 @@ V4 `78c37db9`, one invocation each: Flat train 16,002.441 ms / RSS 3,526,742,016
 Initial group counting remains 837.627 / 836.719 ms for the candidates versus Flat 313.518 ms. The follow-up counts sorted records by actual weight intervals: obtain the next boundary once, locate the end of the occupied run with galloping search, then checked-multiply its cardinality by weight. The final remaining run needs only an endpoint check. Empty address blocks do not split runs. Runtime depends on occupied weight ranges, without a language-specific threshold, physical-block specialization or extra posting metadata. Unordered weight metadata retains its previous point lookup; overflow is now checked in that sum as well.
 
 Implementation is isolated on `exp/posting-range-count`; all 104 library tests passed with scratch16 (104.03 s, `/tmp/posting-range-v5-all-tests.log`), including sparse/dense/repeated records, wave bases, duplicate boundaries and checked multiply/add overflow. `git diff --check` passed. Performance validation is pending. V4 multilingual screening uses the unchanged parent commit.
+
+## Repeated V5 result and rejected inlining experiment
+
+V5 `1ceade8d` Chinese n=3 balanced runs: Flat / normal / full-scaled train medians 16.000 / 17.721 / 19.274 s; OS VmHWM medians 3,586,707,456 / 3,673,223,168 / 4,237,602,816 B. Three-language one-shot models match. Full records live in `posting-experiment-results/countposting-wide-planes-v5/results/`.
+
+V6 `33f754e5` forced the per-position consumer inline. Emitted-code validation confirmed removal of the per-position call, but grew the main task function from 3,072 B (+1,661 B outlined consumer) to 12,341 B. A fresh native screen and a separate adjacent V5/V6 comparison did not establish a win: normal V5 18,095.386 versus V6 18,003.324 ms (-0.51%); full V6 19,683.547 versus V5 19,454.011 ms (+1.18%). V6 is not selected; its results are preserved at `countposting-inline-consumer-v6/`.
+
+## Bounded decoded batches and corpus prefetch experiment
+
+The next candidate starts from V5. Each execution job reuses one 128-element usize stack buffer (1 KiB on this target). A list decodes at most that many coordinates, then one ordinary loop consumes them. This avoids a large consumer per codec width and avoids a consumer call per coordinate. It adds bounded L1 traffic; whether that tradeoff helps is an end-to-end question.
+
+An independent compile-time `TK_POSTING_PREFETCH=1` switch issues x86_64 cache hints 16 coordinates ahead in the decoded batch, with an in-bounds pointer check; the default is off and other architectures retain plain batch consumption. It never reads a token value or changes the atomic rewrite order. Both variants preserve the same posting and temporary address representations. Instruction sampling near the first corpus token load motivates testing latency hiding; sampling skid prevents treating one instruction's sample share as exact stalled cycles.
+
+Initial screening will use Flat, existing V5 full-scaled, plain V7 full-scaled, and prefetch V7 full-scaled. Both new variants use block16/scratch16. Normal-range and multilingual validation follow only if an end-to-end benefit is observed. Tests extend batch decode over all upper widths, inline/empty lists and partial batches. With scratch16, prefetch-on passed all 104 library tests (99.82 s, `/tmp/posting-batched-v7-prefetch-tests.log`); prefetch-off passed all 14 parallel-training tests (10.64 s, `/tmp/posting-batched-v7-plain-tests.log`). `git diff --check` passed. Native measurements are pending.

@@ -7,6 +7,31 @@ mod aggregate;
 pub(super) mod block;
 use super::*;
 
+// Experiment control: no per-position runtime configuration lookup. Compare
+// plain batched decoding against prefetching with otherwise identical code.
+const PREFETCH: bool = match option_env!("TK_POSTING_PREFETCH") {
+    Some(s) => s.as_bytes().len() == 1 && s.as_bytes()[0] == b'1',
+    None => false,
+};
+const DECODE_BATCH: usize = 128;
+const PREFETCH_DISTANCE: usize = 16;
+#[inline]
+fn prefetch_position<C>(corpus: &[C], position: usize) {
+    #[cfg(target_arch = "x86_64")]
+    if position < corpus.len() {
+        // SAFETY: the checked position is inside the live corpus allocation.
+        // Prefetch does not read a token or affect the atomic rewrite protocol.
+        unsafe {
+            std::arch::x86_64::_mm_prefetch(
+                corpus.as_ptr().add(position).cast::<i8>(),
+                std::arch::x86_64::_MM_HINT_T0,
+            );
+        }
+    }
+    #[cfg(not(target_arch = "x86_64"))]
+    let _ = (corpus, position);
+}
+
 const EMPTY: u64 = u64::MAX;
 const MULTIPLE: u64 = u64::MAX - 1;
 struct Selected {
@@ -188,18 +213,31 @@ fn prepare_with_mode<C: Slot, O: Offset, const INLINE: usize, const GROUPED: boo
             let mut left_cache = aggregate::Scratch::new(if GROUPED { lengths.len() } else { 0 });
             let mut right_cache = aggregate::Scratch::new(if GROUPED { lengths.len() } else { 0 });
             let mut valid = Vec::with_capacity(tasks.len());
+            let mut decoded = [0usize; DECODE_BATCH];
             for task in tasks {
                 let rule = &rules[task.rank];
                 let mut positions = address_scratch::Positions::default();
                 let mut weight_cursor = weight_lookup::Cursor::default();
-                task.posting
-                    .try_for_each_range(bits, task.begin, task.end, |p| -> Result<()> {
+                let mut begin = task.begin;
+                while begin < task.end {
+                    let count = (task.end - begin).min(DECODE_BATCH);
+                    task.posting
+                        .decode_into(bits, begin, &mut decoded[..count])?;
+                    if PREFETCH {
+                        for &p in &decoded[..count.min(PREFETCH_DISTANCE)] {
+                            prefetch_position(corpus, p);
+                        }
+                    }
+                    for (i, &p) in decoded[..count].iter().enumerate() {
+                        if PREFETCH && i + PREFETCH_DISTANCE < count {
+                            prefetch_position(corpus, decoded[i + PREFETCH_DISTANCE]);
+                        }
                         let right = p + rule.left_len;
                         if corpus[p].token() != rule.edge.0
                             || right >= corpus.len()
                             || corpus[right].token() != rule.edge.1
                         {
-                            return Ok(());
+                            continue;
                         }
                         positions.push(p);
                         let after = right + rule.right_len;
@@ -269,8 +307,9 @@ fn prepare_with_mode<C: Slot, O: Offset, const INLINE: usize, const GROUPED: boo
                                 }
                             }
                         }
-                        Ok(())
-                    })?;
+                    }
+                    begin += count;
+                }
                 if GROUPED {
                     left_cache.flush_dense(&mut output, rule, true, task.rank)?;
                     right_cache.flush_dense(&mut output, rule, false, task.rank)?;

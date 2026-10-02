@@ -281,6 +281,17 @@ impl BlockPosting {
     pub(super) fn iter(&self, bits: u8) -> impl Iterator<Item = usize> + '_ {
         (0..self.len).map(move |i| address(self.get(i), bits))
     }
+    // Decode a bounded caller-owned batch. The consumer can then use one
+    // ordinary loop without keeping format-specific decode state live.
+    pub(super) fn decode_into(&self, bits: u8, begin: usize, output: &mut [usize]) -> Result<()> {
+        assert!(begin <= self.len && output.len() <= self.len - begin);
+        let end = begin + output.len();
+        let mut destination = output.iter_mut();
+        self.try_for_each_range(bits, begin, end, |p| {
+            *destination.next().unwrap() = p;
+            Ok(())
+        })
+    }
     #[inline]
     pub(super) fn try_for_each_range(
         &self,
@@ -387,7 +398,7 @@ mod tests {
     #[test]
     fn every_plane_width_and_odd_capacity_decode() {
         for high in [0, 1, 255, 256, 65535, 65536, 16777215, 16777216, u32::MAX] {
-            for len in [1, 2, 3, 7, 128, 129] {
+            for len in [0, 1, 2, 3, 7, 128, 129, 257] {
                 let values: Vec<_> = (0..len)
                     .map(|i| ((high as u64) << 32) | (i * 17) as u64)
                     .collect();
@@ -403,6 +414,18 @@ mod tests {
                 .unwrap();
                 assert_eq!(decoded, values);
                 assert_eq!(p.iter(32).map(|v| v as u64).collect::<Vec<_>>(), values);
+                for batch in [1, 16, 128, 129] {
+                    let mut decoded = vec![usize::MAX; len];
+                    for begin in (0..len).step_by(batch) {
+                        let end = (begin + batch).min(len);
+                        p.decode_into(32, begin, &mut decoded[begin..end]).unwrap();
+                    }
+                    assert_eq!(
+                        decoded.iter().map(|&v| v as u64).collect::<Vec<_>>(),
+                        values
+                    );
+                }
+                p.decode_into(32, len, &mut []).unwrap();
             }
         }
     }
