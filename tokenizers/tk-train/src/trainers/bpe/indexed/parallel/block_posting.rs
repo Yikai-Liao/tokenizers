@@ -4,6 +4,8 @@
 use super::*;
 use std::alloc::{Layout, alloc, dealloc};
 
+// Prefix words and the two-word inline representation require 64-bit usize.
+const _: () = assert!(usize::BITS == 64);
 const GROUP: usize = 128;
 const INLINE: usize = 1 << (usize::BITS - 1);
 const PAIR: usize = 1 << (usize::BITS - 2);

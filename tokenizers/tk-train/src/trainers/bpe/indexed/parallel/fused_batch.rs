@@ -15,7 +15,7 @@ const PREFETCH: bool = match option_env!("TK_POSTING_PREFETCH") {
 };
 const FUSED_DECODE: bool = match option_env!("TK_POSTING_FUSED_DECODE") {
     Some(s) => s.as_bytes().len() == 1 && s.as_bytes()[0] == b'1',
-    None => false,
+    None => true,
 };
 const DECODE_BATCH: usize = 128;
 const PREFETCH_DISTANCE: usize = 16;
