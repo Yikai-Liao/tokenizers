@@ -261,9 +261,9 @@ impl BlockPosting {
         }
         if end == 2 {
             let first = if start == 0 { next() } else { self.get(0) };
-            // The first address fits alongside the tag for every physically
-            // allocatable corpus on this target. Arbitrary larger U64 pairs
-            // remain supported by the ordinary two-element heap form.
+            // A first address within LENGTH_MASK fits alongside the tag.
+            // Larger canonical addresses use the two-element heap form,
+            // preserving the complete U64 address domain.
             if first <= LENGTH_MASK as u64 {
                 self.meta = (INLINE_TWO << WIDTH_SHIFT) | first as usize;
                 self.payload = last as usize;
