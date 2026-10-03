@@ -164,6 +164,14 @@ They have opposite constraints, so they get opposite dependency budgets.
 </details>
 
 <details>
+<summary><b><code>tk-collections</code></b> — shared working storage</summary>
+
+Compact full-width positions, scoped allocations, touched-ID accumulators,
+interval cursors, and stable radix grouping. These mechanisms carry no tokenizer
+model policy or training pool and can be shared by tokenizer algorithms.
+</details>
+
+<details>
 <summary><b><code>bitmap_gen</code></b> — dev-only table generator</summary>
 
 `cargo run -p bitmap_gen` regenerates `bitcannon`'s committed classify tables from `unicode-properties`, emitting one `Atom` tag per codepoint.
