@@ -11,6 +11,7 @@
 //! reference only. Drive a trainer directly instead: `feed`, then `train`.
 
 pub mod added_token_serde;
+mod progress;
 mod trainable;
 mod trainer;
 pub mod trainers;
