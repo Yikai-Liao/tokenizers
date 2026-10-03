@@ -1,4 +1,4 @@
-//! D1 posting stream with a full U64 seed every 128 positions. Only gaps are
+//! D1 posting stream with periodic full U64 seeds. Only gaps are
 //! variable-length encoded: translating a list never changes its storage size.
 //! Restart offsets, lengths, and allocation capacities use machine-sized words.
 use super::*;
@@ -6,7 +6,34 @@ use std::alloc::{Layout, alloc, dealloc};
 
 // Prefix words and the two-word inline representation require 64-bit usize.
 const _: () = assert!(usize::BITS == 64);
-const GROUP: usize = 128;
+// Compile-time restart-length ablation; keep the consumer batch and prefetch
+// distance independent so the experiment changes only this storage tradeoff.
+const GROUP: usize = match option_env!("TK_POSTING_RESTART") {
+    None => 128,
+    Some(value) => match value.as_bytes() {
+        b"32" => 32,
+        b"64" => 64,
+        b"128" => 128,
+        b"256" => 256,
+        b"512" => 512,
+        _ => panic!("TK_POSTING_RESTART must be 32, 64, 128, 256, or 512"),
+    },
+};
+pub(super) fn layout_label(bits: u8) -> &'static str {
+    match (GROUP, bits == 32) {
+        (32, true) => "parallel_d1_restart32_addr32",
+        (32, false) => "parallel_d1_restart32_addr16",
+        (64, true) => "parallel_d1_restart64_addr32",
+        (64, false) => "parallel_d1_restart64_addr16",
+        (128, true) => "parallel_d1_restart128_addr32",
+        (128, false) => "parallel_d1_restart128_addr16",
+        (256, true) => "parallel_d1_restart256_addr32",
+        (256, false) => "parallel_d1_restart256_addr16",
+        (512, true) => "parallel_d1_restart512_addr32",
+        (512, false) => "parallel_d1_restart512_addr16",
+        _ => unreachable!(),
+    }
+}
 const INLINE: usize = 1 << (usize::BITS - 1);
 const PAIR: usize = 1 << (usize::BITS - 2);
 const DELTA_MASK: usize = PAIR - 1;
@@ -680,7 +707,7 @@ mod tests {
         for i in 0..values.len() {
             assert_eq!(p.get(i), values[i]);
         }
-        for batch in [1, 17, 128, 129, 509] {
+        for batch in [1, 17, GROUP - 1, GROUP, GROUP + 1, 509] {
             let mut decoded = vec![0usize; values.len()];
             for begin in (0..values.len()).step_by(batch) {
                 let end = (begin + batch).min(values.len());
@@ -715,7 +742,7 @@ mod tests {
     #[test]
     fn buffered_construction_reads_each_position_once() {
         use std::{cell::Cell, rc::Rc};
-        for count in [3, 127, 128, 129, 8193] {
+        for count in [3, GROUP - 1, GROUP, GROUP + 1, 8193] {
             let calls = Rc::new(Cell::new(0));
             let observed = calls.clone();
             let mut remaining = count;
@@ -735,7 +762,7 @@ mod tests {
     }
     #[test]
     fn buffered_stream_and_restarts_match_forward_reference() {
-        for count in [3, 127, 128, 129, 257, 8193] {
+        for count in [3, GROUP - 1, GROUP, GROUP + 1, GROUP * 2 + 1, 8193] {
             let mut values: Vec<_> = (0..count).map(|i| i as u64 * ((1u64 << 32) + 7)).collect();
             values[count - 1] = u64::MAX;
             let posting = make(&values);
@@ -799,10 +826,23 @@ mod tests {
     }
     #[test]
     fn group_boundaries_and_partial_appends() {
-        for n in [0, 1, 2, 3, 7, 127, 128, 129, 255, 256, 257, 509] {
+        for n in [
+            0,
+            1,
+            2,
+            3,
+            7,
+            GROUP - 1,
+            GROUP,
+            GROUP + 1,
+            GROUP * 2 - 1,
+            GROUP * 2,
+            GROUP * 2 + 1,
+            509,
+        ] {
             let values: Vec<_> = (0..n).map(|i| (1u64 << 48) + i as u64 * 65537).collect();
             check(&make(&values), &values);
-            for split in [0, 1, 2, 3, 126, 127, 128, 129, n / 2, n] {
+            for split in [0, 1, 2, 3, GROUP - 2, GROUP - 1, GROUP, GROUP + 1, n / 2, n] {
                 if split > n {
                     continue;
                 }
@@ -814,7 +854,7 @@ mod tests {
     }
     #[test]
     fn translating_equal_gaps_never_changes_storage_size() {
-        for n in [1, 2, 3, 8, 32, 127, 128, 129, 1024] {
+        for n in [1, 2, 3, 8, 32, GROUP - 1, GROUP, GROUP + 1, GROUP * 2 + 1] {
             for gap in [0, 1, 127, 128, 16384, (1u64 << 32) + 7] {
                 let relative: Vec<_> = (0..n).map(|i| i as u64 * gap).collect();
                 let span = relative.last().copied().unwrap_or(0);
@@ -895,17 +935,26 @@ mod tests {
             Arc,
             atomic::{AtomicUsize, Ordering},
         };
-        let mut p = make(&(0..130).collect::<Vec<u64>>());
-        p.append(make(&(130..258).collect::<Vec<_>>())).unwrap();
-        p.append(make(&(258..270).collect::<Vec<_>>())).unwrap();
+        let first = GROUP + 2;
+        let second = first + GROUP;
+        let before_len = second + 12;
+        let extra = GROUP + GROUP / 2;
+        let end = before_len + extra;
+        let mut p = make(&(0..first as u64).collect::<Vec<_>>());
+        p.append(make(&(first as u64..second as u64).collect::<Vec<_>>()))
+            .unwrap();
+        p.append(make(
+            &(second as u64..before_len as u64).collect::<Vec<_>>(),
+        ))
+        .unwrap();
         assert_eq!(p.group_capacity(), 4);
-        assert!(p.stream_capacity() >= 498);
+        assert!(p.stream_capacity() >= end + end.div_ceil(GROUP) * 7);
         let before: Vec<_> = p.iter(32).map(|x| x as u64).collect();
         let visits = Arc::new(AtomicUsize::new(0));
         let failed = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            let mut i = 469u64;
-            p.extend_reverse(200, move || {
-                if visits.fetch_add(1, Ordering::SeqCst) == 290 {
+            let mut i = end as u64 - 1;
+            p.extend_reverse(extra, move || {
+                if visits.fetch_add(1, Ordering::SeqCst) == extra + extra / 2 {
                     panic!("second pass interrupted");
                 }
                 let value = i;
@@ -916,8 +965,9 @@ mod tests {
         }));
         assert!(failed.is_err());
         check(&p, &before);
-        p.append(make(&(270..470).collect::<Vec<_>>())).unwrap();
-        check(&p, &(0..470).collect::<Vec<_>>());
+        p.append(make(&(before_len as u64..end as u64).collect::<Vec<_>>()))
+            .unwrap();
+        check(&p, &(0..end as u64).collect::<Vec<_>>());
     }
     #[test]
     fn changed_replay_size_cannot_overwrite_or_publish_uninitialized_bytes() {
