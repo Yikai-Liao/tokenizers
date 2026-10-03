@@ -15,6 +15,19 @@ const MULTI: usize = 2;
 const RESERVED: usize = 4;
 
 #[derive(Default)]
+struct BuildScratch {
+    stream: Vec<u8>,
+    restarts: Vec<usize>,
+}
+thread_local! {
+    // Reuse only encoded bytes. Materializing full U64 positions would add
+    // eight bytes per occurrence to construction's temporary live memory.
+    static BUILD_SCRATCH: std::cell::RefCell<BuildScratch> = const {
+        std::cell::RefCell::new(BuildScratch { stream: Vec::new(), restarts: Vec::new() })
+    };
+}
+
+#[derive(Default)]
 pub(super) struct BlockPosting {
     // Heap counts need at least one stream byte per item, so Layout's isize
     // bound leaves the top bit free. Inline pairs store a gap, not an address.
@@ -327,9 +340,53 @@ impl BlockPosting {
             }
             return Ok(result);
         }
-        let used = suffix_bytes(0, count, 0, next.clone())?;
+        BUILD_SCRATCH.with(|scratch| match scratch.try_borrow_mut() {
+            Ok(mut scratch) => Self::build_buffered(count, next, &mut scratch),
+            // A producer can itself construct a posting. Its scratch must not
+            // overwrite the still-active outer constructor's encoded stream.
+            Err(_) => Self::build_buffered(count, next, &mut BuildScratch::default()),
+        })
+    }
+    fn build_buffered(
+        count: usize,
+        next: impl FnMut() -> u64,
+        scratch: &mut BuildScratch,
+    ) -> Result<Self> {
+        scratch.stream.clear();
+        scratch.restarts.clear();
+        reverse_codes(0, count, 0, next, |index, code| {
+            // Reserve a whole group's worst-case encoding once. Every U64
+            // gap fits in ten bytes, including the final, partial group.
+            if index == count - 1 || index % GROUP == GROUP - 1 {
+                scratch.stream.reserve(8 + 10 * (index % GROUP));
+            }
+            if index % GROUP == 0 {
+                // The entire temporary stream is reversed before publication.
+                let mut seed = code.to_ne_bytes();
+                seed.reverse();
+                scratch.stream.extend_from_slice(&seed);
+                scratch.restarts.push(scratch.stream.len());
+            } else {
+                let begin = scratch.stream.len();
+                unsafe {
+                    let target = scratch.stream.as_mut_ptr().add(begin);
+                    let end = write_varint(target, code);
+                    let bytes = end.offset_from(target) as usize;
+                    scratch.stream.set_len(begin + bytes);
+                }
+                scratch.stream[begin..].reverse();
+            }
+            Ok(())
+        })?;
+        let used = scratch.stream.len();
         let mut result = Self::allocate(count, count.div_ceil(GROUP), used, used, false, false)?;
-        result.fill_suffix(0, count, 0, next, used)?;
+        for (group, &end) in scratch.restarts.iter().rev().enumerate() {
+            unsafe { result.set_group_offset(group, used - end) };
+        }
+        scratch.stream.reverse();
+        unsafe {
+            std::ptr::copy_nonoverlapping(scratch.stream.as_ptr(), result.data_ptr(), used);
+        }
         Ok(result)
     }
     pub(super) fn from_reversed(
@@ -606,6 +663,77 @@ mod tests {
             );
         }
         p.decode_into(32, values.len(), &mut []).unwrap();
+    }
+    #[test]
+    fn buffered_construction_reads_each_position_once() {
+        use std::{cell::Cell, rc::Rc};
+        for count in [3, 127, 128, 129, 8193] {
+            let calls = Rc::new(Cell::new(0));
+            let observed = calls.clone();
+            let mut remaining = count;
+            let posting = BlockPosting::build_exact(count, move || {
+                observed.set(observed.get() + 1);
+                remaining -= 1;
+                (1u64 << 56) + remaining as u64 * ((1u64 << 32) + 7)
+            })
+            .unwrap();
+            assert_eq!(calls.get(), count);
+            assert_eq!(posting.len(), count);
+            assert_eq!(
+                posting.get(count - 1),
+                (1u64 << 56) + (count - 1) as u64 * ((1u64 << 32) + 7)
+            );
+        }
+    }
+    #[test]
+    fn buffered_stream_and_restarts_match_forward_reference() {
+        for count in [3, 127, 128, 129, 257, 8193] {
+            let mut values: Vec<_> = (0..count).map(|i| i as u64 * ((1u64 << 32) + 7)).collect();
+            values[count - 1] = u64::MAX;
+            let posting = make(&values);
+            let mut expected = Vec::new();
+            for (index, &value) in values.iter().enumerate() {
+                if index % GROUP == 0 {
+                    assert_eq!(posting.group_offset(index / GROUP), expected.len());
+                    expected.extend_from_slice(&value.to_ne_bytes());
+                } else {
+                    let mut gap = value - values[index - 1];
+                    while gap >= 128 {
+                        expected.push((gap as u8 & 127) | 128);
+                        gap >>= 7;
+                    }
+                    expected.push(gap as u8);
+                }
+            }
+            let encoded =
+                unsafe { std::slice::from_raw_parts(posting.data_ptr(), posting.stream_len()) };
+            assert_eq!(encoded, expected);
+            check(&posting, &values);
+        }
+    }
+    #[test]
+    fn buffered_constructor_recursion_and_panic_leave_scratch_reusable() {
+        let mut remaining = 257;
+        let posting = BlockPosting::build_exact(remaining, move || {
+            remaining -= 1;
+            let nested = make(&[1, 129, 65537]);
+            check(&nested, &[1, 129, 65537]);
+            remaining as u64
+        })
+        .unwrap();
+        check(&posting, &(0..257).collect::<Vec<_>>());
+        let interrupted = std::panic::catch_unwind(|| {
+            let mut calls = 0;
+            BlockPosting::build_exact(257, move || {
+                calls += 1;
+                if calls == 200 {
+                    panic!("interrupted buffered construction")
+                }
+                257 - calls
+            })
+        });
+        assert!(interrupted.is_err());
+        check(&make(&[2, 3, 4097]), &[2, 3, 4097]);
     }
     #[test]
     fn complete_address_domain_and_every_varint_boundary() {
