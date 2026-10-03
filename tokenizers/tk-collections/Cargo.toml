@@ -1,0 +1,11 @@
+[package]
+name = "tk-collections"
+version = "0.1.0-dev.0"
+edition = "2024"
+license = "Apache-2.0"
+repository = "https://github.com/huggingface/tokenizers"
+description = "Compact position storage and bounded working collections for tokenizer algorithms."
+
+[dependencies]
+bumpalo = "=3.20.3"
+ahash = "0.8.12"
