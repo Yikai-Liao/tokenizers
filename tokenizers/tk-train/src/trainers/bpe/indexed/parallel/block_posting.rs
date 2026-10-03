@@ -20,8 +20,7 @@ struct BuildScratch {
     restarts: Vec<usize>,
 }
 thread_local! {
-    // Reuse only encoded bytes. Materializing full U64 positions would add
-    // eight bytes per occurrence to construction's temporary live memory.
+    // Reuse scratch storage; only its encoded suffix is initialized.
     static BUILD_SCRATCH: std::cell::RefCell<BuildScratch> = const {
         std::cell::RefCell::new(BuildScratch { stream: Vec::new(), restarts: Vec::new() })
     };
@@ -60,7 +59,10 @@ fn layout(groups: usize, stream_capacity: usize, reserved: bool) -> Result<Layou
     .map_err(|_| "posting allocation layout overflow".into())
 }
 fn varint_bytes(value: u64) -> usize {
-    (64 - value.leading_zeros()).max(1).div_ceil(7) as usize
+    // Exact ceil(width / 7) for every U64 width 1..=64, including zero's
+    // one-byte representation. Avoid division in the backward writer.
+    let width = 64 - (value | 1).leading_zeros();
+    ((width * 9 + 64) >> 6) as usize
 }
 unsafe fn write_varint(mut target: *mut u8, mut value: u64) -> *mut u8 {
     unsafe {
@@ -349,43 +351,70 @@ impl BlockPosting {
     }
     fn build_buffered(
         count: usize,
-        next: impl FnMut() -> u64,
+        next: impl FnMut() -> u64 + Clone,
         scratch: &mut BuildScratch,
     ) -> Result<Self> {
         scratch.stream.clear();
         scratch.restarts.clear();
-        reverse_codes(0, count, 0, next, |index, code| {
-            // Reserve a whole group's worst-case encoding once. Every U64
-            // gap fits in ten bytes, including the final, partial group.
-            if index == count - 1 || index % GROUP == GROUP - 1 {
-                scratch.stream.reserve(8 + 10 * (index % GROUP));
-            }
-            if index % GROUP == 0 {
-                // The entire temporary stream is reversed before publication.
-                let mut seed = code.to_ne_bytes();
-                seed.reverse();
-                scratch.stream.extend_from_slice(&seed);
-                scratch.restarts.push(scratch.stream.len());
-            } else {
-                let begin = scratch.stream.len();
-                unsafe {
-                    let target = scratch.stream.as_mut_ptr().add(begin);
-                    let end = write_varint(target, code);
-                    let bytes = end.offset_from(target) as usize;
-                    scratch.stream.set_len(begin + bytes);
+        let groups = count.div_ceil(GROUP);
+        // Ten bytes per gap and eight per seed bound the temporary allocation
+        // independently of the address range. Keep Vec's length zero: only the
+        // suffix written below is initialized. Never realloc/copy its unused
+        // prefix when growing between different postings.
+        let ready = count
+            .checked_mul(10)
+            .map(|bytes| bytes - groups * 2)
+            .is_some_and(|bytes| {
+                if scratch.restarts.try_reserve_exact(groups).is_err() {
+                    return false;
                 }
-                scratch.stream[begin..].reverse();
+                if scratch.stream.capacity() >= bytes {
+                    return true;
+                }
+                let mut stream = Vec::new();
+                if stream.try_reserve_exact(bytes).is_err() {
+                    return false;
+                }
+                scratch.stream = stream;
+                true
+            });
+        if !ready {
+            // A valid stream can fit even if its worst-case bound does not.
+            // Preserve the original constructor rather than imposing a new
+            // count limit or requiring the larger temporary allocation.
+            let used = suffix_bytes(0, count, 0, next.clone())?;
+            let mut result = Self::allocate(count, groups, used, used, false, false)?;
+            result.fill_suffix(0, count, 0, next, used)?;
+            return Ok(result);
+        }
+        let capacity = scratch.stream.capacity();
+        let data = scratch.stream.as_mut_ptr();
+        let mut cursor = capacity;
+        reverse_codes(0, count, 0, next, |index, code| {
+            let restart = index % GROUP == 0;
+            let size = if restart { 8 } else { varint_bytes(code) };
+            cursor = cursor
+                .checked_sub(size)
+                .ok_or("posting scratch bound exceeded")?;
+            unsafe {
+                let target = data.add(cursor);
+                if restart {
+                    target.cast::<u64>().write_unaligned(code);
+                    scratch.restarts.push(cursor);
+                } else {
+                    let end = write_varint(target, code);
+                    debug_assert_eq!(end, target.add(size));
+                }
             }
             Ok(())
         })?;
-        let used = scratch.stream.len();
-        let mut result = Self::allocate(count, count.div_ceil(GROUP), used, used, false, false)?;
-        for (group, &end) in scratch.restarts.iter().rev().enumerate() {
-            unsafe { result.set_group_offset(group, used - end) };
+        let used = capacity - cursor;
+        let mut result = Self::allocate(count, groups, used, used, false, false)?;
+        for (group, &offset) in scratch.restarts.iter().rev().enumerate() {
+            unsafe { result.set_group_offset(group, offset - cursor) };
         }
-        scratch.stream.reverse();
         unsafe {
-            std::ptr::copy_nonoverlapping(scratch.stream.as_ptr(), result.data_ptr(), used);
+            std::ptr::copy_nonoverlapping(data.add(cursor), result.data_ptr(), used);
         }
         Ok(result)
     }
@@ -663,6 +692,25 @@ mod tests {
             );
         }
         p.decode_into(32, values.len(), &mut []).unwrap();
+    }
+    #[test]
+    fn encoded_lengths_match_every_u64_width() {
+        let reference = |mut value: u64| {
+            let mut bytes = 1;
+            while value >= 128 {
+                value >>= 7;
+                bytes += 1;
+            }
+            bytes
+        };
+        assert_eq!(varint_bytes(0), 1);
+        for width in 1..=64 {
+            let first = 1u64 << (width - 1);
+            let last = u64::MAX >> (64 - width);
+            for value in [first, last] {
+                assert_eq!(varint_bytes(value), reference(value), "{value}");
+            }
+        }
     }
     #[test]
     fn buffered_construction_reads_each_position_once() {
