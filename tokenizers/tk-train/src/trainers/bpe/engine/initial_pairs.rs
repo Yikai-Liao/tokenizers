@@ -26,14 +26,17 @@ pub(super) struct InitialPairTable<'a> {
     pub(super) maximum_word_weight: u64,
 }
 struct InitialGroup {
-    key: u64,
     begin: u32,
     end: u32,
     frequency: u64,
 }
+struct RecordBuffer<'a> {
+    records: &'a mut [MaybeUninit<KeyedValue>],
+    used: usize,
+}
 struct RecordJob<'a> {
     range: Range<usize>,
-    buffers: Vec<&'a mut [MaybeUninit<KeyedValue>]>,
+    buffers: AHashMap<u64, RecordBuffer<'a>>,
 }
 #[inline]
 fn global_position(base: usize, record: KeyedValue) -> u64 {
@@ -98,26 +101,32 @@ pub(super) fn build_in_waves<'a>(
         let mut wave_tables: Vec<_> = (0..workers)
             .map(|_| AHashMap::<u64, PairState<'a>>::new())
             .collect();
-        let chunk = (end - base).div_ceil(workers * 8).max(1);
+        // Fixed slot tiles keep the producer count independent of worker count.
+        // Owner directories therefore grow at most linearly as workers increase
+        // for a fixed corpus; sparse rows omit empty destinations as well.
+        let chunk = 1 << 18;
         let ranges: Vec<_> = (base..end)
             .step_by(chunk)
             .map(|start| start..(start + chunk).min(end))
             .collect();
         let route_work = progress.stage("Route initial pairs", (end - base) * 2);
-        let sizes: Vec<Vec<usize>> = ranges
+        let sizes: Vec<AHashMap<u64, usize>> = ranges
             .par_iter()
             .map(|range| {
-                let mut sizes = vec![0; workers];
+                let mut sizes = AHashMap::<u64, usize>::new();
                 corpus.for_each_edge(range.clone(), |_, key| {
-                    sizes[shard_for(key, workers)] += 1;
+                    *sizes.entry(shard_for(key, workers) as u64).or_default() += 1;
                 });
                 route_work.complete(range.len());
                 sizes
             })
             .collect();
-        let shard_sizes: Vec<usize> = (0..workers)
-            .map(|shard| sizes.iter().map(|job| job[shard]).sum())
-            .collect();
+        let mut shard_sizes = vec![0_usize; workers];
+        for counts in &sizes {
+            for (&shard, &count) in counts {
+                shard_sizes[shard as usize] += count;
+            }
+        }
         let records: usize = shard_sizes.iter().sum();
         // PERF: Each owner owns its record allocation. Installation drops it
         // before later owners encode their positions, so complete raw records
@@ -134,29 +143,39 @@ pub(super) fn build_in_waves<'a>(
                 records
             })
             .collect();
-        let mut jobs: Vec<_> = ranges
+        // Directories contain only nonempty producer/owner routes. Their
+        // number is at most the number of emitted records; empty cross-product
+        // cells allocate nothing and are never visited during partitioning.
+        let mut remaining: Vec<_> = record_buffers.iter_mut().map(Vec::as_mut_slice).collect();
+        let jobs: Vec<_> = ranges
             .into_iter()
-            .map(|range| RecordJob {
-                range,
-                buffers: Vec::with_capacity(workers),
+            .zip(sizes)
+            .map(|(range, counts)| {
+                let mut buffers = AHashMap::<u64, RecordBuffer<'_>>::new();
+                buffers.reserve(counts.len());
+                for (shard, count) in counts {
+                    let buffer = std::mem::take(&mut remaining[shard as usize]);
+                    let (records, next) = buffer.split_at_mut(count);
+                    remaining[shard as usize] = next;
+                    buffers.insert(shard, RecordBuffer { records, used: 0 });
+                }
+                RecordJob { range, buffers }
             })
             .collect();
-        for (shard, buffer) in record_buffers.iter_mut().enumerate() {
-            let mut remaining = buffer.as_mut_slice();
-            for (job, counts) in jobs.iter_mut().zip(&sizes) {
-                let (part, next) = remaining.split_at_mut(counts[shard]);
-                remaining = next;
-                job.buffers.push(part);
-            }
-        }
+        debug_assert!(remaining.iter().all(|buffer| buffer.is_empty()));
+        drop(remaining);
         jobs.into_par_iter().for_each(|mut job| {
-            let mut used = vec![0; workers];
             corpus.for_each_edge(job.range.clone(), |position, key| {
-                let shard = shard_for(key, workers);
-                job.buffers[shard][used[shard]]
-                    .write(KeyedValue::new(key, (position - base) as u32));
-                used[shard] += 1;
+                let shard = shard_for(key, workers) as u64;
+                let buffer = job.buffers.get_mut(&shard).expect("counted owner route");
+                buffer.records[buffer.used].write(KeyedValue::new(key, (position - base) as u32));
+                buffer.used += 1;
             });
+            debug_assert!(
+                job.buffers
+                    .values()
+                    .all(|buffer| buffer.used == buffer.records.len())
+            );
             route_work.complete(job.range.len());
         });
         // Each emitted offset is below records_per_wave <= 2^28. The u32
@@ -231,7 +250,6 @@ pub(super) fn build_in_waves<'a>(
                         mass += u128::from(frequency);
                         if frequency >= wave_floor {
                             groups.push(InitialGroup {
-                                key,
                                 begin: begin as u32,
                                 end: end as u32,
                                 frequency,
@@ -259,7 +277,6 @@ pub(super) fn build_in_waves<'a>(
                     let mut scratch = execution.encoding(worker);
                     table.reserve(groups.len());
                     for InitialGroup {
-                        key,
                         begin,
                         end,
                         frequency,
@@ -269,7 +286,7 @@ pub(super) fn build_in_waves<'a>(
                             .iter()
                             .map(|&record| global_position(base, record));
                         table.insert(
-                            key,
+                            records[begin as usize].key(),
                             PairState {
                                 ledger_count_bits: frequency,
                                 // A complete zero count has no candidate

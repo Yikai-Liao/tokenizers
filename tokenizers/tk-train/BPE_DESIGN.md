@@ -36,6 +36,14 @@ resolves output IDs, prepares changes from an immutable corpus view, applies
 joined writes, and commits pair changes. No preparation read overlaps corpus
 writes. No next selection starts before commit completes.
 
+When the initial vocabulary already meets the target, the coordinator returns
+before allocating mutable slots or a pair index. Initial weighted edge mass
+fitting `u64` proves that every nonnegative per-key count fits as well. If that
+proof is inconclusive, checked initial counting still runs before the return;
+independent keys may each fit even when their total exceeds `u64`. Affix and
+identity-reuse signed bounds are checked while preparing the corpus in either
+case.
+
 | Module | Responsibility |
 |---|---|
 | `vocabulary` | Alphabet selection, decorated initial IDs, token strings, reserved IDs, and identity reuse |
@@ -49,7 +57,11 @@ writes. No next selection starts before commit completes.
 `PreparedMerges` owns both the selected rules and their write positions. Its
 consuming `apply` method returns `MergeEvents` after writes complete. Commit
 borrows event chains until all count owners finish, then releases the complete
-event buffers. Values, fragments, and event nodes are task-local. Each executing
+event buffers. Each producer owns one chain allocation. The batch routes actual
+changes into one row per count owner; it allocates no producer/owner/bucket
+directory matrix. Count actions keep producer order, and stable grouping by
+birth bucket preserves source order, including zero-weight births with positions.
+Values, fragments, and event nodes are task-local. Each executing
 worker lends two reusable ID directories to preparation and commit; its encoding
 scratch also lives with the pool. A directory lease covers sequential work only,
 so no nested pool task can re-enter the same worker's lock.
@@ -97,6 +109,12 @@ byte offset. Filtered stretches may repeat that coordinate; seeking uses the las
 checkpoint before the requested token. This bounds repeated decoding when task
 or wave boundaries split a long or heavily filtered word.
 
+Independent byte chunks measure retained symbols in parallel. Their counts serve
+both word lengths and a small ordered prefix that builds checkpoints, avoiding
+another character scan. Materialization balances jobs by physical slots and
+splits large words with these anchors. Affix lookup still uses each character's
+original byte position rather than its position within a chunk.
+
 After every raw wave is released, consuming `PreparedCorpus::materialize` fills
 the existing mutable slot representation once in parallel. Borrowed word plans,
 checkpoints, and initial ID lookup then leave scope. They never coexist with
@@ -104,9 +122,24 @@ merge writes. The plan uses one word reference and one U64 start per word, in
 exchange for repeating UTF-8 decoding and ID lookup during initial routing.
 Full training memory and CPU determine whether that lifetime trade is useful.
 
-The corpus stores token IDs in fixed `AtomicU32` slots. Live token IDs occupy
-both endpoints of their physical span. Merges update endpoints without shifting
-word suffixes. Immutable separators prevent matches across words.
+The coordinator chooses one fixed slot layout from the larger of the target
+vocabulary size and the resolved initial vocabulary size. Counts through 65,535
+use `AtomicU16`; counts through 16,777,215 use three contiguous atomic bytes;
+larger counts retain `AtomicU32`. The all-ones code in each layout represents the
+separator, and logical reads return complete `u32` IDs. Static dispatch chooses
+the layout once for the complete training attempt, outside token loops.
+
+The three-byte plane has one initialized guard slot. A scalar unaligned
+four-byte read masks off the adjacent byte; even its final read remains inside
+initialized storage. Stores require a joined phase without token readers.
+Shared write entry points make that requirement explicit through an unsafe
+contract; whole-word writers hold the mutable corpus borrow until they drop.
+Rust permits synchronized atomic writes followed by non-atomic reads, as
+specified in its [atomic memory model](https://doc.rust-lang.org/std/sync/atomic/index.html).
+
+Live token IDs occupy both endpoints of their physical span. Merges update
+endpoints without shifting word suffixes. Immutable separators prevent matches
+across words.
 
 A per-ID span table is sufficient while active IDs have one span. Before an ID
 is reused for a different span, the corpus materializes per-occurrence spans.
@@ -123,6 +156,12 @@ Complete single-wave counts are filtered before one exact encoding per retained
 key. Larger inputs build exact lists within each wave, then append those owned
 lists into the accumulated table. They apply the global frequency floor after
 accumulation.
+
+Initial producers scan fixed tiles of `2^18` slots, independent of worker count.
+Each tile retains counts and buffer references only for nonempty owner routes.
+One wave therefore has at most 1,024 producer tiles. Increasing worker count
+does not also multiply the producer count. Installation groups retain the record
+range and frequency; their complete key remains in the first cached record.
 
 Small position allocations use the same fixed size threshold throughout training;
 larger buffers use the system allocator. Append reuses available capacity or
@@ -189,7 +228,7 @@ policy switch cannot recover them. Errors propagate directly; the Reusable
 attempt never restarts.
 Limited-alphabet selection runs once per call; reconstruction reuses its
 retained characters, including the original frequency-tie choice. Both attempts
-use full-width storage and the same shared modules. Affix inputs
+preserve complete IDs and choose the same slot layout bound. Affix inputs
 keep their checked signed weight and edge-mass bounds before either attempt.
 
 Fresh identities cannot reuse active output IDs. Such rules can share a batch
@@ -248,6 +287,13 @@ These terms describe actual work; they do not assert linear training time.
 Stale cohorts can increase `C`, identity reuse can increase `S`, and
 lazy queue repair can increase `Q`.
 
+For one merge batch, let `P` be workers, `D` producer chunks, `T` routed count
+actions, and `F` birth references. Routing storage costs `O(P + D + T + F)`;
+empty producer/owner/bucket combinations contribute no work. Stable birth
+grouping adds `O(sum F_owner log F_owner)` comparisons. Each count-action
+reference uses two resident indices, and each birth reference uses one.
+These actual-event costs replace directories and scans over the cross-product.
+
 The original Word-based trainer removes tokens from vectors and moves the
 remaining suffix after each removal. A word of initial length `n` can therefore
 require `O(n^2)` token moves across its merges. Endpoint updates cost constant
@@ -258,11 +304,11 @@ On the supported 64-bit target, the main storage terms are:
 
 | Component | Storage rule |
 |---|---|
-| Corpus IDs | `4N` bytes |
+| Corpus IDs | `2N`, `3N`, or `4N` bytes by layout, plus one slot of capacity; the three-byte layout initializes that guard |
 | Retained word boundaries | `8W` bytes; fresh training releases them after construction |
 | Occurrence spans | `8N` bytes only when unequal-span identity reuse requires them |
 | Initial records | `12E_wave` bytes, with `E_wave <= 2^28` |
-| Installation groups | 24 bytes per vector capacity item, for at most two owners at once |
+| Installation groups | 16 bytes per vector capacity item, for at most two owners at once |
 | Pair table | 32 bytes per raw bucket for the key, count, and position handle, plus hash-table controls |
 | Reusable-ID ledger | 16 bytes per raw bucket for key and count bits; replaces the initial pair table while cohorts own positions |
 | Fresh priorities | 16 bytes per queue capacity item |

@@ -323,6 +323,7 @@ impl<'a> PairIndex<'a> {
         use tk_collections::IdAccumulator;
         let policy = self.policy;
         let floor = self.minimum_frequency.max(1);
+        let routes = events.route(self.shards.len());
         let candidates = self
             .shards
             .par_iter_mut()
@@ -330,51 +331,45 @@ impl<'a> PairIndex<'a> {
             // Owners without changes keep their counts and valid priorities.
             // Leave their lazy queue refill to selection and avoid scheduling
             // empty codec/directory work, at every corpus and vocabulary scale.
-            .filter(|(owner, _)| {
-                events
-                    .chunks
-                    .iter()
-                    .any(|chunk| !chunk.routes[*owner].changes.is_empty())
-            })
+            .filter(|(owner, _)| !routes[*owner].changes.is_empty())
             .map(|(owner, shard)| -> Result<Vec<MergeCandidate<'a>>> {
                 // PERF: Group births by output ID and direction first. Each
                 // bucket then uses one reusable neighbor directory, as merge
                 // preparation does. This avoids a hash table and allocation
                 // per complete pair while keeping the same commit mechanism
                 // for fresh and reusable identities.
-                for chunk in &events.chunks {
-                    for reference in &chunk.routes[owner].changes {
-                        let change = &chunk.changes[reference.index()];
-                        if matches!(reference.action(), Action::Remove | Action::Both) {
-                            if policy == IdentityPolicy::Reusable {
-                                let count = shard.ledger.entry(change.removed_key).or_default();
-                                let amount = i64::try_from(change.removed_weight)
-                                    .map_err(|_| "BPE identity-reuse removal exceeds i64")?;
-                                *count = (*count as i64)
-                                    .checked_sub(amount)
-                                    .ok_or("BPE identity-reuse count subtraction exceeds i64")?
-                                    as u64;
-                            } else if let Some(state) = shard.states.get_mut(&change.removed_key) {
-                                state.ledger_count_bits = state
-                                    .ledger_count_bits
-                                    .checked_sub(change.removed_weight)
-                                    .ok_or("BPE fresh removal exceeds the current count")?;
-                                if state.ledger_count_bits < floor {
-                                    shard.states.remove(&change.removed_key);
-                                }
+                let route = &routes[owner];
+                for reference in &route.changes {
+                    let change = &events.chunks[reference.chunk].changes[reference.index()];
+                    if matches!(reference.action(), Action::Remove | Action::Both) {
+                        if policy == IdentityPolicy::Reusable {
+                            let count = shard.ledger.entry(change.removed_key).or_default();
+                            let amount = i64::try_from(change.removed_weight)
+                                .map_err(|_| "BPE identity-reuse removal exceeds i64")?;
+                            *count = (*count as i64)
+                                .checked_sub(amount)
+                                .ok_or("BPE identity-reuse count subtraction exceeds i64")?
+                                as u64;
+                        } else if let Some(state) = shard.states.get_mut(&change.removed_key) {
+                            state.ledger_count_bits = state
+                                .ledger_count_bits
+                                .checked_sub(change.removed_weight)
+                                .ok_or("BPE fresh removal exceeds the current count")?;
+                            if state.ledger_count_bits < floor {
+                                shard.states.remove(&change.removed_key);
                             }
                         }
-                        if policy == IdentityPolicy::Reusable
-                            && matches!(reference.action(), Action::Birth | Action::Both)
-                        {
-                            let count = shard.ledger.entry(change.born_key).or_default();
-                            let amount = i64::try_from(change.born_weight)
-                                .map_err(|_| "BPE identity-reuse birth exceeds i64")?;
-                            *count = (*count as i64)
-                                .checked_add(amount)
-                                .ok_or("BPE identity-reuse count addition exceeds i64")?
-                                as u64;
-                        }
+                    }
+                    if policy == IdentityPolicy::Reusable
+                        && matches!(reference.action(), Action::Birth | Action::Both)
+                    {
+                        let count = shard.ledger.entry(change.born_key).or_default();
+                        let amount = i64::try_from(change.born_weight)
+                            .map_err(|_| "BPE identity-reuse birth exceeds i64")?;
+                        *count = (*count as i64)
+                            .checked_add(amount)
+                            .ok_or("BPE identity-reuse count addition exceeds i64")?
+                            as u64;
                     }
                 }
                 let worker = execution.current_worker();
@@ -409,39 +404,43 @@ impl<'a> PairIndex<'a> {
                 // and rule/direction bucket. Per-key vectors would allocate for
                 // each key receiving positions from more than one producer.
                 let mut fragments = Vec::<Fragment<'_>>::new();
-                for bucket in 0..events.buckets {
-                    let first = events.chunks.iter().find_map(|chunk| {
-                        chunk.routes[owner].births[bucket]
-                            .first()
-                            .map(|&index| &chunk.changes[index])
+                let mut remaining = route.births.as_slice();
+                while let Some(&first_index) = remaining.first() {
+                    let first_ref = &route.changes[first_index];
+                    let first = &events.chunks[first_ref.chunk].changes[first_ref.index()];
+                    let bucket = first.bucket;
+                    let end = remaining.partition_point(|&index| {
+                        let reference = &route.changes[index];
+                        events.chunks[reference.chunk].changes[reference.index()].bucket == bucket
                     });
-                    let Some(first) = first else {
-                        continue;
-                    };
+                    let (births, next) = remaining.split_at(end);
+                    remaining = next;
                     let left = bucket & 1 == 0;
                     let pair = key_pair(first.born_key);
                     let replacement = if left { pair.1 } else { pair.0 };
-                    for chunk in &events.chunks {
-                        for &index in &chunk.routes[owner].births[bucket] {
-                            let change = &chunk.changes[index];
-                            let pair = key_pair(change.born_key);
-                            let neighbor = if left { pair.0 } else { pair.1 };
-                            let group = neighbors.touch(neighbor);
-                            group.weight = group
-                                .weight
-                                .checked_add(change.born_weight)
-                                .ok_or("BPE birth frequency exceeds u64")?;
-                            group.occurrences = group
+                    for &reference_index in births {
+                        let reference = &route.changes[reference_index];
+                        let chunk = &events.chunks[reference.chunk];
+                        let index = reference.index();
+                        let change = &chunk.changes[index];
+                        let pair = key_pair(change.born_key);
+                        let neighbor = if left { pair.0 } else { pair.1 };
+                        let group = neighbors.touch(neighbor);
+                        group.weight = group
+                            .weight
+                            .checked_add(change.born_weight)
+                            .ok_or("BPE birth frequency exceeds u64")?;
+                        group.occurrences =
+                            group
                                 .occurrences
                                 .checked_add(change.positions.len())
                                 .ok_or("BPE birth position count exceeds resident bounds")?;
-                            fragments.push(Fragment {
-                                chunk,
-                                index,
-                                next: group.head,
-                            });
-                            group.head = fragments.len() - 1;
-                        }
+                        fragments.push(Fragment {
+                            chunk,
+                            index,
+                            next: group.head,
+                        });
+                        group.head = fragments.len() - 1;
                     }
                     for (neighbor, group) in neighbors.drain() {
                         let key = pair_key(if left {
@@ -482,7 +481,7 @@ impl<'a> PairIndex<'a> {
                         })
                         .map(|fragment| {
                             (
-                                &fragment.chunk.chains[owner],
+                                &fragment.chunk.chains,
                                 fragment.chunk.changes[fragment.index].positions,
                             )
                         });

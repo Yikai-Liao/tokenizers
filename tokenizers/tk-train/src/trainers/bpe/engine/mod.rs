@@ -104,6 +104,54 @@ fn train_attempt(
         trainer.max_token_length.is_some(),
         progress,
     )?;
+    if vocabulary.len() >= trainer.vocab_size && prepared_corpus.initial_counts_fit_u64() {
+        drop(prepared_corpus);
+        execution.release_scratch();
+        return Ok(complete_model(trainer, vocabulary, Vec::new()));
+    }
+    match corpus::slot_bits(trainer.vocab_size.max(vocabulary.len())) {
+        16 => train_with_slots::<corpus::HalfSlots>(
+            trainer,
+            vocabulary,
+            prepared_corpus,
+            policy,
+            execution,
+            progress,
+            #[cfg(test)]
+            trace,
+        ),
+        24 => train_with_slots::<corpus::ThreeByteSlots>(
+            trainer,
+            vocabulary,
+            prepared_corpus,
+            policy,
+            execution,
+            progress,
+            #[cfg(test)]
+            trace,
+        ),
+        _ => train_with_slots::<corpus::FullSlots>(
+            trainer,
+            vocabulary,
+            prepared_corpus,
+            policy,
+            execution,
+            progress,
+            #[cfg(test)]
+            trace,
+        ),
+    }
+}
+fn train_with_slots<S: corpus::SlotStorage>(
+    trainer: &BpeTrainer,
+    mut vocabulary: vocabulary::Vocabulary,
+    prepared_corpus: corpus::PreparedCorpus<'_>,
+    policy: IdentityPolicy,
+    execution: &execution::Execution,
+    progress: &TrainingProgress,
+    #[cfg(test)] trace: &mut Vec<(tk_encode::models::bpe::Pair, u64, u32)>,
+) -> Result<AttemptOutcome> {
+    let workers = execution.workers();
     let arena = AllocationArena::new(workers, prepared_corpus.initial_edges());
     let initial = initial_pairs::build_initial_pairs(
         &prepared_corpus,
@@ -116,7 +164,16 @@ fn train_attempt(
         &arena,
         progress,
     )?;
-    let mut corpus = prepared_corpus.materialize(workers, policy, progress)?;
+    if vocabulary.len() >= trainer.vocab_size {
+        // The total-mass proof was inconclusive. Initial construction has now
+        // retained every checked per-key and signed-policy validation.
+        drop(initial);
+        drop(prepared_corpus);
+        drop(arena);
+        execution.release_scratch();
+        return Ok(complete_model(trainer, vocabulary, Vec::new()));
+    }
+    let mut corpus = prepared_corpus.materialize::<S>(workers, policy, progress)?;
     let mut index =
         pair_index::PairIndex::from_initial_pairs(initial, policy, trainer.min_frequency)?;
     let mut merges = Vec::new();
@@ -210,12 +267,15 @@ fn train_attempt(
     drop(corpus);
     drop(arena);
     execution.release_scratch();
+    Ok(complete_model(trainer, vocabulary, merges))
+}
+fn complete_model(
+    trainer: &BpeTrainer,
+    vocabulary: vocabulary::Vocabulary,
+    merges: Vec<tk_encode::models::bpe::Pair>,
+) -> AttemptOutcome {
     let (vocab, merges) = vocabulary.into_model_parts(merges);
-    Ok(AttemptOutcome::Complete((
-        vocab,
-        merges,
-        trainer.special_tokens.clone(),
-    )))
+    AttemptOutcome::Complete((vocab, merges, trainer.special_tokens.clone()))
 }
 
 #[cfg(test)]

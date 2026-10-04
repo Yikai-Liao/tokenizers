@@ -15,13 +15,170 @@ use rayon::prelude::*;
 use std::{
     mem::{ManuallyDrop, MaybeUninit},
     ops::Range,
-    sync::atomic::{AtomicU32, Ordering},
+    sync::atomic::{AtomicU8, AtomicU16, AtomicU32, Ordering},
 };
 use tk_collections::{IntervalCursor, IntervalIndex};
 use tk_encode::{Result, models::bpe::Pair};
 
-pub(super) struct Corpus {
-    slots: Vec<AtomicU32>,
+// Reserve one code beyond admitted IDs for the separator. Layout is chosen
+// once: sixteen bits for small vocabularies, three bytes through 24 bits, and
+// the complete u32 domain beyond that.
+pub(super) fn slot_bits(id_count: usize) -> u8 {
+    let required = (usize::BITS - id_count.leading_zeros()) as u8;
+    if required <= 16 {
+        16
+    } else if required <= 24 {
+        24
+    } else {
+        32
+    }
+}
+// The coordinator chooses one storage type before training. Static dispatch
+// keeps layout tests and variable-width bit arithmetic outside endpoint loops.
+pub(super) trait SlotStorage: Send + Sync + Sized {
+    fn from_prepared(
+        prepared: &PreparedCorpus<'_>,
+        workers: usize,
+        work: &crate::progress::WorkProgress,
+    ) -> Result<Self>;
+    fn len(&self) -> usize;
+    fn load(&self, position: usize) -> u32;
+    /// # Safety
+    /// Stores belong to a joined write phase with no concurrent token readers.
+    /// Each writer owns distinct logical slots until that phase joins.
+    unsafe fn store(&self, position: usize, id: u32);
+    #[cfg(target_arch = "x86_64")]
+    fn prefetch_pointer(&self, position: usize) -> *const i8;
+}
+pub(super) type FullSlots = Vec<AtomicU32>;
+impl SlotStorage for FullSlots {
+    fn from_prepared(
+        prepared: &PreparedCorpus<'_>,
+        workers: usize,
+        work: &crate::progress::WorkProgress,
+    ) -> Result<Self> {
+        prepared.fill_tokens(workers, work, |_, id| AtomicU32::new(id))
+    }
+    #[inline]
+    fn len(&self) -> usize {
+        self.as_slice().len()
+    }
+    #[inline]
+    fn load(&self, position: usize) -> u32 {
+        self[position].load(Ordering::Relaxed)
+    }
+    #[inline]
+    unsafe fn store(&self, position: usize, id: u32) {
+        self[position].store(id, Ordering::Relaxed);
+    }
+    #[cfg(target_arch = "x86_64")]
+    #[inline]
+    fn prefetch_pointer(&self, position: usize) -> *const i8 {
+        self.as_ptr().wrapping_add(position).cast()
+    }
+}
+pub(super) struct HalfSlots(Vec<AtomicU16>);
+impl SlotStorage for HalfSlots {
+    fn from_prepared(
+        prepared: &PreparedCorpus<'_>,
+        workers: usize,
+        work: &crate::progress::WorkProgress,
+    ) -> Result<Self> {
+        Ok(Self(prepared.fill_tokens(workers, work, |_, id| {
+            AtomicU16::new(id as u16)
+        })?))
+    }
+    #[inline]
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+    #[inline]
+    fn load(&self, position: usize) -> u32 {
+        let id = self.0[position].load(Ordering::Relaxed);
+        if id == u16::MAX {
+            WORD_SEPARATOR_ID
+        } else {
+            u32::from(id)
+        }
+    }
+    #[inline]
+    unsafe fn store(&self, position: usize, id: u32) {
+        debug_assert!(id == WORD_SEPARATOR_ID || id < u32::from(u16::MAX));
+        self.0[position].store(id as u16, Ordering::Relaxed);
+    }
+    #[cfg(target_arch = "x86_64")]
+    #[inline]
+    fn prefetch_pointer(&self, position: usize) -> *const i8 {
+        self.0.as_ptr().wrapping_add(position).cast()
+    }
+}
+// The last initialized guard slot makes the final scalar four-byte read
+// valid. It is outside the logical plane and is never rewritten.
+pub(super) struct ThreeByteSlots {
+    tokens: Vec<[AtomicU8; 3]>,
+}
+impl ThreeByteSlots {
+    const SEPARATOR: u32 = 0x00ff_ffff;
+    fn bytes(id: u32) -> [AtomicU8; 3] {
+        let bytes = id.to_le_bytes();
+        std::array::from_fn(|index| AtomicU8::new(bytes[index]))
+    }
+}
+impl SlotStorage for ThreeByteSlots {
+    fn from_prepared(
+        prepared: &PreparedCorpus<'_>,
+        workers: usize,
+        work: &crate::progress::WorkProgress,
+    ) -> Result<Self> {
+        let mut tokens = prepared.fill_tokens(workers, work, |_, id| Self::bytes(id))?;
+        // fill_tokens reserves this guard before its parallel initialization,
+        // avoiding a second allocation or a full-plane copy here.
+        tokens.push(Self::bytes(0));
+        Ok(Self { tokens })
+    }
+    #[inline]
+    fn len(&self) -> usize {
+        self.tokens.len() - 1
+    }
+    #[inline]
+    fn load(&self, position: usize) -> u32 {
+        assert!(position < self.len());
+        // SAFETY: AtomicU8 has u8's size, alignment and valid representations.
+        // All four bytes are initialized inside this allocation, including
+        // the guard for the last slot. Writes require an exclusive joined
+        // phase through unsafe store; concurrent read-only accesses are valid.
+        // The next slot's low byte is masked off after this scalar read.
+        let raw = unsafe {
+            self.tokens
+                .as_ptr()
+                .add(position)
+                .cast::<u32>()
+                .read_unaligned()
+        };
+        let id = u32::from_le(raw) & Self::SEPARATOR;
+        if id == Self::SEPARATOR {
+            WORD_SEPARATOR_ID
+        } else {
+            id
+        }
+    }
+    #[inline]
+    unsafe fn store(&self, position: usize, id: u32) {
+        debug_assert!(id == WORD_SEPARATOR_ID || id < Self::SEPARATOR);
+        let bytes = id.to_le_bytes();
+        let slot = &self.tokens[..self.len()][position];
+        for index in 0..3 {
+            slot[index].store(bytes[index], Ordering::Relaxed);
+        }
+    }
+    #[cfg(target_arch = "x86_64")]
+    #[inline]
+    fn prefetch_pointer(&self, position: usize) -> *const i8 {
+        self.tokens.as_ptr().wrapping_add(position).cast()
+    }
+}
+pub(super) struct Corpus<S: SlotStorage = FullSlots> {
+    slots: S,
     word_starts: Vec<u64>,
     weights: IntervalIndex<u64>,
     unit_weight: Option<(u64, u64)>,
@@ -55,6 +212,7 @@ pub(super) struct PreparedCorpus<'a> {
     spans_by_id: Vec<u64>,
     scan_whole_words: bool,
     edges: usize,
+    weighted_mass: u128,
 }
 /// Initial routing visits complete keys in ascending physical-coordinate order.
 /// A range owns left endpoints; its final edge may read one token past the range.
@@ -75,6 +233,24 @@ impl InitialPairSource for InitialCorpus<'_> {
         for position in range {
             let left = self.token_ids[position].load(Ordering::Relaxed);
             let right = self.token_ids[position + 1].load(Ordering::Relaxed);
+            if left != WORD_SEPARATOR_ID && right != WORD_SEPARATOR_ID {
+                emit(position, super::pair_index::pair_key((left, right)));
+            }
+        }
+    }
+}
+#[cfg(test)]
+impl<S: SlotStorage> InitialPairSource for &Corpus<S> {
+    fn len(&self) -> usize {
+        self.slots.len()
+    }
+    fn word_weights(&self) -> &IntervalIndex<u64> {
+        &self.weights
+    }
+    fn for_each_edge(&self, range: Range<usize>, mut emit: impl FnMut(usize, u64)) {
+        for position in range {
+            let left = self.slots.load(position);
+            let right = self.slots.load(position + 1);
             if left != WORD_SEPARATOR_ID && right != WORD_SEPARATOR_ID {
                 emit(position, super::pair_index::pair_key((left, right)));
             }
@@ -201,18 +377,55 @@ impl<'a> PreparedCorpus<'a> {
         words.par_sort_unstable_by(|left, right| right.1.cmp(&left.1));
         work.complete(words.len());
         let work = progress.stage("Measure corpus", words.len());
-        let measured: Vec<usize> = words
+        // Long words are measured by independent UTF-8 byte chunks. Retain
+        // these counts for checkpoints instead of rescanning their characters.
+        const CHECKPOINT_BYTES: usize = 4096;
+        let mut byte_chunks = Vec::new();
+        for (index, (word, _)) in words.iter().enumerate() {
+            if word.len() <= CHECKPOINT_BYTES {
+                continue;
+            }
+            for byte in (0..word.len()).step_by(CHECKPOINT_BYTES) {
+                let mut begin = byte;
+                while !word.is_char_boundary(begin) {
+                    begin += 1;
+                }
+                if begin == word.len() {
+                    break;
+                }
+                let mut end = (byte + CHECKPOINT_BYTES).min(word.len());
+                while !word.is_char_boundary(end) {
+                    end += 1;
+                }
+                byte_chunks.push((index, begin..end));
+            }
+        }
+        let count_symbols = |text: &str| {
+            if initial_ids.complete_alphabet() {
+                text.chars().count()
+            } else {
+                text.chars()
+                    .filter(|&character| initial_ids.retained(character))
+                    .count()
+            }
+        };
+        let counts: Vec<usize> = byte_chunks
+            .par_iter()
+            .map(|(index, range)| count_symbols(&words[*index].0[range.clone()]))
+            .collect();
+        let mut measured: Vec<usize> = words
             .par_iter()
             .map(|(word, _)| {
-                if initial_ids.complete_alphabet() {
-                    word.chars().count()
+                if word.len() <= CHECKPOINT_BYTES {
+                    count_symbols(word)
                 } else {
-                    word.chars()
-                        .filter(|&character| initial_ids.retained(character))
-                        .count()
+                    0
                 }
             })
             .collect();
+        for ((index, _), count) in byte_chunks.iter().zip(&counts) {
+            measured[*index] += count;
+        }
         work.complete(words.len());
         let mut word_starts = Vec::with_capacity(words.len());
         let mut interval_starts = Vec::new();
@@ -252,27 +465,23 @@ impl<'a> PreparedCorpus<'a> {
             .zip(word_starts)
             .map(|((word, _), start)| PlannedWord { word, start })
             .collect();
+        // Ordered per-word prefixes restore global anchors, including repeated
+        // positions across byte chunks whose characters were all filtered out.
         let mut checkpoints = Vec::new();
-        // Byte checkpoints also bound seeks through heavily filtered words.
-        // Repeated positions are valid: a filtered byte range consumes no slots;
-        // partition_point selects the final anchor before the target token.
-        const CHECKPOINT_BYTES: usize = 4096;
-        for planned in &words {
-            if planned.word.len() <= CHECKPOINT_BYTES {
-                continue;
+        let mut current_word = None;
+        let mut retained = 0;
+        for ((index, range), count) in byte_chunks.into_iter().zip(counts) {
+            if current_word != Some(index) {
+                current_word = Some(index);
+                retained = 0;
             }
-            let mut retained = 0_usize;
-            let mut last_byte = 0_usize;
-            for (byte, character) in planned.word.char_indices() {
-                if byte - last_byte >= CHECKPOINT_BYTES {
-                    checkpoints.push(SymbolCheckpoint {
-                        position: planned.start as usize + retained,
-                        byte,
-                    });
-                    last_byte = byte;
-                }
-                retained += usize::from(initial_ids.retained(character));
+            if range.start != 0 {
+                checkpoints.push(SymbolCheckpoint {
+                    position: words[index].start as usize + retained,
+                    byte: range.start,
+                });
             }
+            retained += count;
         }
         let unit_weight = interval_weights
             .iter()
@@ -295,84 +504,23 @@ impl<'a> PreparedCorpus<'a> {
             spans_by_id: vocabulary.initial_spans(),
             scan_whole_words: length_limited,
             edges,
+            weighted_mass,
         })
+    }
+    pub(super) fn initial_counts_fit_u64(&self) -> bool {
+        self.weighted_mass <= u128::from(u64::MAX)
     }
     pub(super) fn initial_edges(&self) -> usize {
         self.edges
     }
-    pub(super) fn materialize(
+    pub(super) fn materialize<S: SlotStorage>(
         self,
         workers: usize,
         policy: IdentityPolicy,
         progress: &TrainingProgress,
-    ) -> Result<Corpus> {
-        let slots = self.len;
-        let words = &self.words;
-        let initial_ids = &self.initial_ids;
-        let mut tokens = Vec::<MaybeUninit<AtomicU32>>::new();
-        tokens
-            .try_reserve_exact(slots)
-            .map_err(|_| "BPE corpus allocation failed")?;
-        // PERF: Fill each slot once in its owning word job. Preinitializing the
-        // whole plane would add a serial store pass before the parallel writes.
-        // SAFETY: MaybeUninit elements may be uninitialized. The prefix and every
-        // disjoint job region are fully written before conversion below.
-        unsafe {
-            tokens.set_len(slots);
-        }
-        tokens[0].write(AtomicU32::new(WORD_SEPARATOR_ID));
-        let chunk = words.len().div_ceil(workers * 8).max(1);
-        let work = progress.stage("Fill corpus", slots - 1);
-        let mut jobs = Vec::new();
-        let mut remaining = &mut tokens[1..];
-        for start in (0..words.len()).step_by(chunk) {
-            let end = (start + chunk).min(words.len());
-            let base = words[start].start as usize;
-            let after = words.get(end).map_or(slots, |word| word.start as usize);
-            let (region, next) = remaining.split_at_mut(after - base);
-            remaining = next;
-            jobs.push((start, end, region));
-        }
-        jobs.into_par_iter().for_each(|(start, end, region)| {
-            let mut position = 0;
-            for planned in &words[start..end] {
-                let word = planned.word;
-                if initial_ids.plain() {
-                    for character in word.chars() {
-                        if let Some(id) = initial_ids.plain_id(character) {
-                            region[position].write(AtomicU32::new(id));
-                            position += 1;
-                        }
-                    }
-                } else {
-                    for (byte, character) in word.char_indices() {
-                        if let Some(id) = initial_ids.id(
-                            character,
-                            byte == 0,
-                            byte + character.len_utf8() == word.len(),
-                        ) {
-                            region[position].write(AtomicU32::new(id));
-                            position += 1;
-                        }
-                    }
-                }
-                // Empty filtered words also own one initialized separator.
-                region[position].write(AtomicU32::new(WORD_SEPARATOR_ID));
-                position += 1;
-            }
-            work.complete(region.len());
-        });
-        let mut tokens = ManuallyDrop::new(tokens);
-        // SAFETY: All word jobs joined after writing every measured token and
-        // separator. MaybeUninit<AtomicU32> has the same layout as AtomicU32;
-        // the new vector takes sole ownership of the allocation.
-        let tokens = unsafe {
-            Vec::from_raw_parts(
-                tokens.as_mut_ptr().cast::<AtomicU32>(),
-                tokens.len(),
-                tokens.capacity(),
-            )
-        };
+    ) -> Result<Corpus<S>> {
+        let work = progress.stage("Fill corpus", self.len - 1);
+        let tokens = S::from_prepared(&self, workers, &work)?;
         let word_starts = if policy == IdentityPolicy::Reusable {
             self.words.iter().map(|word| word.start).collect()
         } else {
@@ -388,21 +536,180 @@ impl<'a> PreparedCorpus<'a> {
             scan_whole_words: self.scan_whole_words,
         })
     }
-}
-impl Corpus {
-    #[cfg(test)]
-    pub(super) fn initial_view(&self) -> InitialCorpus<'_> {
-        InitialCorpus {
-            token_ids: &self.slots,
-            word_weights: &self.weights,
+    fn for_each_word_token(
+        &self,
+        index: usize,
+        range: Range<usize>,
+        mut emit: impl FnMut(usize, u32),
+    ) {
+        let planned = &self.words[index];
+        let start = planned.start as usize;
+        let separator = self
+            .words
+            .get(index + 1)
+            .map_or(self.len, |word| word.start as usize)
+            - 1;
+        if range.start < separator {
+            let mut position = start;
+            let mut byte_start = 0;
+            let after = self
+                .checkpoints
+                .partition_point(|point| point.position <= range.start);
+            if let Some(point) = after.checked_sub(1).map(|index| &self.checkpoints[index])
+                && point.position >= start
+            {
+                position = point.position;
+                byte_start = point.byte;
+            }
+            for (offset, character) in planned.word[byte_start..].char_indices() {
+                let byte = byte_start + offset;
+                let id = if self.initial_ids.plain() {
+                    self.initial_ids.plain_id(character)
+                } else {
+                    self.initial_ids.id(
+                        character,
+                        byte == 0,
+                        byte + character.len_utf8() == planned.word.len(),
+                    )
+                };
+                let Some(id) = id else {
+                    continue;
+                };
+                if position >= range.end {
+                    break;
+                }
+                if position >= range.start {
+                    emit(position, id);
+                }
+                position += 1;
+            }
         }
+        if range.contains(&separator) {
+            emit(separator, WORD_SEPARATOR_ID);
+        }
+    }
+    fn fill_tokens<T: Send>(
+        &self,
+        workers: usize,
+        work: &crate::progress::WorkProgress,
+        make: impl Fn(usize, u32) -> T + Sync,
+    ) -> Result<Vec<T>> {
+        let slots = self.len;
+        let words = &self.words;
+        let initial_ids = &self.initial_ids;
+        let mut tokens = Vec::<MaybeUninit<T>>::new();
+        tokens
+            .try_reserve_exact(slots.checked_add(1).ok_or("BPE corpus size overflow")?)
+            .map_err(|_| "BPE corpus allocation failed")?;
+        // PERF: Fill each slot once in its owning word job. Preinitializing the
+        // whole plane would add a serial store pass before the parallel writes.
+        // SAFETY: MaybeUninit elements may be uninitialized. The prefix and every
+        // disjoint job region are fully written before conversion below.
+        unsafe {
+            tokens.set_len(slots);
+        }
+        tokens[0].write(make(0, WORD_SEPARATOR_ID));
+        let chunk = (slots - 1).div_ceil(workers * 8).max(1);
+        let mut specs = Vec::new();
+        let mut start = 0;
+        while start < words.len() {
+            let base = words[start].start as usize;
+            let after = words
+                .get(start + 1)
+                .map_or(slots, |word| word.start as usize);
+            if after - base > chunk {
+                for begin in (base..after).step_by(chunk) {
+                    specs.push((begin, (begin + chunk).min(after), start, start + 1, true));
+                }
+                start += 1;
+                continue;
+            }
+            let target = base + chunk;
+            let mut end = words.partition_point(|word| (word.start as usize) < target);
+            let last = end - 1;
+            let last_after = words.get(end).map_or(slots, |word| word.start as usize);
+            // Leave a crossing large word for the next iteration to split.
+            if last > start && last_after - words[last].start as usize > chunk {
+                end -= 1;
+            }
+            let after = words.get(end).map_or(slots, |word| word.start as usize);
+            specs.push((base, after, start, end, false));
+            start = end;
+        }
+        let mut jobs = Vec::with_capacity(specs.len());
+        let mut remaining = &mut tokens[1..];
+        for (base, after, start, end, segment) in specs {
+            let (region, next) = remaining.split_at_mut(after - base);
+            remaining = next;
+            jobs.push((base, start, end, segment, region));
+        }
+        debug_assert!(remaining.is_empty());
+        jobs.into_par_iter()
+            .for_each(|(base, start, end, segment, region)| {
+                if segment {
+                    let mut written = 0;
+                    self.for_each_word_token(start, base..base + region.len(), |position, id| {
+                        region[position - base].write(make(position, id));
+                        written += 1;
+                    });
+                    debug_assert_eq!(written, region.len());
+                    work.complete(region.len());
+                    return;
+                }
+                let mut position = 0;
+                for planned in &words[start..end] {
+                    let word = planned.word;
+                    if initial_ids.plain() {
+                        for character in word.chars() {
+                            if let Some(id) = initial_ids.plain_id(character) {
+                                region[position].write(make(base + position, id));
+                                position += 1;
+                            }
+                        }
+                    } else {
+                        for (byte, character) in word.char_indices() {
+                            if let Some(id) = initial_ids.id(
+                                character,
+                                byte == 0,
+                                byte + character.len_utf8() == word.len(),
+                            ) {
+                                region[position].write(make(base + position, id));
+                                position += 1;
+                            }
+                        }
+                    }
+                    // Empty filtered words also own one initialized separator.
+                    region[position].write(make(base + position, WORD_SEPARATOR_ID));
+                    position += 1;
+                }
+                debug_assert_eq!(position, region.len());
+                work.complete(region.len());
+            });
+        let mut tokens = ManuallyDrop::new(tokens);
+        // SAFETY: All word jobs joined after writing every measured token and
+        // separator. MaybeUninit<T> has the same layout as T;
+        // the new vector takes sole ownership of the allocation.
+        let tokens = unsafe {
+            Vec::from_raw_parts(
+                tokens.as_mut_ptr().cast::<T>(),
+                tokens.len(),
+                tokens.capacity(),
+            )
+        };
+        Ok(tokens)
+    }
+}
+impl<S: SlotStorage> Corpus<S> {
+    #[cfg(test)]
+    pub(super) fn initial_view(&self) -> impl InitialPairSource + '_ {
+        self
     }
     pub(super) fn len(&self) -> usize {
         self.slots.len()
     }
     #[inline]
     pub(super) fn token(&self, position: u64) -> u32 {
-        self.slots[position as usize].load(Ordering::Relaxed)
+        self.slots.load(position as usize)
     }
     #[inline]
     pub(super) fn span(&self, position: u64) -> u64 {
@@ -414,7 +721,7 @@ impl Corpus {
     pub(super) fn span_by_id(&self, id: u32) -> u64 {
         self.spans_by_id[id as usize]
     }
-    pub(super) fn matcher(&self, pair: Pair) -> PairMatcher<'_> {
+    pub(super) fn matcher(&self, pair: Pair) -> PairMatcher<'_, S> {
         PairMatcher {
             corpus: self,
             pair,
@@ -477,13 +784,19 @@ impl Corpus {
         }
     }
     #[inline]
-    pub(super) fn write_endpoints(&self, matched: PairMatch, replacement: u32) {
-        write_endpoints(&self.slots, matched, replacement);
+    /// # Safety
+    /// No token readers may overlap this joined write phase. The prepared
+    /// geometry must own disjoint endpoint slots across all active writers.
+    pub(super) unsafe fn write_endpoints(&self, matched: PairMatch, replacement: u32) {
+        // SAFETY: the caller supplies the write-phase and ownership proof.
+        unsafe {
+            write_endpoints(&self.slots, matched, replacement);
+        }
     }
     pub(super) fn word_writers(
         &mut self,
         regions: &[std::ops::Range<u64>],
-    ) -> Option<Vec<WordWriter<'_>>> {
+    ) -> Option<Vec<WordWriter<'_, S>>> {
         let spans = self.occurrence_spans.as_mut()?;
         let mut remaining = spans.as_mut_slice();
         let mut writers = Vec::with_capacity(regions.len());
@@ -492,7 +805,7 @@ impl Corpus {
             remaining = next;
             writers.push(WordWriter {
                 base: region.start,
-                slots: &self.slots[region.start as usize..region.end as usize],
+                slots: &self.slots,
                 spans,
             });
         }
@@ -509,7 +822,7 @@ impl Corpus {
             // does not load a value or change the phase-ordering contract.
             unsafe {
                 std::arch::x86_64::_mm_prefetch(
-                    self.slots.as_ptr().add(position as usize).cast(),
+                    self.slots.prefetch_pointer(position as usize),
                     std::arch::x86_64::_MM_HINT_T0,
                 );
             }
@@ -520,35 +833,43 @@ impl Corpus {
 // Prepared plans own disjoint live-token spans. Pool joins delimit the
 // Relaxed stores; this helper also serves exclusive whole-word regions.
 #[inline]
-fn write_endpoints(slots: &[AtomicU32], matched: PairMatch, replacement: u32) {
-    slots[matched.left_start as usize].store(replacement, Ordering::Relaxed);
-    if matched.right_start + 1 != matched.next_start {
-        slots[matched.right_start as usize].store(WORD_SEPARATOR_ID, Ordering::Relaxed);
+unsafe fn write_endpoints<S: SlotStorage>(slots: &S, matched: PairMatch, replacement: u32) {
+    // SAFETY: caller guarantees a reader-free joined phase and disjoint spans.
+    unsafe {
+        slots.store(matched.left_start as usize, replacement);
+        if matched.right_start + 1 != matched.next_start {
+            slots.store(matched.right_start as usize, WORD_SEPARATOR_ID);
+        }
+        slots.store((matched.next_start - 1) as usize, replacement);
     }
-    slots[(matched.next_start - 1) as usize].store(replacement, Ordering::Relaxed);
 }
 /// A complete immutable word region owns its occurrence-span writes as well.
-pub(super) struct WordWriter<'a> {
+pub(super) struct WordWriter<'a, S: SlotStorage> {
     base: u64,
-    slots: &'a [AtomicU32],
+    slots: &'a S,
     spans: &'a mut [u64],
 }
-impl WordWriter<'_> {
+impl<S: SlotStorage> WordWriter<'_, S> {
     pub(super) fn merge(&mut self, position: u64, replacement: u32) {
         let left = (position - self.base) as usize;
         let right = left + self.spans[left] as usize;
         let after = right + self.spans[right] as usize;
         let merged = (after - left) as u64;
-        write_endpoints(
-            self.slots,
-            PairMatch {
-                left_start: left as u64,
-                right_start: right as u64,
-                next_start: after as u64,
-                merged_span: merged,
-            },
-            replacement,
-        );
+        // SAFETY: word_writers borrows Corpus mutably until all writers drop.
+        // Their checked occurrence-span regions are disjoint; merge never reads
+        // token IDs and changes only endpoints inside this writer's region.
+        unsafe {
+            write_endpoints(
+                self.slots,
+                PairMatch {
+                    left_start: self.base + left as u64,
+                    right_start: self.base + right as u64,
+                    next_start: self.base + after as u64,
+                    merged_span: merged,
+                },
+                replacement,
+            );
+        }
         if right + 1 != after {
             self.spans[right] = 0;
         }
@@ -558,13 +879,13 @@ impl WordWriter<'_> {
 }
 /// Fixed rule geometry is cached once. Unequal identity reuse reads its
 /// occurrence plane from the same immutable snapshot instead.
-pub(super) struct PairMatcher<'a> {
-    corpus: &'a Corpus,
+pub(super) struct PairMatcher<'a, S: SlotStorage> {
+    corpus: &'a Corpus<S>,
     pair: Pair,
     left_span: u64,
     right_span: u64,
 }
-impl PairMatcher<'_> {
+impl<S: SlotStorage> PairMatcher<'_, S> {
     #[inline]
     pub(super) fn geometry(&self, left_start: u64) -> PairMatch {
         let left_span = self
@@ -632,6 +953,78 @@ mod tests {
     use super::*;
 
     #[test]
+    fn compact_slot_domains_preserve_ids_separators_and_adjacent_parallel_writes() {
+        for (count, expected_bits) in [
+            (0, 16),
+            (65_535, 16),
+            (65_536, 24),
+            (100_000, 24),
+            (131_071, 24),
+            (131_072, 24),
+            (200_000, 24),
+            (524_288, 24),
+            (1_048_576, 24),
+            (16_777_215, 24),
+            (16_777_216, 32),
+            (u32::MAX as usize, 32),
+            (usize::MAX, 32),
+        ] {
+            assert_eq!(slot_bits(count), expected_bits, "ID count {count}");
+        }
+        fn check<S: SlotStorage>(plane: S, count: usize) {
+            const SLOTS: usize = 512;
+            const ROUNDS: usize = 256;
+            let mut values = vec![0, (count - 1) as u32, WORD_SEPARATOR_ID];
+            values.extend(
+                [65_534, 65_535, 65_536, 131_071, 131_072]
+                    .into_iter()
+                    .filter(|&id| (id as usize) < count),
+            );
+            std::thread::scope(|scope| {
+                for lane in 0..8 {
+                    let plane = &plane;
+                    let values = &values;
+                    scope.spawn(move || {
+                        for round in 0..ROUNDS {
+                            for position in (lane..SLOTS).step_by(8) {
+                                // SAFETY: each thread owns its lane's slots;
+                                // all reads follow this scope's join.
+                                unsafe {
+                                    plane
+                                        .store(position, values[(position + round) % values.len()]);
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+            for position in 0..SLOTS {
+                assert_eq!(
+                    plane.load(position),
+                    values[(position + ROUNDS - 1) % values.len()],
+                    "count {count}, slot {position}"
+                );
+            }
+        }
+        for count in [100_000, 200_000, 16_777_215] {
+            check(
+                ThreeByteSlots {
+                    tokens: (0..513).map(|_| ThreeByteSlots::bytes(0)).collect(),
+                },
+                count,
+            );
+        }
+        check(
+            HalfSlots((0..512).map(|_| AtomicU16::new(0)).collect()),
+            65_535,
+        );
+        check(
+            (0..512).map(|_| AtomicU32::new(0)).collect::<FullSlots>(),
+            u32::MAX as usize,
+        );
+    }
+
+    #[test]
     fn unit_weight_range_preserves_boundaries_and_cursor_resets() {
         let start = 1_u64 << 32;
         let weights = IntervalIndex::new(vec![1, start, start + 4], vec![3, 1, 0]);
@@ -683,7 +1076,7 @@ mod tests {
             ]
             .into_iter()
             .map(AtomicU32::new)
-            .collect(),
+            .collect::<Vec<_>>(),
             word_starts: vec![1, 5],
             weights: IntervalIndex::new(vec![1, 5], vec![3, 1]),
             unit_weight: Some((5, 4)),
@@ -756,7 +1149,7 @@ mod tests {
             slots: [WORD_SEPARATOR_ID, 0, 0, 0, 0, WORD_SEPARATOR_ID]
                 .into_iter()
                 .map(AtomicU32::new)
-                .collect(),
+                .collect::<Vec<_>>(),
             word_starts: vec![1],
             weights: IntervalIndex::new(vec![1], vec![1]),
             unit_weight: Some((1, 5)),
@@ -827,13 +1220,10 @@ mod tests {
                 .chunks
                 .iter()
                 .flat_map(|chunk| {
-                    chunk.changes.iter().flat_map(|change| {
-                        chunk.chains[super::super::pair_index::shard_for(
-                            change.born_key,
-                            chunk.chains.len(),
-                        )]
-                        .reversed(change.positions)
-                    })
+                    chunk
+                        .changes
+                        .iter()
+                        .flat_map(|change| chunk.chains.reversed(change.positions))
                 })
                 .collect();
             assert_eq!(births, [1]);

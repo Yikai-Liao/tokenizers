@@ -3,7 +3,7 @@
 //! select one rule and preserve each intermediate boundary produced by HF BPE.
 use super::{
     IdentityPolicy, WORD_SEPARATOR_ID, aa_parity,
-    corpus::{Corpus, PairMatch, PairMatcher, WordWeightCursor},
+    corpus::{Corpus, PairMatch, PairMatcher, SlotStorage, WordWeightCursor},
     execution::Execution,
     pair_index::{MergeCandidate, pair_key, shard_for},
 };
@@ -22,7 +22,6 @@ struct NeighborChanges {
     removed: u64,
     born: u64,
     positions: PositionChain,
-    owner: u32,
 }
 /// One neighbor's removal and birth are committed together. With reusable IDs,
 /// the two keys can coincide.
@@ -43,16 +42,22 @@ pub(super) enum ChangeAction {
 }
 /// Two low tag bits share one word with a record index. A resident Vec of
 /// 48-byte records bounds its indices well below the available upper bits.
-pub(super) struct OwnerChange(usize);
+pub(super) struct OwnerChange {
+    pub(super) chunk: usize,
+    index_and_action: usize,
+}
 impl OwnerChange {
-    fn new(index: usize, action: ChangeAction) -> Self {
-        Self((index << 2) | action as usize)
+    fn new(chunk: usize, index: usize, action: ChangeAction) -> Self {
+        Self {
+            chunk,
+            index_and_action: (index << 2) | action as usize,
+        }
     }
     pub(super) fn index(&self) -> usize {
-        self.0 >> 2
+        self.index_and_action >> 2
     }
     pub(super) fn action(&self) -> ChangeAction {
-        match self.0 & 3 {
+        match self.index_and_action & 3 {
             0 => ChangeAction::Remove,
             1 => ChangeAction::Birth,
             2 => ChangeAction::Both,
@@ -62,11 +67,10 @@ impl OwnerChange {
 }
 pub(super) struct OwnerRoute {
     pub(super) changes: Vec<OwnerChange>,
-    pub(super) births: Vec<Vec<usize>>,
+    pub(super) births: Vec<usize>,
 }
 pub(super) struct EventChunk {
-    pub(super) chains: Vec<PositionChains>,
-    pub(super) routes: Vec<OwnerRoute>,
+    pub(super) chains: PositionChains,
     pub(super) changes: Vec<PairChanges>,
 }
 pub(super) struct MergeEvents {
@@ -88,26 +92,19 @@ pub(super) struct PreparedMerges {
 struct MergeScratch {
     left: IdAccumulator<NeighborChanges>,
     right: IdAccumulator<NeighborChanges>,
-    pub(super) chains: Vec<PositionChains>,
+    pub(super) chains: PositionChains,
     changes: Vec<PairChanges>,
     remaining_nodes: usize,
-    buckets: usize,
 }
 impl MergeScratch {
-    fn new(
-        workers: usize,
-        identities: usize,
-        buckets: usize,
-        directories: [IdDirectory; 2],
-    ) -> Self {
+    fn new(identities: usize, directories: [IdDirectory; 2]) -> Self {
         let [left, right] = directories;
         Self {
             left: IdAccumulator::with_directory(identities, left),
             right: IdAccumulator::with_directory(identities, right),
-            chains: (0..workers).map(|_| PositionChains::new()).collect(),
+            chains: PositionChains::new(),
             changes: Vec::new(),
             remaining_nodes: PositionChains::new().remaining_nodes(),
-            buckets,
         }
     }
     fn into_directories(self) -> [IdDirectory; 2] {
@@ -142,14 +139,10 @@ impl MergeScratch {
     }
     fn take_chunk(&mut self) -> EventChunk {
         self.remaining_nodes = PositionChains::new().remaining_nodes();
-        let empty = (0..self.chains.len())
-            .map(|_| PositionChains::new())
-            .collect();
-        EventChunk::new(
-            std::mem::replace(&mut self.chains, empty),
-            std::mem::take(&mut self.changes),
-            self.buckets,
-        )
+        EventChunk {
+            chains: std::mem::take(&mut self.chains),
+            changes: std::mem::take(&mut self.changes),
+        }
     }
     fn remove(group: &mut NeighborChanges, weight: u64) -> Result<()> {
         group.removed = group
@@ -164,9 +157,8 @@ impl MergeScratch {
     #[inline(always)]
     fn birth(
         group: &mut NeighborChanges,
-        chains: &mut [PositionChains],
+        chains: &mut PositionChains,
         remaining_nodes: &mut usize,
-        key: u64,
         position: u64,
         weight: u64,
     ) -> Result<()> {
@@ -174,16 +166,13 @@ impl MergeScratch {
             .born
             .checked_add(weight)
             .ok_or("BPE neighbor birth mass exceeds u64")?;
-        if group.positions.is_empty() {
-            group.owner = shard_for(key, chains.len()) as u32;
-        }
-        chains[group.owner as usize].push(&mut group.positions, position)?;
+        chains.push(&mut group.positions, position)?;
         *remaining_nodes -= 1;
         Ok(())
     }
     fn left(
         &mut self,
-        replacement: u32,
+        _replacement: u32,
         neighbor: u32,
         position: u64,
         weight: u64,
@@ -196,7 +185,6 @@ impl MergeScratch {
                 group,
                 &mut self.chains,
                 &mut self.remaining_nodes,
-                pair_key((neighbor, replacement)),
                 position,
                 weight,
             )?;
@@ -205,20 +193,27 @@ impl MergeScratch {
     }
     fn right(
         &mut self,
-        replacement: u32,
+        _replacement: u32,
         removed: u32,
         born: u32,
         position: u64,
         weight: u64,
         birth: bool,
     ) -> Result<()> {
-        Self::remove(self.right.touch(removed), weight)?;
+        let group = self.right.touch(removed);
+        Self::remove(group, weight)?;
         if birth {
+            // A cohort keeps the same neighbor on removal and birth. Preserve
+            // checked removal-before-birth order while sharing its lookup.
+            let group = if removed == born {
+                group
+            } else {
+                self.right.touch(born)
+            };
             Self::birth(
-                self.right.touch(born),
+                group,
                 &mut self.chains,
                 &mut self.remaining_nodes,
-                pair_key((replacement, born)),
                 position,
                 weight,
             )?;
@@ -226,59 +221,71 @@ impl MergeScratch {
         Ok(())
     }
 }
-impl EventChunk {
-    fn new(chains: Vec<PositionChains>, changes: Vec<PairChanges>, buckets: usize) -> Self {
-        let mut routes: Vec<_> = (0..chains.len())
+impl MergeEvents {
+    /// One directory per owner for the whole batch. Only actual actions and
+    /// births occupy entries; producers do not allocate an owner/bucket matrix.
+    pub(super) fn route(&self, workers: usize) -> Vec<OwnerRoute> {
+        let mut routes: Vec<_> = (0..workers)
             .map(|_| OwnerRoute {
                 changes: Vec::new(),
-                births: (0..buckets).map(|_| Vec::new()).collect(),
+                births: Vec::new(),
             })
             .collect();
-        // Producers route complete aggregates and build rule/direction buckets.
-        // Commit owners consume these buckets directly, preserving job order.
-        for (index, change) in changes.iter().enumerate() {
-            let removed =
-                (change.removed_weight != 0).then(|| shard_for(change.removed_key, chains.len()));
-            // Zero-weight identity-reuse births still own positions. Only an empty
-            // chain has no birth action; weight alone cannot decide this.
-            let born =
-                (!change.positions.is_empty()).then(|| shard_for(change.born_key, chains.len()));
-            match (removed, born) {
-                (Some(removed), Some(born)) if removed == born => routes[removed]
-                    .changes
-                    .push(OwnerChange::new(index, ChangeAction::Both)),
-                (removed, born) => {
-                    if let Some(owner) = removed {
-                        routes[owner]
-                            .changes
-                            .push(OwnerChange::new(index, ChangeAction::Remove));
+        for (chunk_index, chunk) in self.chunks.iter().enumerate() {
+            for (index, change) in chunk.changes.iter().enumerate() {
+                debug_assert!((change.bucket as usize) < self.buckets);
+                let removed =
+                    (change.removed_weight != 0).then(|| shard_for(change.removed_key, workers));
+                // Zero-weight identity-reuse births still own positions. Only an empty
+                // chain has no birth action; weight alone cannot decide this.
+                let born =
+                    (!change.positions.is_empty()).then(|| shard_for(change.born_key, workers));
+                match (removed, born) {
+                    (Some(removed), Some(born)) if removed == born => {
+                        let route = &mut routes[removed];
+                        route.births.push(route.changes.len());
+                        route.changes.push(OwnerChange::new(
+                            chunk_index,
+                            index,
+                            ChangeAction::Both,
+                        ));
                     }
-                    if let Some(owner) = born {
-                        routes[owner]
-                            .changes
-                            .push(OwnerChange::new(index, ChangeAction::Birth));
+                    (removed, born) => {
+                        if let Some(owner) = removed {
+                            routes[owner].changes.push(OwnerChange::new(
+                                chunk_index,
+                                index,
+                                ChangeAction::Remove,
+                            ));
+                        }
+                        if let Some(owner) = born {
+                            let route = &mut routes[owner];
+                            route.births.push(route.changes.len());
+                            route.changes.push(OwnerChange::new(
+                                chunk_index,
+                                index,
+                                ChangeAction::Birth,
+                            ));
+                        }
                     }
                 }
             }
-            if let Some(owner) = born {
-                routes[owner].births[change.bucket as usize].push(index);
-            }
         }
-        Self {
-            chains,
-            routes,
-            changes,
-        }
+        // Stable ordering retains spatial producer order within each bucket.
+        // Count actions retain their original order independently of birth grouping.
+        routes.par_iter_mut().for_each(|route| {
+            route.births.sort_by_key(|&index| {
+                let reference = &route.changes[index];
+                self.chunks[reference.chunk].changes[reference.index()].bucket
+            });
+        });
+        routes
     }
+}
+impl EventChunk {
     #[cfg(test)]
-    pub(super) fn test(chains: PositionChains, changes: Vec<PairChanges>, workers: usize) -> Self {
-        let owner = changes
-            .iter()
-            .find(|change| !change.positions.is_empty())
-            .map_or(0, |change| shard_for(change.born_key, workers));
-        let mut owners: Vec<_> = (0..workers).map(|_| PositionChains::new()).collect();
-        owners[owner] = chains;
-        Self::new(owners, changes, 2)
+    pub(super) fn test(chains: PositionChains, changes: Vec<PairChanges>, _workers: usize) -> Self {
+        Self { chains, changes }
     }
 }
 // PERF: Prefetch a bounded distance ahead to overlap scattered endpoint loads
@@ -327,7 +334,7 @@ impl SelectedRules {
             }
         }
     }
-    fn left_selected(&self, corpus: &Corpus, before: u64, prior: u32) -> bool {
+    fn left_selected<S: SlotStorage>(&self, corpus: &Corpus<S>, before: u64, prior: u32) -> bool {
         let tail = self.tails[prior as usize];
         if tail == EMPTY {
             return false;
@@ -339,7 +346,7 @@ impl SelectedRules {
             (tail >> 32) as u32 == previous
         }
     }
-    fn final_next(&self, corpus: &Corpus, after: u64, next: u32) -> u32 {
+    fn final_next<S: SlotStorage>(&self, corpus: &Corpus<S>, after: u64, next: u32) -> u32 {
         let head = self.heads[next as usize];
         if head == EMPTY {
             return next;
@@ -370,12 +377,12 @@ enum SelectedNeighbors<'a> {
         following: Option<u64>,
     },
 }
-struct Preparation<'a> {
-    corpus: &'a Corpus,
+struct Preparation<'a, S: SlotStorage> {
+    corpus: &'a Corpus<S>,
     scratch: &'a mut MergeScratch,
     rule: &'a MergeRule,
     rank: usize,
-    matcher: PairMatcher<'a>,
+    matcher: PairMatcher<'a, S>,
     limit: u64,
     chunks: Vec<EventChunk>,
     positions: PositionBuffer,
@@ -384,7 +391,7 @@ struct Preparation<'a> {
     // immutable boundaries for every rewrite. The cursor also handles resets.
     weights: WordWeightCursor<'a>,
 }
-impl Preparation<'_> {
+impl<S: SlotStorage> Preparation<'_, S> {
     fn room(&mut self) {
         if self.scratch.remaining_nodes < 2 {
             self.scratch.flush_rule(self.rule, self.rank);
@@ -518,13 +525,13 @@ fn position_jobs(candidates: &[MergeCandidate<'_>], workers: usize) -> Vec<Vec<P
     }
     jobs
 }
-fn preparation<'a>(
-    corpus: &'a Corpus,
+fn preparation<'a, S: SlotStorage>(
+    corpus: &'a Corpus<S>,
     scratch: &'a mut MergeScratch,
     rule: &'a MergeRule,
     rank: usize,
     limit: u64,
-) -> Preparation<'a> {
+) -> Preparation<'a, S> {
     Preparation {
         corpus,
         scratch,
@@ -537,8 +544,8 @@ fn preparation<'a>(
         weights: corpus.weight_cursor(),
     }
 }
-pub(super) fn prepare_merges(
-    corpus: &Corpus,
+pub(super) fn prepare_merges<S: SlotStorage>(
+    corpus: &Corpus<S>,
     rules: &[MergeRule],
     candidates: &[MergeCandidate<'_>],
     policy: IdentityPolicy,
@@ -571,12 +578,7 @@ pub(super) fn prepare_merges(
         jobs.into_par_iter()
             .map(|tasks| -> Result<_> {
                 let mut directories = execution.directories();
-                let mut scratch = MergeScratch::new(
-                    execution.workers(),
-                    identities,
-                    rules.len() * 2,
-                    std::mem::take(&mut *directories),
-                );
+                let mut scratch = MergeScratch::new(identities, std::mem::take(&mut *directories));
                 let mut outputs = Vec::new();
                 for task in tasks {
                     let mut plan = preparation(
@@ -649,8 +651,8 @@ struct CohortTask {
     region: std::ops::Range<u64>,
     source: CohortSource,
 }
-fn prepare_cohort(
-    corpus: &Corpus,
+fn prepare_cohort<S: SlotStorage>(
+    corpus: &Corpus<S>,
     rule: &MergeRule,
     candidate: &MergeCandidate<'_>,
     identities: usize,
@@ -734,12 +736,7 @@ fn prepare_cohort(
         .into_par_iter()
         .map(|task| -> Result<_> {
             let mut directories = execution.directories();
-            let mut scratch = MergeScratch::new(
-                execution.workers(),
-                identities,
-                2,
-                std::mem::take(&mut *directories),
-            );
+            let mut scratch = MergeScratch::new(identities, std::mem::take(&mut *directories));
             let mut plan = preparation(corpus, &mut scratch, rule, 0, limit);
             match task.source {
                 CohortSource::Words(words) => {
@@ -800,8 +797,8 @@ fn prepare_cohort(
         })
         .collect()
 }
-fn prepare_aa(
-    corpus: &Corpus,
+fn prepare_aa<S: SlotStorage>(
+    corpus: &Corpus<S>,
     rule: &MergeRule,
     candidate: &MergeCandidate<'_>,
     identities: usize,
@@ -870,12 +867,7 @@ fn prepare_aa(
         .enumerate()
         .map(|(index, positions)| -> Result<_> {
             let mut directories = execution.directories();
-            let mut scratch = MergeScratch::new(
-                execution.workers(),
-                identities,
-                2,
-                std::mem::take(&mut *directories),
-            );
+            let mut scratch = MergeScratch::new(identities, std::mem::take(&mut *directories));
             let mut plan = preparation(corpus, &mut scratch, rule, 0, limit);
             for (offset, position) in positions.iter().enumerate() {
                 let previous = if offset == 0 {
@@ -912,7 +904,7 @@ fn prepare_aa(
         .collect()
 }
 impl PreparedMerges {
-    pub(super) fn apply(self, corpus: &mut Corpus) -> MergeEvents {
+    pub(super) fn apply<S: SlotStorage>(self, corpus: &mut Corpus<S>) -> MergeEvents {
         if corpus.has_occurrence_spans() {
             let regions: Vec<_> = self
                 .jobs
@@ -942,7 +934,15 @@ impl PreparedMerges {
                 for write in &job.writes {
                     let matcher = corpus.matcher(write.rule.pair);
                     write.positions.iter().for_each(|position| {
-                        corpus.write_endpoints(matcher.geometry(position), write.rule.replacement);
+                        // SAFETY: preparation selected disjoint endpoint spans.
+                        // apply holds the mutable corpus borrow until pool join;
+                        // geometry reads immutable ID spans, never token IDs.
+                        unsafe {
+                            corpus.write_endpoints(
+                                matcher.geometry(position),
+                                write.rule.replacement,
+                            );
+                        }
                     });
                 }
             });

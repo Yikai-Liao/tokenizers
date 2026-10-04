@@ -38,6 +38,32 @@ fn check_with_workers(
     }
 }
 #[test]
+fn routed_batches_preserve_rule_and_position_order_with_many_workers() {
+    let mut words = counts(&[("aaaaaaa", 5), ("abcabc", 3), ("baab", 0), ("", 1)]);
+    for index in 0..128_u32 {
+        let word: String = (0..3)
+            .map(|offset| char::from_u32(0x4000 + index * 3 + offset).unwrap())
+            .collect();
+        words.insert(word.into(), 2 + u64::from(index % 3));
+    }
+    let trainer = BpeTrainer::builder()
+        .vocab_size(700)
+        .min_frequency(2)
+        .show_progress(false)
+        .build();
+    check_with_workers(&trainer, &words, &[1, 4, 16, 64]);
+
+    let mut aliases = trainer;
+    aliases.continuing_subword_prefix = Some("a".into());
+    aliases.end_of_word_suffix = Some("a".into());
+    aliases.max_token_length = Some(5);
+    check_with_workers(
+        &aliases,
+        &counts(&[("aaaaaaa", 5), ("abcabc", 3), ("baab", 0)]),
+        &[1, 16, 64],
+    );
+}
+#[test]
 fn weighted_ties_unicode_aa_and_reserved_id_activations() {
     let words = counts(&[
         ("", 1),
@@ -796,7 +822,7 @@ fn planned_edges_match_materialized_slots_across_word_and_seek_boundaries() {
                     })
                     .collect();
                 let corpus = plan
-                    .materialize(4, IdentityPolicy::Reusable, &progress)
+                    .materialize::<corpus::FullSlots>(4, IdentityPolicy::Reusable, &progress)
                     .unwrap();
                 let source = corpus.initial_view();
                 for (range, actual) in ranges.into_iter().zip(observed) {
@@ -891,7 +917,11 @@ fn planned_wave_tables_preserve_coordinates_weights_and_filtering() {
                         .unwrap(),
                     );
                     let corpus = plan
-                        .materialize(workers, IdentityPolicy::Reusable, &progress)
+                        .materialize::<corpus::FullSlots>(
+                            workers,
+                            IdentityPolicy::Reusable,
+                            &progress,
+                        )
                         .unwrap();
                     let expected = snapshot(
                         initial_pairs::build_in_waves(
@@ -911,5 +941,67 @@ fn planned_wave_tables_preserve_coordinates_weights_and_filtering() {
                 }
             }
         });
+    }
+}
+
+#[test]
+fn zero_merge_paths_preserve_count_overflow_and_signed_policy_checks() {
+    let mut trainer = BpeTrainer::builder()
+        .vocab_size(2)
+        .min_frequency(1)
+        .show_progress(false)
+        .build();
+    for words in [counts(&[("ab", 7)]), counts(&[("aba", u64::MAX)])] {
+        let (vocab, merges, _) = trainer.do_train(&words).unwrap();
+        assert_eq!(vocab.len(), 2);
+        assert!(merges.is_empty());
+    }
+    assert!(trainer.do_train(&counts(&[("abab", u64::MAX)])).is_err());
+    trainer.end_of_word_suffix = Some("a".into());
+    assert!(
+        trainer
+            .do_train(&counts(&[("ab", i64::MAX as u64)]))
+            .is_ok()
+    );
+    assert!(
+        trainer
+            .do_train(&counts(&[("ab", i64::MAX as u64 + 1)]))
+            .is_err()
+    );
+    assert!(
+        trainer
+            .do_train(&counts(&[("abc", i64::MAX as u64)]))
+            .is_err()
+    );
+}
+
+#[test]
+fn long_word_split_preserves_unicode_filtering_affixes_and_merge_trace() {
+    let long = "ab测é".repeat(2049);
+    let filtered = format!(
+        "{}a{}测{}",
+        "x".repeat(8193),
+        "x".repeat(8193),
+        "x".repeat(8193)
+    );
+    let words = counts(&[(&long, 3), (&filtered, 2), ("", 1), ("ab", 0)]);
+    for filtered in [false, true] {
+        for affixes in [false, true] {
+            let mut trainer = BpeTrainer::builder()
+                .vocab_size(48)
+                .min_frequency(2)
+                .max_token_length(Some(32))
+                .show_progress(false)
+                .build();
+            if filtered {
+                trainer.limit_alphabet = Some(2);
+                trainer.initial_alphabet = ['a', '测'].into();
+            }
+            if affixes {
+                trainer.continuing_subword_prefix = Some("##".into());
+                trainer.end_of_word_suffix = Some("</w>".into());
+            }
+            check_with_workers(&trainer, &words, &[1, 4, 16]);
+        }
     }
 }
