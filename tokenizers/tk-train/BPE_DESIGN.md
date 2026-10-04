@@ -8,7 +8,7 @@ Thread selection uses `tk_encode::parallelism`.
 The design keeps the optimized corpus, grouping, compression, and merge
 algorithms behind readable ownership contracts. Storage mechanisms belong in
 `tk-collections` so other tokenizer algorithms can reuse them. BPE identities,
-weighted counts, candidate history, and phase ordering belong in the trainer.
+weighted counts, cohort ownership, and phase ordering belong in the trainer.
 Changing a collection layout must not require its callers to reproduce that
 layout or its allocation rules.
 
@@ -150,7 +150,23 @@ preparation returns that constant weight without a lookup. Other initial groups
 count equal-weight runs, and merge preparation uses a cached interval cursor
 outside the unit-weight range.
 
-## Identity and candidate history
+## Identity activation and cohort ownership
+
+Each call starts with a Fresh attempt, including nonempty affixes. Before
+accepting a merge, the coordinator checks whether its canonical replacement ID
+is already active. An existing but inactive reserved ID can activate once, in
+its own batch. Only an active ID collision requires Reusable execution.
+
+On that collision, the coordinator stops before consuming the candidate or
+writing its batch. It releases the attempt's postings, corpus, arena, and scratch,
+then runs the same coordinator once with Reusable ownership from the unchanged
+weighted words. Reconstructing the input restores cohorts and intermediate births
+that Fresh pruning and fused batches omitted. An in-place policy switch cannot
+recover them. Errors propagate directly; the Reusable attempt never restarts.
+Limited-alphabet selection runs once per call; reconstruction reuses its
+retained characters, including the original frequency-tie choice. Both attempts
+use full-width storage and the same shared modules. Affix inputs
+keep their checked signed weight and edge-mass bounds before either attempt.
 
 Fresh identities cannot reuse active output IDs. Such rules can share a batch
 when no selected output affects another selected input. The engine filters stale

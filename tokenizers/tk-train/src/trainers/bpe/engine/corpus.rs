@@ -120,7 +120,9 @@ impl Corpus {
         if slots > isize::MAX as usize / std::mem::size_of::<AtomicU32>() {
             return Err("BPE corpus exceeds resident allocation bounds".into());
         }
-        if policy == IdentityPolicy::Reusable
+        // Preserve the signed input bound for configurations that may reuse
+        // an identity, even while their first attempt accepts fresh IDs only.
+        if (policy == IdentityPolicy::Reusable || vocabulary.has_affixes())
             && (weighted_mass > i64::MAX as u128 || maximum_weight > i64::MAX as u64)
         {
             return Err("BPE identity-reuse weighted edge mass or word weight exceeds i64".into());

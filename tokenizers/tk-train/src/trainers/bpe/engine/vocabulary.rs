@@ -40,6 +40,7 @@ impl Vocabulary {
         word_counts: &AHashMap<CompactString, u64>,
         workers: usize,
         progress: &TrainingProgress,
+        retained_alphabet: &mut Option<Vec<char>>,
     ) -> Result<Self> {
         let mut vocabulary = Self {
             tokens: IndexSet::with_capacity_and_hasher(trainer.vocab_size, RandomState::default()),
@@ -54,7 +55,9 @@ impl Vocabulary {
         let work = progress.stage("Compute alphabet", word_counts.len());
         if trainer.limit_alphabet.is_some() {
             // Preserve the existing frequency-tie selector for limited alphabets.
-            for character in trainer.select_alphabet(word_counts) {
+            let characters =
+                retained_alphabet.get_or_insert_with(|| trainer.select_alphabet(word_counts));
+            for &character in characters.iter() {
                 let mut utf8 = [0; 4];
                 vocabulary.intern(character.encode_utf8(&mut utf8))?;
             }
@@ -199,6 +202,18 @@ impl Vocabulary {
             .iter()
             .map(|&active| u64::from(active))
             .collect()
+    }
+    pub(super) fn has_affixes(&self) -> bool {
+        self.prefix
+            .as_deref()
+            .is_some_and(|prefix| !prefix.is_empty())
+            || self
+                .suffix
+                .as_deref()
+                .is_some_and(|suffix| !suffix.is_empty())
+    }
+    pub(super) fn reuses_active_id(&self, token: &MergeToken) -> bool {
+        token.existing_id.is_some_and(|id| self.active[id as usize])
     }
     pub(super) fn len(&self) -> usize {
         self.tokens.len()
