@@ -147,6 +147,13 @@ pub(super) fn train(
             drop(events);
             work.learned(merges.len(), vocabulary.len());
         }
+        // Training state does not participate in model output. Release position
+        // owners before their arena, and free the corpus and scratch before
+        // constructing the public vocabulary and merge strings.
+        drop(index);
+        drop(corpus);
+        drop(arena);
+        execution.release_scratch();
         let (vocab, merges) = vocabulary.into_model_parts(merges);
         Ok((vocab, merges, trainer.special_tokens.clone()))
     })

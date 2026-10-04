@@ -35,6 +35,21 @@ impl Execution {
             .lock()
             .unwrap_or_else(|error| error.into_inner())
     }
+    pub(super) fn release_scratch(&self) {
+        // Every pool phase has joined. Output construction no longer needs
+        // directories or codec buffers, so release them before duplicating
+        // vocabulary strings for the public model.
+        for directory in &self.directories {
+            *directory.lock().unwrap_or_else(|error| error.into_inner()) = Default::default();
+        }
+        for encoding in &self.encoding {
+            *encoding.lock().unwrap_or_else(|error| error.into_inner()) = Default::default();
+        }
+        *self
+            .selected
+            .lock()
+            .unwrap_or_else(|error| error.into_inner()) = Default::default();
+    }
     pub(super) fn workers(&self) -> usize {
         self.encoding.len()
     }
