@@ -279,11 +279,25 @@ def run(config, out):
 
 
 def report(out):
-    rows, failed = [], []
+    rows, failed, pairs = [], [], []
+    fields = ("train_seconds", "elapsed_seconds", "train_cpu_seconds", "maxrss_kib")
+    valid_blocks = 0
     for path in sorted((out / "runs").glob("*/*/block-*/block.json")):
         if ".interrupted-" in str(path): continue
         block = read(path)
         group, case = path.parts[-4:-2]
+        if block["comparison_valid"]:
+            valid_blocks += 1
+            by_arm = {r["arm"]: r["metrics"] for r in block["results"]}
+            baseline = "full" if "full" in by_arm else block["order"][0]
+            # The supplementary peer arena group uses the unchanged peer as control.
+            if "peer" in by_arm and "full" not in by_arm: baseline = "peer"
+            for arm, metrics in by_arm.items():
+                if arm == baseline: continue
+                pairs.append({"group": group, "case": case, "block": path.parent.name,
+                              "arm": arm, "baseline": baseline,
+                              **{field + "_ratio": metrics[field] / by_arm[baseline][field]
+                                 for field in fields if by_arm[baseline][field] > 0}})
         for row in block["results"]:
             if row["status"] != "ok": failed.append({"group": group, "case": case, **row})
             if block["comparison_valid"]:
@@ -294,15 +308,36 @@ def report(out):
         samples = [r for r in rows if (r["group"], r["case"], r["arm"]) == key]
         summary.append({"group": key[0], "case": key[1], "arm": key[2], "n": len(samples),
             **{f"{field}_median": statistics.median(r[field] for r in samples)
-               for field in ("train_seconds", "elapsed_seconds", "train_cpu_seconds", "maxrss_kib")},
+               for field in fields},
             "train_seconds_min": min(r["train_seconds"] for r in samples),
             "train_seconds_max": max(r["train_seconds"] for r in samples)})
+    comparisons = []
+    for key in sorted({(r["group"], r["case"], r["arm"], r["baseline"]) for r in pairs}):
+        samples = [r for r in pairs if (r["group"], r["case"], r["arm"], r["baseline"]) == key]
+        entry = dict(group=key[0], case=key[1], arm=key[2], baseline=key[3], n=len(samples))
+        for field in fields:
+            values = [r[field + "_ratio"] for r in samples if field + "_ratio" in r]
+            if values:
+                entry.update({field + "_ratio_median": statistics.median(values),
+                              field + "_ratio_min": min(values), field + "_ratio_max": max(values)})
+        comparisons.append(entry)
+    warmup_failures = []
+    for path in sorted((out / "warmup").glob("*/*/result.json")):
+        row = read(path)
+        if row["status"] != "ok": warmup_failures.append({"path": str(path), **row})
     write(out / "summary.json", {"stage": "preliminary", "summary": summary,
-          "valid_paired_samples": len(rows), "failed_runs": failed, "raw_samples": rows})
+          "valid_paired_samples": len(rows), "valid_paired_blocks": valid_blocks,
+          "failed_runs": failed, "warmup_failures": warmup_failures, "raw_samples": rows,
+          "paired_comparisons": comparisons, "raw_paired_ratios": pairs})
     if summary:
         with (out / "summary.csv").open("w") as stream:
             writer = csv.DictWriter(stream, fieldnames=list(summary[0]))
             writer.writeheader(); writer.writerows(summary)
+    if comparisons:
+        with (out / "comparisons.csv").open("w") as stream:
+            columns = list(dict.fromkeys(column for row in comparisons for column in row))
+            writer = csv.DictWriter(stream, fieldnames=columns)
+            writer.writeheader(); writer.writerows(comparisons)
 
 
 def main():

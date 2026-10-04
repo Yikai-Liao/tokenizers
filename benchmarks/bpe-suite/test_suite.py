@@ -73,5 +73,20 @@ class SupervisorTests(unittest.TestCase):
         self.assertEqual(len(summary["failed_runs"]), 1)
         self.assertEqual(summary["summary"], [])
 
+    def test_report_uses_within_block_ratios_and_retains_warmup_failure(self):
+        for block, full_time, hf_time in ((1, 2, 8), (2, 1, 2)):
+            rows = [dict(arm=arm, status="ok", metrics=dict(train_seconds=seconds,
+                         elapsed_seconds=seconds + 1, train_cpu_seconds=seconds, maxrss_kib=100))
+                    for arm, seconds in (("full", full_time), ("hf", hf_time))]
+            suite.write(self.out / f"runs/primary/case/block-{block:02d}/block.json",
+                        dict(order=["hf", "full"], comparison_valid=True, results=rows))
+        suite.write(self.out / "warmup/case/hf/result.json", dict(arm="hf", status="memory_guard"))
+        suite.report(self.out)
+        summary = suite.read(self.out / "summary.json")
+        self.assertEqual(summary["valid_paired_blocks"], 2)
+        self.assertEqual(summary["paired_comparisons"][0]["train_seconds_ratio_median"], 3)
+        self.assertEqual(summary["paired_comparisons"][0]["baseline"], "full")
+        self.assertEqual(len(summary["warmup_failures"]), 1)
+
 
 if __name__ == "__main__": unittest.main()

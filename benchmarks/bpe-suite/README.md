@@ -63,8 +63,12 @@ Only complete paired blocks enter statistics. Warm-ups are recorded separately.
 The initial profile uses five repetitions with rotated and reversed arm order.
 
 `prepared.json` records revisions, settings, dataset sizes, and machine information.
-`summary.json` retains valid raw samples and failures; `summary.csv` reports medians
-and ranges. Old experiments and binary archives are unnecessary for this suite.
+`summary.json` retains valid raw samples, per-block ratios, and failures (including
+warm-ups); `summary.csv` reports medians and ranges. `comparisons.csv` reports the
+median and range of ratios computed within each paired block, with Full as the
+control and unchanged peer as the control for the peer arena group. A ratio above
+one means the other arm costs more time or memory. Old experiments and binary
+archives are unnecessary for this suite.
 Docker packaging, dataset publication, reviewed formal runs, physical-core
 scaling, and capacity sweeps belong to later phases.
 
