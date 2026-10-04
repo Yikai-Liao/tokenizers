@@ -4,7 +4,7 @@
 //! next token; the preceding endpoint locates the previous token. Rewrites never
 //! shift a word's suffix. Unequal identity reuse materializes occurrence spans
 //! before changing the corpus, while immutable boundaries retain word identity.
-use super::{IdentityHistory, WORD_SEPARATOR_ID, vocabulary::Vocabulary};
+use super::{IdentityPolicy, WORD_SEPARATOR_ID, vocabulary::Vocabulary};
 use crate::progress::TrainingProgress;
 use ahash::AHashMap;
 use compact_str::CompactString;
@@ -23,7 +23,7 @@ pub(super) struct Corpus {
     unit_weight: Option<(u64, u64)>,
     spans_by_id: Vec<u64>,
     occurrence_spans: Option<Vec<u64>>,
-    scan_historical_words: bool,
+    scan_whole_words: bool,
     edges: usize,
 }
 pub(super) struct InitialCorpus<'a> {
@@ -67,7 +67,7 @@ impl Corpus {
         word_counts: &AHashMap<CompactString, u64>,
         vocabulary: &mut Vocabulary,
         workers: usize,
-        history: IdentityHistory,
+        policy: IdentityPolicy,
         length_limited: bool,
         progress: &TrainingProgress,
     ) -> Result<Self> {
@@ -120,10 +120,10 @@ impl Corpus {
         if slots > isize::MAX as usize / std::mem::size_of::<AtomicU32>() {
             return Err("BPE corpus exceeds resident allocation bounds".into());
         }
-        if history == IdentityHistory::Historical
+        if policy == IdentityPolicy::Reusable
             && (weighted_mass > i64::MAX as u128 || maximum_weight > i64::MAX as u64)
         {
-            return Err("BPE historical weighted edge mass or word weight exceeds i64".into());
+            return Err("BPE identity-reuse weighted edge mass or word weight exceeds i64".into());
         }
         let mut tokens = Vec::<MaybeUninit<AtomicU32>>::new();
         tokens
@@ -190,7 +190,7 @@ impl Corpus {
                 tokens.capacity(),
             )
         };
-        if history == IdentityHistory::Fresh {
+        if policy == IdentityPolicy::Fresh {
             word_starts = Vec::new();
         }
         let unit_weight = interval_weights
@@ -211,7 +211,7 @@ impl Corpus {
             unit_weight,
             spans_by_id: vocabulary.initial_spans(),
             occurrence_spans: None,
-            scan_historical_words: length_limited,
+            scan_whole_words: length_limited,
             edges,
         })
     }
@@ -273,10 +273,10 @@ impl Corpus {
         }
     }
     pub(super) fn needs_word_scan(&self) -> bool {
-        self.scan_historical_words
+        self.scan_whole_words
     }
     pub(super) fn prepare_spans(&mut self, pair: Pair, replacement: u32, reused_active: bool) {
-        self.scan_historical_words |= reused_active;
+        self.scan_whole_words |= reused_active;
         let span = self.spans_by_id[pair.0 as usize] + self.spans_by_id[pair.1 as usize];
         if replacement as usize == self.spans_by_id.len() {
             self.spans_by_id.push(if self.occurrence_spans.is_some() {
@@ -345,7 +345,7 @@ impl Corpus {
 }
 
 // Prepared plans own disjoint live-token spans. Pool joins delimit the
-// Relaxed stores; this helper also serves exclusive historical word regions.
+// Relaxed stores; this helper also serves exclusive whole-word regions.
 #[inline]
 fn write_endpoints(slots: &[AtomicU32], matched: PairMatch, replacement: u32) {
     slots[matched.left_start as usize].store(replacement, Ordering::Relaxed);
@@ -450,7 +450,7 @@ impl PairMatcher<'_> {
 #[cfg(test)]
 mod tests {
     use super::super::{
-        IdentityHistory,
+        IdentityPolicy,
         execution::Execution,
         initial_pairs,
         merge::{self, MergeRule},
@@ -494,7 +494,7 @@ mod tests {
     use tk_encode::utils::progress::ProgressFormat;
 
     #[test]
-    fn historical_cohorts_keep_distinct_words_and_unequal_occurrence_spans() {
+    fn cohort_cohorts_keep_distinct_words_and_unequal_occurrence_spans() {
         // This synthetic identity state tests the corpus/cohort contract directly.
         // Plain concatenation cannot reuse an active ID this way.
         let mut corpus = Corpus {
@@ -516,7 +516,7 @@ mod tests {
             unit_weight: Some((5, 4)),
             spans_by_id: vec![1; 4],
             occurrence_spans: None,
-            scan_historical_words: false,
+            scan_whole_words: false,
             edges: 3,
         };
         let execution = Execution::new(2).unwrap();
@@ -532,7 +532,7 @@ mod tests {
             )
             .unwrap();
             let mut index =
-                PairIndex::from_initial_pairs(initial, IdentityHistory::Historical, 2).unwrap();
+                PairIndex::from_initial_pairs(initial, IdentityPolicy::Reusable, 2).unwrap();
             for (round, (pair, count, position, replacement, reused)) in [
                 ((0, 1), 3, 1, 3, true),
                 ((3, 2), 4, 1, 4, false),
@@ -554,7 +554,7 @@ mod tests {
                     &corpus,
                     &rules,
                     &[candidate],
-                    IdentityHistory::Historical,
+                    IdentityPolicy::Reusable,
                     corpus.spans_by_id.len(),
                     usize::MAX,
                     &execution,
@@ -590,7 +590,7 @@ mod tests {
             unit_weight: Some((1, 5)),
             spans_by_id: vec![1],
             occurrence_spans: None,
-            scan_historical_words: true,
+            scan_whole_words: true,
             edges: 3,
         };
         // Independent mainline Word semantics: the first rewrite births a
@@ -617,7 +617,7 @@ mod tests {
             )
             .unwrap();
             let mut index =
-                PairIndex::from_initial_pairs(initial, IdentityHistory::Historical, 1).unwrap();
+                PairIndex::from_initial_pairs(initial, IdentityPolicy::Reusable, 1).unwrap();
             assert_eq!(index.best().unwrap().priority_count, 3);
             let candidate = index.take_best();
             corpus.prepare_spans((0, 0), 0, true);
@@ -629,7 +629,7 @@ mod tests {
                 &corpus,
                 &rules,
                 &[candidate],
-                IdentityHistory::Historical,
+                IdentityPolicy::Reusable,
                 1,
                 4,
                 &execution,

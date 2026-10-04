@@ -1,7 +1,7 @@
-//! Frequency interpretation, candidate snapshots, and historical cohort ownership.
-//! Fresh domains can retire low counts permanently. Historical domains preserve
+//! Frequency interpretation, candidate snapshots, and birth cohort ownership.
+//! Fresh domains can retire low counts permanently. Reusable identities preserve
 //! a signed ledger and a separate position owner for each published birth cohort.
-use super::{IdentityHistory, initial_pairs::InitialPairTable};
+use super::{IdentityPolicy, initial_pairs::InitialPairTable};
 use ahash::AHashMap;
 use dary_heap::OctonaryHeap;
 use rayon::prelude::*;
@@ -78,13 +78,13 @@ enum Selection<'a> {
     Fresh {
         leaders: OctonaryHeap<(PairPriority, usize)>,
     },
-    Historical {
+    Cohorts {
         candidates: OctonaryHeap<MergeCandidate<'a>>,
     },
 }
 pub(super) struct PairIndex<'a> {
     pub(super) shards: Vec<PairShard<'a>>,
-    pub(super) history: IdentityHistory,
+    pub(super) policy: IdentityPolicy,
     pub(super) minimum_frequency: u64,
     selection: Selection<'a>,
 }
@@ -152,21 +152,21 @@ impl PairShard<'_> {
 impl<'a> PairIndex<'a> {
     pub(super) fn from_initial_pairs(
         initial: InitialPairTable<'a>,
-        history: IdentityHistory,
+        policy: IdentityPolicy,
         minimum_frequency: u64,
     ) -> Result<Self> {
-        if history == IdentityHistory::Historical
+        if policy == IdentityPolicy::Reusable
             && (initial.weighted_mass > i64::MAX as u128
                 || initial.maximum_word_weight > i64::MAX as u64)
         {
-            return Err("BPE historical weighted edge mass or word weight exceeds i64".into());
+            return Err("BPE identity-reuse weighted edge mass or word weight exceeds i64".into());
         }
         let outputs: Vec<_> = initial
             .shards
             .into_par_iter()
             .map(|mut states| {
                 let mut candidates = Vec::new();
-                let priorities = if history == IdentityHistory::Fresh {
+                let priorities = if policy == IdentityPolicy::Fresh {
                     states
                         .iter()
                         .map(|(&key, state)| PairPriority {
@@ -195,7 +195,7 @@ impl<'a> PairIndex<'a> {
                     priorities,
                     prefix: VecDeque::with_capacity(4),
                 };
-                if history == IdentityHistory::Fresh {
+                if policy == IdentityPolicy::Fresh {
                     shard.prepare_prefix(minimum_frequency.max(1));
                 }
                 (shard, candidates)
@@ -203,15 +203,15 @@ impl<'a> PairIndex<'a> {
             .collect();
         let (shards, candidates): (Vec<_>, Vec<_>) = outputs.into_iter().unzip();
         let candidates = candidates.into_iter().flatten().collect::<Vec<_>>().into();
-        let selection = match history {
-            IdentityHistory::Fresh => Selection::Fresh {
+        let selection = match policy {
+            IdentityPolicy::Fresh => Selection::Fresh {
                 leaders: OctonaryHeap::new(),
             },
-            IdentityHistory::Historical => Selection::Historical { candidates },
+            IdentityPolicy::Reusable => Selection::Cohorts { candidates },
         };
         Ok(Self {
             shards,
-            history,
+            policy,
             minimum_frequency,
             selection,
         })
@@ -242,7 +242,7 @@ impl<'a> PairIndex<'a> {
                     leaders.pop();
                 }
             },
-            Selection::Historical { candidates } => loop {
+            Selection::Cohorts { candidates } => loop {
                 let top = candidates.peek()?;
                 let key = top.priority.key;
                 let count =
@@ -277,13 +277,13 @@ impl<'a> PairIndex<'a> {
                     positions: state.positions,
                 }
             }
-            Selection::Historical { candidates } => candidates
+            Selection::Cohorts { candidates } => candidates
                 .pop()
-                .expect("selection certified the historical winner"),
+                .expect("selection certified the cohort winner"),
         }
     }
     pub(super) fn end_selection(&mut self) {
-        if self.history == IdentityHistory::Fresh {
+        if self.policy == IdentityPolicy::Fresh {
             for shard in &mut self.shards {
                 shard.restore_prefix();
             }
@@ -291,7 +291,7 @@ impl<'a> PairIndex<'a> {
     }
     #[cfg(test)]
     pub(super) fn prepare_prefixes(&mut self) {
-        if self.history == IdentityHistory::Fresh {
+        if self.policy == IdentityPolicy::Fresh {
             let floor = self.minimum_frequency.max(1);
             // Callers install this operation in the training pool.
             use rayon::prelude::*;
@@ -315,7 +315,7 @@ impl<'a> PairIndex<'a> {
         use super::merge::ChangeAction as Action;
         use rayon::prelude::*;
         use tk_collections::IdAccumulator;
-        let history = self.history;
+        let policy = self.policy;
         let floor = self.minimum_frequency.max(1);
         let candidates = self
             .shards
@@ -326,12 +326,12 @@ impl<'a> PairIndex<'a> {
                 // bucket then uses one reusable neighbor directory, as merge
                 // preparation does. This avoids a hash table and allocation
                 // per complete pair while keeping the same commit mechanism
-                // for fresh and historical identities.
+                // for fresh and reusable identities.
                 for chunk in &events.chunks {
                     for reference in &chunk.routes[owner].changes {
                         let change = &chunk.changes[reference.index()];
                         if matches!(reference.action(), Action::Remove | Action::Both) {
-                            if history == IdentityHistory::Historical {
+                            if policy == IdentityPolicy::Reusable {
                                 let state =
                                     shard.states.entry(change.removed_key).or_insert_with(|| {
                                         PairState {
@@ -340,10 +340,10 @@ impl<'a> PairIndex<'a> {
                                         }
                                     });
                                 let amount = i64::try_from(change.removed_weight)
-                                    .map_err(|_| "BPE historical removal exceeds i64")?;
+                                    .map_err(|_| "BPE identity-reuse removal exceeds i64")?;
                                 state.ledger_count_bits = (state.ledger_count_bits as i64)
                                     .checked_sub(amount)
-                                    .ok_or("BPE historical count subtraction exceeds i64")?
+                                    .ok_or("BPE identity-reuse count subtraction exceeds i64")?
                                     as u64;
                             } else if let Some(state) = shard.states.get_mut(&change.removed_key) {
                                 state.ledger_count_bits = state
@@ -355,7 +355,7 @@ impl<'a> PairIndex<'a> {
                                 }
                             }
                         }
-                        if history == IdentityHistory::Historical
+                        if policy == IdentityPolicy::Reusable
                             && matches!(reference.action(), Action::Birth | Action::Both)
                         {
                             let state =
@@ -367,10 +367,10 @@ impl<'a> PairIndex<'a> {
                                         positions: SortedPositions::new(),
                                     });
                             let amount = i64::try_from(change.born_weight)
-                                .map_err(|_| "BPE historical birth exceeds i64")?;
+                                .map_err(|_| "BPE identity-reuse birth exceeds i64")?;
                             state.ledger_count_bits = (state.ledger_count_bits as i64)
                                 .checked_add(amount)
-                                .ok_or("BPE historical count addition exceeds i64")?
+                                .ok_or("BPE identity-reuse count addition exceeds i64")?
                                 as u64;
                         }
                     }
@@ -398,7 +398,11 @@ impl<'a> PairIndex<'a> {
                     index: usize,
                     next: usize,
                 }
-                let mut neighbors = IdAccumulator::<BirthGroup>::new(identities);
+                let mut directories = execution.directories();
+                let mut neighbors = IdAccumulator::<BirthGroup>::with_directory(
+                    identities,
+                    std::mem::take(&mut directories[0]),
+                );
                 // PERF: One owner-level fragment allocation serves every key
                 // and rule/direction bucket. Per-key vectors would allocate for
                 // each key receiving positions from more than one producer.
@@ -446,15 +450,15 @@ impl<'a> PairIndex<'a> {
                         // PERF: Fresh keys cannot revive. Reduce all producers
                         // and reject low counts before touching the global map;
                         // inserting then deleting them causes avoidable growth
-                        // and tombstone churn. Historical ledgers already record
+                        // and tombstone churn. Signed ledgers already record
                         // ordered changes and retain every positive birth cohort,
                         // including counts below the selection floor.
-                        let count = if history == IdentityHistory::Fresh {
+                        let count = if policy == IdentityPolicy::Fresh {
                             group.weight
                         } else {
                             shard.states[&key].ledger_count_bits
                         };
-                        if if history == IdentityHistory::Fresh {
+                        if if policy == IdentityPolicy::Fresh {
                             count < floor
                         } else {
                             (count as i64) <= 0
@@ -462,7 +466,7 @@ impl<'a> PairIndex<'a> {
                             continue;
                         }
                         let mut head = group.head;
-                        // Fresh jobs supply spatially disjoint runs. Historical
+                        // Fresh jobs supply spatially disjoint runs. Identity-reuse
                         // AA births may combine interleaved left/right chains;
                         // the common encoder merges those actual overlaps.
                         let fragments = &fragments;
@@ -480,7 +484,7 @@ impl<'a> PairIndex<'a> {
                                 fragment.chunk.changes[fragment.index].positions,
                             )
                         });
-                        let positions = if history == IdentityHistory::Fresh {
+                        let positions = if policy == IdentityPolicy::Fresh {
                             // Fresh buckets own disjoint, spatially ordered jobs.
                             // The count is already complete. Encode their reverse
                             // traversal without rereading each source's endpoints.
@@ -498,7 +502,7 @@ impl<'a> PairIndex<'a> {
                             key,
                             priority_count: count,
                         };
-                        if history == IdentityHistory::Fresh {
+                        if policy == IdentityPolicy::Fresh {
                             shard.states.insert(
                                 key,
                                 PairState {
@@ -516,7 +520,8 @@ impl<'a> PairIndex<'a> {
                     }
                     fragments.clear();
                 }
-                if history == IdentityHistory::Fresh {
+                directories[0] = neighbors.into_directory();
+                if policy == IdentityPolicy::Fresh {
                     // PERF: Refill while this owner is already running. A
                     // separate pool phase would schedule the same owners again.
                     shard.prepare_prefix(floor);
@@ -524,7 +529,7 @@ impl<'a> PairIndex<'a> {
                 Ok(candidates)
             })
             .collect::<Result<Vec<_>>>()?;
-        if let Selection::Historical { candidates: queue } = &mut self.selection {
+        if let Selection::Cohorts { candidates: queue } = &mut self.selection {
             for births in candidates {
                 queue.extend(births);
             }
@@ -580,12 +585,9 @@ mod tests {
                 ((5, 6), 8, 5),
                 ((6, 7), 7, 6),
             ];
-            let mut index = PairIndex::from_initial_pairs(
-                initial(&items, 2, &arena),
-                IdentityHistory::Fresh,
-                3,
-            )
-            .unwrap();
+            let mut index =
+                PairIndex::from_initial_pairs(initial(&items, 2, &arena), IdentityPolicy::Fresh, 3)
+                    .unwrap();
             index.prepare_prefixes();
             index.begin_selection();
             assert_eq!(key_pair(index.best().unwrap().key), (0, 1));
@@ -639,7 +641,7 @@ mod tests {
         });
     }
     #[test]
-    fn historical_negative_count_repairs_only_when_its_snapshot_reaches_the_head() {
+    fn cohort_negative_count_repairs_only_when_its_snapshot_reaches_the_head() {
         let execution = Execution::new(2).unwrap();
         let arena = AllocationArena::new(2, 3);
         execution.pool.install(|| {
@@ -651,7 +653,7 @@ mod tests {
             assert_ne!(shard_for(pair_key(low), 2), shard_for(pair_key(high), 2));
             let mut index = PairIndex::from_initial_pairs(
                 initial(&[(low, 1, 1), (high, 2, 2)], 2, &arena),
-                IdentityHistory::Historical,
+                IdentityPolicy::Reusable,
                 1,
             )
             .unwrap();
@@ -684,14 +686,14 @@ mod tests {
         });
     }
     #[test]
-    fn historical_birth_publication_keeps_low_positive_cohorts_and_skips_negative_counts() {
+    fn cohort_birth_publication_keeps_low_positive_cohorts_and_skips_negative_counts() {
         let execution = Execution::new(1).unwrap();
         let arena = AllocationArena::new(1, 16);
         execution.pool.install(|| {
             let pair = (1, 2);
             let mut index = PairIndex::from_initial_pairs(
                 initial(&[(pair, 0, 1), ((3, 4), 10, 2)], 1, &arena),
-                IdentityHistory::Historical,
+                IdentityPolicy::Reusable,
                 3,
             )
             .unwrap();
@@ -731,7 +733,7 @@ mod tests {
             assert!(index.best().is_none());
             let mut index = PairIndex::from_initial_pairs(
                 initial(&[(pair, 0, 1)], 1, &arena),
-                IdentityHistory::Historical,
+                IdentityPolicy::Reusable,
                 1,
             )
             .unwrap();
@@ -766,12 +768,9 @@ mod tests {
             let items: Vec<_> = (0..64)
                 .map(|id| ((id, 30_000), 20, u64::from(id) + 1))
                 .collect();
-            let mut index = PairIndex::from_initial_pairs(
-                initial(&items, 1, &arena),
-                IdentityHistory::Fresh,
-                2,
-            )
-            .unwrap();
+            let mut index =
+                PairIndex::from_initial_pairs(initial(&items, 1, &arena), IdentityPolicy::Fresh, 2)
+                    .unwrap();
             index.end_selection();
             let changes = (0..64)
                 .filter(|id| id % 10 != 0)

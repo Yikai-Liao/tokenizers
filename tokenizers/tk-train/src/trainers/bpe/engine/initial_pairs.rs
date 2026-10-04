@@ -3,7 +3,7 @@
 //! Twelve-byte records cache the complete pair key and a wave-local coordinate.
 //! Stable grouping reads the cached key and retains incoming spatial order.
 //! Adding the wave base restores the full-width global coordinate.
-//! A wave uses the original bound of 2^28 physical slots. Its boundary does not
+//! A wave is bounded to 2^28 physical slots. Its boundary does not
 //! end a word or discard an edge: scanning reads the next corpus slot.
 //! Each key is filtered after its complete frequency is known. Multiwave counts
 //! accumulate before filtering; a single wave can filter before encoding.
@@ -49,8 +49,12 @@ pub(super) fn build_initial_pairs<'a>(
     arena: &'a AllocationArena,
     progress: &TrainingProgress,
 ) -> Result<InitialPairTable<'a>> {
-    // PERF: Preserve complete-key filtering and the original large wave bound.
-    // Smaller waves would encode partial counts and retire more arena buffers.
+    // PERF: 2^28 bounds raw records while favoring complete-count filtering in
+    // one wave. Smaller waves can encode low-frequency partial runs that later
+    // disappear, repeat append and table growth, and retain retired arena buffers.
+    // A smaller raw cap need not lower the complete training peak. Corpus length
+    // alone does not predict retained keys or encoding cost, so keep this bound
+    // rather than routing only by length.
     build_in_waves(
         corpus,
         minimum_frequency,

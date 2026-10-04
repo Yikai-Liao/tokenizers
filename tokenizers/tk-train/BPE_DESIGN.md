@@ -40,7 +40,7 @@ writes. No next selection starts before commit completes.
 | `vocabulary` | Alphabet selection, decorated initial IDs, token strings, reserved IDs, and identity reuse |
 | `corpus` | Token endpoints, immutable word boundaries, physical spans, and word weights |
 | `initial_pairs` | Bounded record construction, stable grouping, initial counts, and position encoding |
-| `pair_index` | Frequency interpretation, candidate priority, and historical position cohorts |
+| `pair_index` | Frequency interpretation, candidate priority, and birth position cohorts |
 | `merge` | Disjoint merge plans and ordered neighbor changes |
 | `aa_parity` | Leftmost nonoverlapping matches across position chunks |
 | `execution` | One pool, worker scratch, and explicit scratch reuse |
@@ -48,7 +48,20 @@ writes. No next selection starts before commit completes.
 `PreparedMerges` owns both the selected rules and their write positions. Its
 consuming `apply` method returns `MergeEvents` after writes complete. Commit
 borrows event chains until all count owners finish, then releases the complete
-event buffers. Merge scratch is task-local; encoding scratch lives with the pool.
+event buffers. Values, fragments, and event nodes are task-local. Each executing
+worker lends two reusable ID directories to preparation and commit; its encoding
+scratch also lives with the pool. A directory lease covers sequential work only,
+so no nested pool task can re-enter the same worker's lock.
+
+Fresh batch preparation also reuses the selected-rule head and tail directories.
+Between batches it resets the previously selected endpoints and initializes only
+new vocabulary slots. Shared endpoints retain the complete pair-key lookup.
+Cohort preparation uses the same worker directories for neighbor changes,
+but does not use this fresh batch lookup.
+
+After the last merge phase joins, the coordinator releases the pair index before
+its arena, then the corpus and all reusable scratch, before building public model
+strings. Model construction reads only the vocabulary and ordered merge IDs.
 
 ## Coordinates and storage
 
@@ -92,7 +105,8 @@ word weights, candidate policies, or training pool.
 | `AllocationArena` | Small allocations live until the complete algorithm scope ends |
 | `PositionBuffer` | Full-width coordinates with a shared high half until promotion |
 | `PositionChains` | Bounded local links and full-width coordinates |
-| `IdAccumulator` | A reusable ID directory with values allocated only for touched IDs |
+| `IdAccumulator` | Values allocated only for touched IDs; drain resets touched entries |
+| `IdDirectory` | Transferable ID lookup storage without accumulated values or their allocations |
 | `IntervalIndex` | Values compressed over equal adjacent intervals; cursors support sequential queries |
 | `radix` | Stable key grouping with bounded scratch |
 
@@ -105,6 +119,14 @@ Construction uses reusable encoding scratch. Append measures a replayable run,
 then writes directly beyond the published prefix without a suffix buffer. It
 publishes the new length only after successful replay, so a producer error or
 panic preserves the old list.
+
+`IdAccumulator::into_directory` releases every value allocation and returns a
+clean directory that can serve another value type. Dense directory capacity is
+bounded to 65,536 U32 entries (256 KiB); larger domains use sparse storage and
+release that directory. Changing the domain or value type preserves full U32
+IDs. Normal transfer resets touched entries; a forgotten drain requires a full
+directory reset before ownership transfer. Preparation and commit retain only
+the dense indices, never sparse maps, value vectors, or event buffers.
 
 Position buffers and chain nodes share a private coordinate storage type. A
 chain's low coordinate and local link occupy one item. A separate high plane
@@ -125,13 +147,13 @@ positions and combines final neighbor changes. Counts below the frequency floor
 can retire permanently. Sharded queues expose their leaders to a global selector;
 only the observed winner is repaired against its current count.
 
-Historical identities retain the mainline candidate semantics. The engine keeps
-a signed ledger and a separate position cohort for each published birth event.
+Reusable IDs require a signed count ledger and a separate position cohort for
+each published birth event.
 It selects one rule at a time. A stale position can still identify a word whose
 current tokens now match after identity reuse. Words are deduplicated within a
 cohort; distinct cohorts are never combined solely because their pair keys match.
 
-Historical selection uses one global heap. Repairing shard heads eagerly would
+Cohort selection uses one global heap. Repairing shard heads eagerly would
 change mainline ordering when a signed negative count converts to an unsigned
 candidate priority. Preparation also preserves intermediate births followed by
 removals within one word, including `AA -> A`. The strict maximum-length gate
@@ -140,21 +162,21 @@ applies to each birth; initial pairs retain the mainline initialization behavior
 Both identity policies share corpus navigation, weight lookup, event storage,
 count routing, position encoding, and phase joins. The policy difference stays
 in preparation and candidate ownership. Fresh frequencies use checked `u64`
-arithmetic. Historical training requires word weights and total initial edge
-mass to fit `i64`, so its signed ledger operations remain representable.
+arithmetic. Training with reusable IDs requires word weights and total initial
+edge mass to fit `i64`, so its signed ledger operations remain representable.
 
 Commit receives the complete vocabulary ID domain from the coordinator.
 Producers route nonzero removals and nonempty birth chains. A zero-weight birth
-can still carry historical positions. Fresh job order and bucket ownership give
+can still carry birth positions. Fresh job order and bucket ownership give
 one sorted run with an already accumulated length, so encoding validates it in
-one traversal. Historical sources retain the general chain-order check and
+one traversal. Cohort sources retain the general chain-order check and
 merge when left and right births interleave.
 
 ## Costs and validation
 
 Let `N` be the physical corpus slots, including separators; `W` the words; and
 `E` the initial pair occurrences. Let `C` count decoded candidate positions,
-`S` count tokens visited by historical word scans, and `A` count corpus writes.
+`S` count tokens visited by whole-word scans, and `A` count corpus writes.
 Let `H` count hash-table operations, `Q` count queue operations, and `K` be the
 maximum queue size. Finally, let `M` be encoded position bytes and `G` be copied
 bytes, including token strings and position-buffer growth.
@@ -167,13 +189,13 @@ work is `O(C + S + A + H + Q log K + M + G + L)`, with expected constant-time ha
 lookups. An uncached interval query costs `O(log I)` for `I` intervals, and an
 uncached word query costs `O(log W)`; cached sequential queries can avoid them.
 These terms describe actual work; they do not assert linear training time.
-Stale cohorts can increase `C`, historical identity reuse can increase `S`, and
+Stale cohorts can increase `C`, identity reuse can increase `S`, and
 lazy queue repair can increase `Q`.
 
 The original Word-based trainer removes tokens from vectors and moves the
 remaining suffix after each removal. A word of initial length `n` can therefore
 require `O(n^2)` token moves across its merges. Endpoint updates cost constant
-work per accepted match. Historical preparation can still scan affected words;
+work per accepted match. Cohort preparation can still scan affected words;
 the endpoint layout removes suffix movement, not that semantic work.
 
 On the supported 64-bit target, the main storage terms are:
@@ -181,13 +203,13 @@ On the supported 64-bit target, the main storage terms are:
 | Component | Storage rule |
 |---|---|
 | Corpus IDs | `4N` bytes |
-| Historical word boundaries | `8W` bytes; fresh training releases them after construction |
+| Retained word boundaries | `8W` bytes; fresh training releases them after construction |
 | Occurrence spans | `8N` bytes only when unequal-span identity reuse requires them |
 | Initial records | `12E_wave` bytes, with `E_wave <= 2^28` |
 | Installation groups | 24 bytes per vector capacity item, for at most two owners at once |
 | Pair table | 32 bytes per raw bucket for the key, count, and position handle, plus hash-table controls |
 | Fresh priorities | 16 bytes per queue capacity item |
-| Historical candidates | 32 bytes per queue capacity item, including the position handle |
+| Cohort candidates | 32 bytes per queue capacity item, including the position handle |
 | Position chains | 8 bytes per node with a shared high half; promotion adds a 4-byte high plane |
 
 Weight intervals, vocabulary strings, worker scratch, and allocator metadata
@@ -225,7 +247,7 @@ occurrence ownership.
 | Initial grouping | Use reference grouping with the same full keys, coordinates, weights, and global frequency floor |
 | Batch preparation | Select one certified rule per round and preserve ordered neighbor events |
 | Weight locality | Keep the corpus arrangement and replace interval queries with scalar queries; assess arrangement and query locality together |
-| Position compression | Use flat positions with the same occurrence and historical cohort semantics |
+| Position compression | Use flat positions with the same occurrence and birth cohort semantics |
 | Allocation and scratch reuse | Use ordinary owned allocations and job-local encoding scratch; include allocation and retirement costs |
 
 Start with the full implementation, one group removed at a time, and the

@@ -1,8 +1,8 @@
 //! Prepare neighbor changes from one immutable snapshot, then join disjoint writes.
-//! Fresh identities permit independent rules to share a batch. Historical cohorts
+//! Fresh identities permit independent rules to share a batch. Birth cohorts
 //! select one rule and preserve each intermediate boundary produced by HF BPE.
 use super::{
-    IdentityHistory, WORD_SEPARATOR_ID, aa_parity,
+    IdentityPolicy, WORD_SEPARATOR_ID, aa_parity,
     corpus::{Corpus, PairMatch, PairMatcher, WordWeightCursor},
     execution::Execution,
     pair_index::{MergeCandidate, pair_key, shard_for},
@@ -24,8 +24,8 @@ struct NeighborChanges {
     positions: PositionChain,
     owner: u32,
 }
-/// One neighbor's removal and birth are committed together. In historical
-/// domains the two keys can coincide through identity reuse.
+/// One neighbor's removal and birth are committed together. With reusable IDs,
+/// the two keys can coincide.
 pub(super) struct PairChanges {
     pub(super) removed_key: u64,
     pub(super) born_key: u64,
@@ -239,7 +239,7 @@ impl EventChunk {
         for (index, change) in changes.iter().enumerate() {
             let removed =
                 (change.removed_weight != 0).then(|| shard_for(change.removed_key, chains.len()));
-            // Zero-weight historical births still own positions. Only an empty
+            // Zero-weight identity-reuse births still own positions. Only an empty
             // chain has no birth action; weight alone cannot decide this.
             let born =
                 (!change.positions.is_empty()).then(|| shard_for(change.born_key, chains.len()));
@@ -391,7 +391,7 @@ impl Preparation<'_> {
             self.chunks.push(self.scratch.take_chunk());
         }
     }
-    fn historical(
+    fn record_cohort_match(
         &mut self,
         matched: PairMatch,
         previous: Option<LogicalToken>,
@@ -541,13 +541,13 @@ pub(super) fn prepare_merges(
     corpus: &Corpus,
     rules: &[MergeRule],
     candidates: &[MergeCandidate<'_>],
-    history: IdentityHistory,
+    policy: IdentityPolicy,
     identities: usize,
     limit: usize,
     execution: &Execution,
 ) -> Result<PreparedMerges> {
-    let outputs = if history == IdentityHistory::Historical {
-        prepare_historical(
+    let outputs = if policy == IdentityPolicy::Reusable {
+        prepare_cohort(
             corpus,
             &rules[0],
             &candidates[0],
@@ -641,15 +641,15 @@ pub(super) fn prepare_merges(
         },
     })
 }
-enum HistoricalSource {
+enum CohortSource {
     Words(Vec<usize>),
     Postings(std::ops::Range<usize>),
 }
-struct HistoricalTask {
+struct CohortTask {
     region: std::ops::Range<u64>,
-    source: HistoricalSource,
+    source: CohortSource,
 }
-fn prepare_historical(
+fn prepare_cohort(
     corpus: &Corpus,
     rule: &MergeRule,
     candidate: &MergeCandidate<'_>,
@@ -700,9 +700,9 @@ fn prepare_historical(
                 let end = words
                     .get((index + 1) * chunk)
                     .map_or(corpus.len() as u64, |&word| corpus.word_start(word));
-                HistoricalTask {
+                CohortTask {
                     region: start..end,
-                    source: HistoricalSource::Words(part.to_vec()),
+                    source: CohortSource::Words(part.to_vec()),
                 }
             })
             .collect::<Vec<_>>()
@@ -724,9 +724,9 @@ fn prepare_historical(
         }
         cuts.push((count, corpus.len() as u64));
         cuts.windows(2)
-            .map(|cuts| HistoricalTask {
+            .map(|cuts| CohortTask {
                 region: cuts[0].1..cuts[1].1,
-                source: HistoricalSource::Postings(cuts[0].0..cuts[1].0),
+                source: CohortSource::Postings(cuts[0].0..cuts[1].0),
             })
             .collect()
     };
@@ -742,13 +742,13 @@ fn prepare_historical(
             );
             let mut plan = preparation(corpus, &mut scratch, rule, 0, limit);
             match task.source {
-                HistoricalSource::Words(words) => {
+                CohortSource::Words(words) => {
                     for word in words {
                         let mut previous = None;
                         let mut position = corpus.word_start(word);
                         while corpus.token(position) != WORD_SEPARATOR_ID {
                             if let Some(matched) = plan.matcher.get(position) {
-                                previous = Some(plan.historical(matched, previous)?);
+                                previous = Some(plan.record_cohort_match(matched, previous)?);
                                 position = matched.next_start;
                             } else {
                                 let span = corpus.span(position);
@@ -762,7 +762,7 @@ fn prepare_historical(
                         }
                     }
                 }
-                HistoricalSource::Postings(range) => {
+                CohortSource::Postings(range) => {
                     let mut previous = None;
                     let mut after = task.region.start;
                     for position in candidate.positions.cursor(range) {
@@ -781,7 +781,7 @@ fn prepare_historical(
                                     }
                                 });
                             }
-                            previous = Some(plan.historical(matched, previous)?);
+                            previous = Some(plan.record_cohort_match(matched, previous)?);
                             after = matched.next_start;
                         }
                     }
@@ -920,7 +920,7 @@ impl PreparedMerges {
                 .map(|job| {
                     job.word_region
                         .clone()
-                        .expect("occurrence spans require complete historical word jobs")
+                        .expect("occurrence spans require complete whole-word jobs")
                 })
                 .collect();
             let writers = corpus

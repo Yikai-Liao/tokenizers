@@ -18,14 +18,14 @@ use tk_encode::{
 };
 const WORD_SEPARATOR_ID: u32 = u32::MAX;
 #[derive(Clone, Copy, PartialEq, Eq)]
-enum IdentityHistory {
+enum IdentityPolicy {
     Fresh,
-    Historical,
+    Reusable,
 }
-impl IdentityHistory {
+impl IdentityPolicy {
     fn for_trainer(trainer: &BpeTrainer) -> Self {
         // Plain concatenation preserves irreversible segmentation. Affix removal
-        // changes that proof: retain the historical ledger from initialization.
+        // changes that proof: retain the signed ledger from initialization.
         if trainer
             .continuing_subword_prefix
             .as_deref()
@@ -37,7 +37,7 @@ impl IdentityHistory {
         {
             Self::Fresh
         } else {
-            Self::Historical
+            Self::Reusable
         }
     }
 }
@@ -52,21 +52,21 @@ pub(super) fn train(
     let execution = execution::Execution::new(workers)?;
     execution.pool.install(|| {
         let progress = TrainingProgress::new(trainer.show_progress, trainer.progress_format)?;
-        let history = IdentityHistory::for_trainer(trainer);
+        let policy = IdentityPolicy::for_trainer(trainer);
         let mut vocabulary =
             vocabulary::Vocabulary::initialize(trainer, word_counts, workers, &progress)?;
         let mut corpus = corpus::Corpus::build(
             word_counts,
             &mut vocabulary,
             workers,
-            history,
+            policy,
             trainer.max_token_length.is_some(),
             &progress,
         )?;
         let arena = AllocationArena::new(workers, corpus.initial_edges());
         let initial = initial_pairs::build_initial_pairs(
             corpus.initial_view(),
-            if history == IdentityHistory::Fresh {
+            if policy == IdentityPolicy::Fresh {
                 trainer.min_frequency.max(1)
             } else {
                 0
@@ -76,11 +76,11 @@ pub(super) fn train(
             &progress,
         )?;
         let mut index =
-            pair_index::PairIndex::from_initial_pairs(initial, history, trainer.min_frequency)?;
+            pair_index::PairIndex::from_initial_pairs(initial, policy, trainer.min_frequency)?;
         let mut merges = Vec::new();
         let work = progress.merges(trainer.vocab_size, vocabulary.len());
         while vocabulary.len() < trainer.vocab_size {
-            let cap = if history == IdentityHistory::Fresh {
+            let cap = if policy == IdentityPolicy::Fresh {
                 256.min(trainer.vocab_size - vocabulary.len())
             } else {
                 1
@@ -133,7 +133,7 @@ pub(super) fn train(
                 &corpus,
                 &rules,
                 &candidates,
-                history,
+                policy,
                 vocabulary.len(),
                 trainer.max_token_length.unwrap_or(usize::MAX),
                 &execution,

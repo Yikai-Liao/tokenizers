@@ -142,7 +142,7 @@ fn pruning_waits_for_all_birth_producers_and_alphabet_filtering() {
     assert!(merges.is_empty());
 }
 #[test]
-fn historical_cohort_words_include_stale_addresses_and_zero_weights() {
+fn cohort_cohort_words_include_stale_addresses_and_zero_weights() {
     // The suffix creates an active "aa" ID before AA -> aa. Across words,
     // left and right birth chains for that identity interleave spatially.
     let trainer = BpeTrainer::builder()
@@ -572,7 +572,7 @@ fn wide_frequencies_and_signed_history_boundaries() {
         trainer
             .do_train(&counts(&[("abc", i64::MAX as u64)]))
             .is_err()
-    ); // edge mass exceeds the signed history domain
+    ); // edge mass exceeds the signed policy domain
 }
 
 #[test]
