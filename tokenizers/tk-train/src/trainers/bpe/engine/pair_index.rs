@@ -327,6 +327,15 @@ impl<'a> PairIndex<'a> {
             .shards
             .par_iter_mut()
             .enumerate()
+            // Owners without changes keep their counts and valid priorities.
+            // Leave their lazy queue refill to selection and avoid scheduling
+            // empty codec/directory work, at every corpus and vocabulary scale.
+            .filter(|(owner, _)| {
+                events
+                    .chunks
+                    .iter()
+                    .any(|chunk| !chunk.routes[*owner].changes.is_empty())
+            })
             .map(|(owner, shard)| -> Result<Vec<MergeCandidate<'a>>> {
                 // PERF: Group births by output ID and direction first. Each
                 // bucket then uses one reusable neighbor directory, as merge
