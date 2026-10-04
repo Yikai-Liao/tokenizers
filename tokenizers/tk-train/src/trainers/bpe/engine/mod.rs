@@ -78,6 +78,13 @@ pub(super) fn train(
         let mut index =
             pair_index::PairIndex::from_initial_pairs(initial, policy, trainer.min_frequency)?;
         let mut merges = Vec::new();
+        // PERF: Reuse bounded selection workspace across all rounds. Clearing
+        // candidates releases their postings before commit without reallocating
+        // the vector; rule and conflict storage never exceeds the batch limit.
+        let mut rules = Vec::new();
+        let mut candidates = Vec::new();
+        let mut heads = AHashSet::new();
+        let mut tails = AHashSet::new();
         let work = progress.merges(trainer.vocab_size, vocabulary.len());
         while vocabulary.len() < trainer.vocab_size {
             let cap = if policy == IdentityPolicy::Fresh {
@@ -85,10 +92,9 @@ pub(super) fn train(
             } else {
                 1
             };
-            let mut rules = Vec::new();
-            let mut candidates = Vec::new();
-            let mut heads = AHashSet::new();
-            let mut tails = AHashSet::new();
+            rules.clear();
+            heads.clear();
+            tails.clear();
             index.begin_selection();
             while rules.len() < cap {
                 let Some(priority) = index.best() else {
@@ -119,11 +125,13 @@ pub(super) fn train(
                     observer(pair, priority.priority_count, identity.id);
                 }
                 merges.push(pair);
-                heads.insert(pair.0);
-                tails.insert(pair.1);
-                if reserved || pair.0 == pair.1 {
+                if reserved || pair.0 == pair.1 || rules.len() == cap {
                     break;
                 }
+                // Only a following rule needs these conflict checks. A
+                // single-rule round never allocates the two hash tables.
+                heads.insert(pair.0);
+                tails.insert(pair.1);
             }
             index.end_selection();
             if rules.is_empty() {
@@ -141,7 +149,7 @@ pub(super) fn train(
             // PERF: Preparation owns all writes and birth events. Selected
             // postings have no remaining reader; release them before allocating
             // the next generation during commit.
-            drop(candidates);
+            candidates.clear();
             let events = prepared.apply(&mut corpus);
             index.commit_merges(&events, vocabulary.len(), &execution, &arena)?;
             drop(events);
@@ -150,6 +158,7 @@ pub(super) fn train(
         // Training state does not participate in model output. Release position
         // owners before their arena, and free the corpus and scratch before
         // constructing the public vocabulary and merge strings.
+        drop((rules, candidates, heads, tails));
         drop(index);
         drop(corpus);
         drop(arena);
