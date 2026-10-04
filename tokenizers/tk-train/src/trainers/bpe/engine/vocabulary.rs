@@ -108,11 +108,15 @@ impl Vocabulary {
         if let Some(&id) = self.token_to_id.get(text) {
             return Ok(id);
         }
+        self.insert_new_token(CompactString::from(text))
+    }
+    // The caller has established that this text is absent. No vocabulary
+    // mutation can intervene before this insertion on the coordinator.
+    fn insert_new_token(&mut self, token: CompactString) -> Result<u32> {
         let id = u32::try_from(self.tokens.len()).map_err(|_| "BPE vocabulary exceeds u32")?;
         if id == WORD_SEPARATOR_ID {
             return Err("BPE token ID collides with the word separator".into());
         }
-        let token = CompactString::from(text);
         self.tokens.push(token.clone());
         self.token_to_id.insert(token, id);
         self.active.push(false);
@@ -219,7 +223,9 @@ impl Vocabulary {
     pub(super) fn resolve_merge(&mut self, token: MergeToken) -> Result<MergeIdentity> {
         let id = match token.existing_id {
             Some(id) => id,
-            None => self.intern(token.text.as_str())?,
+            // PERF: merge_token already checked this key. Consume its complete
+            // string instead of probing again and copying another owned string.
+            None => self.insert_new_token(token.text)?,
         };
         let reused_active_id = self.active[id as usize];
         self.active[id as usize] = true;
