@@ -1,8 +1,9 @@
 //! Vocabulary identity and canonical output strings, independent of position storage.
 use super::{BpeTrainer, WORD_SEPARATOR_ID};
 use crate::progress::{TrainingProgress, WorkProgress};
-use ahash::AHashMap;
+use ahash::{AHashMap, RandomState};
 use compact_str::CompactString;
+use indexmap::IndexSet;
 use rayon::prelude::*;
 use tk_encode::{
     Result,
@@ -10,8 +11,9 @@ use tk_encode::{
 };
 
 pub(super) struct Vocabulary {
-    token_to_id: AHashMap<CompactString, u32>,
-    tokens: Vec<CompactString>,
+    // Append-only insertion indices are token IDs. Store each string once while
+    // supporting both text lookup and direct lookup by ID with the same hasher.
+    tokens: IndexSet<CompactString, RandomState>,
     active: Vec<bool>,
     prefix: Option<String>,
     suffix: Option<String>,
@@ -40,8 +42,7 @@ impl Vocabulary {
         progress: &TrainingProgress,
     ) -> Result<Self> {
         let mut vocabulary = Self {
-            token_to_id: AHashMap::with_capacity(trainer.vocab_size),
-            tokens: Vec::with_capacity(trainer.vocab_size),
+            tokens: IndexSet::with_capacity_and_hasher(trainer.vocab_size, RandomState::default()),
             active: Vec::new(),
             prefix: trainer.continuing_subword_prefix.clone(),
             suffix: trainer.end_of_word_suffix.clone(),
@@ -53,12 +54,10 @@ impl Vocabulary {
         let work = progress.stage("Compute alphabet", word_counts.len());
         if trainer.limit_alphabet.is_some() {
             // Preserve the existing frequency-tie selector for limited alphabets.
-            trainer.compute_alphabet(
-                word_counts,
-                &mut vocabulary.token_to_id,
-                &mut vocabulary.tokens,
-            );
-            vocabulary.active.resize(vocabulary.tokens.len(), false);
+            for character in trainer.select_alphabet(word_counts) {
+                let mut utf8 = [0; 4];
+                vocabulary.intern(character.encode_utf8(&mut utf8))?;
+            }
             work.complete(word_counts.len());
         } else {
             let words: Vec<_> = word_counts.keys().collect();
@@ -105,8 +104,8 @@ impl Vocabulary {
         Ok(vocabulary)
     }
     fn intern(&mut self, text: &str) -> Result<u32> {
-        if let Some(&id) = self.token_to_id.get(text) {
-            return Ok(id);
+        if let Some(id) = self.tokens.get_index_of(text) {
+            return Ok(id as u32);
         }
         self.insert_new_token(CompactString::from(text))
     }
@@ -117,8 +116,8 @@ impl Vocabulary {
         if id == WORD_SEPARATOR_ID {
             return Err("BPE token ID collides with the word separator".into());
         }
-        self.tokens.push(token.clone());
-        self.token_to_id.insert(token, id);
+        let (index, inserted) = self.tokens.insert_full(token);
+        debug_assert!(inserted && index == id as usize);
         self.active.push(false);
         Ok(id)
     }
@@ -134,12 +133,12 @@ impl Vocabulary {
             suffix: self.suffix.as_deref().is_some_and(|s| !s.is_empty()),
             complete_alphabet: self.plain_ids_resolved,
         };
-        for (token, &id) in &self.token_to_id {
+        for (id, token) in self.tokens.iter().enumerate() {
             let mut chars = token.chars();
             if let Some(character) = chars.next()
                 && chars.next().is_none()
             {
-                ids.characters[character as usize] = id;
+                ids.characters[character as usize] = id as u32;
             }
         }
         if ids.prefix || ids.suffix {
@@ -216,7 +215,7 @@ impl Vocabulary {
         text.push_str(left);
         text.push_str(right);
         MergeToken {
-            existing_id: self.token_to_id.get(text.as_str()).copied(),
+            existing_id: self.tokens.get_index_of(text.as_str()).map(|id| id as u32),
             text,
         }
     }
@@ -245,9 +244,10 @@ impl Vocabulary {
             })
             .collect();
         (
-            self.token_to_id
+            self.tokens
                 .into_iter()
-                .map(|(token, id)| (token.to_string(), id))
+                .enumerate()
+                .map(|(id, token)| (token.to_string(), id as u32))
                 .collect(),
             merges,
         )

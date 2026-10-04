@@ -246,13 +246,8 @@ impl BpeTrainer {
         self.words.len()
     }
 
-    /// Compute the initial alphabet and limit it if relevant
-    fn compute_alphabet(
-        &self,
-        wc: &AHashMap<CompactString, u64>,
-        w2id: &mut AHashMap<CompactString, u32>,
-        id2w: &mut Vec<CompactString>,
-    ) {
+    /// Select the alphabet with the existing frequency-tie and codepoint order.
+    fn select_alphabet(&self, wc: &AHashMap<CompactString, u64>) -> Vec<char> {
         // Compute the alphabet from seen words
         let mut alphabet: AHashMap<char, usize> = AHashMap::new();
         for (word, count) in wc {
@@ -284,20 +279,25 @@ impl BpeTrainer {
 
         // Keep the initial alphabet (sorted for determinism)
         kept.sort_unstable_by_key(|k| *k.0 as u32);
-        kept.into_iter().for_each(|(c, _)| {
-            let s = c.to_string();
-            /*
-            if !w2id.contains_key(&s) {
-                id2w.push(s.clone());
-                w2id.insert(s, (id2w.len() - 1) as u32);
+        kept.into_iter().map(|(&character, _)| character).collect()
+    }
+
+    #[cfg(test)]
+    fn compute_alphabet(
+        &self,
+        wc: &AHashMap<CompactString, u64>,
+        w2id: &mut AHashMap<CompactString, u32>,
+        id2w: &mut Vec<CompactString>,
+    ) {
+        for character in self.select_alphabet(wc) {
+            let mut utf8 = [0; 4];
+            let text: &str = character.encode_utf8(&mut utf8);
+            let token = CompactString::from(text);
+            if !w2id.contains_key(&token) {
+                id2w.push(token.clone());
+                w2id.insert(token, (id2w.len() - 1) as u32);
             }
-            */
-            // u64 hash version
-            if !w2id.contains_key(&CompactString::from(&s)) {
-                id2w.push(CompactString::from(&s));
-                w2id.insert(CompactString::from(&s), (id2w.len() - 1) as u32);
-            }
-        });
+        }
     }
 
     /// Tokenize words and add subwords to the vocabulary when relevant

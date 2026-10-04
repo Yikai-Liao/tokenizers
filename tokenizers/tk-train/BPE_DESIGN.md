@@ -57,11 +57,22 @@ Fresh batch preparation also reuses the selected-rule head and tail directories.
 Between batches it resets the previously selected endpoints and initializes only
 new vocabulary slots. Shared endpoints retain the complete pair-key lookup.
 Cohort preparation uses the same worker directories for neighbor changes,
-but does not use this fresh batch lookup.
+but does not use this fresh batch lookup. Rule and candidate vectors also retain
+their bounded capacity across rounds. Conflict sets are populated only when
+another rule can enter the batch, so single-rule rounds leave them unallocated.
 
-After the last merge phase joins, the coordinator releases the pair index before
-its arena, then the corpus and all reusable scratch, before building public model
-strings. Model construction reads only the vocabulary and ordered merge IDs.
+After the last merge phase joins, the coordinator releases selected postings and
+the pair index, then the corpus and arena, and clears reusable scratch before
+building public model strings. Model construction reads only the vocabulary and
+ordered merge IDs.
+
+Vocabulary stores canonical token strings in an append-only `IndexSet` with the
+same AHash hasher. Insertion indices are token IDs, so one string serves text
+lookup and direct lookup by ID. No deletion or reordering can change those IDs.
+Active flags occupy a separate vector. New merge text moves into the set after
+the coordinator has checked that it is absent. Limited-alphabet selection keeps
+its existing frequency map, tie handling, and final codepoint order; decorated
+initial IDs still follow the original word-map traversal.
 
 ## Coordinates and storage
 
@@ -147,8 +158,10 @@ positions and combines final neighbor changes. Counts below the frequency floor
 can retire permanently. Sharded queues expose their leaders to a global selector;
 only the observed winner is repaired against its current count.
 
-Reusable IDs require a signed count ledger and a separate position cohort for
-each published birth event.
+For reusable IDs, this engine keeps a signed count ledger and a separate position
+cohort for each published birth event. The ledger stores only count bits; position
+ownership stays in the candidate cohorts. Its zero and negative keys remain
+available for later updates.
 It selects one rule at a time. A stale position can still identify a word whose
 current tokens now match after identity reuse. Words are deduplicated within a
 cohort; distinct cohorts are never combined solely because their pair keys match.
@@ -163,10 +176,13 @@ Both identity policies share corpus navigation, weight lookup, event storage,
 count routing, position encoding, and phase joins. The policy difference stays
 in preparation and candidate ownership. Fresh frequencies use checked `u64`
 arithmetic. Training with reusable IDs requires word weights and total initial
-edge mass to fit `i64`, so its signed ledger operations remain representable.
+edge mass to fit `i64`; each ledger subtraction and addition also checks its
+signed bound in event order.
 
 Commit receives the complete vocabulary ID domain from the coordinator.
-Producers route nonzero removals and nonempty birth chains. A zero-weight birth
+Only owners with routed changes enter commit work; idle owners retain their
+state and lazy priority repair. Producers route nonzero removals and nonempty
+birth chains. A zero-weight birth
 can still carry birth positions. Fresh job order and bucket ownership give
 one sorted run with an already accumulated length, so encoding validates it in
 one traversal. Cohort sources retain the general chain-order check and
@@ -208,9 +224,14 @@ On the supported 64-bit target, the main storage terms are:
 | Initial records | `12E_wave` bytes, with `E_wave <= 2^28` |
 | Installation groups | 24 bytes per vector capacity item, for at most two owners at once |
 | Pair table | 32 bytes per raw bucket for the key, count, and position handle, plus hash-table controls |
+| Reusable-ID ledger | 16 bytes per raw bucket for key and count bits; replaces the initial pair table while cohorts own positions |
 | Fresh priorities | 16 bytes per queue capacity item |
 | Cohort candidates | 32 bytes per queue capacity item, including the position handle |
 | Position chains | 8 bytes per node with a shared high half; promotion adds a 4-byte high plane |
+
+Building the reusable-ID ledger temporarily overlaps its new buckets with the
+initial table being consumed. The smaller steady-state bucket size therefore
+does not alone establish a lower initialization peak.
 
 Weight intervals, vocabulary strings, worker scratch, and allocator metadata
 add separate terms. A G128 position stream uses eight bytes per absolute seed
