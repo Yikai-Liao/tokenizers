@@ -1,6 +1,6 @@
 {
   "stage": "preliminary",
-  "scope": "core ablations complete; primary and peer arena comparisons continue",
+  "scope": "completed core subset of the 120-run preliminary matrix; code review pending",
   "training_revisions": {
     "full": "f9ff8b97fb38b248ceb89f6ca807fa09743c585c",
     "hf": "bbccb0513ff9afda385ca5c85c66eddb1318cfc7",

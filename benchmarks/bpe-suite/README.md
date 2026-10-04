@@ -13,6 +13,10 @@ python3 benchmarks/bpe-suite/suite.py all \
   --release-cache /absolute/path/shared-release-cache
 ```
 
+To rerun the recorded matrix, use
+[`results/preliminary-20261005/config.json`](results/preliminary-20261005/config.json)
+and replace its five input paths. The example above is the initial profile.
+
 The repository must contain the recorded Git revisions. The entry also supports
 `prepare`, `build`, `smoke`, `run`, and `report` separately. Builds use one shared
 Cargo cache. Measurement starts after builds and correctness checks finish.
@@ -57,7 +61,8 @@ experiment and retains the differing model for inspection.
 
 Each run records wall time, CPU time, training HWM, sampled RSS and swap, word and
 symbol counts, initial edges, host load, parameters, and raw stdout/stderr. HWM is
-read before validation; sampled RSS includes validation and is a separate metric.
+read before model output; sampled RSS covers the whole child process, including
+canonical model output. The parent compares files after the child exits.
 Allocation counters are disabled. Memory, RSS, and timeout guards retain failures.
 Only complete paired blocks enter statistics. Warm-ups are recorded separately.
 The initial profile uses five repetitions with rotated and reversed arm order.
@@ -76,37 +81,140 @@ scaling, and capacity sweeps belong to later phases.
 
 Run supervisor checks with `python3 -m unittest discover -s benchmarks/bpe-suite`.
 
-## Preliminary core ablations, 2026-10-05
+## Preliminary results, 2026-10-05
 
-The Chinese 512 MiB whitespace case completed five paired blocks (45 timed runs),
-with vocabulary IDs and ordered merges matching exactly in every run. Full's
-median BPE training time was 20.76 s and its process HWM was 3.15 GiB. Timing ends
-before validation. These are preliminary results pending code review; the other
-comparison groups continue separately.
+The complete matrix contains 35 paired blocks, 120 timed runs, and 24 cells
+with five observations each. Every timed run matched the same case's vocabulary
+IDs and ordered merges. There were no timed-run failures and the supervisor
+observed zero swap for every timed subprocess. These results use unchanged
+Full source at `f9ff8b97`; code review and the formal experiment remain pending.
 
-The percentages below are medians of within-block ratios relative to Full. The
-range covers the five observed training ratios. Each row disables one feature;
-the effects are conditional on Full and cannot be added together.
+The correctness gate also passed 42 smoke runs across all 14 arms, including
+the native HF and peer controls. Eight supervisor checks and five flat-position
+collection tests also passed. Native control timings
+are excluded from these tables.
+
+All inputs are ordered, normalized Wikipedia paragraphs from the pinned
+`wikimedia/wikipedia` revision `b04c8d1ceb2f5cd4588862100d08de323dccfbaa`
+and the 20231101 snapshots. Mixed 512 MiB interleaves whole lines from English,
+Chinese, Japanese, and German, approximately 128 MiB per language. The 256 MiB
+cases are whole-line prefixes of their 512 MiB counterparts. Text is not
+replicated to reach the requested size. English uses a 50,000-token target;
+Chinese and mixed inputs use 100,000. Other parameters appear in the protocol.
+
+Runs were serial on a KVM host exposing six Xeon Gold 6140 vCPUs and 15.59 GiB
+of physical memory, using four training workers, native CPU compilation,
+fat LTO, and disabled allocation counters. Background Codex sessions and
+tmpfs research caches were released before the matrix. Exact input bytes
+and word, symbol, and initial-edge counts are recorded in
+[protocol.json](results/preliminary-20261005/protocol.json).
+
+### Primary comparisons
+
+The table reports medians of absolute measurements. End-to-end time includes
+the common feed and BPE training; process HWM is read before model output.
+
+| Case | Trainer | BPE training (s) | End-to-end (s) | Process HWM (GiB) |
+| --- | --- | ---: | ---: | ---: |
+| English 512 MiB | Full | 2.705 | 17.937 | 0.478 |
+| English 512 MiB | Original HF | 44.670 | 60.028 | 2.477 |
+| English 512 MiB | PR #2348 | 9.981 | 25.236 | 0.708 |
+| Chinese 256 MiB | Full | 12.191 | 16.099 | 1.647 |
+| Chinese 256 MiB | Original HF | 312.567 | 316.037 | 11.666 |
+| Chinese 256 MiB | PR #2348 | 135.283 | 138.944 | 3.928 |
+| Mixed 256 MiB | Full | 12.302 | 22.908 | 1.838 |
+| Mixed 256 MiB | Original HF | 213.772 | 224.763 | 10.817 |
+| Mixed 256 MiB | PR #2348 | 48.017 | 58.656 | 3.358 |
+| Chinese 512 MiB | Full | 20.716 | 28.619 | 3.155 |
+| Chinese 512 MiB | PR #2348 | 266.786 | 274.654 | 7.022 |
+| Mixed 512 MiB | Full | 21.815 | 41.911 | 3.100 |
+| Mixed 512 MiB | PR #2348 | 83.096 | 103.094 | 5.730 |
+
+The following ratios are computed inside each paired block, then summarized
+by their median. They are not divisions of the preceding table's medians.
+A ratio above one means that the named trainer costs more than Full.
+
+| Case | Trainer / Full | Training ratio | End-to-end ratio | HWM ratio |
+| --- | --- | ---: | ---: | ---: |
+| English 512 MiB | Original HF | 16.808× | 3.356× | 5.180× |
+| English 512 MiB | PR #2348 | 3.755× | 1.411× | 1.482× |
+| Chinese 256 MiB | Original HF | 25.249× | 19.626× | 7.049× |
+| Chinese 256 MiB | PR #2348 | 11.187× | 8.753× | 2.385× |
+| Mixed 256 MiB | Original HF | 17.458× | 9.945× | 5.886× |
+| Mixed 256 MiB | PR #2348 | 3.903× | 2.570× | 1.828× |
+| Chinese 512 MiB | PR #2348 | 12.901× | 9.767× | 2.225× |
+| Mixed 512 MiB | PR #2348 | 3.811× | 2.459× | 1.848× |
+
+Original HF did not complete either 512 MiB Chinese or mixed input under the
+host reserve guard. After resource cleanup, the last attempts stopped at
+approximately 12.43 GiB sampled RSS with zero process swap. This is an observed
+lower bound before stopping, not a completed-run HWM or an OOM result. Those
+two cases therefore compare Full and PR #2348; their three-way comparisons
+use 256 MiB. Ratios never cross input sizes.
+
+Six HF 512 MiB memory-guard attempts, one cancelled Peer warm-up, and one
+partial Chinese 512 MiB timed block interrupted for the arm-order correction
+are retained separately and excluded from statistics. That timed block was
+then rerun in full. Two-arm groups alternate directly; the retained first
+Chinese 512 MiB block has the same valid order as the corrected schedule.
+
+### Core ablations
+
+The Chinese 512 MiB whitespace case contains five paired blocks (45 timed runs).
+Full's median BPE training time is 20.76 s and its process
+HWM is 3.15 GiB. Each row disables one feature.
+The percentages are medians of within-block ratios relative to Full; the
+range covers the five observed training ratios. Effects are conditional on
+Full and cannot be added together.
 
 | Change from Full | Training time change | Observed range | Process HWM change |
 | --- | ---: | ---: | ---: |
 | Stable comparison sorting | +9.34% | +8.14% to +11.18% | +22.36% |
 | One rule per round | +45.16% | +43.20% to +47.55% | +0.08% |
 | Full U64 positions | +7.56% | +4.74% to +13.99% | +35.01% |
-| U32 corpus slots | +2.16% | −3.97% to +7.45% | +4.22% |
-| Eager corpus construction | −4.55% | −7.78% to −1.52% | +14.62% |
+| U32 corpus slots | +2.16% | -3.97% to +7.45% | +4.22% |
+| Eager corpus construction | -4.55% | -7.78% to -1.52% | +14.62% |
 | Position pool disabled | +18.93% | +12.53% to +25.85% | +0.29% |
-| Scalar weights | +10.98% | +8.28% to +16.77% | −0.07% |
-| Independently owned vocabulary strings | +0.87% | −4.29% to +1.75% | +0.03% |
+| Scalar weights | +10.98% | +8.28% to +16.77% | -0.07% |
+| Independently owned vocabulary strings | +0.87% | -4.29% to +1.75% | +0.03% |
 
 Eager construction trades lower latency for a higher peak. U32 slots and dual
-strings show no consistent timing direction across these five samples. Their
-measured HWM effects differ: U32 slots increase the peak by 4.22%, while dual
-strings barely change it. HWM includes the common word map and the trainer's
-transient buffers; it does not measure the payload size of a single structure.
+strings show no consistent timing direction across these five samples. U32
+slots increase measured HWM by 4.22%, while dual strings barely change it.
+HWM includes the common word map and transient buffers; it does not measure
+the payload size of a single structure. Full U64 positions also change the
+encoding workspace, as described in the variant table above.
 
-The [absolute measurements](results/preliminary-20261005/ablation-summary.csv),
-[paired comparisons](results/preliminary-20261005/ablation-comparisons.csv), and
-[protocol](results/preliminary-20261005/ablation-protocol.json) record the values
-and settings. Full U64 positions also change the encoding workspace, as described
-in the variant table above.
+### Supplementary Peer WordArena control
+
+This comparison uses its own five paired blocks and the unchanged peer as
+baseline. The other arm restores the pre-WordArena BPE source at `2e22a686`.
+Peer's arena stores corpus symbols; Full's arena pools position buffers.
+
+| Peer variant | BPE training (s) | End-to-end (s) | Process HWM (GiB) |
+| --- | ---: | ---: | ---: |
+| With WordArena | 304.352 | 313.112 | 7.022 |
+| Before WordArena | 332.364 | 340.712 | 7.128 |
+
+Relative to the peer with WordArena, the pre-WordArena arm changes training
+time by +12.42% (observed range
++2.77% to +18.02%), end-to-end time by
++11.95%, and process HWM by +1.51%.
+This control does not isolate the other algorithm changes in PR #2348.
+
+### Data and interpretation
+
+[Absolute summaries](results/preliminary-20261005/summary.csv),
+[paired comparisons and observed ranges](results/preliminary-20261005/comparisons.csv),
+[raw samples and ratios](results/preliminary-20261005/summary.json),
+[per-run resources, jobs, and arm orders](results/preliminary-20261005/samples.json),
+[portable configuration](results/preliminary-20261005/config.json), and
+[protocol](results/preliminary-20261005/protocol.json) contain the complete
+matrix. The earlier core-only CSV files remain an identical subset.
+
+The five observations describe this host, input selection, frontend, and
+worker count. Small effects with ranges spanning zero do not establish a
+consistent timing direction. The report makes no significance claim or
+multi-gigabyte capacity extrapolation. Local raw stdout/stderr and canonical
+case models are retained; standalone executables and Cargo build caches are
+removed after measurement.
