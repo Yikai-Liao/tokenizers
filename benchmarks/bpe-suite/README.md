@@ -61,6 +61,8 @@ read before validation; sampled RSS includes validation and is a separate metric
 Allocation counters are disabled. Memory, RSS, and timeout guards retain failures.
 Only complete paired blocks enter statistics. Warm-ups are recorded separately.
 The initial profile uses five repetitions with rotated and reversed arm order.
+Two-arm groups alternate directly. A failed warm-up stops before timed blocks so
+the input size or resource conditions can be adjusted first.
 
 `prepared.json` records revisions, settings, dataset sizes, and machine information.
 `summary.json` retains valid raw samples, per-block ratios, and failures (including

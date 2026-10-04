@@ -88,5 +88,22 @@ class SupervisorTests(unittest.TestCase):
         self.assertEqual(summary["paired_comparisons"][0]["baseline"], "full")
         self.assertEqual(len(summary["warmup_failures"]), 1)
 
+    def test_two_arm_schedule_balances_first_position(self):
+        orders = [suite.arm_order(["peer", "full"], block) for block in range(4)]
+        self.assertEqual(sum(order[0] == "peer" for order in orders), 2)
+        self.assertEqual(sum(order[0] == "full" for order in orders), 2)
+        for order in orders: self.assertCountEqual(order, ["peer", "full"])
+
+    def test_failed_warmup_stops_before_timed_blocks(self):
+        self.config.update(cases=[self.case], groups=[dict(name="primary", cases=["case"],
+                                arms=["fake"], repetitions=5)])
+        suite.write(self.out / "prepared.json", dict(protocol=suite.PROTOCOL, config=self.config))
+        suite.write(self.out / "smoke.json", dict(passed=True))
+        with patch.object(suite, "execute", return_value=dict(status="memory_guard")) as execute:
+            with self.assertRaisesRegex(RuntimeError, "adjust the profile"):
+                suite.run(self.config, self.out)
+        self.assertEqual(execute.call_count, 1)
+        self.assertFalse((self.out / "runs").exists())
+
 
 if __name__ == "__main__": unittest.main()

@@ -255,9 +255,13 @@ def run(config, out):
                 if key in warmed: continue
                 warmed.add(key)
                 folder = out / "warmup" / name / arm
-                if (folder / "result.json").exists(): continue
-                print(f"warmup {name} {arm}", flush=True)
-                execute(out, config, cases[name], arm, folder)
+                if (folder / "result.json").exists():
+                    row = read(folder / "result.json")
+                else:
+                    print(f"warmup {name} {arm}", flush=True)
+                    row = execute(out, config, cases[name], arm, folder)
+                if row["status"] != "ok":
+                    raise RuntimeError(f"warmup failed: {name} {arm} ({row['status']}); adjust the profile before timing")
     for group in config["groups"]:
         for name in group["cases"]:
             for block in range(group["repetitions"]):
@@ -266,9 +270,7 @@ def run(config, out):
                 if done.exists(): continue
                 if folder.exists(): folder.rename(folder.with_name(folder.name + f".interrupted-{time.time_ns()}"))
                 arms = group["arms"]
-                shift = block % len(arms)
-                order = arms[shift:] + arms[:shift]
-                if block % 2: order = list(reversed(order))
+                order = arm_order(arms, block)
                 rows = []
                 for arm in order:
                     print(f"{group['name']} {name} block {block + 1}/{group['repetitions']} {arm}", flush=True)
@@ -276,6 +278,14 @@ def run(config, out):
                 write(done, {"order": order, "comparison_valid": all(r["status"] == "ok" for r in rows),
                              "results": rows})
                 report(out)
+
+
+def arm_order(arms, block):
+    shift = block % len(arms)
+    order = arms[shift:] + arms[:shift]
+    # With two arms, reversing odd rotations would cancel the alternation.
+    if len(arms) > 2 and block % 2: order = list(reversed(order))
+    return order
 
 
 def report(out):
