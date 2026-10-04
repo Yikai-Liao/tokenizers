@@ -62,10 +62,10 @@ but does not use this fresh batch lookup. Rule and candidate vectors also retain
 their bounded capacity across rounds. Conflict sets are populated only when
 another rule can enter the batch, so single-rule rounds leave them unallocated.
 
-After the last merge phase joins, the coordinator releases selected postings and
-the pair index, then the corpus and arena, and clears reusable scratch before
-building public model strings. Model construction reads only the vocabulary and
-ordered merge IDs.
+After the last merge phase joins, the coordinator releases selected position
+lists and the pair index, then the corpus and arena, and clears reusable scratch
+before building public model strings. Model construction reads only the
+vocabulary and ordered merge IDs.
 
 Vocabulary stores canonical token strings in an append-only `IndexSet` with the
 same AHash hasher. Insertion indices are token IDs, so one string serves text
@@ -181,11 +181,12 @@ is already active. An existing but inactive reserved ID can activate once, in
 its own batch. Only an active ID collision requires Reusable execution.
 
 On that collision, the coordinator stops before consuming the candidate or
-writing its batch. It releases the attempt's postings, corpus, arena, and scratch,
-then runs the same coordinator once with Reusable ownership from the unchanged
-weighted words. Reconstructing the input restores cohorts and intermediate births
-that Fresh pruning and fused batches omitted. An in-place policy switch cannot
-recover them. Errors propagate directly; the Reusable attempt never restarts.
+writing its batch. It releases the attempt's position lists, corpus, arena, and
+scratch, then runs the same coordinator once with Reusable ownership from the
+unchanged weighted words. Reconstructing the input restores cohorts and
+intermediate births that Fresh pruning and fused batches omitted. An in-place
+policy switch cannot recover them. Errors propagate directly; the Reusable
+attempt never restarts.
 Limited-alphabet selection runs once per call; reconstruction reuses its
 retained characters, including the original frequency-tie choice. Both attempts
 use full-width storage and the same shared modules. Affix inputs

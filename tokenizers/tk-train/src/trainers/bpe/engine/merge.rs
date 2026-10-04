@@ -282,7 +282,7 @@ impl EventChunk {
     }
 }
 // PERF: Prefetch a bounded distance ahead to overlap scattered endpoint loads
-// without retaining a full decoded posting.
+// without retaining a fully decoded position list.
 const PREFETCH_DISTANCE: usize = 16;
 const EMPTY: u64 = u64::MAX;
 const MULTIPLE: u64 = u64::MAX - 1;
@@ -486,18 +486,18 @@ impl Preparation<'_> {
         )
     }
 }
-struct PostingTask {
+struct PositionTask {
     rank: usize,
     begin: usize,
     end: usize,
 }
-fn posting_jobs(candidates: &[MergeCandidate<'_>], workers: usize) -> Vec<Vec<PostingTask>> {
+fn position_jobs(candidates: &[MergeCandidate<'_>], workers: usize) -> Vec<Vec<PositionTask>> {
     let total: usize = candidates
         .iter()
         .map(|candidate| candidate.positions.len())
         .sum();
     let chunk = total.div_ceil(workers).clamp(1, 1 << 26);
-    let mut jobs = Vec::<Vec<PostingTask>>::new();
+    let mut jobs = Vec::<Vec<PositionTask>>::new();
     let mut visited = 0;
     for (rank, candidate) in candidates.iter().enumerate() {
         let mut begin = 0;
@@ -507,7 +507,7 @@ fn posting_jobs(candidates: &[MergeCandidate<'_>], workers: usize) -> Vec<Vec<Po
                 jobs.push(Vec::new());
             }
             let take = (chunk - visited % chunk).min(candidate.positions.len() - begin);
-            jobs[job].push(PostingTask {
+            jobs[job].push(PositionTask {
                 rank,
                 begin,
                 end: begin + take,
@@ -565,7 +565,7 @@ pub(super) fn prepare_merges(
             execution,
         )?
     } else {
-        let jobs = posting_jobs(candidates, execution.workers());
+        let jobs = position_jobs(candidates, execution.workers());
         let mut selected = execution.selected_rules();
         selected.reset(rules, identities);
         jobs.into_par_iter()
@@ -643,7 +643,7 @@ pub(super) fn prepare_merges(
 }
 enum CohortSource {
     Words(Vec<usize>),
-    Postings(std::ops::Range<usize>),
+    Positions(std::ops::Range<usize>),
 }
 struct CohortTask {
     region: std::ops::Range<u64>,
@@ -708,7 +708,7 @@ fn prepare_cohort(
             .collect::<Vec<_>>()
     } else {
         // Before alias reuse or a length gate, only cut boundaries need a word
-        // lookup. Move each cut to the first posting in that complete word.
+        // lookup. Move each cut to the first occurrence in that complete word.
         let mut cuts = vec![(0, 0)];
         for desired in (chunk..count).step_by(chunk) {
             let position = candidate
@@ -726,7 +726,7 @@ fn prepare_cohort(
         cuts.windows(2)
             .map(|cuts| CohortTask {
                 region: cuts[0].1..cuts[1].1,
-                source: CohortSource::Postings(cuts[0].0..cuts[1].0),
+                source: CohortSource::Positions(cuts[0].0..cuts[1].0),
             })
             .collect()
     };
@@ -762,7 +762,7 @@ fn prepare_cohort(
                         }
                     }
                 }
-                CohortSource::Postings(range) => {
+                CohortSource::Positions(range) => {
                     let mut previous = None;
                     let mut after = task.region.start;
                     for position in candidate.positions.cursor(range) {

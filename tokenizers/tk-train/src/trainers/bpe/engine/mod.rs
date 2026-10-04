@@ -71,7 +71,7 @@ pub(super) fn train(
                     return Ok(parts);
                 }
                 AttemptOutcome::RestartForReuse => {
-                    // All postings and their arena were dropped by the attempt.
+                    // All position lists and their arena were dropped by the attempt.
                     // Retain neither speculative values nor encoding allocations.
                     execution.release_scratch();
                     policy = IdentityPolicy::Reusable;
@@ -121,7 +121,7 @@ fn train_attempt(
         pair_index::PairIndex::from_initial_pairs(initial, policy, trainer.min_frequency)?;
     let mut merges = Vec::new();
     // PERF: Reuse bounded selection workspace across all rounds. Clearing
-    // candidates releases their postings before commit without reallocating
+    // candidates releases their position lists before commit without reallocating
     // the vector; rule and conflict storage never exceeds the batch limit.
     let mut rules = Vec::new();
     let mut candidates = Vec::new();
@@ -194,7 +194,7 @@ fn train_attempt(
             execution,
         )?;
         // PERF: Preparation owns all writes and birth events. Selected
-        // postings have no remaining reader; release them before allocating
+        // position lists have no remaining reader; release them before allocating
         // the next generation during commit.
         candidates.clear();
         let events = prepared.apply(&mut corpus);

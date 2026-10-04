@@ -70,7 +70,7 @@ impl PartialOrd for MergeCandidate<'_> {
 }
 
 pub(super) struct PairShard<'a> {
-    // Fresh states own postings. Reusable IDs publish independent cohorts, so
+    // Fresh states own position lists. Reusable IDs publish independent cohorts, so
     // their count table stores only numeric ledger bits, including zero/negative
     // values. Exactly one table is populated after initialization.
     pub(super) states: AHashMap<u64, PairState<'a>>,
