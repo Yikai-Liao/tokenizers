@@ -70,7 +70,11 @@ impl PartialOrd for MergeCandidate<'_> {
 }
 
 pub(super) struct PairShard<'a> {
+    // Fresh states own postings. Reusable IDs publish independent cohorts, so
+    // their count table stores only numeric ledger bits, including zero/negative
+    // values. Exactly one table is populated after initialization.
     pub(super) states: AHashMap<u64, PairState<'a>>,
+    ledger: AHashMap<u64, u64>,
     priorities: OctonaryHeap<PairPriority>,
     prefix: VecDeque<PairPriority>,
 }
@@ -166,6 +170,7 @@ impl<'a> PairIndex<'a> {
             .into_par_iter()
             .map(|mut states| {
                 let mut candidates = Vec::new();
+                let mut ledger = AHashMap::new();
                 let priorities = if policy == IdentityPolicy::Fresh {
                     states
                         .iter()
@@ -175,23 +180,25 @@ impl<'a> PairIndex<'a> {
                         })
                         .collect()
                 } else {
-                    for (&key, state) in &mut states {
+                    ledger =
+                        AHashMap::with_capacity_and_hasher(states.len(), states.hasher().clone());
+                    for (key, state) in std::mem::take(&mut states) {
+                        ledger.insert(key, state.ledger_count_bits);
                         if state.ledger_count_bits > 0 {
                             candidates.push(MergeCandidate {
                                 priority: PairPriority {
                                     key,
                                     priority_count: state.ledger_count_bits,
                                 },
-                                positions: std::mem::take(&mut state.positions),
+                                positions: state.positions,
                             });
-                        } else {
-                            state.positions = SortedPositions::new();
                         }
                     }
                     OctonaryHeap::new()
                 };
                 let mut shard = PairShard {
                     states,
+                    ledger,
                     priorities,
                     prefix: VecDeque::with_capacity(4),
                 };
@@ -245,8 +252,7 @@ impl<'a> PairIndex<'a> {
             Selection::Cohorts { candidates } => loop {
                 let top = candidates.peek()?;
                 let key = top.priority.key;
-                let count =
-                    self.shards[shard_for(key, self.shards.len())].states[&key].ledger_count_bits;
+                let count = self.shards[shard_for(key, self.shards.len())].ledger[&key];
                 if top.priority.priority_count == count {
                     return (count != 0 && count >= self.minimum_frequency).then_some(top.priority);
                 }
@@ -332,16 +338,10 @@ impl<'a> PairIndex<'a> {
                         let change = &chunk.changes[reference.index()];
                         if matches!(reference.action(), Action::Remove | Action::Both) {
                             if policy == IdentityPolicy::Reusable {
-                                let state =
-                                    shard.states.entry(change.removed_key).or_insert_with(|| {
-                                        PairState {
-                                            ledger_count_bits: 0,
-                                            positions: SortedPositions::new(),
-                                        }
-                                    });
+                                let count = shard.ledger.entry(change.removed_key).or_default();
                                 let amount = i64::try_from(change.removed_weight)
                                     .map_err(|_| "BPE identity-reuse removal exceeds i64")?;
-                                state.ledger_count_bits = (state.ledger_count_bits as i64)
+                                *count = (*count as i64)
                                     .checked_sub(amount)
                                     .ok_or("BPE identity-reuse count subtraction exceeds i64")?
                                     as u64;
@@ -358,17 +358,10 @@ impl<'a> PairIndex<'a> {
                         if policy == IdentityPolicy::Reusable
                             && matches!(reference.action(), Action::Birth | Action::Both)
                         {
-                            let state =
-                                shard
-                                    .states
-                                    .entry(change.born_key)
-                                    .or_insert_with(|| PairState {
-                                        ledger_count_bits: 0,
-                                        positions: SortedPositions::new(),
-                                    });
+                            let count = shard.ledger.entry(change.born_key).or_default();
                             let amount = i64::try_from(change.born_weight)
                                 .map_err(|_| "BPE identity-reuse birth exceeds i64")?;
-                            state.ledger_count_bits = (state.ledger_count_bits as i64)
+                            *count = (*count as i64)
                                 .checked_add(amount)
                                 .ok_or("BPE identity-reuse count addition exceeds i64")?
                                 as u64;
@@ -456,7 +449,7 @@ impl<'a> PairIndex<'a> {
                         let count = if policy == IdentityPolicy::Fresh {
                             group.weight
                         } else {
-                            shard.states[&key].ledger_count_bits
+                            shard.ledger[&key]
                         };
                         if if policy == IdentityPolicy::Fresh {
                             count < floor
