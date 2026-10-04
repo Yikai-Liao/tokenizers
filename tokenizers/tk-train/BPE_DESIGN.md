@@ -61,6 +61,9 @@ event buffers. Each producer owns one chain allocation. The batch routes actual
 changes into one row per count owner; it allocates no producer/owner/bucket
 directory matrix. Count actions keep producer order, and stable grouping by
 birth bucket preserves source order, including zero-weight births with positions.
+Owners count their actual birth buckets and distribute references into an exact
+output vector in parallel. The old references remain alive until distribution
+finishes; count actions are not reordered.
 Values, fragments, and event nodes are task-local. Each executing
 worker lends two reusable ID directories to preparation and commit; its encoding
 scratch also lives with the pool. A directory lease covers sequential work only,
@@ -288,11 +291,14 @@ Stale cohorts can increase `C`, identity reuse can increase `S`, and
 lazy queue repair can increase `Q`.
 
 For one merge batch, let `P` be workers, `D` producer chunks, `T` routed count
-actions, and `F` birth references. Routing storage costs `O(P + D + T + F)`;
-empty producer/owner/bucket combinations contribute no work. Stable birth
-grouping adds `O(sum F_owner log F_owner)` comparisons. Each count-action
-reference uses two resident indices, and each birth reference uses one.
-These actual-event costs replace directories and scans over the cross-product.
+actions, `F` birth references, and `R` birth buckets, with `R <= 512` independent
+of worker count. Routing and stable birth grouping take `O(P + D + T + F + PR)`
+work and storage. Owners with at least two births use `R` resident counters and
+temporarily hold both the input and exact output birth-reference vectors. Empty
+producer/owner/bucket combinations allocate no directory entries and require no
+cross-product scan. Each count-action reference uses two resident indices, and
+each birth reference uses one. These actual-event costs replace the previous
+producer/owner/bucket directory matrix and comparison sorting of birth buckets.
 
 The original Word-based trainer removes tokens from vectors and moves the
 remaining suffix after each removal. A word of initial length `n` can therefore

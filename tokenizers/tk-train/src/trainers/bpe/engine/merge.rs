@@ -271,13 +271,35 @@ impl MergeEvents {
                 }
             }
         }
-        // Stable ordering retains spatial producer order within each bucket.
-        // Count actions retain their original order independently of birth grouping.
+        // Count actions retain traversal order. Group only actual births on
+        // their owners, keeping histograms out of the serial routing pass.
+        // Stable counting distribution retains spatial producer order without
+        // comparison sorting or repeated indirect key loads per comparison.
         routes.par_iter_mut().for_each(|route| {
-            route.births.sort_by_key(|&index| {
+            if route.births.len() < 2 {
+                return;
+            }
+            let bucket_of = |index: usize| {
                 let reference = &route.changes[index];
-                self.chunks[reference.chunk].changes[reference.index()].bucket
-            });
+                self.chunks[reference.chunk].changes[reference.index()].bucket as usize
+            };
+            let mut offsets = vec![0_usize; self.buckets];
+            for &index in &route.births {
+                offsets[bucket_of(index)] += 1;
+            }
+            let mut total = 0;
+            for offset in &mut offsets {
+                let count = *offset;
+                *offset = total;
+                total += count;
+            }
+            let mut births = vec![0; route.births.len()];
+            for &index in &route.births {
+                let offset = &mut offsets[bucket_of(index)];
+                births[*offset] = index;
+                *offset += 1;
+            }
+            route.births = births;
         });
         routes
     }
