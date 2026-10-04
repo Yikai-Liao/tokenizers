@@ -723,3 +723,193 @@ fn affix_first_activations_preserve_reserved_ids_and_model_order() {
     assert!(trace.iter().any(|&(_, _, id)| id == 0));
     check_with_workers(&trainer, &words, &[1, 4]);
 }
+
+#[test]
+fn planned_edges_match_materialized_slots_across_word_and_seek_boundaries() {
+    use corpus::InitialPairSource;
+    let long = "a测éxb".repeat(2500);
+    let mut words = counts(&[("", 1), ("x", 0), ("a测éxb", 7), ("xa", 3), ("aé", 0)]);
+    words.insert(long.into(), 2);
+    words.insert(
+        format!(
+            "{}a{}测{}",
+            "x".repeat(16000),
+            "x".repeat(16000),
+            "x".repeat(16000)
+        )
+        .into(),
+        5,
+    );
+    for affixes in [false, true] {
+        for limited in [false, true] {
+            let mut trainer = BpeTrainer::builder()
+                .vocab_size(100)
+                .show_progress(false)
+                .build();
+            if affixes {
+                trainer.continuing_subword_prefix = Some("##".into());
+                trainer.end_of_word_suffix = Some("</w>".into());
+            }
+            if limited {
+                trainer.limit_alphabet = Some(2);
+                trainer.initial_alphabet = ['a', '测'].into();
+            }
+            let execution = execution::Execution::new(4).unwrap();
+            let progress = TrainingProgress::new(false, trainer.progress_format).unwrap();
+            execution.pool.install(|| {
+                let mut retained = None;
+                let mut vocab = vocabulary::Vocabulary::initialize(
+                    &trainer,
+                    &words,
+                    4,
+                    &progress,
+                    &mut retained,
+                )
+                .unwrap();
+                let plan = corpus::PreparedCorpus::build(
+                    &words,
+                    &mut vocab,
+                    IdentityPolicy::Reusable,
+                    false,
+                    &progress,
+                )
+                .unwrap();
+                let len = (&plan).len();
+                let mut ranges = vec![0..len - 1, 0..1, len - 2..len - 1];
+                for start in [1, 2, 3, 4095, 4096, 4097, 8191, 8192, len / 2] {
+                    if start < len - 1 {
+                        ranges.push(start..(start + 3).min(len - 1));
+                        ranges.push(start..start);
+                    }
+                }
+                // The complete comparison includes empty words and every separator.
+                let mut all = Vec::new();
+                (&plan).for_each_edge(0..len - 1, |position, key| all.push((position, key)));
+                let observed: Vec<_> = ranges
+                    .iter()
+                    .map(|range| {
+                        let mut pairs = Vec::new();
+                        (&plan).for_each_edge(range.clone(), |position, key| {
+                            pairs.push((position, key))
+                        });
+                        pairs
+                    })
+                    .collect();
+                let corpus = plan
+                    .materialize(4, IdentityPolicy::Reusable, &progress)
+                    .unwrap();
+                let source = corpus.initial_view();
+                for (range, actual) in ranges.into_iter().zip(observed) {
+                    let mut expected = Vec::new();
+                    source.for_each_edge(range.clone(), |position, key| {
+                        expected.push((position, key))
+                    });
+                    assert_eq!(
+                        actual, expected,
+                        "affixes={affixes} limited={limited} range={range:?}"
+                    );
+                }
+                let mut expected = Vec::new();
+                source.for_each_edge(0..len - 1, |position, key| expected.push((position, key)));
+                assert_eq!(all, expected);
+            });
+        }
+    }
+}
+
+#[test]
+fn planned_wave_tables_preserve_coordinates_weights_and_filtering() {
+    #[derive(Debug, PartialEq, Eq)]
+    struct InitialSnapshot {
+        weighted_mass: u128,
+        maximum_word_weight: u64,
+        entries: Vec<(u64, u64, Vec<u64>)>,
+    }
+    fn snapshot(table: initial_pairs::InitialPairTable<'_>) -> InitialSnapshot {
+        let mut entries: Vec<_> = table
+            .shards
+            .into_iter()
+            .flat_map(|shard| shard.into_iter())
+            .map(|(key, state)| {
+                (
+                    key,
+                    state.ledger_count_bits,
+                    state.positions.iter().collect(),
+                )
+            })
+            .collect();
+        entries.sort_unstable_by_key(|entry| entry.0);
+        InitialSnapshot {
+            weighted_mass: table.weighted_mass,
+            maximum_word_weight: table.maximum_word_weight,
+            entries,
+        }
+    }
+    let words = counts(&[
+        ("", 1),
+        ("x", 0),
+        ("ab测éab测éab", 7),
+        ("ab测é", 0),
+        ("baab", 2),
+    ]);
+    let mut trainer = BpeTrainer::builder()
+        .vocab_size(100)
+        .show_progress(false)
+        .build();
+    trainer.continuing_subword_prefix = Some("##".into());
+    trainer.end_of_word_suffix = Some("</w>".into());
+    trainer.limit_alphabet = Some(3);
+    trainer.initial_alphabet = ['a', 'b', '测'].into();
+    for workers in [1, 2, 4] {
+        let execution = execution::Execution::new(workers).unwrap();
+        let progress = TrainingProgress::new(false, trainer.progress_format).unwrap();
+        execution.pool.install(|| {
+            for wave in [2, 7, 1 << 28] {
+                for minimum in [0, 2, 8] {
+                    let mut retained = None;
+                    let mut vocab = vocabulary::Vocabulary::initialize(
+                        &trainer,
+                        &words,
+                        workers,
+                        &progress,
+                        &mut retained,
+                    )
+                    .unwrap();
+                    let plan = corpus::PreparedCorpus::build(
+                        &words,
+                        &mut vocab,
+                        IdentityPolicy::Reusable,
+                        false,
+                        &progress,
+                    )
+                    .unwrap();
+                    let arena = AllocationArena::new(workers, plan.initial_edges());
+                    let actual = snapshot(
+                        initial_pairs::build_in_waves(
+                            &plan, minimum, &execution, &arena, &progress, wave,
+                        )
+                        .unwrap(),
+                    );
+                    let corpus = plan
+                        .materialize(workers, IdentityPolicy::Reusable, &progress)
+                        .unwrap();
+                    let expected = snapshot(
+                        initial_pairs::build_in_waves(
+                            corpus.initial_view(),
+                            minimum,
+                            &execution,
+                            &arena,
+                            &progress,
+                            wave,
+                        )
+                        .unwrap(),
+                    );
+                    assert_eq!(
+                        actual, expected,
+                        "workers={workers} wave={wave} minimum={minimum}"
+                    );
+                }
+            }
+        });
+    }
+}

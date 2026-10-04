@@ -17,9 +17,10 @@ layout or its allocation rules.
 ```mermaid
 flowchart LR
     Words[Weighted words] --> Vocabulary
-    Vocabulary --> Corpus
-    Corpus --> Initialization[Initial pairs]
-    Initialization --> PairIndex
+    Vocabulary --> Plan[Prepared corpus]
+    Plan --> Initialization[Initial pairs]
+    Initialization --> Corpus[Materialized corpus]
+    Corpus --> PairIndex
     PairIndex --> Selection
     Vocabulary --> Selection
     Selection --> Preparation
@@ -38,7 +39,7 @@ writes. No next selection starts before commit completes.
 | Module | Responsibility |
 |---|---|
 | `vocabulary` | Alphabet selection, decorated initial IDs, token strings, reserved IDs, and identity reuse |
-| `corpus` | Token endpoints, immutable word boundaries, physical spans, and word weights |
+| `corpus` | Borrowed initial word plan, consuming corpus materialization, token endpoints, boundaries, spans, and word weights |
 | `initial_pairs` | Bounded record construction, stable grouping, initial counts, and position encoding |
 | `pair_index` | Frequency interpretation, candidate priority, and birth position cohorts |
 | `merge` | Disjoint merge plans and ordered neighbor changes |
@@ -80,6 +81,28 @@ A position is a physical start slot, represented by `u64` throughout scheduling,
 position storage, and event preparation. A resident allocation uses `usize`
 indices. Full coordinate representation does not imply that a process can
 allocate every possible coordinate.
+
+Initialization starts with `PreparedCorpus`, which borrows weighted words and
+retains their measured global starts, initial ID lookup, and weight intervals.
+Word sorting and alphabet filtering establish the same coordinates used by the
+mutable corpus. Initial pair routing reads this plan directly. `InitialPairSource`
+visits complete pair keys in ascending coordinate order; each range owns left
+endpoints and reads one token beyond its end when an edge needs lookahead.
+Affix flags use original byte positions, including when characters are filtered.
+Empty words retain their separator positions.
+
+Long words have sparse checkpoints at UTF-8 character boundaries about every
+4096 bytes. A checkpoint records the next retained symbol's coordinate and a
+byte offset. Filtered stretches may repeat that coordinate; seeking uses the last
+checkpoint before the requested token. This bounds repeated decoding when task
+or wave boundaries split a long or heavily filtered word.
+
+After every raw wave is released, consuming `PreparedCorpus::materialize` fills
+the existing mutable slot representation once in parallel. Borrowed word plans,
+checkpoints, and initial ID lookup then leave scope. They never coexist with
+merge writes. The plan uses one word reference and one U64 start per word, in
+exchange for repeating UTF-8 decoding and ID lookup during initial routing.
+Full training memory and CPU determine whether that lifetime trade is useful.
 
 The corpus stores token IDs in fixed `AtomicU32` slots. Live token IDs occupy
 both endpoints of their physical span. Merges update endpoints without shifting

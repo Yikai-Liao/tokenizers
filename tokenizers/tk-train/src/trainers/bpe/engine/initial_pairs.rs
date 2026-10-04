@@ -8,16 +8,15 @@
 //! Each key is filtered after its complete frequency is known. Multiwave counts
 //! accumulate before filtering; a single wave can filter before encoding.
 use super::{
-    WORD_SEPARATOR_ID,
-    corpus::InitialCorpus,
+    corpus::InitialPairSource,
     execution::Execution,
-    pair_index::{PairState, pair_key, shard_for},
+    pair_index::{PairState, shard_for},
 };
 use crate::progress::TrainingProgress;
 use ahash::AHashMap;
 use radix::KeyedValue;
 use rayon::prelude::*;
-use std::{mem::MaybeUninit, ops::Range, sync::atomic::Ordering};
+use std::{mem::MaybeUninit, ops::Range};
 use tk_collections::{AllocationArena, SortedPositions, radix};
 use tk_encode::Result;
 
@@ -43,7 +42,7 @@ fn global_position(base: usize, record: KeyedValue) -> u64 {
     base as u64 + u64::from(record.value())
 }
 pub(super) fn build_initial_pairs<'a>(
-    corpus: InitialCorpus<'_>,
+    corpus: impl InitialPairSource,
     minimum_frequency: u64,
     execution: &Execution,
     arena: &'a AllocationArena,
@@ -66,7 +65,7 @@ pub(super) fn build_initial_pairs<'a>(
 }
 
 pub(super) fn build_in_waves<'a>(
-    corpus: InitialCorpus<'_>,
+    corpus: impl InitialPairSource,
     minimum_frequency: u64,
     execution: &Execution,
     arena: &'a AllocationArena,
@@ -80,27 +79,22 @@ pub(super) fn build_in_waves<'a>(
         .collect();
     let mut weighted_mass = 0_u128;
     let maximum_word_weight = corpus
-        .word_weights
+        .word_weights()
         .values()
         .iter()
         .copied()
         .max()
         .unwrap_or(0);
-    let edge = |position: usize| {
-        let left = corpus.token_ids[position].load(Ordering::Relaxed);
-        let right = corpus.token_ids[position + 1].load(Ordering::Relaxed);
-        (left != WORD_SEPARATOR_ID && right != WORD_SEPARATOR_ID).then(|| pair_key((left, right)))
-    };
     let uniform_weight =
-        (corpus.word_weights.values().len() == 1).then(|| corpus.word_weights.values()[0]);
-    let single_wave = corpus.token_ids.len() <= records_per_wave;
+        (corpus.word_weights().values().len() == 1).then(|| corpus.word_weights().values()[0]);
+    let single_wave = corpus.len() <= records_per_wave;
     let wave_floor = if single_wave {
         minimum_frequency
     } else {
         minimum_frequency.min(1)
     };
-    for base in (0..corpus.token_ids.len().saturating_sub(1)).step_by(records_per_wave) {
-        let end = (base + records_per_wave).min(corpus.token_ids.len() - 1);
+    for base in (0..corpus.len().saturating_sub(1)).step_by(records_per_wave) {
+        let end = (base + records_per_wave).min(corpus.len() - 1);
         let mut wave_tables: Vec<_> = (0..workers)
             .map(|_| AHashMap::<u64, PairState<'a>>::new())
             .collect();
@@ -114,11 +108,9 @@ pub(super) fn build_in_waves<'a>(
             .par_iter()
             .map(|range| {
                 let mut sizes = vec![0; workers];
-                for position in range.clone() {
-                    if let Some(key) = edge(position) {
-                        sizes[shard_for(key, workers)] += 1;
-                    }
-                }
+                corpus.for_each_edge(range.clone(), |_, key| {
+                    sizes[shard_for(key, workers)] += 1;
+                });
                 route_work.complete(range.len());
                 sizes
             })
@@ -159,14 +151,12 @@ pub(super) fn build_in_waves<'a>(
         }
         jobs.into_par_iter().for_each(|mut job| {
             let mut used = vec![0; workers];
-            for position in job.range.clone() {
-                if let Some(key) = edge(position) {
-                    let shard = shard_for(key, workers);
-                    job.buffers[shard][used[shard]]
-                        .write(KeyedValue::new(key, (position - base) as u32));
-                    used[shard] += 1;
-                }
-            }
+            corpus.for_each_edge(job.range.clone(), |position, key| {
+                let shard = shard_for(key, workers);
+                job.buffers[shard][used[shard]]
+                    .write(KeyedValue::new(key, (position - base) as u32));
+                used[shard] += 1;
+            });
             route_work.complete(job.range.len());
         });
         // Each emitted offset is below records_per_wave <= 2^28. The u32
@@ -222,7 +212,7 @@ pub(super) fn build_in_waves<'a>(
                         } else {
                             let mut frequency = 0_u64;
                             for (count, weight) in corpus
-                                .word_weights
+                                .word_weights()
                                 .runs_for_sorted(&records[begin..end], |&record| {
                                     global_position(base, record)
                                 })

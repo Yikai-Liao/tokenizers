@@ -4,13 +4,17 @@
 //! next token; the preceding endpoint locates the previous token. Rewrites never
 //! shift a word's suffix. Unequal identity reuse materializes occurrence spans
 //! before changing the corpus, while immutable boundaries retain word identity.
-use super::{IdentityPolicy, WORD_SEPARATOR_ID, vocabulary::Vocabulary};
+use super::{
+    IdentityPolicy, WORD_SEPARATOR_ID,
+    vocabulary::{InitialIds, Vocabulary},
+};
 use crate::progress::TrainingProgress;
 use ahash::AHashMap;
 use compact_str::CompactString;
 use rayon::prelude::*;
 use std::{
     mem::{ManuallyDrop, MaybeUninit},
+    ops::Range,
     sync::atomic::{AtomicU32, Ordering},
 };
 use tk_collections::{IntervalCursor, IntervalIndex};
@@ -24,11 +28,128 @@ pub(super) struct Corpus {
     spans_by_id: Vec<u64>,
     occurrence_spans: Option<Vec<u64>>,
     scan_whole_words: bool,
-    edges: usize,
 }
+#[cfg(test)]
 pub(super) struct InitialCorpus<'a> {
     pub(super) token_ids: &'a [AtomicU32],
     pub(super) word_weights: &'a IntervalIndex<u64>,
+}
+// A word keeps its original byte coordinates and its measured global start.
+// Initial pair construction borrows this plan; no mutable slot allocation exists
+// until all raw records have retired.
+struct PlannedWord<'a> {
+    word: &'a CompactString,
+    start: u64,
+}
+struct SymbolCheckpoint {
+    position: usize,
+    byte: usize,
+}
+pub(super) struct PreparedCorpus<'a> {
+    words: Vec<PlannedWord<'a>>,
+    checkpoints: Vec<SymbolCheckpoint>,
+    initial_ids: InitialIds,
+    len: usize,
+    weights: IntervalIndex<u64>,
+    unit_weight: Option<(u64, u64)>,
+    spans_by_id: Vec<u64>,
+    scan_whole_words: bool,
+    edges: usize,
+}
+/// Initial routing visits complete keys in ascending physical-coordinate order.
+/// A range owns left endpoints; its final edge may read one token past the range.
+pub(super) trait InitialPairSource: Sync {
+    fn len(&self) -> usize;
+    fn word_weights(&self) -> &IntervalIndex<u64>;
+    fn for_each_edge(&self, range: Range<usize>, emit: impl FnMut(usize, u64));
+}
+#[cfg(test)]
+impl InitialPairSource for InitialCorpus<'_> {
+    fn len(&self) -> usize {
+        self.token_ids.len()
+    }
+    fn word_weights(&self) -> &IntervalIndex<u64> {
+        self.word_weights
+    }
+    fn for_each_edge(&self, range: Range<usize>, mut emit: impl FnMut(usize, u64)) {
+        for position in range {
+            let left = self.token_ids[position].load(Ordering::Relaxed);
+            let right = self.token_ids[position + 1].load(Ordering::Relaxed);
+            if left != WORD_SEPARATOR_ID && right != WORD_SEPARATOR_ID {
+                emit(position, super::pair_index::pair_key((left, right)));
+            }
+        }
+    }
+}
+impl InitialPairSource for &PreparedCorpus<'_> {
+    fn len(&self) -> usize {
+        self.len
+    }
+    fn word_weights(&self) -> &IntervalIndex<u64> {
+        &self.weights
+    }
+    fn for_each_edge(&self, range: Range<usize>, mut emit: impl FnMut(usize, u64)) {
+        let first = self
+            .words
+            .partition_point(|word| word.start <= range.start as u64)
+            .saturating_sub(1);
+        for index in first..self.words.len() {
+            let planned = &self.words[index];
+            let word_start = planned.start as usize;
+            if word_start >= range.end {
+                break;
+            }
+            let separator = self
+                .words
+                .get(index + 1)
+                .map_or(self.len, |word| word.start as usize)
+                - 1;
+            if separator <= range.start {
+                continue;
+            }
+            let mut position = word_start;
+            let mut byte_start = 0;
+            if word_start < range.start {
+                let after = self
+                    .checkpoints
+                    .partition_point(|point| point.position <= range.start);
+                if let Some(point) = after.checked_sub(1).map(|index| &self.checkpoints[index])
+                    && point.position >= word_start
+                {
+                    position = point.position;
+                    byte_start = point.byte;
+                }
+            }
+            let mut previous = None;
+            for (offset, character) in planned.word[byte_start..].char_indices() {
+                let byte = byte_start + offset;
+                let id = if self.initial_ids.plain() {
+                    self.initial_ids.plain_id(character)
+                } else {
+                    self.initial_ids.id(
+                        character,
+                        byte == 0,
+                        byte + character.len_utf8() == planned.word.len(),
+                    )
+                };
+                let Some(id) = id else {
+                    continue;
+                };
+                if let Some((left_position, left)) = previous
+                    && left_position >= range.start
+                    && left_position < range.end
+                {
+                    emit(left_position, super::pair_index::pair_key((left, id)));
+                }
+                previous = Some((position, id));
+                // The right endpoint at range.end has supplied the lookahead.
+                if position >= range.end {
+                    break;
+                }
+                position += 1;
+            }
+        }
+    }
 }
 #[derive(Clone, Copy)]
 pub(super) struct PairMatch {
@@ -62,11 +183,10 @@ impl WordWeightCursor<'_> {
             .expect("a matched edge belongs to a word")
     }
 }
-impl Corpus {
+impl<'a> PreparedCorpus<'a> {
     pub(super) fn build(
-        word_counts: &AHashMap<CompactString, u64>,
+        word_counts: &'a AHashMap<CompactString, u64>,
         vocabulary: &mut Vocabulary,
-        workers: usize,
         policy: IdentityPolicy,
         length_limited: bool,
         progress: &TrainingProgress,
@@ -127,6 +247,68 @@ impl Corpus {
         {
             return Err("BPE identity-reuse weighted edge mass or word weight exceeds i64".into());
         }
+        let words: Vec<_> = words
+            .into_iter()
+            .zip(word_starts)
+            .map(|((word, _), start)| PlannedWord { word, start })
+            .collect();
+        let mut checkpoints = Vec::new();
+        // Byte checkpoints also bound seeks through heavily filtered words.
+        // Repeated positions are valid: a filtered byte range consumes no slots;
+        // partition_point selects the final anchor before the target token.
+        const CHECKPOINT_BYTES: usize = 4096;
+        for planned in &words {
+            if planned.word.len() <= CHECKPOINT_BYTES {
+                continue;
+            }
+            let mut retained = 0_usize;
+            let mut last_byte = 0_usize;
+            for (byte, character) in planned.word.char_indices() {
+                if byte - last_byte >= CHECKPOINT_BYTES {
+                    checkpoints.push(SymbolCheckpoint {
+                        position: planned.start as usize + retained,
+                        byte,
+                    });
+                    last_byte = byte;
+                }
+                retained += usize::from(initial_ids.retained(character));
+            }
+        }
+        let unit_weight = interval_weights
+            .iter()
+            .position(|&weight| weight == 1)
+            .map(|index| {
+                let start = interval_starts[index];
+                let end = interval_starts
+                    .get(index + 1)
+                    .copied()
+                    .unwrap_or(slots as u64);
+                (start, end - start)
+            });
+        Ok(Self {
+            words,
+            checkpoints,
+            initial_ids,
+            len: slots,
+            weights: IntervalIndex::new(interval_starts, interval_weights),
+            unit_weight,
+            spans_by_id: vocabulary.initial_spans(),
+            scan_whole_words: length_limited,
+            edges,
+        })
+    }
+    pub(super) fn initial_edges(&self) -> usize {
+        self.edges
+    }
+    pub(super) fn materialize(
+        self,
+        workers: usize,
+        policy: IdentityPolicy,
+        progress: &TrainingProgress,
+    ) -> Result<Corpus> {
+        let slots = self.len;
+        let words = &self.words;
+        let initial_ids = &self.initial_ids;
         let mut tokens = Vec::<MaybeUninit<AtomicU32>>::new();
         tokens
             .try_reserve_exact(slots)
@@ -145,17 +327,16 @@ impl Corpus {
         let mut remaining = &mut tokens[1..];
         for start in (0..words.len()).step_by(chunk) {
             let end = (start + chunk).min(words.len());
-            let base = word_starts[start] as usize;
-            let after = word_starts
-                .get(end)
-                .map_or(slots, |&position| position as usize);
+            let base = words[start].start as usize;
+            let after = words.get(end).map_or(slots, |word| word.start as usize);
             let (region, next) = remaining.split_at_mut(after - base);
             remaining = next;
             jobs.push((start, end, region));
         }
         jobs.into_par_iter().for_each(|(start, end, region)| {
             let mut position = 0;
-            for &(word, _) in &words[start..end] {
+            for planned in &words[start..end] {
+                let word = planned.word;
                 if initial_ids.plain() {
                     for character in word.chars() {
                         if let Some(id) = initial_ids.plain_id(character) {
@@ -192,31 +373,24 @@ impl Corpus {
                 tokens.capacity(),
             )
         };
-        if policy == IdentityPolicy::Fresh {
-            word_starts = Vec::new();
-        }
-        let unit_weight = interval_weights
-            .iter()
-            .position(|&weight| weight == 1)
-            .map(|index| {
-                let start = interval_starts[index];
-                let end = interval_starts
-                    .get(index + 1)
-                    .copied()
-                    .unwrap_or(slots as u64);
-                (start, end - start)
-            });
-        Ok(Self {
+        let word_starts = if policy == IdentityPolicy::Reusable {
+            self.words.iter().map(|word| word.start).collect()
+        } else {
+            Vec::new()
+        };
+        Ok(Corpus {
             slots: tokens,
             word_starts,
-            weights: IntervalIndex::new(interval_starts, interval_weights),
-            unit_weight,
-            spans_by_id: vocabulary.initial_spans(),
+            weights: self.weights,
+            unit_weight: self.unit_weight,
+            spans_by_id: self.spans_by_id,
             occurrence_spans: None,
-            scan_whole_words: length_limited,
-            edges,
+            scan_whole_words: self.scan_whole_words,
         })
     }
+}
+impl Corpus {
+    #[cfg(test)]
     pub(super) fn initial_view(&self) -> InitialCorpus<'_> {
         InitialCorpus {
             token_ids: &self.slots,
@@ -225,9 +399,6 @@ impl Corpus {
     }
     pub(super) fn len(&self) -> usize {
         self.slots.len()
-    }
-    pub(super) fn initial_edges(&self) -> usize {
-        self.edges
     }
     #[inline]
     pub(super) fn token(&self, position: u64) -> u32 {
@@ -519,7 +690,6 @@ mod tests {
             spans_by_id: vec![1; 4],
             occurrence_spans: None,
             scan_whole_words: false,
-            edges: 3,
         };
         let execution = Execution::new(2).unwrap();
         let arena = AllocationArena::new(2, 3);
@@ -593,7 +763,6 @@ mod tests {
             spans_by_id: vec![1],
             occurrence_spans: None,
             scan_whole_words: true,
-            edges: 3,
         };
         // Independent mainline Word semantics: the first rewrite births a
         // length-three boundary; the next rewrite removes it. Its cohort still

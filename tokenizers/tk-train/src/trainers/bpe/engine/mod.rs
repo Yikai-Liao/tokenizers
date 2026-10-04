@@ -97,17 +97,16 @@ fn train_attempt(
         progress,
         retained_alphabet,
     )?;
-    let mut corpus = corpus::Corpus::build(
+    let prepared_corpus = corpus::PreparedCorpus::build(
         word_counts,
         &mut vocabulary,
-        workers,
         policy,
         trainer.max_token_length.is_some(),
         progress,
     )?;
-    let arena = AllocationArena::new(workers, corpus.initial_edges());
+    let arena = AllocationArena::new(workers, prepared_corpus.initial_edges());
     let initial = initial_pairs::build_initial_pairs(
-        corpus.initial_view(),
+        &prepared_corpus,
         if policy == IdentityPolicy::Fresh {
             trainer.min_frequency.max(1)
         } else {
@@ -117,6 +116,7 @@ fn train_attempt(
         &arena,
         progress,
     )?;
+    let mut corpus = prepared_corpus.materialize(workers, policy, progress)?;
     let mut index =
         pair_index::PairIndex::from_initial_pairs(initial, policy, trainer.min_frequency)?;
     let mut merges = Vec::new();
