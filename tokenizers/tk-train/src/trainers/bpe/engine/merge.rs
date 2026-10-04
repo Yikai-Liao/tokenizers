@@ -9,7 +9,7 @@ use super::{
 };
 use ahash::AHashMap;
 use rayon::prelude::*;
-use tk_collections::{IdAccumulator, PositionBuffer, PositionChain, PositionChains};
+use tk_collections::{IdAccumulator, IdDirectory, PositionBuffer, PositionChain, PositionChains};
 use tk_encode::{Result, models::bpe::Pair};
 
 #[derive(Clone, Copy)]
@@ -85,7 +85,7 @@ pub(super) struct PreparedMerges {
     jobs: Vec<PreparedJob>,
     events: MergeEvents,
 }
-pub(super) struct MergeScratch {
+struct MergeScratch {
     left: IdAccumulator<NeighborChanges>,
     right: IdAccumulator<NeighborChanges>,
     pub(super) chains: Vec<PositionChains>,
@@ -94,20 +94,24 @@ pub(super) struct MergeScratch {
     buckets: usize,
 }
 impl MergeScratch {
-    pub(super) fn new(workers: usize) -> Self {
+    fn new(
+        workers: usize,
+        identities: usize,
+        buckets: usize,
+        directories: [IdDirectory; 2],
+    ) -> Self {
+        let [left, right] = directories;
         Self {
-            left: IdAccumulator::new(0),
-            right: IdAccumulator::new(0),
+            left: IdAccumulator::with_directory(identities, left),
+            right: IdAccumulator::with_directory(identities, right),
             chains: (0..workers).map(|_| PositionChains::new()).collect(),
             changes: Vec::new(),
             remaining_nodes: PositionChains::new().remaining_nodes(),
-            buckets: 0,
+            buckets,
         }
     }
-    fn reset(&mut self, identities: usize, buckets: usize) {
-        self.buckets = buckets;
-        self.left.ensure_domain(identities);
-        self.right.ensure_domain(identities);
+    fn into_directories(self) -> [IdDirectory; 2] {
+        [self.left.into_directory(), self.right.into_directory()]
     }
     // PERF: Rules in one job share their node allocation. Drain only the
     // neighbor directories between rules; handing off nodes here would create
@@ -284,26 +288,31 @@ const EMPTY: u64 = u64::MAX;
 const MULTIPLE: u64 = u64::MAX - 1;
 /// Dense directories recognize selected neighbors without a hash lookup in the
 /// common case. Shared heads or tails use the complete-key map.
-struct SelectedRules {
+#[derive(Default)]
+pub(super) struct SelectedRules {
     heads: Vec<u64>,
     tails: Vec<u64>,
     multiple: AHashMap<u64, u32>,
+    pairs: Vec<Pair>,
 }
 impl SelectedRules {
-    fn new(rules: &[MergeRule], identities: usize) -> Self {
-        let mut selected = Self {
-            heads: vec![EMPTY; identities],
-            tails: vec![EMPTY; identities],
-            multiple: AHashMap::new(),
-        };
+    fn reset(&mut self, rules: &[MergeRule], identities: usize) {
+        for (head, tail) in self.pairs.drain(..) {
+            self.heads[head as usize] = EMPTY;
+            self.tails[tail as usize] = EMPTY;
+        }
+        self.heads.resize(identities, EMPTY);
+        self.tails.resize(identities, EMPTY);
+        self.multiple.clear();
         for rule in rules {
-            let head = &mut selected.heads[rule.pair.0 as usize];
+            self.pairs.push(rule.pair);
+            let head = &mut self.heads[rule.pair.0 as usize];
             *head = if *head == EMPTY {
                 pair_key((rule.pair.1, rule.replacement))
             } else {
                 MULTIPLE
             };
-            let tail = &mut selected.tails[rule.pair.1 as usize];
+            let tail = &mut self.tails[rule.pair.1 as usize];
             *tail = if *tail == EMPTY {
                 pair_key((rule.pair.0, rule.replacement))
             } else {
@@ -311,15 +320,12 @@ impl SelectedRules {
             };
         }
         for rule in rules {
-            if selected.heads[rule.pair.0 as usize] == MULTIPLE
-                || selected.tails[rule.pair.1 as usize] == MULTIPLE
+            if self.heads[rule.pair.0 as usize] == MULTIPLE
+                || self.tails[rule.pair.1 as usize] == MULTIPLE
             {
-                selected
-                    .multiple
-                    .insert(pair_key(rule.pair), rule.replacement);
+                self.multiple.insert(pair_key(rule.pair), rule.replacement);
             }
         }
-        selected
     }
     fn left_selected(&self, corpus: &Corpus, before: u64, prior: u32) -> bool {
         let tail = self.tails[prior as usize];
@@ -560,11 +566,17 @@ pub(super) fn prepare_merges(
         )?
     } else {
         let jobs = posting_jobs(candidates, execution.workers());
-        let selected = SelectedRules::new(rules, identities);
+        let mut selected = execution.selected_rules();
+        selected.reset(rules, identities);
         jobs.into_par_iter()
             .map(|tasks| -> Result<_> {
-                let mut scratch = execution.merge_scratch();
-                scratch.reset(identities, rules.len() * 2);
+                let mut directories = execution.directories();
+                let mut scratch = MergeScratch::new(
+                    execution.workers(),
+                    identities,
+                    rules.len() * 2,
+                    std::mem::take(&mut *directories),
+                );
                 let mut outputs = Vec::new();
                 for task in tasks {
                     let mut plan = preparation(
@@ -603,6 +615,7 @@ pub(super) fn prepare_merges(
                 if let Some((_, chunks)) = outputs.last_mut() {
                     chunks.push(scratch.take_chunk());
                 }
+                *directories = scratch.into_directories();
                 let (writes, chunks): (Vec<_>, Vec<_>) = outputs.into_iter().unzip();
                 Ok((
                     PreparedJob {
@@ -720,8 +733,13 @@ fn prepare_historical(
     tasks
         .into_par_iter()
         .map(|task| -> Result<_> {
-            let mut scratch = execution.merge_scratch();
-            scratch.reset(identities, 2);
+            let mut directories = execution.directories();
+            let mut scratch = MergeScratch::new(
+                execution.workers(),
+                identities,
+                2,
+                std::mem::take(&mut *directories),
+            );
             let mut plan = preparation(corpus, &mut scratch, rule, 0, limit);
             match task.source {
                 HistoricalSource::Words(words) => {
@@ -771,6 +789,7 @@ fn prepare_historical(
             }
             let (write, mut chunks) = plan.finish();
             chunks.push(scratch.take_chunk());
+            *directories = scratch.into_directories();
             Ok((
                 PreparedJob {
                     writes: vec![write],
@@ -850,8 +869,13 @@ fn prepare_aa(
         .into_par_iter()
         .enumerate()
         .map(|(index, positions)| -> Result<_> {
-            let mut scratch = execution.merge_scratch();
-            scratch.reset(identities, 2);
+            let mut directories = execution.directories();
+            let mut scratch = MergeScratch::new(
+                execution.workers(),
+                identities,
+                2,
+                std::mem::take(&mut *directories),
+            );
             let mut plan = preparation(corpus, &mut scratch, rule, 0, limit);
             for (offset, position) in positions.iter().enumerate() {
                 let previous = if offset == 0 {
@@ -876,6 +900,7 @@ fn prepare_aa(
             plan.positions = positions;
             let (write, mut chunks) = plan.finish();
             chunks.push(scratch.take_chunk());
+            *directories = scratch.into_directories();
             Ok((
                 PreparedJob {
                     writes: vec![write],
@@ -923,5 +948,46 @@ impl PreparedMerges {
             });
         }
         self.events
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn selected_rule_reuse_clears_shared_endpoints_before_domain_growth() {
+        let mut selected = SelectedRules::default();
+        selected.reset(
+            &[
+                MergeRule {
+                    pair: (1, 2),
+                    replacement: 4,
+                },
+                MergeRule {
+                    pair: (1, 3),
+                    replacement: 5,
+                },
+            ],
+            6,
+        );
+        assert_eq!(selected.heads[1], MULTIPLE);
+        assert_eq!(selected.multiple.len(), 2);
+        selected.reset(
+            &[MergeRule {
+                pair: (3, 6),
+                replacement: 7,
+            }],
+            8,
+        );
+        assert_eq!(selected.heads[1], EMPTY);
+        assert_eq!(selected.tails[2], EMPTY);
+        assert_eq!(selected.tails[3], EMPTY);
+        assert!(selected.multiple.is_empty());
+        assert_eq!(selected.heads[3], pair_key((6, 7)));
+        assert_eq!(selected.tails[6], pair_key((3, 7)));
+        selected.reset(&[], 8);
+        assert_eq!(selected.heads[3], EMPTY);
+        assert_eq!(selected.tails[6], EMPTY);
     }
 }

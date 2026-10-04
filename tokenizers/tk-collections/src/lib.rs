@@ -9,7 +9,7 @@ pub mod radix;
 mod sorted_positions;
 
 pub use arena::{AllocationArena, AllocationLease};
-pub use id_accumulator::IdAccumulator;
+pub use id_accumulator::{IdAccumulator, IdDirectory};
 pub use interval_index::{IntervalCursor, IntervalIndex};
 pub use position_buffer::PositionBuffer;
 pub use position_chains::{PositionChain, PositionChains};
