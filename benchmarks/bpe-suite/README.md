@@ -75,3 +75,38 @@ Docker packaging, dataset publication, reviewed formal runs, physical-core
 scaling, and capacity sweeps belong to later phases.
 
 Run supervisor checks with `python3 -m unittest discover -s benchmarks/bpe-suite`.
+
+## Preliminary core ablations, 2026-10-05
+
+The Chinese 512 MiB whitespace case completed five paired blocks (45 timed runs),
+with vocabulary IDs and ordered merges matching exactly in every run. Full's
+median BPE training time was 20.76 s and its process HWM was 3.15 GiB. Timing ends
+before validation. These are preliminary results pending code review; the other
+comparison groups continue separately.
+
+The percentages below are medians of within-block ratios relative to Full. The
+range covers the five observed training ratios. Each row disables one feature;
+the effects are conditional on Full and cannot be added together.
+
+| Change from Full | Training time change | Observed range | Process HWM change |
+| --- | ---: | ---: | ---: |
+| Stable comparison sorting | +9.34% | +8.14% to +11.18% | +22.36% |
+| One rule per round | +45.16% | +43.20% to +47.55% | +0.08% |
+| Full U64 positions | +7.56% | +4.74% to +13.99% | +35.01% |
+| U32 corpus slots | +2.16% | −3.97% to +7.45% | +4.22% |
+| Eager corpus construction | −4.55% | −7.78% to −1.52% | +14.62% |
+| Position pool disabled | +18.93% | +12.53% to +25.85% | +0.29% |
+| Scalar weights | +10.98% | +8.28% to +16.77% | −0.07% |
+| Independently owned vocabulary strings | +0.87% | −4.29% to +1.75% | +0.03% |
+
+Eager construction trades lower latency for a higher peak. U32 slots and dual
+strings show no consistent timing direction across these five samples. Their
+measured HWM effects differ: U32 slots increase the peak by 4.22%, while dual
+strings barely change it. HWM includes the common word map and the trainer's
+transient buffers; it does not measure the payload size of a single structure.
+
+The [absolute measurements](results/preliminary-20261005/ablation-summary.csv),
+[paired comparisons](results/preliminary-20261005/ablation-comparisons.csv), and
+[protocol](results/preliminary-20261005/ablation-protocol.json) record the values
+and settings. Full U64 positions also change the encoding workspace, as described
+in the variant table above.
