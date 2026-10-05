@@ -128,9 +128,8 @@ pub(super) fn build_in_waves<'a>(
             }
         }
         let records: usize = shard_sizes.iter().sum();
-        // PERF: Each owner owns its record allocation. Installation drops it
-        // before later owners encode their positions, so complete raw records
-        // do not remain live alongside every final compressed list.
+        // Each owner owns its record allocation and releases it as soon as
+        // its position lists are complete.
         let mut record_buffers: Vec<_> = shard_sizes
             .iter()
             .map(|&count| {
@@ -202,118 +201,106 @@ pub(super) fn build_in_waves<'a>(
             sort_work.complete(records.len());
         });
         let group_work = progress.stage("Build initial positions", records * 2);
-        // PERF: Sorting uses every worker. At most two owners install lists at
-        // once: compressed output overlaps raw records that have not yet freed.
-        let install_width = workers.min(2);
-        for (tables, buffers) in wave_tables
-            .chunks_mut(install_width)
-            .zip(record_buffers.chunks_mut(install_width))
-        {
-            let grouped: Vec<_> = buffers
-                .par_iter()
-                .map(|records| -> Result<_> {
-                    let mut mass = 0_u128;
-                    let mut begin = 0;
-                    let mut groups = Vec::new();
-                    let mut completed = 0;
-                    while begin < records.len() {
-                        let key = records[begin].key();
-                        let mut end = begin + 1;
-                        while end < records.len() && records[end].key() == key {
-                            end += 1;
-                        }
-                        // PERF: The original uniform-weight path counts the run
-                        // without coordinate or interval queries.
-                        let frequency = if let Some(weight) = uniform_weight {
-                            weight
-                                .checked_mul((end - begin) as u64)
-                                .ok_or("BPE initial pair frequency exceeds u64")?
-                        } else {
-                            let mut frequency = 0_u64;
-                            for (count, weight) in corpus
-                                .word_weights()
-                                .runs_for_sorted(&records[begin..end], |&record| {
-                                    global_position(base, record)
-                                })
-                            {
-                                let weight =
-                                    *weight.expect("every initial edge belongs to a word interval");
-                                frequency = weight
-                                    .checked_mul(count as u64)
-                                    .and_then(|part| frequency.checked_add(part))
-                                    .ok_or("BPE initial pair frequency exceeds u64")?;
-                            }
-                            frequency
-                        };
-                        // Resident edges times u64 weights fit u128. Per-key counts
-                        // remain checked u64 values, without a global u64 mass cap.
-                        mass += u128::from(frequency);
-                        if frequency >= wave_floor {
-                            groups.push(InitialGroup {
-                                begin: begin as u32,
-                                end: end as u32,
-                                frequency,
-                            });
-                        }
-                        completed += end - begin;
-                        if completed >= 1 << 16 {
-                            group_work.complete(completed);
-                            completed = 0;
-                        }
-                        begin = end;
+        let grouped: Vec<_> = record_buffers
+            .par_iter()
+            .map(|records| -> Result<_> {
+                let mut mass = 0_u128;
+                let mut begin = 0;
+                let mut groups = Vec::new();
+                let mut completed = 0;
+                while begin < records.len() {
+                    let key = records[begin].key();
+                    let mut end = begin + 1;
+                    while end < records.len() && records[end].key() == key {
+                        end += 1;
                     }
-                    group_work.complete(completed);
-                    Ok((groups, mass))
-                })
-                .collect::<Result<_>>()?;
-            let masses = tables
-                .par_iter_mut()
-                .zip(buffers.par_iter_mut())
-                .zip(grouped.into_par_iter())
-                .map(|((table, buffer), (groups, mass))| -> Result<u128> {
-                    let records = std::mem::take(buffer);
-                    let worker = execution.current_worker();
-                    let lease = arena.lease(worker);
-                    let mut scratch = execution.encoding(worker);
-                    table.reserve(groups.len());
-                    for InitialGroup {
-                        begin,
-                        end,
-                        frequency,
-                    } in groups
-                    {
-                        let positions = records[begin as usize..end as usize]
-                            .iter()
-                            .map(|&record| global_position(base, record));
-                        table.insert(
-                            records[begin as usize].key(),
-                            PairState {
-                                ledger_count_bits: frequency,
-                                // A complete zero count has no candidate
-                                // payload. A partial zero count may share
-                                // its key with a positive wave elsewhere.
-                                positions: if single_wave && frequency == 0 {
-                                    SortedPositions::new()
-                                } else {
-                                    SortedPositions::from_sorted_iter(
-                                        positions,
-                                        &mut scratch,
-                                        &lease,
-                                    )?
-                                },
+                    // PERF: The original uniform-weight path counts the run
+                    // without coordinate or interval queries.
+                    let frequency = if let Some(weight) = uniform_weight {
+                        weight
+                            .checked_mul((end - begin) as u64)
+                            .ok_or("BPE initial pair frequency exceeds u64")?
+                    } else {
+                        let mut frequency = 0_u64;
+                        for (count, weight) in corpus
+                            .word_weights()
+                            .runs_for_sorted(&records[begin..end], |&record| {
+                                global_position(base, record)
+                            })
+                        {
+                            let weight =
+                                *weight.expect("every initial edge belongs to a word interval");
+                            frequency = weight
+                                .checked_mul(count as u64)
+                                .and_then(|part| frequency.checked_add(part))
+                                .ok_or("BPE initial pair frequency exceeds u64")?;
+                        }
+                        frequency
+                    };
+                    // Resident edges times u64 weights fit u128. Per-key counts
+                    // remain checked u64 values, without a global u64 mass cap.
+                    mass += u128::from(frequency);
+                    if frequency >= wave_floor {
+                        groups.push(InitialGroup {
+                            begin: begin as u32,
+                            end: end as u32,
+                            frequency,
+                        });
+                    }
+                    completed += end - begin;
+                    if completed >= 1 << 16 {
+                        group_work.complete(completed);
+                        completed = 0;
+                    }
+                    begin = end;
+                }
+                group_work.complete(completed);
+                Ok((groups, mass))
+            })
+            .collect::<Result<_>>()?;
+        let masses = wave_tables
+            .par_iter_mut()
+            .zip(record_buffers.par_iter_mut())
+            .zip(grouped.into_par_iter())
+            .map(|((table, buffer), (groups, mass))| -> Result<u128> {
+                let records = std::mem::take(buffer);
+                let worker = execution.current_worker();
+                let lease = arena.lease(worker);
+                let mut scratch = execution.encoding(worker);
+                table.reserve(groups.len());
+                for InitialGroup {
+                    begin,
+                    end,
+                    frequency,
+                } in groups
+                {
+                    let positions = records[begin as usize..end as usize]
+                        .iter()
+                        .map(|&record| global_position(base, record));
+                    table.insert(
+                        records[begin as usize].key(),
+                        PairState {
+                            ledger_count_bits: frequency,
+                            // A complete zero count has no candidate
+                            // payload. A partial zero count may share
+                            // its key with a positive wave elsewhere.
+                            positions: if single_wave && frequency == 0 {
+                                SortedPositions::new()
+                            } else {
+                                SortedPositions::from_sorted_iter(positions, &mut scratch, &lease)?
                             },
-                        );
-                    }
-                    // Group scanning and list installation each account
-                    // for one pass. Publication remains visible work after
-                    // the complete frequencies have been counted.
-                    group_work.complete(records.len());
-                    // This owner's raw stream frees before the next owner wave.
-                    Ok(mass)
-                })
-                .collect::<Result<Vec<_>>>()?;
-            weighted_mass += masses.into_iter().sum::<u128>();
-        }
+                        },
+                    );
+                }
+                // Group scanning and list installation each account
+                // for one pass. Publication remains visible work after
+                // the complete frequencies have been counted.
+                group_work.complete(records.len());
+                // This owner's raw stream is released when its task returns.
+                Ok(mass)
+            })
+            .collect::<Result<Vec<_>>>()?;
+        weighted_mass += masses.into_iter().sum::<u128>();
         // Each wave owns exact lists before publication. Repeated keys append
         // those compressed lists with the original measure/replay lifecycle.
         // Moving an empty owner's table avoids duplicating its map allocation.
