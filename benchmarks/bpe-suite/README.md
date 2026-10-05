@@ -76,8 +76,50 @@ median and range of ratios computed within each paired block, with Full as the
 control and unchanged peer as the control for the peer arena group. A ratio above
 one means the other arm costs more time or memory. Old experiments and binary
 archives are unnecessary for this suite.
-Docker packaging, dataset publication, reviewed formal runs, physical-core
-scaling, and capacity sweeps belong to later phases.
+Docker packaging, dataset publication, reviewed formal runs, and capacity sweeps
+belong to later phases.
+
+## Multicore comparison
+
+The scaling follow-up compares Full, original HF, and PR #2348 on the same
+English 512 MiB, Chinese 256 MiB, and mixed 256 MiB inputs. It measures 1, 2, 4,
+and 6 workers with three repetitions per cell. CPU affinity limits each child
+to the first corresponding CPUs in the recorded CPU set, and the Rayon worker
+count matches that limit. The current host exposes six KVM vCPUs; this does not
+establish six dedicated physical cores.
+
+Use the source snapshots, runner, dependency lock, and canonical model references
+from the prepared preliminary suite:
+
+```sh
+python3 benchmarks/bpe-suite/scaling.py all \
+  --prepared-suite /absolute/path/preliminary-results \
+  --config /absolute/path/scaling.local.json \
+  --out /absolute/path/scaling-results \
+  --release-cache /absolute/path/shared-release-cache
+```
+
+The scaling configuration provides `arms: ["full", "hf", "peer"]`,
+`workers: [1, 2, 4, 6]`, `repetitions: 3`, `warmup_workers: 6`, and the host's
+available `cpu_set`, together with the same source revisions, compiler flags,
+three case descriptions, and resource guards as the preliminary suite. Builds
+reuse its exact dependency lock. A 36-run smoke gate checks all three trainers
+at every worker count before real-input warm-ups and timing.
+
+Each paired block contains all twelve trainer/worker configurations. The order
+rotates between blocks and reverses on alternating blocks. All four-worker
+measurements are new observations within those blocks. `scaling-speedups.csv`
+reports each trainer's T1/Tp training and end-to-end speedups, parallel efficiency,
+CPU-time ratio, and HWM relative to its own one-worker control.
+`algorithm-comparisons.csv` reports HF/Full and peer/Full ratios at equal CPU
+counts. Each ratio is computed inside the same block before its median and
+observed range are summarized.
+
+`summary.csv` records absolute time, HWM, sampled RSS, and swap with medians and
+ranges for every trainer/worker cell. HWM is read before canonical model output;
+sampled RSS covers the whole child. `summary.json` retains every raw observation,
+ratio, arm order, and failure. Exact token IDs and ordered merges are compared
+with the preliminary suite's canonical case models after each run.
 
 Run supervisor checks with `python3 -m unittest discover -s benchmarks/bpe-suite`.
 

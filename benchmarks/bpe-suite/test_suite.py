@@ -1,5 +1,6 @@
 """Check failure accounting and exact model comparison, independent of BPE."""
 import json
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -104,6 +105,22 @@ class SupervisorTests(unittest.TestCase):
                 suite.run(self.config, self.out)
         self.assertEqual(execute.call_count, 1)
         self.assertFalse((self.out / "runs").exists())
+
+    def test_cpu_limit_and_rayon_worker_count_reach_child(self):
+        cpus = sorted(os.sched_getaffinity(0))[:2]
+        self.config.update(workers=len(cpus), cpu_affinity=cpus)
+        script = self.out / "binaries/fake"
+        script.write_text("#!/usr/bin/env python3\nimport json,os,sys\n"
+            "job=json.load(open(sys.argv[1]))\nopen(job['output'],'w').write('[]')\n"
+            "print(json.dumps(dict(train_seconds=1,elapsed_seconds=2,train_cpu_seconds=1,"
+            "maxrss_kib=100,actual_vocab=0,actual_merges=0,cpus=sorted(os.sched_getaffinity(0)),"
+            "rayon=os.environ['RAYON_NUM_THREADS'],workers=job['workers'])))\n")
+        script.chmod(0o755)
+        row = suite.execute(self.out, self.config, self.case, "fake", self.out / "limited")
+        self.assertEqual(row["status"], "ok")
+        self.assertEqual(row["metrics"]["cpus"], cpus)
+        self.assertEqual(row["metrics"]["rayon"], str(len(cpus)))
+        self.assertEqual(row["metrics"]["workers"], len(cpus))
 
 
 if __name__ == "__main__": unittest.main()

@@ -167,6 +167,15 @@ def execute(out, config, case, arm, directory):
         write(directory / "result.json", row)
         return row
     cmd = [str(out / "binaries" / arm), str(directory / "job.json")]
+    if config.get("cpu_affinity"):
+        taskset = shutil.which("taskset")
+        if taskset is None:
+            raise RuntimeError("taskset is required for CPU-limited measurements")
+        affinity = sorted(config["cpu_affinity"])
+        if not set(affinity).issubset(os.sched_getaffinity(0)):
+            raise ValueError("requested CPUs are outside the supervisor affinity")
+        cmd = [taskset, "--cpu-list", ",".join(map(str, affinity)), *cmd]
+        row["cpu_affinity"] = affinity
     row["command"] = cmd
     env = os.environ.copy()
     env.update({"RAYON_NUM_THREADS": str(config["workers"]), "TOKENIZERS_PARALLELISM": "true"})
