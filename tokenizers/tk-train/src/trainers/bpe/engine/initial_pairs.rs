@@ -7,11 +7,7 @@
 //! end a word or discard an edge: scanning reads the next corpus slot.
 //! Each key is filtered after its complete frequency is known. Multiwave counts
 //! accumulate before filtering; a single wave can filter before encoding.
-use super::{
-    corpus::InitialPairSource,
-    execution::Execution,
-    pair_index::{PairState, shard_for},
-};
+use super::{corpus::InitialPairSource, execution::Execution, pair_index::PairState};
 use crate::progress::TrainingProgress;
 use ahash::AHashMap;
 use radix::KeyedValue;
@@ -76,7 +72,8 @@ pub(super) fn build_in_waves<'a>(
     records_per_wave: usize,
 ) -> Result<InitialPairTable<'a>> {
     assert!(records_per_wave > 1 && records_per_wave <= radix::MAX_RECORDS);
-    let workers = execution.workers();
+    let workers = execution.owners();
+    let router = execution.router();
     let mut shards: Vec<_> = (0..workers)
         .map(|_| AHashMap::<u64, PairState<'a>>::new())
         .collect();
@@ -115,7 +112,7 @@ pub(super) fn build_in_waves<'a>(
             .map(|range| {
                 let mut sizes = AHashMap::<u64, usize>::new();
                 corpus.for_each_edge(range.clone(), |_, key| {
-                    *sizes.entry(shard_for(key, workers) as u64).or_default() += 1;
+                    *sizes.entry(router.owner(key) as u64).or_default() += 1;
                 });
                 route_work.complete(range.len());
                 sizes
@@ -165,7 +162,7 @@ pub(super) fn build_in_waves<'a>(
         drop(remaining);
         jobs.into_par_iter().for_each(|mut job| {
             corpus.for_each_edge(job.range.clone(), |position, key| {
-                let shard = shard_for(key, workers) as u64;
+                let shard = router.owner(key) as u64;
                 let buffer = job.buffers.get_mut(&shard).expect("counted owner route");
                 buffer.records[buffer.used].write(KeyedValue::new(key, (position - base) as u32));
                 buffer.used += 1;

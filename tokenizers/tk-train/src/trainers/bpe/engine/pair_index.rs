@@ -27,6 +27,51 @@ pub(super) fn shard_for(key: u64, shards: usize) -> usize {
         mixed % shards
     }
 }
+/// Exact original ownership with division precomputed once for non-power-of-two
+/// counts. The mixed key is u32: reciprocal rounding can undershoot by at most
+/// one quotient unit, repaired by one subtraction. Ownership never changes.
+#[derive(Clone, Copy)]
+pub(super) struct ShardRouter {
+    shards: usize,
+    reciprocal: Option<(u64, u64)>,
+}
+impl ShardRouter {
+    pub(super) fn new(shards: usize, fast: bool) -> Self {
+        assert!(shards != 0);
+        let reciprocal = if fast && !shards.is_power_of_two() && u32::try_from(shards).is_ok() {
+            Some(((1_u64 << 32) / shards as u64, shards as u64))
+        } else {
+            None
+        };
+        Self { shards, reciprocal }
+    }
+    pub(super) fn shards(self) -> usize {
+        self.shards
+    }
+    #[inline]
+    pub(super) fn owner(self, key: u64) -> usize {
+        let mixed = ((key ^ (key >> 32)).wrapping_mul(0x9e37_79b9_7f4a_7c15) >> 32) as u32;
+        self.mixed_owner(mixed)
+    }
+    #[inline]
+    fn mixed_owner(self, mixed: u32) -> usize {
+        if self.shards.is_power_of_two() {
+            mixed as usize & (self.shards - 1)
+        } else if let Some((reciprocal, divisor)) = self.reciprocal {
+            let mixed = u64::from(mixed);
+            let quotient = (mixed * reciprocal) >> 32;
+            let remainder = mixed - quotient * divisor;
+            (if remainder >= divisor {
+                remainder - divisor
+            } else {
+                remainder
+            }) as usize
+        } else {
+            mixed as usize % self.shards
+        }
+    }
+}
+
 pub(super) struct PairState<'a> {
     pub(super) ledger_count_bits: u64,
     pub(super) positions: SortedPositions<'a>,
@@ -77,6 +122,8 @@ pub(super) struct PairShard<'a> {
     ledger: AHashMap<u64, u64>,
     priorities: OctonaryHeap<PairPriority>,
     prefix: VecDeque<PairPriority>,
+    removal_references: u64,
+    removal_updates: u64,
 }
 enum Selection<'a> {
     Fresh {
@@ -91,7 +138,144 @@ pub(super) struct PairIndex<'a> {
     pub(super) policy: IdentityPolicy,
     pub(super) minimum_frequency: u64,
     selection: Selection<'a>,
+    group_births_in_commit: bool,
+    direct_cold_encoding: bool,
+    fast_shard_router: bool,
+    removal_entry: bool,
+    removal_reduce: bool,
+    removal_statistics: bool,
+    removal_selective: bool,
 }
+
+impl PairShard<'_> {
+    fn subtract_fresh(&mut self, key: u64, amount: u64, floor: u64, entry: bool) -> Result<()> {
+        if entry {
+            if let std::collections::hash_map::Entry::Occupied(mut item) = self.states.entry(key) {
+                let state = item.get_mut();
+                state.ledger_count_bits = state
+                    .ledger_count_bits
+                    .checked_sub(amount)
+                    .ok_or("BPE fresh removal exceeds the current count")?;
+                if state.ledger_count_bits < floor {
+                    item.remove();
+                }
+            }
+        } else if let Some(state) = self.states.get_mut(&key) {
+            state.ledger_count_bits = state
+                .ledger_count_bits
+                .checked_sub(amount)
+                .ok_or("BPE fresh removal exceeds the current count")?;
+            if state.ledger_count_bits < floor {
+                self.states.remove(&key);
+            }
+        }
+        Ok(())
+    }
+    /// Every ordinary left/right removal bucket has one fixed old token.
+    /// An even bucket can additionally contain the right RR boundary whose
+    /// neighbor is the replacement. Keep its full key separately if it shares
+    /// the ordinary left directory ID: two key slots preserve that distinction.
+    /// All positive Fresh removal masses are exact and commute; complete total
+    /// subtraction cannot underflow for a valid physical batch. Retired states
+    /// continue to be ignored. Reusable ledgers never enter this method.
+    fn reduce_fresh_removals(
+        &mut self,
+        events: &super::merge::MergeEvents,
+        route: &super::merge::OwnerRoute,
+        identities: usize,
+        execution: &super::execution::Execution,
+        floor: u64,
+        entry: bool,
+        selective: bool,
+    ) -> Result<(u64, u64)> {
+        use tk_collections::IdAccumulator;
+        #[derive(Default)]
+        struct Group {
+            key: u64,
+            weight: u64,
+            second_key: u64,
+            second_weight: u64,
+        }
+        impl Group {
+            fn add(&mut self, key: u64, amount: u64) -> Result<()> {
+                let weight = if self.weight == 0 || self.key == key {
+                    self.key = key;
+                    &mut self.weight
+                } else {
+                    if self.second_weight != 0 && self.second_key != key {
+                        return Err("BPE removal bucket contains inconsistent old keys".into());
+                    }
+                    self.second_key = key;
+                    &mut self.second_weight
+                };
+                *weight = weight
+                    .checked_add(amount)
+                    .ok_or("BPE removal mass exceeds u64")?;
+                Ok(())
+            }
+        }
+        let removals = route.grouped_removals(events);
+        let references = removals.len() as u64;
+        let mut updates = 0;
+        let mut directories = execution.directories();
+        let mut groups =
+            IdAccumulator::<Group>::with_directory(identities, std::mem::take(&mut directories[1]));
+        let mut remaining = removals.as_slice();
+        while let Some(&first) = remaining.first() {
+            let reference = &route.changes[first];
+            let bucket = events.chunks[reference.chunk].changes[reference.index()].bucket;
+            let end = remaining.partition_point(|&index| {
+                let reference = &route.changes[index];
+                events.chunks[reference.chunk].changes[reference.index()].bucket == bucket
+            });
+            let (current, next) = remaining.split_at(end);
+            remaining = next;
+            if selective {
+                let first_chunk = route.changes[current[0]].chunk;
+                // A producer has already aggregated each ordinary bucket key.
+                // RR retains its distinct full old key. This chunk needs no
+                // cross-producer accumulation or directory lookup.
+                if current
+                    .iter()
+                    .all(|&index| route.changes[index].chunk == first_chunk)
+                {
+                    for &index in current {
+                        let reference = &route.changes[index];
+                        let change = &events.chunks[reference.chunk].changes[reference.index()];
+                        self.subtract_fresh(
+                            change.removed_key,
+                            change.removed_weight,
+                            floor,
+                            entry,
+                        )?;
+                    }
+                    updates += current.len() as u64;
+                    continue;
+                }
+            }
+            for &index in current {
+                let reference = &route.changes[index];
+                let change = &events.chunks[reference.chunk].changes[reference.index()];
+                let pair = key_pair(change.removed_key);
+                let neighbor = if bucket & 1 == 0 { pair.0 } else { pair.1 };
+                groups
+                    .touch(neighbor)
+                    .add(change.removed_key, change.removed_weight)?;
+            }
+            for (_, group) in groups.drain() {
+                self.subtract_fresh(group.key, group.weight, floor, entry)?;
+                updates += 1;
+                if group.second_weight != 0 {
+                    self.subtract_fresh(group.second_key, group.second_weight, floor, entry)?;
+                    updates += 1;
+                }
+            }
+        }
+        directories[1] = groups.into_directory();
+        Ok((references, updates))
+    }
+}
+
 impl PairShard<'_> {
     fn upper(&self) -> Option<PairPriority> {
         self.prefix
@@ -201,6 +385,8 @@ impl<'a> PairIndex<'a> {
                     ledger,
                     priorities,
                     prefix: VecDeque::with_capacity(4),
+                    removal_references: 0,
+                    removal_updates: 0,
                 };
                 if policy == IdentityPolicy::Fresh {
                     shard.prepare_prefix(minimum_frequency.max(1));
@@ -221,7 +407,43 @@ impl<'a> PairIndex<'a> {
             policy,
             minimum_frequency,
             selection,
+            group_births_in_commit: false,
+            direct_cold_encoding: false,
+            fast_shard_router: false,
+            removal_entry: false,
+            removal_reduce: false,
+            removal_statistics: false,
+            removal_selective: false,
         })
+    }
+    pub(super) fn configure_commit(
+        &mut self,
+        group_births: bool,
+        direct_cold: bool,
+        fast_router: bool,
+    ) {
+        self.fast_shard_router = fast_router;
+        self.group_births_in_commit = group_births;
+        self.direct_cold_encoding = direct_cold;
+    }
+    pub(super) fn configure_removals(
+        &mut self,
+        entry: bool,
+        reduce: bool,
+        statistics: bool,
+        selective: bool,
+    ) {
+        self.removal_entry = entry;
+        self.removal_reduce = reduce;
+        self.removal_statistics = statistics;
+        self.removal_selective = selective;
+    }
+    pub(super) fn report_removal_statistics(&self) {
+        if self.removal_statistics {
+            let references: u64 = self.shards.iter().map(|s| s.removal_references).sum();
+            let updates: u64 = self.shards.iter().map(|s| s.removal_updates).sum();
+            eprintln!("BPE_REMOVAL_STATS references={references} key_updates={updates}");
+        }
     }
     pub(super) fn begin_selection(&mut self) {
         if let Selection::Fresh { leaders } = &mut self.selection {
@@ -318,218 +540,356 @@ impl<'a> PairIndex<'a> {
         execution: &super::execution::Execution,
         arena: &'a tk_collections::AllocationArena,
     ) -> Result<()> {
+        self.commit_merges_with_prepared(events, identities, execution, arena, Vec::new(), None)
+    }
+    pub(super) fn commit_merges_with_prepared(
+        &mut self,
+        events: &super::merge::MergeEvents,
+        identities: usize,
+        execution: &super::execution::Execution,
+        arena: &'a tk_collections::AllocationArena,
+        births: Vec<(u64, PairState<'a>)>,
+        diagnostic_round: Option<&super::single_producer_diagnostics::RoundDiagnostics>,
+    ) -> Result<()> {
         use super::merge::ChangeAction as Action;
         use rayon::prelude::*;
         use tk_collections::IdAccumulator;
         let policy = self.policy;
         let floor = self.minimum_frequency.max(1);
-        let routes = events.route(self.shards.len());
+        let router = ShardRouter::new(self.shards.len(), self.fast_shard_router);
+        let group_in_owner = self.group_births_in_commit;
+        let direct_cold = self.direct_cold_encoding && policy == IdentityPolicy::Fresh;
+        let removal_entry = self.removal_entry;
+        // One worker has no spatial producer duplication to remove. Keep its
+        // original commit work rather than inflating the scaling denominator.
+        let removal_reduce =
+            self.removal_reduce && policy == IdentityPolicy::Fresh && execution.workers() > 1;
+        let removal_selective = self.removal_selective;
+        let removal_statistics = self.removal_statistics;
+        let route_phase = diagnostic_round.map(|round| {
+            round.phase(if group_in_owner {
+                "route_serial_dispatch_and_fast_metadata"
+            } else {
+                "route_mixed_serial_dispatch_parallel_birth_group"
+            })
+        });
+        let mut routes = if group_in_owner {
+            events.dispatch_with_router(router)
+        } else {
+            events.route_with_router_diagnostics(router, diagnostic_round)
+        };
+        debug_assert!(births.is_empty() || policy == IdentityPolicy::Fresh);
+        // Serial metadata routing moves complete states, with no regrouping or
+        // codec operation. Owners publish within the existing commit phase.
+        let mut prepared: Vec<Vec<(u64, PairState<'a>)>> =
+            (0..self.shards.len()).map(|_| Vec::new()).collect();
+        for (key, state) in births {
+            prepared[router.owner(key)].push((key, state));
+        }
+        drop(route_phase);
+        let dispatched = diagnostic_round.and_then(|round| round.mark());
+        let owner_window = diagnostic_round.map(|round| round.parallel_span());
         let candidates = self
             .shards
             .par_iter_mut()
+            .zip(prepared.into_par_iter())
+            .zip(routes.par_iter_mut())
             .enumerate()
             // Owners without changes keep their counts and valid priorities.
             // Leave their lazy queue refill to selection and avoid scheduling
             // empty codec/directory work, at every corpus and vocabulary scale.
-            .filter(|(owner, _)| !routes[*owner].changes.is_empty())
-            .map(|(owner, shard)| -> Result<Vec<MergeCandidate<'a>>> {
-                // PERF: Group births by output ID and direction first. Each
-                // bucket then uses one reusable neighbor directory, as merge
-                // preparation does. This avoids a hash table and allocation
-                // per complete pair while keeping the same commit mechanism
-                // for fresh and reusable identities.
-                let route = &routes[owner];
-                for reference in &route.changes {
-                    let change = &events.chunks[reference.chunk].changes[reference.index()];
-                    if matches!(reference.action(), Action::Remove | Action::Both) {
-                        if policy == IdentityPolicy::Reusable {
-                            let count = shard.ledger.entry(change.removed_key).or_default();
-                            let amount = i64::try_from(change.removed_weight)
-                                .map_err(|_| "BPE identity-reuse removal exceeds i64")?;
+            .filter(|(_, ((_, prepared), route))| !route.changes.is_empty() || !prepared.is_empty())
+            .map(
+                |(owner, ((shard, prepared), route))| -> Result<Vec<MergeCandidate<'a>>> {
+                    let _owner_span = diagnostic_round.map(|round| {
+                        round.task(
+                            super::single_producer_diagnostics::Stage::CommitOwner,
+                            owner,
+                            execution.current_worker(),
+                            dispatched,
+                        )
+                    });
+                    let mut cold_published_keys = 0;
+                    let mut cold_published_positions = 0;
+                    let mut fast_published_keys = 0;
+                    let mut fast_published_positions = 0;
+                    // PERF: Group births by output ID and direction first. Each
+                    // bucket then uses one reusable neighbor directory, as merge
+                    // preparation does. This avoids a hash table and allocation
+                    // per complete pair while keeping the same commit mechanism
+                    // for fresh and reusable identities.
+                    if group_in_owner {
+                        // Pure metadata grouping shares the existing owner task.
+                        // No arena/directory lease is held and no pool work nests.
+                        route.group_births(events);
+                    }
+                    if removal_reduce {
+                        let (references, updates) = shard.reduce_fresh_removals(
+                            events,
+                            route,
+                            identities,
+                            execution,
+                            floor,
+                            removal_entry,
+                            removal_selective,
+                        )?;
+                        if removal_statistics {
+                            shard.removal_references += references;
+                            shard.removal_updates += updates;
+                        }
+                    }
+                    for reference in &route.changes {
+                        let change = &events.chunks[reference.chunk].changes[reference.index()];
+                        if matches!(reference.action(), Action::Remove | Action::Both) {
+                            if policy == IdentityPolicy::Reusable {
+                                let count = shard.ledger.entry(change.removed_key).or_default();
+                                let amount = i64::try_from(change.removed_weight)
+                                    .map_err(|_| "BPE identity-reuse removal exceeds i64")?;
+                                *count = (*count as i64)
+                                    .checked_sub(amount)
+                                    .ok_or("BPE identity-reuse count subtraction exceeds i64")?
+                                    as u64;
+                            } else if !removal_reduce {
+                                shard.subtract_fresh(
+                                    change.removed_key,
+                                    change.removed_weight,
+                                    floor,
+                                    removal_entry,
+                                )?;
+                                if removal_statistics {
+                                    shard.removal_references += 1;
+                                    shard.removal_updates += 1;
+                                }
+                            }
+                        }
+                        if policy == IdentityPolicy::Reusable
+                            && matches!(reference.action(), Action::Birth | Action::Both)
+                        {
+                            let count = shard.ledger.entry(change.born_key).or_default();
+                            let amount = i64::try_from(change.born_weight)
+                                .map_err(|_| "BPE identity-reuse birth exceeds i64")?;
                             *count = (*count as i64)
-                                .checked_sub(amount)
-                                .ok_or("BPE identity-reuse count subtraction exceeds i64")?
+                                .checked_add(amount)
+                                .ok_or("BPE identity-reuse count addition exceeds i64")?
                                 as u64;
-                        } else if let Some(state) = shard.states.get_mut(&change.removed_key) {
-                            state.ledger_count_bits = state
-                                .ledger_count_bits
-                                .checked_sub(change.removed_weight)
-                                .ok_or("BPE fresh removal exceeds the current count")?;
-                            if state.ledger_count_bits < floor {
-                                shard.states.remove(&change.removed_key);
+                        }
+                    }
+                    for (key, state) in prepared {
+                        if diagnostic_round.is_some() {
+                            fast_published_keys += 1;
+                            fast_published_positions += state.positions.len();
+                        }
+                        let priority = PairPriority {
+                            key,
+                            priority_count: state.ledger_count_bits,
+                        };
+                        debug_assert!(
+                            !shard.states.contains_key(&key),
+                            "fresh birth has one producer rule"
+                        );
+                        shard.states.insert(key, state);
+                        shard.priorities.push(priority);
+                    }
+                    if route.births.is_empty() {
+                        if let Some(round) = diagnostic_round {
+                            round.record_publication(
+                                0,
+                                0,
+                                fast_published_keys,
+                                fast_published_positions,
+                            );
+                        }
+                        if policy == IdentityPolicy::Fresh {
+                            shard.prepare_prefix(floor);
+                        }
+                        return Ok(Vec::new());
+                    }
+                    let worker = execution.current_worker();
+                    let lease = arena.lease(worker);
+                    let mut scratch = (!direct_cold).then(|| execution.encoding(worker));
+                    let mut candidates = Vec::new();
+                    struct BirthGroup {
+                        weight: u64,
+                        head: usize,
+                        occurrences: usize,
+                    }
+                    impl Default for BirthGroup {
+                        fn default() -> Self {
+                            Self {
+                                weight: 0,
+                                head: usize::MAX,
+                                occurrences: 0,
                             }
                         }
                     }
-                    if policy == IdentityPolicy::Reusable
-                        && matches!(reference.action(), Action::Birth | Action::Both)
-                    {
-                        let count = shard.ledger.entry(change.born_key).or_default();
-                        let amount = i64::try_from(change.born_weight)
-                            .map_err(|_| "BPE identity-reuse birth exceeds i64")?;
-                        *count = (*count as i64)
-                            .checked_add(amount)
-                            .ok_or("BPE identity-reuse count addition exceeds i64")?
-                            as u64;
+                    struct Fragment<'a> {
+                        chunk: &'a super::merge::EventChunk,
+                        index: usize,
+                        next: usize,
                     }
-                }
-                let worker = execution.current_worker();
-                let lease = arena.lease(worker);
-                let mut scratch = execution.encoding(worker);
-                let mut candidates = Vec::new();
-                struct BirthGroup {
-                    weight: u64,
-                    head: usize,
-                    occurrences: usize,
-                }
-                impl Default for BirthGroup {
-                    fn default() -> Self {
-                        Self {
-                            weight: 0,
-                            head: usize::MAX,
-                            occurrences: 0,
-                        }
-                    }
-                }
-                struct Fragment<'a> {
-                    chunk: &'a super::merge::EventChunk,
-                    index: usize,
-                    next: usize,
-                }
-                let mut directories = execution.directories();
-                let mut neighbors = IdAccumulator::<BirthGroup>::with_directory(
-                    identities,
-                    std::mem::take(&mut directories[0]),
-                );
-                // PERF: One owner-level fragment allocation serves every key
-                // and rule/direction bucket. Per-key vectors would allocate for
-                // each key receiving positions from more than one producer.
-                let mut fragments = Vec::<Fragment<'_>>::new();
-                let mut remaining = route.births.as_slice();
-                while let Some(&first_index) = remaining.first() {
-                    let first_ref = &route.changes[first_index];
-                    let first = &events.chunks[first_ref.chunk].changes[first_ref.index()];
-                    let bucket = first.bucket;
-                    let end = remaining.partition_point(|&index| {
-                        let reference = &route.changes[index];
-                        events.chunks[reference.chunk].changes[reference.index()].bucket == bucket
-                    });
-                    let (births, next) = remaining.split_at(end);
-                    remaining = next;
-                    let left = bucket & 1 == 0;
-                    let pair = key_pair(first.born_key);
-                    let replacement = if left { pair.1 } else { pair.0 };
-                    for &reference_index in births {
-                        let reference = &route.changes[reference_index];
-                        let chunk = &events.chunks[reference.chunk];
-                        let index = reference.index();
-                        let change = &chunk.changes[index];
-                        let pair = key_pair(change.born_key);
-                        let neighbor = if left { pair.0 } else { pair.1 };
-                        let group = neighbors.touch(neighbor);
-                        group.weight = group
-                            .weight
-                            .checked_add(change.born_weight)
-                            .ok_or("BPE birth frequency exceeds u64")?;
-                        group.occurrences =
-                            group
+                    let mut directories = execution.directories();
+                    let mut neighbors = IdAccumulator::<BirthGroup>::with_directory(
+                        identities,
+                        std::mem::take(&mut directories[0]),
+                    );
+                    // PERF: One owner-level fragment allocation serves every key
+                    // and rule/direction bucket. Per-key vectors would allocate for
+                    // each key receiving positions from more than one producer.
+                    let mut fragments = Vec::<Fragment<'_>>::new();
+                    let mut remaining = route.births.as_slice();
+                    while let Some(&first_index) = remaining.first() {
+                        let first_ref = &route.changes[first_index];
+                        let first = &events.chunks[first_ref.chunk].changes[first_ref.index()];
+                        let bucket = first.bucket;
+                        let end = remaining.partition_point(|&index| {
+                            let reference = &route.changes[index];
+                            events.chunks[reference.chunk].changes[reference.index()].bucket
+                                == bucket
+                        });
+                        let (births, next) = remaining.split_at(end);
+                        remaining = next;
+                        let left = bucket & 1 == 0;
+                        let pair = key_pair(first.born_key);
+                        let replacement = if left { pair.1 } else { pair.0 };
+                        for &reference_index in births {
+                            let reference = &route.changes[reference_index];
+                            let chunk = &events.chunks[reference.chunk];
+                            let index = reference.index();
+                            let change = &chunk.changes[index];
+                            let pair = key_pair(change.born_key);
+                            let neighbor = if left { pair.0 } else { pair.1 };
+                            let group = neighbors.touch(neighbor);
+                            group.weight = group
+                                .weight
+                                .checked_add(change.born_weight)
+                                .ok_or("BPE birth frequency exceeds u64")?;
+                            group.occurrences = group
                                 .occurrences
                                 .checked_add(change.positions.len())
                                 .ok_or("BPE birth position count exceeds resident bounds")?;
-                        fragments.push(Fragment {
-                            chunk,
-                            index,
-                            next: group.head,
-                        });
-                        group.head = fragments.len() - 1;
-                    }
-                    for (neighbor, group) in neighbors.drain() {
-                        let key = pair_key(if left {
-                            (neighbor, replacement)
-                        } else {
-                            (replacement, neighbor)
-                        });
-                        // PERF: Fresh keys cannot revive. Reduce all producers
-                        // and reject low counts before touching the global map;
-                        // inserting then deleting them causes avoidable growth
-                        // and tombstone churn. Signed ledgers already record
-                        // ordered changes and retain every positive birth cohort,
-                        // including counts below the selection floor.
-                        let count = if policy == IdentityPolicy::Fresh {
-                            group.weight
-                        } else {
-                            shard.ledger[&key]
-                        };
-                        if if policy == IdentityPolicy::Fresh {
-                            count < floor
-                        } else {
-                            (count as i64) <= 0
-                        } {
-                            continue;
-                        }
-                        let mut head = group.head;
-                        // Fresh jobs supply spatially disjoint runs. Identity-reuse
-                        // AA births may combine interleaved left/right chains;
-                        // the common encoder merges those actual overlaps.
-                        let fragments = &fragments;
-                        let sources = std::iter::from_fn(move || {
-                            if head == usize::MAX {
-                                return None;
-                            }
-                            let fragment = &fragments[head];
-                            head = fragment.next;
-                            Some(fragment)
-                        })
-                        .map(|fragment| {
-                            (
-                                &fragment.chunk.chains,
-                                fragment.chunk.changes[fragment.index].positions,
-                            )
-                        });
-                        let positions = if policy == IdentityPolicy::Fresh {
-                            // Fresh buckets own disjoint, spatially ordered jobs.
-                            // The count is already complete. Encode their reverse
-                            // traversal without rereading each source's endpoints.
-                            SortedPositions::from_reversed_iter(
-                                group.occurrences,
-                                sources.flat_map(|(owner, chain)| owner.reversed(chain)),
-                                &mut scratch,
-                                &lease,
-                            )?
-                        } else {
-                            SortedPositions::from_reversed_chains(sources, &mut scratch, &lease)?
-                        };
-                        debug_assert_eq!(positions.len(), group.occurrences);
-                        let priority = PairPriority {
-                            key,
-                            priority_count: count,
-                        };
-                        if policy == IdentityPolicy::Fresh {
-                            shard.states.insert(
-                                key,
-                                PairState {
-                                    ledger_count_bits: count,
-                                    positions,
-                                },
-                            );
-                            shard.priorities.push(priority);
-                        } else {
-                            candidates.push(MergeCandidate {
-                                priority,
-                                positions,
+                            fragments.push(Fragment {
+                                chunk,
+                                index,
+                                next: group.head,
                             });
+                            group.head = fragments.len() - 1;
                         }
+                        for (neighbor, group) in neighbors.drain() {
+                            let key = pair_key(if left {
+                                (neighbor, replacement)
+                            } else {
+                                (replacement, neighbor)
+                            });
+                            // PERF: Fresh keys cannot revive. Reduce all producers
+                            // and reject low counts before touching the global map;
+                            // inserting then deleting them causes avoidable growth
+                            // and tombstone churn. Signed ledgers already record
+                            // ordered changes and retain every positive birth cohort,
+                            // including counts below the selection floor.
+                            let count = if policy == IdentityPolicy::Fresh {
+                                group.weight
+                            } else {
+                                shard.ledger[&key]
+                            };
+                            if if policy == IdentityPolicy::Fresh {
+                                count < floor
+                            } else {
+                                (count as i64) <= 0
+                            } {
+                                continue;
+                            }
+                            let mut head = group.head;
+                            // Fresh jobs supply spatially disjoint runs. Identity-reuse
+                            // AA births may combine interleaved left/right chains;
+                            // the common encoder merges those actual overlaps.
+                            let fragments = &fragments;
+                            let sources = std::iter::from_fn(move || {
+                                if head == usize::MAX {
+                                    return None;
+                                }
+                                let fragment = &fragments[head];
+                                head = fragment.next;
+                                Some(fragment)
+                            })
+                            .map(|fragment| {
+                                (
+                                    &fragment.chunk.chains,
+                                    fragment.chunk.changes[fragment.index].positions,
+                                )
+                            });
+                            let positions = if policy == IdentityPolicy::Fresh {
+                                // Fresh buckets own disjoint, spatially ordered jobs.
+                                // The count is already complete. Encode their reverse
+                                // traversal without rereading each source's endpoints.
+                                if direct_cold {
+                                    SortedPositions::from_reversed_iter_direct(
+                                        group.occurrences,
+                                        sources.flat_map(|(owner, chain)| owner.reversed(chain)),
+                                        &lease,
+                                    )?
+                                } else {
+                                    SortedPositions::from_reversed_iter(
+                                        group.occurrences,
+                                        sources.flat_map(|(owner, chain)| owner.reversed(chain)),
+                                        scratch
+                                            .as_deref_mut()
+                                            .expect("cold buffered mode owns scratch"),
+                                        &lease,
+                                    )?
+                                }
+                            } else {
+                                SortedPositions::from_reversed_chains(
+                                    sources,
+                                    scratch.as_deref_mut().expect("reuse cohorts own scratch"),
+                                    &lease,
+                                )?
+                            };
+                            debug_assert_eq!(positions.len(), group.occurrences);
+                            if diagnostic_round.is_some() {
+                                cold_published_keys += 1;
+                                cold_published_positions += positions.len();
+                            }
+                            let priority = PairPriority {
+                                key,
+                                priority_count: count,
+                            };
+                            if policy == IdentityPolicy::Fresh {
+                                shard.states.insert(
+                                    key,
+                                    PairState {
+                                        ledger_count_bits: count,
+                                        positions,
+                                    },
+                                );
+                                shard.priorities.push(priority);
+                            } else {
+                                candidates.push(MergeCandidate {
+                                    priority,
+                                    positions,
+                                });
+                            }
+                        }
+                        fragments.clear();
                     }
-                    fragments.clear();
-                }
-                directories[0] = neighbors.into_directory();
-                if policy == IdentityPolicy::Fresh {
-                    // PERF: Refill while this owner is already running. A
-                    // separate pool phase would schedule the same owners again.
-                    shard.prepare_prefix(floor);
-                }
-                Ok(candidates)
-            })
+                    directories[0] = neighbors.into_directory();
+                    if let Some(round) = diagnostic_round {
+                        round.record_publication(
+                            cold_published_keys,
+                            cold_published_positions,
+                            fast_published_keys,
+                            fast_published_positions,
+                        );
+                    }
+                    if policy == IdentityPolicy::Fresh {
+                        // PERF: Refill while this owner is already running. A
+                        // separate pool phase would schedule the same owners again.
+                        shard.prepare_prefix(floor);
+                    }
+                    Ok(candidates)
+                },
+            )
             .collect::<Result<Vec<_>>>()?;
+        drop(owner_window);
         if let Selection::Cohorts { candidates: queue } = &mut self.selection {
             for births in candidates {
                 queue.extend(births);
@@ -572,6 +932,80 @@ mod tests {
             weighted_mass: items.iter().map(|item| u128::from(item.1)).sum(),
             maximum_word_weight: items.iter().map(|item| item.1).max().unwrap_or(0),
         }
+    }
+    #[test]
+    fn commit_removal_reduce_retains_distinct_rr_old_keys_and_prunes_exactly() {
+        let execution = Execution::new(2).unwrap();
+        let arena = AllocationArena::new(2, 12);
+        execution.pool.install(|| {
+            for entry in [false, true] {
+                for selective in [false, true] {
+                    let items = [((2, 3), 9, 1), ((2, 7), 10, 2), ((4, 3), 4, 3)];
+                    let mut index = PairIndex::from_initial_pairs(
+                        initial(&items, 2, &arena),
+                        IdentityPolicy::Fresh,
+                        3,
+                    )
+                    .unwrap();
+                    index.configure_removals(entry, true, true, selective);
+                    let chunks = [
+                        [((2, 3), 2), ((2, 7), 3)],
+                        [((2, 3), 4), ((2, 7), 1)],
+                        [((4, 3), 2), ((4, 3), 2)],
+                    ]
+                    .into_iter()
+                    .map(|items| {
+                        EventChunk::test(
+                            PositionChains::new(),
+                            items
+                                .into_iter()
+                                .map(|(pair, weight)| PairChanges {
+                                    removed_key: pair_key(pair),
+                                    born_key: pair_key((7, 7)),
+                                    removed_weight: weight,
+                                    born_weight: 0,
+                                    positions: PositionChain::default(),
+                                    bucket: 0,
+                                })
+                                .collect(),
+                            2,
+                        )
+                    })
+                    .collect();
+                    let events = MergeEvents { buckets: 2, chunks };
+                    index.commit_merges(&events, 8, &execution, &arena).unwrap();
+                    for (pair, count) in [((2, 3), 3), ((2, 7), 6)] {
+                        assert_eq!(
+                            index.shards[shard_for(pair_key(pair), 2)].states[&pair_key(pair)]
+                                .ledger_count_bits,
+                            count
+                        );
+                    }
+                    let third = shard_for(pair_key((4, 3)), 2);
+                    assert!(!index.shards[third].states.contains_key(&pair_key((4, 3))));
+                    assert_eq!(
+                        index
+                            .shards
+                            .iter()
+                            .map(|s| s.removal_references)
+                            .sum::<u64>(),
+                        6
+                    );
+                    let expected_updates = if selective
+                        && third != shard_for(pair_key((2, 3)), 2)
+                        && third != shard_for(pair_key((2, 7)), 2)
+                    {
+                        4
+                    } else {
+                        3
+                    };
+                    assert_eq!(
+                        index.shards.iter().map(|s| s.removal_updates).sum::<u64>(),
+                        expected_updates
+                    );
+                }
+            }
+        });
     }
     #[test]
     fn interrupted_frontier_corrects_stale_counts_and_keeps_birth_ties() {
@@ -810,5 +1244,26 @@ mod tests {
             assert!(index.best().is_none());
             index.end_selection();
         });
+    }
+}
+
+#[cfg(test)]
+mod router_tests {
+    use super::{ShardRouter, shard_for};
+    #[test]
+    fn reciprocal_router_is_exact_for_full_mixed_range_boundaries() {
+        for shards in [1, 2, 3, 5, 6, 7, 8, 12, 24, 64, u32::MAX as usize] {
+            let router = ShardRouter::new(shards, true);
+            for mixed in [0, 1, 2, 5, 6, 7, 65535, 65536, u32::MAX - 1, u32::MAX] {
+                assert_eq!(router.mixed_owner(mixed), mixed as usize % shards);
+            }
+            let mut key = 17_u64;
+            for _ in 0..100000 {
+                key = key
+                    .wrapping_mul(6364136223846793005)
+                    .wrapping_add(1442695040888963407);
+                assert_eq!(router.owner(key), shard_for(key, shards));
+            }
+        }
     }
 }

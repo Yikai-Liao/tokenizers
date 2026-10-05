@@ -318,6 +318,80 @@ impl<'a> SortedPositions<'a> {
         Self::build(count, input, scratch, lease)
     }
 
+    /// Construct directly in the final allocation from exactly count
+    /// positions in nonincreasing order.
+    ///
+    /// The replayable iterator is traversed once to validate and measure the
+    /// exact encoded size, then again to write the final stream. No scratch
+    /// buffer or intermediate encoded copy is used.
+    ///
+    /// # Errors
+    /// Returns an error for incorrect length, increasing input, inconsistent
+    /// replay size, or allocation failure.
+    pub fn from_reversed_iter_direct(
+        count: usize,
+        input: impl Iterator<Item = u64> + Clone,
+        lease: &AllocationLease<'a>,
+    ) -> Result<Self> {
+        if count <= 2 {
+            return Self::build(count, input, &mut PositionEncodingScratch::default(), lease);
+        }
+        if count >= INLINE {
+            return Err(StorageError("position count exceeds resident bounds"));
+        }
+
+        let mut used = 0_usize;
+        reverse_codes(0, count, 0, input.clone(), |index, code| {
+            let bytes = if index.is_multiple_of(RESTART_INTERVAL) {
+                8
+            } else {
+                varint_bytes(code)
+            };
+            used = used
+                .checked_add(bytes)
+                .ok_or(StorageError("position stream size overflow"))?;
+            Ok(())
+        })?;
+
+        let groups = count
+            .checked_add(RESTART_INTERVAL - 1)
+            .ok_or(StorageError("position count exceeds resident bounds"))?
+            / RESTART_INTERVAL;
+        let mut result = Self::allocate(count, groups, used, used, false, lease)?;
+        let target = result.data_ptr();
+        let mut cursor = used;
+        reverse_codes(0, count, 0, input, |index, code| {
+            let seed = index.is_multiple_of(RESTART_INTERVAL);
+            let bytes = if seed { 8 } else { varint_bytes(code) };
+            cursor = cursor
+                .checked_sub(bytes)
+                .ok_or(StorageError("position replay exceeds measured size"))?;
+            if seed {
+                result.set_group_offset(index / RESTART_INTERVAL, cursor);
+            }
+            // SAFETY: the checked cursor stays within the exact allocation.
+            // The second traversal writes only unpublished bytes.
+            unsafe {
+                let destination = target.add(cursor);
+                if seed {
+                    destination.cast::<u64>().write_unaligned(code);
+                } else {
+                    write_varint(destination, code);
+                }
+            }
+            Ok(())
+        })?;
+        if cursor != 0 {
+            return Err(StorageError("position replay differs from measured size"));
+        }
+        // SAFETY: the stream and restart directory are initialized. The
+        // allocation is private until this constructor returns.
+        unsafe {
+            result.allocation_ptr().cast::<usize>().write(used);
+        }
+        Ok(result)
+    }
+
     fn build(
         count: usize,
         mut input: impl Iterator<Item = u64>,
@@ -899,6 +973,82 @@ mod tests {
             assert_eq!(output, expected);
         }
     }
+    #[test]
+    fn direct_reversed_encoding_matches_sorted_oracle_and_checks_replay() {
+        let arena = crate::AllocationArena::new(1, 4096);
+        let lease = arena.lease(0);
+        for values in [
+            vec![],
+            vec![u64::MAX],
+            vec![0, u64::MAX],
+            vec![u64::MAX; 2],
+            (0..129).map(|index| index as u64).collect(),
+            (0..257)
+                .map(|index| {
+                    if index < 128 {
+                        index as u64
+                    } else if index < 256 {
+                        (1_u64 << 63) + (index - 128) as u64
+                    } else {
+                        u64::MAX
+                    }
+                })
+                .collect(),
+        ] {
+            let direct = SortedPositions::from_reversed_iter_direct(
+                values.len(),
+                values.iter().rev().copied(),
+                &lease,
+            )
+            .unwrap();
+            verify(&direct, &values);
+        }
+
+        let short = SortedPositions::from_reversed_iter_direct(129, (0_u64..128).rev(), &lease);
+        assert!(short.is_err());
+        let unsorted =
+            SortedPositions::from_reversed_iter_direct(3, [3_u64, 1, 2].into_iter(), &lease);
+        assert!(unsorted.is_err());
+
+        #[derive(Clone)]
+        struct ChangingIter {
+            pass: std::sync::Arc<std::sync::atomic::AtomicUsize>,
+            index: usize,
+            mode: Option<usize>,
+            second_mode: usize,
+        }
+        impl Iterator for ChangingIter {
+            type Item = u64;
+            fn next(&mut self) -> Option<Self::Item> {
+                if self.index == 129 {
+                    return None;
+                }
+                if self.mode.is_none() {
+                    let pass = self.pass.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                    self.mode = Some(if pass == 0 { 0 } else { self.second_mode });
+                }
+                let mode = self.mode.expect("the iterator mode is initialized");
+                let index = self.index;
+                self.index += 1;
+                Some(match mode {
+                    0 => 0,
+                    1 => index as u64,
+                    _ => u64::MAX - (index as u64) * (1_u64 << 56),
+                })
+            }
+        }
+        let changing = |second_mode| ChangingIter {
+            pass: std::sync::Arc::default(),
+            index: 0,
+            mode: None,
+            second_mode,
+        };
+        let result = SortedPositions::from_reversed_iter_direct(129, changing(1), &lease);
+        assert!(result.is_err(), "second pass sorting must be checked");
+        let result = SortedPositions::from_reversed_iter_direct(129, changing(2), &lease);
+        assert!(result.is_err(), "second pass write bounds must be checked");
+    }
+
     #[test]
     fn full_coordinates_duplicates_and_restart_ranges() {
         let arena = crate::AllocationArena::new(1, 4096);

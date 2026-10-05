@@ -60,3 +60,6 @@ parity-aware-bpe = []
 tk-serialize = { path = "../tk-serialize", version = "0.1.0-dev.0", features = ["serialize", "bpe", "unigram", "wordpiece", "wordlevel", "normalizers", "unicode-scripts"] }
 tempfile = "3.10"
 assert_approx_eq = "1.1"
+
+[patch.crates-io]
+rayon-core = { path = "../../vendor/rayon-core" }

@@ -810,6 +810,7 @@ fn active_id_reuse_rebuilds_without_publishing_speculative_rules() {
                 &words,
                 IdentityPolicy::Fresh,
                 &execution,
+                merge::MergeOptions::default(),
                 &progress,
                 &mut retained_alphabet,
                 &mut trace,
@@ -853,6 +854,7 @@ fn affix_first_activations_preserve_reserved_ids_and_model_order() {
             &words,
             IdentityPolicy::Fresh,
             &execution,
+            merge::MergeOptions::default(),
             &progress,
             &mut None,
             &mut trace,
@@ -1119,6 +1121,611 @@ fn long_word_split_preserves_unicode_filtering_affixes_and_merge_trace() {
                 trainer.end_of_word_suffix = Some("</w>".into());
             }
             check_with_workers(&trainer, &words, &[1, 4, 16]);
+        }
+    }
+}
+
+#[test]
+fn owner_single_producer_layout_factors_preserve_hf_trace_and_fallbacks() {
+    use merge::{MergeOptions, PairLayout};
+    let fixtures = [
+        counts(&[
+            ("ab", 1000),
+            ("cd", 900),
+            ("abcd", 20),
+            ("cdab", 15),
+            ("ababcdcd", 9),
+        ]),
+        counts(&[
+            ("aaaaaa", 23),
+            ("aaabaaa", 17),
+            ("abaaab", 11),
+            ("cdabcd", 7),
+        ]),
+        counts(&[
+            ("猫猫猫鱼", 19),
+            ("猫鱼猫鱼", 13),
+            ("abcdef", 7),
+            ("abcabc", 3),
+        ]),
+    ];
+    for (fixture_index, words) in fixtures.iter().enumerate() {
+        for affixes in [false, true] {
+            let mut builder = BpeTrainer::builder()
+                .vocab_size(45)
+                .min_frequency(3)
+                .show_progress(false);
+            if affixes {
+                builder = builder
+                    .continuing_subword_prefix("##".into())
+                    .end_of_word_suffix("</w>".into())
+                    .max_token_length(Some(9));
+            }
+            let trainer = builder.build();
+            let mut expected_trace = Vec::new();
+            let expected = trainer
+                .do_train_observed(words, |pair, count, id| {
+                    expected_trace.push((pair, count, id))
+                })
+                .unwrap();
+            for layout in [
+                PairLayout::Grid,
+                PairLayout::Tail,
+                PairLayout::Whole,
+                PairLayout::Pack,
+            ] {
+                for single_producer_fast in [false, true] {
+                    for direct_encoding in [false, true] {
+                        for workers in [1, 4] {
+                            let options = MergeOptions {
+                                layout,
+                                single_producer_fast,
+                                direct_encoding,
+                                group_births_in_commit: false,
+                                direct_cold_encoding: false,
+                                diagnostics: true,
+                                fast_shard_router: false,
+                                logical_owners: 0,
+                                removal_entry: false,
+                                removal_reduce: false,
+                                removal_statistics: false,
+                                removal_selective: false,
+                                batch_limit: 0,
+                            };
+                            let mut trace = Vec::new();
+                            let actual = train_with_merge_options(
+                                &trainer,
+                                words,
+                                workers,
+                                options,
+                                Some(&mut |pair, count, id| trace.push((pair, count, id))),
+                            )
+                            .unwrap();
+                            assert_eq!(
+                                trace, expected_trace,
+                                "fixture={fixture_index}, affixes={affixes}, options={options:?}, workers={workers}"
+                            );
+                            assert_eq!(actual, expected);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn owner_single_producer_requires_full_task_and_prunes_complete_births() {
+    use merge::{MergeOptions, PairLayout};
+    let words = counts(&[
+        ("ab", 1000),
+        ("cd", 900),
+        ("abcd", 20),
+        ("cdab", 15),
+        ("ababcdcd", 9),
+    ]);
+    let trainer = BpeTrainer::builder()
+        .vocab_size(30)
+        .min_frequency(2)
+        .show_progress(false)
+        .build();
+    for workers in [1, 4] {
+        for floor in [2, 100] {
+            for direct_encoding in [false, true] {
+                let execution = execution::Execution::new(workers).unwrap();
+                let progress = TrainingProgress::new(false, trainer.progress_format).unwrap();
+                execution.pool.install(|| {
+                    let mut retained = None;
+                    let mut vocab = vocabulary::Vocabulary::initialize(
+                        &trainer,
+                        &words,
+                        workers,
+                        &progress,
+                        &mut retained,
+                    )
+                    .unwrap();
+                    let plan = corpus::PreparedCorpus::build(
+                        &words,
+                        &mut vocab,
+                        IdentityPolicy::Fresh,
+                        false,
+                        &progress,
+                    )
+                    .unwrap();
+                    let arena = AllocationArena::new(workers, plan.initial_edges());
+                    let initial =
+                        initial_pairs::build_initial_pairs(&plan, 2, &execution, &arena, &progress)
+                            .unwrap();
+                    let mut corpus = plan
+                        .materialize::<corpus::FullSlots>(workers, IdentityPolicy::Fresh, &progress)
+                        .unwrap();
+                    let mut index = pair_index::PairIndex::from_initial_pairs(
+                        initial,
+                        IdentityPolicy::Fresh,
+                        2,
+                    )
+                    .unwrap();
+                    let mut rules = Vec::new();
+                    let mut candidates = Vec::new();
+                    index.begin_selection();
+                    for pair in [(0, 1), (2, 3)] {
+                        assert_eq!(pair_index::key_pair(index.best().unwrap().key), pair);
+                        candidates.push(index.take_best());
+                        let identity = vocab.resolve_merge(vocab.merge_token(pair)).unwrap();
+                        assert!(!identity.reused_active_id);
+                        corpus.prepare_spans(pair, identity.id, false);
+                        rules.push(merge::MergeRule {
+                            pair,
+                            replacement: identity.id,
+                        });
+                    }
+                    index.end_selection();
+                    let (prepared, births) = merge::prepare_merges_with_births(
+                        &corpus,
+                        &rules,
+                        &candidates,
+                        IdentityPolicy::Fresh,
+                        vocab.len(),
+                        usize::MAX,
+                        &execution,
+                        &arena,
+                        floor,
+                        MergeOptions {
+                            single_producer_fast: true,
+                            direct_encoding,
+                            group_births_in_commit: false,
+                            direct_cold_encoding: false,
+                            layout: PairLayout::Grid,
+                            diagnostics: true,
+                            fast_shard_router: false,
+                            logical_owners: 0,
+                            removal_entry: false,
+                            removal_reduce: false,
+                            removal_statistics: false,
+                            removal_selective: false,
+                            batch_limit: 0,
+                        },
+                        None,
+                    )
+                    .unwrap();
+                    if workers == 1 {
+                        assert_eq!(prepared.diagnostics[0].chunks, 1);
+                        assert_eq!(prepared.diagnostics[0].fast_ranks.len(), 2);
+                        if floor == 2 {
+                            let mut actual = AHashMap::new();
+                            for (key, state) in &births {
+                                assert!(
+                                    actual
+                                        .insert(
+                                            *key,
+                                            (state.ledger_count_bits, state.positions.len())
+                                        )
+                                        .is_none()
+                                );
+                            }
+                            assert_eq!(
+                                actual[&pair_index::pair_key((
+                                    rules[0].replacement,
+                                    rules[1].replacement
+                                ))],
+                                (29, 2)
+                            );
+                            assert_eq!(
+                                actual[&pair_index::pair_key((
+                                    rules[1].replacement,
+                                    rules[0].replacement
+                                ))],
+                                (15, 1)
+                            );
+                            assert_eq!(
+                                actual[&pair_index::pair_key((
+                                    rules[0].replacement,
+                                    rules[0].replacement
+                                ))],
+                                (9, 1)
+                            );
+                            assert_eq!(
+                                actual[&pair_index::pair_key((
+                                    rules[1].replacement,
+                                    rules[1].replacement
+                                ))],
+                                (9, 1)
+                            );
+                        } else {
+                            assert!(births.is_empty());
+                        }
+                    } else {
+                        assert!(
+                            prepared
+                                .diagnostics
+                                .iter()
+                                .flat_map(|job| &job.tasks)
+                                .all(|task| !task.full)
+                        );
+                        assert!(
+                            births.is_empty(),
+                            "partial tasks cannot take producer fast path"
+                        );
+                    }
+                    let events = prepared.apply(&mut corpus);
+                    if workers == 1 {
+                        assert!(
+                            events
+                                .chunks
+                                .iter()
+                                .flat_map(|chunk| &chunk.changes)
+                                .all(|change| change.positions.is_empty())
+                        );
+                        assert!(
+                            events
+                                .chunks
+                                .iter()
+                                .flat_map(|chunk| &chunk.changes)
+                                .any(|change| change.removed_weight != 0)
+                        );
+                    }
+                    candidates.clear();
+                    index
+                        .commit_merges_with_prepared(
+                            &events,
+                            vocab.len(),
+                            &execution,
+                            &arena,
+                            births,
+                            None,
+                        )
+                        .unwrap();
+                    index.begin_selection();
+                    if workers == 1 && floor == 100 {
+                        assert!(index.best().is_none());
+                    } else {
+                        assert_eq!(index.best().unwrap().priority_count, 29);
+                    }
+                });
+            }
+        }
+    }
+}
+
+#[test]
+fn owner_single_producer_active_reuse_restarts_through_original_cohorts() {
+    use merge::{MergeOptions, PairLayout};
+    let trainer = BpeTrainer::builder()
+        .vocab_size(48)
+        .min_frequency(1)
+        .show_progress(false)
+        .end_of_word_suffix("a".into())
+        .build();
+    for words in [
+        counts(&[("baaba", 1)]),
+        counts(&[("baaba", 1), ("xyxyxy", 100)]),
+    ] {
+        let mut expected_trace = Vec::new();
+        let expected = trainer
+            .do_train_observed(&words, |pair, count, id| {
+                expected_trace.push((pair, count, id))
+            })
+            .unwrap();
+        for layout in [
+            PairLayout::Grid,
+            PairLayout::Tail,
+            PairLayout::Whole,
+            PairLayout::Pack,
+        ] {
+            let mut trace = Vec::new();
+            let actual = train_with_merge_options(
+                &trainer,
+                &words,
+                4,
+                MergeOptions {
+                    layout,
+                    single_producer_fast: true,
+                    direct_encoding: true,
+                    group_births_in_commit: false,
+                    direct_cold_encoding: false,
+                    diagnostics: true,
+                    fast_shard_router: false,
+                    logical_owners: 0,
+                    removal_entry: false,
+                    removal_reduce: false,
+                    removal_statistics: false,
+                    removal_selective: false,
+                    batch_limit: 0,
+                },
+                Some(&mut |pair, count, id| trace.push((pair, count, id))),
+            )
+            .unwrap();
+            assert_eq!(trace, expected_trace, "layout={layout:?}");
+            assert_eq!(actual, expected);
+        }
+    }
+}
+
+#[test]
+fn commit_fused_group_and_direct_cold_preserve_hf_trace_and_reuse() {
+    use merge::{MergeOptions, PairLayout};
+    let fixtures = [
+        counts(&[
+            ("ab", 1000),
+            ("cd", 900),
+            ("abcd", 20),
+            ("cdab", 15),
+            ("ababcdcd", 9),
+        ]),
+        counts(&[
+            ("aaaaaa", 23),
+            ("aaabaaa", 17),
+            ("abaaab", 11),
+            ("cdabcd", 7),
+        ]),
+        counts(&[
+            ("猫猫猫鱼", 19),
+            ("猫鱼猫鱼", 13),
+            ("abcdef", 7),
+            ("abcabc", 3),
+        ]),
+    ];
+    for words in &fixtures {
+        for affixes in [false, true] {
+            let mut builder = BpeTrainer::builder()
+                .vocab_size(50)
+                .min_frequency(3)
+                .show_progress(false);
+            if affixes {
+                builder = builder
+                    .continuing_subword_prefix("##".into())
+                    .end_of_word_suffix("</w>".into())
+                    .max_token_length(Some(9));
+            }
+            let trainer = builder.build();
+            let mut expected_trace = Vec::new();
+            let expected = trainer
+                .do_train_observed(words, |pair, count, id| {
+                    expected_trace.push((pair, count, id))
+                })
+                .unwrap();
+            for workers in [1, 4] {
+                for group_births_in_commit in [false, true] {
+                    for direct_cold_encoding in [false, true] {
+                        let options = MergeOptions {
+                            single_producer_fast: true,
+                            direct_encoding: true,
+                            group_births_in_commit,
+                            direct_cold_encoding,
+                            layout: PairLayout::Whole,
+                            diagnostics: false,
+                            fast_shard_router: false,
+                            logical_owners: 0,
+                            removal_entry: false,
+                            removal_reduce: false,
+                            removal_statistics: false,
+                            removal_selective: false,
+                            batch_limit: 0,
+                        };
+                        let mut trace = Vec::new();
+                        let actual = train_with_merge_options(
+                            &trainer,
+                            words,
+                            workers,
+                            options,
+                            Some(&mut |pair, count, id| trace.push((pair, count, id))),
+                        )
+                        .unwrap();
+                        assert_eq!(
+                            trace, expected_trace,
+                            "workers={workers} options={options:?}"
+                        );
+                        assert_eq!(actual, expected);
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn owner_router_balance_preserves_trace_and_reuse() {
+    use merge::{MergeOptions, PairLayout};
+    for affixes in [false, true] {
+        let words = counts(&[
+            ("aaaaaa", 23),
+            ("aaabaaa", 17),
+            ("abccdabcd", 11),
+            ("猫猫猫鱼", 19),
+            ("猫鱼猫鱼", 13),
+        ]);
+        let mut builder = BpeTrainer::builder()
+            .vocab_size(50)
+            .min_frequency(3)
+            .show_progress(false);
+        if affixes {
+            builder = builder
+                .continuing_subword_prefix("##".into())
+                .end_of_word_suffix("</w>".into())
+                .max_token_length(Some(9));
+        }
+        let trainer = builder.build();
+        let mut expected_trace = Vec::new();
+        let expected = trainer
+            .do_train_observed(&words, |pair, count, id| {
+                expected_trace.push((pair, count, id))
+            })
+            .unwrap();
+        for workers in [1, 6] {
+            for logical_owners in [0, 8, 12] {
+                for fast_shard_router in [false, true] {
+                    let options = MergeOptions {
+                        single_producer_fast: true,
+                        direct_encoding: true,
+                        group_births_in_commit: true,
+                        layout: PairLayout::Whole,
+                        fast_shard_router,
+                        logical_owners,
+                        ..Default::default()
+                    };
+                    let mut trace = Vec::new();
+                    let actual = train_with_merge_options(
+                        &trainer,
+                        &words,
+                        workers,
+                        options,
+                        Some(&mut |pair, count, id| trace.push((pair, count, id))),
+                    )
+                    .unwrap();
+                    assert_eq!(
+                        trace, expected_trace,
+                        "workers={workers} options={options:?}"
+                    );
+                    assert_eq!(actual, expected);
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn commit_removal_reduce_matches_hf_trace_and_reuse() {
+    use merge::{MergeOptions, PairLayout};
+    for affixes in [false, true] {
+        let words = counts(&[
+            ("ab", 1000),
+            ("cd", 900),
+            ("abcd", 20),
+            ("cdab", 15),
+            ("ababcdcd", 9),
+            ("aaaaaa", 23),
+            ("aaabaaa", 17),
+            ("猫鱼猫鱼", 13),
+        ]);
+        let mut builder = BpeTrainer::builder()
+            .vocab_size(60)
+            .min_frequency(3)
+            .show_progress(false);
+        if affixes {
+            builder = builder
+                .continuing_subword_prefix("##".into())
+                .end_of_word_suffix("</w>".into())
+                .max_token_length(Some(9));
+        }
+        let trainer = builder.build();
+        let mut expected_trace = Vec::new();
+        let expected = trainer
+            .do_train_observed(&words, |pair, count, id| {
+                expected_trace.push((pair, count, id))
+            })
+            .unwrap();
+        for workers in [1, 6] {
+            for removal_entry in [false, true] {
+                for removal_reduce in [false, true] {
+                    let options = MergeOptions {
+                        single_producer_fast: true,
+                        direct_encoding: true,
+                        group_births_in_commit: true,
+                        fast_shard_router: true,
+                        layout: PairLayout::Whole,
+                        removal_entry,
+                        removal_reduce,
+                        removal_selective: true,
+                        ..Default::default()
+                    };
+                    let mut trace = Vec::new();
+                    let actual = train_with_merge_options(
+                        &trainer,
+                        &words,
+                        workers,
+                        options,
+                        Some(&mut |pair, count, id| trace.push((pair, count, id))),
+                    )
+                    .unwrap();
+                    assert_eq!(
+                        trace, expected_trace,
+                        "workers={workers} options={options:?}"
+                    );
+                    assert_eq!(actual, expected);
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn commit_removal_reduce_batch_limits_preserve_hf_trace_and_reuse() {
+    use merge::{MergeOptions, PairLayout};
+    let words = counts(&[
+        ("abcdabcd", 41),
+        ("abcde", 37),
+        ("cdefcdef", 31),
+        ("ghijghij", 29),
+        ("klmnklmn", 23),
+        ("aaaaaaa", 17),
+        ("猫猫鱼鱼", 13),
+    ]);
+    for affixes in [false, true] {
+        let mut builder = BpeTrainer::builder()
+            .vocab_size(75)
+            .min_frequency(2)
+            .show_progress(false);
+        if affixes {
+            builder = builder
+                .continuing_subword_prefix("##".into())
+                .end_of_word_suffix("</w>".into())
+                .max_token_length(Some(9));
+        }
+        let trainer = builder.build();
+        let mut expected_trace = Vec::new();
+        let expected = trainer
+            .do_train_observed(&words, |pair, count, id| {
+                expected_trace.push((pair, count, id))
+            })
+            .unwrap();
+        for workers in [1, 6] {
+            for batch_limit in [1, 8, 256] {
+                let options = MergeOptions {
+                    single_producer_fast: true,
+                    direct_encoding: true,
+                    group_births_in_commit: true,
+                    fast_shard_router: true,
+                    layout: PairLayout::Whole,
+                    removal_reduce: true,
+                    removal_selective: true,
+                    batch_limit,
+                    ..Default::default()
+                };
+                let mut trace = Vec::new();
+                let actual = train_with_merge_options(
+                    &trainer,
+                    &words,
+                    workers,
+                    options,
+                    Some(&mut |pair, count, id| trace.push((pair, count, id))),
+                )
+                .unwrap();
+                assert_eq!(
+                    trace, expected_trace,
+                    "workers={workers} options={options:?}"
+                );
+                assert_eq!(actual, expected);
+            }
         }
     }
 }

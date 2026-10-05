@@ -5,10 +5,11 @@ use super::{
     IdentityPolicy, WORD_SEPARATOR_ID, aa_parity,
     corpus::{Corpus, PairMatch, PairMatcher, SlotStorage, WordWeightCursor},
     execution::Execution,
-    pair_index::{MergeCandidate, pair_key, shard_for},
+    pair_index::{MergeCandidate, PairState, ShardRouter, pair_key},
 };
 use ahash::AHashMap;
 use rayon::prelude::*;
+use tk_collections::{AllocationArena, SortedPositions};
 use tk_collections::{IdAccumulator, IdDirectory, PositionBuffer, PositionChain, PositionChains};
 use tk_encode::{Result, models::bpe::Pair};
 
@@ -86,8 +87,34 @@ struct PreparedJob {
     word_region: Option<std::ops::Range<u64>>,
 }
 pub(super) struct PreparedMerges {
+    pub(super) diagnostics: Vec<JobDiagnostics>,
     jobs: Vec<PreparedJob>,
     events: MergeEvents,
+}
+#[derive(Debug)]
+pub(super) struct TaskDiagnostic {
+    pub(super) rank: usize,
+    pub(super) begin: usize,
+    pub(super) end: usize,
+    pub(super) full: bool,
+    pub(super) matched_positions: usize,
+}
+#[derive(Debug)]
+pub(super) struct FastRankDiagnostic {
+    pub(super) rank: usize,
+    pub(super) input_positions: usize,
+    pub(super) born_records: usize,
+    pub(super) encoded_keys: usize,
+    pub(super) encoded_positions: usize,
+    pub(super) pruned_keys: usize,
+}
+#[derive(Debug)]
+pub(super) struct JobDiagnostics {
+    pub(super) worker: usize,
+    pub(super) tasks: Vec<TaskDiagnostic>,
+    pub(super) chunks: usize,
+    pub(super) node_budget_fits: bool,
+    pub(super) fast_ranks: Vec<FastRankDiagnostic>,
 }
 struct MergeScratch {
     left: IdAccumulator<NeighborChanges>,
@@ -136,6 +163,90 @@ impl MergeScratch {
                 bucket: (rank * 2 + usize::from(neighbor != rule.replacement)) as u32,
             });
         }
+    }
+    fn flush_rule_with_births<'a>(
+        &mut self,
+        rule: &MergeRule,
+        rank: usize,
+        floor: u64,
+        arena: &'a AllocationArena,
+        execution: &Execution,
+        direct: bool,
+        births: &mut Vec<(u64, PairState<'a>)>,
+        mut diagnostic: Option<&mut FastRankDiagnostic>,
+    ) -> Result<()> {
+        let worker = execution.current_worker();
+        let lease = arena.lease(worker);
+        let mut encoding = (!direct).then(|| execution.encoding(worker));
+        let chains = &self.chains;
+        let changes = &mut self.changes;
+        // These are the original neighbor-directory drains, not a second pass
+        // over emitted events. Each birth already has its complete mass/chain.
+        let mut emit = |mut event: PairChanges| -> Result<()> {
+            if !event.positions.is_empty() {
+                if let Some(stats) = diagnostic.as_deref_mut() {
+                    stats.born_records += 1;
+                }
+                if event.born_weight >= floor {
+                    let occurrences = event.positions.len();
+                    let positions = if let Some(encoding) = encoding.as_deref_mut() {
+                        SortedPositions::from_reversed_iter(
+                            occurrences,
+                            chains.reversed(event.positions),
+                            encoding,
+                            &lease,
+                        )?
+                    } else {
+                        SortedPositions::from_reversed_iter_direct(
+                            occurrences,
+                            chains.reversed(event.positions),
+                            &lease,
+                        )?
+                    };
+                    if let Some(stats) = diagnostic.as_deref_mut() {
+                        stats.encoded_keys += 1;
+                        stats.encoded_positions += occurrences;
+                    }
+                    births.push((
+                        event.born_key,
+                        PairState {
+                            ledger_count_bits: event.born_weight,
+                            positions,
+                        },
+                    ));
+                } else if let Some(stats) = diagnostic.as_deref_mut() {
+                    stats.pruned_keys += 1;
+                }
+            }
+            // No birth event is emitted for the completed producer. The count
+            // owner's original removal actions retain their keys and weights.
+            if event.removed_weight != 0 {
+                event.positions = PositionChain::default();
+                changes.push(event);
+            }
+            Ok(())
+        };
+        for (neighbor, change) in self.left.drain() {
+            emit(PairChanges {
+                removed_key: pair_key((neighbor, rule.pair.0)),
+                born_key: pair_key((neighbor, rule.replacement)),
+                removed_weight: change.removed,
+                born_weight: change.born,
+                positions: change.positions,
+                bucket: (rank * 2) as u32,
+            })?;
+        }
+        for (neighbor, change) in self.right.drain() {
+            emit(PairChanges {
+                removed_key: pair_key((rule.pair.1, neighbor)),
+                born_key: pair_key((rule.replacement, neighbor)),
+                removed_weight: change.removed,
+                born_weight: change.born,
+                positions: change.positions,
+                bucket: (rank * 2 + usize::from(neighbor != rule.replacement)) as u32,
+            })?;
+        }
+        Ok(())
     }
     fn take_chunk(&mut self) -> EventChunk {
         self.remaining_nodes = PositionChains::new().remaining_nodes();
@@ -225,7 +336,50 @@ impl MergeEvents {
     /// One directory per owner for the whole batch. Only actual actions and
     /// births occupy entries; producers do not allocate an owner/bucket matrix.
     pub(super) fn route(&self, workers: usize) -> Vec<OwnerRoute> {
-        let mut routes: Vec<_> = (0..workers)
+        self.route_with_diagnostics(workers, None)
+    }
+    pub(super) fn route_with_diagnostics(
+        &self,
+        workers: usize,
+        diagnostic_round: Option<&super::single_producer_diagnostics::RoundDiagnostics>,
+    ) -> Vec<OwnerRoute> {
+        self.route_with_router_diagnostics(ShardRouter::new(workers, false), diagnostic_round)
+    }
+    pub(super) fn route_with_router_diagnostics(
+        &self,
+        router: ShardRouter,
+        diagnostic_round: Option<&super::single_producer_diagnostics::RoundDiagnostics>,
+    ) -> Vec<OwnerRoute> {
+        let mut routes = self.dispatch_with_router(router);
+        // Count actions retain traversal order. Group only actual births on
+        // their owners, keeping histograms out of the serial routing pass.
+        // Stable counting distribution retains spatial producer order without
+        // comparison sorting or repeated indirect key loads per comparison.
+        let dispatched = diagnostic_round.and_then(|round| round.mark());
+        let route_window = diagnostic_round.map(|round| round.parallel_span());
+        routes
+            .par_iter_mut()
+            .enumerate()
+            .for_each(|(owner, route)| {
+                let _route_span = diagnostic_round.map(|round| {
+                    round.task(
+                        super::single_producer_diagnostics::Stage::RouteBirthGroup,
+                        owner,
+                        rayon::current_thread_index().expect("routing runs in the training pool"),
+                        dispatched,
+                    )
+                });
+                route.group_births(self);
+            });
+        drop(route_window);
+        routes
+    }
+    /// Route only metadata. Birth grouping can run inside the owner task.
+    pub(super) fn dispatch(&self, workers: usize) -> Vec<OwnerRoute> {
+        self.dispatch_with_router(ShardRouter::new(workers, false))
+    }
+    pub(super) fn dispatch_with_router(&self, router: ShardRouter) -> Vec<OwnerRoute> {
+        let mut routes: Vec<_> = (0..router.shards())
             .map(|_| OwnerRoute {
                 changes: Vec::new(),
                 births: Vec::new(),
@@ -235,11 +389,10 @@ impl MergeEvents {
             for (index, change) in chunk.changes.iter().enumerate() {
                 debug_assert!((change.bucket as usize) < self.buckets);
                 let removed =
-                    (change.removed_weight != 0).then(|| shard_for(change.removed_key, workers));
+                    (change.removed_weight != 0).then(|| router.owner(change.removed_key));
                 // Zero-weight identity-reuse births still own positions. Only an empty
                 // chain has no birth action; weight alone cannot decide this.
-                let born =
-                    (!change.positions.is_empty()).then(|| shard_for(change.born_key, workers));
+                let born = (!change.positions.is_empty()).then(|| router.owner(change.born_key));
                 match (removed, born) {
                     (Some(removed), Some(born)) if removed == born => {
                         let route = &mut routes[removed];
@@ -271,37 +424,72 @@ impl MergeEvents {
                 }
             }
         }
-        // Count actions retain traversal order. Group only actual births on
-        // their owners, keeping histograms out of the serial routing pass.
-        // Stable counting distribution retains spatial producer order without
-        // comparison sorting or repeated indirect key loads per comparison.
-        routes.par_iter_mut().for_each(|route| {
-            if route.births.len() < 2 {
-                return;
-            }
-            let bucket_of = |index: usize| {
-                let reference = &route.changes[index];
-                self.chunks[reference.chunk].changes[reference.index()].bucket as usize
-            };
-            let mut offsets = vec![0_usize; self.buckets];
-            for &index in &route.births {
-                offsets[bucket_of(index)] += 1;
-            }
-            let mut total = 0;
-            for offset in &mut offsets {
-                let count = *offset;
-                *offset = total;
-                total += count;
-            }
-            let mut births = vec![0; route.births.len()];
-            for &index in &route.births {
-                let offset = &mut offsets[bucket_of(index)];
-                births[*offset] = index;
-                *offset += 1;
-            }
-            route.births = births;
-        });
         routes
+    }
+}
+impl OwnerRoute {
+    /// Fresh removal counts commute. Group original references by rule/direction
+    /// only; this order is never used for reusable signed ledger actions.
+    pub(super) fn grouped_removals(&self, events: &MergeEvents) -> Vec<usize> {
+        let removals: Vec<_> = self
+            .changes
+            .iter()
+            .enumerate()
+            .filter_map(|(index, change)| {
+                matches!(change.action(), ChangeAction::Remove | ChangeAction::Both)
+                    .then_some(index)
+            })
+            .collect();
+        if removals.len() < 2 {
+            return removals;
+        }
+        let bucket_of = |index: usize| {
+            let reference = &self.changes[index];
+            events.chunks[reference.chunk].changes[reference.index()].bucket as usize
+        };
+        let mut offsets = vec![0_usize; events.buckets];
+        for &index in &removals {
+            offsets[bucket_of(index)] += 1;
+        }
+        let mut total = 0;
+        for offset in &mut offsets {
+            let count = *offset;
+            *offset = total;
+            total += count;
+        }
+        let mut grouped = vec![0; removals.len()];
+        for index in removals {
+            let offset = &mut offsets[bucket_of(index)];
+            grouped[*offset] = index;
+            *offset += 1;
+        }
+        grouped
+    }
+    pub(super) fn group_births(&mut self, events: &MergeEvents) {
+        if self.births.len() < 2 {
+            return;
+        }
+        let bucket_of = |index: usize| {
+            let reference = &self.changes[index];
+            events.chunks[reference.chunk].changes[reference.index()].bucket as usize
+        };
+        let mut offsets = vec![0_usize; events.buckets];
+        for &index in &self.births {
+            offsets[bucket_of(index)] += 1;
+        }
+        let mut total = 0;
+        for offset in &mut offsets {
+            let count = *offset;
+            *offset = total;
+            total += count;
+        }
+        let mut births = vec![0; self.births.len()];
+        for &index in &self.births {
+            let offset = &mut offsets[bucket_of(index)];
+            births[*offset] = index;
+            *offset += 1;
+        }
+        self.births = births;
     }
 }
 impl EventChunk {
@@ -504,6 +692,30 @@ impl<S: SlotStorage> Preparation<'_, S> {
         }
         Ok(())
     }
+    fn finish_with_births<'a>(
+        self,
+        arena: &'a AllocationArena,
+        execution: &Execution,
+        floor: u64,
+        direct: bool,
+        births: &mut Vec<(u64, PairState<'a>)>,
+        diagnostic: Option<&mut FastRankDiagnostic>,
+    ) -> Result<(WritePlan, Vec<EventChunk>)> {
+        debug_assert!(
+            self.chunks.is_empty(),
+            "allocation node budget excludes partial flush"
+        );
+        self.scratch.flush_rule_with_births(
+            self.rule, self.rank, floor, arena, execution, direct, births, diagnostic,
+        )?;
+        Ok((
+            WritePlan {
+                rule: *self.rule,
+                positions: self.positions,
+            },
+            self.chunks,
+        ))
+    }
     fn finish(self) -> (WritePlan, Vec<EventChunk>) {
         self.scratch.flush_rule(self.rule, self.rank);
         (
@@ -519,8 +731,114 @@ struct PositionTask {
     rank: usize,
     begin: usize,
     end: usize,
+    full: bool,
+    fast: bool,
 }
-fn position_jobs(candidates: &[MergeCandidate<'_>], workers: usize) -> Vec<Vec<PositionTask>> {
+impl PositionTask {
+    fn new(rank: usize, begin: usize, end: usize, total: usize) -> Self {
+        Self {
+            rank,
+            begin,
+            end,
+            full: begin == 0 && end == total,
+            fast: false,
+        }
+    }
+}
+fn job_node_budget_fits(tasks: &[PositionTask], capacity: usize) -> bool {
+    tasks
+        .iter()
+        .try_fold(0usize, |total, task| {
+            total.checked_add(task.end - task.begin)
+        })
+        .and_then(|total| total.checked_mul(2))
+        .is_some_and(|nodes| nodes <= capacity)
+}
+#[derive(Clone, Copy, Debug, Default)]
+pub(super) enum PairLayout {
+    #[default]
+    Grid,
+    Tail,
+    Whole,
+    Pack,
+}
+#[derive(Clone, Copy, Debug, Default)]
+pub(super) struct MergeOptions {
+    pub(super) single_producer_fast: bool,
+    pub(super) direct_encoding: bool,
+    pub(super) group_births_in_commit: bool,
+    pub(super) direct_cold_encoding: bool,
+    pub(super) layout: PairLayout,
+    pub(super) diagnostics: bool,
+    pub(super) fast_shard_router: bool,
+    pub(super) logical_owners: usize,
+    pub(super) removal_entry: bool,
+    pub(super) removal_reduce: bool,
+    pub(super) removal_statistics: bool,
+    pub(super) removal_selective: bool,
+    pub(super) batch_limit: usize,
+}
+impl MergeOptions {
+    pub(super) fn from_env() -> Self {
+        Self {
+            single_producer_fast: std::env::var("TK_SINGLE_PRODUCER_FAST").is_ok_and(|v| v == "1"),
+            diagnostics: std::env::var("TK_SINGLE_DIAG").is_ok_and(|v| v == "1"),
+            direct_encoding: std::env::var("TK_SINGLE_DIRECT").map_or(true, |v| v != "0"),
+            group_births_in_commit: std::env::var("TK_COMMIT_GROUP_FUSION").is_ok_and(|v| v == "1"),
+            direct_cold_encoding: std::env::var("TK_COMMIT_DIRECT_COLD").is_ok_and(|v| v == "1"),
+            batch_limit: std::env::var("TK_BATCH_LIMIT")
+                .ok()
+                .and_then(|v| v.parse::<usize>().ok())
+                .filter(|&n| (1..=256).contains(&n))
+                .unwrap_or(256),
+            removal_selective: std::env::var("TK_REMOVAL_SELECTIVE").is_ok_and(|v| v == "1"),
+            removal_entry: std::env::var("TK_REMOVAL_ENTRY").is_ok_and(|v| v == "1"),
+            removal_reduce: std::env::var("TK_REMOVAL_REDUCE").is_ok_and(|v| v == "1"),
+            removal_statistics: std::env::var("TK_REMOVAL_STATS").is_ok_and(|v| v == "1"),
+            fast_shard_router: std::env::var("TK_FAST_SHARD_ROUTER").is_ok_and(|v| v == "1"),
+            logical_owners: std::env::var("TK_LOGICAL_OWNERS")
+                .ok()
+                .and_then(|v| v.parse::<usize>().ok())
+                .filter(|&n| n <= 64)
+                .unwrap_or(0),
+            layout: match std::env::var("TK_PAIR_LAYOUT").as_deref() {
+                Ok("tail") => PairLayout::Tail,
+                Ok("whole") => PairLayout::Whole,
+                Ok("pack") => PairLayout::Pack,
+                _ => PairLayout::Grid,
+            },
+        }
+    }
+}
+fn position_jobs(
+    candidates: &[MergeCandidate<'_>],
+    workers: usize,
+    layout: PairLayout,
+    fast_enabled: bool,
+) -> Vec<Vec<PositionTask>> {
+    let mut jobs = if workers == 1 {
+        position_jobs_grid(candidates, workers)
+    } else {
+        match layout {
+            PairLayout::Grid => position_jobs_grid(candidates, workers),
+            PairLayout::Tail => position_jobs_tail(candidates, workers),
+            PairLayout::Whole => position_jobs_whole(candidates, workers),
+            PairLayout::Pack => position_jobs_pack(candidates, workers),
+        }
+    };
+    if fast_enabled {
+        let capacity = PositionChains::new().remaining_nodes();
+        for job in &mut jobs {
+            if job_node_budget_fits(job, capacity) {
+                for task in job {
+                    task.fast = task.full;
+                }
+            }
+        }
+    }
+    jobs
+}
+fn position_jobs_grid(candidates: &[MergeCandidate<'_>], workers: usize) -> Vec<Vec<PositionTask>> {
     let total: usize = candidates
         .iter()
         .map(|candidate| candidate.positions.len())
@@ -536,17 +854,180 @@ fn position_jobs(candidates: &[MergeCandidate<'_>], workers: usize) -> Vec<Vec<P
                 jobs.push(Vec::new());
             }
             let take = (chunk - visited % chunk).min(candidate.positions.len() - begin);
-            jobs[job].push(PositionTask {
+            jobs[job].push(PositionTask::new(
                 rank,
                 begin,
-                end: begin + take,
-            });
+                begin + take,
+                candidate.positions.len(),
+            ));
             visited += take;
             begin += take;
         }
     }
     jobs
 }
+fn position_jobs_tail(candidates: &[MergeCandidate<'_>], workers: usize) -> Vec<Vec<PositionTask>> {
+    let total: usize = candidates
+        .iter()
+        .map(|candidate| candidate.positions.len())
+        .sum();
+    let chunk = total.div_ceil(workers).clamp(1, 1 << 26);
+    // Keep a very small remainder of one pair in the current job. Its extra
+    // positions cost less than another producer, event run, and codec fragment.
+    // Bound the deviation from equal position counts by both an absolute cap
+    // and a small fraction of the target job size.
+    let tail_budget = chunk.div_ceil(128).min(64);
+    let mut jobs = Vec::<Vec<PositionTask>>::new();
+    let mut filled = chunk;
+    for (rank, candidate) in candidates.iter().enumerate() {
+        let mut begin = 0;
+        while begin < candidate.positions.len() {
+            if filled >= chunk {
+                jobs.push(Vec::new());
+                filled = 0;
+            }
+            let remaining = candidate.positions.len() - begin;
+            let mut take = (chunk - filled).min(remaining);
+            if remaining - take <= tail_budget {
+                take = remaining;
+            }
+            jobs.last_mut()
+                .expect("the current job exists")
+                .push(PositionTask::new(
+                    rank,
+                    begin,
+                    begin + take,
+                    candidate.positions.len(),
+                ));
+            filled += take;
+            begin += take;
+        }
+    }
+    jobs
+}
+fn position_jobs_whole(
+    candidates: &[MergeCandidate<'_>],
+    workers: usize,
+) -> Vec<Vec<PositionTask>> {
+    let total: usize = candidates
+        .iter()
+        .map(|candidate| candidate.positions.len())
+        .sum();
+    let chunk = total.div_ceil(workers).clamp(1, 1 << 26);
+    let tail_budget = chunk.div_ceil(128).min(64);
+    // Keep ordinary pairs intact and expose more ready jobs to the pool.
+    // Small pairs share a job; large pairs retain the original maximum range.
+    let grain = total
+        .div_ceil(workers.saturating_mul(4))
+        .max(4096)
+        .min(chunk);
+    let mut jobs = Vec::<Vec<PositionTask>>::new();
+    let mut filled = chunk;
+    for (rank, candidate) in candidates.iter().enumerate() {
+        let count = candidate.positions.len();
+        if count == 0 {
+            continue;
+        }
+        if count <= chunk {
+            if filled >= grain || filled + count > grain {
+                jobs.push(Vec::new());
+                filled = 0;
+            }
+            jobs.last_mut()
+                .expect("the current job exists")
+                .push(PositionTask::new(rank, 0, count, count));
+            filled += count;
+            continue;
+        }
+        // A large candidate gets spatially ordered ranges, without increasing
+        // its producer count merely to reach the smaller scheduling grain.
+        let mut begin = 0;
+        while begin < count {
+            let remaining = count - begin;
+            let mut take = chunk.min(remaining);
+            if remaining - take <= tail_budget {
+                take = remaining;
+            }
+            jobs.push(vec![PositionTask::new(
+                rank,
+                begin,
+                begin + take,
+                candidate.positions.len(),
+            )]);
+            begin += take;
+        }
+        filled = chunk;
+    }
+    jobs
+}
+
+fn position_jobs_pack(candidates: &[MergeCandidate<'_>], workers: usize) -> Vec<Vec<PositionTask>> {
+    let total: usize = candidates
+        .iter()
+        .map(|candidate| candidate.positions.len())
+        .sum();
+    let chunk = total.div_ceil(workers).clamp(1, 1 << 26);
+    let tail_budget = chunk.div_ceil(128).min(64);
+    let mut remaining: Vec<_> = candidates
+        .iter()
+        .enumerate()
+        .filter(|(_, candidate)| !candidate.positions.is_empty())
+        .map(|(rank, candidate)| {
+            PositionTask::new(
+                rank,
+                0,
+                candidate.positions.len(),
+                candidate.positions.len(),
+            )
+        })
+        .collect();
+    let mut jobs = Vec::<Vec<PositionTask>>::new();
+    let mut filled = chunk;
+    while !remaining.is_empty() {
+        if filled >= chunk {
+            jobs.push(Vec::new());
+            filled = 0;
+        }
+        let space = chunk - filled;
+        // Reorder preparation only. Prefer the largest whole remainder that
+        // fits, with a bounded allowance for the existing tiny-tail policy.
+        // Original ranks and every pair's increasing coordinate ranges remain.
+        let selected = remaining
+            .iter()
+            .enumerate()
+            .filter(|(_, task)| task.end - task.begin <= space + tail_budget)
+            .max_by_key(|(_, task)| (task.end - task.begin, std::cmp::Reverse(task.rank)))
+            .or_else(|| {
+                remaining
+                    .iter()
+                    .enumerate()
+                    .max_by_key(|(_, task)| (task.end - task.begin, std::cmp::Reverse(task.rank)))
+            })
+            .map(|(index, _)| index)
+            .expect("at least one pair remains");
+        let task = &mut remaining[selected];
+        let count = task.end - task.begin;
+        let mut take = space.min(count);
+        if count - take <= tail_budget {
+            take = count;
+        }
+        jobs.last_mut()
+            .expect("the current job exists")
+            .push(PositionTask::new(
+                task.rank,
+                task.begin,
+                task.begin + take,
+                candidates[task.rank].positions.len(),
+            ));
+        task.begin += take;
+        filled += take;
+        if task.begin == task.end {
+            remaining.swap_remove(selected);
+        }
+    }
+    jobs
+}
+
 fn preparation<'a, S: SlotStorage>(
     corpus: &'a Corpus<S>,
     scratch: &'a mut MergeScratch,
@@ -575,6 +1056,68 @@ pub(super) fn prepare_merges<S: SlotStorage>(
     limit: usize,
     execution: &Execution,
 ) -> Result<PreparedMerges> {
+    prepare_merges_core(
+        corpus,
+        rules,
+        candidates,
+        policy,
+        identities,
+        limit,
+        execution,
+        None,
+        1,
+        MergeOptions::default(),
+        None,
+    )
+    .map(|(prepared, _)| prepared)
+}
+pub(super) fn prepare_merges_with_births<'a, S: SlotStorage>(
+    corpus: &Corpus<S>,
+    rules: &[MergeRule],
+    candidates: &[MergeCandidate<'_>],
+    policy: IdentityPolicy,
+    identities: usize,
+    limit: usize,
+    execution: &Execution,
+    arena: &'a AllocationArena,
+    floor: u64,
+    options: MergeOptions,
+    diagnostic_round: Option<&super::single_producer_diagnostics::RoundDiagnostics>,
+) -> Result<(PreparedMerges, Vec<(u64, PairState<'a>)>)> {
+    // Reuse and AA preserve their original preparation and ownership path.
+    if policy == IdentityPolicy::Reusable || rules[0].pair.0 == rules[0].pair.1 {
+        return prepare_merges(
+            corpus, rules, candidates, policy, identities, limit, execution,
+        )
+        .map(|prepared| (prepared, Vec::new()));
+    }
+    prepare_merges_core(
+        corpus,
+        rules,
+        candidates,
+        policy,
+        identities,
+        limit,
+        execution,
+        Some(arena),
+        floor.max(1),
+        options,
+        diagnostic_round,
+    )
+}
+fn prepare_merges_core<'a, S: SlotStorage>(
+    corpus: &Corpus<S>,
+    rules: &[MergeRule],
+    candidates: &[MergeCandidate<'_>],
+    policy: IdentityPolicy,
+    identities: usize,
+    limit: usize,
+    execution: &Execution,
+    arena: Option<&'a AllocationArena>,
+    floor: u64,
+    options: MergeOptions,
+    diagnostic_round: Option<&super::single_producer_diagnostics::RoundDiagnostics>,
+) -> Result<(PreparedMerges, Vec<(u64, PairState<'a>)>)> {
     let outputs = if policy == IdentityPolicy::Reusable {
         prepare_cohort(
             corpus,
@@ -584,6 +1127,9 @@ pub(super) fn prepare_merges<S: SlotStorage>(
             limit as u64,
             execution,
         )?
+        .into_iter()
+        .map(|(job, chunks)| (job, chunks, Vec::new(), None))
+        .collect()
     } else if rules[0].pair.0 == rules[0].pair.1 {
         prepare_aa(
             corpus,
@@ -593,16 +1139,56 @@ pub(super) fn prepare_merges<S: SlotStorage>(
             limit as u64,
             execution,
         )?
+        .into_iter()
+        .map(|(job, chunks)| (job, chunks, Vec::new(), None))
+        .collect()
     } else {
-        let jobs = position_jobs(candidates, execution.workers());
+        let jobs = position_jobs(
+            candidates,
+            execution.workers(),
+            options.layout,
+            options.single_producer_fast && arena.is_some(),
+        );
         let mut selected = execution.selected_rules();
         selected.reset(rules, identities);
-        jobs.into_par_iter()
-            .map(|tasks| -> Result<_> {
+        let dispatched = diagnostic_round.and_then(|round| round.mark());
+        let prep_window = diagnostic_round.map(|round| round.parallel_span());
+        let outputs = jobs
+            .into_par_iter()
+            .enumerate()
+            .map(|(job_index, tasks)| -> Result<_> {
+                let _prep_span = diagnostic_round.map(|round| {
+                    round.task(
+                        super::single_producer_diagnostics::Stage::Prep,
+                        job_index,
+                        execution.current_worker(),
+                        dispatched,
+                    )
+                });
+                let mut diagnostic = options.diagnostics.then(|| JobDiagnostics {
+                    worker: execution.current_worker(),
+                    tasks: tasks
+                        .iter()
+                        .map(|task| TaskDiagnostic {
+                            rank: task.rank,
+                            begin: task.begin,
+                            end: task.end,
+                            matched_positions: 0,
+                            full: task.full,
+                        })
+                        .collect(),
+                    chunks: 0,
+                    node_budget_fits: job_node_budget_fits(
+                        &tasks,
+                        PositionChains::new().remaining_nodes(),
+                    ),
+                    fast_ranks: Vec::new(),
+                });
                 let mut directories = execution.directories();
                 let mut scratch = MergeScratch::new(identities, std::mem::take(&mut *directories));
                 let mut outputs = Vec::new();
-                for task in tasks {
+                let mut births = Vec::new();
+                for (task_index, task) in tasks.into_iter().enumerate() {
                     let mut plan = preparation(
                         corpus,
                         &mut scratch,
@@ -634,36 +1220,88 @@ pub(super) fn prepare_merges<S: SlotStorage>(
                             plan.positions.push(position);
                         }
                     }
-                    outputs.push(plan.finish());
+                    if let Some(diagnostic) = &mut diagnostic {
+                        diagnostic.tasks[task_index].matched_positions = plan.positions.len();
+                    }
+                    if task.fast {
+                        let _codec_span = diagnostic_round.map(|round| {
+                            round.task(
+                                super::single_producer_diagnostics::Stage::FastCodec,
+                                job_index,
+                                execution.current_worker(),
+                                None,
+                            )
+                        });
+                        let mut rank_diagnostic = options.diagnostics.then(|| FastRankDiagnostic {
+                            rank: task.rank,
+                            input_positions: task.end - task.begin,
+                            born_records: 0,
+                            encoded_keys: 0,
+                            encoded_positions: 0,
+                            pruned_keys: 0,
+                        });
+                        outputs.push(plan.finish_with_births(
+                            arena.expect("fast tasks have an arena"),
+                            execution,
+                            floor,
+                            options.direct_encoding,
+                            &mut births,
+                            rank_diagnostic.as_mut(),
+                        )?);
+                        if let (Some(job), Some(rank)) = (&mut diagnostic, rank_diagnostic) {
+                            job.fast_ranks.push(rank);
+                        }
+                    } else {
+                        outputs.push(plan.finish());
+                    }
                 }
                 if let Some((_, chunks)) = outputs.last_mut() {
                     chunks.push(scratch.take_chunk());
                 }
                 *directories = scratch.into_directories();
+                drop(directories);
                 let (writes, chunks): (Vec<_>, Vec<_>) = outputs.into_iter().unzip();
+                let chunks = chunks.into_iter().flatten().collect::<Vec<_>>();
+                if let Some(diagnostic) = &mut diagnostic {
+                    diagnostic.chunks = chunks.len();
+                }
                 Ok((
                     PreparedJob {
                         writes,
                         word_region: None,
                     },
-                    chunks.into_iter().flatten().collect::<Vec<_>>(),
+                    chunks,
+                    births,
+                    diagnostic,
                 ))
             })
-            .collect::<Result<Vec<_>>>()?
+            .collect::<Result<Vec<_>>>()?;
+        drop(prep_window);
+        outputs
     };
     let mut jobs = Vec::new();
     let mut chunks = Vec::new();
-    for (write, events) in outputs {
+    let mut births = Vec::new();
+    let mut diagnostics = Vec::new();
+    for (write, events, encoded, diagnostic) in outputs {
+        if let Some(diagnostic) = diagnostic {
+            diagnostics.push(diagnostic);
+        }
+        births.extend(encoded);
         jobs.push(write);
         chunks.extend(events);
     }
-    Ok(PreparedMerges {
-        jobs,
-        events: MergeEvents {
-            chunks,
-            buckets: rules.len() * 2,
+    Ok((
+        PreparedMerges {
+            diagnostics,
+            jobs,
+            events: MergeEvents {
+                chunks,
+                buckets: rules.len() * 2,
+            },
         },
-    })
+        births,
+    ))
 }
 enum CohortSource {
     Words(Vec<usize>),
@@ -1011,5 +1649,32 @@ mod tests {
         selected.reset(&[], 8);
         assert_eq!(selected.heads[3], EMPTY);
         assert_eq!(selected.tails[6], EMPTY);
+    }
+}
+
+#[cfg(test)]
+mod producer_budget_tests {
+    use super::*;
+    #[test]
+    fn node_budget_includes_partial_tasks_and_accepts_exact_capacity() {
+        let tasks = [
+            PositionTask::new(0, 0, 4, 4),
+            PositionTask::new(1, 3, 8, 12),
+        ];
+        assert!(tasks[0].full);
+        assert!(!tasks[1].full);
+        assert!(job_node_budget_fits(&tasks, 18));
+        assert!(!job_node_budget_fits(&tasks, 17));
+        assert!(!job_node_budget_fits(
+            &[PositionTask::new(0, 0, usize::MAX, usize::MAX)],
+            usize::MAX
+        ));
+        assert!(!job_node_budget_fits(
+            &[
+                PositionTask::new(0, 0, usize::MAX, usize::MAX),
+                PositionTask::new(1, 0, 1, 1)
+            ],
+            usize::MAX
+        ));
     }
 }

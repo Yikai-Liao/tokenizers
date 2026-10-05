@@ -1,5 +1,9 @@
 # Preliminary BPE comparison and ablations
 
+The retained multicore candidate, its selected runtime configuration, and the
+final structural experiment are documented in
+[MULTICORE_CANDIDATE.md](MULTICORE_CANDIDATE.md).
+
 This suite runs the current trainer and eight variants derived from the same
 source. It writes to a separate experiment directory and labels its results
 `preliminary`. Review and the later formal experiment remain separate steps.

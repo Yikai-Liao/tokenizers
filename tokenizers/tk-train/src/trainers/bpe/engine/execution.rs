@@ -1,5 +1,5 @@
 //! One pool with reusable ID directories and encoding scratch.
-use super::merge::SelectedRules;
+use super::{merge::SelectedRules, pair_index::ShardRouter};
 use std::sync::Mutex;
 use tk_collections::{IdDirectory, PositionEncodingScratch};
 use tk_encode::Result;
@@ -9,10 +9,16 @@ pub(super) struct Execution {
     encoding: Vec<Mutex<PositionEncodingScratch>>,
     directories: Vec<Mutex<[IdDirectory; 2]>>,
     selected: Mutex<SelectedRules>,
+    router: ShardRouter,
 }
 impl Execution {
     pub(super) fn new(workers: usize) -> Result<Self> {
+        Self::with_owners(workers, workers, false)
+    }
+    pub(super) fn with_owners(workers: usize, owners: usize, fast_router: bool) -> Result<Self> {
+        let owners = if workers == 1 { 1 } else { owners.max(1) };
         Ok(Self {
+            router: ShardRouter::new(owners, fast_router),
             pool: rayon::ThreadPoolBuilder::new()
                 .num_threads(workers)
                 .build()?,
@@ -22,6 +28,12 @@ impl Execution {
             directories: (0..workers).map(|_| Mutex::default()).collect(),
             selected: Mutex::default(),
         })
+    }
+    pub(super) fn owners(&self) -> usize {
+        self.router.shards()
+    }
+    pub(super) fn router(&self) -> ShardRouter {
+        self.router
     }
     pub(super) fn directories(&self) -> std::sync::MutexGuard<'_, [IdDirectory; 2]> {
         // The caller must finish sequential work before releasing this lease;

@@ -5,6 +5,7 @@ mod execution;
 mod initial_pairs;
 mod merge;
 mod pair_index;
+mod single_producer_diagnostics;
 mod vocabulary;
 use super::BpeTrainer;
 use crate::progress::TrainingProgress;
@@ -31,11 +32,35 @@ pub(super) fn train(
     trainer: &BpeTrainer,
     word_counts: &AHashMap<CompactString, u64>,
     workers: usize,
+    #[cfg(test)] observe: Option<&mut (dyn FnMut(tk_encode::models::bpe::Pair, u64, u32) + Send)>,
+) -> Result<ModelParts> {
+    train_with_merge_options(
+        trainer,
+        word_counts,
+        workers,
+        merge::MergeOptions::from_env(),
+        #[cfg(test)]
+        observe,
+    )
+}
+fn train_with_merge_options(
+    trainer: &BpeTrainer,
+    word_counts: &AHashMap<CompactString, u64>,
+    workers: usize,
+    merge_options: merge::MergeOptions,
     #[cfg(test)] mut observe: Option<
         &mut (dyn FnMut(tk_encode::models::bpe::Pair, u64, u32) + Send),
     >,
 ) -> Result<ModelParts> {
-    let execution = execution::Execution::new(workers)?;
+    let execution = execution::Execution::with_owners(
+        workers,
+        if merge_options.logical_owners == 0 {
+            workers
+        } else {
+            merge_options.logical_owners
+        },
+        merge_options.fast_shard_router,
+    )?;
     execution.pool.install(|| {
         let progress = TrainingProgress::new(trainer.show_progress, trainer.progress_format)?;
         // Every attempt begins with first activations. A nonempty affix does
@@ -55,6 +80,7 @@ pub(super) fn train(
                 word_counts,
                 policy,
                 &execution,
+                merge_options,
                 &progress,
                 &mut retained_alphabet,
                 #[cfg(test)]
@@ -85,6 +111,7 @@ fn train_attempt(
     word_counts: &AHashMap<CompactString, u64>,
     policy: IdentityPolicy,
     execution: &execution::Execution,
+    merge_options: merge::MergeOptions,
     progress: &TrainingProgress,
     retained_alphabet: &mut Option<Vec<char>>,
     #[cfg(test)] trace: &mut Vec<(tk_encode::models::bpe::Pair, u64, u32)>,
@@ -116,6 +143,7 @@ fn train_attempt(
             prepared_corpus,
             policy,
             execution,
+            merge_options,
             progress,
             #[cfg(test)]
             trace,
@@ -126,6 +154,7 @@ fn train_attempt(
             prepared_corpus,
             policy,
             execution,
+            merge_options,
             progress,
             #[cfg(test)]
             trace,
@@ -136,6 +165,7 @@ fn train_attempt(
             prepared_corpus,
             policy,
             execution,
+            merge_options,
             progress,
             #[cfg(test)]
             trace,
@@ -148,10 +178,13 @@ fn train_with_slots<S: corpus::SlotStorage>(
     prepared_corpus: corpus::PreparedCorpus<'_>,
     policy: IdentityPolicy,
     execution: &execution::Execution,
+    merge_options: merge::MergeOptions,
     progress: &TrainingProgress,
     #[cfg(test)] trace: &mut Vec<(tk_encode::models::bpe::Pair, u64, u32)>,
 ) -> Result<AttemptOutcome> {
     let workers = execution.workers();
+    let diagnostics =
+        single_producer_diagnostics::AttemptDiagnostics::new(merge_options.diagnostics, workers);
     let arena = AllocationArena::new(workers, prepared_corpus.initial_edges());
     let initial = initial_pairs::build_initial_pairs(
         &prepared_corpus,
@@ -171,11 +204,23 @@ fn train_with_slots<S: corpus::SlotStorage>(
         drop(prepared_corpus);
         drop(arena);
         execution.release_scratch();
+        diagnostics.finish(true);
         return Ok(complete_model(trainer, vocabulary, Vec::new()));
     }
     let mut corpus = prepared_corpus.materialize::<S>(workers, policy, progress)?;
     let mut index =
         pair_index::PairIndex::from_initial_pairs(initial, policy, trainer.min_frequency)?;
+    index.configure_commit(
+        merge_options.group_births_in_commit,
+        merge_options.direct_cold_encoding,
+        merge_options.fast_shard_router,
+    );
+    index.configure_removals(
+        merge_options.removal_entry,
+        merge_options.removal_reduce,
+        merge_options.removal_statistics,
+        merge_options.removal_selective,
+    );
     let mut merges = Vec::new();
     // PERF: Reuse bounded selection workspace across all rounds. Clearing
     // candidates releases their position lists before commit without reallocating
@@ -187,7 +232,12 @@ fn train_with_slots<S: corpus::SlotStorage>(
     let work = progress.merges(trainer.vocab_size, vocabulary.len());
     while vocabulary.len() < trainer.vocab_size {
         let cap = if policy == IdentityPolicy::Fresh {
-            256.min(trainer.vocab_size - vocabulary.len())
+            let limit = if merge_options.batch_limit == 0 {
+                256
+            } else {
+                merge_options.batch_limit
+            };
+            limit.min(trainer.vocab_size - vocabulary.len())
         } else {
             1
         };
@@ -211,6 +261,7 @@ fn train_with_slots<S: corpus::SlotStorage>(
                 // Switching this index in place would lose observable births.
                 // Input words remain unchanged: rebuild all cohorts instead,
                 // before consuming this candidate or writing its batch.
+                diagnostics.finish(false);
                 return Ok(AttemptOutcome::RestartForReuse);
             }
             let reserved = token.existing_id.is_some();
@@ -241,7 +292,19 @@ fn train_with_slots<S: corpus::SlotStorage>(
         if rules.is_empty() {
             break;
         }
-        let prepared = merge::prepare_merges(
+        let inputs = if merge_options.diagnostics {
+            candidates
+                .iter()
+                .map(|candidate| candidate.positions.len())
+                .collect::<Vec<_>>()
+        } else {
+            Vec::new()
+        };
+        let diagnostic_round = diagnostics.begin_round(&inputs);
+        let diagnostic = merge_options.diagnostics.then_some(&diagnostic_round);
+        let prep_phase = diagnostic
+            .map(|round| round.phase("prepare_mixed_serial_layout_parallel_jobs_serial_fanin"));
+        let (mut prepared, prepared_births) = merge::prepare_merges_with_births(
             &corpus,
             &rules,
             &candidates,
@@ -249,13 +312,30 @@ fn train_with_slots<S: corpus::SlotStorage>(
             vocabulary.len(),
             trainer.max_token_length.unwrap_or(usize::MAX),
             execution,
+            &arena,
+            trainer.min_frequency.max(1),
+            merge_options,
+            diagnostic,
         )?;
+        drop(prep_phase);
+        let job_diagnostics = std::mem::take(&mut prepared.diagnostics);
         // PERF: Preparation owns all writes and birth events. Selected
         // position lists have no remaining reader; release them before allocating
         // the next generation during commit.
         candidates.clear();
         let events = prepared.apply(&mut corpus);
-        index.commit_merges(&events, vocabulary.len(), execution, &arena)?;
+        let commit_phase =
+            diagnostic.map(|round| round.phase("commit_mixed_serial_route_parallel_owner"));
+        index.commit_merges_with_prepared(
+            &events,
+            vocabulary.len(),
+            execution,
+            &arena,
+            prepared_births,
+            diagnostic,
+        )?;
+        drop(commit_phase);
+        diagnostic_round.finish(&job_diagnostics);
         drop(events);
         work.learned(merges.len(), vocabulary.len());
     }
@@ -263,10 +343,12 @@ fn train_with_slots<S: corpus::SlotStorage>(
     // owners before their arena, and free the corpus and scratch before
     // constructing the public vocabulary and merge strings.
     drop((rules, candidates, heads, tails));
+    index.report_removal_statistics();
     drop(index);
     drop(corpus);
     drop(arena);
     execution.release_scratch();
+    diagnostics.finish(true);
     Ok(complete_model(trainer, vocabulary, merges))
 }
 fn complete_model(
