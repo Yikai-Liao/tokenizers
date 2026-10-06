@@ -1,5 +1,7 @@
-use ahash::AHashMap;
+#![allow(dead_code)]
+// Word is retained for the upstream test oracle and optional parity trainer.
 use std::{iter, mem};
+#[cfg(any(test, feature = "parity-aware-bpe"))]
 use tk_encode::models::bpe::Pair;
 
 /// Provides access to the `FirstLastIterator` to any Iterator
@@ -43,6 +45,7 @@ where
     }
 }
 
+#[cfg(any(test, feature = "parity-aware-bpe"))]
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct Symbol {
     c: u32,
@@ -50,6 +53,7 @@ pub(crate) struct Symbol {
     next: isize,
     len: usize,
 }
+#[cfg(any(test, feature = "parity-aware-bpe"))]
 impl Symbol {
     /// Merges the current Symbol with the other one.
     /// In order to update prev/next, we consider Self to be the Symbol on the left,
@@ -61,11 +65,13 @@ impl Symbol {
     }
 }
 
+#[cfg(any(test, feature = "parity-aware-bpe"))]
 #[derive(Clone, Default)]
 pub struct Word {
     symbols: Vec<Symbol>,
 }
 
+#[cfg(any(test, feature = "parity-aware-bpe"))]
 impl std::fmt::Debug for Word {
     fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
         fmt.debug_struct("Word")
@@ -83,6 +89,7 @@ impl std::fmt::Debug for Word {
     }
 }
 
+#[cfg(any(test, feature = "parity-aware-bpe"))]
 impl Word {
     pub fn new() -> Self {
         Word { symbols: vec![] }

@@ -1,30 +1,53 @@
+#![allow(dead_code, unused_imports)]
+// Unmodified upstream BPE algorithm, compiled only as a differential test oracle.
 #![allow(clippy::map_entry)]
-
-#[cfg(test)]
-mod compatibility_tests;
-mod feed;
-#[cfg(feature = "parity-aware-bpe")]
-pub mod parity_trainer;
-#[cfg(test)]
-mod reference;
-mod word;
-mod yttm;
-#[cfg(feature = "parity-aware-bpe")]
-pub use parity_trainer::{ParityBpeTrainer, ParityBpeTrainerBuilder, ParityVariant};
 
 use crate::Trainer;
 use ahash::{AHashMap, AHashSet};
 use compact_str::CompactString;
+use dary_heap::OctonaryHeap;
 use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
 use std::collections::HashSet;
 use tk_encode::vocab::bucket_added_vocabulary::AddedToken;
-// Vocabulary preparation retains the upstream identity rules. The YTTM port
-// produces the raw vocabulary and merges used to construct `PipelineBPE`.
-use word::WithFirstLastIterator;
+// The `Word` machinery a trainer merges into is training-only, so it lives here rather than in the
+// inference crate. `PipelineBPE` is the only BPE left; a trainer reaches it through
+// `from_vocab_and_merges`, the same serde-free door a reader walks through, because its fields are
+// private to `tk-encode`.
+use super::word::{WithFirstLastIterator, Word};
 
 use tk_encode::Result;
 use tk_encode::models::bpe::{BpeConfig, Merges, Pair, PipelineBPE, Vocab};
+use tk_encode::parallelism::*;
 use tk_encode::utils::progress::{ProgressBar, ProgressFormat, ProgressStyle};
+use tk_encode::vocab::bucket_vocab_store::BucketVocabStore;
+
+#[derive(Debug, Eq)]
+struct Merge {
+    pair: Pair,
+    count: u64,
+    pos: AHashSet<usize>,
+}
+impl PartialEq for Merge {
+    fn eq(&self, other: &Self) -> bool {
+        self.count == other.count && self.pair == other.pair
+    }
+}
+impl PartialOrd for Merge {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+impl Ord for Merge {
+    fn cmp(&self, other: &Self) -> Ordering {
+        if self.count != other.count {
+            self.count.cmp(&other.count)
+        } else {
+            // Here we want ascending order
+            other.pair.cmp(&self.pair)
+        }
+    }
+}
 
 struct Config {
     min_frequency: u64,
@@ -364,12 +387,12 @@ impl BpeTrainer {
         w2id: &mut AHashMap<CompactString, u32>,
         id2w: &mut Vec<CompactString>,
         p: &Option<ProgressBar>,
-    ) -> (Vec<Vec<u32>>, Vec<u64>) {
-        let mut words: Vec<Vec<u32>> = Vec::with_capacity(wc.len());
+    ) -> (Vec<Word>, Vec<u64>) {
+        let mut words: Vec<Word> = Vec::with_capacity(wc.len());
         let mut counts: Vec<u64> = Vec::with_capacity(wc.len());
 
         for (word, count) in wc {
-            let mut current_word = Vec::new();
+            let mut current_word = Word::new();
             counts.push(*count);
 
             for (is_first, is_last, c) in word.chars().with_first_and_last() {
@@ -391,7 +414,7 @@ impl BpeTrainer {
                         id2w.push(CompactString::from(&s));
                         w2id.insert(CompactString::from(&s), (id2w.len() - 1) as u32);
                     }
-                    current_word.push(w2id[&CompactString::from(&s)]);
+                    current_word.add(w2id[&CompactString::from(&s)], 1); // We do not care about the len here
                 }
             }
             words.push(current_word);
@@ -402,6 +425,48 @@ impl BpeTrainer {
         }
 
         (words, counts)
+    }
+
+    fn count_pairs(
+        &self,
+        words: &[Word],
+        counts: &[u64],
+        p: &Option<ProgressBar>,
+    ) -> (AHashMap<Pair, i32>, AHashMap<Pair, AHashSet<usize>>) {
+        words
+            .maybe_par_iter()
+            .enumerate()
+            .map(|(i, word)| {
+                let mut pair_counts = AHashMap::new();
+                let mut where_to_update: AHashMap<Pair, AHashSet<usize>> = AHashMap::new();
+
+                for window in word.get_chars().windows(2) {
+                    let cur_pair: Pair = (window[0], window[1]);
+
+                    // Initialize pair_counts and where_to_update for this pair if we just saw it
+                    // Then update counts
+                    *pair_counts.entry(cur_pair).or_default() += counts[i] as i32;
+                    where_to_update.entry(cur_pair).or_default().insert(i);
+                }
+
+                if let Some(p) = &p {
+                    p.inc(1);
+                }
+
+                (pair_counts, where_to_update)
+            })
+            .reduce(
+                || (AHashMap::new(), AHashMap::new()),
+                |(mut pair_counts, mut where_to_update), (pc, wtu)| {
+                    for (k, v) in pc {
+                        *pair_counts.entry(k).or_default() += v;
+                    }
+                    for (k, v) in wtu {
+                        where_to_update.entry(k).or_default().extend(v);
+                    }
+                    (pair_counts, where_to_update)
+                },
+            )
     }
 
     /// Train and hand back the raw parts, for a caller that wants them rather than a built model.
@@ -437,16 +502,10 @@ impl BpeTrainer {
         &self,
         word_counts: &AHashMap<CompactString, u64>,
     ) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
-        self.do_train_with_workers(word_counts, yttm::worker_count())
-    }
-
-    fn do_train_with_workers(
-        &self,
-        word_counts: &AHashMap<CompactString, u64>,
-        workers: usize,
-    ) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
         let mut word_to_id: AHashMap<CompactString, u32> = AHashMap::with_capacity(self.vocab_size);
         let mut id_to_word: Vec<CompactString> = Vec::with_capacity(self.vocab_size);
+        let max_token_length: usize = self.max_token_length.unwrap_or(usize::MAX);
+
         let progress = self.setup_progress();
 
         //
@@ -463,19 +522,136 @@ impl BpeTrainer {
         // 3. Tokenize words
         //
         self.update_progress(&progress, word_counts.len(), "Tokenize words");
-        let (words, counts) =
+        let (mut words, counts) =
             self.tokenize_words(word_counts, &mut word_to_id, &mut id_to_word, &progress);
         self.finalize_progress(&progress, words.len(), "Tokenize words");
 
-        let merges = yttm::train(
-            self,
-            words,
-            counts,
-            &mut word_to_id,
-            &mut id_to_word,
-            &progress,
-            workers,
-        )?;
+        //
+        // 4. Count pairs in words
+        //
+        self.update_progress(&progress, words.len(), "Count pairs");
+        let (mut pair_counts, mut where_to_update) = self.count_pairs(&words, &counts, &progress);
+        // Insert them in the queue
+        let mut queue = OctonaryHeap::with_capacity(pair_counts.len());
+        where_to_update.drain().for_each(|(pair, pos)| {
+            let count = pair_counts[&pair];
+            if count > 0 {
+                queue.push(Merge {
+                    pair,
+                    count: count as u64,
+                    pos,
+                });
+            }
+        });
+        self.finalize_progress(&progress, words.len(), "Count pairs");
+
+        //
+        // 5. Do merges
+        //
+        self.update_progress(&progress, self.vocab_size, "Compute merges");
+        let mut merges: Vec<(Pair, u32)> = vec![];
+        loop {
+            // Stop as soon as we have a big enough vocabulary
+            if word_to_id.len() >= self.vocab_size {
+                break;
+            }
+
+            let Some(mut top) = queue.pop() else {
+                break;
+            };
+
+            if top.count != pair_counts[&top.pair] as u64 {
+                top.count = pair_counts[&top.pair] as u64;
+                queue.push(top);
+                continue;
+            }
+
+            if top.count < 1 || self.min_frequency > top.count {
+                break;
+            }
+
+            let part_a = &id_to_word[top.pair.0 as usize];
+            let mut part_b = id_to_word[top.pair.1 as usize].as_str();
+
+            // Build new token
+            if let Some(prefix) = &self.continuing_subword_prefix
+                && let Some(rest) = part_b.strip_prefix(prefix)
+            {
+                part_b = rest;
+            }
+
+            // Insert new token if it does not already exist
+            let new_token = format!("{part_a}{part_b}");
+            let new_token_id = word_to_id
+                .get(&CompactString::from(&new_token))
+                .copied()
+                .unwrap_or(id_to_word.len() as u32);
+            if !word_to_id.contains_key(&CompactString::from(&new_token)) {
+                id_to_word.push(CompactString::from(&new_token));
+                word_to_id.insert(CompactString::from(&new_token), new_token_id);
+            }
+            merges.push((top.pair, new_token_id));
+
+            // Merge the new pair in every words
+            // Safety: This is just a type assertion, the code below may no longer be safe
+            // if the type of `pos` changes
+            let pos: &AHashSet<usize> = &top.pos;
+
+            let words_len = words.len();
+            // FIXME: doesn't look great
+            struct WordPtr(*mut Word);
+            // Safety: We do not actually use this for concurrent access to the same memory,
+            // only to different chunks within the same allocation.
+            unsafe impl Sync for WordPtr {}
+            let word_start = WordPtr(words.as_mut_ptr());
+
+            let changes = pos
+                .maybe_par_iter()
+                .flat_map(|&i| {
+                    // We can merge each of these words in parallel here because each position
+                    // can be there only once (AHashSet). So this is safe.
+                    unsafe {
+                        // Edition ≥2021 closures capture the `.0` field (a non-Sync raw
+                        // pointer) unless we force whole-struct capture of the Sync wrapper.
+                        let word_start = &word_start;
+                        assert!(i < words_len);
+                        // This is words[i], but avoids needing to go through &T (which triggers UB)
+                        let word = word_start.0.add(i);
+                        // let word: &mut Word = &mut (*word);
+                        (*word)
+                            .merge(top.pair.0, top.pair.1, new_token_id, max_token_length)
+                            .into_iter()
+                            .map(|c| (c, i))
+                            .collect::<Vec<_>>()
+                    }
+                })
+                .collect::<Vec<_>>();
+
+            // Introduce new formed pairs
+            for ((pair, change), iw) in changes {
+                let count = change * counts[iw] as i32;
+                *pair_counts.entry(pair).or_default() += count;
+                if change > 0 {
+                    where_to_update.entry(pair).or_default().insert(iw);
+                }
+            }
+            where_to_update.drain().for_each(|(pair, pos)| {
+                let count = pair_counts[&pair];
+                if count > 0 {
+                    queue.push(Merge {
+                        pair,
+                        count: count as u64,
+                        pos,
+                    });
+                }
+            });
+
+            if let Some(p) = &progress {
+                p.inc(1);
+            }
+            self.emit_json_progress("Compute merges", merges.len(), self.vocab_size);
+        }
+        self.finalize_progress(&progress, merges.len(), "Compute merges");
 
         // The vocabulary, keyed by the token string rather than by `word_to_id`'s hash: we have to
         // look the string up in `id_to_word` either way.
@@ -508,8 +684,8 @@ impl Trainer for BpeTrainer {
     fn train(&self, model: &mut PipelineBPE) -> Result<Vec<AddedToken>> {
         let (vocab, merges, special_tokens) = self.do_train(&self.words)?;
         *model = PipelineBPE::from_config(BpeConfig {
-            vocab,
-            merges,
+            vocab: vocab,
+            merges: merges,
             ..self.model_options()
         })?;
         Ok(special_tokens)
@@ -526,191 +702,28 @@ impl Trainer for BpeTrainer {
         S: AsRef<str> + Send,
         F: Fn(&str) -> Result<Vec<String>> + Sync,
     {
-        self.words = feed::count(iterator, process, yttm::worker_count())?;
+        let words: Result<AHashMap<CompactString, u64>> = iterator
+            .maybe_par_bridge()
+            .map(|sequence| {
+                let words = process(sequence.as_ref())?;
+                let mut map = AHashMap::new();
+                for word in words {
+                    *map.entry(CompactString::from(word)).or_default() += 1;
+                }
+                Ok(map)
+            })
+            .reduce(
+                || Ok(AHashMap::new()),
+                |acc, ws| {
+                    let mut acc = acc?;
+                    for (k, v) in ws? {
+                        *acc.entry(k).or_default() += v;
+                    }
+                    Ok(acc)
+                },
+            );
+
+        self.words = words?;
         Ok(())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{BpeTrainer, Merges};
-    use ahash::AHashMap;
-    use compact_str::CompactString;
-
-    #[test]
-    fn test_train() {
-        let word_counts: AHashMap<CompactString, u64> = [
-            ("roses".into(), 1),
-            ("are".into(), 2),
-            ("red".into(), 1),
-            ("voilets".into(), 1),
-            ("blue".into(), 1),
-            ("BERT".into(), 1),
-            ("is".into(), 2),
-            ("big".into(), 1),
-            ("and".into(), 1),
-            ("so".into(), 1),
-            ("GPT-2".into(), 1),
-        ]
-        .iter()
-        .cloned()
-        .collect();
-        let trainer = BpeTrainer::builder()
-            .show_progress(false)
-            .min_frequency(2)
-            .build();
-        let (trained_vocab, merges, _special_tokens) = trainer.do_train(&word_counts).unwrap();
-
-        // Vocab should contain all of the characters from the `word_counts` mapping
-        // as well as three merges: 're', 'are', and 'is'.
-        let expected_vocab: AHashMap<String, u32> = [
-            ("-".into(), 0),
-            ("2".into(), 1),
-            ("B".into(), 2),
-            ("E".into(), 3),
-            ("G".into(), 4),
-            ("P".into(), 5),
-            ("R".into(), 6),
-            ("T".into(), 7),
-            ("a".into(), 8),
-            ("b".into(), 9),
-            ("d".into(), 10),
-            ("e".into(), 11),
-            ("g".into(), 12),
-            ("i".into(), 13),
-            ("l".into(), 14),
-            ("n".into(), 15),
-            ("o".into(), 16),
-            ("r".into(), 17),
-            ("s".into(), 18),
-            ("t".into(), 19),
-            ("u".into(), 20),
-            ("v".into(), 21),
-            ("re".into(), 22),
-            ("are".into(), 23),
-            ("is".into(), 24),
-        ]
-        .iter()
-        .cloned()
-        .collect();
-        assert_eq!(trained_vocab, expected_vocab);
-
-        // `merges` is the pair of symbol *strings* per merge, highest priority first -- the on-disk
-        // form, and what `PipelineBPE::from_vocab_and_merges` re-derives its ranks from. Position in
-        // the list is the rank, so the order is part of what is being asserted.
-        let expected_merges: Merges = vec![
-            ("r".into(), "e".into()),  // 'r' + 'e'  -> 're'
-            ("a".into(), "re".into()), // 'a' + 're' -> 'are'
-            ("i".into(), "s".into()),  // 'i' + 's'  -> 'is'
-        ];
-        assert_eq!(merges, expected_merges);
-    }
-    #[test]
-    fn bpe_test_max_token_length_16() {
-        /* bpe_test_max_token_length series of tests test the max_token_length flag of bpetrainer
-        // this is the more robust version that only tests max length of learned tokens
-        // (pre) tokenizer settings or vocab can be easily modified when necessary
-         */
-
-        let max_token_length = 16;
-        let long_word_counts: AHashMap<CompactString, u64> = [
-            ("singlelongtokenwithoutcasechange", 2),
-            ("singleLongTokenWithCamelCaseChange", 2),
-            ("Longsingletokenwithpunctu@t!onwithin", 2),
-            ("Anotherlongsingletokenwithnumberw1th1n", 2),
-            ("짧은한글문자열짧은한", 2),             // korean 10 char
-            ("긴한글문자열긴한글문자열긴한글문", 2), // korean 16 char
-            ("短字符串短字符串短字", 2),             //simplified chinese 10 char
-            ("长字符串长字符串长字符串长字符串", 2), // simp. chinese 16 char
-            ("短い文字列短い文字列", 2),             // japanese 10 char
-            ("長い文字列長い文字列長い文字列長", 2), // japanese 16 char
-            ("so", 2),
-            ("GPT-2", 2),
-        ]
-        .iter()
-        .map(|(key, value)| (CompactString::from(key.to_string()), *value))
-        .collect();
-        let trainer = BpeTrainer::builder()
-            .max_token_length(Some(max_token_length))
-            .show_progress(false)
-            .min_frequency(0)
-            .build();
-        let (vocab, _merges, _special_tokens) = trainer.do_train(&long_word_counts).unwrap();
-        for token in vocab.keys() {
-            assert!(
-                token.chars().count() <= max_token_length,
-                "token too long : {} , chars().count() = {}",
-                token,
-                token.chars().count()
-            )
-        }
-    }
-    #[test]
-    fn bpe_test_max_token_length_direct_assert() {
-        /* more direct version of bpe_test_max_token_length test
-        // directly compares tokens with known expected values.
-        // maybe unstable depending on specific settings or changes.
-         */
-        let long_word_counts: AHashMap<CompactString, u64> = [
-            ("sin", 2),
-            ("Sin", 2),
-            ("Lon", 2),
-            ("Ano", 2),
-            ("짧은한", 2),
-            ("긴한글", 2),
-            ("短字符", 2),
-            ("长字符", 2),
-            ("短い文", 2),
-            ("長い文", 2),
-            ("so", 2),
-            ("GP", 2),
-        ]
-        .iter()
-        .map(|(key, value)| (CompactString::from(key.to_string()), *value))
-        .collect();
-        let trainer = BpeTrainer::builder()
-            .max_token_length(Some(2))
-            .show_progress(false)
-            .min_frequency(0)
-            .build();
-        let (trained_vocab, _merges, _special_tokens) =
-            trainer.do_train(&long_word_counts).unwrap();
-        let expected_vocab: AHashMap<String, u32> = [
-            ("短", 12),
-            ("n", 6),
-            ("i", 5),
-            ("s", 8),
-            ("字符", 23),
-            ("長", 14),
-            ("긴", 17),
-            ("い文", 22),
-            ("L", 2),
-            ("in", 21),
-            ("o", 7),
-            ("은한", 29),
-            ("S", 4),
-            ("P", 3),
-            ("so", 27),
-            ("符", 13),
-            ("文", 11),
-            ("字", 10),
-            ("짧", 19),
-            ("GP", 25),
-            ("글", 16),
-            ("G", 1),
-            ("An", 24),
-            ("长", 15),
-            ("A", 0),
-            ("Lo", 26),
-            ("긴한", 28),
-            ("い", 9),
-            ("한", 20),
-            ("은", 18),
-        ]
-        .iter()
-        .cloned()
-        .map(|(k, v)| (k.to_string(), v))
-        .collect();
-        assert_eq!(trained_vocab, expected_vocab)
     }
 }
