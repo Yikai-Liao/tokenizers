@@ -21,6 +21,8 @@ use tk_encode::vocab::bucket_added_vocabulary::AddedToken;
 // Vocabulary preparation retains the upstream identity rules. The YTTM port
 // produces the raw vocabulary and merges used to construct `PipelineBPE`.
 use word::WithFirstLastIterator;
+#[cfg(feature = "parity-aware-bpe")]
+use word::Word;
 
 use tk_encode::Result;
 use tk_encode::models::bpe::{BpeConfig, Merges, Pair, PipelineBPE, Vocab};
