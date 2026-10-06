@@ -34,6 +34,7 @@ pub(super) struct InitialTokenIds {
     prefix: bool,
     suffix: bool,
     complete_alphabet: bool,
+    maximum_initial_id: u32,
 }
 impl Vocabulary {
     pub(super) fn initialize(
@@ -136,6 +137,7 @@ impl Vocabulary {
             prefix: self.prefix.as_deref().is_some_and(|p| !p.is_empty()),
             suffix: self.suffix.as_deref().is_some_and(|s| !s.is_empty()),
             complete_alphabet: self.plain_ids_resolved,
+            maximum_initial_id: 0,
         };
         for (id, token) in self.tokens.iter().enumerate() {
             let mut chars = token.chars();
@@ -143,6 +145,7 @@ impl Vocabulary {
                 && chars.next().is_none()
             {
                 ids.characters[character as usize] = id as u32;
+                ids.maximum_initial_id = ids.maximum_initial_id.max(id as u32);
             }
         }
         if ids.prefix || ids.suffix {
@@ -192,6 +195,7 @@ impl Vocabulary {
                         id
                     }
                 };
+                ids.maximum_initial_id = ids.maximum_initial_id.max(id);
                 self.active[id as usize] = true;
             }
             if (index + 1) % 1024 == 0 {
@@ -264,6 +268,9 @@ impl Vocabulary {
     }
 }
 impl InitialTokenIds {
+    pub(super) fn compact_pair_keys(&self) -> bool {
+        self.maximum_initial_id <= u16::MAX as u32
+    }
     /// Interpret filtering and decorations against original UTF-8 coordinates.
     /// The plain path chooses its loop once and avoids per-symbol affix checks.
     #[inline]
@@ -320,5 +327,50 @@ impl InitialTokenIds {
     }
     pub(super) fn retained(&self, character: char) -> bool {
         self.characters[character as usize] != WORD_SEPARATOR_ID
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn compact_keys_follow_emitted_ids_including_decorations() {
+        use std::ops::ControlFlow;
+        for reserved_len in [u16::MAX as usize, u16::MAX as usize + 1] {
+            let mut vocabulary = Vocabulary {
+                tokens: IndexSet::with_hasher(RandomState::default()),
+                active: Vec::new(),
+                prefix: None,
+                suffix: None,
+                plain_ids_resolved: true,
+            };
+            assert_eq!(vocabulary.intern("a").unwrap(), 0);
+            for index in 1..reserved_len {
+                vocabulary.intern(&format!("<reserved{index}>")).unwrap();
+            }
+            let words = ahash::AHashMap::from_iter([(CompactString::from("aa"), 1_u64)]);
+            let progress =
+                TrainingProgress::new(false, tk_encode::utils::progress::ProgressFormat::Silent)
+                    .unwrap();
+            let work = progress.stage("Initial IDs", words.len());
+            let ids = vocabulary
+                .initial_ids(WordCountsView::from_map(&words), &work)
+                .unwrap();
+            // Reserved vocabulary size alone must not force full-width records.
+            assert!(ids.compact_pair_keys());
+            vocabulary.prefix = Some("##".into());
+            let work = progress.stage("Decorated IDs", words.len());
+            let ids = vocabulary
+                .initial_ids(WordCountsView::from_map(&words), &work)
+                .unwrap();
+            let mut emitted = Vec::new();
+            ids.scan_symbols("aa", 0, |id| {
+                emitted.push(id);
+                ControlFlow::Continue(())
+            });
+            assert_eq!(emitted, [0, reserved_len as u32]);
+            assert_eq!(ids.compact_pair_keys(), reserved_len <= u16::MAX as usize);
+        }
     }
 }

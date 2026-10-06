@@ -47,6 +47,9 @@ impl InitialPairSource for &CorpusPlan<'_> {
     fn word_weights(&self) -> &IntervalIndex<u64> {
         &self.weights
     }
+    fn compact_keys(&self) -> bool {
+        self.initial_ids.compact_pair_keys()
+    }
     fn edge_count(&self, range: Range<usize>) -> usize {
         // The plan has already measured retained symbols. Each word owns its
         // left endpoints through the penultimate symbol, including wave cuts.

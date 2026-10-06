@@ -28,9 +28,11 @@
 //! Rust translation of Clausecker's BSD-2-Clause `radixsort_permuted.c`.
 //! Reference f69e816c3cd79d312cd67aea5b9cf1c338c1b371, July 2026 paper:
 //! <https://arxiv.org/abs/2607.05302>; full upstream license retained above.
-//! Sort complete 64-bit keys; retain payloads in stable incoming order.
-//! Twelve-byte records use the original 512-element block permutation.
-//! Scatter scratch is 3 MiB; metadata adds nine bytes per input block.
+//! Sort complete keys; retain payloads in stable incoming order.
+//! Full keys use twelve-byte records; bounded keys can use eight-byte records.
+//! Both use the original 512-element block permutation.
+//! Scatter scratch is 3 MiB for full records and 2 MiB for compact records;
+//! metadata adds nine bytes per input block.
 //! The fixed block size makes metadata grow with n/512; the paper's square-root
 //! overhead bound does not describe this local parameterization.
 //! Original source and license at the fixed reference revision:
@@ -43,6 +45,10 @@ pub(in super::super) const MAX_RECORDS: usize = 1 << 28;
 const RADIX: usize = 256;
 const BLOCK: usize = 512;
 const SCRATCH: usize = 2 * RADIX;
+
+pub(in super::super) trait RadixRecord: Copy + Default + Send + Sync {
+    fn key(self) -> u64;
+}
 
 /// A full-width key and a bounded payload in twelve bytes.
 ///
@@ -75,30 +81,71 @@ impl KeyedValue {
 }
 const _: () = assert!(std::mem::size_of::<KeyedValue>() == 12);
 
+/// A pair key whose token IDs each fit in sixteen bits, plus its wave offset.
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub(in super::super) struct CompactKeyedValue {
+    key: u32,
+    value: u32,
+}
+impl CompactKeyedValue {
+    #[inline]
+    pub(in super::super) const fn new(key: u64, value: u32) -> Self {
+        let left = (key >> 32) as u32;
+        let right = key as u32;
+        debug_assert!(left <= u16::MAX as u32 && right <= u16::MAX as u32);
+        Self {
+            key: (left << 16) | right,
+            value,
+        }
+    }
+    #[inline]
+    const fn key(self) -> u64 {
+        (((self.key >> 16) as u64) << 32) | ((self.key & 0xffff) as u64)
+    }
+    #[inline]
+    pub(in super::super) const fn value(self) -> u32 {
+        self.value
+    }
+}
+impl RadixRecord for KeyedValue {
+    #[inline]
+    fn key(self) -> u64 {
+        self.key()
+    }
+}
+impl RadixRecord for CompactKeyedValue {
+    #[inline]
+    fn key(self) -> u64 {
+        self.key()
+    }
+}
+const _: () = assert!(std::mem::size_of::<CompactKeyedValue>() == 8);
+
 #[derive(Clone, Copy)]
 struct Partial {
     index: usize,
     length: usize,
 }
 #[derive(Clone, Copy)]
-struct Bucket {
-    next: *mut KeyedValue,
-    end: *mut KeyedValue,
+struct Bucket<R> {
+    next: *mut R,
+    end: *mut R,
 }
-struct Sorter<'a> {
-    records: *mut KeyedValue,
+struct Sorter<'a, R> {
+    records: *mut R,
     length: usize,
-    _borrow: PhantomData<&'a mut [KeyedValue]>,
-    _scratch: Vec<KeyedValue>,
-    scratch_base: *mut KeyedValue,
+    _borrow: PhantomData<&'a mut [R]>,
+    _scratch: Vec<R>,
+    scratch_base: *mut R,
     perm: Vec<u32>,
     perm2: Vec<u32>,
     usage: Vec<u8>,
     partials: [Partial; RADIX],
     fill: usize,
 }
-impl<'a> Sorter<'a> {
-    fn new(records: &'a mut [KeyedValue]) -> Self {
+impl<'a, R: RadixRecord> Sorter<'a, R> {
+    fn new(records: &'a mut [R]) -> Self {
         let full = records.len() / BLOCK;
         let blocks = full + SCRATCH;
         assert!(blocks <= u32::MAX as usize);
@@ -113,7 +160,7 @@ impl<'a> Sorter<'a> {
                 i - (fill - 1) + RADIX
             } as u32;
         }
-        let mut scratch = vec![KeyedValue::default(); SCRATCH * BLOCK];
+        let mut scratch = vec![R::default(); SCRATCH * BLOCK];
         let tail = records.len() % BLOCK;
         scratch[RADIX * BLOCK..RADIX * BLOCK + tail].copy_from_slice(&records[full * BLOCK..]);
         let mut partials = [Partial {
@@ -140,7 +187,7 @@ impl<'a> Sorter<'a> {
             fill,
         }
     }
-    fn block(&mut self, physical: usize) -> *mut KeyedValue {
+    fn block(&mut self, physical: usize) -> *mut R {
         assert!(physical < self.perm.len());
         // SAFETY: physical IDs below SCRATCH identify full scratch blocks.
         // Other IDs identify exactly floor(n/BLOCK) full input blocks.
@@ -183,7 +230,7 @@ impl<'a> Sorter<'a> {
         assert_eq!(total, self.length);
     }
     fn step(&mut self, shift: u32) {
-        let mut buckets = [Bucket {
+        let mut buckets = [Bucket::<R> {
             next: ptr::null_mut(),
             end: ptr::null_mut(),
         }; RADIX];
@@ -329,9 +376,11 @@ impl<'a> Sorter<'a> {
 /// Sort records stably by their complete key.
 ///
 /// Mutates records in place. Constant key bytes need no scatter pass. Block
-/// scratch is 3 MiB plus nine bytes per 512 input records; small inputs use a
-/// simpler scatter when its allocation is smaller.
-pub(in super::super) fn sort_by_key(records: &mut [KeyedValue]) {
+/// scratch is 512 blocks of the selected record type plus nine bytes per 512
+/// input records; small inputs use a
+/// simpler scatter when its allocation is smaller. Scratch sizing follows the
+/// selected record layout so compact records retain their memory advantage.
+pub(in super::super) fn sort_by_key<R: RadixRecord>(records: &mut [R]) {
     assert!(
         records.len() <= MAX_RECORDS,
         "radix input exceeds bounded chunk size"
@@ -343,18 +392,18 @@ pub(in super::super) fn sort_by_key(records: &mut [KeyedValue]) {
         .iter()
         .fold(0, |bits, &r| bits | (r.key() ^ first.key()));
     if std::mem::size_of_val(records)
-        <= SCRATCH * BLOCK * 12 + (records.len() / BLOCK + SCRATCH) * 9
+        <= SCRATCH * BLOCK * std::mem::size_of::<R>() + (records.len() / BLOCK + SCRATCH) * 9
     {
         sort_classic(records, varying)
     } else {
         sort_digits(records, varying)
     }
 }
-fn sort_classic(records: &mut [KeyedValue], varying: u64) {
+fn sort_classic<R: RadixRecord>(records: &mut [R], varying: u64) {
     if records.len() < 2 || varying == 0 {
         return;
     }
-    let mut scratch = vec![KeyedValue::default(); records.len()];
+    let mut scratch = vec![R::default(); records.len()];
     let mut flipped = false;
     {
         let mut input = &mut records[..];
@@ -386,7 +435,7 @@ fn sort_classic(records: &mut [KeyedValue], varying: u64) {
         records.copy_from_slice(&scratch);
     }
 }
-fn sort_digits(records: &mut [KeyedValue], varying: u64) {
+fn sort_digits<R: RadixRecord>(records: &mut [R], varying: u64) {
     if records.len() < 2 || varying == 0 {
         return;
     }
@@ -448,6 +497,47 @@ mod tests {
             expected.sort_by_key(|r| r.key());
             sort_by_key(&mut records);
             assert_eq!(records, expected, "{count}");
+        }
+    }
+
+    #[test]
+    fn compact_keys_keep_payload_order_across_dispatch_and_block_boundaries() {
+        let mut records: Vec<_> = (0..(BLOCK * 1024 + 13))
+            .map(|i| CompactKeyedValue::new(((i * 37) % 251) as u64, i as u32))
+            .collect();
+        // Include the top compact key and duplicates spanning several input blocks.
+        let max_pair_key = (u64::from(u16::MAX) << 32) | u64::from(u16::MAX);
+        records.extend((0..BLOCK * 3).map(|i| CompactKeyedValue::new(max_pair_key, i as u32)));
+        let mut expected = records.clone();
+        expected.sort_by_key(|record| record.key());
+        sort_by_key(&mut records);
+        assert_eq!(records, expected);
+        assert!(records.windows(2).all(|w| w[0].key() <= w[1].key()));
+        let mut seen = std::collections::HashMap::<u64, u32>::new();
+        for record in records {
+            let previous = seen.entry(record.key()).or_insert(0);
+            if record.key() == max_pair_key {
+                assert_eq!(record.value(), *previous);
+            }
+            *previous += 1;
+        }
+        for (left, right) in [
+            (0, 0),
+            (0, 1),
+            (1, 0),
+            (1, 1),
+            (u16::MAX as u32, u16::MAX as u32),
+        ] {
+            let key = (u64::from(left) << 32) | u64::from(right);
+            let record = CompactKeyedValue::new(key, 17);
+            assert_eq!(record.key(), key);
+            assert_eq!(record.value(), 17);
+        }
+        for id in [u16::MAX as u32 + 1, u32::MAX] {
+            let key = (u64::from(id) << 32) | 1;
+            let record = KeyedValue::new(key, 23);
+            assert_eq!(record.key(), key);
+            assert_eq!(record.value(), 23);
         }
     }
 }

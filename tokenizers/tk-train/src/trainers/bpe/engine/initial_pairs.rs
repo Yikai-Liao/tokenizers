@@ -1,6 +1,7 @@
 //! Initial pair counting and position construction from a read-only corpus.
 //!
-//! Twelve-byte records cache the complete pair key and a wave-local coordinate.
+//! Records cache the complete pair key and a wave-local coordinate. Keys with
+//! two 16-bit token IDs use eight-byte records; all other keys use twelve bytes.
 //! Stable grouping reads the cached key and retains incoming spatial order.
 //! Adding the wave base restores the full-width global coordinate.
 //! A wave is bounded to 2^28 physical slots. Its boundary does not
@@ -11,7 +12,7 @@ use super::storage::{AllocationArena, SortedPositions, radix};
 use super::{corpus::InitialPairSource, execution::Execution, pair_index::PairState};
 use crate::progress::TrainingProgress;
 use ahash::AHashMap;
-use radix::KeyedValue;
+use radix::{CompactKeyedValue, KeyedValue, RadixRecord};
 use rayon::prelude::*;
 use std::{mem::MaybeUninit, ops::Range};
 use tk_encode::Result;
@@ -27,13 +28,13 @@ struct InitialGroup {
     frequency: u64,
 }
 #[derive(Default)]
-struct RecordBuffer<'a> {
-    records: &'a mut [MaybeUninit<KeyedValue>],
+struct RecordBuffer<'a, R> {
+    records: &'a mut [MaybeUninit<R>],
     used: usize,
 }
-struct RecordJob<'a> {
+struct RecordJob<'a, R> {
     range: Range<usize>,
-    buffers: OwnerDirectory<RecordBuffer<'a>>,
+    buffers: OwnerDirectory<RecordBuffer<'a, R>>,
 }
 // Bound dense rows independently of configured worker count. Larger pools
 // retain sparse routes, so an empty producer/owner cross product stays bounded.
@@ -74,8 +75,27 @@ impl<T: Default> OwnerDirectory<T> {
             .chain(sparse.into_iter().flat_map(|values| values.values()))
     }
 }
-#[inline]
-fn global_position(base: usize, record: KeyedValue) -> u64 {
+trait InitialRecord: RadixRecord {
+    fn new(key: u64, value: u32) -> Self;
+    fn value(self) -> u32;
+}
+impl InitialRecord for KeyedValue {
+    fn new(key: u64, value: u32) -> Self {
+        KeyedValue::new(key, value)
+    }
+    fn value(self) -> u32 {
+        self.value()
+    }
+}
+impl InitialRecord for CompactKeyedValue {
+    fn new(key: u64, value: u32) -> Self {
+        CompactKeyedValue::new(key, value)
+    }
+    fn value(self) -> u32 {
+        self.value()
+    }
+}
+fn global_position<R: InitialRecord>(base: usize, record: R) -> u64 {
     // The producer bounds the offset by its wave. Both parts fit a resident
     // corpus coordinate; retaining the base keeps positions above u32 intact.
     base as u64 + u64::from(record.value())
@@ -105,6 +125,35 @@ impl<'arena> InitialPairTable<'arena> {
     }
 
     pub(super) fn build_in_waves(
+        corpus: impl InitialPairSource,
+        minimum_frequency: u64,
+        execution: &Execution,
+        arena: &'arena AllocationArena,
+        progress: &TrainingProgress,
+        records_per_wave: usize,
+    ) -> Result<InitialPairTable<'arena>> {
+        if corpus.compact_keys() {
+            Self::build_with_record::<CompactKeyedValue>(
+                corpus,
+                minimum_frequency,
+                execution,
+                arena,
+                progress,
+                records_per_wave,
+            )
+        } else {
+            Self::build_with_record::<KeyedValue>(
+                corpus,
+                minimum_frequency,
+                execution,
+                arena,
+                progress,
+                records_per_wave,
+            )
+        }
+    }
+
+    fn build_with_record<R: InitialRecord>(
         corpus: impl InitialPairSource,
         minimum_frequency: u64,
         execution: &Execution,
@@ -147,7 +196,7 @@ impl<'arena> InitialPairTable<'arena> {
                 let count = corpus.edge_count(base..end);
                 let mut records = Vec::with_capacity(count);
                 corpus.for_each_edge(base..end, |position, key| {
-                    records.push(KeyedValue::new(key, (position - base) as u32));
+                    records.push(R::new(key, (position - base) as u32));
                 });
                 debug_assert_eq!(records.len(), count);
                 work.complete(end - base);
@@ -193,7 +242,7 @@ impl<'arena> InitialPairTable<'arena> {
                 let mut record_buffers: Vec<_> = shard_sizes
                     .iter()
                     .map(|&count| {
-                        let mut records = Vec::<MaybeUninit<KeyedValue>>::with_capacity(count);
+                        let mut records = Vec::<MaybeUninit<R>>::with_capacity(count);
                         // SAFETY: MaybeUninit admits unwritten elements. The counted job
                         // slices cover this owner, and every producer fills its whole slice.
                         unsafe {
@@ -210,7 +259,7 @@ impl<'arena> InitialPairTable<'arena> {
                     .into_iter()
                     .zip(sizes)
                     .map(|(range, counts)| {
-                        let mut buffers = OwnerDirectory::<RecordBuffer<'_>>::new(workers);
+                        let mut buffers = OwnerDirectory::<RecordBuffer<'_, R>>::new(workers);
                         for (shard, count) in counts.entries() {
                             if count == 0 {
                                 continue;
@@ -229,8 +278,7 @@ impl<'arena> InitialPairTable<'arena> {
                     corpus.for_each_edge(job.range.clone(), |position, key| {
                         let shard = router.owner(key);
                         let buffer = job.buffers.touch(shard);
-                        buffer.records[buffer.used]
-                            .write(KeyedValue::new(key, (position - base) as u32));
+                        buffer.records[buffer.used].write(R::new(key, (position - base) as u32));
                         buffer.used += 1;
                     });
                     debug_assert!(
@@ -243,15 +291,14 @@ impl<'arena> InitialPairTable<'arena> {
                 // Each emitted offset is below records_per_wave <= 2^28. The u32
                 // payload is local to this wave; the global coordinate is never narrowed.
                 // SAFETY: All producer jobs joined after initializing every counted
-                // element. MaybeUninit<KeyedValue> and KeyedValue have the same layout
-                // and allocation size.
-                let record_buffers: Vec<Vec<KeyedValue>> = record_buffers
+                // element. MaybeUninit<R> and R have the same layout and allocation size.
+                let record_buffers: Vec<Vec<R>> = record_buffers
                     .into_iter()
                     .map(|records| {
                         let mut records = std::mem::ManuallyDrop::new(records);
                         unsafe {
                             Vec::from_raw_parts(
-                                records.as_mut_ptr().cast::<KeyedValue>(),
+                                records.as_mut_ptr().cast::<R>(),
                                 records.len(),
                                 records.capacity(),
                             )

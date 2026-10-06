@@ -42,6 +42,11 @@ pub(super) trait InitialPairSource: Sync {
         self.for_each_edge(range, |_, _| count += 1);
         count
     }
+    /// True only when both IDs in every emitted pair fit in sixteen bits.
+    /// Unknown sources keep the full-width path.
+    fn compact_keys(&self) -> bool {
+        false
+    }
 }
 #[cfg(test)]
 impl InitialPairSource for InitialCorpus<'_> {
@@ -50,6 +55,12 @@ impl InitialPairSource for InitialCorpus<'_> {
     }
     fn word_weights(&self) -> &IntervalIndex<u64> {
         self.word_weights
+    }
+    fn compact_keys(&self) -> bool {
+        self.token_ids.iter().all(|id| {
+            let id = id.load(Ordering::Relaxed);
+            id == WORD_SEPARATOR_ID || id <= u16::MAX as u32
+        })
     }
     fn for_each_edge(&self, range: Range<usize>, mut emit: impl FnMut(usize, u64)) {
         for position in range {
@@ -68,6 +79,12 @@ impl<S: SlotStorage> InitialPairSource for &Corpus<S> {
     }
     fn word_weights(&self) -> &IntervalIndex<u64> {
         &self.weights
+    }
+    fn compact_keys(&self) -> bool {
+        (0..self.slots.len()).all(|position| {
+            let id = self.slots.load(position);
+            id == WORD_SEPARATOR_ID || id <= u16::MAX as u32
+        })
     }
     fn for_each_edge(&self, range: Range<usize>, mut emit: impl FnMut(usize, u64)) {
         for position in range {
