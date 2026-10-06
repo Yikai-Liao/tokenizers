@@ -27,3 +27,6 @@ uv.lock
 # Agent worktrees: real git repos, and `git add -A` will happily commit them as gitlinks.
 .claude/worktrees/
 excalidraw.log
+
+# Standalone training-library lock is retained with benchmark reproduction.
+/tokenizers/tk-train/Cargo.lock

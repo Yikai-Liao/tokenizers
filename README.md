@@ -158,10 +158,13 @@ of compatibility branches. But, the legacy code amounted to quite a lot of the f
 <summary><b><code>tk-train</code></b> — the training half</summary>
 
 The `Trainer` trait, every concrete `*Trainer`, `TrainerWrapper` and the `Trainable` extension.
+See the [BPE engine guide](tokenizers/tk-train/src/trainers/bpe/engine/README.md) for training semantics and implementation boundaries.
 
 **Why separate:** training is a batch job on a workstation; inference is a hot loop in a server.
 They have opposite constraints, so they get opposite dependency budgets.
 </details>
+
+
 
 <details>
 <summary><b><code>bitmap_gen</code></b> — dev-only table generator</summary>

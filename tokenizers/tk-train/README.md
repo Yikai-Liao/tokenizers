@@ -12,4 +12,7 @@ extension trait on `tk_convert`'s `TokenizerImpl`, and nothing in `tk-encode`
 replaces that type -- the pipeline tokenizer hands out its model by shared
 reference only. Drive a trainer directly instead: `feed`, then `train`.
 
+The [BPE engine guide](src/trainers/bpe/engine/README.md) describes the implementation,
+correctness checks and performance reproduction.
+
 License: Apache-2.0

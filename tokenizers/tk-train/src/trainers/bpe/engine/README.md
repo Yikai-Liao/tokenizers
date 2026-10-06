@@ -1,0 +1,82 @@
+# BPE training engine
+
+The public entry is `BpeTrainer::do_train`. It consumes weighted words and returns
+a vocabulary, merges in rank order, and special tokens. `feed` and `train` wrap
+this entry with pretokenization and model construction. The engine owns one Rayon
+pool per training call and uses the caller's configured worker count.
+
+The implementation preserves weighted pair counts, ascending pair-ID tie breaks,
+left-to-right overlap handling, affixes, reserved IDs, and active-ID reuse. Counts
+use checked `u64` arithmetic; configurations that need a signed reuse ledger also
+check its `i64` domain. Existing vocabulary IDs remain stable. Alphabet frequency
+ties retain the public trainer's existing behavior.
+
+## Reading order
+
+| Module | Responsibility |
+| --- | --- |
+| `mod.rs` | Attempts, ID-reuse restart and phase ordering |
+| `batch.rs` | Reusable batch workspace, certified selection and restart boundaries |
+| `vocabulary.rs` | Token strings, IDs, activation and original-byte symbol interpretation |
+| `corpus/prepare.rs` | Weighted word ordering, checkpoints and deferred slot construction |
+| `corpus/slots.rs` | 16-, 24- and 32-bit planes and their local safety contracts |
+| `corpus/mod.rs` | Live endpoints, token spans, stale-position matching and disjoint writes |
+| `initial_pairs.rs` | Bounded initial waves, stable full-key grouping and weighted counts |
+| `pair_index.rs` | Candidate priorities, selection and lazy count repair |
+| `pair_index/commit.rs` | Publish births, update ledgers and retire old candidates |
+| `merge/mod.rs` | Merge contracts and consuming application after readers join |
+| `merge/prepare/mod.rs` | Path dispatch and shared neighbor-accounting rules |
+| `merge/prepare/{ordinary,aa,cohort}.rs` | Complete preparation algorithms for each path |
+| `merge/events.rs` | Compact event references and stable owner-local birth grouping |
+| `aa_parity.rs` | Exact overlap selection across AA chunks |
+| `execution.rs` | Pool and reusable worker resources, including error-path cleanup |
+| `storage/` | Private coordinate storage, G128 encoding, allocation and ID directories |
+
+`train_attempt` initializes the vocabulary and corpus plan, then selects the slot
+width. `train_with_slots` builds the initial index and runs the visible phase loop:
+`batch.select` → `prepare_merges_with_births` → release candidate readers →
+`prepared.apply` → `index.commit_merges_with_prepared`. An attempt releases its
+training allocations before `complete_model` constructs the public output.
+
+[DESIGN.md](DESIGN.md) explains the semantics and the cost of the retained
+optimizations. Safety arguments remain next to each unsafe operation.
+
+## Correctness checks
+
+From the repository root:
+
+```sh
+cargo test --manifest-path tokenizers/tk-train/Cargo.toml --lib
+cargo test --manifest-path tokenizers/tk-train/Cargo.toml --no-default-features --lib
+```
+
+Tests compare vocabulary IDs, ordered merges and per-rule traces across worker
+counts. Named cases cover ties, AA, affixes, filtering, ID reuse, strict birth
+limits, overflow, zero-merge returns and segmented long words. Storage tests
+exercise full-width positions, restart cursors, append failures, arena lifetime
+and directory recovery. The small-input reference preserves upstream queue and
+cohort behavior independently of engine storage; explicit expectations cover
+wide-count boundaries beyond that reference's count domain.
+
+## Public interface compatibility
+
+`BpeTrainer` builder, feed, train, `do_train` and `train_vocab` signatures match
+Hugging Face upstream. Model serialization and Python/Node bindings are unchanged.
+The optional parity trainer is unchanged: upstream currently fails to compile
+that feature because it references the removed legacy `BPE` type. This change
+preserves that existing behavior rather than introducing a separate interface
+repair.
+
+## Performance evidence
+
+Batching, G128 positions, bounded stable radix grouping, deferred corpus creation,
+allocation reuse and weight cursors remain part of the implementation. Complete
+producer rules encode their births directly; split rules retain the aggregation
+path. The radix implementation keeps its original BSD license and full-key
+stability contract. Sorting uses the existing implementation.
+
+Reproduction tools and experiment records live in
+[tokenizers-bpe-benchmarks](https://github.com/Yikai-Liao/tokenizers-bpe-benchmarks).
+They record source and binary hashes, pinned corpus inputs, compiler settings,
+affinity, public training time, CPU time, process HWM and exact output comparisons.
+Measurements apply to their recorded machine and workloads.

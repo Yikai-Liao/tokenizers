@@ -1,7 +1,11 @@
 #![allow(clippy::map_entry)]
 
+mod engine;
 #[cfg(feature = "parity-aware-bpe")]
 pub mod parity_trainer;
+#[cfg(test)]
+mod reference;
+#[cfg(any(test, feature = "parity-aware-bpe"))]
 mod word;
 #[cfg(feature = "parity-aware-bpe")]
 pub use parity_trainer::{ParityBpeTrainer, ParityBpeTrainerBuilder, ParityVariant};
@@ -9,49 +13,22 @@ pub use parity_trainer::{ParityBpeTrainer, ParityBpeTrainerBuilder, ParityVarian
 use crate::Trainer;
 use ahash::{AHashMap, AHashSet};
 use compact_str::CompactString;
-use dary_heap::OctonaryHeap;
 use serde::{Deserialize, Serialize};
-use std::cmp::Ordering;
 use std::collections::HashSet;
 use tk_encode::vocab::bucket_added_vocabulary::AddedToken;
 // The `Word` machinery a trainer merges into is training-only, so it lives here rather than in the
 // inference crate. `PipelineBPE` is the only BPE left; a trainer reaches it through
 // `from_vocab_and_merges`, the same serde-free door a reader walks through, because its fields are
 // private to `tk-encode`.
+#[cfg(any(test, feature = "parity-aware-bpe"))]
 use word::{WithFirstLastIterator, Word};
 
 use tk_encode::Result;
-use tk_encode::models::bpe::{Merges, Pair, PipelineBPE, BpeConfig, Vocab};
+#[cfg(any(test, feature = "parity-aware-bpe"))]
+use tk_encode::models::bpe::Pair;
+use tk_encode::models::bpe::{BpeConfig, Merges, PipelineBPE, Vocab};
 use tk_encode::parallelism::*;
-use tk_encode::utils::progress::{ProgressBar, ProgressFormat, ProgressStyle};
-use tk_encode::vocab::bucket_vocab_store::BucketVocabStore;
-
-#[derive(Debug, Eq)]
-struct Merge {
-    pair: Pair,
-    count: u64,
-    pos: AHashSet<usize>,
-}
-impl PartialEq for Merge {
-    fn eq(&self, other: &Self) -> bool {
-        self.count == other.count && self.pair == other.pair
-    }
-}
-impl PartialOrd for Merge {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-impl Ord for Merge {
-    fn cmp(&self, other: &Self) -> Ordering {
-        if self.count != other.count {
-            self.count.cmp(&other.count)
-        } else {
-            // Here we want ascending order
-            other.pair.cmp(&self.pair)
-        }
-    }
-}
+use tk_encode::utils::progress::ProgressFormat;
 
 struct Config {
     min_frequency: u64,
@@ -208,7 +185,7 @@ impl BpeTrainerBuilder {
 /// // `PipelineBPE` has no empty state to train *into* -- it only exists once there is a
 /// // vocabulary and a merge list -- so take the parts and build it.
 /// let (vocab, merges, special_tokens) = trainer.train_vocab().unwrap();
-/// let model = PipelineBPE::from_config(BpeConfig { vocab: vocab, merges: merges, ..BpeConfig::default() }).unwrap();
+/// let model = PipelineBPE::from_config(BpeConfig { vocab, merges, ..BpeConfig::default() }).unwrap();
 /// ```
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Eq)]
@@ -269,74 +246,8 @@ impl BpeTrainer {
         self.words.len()
     }
 
-    /// Setup a progress bar if asked to show progress (only for Indicatif format)
-    fn setup_progress(&self) -> Option<ProgressBar> {
-        if self.show_progress && self.progress_format == ProgressFormat::Indicatif {
-            let p = ProgressBar::new(0);
-            p.set_style(
-                ProgressStyle::default_bar()
-                    .template("[{elapsed_precise}] {msg:<30!} {wide_bar} {pos:<9!}/{len:>9!}")
-                    .expect("Invalid progress template"),
-            );
-            Some(p)
-        } else {
-            None
-        }
-    }
-
-    /// Emit JSON progress line to stderr (for JsonLines format)
-    fn emit_json_progress(&self, stage: &str, current: usize, total: usize) {
-        if self.progress_format == ProgressFormat::JsonLines {
-            eprintln!(
-                r#"{{"stage":"{}","current":{},"total":{}}}"#,
-                stage, current, total
-            );
-        }
-    }
-
-    /// Set the progress bar in the finish state
-    fn finalize_progress(&self, p: &Option<ProgressBar>, final_len: usize, stage: &str) {
-        if let Some(p) = p {
-            p.set_length(final_len as u64);
-            p.finish();
-            println!();
-        }
-        self.emit_json_progress(stage, final_len, final_len);
-    }
-
-    /// Update the progress bar with the new provided length and message
-    fn update_progress(&self, p: &Option<ProgressBar>, len: usize, message: &'static str) {
-        if let Some(p) = p {
-            p.set_message(message);
-            p.set_length(len as u64);
-            p.reset();
-        }
-        // Emit initial JSON progress for this stage
-        self.emit_json_progress(message, 0, len);
-    }
-
-    /// Add the provided special tokens to the initial vocabulary
-    fn add_special_tokens(
-        &self,
-        w2id: &mut AHashMap<CompactString, u32>,
-        id2w: &mut Vec<CompactString>,
-    ) {
-        for token in &self.special_tokens {
-            // get hash of content
-            if !w2id.contains_key(&CompactString::from(&token.content)) {
-                id2w.push(CompactString::from(&token.content));
-                w2id.insert(CompactString::from(&token.content), (id2w.len() - 1) as u32);
-            }
-        }
-    }
-
-    /// Compute the initial alphabet and limit it if relevant
-    fn compute_alphabet(
-        &self,
-        wc: &AHashMap<CompactString, u64>,
-        w2id: &mut AHashMap<CompactString, u32>,
-        id2w: &mut Vec<CompactString>,
-    ) {
+    /// Select the alphabet with the existing frequency-tie and codepoint order.
+    fn select_alphabet(&self, wc: &AHashMap<CompactString, u64>) -> Vec<char> {
         // Compute the alphabet from seen words
         let mut alphabet: AHashMap<char, usize> = AHashMap::new();
         for (word, count) in wc {
@@ -368,111 +279,28 @@ impl BpeTrainer {
 
         // Keep the initial alphabet (sorted for determinism)
         kept.sort_unstable_by_key(|k| *k.0 as u32);
-        kept.into_iter().for_each(|(c, _)| {
-            let s = c.to_string();
-            /*
-            if !w2id.contains_key(&s) {
-                id2w.push(s.clone());
-                w2id.insert(s, (id2w.len() - 1) as u32);
-            }
-            */
-            // u64 hash version
-            if !w2id.contains_key(&CompactString::from(&s)) {
-                id2w.push(CompactString::from(&s));
-                w2id.insert(CompactString::from(&s), (id2w.len() - 1) as u32);
-            }
-        });
+        kept.into_iter().map(|(&character, _)| character).collect()
     }
 
-    /// Tokenize words and add subwords to the vocabulary when relevant
-    fn tokenize_words(
+    #[cfg(test)]
+    fn compute_alphabet(
         &self,
         wc: &AHashMap<CompactString, u64>,
         w2id: &mut AHashMap<CompactString, u32>,
         id2w: &mut Vec<CompactString>,
-        p: &Option<ProgressBar>,
-    ) -> (Vec<Word>, Vec<u64>) {
-        let mut words: Vec<Word> = Vec::with_capacity(wc.len());
-        let mut counts: Vec<u64> = Vec::with_capacity(wc.len());
-
-        for (word, count) in wc {
-            let mut current_word = Word::new();
-            counts.push(*count);
-
-            for (is_first, is_last, c) in word.chars().with_first_and_last() {
-                let mut s = c.to_string();
-                if w2id.contains_key(&CompactString::from(&s)) {
-                    // Found the initial char in the authorized alphabet
-
-                    // Add the `continuing_subword_prefix` if relevant
-                    if !is_first && let Some(prefix) = &self.continuing_subword_prefix {
-                        s.insert_str(0, prefix);
-                    }
-                    // Add the `end_of_word_suffix` if relevant
-                    if is_last && let Some(suffix) = &self.end_of_word_suffix {
-                        s.push_str(suffix);
-                    }
-
-                    // Insert the new formed string if necessary
-                    if !w2id.contains_key(&CompactString::from(&s)) {
-                        id2w.push(CompactString::from(&s));
-                        w2id.insert(CompactString::from(&s), (id2w.len() - 1) as u32);
-                    }
-                    current_word.add(w2id[&CompactString::from(&s)], 1); // We do not care about the len here
-                }
-            }
-            words.push(current_word);
-
-            if let Some(p) = p {
-                p.inc(1);
+    ) {
+        for character in self.select_alphabet(wc) {
+            let mut utf8 = [0; 4];
+            let text: &str = character.encode_utf8(&mut utf8);
+            let token = CompactString::from(text);
+            if !w2id.contains_key(&token) {
+                id2w.push(token.clone());
+                w2id.insert(token, (id2w.len() - 1) as u32);
             }
         }
-
-        (words, counts)
     }
 
-    fn count_pairs(
-        &self,
-        words: &[Word],
-        counts: &[u64],
-        p: &Option<ProgressBar>,
-    ) -> (AHashMap<Pair, i32>, AHashMap<Pair, AHashSet<usize>>) {
-        words
-            .maybe_par_iter()
-            .enumerate()
-            .map(|(i, word)| {
-                let mut pair_counts = AHashMap::new();
-                let mut where_to_update: AHashMap<Pair, AHashSet<usize>> = AHashMap::new();
-
-                for window in word.get_chars().windows(2) {
-                    let cur_pair: Pair = (window[0], window[1]);
-
-                    // Initialize pair_counts and where_to_update for this pair if we just saw it
-                    // Then update counts
-                    *pair_counts.entry(cur_pair).or_default() += counts[i] as i32;
-                    where_to_update.entry(cur_pair).or_default().insert(i);
-                }
-
-                if let Some(p) = &p {
-                    p.inc(1);
-                }
-
-                (pair_counts, where_to_update)
-            })
-            .reduce(
-                || (AHashMap::new(), AHashMap::new()),
-                |(mut pair_counts, mut where_to_update), (pc, wtu)| {
-                    for (k, v) in pc {
-                        *pair_counts.entry(k).or_default() += v;
-                    }
-                    for (k, v) in wtu {
-                        where_to_update.entry(k).or_default().extend(v);
-                    }
-                    (pair_counts, where_to_update)
-                },
-            )
-    }
-
+    /// Tokenize words and add subwords to the vocabulary when relevant
     /// Train and hand back the raw parts, for a caller that wants them rather than a built model.
     ///
     /// The WordPiece trainer is the one caller: it trains a BPE and reinterprets the vocabulary as
@@ -506,178 +334,18 @@ impl BpeTrainer {
         &self,
         word_counts: &AHashMap<CompactString, u64>,
     ) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
-        let mut word_to_id: AHashMap<CompactString, u32> = AHashMap::with_capacity(self.vocab_size);
-        let mut id_to_word: Vec<CompactString> = Vec::with_capacity(self.vocab_size);
-        let max_token_length: usize = self.max_token_length.unwrap_or(usize::MAX);
-
-        let progress = self.setup_progress();
-
-        //
-        // 1. Add all special tokens to the vocabulary
-        //
-        self.add_special_tokens(&mut word_to_id, &mut id_to_word);
-
-        //
-        // 2. Compute the initial alphabet
-        //
-        self.compute_alphabet(word_counts, &mut word_to_id, &mut id_to_word);
-
-        //
-        // 3. Tokenize words
-        //
-        self.update_progress(&progress, word_counts.len(), "Tokenize words");
-        let (mut words, counts) =
-            self.tokenize_words(word_counts, &mut word_to_id, &mut id_to_word, &progress);
-        self.finalize_progress(&progress, words.len(), "Tokenize words");
-
-        //
-        // 4. Count pairs in words
-        //
-        self.update_progress(&progress, words.len(), "Count pairs");
-        let (mut pair_counts, mut where_to_update) = self.count_pairs(&words, &counts, &progress);
-        // Insert them in the queue
-        let mut queue = OctonaryHeap::with_capacity(pair_counts.len());
-        where_to_update.drain().for_each(|(pair, pos)| {
-            let count = pair_counts[&pair];
-            if count > 0 {
-                queue.push(Merge {
-                    pair,
-                    count: count as u64,
-                    pos,
-                });
-            }
-        });
-        self.finalize_progress(&progress, words.len(), "Count pairs");
-
-        //
-        // 5. Do merges
-        //
-        self.update_progress(&progress, self.vocab_size, "Compute merges");
-        let mut merges: Vec<(Pair, u32)> = vec![];
-        loop {
-            // Stop as soon as we have a big enough vocabulary
-            if word_to_id.len() >= self.vocab_size {
-                break;
-            }
-
-            let Some(mut top) = queue.pop() else {
-                break;
-            };
-
-            if top.count != pair_counts[&top.pair] as u64 {
-                top.count = pair_counts[&top.pair] as u64;
-                queue.push(top);
-                continue;
-            }
-
-            if top.count < 1 || self.min_frequency > top.count {
-                break;
-            }
-
-            let part_a = &id_to_word[top.pair.0 as usize];
-            let mut part_b = id_to_word[top.pair.1 as usize].as_str();
-
-            // Build new token
-            if let Some(prefix) = &self.continuing_subword_prefix
-                && let Some(rest) = part_b.strip_prefix(prefix)
-            {
-                part_b = rest;
-            }
-
-            // Insert new token if it does not already exist
-            let new_token = format!("{part_a}{part_b}");
-            let new_token_id = word_to_id
-                .get(&CompactString::from(&new_token))
-                .copied()
-                .unwrap_or(id_to_word.len() as u32);
-            if !word_to_id.contains_key(&CompactString::from(&new_token)) {
-                id_to_word.push(CompactString::from(&new_token));
-                word_to_id.insert(CompactString::from(&new_token), new_token_id);
-            }
-            merges.push((top.pair, new_token_id));
-
-            // Merge the new pair in every words
-            // Safety: This is just a type assertion, the code below may no longer be safe
-            // if the type of `pos` changes
-            let pos: &AHashSet<usize> = &top.pos;
-
-            let words_len = words.len();
-            // FIXME: doesn't look great
-            struct WordPtr(*mut Word);
-            // Safety: We do not actually use this for concurrent access to the same memory,
-            // only to different chunks within the same allocation.
-            unsafe impl Sync for WordPtr {}
-            let word_start = WordPtr(words.as_mut_ptr());
-
-            let changes = pos
-                .maybe_par_iter()
-                .flat_map(|&i| {
-                    // We can merge each of these words in parallel here because each position
-                    // can be there only once (AHashSet). So this is safe.
-                    unsafe {
-                        // Edition ≥2021 closures capture the `.0` field (a non-Sync raw
-                        // pointer) unless we force whole-struct capture of the Sync wrapper.
-                        let word_start = &word_start;
-                        assert!(i < words_len);
-                        // This is words[i], but avoids needing to go through &T (which triggers UB)
-                        let word = word_start.0.add(i);
-                        // let word: &mut Word = &mut (*word);
-                        (*word)
-                            .merge(top.pair.0, top.pair.1, new_token_id, max_token_length)
-                            .into_iter()
-                            .map(|c| (c, i))
-                            .collect::<Vec<_>>()
-                    }
-                })
-                .collect::<Vec<_>>();
-
-            // Introduce new formed pairs
-            for ((pair, change), iw) in changes {
-                let count = change * counts[iw] as i32;
-                *pair_counts.entry(pair).or_default() += count;
-                if change > 0 {
-                    where_to_update.entry(pair).or_default().insert(iw);
-                }
-            }
-            where_to_update.drain().for_each(|(pair, pos)| {
-                let count = pair_counts[&pair];
-                if count > 0 {
-                    queue.push(Merge {
-                        pair,
-                        count: count as u64,
-                        pos,
-                    });
-                }
-            });
-
-            if let Some(p) = &progress {
-                p.inc(1);
-            }
-            self.emit_json_progress("Compute merges", merges.len(), self.vocab_size);
-        }
-        self.finalize_progress(&progress, merges.len(), "Compute merges");
-
-        // The vocabulary, keyed by the token string rather than by `word_to_id`'s hash: we have to
-        // look the string up in `id_to_word` either way.
-        let vocab: Vocab = word_to_id
-            .into_iter()
-            .map(|(_key, val)| (id_to_word[val as usize].to_string(), val))
-            .collect();
-
-        // `merges` holds id pairs, highest priority first; the on-disk form is the two token
-        // strings, which is also what `from_vocab_and_merges` re-derives its ranks from. Order is
-        // the rank, so it has to be preserved.
-        let merges: Merges = merges
-            .into_iter()
-            .map(|(pair, _new_token_id)| {
-                (
-                    id_to_word[pair.0 as usize].to_string(),
-                    id_to_word[pair.1 as usize].to_string(),
-                )
-            })
-            .collect();
-
-        Ok((vocab, merges, self.special_tokens.clone()))
+        let workers = if get_parallelism() {
+            num_threads().max(1)
+        } else {
+            1
+        };
+        engine::train(
+            self,
+            word_counts,
+            workers,
+            #[cfg(test)]
+            None,
+        )
     }
 }
 
@@ -687,7 +355,11 @@ impl Trainer for BpeTrainer {
     /// Train a BPE model
     fn train(&self, model: &mut PipelineBPE) -> Result<Vec<AddedToken>> {
         let (vocab, merges, special_tokens) = self.do_train(&self.words)?;
-        *model = PipelineBPE::from_config(BpeConfig { vocab: vocab, merges: merges, ..self.model_options() })?;
+        *model = PipelineBPE::from_config(BpeConfig {
+            vocab,
+            merges,
+            ..self.model_options()
+        })?;
         Ok(special_tokens)
     }
 
