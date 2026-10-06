@@ -1,7 +1,7 @@
 //! Vocabulary identity and canonical output strings, independent of position storage.
 use super::{BpeTrainer, WORD_SEPARATOR_ID};
 use crate::progress::{TrainingProgress, WorkProgress};
-use crate::trainers::bpe::word_counts::Words;
+use crate::trainers::bpe::word_counts::WordCountsView;
 use ahash::RandomState;
 use compact_str::CompactString;
 use indexmap::IndexSet;
@@ -38,7 +38,7 @@ pub(super) struct InitialTokenIds {
 impl Vocabulary {
     pub(super) fn initialize(
         trainer: &BpeTrainer,
-        word_counts: Words<'_>,
+        word_counts: WordCountsView<'_>,
         workers: usize,
         progress: &TrainingProgress,
         retained_alphabet: &mut Option<Vec<char>>,
@@ -127,7 +127,7 @@ impl Vocabulary {
     }
     pub(super) fn initial_ids(
         &mut self,
-        word_counts: Words<'_>,
+        word_counts: WordCountsView<'_>,
         work: &WorkProgress,
     ) -> Result<InitialTokenIds> {
         let mut ids = InitialTokenIds {
@@ -155,7 +155,7 @@ impl Vocabulary {
         }
         self.active.fill(false);
         let mut decorated = String::new();
-        // Allocate decorated IDs in the original map traversal before reordering words.
+        // Allocate decorated IDs in the input view's traversal before sorting weighted words.
         for (index, word) in word_counts.keys().enumerate() {
             for (byte, character) in word.char_indices() {
                 let plain_id = ids.characters[character as usize];

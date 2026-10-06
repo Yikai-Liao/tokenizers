@@ -2,7 +2,7 @@
 
 mod feed;
 mod word_counts;
-use word_counts::{WordCounts, Words};
+use word_counts::{WordCounts, WordCountsView};
 
 mod engine;
 #[cfg(feature = "parity-aware-bpe")]
@@ -251,7 +251,7 @@ impl BpeTrainer {
     }
 
     /// Select the alphabet with the existing frequency-tie and codepoint order.
-    fn select_alphabet(&self, wc: Words<'_>) -> Vec<char> {
+    fn select_alphabet(&self, wc: WordCountsView<'_>) -> Vec<char> {
         // Compute the alphabet from seen words
         let mut alphabet: AHashMap<char, usize> = AHashMap::new();
         for (word, count) in wc.iter() {
@@ -293,7 +293,7 @@ impl BpeTrainer {
         w2id: &mut AHashMap<CompactString, u32>,
         id2w: &mut Vec<CompactString>,
     ) {
-        for character in self.select_alphabet(Words::from_map(wc)) {
+        for character in self.select_alphabet(WordCountsView::from_map(wc)) {
             let mut utf8 = [0; 4];
             let text: &str = character.encode_utf8(&mut utf8);
             let token = CompactString::from(text);
@@ -338,10 +338,13 @@ impl BpeTrainer {
         &self,
         word_counts: &AHashMap<CompactString, u64>,
     ) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
-        self.train_counts(Words::from_map(word_counts))
+        self.train_counts(WordCountsView::from_map(word_counts))
     }
 
-    fn train_counts(&self, word_counts: Words<'_>) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
+    fn train_counts(
+        &self,
+        word_counts: WordCountsView<'_>,
+    ) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
         let workers = if get_parallelism() {
             num_threads().max(1)
         } else {

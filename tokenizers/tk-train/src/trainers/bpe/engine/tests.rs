@@ -24,7 +24,7 @@ fn check_with_workers(
         let mut trace = Vec::<(Pair, u64, u32)>::new();
         let actual = train(
             trainer,
-            super::super::word_counts::Words::from_map(words),
+            WordCountsView::from_map(words),
             workers,
             Some(&mut |pair, count, id| trace.push((pair, count, id))),
         )
@@ -275,13 +275,8 @@ fn pruning_waits_for_all_birth_producers_and_alphabet_filtering() {
     // independently checks the frequency limit and forced characters.
     let mut alphabet_only = trainer;
     alphabet_only.vocab_size = 3;
-    let (vocab, merges, _) = train(
-        &alphabet_only,
-        super::super::word_counts::Words::from_map(&words),
-        1,
-        None,
-    )
-    .unwrap();
+    let (vocab, merges, _) =
+        train(&alphabet_only, WordCountsView::from_map(&words), 1, None).unwrap();
     assert_eq!(
         vocab,
         [("a".into(), 0), ("b".into(), 1), ("测".into(), 2)]
@@ -535,6 +530,10 @@ fn feed_preserves_flat_counts_and_trainer_equality() {
         trainer.train_vocab().unwrap(),
         trainer.do_train(&words).unwrap()
     );
+    assert_eq!(
+        trainer.train_vocab().unwrap(),
+        restored.train_vocab().unwrap()
+    );
     // Deserialization retains the original map's full count domain.
     let mut json = serde_json::to_value(&trainer).unwrap();
     json["words"]["shared"] = serde_json::json!(515);
@@ -544,6 +543,30 @@ fn feed_preserves_flat_counts_and_trainer_equality() {
     json["words"] = serde_json::json!({"zero": 0, "wide": u64::MAX});
     let restored: BpeTrainer = serde_json::from_value(json.clone()).unwrap();
     assert_eq!(serde_json::to_value(restored).unwrap(), json);
+    let edge_words = vec![
+        "".into(),
+        "中文🙂".into(),
+        "e\u{301}".into(),
+        "long".repeat(2048),
+    ];
+    trainer
+        .feed(["empty", "words"].into_iter(), |input| {
+            Ok(if input == "empty" {
+                Vec::new()
+            } else {
+                edge_words.clone()
+            })
+        })
+        .unwrap();
+    assert_eq!(
+        trainer.words,
+        super::super::word_counts::WordCounts::from_map(
+            edge_words
+                .into_iter()
+                .map(|word| (word.into(), 1))
+                .collect()
+        )
+    );
     trainer
         .feed(std::iter::empty::<&str>(), |_| unreachable!())
         .unwrap();
@@ -573,6 +596,39 @@ fn feed_error_runs_callbacks_without_replacing_previous_counts() {
     assert_eq!(error.to_string(), "process failed");
     assert_eq!(calls.load(Ordering::Relaxed), 257);
     assert_eq!(trainer, previous);
+    assert_eq!(
+        serde_json::to_value(&trainer).unwrap()["words"],
+        serde_json::json!({"previous": 1})
+    );
+}
+
+fn check_feed_flush_boundaries(workers: usize) {
+    use super::super::word_counts::WordCounts;
+    use crate::Trainer;
+    for unique in [2047, 2048, 2049] {
+        let output: Vec<_> = (0..unique).map(|i| format!("word{i}")).collect();
+        let expected = output
+            .iter()
+            .map(|word| (word.as_str().into(), 8))
+            .collect();
+        let mut trainer = BpeTrainer::builder().show_progress(false).build();
+        trainer
+            .feed(std::iter::repeat_n("input", 8), |_| {
+                assert_eq!(rayon::current_num_threads(), workers);
+                Ok(output.clone())
+            })
+            .unwrap();
+        assert_eq!(trainer.get_word_count(), unique);
+        assert_eq!(
+            trainer.words.view().iter().map(|(_, n)| n).sum::<u64>(),
+            (unique * 8) as u64
+        );
+        assert_eq!(trainer.words, WordCounts::from_map(expected));
+        assert_eq!(
+            matches!(trainer.words, WordCounts::Entries(_)),
+            tk_encode::parallelism::get_parallelism() && workers > 1
+        );
+    }
 }
 
 #[test]
@@ -648,6 +704,57 @@ fn public_feed_train_and_model_reload_preserve_affixes() {
             );
         }
     }
+    check_feed_model_order_boundaries();
+}
+
+fn check_feed_model_order_boundaries() {
+    use super::super::word_counts::WordCounts;
+    use crate::Trainer;
+    let mut trainer = BpeTrainer::builder()
+        .vocab_size(8)
+        .min_frequency(1)
+        .show_progress(false)
+        .continuing_subword_prefix("##".into())
+        .end_of_word_suffix("</w>".into())
+        .build();
+    // One word fixes decorated-ID allocation independently of count traversal.
+    trainer
+        .feed(["ab", "ab"].into_iter(), |word| Ok(vec![word.into()]))
+        .unwrap();
+    let before = trainer.clone();
+    let expected = (
+        [("a", 0), ("b", 1), ("##b</w>", 2), ("ab</w>", 3)]
+            .into_iter()
+            .map(|(token, id)| (token.into(), id))
+            .collect(),
+        vec![("a".into(), "##b</w>".into())],
+        vec![],
+    );
+    assert_eq!(trainer.train_vocab().unwrap(), expected);
+    assert_eq!(trainer.train_vocab().unwrap(), expected);
+    assert_eq!(trainer.do_train(&counts(&[("ab", 2)])).unwrap(), expected);
+    assert_eq!(trainer, before);
+
+    let trainer = BpeTrainer::builder()
+        .show_progress(false)
+        .limit_alphabet(1)
+        .vocab_size(1)
+        .build();
+    // Equal-frequency alphabet cutoffs may retain either character upstream.
+    // Traversal order is unspecified; check the exact allowed models for each view.
+    for words in [
+        WordCounts::from_map(counts(&[("a", 1), ("b", 1)])),
+        WordCounts::from_entries(vec![("a".into(), 1), ("b".into(), 1)]),
+        WordCounts::from_entries(vec![("b".into(), 1), ("a".into(), 1)]),
+    ] {
+        let (vocab, merges, special) = trainer.train_counts(words.view()).unwrap();
+        assert!(
+            vocab == [("a".into(), 0)].into_iter().collect()
+                || vocab == [("b".into(), 0)].into_iter().collect()
+        );
+        assert!(merges.is_empty());
+        assert!(special.is_empty());
+    }
 }
 
 #[test]
@@ -661,7 +768,7 @@ fn wide_frequencies_and_signed_ledger_boundaries() {
         let mut trace = Vec::new();
         train(
             &trainer,
-            super::super::word_counts::Words::from_map(&counts(&[("ab", weight)])),
+            WordCountsView::from_map(&counts(&[("ab", weight)])),
             2,
             Some(&mut |pair, count, id| trace.push((pair, count, id))),
         )
@@ -701,11 +808,19 @@ fn public_thread_policy_in_isolated_processes() {
     const CHILD: &str = "BPE_THREAD_POLICY_TEST_CHILD";
     if let Ok(setting) = std::env::var(CHILD) {
         let (parallel, workers) = setting.split_once(':').unwrap();
-        tk_encode::parallelism::set_num_threads(workers.parse().unwrap());
+        let workers = workers.parse().unwrap();
+        tk_encode::parallelism::set_num_threads(workers);
         tk_encode::parallelism::set_parallelism(parallel == "true");
-        public_feed_train_and_model_reload_preserve_affixes();
-        feed_preserves_flat_counts_and_trainer_equality();
-        feed_error_runs_callbacks_without_replacing_previous_counts();
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(workers)
+            .build()
+            .unwrap()
+            .install(|| {
+                check_feed_flush_boundaries(workers);
+                public_feed_train_and_model_reload_preserve_affixes();
+                feed_preserves_flat_counts_and_trainer_equality();
+                feed_error_runs_callbacks_without_replacing_previous_counts();
+            });
         let trainer = BpeTrainer::builder()
             .vocab_size(10)
             .min_frequency(1)
@@ -718,7 +833,7 @@ fn public_thread_policy_in_isolated_processes() {
         );
         return;
     }
-    for setting in ["false:4", "true:1", "true:4"] {
+    for setting in ["false:4", "true:1", "true:2", "true:4"] {
         let result = std::process::Command::new(std::env::current_exe().unwrap())
             .args([
                 "--exact",
@@ -748,7 +863,7 @@ fn suffix_identity_reuse_has_literal_mainline_merge_choices() {
     let mut trace = Vec::new();
     let (_, merges, _) = train(
         &trainer,
-        super::super::word_counts::Words::from_map(&words),
+        WordCountsView::from_map(&words),
         2,
         Some(&mut |pair, count, id| trace.push((pair, count, id))),
     )
@@ -787,7 +902,7 @@ fn active_id_reuse_rebuilds_without_publishing_speculative_rules() {
             let progress = TrainingProgress::new(false, trainer.progress_format).unwrap();
             train_attempt(
                 &trainer,
-                super::super::word_counts::Words::from_map(&words),
+                WordCountsView::from_map(&words),
                 IdentityPolicy::FirstActivationOnly,
                 &execution,
                 merge::MergeOptions::default(),
@@ -831,7 +946,7 @@ fn affix_first_activations_preserve_reserved_ids_and_model_order() {
         let progress = TrainingProgress::new(false, trainer.progress_format).unwrap();
         train_attempt(
             &trainer,
-            super::super::word_counts::Words::from_map(&words),
+            WordCountsView::from_map(&words),
             IdentityPolicy::FirstActivationOnly,
             &execution,
             merge::MergeOptions::default(),
@@ -885,14 +1000,14 @@ fn planned_edges_match_materialized_slots_across_word_and_seek_boundaries() {
                 let mut retained = None;
                 let mut vocab = vocabulary::Vocabulary::initialize(
                     &trainer,
-                    super::super::word_counts::Words::from_map(&words),
+                    WordCountsView::from_map(&words),
                     4,
                     &progress,
                     &mut retained,
                 )
                 .unwrap();
                 let plan = corpus::CorpusPlan::build(
-                    super::super::word_counts::Words::from_map(&words),
+                    WordCountsView::from_map(&words),
                     &mut vocab,
                     IdentityPolicy::AllowActiveReuse,
                     false,
@@ -1050,7 +1165,7 @@ fn producer_encoding_preserves_hf_trace_and_fallbacks() {
                     let mut trace = Vec::new();
                     let actual = train_with_merge_options(
                         &trainer,
-                        super::super::word_counts::Words::from_map(words),
+                        WordCountsView::from_map(words),
                         workers,
                         options,
                         Some(&mut |pair, count, id| trace.push((pair, count, id))),
@@ -1090,14 +1205,14 @@ fn owner_single_producer_requires_full_task_and_prunes_complete_births() {
                 let mut retained = None;
                 let mut vocab = vocabulary::Vocabulary::initialize(
                     &trainer,
-                    super::super::word_counts::Words::from_map(&words),
+                    WordCountsView::from_map(&words),
                     workers,
                     &progress,
                     &mut retained,
                 )
                 .unwrap();
                 let plan = corpus::CorpusPlan::build(
-                    super::super::word_counts::Words::from_map(&words),
+                    WordCountsView::from_map(&words),
                     &mut vocab,
                     IdentityPolicy::FirstActivationOnly,
                     false,

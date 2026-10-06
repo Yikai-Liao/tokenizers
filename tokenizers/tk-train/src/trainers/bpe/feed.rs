@@ -6,11 +6,11 @@ use std::collections::hash_map::Entry;
 use tk_encode::{Result, parallelism::*};
 
 type CountMap = AHashMap<CompactString, u64>;
-type Shared = scc::HashMap<CompactString, u64, RandomState>;
-// Bound per-worker memory while amortizing shared-table writes across repeats.
-const LOCAL_KEYS: usize = 2048;
+type SharedCounts = scc::HashMap<CompactString, u64, RandomState>;
+// Cap distinct local keys; strings and callback output are not byte-bounded.
+const LOCAL_KEY_LIMIT: usize = 2048;
 
-fn flush(local: &mut CountMap, shared: &Shared) {
+fn flush(local: &mut CountMap, shared: &SharedCounts) {
     for (word, count) in local.drain() {
         shared
             .entry_sync(word)
@@ -19,13 +19,13 @@ fn flush(local: &mut CountMap, shared: &Shared) {
     }
 }
 
-fn add_local(local: &mut CountMap, word: CompactString, shared: &Shared) {
+fn add_local(local: &mut CountMap, word: CompactString, shared: &SharedCounts) {
     match local.entry(word) {
         Entry::Occupied(mut entry) => *entry.get_mut() += 1,
         Entry::Vacant(entry) => {
             entry.insert(1);
             // Only a new key can fill the cache; repeated words need no size check.
-            if local.len() == LOCAL_KEYS {
+            if local.len() == LOCAL_KEY_LIMIT {
                 flush(local, shared);
             }
         }
@@ -43,7 +43,7 @@ where
     F: Fn(&str) -> Result<Vec<String>>,
     A: FnMut(&mut CountMap, CompactString),
 {
-    // Callbacks still run after a normal error; the first error is retained.
+    // Run the callback even after a normal error; retain this fold's first error.
     let words = process(sequence.as_ref());
     let mut counts = counts?;
     for word in words? {
@@ -71,7 +71,7 @@ where
             })
             .map(WordCounts::from_map);
     }
-    let shared = Shared::with_hasher(hash.clone());
+    let shared = SharedCounts::with_hasher(hash.clone());
     // Keep preprocessing behind the upstream bridge: mapping it on the input
     // iterator would execute callbacks under the bridge's serial next() lock.
     // Local caches absorb repeats; flushes update weighted counts directly,
@@ -99,4 +99,53 @@ where
         true
     });
     Ok(WordCounts::from_entries(words))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn weighted_flush_and_error_preserve_local_contracts() {
+        let shared = SharedCounts::with_hasher(RandomState::default());
+        let mut local = CountMap::default();
+        for _ in 0..3 {
+            add_local(&mut local, "word0".into(), &shared);
+        }
+        for i in 1..LOCAL_KEY_LIMIT {
+            add_local(&mut local, format!("word{i}").into(), &shared);
+        }
+        assert!(local.is_empty());
+        assert_eq!(shared.len(), LOCAL_KEY_LIMIT);
+        assert_eq!(*shared.get_sync("word0").unwrap().get(), 3);
+        add_local(&mut local, "word0".into(), &shared);
+        add_local(&mut local, "tail".into(), &shared);
+        flush(&mut local, &shared);
+        assert!(local.is_empty());
+        assert_eq!(*shared.get_sync("word0").unwrap().get(), 4);
+        assert_eq!(*shared.get_sync("tail").unwrap().get(), 1);
+
+        // This fold has already flushed before a callback fails. Later callbacks
+        // run, but neither their output nor a later error replaces its first error.
+        let mut state = Ok(local);
+        let calls = std::cell::Cell::new(0);
+        for sequence in ["first", "success", "second"] {
+            state = accumulate(
+                state,
+                sequence,
+                &|s| {
+                    calls.set(calls.get() + 1);
+                    match s {
+                        "success" => Ok(vec!["discarded".into()]),
+                        _ => Err(s.to_owned().into()),
+                    }
+                },
+                |counts, word| add_local(counts, word, &shared),
+            );
+        }
+        assert_eq!(state.unwrap_err().to_string(), "first");
+        assert_eq!(calls.get(), 3);
+        assert!(shared.get_sync("discarded").is_none());
+        assert_eq!(shared.len(), LOCAL_KEY_LIMIT + 1);
+    }
 }

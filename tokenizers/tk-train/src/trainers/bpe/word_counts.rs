@@ -18,17 +18,17 @@ impl Default for WordCounts {
     }
 }
 impl WordCounts {
-    // Each entry is a globally unique key; order has no contract.
+    // Requires globally unique keys. Entry order is unspecified.
     pub(super) fn from_entries(entries: Vec<Entry>) -> Self {
         Self::Entries(entries)
     }
     pub(super) fn from_map(map: CountMap) -> Self {
         Self::Map(map)
     }
-    pub(super) fn view(&self) -> Words<'_> {
+    pub(super) fn view(&self) -> WordCountsView<'_> {
         match self {
-            Self::Map(map) => Words::from_map(map),
-            Self::Entries(entries) => Words { map: None, entries },
+            Self::Map(map) => WordCountsView::from_map(map),
+            Self::Entries(entries) => WordCountsView { map: None, entries },
         }
     }
     pub(super) fn len(&self) -> usize {
@@ -85,11 +85,11 @@ impl<'de> Deserialize<'de> for WordCounts {
 // Borrow either representation (including public do_train's caller-owned map).
 // Repeated train(&self) calls leave owned counts intact; only thin references
 // are collected and sorted by CorpusPlan.
-pub(super) struct Words<'a> {
+pub(super) struct WordCountsView<'a> {
     map: Option<&'a CountMap>,
     entries: &'a [Entry],
 }
-impl<'a> Words<'a> {
+impl<'a> WordCountsView<'a> {
     pub(super) fn from_map(map: &'a CountMap) -> Self {
         Self {
             map: Some(map),
@@ -107,5 +107,49 @@ impl<'a> Words<'a> {
     }
     pub(super) fn keys(self) -> impl Iterator<Item = &'a CompactString> {
         self.iter().map(|(word, _)| word)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn content_equality_and_flat_serde_ignore_representation_and_order() {
+        let entries = vec![("zero".into(), 0), ("wide".into(), u64::MAX)];
+        let original = WordCounts::from_entries(entries.clone());
+        let mut reversed = entries.clone();
+        reversed.reverse();
+        for equivalent in [
+            original.clone(),
+            WordCounts::from_entries(reversed),
+            WordCounts::from_map(entries.iter().cloned().collect()),
+        ] {
+            assert_eq!(original, equivalent);
+            assert_eq!(equivalent, original);
+            let json = serde_json::to_value(&equivalent).unwrap();
+            assert_eq!(json, serde_json::json!({"zero": 0, "wide": u64::MAX}));
+            assert_eq!(
+                serde_json::from_value::<WordCounts>(json).unwrap(),
+                original
+            );
+        }
+        for different in [
+            vec![("zero".into(), 1), ("wide".into(), u64::MAX)],
+            vec![("other".into(), 0), ("wide".into(), u64::MAX)],
+            vec![("zero".into(), 0)],
+            vec![
+                ("zero".into(), 0),
+                ("wide".into(), u64::MAX),
+                ("extra".into(), 1),
+            ],
+        ] {
+            let different = WordCounts::from_entries(different);
+            assert_ne!(original, different);
+            assert_ne!(different, original);
+        }
+        let empty_map = WordCounts::from_map(CountMap::default());
+        assert_eq!(WordCounts::default(), empty_map);
+        assert_eq!(empty_map, WordCounts::default());
     }
 }

@@ -1,15 +1,22 @@
 # BPE training engine
 
 The public entry is `BpeTrainer::do_train`. It consumes weighted words and returns
-a vocabulary, merges in rank order, and special tokens. `feed` invokes the caller's preprocessing callback and collects weighted words;
-`train` builds a model through the same private training entry as `do_train`. The engine owns one Rayon
-pool per training call and uses the caller's configured worker count.
+a vocabulary, merges in rank order, and special tokens. `feed` invokes the caller's
+preprocessing callback and collects weighted words; `train` builds a model through
+the same private training entry as `do_train`.
+
+Feed uses the ambient Rayon pool, including a pool installed by the caller.
+Training owns one pool per call and uses `tk_encode::parallelism::num_threads()`.
+Both respect the parallelism switch. Ordinary callback errors do not stop later
+callbacks; a failed feed leaves the trainer's previous counts intact.
 
 The implementation preserves weighted pair counts, ascending pair-ID tie breaks,
-left-to-right overlap handling, affixes, reserved IDs, and active-ID reuse. Counts
-use checked `u64` arithmetic; configurations that need a signed reuse ledger also
+left-to-right overlap handling, affixes, reserved IDs, and active-ID reuse. Training
+counts use checked `u64` arithmetic; configurations that need a signed reuse ledger also
 check its `i64` domain. Existing vocabulary IDs remain stable. Alphabet frequency
-ties retain the public trainer's existing behavior.
+ties retain the public trainer's existing behavior. Decorated IDs are assigned
+in the count view's traversal order before weighted words are sorted; neither
+hash-map traversal nor parallel feed entries promise a stable order.
 
 ## Reading order
 
