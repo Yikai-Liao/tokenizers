@@ -1,8 +1,8 @@
 # BPE training engine
 
 The public entry is `BpeTrainer::do_train`. It consumes weighted words and returns
-a vocabulary, merges in rank order, and special tokens. `feed` and `train` wrap
-this entry with pretokenization and model construction. The engine owns one Rayon
+a vocabulary, merges in rank order, and special tokens. `feed` invokes the caller's preprocessing callback and collects weighted words;
+`train` builds a model through the same private training entry as `do_train`. The engine owns one Rayon
 pool per training call and uses the caller's configured worker count.
 
 The implementation preserves weighted pair counts, ascending pair-ID tie breaks,
@@ -12,6 +12,15 @@ check its `i64` domain. Existing vocabulary IDs remain stable. Alphabet frequenc
 ties retain the public trainer's existing behavior.
 
 ## Reading order
+
+The trainer's private `../feed.rs` counts words in a single map for sequential
+input. Parallel input keeps the upstream iterator bridge and batches local counts
+into a shared table. Feed consumes that table into globally unique, unordered
+entries, without rebuilding a dictionary. Both paths share callback and error
+handling. `../word_counts.rs` exposes a borrowed view of either owned result or
+the caller-owned map passed to `do_train`. Training orders weighted words; feed
+does not sort. Trainer serialization remains a flat word-count map, and equality
+compares counts independently of their internal representation.
 
 | Module | Responsibility |
 | --- | --- |

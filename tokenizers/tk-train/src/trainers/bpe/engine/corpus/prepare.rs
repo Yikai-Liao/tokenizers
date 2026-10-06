@@ -7,7 +7,7 @@ use super::super::{
 };
 use super::{Corpus, InitialPairSource, SlotStorage};
 use crate::progress::TrainingProgress;
-use ahash::AHashMap;
+use crate::trainers::bpe::word_counts::Words;
 use compact_str::CompactString;
 use rayon::prelude::*;
 use std::{
@@ -89,7 +89,7 @@ impl InitialPairSource for &CorpusPlan<'_> {
 }
 impl<'a> CorpusPlan<'a> {
     pub(in super::super) fn build(
-        word_counts: &'a AHashMap<CompactString, u64>,
+        word_counts: Words<'a>,
         vocabulary: &mut Vocabulary,
         policy: IdentityPolicy,
         length_limited: bool,

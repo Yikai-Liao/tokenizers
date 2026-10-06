@@ -24,7 +24,7 @@ fn check_with_workers(
         let mut trace = Vec::<(Pair, u64, u32)>::new();
         let actual = train(
             trainer,
-            words,
+            super::super::word_counts::Words::from_map(words),
             workers,
             Some(&mut |pair, count, id| trace.push((pair, count, id))),
         )
@@ -275,7 +275,13 @@ fn pruning_waits_for_all_birth_producers_and_alphabet_filtering() {
     // independently checks the frequency limit and forced characters.
     let mut alphabet_only = trainer;
     alphabet_only.vocab_size = 3;
-    let (vocab, merges, _) = train(&alphabet_only, &words, 1, None).unwrap();
+    let (vocab, merges, _) = train(
+        &alphabet_only,
+        super::super::word_counts::Words::from_map(&words),
+        1,
+        None,
+    )
+    .unwrap();
     assert_eq!(
         vocab,
         [("a".into(), 0), ("b".into(), 1), ("测".into(), 2)]
@@ -500,6 +506,76 @@ fn randomized_round_by_round_hf_differential() {
 }
 
 #[test]
+fn feed_preserves_flat_counts_and_trainer_equality() {
+    use crate::Trainer;
+    let mut trainer = BpeTrainer::builder().show_progress(false).build();
+    trainer
+        .feed(
+            (0..257)
+                .map(|i| if i % 2 == 0 { "even" } else { "odd" })
+                .chain(std::iter::once("singleton")),
+            |word| Ok(vec![word.into(), "shared".into(), "shared".into()]),
+        )
+        .unwrap();
+    let json = serde_json::to_value(&trainer).unwrap();
+    assert_eq!(
+        json["words"],
+        serde_json::json!({"even": 129, "odd": 128, "singleton": 1, "shared": 516})
+    );
+    let restored: BpeTrainer = serde_json::from_value(json).unwrap();
+    assert_eq!(trainer, restored);
+    assert_eq!(trainer, trainer.clone());
+    let words = counts(&[
+        ("even", 129),
+        ("odd", 128),
+        ("singleton", 1),
+        ("shared", 516),
+    ]);
+    assert_eq!(
+        trainer.train_vocab().unwrap(),
+        trainer.do_train(&words).unwrap()
+    );
+    // Deserialization retains the original map's full count domain.
+    let mut json = serde_json::to_value(&trainer).unwrap();
+    json["words"]["shared"] = serde_json::json!(515);
+    let altered: BpeTrainer = serde_json::from_value(json.clone()).unwrap();
+    assert_ne!(trainer, altered);
+    assert_ne!(restored, altered);
+    json["words"] = serde_json::json!({"zero": 0, "wide": u64::MAX});
+    let restored: BpeTrainer = serde_json::from_value(json.clone()).unwrap();
+    assert_eq!(serde_json::to_value(restored).unwrap(), json);
+    trainer
+        .feed(std::iter::empty::<&str>(), |_| unreachable!())
+        .unwrap();
+    assert_eq!(trainer.get_word_count(), 0);
+}
+
+#[test]
+fn feed_error_runs_callbacks_without_replacing_previous_counts() {
+    use crate::Trainer;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    let mut trainer = BpeTrainer::builder().show_progress(false).build();
+    trainer
+        .feed(["previous"].into_iter(), |word| Ok(vec![word.into()]))
+        .unwrap();
+    let previous = trainer.clone();
+    let calls = AtomicUsize::new(0);
+    let error = trainer
+        .feed((0..257).map(|i| i.to_string()), |word| {
+            calls.fetch_add(1, Ordering::Relaxed);
+            if word == "7" {
+                Err("process failed".into())
+            } else {
+                Ok(vec![word.into()])
+            }
+        })
+        .unwrap_err();
+    assert_eq!(error.to_string(), "process failed");
+    assert_eq!(calls.load(Ordering::Relaxed), 257);
+    assert_eq!(trainer, previous);
+}
+
+#[test]
 fn public_feed_train_and_model_reload_preserve_affixes() {
     use crate::Trainer;
     use tk_encode::{
@@ -585,7 +661,7 @@ fn wide_frequencies_and_signed_ledger_boundaries() {
         let mut trace = Vec::new();
         train(
             &trainer,
-            &counts(&[("ab", weight)]),
+            super::super::word_counts::Words::from_map(&counts(&[("ab", weight)])),
             2,
             Some(&mut |pair, count, id| trace.push((pair, count, id))),
         )
@@ -628,6 +704,8 @@ fn public_thread_policy_in_isolated_processes() {
         tk_encode::parallelism::set_num_threads(workers.parse().unwrap());
         tk_encode::parallelism::set_parallelism(parallel == "true");
         public_feed_train_and_model_reload_preserve_affixes();
+        feed_preserves_flat_counts_and_trainer_equality();
+        feed_error_runs_callbacks_without_replacing_previous_counts();
         let trainer = BpeTrainer::builder()
             .vocab_size(10)
             .min_frequency(1)
@@ -670,7 +748,7 @@ fn suffix_identity_reuse_has_literal_mainline_merge_choices() {
     let mut trace = Vec::new();
     let (_, merges, _) = train(
         &trainer,
-        &words,
+        super::super::word_counts::Words::from_map(&words),
         2,
         Some(&mut |pair, count, id| trace.push((pair, count, id))),
     )
@@ -709,7 +787,7 @@ fn active_id_reuse_rebuilds_without_publishing_speculative_rules() {
             let progress = TrainingProgress::new(false, trainer.progress_format).unwrap();
             train_attempt(
                 &trainer,
-                &words,
+                super::super::word_counts::Words::from_map(&words),
                 IdentityPolicy::FirstActivationOnly,
                 &execution,
                 merge::MergeOptions::default(),
@@ -753,7 +831,7 @@ fn affix_first_activations_preserve_reserved_ids_and_model_order() {
         let progress = TrainingProgress::new(false, trainer.progress_format).unwrap();
         train_attempt(
             &trainer,
-            &words,
+            super::super::word_counts::Words::from_map(&words),
             IdentityPolicy::FirstActivationOnly,
             &execution,
             merge::MergeOptions::default(),
@@ -807,14 +885,14 @@ fn planned_edges_match_materialized_slots_across_word_and_seek_boundaries() {
                 let mut retained = None;
                 let mut vocab = vocabulary::Vocabulary::initialize(
                     &trainer,
-                    &words,
+                    super::super::word_counts::Words::from_map(&words),
                     4,
                     &progress,
                     &mut retained,
                 )
                 .unwrap();
                 let plan = corpus::CorpusPlan::build(
-                    &words,
+                    super::super::word_counts::Words::from_map(&words),
                     &mut vocab,
                     IdentityPolicy::AllowActiveReuse,
                     false,
@@ -972,7 +1050,7 @@ fn producer_encoding_preserves_hf_trace_and_fallbacks() {
                     let mut trace = Vec::new();
                     let actual = train_with_merge_options(
                         &trainer,
-                        words,
+                        super::super::word_counts::Words::from_map(words),
                         workers,
                         options,
                         Some(&mut |pair, count, id| trace.push((pair, count, id))),
@@ -1012,14 +1090,14 @@ fn owner_single_producer_requires_full_task_and_prunes_complete_births() {
                 let mut retained = None;
                 let mut vocab = vocabulary::Vocabulary::initialize(
                     &trainer,
-                    &words,
+                    super::super::word_counts::Words::from_map(&words),
                     workers,
                     &progress,
                     &mut retained,
                 )
                 .unwrap();
                 let plan = corpus::CorpusPlan::build(
-                    &words,
+                    super::super::word_counts::Words::from_map(&words),
                     &mut vocab,
                     IdentityPolicy::FirstActivationOnly,
                     false,

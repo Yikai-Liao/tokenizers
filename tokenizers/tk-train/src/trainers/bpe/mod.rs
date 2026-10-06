@@ -1,5 +1,9 @@
 #![allow(clippy::map_entry)]
 
+mod feed;
+mod word_counts;
+use word_counts::{WordCounts, Words};
+
 mod engine;
 #[cfg(feature = "parity-aware-bpe")]
 pub mod parity_trainer;
@@ -163,7 +167,7 @@ impl BpeTrainerBuilder {
             continuing_subword_prefix: self.config.continuing_subword_prefix,
             end_of_word_suffix: self.config.end_of_word_suffix,
             max_token_length: self.config.max_token_length,
-            words: AHashMap::new(),
+            words: WordCounts::default(),
         }
     }
 }
@@ -218,7 +222,7 @@ pub struct BpeTrainer {
     /// An optional parameter to limit the max length of any single token
     pub max_token_length: Option<usize>,
 
-    words: AHashMap<CompactString, u64>,
+    words: WordCounts,
 }
 
 impl Default for BpeTrainer {
@@ -247,10 +251,10 @@ impl BpeTrainer {
     }
 
     /// Select the alphabet with the existing frequency-tie and codepoint order.
-    fn select_alphabet(&self, wc: &AHashMap<CompactString, u64>) -> Vec<char> {
+    fn select_alphabet(&self, wc: Words<'_>) -> Vec<char> {
         // Compute the alphabet from seen words
         let mut alphabet: AHashMap<char, usize> = AHashMap::new();
-        for (word, count) in wc {
+        for (word, count) in wc.iter() {
             for c in word.chars() {
                 *alphabet.entry(c).or_default() += *count as usize;
             }
@@ -289,7 +293,7 @@ impl BpeTrainer {
         w2id: &mut AHashMap<CompactString, u32>,
         id2w: &mut Vec<CompactString>,
     ) {
-        for character in self.select_alphabet(wc) {
+        for character in self.select_alphabet(Words::from_map(wc)) {
             let mut utf8 = [0; 4];
             let text: &str = character.encode_utf8(&mut utf8);
             let token = CompactString::from(text);
@@ -307,7 +311,7 @@ impl BpeTrainer {
     /// WordPiece pieces, so building a `PipelineBPE` first -- merge tables and all -- would be work
     /// thrown away.
     pub fn train_vocab(&self) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
-        self.do_train(&self.words)
+        self.train_counts(self.words.view())
     }
 
     /// The runtime options a trained model is built with.
@@ -334,6 +338,10 @@ impl BpeTrainer {
         &self,
         word_counts: &AHashMap<CompactString, u64>,
     ) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
+        self.train_counts(Words::from_map(word_counts))
+    }
+
+    fn train_counts(&self, word_counts: Words<'_>) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
         let workers = if get_parallelism() {
             num_threads().max(1)
         } else {
@@ -354,7 +362,7 @@ impl Trainer for BpeTrainer {
 
     /// Train a BPE model
     fn train(&self, model: &mut PipelineBPE) -> Result<Vec<AddedToken>> {
-        let (vocab, merges, special_tokens) = self.do_train(&self.words)?;
+        let (vocab, merges, special_tokens) = self.train_counts(self.words.view())?;
         *model = PipelineBPE::from_config(BpeConfig {
             vocab,
             merges,
@@ -374,28 +382,7 @@ impl Trainer for BpeTrainer {
         S: AsRef<str> + Send,
         F: Fn(&str) -> Result<Vec<String>> + Sync,
     {
-        let words: Result<AHashMap<CompactString, u64>> = iterator
-            .maybe_par_bridge()
-            .map(|sequence| {
-                let words = process(sequence.as_ref())?;
-                let mut map = AHashMap::new();
-                for word in words {
-                    *map.entry(CompactString::from(word)).or_default() += 1;
-                }
-                Ok(map)
-            })
-            .reduce(
-                || Ok(AHashMap::new()),
-                |acc, ws| {
-                    let mut acc = acc?;
-                    for (k, v) in ws? {
-                        *acc.entry(k).or_default() += v;
-                    }
-                    Ok(acc)
-                },
-            );
-
-        self.words = words?;
+        self.words = feed::count(iterator, &process)?;
         Ok(())
     }
 }

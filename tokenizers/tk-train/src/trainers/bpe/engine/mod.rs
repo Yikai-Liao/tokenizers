@@ -1,4 +1,5 @@
 //! One BPE coordinator over shared vocabulary, corpus, and occurrence storage.
+use crate::trainers::bpe::word_counts::Words;
 mod aa_parity;
 mod batch;
 mod corpus;
@@ -10,8 +11,10 @@ mod storage;
 mod vocabulary;
 use super::BpeTrainer;
 use crate::progress::TrainingProgress;
+#[cfg(test)]
 use ahash::AHashMap;
 use batch::{BatchSelection, RuleBatch};
+#[cfg(test)]
 use compact_str::CompactString;
 use storage::AllocationArena;
 use tk_encode::{
@@ -32,7 +35,7 @@ enum AttemptOutcome {
 }
 pub(super) fn train(
     trainer: &BpeTrainer,
-    word_counts: &AHashMap<CompactString, u64>,
+    word_counts: Words<'_>,
     workers: usize,
     #[cfg(test)] observe: Option<&mut (dyn FnMut(tk_encode::models::bpe::Pair, u64, u32) + Send)>,
 ) -> Result<ModelParts> {
@@ -47,7 +50,7 @@ pub(super) fn train(
 }
 fn train_with_merge_options(
     trainer: &BpeTrainer,
-    word_counts: &AHashMap<CompactString, u64>,
+    word_counts: Words<'_>,
     workers: usize,
     merge_options: merge::MergeOptions,
     #[cfg(test)] mut observe: Option<
@@ -103,7 +106,7 @@ fn train_with_merge_options(
 #[cfg_attr(test, allow(clippy::too_many_arguments))]
 fn train_attempt(
     trainer: &BpeTrainer,
-    word_counts: &AHashMap<CompactString, u64>,
+    word_counts: Words<'_>,
     policy: IdentityPolicy,
     execution: &execution::Execution,
     merge_options: merge::MergeOptions,

@@ -1,7 +1,8 @@
 //! Vocabulary identity and canonical output strings, independent of position storage.
 use super::{BpeTrainer, WORD_SEPARATOR_ID};
 use crate::progress::{TrainingProgress, WorkProgress};
-use ahash::{AHashMap, RandomState};
+use crate::trainers::bpe::word_counts::Words;
+use ahash::RandomState;
 use compact_str::CompactString;
 use indexmap::IndexSet;
 use rayon::prelude::*;
@@ -37,7 +38,7 @@ pub(super) struct InitialTokenIds {
 impl Vocabulary {
     pub(super) fn initialize(
         trainer: &BpeTrainer,
-        word_counts: &AHashMap<CompactString, u64>,
+        word_counts: Words<'_>,
         workers: usize,
         progress: &TrainingProgress,
         retained_alphabet: &mut Option<Vec<char>>,
@@ -126,7 +127,7 @@ impl Vocabulary {
     }
     pub(super) fn initial_ids(
         &mut self,
-        word_counts: &AHashMap<CompactString, u64>,
+        word_counts: Words<'_>,
         work: &WorkProgress,
     ) -> Result<InitialTokenIds> {
         let mut ids = InitialTokenIds {
