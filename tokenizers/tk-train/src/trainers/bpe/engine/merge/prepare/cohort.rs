@@ -2,7 +2,7 @@
 use super::*;
 use rayon::prelude::*;
 enum CohortSource {
-    WordCountsView(Vec<usize>),
+    WordIndices(Vec<usize>),
     Positions(std::ops::Range<usize>),
 }
 struct CohortTask {
@@ -62,7 +62,7 @@ pub(super) fn prepare<S: SlotStorage>(
                     .map_or(corpus.len() as u64, |&word| corpus.word_start(word));
                 CohortTask {
                     region: start..end,
-                    source: CohortSource::WordCountsView(part.to_vec()),
+                    source: CohortSource::WordIndices(part.to_vec()),
                 }
             })
             .collect::<Vec<_>>()
@@ -96,7 +96,7 @@ pub(super) fn prepare<S: SlotStorage>(
             execution.with_merge_scratch(token_id_count, |scratch| {
                 let mut plan = RulePreparation::new(corpus, scratch, rule, 0, birth_span_limit);
                 match task.source {
-                    CohortSource::WordCountsView(words) => {
+                    CohortSource::WordIndices(words) => {
                         for word in words {
                             let mut previous = None;
                             let mut position = corpus.word_start(word);

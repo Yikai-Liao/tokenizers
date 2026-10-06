@@ -160,6 +160,9 @@ jobs:
       - name: Lint with RustFmt
         run: cargo fmt --all -- --check
 
+      - name: Format training
+        run: cargo fmt --manifest-path tk-train/Cargo.toml --all -- --check
+
   readme:
     permissions:
       contents: read

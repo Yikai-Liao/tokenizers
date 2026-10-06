@@ -97,8 +97,9 @@ unsafe fn read_varint(source: &mut *const u8) -> u64 {
 }
 
 // Visit exactly one reverse run, checking every gap, including seed boundaries.
-// Constructors encode once into scratch. Appends replay this same traversal to
-// measure first and write directly beyond the published prefix.
+// For compressed lists, scratch-backed construction encodes once into scratch.
+// Direct construction and appends measure first, then replay into final storage.
+// Appends write beyond the published prefix.
 fn reverse_codes(
     start: usize,
     end: usize,
@@ -793,8 +794,8 @@ impl<I: Iterator<Item = u64>> DescendingMerge<I> {
 }
 impl<I: Iterator<Item = u64>> Iterator for DescendingMerge<I> {
     type Item = u64;
-    // PERF: Consumers decode in tight loops across the crate boundary. Keeping
-    // this cursor step visible avoids a function call for every position.
+    // PERF: Inline the iterator step into tight consumer loops to avoid a
+    // function call for every position.
     #[inline]
     fn next(&mut self) -> Option<u64> {
         let (position, index) = self.heads.peek().copied()?;
@@ -830,8 +831,8 @@ impl PositionCursor<'_, '_> {
 }
 impl Iterator for PositionCursor<'_, '_> {
     type Item = u64;
-    // PERF: Consumers decode in tight loops across the crate boundary. Keeping
-    // this cursor step visible avoids a function call for every position.
+    // PERF: Inline the decoder step into tight consumer loops to avoid a
+    // function call for every position.
     #[inline]
     fn next(&mut self) -> Option<u64> {
         if self.index == self.end {

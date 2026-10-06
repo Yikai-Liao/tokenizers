@@ -123,7 +123,7 @@ impl BpeTrainerBuilder {
         self
     }
 
-    /// Set the initial alphabet
+    /// Set the initial alphabet. See [`BpeTrainer::initial_alphabet`] for truncation.
     #[must_use]
     pub fn initial_alphabet(mut self, alphabet: HashSet<char>) -> Self {
         let mut initial_alphabet = AHashSet::with_capacity(alphabet.len());
@@ -145,7 +145,9 @@ impl BpeTrainerBuilder {
         self.config.end_of_word_suffix = Some(suffix);
         self
     }
-    /// Set max_token_length
+    /// Set the exclusive span limit for newly created adjacent pairs.
+    ///
+    /// See [`BpeTrainer::max_token_length`] for units and the initial-pair exception.
     #[must_use]
     pub fn max_token_length(mut self, max_token_length: Option<usize>) -> Self {
         self.config.max_token_length = max_token_length;
@@ -210,14 +212,21 @@ pub struct BpeTrainer {
     pub special_tokens: Vec<AddedToken>,
     /// Whether to limit the number of initial tokens that can be kept before computing merges
     pub limit_alphabet: Option<usize>,
-    /// The initial alphabet we want absolutely to include. This allows to cover
-    /// some characters that are not necessarily in the training set
+    /// Characters prioritized during alphabet selection, including characters
+    /// absent from the training input. If `limit_alphabet` is smaller than this
+    /// set, some of these characters can still be removed.
     pub initial_alphabet: AHashSet<char>,
     /// An optional prefix to use on any subword that exist only behind another one
     pub continuing_subword_prefix: Option<String>,
     /// An optional suffix to characterize and end-of-word subword
     pub end_of_word_suffix: Option<String>,
-    /// An optional parameter to limit the max length of any single token
+    /// An exclusive span limit for newly created adjacent pairs, measured in
+    /// retained input characters. Affix text and UTF-8 byte widths do not count.
+    /// `None` disables this limit.
+    ///
+    /// Initial pairs bypass the limit, and selected pairs have no additional
+    /// length check. For example, `Some(3)` rejects a newborn pair spanning three
+    /// characters, while `Some(1)` still permits an initial two-character merge.
     pub max_token_length: Option<usize>,
 
     words: WordCounts,
@@ -305,9 +314,14 @@ impl BpeTrainer {
     /// Train the collected weighted words and return vocabulary entries, ordered
     /// merges, and special tokens.
     ///
-    /// The WordPiece trainer is the one caller: it trains a BPE and reinterprets the vocabulary as
-    /// WordPiece pieces, so building a `PipelineBPE` first -- merge tables and all -- would be work
-    /// thrown away.
+    /// Stored counts remain available for subsequent calls. Execution policy and
+    /// numeric limits are the same as for [`Self::do_train`]. The WordPiece trainer
+    /// uses these parts to reinterpret the vocabulary without building BPE merge tables.
+    ///
+    /// # Errors
+    ///
+    /// Returns the training errors described in [`Self::do_train`], including the
+    /// signed input limits for nonempty affixes even when no merge is needed.
     pub fn train_vocab(&self) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
         self.train_counts(self.words.view())
     }
@@ -330,6 +344,26 @@ impl BpeTrainer {
     ///
     /// These parts populate [`BpeConfig`] for [`PipelineBPE::from_config`]. The
     /// WordPiece trainer consumes the vocabulary without building BPE merge tables.
+    /// The input map is borrowed and remains unchanged.
+    ///
+    /// Training uses a dedicated Rayon pool sized by
+    /// [`tk_encode::parallelism::num_threads`], or one worker when parallelism is
+    /// disabled. [`Trainer::feed`] uses the ambient pool, including one installed
+    /// by the caller.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error on overflow or underflow in checked `u64` pair, birth,
+    /// or removal arithmetic, or in checked `i64` active-reuse ledger updates.
+    /// Nonempty affixes and active reuse also require the maximum word weight and
+    /// initial weighted edge mass (the sum of each word's weight times its retained
+    /// adjacent-pair count) to fit in `i64::MAX`. The affix check applies even when
+    /// the initial vocabulary already meets the target size. Plain first-activation
+    /// input has no total-`u64` mass limit when every individual pair count fits.
+    ///
+    /// Pool creation, progress setup, vocabulary or corpus size bounds, and fallible position
+    /// storage operations can also return errors. Feed counting and limited-alphabet
+    /// frequency accumulation use ordinary addition rather than these checked rules.
     pub fn do_train(
         &self,
         word_counts: &AHashMap<CompactString, u64>,

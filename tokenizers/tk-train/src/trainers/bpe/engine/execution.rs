@@ -5,6 +5,15 @@ use super::{merge::SelectedRuleIndex, pair_index::ShardRouter};
 use std::sync::Mutex;
 use tk_encode::Result;
 
+// Enabled only by the isolated thread-policy test. Observe executing tasks so a
+// configured pool size alone cannot make the test pass.
+#[cfg(test)]
+pub(super) static EXPECTED_WORKERS: std::sync::atomic::AtomicUsize =
+    std::sync::atomic::AtomicUsize::new(0);
+#[cfg(test)]
+pub(super) static OBSERVED_TASKS: std::sync::atomic::AtomicUsize =
+    std::sync::atomic::AtomicUsize::new(0);
+
 /// One training call's pool and resources reused by actual executing workers.
 /// Logical pair-owner shards can run on any worker. Directory, arena, and codec
 /// leases require sequential work without nested pool tasks; joined phases define
@@ -99,6 +108,15 @@ impl Execution {
     /// Call only inside this pool's tasks. Worker-local leases must not span nested
     /// pool work, which could re-enter the same resource locks.
     pub(super) fn current_worker(&self) -> usize {
+        #[cfg(test)]
+        {
+            use std::sync::atomic::Ordering;
+            let expected = EXPECTED_WORKERS.load(Ordering::Relaxed);
+            if expected != 0 {
+                assert_eq!(rayon::current_num_threads(), expected);
+                OBSERVED_TASKS.fetch_add(1, Ordering::Relaxed);
+            }
+        }
         self.pool
             .current_thread_index()
             .expect("BPE allocation runs inside its training pool")

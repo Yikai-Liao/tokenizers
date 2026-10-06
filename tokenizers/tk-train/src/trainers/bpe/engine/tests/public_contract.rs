@@ -125,35 +125,58 @@ fn wide_frequencies_and_signed_ledger_boundaries() {
 
 #[test]
 fn public_thread_policy_in_isolated_processes() {
+    use crate::trainers::bpe::word_counts::WordCounts;
+    use std::sync::atomic::Ordering;
     const CHILD: &str = "BPE_THREAD_POLICY_TEST_CHILD";
     if let Ok(setting) = std::env::var(CHILD) {
-        let (parallel, workers) = setting.split_once(':').unwrap();
+        let fields: Vec<_> = setting.split(':').collect();
+        let [parallel, workers, ambient] = fields.as_slice() else {
+            panic!("expected parallel:training-workers:ambient-workers");
+        };
         let workers = workers.parse().unwrap();
+        let ambient = ambient.parse().unwrap();
+        let parallel = *parallel == "true";
         tk_encode::parallelism::set_num_threads(workers);
-        tk_encode::parallelism::set_parallelism(parallel == "true");
+        tk_encode::parallelism::set_parallelism(parallel);
+        execution::EXPECTED_WORKERS.store(if parallel { workers } else { 1 }, Ordering::Relaxed);
         rayon::ThreadPoolBuilder::new()
-            .num_threads(workers)
+            .num_threads(ambient)
             .build()
             .unwrap()
             .install(|| {
-                check_feed_flush_boundaries(workers);
+                check_feed_flush_boundaries(ambient);
                 public_feed_train_and_model_reload_preserve_affixes();
                 feed_preserves_flat_counts_and_trainer_equality();
                 feed_error_runs_callbacks_without_replacing_previous_counts();
+
+                let mut trainer = BpeTrainer::builder()
+                    .vocab_size(10)
+                    .min_frequency(1)
+                    .show_progress(false)
+                    .build();
+                let words = counts(&[("aaaaa", 3), ("abcabc", 2), ("测测测", 1)]);
+                execution::OBSERVED_TASKS.store(0, Ordering::Relaxed);
+                let parts = trainer.do_train(&words).unwrap();
+                assert!(execution::OBSERVED_TASKS.load(Ordering::Relaxed) > 0);
+                assert_eq!(
+                    parts,
+                    trainer.do_train_observed(&words, |_, _, _| {}).unwrap()
+                );
+                trainer.words = WordCounts::from_map(words);
+                execution::OBSERVED_TASKS.store(0, Ordering::Relaxed);
+                assert_eq!(trainer.train_vocab().unwrap(), parts);
+                assert!(execution::OBSERVED_TASKS.load(Ordering::Relaxed) > 0);
             });
-        let trainer = BpeTrainer::builder()
-            .vocab_size(10)
-            .min_frequency(1)
-            .show_progress(false)
-            .build();
-        let words = counts(&[("aaaaa", 3), ("abcabc", 2), ("测测测", 1)]);
-        assert_eq!(
-            trainer.do_train(&words).unwrap(),
-            trainer.do_train_observed(&words, |_, _, _| {}).unwrap()
-        );
         return;
     }
-    for setting in ["false:4", "true:1", "true:2", "true:4"] {
+    for setting in [
+        "false:4:4",
+        "true:1:1",
+        "true:2:2",
+        "true:4:4",
+        "true:4:2",
+        "false:4:2",
+    ] {
         let result = std::process::Command::new(std::env::current_exe().unwrap())
             .args([
                 "--exact",

@@ -216,7 +216,7 @@ mod tests {
 
     #[test]
     fn all_partitions_of_small_valid_edge_patterns_match_greedy() {
-        // A set bit continues an AA run; otherwise leave a gap. Every possible
+        // A clear bit continues an AA run; a set bit leaves a gap. Every possible
         // chunk boundary, including duplicated boundaries for empty chunks,
         // is checked against the sequential greedy oracle.
         {
