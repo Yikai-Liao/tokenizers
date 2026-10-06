@@ -10,14 +10,20 @@ use super::super::{
     IdentityPolicy, WORD_SEPARATOR_ID, aa_parity,
     corpus::{Corpus, PairMatch, PairMatcher, SlotStorage, WordWeightCursor},
     execution::Execution,
-    pair_index::{MergeCandidate, PairState, pair_key},
+    pair_index::{MergeCandidate, pair_key},
 };
 use super::{
-    EventChunk, MergeEvents, MergeRule, PairChanges, PreparedJob, PreparedMerges, WritePlan,
+    CompletedBirth, EventChunk, MergeEvents, MergeRule, PairChanges, PreparedJob, PreparedMerges,
+    WritePlan,
 };
 use ahash::AHashMap;
 use tk_encode::{Result, models::bpe::Pair};
-type PreparedOutput<'a> = (PreparedJob, Vec<EventChunk>, Vec<(u64, PairState<'a>)>);
+/// One job's writes, buffered neighbor events, and already encoded fresh births.
+struct PreparedOutput<'arena> {
+    job: PreparedJob,
+    chunks: Vec<EventChunk>,
+    completed_births: Vec<CompletedBirth<'arena>>,
+}
 #[derive(Default)]
 struct NeighborChanges {
     removed: u64,
@@ -57,12 +63,12 @@ impl MergeScratch {
         ));
     }
     // One direction/bucket rule for buffered events and complete producers.
-    fn neighbor_events<'s>(
-        left: &'s mut IdAccumulator<NeighborChanges>,
-        right: &'s mut IdAccumulator<NeighborChanges>,
-        rule: &'s MergeRule,
+    fn neighbor_events(
+        left: &mut IdAccumulator<NeighborChanges>,
+        right: &mut IdAccumulator<NeighborChanges>,
+        rule: &MergeRule,
         rank: usize,
-    ) -> impl Iterator<Item = PairChanges> + 's {
+    ) -> impl Iterator<Item = PairChanges> {
         let left = left.drain().map(move |(neighbor, change)| PairChanges {
             removed_key: pair_key((neighbor, rule.pair.0)),
             born_key: pair_key((neighbor, rule.replacement)),
@@ -83,15 +89,19 @@ impl MergeScratch {
         });
         left.chain(right)
     }
+    /// Drain a complete producer's neighbors, pruning before direct encoding.
+    /// The caller must cover the whole rule without a partial node-budget flush.
+    /// Removal events survive; completed births are published only through the
+    /// returned records, with no second event scan or position re-encoding.
     #[allow(clippy::too_many_arguments)]
-    fn flush_rule_with_births<'a>(
+    fn flush_rule_with_births<'arena>(
         &mut self,
         rule: &MergeRule,
         rank: usize,
         floor: u64,
-        arena: &'a AllocationArena,
+        arena: &'arena AllocationArena,
         execution: &Execution,
-        births: &mut Vec<(u64, PairState<'a>)>,
+        births: &mut Vec<CompletedBirth<'arena>>,
     ) -> Result<()> {
         let worker = execution.current_worker();
         let lease = arena.lease(worker);
@@ -108,13 +118,11 @@ impl MergeScratch {
                     &lease,
                 )?;
 
-                births.push((
-                    event.born_key,
-                    PairState {
-                        ledger_count_bits: event.born_weight,
-                        positions,
-                    },
-                ));
+                births.push(CompletedBirth {
+                    key: event.born_key,
+                    weight: event.born_weight,
+                    positions,
+                });
             }
             // No birth event is emitted for the completed producer. The count
             // owner's original removal actions retain their keys and weights.
@@ -278,38 +286,34 @@ impl SelectedRuleIndex {
         }
     }
 }
-#[derive(Clone, Copy)]
-struct LogicalToken {
-    id: u32,
-    start: u64,
-    span: u64,
-}
-enum SelectedNeighbors<'a> {
-    Rules(&'a SelectedRuleIndex),
+enum SelectedNeighbors<'rules> {
+    Rules(&'rules SelectedRuleIndex),
     Adjacent {
         previous: Option<u64>,
         following: Option<u64>,
     },
 }
-struct RulePreparation<'a, S: SlotStorage> {
-    corpus: &'a Corpus<S>,
-    scratch: &'a mut MergeScratch,
-    rule: &'a MergeRule,
+struct RulePreparation<'prep, S: SlotStorage> {
+    corpus: &'prep Corpus<S>,
+    scratch: &'prep mut MergeScratch,
+    rule: &'prep MergeRule,
     rank: usize,
-    matcher: PairMatcher<'a, S>,
+    matcher: PairMatcher<'prep, S>,
+    /// Strict admission gate for newborn neighbors, in retained-symbol slots.
+    /// Initial candidates and the selected merge itself have no extra length gate.
     birth_span_limit: u64,
     chunks: Vec<EventChunk>,
     positions: PositionBuffer,
     // PERF: Weighted words are contiguous and often share weights. Cache the
     // current interval across sorted occurrence visits instead of searching
     // immutable boundaries for every rewrite. The cursor also handles resets.
-    weights: WordWeightCursor<'a>,
+    weights: WordWeightCursor<'prep>,
 }
-impl<'c, S: SlotStorage> RulePreparation<'c, S> {
+impl<'prep, S: SlotStorage> RulePreparation<'prep, S> {
     fn new(
-        corpus: &'c Corpus<S>,
-        scratch: &'c mut MergeScratch,
-        rule: &'c MergeRule,
+        corpus: &'prep Corpus<S>,
+        scratch: &'prep mut MergeScratch,
+        rule: &'prep MergeRule,
         rank: usize,
         birth_span_limit: u64,
     ) -> Self {
@@ -330,38 +334,6 @@ impl<'c, S: SlotStorage> RulePreparation<'c, S> {
             self.scratch.flush_rule(self.rule, self.rank);
             self.chunks.push(self.scratch.take_chunk());
         }
-    }
-    fn record_cohort_match(
-        &mut self,
-        matched: PairMatch,
-        previous: Option<LogicalToken>,
-    ) -> Result<LogicalToken> {
-        self.room();
-        let weight = self.weights.weight(matched.left_start);
-        if let Some(previous) = previous {
-            self.scratch.left(
-                previous.id,
-                previous.start,
-                weight,
-                previous.span + matched.merged_span < self.birth_span_limit,
-            )?;
-        }
-        let next = self.corpus.token(matched.next_start);
-        if next != WORD_SEPARATOR_ID {
-            self.scratch.right(
-                next,
-                next,
-                matched.left_start,
-                weight,
-                matched.merged_span + self.corpus.span(matched.next_start) < self.birth_span_limit,
-            )?;
-        }
-        self.positions.push_position(matched.left_start);
-        Ok(LogicalToken {
-            id: self.rule.replacement,
-            start: matched.left_start,
-            span: matched.merged_span,
-        })
     }
     fn fresh(&mut self, matched: PairMatch, neighbors: SelectedNeighbors<'_>) -> Result<()> {
         self.room();
@@ -411,12 +383,12 @@ impl<'c, S: SlotStorage> RulePreparation<'c, S> {
         }
         Ok(())
     }
-    fn finish_with_births<'a>(
+    fn finish_with_births<'arena>(
         self,
-        arena: &'a AllocationArena,
+        arena: &'arena AllocationArena,
         execution: &Execution,
         floor: u64,
-        births: &mut Vec<(u64, PairState<'a>)>,
+        births: &mut Vec<CompletedBirth<'arena>>,
     ) -> Result<(WritePlan, Vec<EventChunk>)> {
         debug_assert!(
             self.chunks.is_empty(),
@@ -454,8 +426,12 @@ impl Default for MergeOptions {
         }
     }
 }
+/// Prepare all jobs against one stable corpus and join every reader before return.
+/// Rules and candidates must be nonempty and correspond in accepted rank order.
+/// Complete fresh producers return encoded births; partial, AA, and reuse jobs
+/// return event chains for owner reduction. An error returns no applicable plan.
 #[allow(clippy::too_many_arguments)]
-pub(in super::super) fn prepare_merges_with_births<'a, S: SlotStorage>(
+pub(in super::super) fn prepare_merges_with_births<'arena, S: SlotStorage>(
     corpus: &Corpus<S>,
     rules: &[MergeRule],
     candidates: &[MergeCandidate<'_>],
@@ -463,10 +439,10 @@ pub(in super::super) fn prepare_merges_with_births<'a, S: SlotStorage>(
     token_id_count: usize,
     birth_span_limit: usize,
     execution: &Execution,
-    arena: &'a AllocationArena,
+    arena: &'arena AllocationArena,
     floor: u64,
     options: MergeOptions,
-) -> Result<(PreparedMerges, Vec<(u64, PairState<'a>)>)> {
+) -> Result<(PreparedMerges, Vec<CompletedBirth<'arena>>)> {
     let floor = floor.max(1);
     let outputs = if policy == IdentityPolicy::AllowActiveReuse {
         cohort::prepare(
@@ -478,7 +454,11 @@ pub(in super::super) fn prepare_merges_with_births<'a, S: SlotStorage>(
             execution,
         )?
         .into_iter()
-        .map(|(job, chunks)| (job, chunks, Vec::new()))
+        .map(|(job, chunks)| PreparedOutput {
+            job,
+            chunks,
+            completed_births: Vec::new(),
+        })
         .collect()
     } else if rules[0].pair.0 == rules[0].pair.1 {
         aa::prepare(
@@ -490,7 +470,11 @@ pub(in super::super) fn prepare_merges_with_births<'a, S: SlotStorage>(
             execution,
         )?
         .into_iter()
-        .map(|(job, chunks)| (job, chunks, Vec::new()))
+        .map(|(job, chunks)| PreparedOutput {
+            job,
+            chunks,
+            completed_births: Vec::new(),
+        })
         .collect()
     } else {
         ordinary::prepare(
@@ -508,10 +492,10 @@ pub(in super::super) fn prepare_merges_with_births<'a, S: SlotStorage>(
     let mut jobs = Vec::new();
     let mut chunks = Vec::new();
     let mut births = Vec::new();
-    for (write, events, encoded) in outputs {
-        births.extend(encoded);
-        jobs.push(write);
-        chunks.extend(events);
+    for output in outputs {
+        births.extend(output.completed_births);
+        jobs.push(output.job);
+        chunks.extend(output.chunks);
     }
     Ok((
         PreparedMerges {

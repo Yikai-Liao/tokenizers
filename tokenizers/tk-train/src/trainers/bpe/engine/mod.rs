@@ -1,4 +1,8 @@
 //! One BPE coordinator over shared vocabulary, corpus, and occurrence storage.
+//! The visible round is select, prepare, release candidates, apply, commit, then
+//! release events. Preparation readers and corpus writers join before the next
+//! phase. Errors discard the attempt; commit may fail after writes/partial counts.
+//! Active-ID reuse restarts from original words with the already selected alphabet.
 use crate::trainers::bpe::word_counts::WordCountsView;
 mod aa_parity;
 mod batch;
@@ -25,7 +29,9 @@ use tk_encode::{
 const WORD_SEPARATOR_ID: u32 = u32::MAX;
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum IdentityPolicy {
+    /// New IDs and first activations of reserved IDs; existing keys cannot revive.
     FirstActivationOnly,
+    /// Active identities may revive keys; rebuild with a signed ledger and cohorts.
     AllowActiveReuse,
 }
 type ModelParts = (Vocab, Merges, Vec<AddedToken>);
@@ -84,7 +90,8 @@ fn train_with_merge_options(
                 &mut trace,
             )? {
                 AttemptOutcome::Complete(parts) => {
-                    // A restarted attempt has no externally visible merge trace.
+                    // Publish only the successfully completed attempt's trace;
+                    // traces from abandoned attempts were discarded.
                     #[cfg(test)]
                     if let Some(observer) = observe.as_mut() {
                         for (pair, count, id) in trace {

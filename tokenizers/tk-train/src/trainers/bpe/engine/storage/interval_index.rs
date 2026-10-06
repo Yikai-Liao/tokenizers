@@ -31,18 +31,18 @@ impl<T> IntervalIndex<T> {
     /// Group sorted coordinates by interval. The count includes duplicates;
     /// coordinates before the first interval produce a `None` value.
     /// The coordinate function must preserve the input's nondecreasing order.
-    pub(in super::super) fn runs_for_sorted<'a, U>(
-        &'a self,
+    pub(in super::super) fn runs_for_sorted<U>(
+        &self,
         mut items: &[U],
         coordinate: impl Fn(&U) -> u64,
-    ) -> impl Iterator<Item = (usize, Option<&'a T>)> {
+    ) -> impl Iterator<Item = (usize, Option<&T>)> {
         std::iter::from_fn(move || {
             let first = items.first()?;
             let interval = self.interval_containing(coordinate(first));
             let boundary = self.starts.get(interval.map_or(0, |i| i + 1)).copied();
             let before_end = |item: &U| boundary.is_none_or(|end| coordinate(item) < end);
             // PERF: One galloping search replaces a lookup and accumulation for
-            // each coordinate in a long equal-value run. Short runs stop early.
+            // each coordinate in a long same-interval run. Short runs stop early.
             let count = if before_end(items.last().unwrap()) {
                 items.len()
             } else {
@@ -62,13 +62,14 @@ impl<T> IntervalIndex<T> {
         &self.values
     }
 }
-/// Caches a forward interval while accepting arbitrary full-width queries.
-pub(in super::super) struct IntervalCursor<'a, T> {
-    index: &'a IntervalIndex<T>,
-    current: Option<(u64, Option<u64>, &'a T)>,
+/// Cache the last matching interval. Cache misses binary-search the boundaries;
+/// full-width queries may move in either direction.
+pub(in super::super) struct IntervalCursor<'index, T> {
+    index: &'index IntervalIndex<T>,
+    current: Option<(u64, Option<u64>, &'index T)>,
 }
-impl<'a, T> IntervalCursor<'a, T> {
-    pub(in super::super) fn get(&mut self, position: u64) -> Option<&'a T> {
+impl<'index, T> IntervalCursor<'index, T> {
+    pub(in super::super) fn get(&mut self, position: u64) -> Option<&'index T> {
         if let Some((start, end, value)) = self.current
             && position >= start
             && end.is_none_or(|end| position < end)

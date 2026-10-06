@@ -20,10 +20,8 @@ use compact_str::CompactString;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use tk_encode::vocab::bucket_added_vocabulary::AddedToken;
-// The `Word` machinery a trainer merges into is training-only, so it lives here rather than in the
-// inference crate. `PipelineBPE` is the only BPE left; a trainer reaches it through
-// `from_vocab_and_merges`, the same serde-free door a reader walks through, because its fields are
-// private to `tk-encode`.
+// The reference and optional parity trainer use `Word`; production training uses
+// the engine's fixed-coordinate corpus. Both representations are training-only.
 #[cfg(any(test, feature = "parity-aware-bpe"))]
 use word::{WithFirstLastIterator, Word};
 
@@ -304,8 +302,8 @@ impl BpeTrainer {
         }
     }
 
-    /// Tokenize words and add subwords to the vocabulary when relevant
-    /// Train and hand back the raw parts, for a caller that wants them rather than a built model.
+    /// Train the collected weighted words and return vocabulary entries, ordered
+    /// merges, and special tokens.
     ///
     /// The WordPiece trainer is the one caller: it trains a BPE and reinterprets the vocabulary as
     /// WordPiece pieces, so building a `PipelineBPE` first -- merge tables and all -- would be work
@@ -327,13 +325,11 @@ impl BpeTrainer {
         }
     }
 
-    /// Runs the training and returns the vocabulary and merge list it produced, plus the special
-    /// tokens the caller has to add alongside them.
+    /// Train weighted words and return vocabulary entries, ordered merges, and
+    /// special tokens for registration by the caller.
     ///
-    /// It hands back `(Vocab, Merges)` rather than filling in a model because that pair *is* what a
-    /// `tokenizer.json` stores, and `PipelineBPE` can only be built from it -- see
-    /// [`PipelineBPE::from_vocab_and_merges`]. The WordPiece trainer wants the vocabulary alone, so
-    /// splitting the two also saves it building merge tables it would throw away.
+    /// These parts populate [`BpeConfig`] for [`PipelineBPE::from_config`]. The
+    /// WordPiece trainer consumes the vocabulary without building BPE merge tables.
     pub fn do_train(
         &self,
         word_counts: &AHashMap<CompactString, u64>,
@@ -363,7 +359,8 @@ impl BpeTrainer {
 impl Trainer for BpeTrainer {
     type Model = PipelineBPE;
 
-    /// Train a BPE model
+    /// Train the collected words and replace the model using the trainer's affixes.
+    /// Return special tokens for registration by the caller.
     fn train(&self, model: &mut PipelineBPE) -> Result<Vec<AddedToken>> {
         let (vocab, merges, special_tokens) = self.train_counts(self.words.view())?;
         *model = PipelineBPE::from_config(BpeConfig {
@@ -379,6 +376,8 @@ impl Trainer for BpeTrainer {
         self.show_progress
     }
 
+    /// Apply `process` to each input and collect the resulting weighted words.
+    /// Successful collection replaces the words used by `train` and `train_vocab`.
     fn feed<I, S, F>(&mut self, iterator: I, process: F) -> Result<()>
     where
         I: Iterator<Item = S> + Send,
@@ -455,7 +454,7 @@ mod tests {
         assert_eq!(trained_vocab, expected_vocab);
 
         // `merges` is the pair of symbol *strings* per merge, highest priority first -- the on-disk
-        // form, and what `PipelineBPE::from_vocab_and_merges` re-derives its ranks from. Position in
+        // form, and what `PipelineBPE::from_config` derives its ranks from. Position in
         // the list is the rank, so the order is part of what is being asserted.
         let expected_merges: Merges = vec![
             ("r".into(), "e".into()),  // 'r' + 'e'  -> 're'

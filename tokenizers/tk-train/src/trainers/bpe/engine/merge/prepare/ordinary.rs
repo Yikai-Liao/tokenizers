@@ -5,8 +5,10 @@ struct PositionTask {
     rank: usize,
     begin: usize,
     end: usize,
-    full: bool,
-    fast: bool,
+    /// Covers the entire candidate-position list for this rule, not the batch.
+    whole_rule: bool,
+    /// Complete producer whose entire job fits the conservative node budget.
+    encode_births_directly: bool,
 }
 impl PositionTask {
     fn new(rank: usize, begin: usize, end: usize, total: usize) -> Self {
@@ -14,8 +16,8 @@ impl PositionTask {
             rank,
             begin,
             end,
-            full: begin == 0 && end == total,
-            fast: false,
+            whole_rule: begin == 0 && end == total,
+            encode_births_directly: false,
         }
     }
 }
@@ -43,7 +45,7 @@ fn position_jobs(
         for job in &mut jobs {
             if job_node_budget_fits(job, capacity) {
                 for task in job {
-                    task.fast = task.full;
+                    task.encode_births_directly = task.whole_rule;
                 }
             }
         }
@@ -136,17 +138,17 @@ fn position_jobs_whole(
 }
 
 #[allow(clippy::too_many_arguments)]
-pub(super) fn prepare<'a, S: SlotStorage>(
+pub(super) fn prepare<'arena, S: SlotStorage>(
     corpus: &Corpus<S>,
     rules: &[MergeRule],
     candidates: &[MergeCandidate<'_>],
     token_id_count: usize,
     birth_span_limit: usize,
     execution: &Execution,
-    arena: &'a AllocationArena,
+    arena: &'arena AllocationArena,
     floor: u64,
     options: MergeOptions,
-) -> Result<Vec<PreparedOutput<'a>>> {
+) -> Result<Vec<PreparedOutput<'arena>>> {
     let jobs = position_jobs(
         candidates,
         execution.workers(),
@@ -193,7 +195,7 @@ pub(super) fn prepare<'a, S: SlotStorage>(
                         }
                     }
 
-                    if task.fast {
+                    if task.encode_births_directly {
                         outputs.push(plan.finish_with_births(
                             arena,
                             execution,
@@ -211,14 +213,14 @@ pub(super) fn prepare<'a, S: SlotStorage>(
                 let (writes, chunks): (Vec<_>, Vec<_>) = outputs.into_iter().unzip();
                 let chunks = chunks.into_iter().flatten().collect::<Vec<_>>();
 
-                Ok((
-                    PreparedJob {
+                Ok(PreparedOutput {
+                    job: PreparedJob {
                         writes,
                         word_region: None,
                     },
                     chunks,
-                    births,
-                ))
+                    completed_births: births,
+                })
             })
         })
         .collect::<Result<Vec<_>>>()
@@ -232,8 +234,8 @@ mod producer_budget_tests {
             PositionTask::new(0, 0, 4, 4),
             PositionTask::new(1, 3, 8, 12),
         ];
-        assert!(tasks[0].full);
-        assert!(!tasks[1].full);
+        assert!(tasks[0].whole_rule);
+        assert!(!tasks[1].whole_rule);
         assert!(job_node_budget_fits(&tasks, 18));
         assert!(!job_node_budget_fits(&tasks, 17));
         assert!(!job_node_budget_fits(

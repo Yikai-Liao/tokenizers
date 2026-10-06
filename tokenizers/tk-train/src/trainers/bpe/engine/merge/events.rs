@@ -46,6 +46,9 @@ impl RoutedChangeRef {
         }
     }
 }
+/// One owner's original-order count actions and separately grouped birth indices.
+/// Birth grouping may reorder only `births`; `changes` preserves checked update
+/// order, including removal-before-birth when both keys route to the same owner.
 pub(in super::super) struct OwnerRoute {
     pub(in super::super) changes: Vec<RoutedChangeRef>,
     pub(in super::super) births: Vec<usize>,
@@ -54,6 +57,8 @@ pub(in super::super) struct EventChunk {
     pub(in super::super) chains: PositionChains,
     pub(in super::super) changes: Vec<PairChanges>,
 }
+/// Owns buffered position chains until the joined commit finishes borrowing them.
+/// Already encoded complete births retain only removal events here.
 pub(in super::super) struct MergeEvents {
     pub(in super::super) buckets: usize,
     pub(in super::super) chunks: Vec<EventChunk>,
@@ -123,6 +128,9 @@ impl MergeEvents {
     }
 }
 impl OwnerRoute {
+    /// Stably group birth references by rule/direction without changing actions.
+    /// Equal-bucket fragments keep producer order for the fresh spatial encoder;
+    /// reuse uses an encoder that also handles genuinely interleaved chains.
     pub(in super::super) fn group_births(&mut self, events: &MergeEvents) {
         if self.births.len() < 2 {
             return;

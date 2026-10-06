@@ -27,10 +27,15 @@
 
 //! Rust translation of Clausecker's BSD-2-Clause `radixsort_permuted.c`.
 //! Reference f69e816c3cd79d312cd67aea5b9cf1c338c1b371, July 2026 paper:
-//! https://arxiv.org/abs/2607.05302 ; full upstream license retained above.
+//! <https://arxiv.org/abs/2607.05302>; full upstream license retained above.
 //! Sort complete 64-bit keys; retain payloads in stable incoming order.
 //! Twelve-byte records use the original 512-element block permutation.
 //! Scatter scratch is 3 MiB; metadata adds nine bytes per input block.
+//! The fixed block size makes metadata grow with n/512; the paper's square-root
+//! overhead bound does not describe this local parameterization.
+//! Original source and license at the fixed reference revision:
+//! <https://github.com/clausecker/radsort/blob/f69e816c3cd79d312cd67aea5b9cf1c338c1b371/radixsort_permuted.c>
+//! <https://github.com/clausecker/radsort/blob/f69e816c3cd79d312cd67aea5b9cf1c338c1b371/COPYING>
 use std::{marker::PhantomData, ptr};
 
 /// Bounded records keep local block-permutation indices within u32.
@@ -321,7 +326,7 @@ impl<'a> Sorter<'a> {
         assert_eq!(start, self.length);
     }
 }
-/// Sort records stably by their complete key and return allocated scratch bytes.
+/// Sort records stably by their complete key.
 ///
 /// Mutates records in place. Constant key bytes need no scatter pass. Block
 /// scratch is 3 MiB plus nine bytes per 512 input records; small inputs use a

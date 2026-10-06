@@ -1,4 +1,7 @@
 //! Exact left-to-right AA selection from ordered chunks of valid pair starts.
+//! AA means `(A, A)` for one token identity. `token_length` measures A's span
+//! in fixed corpus slots. Edge-run parity here is independent of the optional
+//! parity-aware BPE trainer; the coordinator processes summaries sequentially.
 //!
 //! Each chunk locates its trailing run by logarithmic boundary checks. The coordinator
 //! processes one summary per chunk; workers then select their own starts using
@@ -26,7 +29,7 @@ fn consecutive(left: u64, right: u64, token_length: u64) -> bool {
 
 /// Inspect a fixed chunk without a full summary scan. Valid, sorted AA starts
 /// have gaps >= token_length. Consequently the suffix is one run exactly when
-/// last - starts[i] == (len - 1 - i) * token_length. This predicate is monotone:
+/// `last - starts[i] == (len - 1 - i) * token_length`. This predicate is monotone:
 /// binary search finds the trailing run's first index in O(log len).
 pub fn summarize_by(
     len: usize,

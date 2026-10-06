@@ -16,8 +16,8 @@ use rayon::prelude::*;
 use std::{mem::MaybeUninit, ops::Range};
 use tk_encode::Result;
 
-pub(super) struct InitialPairTable<'a> {
-    pub(super) shards: Vec<AHashMap<u64, PairState<'a>>>,
+pub(super) struct InitialPairTable<'arena> {
+    pub(super) shards: Vec<AHashMap<u64, PairState<'arena>>>,
     pub(super) weighted_mass: u128,
     pub(super) maximum_word_weight: u64,
 }
@@ -40,14 +40,14 @@ fn global_position(base: usize, record: KeyedValue) -> u64 {
     // corpus coordinate; retaining the base keeps positions above u32 intact.
     base as u64 + u64::from(record.value())
 }
-impl<'a> InitialPairTable<'a> {
+impl<'arena> InitialPairTable<'arena> {
     pub(super) fn build(
         corpus: impl InitialPairSource,
         minimum_frequency: u64,
         execution: &Execution,
-        arena: &'a AllocationArena,
+        arena: &'arena AllocationArena,
         progress: &TrainingProgress,
-    ) -> Result<InitialPairTable<'a>> {
+    ) -> Result<InitialPairTable<'arena>> {
         // PERF: 2^28 bounds raw records while favoring complete-count filtering in
         // one wave. Smaller waves can encode low-frequency partial runs that later
         // disappear, repeat append and table growth, and retain retired arena buffers.
@@ -68,15 +68,15 @@ impl<'a> InitialPairTable<'a> {
         corpus: impl InitialPairSource,
         minimum_frequency: u64,
         execution: &Execution,
-        arena: &'a AllocationArena,
+        arena: &'arena AllocationArena,
         progress: &TrainingProgress,
         records_per_wave: usize,
-    ) -> Result<InitialPairTable<'a>> {
+    ) -> Result<InitialPairTable<'arena>> {
         assert!(records_per_wave > 1 && records_per_wave <= radix::MAX_RECORDS);
         let workers = execution.workers();
         let router = execution.router();
         let mut shards: Vec<_> = (0..workers)
-            .map(|_| AHashMap::<u64, PairState<'a>>::new())
+            .map(|_| AHashMap::<u64, PairState<'arena>>::new())
             .collect();
         let mut weighted_mass = 0_u128;
         let maximum_word_weight = corpus
@@ -97,7 +97,7 @@ impl<'a> InitialPairTable<'a> {
         for base in (0..corpus.len().saturating_sub(1)).step_by(records_per_wave) {
             let end = (base + records_per_wave).min(corpus.len() - 1);
             let mut wave_tables: Vec<_> = (0..workers)
-                .map(|_| AHashMap::<u64, PairState<'a>>::new())
+                .map(|_| AHashMap::<u64, PairState<'arena>>::new())
                 .collect();
             // Fixed slot tiles keep the producer count independent of worker count.
             // Owner directories therefore grow at most linearly as workers increase

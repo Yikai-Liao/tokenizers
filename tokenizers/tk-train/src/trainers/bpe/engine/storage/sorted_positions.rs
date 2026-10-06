@@ -1,12 +1,18 @@
-//! Nondecreasing full-width positions with absolute seeds and varint gaps.
-//! A range cursor rewinds at most 127 deltas. Allocation tags distinguish scoped
-//! arena storage from independently owned buffers; cursors never share state.
+//! Nondecreasing u64 positions stored as absolute seeds and unsigned LEB128 gaps.
+//! Each group contains at most 128 positions. A restart-offset directory locates
+//! its eight-byte seed; later values store differences from their predecessors.
+//! Seeking decodes at most 127 gaps. Small lists have inline representations.
+//! This is a private in-memory representation, not a serialized file format.
+//! Allocation tags distinguish arena storage from independently owned buffers;
+//! cursors never share state. For the integer encoding alone, see
+//! <https://protobuf.dev/programming-guides/encoding/#base-128-varints>.
 use super::{AllocationLease, Result, StorageError};
 use std::alloc::{Layout, alloc, dealloc};
 use std::collections::BinaryHeap;
 use std::marker::PhantomData;
 use std::ops::Range;
 
+// Positions per restart group; independent of the integer codec's base 128.
 const RESTART_INTERVAL: usize = 128;
 const INLINE: usize = 1 << (usize::BITS - 1);
 const PAIR: usize = 1 << (usize::BITS - 2);
@@ -22,15 +28,16 @@ pub(in super::super) struct PositionEncodingScratch {
     restarts: Vec<usize>,
 }
 
-/// Nondecreasing positions. Equal values remain distinct elements.
+/// Owns a nondecreasing position list. Equal values remain distinct elements.
 ///
-/// Lists may move between workers but cannot outlive the allocation arena.
-/// Mutation requires exclusive access. Storage format is private.
+/// Small lists are inline; larger lists own a heap buffer or borrow arena storage.
+/// The arena must outlive lists that borrow its storage. Lists can move between
+/// workers. Mutation requires exclusive access. The storage format is private.
 #[derive(Default)]
-pub(in super::super) struct SortedPositions<'a> {
+pub(in super::super) struct SortedPositions<'arena> {
     count_and_flags: usize,
     payload: *mut u8,
-    arena_lifetime: PhantomData<&'a super::AllocationArena>,
+    arena_lifetime: PhantomData<&'arena super::AllocationArena>,
 }
 // SAFETY: each list exclusively owns its heap buffer or borrows stable arena
 // storage. Moving it does not move that storage; the arena is Send + Sync.
@@ -204,7 +211,7 @@ impl PositionEncodingScratch {
     }
 }
 
-impl<'a> SortedPositions<'a> {
+impl<'arena> SortedPositions<'arena> {
     /// Construct an empty list without an allocation.
     pub(in super::super) fn new() -> Self {
         Self::default()
@@ -288,7 +295,7 @@ impl<'a> SortedPositions<'a> {
         capacity: usize,
         used: usize,
         reserved: bool,
-        lease: &AllocationLease<'a>,
+        lease: &AllocationLease<'arena>,
     ) -> Result<Self> {
         let allocation = layout(groups, capacity, reserved)?;
         let (ptr, arena) = if let Some(ptr) = lease.allocate(allocation)? {
@@ -336,7 +343,7 @@ impl<'a> SortedPositions<'a> {
     pub(in super::super) fn from_reversed_iter_direct(
         count: usize,
         input: impl Iterator<Item = u64> + Clone,
-        lease: &AllocationLease<'a>,
+        lease: &AllocationLease<'arena>,
     ) -> Result<Self> {
         if count <= 2 {
             return Self::from_reversed_iter(
@@ -366,7 +373,7 @@ impl<'a> SortedPositions<'a> {
         count: usize,
         mut input: impl Iterator<Item = u64>,
         scratch: &mut PositionEncodingScratch,
-        lease: &AllocationLease<'a>,
+        lease: &AllocationLease<'arena>,
     ) -> Result<Self> {
         if count == 0 {
             if input.next().is_some() {
@@ -445,7 +452,7 @@ impl<'a> SortedPositions<'a> {
     pub(in super::super) fn from_sorted_iter(
         input: impl DoubleEndedIterator<Item = u64> + ExactSizeIterator,
         scratch: &mut PositionEncodingScratch,
-        lease: &AllocationLease<'a>,
+        lease: &AllocationLease<'arena>,
     ) -> Result<Self> {
         Self::from_reversed_iter(input.len(), input.rev(), scratch, lease)
     }
@@ -458,7 +465,7 @@ impl<'a> SortedPositions<'a> {
     pub(in super::super) fn from_sorted(
         positions: &[u64],
         scratch: &mut PositionEncodingScratch,
-        lease: &AllocationLease<'a>,
+        lease: &AllocationLease<'arena>,
     ) -> Result<Self> {
         Self::from_sorted_iter(positions.iter().copied(), scratch, lease)
     }
@@ -472,7 +479,7 @@ impl<'a> SortedPositions<'a> {
         &mut self,
         input: impl DoubleEndedIterator<Item = u64> + ExactSizeIterator + Clone,
         scratch: &mut PositionEncodingScratch,
-        lease: &AllocationLease<'a>,
+        lease: &AllocationLease<'arena>,
     ) -> Result<()> {
         self.append_reverse(input.len(), input.rev(), scratch, lease)
     }
@@ -486,7 +493,7 @@ impl<'a> SortedPositions<'a> {
     fn from_chains(
         sources: &[(&super::PositionChains, super::PositionChain)],
         scratch: &mut PositionEncodingScratch,
-        lease: &AllocationLease<'a>,
+        lease: &AllocationLease<'arena>,
     ) -> Result<Self> {
         Self::from_reversed_chains(sources.iter().rev().copied(), scratch, lease)
     }
@@ -500,7 +507,7 @@ impl<'a> SortedPositions<'a> {
     pub(in super::super) fn from_reversed_chains<'s>(
         sources: impl Iterator<Item = (&'s super::PositionChains, super::PositionChain)> + Clone,
         scratch: &mut PositionEncodingScratch,
-        lease: &AllocationLease<'a>,
+        lease: &AllocationLease<'arena>,
     ) -> Result<Self> {
         let mut previous = None;
         let mut ordered = true;
@@ -545,7 +552,7 @@ impl<'a> SortedPositions<'a> {
         count: usize,
         input: impl Iterator<Item = u64> + Clone,
         scratch: &mut PositionEncodingScratch,
-        lease: &AllocationLease<'a>,
+        lease: &AllocationLease<'arena>,
     ) -> Result<()> {
         if count == 0 {
             return Ok(());
@@ -661,7 +668,7 @@ impl<'a> SortedPositions<'a> {
         &mut self,
         positions: &[u64],
         scratch: &mut PositionEncodingScratch,
-        lease: &AllocationLease<'a>,
+        lease: &AllocationLease<'arena>,
     ) -> Result<()> {
         self.append_sorted_iter(positions.iter().copied(), scratch, lease)
     }
@@ -676,7 +683,7 @@ impl<'a> SortedPositions<'a> {
         &mut self,
         other: Self,
         scratch: &mut PositionEncodingScratch,
-        lease: &AllocationLease<'a>,
+        lease: &AllocationLease<'arena>,
     ) -> Result<()> {
         if self.is_empty() {
             *self = other;
@@ -735,7 +742,7 @@ impl<'a> SortedPositions<'a> {
     /// # Panics
     /// Panics if the range is outside the list.
     #[inline]
-    pub(in super::super) fn cursor(&self, range: Range<usize>) -> PositionCursor<'_, 'a> {
+    pub(in super::super) fn cursor(&self, range: Range<usize>) -> PositionCursor<'_, 'arena> {
         assert!(range.start <= range.end && range.end <= self.len());
         let mut cursor = PositionCursor {
             positions: self,
@@ -765,7 +772,7 @@ impl<'a> SortedPositions<'a> {
     }
     /// Read all positions with independent decoder state.
     #[inline]
-    pub(in super::super) fn iter(&self) -> PositionCursor<'_, 'a> {
+    pub(in super::super) fn iter(&self) -> PositionCursor<'_, 'arena> {
         self.cursor(0..self.len())
     }
 }
@@ -801,8 +808,8 @@ impl<I: Iterator<Item = u64>> Iterator for DescendingMerge<I> {
 }
 
 /// An independent sequential decoder over a list-element range.
-pub(in super::super) struct PositionCursor<'a, 'arena> {
-    positions: &'a SortedPositions<'arena>,
+pub(in super::super) struct PositionCursor<'list, 'arena> {
+    positions: &'list SortedPositions<'arena>,
     index: usize,
     end: usize,
     source: *const u8,

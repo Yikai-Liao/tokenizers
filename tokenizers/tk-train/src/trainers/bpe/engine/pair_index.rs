@@ -73,10 +73,18 @@ impl ShardRouter {
     }
 }
 
-pub(super) struct PairState<'a> {
+/// Count and occurrence-list ownership used by initialization and fresh keys.
+/// `ledger_count_bits` is a nonnegative weighted count in these states. Reuse
+/// initialization moves counts into a separate signed ledger and transfers
+/// positions to independently owned cohorts. Lists may contain stale positions.
+pub(super) struct PairState<'arena> {
     pub(super) ledger_count_bits: u64,
-    pub(super) positions: SortedPositions<'a>,
+    pub(super) positions: SortedPositions<'arena>,
 }
+/// Cached selection priority: larger count, then smaller pair-ID key, wins.
+/// Fresh snapshots are decreasing-count upper bounds, certified by `best` before
+/// removal. Reuse snapshots hold the shared signed ledger's `u64` bit pattern and
+/// are lazily repaired at the queue frontier; they are not fresh upper bounds.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(super) struct PairPriority {
     pub(super) key: u64,
@@ -94,9 +102,13 @@ impl PartialOrd for PairPriority {
         Some(self.cmp(other))
     }
 }
-pub(super) struct MergeCandidate<'a> {
+/// An occurrence-list owner paired with a possibly stale priority snapshot.
+/// Weighted count differs from list length; preparation validates old positions
+/// against the live corpus. Reuse may retain multiple cohorts for one pair, whose
+/// priorities snapshot the shared ledger rather than individual cohort mass.
+pub(super) struct MergeCandidate<'arena> {
     pub(super) priority: PairPriority,
-    pub(super) positions: SortedPositions<'a>,
+    pub(super) positions: SortedPositions<'arena>,
 }
 impl Eq for MergeCandidate<'_> {}
 impl PartialEq for MergeCandidate<'_> {
@@ -115,28 +127,28 @@ impl PartialOrd for MergeCandidate<'_> {
     }
 }
 
-struct PairShard<'a> {
+struct PairShard<'arena> {
     // Fresh states own position lists. Reusable IDs publish independent cohorts, so
     // their count table stores only numeric ledger bits, including zero/negative
     // values. Exactly one table is populated after initialization.
-    states: AHashMap<u64, PairState<'a>>,
+    states: AHashMap<u64, PairState<'arena>>,
     ledger: AHashMap<u64, u64>,
     priorities: OctonaryHeap<PairPriority>,
     prefix: VecDeque<PairPriority>,
 }
-enum Selection<'a> {
+enum Selection<'arena> {
     Fresh {
         leaders: OctonaryHeap<(PairPriority, usize)>,
     },
     Cohorts {
-        candidates: OctonaryHeap<MergeCandidate<'a>>,
+        candidates: OctonaryHeap<MergeCandidate<'arena>>,
     },
 }
-pub(super) struct PairIndex<'a> {
-    shards: Vec<PairShard<'a>>,
+pub(super) struct PairIndex<'arena> {
+    shards: Vec<PairShard<'arena>>,
     policy: IdentityPolicy,
     minimum_frequency: u64,
-    selection: Selection<'a>,
+    selection: Selection<'arena>,
 }
 
 impl PairShard<'_> {
@@ -215,9 +227,9 @@ impl PairShard<'_> {
         }
     }
 }
-impl<'a> PairIndex<'a> {
+impl<'arena> PairIndex<'arena> {
     pub(super) fn from_initial_pairs(
-        initial: InitialPairTable<'a>,
+        initial: InitialPairTable<'arena>,
         policy: IdentityPolicy,
         minimum_frequency: u64,
     ) -> Result<Self> {
@@ -286,6 +298,8 @@ impl<'a> PairIndex<'a> {
         })
     }
 
+    /// Build the fresh owner frontier for a selection phase.
+    /// Count updates wait until `end_selection` returns cached prefixes to heaps.
     pub(super) fn begin_selection(&mut self) {
         if let Selection::Fresh { leaders } = &mut self.selection {
             let mut heads = std::mem::take(leaders).into_vec();
@@ -298,34 +312,27 @@ impl<'a> PairIndex<'a> {
             *leaders = heads.into();
         }
     }
+    /// Certify the current selection frontier, repairing stale priorities.
+    /// Fresh selection compares decreasing upper bounds across owners. Reuse
+    /// repairs only the head cohort against its shared ledger and retains the
+    /// existing unsigned ordering of signed ledger bits, including negative values.
+    /// Call `take_best` before changing selection/count state to consume this winner.
     pub(super) fn best(&mut self) -> Option<PairPriority> {
         match &mut self.selection {
-            Selection::Fresh { leaders } => loop {
-                let (upper, shard) = leaders.peek().copied()?;
-                let exact = self.shards[shard].exact(self.minimum_frequency.max(1));
-                if exact == Some(upper) {
-                    return exact;
-                }
-                if let Some(priority) = exact {
-                    *leaders.peek_mut().expect("the observed leader exists") = (priority, shard);
-                } else {
-                    leaders.pop();
-                }
-            },
-            Selection::Cohorts { candidates } => loop {
-                let top = candidates.peek()?;
-                let key = top.priority.key;
-                let count = self.shards[shard_for(key, self.shards.len())].ledger[&key];
-                if top.priority.priority_count == count {
-                    return (count != 0 && count >= self.minimum_frequency).then_some(top.priority);
-                }
-                let mut top = candidates.pop().expect("the observed candidate exists");
-                top.priority.priority_count = count;
-                candidates.push(top);
-            },
+            Selection::Fresh { leaders } => {
+                best_first_activation(&mut self.shards, leaders, self.minimum_frequency.max(1))
+            }
+            Selection::Cohorts { candidates } => {
+                best_active_reuse(&self.shards, candidates, self.minimum_frequency)
+            }
         }
     }
-    pub(super) fn take_best(&mut self) -> MergeCandidate<'a> {
+    /// Consume the winner most recently certified by `best`.
+    /// The caller must not change selection state between certification and removal.
+    /// Fresh mode transfers the pair state's positions. Reuse removes one cohort
+    /// while leaving its shared ledger and other cohorts intact.
+    /// The returned list retains its `'arena` storage lifetime after this borrow ends.
+    pub(super) fn take_best(&mut self) -> MergeCandidate<'arena> {
         match &mut self.selection {
             Selection::Fresh { leaders } => {
                 let (priority, shard) = *leaders
@@ -351,6 +358,8 @@ impl<'a> PairIndex<'a> {
                 .expect("selection certified the cohort winner"),
         }
     }
+    /// Return unconsumed fresh prefixes to heaps before commit changes counts.
+    /// Keeping a cached prefix through commit would bypass stale-count repair.
     pub(super) fn end_selection(&mut self) {
         if self.policy == IdentityPolicy::FirstActivationOnly {
             for shard in &mut self.shards {
@@ -371,19 +380,62 @@ impl<'a> PairIndex<'a> {
     }
 }
 
+/// Certify a fresh winner by comparing decreasing count upper bounds across owners.
+/// Existing fresh keys only lose mass; removed keys cannot revive in this attempt.
+fn best_first_activation(
+    shards: &mut [PairShard<'_>],
+    leaders: &mut OctonaryHeap<(PairPriority, usize)>,
+    floor: u64,
+) -> Option<PairPriority> {
+    loop {
+        let (upper, shard) = leaders.peek().copied()?;
+        let exact = shards[shard].exact(floor);
+        if exact == Some(upper) {
+            return exact;
+        }
+        if let Some(priority) = exact {
+            *leaders.peek_mut().expect("the observed leader exists") = (priority, shard);
+        } else {
+            leaders.pop();
+        }
+    }
+}
+
+/// Repair only the head cohort using the pair's shared ledger snapshot.
+/// Preserve the reference queue's unsigned ordering of signed bits, including
+/// negative values. This selection condition differs from positive-ledger birth
+/// publication and provides no decreasing upper-bound proof.
+fn best_active_reuse(
+    shards: &[PairShard<'_>],
+    candidates: &mut OctonaryHeap<MergeCandidate<'_>>,
+    minimum_frequency: u64,
+) -> Option<PairPriority> {
+    loop {
+        let top = candidates.peek()?;
+        let key = top.priority.key;
+        let count = shards[shard_for(key, shards.len())].ledger[&key];
+        if top.priority.priority_count == count {
+            return (count != 0 && count >= minimum_frequency).then_some(top.priority);
+        }
+        let mut top = candidates.pop().expect("the observed candidate exists");
+        top.priority.priority_count = count;
+        candidates.push(top);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::super::storage::{AllocationArena, PositionChain, PositionChains};
     use super::super::{
         execution::Execution,
-        merge::{EventChunk, MergeEvents, PairChanges},
+        merge::{CompletedBirth, EventChunk, MergeEvents, PairChanges},
     };
     use super::*;
-    fn initial<'a>(
+    fn initial<'arena>(
         items: &[(Pair, u64, u64)],
         workers: usize,
-        arena: &'a AllocationArena,
-    ) -> InitialPairTable<'a> {
+        arena: &'arena AllocationArena,
+    ) -> InitialPairTable<'arena> {
         let mut shards: Vec<_> = (0..workers).map(|_| AHashMap::new()).collect();
         let mut scratch = super::super::storage::PositionEncodingScratch::default();
         for &(pair, count, position) in items {
@@ -404,6 +456,132 @@ mod tests {
             weighted_mass: items.iter().map(|item| u128::from(item.1)).sum(),
             maximum_word_weight: items.iter().map(|item| item.1).max().unwrap_or(0),
         }
+    }
+
+    #[test]
+    fn completed_and_partial_births_publish_once_after_ordered_removals() {
+        for workers in [1, 4] {
+            let execution = Execution::new(workers).unwrap();
+            let arena = AllocationArena::new(workers, 64);
+            execution.pool.install(|| {
+                let old = (0, 1);
+                let complete = (2, 3);
+                let partial = (4, 5);
+                let mut index = PairIndex::from_initial_pairs(
+                    initial(&[(old, 3, 1)], workers, &arena),
+                    IdentityPolicy::FirstActivationOnly,
+                    2,
+                )
+                .unwrap();
+                // Commit follows end_selection, which returns cached fresh
+                // priorities to their heaps before count changes invalidate them.
+                index.begin_selection();
+                index.end_selection();
+                let positions = {
+                    let lease = arena.lease(execution.current_worker());
+                    let mut scratch = super::super::storage::PositionEncodingScratch::default();
+                    SortedPositions::from_sorted(&[9, 12], &mut scratch, &lease).unwrap()
+                };
+                let mut events = MergeEvents {
+                    buckets: 2,
+                    chunks: Vec::new(),
+                };
+                // Each fragment is below the floor; together they must be kept.
+                for position in [2, 7] {
+                    let mut chains = PositionChains::new();
+                    let mut positions = PositionChain::default();
+                    chains.push(&mut positions, position).unwrap();
+                    events.chunks.push(EventChunk {
+                        chains,
+                        changes: vec![PairChanges {
+                            removed_key: pair_key(old),
+                            born_key: pair_key(partial),
+                            removed_weight: 1,
+                            born_weight: 1,
+                            positions,
+                            bucket: 1,
+                        }],
+                    });
+                }
+                index
+                    .commit_merges_with_prepared(
+                        &events,
+                        6,
+                        &execution,
+                        &arena,
+                        vec![CompletedBirth {
+                            key: pair_key(complete),
+                            weight: 5,
+                            positions,
+                        }],
+                    )
+                    .unwrap();
+                drop(events);
+                index.begin_selection();
+                for (pair, count, expected_positions) in
+                    [(complete, 5, [9, 12]), (partial, 2, [2, 7])]
+                {
+                    assert_eq!(
+                        index.best().unwrap(),
+                        PairPriority {
+                            key: pair_key(pair),
+                            priority_count: count,
+                        }
+                    );
+                    assert_eq!(
+                        index.take_best().positions.iter().collect::<Vec<_>>(),
+                        expected_positions,
+                    );
+                }
+                assert!(index.best().is_none(), "no retired key or duplicate birth");
+            });
+        }
+    }
+
+    #[test]
+    fn reuse_both_checks_removal_before_birth_without_netting() {
+        let execution = Execution::new(1).unwrap();
+        let arena = AllocationArena::new(1, 16);
+        execution.pool.install(|| {
+            let pair = (1, 2);
+            let mut index = PairIndex::from_initial_pairs(
+                initial(&[(pair, i64::MAX as u64, 1)], 1, &arena),
+                IdentityPolicy::AllowActiveReuse,
+                1,
+            )
+            .unwrap();
+            let mut chains = PositionChains::new();
+            let mut positions = PositionChain::default();
+            chains.push(&mut positions, 5).unwrap();
+            let events = MergeEvents {
+                buckets: 2,
+                chunks: vec![EventChunk {
+                    chains,
+                    changes: vec![PairChanges {
+                        removed_key: pair_key(pair),
+                        born_key: pair_key(pair),
+                        removed_weight: 1,
+                        born_weight: 1,
+                        positions,
+                        bucket: 1,
+                    }],
+                }],
+            };
+            // Addition first would overflow, although removal first fits.
+            index.commit_merges(&events, 3, &execution, &arena).unwrap();
+            assert_eq!(index.shards[0].ledger[&pair_key(pair)], i64::MAX as u64);
+            index.shards[0]
+                .ledger
+                .insert(pair_key(pair), i64::MIN as u64);
+            // A zero net update still fails at the intermediate subtraction.
+            let error = index
+                .commit_merges(&events, 3, &execution, &arena)
+                .unwrap_err();
+            assert_eq!(
+                error.to_string(),
+                "BPE identity-reuse count subtraction exceeds i64"
+            );
+        });
     }
 
     #[test]

@@ -5,6 +5,10 @@ use super::{merge::SelectedRuleIndex, pair_index::ShardRouter};
 use std::sync::Mutex;
 use tk_encode::Result;
 
+/// One training call's pool and resources reused by actual executing workers.
+/// Logical pair-owner shards can run on any worker. Directory, arena, and codec
+/// leases require sequential work without nested pool tasks; joined phases define
+/// when the coordinator may release scratch or use the next corpus snapshot.
 pub(super) struct Execution {
     pub(super) pool: rayon::ThreadPool,
     encoding: Vec<Mutex<PositionEncodingScratch>>,
@@ -36,9 +40,10 @@ impl Execution {
             .lock()
             .unwrap_or_else(|error| error.into_inner())
     }
-    /// Run sequential task work and return only reusable lookup directories.
-    /// Errors reset touched IDs as well. Unwinding drops values and unlocks the
-    /// worker; the next task starts with empty directories. Never nest pool work.
+    /// Run `work` sequentially and return its result.
+    /// After `work` returns, restore lookup directories and drop remaining scratch.
+    /// Errors also reset touched IDs. Unwinding drops accumulator values and unlocks
+    /// the worker; the next task starts with empty directories. Never nest pool work.
     pub(super) fn with_merge_scratch<T>(
         &self,
         token_id_count: usize,
@@ -90,14 +95,16 @@ impl Execution {
     pub(super) fn workers(&self) -> usize {
         self.encoding.len()
     }
+    /// Return the executing worker in this training pool, not a logical owner ID.
+    /// Call only inside this pool's tasks. Worker-local leases must not span nested
+    /// pool work, which could re-enter the same resource locks.
     pub(super) fn current_worker(&self) -> usize {
-        // Allocation cursors follow executing workers, as the original TLS
-        // storage did. Obtain the index inside this pool's task. Encoding with
-        // either lease held must remain sequential, without nested pool work.
         self.pool
             .current_thread_index()
             .expect("BPE allocation runs inside its training pool")
     }
+    /// Borrow codec scratch for the executing worker returned by `current_worker`.
+    /// Keep work sequential until this guard is dropped.
     pub(super) fn encoding(
         &self,
         worker_id: usize,

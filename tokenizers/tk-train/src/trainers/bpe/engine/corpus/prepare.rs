@@ -20,16 +20,16 @@ use tk_encode::Result;
 // A word keeps its original byte coordinates and its measured global start.
 // Initial pair construction borrows this plan; no mutable slot allocation exists
 // until all raw records have retired.
-struct PlannedWord<'a> {
-    word: &'a CompactString,
+struct PlannedWord<'input> {
+    word: &'input CompactString,
     start: u64,
 }
 struct SymbolCheckpoint {
     slot_position: usize,
     byte_offset: usize,
 }
-pub(in super::super) struct CorpusPlan<'a> {
-    words: Vec<PlannedWord<'a>>,
+pub(in super::super) struct CorpusPlan<'input> {
+    words: Vec<PlannedWord<'input>>,
     checkpoints: Vec<SymbolCheckpoint>,
     initial_ids: InitialTokenIds,
     len: usize,
@@ -87,9 +87,9 @@ impl InitialPairSource for &CorpusPlan<'_> {
         }
     }
 }
-impl<'a> CorpusPlan<'a> {
+impl<'input> CorpusPlan<'input> {
     pub(in super::super) fn build(
-        word_counts: WordCountsView<'a>,
+        word_counts: WordCountsView<'input>,
         vocabulary: &mut Vocabulary,
         policy: IdentityPolicy,
         length_limited: bool,

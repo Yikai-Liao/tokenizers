@@ -2,7 +2,7 @@
 use super::*;
 use rayon::prelude::*;
 enum CohortSource {
-    Words(Vec<usize>),
+    WordCountsView(Vec<usize>),
     Positions(std::ops::Range<usize>),
 }
 struct CohortTask {
@@ -62,7 +62,7 @@ pub(super) fn prepare<S: SlotStorage>(
                     .map_or(corpus.len() as u64, |&word| corpus.word_start(word));
                 CohortTask {
                     region: start..end,
-                    source: CohortSource::Words(part.to_vec()),
+                    source: CohortSource::WordCountsView(part.to_vec()),
                 }
             })
             .collect::<Vec<_>>()
@@ -96,7 +96,7 @@ pub(super) fn prepare<S: SlotStorage>(
             execution.with_merge_scratch(token_id_count, |scratch| {
                 let mut plan = RulePreparation::new(corpus, scratch, rule, 0, birth_span_limit);
                 match task.source {
-                    CohortSource::Words(words) => {
+                    CohortSource::WordCountsView(words) => {
                         for word in words {
                             let mut previous = None;
                             let mut position = corpus.word_start(word);
@@ -154,4 +154,49 @@ pub(super) fn prepare<S: SlotStorage>(
             })
         })
         .collect()
+}
+
+/// One logical token after earlier matches in this word, before endpoint writes.
+#[derive(Clone, Copy)]
+struct LogicalToken {
+    id: u32,
+    start: u64,
+    span: u64,
+}
+
+impl<S: SlotStorage> RulePreparation<'_, S> {
+    /// Record a reuse match against the logical preceding token; preserve
+    /// intermediate boundaries and removal-before-birth neighbor accounting.
+    fn record_cohort_match(
+        &mut self,
+        matched: PairMatch,
+        previous: Option<LogicalToken>,
+    ) -> Result<LogicalToken> {
+        self.room();
+        let weight = self.weights.weight(matched.left_start);
+        if let Some(previous) = previous {
+            self.scratch.left(
+                previous.id,
+                previous.start,
+                weight,
+                previous.span + matched.merged_span < self.birth_span_limit,
+            )?;
+        }
+        let next = self.corpus.token(matched.next_start);
+        if next != WORD_SEPARATOR_ID {
+            self.scratch.right(
+                next,
+                next,
+                matched.left_start,
+                weight,
+                matched.merged_span + self.corpus.span(matched.next_start) < self.birth_span_limit,
+            )?;
+        }
+        self.positions.push_position(matched.left_start);
+        Ok(LogicalToken {
+            id: self.rule.replacement,
+            start: matched.left_start,
+            span: matched.merged_span,
+        })
+    }
 }
