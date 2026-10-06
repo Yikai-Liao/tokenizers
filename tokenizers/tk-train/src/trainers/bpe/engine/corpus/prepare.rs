@@ -47,6 +47,28 @@ impl InitialPairSource for &CorpusPlan<'_> {
     fn word_weights(&self) -> &IntervalIndex<u64> {
         &self.weights
     }
+    fn edge_count(&self, range: Range<usize>) -> usize {
+        // The plan has already measured retained symbols. Each word owns its
+        // left endpoints through the penultimate symbol, including wave cuts.
+        let first = self
+            .words
+            .partition_point(|word| word.start <= range.start as u64)
+            .saturating_sub(1);
+        let mut count = 0;
+        for index in first..self.words.len() {
+            let start = self.words[index].start as usize;
+            if start >= range.end {
+                break;
+            }
+            let after = self
+                .words
+                .get(index + 1)
+                .map_or(self.len, |word| word.start as usize);
+            let end = after.saturating_sub(2).max(start);
+            count += end.min(range.end).saturating_sub(start.max(range.start));
+        }
+        count
+    }
     fn for_each_edge(&self, range: Range<usize>, mut emit: impl FnMut(usize, u64)) {
         let first = self
             .words

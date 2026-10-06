@@ -26,13 +26,53 @@ struct InitialGroup {
     end: u32,
     frequency: u64,
 }
+#[derive(Default)]
 struct RecordBuffer<'a> {
     records: &'a mut [MaybeUninit<KeyedValue>],
     used: usize,
 }
 struct RecordJob<'a> {
     range: Range<usize>,
-    buffers: AHashMap<u64, RecordBuffer<'a>>,
+    buffers: OwnerDirectory<RecordBuffer<'a>>,
+}
+// Bound dense rows independently of configured worker count. Larger pools
+// retain sparse routes, so an empty producer/owner cross product stays bounded.
+enum OwnerDirectory<T> {
+    Dense(Vec<T>),
+    Sparse(AHashMap<usize, T>),
+}
+impl<T: Default> OwnerDirectory<T> {
+    fn new(workers: usize) -> Self {
+        if workers <= 64 {
+            Self::Dense((0..workers).map(|_| T::default()).collect())
+        } else {
+            Self::Sparse(AHashMap::new())
+        }
+    }
+    #[inline]
+    fn touch(&mut self, owner: usize) -> &mut T {
+        match self {
+            Self::Dense(values) => &mut values[owner],
+            Self::Sparse(values) => values.entry(owner).or_default(),
+        }
+    }
+    fn entries(self) -> impl Iterator<Item = (usize, T)> {
+        let (dense, sparse) = match self {
+            Self::Dense(values) => (values, AHashMap::new()),
+            Self::Sparse(values) => (Vec::new(), values),
+        };
+        dense.into_iter().enumerate().chain(sparse)
+    }
+    fn values(&self) -> impl Iterator<Item = &T> {
+        let (dense, sparse) = match self {
+            Self::Dense(values) => (Some(values), None),
+            Self::Sparse(values) => (None, Some(values)),
+        };
+        dense
+            .into_iter()
+            .flatten()
+            .chain(sparse.into_iter().flat_map(|values| values.values()))
+    }
 }
 #[inline]
 fn global_position(base: usize, record: KeyedValue) -> u64 {
@@ -99,101 +139,128 @@ impl<'arena> InitialPairTable<'arena> {
             let mut wave_tables: Vec<_> = (0..workers)
                 .map(|_| AHashMap::<u64, PairState<'arena>>::new())
                 .collect();
-            // Fixed slot tiles keep the producer count independent of worker count.
-            // Owner directories therefore grow at most linearly as workers increase
-            // for a fixed corpus; sparse rows omit empty destinations as well.
-            let chunk = 1 << 18;
-            let ranges: Vec<_> = (base..end)
-                .step_by(chunk)
-                .map(|start| start..(start + chunk).min(end))
-                .collect();
-            let route_work = progress.stage("Route initial pairs", (end - base) * 2);
-            let sizes: Vec<AHashMap<u64, usize>> = ranges
-                .par_iter()
-                .map(|range| {
-                    let mut sizes = AHashMap::<u64, usize>::new();
-                    corpus.for_each_edge(range.clone(), |_, key| {
-                        *sizes.entry(router.owner(key) as u64).or_default() += 1;
-                    });
-                    route_work.complete(range.len());
-                    sizes
-                })
-                .collect();
-            let mut shard_sizes = vec![0_usize; workers];
-            for counts in &sizes {
-                for (&shard, &count) in counts {
-                    shard_sizes[shard as usize] += count;
-                }
-            }
-            let records: usize = shard_sizes.iter().sum();
-            // Each owner owns its record allocation and releases it as soon as
-            // its position lists are complete.
-            let mut record_buffers: Vec<_> = shard_sizes
-                .iter()
-                .map(|&count| {
-                    let mut records = Vec::<MaybeUninit<KeyedValue>>::with_capacity(count);
-                    // SAFETY: MaybeUninit admits unwritten elements. The counted job
-                    // slices cover this owner, and every producer fills its whole slice.
-                    unsafe {
-                        records.set_len(count);
-                    }
-                    records
-                })
-                .collect();
-            // Directories contain only nonempty producer/owner routes. Their
-            // number is at most the number of emitted records; empty cross-product
-            // cells allocate nothing and are never visited during partitioning.
-            let mut remaining: Vec<_> = record_buffers.iter_mut().map(Vec::as_mut_slice).collect();
-            let jobs: Vec<_> = ranges
-                .into_iter()
-                .zip(sizes)
-                .map(|(range, counts)| {
-                    let mut buffers = AHashMap::<u64, RecordBuffer<'_>>::new();
-                    buffers.reserve(counts.len());
-                    for (shard, count) in counts {
-                        let buffer = std::mem::take(&mut remaining[shard as usize]);
-                        let (records, next) = buffer.split_at_mut(count);
-                        remaining[shard as usize] = next;
-                        buffers.insert(shard, RecordBuffer { records, used: 0 });
-                    }
-                    RecordJob { range, buffers }
-                })
-                .collect();
-            debug_assert!(remaining.iter().all(|buffer| buffer.is_empty()));
-            drop(remaining);
-            jobs.into_par_iter().for_each(|mut job| {
-                corpus.for_each_edge(job.range.clone(), |position, key| {
-                    let shard = router.owner(key) as u64;
-                    let buffer = job.buffers.get_mut(&shard).expect("counted owner route");
-                    buffer.records[buffer.used]
-                        .write(KeyedValue::new(key, (position - base) as u32));
-                    buffer.used += 1;
+            let mut record_buffers = if workers == 1 {
+                // A sole owner needs neither a key-dependent capacity scan nor
+                // route directories. The immutable plan counts edges from word
+                // geometry, then one symbol scan fills the exact allocation.
+                let work = progress.stage("Route initial pairs", end - base);
+                let count = corpus.edge_count(base..end);
+                let mut records = Vec::with_capacity(count);
+                corpus.for_each_edge(base..end, |position, key| {
+                    records.push(KeyedValue::new(key, (position - base) as u32));
                 });
-                debug_assert!(
-                    job.buffers
-                        .values()
-                        .all(|buffer| buffer.used == buffer.records.len())
-                );
-                route_work.complete(job.range.len());
-            });
-            // Each emitted offset is below records_per_wave <= 2^28. The u32
-            // payload is local to this wave; the global coordinate is never narrowed.
-            // SAFETY: All producer jobs joined after initializing every counted
-            // element. MaybeUninit<KeyedValue> and KeyedValue have the same layout
-            // and allocation size.
-            let mut record_buffers: Vec<Vec<KeyedValue>> = record_buffers
-                .into_iter()
-                .map(|records| {
-                    let mut records = std::mem::ManuallyDrop::new(records);
-                    unsafe {
-                        Vec::from_raw_parts(
-                            records.as_mut_ptr().cast::<KeyedValue>(),
-                            records.len(),
-                            records.capacity(),
-                        )
+                debug_assert_eq!(records.len(), count);
+                work.complete(end - base);
+                vec![records]
+            } else {
+                // Fixed slot tiles keep producer count independent of pool size.
+                // Small pools use bounded dense directories; larger pools retain
+                // only their nonempty routes.
+                let chunk = 1 << 18;
+                let ranges: Vec<_> = (base..end)
+                    .step_by(chunk)
+                    .map(|start| start..(start + chunk).min(end))
+                    .collect();
+                let route_work = progress.stage("Route initial pairs", (end - base) * 2);
+                let sizes: Vec<OwnerDirectory<usize>> = ranges
+                    .par_iter()
+                    .map(|range| {
+                        let mut sizes = OwnerDirectory::<usize>::new(workers);
+                        corpus.for_each_edge(range.clone(), |_, key| {
+                            *sizes.touch(router.owner(key)) += 1;
+                        });
+                        route_work.complete(range.len());
+                        sizes
+                    })
+                    .collect();
+                let mut shard_sizes = vec![0_usize; workers];
+                for counts in &sizes {
+                    match counts {
+                        OwnerDirectory::Dense(values) => {
+                            for (total, count) in shard_sizes.iter_mut().zip(values) {
+                                *total += count;
+                            }
+                        }
+                        OwnerDirectory::Sparse(values) => {
+                            for (&owner, &count) in values {
+                                shard_sizes[owner] += count;
+                            }
+                        }
                     }
-                })
-                .collect();
+                }
+                // Each owner owns its record allocation and releases it as soon as
+                // its position lists are complete.
+                let mut record_buffers: Vec<_> = shard_sizes
+                    .iter()
+                    .map(|&count| {
+                        let mut records = Vec::<MaybeUninit<KeyedValue>>::with_capacity(count);
+                        // SAFETY: MaybeUninit admits unwritten elements. The counted job
+                        // slices cover this owner, and every producer fills its whole slice.
+                        unsafe {
+                            records.set_len(count);
+                        }
+                        records
+                    })
+                    .collect();
+                // Allocate record slices only for nonempty routes. Dense rows
+                // have at most 64 cells; sparse rows omit empty destinations.
+                let mut remaining: Vec<_> =
+                    record_buffers.iter_mut().map(Vec::as_mut_slice).collect();
+                let jobs: Vec<_> = ranges
+                    .into_iter()
+                    .zip(sizes)
+                    .map(|(range, counts)| {
+                        let mut buffers = OwnerDirectory::<RecordBuffer<'_>>::new(workers);
+                        for (shard, count) in counts.entries() {
+                            if count == 0 {
+                                continue;
+                            }
+                            let buffer = std::mem::take(&mut remaining[shard]);
+                            let (records, next) = buffer.split_at_mut(count);
+                            remaining[shard] = next;
+                            *buffers.touch(shard) = RecordBuffer { records, used: 0 };
+                        }
+                        RecordJob { range, buffers }
+                    })
+                    .collect();
+                debug_assert!(remaining.iter().all(|buffer| buffer.is_empty()));
+                drop(remaining);
+                jobs.into_par_iter().for_each(|mut job| {
+                    corpus.for_each_edge(job.range.clone(), |position, key| {
+                        let shard = router.owner(key);
+                        let buffer = job.buffers.touch(shard);
+                        buffer.records[buffer.used]
+                            .write(KeyedValue::new(key, (position - base) as u32));
+                        buffer.used += 1;
+                    });
+                    debug_assert!(
+                        job.buffers
+                            .values()
+                            .all(|buffer| buffer.used == buffer.records.len())
+                    );
+                    route_work.complete(job.range.len());
+                });
+                // Each emitted offset is below records_per_wave <= 2^28. The u32
+                // payload is local to this wave; the global coordinate is never narrowed.
+                // SAFETY: All producer jobs joined after initializing every counted
+                // element. MaybeUninit<KeyedValue> and KeyedValue have the same layout
+                // and allocation size.
+                let record_buffers: Vec<Vec<KeyedValue>> = record_buffers
+                    .into_iter()
+                    .map(|records| {
+                        let mut records = std::mem::ManuallyDrop::new(records);
+                        unsafe {
+                            Vec::from_raw_parts(
+                                records.as_mut_ptr().cast::<KeyedValue>(),
+                                records.len(),
+                                records.capacity(),
+                            )
+                        }
+                    })
+                    .collect();
+                record_buffers
+            };
+            let records = record_buffers.iter().map(Vec::len).sum();
             let sort_work = progress.stage("Sort initial pairs", records);
             record_buffers.par_iter_mut().for_each(|records| {
                 radix::sort_by_key(records);

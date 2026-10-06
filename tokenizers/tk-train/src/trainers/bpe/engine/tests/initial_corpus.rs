@@ -19,7 +19,7 @@ fn full_pair_keys_remain_distinct_in_initial_counting() {
     ];
     let slots: Vec<_> = ids.into_iter().map(AtomicU32::new).collect();
     let weights = IntervalIndex::new(vec![1], vec![7]);
-    for workers in [1, 4] {
+    for workers in [1, 4, 65] {
         let execution = execution::Execution::new(workers).unwrap();
         let arena = AllocationArena::new(workers, 3);
         let progress =
@@ -205,6 +205,11 @@ fn planned_edges_match_materialized_slots_across_word_and_seek_boundaries() {
                         (&plan).for_each_edge(range.clone(), |position, key| {
                             pairs.push((position, key))
                         });
+                        assert_eq!(
+                            (&plan).edge_count(range.clone()),
+                            pairs.len(),
+                            "planned capacity for {range:?}"
+                        );
                         pairs
                     })
                     .collect();

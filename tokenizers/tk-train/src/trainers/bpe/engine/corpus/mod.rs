@@ -37,6 +37,11 @@ pub(super) trait InitialPairSource: Sync {
     fn len(&self) -> usize;
     fn word_weights(&self) -> &IntervalIndex<u64>;
     fn for_each_edge(&self, range: Range<usize>, emit: impl FnMut(usize, u64));
+    fn edge_count(&self, range: Range<usize>) -> usize {
+        let mut count = 0;
+        self.for_each_edge(range, |_, _| count += 1);
+        count
+    }
 }
 #[cfg(test)]
 impl InitialPairSource for InitialCorpus<'_> {
