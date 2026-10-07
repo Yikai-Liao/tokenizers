@@ -74,27 +74,6 @@ fn train_with_merge_options(
     word_counts: WordCountsView<'_>,
     workers: usize,
     merge_options: merge::MergeOptions,
-    #[cfg(test)] observe: Option<&mut (dyn FnMut(tk_encode::models::bpe::Pair, u64, u32) + Send)>,
-    #[cfg(test)] birth_observe: BirthObserver<'_>,
-) -> Result<ModelParts> {
-    train_with_merge_options_and_cache(
-        trainer,
-        word_counts,
-        workers,
-        merge_options,
-        corpus::InitialCachePolicy::default(),
-        #[cfg(test)]
-        observe,
-        #[cfg(test)]
-        birth_observe,
-    )
-}
-fn train_with_merge_options_and_cache(
-    trainer: &BpeTrainer,
-    word_counts: WordCountsView<'_>,
-    workers: usize,
-    merge_options: merge::MergeOptions,
-    cache_policy: corpus::InitialCachePolicy,
     #[cfg(test)] mut observe: Option<
         &mut (dyn FnMut(tk_encode::models::bpe::Pair, u64, u32) + Send),
     >,
@@ -125,7 +104,6 @@ fn train_with_merge_options_and_cache(
                 policy,
                 &execution,
                 merge_options,
-                cache_policy,
                 &progress,
                 &mut retained_alphabet,
                 #[cfg(test)]
@@ -161,7 +139,6 @@ fn train_attempt(
     policy: IdentityPolicy,
     execution: &execution::Execution,
     merge_options: merge::MergeOptions,
-    cache_policy: corpus::InitialCachePolicy,
     progress: &TrainingProgress,
     retained_alphabet: &mut Option<Vec<char>>,
     #[cfg(test)] trace: &mut Vec<(tk_encode::models::bpe::Pair, u64, u32)>,
@@ -175,7 +152,7 @@ fn train_attempt(
         progress,
         retained_alphabet,
     )?;
-    let mut prepared_corpus = corpus::CorpusPlan::build(
+    let prepared_corpus = corpus::CorpusPlan::build(
         word_counts,
         &mut vocabulary,
         policy,
@@ -188,7 +165,6 @@ fn train_attempt(
         progress.stage("Compute merges", trainer.vocab_size);
         return Ok(complete_model(trainer, vocabulary, Vec::new()));
     }
-    prepared_corpus.prepare_initial_symbols_with_policy(workers, progress, cache_policy)?;
     match corpus::slot_bits(trainer.vocab_size.max(vocabulary.len())) {
         16 => train_with_slots::<corpus::U16Slots>(
             trainer,

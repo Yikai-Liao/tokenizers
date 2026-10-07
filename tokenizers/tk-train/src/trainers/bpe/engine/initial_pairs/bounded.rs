@@ -1,7 +1,7 @@
 //! Stable direct pair partition for a bounded initial alphabet.
 //!
-//! Keep the corpus's existing u16 symbol cache. Only temporary occurrence
-//! records become u32 offsets; original IDs determine keys and owner shards.
+//! Temporary occurrence records use u32 offsets; original IDs determine keys
+//! and owner shards. Corpus materialization follows initial pair construction.
 use super::super::pair_index::pair_key;
 use super::*;
 

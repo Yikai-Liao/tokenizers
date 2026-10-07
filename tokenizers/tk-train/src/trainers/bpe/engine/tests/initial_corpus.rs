@@ -750,7 +750,7 @@ fn long_word_split_preserves_unicode_filtering_affixes_and_merge_trace() {
     }
 }
 
-// Reconstruct the real first attempt's initialization and cache, then query the
+// Reconstruct the real first attempt's initial plan, then query the
 // very selector used by build_in_waves. No global observer can mix parallel tests.
 fn assert_training_plan_bounded_admission(
     trainer: &BpeTrainer,
@@ -776,7 +776,7 @@ fn assert_training_plan_bounded_admission(
                 "training must build initial pairs"
             );
         }
-        let mut plan = corpus::CorpusPlan::build(
+        let plan = corpus::CorpusPlan::build(
             WordCountsView::from_map(words),
             &mut vocabulary,
             IdentityPolicy::FirstActivationOnly,
@@ -784,7 +784,6 @@ fn assert_training_plan_bounded_admission(
             &progress,
         )
         .unwrap();
-        plan.prepare_initial_symbols(workers, &progress).unwrap();
         assert_eq!(
             initial_pairs::InitialPairTable::admits_bounded_for_test(&&plan, workers, 1 << 28),
             expected,

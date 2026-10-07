@@ -114,24 +114,22 @@ The initial plan records word geometry, weights, resolved initial IDs, and check
 resident-size and numeric bounds. Bounded waves own left endpoints; the last edge
 in a wave can read one symbol beyond its range.
 
-A separate preparation stage can build an immutable `u16` or `u32` symbol cache.
-Cache enablement and width policy are independent of record/collector admission,
-which uses the resolver's initial-ID bound and the observed alphabet. Production
-currently caches only narrow IDs. Typed
-kernels dispatch once per word/job and feed both initial edges and final slots.
-Word geometry restores separator placeholders, preserving every real token ID.
-Scanner checkpoints retain original UTF-8 coordinates, including repeated slot
-coordinates after filtering; they stay with the plan until materialization.
+Initial pair construction scans the borrowed word strings through the resolved
+character-ID lookup tables. Checkpoints retain original UTF-8 coordinates,
+including repeated slot coordinates after filtering, so bounded waves can seek
+into long words. Record and collector admission use the resolver's initial-ID
+bound and the observed alphabet.
 
-Only after raw initial records have retired does the plan allocate mutable slots.
-The cache overlaps raw records during grouping and then final slots during
-materialization; it trades an extra plane for fewer repeated scans. The scanner
-path still decodes strings when filling final slots.
+Only after raw initial records have retired does the plan allocate mutable slots,
+decoding the borrowed strings directly into the selected slot representation.
+The plan's lookup tables and checkpoints are released after materialization.
+This ordering avoids overlapping a corpus-sized symbol plane with raw initial
+records and their sorting scratch.
 
 When the initialized vocabulary already meets the target size, no mutable corpus
 is needed. Planning still checks resident-size and signed-input bounds. If the
 total weighted edge mass fits in `u64`, it proves that every pair count fits, and
-training returns before preparing any cache. Otherwise initial grouping performs
+training returns after planning. Otherwise initial grouping performs
 the per-key checks before returning an empty merge list. Total mass above
 `u64::MAX` is therefore not itself a plain-input error.
 
@@ -498,13 +496,6 @@ collectors share checked weighted-frequency reduction, floor handling, and
 multiwave position encoding and publication. Original ID ownership, checked
 count accumulation, and retirement before corpus materialization remain the
 same across the two record layouts.
-
-Enabled initial caches use two or four bytes per slot, independently of mutable
-slot layout. Character-ID lookup tables are released after cache construction;
-the cache is released after materialization, before merge training. A wide plane
-adds 2N logical bytes over a narrow plane (actual capacity also counts), in exchange
-for fewer repeated UTF-8 scans and ID lookups. Checkpoints remain allocated
-until materialization.
 
 ### Slot and coordinate storage
 
