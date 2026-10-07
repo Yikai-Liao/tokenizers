@@ -38,51 +38,14 @@ struct RecordBuffer<'a, R> {
 }
 struct RecordJob<'a, R> {
     range: Range<usize>,
-    buffers: OwnerDirectory<RecordBuffer<'a, R>>,
+    buffers: Vec<RecordBuffer<'a, R>>,
 }
-// Bound dense rows independently of configured worker count. Larger pools
-// retain sparse routes, so an empty producer/owner cross product stays bounded.
-const DENSE_OWNER_LIMIT: usize = 64;
-// Keep routing metadata and scheduling independent of pool size. This tile
-// size trades more producer metadata for finer spatial work distribution.
+// Keep routing metadata and scheduling independent of pool size. A wave has
+// at most 2^28 slots and a tile has 2^18, so P <= 1024 producers. On 64-bit
+// targets the count and RecordBuffer cells request (8 + 24)*P*W <= 32 KiB*W
+// payload bytes. This accepts a few MiB for ordinary pool sizes to keep one
+// direct-index route representation; it is not an allocator or total-HWM bound.
 const ROUTE_TILE_SLOTS: usize = 1 << 18;
-enum OwnerDirectory<T> {
-    Dense(Vec<T>),
-    Sparse(AHashMap<usize, T>),
-}
-impl<T: Default> OwnerDirectory<T> {
-    fn new(workers: usize) -> Self {
-        if workers <= DENSE_OWNER_LIMIT {
-            Self::Dense((0..workers).map(|_| T::default()).collect())
-        } else {
-            Self::Sparse(AHashMap::new())
-        }
-    }
-    #[inline]
-    fn touch(&mut self, owner: usize) -> &mut T {
-        match self {
-            Self::Dense(values) => &mut values[owner],
-            Self::Sparse(values) => values.entry(owner).or_default(),
-        }
-    }
-    fn entries(self) -> impl Iterator<Item = (usize, T)> {
-        let (dense, sparse) = match self {
-            Self::Dense(values) => (values, AHashMap::new()),
-            Self::Sparse(values) => (Vec::new(), values),
-        };
-        dense.into_iter().enumerate().chain(sparse)
-    }
-    fn values(&self) -> impl Iterator<Item = &T> {
-        let (dense, sparse) = match self {
-            Self::Dense(values) => (Some(values), None),
-            Self::Sparse(values) => (None, Some(values)),
-        };
-        dense
-            .into_iter()
-            .flatten()
-            .chain(sparse.into_iter().flat_map(|values| values.values()))
-    }
-}
 // Dispatch proves the chosen record can represent each emitted key and wave
 // offset; construction and access then preserve both values exactly.
 trait PositionRecord: Copy + Send + Sync {
@@ -171,20 +134,19 @@ fn collect_wave_records<R: InitialRecord>(
         vec![records]
     } else {
         // Fixed slot tiles keep producer count independent of pool size.
-        // Small pools use bounded dense directories; larger pools retain
-        // only their nonempty routes.
+        // Every producer uses the same direct-index directory at every pool size.
         let chunk = ROUTE_TILE_SLOTS;
         let ranges: Vec<_> = (base..end)
             .step_by(chunk)
             .map(|start| start..(start + chunk).min(end))
             .collect();
         let route_work = progress.stage("Route initial pairs", (end - base) * 2);
-        let sizes: Vec<OwnerDirectory<usize>> = ranges
+        let sizes: Vec<Vec<usize>> = ranges
             .par_iter()
             .map(|range| {
-                let mut sizes = OwnerDirectory::<usize>::new(workers);
+                let mut sizes = vec![0_usize; workers];
                 corpus.for_each_edge(range.clone(), |_, key| {
-                    *sizes.touch(router.owner(key)) += 1;
+                    sizes[router.owner(key)] += 1;
                 });
                 route_work.complete(range.len());
                 sizes
@@ -192,17 +154,8 @@ fn collect_wave_records<R: InitialRecord>(
             .collect();
         let mut shard_sizes = vec![0_usize; workers];
         for counts in &sizes {
-            match counts {
-                OwnerDirectory::Dense(values) => {
-                    for (total, count) in shard_sizes.iter_mut().zip(values) {
-                        *total += count;
-                    }
-                }
-                OwnerDirectory::Sparse(values) => {
-                    for (&owner, &count) in values {
-                        shard_sizes[owner] += count;
-                    }
-                }
+            for (total, count) in shard_sizes.iter_mut().zip(counts) {
+                *total += count;
             }
         }
         // Each owner owns its record allocation and releases it as soon as
@@ -219,41 +172,17 @@ fn collect_wave_records<R: InitialRecord>(
                 records
             })
             .collect();
-        // Allocate record slices only for nonempty routes. Dense rows
-        // have at most 64 cells; sparse rows omit empty destinations.
-        // Ranges are ascending: every owner gets earlier ranges first.
-        // Each producer preserves source order, so completion order and
-        // sparse-map iteration cannot reorder equal-key positions.
-        let mut remaining: Vec<_> = record_buffers.iter_mut().map(Vec::as_mut_slice).collect();
-        let jobs: Vec<_> = ranges
-            .into_iter()
-            .zip(sizes)
-            .map(|(range, counts)| {
-                let mut buffers = OwnerDirectory::<RecordBuffer<'_, R>>::new(workers);
-                for (shard, count) in counts.entries() {
-                    if count == 0 {
-                        continue;
-                    }
-                    let buffer = std::mem::take(&mut remaining[shard]);
-                    let (records, next) = buffer.split_at_mut(count);
-                    remaining[shard] = next;
-                    *buffers.touch(shard) = RecordBuffer { records, used: 0 };
-                }
-                RecordJob { range, buffers }
-            })
-            .collect();
-        debug_assert!(remaining.iter().all(|buffer| buffer.is_empty()));
-        drop(remaining);
+        let jobs = assign_record_jobs(ranges, sizes, &mut record_buffers);
         jobs.into_par_iter().for_each(|mut job| {
             corpus.for_each_edge(job.range.clone(), |position, key| {
                 let shard = router.owner(key);
-                let buffer = job.buffers.touch(shard);
+                let buffer = &mut job.buffers[shard];
                 buffer.records[buffer.used].write(R::new(key, (position - base) as u32));
                 buffer.used += 1;
             });
             debug_assert!(
                 job.buffers
-                    .values()
+                    .iter()
                     .all(|buffer| buffer.used == buffer.records.len())
             );
             route_work.complete(job.range.len());
@@ -280,6 +209,40 @@ fn collect_wave_records<R: InitialRecord>(
             .collect();
         record_buffers
     }
+}
+
+/// Assign disjoint exact-count slices in source-range order. Empty owners keep
+/// empty slices: directory capacity does not initialize any uncounted record.
+/// The returned jobs exclusively borrow their owner allocations until joined.
+fn assign_record_jobs<'a, R: Default>(
+    ranges: Vec<Range<usize>>,
+    sizes: Vec<Vec<usize>>,
+    record_buffers: &'a mut [Vec<MaybeUninit<R>>],
+) -> Vec<RecordJob<'a, R>> {
+    let workers = record_buffers.len();
+    let mut remaining: Vec<_> = record_buffers.iter_mut().map(Vec::as_mut_slice).collect();
+    // Ranges are ascending. Each owner gets earlier ranges first, and each
+    // producer preserves source order. Task completion cannot reorder records.
+    let jobs = ranges
+        .into_iter()
+        .zip(sizes)
+        .map(|(range, counts)| {
+            let mut buffers: Vec<RecordBuffer<'_, R>> =
+                (0..workers).map(|_| RecordBuffer::default()).collect();
+            for (shard, count) in counts.into_iter().enumerate() {
+                if count == 0 {
+                    continue;
+                }
+                let buffer = std::mem::take(&mut remaining[shard]);
+                let (records, next) = buffer.split_at_mut(count);
+                remaining[shard] = next;
+                buffers[shard] = RecordBuffer { records, used: 0 };
+            }
+            RecordJob { range, buffers }
+        })
+        .collect();
+    debug_assert!(remaining.iter().all(|buffer| buffer.is_empty()));
+    jobs
 }
 
 /// Count stable equal-key runs and retain those admitted by this wave's floor.
@@ -717,5 +680,199 @@ mod tests {
             positions.iter().collect::<Vec<_>>(),
             [(1_u64 << 32) + 17, (1_u64 << 32) + (1 << 28) + 16]
         );
+    }
+}
+
+#[cfg(test)]
+mod routing_tests {
+    use super::super::pair_index::ShardRouter;
+    use super::*;
+
+    #[test]
+    fn counted_owner_slices_preserve_order_and_exact_coverage_at_65_and_1024() {
+        for workers in [65, 1024] {
+            let router = ShardRouter::new(workers);
+            let mut keys = vec![None; workers];
+            let mut missing = workers;
+            for key in 0..100000_u64 {
+                let slot = &mut keys[router.owner(key)];
+                if slot.is_none() {
+                    *slot = Some(key);
+                    missing -= 1;
+                }
+                if missing == 0 {
+                    break;
+                }
+            }
+            assert_eq!(missing, 0, "fixture reaches every actual router owner");
+            for sparse_input in [false, true] {
+                let ranges: Vec<_> = (0..3)
+                    .map(|tile| tile * ROUTE_TILE_SLOTS..(tile + 1) * ROUTE_TILE_SLOTS)
+                    .collect();
+                let mut events = Vec::new();
+                for (tile, range) in ranges.iter().enumerate() {
+                    for owner in (0..workers).rev() {
+                        if !sparse_input || [0, workers / 2, workers - 1].contains(&owner) {
+                            events.push((range.start + workers - owner, keys[owner].unwrap()));
+                        }
+                    }
+                    assert!(
+                        events
+                            .iter()
+                            .filter(|(position, _)| range.contains(position))
+                            .all(|(position, _)| *position < range.end)
+                    );
+                    assert_eq!(range.start, tile * ROUTE_TILE_SLOTS);
+                }
+                // Independent oracle filters the original source sequence by
+                // owner; reversed job completion must not reorder these values.
+                let expected: Vec<Vec<_>> = (0..workers)
+                    .map(|owner| {
+                        events
+                            .iter()
+                            .filter(|(_, key)| router.owner(*key) == owner)
+                            .map(|&(position, key)| (key, position as u32))
+                            .collect()
+                    })
+                    .collect();
+                let sizes: Vec<Vec<usize>> = ranges
+                    .iter()
+                    .map(|range| {
+                        (0..workers)
+                            .map(|owner| {
+                                events
+                                    .iter()
+                                    .filter(|(position, key)| {
+                                        range.contains(position) && router.owner(*key) == owner
+                                    })
+                                    .count()
+                            })
+                            .collect()
+                    })
+                    .collect();
+                let sentinel = KeyedValue::new(u64::MAX, u32::MAX);
+                let mut buffers: Vec<Vec<MaybeUninit<KeyedValue>>> = expected
+                    .iter()
+                    .map(|owner| {
+                        // Initialize only len, with extra capacity left unwritten.
+                        // Sentinels make any missing counted write observable safely.
+                        let mut values = Vec::with_capacity(owner.len() + 5);
+                        values.resize_with(owner.len(), || MaybeUninit::new(sentinel));
+                        values
+                    })
+                    .collect();
+                let mut jobs = assign_record_jobs(ranges, sizes, &mut buffers);
+                assert!(jobs.iter().all(|job| job.buffers.len() == workers));
+                for job in jobs.iter_mut().rev() {
+                    for &(position, key) in &events {
+                        if job.range.contains(&position) {
+                            let buffer = &mut job.buffers[router.owner(key)];
+                            buffer.records[buffer.used]
+                                .write(KeyedValue::new(key, position as u32));
+                            buffer.used += 1;
+                        }
+                    }
+                    assert!(
+                        job.buffers
+                            .iter()
+                            .all(|buffer| buffer.used == buffer.records.len())
+                    );
+                }
+                drop(jobs);
+                for (actual, expected) in buffers.iter().zip(&expected) {
+                    assert_eq!(actual.len(), expected.len());
+                    assert!(actual.capacity() >= actual.len() + 5);
+                    let values: Vec<_> = actual
+                        .iter()
+                        .map(|record| {
+                            // SAFETY: Every resident cell was initialized to a
+                            // sentinel before assignment and then written exactly once.
+                            let record = unsafe { record.assume_init_ref() };
+                            (record.key(), record.value())
+                        })
+                        .collect();
+                    assert_eq!(values, *expected);
+                }
+            }
+        }
+    }
+
+    struct SparseEdges {
+        len: usize,
+        edges: Vec<(usize, u64)>,
+        weights: IntervalIndex<u64>,
+    }
+    impl InitialPairSource for SparseEdges {
+        fn len(&self) -> usize {
+            self.len
+        }
+        fn word_weights(&self) -> &IntervalIndex<u64> {
+            &self.weights
+        }
+        fn for_each_edge(&self, range: Range<usize>, mut emit: impl FnMut(usize, u64)) {
+            for &(position, key) in &self.edges {
+                if range.contains(&position) {
+                    emit(position, key);
+                }
+            }
+        }
+    }
+    #[test]
+    fn generic_eight_owner_collector_matches_source_order_across_tiles() {
+        let source = SparseEdges {
+            len: 3 * ROUTE_TILE_SLOTS + 2,
+            edges: [
+                1,
+                ROUTE_TILE_SLOTS - 1,
+                ROUTE_TILE_SLOTS,
+                ROUTE_TILE_SLOTS + 1,
+                2 * ROUTE_TILE_SLOTS - 1,
+                2 * ROUTE_TILE_SLOTS,
+                3 * ROUTE_TILE_SLOTS,
+            ]
+            .into_iter()
+            .enumerate()
+            .map(|(index, position)| {
+                (
+                    position,
+                    (u64::from(u32::MAX - 1) << 32) | (index % 3) as u64,
+                )
+            })
+            .collect(),
+            weights: IntervalIndex::new(vec![1], vec![1]),
+        };
+        let execution = Execution::new(8).unwrap();
+        let progress =
+            TrainingProgress::new(false, tk_encode::utils::progress::ProgressFormat::Silent)
+                .unwrap();
+        assert!(source.bounded_initial_ids().is_none());
+        assert!(!source.compact_keys());
+        execution.pool.install(|| {
+            let streams = collect_wave_records::<KeyedValue>(
+                &source,
+                0..source.len - 1,
+                &execution,
+                &progress,
+            );
+            let router = execution.router();
+            assert_eq!(streams.len(), 8);
+            for (owner, records) in streams.iter().enumerate() {
+                let expected: Vec<_> = source
+                    .edges
+                    .iter()
+                    .filter(|(_, key)| router.owner(*key) == owner)
+                    .map(|&(position, key)| (key, position as u32))
+                    .collect();
+                let actual: Vec<_> = records
+                    .iter()
+                    .map(|record| (record.key(), record.value()))
+                    .collect();
+                assert_eq!(actual, expected);
+            }
+            assert_eq!(
+                streams.iter().map(Vec::len).sum::<usize>(),
+                source.edges.len()
+            );
+        });
     }
 }

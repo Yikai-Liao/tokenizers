@@ -463,6 +463,21 @@ order within each key. The wave base restores full-width positions. Interval wei
 weighted counts. Owners can encode initial lists in parallel using resources
 from the worker that executes each task.
 
+Generic multi-owner routing uses one dense owner directory for every pool
+size. A wave covers at most `2^28` slots and each spatial producer covers
+`2^18`, so there are at most `P = 1024` producers. On 64-bit targets, a count
+cell uses 8 bytes and a `RecordBuffer` slice/used cell uses 24. Together their
+directory payload is bounded by `32*P*W <= 32 KiB*W` bytes for `W` logical
+owners: 2 MiB at 64 owners, 4 MiB at 128, and 8 MiB at 256. These are payload
+requests, excluding row/vector headers, allocator capacity and record storage;
+they are not total resident-memory bounds. The engine accepts this metadata
+cost without a worker-count representation switch or public worker limit.
+Only counted records obtain initialized resident length. Ascending source ranges
+receive disjoint exact-count owner slices before parallel fill; task completion
+order cannot change the incoming record order. The sole-owner single-scan path,
+wave/tile sizes, bounded alphabet collector and pair-state hash tables remain
+separate mechanisms.
+
 When the cached plan has at most 256 distinct resolved initial IDs, a bounded
 pair collector can replace per-occurrence keyed records with four-byte wave-local
 position offsets. Eligibility follows the IDs actually activated by retained
