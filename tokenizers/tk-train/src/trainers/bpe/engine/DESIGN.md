@@ -110,22 +110,28 @@ intermediate boundaries needed for cohort accounting.
 
 ### Delayed corpus construction
 
-The initial index reads the immutable plan and original strings before mutable
-slots are allocated. Bounded waves own left endpoints; the last edge in a wave
-can read one symbol beyond its range. Long-word checkpoints map original UTF-8
-byte offsets to retained-symbol coordinates. Filtered chunks can have repeated
-slot coordinates. Checkpoint seeking and ordinary scans use the same symbol
-interpretation.
+The initial plan records word geometry, weights, resolved initial IDs, and checked
+resident-size and numeric bounds. Bounded waves own left endpoints; the last edge
+in a wave can read one symbol beyond its range.
 
-Only after raw initial records have retired does the plan allocate the mutable
-corpus. This reduces the overlap between those records and the slot plane, at the
-cost of further UTF-8 decoding and ID lookup.
+When the resolved initial ID bound fits in `u16`, a separate preparation stage
+builds an immutable symbol cache. Word geometry identifies separator placeholders,
+leaving the full `u16` domain available for real token IDs. Cached IDs supply both
+initial edges and final slots. Wide IDs keep the original string scanner and UTF-8
+checkpoints; filtered chunks may have repeated slot coordinates. Checkpoint seeks
+and ordinary scans share the same symbol interpretation.
+
+Only after raw initial records have retired does the plan allocate mutable slots.
+The cache overlaps raw records during grouping and then final slots during
+materialization; it trades an extra plane for fewer repeated scans. The scanner
+path still decodes strings when filling final slots.
 
 When the initialized vocabulary already meets the target size, no mutable corpus
 is needed. Planning still checks resident-size and signed-input bounds. If the
-total weighted edge mass fits in `u64`, it proves that every pair count fits;
-otherwise initial grouping performs the per-key checks before returning an empty
-merge list. Total mass above `u64::MAX` is therefore not itself a plain-input error.
+total weighted edge mass fits in `u64`, it proves that every pair count fits, and
+training returns before preparing any cache. Otherwise initial grouping performs
+the per-key checks before returning an empty merge list. Total mass above
+`u64::MAX` is therefore not itself a plain-input error.
 
 ### The birth length rule
 

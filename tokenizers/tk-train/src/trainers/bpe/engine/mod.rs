@@ -129,7 +129,7 @@ fn train_attempt(
         progress,
         retained_alphabet,
     )?;
-    let prepared_corpus = corpus::CorpusPlan::build(
+    let mut prepared_corpus = corpus::CorpusPlan::build(
         word_counts,
         &mut vocabulary,
         policy,
@@ -142,6 +142,7 @@ fn train_attempt(
         progress.stage("Compute merges", trainer.vocab_size);
         return Ok(complete_model(trainer, vocabulary, Vec::new()));
     }
+    prepared_corpus.prepare_initial_symbols(workers, progress)?;
     match corpus::slot_bits(trainer.vocab_size.max(vocabulary.len())) {
         16 => train_with_slots::<corpus::U16Slots>(
             trainer,

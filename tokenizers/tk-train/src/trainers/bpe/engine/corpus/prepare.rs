@@ -30,8 +30,11 @@ struct SymbolCheckpoint {
     byte_offset: usize,
 }
 enum InitialSymbols {
-    Decoded(InitialTokenIds),
-    // Original word geometry identifies separators; all u16 IDs remain valid.
+    Scanner(InitialTokenIds),
+    // PERF: Reuse resolved IDs instead of repeating UTF-8 scans and lookup.
+    // This immutable two-byte-per-slot plane overlaps raw records and later
+    // mutable slots. Geometry identifies separator placeholders (0), so all
+    // u16 values, including 0 and 65535, remain valid token IDs.
     Cached(Vec<u16>),
 }
 pub(in super::super) struct CorpusPlan<'input> {
@@ -45,7 +48,12 @@ pub(in super::super) struct CorpusPlan<'input> {
     scan_whole_words: bool,
     edges: usize,
     weighted_mass: u128,
+    #[cfg(test)]
+    cached_multiword_jobs: std::sync::atomic::AtomicUsize,
 }
+#[cfg(test)]
+pub(in super::super) static CACHE_PREPARATION_ATTEMPTS: std::sync::atomic::AtomicUsize =
+    std::sync::atomic::AtomicUsize::new(0);
 impl InitialPairSource for &CorpusPlan<'_> {
     fn len(&self) -> usize {
         self.len
@@ -56,7 +64,7 @@ impl InitialPairSource for &CorpusPlan<'_> {
     fn compact_keys(&self) -> bool {
         match &self.symbols {
             InitialSymbols::Cached(_) => true,
-            InitialSymbols::Decoded(ids) => ids.compact_pair_keys(),
+            InitialSymbols::Scanner(ids) => ids.compact_pair_keys(),
         }
     }
     fn edge_count(&self, range: Range<usize>) -> usize {
@@ -100,38 +108,40 @@ impl InitialPairSource for &CorpusPlan<'_> {
             if separator <= range.start {
                 continue;
             }
-            if let InitialSymbols::Cached(symbols) = &self.symbols {
-                let begin = word_start.max(range.start);
-                let end = separator.saturating_sub(1).min(range.end).max(begin);
-                for position in begin..end {
-                    emit(
-                        position,
-                        pair_key((
-                            u32::from(symbols[position]),
-                            u32::from(symbols[position + 1]),
-                        )),
-                    );
+            match &self.symbols {
+                InitialSymbols::Cached(symbols) => {
+                    let begin = word_start.max(range.start);
+                    let end = separator.saturating_sub(1).min(range.end).max(begin);
+                    for position in begin..end {
+                        emit(
+                            position,
+                            pair_key((
+                                u32::from(symbols[position]),
+                                u32::from(symbols[position + 1]),
+                            )),
+                        );
+                    }
                 }
-                continue;
+                InitialSymbols::Scanner(ids) => {
+                    let (mut position, byte_start) = self.scan_start(index, range.start);
+                    let mut previous = None;
+                    ids.scan_symbols(planned.word, byte_start, |id| {
+                        if let Some((left_position, left)) = previous
+                            && left_position >= range.start
+                            && left_position < range.end
+                        {
+                            emit(left_position, pair_key((left, id)));
+                        }
+                        previous = Some((position, id));
+                        // The right endpoint at range.end has supplied the lookahead.
+                        if position >= range.end {
+                            return ControlFlow::Break(());
+                        }
+                        position += 1;
+                        ControlFlow::Continue(())
+                    });
+                }
             }
-            let (mut position, byte_start) = self.scan_start(index, range.start);
-            let mut previous = None;
-            self.initial_ids()
-                .scan_symbols(planned.word, byte_start, |id| {
-                    if let Some((left_position, left)) = previous
-                        && left_position >= range.start
-                        && left_position < range.end
-                    {
-                        emit(left_position, pair_key((left, id)));
-                    }
-                    previous = Some((position, id));
-                    // The right endpoint at range.end has supplied the lookahead.
-                    if position >= range.end {
-                        return ControlFlow::Break(());
-                    }
-                    position += 1;
-                    ControlFlow::Continue(())
-                });
         }
     }
 }
@@ -270,11 +280,10 @@ impl<'input> CorpusPlan<'input> {
                     .unwrap_or(slots as u64);
                 (start, end - start)
             });
-        let cache_symbols = initial_ids.compact_pair_keys();
-        let mut plan = Self {
+        Ok(Self {
             words,
             checkpoints,
-            symbols: InitialSymbols::Decoded(initial_ids),
+            symbols: InitialSymbols::Scanner(initial_ids),
             len: slots,
             weights: IntervalIndex::new(interval_starts, interval_weights),
             unit_weight,
@@ -282,28 +291,35 @@ impl<'input> CorpusPlan<'input> {
             scan_whole_words: length_limited,
             edges,
             weighted_mass,
-        };
-        if cache_symbols {
-            let work = progress.stage("Cache initial symbols", slots - 1);
-            plan.symbols = InitialSymbols::Cached(plan.fill_tokens(
-                rayon::current_num_threads(),
-                &work,
-                |_, id| {
-                    if id == WORD_SEPARATOR_ID {
-                        0
-                    } else {
-                        id as u16
-                    }
-                },
-            )?);
-        }
-        Ok(plan)
+            #[cfg(test)]
+            cached_multiword_jobs: std::sync::atomic::AtomicUsize::new(0),
+        })
     }
-    fn initial_ids(&self) -> &InitialTokenIds {
+    /// Resolve an immutable symbol plane only after the first zero-merge return.
+    /// Wide IDs keep their scanner; a prepared cache is already ready to reuse.
+    pub(in super::super) fn prepare_initial_symbols(
+        &mut self,
+        workers: usize,
+        progress: &TrainingProgress,
+    ) -> Result<()> {
         match &self.symbols {
-            InitialSymbols::Decoded(ids) => ids,
-            InitialSymbols::Cached(_) => unreachable!("cached scans use measured word geometry"),
+            InitialSymbols::Scanner(ids) if ids.compact_pair_keys() => {}
+            _ => return Ok(()),
         }
+        #[cfg(test)]
+        CACHE_PREPARATION_ATTEMPTS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let work = progress.stage("Cache initial symbols", self.len - 1);
+        // Eligibility proves each resolved non-separator ID fits in u16.
+        // Handle the full-width separator before narrowing a real token ID.
+        let symbols = self.fill_tokens(workers, &work, |_, id| {
+            if id == WORD_SEPARATOR_ID {
+                0
+            } else {
+                id as u16
+            }
+        })?;
+        self.symbols = InitialSymbols::Cached(symbols);
+        Ok(())
     }
     pub(in super::super) fn initial_counts_fit_u64(&self) -> bool {
         self.weighted_mass <= u128::from(u64::MAX)
@@ -360,28 +376,28 @@ impl<'input> CorpusPlan<'input> {
             .get(index + 1)
             .map_or(self.len, |word| word.start as usize)
             - 1;
-        if let InitialSymbols::Cached(symbols) = &self.symbols {
-            for position in (planned.start as usize).max(range.start)..separator.min(range.end) {
-                emit(position, u32::from(symbols[position]));
+        match &self.symbols {
+            InitialSymbols::Cached(symbols) => {
+                for position in (planned.start as usize).max(range.start)..separator.min(range.end)
+                {
+                    emit(position, u32::from(symbols[position]));
+                }
             }
-            if range.contains(&separator) {
-                emit(separator, WORD_SEPARATOR_ID);
+            InitialSymbols::Scanner(ids) => {
+                if range.start < separator {
+                    let (mut position, byte_start) = self.scan_start(index, range.start);
+                    ids.scan_symbols(planned.word, byte_start, |id| {
+                        if position >= range.end {
+                            return ControlFlow::Break(());
+                        }
+                        if position >= range.start {
+                            emit(position, id);
+                        }
+                        position += 1;
+                        ControlFlow::Continue(())
+                    });
+                }
             }
-            return;
-        }
-        if range.start < separator {
-            let (mut position, byte_start) = self.scan_start(index, range.start);
-            self.initial_ids()
-                .scan_symbols(planned.word, byte_start, |id| {
-                    if position >= range.end {
-                        return ControlFlow::Break(());
-                    }
-                    if position >= range.start {
-                        emit(position, id);
-                    }
-                    position += 1;
-                    ControlFlow::Continue(())
-                });
         }
         if range.contains(&separator) {
             emit(separator, WORD_SEPARATOR_ID);
@@ -454,32 +470,42 @@ impl<'input> CorpusPlan<'input> {
                     work.complete(region.len());
                     return;
                 }
-                if matches!(self.symbols, InitialSymbols::Cached(_)) {
-                    for index in start..end {
-                        self.for_each_word_token(
-                            index,
-                            base..base + region.len(),
-                            |position, id| {
-                                region[position - base].write(make(position, id));
-                            },
-                        );
+                match &self.symbols {
+                    InitialSymbols::Cached(_) => {
+                        #[cfg(test)]
+                        if end - start > 1 {
+                            self.cached_multiword_jobs
+                                .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                        }
+                        let mut written = 0;
+                        for index in start..end {
+                            self.for_each_word_token(
+                                index,
+                                base..base + region.len(),
+                                |position, id| {
+                                    region[position - base].write(make(position, id));
+                                    written += 1;
+                                },
+                            );
+                        }
+                        debug_assert_eq!(written, region.len());
                     }
-                    work.complete(region.len());
-                    return;
+                    InitialSymbols::Scanner(ids) => {
+                        let mut position = 0;
+                        for planned in &words[start..end] {
+                            let word = planned.word;
+                            ids.scan_symbols(word, 0, |id| {
+                                region[position].write(make(base + position, id));
+                                position += 1;
+                                ControlFlow::Continue(())
+                            });
+                            // Empty filtered words also own one initialized separator.
+                            region[position].write(make(base + position, WORD_SEPARATOR_ID));
+                            position += 1;
+                        }
+                        debug_assert_eq!(position, region.len());
+                    }
                 }
-                let mut position = 0;
-                for planned in &words[start..end] {
-                    let word = planned.word;
-                    self.initial_ids().scan_symbols(word, 0, |id| {
-                        region[position].write(make(base + position, id));
-                        position += 1;
-                        ControlFlow::Continue(())
-                    });
-                    // Empty filtered words also own one initialized separator.
-                    region[position].write(make(base + position, WORD_SEPARATOR_ID));
-                    position += 1;
-                }
-                debug_assert_eq!(position, region.len());
                 work.complete(region.len());
             });
         let mut tokens = ManuallyDrop::new(tokens);
@@ -500,6 +526,7 @@ impl<'input> CorpusPlan<'input> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use ahash::AHashMap;
     #[test]
     fn real_initial_id_bound_selects_cached_or_scanned_symbols_without_truncation() {
         use crate::trainers::bpe::BpeTrainer;
@@ -542,6 +569,7 @@ mod tests {
                 &progress,
             )
             .unwrap();
+            plan.prepare_initial_symbols(1, &progress).unwrap();
             assert_eq!(
                 matches!(plan.symbols, InitialSymbols::Cached(_)),
                 reserved == 65_535
@@ -558,7 +586,7 @@ mod tests {
                     .unwrap(),
                 expected
             );
-            plan.symbols = InitialSymbols::Decoded(
+            plan.symbols = InitialSymbols::Scanner(
                 vocabulary
                     .initial_ids(
                         WordCountsView::from_map(&words),
@@ -575,5 +603,168 @@ mod tests {
                 expected
             );
         }
+    }
+
+    #[test]
+    fn cached_symbols_match_scanner_for_multiword_filtered_and_boundary_ranges() {
+        use crate::trainers::bpe::{BpeTrainer, word_counts::WordCountsView};
+        use std::collections::HashSet;
+        use tk_encode::vocab::bucket_added_vocabulary::AddedToken;
+
+        let mut entries = vec![
+            ("ab".to_owned(), 10_000),
+            ("baba".to_owned(), 9_000),
+            ("aa".to_owned(), 8_000),
+            ("bb".to_owned(), 7_000),
+            ("".to_owned(), 6_000),
+            ("x".to_owned(), 5_000),
+        ];
+        entries.extend((0..32).map(|index| {
+            let filtered = char::from_u32(0x4e00 + index).unwrap();
+            (format!("x{filtered}"), 100 - u64::from(index))
+        }));
+        let words: AHashMap<CompactString, u64> = entries
+            .into_iter()
+            .map(|(word, weight)| (CompactString::from(word), weight))
+            .collect();
+
+        // Real single-character IDs sit at both ends of the compact domain;
+        // all other reserved entries are multicharacter strings and cannot
+        // become emitted initial IDs. Alphabet truncation filters x and CJK.
+        let reserved = usize::from(u16::MAX) + 1;
+        let trainer = BpeTrainer::builder()
+            .vocab_size(reserved)
+            .special_tokens(
+                (0..reserved)
+                    .map(|index| {
+                        AddedToken::from(
+                            match index {
+                                0 => "a".to_owned(),
+                                index if index == usize::from(u16::MAX) => "b".to_owned(),
+                                _ => format!("reserved:{index}"),
+                            },
+                            true,
+                        )
+                    })
+                    .collect(),
+            )
+            .limit_alphabet(2)
+            .initial_alphabet(HashSet::from(['a', 'b']))
+            .show_progress(false)
+            .build();
+        let progress = TrainingProgress::new(false, trainer.progress_format).unwrap();
+        let mut retained_alphabet = None;
+        let mut vocabulary = Vocabulary::initialize(
+            &trainer,
+            WordCountsView::from_map(&words),
+            1,
+            &progress,
+            &mut retained_alphabet,
+        )
+        .unwrap();
+        let scanner_ids = vocabulary
+            .initial_ids(
+                WordCountsView::from_map(&words),
+                &progress.stage("Save scanner IDs", words.len()),
+            )
+            .unwrap();
+        let mut plan = CorpusPlan::build(
+            WordCountsView::from_map(&words),
+            &mut vocabulary,
+            IdentityPolicy::FirstActivationOnly,
+            false,
+            &progress,
+        )
+        .unwrap();
+        assert!(matches!(plan.symbols, InitialSymbols::Scanner(_)));
+
+        let scanner_tokens = plan
+            .fill_tokens(
+                1,
+                &progress.stage("Scanner fixture", plan.len - 1),
+                |position, id| (position, id),
+            )
+            .unwrap();
+        assert!(scanner_tokens.iter().any(|&(_, id)| id == 0));
+        assert!(scanner_tokens.iter().any(|&(_, id)| id == u16::MAX as u32));
+        assert!(
+            scanner_tokens
+                .iter()
+                .all(|&(_, id)| [WORD_SEPARATOR_ID, 0, u16::MAX as u32].contains(&id))
+        );
+
+        let collect = |plan: &CorpusPlan<'_>, range: Range<usize>| {
+            let expected = plan.edge_count(range.clone());
+            let mut edges = Vec::new();
+            plan.for_each_edge(range, |position, key| edges.push((position, key)));
+            assert_eq!(edges.len(), expected);
+            edges
+        };
+        let ab_start = plan.words[0].start as usize;
+        assert_eq!(plan.words[0].word.as_str(), "ab");
+        assert_eq!(plan.words[1].word.as_str(), "baba");
+        let baba_start = plan
+            .words
+            .iter()
+            .find(|word| word.word.as_str() == "baba")
+            .unwrap()
+            .start as usize;
+        let ranges = [
+            0..plan.len,
+            baba_start + 2..baba_start + 3,
+            baba_start + 1..baba_start + 3,
+            ab_start..ab_start + 1,
+        ];
+        let scanner_edges: Vec<_> = ranges
+            .iter()
+            .map(|range| collect(&plan, range.clone()))
+            .collect();
+        assert_eq!(
+            scanner_edges[3],
+            [(ab_start, pair_key((0, u16::MAX as u32)))]
+        );
+        assert_eq!(
+            scanner_edges[1],
+            [(baba_start + 2, pair_key((u16::MAX as u32, 0)))]
+        );
+
+        plan.prepare_initial_symbols(1, &progress).unwrap();
+        assert!(matches!(plan.symbols, InitialSymbols::Cached(_)));
+        let cached_tokens = plan
+            .fill_tokens(
+                1,
+                &progress.stage("Cached fixture", plan.len - 1),
+                |position, id| (position, id),
+            )
+            .unwrap();
+        assert!(
+            plan.cached_multiword_jobs
+                .load(std::sync::atomic::Ordering::Relaxed)
+                > 0
+        );
+        assert_eq!(cached_tokens, scanner_tokens);
+        let cached_edges: Vec<_> = ranges
+            .iter()
+            .map(|range| collect(&plan, range.clone()))
+            .collect();
+        assert_eq!(cached_edges, scanner_edges);
+
+        // Restore scanning on this exact plan, retaining its sorted word and
+        // checkpoint geometry so the comparison cannot drift through replanning.
+        plan.symbols = InitialSymbols::Scanner(scanner_ids);
+        assert_eq!(
+            plan.fill_tokens(
+                1,
+                &progress.stage("Restored scanner", plan.len - 1),
+                |position, id| { (position, id) }
+            )
+            .unwrap(),
+            scanner_tokens
+        );
+        let restored_edges: Vec<_> = ranges
+            .iter()
+            .map(|range| collect(&plan, range.clone()))
+            .collect();
+        assert_eq!(restored_edges, scanner_edges);
     }
 }

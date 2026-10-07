@@ -10,6 +10,8 @@ mod slots;
 use super::WORD_SEPARATOR_ID;
 #[cfg(test)]
 use crate::progress::TrainingProgress;
+#[cfg(test)]
+pub(super) use prepare::CACHE_PREPARATION_ATTEMPTS;
 pub(super) use prepare::CorpusPlan;
 pub(super) use slots::{PackedU24Slots, SlotStorage, U16Slots, U32Slots, slot_bits};
 use std::ops::Range;
