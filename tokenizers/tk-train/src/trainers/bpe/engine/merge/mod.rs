@@ -6,6 +6,8 @@ use super::{
     storage::{PositionBuffer, SortedPositions},
 };
 pub(super) use events::{ChangeAction, EventChunk, MergeEvents, OwnerRoute, PairChanges};
+#[cfg(test)]
+pub(super) use prepare::BirthPaths;
 pub(super) use prepare::{
     ContiguousBirthPolicy, MergeOptions, MergeScratch, SelectedRuleIndex,
     prepare_merges_with_births,
@@ -46,6 +48,8 @@ pub(super) struct CompletedBirth<'arena> {
 /// to the same corpus snapshot; the type does not identify its instance/version.
 pub(super) struct PreparedMerges {
     pub(super) birth_shape: prepare::BirthShape,
+    #[cfg(test)]
+    pub(super) birth_paths: BirthPaths,
     jobs: Vec<PreparedJob>,
     events: MergeEvents,
 }

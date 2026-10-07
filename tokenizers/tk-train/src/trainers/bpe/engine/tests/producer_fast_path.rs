@@ -58,6 +58,7 @@ fn producer_encoding_preserves_hf_trace_and_fallbacks() {
                         workers,
                         options,
                         Some(&mut |pair, count, id| trace.push((pair, count, id))),
+                        None,
                     )
                     .unwrap();
                     assert_eq!(
@@ -256,6 +257,16 @@ fn adaptive_birth_kernels_preserve_dense_tiny_wide_affix_and_reuse_trace() {
         ("zeroabab🙂", 0),
         ("", 1),
     ]);
+    // Sixteen disjoint ordinary keys all fit the existing whole-task cut even
+    // at 16 workers: total=16*64, chunk=64. Unlike a single large pair this
+    // guarantees actual complete producers and third-birth promotion there.
+    let balanced_words: AHashMap<CompactString, u64> = (0..16)
+        .map(|i| {
+            let a = char::from_u32(0x400 + 2 * i).unwrap();
+            let b = char::from_u32(0x401 + 2 * i).unwrap();
+            (format!("{a}{b}").repeat(64).into(), 1)
+        })
+        .collect();
     let affix_words = counts(&[
         (&"xabcdab中abab".repeat(40), 7),
         (&"abababaaaa中文".repeat(20), 11),
@@ -263,7 +274,24 @@ fn adaptive_birth_kernels_preserve_dense_tiny_wide_affix_and_reuse_trace() {
         ("", 1),
     ]);
     let reuse_words = counts(&[("baaba", 1), ("xyxyxy", 100)]);
+    // The high-weight four-symbol word supplies a tiny complete first batch.
+    // Crossed endpoints stop that prefix before the low-weight dense words.
+    // Later `ab` supplies linked feedback that can re-enable collection; `bc`
+    // cannot share its crossed batch and supplies a subsequent promoted task.
+    let feedback_words = counts(&[
+        ("pxay", 100_000),
+        (&"ab".repeat(256), 1),
+        (&"bc".repeat(128), 1),
+    ]);
     let scenarios = [
+        (
+            BpeTrainer::builder()
+                .vocab_size(128)
+                .min_frequency(2)
+                .show_progress(false)
+                .build(),
+            &balanced_words,
+        ),
         (
             BpeTrainer::builder()
                 .vocab_size(80)
@@ -302,6 +330,14 @@ fn adaptive_birth_kernels_preserve_dense_tiny_wide_affix_and_reuse_trace() {
                 .build(),
             &reuse_words,
         ),
+        (
+            BpeTrainer::builder()
+                .vocab_size(80)
+                .min_frequency(1)
+                .show_progress(false)
+                .build(),
+            &feedback_words,
+        ),
     ];
     for (scenario, (trainer, words)) in scenarios.iter().enumerate() {
         let mut expected_trace = Vec::new();
@@ -318,14 +354,129 @@ fn adaptive_birth_kernels_preserve_dense_tiny_wide_affix_and_reuse_trace() {
                     ..MergeOptions::default()
                 };
                 let mut trace = Vec::new();
+                let mut birth_history = Vec::new();
                 let actual = train_with_merge_options(
                     trainer,
                     WordCountsView::from_map(words),
                     workers,
                     options,
                     Some(&mut |pair, count, id| trace.push((pair, count, id))),
+                    Some(&mut |event| birth_history.push(event)),
                 )
                 .unwrap();
+                if scenario == 0 {
+                    let first = birth_history
+                        .iter()
+                        .find_map(|event| match event {
+                            BirthObservation::Round { paths, .. } => Some(paths),
+                            _ => None,
+                        })
+                        .expect("the balanced fixture trains a batch");
+                    assert_eq!(first.eligible_tasks, 16, "workers={workers}");
+                    if contiguous_births {
+                        assert_eq!(first.contiguous_tasks, 16);
+                        assert!(first.promoted_groups >= 16, "workers={workers}");
+                    } else {
+                        assert_eq!(first.contiguous_tasks, 0);
+                        assert_eq!(first.promoted_groups, 0);
+                    }
+                }
+                if scenario == 4 {
+                    let attempts: Vec<_> = birth_history
+                        .iter()
+                        .filter_map(|event| match event {
+                            BirthObservation::Attempt(policy) => Some(*policy),
+                            _ => None,
+                        })
+                        .collect();
+                    assert_eq!(
+                        attempts,
+                        [
+                            IdentityPolicy::FirstActivationOnly,
+                            IdentityPolicy::AllowActiveReuse
+                        ]
+                    );
+                    // The rebuilt attempt starts enabled even if the abandoned
+                    // attempt's successful batches disabled adaptive collection.
+                    let restart = birth_history
+                        .iter()
+                        .position(|event| {
+                            matches!(
+                                event,
+                                BirthObservation::Attempt(IdentityPolicy::AllowActiveReuse)
+                            )
+                        })
+                        .unwrap();
+                    let enabled = birth_history[restart + 1..]
+                        .iter()
+                        .find_map(|event| match event {
+                            BirthObservation::Round {
+                                enabled_before,
+                                paths,
+                                ..
+                            } => {
+                                assert_eq!(paths.eligible_tasks, 0, "reuse stays buffered");
+                                assert_eq!(paths.promoted_groups, 0);
+                                Some(*enabled_before)
+                            }
+                            _ => None,
+                        })
+                        .unwrap();
+                    assert_eq!(enabled, contiguous_births);
+
+                    for event in &birth_history[restart + 1..] {
+                        if let BirthObservation::Round { paths, .. } = event {
+                            assert_eq!(paths.eligible_tasks, 0, "every reuse round stays buffered");
+                            assert_eq!(paths.promoted_groups, 0);
+                        }
+                    }
+                    if workers == 1 && contiguous_births && adaptive_births {
+                        let old_mode = birth_history[..restart]
+                            .iter()
+                            .rev()
+                            .find_map(|event| match event {
+                                BirthObservation::Round { enabled_after, .. } => {
+                                    Some(*enabled_after)
+                                }
+                                _ => None,
+                            })
+                            .unwrap();
+                        assert!(!old_mode, "restart abandons a disabled policy");
+                    }
+                }
+                if scenario == 5 && workers == 1 && contiguous_births && adaptive_births {
+                    let rounds: Vec<_> = birth_history
+                        .iter()
+                        .filter_map(|event| match event {
+                            BirthObservation::Round {
+                                enabled_before,
+                                enabled_after,
+                                paths,
+                            } => Some((*enabled_before, *enabled_after, paths)),
+                            _ => None,
+                        })
+                        .collect();
+                    assert!(rounds[0].0);
+                    let disabled = rounds
+                        .iter()
+                        .position(|(before, after, _)| *before && !*after)
+                        .expect("a tiny complete batch disables collection");
+                    let reenabled = rounds
+                        .iter()
+                        .enumerate()
+                        .skip(disabled + 1)
+                        .find_map(|(i, (before, after, paths))| {
+                            (!*before && *after && paths.eligible_tasks != 0).then_some(i)
+                        })
+                        .expect("linked complete work re-enables collection");
+                    assert_eq!(rounds[reenabled].2.contiguous_tasks, 0);
+                    assert!(
+                        rounds[reenabled + 1..]
+                            .iter()
+                            .any(|(before, _, paths)| *before && paths.promoted_groups != 0),
+                        "a later batch actually promotes after re-enabling"
+                    );
+                }
                 assert_eq!(
                     trace, expected_trace,
                     "scenario={scenario}, workers={workers}, options={options:?}"

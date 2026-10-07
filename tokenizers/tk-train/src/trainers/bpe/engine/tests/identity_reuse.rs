@@ -95,6 +95,7 @@ fn active_id_reuse_rebuilds_without_publishing_speculative_rules() {
                 &progress,
                 &mut retained_alphabet,
                 &mut trace,
+                &mut None,
             )
             .unwrap()
         });
@@ -139,6 +140,7 @@ fn affix_first_activations_preserve_reserved_ids_and_model_order() {
             &progress,
             &mut None,
             &mut trace,
+            &mut None,
         )
         .unwrap()
     });

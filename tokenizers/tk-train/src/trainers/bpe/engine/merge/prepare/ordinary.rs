@@ -167,6 +167,8 @@ pub(super) fn prepare<'arena, S: SlotStorage>(
                 let mut outputs = Vec::new();
                 let mut births = Vec::new();
                 let mut birth_shape = BirthShape::default();
+                #[cfg(test)]
+                let mut birth_paths = BirthPaths::default();
                 for task in tasks {
                     // Geometry, not alphabet or input kind, admits compact
                     // coordinates: max index < corpus.len() <= u32::MAX.
@@ -191,6 +193,8 @@ pub(super) fn prepare<'arena, S: SlotStorage>(
                             execution,
                             floor,
                             &mut births,
+                            #[cfg(test)]
+                            &mut birth_paths,
                         )?
                     } else {
                         prepare_task::<false, S>(
@@ -202,6 +206,8 @@ pub(super) fn prepare<'arena, S: SlotStorage>(
                             execution,
                             floor,
                             &mut births,
+                            #[cfg(test)]
+                            &mut birth_paths,
                         )?
                     };
                     outputs.push(output);
@@ -222,6 +228,8 @@ pub(super) fn prepare<'arena, S: SlotStorage>(
                     chunks,
                     completed_births: births,
                     birth_shape,
+                    #[cfg(test)]
+                    birth_paths,
                 })
             })
         })
@@ -240,6 +248,7 @@ fn prepare_task<'arena, const CONTIGUOUS: bool, S: SlotStorage>(
     execution: &Execution,
     floor: u64,
     births: &mut Vec<CompletedBirth<'arena>>,
+    #[cfg(test)] birth_paths: &mut BirthPaths,
 ) -> Result<((WritePlan, Vec<EventChunk>), BirthShape)> {
     let eligible = task.encode_births_directly && plan.corpus.len() <= u32::MAX as usize;
     debug_assert!(!CONTIGUOUS || eligible);
@@ -253,6 +262,14 @@ fn prepare_task<'arena, const CONTIGUOUS: bool, S: SlotStorage>(
     } else {
         BirthShape::default()
     };
+    #[cfg(test)]
+    if eligible {
+        birth_paths.eligible_tasks += 1;
+        birth_paths.contiguous_tasks += usize::from(CONTIGUOUS);
+        // The pool has one header per actually promoted group and is cleared
+        // after both direction drains. Read before finish consumes its payloads.
+        birth_paths.promoted_groups += plan.scratch.birth_vectors.len();
+    }
     let output = if task.encode_births_directly {
         plan.finish_with_births::<CONTIGUOUS>(arena, execution, floor, births)?
     } else {

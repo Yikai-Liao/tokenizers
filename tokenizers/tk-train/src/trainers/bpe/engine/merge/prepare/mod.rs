@@ -25,11 +25,15 @@ struct PreparedOutput<'arena> {
     chunks: Vec<EventChunk>,
     completed_births: Vec<CompletedBirth<'arena>>,
     birth_shape: BirthShape,
+    #[cfg(test)]
+    birth_paths: BirthPaths,
 }
 #[derive(Default)]
 struct NeighborChanges {
     removed: u64,
     born: u64,
+    // Linked groups retain all coordinates here. After promotion this keeps
+    // only the first two seed nodes; `vector` names the full coordinate list.
     positions: PositionChain,
     // A scratch-local header index occupies the linked layout's trailing pad
     // on 64-bit targets: removed8 + born8 + chain12 + index4 = 32B,
@@ -580,6 +584,24 @@ impl BirthShape {
         self.touched_groups = self.touched_groups.saturating_add(other.touched_groups);
     }
 }
+// Test-only evidence of actual task dispatch and promotion, sampled once before
+// each complete drain. Production shape feedback needs neither these fields nor
+// a per-occurrence counter.
+#[cfg(test)]
+#[derive(Clone, Copy, Default, Debug)]
+pub(in super::super) struct BirthPaths {
+    pub(in super::super) eligible_tasks: usize,
+    pub(in super::super) contiguous_tasks: usize,
+    pub(in super::super) promoted_groups: usize,
+}
+#[cfg(test)]
+impl BirthPaths {
+    fn add(&mut self, other: Self) {
+        self.eligible_tasks += other.eligible_tasks;
+        self.contiguous_tasks += other.contiguous_tasks;
+        self.promoted_groups += other.promoted_groups;
+    }
+}
 /// Attempt-local feedback selects one const kernel for the next batch.
 /// History predicts performance only: the next batch need not share its shape.
 /// The cutoff 16 is an empirical candidate, not a proof of CPU or HWM benefit.
@@ -648,6 +670,8 @@ pub(in super::super) fn prepare_merges_with_births<'arena, S: SlotStorage>(
             chunks,
             completed_births: Vec::new(),
             birth_shape: BirthShape::default(),
+            #[cfg(test)]
+            birth_paths: BirthPaths::default(),
         })
         .collect()
     } else if rules[0].pair.0 == rules[0].pair.1 {
@@ -665,6 +689,8 @@ pub(in super::super) fn prepare_merges_with_births<'arena, S: SlotStorage>(
             chunks,
             completed_births: Vec::new(),
             birth_shape: BirthShape::default(),
+            #[cfg(test)]
+            birth_paths: BirthPaths::default(),
         })
         .collect()
     } else {
@@ -684,8 +710,12 @@ pub(in super::super) fn prepare_merges_with_births<'arena, S: SlotStorage>(
     let mut chunks = Vec::new();
     let mut births = Vec::new();
     let mut birth_shape = BirthShape::default();
+    #[cfg(test)]
+    let mut birth_paths = BirthPaths::default();
     for output in outputs {
         birth_shape.add(output.birth_shape);
+        #[cfg(test)]
+        birth_paths.add(output.birth_paths);
         births.extend(output.completed_births);
         jobs.push(output.job);
         chunks.extend(output.chunks);
@@ -694,6 +724,8 @@ pub(in super::super) fn prepare_merges_with_births<'arena, S: SlotStorage>(
         PreparedMerges {
             jobs,
             birth_shape,
+            #[cfg(test)]
+            birth_paths,
             events: MergeEvents {
                 chunks,
                 buckets: rules.len() * 2,

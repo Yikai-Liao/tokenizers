@@ -28,12 +28,25 @@ use tk_encode::{
 };
 const WORD_SEPARATOR_ID: u32 = u32::MAX;
 #[derive(Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(test, derive(Debug))]
 enum IdentityPolicy {
     /// New IDs and first activations of reserved IDs; existing keys cannot revive.
     FirstActivationOnly,
     /// Active identities may revive keys; rebuild with a signed ledger and cohorts.
     AllowActiveReuse,
 }
+#[cfg(test)]
+#[derive(Debug)]
+enum BirthObservation {
+    Attempt(IdentityPolicy),
+    Round {
+        enabled_before: bool,
+        enabled_after: bool,
+        paths: merge::BirthPaths,
+    },
+}
+#[cfg(test)]
+type BirthObserver<'a> = Option<&'a mut (dyn FnMut(BirthObservation) + Send)>;
 type ModelParts = (Vocab, Merges, Vec<AddedToken>);
 enum AttemptOutcome {
     Complete(ModelParts),
@@ -52,6 +65,8 @@ pub(super) fn train(
         merge::MergeOptions::default(),
         #[cfg(test)]
         observe,
+        #[cfg(test)]
+        None,
     )
 }
 fn train_with_merge_options(
@@ -62,6 +77,7 @@ fn train_with_merge_options(
     #[cfg(test)] mut observe: Option<
         &mut (dyn FnMut(tk_encode::models::bpe::Pair, u64, u32) + Send),
     >,
+    #[cfg(test)] mut birth_observe: BirthObserver<'_>,
 ) -> Result<ModelParts> {
     let execution = execution::Execution::new(workers)?;
     execution.pool.install(|| {
@@ -77,6 +93,10 @@ fn train_with_merge_options(
         let mut trace = Vec::new();
         loop {
             #[cfg(test)]
+            if let Some(observer) = birth_observe.as_mut() {
+                observer(BirthObservation::Attempt(policy));
+            }
+            #[cfg(test)]
             trace.clear();
             match train_attempt(
                 trainer,
@@ -88,6 +108,8 @@ fn train_with_merge_options(
                 &mut retained_alphabet,
                 #[cfg(test)]
                 &mut trace,
+                #[cfg(test)]
+                &mut birth_observe,
             )? {
                 AttemptOutcome::Complete(parts) => {
                     // Publish only the successfully completed attempt's trace;
@@ -120,6 +142,7 @@ fn train_attempt(
     progress: &TrainingProgress,
     retained_alphabet: &mut Option<Vec<char>>,
     #[cfg(test)] trace: &mut Vec<(tk_encode::models::bpe::Pair, u64, u32)>,
+    #[cfg(test)] birth_observe: &mut BirthObserver<'_>,
 ) -> Result<AttemptOutcome> {
     let workers = execution.workers();
     let mut vocabulary = vocabulary::Vocabulary::initialize(
@@ -154,6 +177,8 @@ fn train_attempt(
             progress,
             #[cfg(test)]
             trace,
+            #[cfg(test)]
+            birth_observe,
         ),
         24 => train_with_slots::<corpus::PackedU24Slots>(
             trainer,
@@ -165,6 +190,8 @@ fn train_attempt(
             progress,
             #[cfg(test)]
             trace,
+            #[cfg(test)]
+            birth_observe,
         ),
         _ => train_with_slots::<corpus::U32Slots>(
             trainer,
@@ -176,6 +203,8 @@ fn train_attempt(
             progress,
             #[cfg(test)]
             trace,
+            #[cfg(test)]
+            birth_observe,
         ),
     }
 }
@@ -189,6 +218,7 @@ fn train_with_slots<S: corpus::SlotStorage>(
     merge_options: merge::MergeOptions,
     progress: &TrainingProgress,
     #[cfg(test)] trace: &mut Vec<(tk_encode::models::bpe::Pair, u64, u32)>,
+    #[cfg(test)] birth_observe: &mut BirthObserver<'_>,
 ) -> Result<AttemptOutcome> {
     let workers = execution.workers();
 
@@ -244,6 +274,8 @@ fn train_with_slots<S: corpus::SlotStorage>(
             BatchSelection::RestartForReuse => return Ok(AttemptOutcome::RestartForReuse),
         }
         merges.extend(batch.rules.iter().map(|rule| rule.pair));
+        #[cfg(test)]
+        let enabled_before = contiguous_births.options(merge_options).contiguous_births;
         let (prepared, prepared_births) = merge::prepare_merges_with_births(
             &corpus,
             &batch.rules,
@@ -262,6 +294,8 @@ fn train_with_slots<S: corpus::SlotStorage>(
         // the next generation during commit.
         batch.candidates.clear();
         let birth_shape = prepared.birth_shape;
+        #[cfg(test)]
+        let birth_paths = prepared.birth_paths;
         let events = prepared.apply(&mut corpus);
 
         index.commit_merges_with_prepared(
@@ -272,6 +306,14 @@ fn train_with_slots<S: corpus::SlotStorage>(
             prepared_births,
         )?;
         contiguous_births.observe(birth_shape);
+        #[cfg(test)]
+        if let Some(observer) = birth_observe.as_mut() {
+            observer(BirthObservation::Round {
+                enabled_before,
+                enabled_after: contiguous_births.options(merge_options).contiguous_births,
+                paths: birth_paths,
+            });
+        }
 
         drop(events);
         work.learned(merges.len());
