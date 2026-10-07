@@ -10,6 +10,7 @@ pub(in super::super) struct PositionChain {
     head: Option<PositionNode>,
     tail: Option<PositionNode>,
     length: u32,
+    checkpoint: Option<PositionNode>,
 }
 impl PositionChain {
     /// Return the number of linked positions.
@@ -27,6 +28,7 @@ impl PositionChain {
 #[derive(Default)]
 pub(in super::super) struct PositionChains {
     positions: PositionStorage<Option<PositionNode>>,
+    checkpoints: ahash::AHashMap<u32, Option<PositionNode>>,
 }
 impl PositionChains {
     pub(in super::super) const MAX_NODES: usize = 1 << 27;
@@ -60,7 +62,43 @@ impl PositionChains {
         self.positions.push(position, chain.head);
         chain.head = Some(node);
         chain.length += 1;
+        if chain.length.is_multiple_of(Self::BLOCK_SIZE as u32) {
+            self.checkpoints.insert(node.0.get(), chain.checkpoint);
+            chain.checkpoint = Some(node);
+        }
         Ok(())
+    }
+    pub(in super::super) const BLOCK_SIZE: usize = 4096;
+
+    /// Producer checkpoints make every reverse encoding run bounded. Splitting
+    /// visits only block metadata, never the whole linked position payload.
+    pub(in super::super) fn split_reverse(&self, chain: PositionChain) -> Vec<PositionChain> {
+        let mut output = Vec::with_capacity(chain.len().div_ceil(Self::BLOCK_SIZE));
+        let mut head = chain.head;
+        let mut remaining = chain.len();
+        let partial = remaining % Self::BLOCK_SIZE;
+        if partial != 0 {
+            output.push(PositionChain {
+                head,
+                tail: None,
+                length: partial as u32,
+                checkpoint: None,
+            });
+            head = chain.checkpoint;
+            remaining -= partial;
+        }
+        while remaining != 0 {
+            let node = head.expect("producer retained the full block boundary");
+            output.push(PositionChain {
+                head,
+                tail: None,
+                length: Self::BLOCK_SIZE as u32,
+                checkpoint: None,
+            });
+            head = self.checkpoints[&node.0.get()];
+            remaining -= Self::BLOCK_SIZE;
+        }
+        output
     }
     /// Visit a chain from its most recently appended coordinate.
     #[inline]
@@ -99,6 +137,9 @@ impl Iterator for ChainIter<'_> {
     type Item = u64;
     #[inline]
     fn next(&mut self) -> Option<u64> {
+        if self.remaining == 0 {
+            return None;
+        }
         let node = self.head?;
         let index = node.0.get() as usize - 1;
         let (position, next) = self.chains.positions.get(index);
@@ -125,5 +166,32 @@ mod tests {
         }
         assert_eq!(chains.reversed(a).collect::<Vec<_>>(), [1 << 63, 0]);
         assert_eq!(chains.reversed(b).collect::<Vec<_>>(), [u64::MAX, 1 << 32]);
+    }
+    #[test]
+    fn producer_checkpoints_split_long_chains_and_copied_branches() {
+        let mut chains = PositionChains::new();
+        let mut a = PositionChain::default();
+        for position in 0..6001 {
+            chains.push(&mut a, position).unwrap();
+        }
+        let snapshot = a;
+        let mut branch = a;
+        for position in 6001..20_001 {
+            chains.push(&mut a, position).unwrap();
+            chains.push(&mut branch, position + (1 << 32)).unwrap();
+        }
+        for chain in [snapshot, a, branch] {
+            let runs = chains.split_reverse(chain);
+            assert!(
+                runs.iter()
+                    .all(|run| run.len() <= PositionChains::BLOCK_SIZE)
+            );
+            assert_eq!(
+                runs.iter()
+                    .flat_map(|&run| chains.reversed(run))
+                    .collect::<Vec<_>>(),
+                chains.reversed(chain).collect::<Vec<_>>()
+            );
+        }
     }
 }

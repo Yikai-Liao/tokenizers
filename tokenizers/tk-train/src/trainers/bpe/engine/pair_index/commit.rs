@@ -51,6 +51,17 @@ impl<'arena> PairIndex<'arena> {
             self.prepared_births[router.owner(birth.key)].push(birth);
         }
 
+        if policy == IdentityPolicy::FirstActivationOnly && self.owner_mode != OwnerMode::Baseline {
+            let result = self.commit_data_births(events, identities, execution, arena, floor);
+            for route in &mut self.routes {
+                route.clear();
+            }
+            for prepared in &mut self.prepared_births {
+                prepared.clear();
+            }
+            return result;
+        }
+
         let result = self
             .shards
             .par_iter_mut()
@@ -115,7 +126,7 @@ impl<'arena> PairShard<'arena> {
     }
 
     /// Fresh keys cannot revive. Retire low counts after each checked removal.
-    fn apply_first_activation_counts(
+    pub(super) fn apply_first_activation_counts(
         &mut self,
         route: &OwnerRoute,
         events: &MergeEvents,
@@ -164,7 +175,7 @@ impl<'arena> PairShard<'arena> {
     /// Publish sole-producer fresh births after ordered counts and before routed
     /// birth reduction. Move the encoded lists directly into index state; each
     /// key must be new here and absent from the remaining routed birth chains.
-    fn publish_completed_births(
+    pub(super) fn publish_completed_births(
         &mut self,
         births: &mut Vec<CompletedBirth<'arena>>,
         policy: IdentityPolicy,
