@@ -52,6 +52,8 @@ impl RoutedChangeRef {
 pub(in super::super) struct OwnerRoute {
     pub(in super::super) changes: Vec<RoutedChangeRef>,
     pub(in super::super) births: Vec<usize>,
+    // Scratch retains capacity; grouping overwrites its active entries before
+    // reading them. Offsets need resetting only when there are multiple births.
     grouped_births: Vec<usize>,
     bucket_offsets: Vec<usize>,
 }
@@ -90,9 +92,7 @@ impl MergeEvents {
     ) {
         routes.resize_with(router.shards(), OwnerRoute::default);
         for route in routes.iter_mut() {
-            route.changes.clear();
-            route.births.clear();
-            route.grouped_births.clear();
+            route.clear();
         }
         for (chunk_index, chunk) in self.chunks.iter().enumerate() {
             for (index, change) in chunk.changes.iter().enumerate() {
@@ -150,6 +150,16 @@ impl OwnerRoute {
         self.changes.clear();
         self.births.clear();
         self.grouped_births.clear();
+    }
+
+    #[cfg(test)]
+    pub(in super::super) fn assert_cleared(&self) {
+        assert!(self.changes.is_empty(), "routed count actions remain");
+        assert!(self.births.is_empty(), "routed birth indices remain");
+        assert!(
+            self.grouped_births.is_empty(),
+            "grouping scratch entries remain"
+        );
     }
 
     /// Stably group birth references by rule/direction without changing actions.

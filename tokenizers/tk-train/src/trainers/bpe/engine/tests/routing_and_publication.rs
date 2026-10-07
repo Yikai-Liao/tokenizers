@@ -125,90 +125,209 @@ fn reusable_routes_clear_old_actions_and_regroup_for_new_bucket_domain() {
     use merge::{ChangeAction, EventChunk, MergeEvents, OwnerRoute, PairChanges};
     use pair_index::{ShardRouter, pair_key};
 
-    let mut chains = PositionChains::new();
-    let mut changes = Vec::new();
-    for i in 0..24_u32 {
-        let mut positions = PositionChain::default();
-        chains.push(&mut positions, u64::from(i)).unwrap();
-        changes.push(PairChanges {
-            removed_key: pair_key((i, i + 1)),
-            born_key: pair_key((i + 1, i)),
-            removed_weight: u64::from(i % 2 == 0),
-            born_weight: 0,
-            positions,
-            bucket: i % 8,
-        });
-    }
-    let first = MergeEvents {
-        buckets: 8,
-        chunks: vec![EventChunk { chains, changes }],
+    const WORKERS: usize = 4;
+    const OWNER: usize = 2;
+    let router = ShardRouter::new(WORKERS);
+    let keys: Vec<_> = (0..100_u32)
+        .map(|id| pair_key((id, id + 101)))
+        .filter(|&key| router.owner(key) == OWNER)
+        .take(3)
+        .collect();
+    assert_eq!(keys.len(), 3);
+    assert!(keys.iter().all(|&key| router.owner(key) == OWNER));
+
+    let make_round = |buckets, rows: &[&[(u32, bool)]], key, start| {
+        let chunks = rows
+            .iter()
+            .enumerate()
+            .map(|(chunk, row)| {
+                let mut chains = PositionChains::new();
+                let changes = row
+                    .iter()
+                    .enumerate()
+                    .map(|(index, &(bucket, both))| {
+                        let mut positions = PositionChain::default();
+                        chains
+                            .push(&mut positions, start + (chunk * 10 + index) as u64)
+                            .unwrap();
+                        PairChanges {
+                            removed_key: key,
+                            born_key: key,
+                            removed_weight: u64::from(both),
+                            born_weight: u64::from(both),
+                            positions,
+                            bucket,
+                        }
+                    })
+                    .collect();
+                EventChunk { chains, changes }
+            })
+            .collect();
+        MergeEvents { buckets, chunks }
     };
-    let mut routes = (0..4).map(|_| OwnerRoute::default()).collect::<Vec<_>>();
-    first.dispatch_into(&mut routes, ShardRouter::new(4));
-    for route in &mut routes {
-        route.group_births(&first);
+    let mut rounds = [
+        (
+            make_round(
+                8,
+                &[
+                    &[(7, false), (0, true), (7, false)],
+                    &[(2, true), (0, false)],
+                ],
+                keys[0],
+                100,
+            ),
+            vec![
+                (0, 1, 0, true),
+                (1, 1, 0, false),
+                (1, 0, 2, true),
+                (0, 0, 7, false),
+                (0, 2, 7, false),
+            ],
+        ),
+        (
+            make_round(
+                2,
+                &[&[(1, false), (0, true)], &[(1, true), (0, false)]],
+                keys[1],
+                200,
+            ),
+            vec![
+                (0, 1, 0, true),
+                (1, 1, 0, false),
+                (0, 0, 1, false),
+                (1, 0, 1, true),
+            ],
+        ),
+        (
+            make_round(
+                11,
+                &[
+                    &[(10, true), (3, false), (10, false)],
+                    &[(0, false), (3, true), (10, false)],
+                ],
+                keys[2],
+                300,
+            ),
+            vec![
+                (1, 0, 0, false),
+                (0, 1, 3, false),
+                (1, 1, 3, true),
+                (0, 0, 10, true),
+                (0, 2, 10, false),
+                (1, 2, 10, false),
+            ],
+        ),
+    ];
+    // This action must disappear at the next dispatch, independently of births.
+    rounds[0].0.chunks[0].changes.push(PairChanges {
+        removed_key: keys[0],
+        born_key: keys[0],
+        removed_weight: 1,
+        born_weight: 0,
+        positions: PositionChain::default(),
+        bucket: 7,
+    });
+    let mut routes = (0..WORKERS)
+        .map(|_| OwnerRoute::default())
+        .collect::<Vec<_>>();
+    let mut first_capacities = None;
+    for (round, (events, expected_births)) in rounds.iter().enumerate() {
+        events.dispatch_into(&mut routes, router);
+        assert!(routes.iter().enumerate().all(|(owner, route)| {
+            if owner == OWNER {
+                route.births.len() == expected_births.len()
+            } else {
+                route.changes.is_empty() && route.births.is_empty()
+            }
+        }));
+        // Every round must enter group_births beyond its <2-birth shortcut.
+        assert!(routes[OWNER].births.len() >= 2);
+        for route in &mut routes {
+            route.group_births(events);
+        }
+
+        let describe = |index: usize| {
+            let reference = &routes[OWNER].changes[index];
+            let change = &events.chunks[reference.chunk].changes[reference.index()];
+            let action = match reference.action() {
+                ChangeAction::Birth => "birth",
+                ChangeAction::Both => "both",
+                ChangeAction::Remove => "remove",
+            };
+            (
+                reference.chunk,
+                reference.index(),
+                change.bucket,
+                action,
+                change.removed_key,
+                change.born_key,
+                events.chunks[reference.chunk]
+                    .chains
+                    .reversed(change.positions)
+                    .collect::<Vec<_>>(),
+            )
+        };
+        let expected = |&(chunk, index, bucket, both): &(usize, usize, u32, bool)| {
+            (
+                chunk,
+                index,
+                bucket,
+                if both { "both" } else { "birth" },
+                keys[round],
+                keys[round],
+                vec![(round as u64 + 1) * 100 + (chunk * 10 + index) as u64],
+            )
+        };
+        let actual_births: Vec<_> = routes[OWNER]
+            .births
+            .iter()
+            .map(|&index| describe(index))
+            .collect();
+        assert_eq!(
+            actual_births,
+            expected_births.iter().map(expected).collect::<Vec<_>>(),
+            "round={round}: stable buckets must reference this round's events"
+        );
+        // Grouping reorders births only. Checked count actions keep the original
+        // producer/record sequence, including each Both action.
+        let mut original: Vec<_> = expected_births.iter().map(expected).collect();
+        if round == 0 {
+            original.push((0, 3, 7, "remove", keys[0], keys[0], Vec::new()));
+        }
+        original.sort_unstable_by_key(|&(chunk, index, ..)| (chunk, index));
+        let actual_actions: Vec<_> = (0..routes[OWNER].changes.len()).map(describe).collect();
+        assert_eq!(actual_actions, original);
+
+        let capacities: Vec<_> = routes
+            .iter()
+            .map(|route| (route.changes.capacity(), route.births.capacity()))
+            .collect();
+        if let Some(first) = &first_capacities {
+            assert!(capacities.iter().zip(first).all(
+                |(current, first): (&(usize, usize), &(usize, usize))| current.0 >= first.0
+                    && current.1 >= first.1
+            ));
+        } else {
+            first_capacities = Some(capacities);
+        }
     }
     let capacities: Vec<_> = routes
         .iter()
         .map(|route| (route.changes.capacity(), route.births.capacity()))
         .collect();
-
-    let mut chains = PositionChains::new();
-    let mut zero_weight_birth = PositionChain::default();
-    chains.push(&mut zero_weight_birth, 99).unwrap();
-    let mut reused_id_birth = PositionChain::default();
-    chains.push(&mut reused_id_birth, 100).unwrap();
-    let second = MergeEvents {
-        buckets: 1,
-        chunks: vec![EventChunk {
-            chains,
-            changes: vec![
-                PairChanges {
-                    removed_key: pair_key((1, 2)),
-                    born_key: pair_key((2, 1)),
-                    removed_weight: 0,
-                    born_weight: 0,
-                    positions: zero_weight_birth,
-                    bucket: 0,
-                },
-                PairChanges {
-                    removed_key: pair_key((3, 4)),
-                    born_key: pair_key((3, 4)),
-                    removed_weight: 1,
-                    born_weight: 1,
-                    positions: reused_id_birth,
-                    bucket: 0,
-                },
-            ],
-        }],
+    let empty = MergeEvents {
+        buckets: 0,
+        chunks: Vec::new(),
     };
-    second.dispatch_into(&mut routes, ShardRouter::new(4));
-    for route in &mut routes {
-        route.group_births(&second);
+    empty.dispatch_into(&mut routes, router);
+    for (route, capacity) in routes.iter_mut().zip(capacities) {
+        route.group_births(&empty);
+        route.assert_cleared();
+        assert_eq!(
+            (route.changes.capacity(), route.births.capacity()),
+            capacity
+        );
     }
-    let active: Vec<_> = routes
-        .iter()
-        .flat_map(|route| route.changes.iter().map(|reference| reference.action()))
-        .collect();
-    assert_eq!(active.len(), 2);
-    assert!(
-        active
-            .iter()
-            .any(|action| matches!(action, ChangeAction::Birth))
-    );
-    assert!(
-        active
-            .iter()
-            .any(|action| matches!(action, ChangeAction::Both))
-    );
-    assert_eq!(
-        routes.iter().map(|route| route.births.len()).sum::<usize>(),
-        2
-    );
-    assert!(routes.iter().enumerate().all(|(index, route)| {
-        route.changes.capacity() >= capacities[index].0
-            && route.births.capacity() >= capacities[index].1
-    }));
 }
 
 #[test]

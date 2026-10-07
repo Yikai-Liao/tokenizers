@@ -585,6 +585,88 @@ mod tests {
                 error.to_string(),
                 "BPE identity-reuse count subtraction exceeds i64"
             );
+            for route in &index.routes {
+                route.assert_cleared();
+            }
+            assert!(index.prepared_births.iter().all(Vec::is_empty));
+        });
+    }
+
+    #[test]
+    fn fresh_count_error_clears_routed_and_prepared_births_after_join() {
+        let execution = Execution::new(1).unwrap();
+        let arena = AllocationArena::new(1, 16);
+        execution.pool.install(|| {
+            let old = (0, 1);
+            let partial = (2, 3);
+            let complete = (4, 5);
+            let mut index = PairIndex::from_initial_pairs(
+                initial(&[(old, 4, 1)], 1, &arena),
+                IdentityPolicy::FirstActivationOnly,
+                1,
+            )
+            .unwrap();
+            index.begin_selection();
+            index.end_selection();
+            let positions = {
+                let lease = arena.lease(execution.current_worker());
+                let mut scratch = super::super::storage::PositionEncodingScratch::default();
+                SortedPositions::from_sorted(&[9, 12], &mut scratch, &lease).unwrap()
+            };
+            let mut events = MergeEvents {
+                buckets: 2,
+                chunks: Vec::new(),
+            };
+            // Both births route to the sole owner and fill grouping scratch.
+            // The second removal fails after the first has changed the count.
+            for (position, removed_weight) in [(2, 1), (7, 4)] {
+                let mut chains = PositionChains::new();
+                let mut positions = PositionChain::default();
+                chains.push(&mut positions, position).unwrap();
+                events.chunks.push(EventChunk {
+                    chains,
+                    changes: vec![PairChanges {
+                        removed_key: pair_key(old),
+                        born_key: pair_key(partial),
+                        removed_weight,
+                        born_weight: 1,
+                        positions,
+                        bucket: 1,
+                    }],
+                });
+            }
+            let fixture_route = events.route(1);
+            assert_eq!(fixture_route[0].births.len(), 2);
+            // Prepared births are legal only under the fresh policy, and this
+            // complete key is absent from the routed partial births.
+            assert_ne!(complete, partial);
+            let error = index
+                .commit_merges_with_prepared(
+                    &events,
+                    6,
+                    &execution,
+                    &arena,
+                    vec![CompletedBirth {
+                        key: pair_key(complete),
+                        weight: 5,
+                        positions,
+                    }],
+                )
+                .unwrap_err();
+            assert_eq!(
+                error.to_string(),
+                "BPE fresh removal exceeds the current count"
+            );
+            assert_eq!(index.routes.len(), 1);
+            for route in &index.routes {
+                route.assert_cleared();
+            }
+            assert_eq!(index.prepared_births.len(), 1);
+            assert!(index.prepared_births[0].capacity() >= 1);
+            assert!(index.prepared_births.iter().all(Vec::is_empty));
+            // Cleanup discards buffered entries, not earlier count mutations.
+            // The failed attempt is discarded; selection must not resume.
+            assert_eq!(index.shards[0].states[&pair_key(old)].ledger_count_bits, 3);
         });
     }
 
