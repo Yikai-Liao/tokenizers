@@ -7,7 +7,8 @@ use super::{
 };
 pub(super) use events::{ChangeAction, EventChunk, MergeEvents, OwnerRoute, PairChanges};
 pub(super) use prepare::{
-    MergeOptions, MergeScratch, SelectedRuleIndex, prepare_merges_with_births,
+    ContiguousBirthPolicy, MergeOptions, MergeScratch, SelectedRuleIndex,
+    prepare_merges_with_births,
 };
 use rayon::prelude::*;
 use tk_encode::models::bpe::Pair;
@@ -44,6 +45,7 @@ pub(super) struct CompletedBirth<'arena> {
 /// when occurrence spans are materialized. The coordinator must apply this plan
 /// to the same corpus snapshot; the type does not identify its instance/version.
 pub(super) struct PreparedMerges {
+    pub(super) birth_shape: prepare::BirthShape,
     jobs: Vec<PreparedJob>,
     events: MergeEvents,
 }

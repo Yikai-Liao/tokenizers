@@ -21,6 +21,10 @@ impl PositionTask {
         }
     }
 }
+// Each matched source position emits at most one birth per direction. Thus
+// 2*sum(raw task positions) bounds every logical node in this whole job,
+// including stale positions that emit none. Before any remaining match there
+// are at least two budget units, so an admitted complete task cannot flush.
 fn job_node_budget_fits(tasks: &[PositionTask], capacity: usize) -> bool {
     tasks
         .iter()
@@ -162,49 +166,46 @@ pub(super) fn prepare<'arena, S: SlotStorage>(
             execution.with_merge_scratch(token_id_count, |scratch| {
                 let mut outputs = Vec::new();
                 let mut births = Vec::new();
+                let mut birth_shape = BirthShape::default();
                 for task in tasks {
-                    let mut plan = RulePreparation::new(
+                    // Geometry, not alphabet or input kind, admits compact
+                    // coordinates: max index < corpus.len() <= u32::MAX.
+                    let eligible = task.encode_births_directly && corpus.len() <= u32::MAX as usize;
+                    let plan = RulePreparation::new(
                         corpus,
                         scratch,
                         &rules[task.rank],
                         task.rank,
                         birth_span_limit as u64,
                     );
-                    let mut cursor = candidates[task.rank].positions.cursor(task.begin..task.end);
-                    // PERF: Interleave decoding and consumption through a small
-                    // ring. Each newly decoded position is prefetched one ring
-                    // ahead of its endpoint loads, without a full decoded tile.
-                    let mut ring = [0; PREFETCH_DISTANCE];
-                    let mut active = cursor.decode_into(&mut ring);
-                    for &position in &ring[..active] {
-                        corpus.prefetch(position);
-                    }
-                    let mut head = 0;
-                    while active != 0 {
-                        let position = ring[head];
-                        if let Some(next) = cursor.next() {
-                            ring[head] = next;
-                            corpus.prefetch(next);
-                        } else {
-                            active -= 1;
-                        }
-                        head = (head + 1) % PREFETCH_DISTANCE;
-                        if let Some(matched) = plan.matcher.get(position) {
-                            plan.fresh(matched, SelectedNeighbors::Rules(&selected))?;
-                            plan.positions.push_position(position);
-                        }
-                    }
-
-                    if task.encode_births_directly {
-                        outputs.push(plan.finish_with_births(
+                    let positions = &candidates[task.rank].positions;
+                    // Dispatch collection, shape sampling, and complete drain
+                    // together. A linked producer cannot reach a Vec-aware drain.
+                    let (output, shape) = if eligible && options.contiguous_births {
+                        prepare_task::<true, S>(
+                            plan,
+                            positions,
+                            &task,
+                            &selected,
                             arena,
                             execution,
                             floor,
                             &mut births,
-                        )?);
+                        )?
                     } else {
-                        outputs.push(plan.finish());
-                    }
+                        prepare_task::<false, S>(
+                            plan,
+                            positions,
+                            &task,
+                            &selected,
+                            arena,
+                            execution,
+                            floor,
+                            &mut births,
+                        )?
+                    };
+                    outputs.push(output);
+                    birth_shape.add(shape);
                 }
                 if let Some((_, chunks)) = outputs.last_mut() {
                     chunks.push(scratch.take_chunk());
@@ -220,10 +221,78 @@ pub(super) fn prepare<'arena, S: SlotStorage>(
                     },
                     chunks,
                     completed_births: births,
+                    birth_shape,
                 })
             })
         })
         .collect::<Result<Vec<_>>>()
+}
+
+// The task's const choice spans collection and drain, including wide complete
+// producers and linked adaptive fallback. AA/reuse keep their buffered path.
+#[allow(clippy::too_many_arguments)]
+fn prepare_task<'arena, const CONTIGUOUS: bool, S: SlotStorage>(
+    mut plan: RulePreparation<'_, S>,
+    positions: &SortedPositions<'_>,
+    task: &PositionTask,
+    selected: &SelectedRuleIndex,
+    arena: &'arena AllocationArena,
+    execution: &Execution,
+    floor: u64,
+    births: &mut Vec<CompletedBirth<'arena>>,
+) -> Result<((WritePlan, Vec<EventChunk>), BirthShape)> {
+    let eligible = task.encode_births_directly && plan.corpus.len() <= u32::MAX as usize;
+    debug_assert!(!CONTIGUOUS || eligible);
+    let nodes_before = plan.scratch.remaining_nodes;
+    prepare_positions::<CONTIGUOUS, S>(&mut plan, positions, task, selected)?;
+    let shape = if eligible {
+        // Complete/noflush gives exact B: every actual birth decrements the
+        // budget once. Capture C before drains empty both directories. Linked
+        // fallback also samples, so the next batch can re-enable contiguous.
+        plan.scratch.birth_shape_since(nodes_before)
+    } else {
+        BirthShape::default()
+    };
+    let output = if task.encode_births_directly {
+        plan.finish_with_births::<CONTIGUOUS>(arena, execution, floor, births)?
+    } else {
+        debug_assert!(!CONTIGUOUS);
+        plan.finish()
+    };
+    Ok((output, shape))
+}
+
+// Dispatch once per task; the linked monomorph carries no pool-index branch.
+fn prepare_positions<const CONTIGUOUS: bool, S: SlotStorage>(
+    plan: &mut RulePreparation<'_, S>,
+    positions: &SortedPositions<'_>,
+    task: &PositionTask,
+    selected: &SelectedRuleIndex,
+) -> Result<()> {
+    let mut cursor = positions.cursor(task.begin..task.end);
+    // PERF: Interleave decoding and consumption through a small ring. Each
+    // refill prefetches one ring ahead without retaining a full decoded tile.
+    let mut ring = [0; PREFETCH_DISTANCE];
+    let mut active = cursor.decode_into(&mut ring);
+    for &position in &ring[..active] {
+        plan.corpus.prefetch(position);
+    }
+    let mut head = 0;
+    while active != 0 {
+        let position = ring[head];
+        if let Some(next) = cursor.next() {
+            ring[head] = next;
+            plan.corpus.prefetch(next);
+        } else {
+            active -= 1;
+        }
+        head = (head + 1) % PREFETCH_DISTANCE;
+        if let Some(matched) = plan.matcher.get(position) {
+            plan.fresh::<CONTIGUOUS>(matched, SelectedNeighbors::Rules(selected))?;
+            plan.positions.push_position(position);
+        }
+    }
+    Ok(())
 }
 #[cfg(test)]
 mod producer_budget_tests {

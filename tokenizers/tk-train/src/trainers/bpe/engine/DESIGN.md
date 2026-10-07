@@ -353,6 +353,59 @@ Split producers emit partial chains for owner reduction. A fragment below the
 floor cannot be pruned independently, because several fragments can reach the
 floor together. AA and reuse keep their dedicated preparation paths.
 
+### Complete-producer birth storage
+
+Eligible ordinary producers may keep each neighbor's born coordinates in a
+contiguous `Vec<u32>`. Eligibility requires the entire candidate list, a job
+whose conservative `2 * sum(raw candidate lengths)` node budget fits, and
+`corpus.len() <= u32::MAX`. Every match emits at most two births, so a complete
+job has at least two remaining logical nodes before each match. Its maximum
+coordinate is less than the corpus length and therefore fits in `u32`.
+Partial producers, AA, reuse and wide-coordinate corpora keep linked storage.
+These are geometry and ownership conditions, not an input-type or alphabet test.
+
+A group retains its first two positions as linked seeds and promotes only when
+an actual third birth arrives. The neighbor entry holds an
+`Option<NonZeroU32>` index into a scratch-local `Vec<Vec<u32>>`; tiny and
+ineligible groups allocate no vector header or payload. On 64-bit targets,
+removed weight (8 bytes) + born weight (8) + linked chain metadata (12) + pool
+index (4) use the existing 32-byte aligned entry, and its `(u32, entry)` tuple
+occupies 40 bytes. This fills alignment padding rather than widening the entry.
+Some 32-bit layouts grow from 28 to 32 bytes; correctness does not depend on the
+64-bit layout equality.
+
+For a group with `n` births, linked low-coordinate nodes use `8*n` payload
+bytes. A promoted group instead retains two seed nodes (16 bytes) and requests
+`4*Vec.capacity()` coordinate bytes. A vector header is 24 bytes on 64-bit
+targets, but the pool pays headers for its capacity, not exactly one per live
+group; allocator overhead and retained pool capacity are additional costs.
+The common neighbor metadata is separate from both formulas. These quantities
+explain why larger groups can benefit, without establishing a universal memory
+or CPU crossover. Drain takes each promoted vector using its actual length and
+drops its payload immediately after encoding or pruning. Pool indices remain
+unique until both direction drains finish; only then are headers cleared for
+reuse. Errors or unwinding drop the scratch's remaining owned payloads.
+
+The coordinator chooses the next batch's kernel from actual preceding birth
+shape. For a complete eligible task that cannot flush, remaining logical nodes
+before minus after collection equals the exact number of admitted births `B`,
+including zero-weight and later-pruned births. Each birth consumes one logical
+node, and no reset occurs inside the task. The two neighbor directories expose
+their touched lengths before drain; their sum `C_all` includes empty or
+removal-only groups and is at least the number of nonempty birth groups. Thus
+`B/C_all` is a conservative mean rather than a scan or vocabulary proxy.
+Existing job outputs fold these two scalars after join. Successful commit
+publishes the history; failures do not, and attempt restart begins with empty
+history. Linked eligible tasks still report shape, allowing later re-enabling;
+no eligible groups leaves the current policy unchanged.
+
+The cutoff `B/C_all >= 16` is an empirical performance policy for the next
+batch, not a hardware theorem, a correctness boundary or a guarantee that the
+next batch has the same shape. A fresh attempt initially permits contiguous
+storage. Collection through complete drain uses one const kernel chosen outside
+the position loop. The const-false path keeps linked chains through encoding
+without vector-source dispatch, including partial, AA and reuse paths.
+
 ### Owner commit order
 
 The index retains each owner's route, birth-grouping buffers, and completed-birth

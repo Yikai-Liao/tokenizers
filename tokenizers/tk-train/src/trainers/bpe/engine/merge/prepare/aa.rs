@@ -84,7 +84,7 @@ pub(super) fn prepare<S: SlotStorage>(
                         Some(positions.position(offset + 1))
                     };
                     let matched = matcher.geometry(position);
-                    plan.fresh(
+                    plan.fresh::<false>(
                         matched,
                         SelectedNeighbors::Adjacent {
                             previous,

@@ -224,6 +224,10 @@ fn train_with_slots<S: corpus::SlotStorage>(
     // candidates releases their position lists before commit without reallocating
     // the vector; rule and conflict storage never exceeds the batch limit.
     let mut batch = RuleBatch::default();
+    // A fresh state for each attempt, including a rebuild for active-ID reuse.
+    // Explore the first eligible batch; only successful joined work/commit can
+    // influence the next one. No worker scheduling history survives a restart.
+    let mut contiguous_births = merge::ContiguousBirthPolicy::default();
     let work = progress.stage("Compute merges", trainer.vocab_size);
     while vocabulary.len() < trainer.vocab_size {
         match batch.select(
@@ -250,13 +254,14 @@ fn train_with_slots<S: corpus::SlotStorage>(
             execution,
             &arena,
             trainer.min_frequency.max(1),
-            merge_options,
+            contiguous_births.options(merge_options),
         )?;
 
         // PERF: Preparation owns all writes and birth events. Selected
         // position lists have no remaining reader; release them before allocating
         // the next generation during commit.
         batch.candidates.clear();
+        let birth_shape = prepared.birth_shape;
         let events = prepared.apply(&mut corpus);
 
         index.commit_merges_with_prepared(
@@ -266,6 +271,7 @@ fn train_with_slots<S: corpus::SlotStorage>(
             &arena,
             prepared_births,
         )?;
+        contiguous_births.observe(birth_shape);
 
         drop(events);
         work.learned(merges.len());

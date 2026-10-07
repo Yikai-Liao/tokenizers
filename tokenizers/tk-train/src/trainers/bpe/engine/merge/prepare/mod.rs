@@ -17,25 +17,43 @@ use super::{
     WritePlan,
 };
 use ahash::AHashMap;
+use std::num::NonZeroU32;
 use tk_encode::{Result, models::bpe::Pair};
 /// One job's writes, buffered neighbor events, and already encoded fresh births.
 struct PreparedOutput<'arena> {
     job: PreparedJob,
     chunks: Vec<EventChunk>,
     completed_births: Vec<CompletedBirth<'arena>>,
+    birth_shape: BirthShape,
 }
 #[derive(Default)]
 struct NeighborChanges {
     removed: u64,
     born: u64,
     positions: PositionChain,
+    // A scratch-local header index occupies the linked layout's trailing pad
+    // on 64-bit targets: removed8 + born8 + chain12 + index4 = 32B,
+    // equal to the old aligned layout. Some 32-bit layouts grow 28B to 32B;
+    // correctness is portable, but this equality is not a universal ABI claim.
+    // Tiny/ineligible groups own no Vec header or payload.
+    vector: Option<NonZeroU32>,
 }
+#[cfg(target_pointer_width = "64")]
+const _: () = {
+    assert!(std::mem::size_of::<NeighborChanges>() == 32);
+    assert!(std::mem::size_of::<(u32, NeighborChanges)>() == 40);
+};
+const _: () = assert!(PositionChains::MAX_NODES < u32::MAX as usize);
 pub(in super::super) struct MergeScratch {
     left: IdAccumulator<NeighborChanges>,
     right: IdAccumulator<NeighborChanges>,
     chains: PositionChains,
     changes: Vec<PairChanges>,
     remaining_nodes: usize,
+    // Only complete compact producers allocate headers. Indices are unique
+    // across both directions until their whole drain ends. Empty header capacity
+    // may serve the next rule; coordinate payloads retire at each group's drain.
+    birth_vectors: Vec<Vec<u32>>,
 }
 impl MergeScratch {
     pub(in super::super) fn new(token_id_count: usize, directories: [IdDirectory; 2]) -> Self {
@@ -46,6 +64,17 @@ impl MergeScratch {
             chains: PositionChains::new(),
             changes: Vec::new(),
             remaining_nodes: PositionChains::MAX_NODES,
+            birth_vectors: Vec::new(),
+        }
+    }
+    /// Sample only a complete eligible task, after collection and before drain.
+    fn birth_shape_since(&self, nodes_before: usize) -> BirthShape {
+        BirthShape {
+            births: nodes_before - self.remaining_nodes,
+            touched_groups: self
+                .left
+                .touched_len()
+                .saturating_add(self.right.touched_len()),
         }
     }
     pub(in super::super) fn into_directories(self) -> [IdDirectory; 2] {
@@ -55,12 +84,15 @@ impl MergeScratch {
     // neighbor directories between rules; handing off nodes here would create
     // a separately growing allocation for every rule and prevent buffer reuse.
     fn flush_rule(&mut self, rule: &MergeRule, rank: usize) {
-        self.changes.extend(Self::neighbor_events(
-            &mut self.left,
-            &mut self.right,
-            rule,
-            rank,
-        ));
+        debug_assert!(self.birth_vectors.is_empty());
+        self.changes.extend(
+            Self::neighbor_events(&mut self.left, &mut self.right, rule, rank).map(
+                |(event, vector)| {
+                    debug_assert!(vector.is_none(), "buffered jobs keep linked births");
+                    event
+                },
+            ),
+        );
     }
     // One direction/bucket rule for buffered events and complete producers.
     fn neighbor_events(
@@ -68,24 +100,34 @@ impl MergeScratch {
         right: &mut IdAccumulator<NeighborChanges>,
         rule: &MergeRule,
         rank: usize,
-    ) -> impl Iterator<Item = PairChanges> {
-        let left = left.drain().map(move |(neighbor, change)| PairChanges {
-            removed_key: pair_key((neighbor, rule.pair.0)),
-            born_key: pair_key((neighbor, rule.replacement)),
-            removed_weight: change.removed,
-            born_weight: change.born,
-            positions: change.positions,
+    ) -> impl Iterator<Item = (PairChanges, Option<NonZeroU32>)> {
+        let left = left.drain().map(move |(neighbor, change)| {
+            (
+                PairChanges {
+                    removed_key: pair_key((neighbor, rule.pair.0)),
+                    born_key: pair_key((neighbor, rule.replacement)),
+                    removed_weight: change.removed,
+                    born_weight: change.born,
+                    positions: change.positions,
 
-            bucket: (rank * 2) as u32,
+                    bucket: (rank * 2) as u32,
+                },
+                change.vector,
+            )
         });
-        let right = right.drain().map(move |(neighbor, change)| PairChanges {
-            removed_key: pair_key((rule.pair.1, neighbor)),
-            born_key: pair_key((rule.replacement, neighbor)),
-            removed_weight: change.removed,
-            born_weight: change.born,
-            positions: change.positions,
+        let right = right.drain().map(move |(neighbor, change)| {
+            (
+                PairChanges {
+                    removed_key: pair_key((rule.pair.1, neighbor)),
+                    born_key: pair_key((rule.replacement, neighbor)),
+                    removed_weight: change.removed,
+                    born_weight: change.born,
+                    positions: change.positions,
 
-            bucket: (rank * 2 + usize::from(neighbor != rule.replacement)) as u32,
+                    bucket: (rank * 2 + usize::from(neighbor != rule.replacement)) as u32,
+                },
+                change.vector,
+            )
         });
         left.chain(right)
     }
@@ -94,7 +136,7 @@ impl MergeScratch {
     /// Removal events survive; completed births are published only through the
     /// returned records, with no second event scan or position re-encoding.
     #[allow(clippy::too_many_arguments)]
-    fn flush_rule_with_births<'arena>(
+    fn flush_rule_with_births<'arena, const CONTIGUOUS: bool>(
         &mut self,
         rule: &MergeRule,
         rank: usize,
@@ -107,17 +149,51 @@ impl MergeScratch {
         let lease = arena.lease(worker);
         let chains = &self.chains;
         let changes = &mut self.changes;
+        let vectors = &mut self.birth_vectors;
         // These are the original neighbor-directory drains, not a second pass
         // over emitted events. Each birth already has its complete mass/chain.
-        let mut emit = |mut event: PairChanges| -> Result<()> {
-            if !event.positions.is_empty() && event.born_weight >= floor {
-                let occurrences = event.positions.len();
-                let positions = SortedPositions::from_reversed_iter_direct(
-                    occurrences,
-                    chains.reversed(event.positions),
-                    &lease,
-                )?;
-
+        let mut emit = |(mut event, index): (PairChanges, Option<NonZeroU32>)| -> Result<()> {
+            let positions = if CONTIGUOUS {
+                // Take even a pruned group: its payload drops on this iteration.
+                // Other direction/group indices remain live until both drains end.
+                let source = index.map(|index| {
+                    let positions = std::mem::take(&mut vectors[index.get() as usize - 1]);
+                    debug_assert!(positions.len() >= 3, "one owner consumes each index once");
+                    positions
+                });
+                let count = source.as_ref().map_or(event.positions.len(), Vec::len);
+                if count != 0 && event.born_weight >= floor {
+                    Some(match &source {
+                        None => SortedPositions::from_reversed_iter_direct(
+                            count,
+                            chains.reversed(event.positions),
+                            &lease,
+                        )?,
+                        Some(positions) => SortedPositions::from_reversed_iter_direct(
+                            count,
+                            positions.iter().rev().map(|&p| u64::from(p)),
+                            &lease,
+                        )?,
+                    })
+                } else {
+                    None
+                }
+            } else {
+                // Collection and drain share one const kernel. Linked complete
+                // producers use their chain directly, with no Vec source dispatch.
+                debug_assert!(index.is_none(), "linked collection publishes no pool index");
+                let count = event.positions.len();
+                if count != 0 && event.born_weight >= floor {
+                    Some(SortedPositions::from_reversed_iter_direct(
+                        count,
+                        chains.reversed(event.positions),
+                        &lease,
+                    )?)
+                } else {
+                    None
+                }
+            };
+            if let Some(positions) = positions {
                 births.push(CompletedBirth {
                     key: event.born_key,
                     weight: event.born_weight,
@@ -132,9 +208,23 @@ impl MergeScratch {
             }
             Ok(())
         };
-        Self::neighbor_events(&mut self.left, &mut self.right, rule, rank).try_for_each(&mut emit)
+        Self::neighbor_events(&mut self.left, &mut self.right, rule, rank)
+            .try_for_each(&mut emit)?;
+        drop(emit);
+        // No group in either direction retains an index now. On error, scratch
+        // owns and drops all remaining payloads with the discarded attempt.
+        if CONTIGUOUS {
+            vectors.clear();
+        } else {
+            debug_assert!(
+                vectors.is_empty(),
+                "linked complete jobs own no pool payloads"
+            );
+        }
+        Ok(())
     }
     fn take_chunk(&mut self) -> EventChunk {
+        debug_assert!(self.birth_vectors.is_empty());
         self.remaining_nodes = PositionChains::MAX_NODES;
         EventChunk {
             chains: std::mem::take(&mut self.chains),
@@ -152,9 +242,10 @@ impl MergeScratch {
     // successful path to the caller so count and chain updates share local
     // values; overflow error construction must not keep it out of line.
     #[inline(always)]
-    fn birth(
+    fn birth<const CONTIGUOUS: bool>(
         group: &mut NeighborChanges,
         chains: &mut PositionChains,
+        vectors: &mut Vec<Vec<u32>>,
         remaining_nodes: &mut usize,
         position: u64,
         weight: u64,
@@ -163,17 +254,51 @@ impl MergeScratch {
             .born
             .checked_add(weight)
             .ok_or("BPE neighbor birth mass exceeds u64")?;
-        chains.push(&mut group.positions, position)?;
+        if CONTIGUOUS {
+            debug_assert!(position <= u64::from(u32::MAX));
+            if let Some(index) = group.vector {
+                vectors[index.get() as usize - 1].push(position as u32);
+            } else if group.positions.len() == 2 {
+                // Reuse the existing tiny chain as the small-buffer fallback.
+                // Prior positions also belong to this admitted resident corpus.
+                let first = chains.first(group.positions).unwrap();
+                let second = chains.last(group.positions).unwrap();
+                debug_assert!(first <= u64::from(u32::MAX) && second <= u64::from(u32::MAX));
+                let mut positions = Vec::with_capacity(4);
+                positions.push(first as u32);
+                positions.push(second as u32);
+                positions.push(position as u32);
+                let index = NonZeroU32::new(
+                    u32::try_from(vectors.len() + 1)
+                        .expect("logical node budget bounds header indices"),
+                )
+                .expect("header indices start at one");
+                vectors.push(positions);
+                group.vector = Some(index);
+            } else {
+                chains.push(&mut group.positions, position)?;
+            }
+        } else {
+            // Compile-time linked path: no pool index probe for partial/AA/reuse.
+            chains.push(&mut group.positions, position)?;
+        }
         *remaining_nodes -= 1;
         Ok(())
     }
-    fn left(&mut self, neighbor: u32, position: u64, weight: u64, birth: bool) -> Result<()> {
+    fn left<const CONTIGUOUS: bool>(
+        &mut self,
+        neighbor: u32,
+        position: u64,
+        weight: u64,
+        birth: bool,
+    ) -> Result<()> {
         let group = self.left.touch(neighbor);
         Self::remove(group, weight)?;
         if birth {
-            Self::birth(
+            Self::birth::<CONTIGUOUS>(
                 group,
                 &mut self.chains,
+                &mut self.birth_vectors,
                 &mut self.remaining_nodes,
                 position,
                 weight,
@@ -181,7 +306,7 @@ impl MergeScratch {
         }
         Ok(())
     }
-    fn right(
+    fn right<const CONTIGUOUS: bool>(
         &mut self,
         removed: u32,
         born: u32,
@@ -199,9 +324,10 @@ impl MergeScratch {
             } else {
                 self.right.touch(born)
             };
-            Self::birth(
+            Self::birth::<CONTIGUOUS>(
                 group,
                 &mut self.chains,
+                &mut self.birth_vectors,
                 &mut self.remaining_nodes,
                 position,
                 weight,
@@ -329,14 +455,22 @@ impl<'prep, S: SlotStorage> RulePreparation<'prep, S> {
             weights: corpus.weight_cursor(),
         }
     }
-    fn room(&mut self) {
+    fn room<const CONTIGUOUS: bool>(&mut self) {
         if self.scratch.remaining_nodes < 2 {
+            assert!(
+                !CONTIGUOUS,
+                "complete producer's node budget forbids a partial flush"
+            );
             self.scratch.flush_rule(self.rule, self.rank);
             self.chunks.push(self.scratch.take_chunk());
         }
     }
-    fn fresh(&mut self, matched: PairMatch, neighbors: SelectedNeighbors<'_>) -> Result<()> {
-        self.room();
+    fn fresh<const CONTIGUOUS: bool>(
+        &mut self,
+        matched: PairMatch,
+        neighbors: SelectedNeighbors<'_>,
+    ) -> Result<()> {
+        self.room::<CONTIGUOUS>();
         let weight = self.weights.weight(matched.left_start);
         let prior = self.corpus.token(matched.left_start - 1);
         if prior != WORD_SEPARATOR_ID {
@@ -351,7 +485,7 @@ impl<'prep, S: SlotStorage> RulePreparation<'prep, S> {
                 }
             };
             if !left_selected {
-                self.scratch.left(
+                self.scratch.left::<CONTIGUOUS>(
                     prior,
                     before,
                     weight,
@@ -373,7 +507,7 @@ impl<'prep, S: SlotStorage> RulePreparation<'prep, S> {
                     selected.final_next(self.corpus, matched.next_start, next)
                 }
             };
-            self.scratch.right(
+            self.scratch.right::<CONTIGUOUS>(
                 next,
                 final_next,
                 matched.left_start,
@@ -383,7 +517,7 @@ impl<'prep, S: SlotStorage> RulePreparation<'prep, S> {
         }
         Ok(())
     }
-    fn finish_with_births<'arena>(
+    fn finish_with_births<'arena, const CONTIGUOUS: bool>(
         self,
         arena: &'arena AllocationArena,
         execution: &Execution,
@@ -394,8 +528,9 @@ impl<'prep, S: SlotStorage> RulePreparation<'prep, S> {
             self.chunks.is_empty(),
             "allocation node budget excludes partial flush"
         );
-        self.scratch
-            .flush_rule_with_births(self.rule, self.rank, floor, arena, execution, births)?;
+        self.scratch.flush_rule_with_births::<CONTIGUOUS>(
+            self.rule, self.rank, floor, arena, execution, births,
+        )?;
         Ok((
             WritePlan {
                 rule: *self.rule,
@@ -418,12 +553,66 @@ impl<'prep, S: SlotStorage> RulePreparation<'prep, S> {
 #[derive(Clone, Copy, Debug)]
 pub(in super::super) struct MergeOptions {
     pub(in super::super) single_producer_fast: bool,
+    pub(in super::super) contiguous_births: bool,
+    #[cfg(test)]
+    pub(in super::super) adaptive_births: bool,
 }
 impl Default for MergeOptions {
     fn default() -> Self {
         Self {
             single_producer_fast: true,
+            contiguous_births: true,
+            #[cfg(test)]
+            adaptive_births: true,
         }
+    }
+}
+/// Actual shape of eligible complete ordinary producers, before floor pruning.
+/// Summed only after reader jobs join; it never participates in model semantics.
+#[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
+pub(in super::super) struct BirthShape {
+    births: usize,
+    touched_groups: usize,
+}
+impl BirthShape {
+    fn add(&mut self, other: Self) {
+        self.births = self.births.saturating_add(other.births);
+        self.touched_groups = self.touched_groups.saturating_add(other.touched_groups);
+    }
+}
+/// Attempt-local feedback selects one const kernel for the next batch.
+/// History predicts performance only: the next batch need not share its shape.
+/// The cutoff 16 is an empirical candidate, not a proof of CPU or HWM benefit.
+#[derive(Debug)]
+pub(in super::super) struct ContiguousBirthPolicy {
+    enabled: bool,
+}
+impl Default for ContiguousBirthPolicy {
+    fn default() -> Self {
+        Self { enabled: true }
+    }
+}
+impl ContiguousBirthPolicy {
+    pub(in super::super) fn options(&self, options: MergeOptions) -> MergeOptions {
+        #[cfg(test)]
+        if !options.adaptive_births {
+            return options;
+        }
+        MergeOptions {
+            contiguous_births: options.contiguous_births && self.enabled,
+            ..options
+        }
+    }
+    pub(in super::super) fn observe(&mut self, shape: BirthShape) {
+        if shape.touched_groups != 0 {
+            // C_all includes removal-only groups, so C_all >= C_nonempty and
+            // B/C_all conservatively understates mean nonempty chain length.
+            // Integer division is equivalent to B >= 16*C without overflowing
+            // the product. Saturating totals are deterministic across workers;
+            // B saturation understates the ratio, C saturation rejects at 16.
+            self.enabled = shape.births / shape.touched_groups >= 16;
+        }
+        // No eligible producer: retain the mode, rather than infer a zero mean.
     }
 }
 /// Prepare all jobs against one stable corpus and join every reader before return.
@@ -458,6 +647,7 @@ pub(in super::super) fn prepare_merges_with_births<'arena, S: SlotStorage>(
             job,
             chunks,
             completed_births: Vec::new(),
+            birth_shape: BirthShape::default(),
         })
         .collect()
     } else if rules[0].pair.0 == rules[0].pair.1 {
@@ -474,6 +664,7 @@ pub(in super::super) fn prepare_merges_with_births<'arena, S: SlotStorage>(
             job,
             chunks,
             completed_births: Vec::new(),
+            birth_shape: BirthShape::default(),
         })
         .collect()
     } else {
@@ -492,7 +683,9 @@ pub(in super::super) fn prepare_merges_with_births<'arena, S: SlotStorage>(
     let mut jobs = Vec::new();
     let mut chunks = Vec::new();
     let mut births = Vec::new();
+    let mut birth_shape = BirthShape::default();
     for output in outputs {
+        birth_shape.add(output.birth_shape);
         births.extend(output.completed_births);
         jobs.push(output.job);
         chunks.extend(output.chunks);
@@ -500,6 +693,7 @@ pub(in super::super) fn prepare_merges_with_births<'arena, S: SlotStorage>(
     Ok((
         PreparedMerges {
             jobs,
+            birth_shape,
             events: MergeEvents {
                 chunks,
                 buckets: rules.len() * 2,
@@ -509,42 +703,4 @@ pub(in super::super) fn prepare_merges_with_births<'arena, S: SlotStorage>(
     ))
 }
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn selected_rule_reuse_clears_shared_endpoints_before_domain_growth() {
-        let mut selected = SelectedRuleIndex::default();
-        selected.reset(
-            &[
-                MergeRule {
-                    pair: (1, 2),
-                    replacement: 4,
-                },
-                MergeRule {
-                    pair: (1, 3),
-                    replacement: 5,
-                },
-            ],
-            6,
-        );
-        assert_eq!(selected.heads[1], MULTIPLE);
-        assert_eq!(selected.multiple.len(), 2);
-        selected.reset(
-            &[MergeRule {
-                pair: (3, 6),
-                replacement: 7,
-            }],
-            8,
-        );
-        assert_eq!(selected.heads[1], EMPTY);
-        assert_eq!(selected.tails[2], EMPTY);
-        assert_eq!(selected.tails[3], EMPTY);
-        assert!(selected.multiple.is_empty());
-        assert_eq!(selected.heads[3], pair_key((6, 7)));
-        assert_eq!(selected.tails[6], pair_key((3, 7)));
-        selected.reset(&[], 8);
-        assert_eq!(selected.heads[3], EMPTY);
-        assert_eq!(selected.tails[6], EMPTY);
-    }
-}
+mod tests;

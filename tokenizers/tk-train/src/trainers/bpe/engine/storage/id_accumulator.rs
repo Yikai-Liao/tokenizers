@@ -106,6 +106,14 @@ impl<T: Default> IdAccumulator<T> {
     }
 }
 impl<T> IdAccumulator<T> {
+    /// Number of touched IDs, including values whose birth chain is empty.
+    /// Both representations store this count; no directory or value scan occurs.
+    pub(in super::super) fn touched_len(&self) -> usize {
+        match &self.storage {
+            Storage::Dense { entries, .. } => entries.len(),
+            Storage::Sparse(values) => values.len(),
+        }
+    }
     /// Release values and return only reusable ID lookup storage.
     /// Unconsumed touched IDs are reset before the directory changes owners.
     pub(in super::super) fn into_directory(self) -> IdDirectory {
@@ -188,7 +196,9 @@ mod tests {
             assert_eq!(counts.get(1), None);
             assert_eq!(*counts.touch(1), 0);
             *counts.touch(3) = 99;
+            assert_eq!(counts.touched_len(), 2);
             drop(counts.drain().take(1));
+            assert_eq!(counts.touched_len(), 0);
             assert_eq!(counts.get(1), None);
             assert_eq!(counts.get(3), None);
             let mut counts =

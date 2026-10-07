@@ -172,10 +172,10 @@ impl<S: SlotStorage> RulePreparation<'_, S> {
         matched: PairMatch,
         previous: Option<LogicalToken>,
     ) -> Result<LogicalToken> {
-        self.room();
+        self.room::<false>();
         let weight = self.weights.weight(matched.left_start);
         if let Some(previous) = previous {
-            self.scratch.left(
+            self.scratch.left::<false>(
                 previous.id,
                 previous.start,
                 weight,
@@ -184,7 +184,7 @@ impl<S: SlotStorage> RulePreparation<'_, S> {
         }
         let next = self.corpus.token(matched.next_start);
         if next != WORD_SEPARATOR_ID {
-            self.scratch.right(
+            self.scratch.right::<false>(
                 next,
                 next,
                 matched.left_start,

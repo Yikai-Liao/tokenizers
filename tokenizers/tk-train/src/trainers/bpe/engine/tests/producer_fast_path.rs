@@ -49,6 +49,7 @@ fn producer_encoding_preserves_hf_trace_and_fallbacks() {
                 for workers in [1, 4] {
                     let options = MergeOptions {
                         single_producer_fast,
+                        ..MergeOptions::default()
                     };
                     let mut trace = Vec::new();
                     let actual = train_with_merge_options(
@@ -151,10 +152,16 @@ fn owner_single_producer_requires_full_task_and_prunes_complete_births() {
                     floor,
                     MergeOptions {
                         single_producer_fast: true,
+                        ..MergeOptions::default()
                     },
                 )
                 .unwrap();
                 if workers == 1 {
+                    assert_ne!(
+                        prepared.birth_shape,
+                        Default::default(),
+                        "whole compact producers are observed even when floor prunes births"
+                    );
                     if floor == 2 {
                         let mut actual = AHashMap::new();
                         for birth in &births {
@@ -196,6 +203,11 @@ fn owner_single_producer_requires_full_task_and_prunes_complete_births() {
                         assert!(births.is_empty());
                     }
                 } else {
+                    assert_eq!(
+                        prepared.birth_shape,
+                        Default::default(),
+                        "partial jobs cannot sample the noflush budget delta"
+                    );
                     assert!(
                         births.is_empty(),
                         "partial tasks cannot take producer fast path"
@@ -229,6 +241,100 @@ fn owner_single_producer_requires_full_task_and_prunes_complete_births() {
                     assert_eq!(index.best().unwrap().priority_count, 29);
                 }
             });
+        }
+    }
+}
+
+#[test]
+fn adaptive_birth_kernels_preserve_dense_tiny_wide_affix_and_reuse_trace() {
+    use merge::MergeOptions;
+    let dense_words = counts(&[
+        (&"ab".repeat(256), 7),
+        (&"cd".repeat(160), 6),
+        ("xabyabzab", 2),
+        ("abcd", 1),
+        ("zeroabab🙂", 0),
+        ("", 1),
+    ]);
+    let affix_words = counts(&[
+        (&"xabcdab中abab".repeat(40), 7),
+        (&"abababaaaa中文".repeat(20), 11),
+        ("zeroaaaa🙂", 0),
+        ("", 1),
+    ]);
+    let reuse_words = counts(&[("baaba", 1), ("xyxyxy", 100)]);
+    let scenarios = [
+        (
+            BpeTrainer::builder()
+                .vocab_size(80)
+                .min_frequency(2)
+                .show_progress(false)
+                .build(),
+            &dense_words,
+        ),
+        // The target chooses packed24 slots without allocating a huge corpus.
+        (
+            BpeTrainer::builder()
+                .vocab_size(65536)
+                .min_frequency(2)
+                .show_progress(false)
+                .build(),
+            &dense_words,
+        ),
+        (
+            BpeTrainer::builder()
+                .vocab_size(80)
+                .min_frequency(2)
+                .show_progress(false)
+                .max_token_length(Some(7))
+                .continuing_subword_prefix("##".into())
+                .end_of_word_suffix("</w>".into())
+                .special_tokens(vec![AddedToken::from("##ab", true)])
+                .build(),
+            &affix_words,
+        ),
+        (
+            BpeTrainer::builder()
+                .vocab_size(48)
+                .min_frequency(1)
+                .show_progress(false)
+                .end_of_word_suffix("a".into())
+                .build(),
+            &reuse_words,
+        ),
+    ];
+    for (scenario, (trainer, words)) in scenarios.iter().enumerate() {
+        let mut expected_trace = Vec::new();
+        let expected = trainer
+            .do_train_observed(words, |pair, count, id| {
+                expected_trace.push((pair, count, id))
+            })
+            .unwrap();
+        for (contiguous_births, adaptive_births) in [(false, false), (true, false), (true, true)] {
+            for workers in [1, 4, 16] {
+                let options = MergeOptions {
+                    contiguous_births,
+                    adaptive_births,
+                    ..MergeOptions::default()
+                };
+                let mut trace = Vec::new();
+                let actual = train_with_merge_options(
+                    trainer,
+                    WordCountsView::from_map(words),
+                    workers,
+                    options,
+                    Some(&mut |pair, count, id| trace.push((pair, count, id))),
+                )
+                .unwrap();
+                assert_eq!(
+                    trace, expected_trace,
+                    "scenario={scenario}, workers={workers}, options={options:?}"
+                );
+                assert_eq!(
+                    actual, expected,
+                    "scenario={scenario}, workers={workers}, options={options:?}"
+                );
+            }
         }
     }
 }
