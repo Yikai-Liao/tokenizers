@@ -24,8 +24,8 @@ fn weighted_ties_unicode_aa_and_reserved_id_activations() {
             .special_tokens(special)
             .show_progress(false)
             .build();
-        check(&trainer, &words);
-        check(&trainer, &counts(&[(&"a".repeat(1024), 3)]));
+        check_cache_modes(&trainer, &words);
+        check_cache_modes(&trainer, &counts(&[(&"a".repeat(1024), 3)]));
     }
 }
 
@@ -68,7 +68,7 @@ fn affixes_aliases_and_strict_length_boundaries() {
         trainer.continuing_subword_prefix = prefix.map(str::to_owned);
         trainer.end_of_word_suffix = suffix.map(str::to_owned);
         trainer.max_token_length = limit;
-        check(&trainer, &words);
+        check_cache_modes(&trainer, &words);
     }
 }
 
@@ -79,7 +79,7 @@ fn pruning_waits_for_all_birth_producers_and_alphabet_filtering() {
         .min_frequency(2)
         .show_progress(false)
         .build();
-    check(&trainer, &counts(&[("xabp", 1), ("xabq", 1)]));
+    check_cache_modes(&trainer, &counts(&[("xabp", 1), ("xabq", 1)]));
     let trainer = BpeTrainer::builder()
         .vocab_size(30)
         .limit_alphabet(3)
@@ -93,7 +93,7 @@ fn pruning_waits_for_all_birth_producers_and_alphabet_filtering() {
         ("测试测试", 3),
         ("ccc", 1),
     ]);
-    check(&trainer, &words);
+    check_cache_modes(&trainer, &words);
     // The mainline oracle shares alphabet construction. A literal expectation
     // independently checks the frequency limit and forced characters.
     let mut alphabet_only = trainer;

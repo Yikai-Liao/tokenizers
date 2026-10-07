@@ -74,6 +74,27 @@ fn train_with_merge_options(
     word_counts: WordCountsView<'_>,
     workers: usize,
     merge_options: merge::MergeOptions,
+    #[cfg(test)] observe: Option<&mut (dyn FnMut(tk_encode::models::bpe::Pair, u64, u32) + Send)>,
+    #[cfg(test)] birth_observe: BirthObserver<'_>,
+) -> Result<ModelParts> {
+    train_with_merge_options_and_cache(
+        trainer,
+        word_counts,
+        workers,
+        merge_options,
+        corpus::InitialCachePolicy::default(),
+        #[cfg(test)]
+        observe,
+        #[cfg(test)]
+        birth_observe,
+    )
+}
+fn train_with_merge_options_and_cache(
+    trainer: &BpeTrainer,
+    word_counts: WordCountsView<'_>,
+    workers: usize,
+    merge_options: merge::MergeOptions,
+    cache_policy: corpus::InitialCachePolicy,
     #[cfg(test)] mut observe: Option<
         &mut (dyn FnMut(tk_encode::models::bpe::Pair, u64, u32) + Send),
     >,
@@ -104,6 +125,7 @@ fn train_with_merge_options(
                 policy,
                 &execution,
                 merge_options,
+                cache_policy,
                 &progress,
                 &mut retained_alphabet,
                 #[cfg(test)]
@@ -139,6 +161,7 @@ fn train_attempt(
     policy: IdentityPolicy,
     execution: &execution::Execution,
     merge_options: merge::MergeOptions,
+    cache_policy: corpus::InitialCachePolicy,
     progress: &TrainingProgress,
     retained_alphabet: &mut Option<Vec<char>>,
     #[cfg(test)] trace: &mut Vec<(tk_encode::models::bpe::Pair, u64, u32)>,
@@ -165,7 +188,7 @@ fn train_attempt(
         progress.stage("Compute merges", trainer.vocab_size);
         return Ok(complete_model(trainer, vocabulary, Vec::new()));
     }
-    prepared_corpus.prepare_initial_symbols(workers, progress)?;
+    prepared_corpus.prepare_initial_symbols_with_policy(workers, progress, cache_policy)?;
     match corpus::slot_bits(trainer.vocab_size.max(vocabulary.len())) {
         16 => train_with_slots::<corpus::U16Slots>(
             trainer,
@@ -208,6 +231,12 @@ fn train_attempt(
         ),
     }
 }
+fn expected_id_domain(target: usize, initial_ids: usize, physical_edges: usize) -> usize {
+    target
+        .min(initial_ids.saturating_add(physical_edges))
+        .min(u32::MAX as usize)
+}
+
 #[cfg_attr(test, allow(clippy::too_many_arguments))]
 fn train_with_slots<S: corpus::SlotStorage>(
     trainer: &BpeTrainer,
@@ -245,6 +274,17 @@ fn train_with_slots<S: corpus::SlotStorage>(
         progress.stage("Compute merges", trainer.vocab_size);
         return Ok(complete_model(trainer, vocabulary, Vec::new()));
     }
+    // In fresh mode every successful rule consumes at least one physical edge;
+    // each appended ID belongs to one such rule. Thus final ID count is bounded
+    // by min(target, initial IDs + initial physical edges), not weighted mass.
+    // Reuse can select historical cohorts without that progress proof, so this
+    // remains only a capacity hint: actual domains always grow beyond it.
+    let expected_ids = expected_id_domain(
+        trainer.vocab_size,
+        vocabulary.len(),
+        prepared_corpus.initial_edges(),
+    );
+    execution.expect_id_domain(expected_ids);
     let mut corpus = prepared_corpus.materialize::<S>(workers, policy, progress)?;
     let mut index =
         pair_index::PairIndex::from_initial_pairs(initial, policy, trainer.min_frequency)?;

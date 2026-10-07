@@ -39,11 +39,7 @@ fn position_jobs(
     workers: usize,
     fast_enabled: bool,
 ) -> Vec<Vec<PositionTask>> {
-    let mut jobs = if workers == 1 {
-        position_jobs_grid(candidates, workers)
-    } else {
-        position_jobs_whole(candidates, workers)
-    };
+    let mut jobs = position_jobs_whole(candidates, workers);
     if fast_enabled {
         let capacity = PositionChains::MAX_NODES;
         for job in &mut jobs {
@@ -56,35 +52,6 @@ fn position_jobs(
     }
     jobs
 }
-fn position_jobs_grid(candidates: &[MergeCandidate<'_>], workers: usize) -> Vec<Vec<PositionTask>> {
-    let total: usize = candidates
-        .iter()
-        .map(|candidate| candidate.positions.len())
-        .sum();
-    let chunk = total.div_ceil(workers).clamp(1, 1 << 26);
-    let mut jobs = Vec::<Vec<PositionTask>>::new();
-    let mut visited = 0;
-    for (rank, candidate) in candidates.iter().enumerate() {
-        let mut begin = 0;
-        while begin < candidate.positions.len() {
-            let job = visited / chunk;
-            if job == jobs.len() {
-                jobs.push(Vec::new());
-            }
-            let take = (chunk - visited % chunk).min(candidate.positions.len() - begin);
-            jobs[job].push(PositionTask::new(
-                rank,
-                begin,
-                begin + take,
-                candidate.positions.len(),
-            ));
-            visited += take;
-            begin += take;
-        }
-    }
-    jobs
-}
-
 fn position_jobs_whole(
     candidates: &[MergeCandidate<'_>],
     workers: usize,

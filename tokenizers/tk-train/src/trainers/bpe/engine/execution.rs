@@ -39,6 +39,19 @@ impl Execution {
             selected: Mutex::default(),
         })
     }
+    /// Set a nonbinding capacity hint after zero-merge guards. Allocate lazily
+    /// on the first actual accumulator use, not while constructing this pool.
+    pub(super) fn expect_id_domain(&self, domain: usize) {
+        for directories in &self.directories {
+            for directory in directories
+                .lock()
+                .unwrap_or_else(|error| error.into_inner())
+                .iter_mut()
+            {
+                directory.expect_domain(domain);
+            }
+        }
+    }
     pub(super) fn router(&self) -> ShardRouter {
         self.router
     }

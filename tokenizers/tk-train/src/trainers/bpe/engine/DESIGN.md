@@ -114,12 +114,14 @@ The initial plan records word geometry, weights, resolved initial IDs, and check
 resident-size and numeric bounds. Bounded waves own left endpoints; the last edge
 in a wave can read one symbol beyond its range.
 
-When the resolved initial ID bound fits in `u16`, a separate preparation stage
-builds an immutable symbol cache. Word geometry identifies separator placeholders,
-leaving the full `u16` domain available for real token IDs. Cached IDs supply both
-initial edges and final slots. Wide IDs keep the original string scanner and UTF-8
-checkpoints; filtered chunks may have repeated slot coordinates. Checkpoint seeks
-and ordinary scans share the same symbol interpretation.
+A separate preparation stage can build an immutable `u16` or `u32` symbol cache.
+Cache enablement and width policy are independent of record/collector admission,
+which uses the resolver's initial-ID bound and the observed alphabet. Production
+currently caches only narrow IDs. Typed
+kernels dispatch once per word/job and feed both initial edges and final slots.
+Word geometry restores separator placeholders, preserving every real token ID.
+Scanner checkpoints retain original UTF-8 coordinates, including repeated slot
+coordinates after filtering; they stay with the plan until materialization.
 
 Only after raw initial records have retired does the plan allocate mutable slots.
 The cache overlaps raw records during grouping and then final slots during
@@ -463,7 +465,7 @@ Weight runs and a unit-weight shortcut supply weighted counts. Generic multi-own
 routing uses dense directories and source-ordered disjoint counted slices at every
 pool size. Fill is parallel; owners encode using the executing worker's resources.
 
-When the cached plan has at most 256 distinct resolved initial IDs, a bounded
+When the plan has at most 256 distinct resolved initial IDs within u16, a bounded
 pair collector can replace per-occurrence keyed records with four-byte wave-local
 position offsets. Eligibility follows the IDs actually activated by retained
 symbols, including affix aliases and zero-weight words; it does not follow a
@@ -497,13 +499,12 @@ multiwave position encoding and publication. Original ID ownership, checked
 count accumulation, and retirement before corpus materialization remain the
 same across the two record layouts.
 
-For bounded initial IDs, the read-only corpus plan caches retained-symbol IDs in
-a sixteen-bit plane. Word geometry distinguishes separators from valid IDs.
-Initial routing and corpus filling read this plane; the original character-ID
-lookup tables are released after it is filled. Wide IDs retain the decoding path.
-The plane is released after corpus materialization, before merge training. Its
-extra allocation trades memory during initialization for fewer repeated UTF-8
-scans and ID lookups; it does not guarantee a lower process memory peak.
+Enabled initial caches use two or four bytes per slot, independently of mutable
+slot layout. Character-ID lookup tables are released after cache construction;
+the cache is released after materialization, before merge training. A wide plane
+adds 2N logical bytes over a narrow plane (actual capacity also counts), in exchange
+for fewer repeated UTF-8 scans and ID lookups. Checkpoints remain allocated
+until materialization.
 
 ### Slot and coordinate storage
 

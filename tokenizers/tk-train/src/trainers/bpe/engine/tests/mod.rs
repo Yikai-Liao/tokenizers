@@ -15,6 +15,31 @@ fn check_with_workers(
     words: &AHashMap<CompactString, u64>,
     workers: &[usize],
 ) {
+    check_with_workers_and_cache(
+        trainer,
+        words,
+        workers,
+        &[corpus::InitialCachePolicy::default()],
+    );
+}
+pub(super) fn check_cache_modes(trainer: &BpeTrainer, words: &AHashMap<CompactString, u64>) {
+    check_with_workers_and_cache(
+        trainer,
+        words,
+        &[1, 4],
+        &[
+            corpus::InitialCachePolicy::default(),
+            corpus::InitialCachePolicy::U32,
+            corpus::InitialCachePolicy::SCANNER,
+        ],
+    );
+}
+fn check_with_workers_and_cache(
+    trainer: &BpeTrainer,
+    words: &AHashMap<CompactString, u64>,
+    workers: &[usize],
+    cache_policies: &[corpus::InitialCachePolicy],
+) {
     let mut expected_trace = Vec::new();
     let expected = trainer
         .do_train_observed(words, |pair, count, id| {
@@ -22,20 +47,28 @@ fn check_with_workers(
         })
         .unwrap();
     for &workers in workers {
-        let mut trace = Vec::<(Pair, u64, u32)>::new();
-        let actual = train(
-            trainer,
-            WordCountsView::from_map(words),
-            workers,
-            Some(&mut |pair, count, id| trace.push((pair, count, id))),
-        )
-        .unwrap();
-        assert_eq!(
-            trace, expected_trace,
-            "workers={workers}, prefix={:?}, suffix={:?}, limit={:?}",
-            trainer.continuing_subword_prefix, trainer.end_of_word_suffix, trainer.max_token_length
-        );
-        assert_eq!(actual, expected, "workers={workers}");
+        for &cache_policy in cache_policies {
+            let mut trace = Vec::<(Pair, u64, u32)>::new();
+            let actual = train_with_merge_options_and_cache(
+                trainer,
+                WordCountsView::from_map(words),
+                workers,
+                merge::MergeOptions::default(),
+                cache_policy,
+                Some(&mut |pair, count, id| trace.push((pair, count, id))),
+                None,
+            )
+            .unwrap();
+            assert_eq!(
+                trace,
+                expected_trace,
+                "workers={workers}, prefix={:?}, suffix={:?}, limit={:?}",
+                trainer.continuing_subword_prefix,
+                trainer.end_of_word_suffix,
+                trainer.max_token_length
+            );
+            assert_eq!(actual, expected, "workers={workers}");
+        }
     }
 }
 

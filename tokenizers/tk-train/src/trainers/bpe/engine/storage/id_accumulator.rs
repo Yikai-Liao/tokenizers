@@ -1,209 +1,189 @@
-use ahash::AHashMap;
-
 const NO_ENTRY: u32 = u32::MAX;
-// Bound the dense u32 directory to 256 KiB; this does not narrow the ID domain.
-const DENSE_IDS: usize = (256 << 10) / std::mem::size_of::<u32>();
-/// Reusable bounded ID-to-entry storage, independent of accumulated values.
-/// Returning a directory releases every value and its backing allocation.
+/// Reusable ID-to-entry storage. Only touched IDs own accumulated values.
 #[derive(Default)]
 pub(in super::super) struct IdDirectory {
     indices: Vec<u32>,
+    expected_domain: usize,
     drain_pending: bool,
 }
 impl IdDirectory {
+    pub(in super::super) fn expect_domain(&mut self, domain: usize) {
+        self.expected_domain = domain.min(u32::MAX as usize);
+    }
     fn ensure_domain(&mut self, domain: usize) {
-        // Grow geometrically without allowing Vec's doubling to exceed the
-        // bounded dense domain near its upper limit.
         if domain > self.indices.capacity() {
+            // This is a capacity hint, never an ID limit. Reserve the exact
+            // expected bound once, rather than round 100k/200k up to powers of
+            // two. Only the actual domain is initialized; later jobs append
+            // its new tail and preserve previously initialized indices.
             self.indices
-                .reserve_exact(domain.next_power_of_two() - self.indices.len());
+                .reserve_exact(self.expected_domain.max(domain) - self.indices.len());
         }
-        self.indices.resize(domain, NO_ENTRY);
+        if domain > self.indices.len() {
+            self.indices.resize(domain, NO_ENTRY);
+        }
     }
 }
-/// Accumulates values by ID and drains only touched IDs.
-/// A bounded dense directory avoids hashing; values occupy touched storage only.
+/// Accumulate by ID in a dense u32 directory; values occupy touched storage only.
+/// A D-entry reservation requests 4*D bytes: two directions on eight workers
+/// request about 6.10 MiB at D=100k or 12.21 MiB at D=200k. An allocator may
+/// grant more capacity and has additional overhead; storage is reused per job.
+/// Vocabulary IDs are contiguous and exclude u32::MAX (the word separator).
 pub(in super::super) struct IdAccumulator<T> {
-    storage: Storage<T>,
-}
-enum Storage<T> {
-    Dense {
-        directory: IdDirectory,
-        entries: Vec<(u32, T)>,
-    },
-    Sparse(AHashMap<u32, T>),
+    directory: IdDirectory,
+    entries: Vec<(u32, T)>,
 }
 impl<T: Default> IdAccumulator<T> {
-    /// Reuse a previously returned directory for a new value type and domain.
-    /// Large domains use sparse storage and release the bounded directory.
+    /// Reuse a returned directory. IDs must belong to the supplied actual domain;
+    /// an expected capacity hint never prevents a larger actual domain. Shrinking
+    /// a later domain retains initialized storage, so invalid IDs beyond that
+    /// domain are not guaranteed to panic. Engine callers always pass valid IDs.
     pub(in super::super) fn with_directory(domain: usize, mut directory: IdDirectory) -> Self {
+        // Unique touched IDs are fewer than or equal to this contiguous domain.
+        // Domain <= u32::MAX therefore bounds entry indices by u32::MAX-1,
+        // leaving NO_ENTRY unavailable as a real entry index. Retained lengths
+        // obey the same bound because every earlier constructor checked it.
+        assert!(
+            domain <= u32::MAX as usize,
+            "BPE ID domain exceeds the reserved separator"
+        );
+        directory.ensure_domain(domain);
         Self {
-            storage: if domain <= DENSE_IDS {
-                directory.ensure_domain(domain);
-                Storage::Dense {
-                    directory,
-                    entries: Vec::new(),
-                }
-            } else {
-                Storage::Sparse(AHashMap::new())
-            },
+            directory,
+            entries: Vec::new(),
         }
     }
     /// Return a touched value, creating its default value on the first visit.
-    ///
-    /// # Panics
-    /// Panics when an ID lies outside a dense domain supplied to the constructor.
-    // PERF: Touched-ID lookup runs for each adjacent boundary. Inlining lets
-    // callers specialize the accumulator value without a per-boundary call.
-    // The sparse insertion branch makes ordinary inline heuristics keep this
-    // out of line even for dense token loops; keep the directory lookup local.
     #[inline(always)]
     pub(in super::super) fn touch(&mut self, id: u32) -> &mut T {
-        match &mut self.storage {
-            Storage::Dense { directory, entries } => {
-                let index = &mut directory.indices[id as usize];
-                if *index == NO_ENTRY {
-                    let value = T::default();
-                    entries.push((id, value));
-                    // Distinct touched IDs cannot exceed the bounded dense domain.
-                    // Publish only after construction, so a caught default-value
-                    // panic cannot leave a stale index in a reusable directory.
-                    *index = (entries.len() - 1) as u32;
-                }
-                &mut entries[*index as usize].1
-            }
-            Storage::Sparse(values) => values.entry(id).or_default(),
+        let index = &mut self.directory.indices[id as usize];
+        if *index == NO_ENTRY {
+            let next = self.entries.len() as u32;
+            debug_assert!(next < NO_ENTRY);
+            let value = T::default();
+            self.entries.push((id, value));
+            // Real IDs exclude the separator, so at most u32::MAX distinct
+            // entries exist and their last index is at most u32::MAX-1.
+            // Publish after construction: a caught Default panic leaves no
+            // stale index in a reusable directory.
+            *index = next;
         }
+        &mut self.entries[*index as usize].1
     }
-    /// Look up a value without marking an ID as touched.
     #[cfg(test)]
     fn get(&self, id: u32) -> Option<&T> {
-        match &self.storage {
-            Storage::Dense { directory, entries } => directory
-                .indices
-                .get(id as usize)
-                .filter(|&&index| index != NO_ENTRY)
-                .map(|&index| &entries[index as usize].1),
-            Storage::Sparse(values) => values.get(&id),
-        }
+        self.directory
+            .indices
+            .get(id as usize)
+            .filter(|&&index| index != NO_ENTRY)
+            .map(|&index| &self.entries[index as usize].1)
     }
     /// Move out touched values, retaining allocations. Dropping the iterator
-    /// removes its unconsumed values as well.
+    /// also removes unconsumed values and clears their directory entries.
     pub(in super::super) fn drain(&mut self) -> impl Iterator<Item = (u32, T)> + '_ {
-        match &mut self.storage {
-            Storage::Dense { directory, entries } => {
-                let prior_pending = directory.drain_pending;
-                directory.drain_pending = true;
-                IdDrain::Dense {
-                    entries: entries.drain(..),
-                    indices: &mut directory.indices,
-                    pending: &mut directory.drain_pending,
-                    prior_pending,
-                }
-            }
-            Storage::Sparse(values) => IdDrain::Sparse(values.drain()),
+        let prior_pending = self.directory.drain_pending;
+        self.directory.drain_pending = true;
+        IdDrain {
+            entries: self.entries.drain(..),
+            indices: &mut self.directory.indices,
+            pending: &mut self.directory.drain_pending,
+            prior_pending,
         }
     }
 }
 impl<T> IdAccumulator<T> {
-    /// Number of touched IDs, including values whose birth chain is empty.
-    /// Both representations store this count; no directory or value scan occurs.
+    /// Number of touched IDs, including empty birth chains.
     pub(in super::super) fn touched_len(&self) -> usize {
-        match &self.storage {
-            Storage::Dense { entries, .. } => entries.len(),
-            Storage::Sparse(values) => values.len(),
-        }
+        self.entries.len()
     }
     /// Release values and return only reusable ID lookup storage.
-    /// Unconsumed touched IDs are reset before the directory changes owners.
     pub(in super::super) fn into_directory(self) -> IdDirectory {
-        match self.storage {
-            Storage::Dense {
-                mut directory,
-                entries,
-            } => {
-                if directory.drain_pending {
-                    // A forgotten Vec::Drain has removed its entries from the
-                    // vector without running our touched-ID cleanup. Recover
-                    // only this exceptional transfer with a complete reset.
-                    directory.indices.fill(NO_ENTRY);
-                    directory.drain_pending = false;
-                } else {
-                    for (id, _) in entries {
-                        directory.indices[id as usize] = NO_ENTRY;
-                    }
-                }
-                directory
+        let Self {
+            mut directory,
+            entries,
+        } = self;
+        if directory.drain_pending {
+            // A forgotten Vec::Drain leaked its values and bypassed touched-ID
+            // cleanup. Only this exceptional transfer needs a complete reset.
+            directory.indices.fill(NO_ENTRY);
+            directory.drain_pending = false;
+        } else {
+            for (id, _) in entries {
+                directory.indices[id as usize] = NO_ENTRY;
             }
-            Storage::Sparse(_) => IdDirectory::default(),
         }
+        directory
     }
 }
-enum IdDrain<'a, T> {
-    Dense {
-        entries: std::vec::Drain<'a, (u32, T)>,
-        indices: &'a mut [u32],
-        pending: &'a mut bool,
-        prior_pending: bool,
-    },
-    Sparse(std::collections::hash_map::Drain<'a, u32, T>),
+struct IdDrain<'a, T> {
+    entries: std::vec::Drain<'a, (u32, T)>,
+    indices: &'a mut [u32],
+    pending: &'a mut bool,
+    prior_pending: bool,
 }
 impl<T> Iterator for IdDrain<'_, T> {
     type Item = (u32, T);
     fn next(&mut self) -> Option<Self::Item> {
-        match self {
-            Self::Dense {
-                entries, indices, ..
-            } => entries.next().map(|(id, value)| {
-                indices[id as usize] = NO_ENTRY;
-                (id, value)
-            }),
-            Self::Sparse(entries) => entries.next(),
-        }
+        self.entries.next().map(|(id, value)| {
+            self.indices[id as usize] = NO_ENTRY;
+            (id, value)
+        })
     }
 }
 impl<T> Drop for IdDrain<'_, T> {
     fn drop(&mut self) {
-        if let Self::Dense {
-            entries,
-            indices,
-            pending,
-            prior_pending,
-        } = self
-        {
-            for (id, _) in entries {
-                indices[id as usize] = NO_ENTRY;
-            }
-            // Completing this drain cannot clean IDs leaked by an earlier
-            // forgotten drain. Preserve that state until ownership transfer.
-            **pending = *prior_pending;
+        for (id, _) in &mut self.entries {
+            self.indices[id as usize] = NO_ENTRY;
         }
+        // A later drain cannot clean IDs leaked by an earlier forgotten drain.
+        *self.pending = self.prior_pending;
     }
 }
 #[cfg(test)]
 mod tests {
     use super::*;
     #[test]
-    fn touched_values_do_not_survive_drain_in_either_domain() {
-        for domain in [4, 100_000] {
-            let mut counts = IdAccumulator::<usize>::with_directory(domain, IdDirectory::default());
+    fn touched_values_do_not_survive_drain_across_large_domains() {
+        let mut directory = IdDirectory::default();
+        directory.expect_domain(usize::MAX);
+        assert_eq!(directory.expected_domain, u32::MAX as usize);
+        assert_eq!(super::super::super::expected_id_domain(usize::MAX, 3, 2), 5);
+        for domain in [4, 100_000, 200_000] {
+            let mut directory = IdDirectory::default();
+            directory.expect_domain(domain);
+            assert_eq!(directory.indices.capacity(), 0);
+            let mut counts = IdAccumulator::<usize>::with_directory(4, directory);
+            let allocation = (
+                counts.directory.indices.as_ptr(),
+                counts.directory.indices.capacity(),
+            );
+            assert!(allocation.1 >= domain);
             *counts.touch(1) += 3;
             *counts.touch(1) += 7;
             *counts.touch(3) += 11;
+            assert_eq!(counts.touched_len(), 2);
             let mut result: Vec<_> = counts.drain().collect();
+            assert_eq!(counts.touched_len(), 0);
             result.sort_unstable();
             assert_eq!(result, [(1, 10), (3, 11)]);
             assert_eq!(counts.get(1), None);
             assert_eq!(*counts.touch(1), 0);
             *counts.touch(3) = 99;
-            assert_eq!(counts.touched_len(), 2);
             drop(counts.drain().take(1));
-            assert_eq!(counts.touched_len(), 0);
             assert_eq!(counts.get(1), None);
             assert_eq!(counts.get(3), None);
+            let mut counts = IdAccumulator::<u64>::with_directory(domain, counts.into_directory());
+            assert_eq!(
+                (
+                    counts.directory.indices.as_ptr(),
+                    counts.directory.indices.capacity()
+                ),
+                allocation
+            );
+            assert_eq!(*counts.touch((domain - 1) as u32), 0);
             let mut counts =
-                IdAccumulator::<usize>::with_directory(100_000, counts.into_directory());
-            assert_eq!(*counts.touch(99_999), 0);
+                IdAccumulator::<u64>::with_directory(domain + 1, counts.into_directory());
+            assert_eq!(*counts.touch(domain as u32), 0);
         }
     }
     #[test]
@@ -233,23 +213,10 @@ mod tests {
             assert_eq!(*counts.touch(id), 0);
         }
         *counts.touch(7) = 19;
-        let directory = counts.into_directory();
-        let mut large = IdAccumulator::<usize>::with_directory(100_000, directory);
-        assert_eq!(*large.touch(99_999), 0);
-        let mut small = IdAccumulator::<usize>::with_directory(2, large.into_directory());
+        let mut small = IdAccumulator::<usize>::with_directory(2, counts.into_directory());
         assert_eq!(*small.touch(1), 0);
     }
-    #[test]
-    fn directory_growth_stays_within_the_dense_budget() {
-        let mut directory = IdDirectory::default();
-        for domain in [8_010, 16_021, 32_043, 64_087, DENSE_IDS] {
-            let mut counts = IdAccumulator::<u64>::with_directory(domain, directory);
-            *counts.touch((domain - 1) as u32) = 7;
-            directory = counts.into_directory();
-            assert!(directory.indices.capacity() <= DENSE_IDS);
-            assert!(directory.indices.iter().all(|&index| index == NO_ENTRY));
-        }
-    }
+
     #[test]
     fn caught_value_construction_panic_leaves_a_reusable_directory() {
         struct Panics;
@@ -271,17 +238,19 @@ mod tests {
     }
     #[test]
     fn forgotten_drain_does_not_transfer_dirty_ids_to_another_accumulator() {
-        for later_drains in 0..3 {
-            let mut counts = IdAccumulator::<u64>::with_directory(2, IdDirectory::default());
-            *counts.touch(1) = 7;
+        for (domain, later_drains) in [(4, 0), (100_000, 1), (200_000, 3)] {
+            let id = (domain - 1) as u32;
+            let mut counts = IdAccumulator::<u64>::with_directory(domain, IdDirectory::default());
+            *counts.touch(id) = 7;
             std::mem::forget(counts.drain());
             for _ in 0..later_drains {
                 drop(counts.drain());
             }
-            let mut counts = IdAccumulator::<usize>::with_directory(2, counts.into_directory());
+            let mut counts =
+                IdAccumulator::<usize>::with_directory(domain, counts.into_directory());
             *counts.touch(0) = 99;
-            assert_eq!(counts.get(1), None);
-            assert_eq!(*counts.touch(1), 0);
+            assert_eq!(counts.get(id), None);
+            assert_eq!(*counts.touch(id), 0);
         }
     }
 }

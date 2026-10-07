@@ -251,6 +251,27 @@ fn zero_merge_skips_initial_symbol_cache_preparation_in_isolated_process() {
             0
         );
 
+        for policy in [
+            corpus::InitialCachePolicy::U32,
+            corpus::InitialCachePolicy::SCANNER,
+        ] {
+            let parts = train_with_merge_options_and_cache(
+                &trainer,
+                WordCountsView::from_map(&words),
+                1,
+                merge::MergeOptions::default(),
+                policy,
+                None,
+                None,
+            )
+            .unwrap();
+            assert!(parts.1.is_empty());
+            assert_eq!(
+                corpus::CACHE_PREPARATION_ATTEMPTS.load(Ordering::Relaxed),
+                0
+            );
+        }
+
         corpus::CACHE_PREPARATION_ATTEMPTS.store(0, Ordering::Relaxed);
         let trainer = BpeTrainer::builder()
             .vocab_size(4)
