@@ -1,8 +1,10 @@
 //! Initial pair counting and position construction from a read-only corpus.
 //!
-//! Records cache the complete pair key and a wave-local coordinate. Keys with
-//! two 16-bit token IDs use eight-byte records; all other keys use twelve bytes.
-//! Stable grouping reads the cached key and retains incoming spatial order.
+//! Generic collectors cache the complete pair key and a wave-local coordinate:
+//! two 16-bit token IDs use eight-byte records; other keys use twelve bytes.
+//! The bounded collector stores four-byte offsets per occurrence and one original
+//! full key per group. Both retain incoming spatial order and share subsequent
+//! frequency counting, position encoding and checked publication.
 //! Adding the wave base restores the full-width global coordinate.
 //! A wave is bounded to 2^28 physical slots. Its boundary does not
 //! end a word or discard an edge: scanning reads the next corpus slot.
@@ -347,6 +349,26 @@ fn group_frequency<R: PositionRecord>(
 }
 
 impl<'arena> InitialPairTable<'arena> {
+    fn admitted_bounded_alphabet(
+        corpus: &impl InitialPairSource,
+        workers: usize,
+        records_per_wave: usize,
+    ) -> Option<bounded::Alphabet> {
+        let alphabet = bounded::Alphabet::new(corpus.bounded_initial_ids()?)?;
+        alphabet
+            .admits_source(corpus, workers, records_per_wave)
+            .then_some(alphabet)
+    }
+
+    #[cfg(test)]
+    pub(super) fn admits_bounded_for_test(
+        corpus: &impl InitialPairSource,
+        workers: usize,
+        records_per_wave: usize,
+    ) -> bool {
+        Self::admitted_bounded_alphabet(corpus, workers, records_per_wave).is_some()
+    }
+
     pub(super) fn build(
         corpus: impl InitialPairSource,
         minimum_frequency: u64,
@@ -379,28 +401,17 @@ impl<'arena> InitialPairTable<'arena> {
         records_per_wave: usize,
     ) -> Result<InitialPairTable<'arena>> {
         assert!(records_per_wave > 1 && records_per_wave <= radix::MAX_RECORDS);
-        if let Some(ids) = corpus.bounded_initial_ids()
-            && let Some(alphabet) = bounded::Alphabet::new(ids)
-            && alphabet.admits_source(&corpus, execution.workers(), records_per_wave)
+        if let Some(alphabet) =
+            Self::admitted_bounded_alphabet(&corpus, execution.workers(), records_per_wave)
         {
-            return Self::build_with_groups(
+            return Self::build_bounded(
                 corpus,
+                alphabet,
                 minimum_frequency,
                 execution,
                 arena,
                 progress,
                 records_per_wave,
-                |corpus, range, wave_floor, uniform_weight| {
-                    bounded::collect_wave(
-                        corpus,
-                        range,
-                        &alphabet,
-                        execution,
-                        progress,
-                        wave_floor,
-                        uniform_weight,
-                    )
-                },
             );
         }
         if corpus.compact_keys() {
@@ -422,6 +433,66 @@ impl<'arena> InitialPairTable<'arena> {
                 records_per_wave,
             )
         }
+    }
+
+    /// Exercise the actual bounded collector and shared publication on tiny
+    /// semantic fixtures. Production admission remains unchanged; this bypasses
+    /// only its cost heuristic, retaining the source/alphabet contracts.
+    #[cfg(test)]
+    pub(super) fn build_bounded_for_test(
+        corpus: impl InitialPairSource,
+        minimum_frequency: u64,
+        execution: &Execution,
+        arena: &'arena AllocationArena,
+        progress: &TrainingProgress,
+        records_per_wave: usize,
+    ) -> Result<InitialPairTable<'arena>> {
+        let alphabet = bounded::Alphabet::new(
+            corpus
+                .bounded_initial_ids()
+                .expect("forced bounded fixture supplies its actual IDs"),
+        )
+        .expect("forced bounded fixture has a legal alphabet");
+        Self::build_bounded(
+            corpus,
+            alphabet,
+            minimum_frequency,
+            execution,
+            arena,
+            progress,
+            records_per_wave,
+        )
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn build_bounded(
+        corpus: impl InitialPairSource,
+        alphabet: bounded::Alphabet,
+        minimum_frequency: u64,
+        execution: &Execution,
+        arena: &'arena AllocationArena,
+        progress: &TrainingProgress,
+        records_per_wave: usize,
+    ) -> Result<InitialPairTable<'arena>> {
+        Self::build_with_groups(
+            corpus,
+            minimum_frequency,
+            execution,
+            arena,
+            progress,
+            records_per_wave,
+            |corpus, range, wave_floor, uniform_weight| {
+                bounded::collect_wave(
+                    corpus,
+                    range,
+                    &alphabet,
+                    execution,
+                    progress,
+                    wave_floor,
+                    uniform_weight,
+                )
+            },
+        )
     }
 
     fn build_with_record<R: InitialRecord>(

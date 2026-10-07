@@ -1,5 +1,6 @@
 //! Coordinate planning, full pair keys, wave boundaries, and materialization.
 use super::*;
+use super::{corpus::InitialPairSource, pair_index::pair_key};
 
 struct ForcedFullWidth<'a>(corpus::InitialCorpus<'a>);
 impl corpus::InitialPairSource for ForcedFullWidth<'_> {
@@ -73,7 +74,7 @@ impl corpus::InitialPairSource for BoundedInitialSource<'_> {
 }
 
 #[test]
-fn bounded_pair_directory_matches_full_keys_weights_and_wave_append() {
+fn cost_rejected_high_ids_match_forced_bounded_weights_and_wave_append() {
     use std::sync::atomic::AtomicU32;
     let ids = [
         WORD_SEPARATOR_ID,
@@ -82,31 +83,62 @@ fn bounded_pair_directory_matches_full_keys_weights_and_wave_append() {
         7,
         WORD_SEPARATOR_ID,
         7,
+        7,
         65535,
         7,
         WORD_SEPARATOR_ID,
         65535,
         65535,
         WORD_SEPARATOR_ID,
+        WORD_SEPARATOR_ID,
+        7,
+        7,
+        WORD_SEPARATOR_ID,
     ];
     let slots: Vec<_> = ids.into_iter().map(AtomicU32::new).collect();
-    let weights = storage::IntervalIndex::new(vec![1, 5, 9], vec![5, 0, 3]);
+    let weights = storage::IntervalIndex::new(vec![1, 5, 10, 14], vec![5, 0, 3, 1]);
+    let source = || {
+        BoundedInitialSource::new(
+            corpus::InitialCorpus {
+                token_ids: &slots,
+                word_weights: &weights,
+            },
+            vec![7, 65535],
+        )
+    };
+    // A two-slot wave at 12 has no edge, between populated waves. The
+    // forced collector must handle this without publishing unwritten offsets.
+    let mut empty_wave_edges = 0;
+    source().for_each_edge(12..14, |_, _| empty_wave_edges += 1);
+    assert_eq!(empty_wave_edges, 0);
     let progress =
         TrainingProgress::new(false, tk_encode::utils::progress::ProgressFormat::Silent).unwrap();
     for workers in [1, 4, 65] {
         let execution = execution::Execution::new(workers).unwrap();
         let arena = AllocationArena::new(workers, slots.len() - 1);
         execution.pool.install(|| {
-            for floor in [0, 1, 6, 11] {
-                for wave in [3, 6, 1 << 28] {
-                    let bounded = initial_pairs::InitialPairTable::build_in_waves(
-                        BoundedInitialSource::new(
-                            corpus::InitialCorpus {
-                                token_ids: &slots,
-                                word_weights: &weights,
-                            },
-                            vec![7, 65535],
-                        ),
+            for floor in [0, 1, 6, 11, 12] {
+                for wave in [2, 3, 6, 1 << 28] {
+                    // These few edges cannot pay for the high-ID lookup. Keep
+                    // the admission regression, separately from collector semantics.
+                    assert!(!initial_pairs::InitialPairTable::admits_bounded_for_test(
+                        &source(),
+                        workers,
+                        wave,
+                    ));
+                    let fallback = initial_pairs::InitialPairTable::build_in_waves(
+                        source(),
+                        floor,
+                        &execution,
+                        &arena,
+                        &progress,
+                        wave,
+                    )
+                    .unwrap();
+                    // This entry explicitly selects the same bounded collect
+                    // and publication helpers used by the admitted production arm.
+                    let bounded = initial_pairs::InitialPairTable::build_bounded_for_test(
+                        source(),
                         floor,
                         &execution,
                         &arena,
@@ -126,8 +158,26 @@ fn bounded_pair_directory_matches_full_keys_weights_and_wave_append() {
                         wave,
                     )
                     .unwrap();
-                    assert_eq!(initial_snapshot(&bounded), initial_snapshot(&generic));
-                    assert_eq!(bounded.weighted_mass, 13);
+                    let snapshot = initial_snapshot(&bounded);
+                    assert_eq!(snapshot, initial_snapshot(&generic));
+                    assert_eq!(snapshot, initial_snapshot(&fallback));
+                    assert_eq!(snapshot.get(&pair_key((7, 7))).is_some(), floor <= 11);
+                    if floor <= 11 {
+                        // Offset 5 contributes zero mass to a positive key. It
+                        // survives a complete wave or a mixed positive wave;
+                        // a zero-only partial wave is filtered when floor > 0.
+                        let positions = if floor == 0 || wave >= 6 {
+                            vec![1, 2, 5, 14]
+                        } else {
+                            vec![1, 2, 14]
+                        };
+                        assert_eq!(snapshot[&pair_key((7, 7))], (11, positions));
+                    }
+                    if floor == 0 {
+                        let zero_positions = if wave >= slots.len() { vec![] } else { vec![6] };
+                        assert_eq!(snapshot[&pair_key((7, 65535))], (0, zero_positions));
+                    }
+                    assert_eq!(bounded.weighted_mass, 14);
                     assert_eq!(bounded.maximum_word_weight, 5);
                 }
             }
@@ -136,7 +186,7 @@ fn bounded_pair_directory_matches_full_keys_weights_and_wave_append() {
 }
 
 #[test]
-fn bounded_pair_count_keeps_u128_mass_and_checked_per_key_u64() {
+fn cost_rejected_overflow_fixture_checks_forced_bounded_and_generic() {
     use std::sync::atomic::AtomicU32;
     let progress =
         TrainingProgress::new(false, tk_encode::utils::progress::ProgressFormat::Silent).unwrap();
@@ -158,14 +208,32 @@ fn bounded_pair_count_keeps_u128_mass_and_checked_per_key_u64() {
             .collect();
             let arena = AllocationArena::new(1, 2);
             for wave in [3, 1 << 28] {
-                let result = initial_pairs::InitialPairTable::build_in_waves(
+                let source = || {
                     BoundedInitialSource::new(
                         corpus::InitialCorpus {
                             token_ids: &slots,
                             word_weights: &weights,
                         },
                         vec![1, 2],
-                    ),
+                    )
+                };
+                assert!(!initial_pairs::InitialPairTable::admits_bounded_for_test(
+                    &source(),
+                    1,
+                    wave,
+                ));
+                // A single wave overflows during group counting; wave=3
+                // overflows during checked append of two individually valid keys.
+                let bounded = initial_pairs::InitialPairTable::build_bounded_for_test(
+                    source(),
+                    0,
+                    &execution,
+                    &arena,
+                    &progress,
+                    wave,
+                );
+                let fallback = initial_pairs::InitialPairTable::build_in_waves(
+                    source(),
                     0,
                     &execution,
                     &arena,
@@ -173,9 +241,14 @@ fn bounded_pair_count_keeps_u128_mass_and_checked_per_key_u64() {
                     wave,
                 );
                 if repeated {
-                    assert!(result.is_err());
+                    let message = "BPE initial pair frequency exceeds u64";
+                    assert_eq!(bounded.err().unwrap().to_string(), message);
+                    assert_eq!(fallback.err().unwrap().to_string(), message);
                 } else {
-                    assert_eq!(result.unwrap().weighted_mass, 2 * u128::from(u64::MAX));
+                    let bounded = bounded.unwrap();
+                    let fallback = fallback.unwrap();
+                    assert_eq!(bounded.weighted_mass, 2 * u128::from(u64::MAX));
+                    assert_eq!(initial_snapshot(&bounded), initial_snapshot(&fallback));
                 }
             }
         }
@@ -183,7 +256,7 @@ fn bounded_pair_count_keeps_u128_mass_and_checked_per_key_u64() {
 }
 
 #[test]
-fn bounded_sources_with_no_edges_do_not_create_uninitialized_payloads() {
+fn no_edge_bounded_hints_are_cost_rejected_and_publish_empty_generic_output() {
     use std::sync::atomic::AtomicU32;
     let execution = execution::Execution::new(4).unwrap();
     let arena = AllocationArena::new(4, 0);
@@ -197,19 +270,18 @@ fn bounded_sources_with_no_edges_do_not_create_uninitialized_payloads() {
         ] {
             let slots: Vec<_> = ids.into_iter().map(AtomicU32::new).collect();
             let weights = storage::IntervalIndex::new(vec![0], vec![0]);
+            let source = BoundedInitialSource::new(
+                corpus::InitialCorpus {
+                    token_ids: &slots,
+                    word_weights: &weights,
+                },
+                vec![7],
+            );
+            assert!(!initial_pairs::InitialPairTable::admits_bounded_for_test(
+                &source, 4, 3,
+            ));
             let table = initial_pairs::InitialPairTable::build_in_waves(
-                BoundedInitialSource::new(
-                    corpus::InitialCorpus {
-                        token_ids: &slots,
-                        word_weights: &weights,
-                    },
-                    vec![7],
-                ),
-                0,
-                &execution,
-                &arena,
-                &progress,
-                3,
+                source, 0, &execution, &arena, &progress, 3,
             )
             .unwrap();
             assert!(initial_snapshot(&table).is_empty());
@@ -231,20 +303,21 @@ fn bounded_directory_preserves_order_across_parallel_spatial_producers() {
     let progress =
         TrainingProgress::new(false, tk_encode::utils::progress::ProgressFormat::Silent).unwrap();
     execution.pool.install(|| {
-        let bounded = initial_pairs::InitialPairTable::build(
-            BoundedInitialSource::new(
-                corpus::InitialCorpus {
-                    token_ids: &slots,
-                    word_weights: &weights,
-                },
-                vec![7, 65535],
-            ),
-            0,
-            &execution,
-            &arena,
-            &progress,
-        )
-        .unwrap();
+        let source = BoundedInitialSource::new(
+            corpus::InitialCorpus {
+                token_ids: &slots,
+                word_weights: &weights,
+            },
+            vec![7, 65535],
+        );
+        assert!(initial_pairs::InitialPairTable::admits_bounded_for_test(
+            &source,
+            4,
+            1 << 28,
+        ));
+        let bounded =
+            initial_pairs::InitialPairTable::build(source, 0, &execution, &arena, &progress)
+                .unwrap();
         let generic = initial_pairs::InitialPairTable::build(
             ForcedFullWidth(corpus::InitialCorpus {
                 token_ids: &slots,
@@ -683,8 +756,77 @@ fn long_word_split_preserves_unicode_filtering_affixes_and_merge_trace() {
     }
 }
 
+// Reconstruct the real first attempt's initialization and cache, then query the
+// very selector used by build_in_waves. No global observer can mix parallel tests.
+fn assert_training_plan_bounded_admission(
+    trainer: &BpeTrainer,
+    words: &AHashMap<CompactString, u64>,
+    workers: usize,
+    expected: bool,
+) {
+    let execution = execution::Execution::new(workers).unwrap();
+    let progress = TrainingProgress::new(false, trainer.progress_format).unwrap();
+    execution.pool.install(|| {
+        let mut retained = None;
+        let mut vocabulary = vocabulary::Vocabulary::initialize(
+            trainer,
+            WordCountsView::from_map(words),
+            workers,
+            &progress,
+            &mut retained,
+        )
+        .unwrap();
+        if expected {
+            assert!(
+                vocabulary.len() < trainer.vocab_size,
+                "training must build initial pairs"
+            );
+        }
+        let mut plan = corpus::CorpusPlan::build(
+            WordCountsView::from_map(words),
+            &mut vocabulary,
+            IdentityPolicy::FirstActivationOnly,
+            trainer.max_token_length.is_some(),
+            &progress,
+        )
+        .unwrap();
+        plan.prepare_initial_symbols(workers, &progress).unwrap();
+        assert_eq!(
+            initial_pairs::InitialPairTable::admits_bounded_for_test(&&plan, workers, 1 << 28),
+            expected,
+            "workers={workers}, edges={}",
+            plan.initial_edges(),
+        );
+    });
+}
+
 #[test]
-fn small_actual_byte_alphabet_training_preserves_full_trace() {
+fn cost_admitted_real_corpus_plan_preserves_full_training_trace() {
+    // Physical edges pay for the directory; increasing weights alone would not.
+    // The two-ID domain also keeps this end-to-end oracle fixture inexpensive.
+    let words: AHashMap<CompactString, u64> = [
+        ("ab".repeat(128).into(), 3),
+        ("ba".repeat(128).into(), 1),
+        ("aabb".repeat(64).into(), 5),
+        ("baaab".repeat(40).into(), 0),
+    ]
+    .into_iter()
+    .collect();
+    for floor in [1, 4] {
+        let trainer = BpeTrainer::builder()
+            .vocab_size(32)
+            .min_frequency(floor)
+            .show_progress(false)
+            .build();
+        for workers in [1, 4, 16] {
+            assert_training_plan_bounded_admission(&trainer, &words, workers, true);
+        }
+        check_with_workers(&trainer, &words, &[1, 4, 16]);
+    }
+}
+
+#[test]
+fn small_byte_alphabet_training_preserves_trace_with_cost_rejected_plan() {
     let alphabet = tk_encode::pre_tokenizers::byte_level::ByteLevel::alphabet();
     let words = alphabet
         .into_iter()
@@ -697,6 +839,11 @@ fn small_actual_byte_alphabet_training_preserves_full_trace() {
             .min_frequency(1)
             .show_progress(false)
             .build();
+        // 256 physical edges do not pay for a 65536-pair directory. Target=256
+        // can finish before collection; target=270 exercises the generic fallback.
+        for workers in [1, 4, 16] {
+            assert_training_plan_bounded_admission(&trainer, &words, workers, false);
+        }
         check_with_workers(&trainer, &words, &[1, 4, 16]);
     }
 }
