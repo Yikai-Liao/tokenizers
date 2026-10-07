@@ -355,6 +355,12 @@ floor together. AA and reuse keep their dedicated preparation paths.
 
 ### Owner commit order
 
+The index retains each owner's route, birth-grouping buffers, and completed-birth
+vector between rounds. These buffers keep their largest capacity for the attempt.
+Their live entries are cleared after all owner tasks join, including on an error;
+route indices must not outlive the events they address. This avoids repeated
+allocation while allowing unused capacity from an earlier round to remain resident.
+
 Each changed owner performs these operations within one joined phase:
 
 1. Stably group birth metadata while preserving the order of routed count actions.

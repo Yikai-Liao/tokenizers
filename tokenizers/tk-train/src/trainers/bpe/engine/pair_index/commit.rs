@@ -38,21 +38,24 @@ impl<'arena> PairIndex<'arena> {
         let policy = self.policy;
         let floor = self.minimum_frequency.max(1);
         let router = ShardRouter::new(self.shards.len());
-        let mut routes = events.dispatch_with_router(router);
+        events.dispatch_into(&mut self.routes, router);
         debug_assert!(births.is_empty() || policy == IdentityPolicy::FirstActivationOnly);
         // Serial metadata routing moves completed births, with no regrouping or
         // codec operation. Owners publish within the existing commit phase.
-        let mut prepared: Vec<Vec<CompletedBirth<'arena>>> =
-            (0..self.shards.len()).map(|_| Vec::new()).collect();
+        self.prepared_births
+            .resize_with(self.shards.len(), Vec::new);
+        for births in &mut self.prepared_births {
+            births.clear();
+        }
         for birth in births {
-            prepared[router.owner(birth.key)].push(birth);
+            self.prepared_births[router.owner(birth.key)].push(birth);
         }
 
-        let candidates = self
+        let result = self
             .shards
             .par_iter_mut()
-            .zip(prepared.into_par_iter())
-            .zip(routes.par_iter_mut())
+            .zip(self.prepared_births.par_iter_mut())
+            .zip(self.routes.par_iter_mut())
             // Owners without changes keep their counts and valid priorities.
             // Leave their lazy queue refill to selection and avoid scheduling
             // empty codec/directory work, at every corpus and vocabulary scale.
@@ -70,7 +73,17 @@ impl<'arena> PairIndex<'arena> {
                     )
                 },
             )
-            .collect::<Result<Vec<_>>>()?;
+            .collect::<Result<Vec<_>>>();
+
+        // Routes contain numeric references only. Drop them after all owner jobs
+        // have joined, including on error, while retaining their vector capacity.
+        for route in &mut self.routes {
+            route.clear();
+        }
+        for births in &mut self.prepared_births {
+            births.clear();
+        }
+        let candidates = result?;
 
         if let Selection::Cohorts { candidates: queue } = &mut self.selection {
             for births in candidates {
@@ -153,11 +166,11 @@ impl<'arena> PairShard<'arena> {
     /// key must be new here and absent from the remaining routed birth chains.
     fn publish_completed_births(
         &mut self,
-        births: Vec<CompletedBirth<'arena>>,
+        births: &mut Vec<CompletedBirth<'arena>>,
         policy: IdentityPolicy,
     ) {
         debug_assert!(births.is_empty() || policy == IdentityPolicy::FirstActivationOnly);
-        for birth in births {
+        for birth in births.drain(..) {
             let priority = PairPriority {
                 key: birth.key,
                 priority_count: birth.weight,

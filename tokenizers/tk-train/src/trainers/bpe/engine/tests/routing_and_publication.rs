@@ -120,6 +120,98 @@ fn routing_keeps_stable_births_and_original_count_actions() {
 }
 
 #[test]
+fn reusable_routes_clear_old_actions_and_regroup_for_new_bucket_domain() {
+    use super::storage::{PositionChain, PositionChains};
+    use merge::{ChangeAction, EventChunk, MergeEvents, OwnerRoute, PairChanges};
+    use pair_index::{ShardRouter, pair_key};
+
+    let mut chains = PositionChains::new();
+    let mut changes = Vec::new();
+    for i in 0..24_u32 {
+        let mut positions = PositionChain::default();
+        chains.push(&mut positions, u64::from(i)).unwrap();
+        changes.push(PairChanges {
+            removed_key: pair_key((i, i + 1)),
+            born_key: pair_key((i + 1, i)),
+            removed_weight: u64::from(i % 2 == 0),
+            born_weight: 0,
+            positions,
+            bucket: i % 8,
+        });
+    }
+    let first = MergeEvents {
+        buckets: 8,
+        chunks: vec![EventChunk { chains, changes }],
+    };
+    let mut routes = (0..4).map(|_| OwnerRoute::default()).collect::<Vec<_>>();
+    first.dispatch_into(&mut routes, ShardRouter::new(4));
+    for route in &mut routes {
+        route.group_births(&first);
+    }
+    let capacities: Vec<_> = routes
+        .iter()
+        .map(|route| (route.changes.capacity(), route.births.capacity()))
+        .collect();
+
+    let mut chains = PositionChains::new();
+    let mut zero_weight_birth = PositionChain::default();
+    chains.push(&mut zero_weight_birth, 99).unwrap();
+    let mut reused_id_birth = PositionChain::default();
+    chains.push(&mut reused_id_birth, 100).unwrap();
+    let second = MergeEvents {
+        buckets: 1,
+        chunks: vec![EventChunk {
+            chains,
+            changes: vec![
+                PairChanges {
+                    removed_key: pair_key((1, 2)),
+                    born_key: pair_key((2, 1)),
+                    removed_weight: 0,
+                    born_weight: 0,
+                    positions: zero_weight_birth,
+                    bucket: 0,
+                },
+                PairChanges {
+                    removed_key: pair_key((3, 4)),
+                    born_key: pair_key((3, 4)),
+                    removed_weight: 1,
+                    born_weight: 1,
+                    positions: reused_id_birth,
+                    bucket: 0,
+                },
+            ],
+        }],
+    };
+    second.dispatch_into(&mut routes, ShardRouter::new(4));
+    for route in &mut routes {
+        route.group_births(&second);
+    }
+    let active: Vec<_> = routes
+        .iter()
+        .flat_map(|route| route.changes.iter().map(|reference| reference.action()))
+        .collect();
+    assert_eq!(active.len(), 2);
+    assert!(
+        active
+            .iter()
+            .any(|action| matches!(action, ChangeAction::Birth))
+    );
+    assert!(
+        active
+            .iter()
+            .any(|action| matches!(action, ChangeAction::Both))
+    );
+    assert_eq!(
+        routes.iter().map(|route| route.births.len()).sum::<usize>(),
+        2
+    );
+    assert!(routes.iter().enumerate().all(|(index, route)| {
+        route.changes.capacity() >= capacities[index].0
+            && route.births.capacity() >= capacities[index].1
+    }));
+}
+
+#[test]
 fn routed_batches_preserve_rule_and_position_order_with_many_workers() {
     let mut words = counts(&[("aaaaaaa", 5), ("abcabc", 3), ("baab", 0), ("", 1)]);
     for index in 0..128_u32 {

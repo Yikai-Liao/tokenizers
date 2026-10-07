@@ -149,6 +149,8 @@ pub(super) struct PairIndex<'arena> {
     policy: IdentityPolicy,
     minimum_frequency: u64,
     selection: Selection<'arena>,
+    routes: Vec<super::merge::OwnerRoute>,
+    prepared_births: Vec<Vec<super::merge::CompletedBirth<'arena>>>,
 }
 
 impl PairShard<'_> {
@@ -295,6 +297,8 @@ impl<'arena> PairIndex<'arena> {
             policy,
             minimum_frequency,
             selection,
+            routes: Vec::new(),
+            prepared_births: Vec::new(),
         })
     }
 

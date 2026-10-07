@@ -52,6 +52,8 @@ impl RoutedChangeRef {
 pub(in super::super) struct OwnerRoute {
     pub(in super::super) changes: Vec<RoutedChangeRef>,
     pub(in super::super) births: Vec<usize>,
+    grouped_births: Vec<usize>,
+    bucket_offsets: Vec<usize>,
 }
 pub(in super::super) struct EventChunk {
     pub(in super::super) chains: PositionChains,
@@ -69,7 +71,10 @@ impl MergeEvents {
     #[cfg(test)]
     pub(in super::super) fn route(&self, workers: usize) -> Vec<OwnerRoute> {
         {
-            let mut routes = self.dispatch_with_router(ShardRouter::new(workers));
+            let mut routes = (0..workers)
+                .map(|_| OwnerRoute::default())
+                .collect::<Vec<_>>();
+            self.dispatch_into(&mut routes, ShardRouter::new(workers));
             for route in &mut routes {
                 route.group_births(self);
             }
@@ -78,13 +83,17 @@ impl MergeEvents {
     }
 
     /// Route only metadata. Birth grouping can run inside the owner task.
-    pub(in super::super) fn dispatch_with_router(&self, router: ShardRouter) -> Vec<OwnerRoute> {
-        let mut routes: Vec<_> = (0..router.shards())
-            .map(|_| OwnerRoute {
-                changes: Vec::new(),
-                births: Vec::new(),
-            })
-            .collect();
+    pub(in super::super) fn dispatch_into(
+        &self,
+        routes: &mut Vec<OwnerRoute>,
+        router: ShardRouter,
+    ) {
+        routes.resize_with(router.shards(), OwnerRoute::default);
+        for route in routes.iter_mut() {
+            route.changes.clear();
+            route.births.clear();
+            route.grouped_births.clear();
+        }
         for (chunk_index, chunk) in self.chunks.iter().enumerate() {
             for (index, change) in chunk.changes.iter().enumerate() {
                 debug_assert!((change.bucket as usize) < self.buckets);
@@ -124,10 +133,25 @@ impl MergeEvents {
                 }
             }
         }
-        routes
+    }
+}
+impl Default for OwnerRoute {
+    fn default() -> Self {
+        Self {
+            changes: Vec::new(),
+            births: Vec::new(),
+            grouped_births: Vec::new(),
+            bucket_offsets: Vec::new(),
+        }
     }
 }
 impl OwnerRoute {
+    pub(in super::super) fn clear(&mut self) {
+        self.changes.clear();
+        self.births.clear();
+        self.grouped_births.clear();
+    }
+
     /// Stably group birth references by rule/direction without changing actions.
     /// Equal-bucket fragments keep producer order for the fresh spatial encoder;
     /// reuse uses an encoder that also handles genuinely interleaved chains.
@@ -139,22 +163,23 @@ impl OwnerRoute {
             let reference = &self.changes[index];
             events.chunks[reference.chunk].changes[reference.index()].bucket as usize
         };
-        let mut offsets = vec![0_usize; events.buckets];
+        self.bucket_offsets.resize(events.buckets, 0);
+        self.bucket_offsets[..events.buckets].fill(0);
         for &index in &self.births {
-            offsets[bucket_of(index)] += 1;
+            self.bucket_offsets[bucket_of(index)] += 1;
         }
         let mut total = 0;
-        for offset in &mut offsets {
+        for offset in &mut self.bucket_offsets[..events.buckets] {
             let count = *offset;
             *offset = total;
             total += count;
         }
-        let mut births = vec![0; self.births.len()];
+        self.grouped_births.resize(self.births.len(), 0);
         for &index in &self.births {
-            let offset = &mut offsets[bucket_of(index)];
-            births[*offset] = index;
+            let offset = &mut self.bucket_offsets[bucket_of(index)];
+            self.grouped_births[*offset] = index;
             *offset += 1;
         }
-        self.births = births;
+        std::mem::swap(&mut self.births, &mut self.grouped_births);
     }
 }
