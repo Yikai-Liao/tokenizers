@@ -1,0 +1,40 @@
+{
+  "benchmark_repository_commit": "0fa8d08fc832b4f8f505e6bfb0f4637d0d29fad3",
+  "arms": {
+    "baseline": {
+      "branch": "main",
+      "code_commit": "8faaff79d859bfd6b2417cfe8c93ea2851c3aaca",
+      "build_id": "badfc052f99e95b871b75ad85a6e24e3067249bde351ab3af7d4bbc9c799b6a8",
+      "binary_sha256": "070717e030355fb20d7ac13e9a39af744d94afd66179d2ffaa2ab8f7a3da2901",
+      "runner_sha256": "0f7464f8ec6dbd8e399fa40ba9d7c91e1d9c359ad0b0caea4c0edec5be4824bc"
+    },
+    "stable": {
+      "branch": "experiment/owner-stable-group",
+      "code_commit": "e2e2f55e157beea06bdcba6e08190d8ecaba08fe",
+      "build_id": "fb35a733f9668659e35fb64af1f579802295d6b2fffc3d1f9b566799e3e06115",
+      "binary_sha256": "71c1278c66aa86c3982dcc2b3346b06fca00e078a643de126fbbb5f2cf8c65be",
+      "runner_sha256": "0f7464f8ec6dbd8e399fa40ba9d7c91e1d9c359ad0b0caea4c0edec5be4824bc"
+    },
+    "epoch": {
+      "branch": "experiment/owner-epoch-index",
+      "code_commit": "2d6c645a60faa4840a4d9609fba8e7952f0b6f0c",
+      "build_id": "1ca47d97129b041dd960e7894701f870e93fb32061e41cb1c2d481a68971e4d1",
+      "binary_sha256": "1611760bb0f649b6a502445c86199f2eae499886f91fbc38ff7a9ef1f42ff3b5",
+      "runner_sha256": "0f7464f8ec6dbd8e399fa40ba9d7c91e1d9c359ad0b0caea4c0edec5be4824bc"
+    },
+    "bucket": {
+      "branch": "experiment/owner-independent",
+      "code_commit": "edbd4f70918b9bafea4c9f8f80858e1b49aeb566",
+      "build_id": "01c506a12622a4c7f7ed3a66aadce57248c7d3d8ed3ff52c8ba959cbcbcd0def",
+      "binary_sha256": "d19cd30f48f67c59ea7dca073198518112b7ecb54ea54f863e9d740ee8a7c0dd",
+      "runner_sha256": "0f7464f8ec6dbd8e399fa40ba9d7c91e1d9c359ad0b0caea4c0edec5be4824bc"
+    },
+    "blocks": {
+      "branch": "experiment/owner-block-positions",
+      "code_commit": "47fbe9b71ca0c3fa7a27366f90044d7d8dd6eac4",
+      "build_id": "29b05982be8026c3fc44c1c2928808b3ad9e7de010bcc0dca20365938ceedee9",
+      "binary_sha256": "2da332552eb931a7dd751a1e2d3a9ae888ea001a88c755069c170ff263e078ee",
+      "runner_sha256": "0f7464f8ec6dbd8e399fa40ba9d7c91e1d9c359ad0b0caea4c0edec5be4824bc"
+    }
+  }
+}
