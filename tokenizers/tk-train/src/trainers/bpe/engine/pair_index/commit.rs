@@ -35,6 +35,9 @@ impl<'arena> PairIndex<'arena> {
         arena: &'arena AllocationArena,
         births: Vec<CompletedBirth<'arena>>,
     ) -> Result<()> {
+        if self.epoch.is_some() {
+            return self.commit_epoch(events, execution, arena, births);
+        }
         let policy = self.policy;
         let floor = self.minimum_frequency.max(1);
         let router = ShardRouter::new(self.shards.len());

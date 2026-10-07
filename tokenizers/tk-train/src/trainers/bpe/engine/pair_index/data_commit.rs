@@ -105,7 +105,11 @@ impl<'arena> PairIndex<'arena> {
             .into_par_iter()
             .map(|job| -> Result<CompletedBirth<'arena>> {
                 let positions = if job.count >= 16_384 {
-                    SortedPositions::from_cooperative_chains(job.count, &job.sources, arena)?
+                    SortedPositions::from_cooperative_chains(
+                        job.count,
+                        job.sources.iter().copied(),
+                        arena,
+                    )?
                 } else {
                     let worker = execution.current_worker();
                     let lease = arena.lease(worker);

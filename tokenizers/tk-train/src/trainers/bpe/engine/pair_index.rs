@@ -3,6 +3,8 @@
 //! a signed ledger and a separate position owner for each published birth cohort.
 mod commit;
 mod data_commit;
+mod epoch;
+mod epoch_commit;
 use super::storage::SortedPositions;
 use super::{IdentityPolicy, initial_pairs::InitialPairTable};
 use ahash::AHashMap;
@@ -153,6 +155,7 @@ pub(super) struct PairIndex<'arena> {
     routes: Vec<super::merge::OwnerRoute>,
     prepared_births: Vec<Vec<super::merge::CompletedBirth<'arena>>>,
     owner_mode: OwnerMode,
+    epoch: Option<epoch::EpochIndex<'arena>>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -251,11 +254,37 @@ impl<'arena> PairIndex<'arena> {
         policy: IdentityPolicy,
         minimum_frequency: u64,
     ) -> Result<Self> {
+        Self::from_initial_pairs_mode(initial, policy, minimum_frequency, OwnerMode::configured())
+    }
+    fn from_initial_pairs_mode(
+        initial: InitialPairTable<'arena>,
+        policy: IdentityPolicy,
+        minimum_frequency: u64,
+        owner_mode: OwnerMode,
+    ) -> Result<Self> {
         if policy == IdentityPolicy::AllowActiveReuse
             && (initial.weighted_mass > i64::MAX as u128
                 || initial.maximum_word_weight > i64::MAX as u64)
         {
             return Err("BPE identity-reuse weighted edge mass or word weight exceeds i64".into());
+        }
+        if policy == IdentityPolicy::FirstActivationOnly && owner_mode == OwnerMode::Data {
+            let epoch = epoch::EpochIndex::from_states(
+                initial.shards.into_iter().flatten(),
+                minimum_frequency.max(1),
+            );
+            return Ok(Self {
+                shards: Vec::new(),
+                policy,
+                minimum_frequency,
+                selection: Selection::Fresh {
+                    leaders: OctonaryHeap::new(),
+                },
+                routes: Vec::new(),
+                prepared_births: Vec::new(),
+                owner_mode,
+                epoch: Some(epoch),
+            });
         }
         let outputs: Vec<_> = initial
             .shards
@@ -315,13 +344,17 @@ impl<'arena> PairIndex<'arena> {
             selection,
             routes: Vec::new(),
             prepared_births: Vec::new(),
-            owner_mode: OwnerMode::configured(),
+            owner_mode,
+            epoch: None,
         })
     }
 
     /// Build the fresh owner frontier for a selection phase.
     /// Count updates wait until `end_selection` returns cached prefixes to heaps.
     pub(super) fn begin_selection(&mut self) {
+        if self.epoch.is_some() {
+            return;
+        }
         if let Selection::Fresh { leaders } = &mut self.selection {
             let mut heads = std::mem::take(leaders).into_vec();
             heads.clear();
@@ -339,6 +372,9 @@ impl<'arena> PairIndex<'arena> {
     /// existing unsigned ordering of signed ledger bits, including negative values.
     /// Call `take_best` before changing selection/count state to consume this winner.
     pub(super) fn best(&mut self) -> Option<PairPriority> {
+        if let Some(epoch) = &self.epoch {
+            return epoch.best();
+        }
         match &mut self.selection {
             Selection::Fresh { leaders } => {
                 best_first_activation(&mut self.shards, leaders, self.minimum_frequency.max(1))
@@ -354,6 +390,13 @@ impl<'arena> PairIndex<'arena> {
     /// while leaving its shared ledger and other cohorts intact.
     /// The returned list retains its `'arena` storage lifetime after this borrow ends.
     pub(super) fn take_best(&mut self) -> MergeCandidate<'arena> {
+        if let Some(epoch) = &mut self.epoch {
+            let (priority, positions) = epoch.take_best();
+            return MergeCandidate {
+                priority,
+                positions,
+            };
+        }
         match &mut self.selection {
             Selection::Fresh { leaders } => {
                 let (priority, shard) = *leaders
@@ -382,6 +425,9 @@ impl<'arena> PairIndex<'arena> {
     /// Return unconsumed fresh prefixes to heaps before commit changes counts.
     /// Keeping a cached prefix through commit would bypass stale-count repair.
     pub(super) fn end_selection(&mut self) {
+        if self.epoch.is_some() {
+            return;
+        }
         if self.policy == IdentityPolicy::FirstActivationOnly {
             for shard in &mut self.shards {
                 shard.restore_prefix();
@@ -398,6 +444,14 @@ impl<'arena> PairIndex<'arena> {
                 .par_iter_mut()
                 .for_each(|shard| shard.prepare_prefix(floor));
         }
+    }
+    #[cfg(test)]
+    fn baseline_for_test(
+        initial: InitialPairTable<'arena>,
+        policy: IdentityPolicy,
+        minimum_frequency: u64,
+    ) -> Result<Self> {
+        Self::from_initial_pairs_mode(initial, policy, minimum_frequency, OwnerMode::Baseline)
     }
 }
 
@@ -488,7 +542,7 @@ mod tests {
                 let old = (0, 1);
                 let complete = (2, 3);
                 let partial = (4, 5);
-                let mut index = PairIndex::from_initial_pairs(
+                let mut index = PairIndex::baseline_for_test(
                     initial(&[(old, 3, 1)], workers, &arena),
                     IdentityPolicy::FirstActivationOnly,
                     2,
@@ -565,7 +619,7 @@ mod tests {
         let arena = AllocationArena::new(1, 16);
         execution.pool.install(|| {
             let pair = (1, 2);
-            let mut index = PairIndex::from_initial_pairs(
+            let mut index = PairIndex::baseline_for_test(
                 initial(&[(pair, i64::MAX as u64, 1)], 1, &arena),
                 IdentityPolicy::AllowActiveReuse,
                 1,
@@ -617,7 +671,7 @@ mod tests {
             let old = (0, 1);
             let partial = (2, 3);
             let complete = (4, 5);
-            let mut index = PairIndex::from_initial_pairs(
+            let mut index = PairIndex::baseline_for_test(
                 initial(&[(old, 4, 1)], 1, &arena),
                 IdentityPolicy::FirstActivationOnly,
                 1,
@@ -700,7 +754,7 @@ mod tests {
                 ((5, 6), 8, 5),
                 ((6, 7), 7, 6),
             ];
-            let mut index = PairIndex::from_initial_pairs(
+            let mut index = PairIndex::baseline_for_test(
                 initial(&items, 2, &arena),
                 IdentityPolicy::FirstActivationOnly,
                 3,
@@ -769,7 +823,7 @@ mod tests {
                 .find(|&pair| shard_for(pair_key(pair), 2) != shard_for(pair_key(low), 2))
                 .unwrap();
             assert_ne!(shard_for(pair_key(low), 2), shard_for(pair_key(high), 2));
-            let mut index = PairIndex::from_initial_pairs(
+            let mut index = PairIndex::baseline_for_test(
                 initial(&[(low, 1, 1), (high, 2, 2)], 2, &arena),
                 IdentityPolicy::AllowActiveReuse,
                 1,
@@ -808,7 +862,7 @@ mod tests {
         let arena = AllocationArena::new(1, 16);
         execution.pool.install(|| {
             let pair = (1, 2);
-            let mut index = PairIndex::from_initial_pairs(
+            let mut index = PairIndex::baseline_for_test(
                 initial(&[(pair, 0, 1), ((3, 4), 10, 2)], 1, &arena),
                 IdentityPolicy::AllowActiveReuse,
                 3,
@@ -847,7 +901,7 @@ mod tests {
                 );
             }
             assert!(index.best().is_none());
-            let mut index = PairIndex::from_initial_pairs(
+            let mut index = PairIndex::baseline_for_test(
                 initial(&[(pair, 0, 1)], 1, &arena),
                 IdentityPolicy::AllowActiveReuse,
                 1,
@@ -883,7 +937,7 @@ mod tests {
             let items: Vec<_> = (0..64)
                 .map(|id| ((id, 30_000), 20, u64::from(id) + 1))
                 .collect();
-            let mut index = PairIndex::from_initial_pairs(
+            let mut index = PairIndex::baseline_for_test(
                 initial(&items, 1, &arena),
                 IdentityPolicy::FirstActivationOnly,
                 2,
