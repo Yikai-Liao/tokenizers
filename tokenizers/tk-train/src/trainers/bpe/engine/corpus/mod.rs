@@ -52,6 +52,17 @@ pub(super) trait InitialPairSource: Sync {
     fn compact_keys(&self) -> bool {
         false
     }
+    /// Sorted distinct initial IDs covering every symbol in emitted edges.
+    /// Unknown sources keep generic records. IDs are original vocabulary IDs,
+    /// not narrowed ordinals; unused symbols may conservatively be included.
+    fn bounded_initial_ids(&self) -> Option<Vec<u32>> {
+        None
+    }
+    /// Exact range cardinality from retained word geometry, without a symbol
+    /// scan. Unknown sources decline cost admission and use generic records.
+    fn bounded_edge_count(&self, _range: Range<usize>) -> Option<usize> {
+        None
+    }
 }
 #[cfg(test)]
 impl InitialPairSource for InitialCorpus<'_> {

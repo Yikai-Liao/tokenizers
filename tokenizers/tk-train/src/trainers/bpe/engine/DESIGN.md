@@ -410,6 +410,40 @@ order within each key. The wave base restores full-width positions. Interval wei
 weighted counts. Owners can encode initial lists in parallel using resources
 from the worker that executes each task.
 
+When the cached plan has at most 256 distinct resolved initial IDs, a bounded
+pair collector can replace per-occurrence keyed records with four-byte wave-local
+position offsets. Eligibility follows the IDs actually activated by retained
+symbols, including affix aliases and zero-weight words; it does not follow a
+pretokenizer flag or truncate vocabulary IDs. An ordinal lookup and sorted
+original-ID table recover complete pair keys. Those keys retain the existing
+owner routing and priority tie order. Stable counting partitions each pair's
+positions by ascending spatial producer range, preserving occurrence order.
+
+The collector has an `n²` pair domain. Producer count is bounded by the pool,
+spatial tile count, 64 producers, and a 16 MiB backing-capacity budget for the
+count rows and nonempty pair-slice descriptors. Owner/key totals and ordinal
+mapping require additional metadata; retained vector capacities enter the cost
+estimate. Unknown alphabets, wide IDs, and sources without a cheap exact edge
+count retain the generic compact/full-key collector.
+
+Small sources also retain generic records when the bounded-specific directory
+estimate `M` exceeds `E * (2 * sizeof(CompactKeyedValue) - sizeof(u32))`, where `E`
+is the full source's already measured edge count. The difference leaves room for
+the bounded four-byte offsets within the generic sorter's raw-plus-scratch record
+working set. Admission uses division to avoid multiplying large counts. This is
+a conservative working-set heuristic: some generic key distributions need no
+sorting scratch, and metadata shared by both collectors is excluded from `M`.
+It is not a bound on allocator overhead or the full training peak.
+
+Admission compares the global edge count with the maximum wave's directory
+estimate. A large source keeps the bounded collector even if its final wave is
+small; that tail can pay a disproportionate directory cost rather than losing
+the benefit of preceding large waves or requiring mixed record layouts. Both
+collectors share checked weighted-frequency reduction, floor handling, and
+multiwave position encoding and publication. Original ID ownership, checked
+count accumulation, and retirement before corpus materialization remain the
+same across the two record layouts.
+
 For bounded initial IDs, the read-only corpus plan caches retained-symbol IDs in
 a sixteen-bit plane. Word geometry distinguishes separators from valid IDs.
 Initial routing and corpus filling read this plane; the original character-ID

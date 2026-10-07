@@ -8,6 +8,8 @@
 //! end a word or discard an edge: scanning reads the next corpus slot.
 //! Each key is filtered after its complete frequency is known. Multiwave counts
 //! accumulate before filtering; a single wave can filter before encoding.
+mod bounded;
+
 use super::storage::{AllocationArena, IntervalIndex, SortedPositions, radix};
 use super::{corpus::InitialPairSource, execution::Execution, pair_index::PairState};
 use crate::progress::{TrainingProgress, WorkProgress};
@@ -81,31 +83,65 @@ impl<T: Default> OwnerDirectory<T> {
 }
 // Dispatch proves the chosen record can represent each emitted key and wave
 // offset; construction and access then preserve both values exactly.
-trait InitialRecord: RadixRecord {
+trait PositionRecord: Copy + Send + Sync {
+    fn local_offset(self) -> u32;
+}
+impl PositionRecord for u32 {
+    fn local_offset(self) -> u32 {
+        self
+    }
+}
+impl PositionRecord for KeyedValue {
+    fn local_offset(self) -> u32 {
+        self.value()
+    }
+}
+impl PositionRecord for CompactKeyedValue {
+    fn local_offset(self) -> u32 {
+        self.value()
+    }
+}
+trait InitialRecord: RadixRecord + PositionRecord {
     fn new(key: u64, value: u32) -> Self;
-    fn value(self) -> u32;
 }
 impl InitialRecord for KeyedValue {
     fn new(key: u64, value: u32) -> Self {
         KeyedValue::new(key, value)
-    }
-    fn value(self) -> u32 {
-        self.value()
     }
 }
 impl InitialRecord for CompactKeyedValue {
     fn new(key: u64, value: u32) -> Self {
         CompactKeyedValue::new(key, value)
     }
-    fn value(self) -> u32 {
-        self.value()
-    }
 }
-fn global_position<R: InitialRecord>(base: usize, record: R) -> u64 {
+fn global_position<R: PositionRecord>(base: usize, record: R) -> u64 {
     // The producer bounds the offset by its wave. Both parts fit a resident
     // corpus coordinate; retaining the base keeps positions above u32 intact.
-    base as u64 + u64::from(record.value())
+    base as u64 + u64::from(record.local_offset())
 }
+// Generic records carry their key; the bounded collector stores one key per
+// group and only u32 offsets per occurrence. Both feed the same count, encode,
+// checked multiwave append and publication lifecycle.
+trait GroupKeys<R> {
+    fn key(&self, records: &[R], group: usize, begin: usize) -> u64;
+}
+impl<R: InitialRecord> GroupKeys<R> for () {
+    fn key(&self, records: &[R], _group: usize, begin: usize) -> u64 {
+        records[begin].key()
+    }
+}
+impl GroupKeys<u32> for Vec<u64> {
+    fn key(&self, _records: &[u32], group: usize, _begin: usize) -> u64 {
+        self[group]
+    }
+}
+struct GroupedWave<R, K> {
+    records: Vec<R>,
+    groups: Vec<InitialGroup>,
+    keys: K,
+    mass: u128,
+}
+
 /// Collect fully initialized owner streams for one bounded wave. Count, slice
 /// assignment, producer writes and their join stay within this safety boundary.
 fn collect_wave_records<R: InitialRecord>(
@@ -264,25 +300,7 @@ fn count_groups<R: InitialRecord>(
         while end < records.len() && records[end].key() == key {
             end += 1;
         }
-        // PERF: The original uniform-weight path counts the run
-        // without coordinate or interval queries.
-        let frequency = if let Some(weight) = uniform_weight {
-            weight
-                .checked_mul((end - begin) as u64)
-                .ok_or("BPE initial pair frequency exceeds u64")?
-        } else {
-            let mut frequency = 0_u64;
-            for (count, weight) in weights.runs_for_sorted(&records[begin..end], |&record| {
-                global_position(wave_base, record)
-            }) {
-                let weight = *weight.expect("every initial edge belongs to a word interval");
-                frequency = weight
-                    .checked_mul(count as u64)
-                    .and_then(|part| frequency.checked_add(part))
-                    .ok_or("BPE initial pair frequency exceeds u64")?;
-            }
-            frequency
-        };
+        let frequency = group_frequency(&records[begin..end], wave_base, weights, uniform_weight)?;
         // Resident edges times u64 weights fit u128. Per-key counts
         // remain checked u64 values, without a global u64 mass cap.
         mass += u128::from(frequency);
@@ -302,6 +320,30 @@ fn count_groups<R: InitialRecord>(
     }
     work.complete(completed);
     Ok((groups, mass))
+}
+
+fn group_frequency<R: PositionRecord>(
+    records: &[R],
+    wave_base: usize,
+    weights: &IntervalIndex<u64>,
+    uniform_weight: Option<u64>,
+) -> Result<u64> {
+    if let Some(weight) = uniform_weight {
+        return weight
+            .checked_mul(records.len() as u64)
+            .ok_or_else(|| "BPE initial pair frequency exceeds u64".into());
+    }
+    let mut frequency = 0_u64;
+    for (count, weight) in
+        weights.runs_for_sorted(records, |&record| global_position(wave_base, record))
+    {
+        let weight = *weight.expect("every initial edge belongs to a word interval");
+        frequency = weight
+            .checked_mul(count as u64)
+            .and_then(|part| frequency.checked_add(part))
+            .ok_or("BPE initial pair frequency exceeds u64")?;
+    }
+    Ok(frequency)
 }
 
 impl<'arena> InitialPairTable<'arena> {
@@ -336,6 +378,31 @@ impl<'arena> InitialPairTable<'arena> {
         progress: &TrainingProgress,
         records_per_wave: usize,
     ) -> Result<InitialPairTable<'arena>> {
+        assert!(records_per_wave > 1 && records_per_wave <= radix::MAX_RECORDS);
+        if let Some(ids) = corpus.bounded_initial_ids()
+            && let Some(alphabet) = bounded::Alphabet::new(ids)
+            && alphabet.admits_source(&corpus, execution.workers(), records_per_wave)
+        {
+            return Self::build_with_groups(
+                corpus,
+                minimum_frequency,
+                execution,
+                arena,
+                progress,
+                records_per_wave,
+                |corpus, range, wave_floor, uniform_weight| {
+                    bounded::collect_wave(
+                        corpus,
+                        range,
+                        &alphabet,
+                        execution,
+                        progress,
+                        wave_floor,
+                        uniform_weight,
+                    )
+                },
+            );
+        }
         if corpus.compact_keys() {
             Self::build_with_record::<CompactKeyedValue>(
                 corpus,
@@ -365,6 +432,56 @@ impl<'arena> InitialPairTable<'arena> {
         progress: &TrainingProgress,
         records_per_wave: usize,
     ) -> Result<InitialPairTable<'arena>> {
+        Self::build_with_groups(
+            corpus,
+            minimum_frequency,
+            execution,
+            arena,
+            progress,
+            records_per_wave,
+            |corpus, range, wave_floor, uniform_weight| {
+                let mut buffers =
+                    collect_wave_records::<R>(corpus, range.clone(), execution, progress);
+                let records = buffers.iter().map(Vec::len).sum();
+                let sort_work = progress.stage("Sort initial pairs", records);
+                buffers.par_iter_mut().for_each(|records| {
+                    radix::sort_by_key(records);
+                    sort_work.complete(records.len());
+                });
+                let group_work = progress.stage("Count initial pairs", records);
+                buffers
+                    .into_par_iter()
+                    .map(|records| {
+                        let (groups, mass) = count_groups(
+                            &records,
+                            range.start,
+                            corpus.word_weights(),
+                            uniform_weight,
+                            wave_floor,
+                            &group_work,
+                        )?;
+                        Ok(GroupedWave {
+                            records,
+                            groups,
+                            keys: (),
+                            mass,
+                        })
+                    })
+                    .collect::<Result<Vec<_>>>()
+            },
+        )
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn build_with_groups<R: PositionRecord, K: GroupKeys<R> + Send, C: InitialPairSource>(
+        corpus: C,
+        minimum_frequency: u64,
+        execution: &Execution,
+        arena: &'arena AllocationArena,
+        progress: &TrainingProgress,
+        records_per_wave: usize,
+        collect: impl Fn(&C, Range<usize>, u64, Option<u64>) -> Result<Vec<GroupedWave<R, K>>>,
+    ) -> Result<InitialPairTable<'arena>> {
         assert!(records_per_wave > 1 && records_per_wave <= radix::MAX_RECORDS);
         let workers = execution.workers();
         let mut shards: Vec<_> = (0..workers)
@@ -391,49 +508,37 @@ impl<'arena> InitialPairTable<'arena> {
             let mut wave_tables: Vec<_> = (0..workers)
                 .map(|_| AHashMap::<u64, PairState<'arena>>::new())
                 .collect();
-            let mut record_buffers =
-                collect_wave_records::<R>(&corpus, base..end, execution, progress);
-            let records = record_buffers.iter().map(Vec::len).sum();
-            let sort_work = progress.stage("Sort initial pairs", records);
-            record_buffers.par_iter_mut().for_each(|records| {
-                radix::sort_by_key(records);
-                sort_work.complete(records.len());
-            });
-            let group_work = progress.stage("Build initial positions", records * 2);
-            let grouped: Vec<_> = record_buffers
-                .par_iter()
-                .map(|records| {
-                    count_groups(
-                        records,
-                        base,
-                        corpus.word_weights(),
-                        uniform_weight,
-                        wave_floor,
-                        &group_work,
-                    )
-                })
-                .collect::<Result<_>>()?;
+            let grouped = collect(&corpus, base..end, wave_floor, uniform_weight)?;
+            let records = grouped.iter().map(|wave| wave.records.len()).sum();
+            let group_work = progress.stage("Encode initial positions", records);
             let masses = wave_tables
                 .par_iter_mut()
-                .zip(record_buffers.par_iter_mut())
                 .zip(grouped.into_par_iter())
-                .map(|((table, buffer), (groups, mass))| -> Result<u128> {
-                    let records = std::mem::take(buffer);
+                .map(|(table, wave)| -> Result<u128> {
+                    let GroupedWave {
+                        records,
+                        groups,
+                        keys,
+                        mass,
+                    } = wave;
                     let worker = execution.current_worker();
                     let lease = arena.lease(worker);
                     let mut scratch = execution.encoding(worker);
                     table.reserve(groups.len());
-                    for InitialGroup {
-                        begin,
-                        end,
-                        frequency,
-                    } in groups
+                    for (
+                        group,
+                        InitialGroup {
+                            begin,
+                            end,
+                            frequency,
+                        },
+                    ) in groups.into_iter().enumerate()
                     {
                         let positions = records[begin as usize..end as usize]
                             .iter()
                             .map(|&record| global_position(base, record));
                         table.insert(
-                            records[begin as usize].key(),
+                            keys.key(&records, group, begin as usize),
                             PairState {
                                 ledger_count_bits: frequency,
                                 // A complete zero count has no candidate

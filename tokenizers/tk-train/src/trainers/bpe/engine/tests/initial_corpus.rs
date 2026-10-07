@@ -33,6 +33,234 @@ fn initial_snapshot(
         .collect()
 }
 
+struct BoundedInitialSource<'a> {
+    inner: corpus::InitialCorpus<'a>,
+    ids: Vec<u32>,
+    edges: usize,
+}
+impl<'a> BoundedInitialSource<'a> {
+    fn new(inner: corpus::InitialCorpus<'a>, ids: Vec<u32>) -> Self {
+        // Synthetic fixtures precompute their hint before invoking production
+        // admission. Real CorpusPlan already stores this exact geometry count.
+        let edges = inner
+            .token_ids
+            .windows(2)
+            .filter(|pair| {
+                pair.iter()
+                    .all(|id| id.load(std::sync::atomic::Ordering::Relaxed) != WORD_SEPARATOR_ID)
+            })
+            .count();
+        Self { inner, ids, edges }
+    }
+}
+impl corpus::InitialPairSource for BoundedInitialSource<'_> {
+    fn len(&self) -> usize {
+        corpus::InitialPairSource::len(&self.inner)
+    }
+    fn word_weights(&self) -> &storage::IntervalIndex<u64> {
+        self.inner.word_weights
+    }
+    fn for_each_edge(&self, range: std::ops::Range<usize>, emit: impl FnMut(usize, u64)) {
+        corpus::InitialPairSource::for_each_edge(&self.inner, range, emit);
+    }
+    fn bounded_initial_ids(&self) -> Option<Vec<u32>> {
+        Some(self.ids.clone())
+    }
+    fn bounded_edge_count(&self, range: std::ops::Range<usize>) -> Option<usize> {
+        assert_eq!(range, 0..self.inner.token_ids.len().saturating_sub(1));
+        Some(self.edges)
+    }
+}
+
+#[test]
+fn bounded_pair_directory_matches_full_keys_weights_and_wave_append() {
+    use std::sync::atomic::AtomicU32;
+    let ids = [
+        WORD_SEPARATOR_ID,
+        7,
+        7,
+        7,
+        WORD_SEPARATOR_ID,
+        7,
+        65535,
+        7,
+        WORD_SEPARATOR_ID,
+        65535,
+        65535,
+        WORD_SEPARATOR_ID,
+    ];
+    let slots: Vec<_> = ids.into_iter().map(AtomicU32::new).collect();
+    let weights = storage::IntervalIndex::new(vec![1, 5, 9], vec![5, 0, 3]);
+    let progress =
+        TrainingProgress::new(false, tk_encode::utils::progress::ProgressFormat::Silent).unwrap();
+    for workers in [1, 4, 65] {
+        let execution = execution::Execution::new(workers).unwrap();
+        let arena = AllocationArena::new(workers, slots.len() - 1);
+        execution.pool.install(|| {
+            for floor in [0, 1, 6, 11] {
+                for wave in [3, 6, 1 << 28] {
+                    let bounded = initial_pairs::InitialPairTable::build_in_waves(
+                        BoundedInitialSource::new(
+                            corpus::InitialCorpus {
+                                token_ids: &slots,
+                                word_weights: &weights,
+                            },
+                            vec![7, 65535],
+                        ),
+                        floor,
+                        &execution,
+                        &arena,
+                        &progress,
+                        wave,
+                    )
+                    .unwrap();
+                    let generic = initial_pairs::InitialPairTable::build_in_waves(
+                        ForcedFullWidth(corpus::InitialCorpus {
+                            token_ids: &slots,
+                            word_weights: &weights,
+                        }),
+                        floor,
+                        &execution,
+                        &arena,
+                        &progress,
+                        wave,
+                    )
+                    .unwrap();
+                    assert_eq!(initial_snapshot(&bounded), initial_snapshot(&generic));
+                    assert_eq!(bounded.weighted_mass, 13);
+                    assert_eq!(bounded.maximum_word_weight, 5);
+                }
+            }
+        });
+    }
+}
+
+#[test]
+fn bounded_pair_count_keeps_u128_mass_and_checked_per_key_u64() {
+    use std::sync::atomic::AtomicU32;
+    let progress =
+        TrainingProgress::new(false, tk_encode::utils::progress::ProgressFormat::Silent).unwrap();
+    let execution = execution::Execution::new(1).unwrap();
+    execution.pool.install(|| {
+        let weights = storage::IntervalIndex::new(vec![1], vec![u64::MAX]);
+        for repeated in [false, true] {
+            let slots: Vec<_> = [
+                WORD_SEPARATOR_ID,
+                1,
+                2,
+                WORD_SEPARATOR_ID,
+                if repeated { 1 } else { 2 },
+                2,
+                WORD_SEPARATOR_ID,
+            ]
+            .into_iter()
+            .map(AtomicU32::new)
+            .collect();
+            let arena = AllocationArena::new(1, 2);
+            for wave in [3, 1 << 28] {
+                let result = initial_pairs::InitialPairTable::build_in_waves(
+                    BoundedInitialSource::new(
+                        corpus::InitialCorpus {
+                            token_ids: &slots,
+                            word_weights: &weights,
+                        },
+                        vec![1, 2],
+                    ),
+                    0,
+                    &execution,
+                    &arena,
+                    &progress,
+                    wave,
+                );
+                if repeated {
+                    assert!(result.is_err());
+                } else {
+                    assert_eq!(result.unwrap().weighted_mass, 2 * u128::from(u64::MAX));
+                }
+            }
+        }
+    });
+}
+
+#[test]
+fn bounded_sources_with_no_edges_do_not_create_uninitialized_payloads() {
+    use std::sync::atomic::AtomicU32;
+    let execution = execution::Execution::new(4).unwrap();
+    let arena = AllocationArena::new(4, 0);
+    let progress =
+        TrainingProgress::new(false, tk_encode::utils::progress::ProgressFormat::Silent).unwrap();
+    execution.pool.install(|| {
+        for ids in [
+            Vec::new(),
+            vec![7],
+            vec![WORD_SEPARATOR_ID, 7, WORD_SEPARATOR_ID],
+        ] {
+            let slots: Vec<_> = ids.into_iter().map(AtomicU32::new).collect();
+            let weights = storage::IntervalIndex::new(vec![0], vec![0]);
+            let table = initial_pairs::InitialPairTable::build_in_waves(
+                BoundedInitialSource::new(
+                    corpus::InitialCorpus {
+                        token_ids: &slots,
+                        word_weights: &weights,
+                    },
+                    vec![7],
+                ),
+                0,
+                &execution,
+                &arena,
+                &progress,
+                3,
+            )
+            .unwrap();
+            assert!(initial_snapshot(&table).is_empty());
+            assert_eq!(table.weighted_mass, 0);
+        }
+    });
+}
+
+#[test]
+fn bounded_directory_preserves_order_across_parallel_spatial_producers() {
+    use std::sync::atomic::AtomicU32;
+    let tile = 1 << 18;
+    let slots: Vec<_> = (0..(2 * tile + 3))
+        .map(|i| AtomicU32::new(if i % 3 == 0 { 65535 } else { 7 }))
+        .collect();
+    let weights = storage::IntervalIndex::new(vec![0], vec![3]);
+    let execution = execution::Execution::new(4).unwrap();
+    let arena = AllocationArena::new(4, slots.len() - 1);
+    let progress =
+        TrainingProgress::new(false, tk_encode::utils::progress::ProgressFormat::Silent).unwrap();
+    execution.pool.install(|| {
+        let bounded = initial_pairs::InitialPairTable::build(
+            BoundedInitialSource::new(
+                corpus::InitialCorpus {
+                    token_ids: &slots,
+                    word_weights: &weights,
+                },
+                vec![7, 65535],
+            ),
+            0,
+            &execution,
+            &arena,
+            &progress,
+        )
+        .unwrap();
+        let generic = initial_pairs::InitialPairTable::build(
+            ForcedFullWidth(corpus::InitialCorpus {
+                token_ids: &slots,
+                word_weights: &weights,
+            }),
+            0,
+            &execution,
+            &arena,
+            &progress,
+        )
+        .unwrap();
+        assert_eq!(initial_snapshot(&bounded), initial_snapshot(&generic));
+        assert_eq!(bounded.weighted_mass, 3 * (slots.len() - 1) as u128);
+    });
+}
+
 #[test]
 fn full_pair_keys_remain_distinct_in_initial_counting() {
     use super::storage::IntervalIndex;
@@ -452,5 +680,23 @@ fn long_word_split_preserves_unicode_filtering_affixes_and_merge_trace() {
             }
             check_with_workers(&trainer, &words, &[1, 4, 16]);
         }
+    }
+}
+
+#[test]
+fn small_actual_byte_alphabet_training_preserves_full_trace() {
+    let alphabet = tk_encode::pre_tokenizers::byte_level::ByteLevel::alphabet();
+    let words = alphabet
+        .into_iter()
+        .enumerate()
+        .map(|(index, symbol)| (format!("{symbol}{symbol}").into(), [0, 1, 3][index % 3]))
+        .collect();
+    for target in [256, 270] {
+        let trainer = BpeTrainer::builder()
+            .vocab_size(target)
+            .min_frequency(1)
+            .show_progress(false)
+            .build();
+        check_with_workers(&trainer, &words, &[1, 4, 16]);
     }
 }

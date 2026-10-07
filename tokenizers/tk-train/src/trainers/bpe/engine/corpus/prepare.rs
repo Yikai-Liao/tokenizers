@@ -67,6 +67,34 @@ impl InitialPairSource for &CorpusPlan<'_> {
             InitialSymbols::Scanner(ids) => ids.compact_pair_keys(),
         }
     }
+    fn bounded_initial_ids(&self) -> Option<Vec<u32>> {
+        // Initial spans mark exactly the IDs activated by retained input symbols,
+        // including affix aliases. Forced unobserved alphabet and reserved tokens
+        // have no span. Keep wide scanners on the generic path: this candidate
+        // specializes pair grouping, without changing cache/materialization.
+        if !matches!(self.symbols, InitialSymbols::Cached(_)) {
+            return None;
+        }
+        let mut ids = Vec::new();
+        for (id, &span) in self.spans_by_id.iter().enumerate() {
+            if span != 0 {
+                if ids.len() == 256 {
+                    return None;
+                }
+                ids.push(id as u32);
+            }
+        }
+        Some(ids)
+    }
+    fn bounded_edge_count(&self, range: Range<usize>) -> Option<usize> {
+        Some(
+            if range.start == 0 && range.end == self.len.saturating_sub(1) {
+                self.edges
+            } else {
+                self.edge_count(range)
+            },
+        )
+    }
     fn edge_count(&self, range: Range<usize>) -> usize {
         // The plan has already measured retained symbols. Each word owns its
         // left endpoints through the penultimate symbol, including wave cuts.
@@ -528,6 +556,97 @@ mod tests {
     use super::*;
     use ahash::AHashMap;
     #[test]
+    fn bounded_domain_counts_resolved_affixes_aliases_and_observed_symbols() {
+        use crate::trainers::bpe::BpeTrainer;
+        use tk_encode::vocab::bucket_added_vocabulary::AddedToken;
+        for (prefix, suffix, letters) in [
+            (false, false, 256),
+            (true, false, 128),
+            (false, true, 128),
+            (true, true, 85),
+        ] {
+            for extra in [false, true] {
+                let first = char::from_u32(0x3400).unwrap();
+                let mut words: AHashMap<CompactString, u64> = (0..letters)
+                    .map(|i| {
+                        let ch = char::from_u32(0x3400 + i).unwrap();
+                        (
+                            ch.to_string()
+                                .repeat(if prefix && suffix { 3 } else { 2 })
+                                .into(),
+                            0,
+                        )
+                    })
+                    .collect();
+                if prefix && suffix {
+                    words.insert(first.to_string().into(), 0);
+                }
+                if extra {
+                    words.insert(
+                        char::from_u32(0x3400 + letters).unwrap().to_string().into(),
+                        0,
+                    );
+                }
+                let mut builder = BpeTrainer::builder()
+                    .vocab_size(2048)
+                    .initial_alphabet(['\u{e000}'].into_iter().collect())
+                    .show_progress(false);
+                if prefix {
+                    builder = builder.continuing_subword_prefix("##".into());
+                }
+                if suffix {
+                    builder = builder.end_of_word_suffix("</w>".into());
+                }
+                // Reuse a reserved decorated ID without changing the symbol count.
+                if prefix {
+                    builder =
+                        builder.special_tokens(vec![AddedToken::from(format!("##{first}"), true)]);
+                }
+                let trainer = builder.build();
+                let progress = TrainingProgress::new(false, trainer.progress_format).unwrap();
+                let mut retained = None;
+                let mut vocabulary = Vocabulary::initialize(
+                    &trainer,
+                    WordCountsView::from_map(&words),
+                    1,
+                    &progress,
+                    &mut retained,
+                )
+                .unwrap();
+                let mut plan = CorpusPlan::build(
+                    WordCountsView::from_map(&words),
+                    &mut vocabulary,
+                    IdentityPolicy::FirstActivationOnly,
+                    false,
+                    &progress,
+                )
+                .unwrap();
+                plan.prepare_initial_symbols(1, &progress).unwrap();
+                let actual: Vec<_> = plan
+                    .spans_by_id
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(id, &span)| (span != 0).then_some(id as u32))
+                    .collect();
+                assert_eq!(actual.len(), if extra { 257 } else { 256 });
+                assert_eq!(
+                    (&plan).bounded_initial_ids(),
+                    (!extra).then_some(actual.clone())
+                );
+                let emitted = plan
+                    .fill_tokens(1, &progress.stage("test", plan.len - 1), |_, id| id)
+                    .unwrap();
+                assert!(
+                    emitted
+                        .into_iter()
+                        .filter(|&id| id != WORD_SEPARATOR_ID)
+                        .all(|id| actual.binary_search(&id).is_ok())
+                );
+            }
+        }
+    }
+
+    #[test]
     fn real_initial_id_bound_selects_cached_or_scanned_symbols_without_truncation() {
         use crate::trainers::bpe::BpeTrainer;
         use tk_encode::vocab::bucket_added_vocabulary::AddedToken;
@@ -573,6 +692,10 @@ mod tests {
             assert_eq!(
                 matches!(plan.symbols, InitialSymbols::Cached(_)),
                 reserved == 65_535
+            );
+            assert_eq!(
+                (&plan).bounded_initial_ids(),
+                (reserved == 65_535).then(|| vec![7, reserved as u32])
             );
             let mut cached = Vec::new();
             (&plan).for_each_edge(0..3, |position, key| cached.push((position, key)));
@@ -730,6 +853,10 @@ mod tests {
 
         plan.prepare_initial_symbols(1, &progress).unwrap();
         assert!(matches!(plan.symbols, InitialSymbols::Cached(_)));
+        assert_eq!(
+            (&plan).bounded_initial_ids(),
+            Some(vec![0, u16::MAX as u32])
+        );
         let cached_tokens = plan
             .fill_tokens(
                 1,
