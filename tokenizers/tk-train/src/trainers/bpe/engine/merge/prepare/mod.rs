@@ -35,17 +35,15 @@ struct NeighborChanges {
     // Linked groups retain all coordinates here. After promotion this keeps
     // only the first two seed nodes; `vector` names the full coordinate list.
     positions: PositionChain,
-    // A scratch-local header index occupies the linked layout's trailing pad
-    // on 64-bit targets: removed8 + born8 + chain12 + index4 = 32B,
-    // equal to the old aligned layout. Some 32-bit layouts grow 28B to 32B;
-    // correctness is portable, but this equality is not a universal ABI claim.
+    // Producer checkpoints expand the chain handle to 16 bytes. The experiment
+    // explicitly charges this metadata cost to every candidate (40B here).
     // Tiny/ineligible groups own no Vec header or payload.
     vector: Option<NonZeroU32>,
 }
 #[cfg(target_pointer_width = "64")]
 const _: () = {
-    assert!(std::mem::size_of::<NeighborChanges>() == 32);
-    assert!(std::mem::size_of::<(u32, NeighborChanges)>() == 40);
+    assert!(std::mem::size_of::<NeighborChanges>() == 40);
+    assert!(std::mem::size_of::<(u32, NeighborChanges)>() == 48);
 };
 const _: () = assert!(PositionChains::MAX_NODES < u32::MAX as usize);
 pub(in super::super) struct MergeScratch {
