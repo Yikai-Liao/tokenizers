@@ -12,11 +12,13 @@ const LOCAL_KEY_LIMIT: usize = 2048;
 // Amortize the bridge's serialized source `next()` lock across several inputs.
 const FEED_BATCH_SIZE: usize = 32;
 
-fn batches<I, S>(mut iterator: I) -> impl Iterator<Item = Vec<S>> + Send
+fn batches<I, S>(iterator: I) -> impl Iterator<Item = Vec<S>> + Send
 where
     I: Iterator<Item = S> + Send,
     S: Send,
 {
+    // Keep one exhaustion state across batches, including a partial final batch.
+    let mut iterator = iterator.fuse();
     std::iter::from_fn(move || {
         let batch: Vec<_> = iterator.by_ref().take(FEED_BATCH_SIZE).collect();
         (!batch.is_empty()).then_some(batch)
@@ -148,6 +150,38 @@ mod tests {
             FEED_BATCH_SIZE + 1
         );
         assert_eq!(batches.next(), None);
+    }
+
+    #[test]
+    fn batches_stop_at_first_none_even_when_the_source_resumes() {
+        fn source(prefix: usize) -> impl Iterator<Item = usize> + Send {
+            let mut step = 0;
+            std::iter::from_fn(move || {
+                let current = step;
+                step += 1;
+                if current < prefix {
+                    Some(current)
+                } else if current == prefix + 1 {
+                    Some(usize::MAX)
+                } else {
+                    None
+                }
+            })
+        }
+        for prefix in [0, 1, 31, 32, 33, 64, 65] {
+            // Establish that this fixture really resumes after its first None.
+            let mut raw = source(prefix);
+            assert_eq!(raw.nth(prefix), None);
+            assert_eq!(raw.next(), Some(usize::MAX));
+            let mut grouped = batches(source(prefix));
+            let mut items = Vec::new();
+            for batch in grouped.by_ref() {
+                items.extend(batch);
+            }
+            assert_eq!(items, (0..prefix).collect::<Vec<_>>(), "{prefix}");
+            assert_eq!(grouped.next(), None);
+            assert_eq!(grouped.next(), None);
+        }
     }
 
     #[test]

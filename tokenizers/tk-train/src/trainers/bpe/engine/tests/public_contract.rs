@@ -144,7 +144,8 @@ fn public_thread_policy_in_isolated_processes() {
             .build()
             .unwrap()
             .install(|| {
-                check_feed_flush_boundaries(ambient);
+                check_feed_nonfused_none_boundaries(workers, parallel);
+                check_feed_flush_boundaries(ambient, parallel);
                 public_feed_train_and_model_reload_preserve_affixes();
                 feed_preserves_flat_counts_and_trainer_equality();
                 feed_error_runs_callbacks_without_replacing_previous_counts();
@@ -175,6 +176,7 @@ fn public_thread_policy_in_isolated_processes() {
         "true:2:2",
         "true:4:4",
         "true:4:2",
+        "true:4:16",
         "false:4:2",
     ] {
         let result = std::process::Command::new(std::env::current_exe().unwrap())
@@ -414,32 +416,137 @@ fn feed_error_runs_callbacks_without_replacing_previous_counts() {
     );
 }
 
-fn check_feed_flush_boundaries(workers: usize) {
+fn nonfused_inputs_resuming_after_none(before_none: usize) -> impl Iterator<Item = String> + Send {
+    let mut step = 0;
+    std::iter::from_fn(move || {
+        let current = step;
+        step += 1;
+        if current < before_none {
+            Some(format!("word{current}"))
+        } else if current == before_none {
+            None
+        } else if current == before_none + 1 {
+            Some("tail".into())
+        } else {
+            None
+        }
+    })
+}
+
+fn check_feed_nonfused_none_boundaries(workers: usize, parallel: bool) {
     use crate::Trainer;
     use crate::trainers::bpe::word_counts::WordCounts;
-    for unique in [2047, 2048, 2049] {
-        let output: Vec<_> = (0..unique).map(|i| format!("word{i}")).collect();
-        let expected = output
-            .iter()
-            .map(|word| (word.as_str().into(), 8))
-            .collect();
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    assert_eq!(tk_encode::parallelism::num_threads(), workers);
+    assert_eq!(tk_encode::parallelism::get_parallelism(), parallel);
+    for before_none in [31, 32, 33] {
+        let callbacks = AtomicUsize::new(0);
         let mut trainer = BpeTrainer::builder().show_progress(false).build();
         trainer
-            .feed(std::iter::repeat_n("input", 8), |_| {
-                assert_eq!(rayon::current_num_threads(), workers);
-                Ok(output.clone())
+            .feed(nonfused_inputs_resuming_after_none(before_none), |word| {
+                callbacks.fetch_add(1, Ordering::Relaxed);
+                Ok(vec![word.to_owned()])
             })
             .unwrap();
-        assert_eq!(trainer.get_word_count(), unique);
+
+        assert_eq!(callbacks.load(Ordering::Relaxed), before_none);
+        assert_eq!(trainer.get_word_count(), before_none);
+        let expected = (0..before_none)
+            .map(|index| (format!("word{index}").into(), 1))
+            .collect();
+        assert_eq!(trainer.words, WordCounts::from_map(expected));
+    }
+}
+
+struct FeedWorkerGate {
+    workers: std::sync::Mutex<std::collections::HashSet<usize>>,
+    ready: std::sync::Condvar,
+}
+
+impl FeedWorkerGate {
+    fn new() -> Self {
+        Self {
+            workers: std::sync::Mutex::new(std::collections::HashSet::new()),
+            ready: std::sync::Condvar::new(),
+        }
+    }
+
+    fn wait_for_second_worker(&self) {
+        use std::time::{Duration, Instant};
+        let worker = rayon::current_thread_index().expect("feed callback should run in Rayon");
+        let deadline = Instant::now() + Duration::from_secs(5);
+        let mut workers = self.workers.lock().unwrap();
+        if !workers.insert(worker) {
+            return;
+        }
+        self.ready.notify_all();
+        while workers.len() < 2 {
+            let remaining = deadline.saturating_duration_since(Instant::now());
+            assert!(
+                !remaining.is_zero(),
+                "only one Rayon worker ran feed callbacks"
+            );
+            let (next, timeout) = self.ready.wait_timeout(workers, remaining).unwrap();
+            workers = next;
+            assert!(
+                !timeout.timed_out() || workers.len() >= 2,
+                "only one Rayon worker ran feed callbacks"
+            );
+        }
+    }
+
+    fn participants(&self) -> usize {
+        self.workers.lock().unwrap().len()
+    }
+}
+
+fn check_feed_flush_boundaries(pool_workers: usize, parallel: bool) {
+    use crate::Trainer;
+    use crate::trainers::bpe::word_counts::WordCounts;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    const INPUTS_PER_BATCH: usize = 32;
+
+    assert_eq!(tk_encode::parallelism::get_parallelism(), parallel);
+    assert_eq!(rayon::current_num_threads(), pool_workers);
+    let coordinated = parallel && pool_workers > 1;
+    for unique in [2047, 2048, 2049] {
+        let output: Vec<_> = (0..unique).map(|i| format!("word{i}")).collect();
+        let batch_count = pool_workers.max(1) * 2;
+        let input_count = batch_count * INPUTS_PER_BATCH;
+        let gate = coordinated.then(FeedWorkerGate::new);
+        let callbacks = AtomicUsize::new(0);
+        let mut expected: AHashMap<CompactString, u64> = output
+            .iter()
+            .map(|word| (word.as_str().into(), batch_count as u64))
+            .collect();
+        expected.insert("shared".into(), (input_count - batch_count) as u64);
+        let mut trainer = BpeTrainer::builder().show_progress(false).build();
+        trainer
+            .feed((0..input_count).map(|index| index.to_string()), |input| {
+                callbacks.fetch_add(1, Ordering::Relaxed);
+                if let Some(gate) = &gate {
+                    gate.wait_for_second_worker();
+                }
+                let index = input.parse::<usize>().unwrap();
+                if index % INPUTS_PER_BATCH == 0 {
+                    Ok(output.clone())
+                } else {
+                    Ok(vec!["shared".into()])
+                }
+            })
+            .unwrap();
+        assert_eq!(callbacks.load(Ordering::Relaxed), input_count);
+        assert_eq!(trainer.get_word_count(), unique + 1);
         assert_eq!(
             trainer.words.view().iter().map(|(_, n)| n).sum::<u64>(),
-            (unique * 8) as u64
+            (unique * batch_count + input_count - batch_count) as u64
         );
         assert_eq!(trainer.words, WordCounts::from_map(expected));
-        assert_eq!(
-            matches!(trainer.words, WordCounts::Entries(_)),
-            tk_encode::parallelism::get_parallelism() && workers > 1
-        );
+        if let Some(gate) = &gate {
+            assert!(gate.participants() >= 2);
+        }
+        assert_eq!(matches!(trainer.words, WordCounts::Entries(_)), coordinated);
     }
 }
 
