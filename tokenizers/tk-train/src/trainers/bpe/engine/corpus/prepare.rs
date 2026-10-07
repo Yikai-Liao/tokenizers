@@ -19,7 +19,8 @@ use tk_encode::Result;
 
 // A word keeps its original byte coordinates and its measured global start.
 // Initial pair construction borrows this plan; no mutable slot allocation exists
-// until all raw records have retired.
+// until all raw records have retired. A cached immutable initial plane may
+// replace the decoding tables while the plan is borrowed.
 struct PlannedWord<'input> {
     word: &'input CompactString,
     start: u64,
@@ -28,10 +29,15 @@ struct SymbolCheckpoint {
     slot_position: usize,
     byte_offset: usize,
 }
+enum InitialSymbols {
+    Decoded(InitialTokenIds),
+    // Original word geometry identifies separators; all u16 IDs remain valid.
+    Cached(Vec<u16>),
+}
 pub(in super::super) struct CorpusPlan<'input> {
     words: Vec<PlannedWord<'input>>,
     checkpoints: Vec<SymbolCheckpoint>,
-    initial_ids: InitialTokenIds,
+    symbols: InitialSymbols,
     len: usize,
     weights: IntervalIndex<u64>,
     unit_weight: Option<(u64, u64)>,
@@ -48,7 +54,10 @@ impl InitialPairSource for &CorpusPlan<'_> {
         &self.weights
     }
     fn compact_keys(&self) -> bool {
-        self.initial_ids.compact_pair_keys()
+        match &self.symbols {
+            InitialSymbols::Cached(_) => true,
+            InitialSymbols::Decoded(ids) => ids.compact_pair_keys(),
+        }
     }
     fn edge_count(&self, range: Range<usize>) -> usize {
         // The plan has already measured retained symbols. Each word owns its
@@ -91,9 +100,23 @@ impl InitialPairSource for &CorpusPlan<'_> {
             if separator <= range.start {
                 continue;
             }
+            if let InitialSymbols::Cached(symbols) = &self.symbols {
+                let begin = word_start.max(range.start);
+                let end = separator.saturating_sub(1).min(range.end).max(begin);
+                for position in begin..end {
+                    emit(
+                        position,
+                        pair_key((
+                            u32::from(symbols[position]),
+                            u32::from(symbols[position + 1]),
+                        )),
+                    );
+                }
+                continue;
+            }
             let (mut position, byte_start) = self.scan_start(index, range.start);
             let mut previous = None;
-            self.initial_ids
+            self.initial_ids()
                 .scan_symbols(planned.word, byte_start, |id| {
                     if let Some((left_position, left)) = previous
                         && left_position >= range.start
@@ -247,10 +270,11 @@ impl<'input> CorpusPlan<'input> {
                     .unwrap_or(slots as u64);
                 (start, end - start)
             });
-        Ok(Self {
+        let cache_symbols = initial_ids.compact_pair_keys();
+        let mut plan = Self {
             words,
             checkpoints,
-            initial_ids,
+            symbols: InitialSymbols::Decoded(initial_ids),
             len: slots,
             weights: IntervalIndex::new(interval_starts, interval_weights),
             unit_weight,
@@ -258,7 +282,28 @@ impl<'input> CorpusPlan<'input> {
             scan_whole_words: length_limited,
             edges,
             weighted_mass,
-        })
+        };
+        if cache_symbols {
+            let work = progress.stage("Cache initial symbols", slots - 1);
+            plan.symbols = InitialSymbols::Cached(plan.fill_tokens(
+                rayon::current_num_threads(),
+                &work,
+                |_, id| {
+                    if id == WORD_SEPARATOR_ID {
+                        0
+                    } else {
+                        id as u16
+                    }
+                },
+            )?);
+        }
+        Ok(plan)
+    }
+    fn initial_ids(&self) -> &InitialTokenIds {
+        match &self.symbols {
+            InitialSymbols::Decoded(ids) => ids,
+            InitialSymbols::Cached(_) => unreachable!("cached scans use measured word geometry"),
+        }
     }
     pub(in super::super) fn initial_counts_fit_u64(&self) -> bool {
         self.weighted_mass <= u128::from(u64::MAX)
@@ -315,9 +360,18 @@ impl<'input> CorpusPlan<'input> {
             .get(index + 1)
             .map_or(self.len, |word| word.start as usize)
             - 1;
+        if let InitialSymbols::Cached(symbols) = &self.symbols {
+            for position in (planned.start as usize).max(range.start)..separator.min(range.end) {
+                emit(position, u32::from(symbols[position]));
+            }
+            if range.contains(&separator) {
+                emit(separator, WORD_SEPARATOR_ID);
+            }
+            return;
+        }
         if range.start < separator {
             let (mut position, byte_start) = self.scan_start(index, range.start);
-            self.initial_ids
+            self.initial_ids()
                 .scan_symbols(planned.word, byte_start, |id| {
                     if position >= range.end {
                         return ControlFlow::Break(());
@@ -341,7 +395,6 @@ impl<'input> CorpusPlan<'input> {
     ) -> Result<Vec<T>> {
         let slots = self.len;
         let words = &self.words;
-        let initial_ids = &self.initial_ids;
         let mut tokens = Vec::<MaybeUninit<T>>::new();
         tokens
             .try_reserve_exact(slots.checked_add(1).ok_or("BPE corpus size overflow")?)
@@ -401,10 +454,23 @@ impl<'input> CorpusPlan<'input> {
                     work.complete(region.len());
                     return;
                 }
+                if matches!(self.symbols, InitialSymbols::Cached(_)) {
+                    for index in start..end {
+                        self.for_each_word_token(
+                            index,
+                            base..base + region.len(),
+                            |position, id| {
+                                region[position - base].write(make(position, id));
+                            },
+                        );
+                    }
+                    work.complete(region.len());
+                    return;
+                }
                 let mut position = 0;
                 for planned in &words[start..end] {
                     let word = planned.word;
-                    initial_ids.scan_symbols(word, 0, |id| {
+                    self.initial_ids().scan_symbols(word, 0, |id| {
                         region[position].write(make(base + position, id));
                         position += 1;
                         ControlFlow::Continue(())
@@ -428,5 +494,86 @@ impl<'input> CorpusPlan<'input> {
             )
         };
         Ok(tokens)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn real_initial_id_bound_selects_cached_or_scanned_symbols_without_truncation() {
+        use crate::trainers::bpe::BpeTrainer;
+        use tk_encode::vocab::bucket_added_vocabulary::AddedToken;
+        let words = [(CompactString::from("ab"), 1)].into_iter().collect();
+        for reserved in [65_535, 65_536] {
+            let trainer = BpeTrainer::builder()
+                .vocab_size(reserved + 2)
+                .special_tokens(
+                    (0..reserved)
+                        .map(|index| {
+                            AddedToken::from(
+                                if index == 7 {
+                                    "b".to_owned()
+                                } else {
+                                    format!("reserved:{index}")
+                                },
+                                true,
+                            )
+                        })
+                        .collect(),
+                )
+                .show_progress(false)
+                .build();
+            let progress = TrainingProgress::new(false, trainer.progress_format).unwrap();
+            let mut retained = None;
+            let mut vocabulary = Vocabulary::initialize(
+                &trainer,
+                WordCountsView::from_map(&words),
+                1,
+                &progress,
+                &mut retained,
+            )
+            .unwrap();
+            let mut plan = CorpusPlan::build(
+                WordCountsView::from_map(&words),
+                &mut vocabulary,
+                IdentityPolicy::FirstActivationOnly,
+                false,
+                &progress,
+            )
+            .unwrap();
+            assert_eq!(
+                matches!(plan.symbols, InitialSymbols::Cached(_)),
+                reserved == 65_535
+            );
+            let mut cached = Vec::new();
+            (&plan).for_each_edge(0..3, |position, key| cached.push((position, key)));
+            assert_eq!(cached, [(1, pair_key((reserved as u32, 7)))]);
+            let mut lookahead = Vec::new();
+            (&plan).for_each_edge(1..2, |position, key| lookahead.push((position, key)));
+            assert_eq!(lookahead, cached);
+            let expected = [WORD_SEPARATOR_ID, reserved as u32, 7, WORD_SEPARATOR_ID];
+            assert_eq!(
+                plan.fill_tokens(1, &progress.stage("test", 3), |_, id| id)
+                    .unwrap(),
+                expected
+            );
+            plan.symbols = InitialSymbols::Decoded(
+                vocabulary
+                    .initial_ids(
+                        WordCountsView::from_map(&words),
+                        &progress.stage("scan test", 1),
+                    )
+                    .unwrap(),
+            );
+            let mut scanned = Vec::new();
+            (&plan).for_each_edge(0..3, |position, key| scanned.push((position, key)));
+            assert_eq!(cached, scanned);
+            assert_eq!(
+                plan.fill_tokens(1, &progress.stage("test", 3), |_, id| id)
+                    .unwrap(),
+                expected
+            );
+        }
     }
 }
