@@ -21,4 +21,6 @@
 
 候选来自两份用户提供的研究材料。稳定分组参考 [SPAA’23 Semisort](https://www.cs.ucr.edu/~ygu/papers/SPAA23/semisort.pdf)，epoch 的 join／bulk 思路参考 [Joinable Parallel Balanced Binary Trees](https://www.cs.cmu.edu/~blelloch/papers/3512769.pdf)；bucket 协作任务的研究参照包括 [DuckDB Window 执行](https://duckdb.org/2025/02/14/window-flying)，独立压缩块参考 [PaC-trees](https://arxiv.org/abs/2204.06077v1)。此处 Rust 实现独立编写，完整训练收益由本实验决定。
 
-实测数据、各分支 code commit 和 binary hash 将记录在 `REPORT.md`。
+实测数据、各分支 code commit 和 binary hash 见 [REPORT.md](REPORT.md)。[evidence](evidence) 保留完整 summary、每轮原值、测试日志，以及压缩的构建记录、主机信息、进程输出和模型参照。模型按语种去重，只按拼写排序词表来规范化表示，保留原 token ID 和完整 merge 顺序；每个 attempt 的原始文件 hash 和规范模型 hash 见 `evidence/models.json`。
+
+`export_evidence.py --comparison <run.py 的输出目录> --out <证据目录>` 从已完成且校验通过的比较导出证据，并计算是否满足补测单线程的条件。它和 `run.py` 使用本次归档的 benchmark harness；将 harness 所在目录放到 `PYTHONPATH`。`plot.py --summary evidence/summary.json --out training-ratios` 用 matplotlib 重建图表。
