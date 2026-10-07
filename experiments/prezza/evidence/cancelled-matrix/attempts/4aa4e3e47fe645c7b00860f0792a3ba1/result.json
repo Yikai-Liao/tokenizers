@@ -1,0 +1,55 @@
+{
+  "affinity": [
+    0
+  ],
+  "arm": "baseline",
+  "attempt_id": "4aa4e3e47fe645c7b00860f0792a3ba1",
+  "case": "zh512-whitespace-v50000",
+  "command": [
+    "taskset",
+    "--cpu-list",
+    "0",
+    "/root/code/tokenizers-bpe-benchmarks/.bench/builds/badfc052f99e95b871b75ad85a6e24e3067249bde351ab3af7d4bbc9c799b6a8/bpe-bench-runner",
+    "/root/code/tokenizers-bpe-benchmarks/.bench/prezza/zh512-matrix/runs/attempts/4aa4e3e47fe645c7b00860f0792a3ba1/job.json"
+  ],
+  "environment": {
+    "HOME": "/root",
+    "LANG": "C.UTF-8",
+    "LC_ALL": "C.UTF-8",
+    "PATH": "/root/code/tokenizers-bpe-benchmarks/.venv/bin:/root/.cargo/bin:/root/.bun/bin:/usr/local/go/bin:/root/go/bin:/root/.local/share/pnpm/bin:/root/.local/state/fnm_multishells/4189729_1791394069208/bin:/root/.local/share/fnm:/root/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+    "RAYON_NUM_THREADS": "1",
+    "TOKENIZERS_PARALLELISM": "true",
+    "USER": "root"
+  },
+  "error": "",
+  "finished_unix": 1791394259.42285,
+  "job": {
+    "attempt_id": "4aa4e3e47fe645c7b00860f0792a3ba1",
+    "build_id": "badfc052f99e95b871b75ad85a6e24e3067249bde351ab3af7d4bbc9c799b6a8",
+    "input": "/root/code/tokenizers-bpe-benchmarks/.bench/prezza/zh512-words/words.json",
+    "input_id": "db0490c608af7072ea8ae56e5f68ecb12a66239f6c6277f307505dd301bb3cc5",
+    "mode": "core",
+    "output": "/root/code/tokenizers-bpe-benchmarks/.bench/prezza/zh512-matrix/runs/attempts/4aa4e3e47fe645c7b00860f0792a3ba1/model.json",
+    "pretokenizer": "whitespace",
+    "protocol_version": 1,
+    "trainer": {
+      "max_token_length": null,
+      "min_frequency": 2,
+      "prefix": null,
+      "suffix": null,
+      "vocab_size": 50000
+    },
+    "workers": 1
+  },
+  "loadavg": [
+    2.7451171875,
+    4.36767578125,
+    5.2021484375
+  ],
+  "pid": 4191239,
+  "process_start_ticks": "78250672",
+  "slot": "warmup:0:zh512-whitespace-v50000:1:baseline",
+  "started_unix": 1791394219.0552585,
+  "status": "interrupted",
+  "workers": 1
+}

@@ -1,0 +1,10 @@
+{
+  "bytes": 780,
+  "data_path": "/root/code/tokenizers-bpe-benchmarks/.bench/prezza/final-smoke/fixture.txt",
+  "input_id": "3a5245891ef728095b557fccecf58119fdee802c6e94f3039c7d164c3f916025",
+  "kind": "text",
+  "line_protocol": "UTF-8 lines; remove LF and optional CR; preserve other whitespace",
+  "path": "/root/code/tokenizers-bpe-benchmarks/.bench/prezza/final-smoke/fixture.txt",
+  "schema_version": 1,
+  "sha256": "d92435d39fac7d7bad1134ba2b0e071aa63c5857610c2dc92ae6021f094722ae"
+}

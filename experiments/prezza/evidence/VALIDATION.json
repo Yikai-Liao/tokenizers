@@ -1,0 +1,15 @@
+{
+  "code_revision": "07502ccf16efa328120a1a844448cec3692acd5c",
+  "baseline_revision": "8faaff79d859bfd6b2417cfe8c93ea2851c3aaca",
+  "benchmark_revision": "0fa8d08fc832b4f8f505e6bfb0f4637d0d29fad3",
+  "unit_tests": {
+    "main_no_default": 104,
+    "prezza_no_default": 104,
+    "prezza_default": 104
+  },
+  "clippy": "passed -D warnings",
+  "exact_smoke_processes": 32,
+  "diagnostic_processes": 4,
+  "detailed_matrix": "cancelled at user request during first warmup; no completed paired block",
+  "extended_corpora": "not measured; user cancelled detailed Prezza testing and requested Owner candidates"
+}

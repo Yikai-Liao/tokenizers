@@ -1,0 +1,9 @@
+{"event": "experiment", "time_unix": 1791394024.4574158, "experiment_id": "fee6c174eecea416e20d1a5d758f1d81447ef52b114cec52ea777486f33b2d06"}
+{"event": "running", "time_unix": 1791394024.4606986, "attempt_id": "ed0ba50ec7dd4fed8fde162774ea80aa", "slot": "block:0:fixture:1:baseline"}
+{"event": "finished", "time_unix": 1791394024.4917445, "attempt_id": "ed0ba50ec7dd4fed8fde162774ea80aa", "status": "ok", "slot": "block:0:fixture:1:baseline"}
+{"event": "running", "time_unix": 1791394024.4956985, "attempt_id": "b0d20fe1ac3e4549beacb1b9cba22c60", "slot": "block:0:fixture:1:prezza"}
+{"event": "finished", "time_unix": 1791394024.5243442, "attempt_id": "b0d20fe1ac3e4549beacb1b9cba22c60", "status": "ok", "slot": "block:0:fixture:1:prezza"}
+{"event": "running", "time_unix": 1791394024.527593, "attempt_id": "6a0b55f59b6241a2b91801ceff10ed50", "slot": "block:0:fixture:4:baseline"}
+{"event": "finished", "time_unix": 1791394024.5565832, "attempt_id": "6a0b55f59b6241a2b91801ceff10ed50", "status": "ok", "slot": "block:0:fixture:4:baseline"}
+{"event": "running", "time_unix": 1791394024.5603716, "attempt_id": "f01886647f7345b1ac63e1c411096492", "slot": "block:0:fixture:4:prezza"}
+{"event": "finished", "time_unix": 1791394024.5892959, "attempt_id": "f01886647f7345b1ac63e1c411096492", "status": "ok", "slot": "block:0:fixture:4:prezza"}

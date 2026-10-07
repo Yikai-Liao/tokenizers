@@ -1,0 +1,575 @@
+{
+  "attempted_blocks": 2,
+  "attempts": 4,
+  "cells": [
+    {
+      "case": "fixture",
+      "complete_blocks": 1,
+      "metrics": {
+        "feed_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 0.000164915,
+              "median": 0.000164915,
+              "minimum": 0.000164915,
+              "samples": [
+                0.000164915
+              ]
+            },
+            "prezza": {
+              "maximum": 0.000217425,
+              "median": 0.000217425,
+              "minimum": 0.000217425,
+              "samples": [
+                0.000217425
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 1.3184064518085077,
+              "range": [
+                1.3184064518085077,
+                1.3184064518085077
+              ],
+              "samples": [
+                1.3184064518085077
+              ]
+            }
+          }
+        },
+        "pipeline_cpu_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 0.0038380000000000003,
+              "median": 0.0038380000000000003,
+              "minimum": 0.0038380000000000003,
+              "samples": [
+                0.0038380000000000003
+              ]
+            },
+            "prezza": {
+              "maximum": 0.003924,
+              "median": 0.003924,
+              "minimum": 0.003924,
+              "samples": [
+                0.003924
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 1.0224075039082856,
+              "range": [
+                1.0224075039082856,
+                1.0224075039082856
+              ],
+              "samples": [
+                1.0224075039082856
+              ]
+            }
+          }
+        },
+        "pipeline_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 0.003915631,
+              "median": 0.003915631,
+              "minimum": 0.003915631,
+              "samples": [
+                0.003915631
+              ]
+            },
+            "prezza": {
+              "maximum": 0.003973453,
+              "median": 0.003973453,
+              "minimum": 0.003973453,
+              "samples": [
+                0.003973453
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 1.0147669685933123,
+              "range": [
+                1.0147669685933123,
+                1.0147669685933123
+              ],
+              "samples": [
+                1.0147669685933123
+              ]
+            }
+          }
+        },
+        "process_hwm_kib_before_validation": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 7864,
+              "median": 7864,
+              "minimum": 7864,
+              "samples": [
+                7864
+              ]
+            },
+            "prezza": {
+              "maximum": 8068,
+              "median": 8068,
+              "minimum": 8068,
+              "samples": [
+                8068
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 1.025940996948118,
+              "range": [
+                1.025940996948118,
+                1.025940996948118
+              ],
+              "samples": [
+                1.025940996948118
+              ]
+            }
+          }
+        },
+        "process_peak_rss_bytes": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 8052736,
+              "median": 8052736,
+              "minimum": 8052736,
+              "samples": [
+                8052736
+              ]
+            },
+            "prezza": {
+              "maximum": 8261632,
+              "median": 8261632,
+              "minimum": 8261632,
+              "samples": [
+                8261632
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 1.025940996948118,
+              "range": [
+                1.025940996948118,
+                1.025940996948118
+              ],
+              "samples": [
+                1.025940996948118
+              ]
+            }
+          }
+        },
+        "sampled_peak_rss_bytes": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 4128768,
+              "median": 4128768,
+              "minimum": 4128768,
+              "samples": [
+                4128768
+              ]
+            },
+            "prezza": {
+              "maximum": 217088,
+              "median": 217088,
+              "minimum": 217088,
+              "samples": [
+                217088
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 0.05257936507936508,
+              "range": [
+                0.05257936507936508,
+                0.05257936507936508
+              ],
+              "samples": [
+                0.05257936507936508
+              ]
+            }
+          }
+        },
+        "train_cpu_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 0.0036959999999999996,
+              "median": 0.0036959999999999996,
+              "minimum": 0.0036959999999999996,
+              "samples": [
+                0.0036959999999999996
+              ]
+            },
+            "prezza": {
+              "maximum": 0.0037470000000000003,
+              "median": 0.0037470000000000003,
+              "minimum": 0.0037470000000000003,
+              "samples": [
+                0.0037470000000000003
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 1.0137987012987015,
+              "range": [
+                1.0137987012987015,
+                1.0137987012987015
+              ],
+              "samples": [
+                1.0137987012987015
+              ]
+            }
+          }
+        },
+        "train_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 0.00374713,
+              "median": 0.00374713,
+              "minimum": 0.00374713,
+              "samples": [
+                0.00374713
+              ]
+            },
+            "prezza": {
+              "maximum": 0.003752431,
+              "median": 0.003752431,
+              "minimum": 0.003752431,
+              "samples": [
+                0.003752431
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 1.0014146827038293,
+              "range": [
+                1.0014146827038293,
+                1.0014146827038293
+              ],
+              "samples": [
+                1.0014146827038293
+              ]
+            }
+          }
+        }
+      },
+      "workers": 1
+    },
+    {
+      "case": "fixture",
+      "complete_blocks": 1,
+      "metrics": {
+        "feed_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 0.00071726,
+              "median": 0.00071726,
+              "minimum": 0.00071726,
+              "samples": [
+                0.00071726
+              ]
+            },
+            "prezza": {
+              "maximum": 0.000523337,
+              "median": 0.000523337,
+              "minimum": 0.000523337,
+              "samples": [
+                0.000523337
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 0.7296336056660069,
+              "range": [
+                0.7296336056660069,
+                0.7296336056660069
+              ],
+              "samples": [
+                0.7296336056660069
+              ]
+            }
+          }
+        },
+        "pipeline_cpu_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 0.00819,
+              "median": 0.00819,
+              "minimum": 0.00819,
+              "samples": [
+                0.00819
+              ]
+            },
+            "prezza": {
+              "maximum": 0.006011000000000001,
+              "median": 0.006011000000000001,
+              "minimum": 0.006011000000000001,
+              "samples": [
+                0.006011000000000001
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 0.7339438339438341,
+              "range": [
+                0.7339438339438341,
+                0.7339438339438341
+              ],
+              "samples": [
+                0.7339438339438341
+              ]
+            }
+          }
+        },
+        "pipeline_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 0.0053714,
+              "median": 0.0053714,
+              "minimum": 0.0053714,
+              "samples": [
+                0.0053714
+              ]
+            },
+            "prezza": {
+              "maximum": 0.00348228,
+              "median": 0.00348228,
+              "minimum": 0.00348228,
+              "samples": [
+                0.00348228
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 0.6483002569162601,
+              "range": [
+                0.6483002569162601,
+                0.6483002569162601
+              ],
+              "samples": [
+                0.6483002569162601
+              ]
+            }
+          }
+        },
+        "process_hwm_kib_before_validation": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 7752,
+              "median": 7752,
+              "minimum": 7752,
+              "samples": [
+                7752
+              ]
+            },
+            "prezza": {
+              "maximum": 7936,
+              "median": 7936,
+              "minimum": 7936,
+              "samples": [
+                7936
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 1.023735810113519,
+              "range": [
+                1.023735810113519,
+                1.023735810113519
+              ],
+              "samples": [
+                1.023735810113519
+              ]
+            }
+          }
+        },
+        "process_peak_rss_bytes": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 7938048,
+              "median": 7938048,
+              "minimum": 7938048,
+              "samples": [
+                7938048
+              ]
+            },
+            "prezza": {
+              "maximum": 8126464,
+              "median": 8126464,
+              "minimum": 8126464,
+              "samples": [
+                8126464
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 1.023735810113519,
+              "range": [
+                1.023735810113519,
+                1.023735810113519
+              ],
+              "samples": [
+                1.023735810113519
+              ]
+            }
+          }
+        },
+        "sampled_peak_rss_bytes": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 2084864,
+              "median": 2084864,
+              "minimum": 2084864,
+              "samples": [
+                2084864
+              ]
+            },
+            "prezza": {
+              "maximum": 356352,
+              "median": 356352,
+              "minimum": 356352,
+              "samples": [
+                356352
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 0.17092337917485265,
+              "range": [
+                0.17092337917485265,
+                0.17092337917485265
+              ],
+              "samples": [
+                0.17092337917485265
+              ]
+            }
+          }
+        },
+        "train_cpu_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 0.006636,
+              "median": 0.006636,
+              "minimum": 0.006636,
+              "samples": [
+                0.006636
+              ]
+            },
+            "prezza": {
+              "maximum": 0.004615,
+              "median": 0.004615,
+              "minimum": 0.004615,
+              "samples": [
+                0.004615
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 0.6954490657022302,
+              "range": [
+                0.6954490657022302,
+                0.6954490657022302
+              ],
+              "samples": [
+                0.6954490657022302
+              ]
+            }
+          }
+        },
+        "train_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 0.004648081,
+              "median": 0.004648081,
+              "minimum": 0.004648081,
+              "samples": [
+                0.004648081
+              ]
+            },
+            "prezza": {
+              "maximum": 0.002953019,
+              "median": 0.002953019,
+              "minimum": 0.002953019,
+              "samples": [
+                0.002953019
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 0.6353200385277279,
+              "range": [
+                0.6353200385277279,
+                0.6353200385277279
+              ],
+              "samples": [
+                0.6353200385277279
+              ]
+            }
+          }
+        }
+      },
+      "workers": 4
+    }
+  ],
+  "complete_blocks": 2,
+  "correctness_failed": false,
+  "excluded_blocks": 0,
+  "expected_blocks": 2,
+  "experiment_id": "67e87847daebd11c6b7f639aeeb94409e887b4934ee2299f7063088b9f28b489",
+  "failures": [],
+  "maximum_sampled_swap_bytes": 0,
+  "mode": "pipeline",
+  "performance_conclusion_valid": true,
+  "scaling": [
+    {
+      "arm": "baseline",
+      "case": "fixture",
+      "efficiency": 1.0,
+      "method": "ratio of arm wall-time medians",
+      "speedup": 1.0,
+      "workers": 1
+    },
+    {
+      "arm": "baseline",
+      "case": "fixture",
+      "efficiency": 0.18224443348102914,
+      "method": "ratio of arm wall-time medians",
+      "speedup": 0.7289777339241166,
+      "workers": 4
+    },
+    {
+      "arm": "prezza",
+      "case": "fixture",
+      "efficiency": 1.0,
+      "method": "ratio of arm wall-time medians",
+      "speedup": 1.0,
+      "workers": 1
+    },
+    {
+      "arm": "prezza",
+      "case": "fixture",
+      "efficiency": 0.2852623137714371,
+      "method": "ratio of arm wall-time medians",
+      "speedup": 1.1410492550857485,
+      "workers": 4
+    }
+  ]
+}

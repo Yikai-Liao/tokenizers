@@ -1,0 +1,3 @@
+{"event": "experiment", "time_unix": 1791394219.0529149, "experiment_id": "0ed60cbcfc3b62f8f2daf4da114838059c2b472e8481027dad3dbcb16175b3e7"}
+{"event": "running", "time_unix": 1791394219.0563855, "attempt_id": "4aa4e3e47fe645c7b00860f0792a3ba1", "slot": "warmup:0:zh512-whitespace-v50000:1:baseline"}
+{"event": "finished", "time_unix": 1791394259.4254413, "attempt_id": "4aa4e3e47fe645c7b00860f0792a3ba1", "status": "interrupted", "slot": "warmup:0:zh512-whitespace-v50000:1:baseline"}

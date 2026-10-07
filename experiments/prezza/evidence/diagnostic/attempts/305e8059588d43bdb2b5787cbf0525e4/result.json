@@ -1,0 +1,98 @@
+{
+  "affinity": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "arm": "baseline",
+  "attempt_id": "305e8059588d43bdb2b5787cbf0525e4",
+  "case": "zh512-whitespace-v100000",
+  "command": [
+    "taskset",
+    "--cpu-list",
+    "0,1,2,3",
+    "/root/code/tokenizers-bpe-benchmarks/.bench/builds/d7bbb2d45f5a6e4b55db6cc09d1a358e326ea75c27dbc580c7618ac4d65a1734/bpe-bench-runner",
+    "/root/code/tokenizers-bpe-benchmarks/.bench/prezza/final-diagnostic/runs/attempts/305e8059588d43bdb2b5787cbf0525e4/job.json"
+  ],
+  "environment": {
+    "BPE_CORPUS_STATS": "1",
+    "HOME": "/root",
+    "LANG": "C.UTF-8",
+    "LC_ALL": "C.UTF-8",
+    "PATH": "/root/code/tokenizers-bpe-benchmarks/.venv/bin:/root/.cargo/bin:/root/.bun/bin:/usr/local/go/bin:/root/go/bin:/root/.local/share/pnpm/bin:/root/.local/state/fnm_multishells/4189729_1791394069208/bin:/root/.local/share/fnm:/root/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+    "RAYON_NUM_THREADS": "4",
+    "TOKENIZERS_PARALLELISM": "true",
+    "USER": "root"
+  },
+  "finished_unix": 1791394178.4578824,
+  "job": {
+    "attempt_id": "305e8059588d43bdb2b5787cbf0525e4",
+    "build_id": "d7bbb2d45f5a6e4b55db6cc09d1a358e326ea75c27dbc580c7618ac4d65a1734",
+    "input": "/root/code/tokenizers-bpe-benchmarks/.bench/prezza/zh512-words/words.json",
+    "input_id": "db0490c608af7072ea8ae56e5f68ecb12a66239f6c6277f307505dd301bb3cc5",
+    "mode": "core",
+    "output": "/root/code/tokenizers-bpe-benchmarks/.bench/prezza/final-diagnostic/runs/attempts/305e8059588d43bdb2b5787cbf0525e4/model.json",
+    "pretokenizer": "whitespace",
+    "protocol_version": 1,
+    "trainer": {
+      "max_token_length": null,
+      "min_frequency": 2,
+      "prefix": null,
+      "suffix": null,
+      "vocab_size": 100000
+    },
+    "workers": 4
+  },
+  "loadavg": [
+    1.9208984375,
+    4.8330078125,
+    5.4189453125
+  ],
+  "metrics": {
+    "load_seconds": 13.595828692,
+    "process_hwm_kib_before_validation": 2842036,
+    "train_cpu_seconds": 53.654033000000005,
+    "train_seconds": 17.455162644
+  },
+  "minimum_host_available_bytes": 7065948160,
+  "model_sha256": "051973da2ed5cb24b3701e0a929863446c0048ae210da99e104033fff44ecdab",
+  "pid": 4190312,
+  "process_peak_rss_bytes": 2910724096,
+  "process_start_ticks": "78242785",
+  "returncode": 0,
+  "runner_result": {
+    "attempt_id": "305e8059588d43bdb2b5787cbf0525e4",
+    "build_id": "d7bbb2d45f5a6e4b55db6cc09d1a358e326ea75c27dbc580c7618ac4d65a1734",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "db0490c608af7072ea8ae56e5f68ecb12a66239f6c6277f307505dd301bb3cc5",
+    "metrics": {
+      "load_seconds": 13.595828692,
+      "process_hwm_kib_before_validation": 2842036,
+      "train_cpu_seconds": 53.654033000000005,
+      "train_seconds": 17.455162644
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 79245,
+      "actual_vocab": 100000,
+      "model_path": "/root/code/tokenizers-bpe-benchmarks/.bench/prezza/final-diagnostic/runs/attempts/305e8059588d43bdb2b5787cbf0525e4/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  "sampled_peak_rss_bytes": 2910724096,
+  "sampled_peak_swap_bytes": 0,
+  "slot": "block:0:zh512-whitespace-v100000:4:baseline",
+  "started_unix": 1791394140.1870415,
+  "status": "ok",
+  "supervisor_wall_seconds": 36.60920720000286,
+  "workers": 4
+}

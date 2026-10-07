@@ -1,0 +1,48 @@
+{
+  "arms": {
+    "baseline": {
+      "build": "/root/code/tokenizers-bpe-benchmarks/.bench/builds/badfc052f99e95b871b75ad85a6e24e3067249bde351ab3af7d4bbc9c799b6a8/build.json",
+      "environment": {}
+    },
+    "prezza": {
+      "build": "/root/code/tokenizers-bpe-benchmarks/.bench/builds/d7bbb2d45f5a6e4b55db6cc09d1a358e326ea75c27dbc580c7618ac4d65a1734/build.json",
+      "environment": {
+        "BPE_CORPUS_LAYOUT": "prezza"
+      }
+    }
+  },
+  "cases": [
+    {
+      "input_manifest": "/root/code/tokenizers-bpe-benchmarks/.bench/prezza/final-smoke/words-whitespace_split/manifest.json",
+      "name": "fixture",
+      "pretokenizer": "whitespace_split",
+      "trainer": {
+        "max_token_length": 12,
+        "min_frequency": 2,
+        "vocab_size": 300
+      }
+    }
+  ],
+  "comparison": "exact-model",
+  "execution": {
+    "cpu_set": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "max_process_rss_gib": 10,
+    "min_available_gib": 2,
+    "order": "balanced-alternating",
+    "paired_blocks": 1,
+    "timeout_seconds": 900,
+    "warmups_per_cell": 0,
+    "workers": [
+      1,
+      4
+    ]
+  },
+  "mode": "core",
+  "name": "prezza-smoke",
+  "schema_version": 1
+}

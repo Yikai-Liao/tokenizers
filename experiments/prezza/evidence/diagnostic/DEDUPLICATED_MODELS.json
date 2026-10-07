@@ -1,0 +1,26 @@
+[
+  {
+    "attempt_id": "4b70adc028084564b3f7d8e52c59b719",
+    "case": "zh512-whitespace-v50000",
+    "model_sha256": "96bff76e3106e8941334589b2c20e41169b2a07998eb48a02e806d1f620528b0",
+    "canonical_model": "models/zh512-whitespace-v50000.json"
+  },
+  {
+    "attempt_id": "305e8059588d43bdb2b5787cbf0525e4",
+    "case": "zh512-whitespace-v100000",
+    "model_sha256": "051973da2ed5cb24b3701e0a929863446c0048ae210da99e104033fff44ecdab",
+    "canonical_model": "models/zh512-whitespace-v100000.json"
+  },
+  {
+    "attempt_id": "eaf2d4f4b06e470f883f4a5f647c1245",
+    "case": "zh512-whitespace-v50000",
+    "model_sha256": "96bff76e3106e8941334589b2c20e41169b2a07998eb48a02e806d1f620528b0",
+    "canonical_model": "models/zh512-whitespace-v50000.json"
+  },
+  {
+    "attempt_id": "6eddc3f3dff847138e3643c5c0f119ab",
+    "case": "zh512-whitespace-v100000",
+    "model_sha256": "051973da2ed5cb24b3701e0a929863446c0048ae210da99e104033fff44ecdab",
+    "canonical_model": "models/zh512-whitespace-v100000.json"
+  }
+]

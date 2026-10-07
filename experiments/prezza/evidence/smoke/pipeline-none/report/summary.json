@@ -1,0 +1,575 @@
+{
+  "attempted_blocks": 2,
+  "attempts": 4,
+  "cells": [
+    {
+      "case": "fixture",
+      "complete_blocks": 1,
+      "metrics": {
+        "feed_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 0.000181294,
+              "median": 0.000181294,
+              "minimum": 0.000181294,
+              "samples": [
+                0.000181294
+              ]
+            },
+            "prezza": {
+              "maximum": 0.00017518,
+              "median": 0.00017518,
+              "minimum": 0.00017518,
+              "samples": [
+                0.00017518
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 0.9662757730537139,
+              "range": [
+                0.9662757730537139,
+                0.9662757730537139
+              ],
+              "samples": [
+                0.9662757730537139
+              ]
+            }
+          }
+        },
+        "pipeline_cpu_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 0.004893,
+              "median": 0.004893,
+              "minimum": 0.004893,
+              "samples": [
+                0.004893
+              ]
+            },
+            "prezza": {
+              "maximum": 0.003954999999999999,
+              "median": 0.003954999999999999,
+              "minimum": 0.003954999999999999,
+              "samples": [
+                0.003954999999999999
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 0.8082975679542203,
+              "range": [
+                0.8082975679542203,
+                0.8082975679542203
+              ],
+              "samples": [
+                0.8082975679542203
+              ]
+            }
+          }
+        },
+        "pipeline_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 0.004895147,
+              "median": 0.004895147,
+              "minimum": 0.004895147,
+              "samples": [
+                0.004895147
+              ]
+            },
+            "prezza": {
+              "maximum": 0.00396875,
+              "median": 0.00396875,
+              "minimum": 0.00396875,
+              "samples": [
+                0.00396875
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 0.810751954946399,
+              "range": [
+                0.810751954946399,
+                0.810751954946399
+              ],
+              "samples": [
+                0.810751954946399
+              ]
+            }
+          }
+        },
+        "process_hwm_kib_before_validation": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 7820,
+              "median": 7820,
+              "minimum": 7820,
+              "samples": [
+                7820
+              ]
+            },
+            "prezza": {
+              "maximum": 8036,
+              "median": 8036,
+              "minimum": 8036,
+              "samples": [
+                8036
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 1.0276214833759592,
+              "range": [
+                1.0276214833759592,
+                1.0276214833759592
+              ],
+              "samples": [
+                1.0276214833759592
+              ]
+            }
+          }
+        },
+        "process_peak_rss_bytes": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 8007680,
+              "median": 8007680,
+              "minimum": 8007680,
+              "samples": [
+                8007680
+              ]
+            },
+            "prezza": {
+              "maximum": 8228864,
+              "median": 8228864,
+              "minimum": 8228864,
+              "samples": [
+                8228864
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 1.0276214833759592,
+              "range": [
+                1.0276214833759592,
+                1.0276214833759592
+              ],
+              "samples": [
+                1.0276214833759592
+              ]
+            }
+          }
+        },
+        "sampled_peak_rss_bytes": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 282624,
+              "median": 282624,
+              "minimum": 282624,
+              "samples": [
+                282624
+              ]
+            },
+            "prezza": {
+              "maximum": 376832,
+              "median": 376832,
+              "minimum": 376832,
+              "samples": [
+                376832
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 1.3333333333333333,
+              "range": [
+                1.3333333333333333,
+                1.3333333333333333
+              ],
+              "samples": [
+                1.3333333333333333
+              ]
+            }
+          }
+        },
+        "train_cpu_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 0.004710000000000001,
+              "median": 0.004710000000000001,
+              "minimum": 0.004710000000000001,
+              "samples": [
+                0.004710000000000001
+              ]
+            },
+            "prezza": {
+              "maximum": 0.003777000000000001,
+              "median": 0.003777000000000001,
+              "minimum": 0.003777000000000001,
+              "samples": [
+                0.003777000000000001
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 0.8019108280254778,
+              "range": [
+                0.8019108280254778,
+                0.8019108280254778
+              ],
+              "samples": [
+                0.8019108280254778
+              ]
+            }
+          }
+        },
+        "train_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 0.004707877,
+              "median": 0.004707877,
+              "minimum": 0.004707877,
+              "samples": [
+                0.004707877
+              ]
+            },
+            "prezza": {
+              "maximum": 0.003787413,
+              "median": 0.003787413,
+              "minimum": 0.003787413,
+              "samples": [
+                0.003787413
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 0.8044842717853503,
+              "range": [
+                0.8044842717853503,
+                0.8044842717853503
+              ],
+              "samples": [
+                0.8044842717853503
+              ]
+            }
+          }
+        }
+      },
+      "workers": 1
+    },
+    {
+      "case": "fixture",
+      "complete_blocks": 1,
+      "metrics": {
+        "feed_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 0.000522823,
+              "median": 0.000522823,
+              "minimum": 0.000522823,
+              "samples": [
+                0.000522823
+              ]
+            },
+            "prezza": {
+              "maximum": 0.00046626,
+              "median": 0.00046626,
+              "minimum": 0.00046626,
+              "samples": [
+                0.00046626
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 0.8918123341934079,
+              "range": [
+                0.8918123341934079,
+                0.8918123341934079
+              ],
+              "samples": [
+                0.8918123341934079
+              ]
+            }
+          }
+        },
+        "pipeline_cpu_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 0.008160999999999998,
+              "median": 0.008160999999999998,
+              "minimum": 0.008160999999999998,
+              "samples": [
+                0.008160999999999998
+              ]
+            },
+            "prezza": {
+              "maximum": 0.007433,
+              "median": 0.007433,
+              "minimum": 0.007433,
+              "samples": [
+                0.007433
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 0.9107952456806766,
+              "range": [
+                0.9107952456806766,
+                0.9107952456806766
+              ],
+              "samples": [
+                0.9107952456806766
+              ]
+            }
+          }
+        },
+        "pipeline_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 0.004980164,
+              "median": 0.004980164,
+              "minimum": 0.004980164,
+              "samples": [
+                0.004980164
+              ]
+            },
+            "prezza": {
+              "maximum": 0.00405223,
+              "median": 0.00405223,
+              "minimum": 0.00405223,
+              "samples": [
+                0.00405223
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 0.813674007522644,
+              "range": [
+                0.813674007522644,
+                0.813674007522644
+              ],
+              "samples": [
+                0.813674007522644
+              ]
+            }
+          }
+        },
+        "process_hwm_kib_before_validation": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 7828,
+              "median": 7828,
+              "minimum": 7828,
+              "samples": [
+                7828
+              ]
+            },
+            "prezza": {
+              "maximum": 7924,
+              "median": 7924,
+              "minimum": 7924,
+              "samples": [
+                7924
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 1.01226366888094,
+              "range": [
+                1.01226366888094,
+                1.01226366888094
+              ],
+              "samples": [
+                1.01226366888094
+              ]
+            }
+          }
+        },
+        "process_peak_rss_bytes": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 8015872,
+              "median": 8015872,
+              "minimum": 8015872,
+              "samples": [
+                8015872
+              ]
+            },
+            "prezza": {
+              "maximum": 8114176,
+              "median": 8114176,
+              "minimum": 8114176,
+              "samples": [
+                8114176
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 1.01226366888094,
+              "range": [
+                1.01226366888094,
+                1.01226366888094
+              ],
+              "samples": [
+                1.01226366888094
+              ]
+            }
+          }
+        },
+        "sampled_peak_rss_bytes": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 1642496,
+              "median": 1642496,
+              "minimum": 1642496,
+              "samples": [
+                1642496
+              ]
+            },
+            "prezza": {
+              "maximum": 1515520,
+              "median": 1515520,
+              "minimum": 1515520,
+              "samples": [
+                1515520
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 0.9226932668329177,
+              "range": [
+                0.9226932668329177,
+                0.9226932668329177
+              ],
+              "samples": [
+                0.9226932668329177
+              ]
+            }
+          }
+        },
+        "train_cpu_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 0.006664,
+              "median": 0.006664,
+              "minimum": 0.006664,
+              "samples": [
+                0.006664
+              ]
+            },
+            "prezza": {
+              "maximum": 0.006384,
+              "median": 0.006384,
+              "minimum": 0.006384,
+              "samples": [
+                0.006384
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 0.957983193277311,
+              "range": [
+                0.957983193277311,
+                0.957983193277311
+              ],
+              "samples": [
+                0.957983193277311
+              ]
+            }
+          }
+        },
+        "train_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 0.004450839,
+              "median": 0.004450839,
+              "minimum": 0.004450839,
+              "samples": [
+                0.004450839
+              ]
+            },
+            "prezza": {
+              "maximum": 0.003579201,
+              "median": 0.003579201,
+              "minimum": 0.003579201,
+              "samples": [
+                0.003579201
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 0.8041632150702374,
+              "range": [
+                0.8041632150702374,
+                0.8041632150702374
+              ],
+              "samples": [
+                0.8041632150702374
+              ]
+            }
+          }
+        }
+      },
+      "workers": 4
+    }
+  ],
+  "complete_blocks": 2,
+  "correctness_failed": false,
+  "excluded_blocks": 0,
+  "expected_blocks": 2,
+  "experiment_id": "fee6c174eecea416e20d1a5d758f1d81447ef52b114cec52ea777486f33b2d06",
+  "failures": [],
+  "maximum_sampled_swap_bytes": 0,
+  "mode": "pipeline",
+  "performance_conclusion_valid": true,
+  "scaling": [
+    {
+      "arm": "baseline",
+      "case": "fixture",
+      "efficiency": 1.0,
+      "method": "ratio of arm wall-time medians",
+      "speedup": 1.0,
+      "workers": 1
+    },
+    {
+      "arm": "baseline",
+      "case": "fixture",
+      "efficiency": 0.24573221885865607,
+      "method": "ratio of arm wall-time medians",
+      "speedup": 0.9829288754346243,
+      "workers": 4
+    },
+    {
+      "arm": "prezza",
+      "case": "fixture",
+      "efficiency": 1.0,
+      "method": "ratio of arm wall-time medians",
+      "speedup": 1.0,
+      "workers": 1
+    },
+    {
+      "arm": "prezza",
+      "case": "fixture",
+      "efficiency": 0.24484974939724544,
+      "method": "ratio of arm wall-time medians",
+      "speedup": 0.9793989975889817,
+      "workers": 4
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "bytes": 264,
+  "data_path": "/root/code/tokenizers-bpe-benchmarks/.bench/prezza/final-smoke/words-bytelevel_regex/words.json",
+  "input_id": "c9fb056ea49dca39115713e9cfb56d73fb41c773a6b20b1ec659e69df574a599",
+  "kind": "prepared_words",
+  "path": "words.json",
+  "pretokenizer": "bytelevel_regex",
+  "raw": {
+    "sha256": "d92435d39fac7d7bad1134ba2b0e071aa63c5857610c2dc92ae6021f094722ae"
+  },
+  "recipe": {
+    "format_version": 1,
+    "preparer_build_id": "badfc052f99e95b871b75ad85a6e24e3067249bde351ab3af7d4bbc9c799b6a8",
+    "pretokenizer": "bytelevel_regex",
+    "raw_sha256": "d92435d39fac7d7bad1134ba2b0e071aa63c5857610c2dc92ae6021f094722ae",
+    "tool_sha256": "63fc4ab5fa4d05f7db209ab95ec00df03ddee60b85d9fb2a1434e1e9a0b2b16c"
+  },
+  "schema_version": 1,
+  "sha256": "f3d56240ce594abc991a972e2616935ad92e48d3a0a923c6343964cb569ea7cb"
+}

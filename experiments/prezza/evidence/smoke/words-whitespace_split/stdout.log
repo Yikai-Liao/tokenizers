@@ -1,0 +1,1 @@
+{"attempt_id":"prepare","build_id":"badfc052f99e95b871b75ad85a6e24e3067249bde351ab3af7d4bbc9c799b6a8","effective_affinity":[0,1,2,3,4,5],"input_id":"6b60842e14ce4da47b8971e69752eac4d6bc2a016b462068b9e75013b8090368","mode":"prepare","preprocessing_cpu_seconds":0.00023399999999999983,"preprocessing_seconds":0.000235671,"protocol_version":1,"unique_words":10,"workers_requested":1}

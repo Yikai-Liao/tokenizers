@@ -1,0 +1,575 @@
+{
+  "attempted_blocks": 2,
+  "attempts": 4,
+  "cells": [
+    {
+      "case": "fixture",
+      "complete_blocks": 1,
+      "metrics": {
+        "feed_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 0.000252465,
+              "median": 0.000252465,
+              "minimum": 0.000252465,
+              "samples": [
+                0.000252465
+              ]
+            },
+            "prezza": {
+              "maximum": 0.000327738,
+              "median": 0.000327738,
+              "minimum": 0.000327738,
+              "samples": [
+                0.000327738
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 1.2981522191194819,
+              "range": [
+                1.2981522191194819,
+                1.2981522191194819
+              ],
+              "samples": [
+                1.2981522191194819
+              ]
+            }
+          }
+        },
+        "pipeline_cpu_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 0.004447,
+              "median": 0.004447,
+              "minimum": 0.004447,
+              "samples": [
+                0.004447
+              ]
+            },
+            "prezza": {
+              "maximum": 0.004292,
+              "median": 0.004292,
+              "minimum": 0.004292,
+              "samples": [
+                0.004292
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 0.9651450416010793,
+              "range": [
+                0.9651450416010793,
+                0.9651450416010793
+              ],
+              "samples": [
+                0.9651450416010793
+              ]
+            }
+          }
+        },
+        "pipeline_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 0.00444859,
+              "median": 0.00444859,
+              "minimum": 0.00444859,
+              "samples": [
+                0.00444859
+              ]
+            },
+            "prezza": {
+              "maximum": 0.004299831,
+              "median": 0.004299831,
+              "minimum": 0.004299831,
+              "samples": [
+                0.004299831
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 0.9665604157721884,
+              "range": [
+                0.9665604157721884,
+                0.9665604157721884
+              ],
+              "samples": [
+                0.9665604157721884
+              ]
+            }
+          }
+        },
+        "process_hwm_kib_before_validation": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 7876,
+              "median": 7876,
+              "minimum": 7876,
+              "samples": [
+                7876
+              ]
+            },
+            "prezza": {
+              "maximum": 7808,
+              "median": 7808,
+              "minimum": 7808,
+              "samples": [
+                7808
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 0.9913661757237177,
+              "range": [
+                0.9913661757237177,
+                0.9913661757237177
+              ],
+              "samples": [
+                0.9913661757237177
+              ]
+            }
+          }
+        },
+        "process_peak_rss_bytes": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 8065024,
+              "median": 8065024,
+              "minimum": 8065024,
+              "samples": [
+                8065024
+              ]
+            },
+            "prezza": {
+              "maximum": 7995392,
+              "median": 7995392,
+              "minimum": 7995392,
+              "samples": [
+                7995392
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 0.9913661757237177,
+              "range": [
+                0.9913661757237177,
+                0.9913661757237177
+              ],
+              "samples": [
+                0.9913661757237177
+              ]
+            }
+          }
+        },
+        "sampled_peak_rss_bytes": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 385024,
+              "median": 385024,
+              "minimum": 385024,
+              "samples": [
+                385024
+              ]
+            },
+            "prezza": {
+              "maximum": 802816,
+              "median": 802816,
+              "minimum": 802816,
+              "samples": [
+                802816
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 2.0851063829787235,
+              "range": [
+                2.0851063829787235,
+                2.0851063829787235
+              ],
+              "samples": [
+                2.0851063829787235
+              ]
+            }
+          }
+        },
+        "train_cpu_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 0.0041930000000000005,
+              "median": 0.0041930000000000005,
+              "minimum": 0.0041930000000000005,
+              "samples": [
+                0.0041930000000000005
+              ]
+            },
+            "prezza": {
+              "maximum": 0.003968,
+              "median": 0.003968,
+              "minimum": 0.003968,
+              "samples": [
+                0.003968
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 0.9463391366563318,
+              "range": [
+                0.9463391366563318,
+                0.9463391366563318
+              ],
+              "samples": [
+                0.9463391366563318
+              ]
+            }
+          }
+        },
+        "train_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 0.004191192,
+              "median": 0.004191192,
+              "minimum": 0.004191192,
+              "samples": [
+                0.004191192
+              ]
+            },
+            "prezza": {
+              "maximum": 0.003967205,
+              "median": 0.003967205,
+              "minimum": 0.003967205,
+              "samples": [
+                0.003967205
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 0.9465576857371363,
+              "range": [
+                0.9465576857371363,
+                0.9465576857371363
+              ],
+              "samples": [
+                0.9465576857371363
+              ]
+            }
+          }
+        }
+      },
+      "workers": 1
+    },
+    {
+      "case": "fixture",
+      "complete_blocks": 1,
+      "metrics": {
+        "feed_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 0.000598808,
+              "median": 0.000598808,
+              "minimum": 0.000598808,
+              "samples": [
+                0.000598808
+              ]
+            },
+            "prezza": {
+              "maximum": 0.000678541,
+              "median": 0.000678541,
+              "minimum": 0.000678541,
+              "samples": [
+                0.000678541
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 1.1331528636891957,
+              "range": [
+                1.1331528636891957,
+                1.1331528636891957
+              ],
+              "samples": [
+                1.1331528636891957
+              ]
+            }
+          }
+        },
+        "pipeline_cpu_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 0.009198999999999999,
+              "median": 0.009198999999999999,
+              "minimum": 0.009198999999999999,
+              "samples": [
+                0.009198999999999999
+              ]
+            },
+            "prezza": {
+              "maximum": 0.008816000000000001,
+              "median": 0.008816000000000001,
+              "minimum": 0.008816000000000001,
+              "samples": [
+                0.008816000000000001
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 0.9583650396782261,
+              "range": [
+                0.9583650396782261,
+                0.9583650396782261
+              ],
+              "samples": [
+                0.9583650396782261
+              ]
+            }
+          }
+        },
+        "pipeline_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 0.006192905,
+              "median": 0.006192905,
+              "minimum": 0.006192905,
+              "samples": [
+                0.006192905
+              ]
+            },
+            "prezza": {
+              "maximum": 0.005381409,
+              "median": 0.005381409,
+              "minimum": 0.005381409,
+              "samples": [
+                0.005381409
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 0.868963596244412,
+              "range": [
+                0.868963596244412,
+                0.868963596244412
+              ],
+              "samples": [
+                0.868963596244412
+              ]
+            }
+          }
+        },
+        "process_hwm_kib_before_validation": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 7820,
+              "median": 7820,
+              "minimum": 7820,
+              "samples": [
+                7820
+              ]
+            },
+            "prezza": {
+              "maximum": 8032,
+              "median": 8032,
+              "minimum": 8032,
+              "samples": [
+                8032
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 1.0271099744245524,
+              "range": [
+                1.0271099744245524,
+                1.0271099744245524
+              ],
+              "samples": [
+                1.0271099744245524
+              ]
+            }
+          }
+        },
+        "process_peak_rss_bytes": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 8007680,
+              "median": 8007680,
+              "minimum": 8007680,
+              "samples": [
+                8007680
+              ]
+            },
+            "prezza": {
+              "maximum": 8224768,
+              "median": 8224768,
+              "minimum": 8224768,
+              "samples": [
+                8224768
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 1.0271099744245524,
+              "range": [
+                1.0271099744245524,
+                1.0271099744245524
+              ],
+              "samples": [
+                1.0271099744245524
+              ]
+            }
+          }
+        },
+        "sampled_peak_rss_bytes": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 1478656,
+              "median": 1478656,
+              "minimum": 1478656,
+              "samples": [
+                1478656
+              ]
+            },
+            "prezza": {
+              "maximum": 1986560,
+              "median": 1986560,
+              "minimum": 1986560,
+              "samples": [
+                1986560
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 1.3434903047091413,
+              "range": [
+                1.3434903047091413,
+                1.3434903047091413
+              ],
+              "samples": [
+                1.3434903047091413
+              ]
+            }
+          }
+        },
+        "train_cpu_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 0.007626,
+              "median": 0.007626,
+              "minimum": 0.007626,
+              "samples": [
+                0.007626
+              ]
+            },
+            "prezza": {
+              "maximum": 0.0073739999999999995,
+              "median": 0.0073739999999999995,
+              "minimum": 0.0073739999999999995,
+              "samples": [
+                0.0073739999999999995
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 0.9669551534225019,
+              "range": [
+                0.9669551534225019,
+                0.9669551534225019
+              ],
+              "samples": [
+                0.9669551534225019
+              ]
+            }
+          }
+        },
+        "train_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 0.005587368,
+              "median": 0.005587368,
+              "minimum": 0.005587368,
+              "samples": [
+                0.005587368
+              ]
+            },
+            "prezza": {
+              "maximum": 0.004698647,
+              "median": 0.004698647,
+              "minimum": 0.004698647,
+              "samples": [
+                0.004698647
+              ]
+            }
+          },
+          "paired_ratios": {
+            "prezza": {
+              "median": 0.8409410298373046,
+              "range": [
+                0.8409410298373046,
+                0.8409410298373046
+              ],
+              "samples": [
+                0.8409410298373046
+              ]
+            }
+          }
+        }
+      },
+      "workers": 4
+    }
+  ],
+  "complete_blocks": 2,
+  "correctness_failed": false,
+  "excluded_blocks": 0,
+  "expected_blocks": 2,
+  "experiment_id": "c42e67e336a7f84d1f3de51602ff8a26b6d93381433805a4bdae8118e1dd4a87",
+  "failures": [],
+  "maximum_sampled_swap_bytes": 0,
+  "mode": "pipeline",
+  "performance_conclusion_valid": true,
+  "scaling": [
+    {
+      "arm": "baseline",
+      "case": "fixture",
+      "efficiency": 1.0,
+      "method": "ratio of arm wall-time medians",
+      "speedup": 1.0,
+      "workers": 1
+    },
+    {
+      "arm": "baseline",
+      "case": "fixture",
+      "efficiency": 0.17958413700839912,
+      "method": "ratio of arm wall-time medians",
+      "speedup": 0.7183365480335965,
+      "workers": 4
+    },
+    {
+      "arm": "prezza",
+      "case": "fixture",
+      "efficiency": 1.0,
+      "method": "ratio of arm wall-time medians",
+      "speedup": 1.0,
+      "workers": 1
+    },
+    {
+      "arm": "prezza",
+      "case": "fixture",
+      "efficiency": 0.19975395848931013,
+      "method": "ratio of arm wall-time medians",
+      "speedup": 0.7990158339572405,
+      "workers": 4
+    }
+  ]
+}

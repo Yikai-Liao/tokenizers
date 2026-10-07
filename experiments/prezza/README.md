@@ -90,7 +90,7 @@ PYTHONPATH=. uv run python /root/code/tokenizers-prezza/experiments/prezza/run.p
 
 The main matrix includes unmodified main, the experiment binary's endpoint
 control, and the same binary's Prezza arm; both 50K and 100K vocabulary targets;
-1/2/4/6 workers; a warmup and three balanced paired blocks. Configs, CPU affinity,
+1/4 workers; a warmup and three balanced paired blocks. Configs, CPU affinity,
 source and binary hashes, input identities, raw wall/CPU/RSS measurements and
 exact-model comparisons are retained by the benchmark protocol. Core load and
 model serialization are excluded from `do_train` timing; process HWM includes

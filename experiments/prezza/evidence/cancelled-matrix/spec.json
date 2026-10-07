@@ -1,0 +1,318 @@
+{
+  "builds": {
+    "baseline": {
+      "binary_sha256": "070717e030355fb20d7ac13e9a39af744d94afd66179d2ffaa2ab8f7a3da2901",
+      "build_id": "badfc052f99e95b871b75ad85a6e24e3067249bde351ab3af7d4bbc9c799b6a8",
+      "runner_sha256": "0f7464f8ec6dbd8e399fa40ba9d7c91e1d9c359ad0b0caea4c0edec5be4824bc"
+    },
+    "endpoint_control": {
+      "binary_sha256": "16c3bddd0f23057abe3b932c3a8e8190f8fcc705e2f95fcbc393e52b47d736dd",
+      "build_id": "d7bbb2d45f5a6e4b55db6cc09d1a358e326ea75c27dbc580c7618ac4d65a1734",
+      "runner_sha256": "0f7464f8ec6dbd8e399fa40ba9d7c91e1d9c359ad0b0caea4c0edec5be4824bc"
+    },
+    "prezza": {
+      "binary_sha256": "16c3bddd0f23057abe3b932c3a8e8190f8fcc705e2f95fcbc393e52b47d736dd",
+      "build_id": "d7bbb2d45f5a6e4b55db6cc09d1a358e326ea75c27dbc580c7618ac4d65a1734",
+      "runner_sha256": "0f7464f8ec6dbd8e399fa40ba9d7c91e1d9c359ad0b0caea4c0edec5be4824bc"
+    }
+  },
+  "child_environments": {
+    "baseline": {
+      "HOME": "/root",
+      "LANG": "C.UTF-8",
+      "LC_ALL": "C.UTF-8",
+      "PATH": "/root/code/tokenizers-bpe-benchmarks/.venv/bin:/root/.cargo/bin:/root/.bun/bin:/usr/local/go/bin:/root/go/bin:/root/.local/share/pnpm/bin:/root/.local/state/fnm_multishells/4189729_1791394069208/bin:/root/.local/share/fnm:/root/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "USER": "root"
+    },
+    "endpoint_control": {
+      "HOME": "/root",
+      "LANG": "C.UTF-8",
+      "LC_ALL": "C.UTF-8",
+      "PATH": "/root/code/tokenizers-bpe-benchmarks/.venv/bin:/root/.cargo/bin:/root/.bun/bin:/usr/local/go/bin:/root/go/bin:/root/.local/share/pnpm/bin:/root/.local/state/fnm_multishells/4189729_1791394069208/bin:/root/.local/share/fnm:/root/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "USER": "root"
+    },
+    "prezza": {
+      "BPE_CORPUS_LAYOUT": "prezza",
+      "HOME": "/root",
+      "LANG": "C.UTF-8",
+      "LC_ALL": "C.UTF-8",
+      "PATH": "/root/code/tokenizers-bpe-benchmarks/.venv/bin:/root/.cargo/bin:/root/.bun/bin:/usr/local/go/bin:/root/go/bin:/root/.local/share/pnpm/bin:/root/.local/state/fnm_multishells/4189729_1791394069208/bin:/root/.local/share/fnm:/root/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "USER": "root"
+    }
+  },
+  "comparator_version": 1,
+  "config": {
+    "arms": {
+      "baseline": {
+        "build": "badfc052f99e95b871b75ad85a6e24e3067249bde351ab3af7d4bbc9c799b6a8",
+        "environment": {}
+      },
+      "endpoint_control": {
+        "build": "d7bbb2d45f5a6e4b55db6cc09d1a358e326ea75c27dbc580c7618ac4d65a1734",
+        "environment": {}
+      },
+      "prezza": {
+        "build": "d7bbb2d45f5a6e4b55db6cc09d1a358e326ea75c27dbc580c7618ac4d65a1734",
+        "environment": {
+          "BPE_CORPUS_LAYOUT": "prezza"
+        }
+      }
+    },
+    "cases": [
+      {
+        "input_manifest": "db0490c608af7072ea8ae56e5f68ecb12a66239f6c6277f307505dd301bb3cc5",
+        "name": "zh512-whitespace-v50000",
+        "pretokenizer": "whitespace",
+        "trainer": {
+          "max_token_length": null,
+          "min_frequency": 2,
+          "prefix": null,
+          "suffix": null,
+          "vocab_size": 50000
+        }
+      },
+      {
+        "input_manifest": "db0490c608af7072ea8ae56e5f68ecb12a66239f6c6277f307505dd301bb3cc5",
+        "name": "zh512-whitespace-v100000",
+        "pretokenizer": "whitespace",
+        "trainer": {
+          "max_token_length": null,
+          "min_frequency": 2,
+          "prefix": null,
+          "suffix": null,
+          "vocab_size": 100000
+        }
+      }
+    ],
+    "comparison": "exact-model",
+    "execution": {
+      "cpu_set": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "max_process_rss_gib": 10,
+      "min_available_gib": 2,
+      "numa": {
+        "nodes": [],
+        "policy": "default"
+      },
+      "order": "balanced-alternating",
+      "paired_blocks": 3,
+      "timeout_seconds": 900,
+      "warmup_scope": "cell",
+      "warmups_per_cell": 1,
+      "workers": [
+        1,
+        4
+      ]
+    },
+    "mode": "core",
+    "name": "prezza-zh512-whitespace",
+    "schema_version": 1
+  },
+  "host": {
+    "cgroup_memory": [
+      {
+        "limit": null,
+        "path": "/sys/fs/cgroup/system.slice/paseo.service"
+      },
+      {
+        "limit": null,
+        "path": "/sys/fs/cgroup/system.slice"
+      }
+    ],
+    "cpu": {
+      "lscpu": [
+        {
+          "data": "x86_64",
+          "field": "Architecture:"
+        },
+        {
+          "data": "32-bit, 64-bit",
+          "field": "CPU op-mode(s):"
+        },
+        {
+          "data": "46 bits physical, 48 bits virtual",
+          "field": "Address sizes:"
+        },
+        {
+          "data": "Little Endian",
+          "field": "Byte Order:"
+        },
+        {
+          "data": "6",
+          "field": "CPU(s):"
+        },
+        {
+          "data": "0-5",
+          "field": "On-line CPU(s) list:"
+        },
+        {
+          "data": "GenuineIntel",
+          "field": "Vendor ID:"
+        },
+        {
+          "data": "Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz",
+          "field": "Model name:"
+        },
+        {
+          "data": "6",
+          "field": "CPU family:"
+        },
+        {
+          "data": "85",
+          "field": "Model:"
+        },
+        {
+          "data": "1",
+          "field": "Thread(s) per core:"
+        },
+        {
+          "data": "1",
+          "field": "Core(s) per socket:"
+        },
+        {
+          "data": "6",
+          "field": "Socket(s):"
+        },
+        {
+          "data": "4",
+          "field": "Stepping:"
+        },
+        {
+          "data": "4589.21",
+          "field": "BogoMIPS:"
+        },
+        {
+          "data": "fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon rep_good nopl xtopology cpuid tsc_known_freq pni pclmulqdq ssse3 fma cx16 pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch cpuid_fault pti ssbd ibrs ibpb stibp fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm mpx avx512f avx512dq rdseed adx smap clflushopt clwb avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves arat umip pku ospke md_clear flush_l1d arch_capabilities",
+          "field": "Flags:"
+        },
+        {
+          "data": "KVM",
+          "field": "Hypervisor vendor:"
+        },
+        {
+          "data": "full",
+          "field": "Virtualization type:"
+        },
+        {
+          "data": "192 KiB (6 instances)",
+          "field": "L1d cache:"
+        },
+        {
+          "data": "192 KiB (6 instances)",
+          "field": "L1i cache:"
+        },
+        {
+          "data": "6 MiB (6 instances)",
+          "field": "L2 cache:"
+        },
+        {
+          "data": "148.5 MiB (6 instances)",
+          "field": "L3 cache:"
+        },
+        {
+          "data": "1",
+          "field": "NUMA node(s):"
+        },
+        {
+          "data": "0-5",
+          "field": "NUMA node0 CPU(s):"
+        },
+        {
+          "data": "Not affected",
+          "field": "Vulnerability Gather data sampling:"
+        },
+        {
+          "data": "Mitigation; Aligned branch/return thunks",
+          "field": "Vulnerability Indirect target selection:"
+        },
+        {
+          "data": "Not affected",
+          "field": "Vulnerability Itlb multihit:"
+        },
+        {
+          "data": "Mitigation; PTE Inversion",
+          "field": "Vulnerability L1tf:"
+        },
+        {
+          "data": "Mitigation; Clear CPU buffers; SMT Host state unknown",
+          "field": "Vulnerability Mds:"
+        },
+        {
+          "data": "Mitigation; PTI",
+          "field": "Vulnerability Meltdown:"
+        },
+        {
+          "data": "Mitigation; Clear CPU buffers; SMT Host state unknown",
+          "field": "Vulnerability Mmio stale data:"
+        },
+        {
+          "data": "Not affected",
+          "field": "Vulnerability Reg file data sampling:"
+        },
+        {
+          "data": "Mitigation; IBRS",
+          "field": "Vulnerability Retbleed:"
+        },
+        {
+          "data": "Not affected",
+          "field": "Vulnerability Spec rstack overflow:"
+        },
+        {
+          "data": "Mitigation; Speculative Store Bypass disabled via prctl",
+          "field": "Vulnerability Spec store bypass:"
+        },
+        {
+          "data": "Mitigation; usercopy/swapgs barriers and __user pointer sanitization",
+          "field": "Vulnerability Spectre v1:"
+        },
+        {
+          "data": "Mitigation; IBRS; IBPB conditional; STIBP disabled; RSB filling; PBRSB-eIBRS Not affected; BHI SW loop, KVM SW loop",
+          "field": "Vulnerability Spectre v2:"
+        },
+        {
+          "data": "Not affected",
+          "field": "Vulnerability Srbds:"
+        },
+        {
+          "data": "Not affected",
+          "field": "Vulnerability Tsa:"
+        },
+        {
+          "data": "Mitigation; Clear CPU buffers; SMT Host state unknown",
+          "field": "Vulnerability Tsx async abort:"
+        },
+        {
+          "data": "Not affected",
+          "field": "Vulnerability Vmscape:"
+        }
+      ]
+    },
+    "hostname": "us-agent",
+    "platform": "Linux-6.12.101+deb13-amd64-x86_64-with-glibc2.41",
+    "supervisor_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "topology": "# The following is the parsable format, which can be fed to other\n# programs. Each different item in every column has an unique ID\n# starting usually from zero.\n# CPU,Core,Socket,Node\n0,0,0,0\n1,1,1,0\n2,2,2,0\n3,3,3,0\n4,4,4,0\n5,5,5,0\n"
+  },
+  "inputs": {
+    "zh512-whitespace-v100000": {
+      "input_id": "db0490c608af7072ea8ae56e5f68ecb12a66239f6c6277f307505dd301bb3cc5",
+      "sha256": "f8de16e1636513a76906cae9b122200a983c0cf9d77601f7f846db6ae72cf960"
+    },
+    "zh512-whitespace-v50000": {
+      "input_id": "db0490c608af7072ea8ae56e5f68ecb12a66239f6c6277f307505dd301bb3cc5",
+      "sha256": "f8de16e1636513a76906cae9b122200a983c0cf9d77601f7f846db6ae72cf960"
+    }
+  },
+  "protocol_version": 1,
+  "supervisor_sha256": "447d3b69b7332edd0d840a5b80d20b379d4fd114cbcffc43bbddbc9eeb823ec5"
+}

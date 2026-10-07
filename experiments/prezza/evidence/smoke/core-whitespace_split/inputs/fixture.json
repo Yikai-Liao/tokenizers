@@ -1,0 +1,20 @@
+{
+  "bytes": 229,
+  "data_path": "/root/code/tokenizers-bpe-benchmarks/.bench/prezza/final-smoke/words-whitespace_split/words.json",
+  "input_id": "35bc82e220afc59d4dd3313b6c003e22ad017f96fa2dae49d85c2cd61aa45920",
+  "kind": "prepared_words",
+  "path": "words.json",
+  "pretokenizer": "whitespace_split",
+  "raw": {
+    "sha256": "d92435d39fac7d7bad1134ba2b0e071aa63c5857610c2dc92ae6021f094722ae"
+  },
+  "recipe": {
+    "format_version": 1,
+    "preparer_build_id": "badfc052f99e95b871b75ad85a6e24e3067249bde351ab3af7d4bbc9c799b6a8",
+    "pretokenizer": "whitespace_split",
+    "raw_sha256": "d92435d39fac7d7bad1134ba2b0e071aa63c5857610c2dc92ae6021f094722ae",
+    "tool_sha256": "63fc4ab5fa4d05f7db209ab95ec00df03ddee60b85d9fb2a1434e1e9a0b2b16c"
+  },
+  "schema_version": 1,
+  "sha256": "0991e9b447ed6f4c873e4c6b4ace0fb4e76f49aea9a9f9d3cc4f32262f126304"
+}

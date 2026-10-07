@@ -1,0 +1,19 @@
+{
+  "attempt_id": "prepare",
+  "build_id": "badfc052f99e95b871b75ad85a6e24e3067249bde351ab3af7d4bbc9c799b6a8",
+  "effective_affinity": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "input_id": "4fae412d90f8a16aafecddbb89430302a7f04fc1a83beb9f0fe38a63ee737904",
+  "mode": "prepare",
+  "preprocessing_cpu_seconds": 0.00014999999999999996,
+  "preprocessing_seconds": 0.000151365,
+  "protocol_version": 1,
+  "unique_words": 10,
+  "workers_requested": 1
+}

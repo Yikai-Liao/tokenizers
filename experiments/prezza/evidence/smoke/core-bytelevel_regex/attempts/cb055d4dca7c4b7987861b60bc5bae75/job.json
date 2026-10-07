@@ -1,0 +1,18 @@
+{
+  "attempt_id": "cb055d4dca7c4b7987861b60bc5bae75",
+  "build_id": "d7bbb2d45f5a6e4b55db6cc09d1a358e326ea75c27dbc580c7618ac4d65a1734",
+  "input": "/root/code/tokenizers-bpe-benchmarks/.bench/prezza/final-smoke/words-bytelevel_regex/words.json",
+  "input_id": "c9fb056ea49dca39115713e9cfb56d73fb41c773a6b20b1ec659e69df574a599",
+  "mode": "core",
+  "output": "/root/code/tokenizers-bpe-benchmarks/.bench/prezza/final-smoke/core-bytelevel_regex/attempts/cb055d4dca7c4b7987861b60bc5bae75/model.json",
+  "pretokenizer": "bytelevel_regex",
+  "protocol_version": 1,
+  "trainer": {
+    "max_token_length": 12,
+    "min_frequency": 2,
+    "prefix": null,
+    "suffix": null,
+    "vocab_size": 300
+  },
+  "workers": 4
+}

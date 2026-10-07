@@ -1,0 +1,20 @@
+{
+  "bytes": 481115715,
+  "data_path": "/root/code/tokenizers-bpe-benchmarks/.bench/prezza/zh512-words/words.json",
+  "input_id": "db0490c608af7072ea8ae56e5f68ecb12a66239f6c6277f307505dd301bb3cc5",
+  "kind": "prepared_words",
+  "path": "words.json",
+  "pretokenizer": "whitespace",
+  "raw": {
+    "sha256": "a0d40d4102cba1e933f25e5ccd17552d2eaebaec4ef770bc39d8e46e740b4d4f"
+  },
+  "recipe": {
+    "format_version": 1,
+    "preparer_build_id": "badfc052f99e95b871b75ad85a6e24e3067249bde351ab3af7d4bbc9c799b6a8",
+    "pretokenizer": "whitespace",
+    "raw_sha256": "a0d40d4102cba1e933f25e5ccd17552d2eaebaec4ef770bc39d8e46e740b4d4f",
+    "tool_sha256": "63fc4ab5fa4d05f7db209ab95ec00df03ddee60b85d9fb2a1434e1e9a0b2b16c"
+  },
+  "schema_version": 1,
+  "sha256": "f8de16e1636513a76906cae9b122200a983c0cf9d77601f7f846db6ae72cf960"
+}
