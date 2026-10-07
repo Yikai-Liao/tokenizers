@@ -2,6 +2,7 @@
 //! Fresh domains can retire low counts permanently. Reusable identities preserve
 //! a signed ledger and a separate position owner for each published birth cohort.
 mod commit;
+mod data_commit;
 use super::storage::SortedPositions;
 use super::{IdentityPolicy, initial_pairs::InitialPairTable};
 use ahash::AHashMap;
@@ -151,6 +152,21 @@ pub(super) struct PairIndex<'arena> {
     selection: Selection<'arena>,
     routes: Vec<super::merge::OwnerRoute>,
     prepared_births: Vec<Vec<super::merge::CompletedBirth<'arena>>>,
+    owner_mode: OwnerMode,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum OwnerMode {
+    Baseline,
+    Data,
+}
+impl OwnerMode {
+    fn configured() -> Self {
+        match std::env::var("BPE_OWNER_MODE").as_deref() {
+            Ok("baseline") => Self::Baseline,
+            _ => Self::Data,
+        }
+    }
 }
 
 impl PairShard<'_> {
@@ -299,6 +315,7 @@ impl<'arena> PairIndex<'arena> {
             selection,
             routes: Vec::new(),
             prepared_births: Vec::new(),
+            owner_mode: OwnerMode::configured(),
         })
     }
 

@@ -7,6 +7,7 @@
 //! cursors never share state. For the integer encoding alone, see
 //! <https://protobuf.dev/programming-guides/encoding/#base-128-varints>.
 use super::{AllocationLease, Result, StorageError};
+use rayon::prelude::*;
 use std::alloc::{Layout, alloc, dealloc};
 use std::collections::BinaryHeap;
 use std::marker::PhantomData;
@@ -213,6 +214,97 @@ impl PositionEncodingScratch {
 }
 
 impl<'arena> SortedPositions<'arena> {
+    /// Encode fresh, spatially ordered sources with cooperative work on a hot
+    /// key. Global ordinals retain the existing 128-position restart format.
+    /// No worker lease survives a nested parallel phase.
+    pub(in super::super) fn from_cooperative_chains(
+        count: usize,
+        sources: &[(&super::PositionChains, super::PositionChain)],
+        arena: &'arena super::AllocationArena,
+    ) -> Result<Self> {
+        if count < 16_384 {
+            let worker = rayon::current_thread_index().expect("training pool worker");
+            let lease = arena.lease(worker);
+            return Self::from_reversed_iter_direct(
+                count,
+                sources
+                    .iter()
+                    .flat_map(|(owner, chain)| owner.reversed(*chain)),
+                &lease,
+            );
+        }
+        if count >= INLINE {
+            return Err(StorageError("position count exceeds resident bounds"));
+        }
+        let mut pieces = Vec::new();
+        for &(owner, chain) in sources {
+            pieces.extend(
+                owner
+                    .split_reverse(chain)
+                    .into_iter()
+                    .map(|chain| (owner, chain)),
+            );
+        }
+        pieces.reverse();
+        let mut ordinal = 0_usize;
+        let mut previous = 0;
+        let mut runs = Vec::with_capacity(pieces.len());
+        for (owner, chain) in pieces {
+            let end = ordinal
+                .checked_add(chain.len())
+                .ok_or(StorageError("position count exceeds resident bounds"))?;
+            runs.push(CooperativeRun {
+                owner,
+                chain,
+                start: ordinal,
+                end,
+                previous,
+                bytes: 0,
+                offset: 0,
+            });
+            ordinal = end;
+            previous = owner.last(chain).expect("nonempty encoding block");
+        }
+        if ordinal != count {
+            return Err(StorageError(
+                "position run differs from its declared length",
+            ));
+        }
+        runs.par_iter_mut().try_for_each(|run| -> Result<()> {
+            run.bytes = encoded_size(
+                run.start,
+                run.end,
+                run.previous,
+                run.owner.reversed(run.chain),
+            )?;
+            Ok(())
+        })?;
+        let mut used = 0_usize;
+        for run in &mut runs {
+            run.offset = used;
+            used = used
+                .checked_add(run.bytes)
+                .ok_or(StorageError("position stream size overflow"))?;
+        }
+        let result = {
+            let lease = arena.lease(rayon::current_thread_index().expect("training pool worker"));
+            Self::allocate(
+                count,
+                count.div_ceil(RESTART_INTERVAL),
+                used,
+                used,
+                false,
+                &lease,
+            )?
+        };
+        let target = CooperativeTarget {
+            data: result.data_ptr(),
+            directory: result.allocation_ptr().cast::<usize>(),
+            multi: result.multi(),
+        };
+        runs.par_iter().try_for_each(|run| target.write(run))?;
+        Ok(result)
+    }
     /// Construct an empty list without an allocation.
     pub(in super::super) fn new() -> Self {
         Self::default()
@@ -778,6 +870,64 @@ impl<'arena> SortedPositions<'arena> {
     }
 }
 
+struct CooperativeRun<'events> {
+    owner: &'events super::PositionChains,
+    chain: super::PositionChain,
+    start: usize,
+    end: usize,
+    previous: u64,
+    bytes: usize,
+    offset: usize,
+}
+/// Private output capability, used only before the list can be read or published.
+struct CooperativeTarget {
+    data: *mut u8,
+    directory: *mut usize,
+    multi: bool,
+}
+// SAFETY: the constructor supplies disjoint byte ranges and disjoint seed
+// ordinals. All writers join before the owning list is read, moved, or dropped.
+unsafe impl Sync for CooperativeTarget {}
+impl CooperativeTarget {
+    fn write(&self, run: &CooperativeRun<'_>) -> Result<()> {
+        let mut cursor = run.offset + run.bytes;
+        reverse_codes(
+            run.start,
+            run.end,
+            run.previous,
+            run.owner.reversed(run.chain),
+            |index, code| {
+                let seed = index.is_multiple_of(RESTART_INTERVAL);
+                let bytes = if seed { 8 } else { varint_bytes(code) };
+                cursor = cursor
+                    .checked_sub(bytes)
+                    .filter(|&offset| offset >= run.offset)
+                    .ok_or(StorageError("position producer changed during replay"))?;
+                // SAFETY: measured checked bounds restrict writes to this run's
+                // final stream range. Each global seed belongs to exactly one run.
+                unsafe {
+                    let target = self.data.add(cursor);
+                    if seed {
+                        if self.multi {
+                            self.directory
+                                .add(3 + index / RESTART_INTERVAL)
+                                .write(cursor);
+                        }
+                        target.cast::<u64>().write_unaligned(code);
+                    } else {
+                        write_varint(target, code);
+                    }
+                }
+                Ok(())
+            },
+        )?;
+        if cursor != run.offset {
+            return Err(StorageError("position producer changed during replay"));
+        }
+        Ok(())
+    }
+}
+
 struct DescendingMerge<I> {
     runs: Vec<I>,
     heads: BinaryHeap<(u64, usize)>,
@@ -917,6 +1067,78 @@ mod tests {
                 );
             }
             assert_eq!(output, expected);
+        }
+    }
+    #[test]
+    fn cooperative_encoding_preserves_global_restarts_and_hot_key_runs() {
+        for workers in [1, 4] {
+            let pool = rayon::ThreadPoolBuilder::new()
+                .num_threads(workers)
+                .build()
+                .unwrap();
+            let arena = super::super::AllocationArena::new(workers, 256_000);
+            pool.install(|| {
+                for lengths in [vec![33_001], vec![127, 128, 129, 16_777, 9001]] {
+                    let mut owners = Vec::new();
+                    let mut handles = Vec::new();
+                    let mut expected = Vec::new();
+                    let mut value = 1_u64 << 63;
+                    for length in lengths {
+                        let mut owner = super::super::PositionChains::new();
+                        let mut chain = super::super::PositionChain::default();
+                        for index in 0..length {
+                            value += if index % 7 == 0 { 0 } else { 8193 };
+                            owner.push(&mut chain, value).unwrap();
+                            expected.push(value);
+                        }
+                        owners.push(owner);
+                        handles.push(chain);
+                    }
+                    let sources: Vec<_> = owners.iter().zip(handles).rev().collect();
+                    let result =
+                        SortedPositions::from_cooperative_chains(expected.len(), &sources, &arena)
+                            .unwrap();
+                    verify(&result, &expected);
+                    let lease = arena.lease(rayon::current_thread_index().unwrap());
+                    let ordinary = SortedPositions::from_reversed_iter_direct(
+                        expected.len(),
+                        expected.iter().rev().copied(),
+                        &lease,
+                    )
+                    .unwrap();
+                    assert_eq!(result.stream_len(), ordinary.stream_len());
+                    // Compare the actual codec bytes, not merely its decoder.
+                    unsafe {
+                        assert_eq!(
+                            std::slice::from_raw_parts(result.data_ptr(), result.stream_len()),
+                            std::slice::from_raw_parts(ordinary.data_ptr(), ordinary.stream_len())
+                        );
+                    }
+                }
+                let mut owner = super::super::PositionChains::new();
+                let mut chain = super::super::PositionChain::default();
+                for index in 0..16_500 {
+                    owner
+                        .push(&mut chain, if index == 16_499 { 0 } else { index })
+                        .unwrap();
+                }
+                assert!(
+                    SortedPositions::from_cooperative_chains(
+                        chain.len(),
+                        &[(&owner, chain)],
+                        &arena
+                    )
+                    .is_err()
+                );
+                assert!(
+                    SortedPositions::from_cooperative_chains(
+                        chain.len() + 1,
+                        &[(&owner, chain)],
+                        &arena
+                    )
+                    .is_err()
+                );
+            });
         }
     }
     #[test]
