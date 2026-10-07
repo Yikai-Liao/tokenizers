@@ -1006,16 +1006,9 @@ impl ParityBpeTrainer {
     /// When `total_symbols` is false this is simply `num_merges`. When it is
     /// true, `num_merges` is the TOTAL target vocabulary size, counting the
     /// special tokens, alphabet, affix-variant chars and merges together, so
-    /// the merge count is `target - base_symbols`, where `base_symbols` is the
-    /// number of symbols already placed (specials, alphabet, and any
-    /// prefix/suffix char variants created during tokenization). The final
-    /// vocabulary then equals the target.
-    ///
-    /// A previous version subtracted the count of distinct word-internal plus
-    /// word-final characters. With no end-of-word suffix each character is a
-    /// single token, so characters appearing in both positions were subtracted
-    /// twice and the special tokens were ignored, leaving the final vocabulary
-    /// short of the target.
+    /// the merge budget is `target.saturating_sub(base_symbols)`.
+    /// `base_symbols` counts already placed specials, alphabet and affix variants.
+    /// Available pairs and existing identities determine the final vocabulary size.
     fn resolve_merge_count(&self, base_symbols: usize) -> usize {
         if self.total_symbols {
             let merge_target = self.num_merges.saturating_sub(base_symbols);

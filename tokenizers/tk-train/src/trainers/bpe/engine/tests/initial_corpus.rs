@@ -482,7 +482,6 @@ fn owner_directories_keep_duplicate_keys_stable_across_tiles() {
         .collect();
     let weights = IntervalIndex::new(vec![0], vec![7]);
     let mut reference = None;
-    let mut expected_mass = None;
     for workers in [1, 64, 65] {
         let execution = execution::Execution::new(workers).unwrap();
         let arena = AllocationArena::new(workers, slots.len() - 1);
@@ -510,11 +509,6 @@ fn owner_directories_keep_duplicate_keys_stable_across_tiles() {
         }
         let edges = (slots.len() - 1) as u128;
         assert_eq!(initial.weighted_mass, edges * 7);
-        if let Some(mass) = expected_mass {
-            assert_eq!(initial.weighted_mass, mass);
-        } else {
-            expected_mass = Some(initial.weighted_mass);
-        }
         assert_eq!(initial.maximum_word_weight, 7);
         assert_eq!(snapshot.len(), 2);
         let repeated_across_tiles = |pair| {

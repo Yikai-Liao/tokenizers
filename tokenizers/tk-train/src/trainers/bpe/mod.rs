@@ -202,9 +202,8 @@ pub struct BpeTrainer {
     pub show_progress: bool,
     /// Progress output format (Indicatif, JsonLines, or Silent)
     ///
-    /// `ProgressFormat` is a `tk-encode` type and carries no serde of its own; `tk-convert` used to
-    /// own its on-disk shape, and that layer is gone. It only decides how progress is *displayed*,
-    /// so it is skipped rather than given a shape here, and falls back to its `Default`.
+    /// Progress display is not serialized; deserialization uses its default.
+    /// It does not change training results.
     #[serde(skip)]
     pub progress_format: ProgressFormat,
     /// A list of special tokens that the model should know of

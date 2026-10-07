@@ -328,9 +328,6 @@ impl<'arena> InitialPairTable<'arena> {
         // PERF: 2^28 bounds raw records while favoring complete-count filtering in
         // one wave. Smaller waves can encode low-frequency partial runs that later
         // disappear, repeat append and table growth, and retain retired arena buffers.
-        // A smaller raw cap need not lower the complete training peak. Corpus length
-        // alone does not predict retained keys or encoding cost, so keep this bound
-        // rather than routing only by length.
         Self::build_in_waves(
             corpus,
             minimum_frequency,

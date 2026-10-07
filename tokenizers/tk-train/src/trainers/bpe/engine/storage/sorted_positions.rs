@@ -576,8 +576,8 @@ impl<'arena> SortedPositions<'arena> {
             return Ok(());
         }
         let previous = self.get(start - 1);
-        // PERF: Preserve the original append lifecycle: measure and replay the
-        // immutable run, with no encoded suffix buffer or subsequent copy.
+        // PERF: Measure the immutable run, then replay it into destination storage.
+        // This visits input twice and avoids a temporary encoded allocation.
         let added = encoded_size(start, end, previous, input.clone())?;
         let old_used = self.stream_len();
         let used = old_used
