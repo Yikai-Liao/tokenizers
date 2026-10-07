@@ -681,9 +681,18 @@ mod tests {
             assert_eq!(index.prepared_births.len(), 1);
             assert!(index.prepared_births[0].capacity() >= 1);
             assert!(index.prepared_births.iter().all(Vec::is_empty));
-            // Cleanup discards buffered entries, not earlier count mutations.
-            // The failed attempt is discarded; selection must not resume.
-            assert_eq!(index.shards[0].states[&pair_key(old)].ledger_count_bits, 3);
+            // The baseline can retain earlier mutations; this snapshot route
+            // publishes only after every checked count task succeeds. Either
+            // way the failed corpus/index attempt must be discarded.
+            let expected = if index.owner_mode == OwnerMode::Baseline {
+                3
+            } else {
+                4
+            };
+            assert_eq!(
+                index.shards[0].states[&pair_key(old)].ledger_count_bits,
+                expected
+            );
         });
     }
 

@@ -72,33 +72,16 @@ impl PositionChains {
 
     /// Producer checkpoints make every reverse encoding run bounded. Splitting
     /// visits only block metadata, never the whole linked position payload.
-    pub(in super::super) fn split_reverse(&self, chain: PositionChain) -> Vec<PositionChain> {
-        let mut output = Vec::with_capacity(chain.len().div_ceil(Self::BLOCK_SIZE));
-        let mut head = chain.head;
-        let mut remaining = chain.len();
-        let partial = remaining % Self::BLOCK_SIZE;
-        if partial != 0 {
-            output.push(PositionChain {
-                head,
-                tail: None,
-                length: partial as u32,
-                checkpoint: None,
-            });
-            head = chain.checkpoint;
-            remaining -= partial;
+    pub(in super::super) fn split_reverse(
+        &self,
+        chain: PositionChain,
+    ) -> impl ExactSizeIterator<Item = PositionChain> + '_ {
+        ReverseBlocks {
+            chains: self,
+            head: chain.head,
+            checkpoint: chain.checkpoint,
+            remaining: chain.len(),
         }
-        while remaining != 0 {
-            let node = head.expect("producer retained the full block boundary");
-            output.push(PositionChain {
-                head,
-                tail: None,
-                length: Self::BLOCK_SIZE as u32,
-                checkpoint: None,
-            });
-            head = self.checkpoints[&node.0.get()];
-            remaining -= Self::BLOCK_SIZE;
-        }
-        output
     }
     /// Visit a chain from its most recently appended coordinate.
     #[inline]
@@ -127,6 +110,47 @@ impl PositionChains {
             .map(|node| self.positions.get(node.0.get() as usize - 1).0)
     }
 }
+struct ReverseBlocks<'chains> {
+    chains: &'chains PositionChains,
+    head: Option<PositionNode>,
+    checkpoint: Option<PositionNode>,
+    remaining: usize,
+}
+impl Iterator for ReverseBlocks<'_> {
+    type Item = PositionChain;
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.remaining == 0 {
+            return None;
+        }
+        let partial = self.remaining % PositionChains::BLOCK_SIZE;
+        let count = if partial == 0 {
+            PositionChains::BLOCK_SIZE
+        } else {
+            partial
+        };
+        let chain = PositionChain {
+            head: self.head,
+            tail: None,
+            length: count as u32,
+            checkpoint: None,
+        };
+        self.head = if partial == 0 {
+            let node = self
+                .head
+                .expect("producer retained the full block boundary");
+            self.chains.checkpoints[&node.0.get()]
+        } else {
+            self.checkpoint
+        };
+        self.remaining -= count;
+        Some(chain)
+    }
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let count = self.remaining.div_ceil(PositionChains::BLOCK_SIZE);
+        (count, Some(count))
+    }
+}
+impl ExactSizeIterator for ReverseBlocks<'_> {}
 #[derive(Clone)]
 struct ChainIter<'a> {
     chains: &'a PositionChains,
@@ -181,7 +205,7 @@ mod tests {
             chains.push(&mut branch, position + (1 << 32)).unwrap();
         }
         for chain in [snapshot, a, branch] {
-            let runs = chains.split_reverse(chain);
+            let runs: Vec<_> = chains.split_reverse(chain).collect();
             assert!(
                 runs.iter()
                     .all(|run| run.len() <= PositionChains::BLOCK_SIZE)

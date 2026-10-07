@@ -217,9 +217,9 @@ impl<'arena> SortedPositions<'arena> {
     /// Encode fresh, spatially ordered sources with cooperative work on a hot
     /// key. Global ordinals retain the existing 128-position restart format.
     /// No worker lease survives a nested parallel phase.
-    pub(in super::super) fn from_cooperative_chains(
+    pub(in super::super) fn from_cooperative_chains<'events>(
         count: usize,
-        sources: &[(&super::PositionChains, super::PositionChain)],
+        sources: impl Iterator<Item = (&'events super::PositionChains, super::PositionChain)> + Clone,
         arena: &'arena super::AllocationArena,
     ) -> Result<Self> {
         if count < 16_384 {
@@ -227,9 +227,7 @@ impl<'arena> SortedPositions<'arena> {
             let lease = arena.lease(worker);
             return Self::from_reversed_iter_direct(
                 count,
-                sources
-                    .iter()
-                    .flat_map(|(owner, chain)| owner.reversed(*chain)),
+                sources.flat_map(|(owner, chain)| owner.reversed(chain)),
                 &lease,
             );
         }
@@ -237,13 +235,8 @@ impl<'arena> SortedPositions<'arena> {
             return Err(StorageError("position count exceeds resident bounds"));
         }
         let mut pieces = Vec::new();
-        for &(owner, chain) in sources {
-            pieces.extend(
-                owner
-                    .split_reverse(chain)
-                    .into_iter()
-                    .map(|chain| (owner, chain)),
-            );
+        for (owner, chain) in sources {
+            pieces.extend(owner.split_reverse(chain).map(|chain| (owner, chain)));
         }
         pieces.reverse();
         let mut ordinal = 0_usize;
@@ -1095,9 +1088,12 @@ mod tests {
                         handles.push(chain);
                     }
                     let sources: Vec<_> = owners.iter().zip(handles).rev().collect();
-                    let result =
-                        SortedPositions::from_cooperative_chains(expected.len(), &sources, &arena)
-                            .unwrap();
+                    let result = SortedPositions::from_cooperative_chains(
+                        expected.len(),
+                        sources.iter().copied(),
+                        &arena,
+                    )
+                    .unwrap();
                     verify(&result, &expected);
                     let lease = arena.lease(rayon::current_thread_index().unwrap());
                     let ordinary = SortedPositions::from_reversed_iter_direct(
@@ -1125,7 +1121,7 @@ mod tests {
                 assert!(
                     SortedPositions::from_cooperative_chains(
                         chain.len(),
-                        &[(&owner, chain)],
+                        [(&owner, chain)].into_iter(),
                         &arena
                     )
                     .is_err()
@@ -1133,7 +1129,7 @@ mod tests {
                 assert!(
                     SortedPositions::from_cooperative_chains(
                         chain.len() + 1,
-                        &[(&owner, chain)],
+                        [(&owner, chain)].into_iter(),
                         &arena
                     )
                     .is_err()
