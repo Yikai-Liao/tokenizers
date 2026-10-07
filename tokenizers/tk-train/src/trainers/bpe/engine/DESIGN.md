@@ -455,28 +455,13 @@ before public model strings are built.
 
 ### Initial grouping
 
-[Initial pair construction](initial_pairs.rs) emits bounded waves of records.
-When both initial token IDs fit in sixteen bits, each record uses eight bytes;
-otherwise it uses twelve. Both representations preserve the complete pair
-identity and a wave-local coordinate offset. Stable radix grouping keeps physical
-order within each key. The wave base restores full-width positions. Interval weight runs and a unit-weight shortcut supply
-weighted counts. Owners can encode initial lists in parallel using resources
-from the worker that executes each task.
-
-Generic multi-owner routing uses one dense owner directory for every pool
-size. A wave covers at most `2^28` slots and each spatial producer covers
-`2^18`, so there are at most `P = 1024` producers. On 64-bit targets, a count
-cell uses 8 bytes and a `RecordBuffer` slice/used cell uses 24. Together their
-directory payload is bounded by `32*P*W <= 32 KiB*W` bytes for `W` logical
-owners: 2 MiB at 64 owners, 4 MiB at 128, and 8 MiB at 256. These are payload
-requests, excluding row/vector headers, allocator capacity and record storage;
-they are not total resident-memory bounds. The engine accepts this metadata
-cost without a worker-count representation switch or public worker limit.
-Only counted records obtain initialized resident length. Ascending source ranges
-receive disjoint exact-count owner slices before parallel fill; task completion
-order cannot change the incoming record order. The sole-owner single-scan path,
-wave/tile sizes, bounded alphabet collector and pair-state hash tables remain
-separate mechanisms.
+[Initial pair construction](initial_pairs.rs) emits bounded record waves.
+Sixteen-bit initial IDs use eight-byte records; wider keys use twelve. Both
+preserve complete pair identity and wave-local offsets. Stable grouping keeps
+each key's physical order; the wave base restores full-width coordinates.
+Weight runs and a unit-weight shortcut supply weighted counts. Generic multi-owner
+routing uses dense directories and source-ordered disjoint counted slices at every
+pool size. Fill is parallel; owners encode using the executing worker's resources.
 
 When the cached plan has at most 256 distinct resolved initial IDs, a bounded
 pair collector can replace per-occurrence keyed records with four-byte wave-local

@@ -472,7 +472,7 @@ fn low_id_compact_records_match_forced_full_records_across_small_waves() {
 }
 
 #[test]
-fn dense_and_sparse_owner_directories_keep_duplicate_keys_stable_across_tiles() {
+fn owner_directories_keep_duplicate_keys_stable_across_tiles() {
     use super::storage::IntervalIndex;
     use std::sync::atomic::AtomicU32;
 
