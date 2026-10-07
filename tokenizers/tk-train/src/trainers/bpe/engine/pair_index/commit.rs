@@ -171,23 +171,27 @@ impl<'arena> PairShard<'arena> {
     ) {
         debug_assert!(births.is_empty() || policy == IdentityPolicy::FirstActivationOnly);
         for birth in births.drain(..) {
-            let priority = PairPriority {
-                key: birth.key,
-                priority_count: birth.weight,
-            };
-            debug_assert!(
-                !self.states.contains_key(&birth.key),
-                "fresh birth has one producer rule"
-            );
-            self.states.insert(
-                birth.key,
-                PairState {
-                    ledger_count_bits: birth.weight,
-                    positions: birth.positions,
-                },
-            );
-            self.priorities.push(priority);
+            self.insert_fresh(birth.key, birth.weight, birth.positions);
         }
+    }
+
+    /// Publish the count and positions together with their selectable priority.
+    fn insert_fresh(&mut self, key: u64, count: u64, positions: SortedPositions<'arena>) {
+        debug_assert!(
+            !self.states.contains_key(&key),
+            "fresh birth has one producer rule"
+        );
+        self.states.insert(
+            key,
+            PairState {
+                ledger_count_bits: count,
+                positions,
+            },
+        );
+        self.priorities.push(PairPriority {
+            key,
+            priority_count: count,
+        });
     }
 
     /// Reduce each stably grouped bucket, then encode and publish one complete key
@@ -321,22 +325,14 @@ impl<'arena> PairShard<'arena> {
                     };
                     debug_assert_eq!(positions.len(), group.occurrences);
 
-                    let priority = PairPriority {
-                        key,
-                        priority_count: count,
-                    };
                     if policy == IdentityPolicy::FirstActivationOnly {
-                        self.states.insert(
-                            key,
-                            PairState {
-                                ledger_count_bits: count,
-                                positions,
-                            },
-                        );
-                        self.priorities.push(priority);
+                        self.insert_fresh(key, count, positions);
                     } else {
                         candidates.push(MergeCandidate {
-                            priority,
+                            priority: PairPriority {
+                                key,
+                                priority_count: count,
+                            },
                             positions,
                         });
                     }

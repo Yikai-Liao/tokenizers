@@ -63,11 +63,12 @@ impl Alphabet {
         // estimates bounded-specific overhead; owner-sized record/slice wrappers
         // common to the generic collector are excluded.
         pairs
-            * (producers * (std::mem::size_of::<u32>() + std::mem::size_of::<PairBuffer<'_>>())
+            * (producers
+                * (std::mem::size_of::<u32>() + std::mem::size_of::<RecordBuffer<'_, u32>>())
                 + 2 * std::mem::size_of::<usize>())
             + producers
                 * (std::mem::size_of::<Vec<u32>>()
-                    + std::mem::size_of::<Vec<PairBuffer<'_>>>()
+                    + std::mem::size_of::<Vec<RecordBuffer<'_, u32>>>()
                     + std::mem::size_of::<Range<usize>>()
                     + std::mem::size_of::<Producer<'_>>())
             + self.ordinals.capacity() * std::mem::size_of::<u8>()
@@ -101,22 +102,18 @@ impl Alphabet {
     }
 }
 
-#[derive(Default)]
-struct PairBuffer<'a> {
-    records: &'a mut [MaybeUninit<u32>],
-    used: usize,
-}
 struct Producer<'a> {
     range: Range<usize>,
     // Count rows become bucket-to-buffer indices once slices are assigned.
     // Only nonempty buckets hold a fat slice descriptor.
     directory: Vec<u32>,
-    buffers: Vec<PairBuffer<'a>>,
+    buffers: Vec<RecordBuffer<'a, u32>>,
 }
 
 fn producer_count(pairs: usize, workers: usize, slots: usize) -> usize {
     assert!(pairs > 0 && workers > 0);
-    let per_producer = pairs * (std::mem::size_of::<u32>() + std::mem::size_of::<PairBuffer<'_>>());
+    let per_producer =
+        pairs * (std::mem::size_of::<u32>() + std::mem::size_of::<RecordBuffer<'_, u32>>());
     workers
         .min(MAX_PRODUCERS)
         .min((DIRECTORY_BUDGET / per_producer).max(1))
@@ -171,19 +168,11 @@ pub(super) fn collect_wave(
     for (bucket, &count) in totals.iter().enumerate() {
         owner_sizes[owners[bucket]] += count;
     }
-    let mut records: Vec<Vec<MaybeUninit<u32>>> = owner_sizes
+    let mut records: Vec<_> = owner_sizes
         .iter()
-        .map(|&count| {
-            let mut values = Vec::with_capacity(count);
-            // SAFETY: MaybeUninit may be unwritten. The counted pair/producer slices
-            // below partition this allocation exactly; no initialized view exists yet.
-            unsafe {
-                values.set_len(count);
-            }
-            values
-        })
+        .map(|&count| allocate_records::<u32>(count))
         .collect();
-    let mut buffers: Vec<Vec<PairBuffer<'_>>> = rows
+    let mut buffers: Vec<Vec<RecordBuffer<'_, u32>>> = rows
         .iter()
         .map(|row| Vec::with_capacity(row.iter().filter(|&&count| count != 0).count()))
         .collect();
@@ -193,7 +182,7 @@ pub(super) fn collect_wave(
         .sum::<usize>()
         + buffers
             .iter()
-            .map(|buffer| buffer.capacity() * std::mem::size_of::<PairBuffer<'_>>())
+            .map(|buffer| buffer.capacity() * std::mem::size_of::<RecordBuffer<'_, u32>>())
             .sum::<usize>();
     assert!(
         metadata_bytes <= DIRECTORY_BUDGET,
@@ -218,7 +207,7 @@ pub(super) fn collect_wave(
             let (records, next) = pair_rest.split_at_mut(count);
             pair_rest = next;
             row[bucket] = buffers.len() as u32;
-            buffers.push(PairBuffer { records, used: 0 });
+            buffers.push(RecordBuffer { records, used: 0 });
         }
         debug_assert!(pair_rest.is_empty());
     }
@@ -239,16 +228,10 @@ pub(super) fn collect_wave(
             corpus.for_each_edge(producer.range.clone(), |position, key| {
                 let bucket = alphabet.bucket(key);
                 let buffer = &mut producer.buffers[producer.directory[bucket] as usize];
-                buffer.records[buffer.used].write((position - base) as u32);
-                buffer.used += 1;
+                buffer.push((position - base) as u32);
             });
             // Repeated source scans have identical edge/key order and cardinality.
-            assert!(
-                producer
-                    .buffers
-                    .iter()
-                    .all(|buffer| buffer.used == buffer.records.len())
-            );
+            producer.buffers.into_iter().for_each(RecordBuffer::finish);
             work.complete(producer.range.len());
         });
     // SAFETY: Producers own disjoint, counted slices and joined after every
@@ -256,12 +239,7 @@ pub(super) fn collect_wave(
     // u32 and MaybeUninit<u32> share layout; each allocation keeps its capacity.
     let records: Vec<Vec<u32>> = records
         .into_iter()
-        .map(|values| {
-            let mut values = std::mem::ManuallyDrop::new(values);
-            unsafe {
-                Vec::from_raw_parts(values.as_mut_ptr().cast(), values.len(), values.capacity())
-            }
-        })
+        .map(|values| unsafe { initialized_records(values) })
         .collect();
     let mut ranges: Vec<Vec<(u64, usize, usize)>> = (0..workers).map(|_| Vec::new()).collect();
     let mut ends = vec![0_usize; workers];
@@ -418,7 +396,8 @@ mod tests {
                     assert!(
                         producers
                             * pairs
-                            * (std::mem::size_of::<u32>() + std::mem::size_of::<PairBuffer<'_>>())
+                            * (std::mem::size_of::<u32>()
+                                + std::mem::size_of::<RecordBuffer<'_, u32>>())
                             <= DIRECTORY_BUDGET
                     );
                 }

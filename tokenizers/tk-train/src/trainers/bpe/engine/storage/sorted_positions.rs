@@ -1009,8 +1009,6 @@ mod tests {
             (0..777).map(|i| (1 << 63) + i * 17).collect(),
             vec![0, (1 << 32) - 1, 1 << 32, (1 << 63) - 1, 1 << 63, u64::MAX],
         ] {
-            let positions = SortedPositions::from_sorted(&values, &mut scratch, &lease).unwrap();
-            verify(&positions, &values);
             let positions = SortedPositions::from_reversed_iter(
                 values.len(),
                 values.iter().rev().copied(),

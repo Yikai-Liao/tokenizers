@@ -49,6 +49,7 @@ impl RoutedChangeRef {
 /// One owner's original-order count actions and separately grouped birth indices.
 /// Birth grouping may reorder only `births`; `changes` preserves checked update
 /// order, including removal-before-birth when both keys route to the same owner.
+#[derive(Default)]
 pub(in super::super) struct OwnerRoute {
     pub(in super::super) changes: Vec<RoutedChangeRef>,
     pub(in super::super) births: Vec<usize>,
@@ -132,16 +133,6 @@ impl MergeEvents {
                     }
                 }
             }
-        }
-    }
-}
-impl Default for OwnerRoute {
-    fn default() -> Self {
-        Self {
-            changes: Vec::new(),
-            births: Vec::new(),
-            grouped_births: Vec::new(),
-            bucket_offsets: Vec::new(),
         }
     }
 }

@@ -110,9 +110,10 @@ intermediate boundaries needed for cohort accounting.
 
 ### Delayed corpus construction
 
-The initial plan records word geometry, weights, resolved initial IDs, and checked
-resident-size and numeric bounds. Bounded waves own left endpoints; the last edge
-in a wave can read one symbol beyond its range.
+`CorpusPlan` owns word geometry, resolved initial IDs, and checked resident-size
+and numeric bounds. `WordMeasure` measures retained symbols once and derives the
+UTF-8 seek anchors used by initial grouping. Bounded waves own left endpoints;
+the last edge in a wave can read one symbol beyond its range.
 
 Initial pair construction scans the borrowed word strings through the resolved
 character-ID lookup tables. Checkpoints retain original UTF-8 coordinates,
@@ -364,47 +365,28 @@ coordinate is less than the corpus length and therefore fits in `u32`.
 Partial producers, AA, reuse and wide-coordinate corpora keep linked storage.
 These are geometry and ownership conditions, not an input-type or alphabet test.
 
-A group retains its first two positions as linked seeds and promotes only when
-an actual third birth arrives. The neighbor entry holds an
-`Option<NonZeroU32>` index into a scratch-local `Vec<Vec<u32>>`; tiny and
-ineligible groups allocate no vector header or payload. On 64-bit targets,
-removed weight (8 bytes) + born weight (8) + linked chain metadata (12) + pool
-index (4) use the existing 32-byte aligned entry, and its `(u32, entry)` tuple
-occupies 40 bytes. This fills alignment padding rather than widening the entry.
-Some 32-bit layouts grow from 28 to 32 bytes; correctness does not depend on the
-64-bit layout equality.
+A group keeps two linked seed positions and promotes on its third birth; tiny
+and ineligible groups allocate no vector. Compact coordinates can save space for
+larger groups, but vector capacity and pool overhead affect the crossover.
+Drain releases each promoted payload after encoding or pruning. Pool indices
+stay unique until both direction drains finish; errors leave remaining payloads
+owned by scratch. [Preparation storage](merge/prepare/mod.rs) documents the
+field layout and allocation details next to their implementation.
 
-For a group with `n` births, linked low-coordinate nodes use `8*n` payload
-bytes. A promoted group instead retains two seed nodes (16 bytes) and requests
-`4*Vec.capacity()` coordinate bytes. A vector header is 24 bytes on 64-bit
-targets, but the pool pays headers for its capacity, not exactly one per live
-group; allocator overhead and retained pool capacity are additional costs.
-The common neighbor metadata is separate from both formulas. These quantities
-explain why larger groups can benefit, without establishing a universal memory
-or CPU crossover. Drain takes each promoted vector using its actual length and
-drops its payload immediately after encoding or pruning. Pool indices remain
-unique until both direction drains finish; only then are headers cleared for
-reuse. Errors or unwinding drop the scratch's remaining owned payloads.
+The next batch's layout follows the preceding eligible tasks' birth shape.
+`B` counts all admitted births, including zero-weight and later-pruned births;
+`C_all` counts touched neighbor groups, including empty or removal-only groups.
+Their ratio is a conservative mean group size. Successful commit updates the
+policy using `B/C_all >= 16`; failures leave it unchanged, and restart resets
+history. Linked eligible tasks also report shape so contiguous storage can be
+re-enabled. With no eligible groups, the current policy stays unchanged.
 
-The coordinator chooses the next batch's kernel from actual preceding birth
-shape. For a complete eligible task that cannot flush, remaining logical nodes
-before minus after collection equals the exact number of admitted births `B`,
-including zero-weight and later-pruned births. Each birth consumes one logical
-node, and no reset occurs inside the task. The two neighbor directories expose
-their touched lengths before drain; their sum `C_all` includes empty or
-removal-only groups and is at least the number of nonempty birth groups. Thus
-`B/C_all` is a conservative mean rather than a scan or vocabulary proxy.
-Existing job outputs fold these two scalars after join. Successful commit
-publishes the history; failures do not, and attempt restart begins with empty
-history. Linked eligible tasks still report shape, allowing later re-enabling;
-no eligible groups leaves the current policy unchanged.
-
-The cutoff `B/C_all >= 16` is an empirical performance policy for the next
-batch, not a hardware theorem, a correctness boundary or a guarantee that the
-next batch has the same shape. A fresh attempt initially permits contiguous
-storage. Collection through complete drain uses one const kernel chosen outside
-the position loop. The const-false path keeps linked chains through encoding
-without vector-source dispatch, including partial, AA and reuse paths.
+A fresh attempt initially permits contiguous storage. The cutoff is an empirical
+performance policy, independent of model semantics; it does not guarantee the
+next batch's shape or a universal performance crossover. A kernel chosen before
+collection keeps layout dispatch outside the position loop. See
+[ContiguousBirthPolicy](merge/prepare/mod.rs) for policy and
+[birth collection](merge/prepare/mod.rs) for measurement.
 
 ### Owner commit order
 
@@ -472,30 +454,21 @@ original-ID table recover complete pair keys. Those keys retain the existing
 owner routing and priority tie order. Stable counting partitions each pair's
 positions by ascending spatial producer range, preserving occurrence order.
 
-The collector has an `n²` pair domain. Producer count is bounded by the pool,
-spatial tile count, 64 producers, and a 16 MiB backing-capacity budget for the
-count rows and nonempty pair-slice descriptors. Owner/key totals and ordinal
-mapping require additional metadata; retained vector capacities enter the cost
-estimate. Unknown alphabets, wide IDs, and sources without a cheap exact edge
-count retain the generic compact/full-key collector.
-
-Small sources also retain generic records when the bounded-specific directory
-estimate `M` exceeds `E * (2 * sizeof(CompactKeyedValue) - sizeof(u32))`, where `E`
-is the full source's already measured edge count. The difference leaves room for
-the bounded four-byte offsets within the generic sorter's raw-plus-scratch record
-working set. Admission uses division to avoid multiplying large counts. This is
-a conservative working-set heuristic: some generic key distributions need no
-sorting scratch, and metadata shared by both collectors is excluded from `M`.
-It is not a bound on allocator overhead or the full training peak.
+The collector's `n²` directory cost can outweigh the savings from four-byte
+offsets on small sources. Admission bounds parallel metadata and compares its
+estimated cost with the generic record working set. This is a selection heuristic,
+not a bound on full training peak memory. Unknown alphabets, wide IDs, and sources
+without a cheap exact edge count retain generic records. Exact budgets and cost
+calculations live in [the bounded collector](initial_pairs/bounded.rs).
 
 Admission compares the global edge count with the maximum wave's directory
 estimate. A large source keeps the bounded collector even if its final wave is
 small; that tail can pay a disproportionate directory cost rather than losing
-the benefit of preceding large waves or requiring mixed record layouts. Both
-collectors share checked weighted-frequency reduction, floor handling, and
-multiwave position encoding and publication. Original ID ownership, checked
-count accumulation, and retirement before corpus materialization remain the
-same across the two record layouts.
+the benefit of preceding large waves or requiring mixed record layouts.
+`InitialCollector` owns the common wave lifecycle: each collector produces
+grouped records, then shared encoding and publication build or append occurrence
+lists. Both paths preserve checked weighted counts, floor handling, full pair
+identity, and spatial order. Raw records retire before corpus materialization.
 
 ### Slot and coordinate storage
 
@@ -539,10 +512,8 @@ of logical pair owners.
 
 Published position lists borrow the arena, not the temporary `AllocationLease`
 that grants exclusive access to one worker's allocation cursor. They can outlive
-that lease. Arena-backed containers share an `'arena` lifetime; a cursor borrows
-its list as `'list`, fragments borrow event chunks as `'events`, and preparation
-uses shorter `'prep` borrows. These are compile-time relationships.
-`PhantomData` adds no stored reference or runtime reference count.
+that lease. The arena must outlive its published lists, and lists and event chunks
+must outlive the cursors and fragments that borrow them.
 
 A task must not start nested pool work while holding worker resources: reentry
 could attempt to acquire its own lock. Joined phases and owner-before-arena drop

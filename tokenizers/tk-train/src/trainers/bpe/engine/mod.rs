@@ -48,8 +48,8 @@ enum BirthObservation {
 #[cfg(test)]
 type BirthObserver<'a> = Option<&'a mut (dyn FnMut(BirthObservation) + Send)>;
 type ModelParts = (Vocab, Merges, Vec<AddedToken>);
-enum AttemptOutcome {
-    Complete(ModelParts),
+enum AttemptOutcome<T = ModelParts> {
+    Complete(T),
     RestartForReuse,
 }
 pub(super) fn train(
@@ -85,29 +85,25 @@ fn train_with_merge_options(
         // Every attempt begins with first activations. A nonempty affix does
         // not by itself require one-rule cohort execution. Stop before accepting
         // the first reused active ID, then rebuild with the same coordinator.
-        let mut policy = IdentityPolicy::FirstActivationOnly;
-        // Alphabet frequency ties are intentionally unchanged. A restart must
-        // retain this call's choice rather than sample the selector again.
-        let mut retained_alphabet = None;
-        #[cfg(test)]
-        let mut trace = Vec::new();
+        let mut training = Training {
+            trainer,
+            execution: &execution,
+            merge_options,
+            progress: &progress,
+            policy: IdentityPolicy::FirstActivationOnly,
+            retained_alphabet: None,
+            #[cfg(test)]
+            trace: Vec::new(),
+        };
         loop {
             #[cfg(test)]
             if let Some(observer) = birth_observe.as_mut() {
-                observer(BirthObservation::Attempt(policy));
+                observer(BirthObservation::Attempt(training.policy));
             }
             #[cfg(test)]
-            trace.clear();
-            match train_attempt(
-                trainer,
+            training.trace.clear();
+            match training.attempt(
                 word_counts,
-                policy,
-                &execution,
-                merge_options,
-                &progress,
-                &mut retained_alphabet,
-                #[cfg(test)]
-                &mut trace,
                 #[cfg(test)]
                 &mut birth_observe,
             )? {
@@ -116,7 +112,7 @@ fn train_with_merge_options(
                     // traces from abandoned attempts were discarded.
                     #[cfg(test)]
                     if let Some(observer) = observe.as_mut() {
-                        for (pair, count, id) in trace {
+                        for (pair, count, id) in training.trace {
                             observer(pair, count, id);
                         }
                     }
@@ -126,85 +122,235 @@ fn train_with_merge_options(
                     // All position lists and their arena were dropped by the attempt.
                     // Retain neither speculative values nor encoding allocations.
                     execution.release_scratch();
-                    policy = IdentityPolicy::AllowActiveReuse;
+                    training.policy = IdentityPolicy::AllowActiveReuse;
                 }
             }
         }
     })
 }
-#[cfg_attr(test, allow(clippy::too_many_arguments))]
-fn train_attempt(
-    trainer: &BpeTrainer,
-    word_counts: WordCountsView<'_>,
-    policy: IdentityPolicy,
-    execution: &execution::Execution,
+/// Shared state for a complete training call, including an identity-reuse restart.
+/// Slot layouts use the same round algorithm and retain this call's alphabet.
+struct Training<'a> {
+    trainer: &'a BpeTrainer,
+    execution: &'a execution::Execution,
     merge_options: merge::MergeOptions,
-    progress: &TrainingProgress,
-    retained_alphabet: &mut Option<Vec<char>>,
-    #[cfg(test)] trace: &mut Vec<(tk_encode::models::bpe::Pair, u64, u32)>,
-    #[cfg(test)] birth_observe: &mut BirthObserver<'_>,
-) -> Result<AttemptOutcome> {
-    let workers = execution.workers();
-    let mut vocabulary = vocabulary::Vocabulary::initialize(
-        trainer,
-        word_counts,
-        workers,
-        progress,
-        retained_alphabet,
-    )?;
-    let prepared_corpus = corpus::CorpusPlan::build(
-        word_counts,
-        &mut vocabulary,
-        policy,
-        trainer.max_token_length.is_some(),
-        progress,
-    )?;
-    if vocabulary.len() >= trainer.vocab_size && prepared_corpus.initial_counts_fit_u64() {
-        drop(prepared_corpus);
-        execution.release_scratch();
-        progress.stage("Compute merges", trainer.vocab_size);
-        return Ok(complete_model(trainer, vocabulary, Vec::new()));
+    progress: &'a TrainingProgress,
+    policy: IdentityPolicy,
+    retained_alphabet: Option<Vec<char>>,
+    #[cfg(test)]
+    trace: Vec<(tk_encode::models::bpe::Pair, u64, u32)>,
+}
+impl Training<'_> {
+    fn attempt(
+        &mut self,
+        word_counts: WordCountsView<'_>,
+        #[cfg(test)] birth_observe: &mut BirthObserver<'_>,
+    ) -> Result<AttemptOutcome> {
+        let trainer = self.trainer;
+        let execution = self.execution;
+        let progress = self.progress;
+        let policy = self.policy;
+        let workers = execution.workers();
+        let mut vocabulary = vocabulary::Vocabulary::initialize(
+            trainer,
+            word_counts,
+            workers,
+            progress,
+            &mut self.retained_alphabet,
+        )?;
+        let prepared_corpus = corpus::CorpusPlan::build(
+            word_counts,
+            &mut vocabulary,
+            policy,
+            trainer.max_token_length.is_some(),
+            progress,
+        )?;
+        if vocabulary.len() >= trainer.vocab_size && prepared_corpus.initial_counts_fit_u64() {
+            drop(prepared_corpus);
+            execution.release_scratch();
+            progress.stage("Compute merges", trainer.vocab_size);
+            return Ok(complete_model(trainer, vocabulary, Vec::new()));
+        }
+        match corpus::slot_bits(trainer.vocab_size.max(vocabulary.len())) {
+            16 => self.run::<corpus::U16Slots>(
+                vocabulary,
+                prepared_corpus,
+                #[cfg(test)]
+                birth_observe,
+            ),
+            24 => self.run::<corpus::PackedU24Slots>(
+                vocabulary,
+                prepared_corpus,
+                #[cfg(test)]
+                birth_observe,
+            ),
+            _ => self.run::<corpus::U32Slots>(
+                vocabulary,
+                prepared_corpus,
+                #[cfg(test)]
+                birth_observe,
+            ),
+        }
     }
-    match corpus::slot_bits(trainer.vocab_size.max(vocabulary.len())) {
-        16 => train_with_slots::<corpus::U16Slots>(
-            trainer,
-            vocabulary,
-            prepared_corpus,
-            policy,
+
+    fn run<S: corpus::SlotStorage>(
+        &mut self,
+        mut vocabulary: vocabulary::Vocabulary,
+        prepared_corpus: corpus::CorpusPlan<'_>,
+        #[cfg(test)] birth_observe: &mut BirthObserver<'_>,
+    ) -> Result<AttemptOutcome> {
+        let trainer = self.trainer;
+        let execution = self.execution;
+        let progress = self.progress;
+        let policy = self.policy;
+        let workers = execution.workers();
+
+        let arena = AllocationArena::new(workers, prepared_corpus.initial_edges());
+        let initial = initial_pairs::InitialPairTable::build(
+            &prepared_corpus,
+            if policy == IdentityPolicy::FirstActivationOnly {
+                trainer.min_frequency.max(1)
+            } else {
+                0
+            },
             execution,
-            merge_options,
+            &arena,
             progress,
-            #[cfg(test)]
-            trace,
+        )?;
+        if vocabulary.len() >= trainer.vocab_size {
+            // The total-mass proof was inconclusive. Initial construction has now
+            // retained every checked per-key and signed-policy validation.
+            drop(initial);
+            drop(prepared_corpus);
+            drop(arena);
+            execution.release_scratch();
+
+            progress.stage("Compute merges", trainer.vocab_size);
+            return Ok(complete_model(trainer, vocabulary, Vec::new()));
+        }
+        // In fresh mode every successful rule consumes at least one physical edge;
+        // each appended ID belongs to one such rule. Thus final ID count is bounded
+        // by min(target, initial IDs + initial physical edges), not weighted mass.
+        // Reuse can select historical cohorts without that progress proof, so this
+        // remains only a capacity hint: actual domains always grow beyond it.
+        let expected_ids = expected_id_domain(
+            trainer.vocab_size,
+            vocabulary.len(),
+            prepared_corpus.initial_edges(),
+        );
+        execution.expect_id_domain(expected_ids);
+        let mut corpus = prepared_corpus.materialize::<S>(workers, policy, progress)?;
+        let mut index =
+            pair_index::PairIndex::from_initial_pairs(initial, policy, trainer.min_frequency)?;
+
+        let merges = match self.merge_loop(
+            &mut vocabulary,
+            &mut corpus,
+            &mut index,
+            &arena,
             #[cfg(test)]
             birth_observe,
-        ),
-        24 => train_with_slots::<corpus::PackedU24Slots>(
-            trainer,
-            vocabulary,
-            prepared_corpus,
-            policy,
-            execution,
-            merge_options,
-            progress,
+        )? {
+            AttemptOutcome::Complete(merges) => merges,
+            AttemptOutcome::RestartForReuse => return Ok(AttemptOutcome::RestartForReuse),
+        };
+        // Training state does not participate in model output. Release position
+        // owners before their arena, and free the corpus and scratch before
+        // constructing the public vocabulary and merge strings.
+        drop(index);
+        drop(corpus);
+        drop(arena);
+        execution.release_scratch();
+
+        Ok(complete_model(trainer, vocabulary, merges))
+    }
+    /// Complete joined rounds, or request a fresh attempt for active-ID reuse.
+    /// Batch candidates and adaptive history belong only to this attempt.
+    fn merge_loop<'arena, S: corpus::SlotStorage>(
+        &mut self,
+        vocabulary: &mut vocabulary::Vocabulary,
+        corpus: &mut corpus::Corpus<S>,
+        index: &mut pair_index::PairIndex<'arena>,
+        arena: &'arena AllocationArena,
+        #[cfg(test)] birth_observe: &mut BirthObserver<'_>,
+    ) -> Result<AttemptOutcome<Vec<tk_encode::models::bpe::Pair>>> {
+        let trainer = self.trainer;
+        let execution = self.execution;
+        let progress = self.progress;
+        let policy = self.policy;
+        let merge_options = self.merge_options;
+        #[cfg(test)]
+        let trace = &mut self.trace;
+        let mut merges = Vec::new();
+        // PERF: Reuse bounded selection workspace across all rounds. Clearing
+        // candidates releases their position lists before commit without reallocating
+        // the vector; rule and conflict storage never exceeds the batch limit.
+        let mut batch = RuleBatch::default();
+        // A fresh state for each attempt, including a rebuild for active-ID reuse.
+        // Explore the first eligible batch; only successful joined work/commit can
+        // influence the next one. No worker scheduling history survives a restart.
+        let mut contiguous_births = merge::ContiguousBirthPolicy::default();
+        let work = progress.stage("Compute merges", trainer.vocab_size);
+        while vocabulary.len() < trainer.vocab_size {
+            match batch.select(
+                trainer,
+                vocabulary,
+                corpus,
+                index,
+                policy,
+                #[cfg(test)]
+                trace,
+            )? {
+                BatchSelection::Ready => {}
+                BatchSelection::Finished => break,
+                BatchSelection::RestartForReuse => return Ok(AttemptOutcome::RestartForReuse),
+            }
+            merges.extend(batch.rules.iter().map(|rule| rule.pair));
             #[cfg(test)]
-            trace,
+            let enabled_before = contiguous_births.options(merge_options).contiguous_births;
+            let (prepared, prepared_births) = merge::prepare_merges_with_births(
+                corpus,
+                &batch.rules,
+                &batch.candidates,
+                policy,
+                vocabulary.len(),
+                trainer.max_token_length.unwrap_or(usize::MAX),
+                execution,
+                arena,
+                trainer.min_frequency.max(1),
+                contiguous_births.options(merge_options),
+            )?;
+
+            // PERF: Preparation owns all writes and birth events. Selected
+            // position lists have no remaining reader; release them before allocating
+            // the next generation during commit.
+            batch.candidates.clear();
+            let birth_shape = prepared.birth_shape;
             #[cfg(test)]
-            birth_observe,
-        ),
-        _ => train_with_slots::<corpus::U32Slots>(
-            trainer,
-            vocabulary,
-            prepared_corpus,
-            policy,
-            execution,
-            merge_options,
-            progress,
+            let birth_paths = prepared.birth_paths;
+            let events = prepared.apply(corpus);
+
+            index.commit_merges_with_prepared(
+                &events,
+                vocabulary.len(),
+                execution,
+                arena,
+                prepared_births,
+            )?;
+            contiguous_births.observe(birth_shape);
             #[cfg(test)]
-            trace,
-            #[cfg(test)]
-            birth_observe,
-        ),
+            if let Some(observer) = birth_observe.as_mut() {
+                observer(BirthObservation::Round {
+                    enabled_before,
+                    enabled_after: contiguous_births.options(merge_options).contiguous_births,
+                    paths: birth_paths,
+                });
+            }
+
+            drop(events);
+            work.learned(merges.len());
+        }
+        Ok(AttemptOutcome::Complete(merges))
     }
 }
 fn expected_id_domain(target: usize, initial_ids: usize, physical_edges: usize) -> usize {
@@ -213,139 +359,6 @@ fn expected_id_domain(target: usize, initial_ids: usize, physical_edges: usize) 
         .min(u32::MAX as usize)
 }
 
-#[cfg_attr(test, allow(clippy::too_many_arguments))]
-fn train_with_slots<S: corpus::SlotStorage>(
-    trainer: &BpeTrainer,
-    mut vocabulary: vocabulary::Vocabulary,
-    prepared_corpus: corpus::CorpusPlan<'_>,
-    policy: IdentityPolicy,
-    execution: &execution::Execution,
-    merge_options: merge::MergeOptions,
-    progress: &TrainingProgress,
-    #[cfg(test)] trace: &mut Vec<(tk_encode::models::bpe::Pair, u64, u32)>,
-    #[cfg(test)] birth_observe: &mut BirthObserver<'_>,
-) -> Result<AttemptOutcome> {
-    let workers = execution.workers();
-
-    let arena = AllocationArena::new(workers, prepared_corpus.initial_edges());
-    let initial = initial_pairs::InitialPairTable::build(
-        &prepared_corpus,
-        if policy == IdentityPolicy::FirstActivationOnly {
-            trainer.min_frequency.max(1)
-        } else {
-            0
-        },
-        execution,
-        &arena,
-        progress,
-    )?;
-    if vocabulary.len() >= trainer.vocab_size {
-        // The total-mass proof was inconclusive. Initial construction has now
-        // retained every checked per-key and signed-policy validation.
-        drop(initial);
-        drop(prepared_corpus);
-        drop(arena);
-        execution.release_scratch();
-
-        progress.stage("Compute merges", trainer.vocab_size);
-        return Ok(complete_model(trainer, vocabulary, Vec::new()));
-    }
-    // In fresh mode every successful rule consumes at least one physical edge;
-    // each appended ID belongs to one such rule. Thus final ID count is bounded
-    // by min(target, initial IDs + initial physical edges), not weighted mass.
-    // Reuse can select historical cohorts without that progress proof, so this
-    // remains only a capacity hint: actual domains always grow beyond it.
-    let expected_ids = expected_id_domain(
-        trainer.vocab_size,
-        vocabulary.len(),
-        prepared_corpus.initial_edges(),
-    );
-    execution.expect_id_domain(expected_ids);
-    let mut corpus = prepared_corpus.materialize::<S>(workers, policy, progress)?;
-    let mut index =
-        pair_index::PairIndex::from_initial_pairs(initial, policy, trainer.min_frequency)?;
-
-    let mut merges = Vec::new();
-    // PERF: Reuse bounded selection workspace across all rounds. Clearing
-    // candidates releases their position lists before commit without reallocating
-    // the vector; rule and conflict storage never exceeds the batch limit.
-    let mut batch = RuleBatch::default();
-    // A fresh state for each attempt, including a rebuild for active-ID reuse.
-    // Explore the first eligible batch; only successful joined work/commit can
-    // influence the next one. No worker scheduling history survives a restart.
-    let mut contiguous_births = merge::ContiguousBirthPolicy::default();
-    let work = progress.stage("Compute merges", trainer.vocab_size);
-    while vocabulary.len() < trainer.vocab_size {
-        match batch.select(
-            trainer,
-            &mut vocabulary,
-            &mut corpus,
-            &mut index,
-            policy,
-            #[cfg(test)]
-            trace,
-        )? {
-            BatchSelection::Ready => {}
-            BatchSelection::Finished => break,
-            BatchSelection::RestartForReuse => return Ok(AttemptOutcome::RestartForReuse),
-        }
-        merges.extend(batch.rules.iter().map(|rule| rule.pair));
-        #[cfg(test)]
-        let enabled_before = contiguous_births.options(merge_options).contiguous_births;
-        let (prepared, prepared_births) = merge::prepare_merges_with_births(
-            &corpus,
-            &batch.rules,
-            &batch.candidates,
-            policy,
-            vocabulary.len(),
-            trainer.max_token_length.unwrap_or(usize::MAX),
-            execution,
-            &arena,
-            trainer.min_frequency.max(1),
-            contiguous_births.options(merge_options),
-        )?;
-
-        // PERF: Preparation owns all writes and birth events. Selected
-        // position lists have no remaining reader; release them before allocating
-        // the next generation during commit.
-        batch.candidates.clear();
-        let birth_shape = prepared.birth_shape;
-        #[cfg(test)]
-        let birth_paths = prepared.birth_paths;
-        let events = prepared.apply(&mut corpus);
-
-        index.commit_merges_with_prepared(
-            &events,
-            vocabulary.len(),
-            execution,
-            &arena,
-            prepared_births,
-        )?;
-        contiguous_births.observe(birth_shape);
-        #[cfg(test)]
-        if let Some(observer) = birth_observe.as_mut() {
-            observer(BirthObservation::Round {
-                enabled_before,
-                enabled_after: contiguous_births.options(merge_options).contiguous_births,
-                paths: birth_paths,
-            });
-        }
-
-        drop(events);
-        work.learned(merges.len());
-    }
-    // Training state does not participate in model output. Release position
-    // owners before their arena, and free the corpus and scratch before
-    // constructing the public vocabulary and merge strings.
-    drop(batch);
-
-    drop(index);
-    drop(corpus);
-    drop(arena);
-    execution.release_scratch();
-
-    Ok(complete_model(trainer, vocabulary, merges))
-}
 fn complete_model(
     trainer: &BpeTrainer,
     vocabulary: vocabulary::Vocabulary,

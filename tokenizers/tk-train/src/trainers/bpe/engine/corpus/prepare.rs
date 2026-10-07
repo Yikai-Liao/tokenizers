@@ -140,24 +140,15 @@ impl InitialPairSource for &CorpusPlan<'_> {
         }
     }
 }
-impl<'input> CorpusPlan<'input> {
-    pub(in super::super) fn build(
-        word_counts: WordCountsView<'input>,
-        vocabulary: &mut Vocabulary,
-        policy: IdentityPolicy,
-        length_limited: bool,
-        progress: &TrainingProgress,
-    ) -> Result<Self> {
-        let work = progress.stage("Resolve initial IDs", word_counts.len());
-        let initial_ids = vocabulary.initial_ids(word_counts, &work)?;
-        let mut words: Vec<_> = word_counts
-            .iter()
-            .map(|(word, &weight)| (word, weight))
-            .collect();
-        let work = progress.stage("Arrange weighted words", words.len());
-        words.par_sort_unstable_by(|left, right| right.1.cmp(&left.1));
-        work.complete(words.len());
-        let work = progress.stage("Measure corpus", words.len());
+/// Symbol counts and seek anchors share one measurement of long UTF-8 words.
+/// Byte chunks stay private; planning only consumes lengths and global checkpoints.
+struct WordMeasure {
+    lengths: Vec<usize>,
+    chunks: Vec<(usize, Range<usize>)>,
+    counts: Vec<usize>,
+}
+impl WordMeasure {
+    fn new(words: &[(&CompactString, u64)], initial_ids: &InitialTokenIds) -> Self {
         // Long words are measured by independent UTF-8 byte chunks. Retain
         // these counts for checkpoints instead of rescanning their characters.
         const CHECKPOINT_BYTES: usize = 4096;
@@ -181,32 +172,71 @@ impl<'input> CorpusPlan<'input> {
                 byte_chunks.push((index, begin..end));
             }
         }
-        let count_symbols = |text: &str| {
-            if initial_ids.complete_alphabet() {
-                text.chars().count()
-            } else {
-                text.chars()
-                    .filter(|&character| initial_ids.retained(character))
-                    .count()
-            }
-        };
         let counts: Vec<usize> = byte_chunks
             .par_iter()
-            .map(|(index, range)| count_symbols(&words[*index].0[range.clone()]))
+            .map(|(index, range)| initial_ids.symbol_count(&words[*index].0[range.clone()]))
             .collect();
-        let mut measured: Vec<usize> = words
+        let mut lengths: Vec<usize> = words
             .par_iter()
             .map(|(word, _)| {
                 if word.len() <= CHECKPOINT_BYTES {
-                    count_symbols(word)
+                    initial_ids.symbol_count(word)
                 } else {
                     0
                 }
             })
             .collect();
         for ((index, _), count) in byte_chunks.iter().zip(&counts) {
-            measured[*index] += count;
+            lengths[*index] += count;
         }
+        Self {
+            lengths,
+            chunks: byte_chunks,
+            counts,
+        }
+    }
+    fn checkpoints(self, words: &[PlannedWord<'_>]) -> Vec<SymbolCheckpoint> {
+        // Ordered per-word prefixes restore global anchors, including repeated
+        // positions across byte chunks whose characters were all filtered out.
+        let mut checkpoints = Vec::new();
+        let mut current_word = None;
+        let mut retained = 0;
+        for ((index, range), count) in self.chunks.into_iter().zip(self.counts) {
+            if current_word != Some(index) {
+                current_word = Some(index);
+                retained = 0;
+            }
+            if range.start != 0 {
+                checkpoints.push(SymbolCheckpoint {
+                    slot_position: words[index].start as usize + retained,
+                    byte_offset: range.start,
+                });
+            }
+            retained += count;
+        }
+        checkpoints
+    }
+}
+
+impl<'input> CorpusPlan<'input> {
+    pub(in super::super) fn build(
+        word_counts: WordCountsView<'input>,
+        vocabulary: &mut Vocabulary,
+        policy: IdentityPolicy,
+        length_limited: bool,
+        progress: &TrainingProgress,
+    ) -> Result<Self> {
+        let work = progress.stage("Resolve initial IDs", word_counts.len());
+        let initial_ids = vocabulary.initial_ids(word_counts, &work)?;
+        let mut words: Vec<_> = word_counts
+            .iter()
+            .map(|(word, &weight)| (word, weight))
+            .collect();
+        let work = progress.stage("Arrange weighted words", words.len());
+        words.par_sort_unstable_by(|left, right| right.1.cmp(&left.1));
+        work.complete(words.len());
+        let work = progress.stage("Measure corpus", words.len());
+        let measured = WordMeasure::new(&words, &initial_ids);
         work.complete(words.len());
         let mut word_starts = Vec::with_capacity(words.len());
         let mut interval_starts = Vec::new();
@@ -215,7 +245,7 @@ impl<'input> CorpusPlan<'input> {
         let mut edges = 0_usize;
         let mut weighted_mass = 0_u128;
         let mut maximum_weight = 0_u64;
-        for ((_, weight), &symbols) in words.iter().zip(&measured) {
+        for ((_, weight), &symbols) in words.iter().zip(&measured.lengths) {
             weighted_mass += u128::from(*weight) * symbols.saturating_sub(1) as u128;
             maximum_weight = maximum_weight.max(*weight);
             word_starts.push(slots as u64);
@@ -246,24 +276,7 @@ impl<'input> CorpusPlan<'input> {
             .zip(word_starts)
             .map(|((word, _), start)| PlannedWord { word, start })
             .collect();
-        // Ordered per-word prefixes restore global anchors, including repeated
-        // positions across byte chunks whose characters were all filtered out.
-        let mut checkpoints = Vec::new();
-        let mut current_word = None;
-        let mut retained = 0;
-        for ((index, range), count) in byte_chunks.into_iter().zip(counts) {
-            if current_word != Some(index) {
-                current_word = Some(index);
-                retained = 0;
-            }
-            if range.start != 0 {
-                checkpoints.push(SymbolCheckpoint {
-                    slot_position: words[index].start as usize + retained,
-                    byte_offset: range.start,
-                });
-            }
-            retained += count;
-        }
+        let checkpoints = measured.checkpoints(&words);
         let unit_weight = interval_weights
             .iter()
             .position(|&weight| weight == 1)

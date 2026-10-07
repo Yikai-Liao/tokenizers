@@ -161,7 +161,7 @@ fn cost_rejected_high_ids_match_forced_bounded_weights_and_wave_append() {
                     let snapshot = initial_snapshot(&bounded);
                     assert_eq!(snapshot, initial_snapshot(&generic));
                     assert_eq!(snapshot, initial_snapshot(&fallback));
-                    assert_eq!(snapshot.get(&pair_key((7, 7))).is_some(), floor <= 11);
+                    assert_eq!(snapshot.contains_key(&pair_key((7, 7))), floor <= 11);
                     if floor <= 11 {
                         // Offset 5 contributes zero mass to a positive key. It
                         // survives a complete wave or a mixed positive wave;

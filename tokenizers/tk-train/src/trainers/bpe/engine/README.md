@@ -130,11 +130,14 @@ results in benchmark records.
 
 ## Source guide
 
-- Start with [mod.rs](mod.rs) for attempts, restart, and the round loop, then
-  [batch.rs](batch.rs) for rule selection.
+- Start with [mod.rs](mod.rs): `Training` initializes and restarts attempts,
+  manages their storage, and coordinates joined rounds. [batch.rs](batch.rs)
+  owns rule selection.
 - Read [vocabulary.rs](vocabulary.rs) and [corpus](corpus/mod.rs) for token
-  identity and fixed coordinates. [Corpus planning](corpus/prepare.rs) and
-  [initial pairs](initial_pairs.rs) build the first index from borrowed input.
+  identity and fixed coordinates. [Corpus planning](corpus/prepare.rs) hides
+  symbol measurement and seek anchors in `WordMeasure`.
+- Read [initial pairs](initial_pairs.rs) for `InitialCollector`, which selects
+  the record layout and shares wave encoding and publication across collectors.
 - Read [merge preparation](merge/prepare/mod.rs), [application](merge/mod.rs),
   and [owner commit](pair_index/commit.rs) for the read, write, and publication
   phases. [PairIndex](pair_index.rs) owns counts, cohorts, and queues.

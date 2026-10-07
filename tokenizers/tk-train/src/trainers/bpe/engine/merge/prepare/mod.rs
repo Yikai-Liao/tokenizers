@@ -157,45 +157,30 @@ impl MergeScratch {
         // These are the original neighbor-directory drains, not a second pass
         // over emitted events. Each birth already has its complete mass/chain.
         let mut emit = |(mut event, index): (PairChanges, Option<NonZeroU32>)| -> Result<()> {
-            let positions = if CONTIGUOUS {
-                // Take even a pruned group: its payload drops on this iteration.
-                // Other direction/group indices remain live until both drains end.
-                let source = index.map(|index| {
-                    let positions = std::mem::take(&mut vectors[index.get() as usize - 1]);
-                    debug_assert!(positions.len() >= 3, "one owner consumes each index once");
-                    positions
-                });
-                let count = source.as_ref().map_or(event.positions.len(), Vec::len);
-                if count != 0 && event.born_weight >= floor {
-                    Some(match &source {
-                        None => SortedPositions::from_reversed_iter_direct(
-                            count,
-                            chains.reversed(event.positions),
-                            &lease,
-                        )?,
-                        Some(positions) => SortedPositions::from_reversed_iter_direct(
-                            count,
-                            positions.iter().rev().map(|&p| u64::from(p)),
-                            &lease,
-                        )?,
-                    })
-                } else {
-                    None
-                }
+            // Taking a vector also retires pruned groups. The linked kernel
+            // folds this branch away because its collection never creates indices.
+            let source = if CONTIGUOUS {
+                index.map(|index| std::mem::take(&mut vectors[index.get() as usize - 1]))
             } else {
-                // Collection and drain share one const kernel. Linked complete
-                // producers use their chain directly, with no Vec source dispatch.
                 debug_assert!(index.is_none(), "linked collection publishes no pool index");
-                let count = event.positions.len();
-                if count != 0 && event.born_weight >= floor {
-                    Some(SortedPositions::from_reversed_iter_direct(
+                None
+            };
+            let count = source.as_ref().map_or(event.positions.len(), Vec::len);
+            let positions = if count != 0 && event.born_weight >= floor {
+                Some(match &source {
+                    None => SortedPositions::from_reversed_iter_direct(
                         count,
                         chains.reversed(event.positions),
                         &lease,
-                    )?)
-                } else {
-                    None
-                }
+                    )?,
+                    Some(positions) => SortedPositions::from_reversed_iter_direct(
+                        count,
+                        positions.iter().rev().map(|&p| u64::from(p)),
+                        &lease,
+                    )?,
+                })
+            } else {
+                None
             };
             if let Some(positions) = positions {
                 births.push(CompletedBirth {
@@ -214,7 +199,6 @@ impl MergeScratch {
         };
         Self::neighbor_events(&mut self.left, &mut self.right, rule, rank)
             .try_for_each(&mut emit)?;
-        drop(emit);
         // No group in either direction retains an index now. On error, scratch
         // owns and drops all remaining payloads with the discarded attempt.
         if CONTIGUOUS {
@@ -625,6 +609,7 @@ impl ContiguousBirthPolicy {
             ..options
         }
     }
+    #[allow(clippy::manual_checked_ops)]
     pub(in super::super) fn observe(&mut self, shape: BirthShape) {
         if shape.touched_groups != 0 {
             // C_all includes removal-only groups, so C_all >= C_nonempty and
@@ -655,57 +640,44 @@ pub(in super::super) fn prepare_merges_with_births<'arena, S: SlotStorage>(
     options: MergeOptions,
 ) -> Result<(PreparedMerges, Vec<CompletedBirth<'arena>>)> {
     let floor = floor.max(1);
-    let outputs = if policy == IdentityPolicy::AllowActiveReuse {
-        cohort::prepare(
-            corpus,
-            &rules[0],
-            &candidates[0],
-            token_id_count,
-            birth_span_limit as u64,
-            execution,
-        )?
-        .into_iter()
-        .map(|(job, chunks)| PreparedOutput {
-            job,
-            chunks,
-            completed_births: Vec::new(),
-            birth_shape: BirthShape::default(),
-            #[cfg(test)]
-            birth_paths: BirthPaths::default(),
-        })
-        .collect()
-    } else if rules[0].pair.0 == rules[0].pair.1 {
-        aa::prepare(
-            corpus,
-            &rules[0],
-            &candidates[0],
-            token_id_count,
-            birth_span_limit as u64,
-            execution,
-        )?
-        .into_iter()
-        .map(|(job, chunks)| PreparedOutput {
-            job,
-            chunks,
-            completed_births: Vec::new(),
-            birth_shape: BirthShape::default(),
-            #[cfg(test)]
-            birth_paths: BirthPaths::default(),
-        })
-        .collect()
-    } else {
-        ordinary::prepare(
-            corpus,
-            rules,
-            candidates,
-            token_id_count,
-            birth_span_limit,
-            execution,
-            arena,
-            floor,
-            options,
-        )?
-    };
+    let outputs =
+        if policy == IdentityPolicy::AllowActiveReuse || rules[0].pair.0 == rules[0].pair.1 {
+            let prepare = if policy == IdentityPolicy::AllowActiveReuse {
+                cohort::prepare::<S>
+            } else {
+                aa::prepare::<S>
+            };
+            prepare(
+                corpus,
+                &rules[0],
+                &candidates[0],
+                token_id_count,
+                birth_span_limit as u64,
+                execution,
+            )?
+            .into_iter()
+            .map(|(job, chunks)| PreparedOutput {
+                job,
+                chunks,
+                completed_births: Vec::new(),
+                birth_shape: BirthShape::default(),
+                #[cfg(test)]
+                birth_paths: BirthPaths::default(),
+            })
+            .collect()
+        } else {
+            ordinary::prepare(
+                corpus,
+                rules,
+                candidates,
+                token_id_count,
+                birth_span_limit,
+                execution,
+                arena,
+                floor,
+                options,
+            )?
+        };
     let mut jobs = Vec::new();
     let mut chunks = Vec::new();
     let mut births = Vec::new();

@@ -82,22 +82,21 @@ fn active_id_reuse_rebuilds_without_publishing_speculative_rules() {
             words.insert("xyxyxy".into(), 100);
         }
         let execution = execution::Execution::new(2).unwrap();
-        let mut trace = Vec::new();
-        let mut retained_alphabet = None;
-        let outcome = execution.pool.install(|| {
+        let (outcome, trace, retained_alphabet) = execution.pool.install(|| {
             let progress = TrainingProgress::new(false, trainer.progress_format).unwrap();
-            train_attempt(
-                &trainer,
-                WordCountsView::from_map(&words),
-                IdentityPolicy::FirstActivationOnly,
-                &execution,
-                merge::MergeOptions::default(),
-                &progress,
-                &mut retained_alphabet,
-                &mut trace,
-                &mut None,
-            )
-            .unwrap()
+            let mut training = Training {
+                trainer: &trainer,
+                execution: &execution,
+                merge_options: merge::MergeOptions::default(),
+                progress: &progress,
+                policy: IdentityPolicy::FirstActivationOnly,
+                retained_alphabet: None,
+                trace: Vec::new(),
+            };
+            let outcome = training
+                .attempt(WordCountsView::from_map(&words), &mut None)
+                .unwrap();
+            (outcome, training.trace, training.retained_alphabet)
         });
         assert!(matches!(outcome, AttemptOutcome::RestartForReuse));
         assert_eq!(trace.is_empty(), !late);
@@ -128,21 +127,21 @@ fn affix_first_activations_preserve_reserved_ids_and_model_order() {
         .special_tokens(vec![AddedToken::from("##ab", true)])
         .build();
     let execution = execution::Execution::new(2).unwrap();
-    let mut trace = Vec::new();
-    let outcome = execution.pool.install(|| {
+    let (outcome, trace) = execution.pool.install(|| {
         let progress = TrainingProgress::new(false, trainer.progress_format).unwrap();
-        train_attempt(
-            &trainer,
-            WordCountsView::from_map(&words),
-            IdentityPolicy::FirstActivationOnly,
-            &execution,
-            merge::MergeOptions::default(),
-            &progress,
-            &mut None,
-            &mut trace,
-            &mut None,
-        )
-        .unwrap()
+        let mut training = Training {
+            trainer: &trainer,
+            execution: &execution,
+            merge_options: merge::MergeOptions::default(),
+            progress: &progress,
+            policy: IdentityPolicy::FirstActivationOnly,
+            retained_alphabet: None,
+            trace: Vec::new(),
+        };
+        let outcome = training
+            .attempt(WordCountsView::from_map(&words), &mut None)
+            .unwrap();
+        (outcome, training.trace)
     });
     let AttemptOutcome::Complete((vocab, _, _)) = outcome else {
         panic!("first activations do not require ID-reuse execution");

@@ -305,8 +305,14 @@ impl InitialTokenIds {
             }
         }
     }
-    pub(super) fn complete_alphabet(&self) -> bool {
-        self.complete_alphabet
+    pub(super) fn symbol_count(&self, text: &str) -> usize {
+        if self.complete_alphabet {
+            text.chars().count()
+        } else {
+            text.chars()
+                .filter(|&ch| self.characters[ch as usize] != WORD_SEPARATOR_ID)
+                .count()
+        }
     }
     pub(super) fn plain(&self) -> bool {
         !self.prefix && !self.suffix
@@ -326,9 +332,6 @@ impl InitialTokenIds {
         } else {
             self.decorated[plain as usize][flags - 1]
         })
-    }
-    pub(super) fn retained(&self, character: char) -> bool {
-        self.characters[character as usize] != WORD_SEPARATOR_ID
     }
 }
 

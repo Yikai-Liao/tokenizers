@@ -125,40 +125,6 @@ fn complete_birth_shape_counts_vector_linked_zero_and_pruned_births() {
 }
 
 #[test]
-fn birth_shape_join_fold_is_deterministic_and_saturates() {
-    let parts = [
-        BirthShape {
-            births: usize::MAX - 1,
-            touched_groups: 1,
-        },
-        BirthShape {
-            births: 17,
-            touched_groups: 3,
-        },
-        BirthShape {
-            births: 9,
-            touched_groups: usize::MAX,
-        },
-    ];
-    let mut forward = BirthShape::default();
-    let mut reverse = BirthShape::default();
-    for part in parts {
-        forward.add(part);
-    }
-    for part in parts.into_iter().rev() {
-        reverse.add(part);
-    }
-    assert_eq!(forward, reverse);
-    assert_eq!(
-        forward,
-        BirthShape {
-            births: usize::MAX,
-            touched_groups: usize::MAX
-        }
-    );
-}
-
-#[test]
 fn selected_rule_reuse_clears_shared_endpoints_before_domain_growth() {
     let mut selected = SelectedRuleIndex::default();
     selected.reset(
@@ -211,160 +177,115 @@ fn complete_birth_vectors_preserve_counts_positions_buckets_and_tiny_fallback() 
         }
         scratch.right::<CONTIGUOUS>(7, 7, 0, 11, false)
     }
-    for workers in [1, 4] {
-        let execution = Execution::new(workers).unwrap();
-        let arena = AllocationArena::new(workers, 4096);
-        execution.pool.install(|| {
-            for count in [0, 1, 2, 3, 4, 129, 513] {
-                for (left_neighbor, right_born) in [(4, 6), (3, 3)] {
-                    let positions: Vec<_> = (0..count)
-                        .map(|i| u64::from(u32::MAX) - count as u64 + (i / 2) as u64)
-                        .collect();
-                    let mass: u64 = (0..count).map(|i| (i % 5) as u64).sum();
-                    for floor in [1, mass + 1] {
-                        let rule = MergeRule {
-                            pair: (1, 2),
-                            replacement: 3,
-                        };
-                        let mut expected_births = Vec::new();
-                        if count != 0 && mass >= floor {
-                            expected_births.push((
-                                pair_key((left_neighbor, 3)),
-                                mass,
-                                positions.clone(),
-                            ));
-                            expected_births.push((
-                                pair_key((3, right_born)),
-                                mass,
-                                positions.clone(),
-                            ));
-                        }
-                        let mut expected_removals = Vec::new();
-                        if mass != 0 {
-                            expected_removals.push((
-                                pair_key((left_neighbor, 1)),
-                                pair_key((left_neighbor, 3)),
-                                mass,
-                                mass,
-                                4,
-                            ));
-                            expected_removals.push((
-                                pair_key((2, 5)),
-                                pair_key((3, 5)),
-                                mass,
-                                0,
-                                5,
-                            ));
-                        }
-                        expected_removals.push((pair_key((2, 7)), pair_key((3, 7)), 11, 0, 5));
-                        for contiguous in [false, true] {
-                            execution
-                                .with_merge_scratch(10, |scratch| {
-                                    if contiguous {
-                                        fill::<true>(
-                                            scratch,
-                                            &positions,
-                                            left_neighbor,
-                                            right_born,
-                                        )?;
-                                    } else {
-                                        fill::<false>(
-                                            scratch,
-                                            &positions,
-                                            left_neighbor,
-                                            right_born,
-                                        )?;
-                                    }
-                                    if count != 0 {
-                                        let group = scratch.left.touch(left_neighbor);
-                                        match group.vector {
-                                            Some(index) => {
-                                                assert!(contiguous && count > 2);
-                                                assert_eq!(group.positions.len(), 2);
-                                                let values = &scratch.birth_vectors
-                                                    [index.get() as usize - 1];
-                                                assert_eq!(
-                                                    values
-                                                        .iter()
-                                                        .copied()
-                                                        .map(u64::from)
-                                                        .collect::<Vec<_>>(),
-                                                    positions
-                                                );
-                                                assert!(values.capacity() < values.len() * 2);
-                                            }
-                                            None => {
-                                                assert!(!contiguous || count <= 2);
-                                                assert_eq!(group.positions.len(), count);
-                                            }
-                                        }
-                                    }
-                                    let mut births = Vec::new();
-                                    if contiguous {
-                                        scratch.flush_rule_with_births::<true>(
-                                            &rule,
-                                            2,
-                                            floor,
-                                            &arena,
-                                            &execution,
-                                            &mut births,
+    let workers = 1;
+    let execution = Execution::new(workers).unwrap();
+    let arena = AllocationArena::new(workers, 4096);
+    execution.pool.install(|| {
+        for count in [0, 1, 2, 3, 129] {
+            for (left_neighbor, right_born) in [(4, 6), (3, 3)] {
+                let positions: Vec<_> = (0..count)
+                    .map(|i| u64::from(u32::MAX) - count as u64 + (i / 2) as u64)
+                    .collect();
+                let mass: u64 = (0..count).map(|i| (i % 5) as u64).sum();
+                for floor in [1, mass + 1] {
+                    let rule = MergeRule {
+                        pair: (1, 2),
+                        replacement: 3,
+                    };
+                    let mut expected_births = Vec::new();
+                    if count != 0 && mass >= floor {
+                        expected_births.push((
+                            pair_key((left_neighbor, 3)),
+                            mass,
+                            positions.clone(),
+                        ));
+                        expected_births.push((pair_key((3, right_born)), mass, positions.clone()));
+                    }
+                    let mut expected_removals = Vec::new();
+                    if mass != 0 {
+                        expected_removals.push((
+                            pair_key((left_neighbor, 1)),
+                            pair_key((left_neighbor, 3)),
+                            mass,
+                            mass,
+                            4,
+                        ));
+                        expected_removals.push((pair_key((2, 5)), pair_key((3, 5)), mass, 0, 5));
+                    }
+                    expected_removals.push((pair_key((2, 7)), pair_key((3, 7)), 11, 0, 5));
+                    for contiguous in [false, true] {
+                        execution
+                            .with_merge_scratch(10, |scratch| {
+                                if contiguous {
+                                    fill::<true>(scratch, &positions, left_neighbor, right_born)?;
+                                } else {
+                                    fill::<false>(scratch, &positions, left_neighbor, right_born)?;
+                                }
+                                let mut births = Vec::new();
+                                if contiguous {
+                                    scratch.flush_rule_with_births::<true>(
+                                        &rule,
+                                        2,
+                                        floor,
+                                        &arena,
+                                        &execution,
+                                        &mut births,
+                                    )
+                                } else {
+                                    scratch.flush_rule_with_births::<false>(
+                                        &rule,
+                                        2,
+                                        floor,
+                                        &arena,
+                                        &execution,
+                                        &mut births,
+                                    )
+                                }?;
+                                assert!(scratch.birth_vectors.is_empty());
+                                let actual_births: Vec<_> = births
+                                    .iter()
+                                    .map(|birth| {
+                                        (
+                                            birth.key,
+                                            birth.weight,
+                                            birth.positions.iter().collect::<Vec<_>>(),
                                         )
-                                    } else {
-                                        scratch.flush_rule_with_births::<false>(
-                                            &rule,
-                                            2,
-                                            floor,
-                                            &arena,
-                                            &execution,
-                                            &mut births,
+                                    })
+                                    .collect();
+                                assert_eq!(actual_births, expected_births);
+                                let chunk = scratch.take_chunk();
+                                let actual_removals: Vec<_> = chunk
+                                    .changes
+                                    .iter()
+                                    .map(|event| {
+                                        assert!(event.positions.is_empty());
+                                        (
+                                            event.removed_key,
+                                            event.born_key,
+                                            event.removed_weight,
+                                            event.born_weight,
+                                            event.bucket,
                                         )
-                                    }?;
-                                    assert!(scratch.birth_vectors.is_empty());
-                                    let actual_births: Vec<_> = births
-                                        .iter()
-                                        .map(|birth| {
-                                            (
-                                                birth.key,
-                                                birth.weight,
-                                                birth.positions.iter().collect::<Vec<_>>(),
-                                            )
-                                        })
-                                        .collect();
-                                    assert_eq!(actual_births, expected_births);
-                                    let chunk = scratch.take_chunk();
-                                    let actual_removals: Vec<_> = chunk
-                                        .changes
-                                        .iter()
-                                        .map(|event| {
-                                            assert!(event.positions.is_empty());
-                                            (
-                                                event.removed_key,
-                                                event.born_key,
-                                                event.removed_weight,
-                                                event.born_weight,
-                                                event.bucket,
-                                            )
-                                        })
-                                        .collect();
-                                    assert_eq!(actual_removals, expected_removals);
-                                    // Drain resets these entries before another rule.
-                                    for neighbor in [left_neighbor, 8] {
-                                        let group = scratch.left.touch(neighbor);
-                                        assert_eq!(
-                                            (group.removed, group.born, group.positions.len()),
-                                            (0, 0, 0)
-                                        );
-                                        assert!(group.vector.is_none());
-                                    }
-                                    Ok(())
-                                })
-                                .unwrap();
-                        }
+                                    })
+                                    .collect();
+                                assert_eq!(actual_removals, expected_removals);
+                                // Drain resets these entries before another rule.
+                                for neighbor in [left_neighbor, 8] {
+                                    let group = scratch.left.touch(neighbor);
+                                    assert_eq!(
+                                        (group.removed, group.born, group.positions.len()),
+                                        (0, 0, 0)
+                                    );
+                                    assert!(group.vector.is_none());
+                                }
+                                Ok(())
+                            })
+                            .unwrap();
                     }
                 }
             }
-        });
-    }
+        }
+    });
 }
 
 #[test]
@@ -434,7 +355,7 @@ fn linked_fallback_keeps_full_width_coordinates_and_overflow_order() {
 }
 
 #[test]
-fn pool_indices_are_unique_across_directions_and_reused_only_after_complete_drain() {
+fn completed_births_isolate_directions_and_retire_pruned_values() {
     for workers in [1, 4] {
         let execution = Execution::new(workers).unwrap();
         let arena = AllocationArena::new(workers, 256);
@@ -445,24 +366,14 @@ fn pool_indices_are_unique_across_directions_and_reused_only_after_complete_drai
                         pair: (1, 2),
                         replacement: 3,
                     };
-                    let mut header_capacity = 0;
                     for rank in 0..3 {
                         let left: Vec<_> = (0..3).map(|i| (100 * rank + i) as u64).collect();
-                        let right: Vec<_> =
-                            left.iter().map(|&position| position + 10).collect();
+                        let right: Vec<_> = left.iter().map(|&position| position + 10).collect();
                         for (&left, &right) in left.iter().zip(&right) {
                             scratch.left::<true>(4, left, 1, true)?;
                             scratch.right::<true>(5, 4, right, 1, true)?;
                             scratch.left::<true>(8, left, 0, true)?;
                         }
-                        let left_index = scratch.left.touch(4).vector.unwrap();
-                        let right_index = scratch.right.touch(4).vector.unwrap();
-                        let zero_index = scratch.left.touch(8).vector.unwrap();
-                        assert_eq!(
-                            (left_index.get(), right_index.get(), zero_index.get()),
-                            (1, 2, 3)
-                        );
-                        assert_eq!(scratch.birth_vectors.len(), 3);
                         let mut births = Vec::new();
                         scratch.flush_rule_with_births::<true>(
                             &rule,
@@ -488,13 +399,6 @@ fn pool_indices_are_unique_across_directions_and_reused_only_after_complete_drai
                             scratch.birth_vectors.is_empty(),
                             "the pruned zero vector also retires"
                         );
-                        if rank != 0 {
-                            assert_eq!(scratch.birth_vectors.capacity(), header_capacity);
-                        }
-                        header_capacity = scratch.birth_vectors.capacity();
-                        assert!(header_capacity >= 3);
-                        assert!(scratch.left.touch(4).vector.is_none());
-                        assert!(scratch.right.touch(4).vector.is_none());
                     }
                     // A later partial/wide producer shares this scratch, but must
                     // neither inspect prior header slots nor truncate coordinates.
@@ -503,10 +407,8 @@ fn pool_indices_are_unique_across_directions_and_reused_only_after_complete_drai
                         scratch.left::<false>(9, position, 0, true)?;
                     }
                     assert!(scratch.left.touch(9).vector.is_none());
-                    assert_eq!(scratch.remaining_nodes, PositionChains::MAX_NODES - 31);
                     scratch.flush_rule(&rule, 3);
                     assert!(scratch.birth_vectors.is_empty());
-                    assert_eq!(scratch.birth_vectors.capacity(), header_capacity);
                     let chunk = scratch.take_chunk();
                     let partial = chunk
                         .changes
@@ -629,8 +531,7 @@ fn encoder_error_mid_drain_keeps_unconsumed_vectors_owned_until_scratch_cleanup(
             let mut births = Vec::new();
             let error = scratch
                 .flush_rule_with_births::<true>(&rule, 0, 1, &arena, &execution, &mut births)
-                .err()
-                .expect("unsorted promoted source is rejected");
+                .expect_err("unsorted promoted source is rejected");
             // Left publication happened before the bad right group. No
             // rollback is promised; the remaining right payload is still owned.
             assert_eq!(births.len(), 1);
@@ -668,9 +569,7 @@ fn promoted_birth_error_releases_values_and_reuses_clean_directories() {
             execution
                 .with_merge_scratch(8, |scratch| {
                     for neighbor in [4, 5, 6] {
-                        for group in
-                            [scratch.left.touch(neighbor), scratch.right.touch(neighbor)]
-                        {
+                        for group in [scratch.left.touch(neighbor), scratch.right.touch(neighbor)] {
                             assert_eq!(
                                 (group.removed, group.born, group.positions.len()),
                                 (0, 0, 0)

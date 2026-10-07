@@ -41,13 +41,6 @@ fn check_with_workers(
     }
 }
 
-fn next(rng: &mut u64) -> u64 {
-    *rng = rng
-        .wrapping_mul(6364136223846793005)
-        .wrapping_add(1442695040888963407);
-    *rng >> 32
-}
-
 mod identity_reuse;
 mod initial_corpus;
 mod producer_fast_path;
