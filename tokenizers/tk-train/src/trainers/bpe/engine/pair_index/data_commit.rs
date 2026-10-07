@@ -2,22 +2,58 @@
 //! reach the unique state publisher. Reuse retains the original commit engine.
 use super::super::{
     execution::Execution,
-    merge::{CompletedBirth, MergeEvents},
+    merge::{CompletedBirth, EventChunk, MergeEvents},
     storage::{AllocationArena, PositionChain, PositionChains},
 };
 use super::*;
 
-struct BirthJob<'events> {
+struct BirthJob<'data, 'events> {
     key: u64,
     weight: u64,
     count: usize,
-    sources: Vec<(&'events PositionChains, PositionChain)>,
+    sources: FragmentSources<'data, 'events>,
 }
-#[derive(Default)]
-struct Group<'events> {
+struct Group {
     weight: u64,
     count: usize,
-    sources: Vec<(&'events PositionChains, PositionChain)>,
+    head: usize,
+}
+impl Default for Group {
+    fn default() -> Self {
+        Self {
+            weight: 0,
+            count: 0,
+            head: usize::MAX,
+        }
+    }
+}
+struct Fragment<'events> {
+    chunk: &'events EventChunk,
+    index: usize,
+    next: usize,
+}
+struct ReducedBucket<'events> {
+    fragments: Vec<Fragment<'events>>,
+    jobs: Vec<(u64, u64, usize, usize)>,
+}
+#[derive(Clone)]
+struct FragmentSources<'data, 'events> {
+    fragments: &'data [Fragment<'events>],
+    head: usize,
+}
+impl<'events> Iterator for FragmentSources<'_, 'events> {
+    type Item = (&'events PositionChains, PositionChain);
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.head == usize::MAX {
+            return None;
+        }
+        let fragment = &self.fragments[self.head];
+        self.head = fragment.next;
+        Some((
+            &fragment.chunk.chains,
+            fragment.chunk.changes[fragment.index].positions,
+        ))
+    }
 }
 
 impl<'arena> PairIndex<'arena> {
@@ -56,12 +92,13 @@ impl<'arena> PairIndex<'arena> {
         let groups = buckets
             .into_par_iter()
             .map(|bucket| {
-                execution.with_accumulator::<Group<'_>, _>(identities, 0, |neighbors| {
+                execution.with_accumulator::<Group, _>(identities, 0, |neighbors| {
                     let (chunk, index) = bucket[0];
                     let first = &events.chunks[chunk].changes[index];
                     let left = first.bucket & 1 == 0;
                     let pair = key_pair(first.born_key);
                     let replacement = if left { pair.1 } else { pair.0 };
+                    let mut fragments = Vec::with_capacity(bucket.len());
                     for &(chunk, index) in bucket {
                         let chunk = &events.chunks[chunk];
                         let change = &chunk.changes[index];
@@ -76,45 +113,67 @@ impl<'arena> PairIndex<'arena> {
                             .count
                             .checked_add(change.positions.len())
                             .ok_or("BPE birth position count exceeds resident bounds")?;
-                        group.sources.push((&chunk.chains, change.positions));
+                        fragments.push(Fragment {
+                            chunk,
+                            index,
+                            next: group.head,
+                        });
+                        group.head = fragments.len() - 1;
                     }
                     let mut output = Vec::new();
-                    for (neighbor, mut group) in neighbors.drain() {
+                    for (neighbor, group) in neighbors.drain() {
                         if group.weight < floor {
                             continue;
                         }
-                        group.sources.reverse();
-                        output.push(BirthJob {
-                            key: pair_key(if left {
+                        output.push((
+                            pair_key(if left {
                                 (neighbor, replacement)
                             } else {
                                 (replacement, neighbor)
                             }),
-                            weight: group.weight,
-                            count: group.count,
-                            sources: group.sources,
-                        });
+                            group.weight,
+                            group.count,
+                            group.head,
+                        ));
                     }
-                    Ok(output)
+                    Ok(ReducedBucket {
+                        fragments,
+                        jobs: output,
+                    })
                 })
             })
             .collect::<Result<Vec<_>>>()?;
-        let mut jobs: Vec<_> = groups.into_iter().flatten().collect();
+        drop(references);
+        let mut jobs: Vec<_> = groups
+            .iter()
+            .flat_map(|bucket| {
+                bucket
+                    .jobs
+                    .iter()
+                    .map(|&(key, weight, count, head)| BirthJob {
+                        key,
+                        weight,
+                        count,
+                        sources: FragmentSources {
+                            fragments: &bucket.fragments,
+                            head,
+                        },
+                    })
+            })
+            .collect();
         jobs.sort_unstable_by_key(|job| std::cmp::Reverse(job.count));
         let completed = jobs
             .into_par_iter()
             .map(|job| -> Result<CompletedBirth<'arena>> {
                 let positions = if job.count >= 16_384 {
-                    SortedPositions::from_cooperative_chains(job.count, &job.sources, arena)?
+                    SortedPositions::from_cooperative_chains(job.count, job.sources, arena)?
                 } else {
                     let worker = execution.current_worker();
                     let lease = arena.lease(worker);
                     let mut scratch = execution.encoding(worker);
                     SortedPositions::from_reversed_iter(
                         job.count,
-                        job.sources
-                            .iter()
-                            .flat_map(|(owner, chain)| owner.reversed(*chain)),
+                        job.sources.flat_map(|(owner, chain)| owner.reversed(chain)),
                         &mut scratch,
                         &lease,
                     )?

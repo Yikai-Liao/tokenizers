@@ -38,7 +38,14 @@ impl<'arena> PairIndex<'arena> {
         let policy = self.policy;
         let floor = self.minimum_frequency.max(1);
         let router = ShardRouter::new(self.shards.len());
-        events.dispatch_into(&mut self.routes, router);
+        let residual_births = if policy == IdentityPolicy::FirstActivationOnly
+            && self.owner_mode != OwnerMode::Baseline
+        {
+            events.dispatch_removals_into(&mut self.routes, router)
+        } else {
+            events.dispatch_into(&mut self.routes, router);
+            true
+        };
         debug_assert!(births.is_empty() || policy == IdentityPolicy::FirstActivationOnly);
         // Serial metadata routing moves completed births, with no regrouping or
         // codec operation. Owners publish within the existing commit phase.
@@ -51,7 +58,10 @@ impl<'arena> PairIndex<'arena> {
             self.prepared_births[router.owner(birth.key)].push(birth);
         }
 
-        if policy == IdentityPolicy::FirstActivationOnly && self.owner_mode != OwnerMode::Baseline {
+        if policy == IdentityPolicy::FirstActivationOnly
+            && self.owner_mode != OwnerMode::Baseline
+            && residual_births
+        {
             let result = self.commit_data_births(events, identities, execution, arena, floor);
             for route in &mut self.routes {
                 route.clear();
