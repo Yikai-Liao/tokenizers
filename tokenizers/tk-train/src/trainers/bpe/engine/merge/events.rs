@@ -69,6 +69,34 @@ pub(in super::super) struct MergeEvents {
     pub(in super::super) chunks: Vec<EventChunk>,
 }
 impl MergeEvents {
+    /// Fresh data tasks gather births globally. Route only original-order
+    /// removals to the unique state owners, without redundant birth metadata.
+    pub(in super::super) fn dispatch_removals_into(
+        &self,
+        routes: &mut Vec<OwnerRoute>,
+        router: ShardRouter,
+    ) -> bool {
+        let mut residual_births = false;
+        routes.resize_with(router.shards(), OwnerRoute::default);
+        for route in routes.iter_mut() {
+            route.clear();
+        }
+        for (chunk_index, chunk) in self.chunks.iter().enumerate() {
+            for (index, change) in chunk.changes.iter().enumerate() {
+                residual_births |= !change.positions.is_empty();
+                if change.removed_weight != 0 {
+                    routes[router.owner(change.removed_key)]
+                        .changes
+                        .push(RoutedChangeRef::new(
+                            chunk_index,
+                            index,
+                            ChangeAction::Remove,
+                        ));
+                }
+            }
+        }
+        residual_births
+    }
     /// One directory per owner for the whole batch. Only actual actions and
     /// births occupy entries; producers do not allocate an owner/bucket matrix.
     #[cfg(test)]

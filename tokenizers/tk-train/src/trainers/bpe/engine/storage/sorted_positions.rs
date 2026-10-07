@@ -3,6 +3,9 @@
 //! its eight-byte seed; later values store differences from their predecessors.
 //! Seeking decodes at most 127 gaps. Small lists have inline representations.
 //! This is a private in-memory representation, not a serialized file format.
+//! The experiment also supports directories of independently compressed blocks.
+//! Each child retains local 128-position restarts; outer ordinal offsets locate
+//! the child. Sixteen-byte alignment reserves pointer bit 3 for the block tag.
 //! Allocation tags distinguish arena storage from independently owned buffers;
 //! cursors never share state. For the integer encoding alone, see
 //! <https://protobuf.dev/programming-guides/encoding/#base-128-varints>.
@@ -21,6 +24,7 @@ const DELTA_MASK: usize = PAIR - 1;
 const ARENA: usize = 1;
 const MULTI: usize = 2;
 const RESERVED: usize = 4;
+const BLOCKS: usize = 8;
 
 /// Reusable encoding space. Only its written suffix is initialized.
 #[derive(Default)]
@@ -58,7 +62,7 @@ fn layout(groups: usize, capacity: usize, reserved: bool) -> Result<Layout> {
     let bytes = prefix_bytes(groups, reserved)
         .and_then(|head| head.checked_add(capacity))
         .ok_or(StorageError("position allocation size overflow"))?;
-    Layout::from_size_align(bytes, 8)
+    Layout::from_size_align(bytes, 16)
         .map_err(|_| StorageError("position allocation exceeds resident bounds"))
 }
 fn varint_bytes(value: u64) -> usize {
@@ -214,12 +218,104 @@ impl PositionEncodingScratch {
 }
 
 impl<'arena> SortedPositions<'arena> {
+    /// Each bounded task emits its final compressed block in one pass. Joining
+    /// connects a directory; it never decodes or copies compressed payloads.
+    pub(in super::super) fn from_independent_chains<'events>(
+        count: usize,
+        sources: impl Iterator<Item = (&'events super::PositionChains, super::PositionChain)> + Clone,
+        execution: &super::super::execution::Execution,
+        arena: &'arena super::AllocationArena,
+    ) -> Result<Self> {
+        if count >= INLINE {
+            return Err(StorageError("position count exceeds resident bounds"));
+        }
+        let mut tasks = Vec::new();
+        let mut current = Vec::new();
+        let mut size = 0_usize;
+        for (owner, chain) in sources {
+            for piece in owner.split_reverse(chain) {
+                size = size
+                    .checked_add(piece.len())
+                    .ok_or(StorageError("position count exceeds resident bounds"))?;
+                current.push((owner, piece));
+                if size >= super::PositionChains::BLOCK_SIZE {
+                    tasks.push((size, std::mem::take(&mut current)));
+                    size = 0;
+                }
+            }
+        }
+        if size != 0 {
+            tasks.push((size, current));
+        }
+        let mut blocks = tasks
+            .into_par_iter()
+            .map(|(count, sources)| -> Result<PositionBlock<'arena>> {
+                let worker = execution.current_worker();
+                let lease = arena.lease(worker);
+                let mut scratch = execution.encoding(worker);
+                let last = sources
+                    .first()
+                    .and_then(|(owner, chain)| owner.last(*chain))
+                    .expect("nonempty bounded block");
+                let positions = Self::from_reversed_iter(
+                    count,
+                    sources
+                        .iter()
+                        .flat_map(|(owner, chain)| owner.reversed(*chain)),
+                    &mut scratch,
+                    &lease,
+                )?;
+                let first = positions.get(0);
+                Ok(PositionBlock {
+                    end: 0,
+                    first,
+                    last,
+                    positions,
+                })
+            })
+            .collect::<Result<Vec<_>>>()?;
+        blocks.reverse();
+        let mut total = 0_usize;
+        let mut previous = None;
+        for block in &mut blocks {
+            if previous.is_some_and(|last| last > block.first) {
+                return Err(StorageError("positions are not sorted"));
+            }
+            total = total
+                .checked_add(block.positions.len())
+                .ok_or(StorageError("position count exceeds resident bounds"))?;
+            block.end = total;
+            previous = Some(block.last);
+        }
+        if total != count {
+            return Err(StorageError(
+                "position run differs from its declared length",
+            ));
+        }
+        if blocks.len() <= 1 {
+            return Ok(blocks.pop().map_or_else(Self::new, |block| block.positions));
+        }
+        let payload = Box::into_raw(Box::new(PositionBlocks { entries: blocks })).cast::<u8>();
+        Ok(Self {
+            count_and_flags: count,
+            payload: payload.map_addr(|address| address | BLOCKS),
+            arena_lifetime: PhantomData,
+        })
+    }
+    fn is_blocks(&self) -> bool {
+        !self.is_inline() && self.payload.addr() & BLOCKS != 0
+    }
+    fn blocks(&self) -> &PositionBlocks<'arena> {
+        // SAFETY: only the block constructor sets BLOCKS. Its aligned Box stays
+        // owned by this list and is read only after all block tasks have joined.
+        unsafe { &*self.allocation_ptr().cast::<PositionBlocks<'arena>>() }
+    }
     /// Encode fresh, spatially ordered sources with cooperative work on a hot
     /// key. Global ordinals retain the existing 128-position restart format.
     /// No worker lease survives a nested parallel phase.
-    pub(in super::super) fn from_cooperative_chains(
+    pub(in super::super) fn from_cooperative_chains<'events>(
         count: usize,
-        sources: &[(&super::PositionChains, super::PositionChain)],
+        sources: impl Iterator<Item = (&'events super::PositionChains, super::PositionChain)> + Clone,
         arena: &'arena super::AllocationArena,
     ) -> Result<Self> {
         if count < 16_384 {
@@ -227,9 +323,7 @@ impl<'arena> SortedPositions<'arena> {
             let lease = arena.lease(worker);
             return Self::from_reversed_iter_direct(
                 count,
-                sources
-                    .iter()
-                    .flat_map(|(owner, chain)| owner.reversed(*chain)),
+                sources.flat_map(|(owner, chain)| owner.reversed(chain)),
                 &lease,
             );
         }
@@ -237,13 +331,8 @@ impl<'arena> SortedPositions<'arena> {
             return Err(StorageError("position count exceeds resident bounds"));
         }
         let mut pieces = Vec::new();
-        for &(owner, chain) in sources {
-            pieces.extend(
-                owner
-                    .split_reverse(chain)
-                    .into_iter()
-                    .map(|chain| (owner, chain)),
-            );
+        for (owner, chain) in sources {
+            pieces.extend(owner.split_reverse(chain).map(|chain| (owner, chain)));
         }
         pieces.reverse();
         let mut ordinal = 0_usize;
@@ -329,7 +418,7 @@ impl<'arena> SortedPositions<'arena> {
         self.is_empty() || self.count_and_flags & INLINE != 0
     }
     fn allocation_ptr(&self) -> *mut u8 {
-        self.payload.map_addr(|address| address & !7)
+        self.payload.map_addr(|address| address & !15)
     }
     fn multi(&self) -> bool {
         self.payload.addr() & MULTI != 0
@@ -655,6 +744,23 @@ impl<'arena> SortedPositions<'arena> {
             .checked_add(count)
             .filter(|&end| end < INLINE)
             .ok_or(StorageError("position count exceeds resident bounds"))?;
+        if self.is_blocks() {
+            let mut cache = [0; RESTART_INTERVAL];
+            let mut cached_begin = usize::MAX;
+            let previous = (0..start).rev().map(|index| {
+                let begin = index / RESTART_INTERVAL * RESTART_INTERVAL;
+                if begin != cached_begin {
+                    let end = (begin + RESTART_INTERVAL).min(start);
+                    self.cursor(begin..end)
+                        .decode_into(&mut cache[..end - begin]);
+                    cached_begin = begin;
+                }
+                cache[index - begin]
+            });
+            let result = Self::from_reversed_iter(end, input.chain(previous), scratch, lease)?;
+            *self = result;
+            return Ok(());
+        }
         if self.is_inline() {
             let mut previous = [0; 2];
             self.iter().decode_into(&mut previous[..start]);
@@ -814,6 +920,15 @@ impl<'arena> SortedPositions<'arena> {
         if self.is_empty() {
             return 0;
         }
+        if self.is_blocks() {
+            let blocks = &self.blocks().entries;
+            let index = blocks.partition_point(|block| block.last < position);
+            if index == blocks.len() {
+                return self.len();
+            }
+            let begin = if index == 0 { 0 } else { blocks[index - 1].end };
+            return begin + blocks[index].positions.lower_bound(position);
+        }
         let mut low = 0;
         let mut high = self.len().div_ceil(RESTART_INTERVAL);
         while low < high {
@@ -839,27 +954,31 @@ impl<'arena> SortedPositions<'arena> {
         assert!(range.start <= range.end && range.end <= self.len());
         let mut cursor = PositionCursor {
             positions: self,
+            active: self,
             index: range.start,
             end: range.end,
             source: std::ptr::null(),
             value: 0,
+            block_index: 0,
+            block_start: 0,
+            block_end: self.len(),
         };
-        if range.start < range.end
-            && !self.is_inline()
-            && !range.start.is_multiple_of(RESTART_INTERVAL)
-        {
-            // SAFETY: the validated range selects an initialized seed group;
-            // every skipped varint was emitted by the encoder in that group.
-            unsafe {
-                cursor.source = self
-                    .data_ptr()
-                    .add(self.group_offset(range.start / RESTART_INTERVAL));
-                cursor.value = cursor.source.cast::<u64>().read_unaligned();
-                cursor.source = cursor.source.add(8);
-                for _ in 1..range.start % RESTART_INTERVAL {
-                    cursor.value += read_varint(&mut cursor.source);
-                }
+        if range.start < range.end {
+            if self.is_blocks() {
+                cursor.block_index = self
+                    .blocks()
+                    .entries
+                    .partition_point(|block| block.end <= range.start);
+                cursor.block_start = if cursor.block_index == 0 {
+                    0
+                } else {
+                    self.blocks().entries[cursor.block_index - 1].end
+                };
+                let block = &self.blocks().entries[cursor.block_index];
+                cursor.active = &block.positions;
+                cursor.block_end = block.end;
             }
+            cursor.initialize_source();
         }
         cursor
     }
@@ -868,6 +987,17 @@ impl<'arena> SortedPositions<'arena> {
     pub(in super::super) fn iter(&self) -> PositionCursor<'_, 'arena> {
         self.cursor(0..self.len())
     }
+}
+
+#[repr(align(16))]
+struct PositionBlocks<'arena> {
+    entries: Vec<PositionBlock<'arena>>,
+}
+struct PositionBlock<'arena> {
+    end: usize,
+    first: u64,
+    last: u64,
+    positions: SortedPositions<'arena>,
 }
 
 struct CooperativeRun<'events> {
@@ -961,12 +1091,34 @@ impl<I: Iterator<Item = u64>> Iterator for DescendingMerge<I> {
 /// An independent sequential decoder over a list-element range.
 pub(in super::super) struct PositionCursor<'list, 'arena> {
     positions: &'list SortedPositions<'arena>,
+    active: &'list SortedPositions<'arena>,
     index: usize,
     end: usize,
     source: *const u8,
     value: u64,
+    block_index: usize,
+    block_start: usize,
+    block_end: usize,
 }
-impl PositionCursor<'_, '_> {
+impl<'list, 'arena> PositionCursor<'list, 'arena> {
+    fn initialize_source(&mut self) {
+        let positions = self.active;
+        let index = self.index - self.block_start;
+        if !positions.is_inline() && !index.is_multiple_of(RESTART_INTERVAL) {
+            // SAFETY: the outer ordinal directory selected the owning block.
+            // Its local restart and gaps were fully initialized before publish.
+            unsafe {
+                self.source = positions
+                    .data_ptr()
+                    .add(positions.group_offset(index / RESTART_INTERVAL));
+                self.value = self.source.cast::<u64>().read_unaligned();
+                self.source = self.source.add(8);
+                for _ in 1..index % RESTART_INTERVAL {
+                    self.value += read_varint(&mut self.source);
+                }
+            }
+        }
+    }
     /// Decode at most output.len() positions and return the number written.
     #[inline]
     pub(in super::super) fn decode_into(&mut self, output: &mut [u64]) -> usize {
@@ -988,10 +1140,19 @@ impl Iterator for PositionCursor<'_, '_> {
         if self.index == self.end {
             return None;
         }
-        let value = if self.positions.is_inline() {
-            self.positions.payload.addr() as u64
-                + if self.index == 1 {
-                    (self.positions.count_and_flags & DELTA_MASK) as u64
+        if self.index == self.block_end {
+            self.block_start = self.index;
+            self.block_index += 1;
+            let block = &self.positions.blocks().entries[self.block_index];
+            self.active = &block.positions;
+            self.block_end = block.end;
+        }
+        let positions = self.active;
+        let index = self.index - self.block_start;
+        let value = if positions.is_inline() {
+            positions.payload.addr() as u64
+                + if index == 1 {
+                    (positions.count_and_flags & DELTA_MASK) as u64
                 } else {
                     0
                 }
@@ -999,11 +1160,10 @@ impl Iterator for PositionCursor<'_, '_> {
             // SAFETY: range indices never exceed the list count. Its encoder
             // initialized every seed and terminated gap, and append preserves it.
             unsafe {
-                if self.index.is_multiple_of(RESTART_INTERVAL) {
-                    self.source = self
-                        .positions
+                if index.is_multiple_of(RESTART_INTERVAL) {
+                    self.source = positions
                         .data_ptr()
-                        .add(self.positions.group_offset(self.index / RESTART_INTERVAL));
+                        .add(positions.group_offset(index / RESTART_INTERVAL));
                     self.value = self.source.cast::<u64>().read_unaligned();
                     self.source = self.source.add(8);
                 } else {
@@ -1024,6 +1184,16 @@ impl ExactSizeIterator for PositionCursor<'_, '_> {}
 impl std::iter::FusedIterator for PositionCursor<'_, '_> {}
 impl Drop for SortedPositions<'_> {
     fn drop(&mut self) {
+        if self.is_blocks() {
+            // SAFETY: the block tag exclusively owns the aligned Box created
+            // by from_independent_chains; dropping it drops every child once.
+            unsafe {
+                drop(Box::from_raw(
+                    self.allocation_ptr().cast::<PositionBlocks<'_>>(),
+                ));
+            }
+            return;
+        }
         if !self.is_inline() && self.payload.addr() & ARENA == 0 {
             let allocation = layout(
                 self.group_capacity(),
@@ -1070,6 +1240,109 @@ mod tests {
         }
     }
     #[test]
+    fn independent_blocks_coalesce_fragments_seek_append_and_drop() {
+        assert_eq!(std::mem::size_of::<SortedPositions<'_>>(), 16);
+        for workers in [1, 4] {
+            let execution = super::super::super::execution::Execution::new(workers).unwrap();
+            let arena = super::super::AllocationArena::new(workers, 256_000);
+            execution.pool.install(|| {
+                for lengths in [
+                    vec![20_003],
+                    vec![1; 20_003],
+                    vec![127, 128, 129, 4096, 16_000, 2],
+                ] {
+                    let mut owner = super::super::PositionChains::new();
+                    let mut handles = Vec::new();
+                    let mut expected = Vec::new();
+                    let mut value = 1_u64 << 63;
+                    for length in lengths {
+                        let mut chain = super::super::PositionChain::default();
+                        for index in 0..length {
+                            value += if index % 7 == 0 { 0 } else { 129 };
+                            owner.push(&mut chain, value).unwrap();
+                            expected.push(value);
+                        }
+                        handles.push(chain);
+                    }
+                    let sources: Vec<_> = handles
+                        .into_iter()
+                        .rev()
+                        .map(|chain| (&owner, chain))
+                        .collect();
+                    let mut result = SortedPositions::from_independent_chains(
+                        expected.len(),
+                        sources.iter().copied(),
+                        &execution,
+                        &arena,
+                    )
+                    .unwrap();
+                    assert!(result.is_blocks());
+                    assert!(
+                        result.blocks().entries.len()
+                            <= expected
+                                .len()
+                                .div_ceil(super::super::PositionChains::BLOCK_SIZE)
+                    );
+                    verify(&result, &expected);
+                    std::thread::scope(|scope| {
+                        for _ in 0..4 {
+                            scope.spawn(|| verify(&result, &expected));
+                        }
+                    });
+                    let lease = arena.lease(execution.current_worker());
+                    let mut scratch = PositionEncodingScratch::default();
+                    assert!(result.append_sorted(&[0], &mut scratch, &lease).is_err());
+                    verify(&result, &expected);
+                    result
+                        .append_sorted(&[value, u64::MAX], &mut scratch, &lease)
+                        .unwrap();
+                    expected.extend([value, u64::MAX]);
+                    verify(&result, &expected);
+                }
+                for values in [vec![], vec![u64::MAX], vec![0, u64::MAX], vec![u64::MAX; 2]] {
+                    let mut owner = super::super::PositionChains::new();
+                    let mut chain = super::super::PositionChain::default();
+                    for &value in &values {
+                        owner.push(&mut chain, value).unwrap();
+                    }
+                    let result = SortedPositions::from_independent_chains(
+                        values.len(),
+                        [(&owner, chain)].into_iter(),
+                        &execution,
+                        &arena,
+                    )
+                    .unwrap();
+                    verify(&result, &values);
+                    assert!(
+                        SortedPositions::from_independent_chains(
+                            values.len() + 1,
+                            [(&owner, chain)].into_iter(),
+                            &execution,
+                            &arena
+                        )
+                        .is_err()
+                    );
+                }
+                let mut owner = super::super::PositionChains::new();
+                let mut chain = super::super::PositionChain::default();
+                for index in 0..16_500 {
+                    owner
+                        .push(&mut chain, if index == 4096 { 0 } else { index })
+                        .unwrap();
+                }
+                assert!(
+                    SortedPositions::from_independent_chains(
+                        chain.len(),
+                        [(&owner, chain)].into_iter(),
+                        &execution,
+                        &arena
+                    )
+                    .is_err()
+                );
+            });
+        }
+    }
+    #[test]
     fn cooperative_encoding_preserves_global_restarts_and_hot_key_runs() {
         for workers in [1, 4] {
             let pool = rayon::ThreadPoolBuilder::new()
@@ -1095,9 +1368,12 @@ mod tests {
                         handles.push(chain);
                     }
                     let sources: Vec<_> = owners.iter().zip(handles).rev().collect();
-                    let result =
-                        SortedPositions::from_cooperative_chains(expected.len(), &sources, &arena)
-                            .unwrap();
+                    let result = SortedPositions::from_cooperative_chains(
+                        expected.len(),
+                        sources.iter().copied(),
+                        &arena,
+                    )
+                    .unwrap();
                     verify(&result, &expected);
                     let lease = arena.lease(rayon::current_thread_index().unwrap());
                     let ordinary = SortedPositions::from_reversed_iter_direct(
@@ -1125,7 +1401,7 @@ mod tests {
                 assert!(
                     SortedPositions::from_cooperative_chains(
                         chain.len(),
-                        &[(&owner, chain)],
+                        [(&owner, chain)].into_iter(),
                         &arena
                     )
                     .is_err()
@@ -1133,7 +1409,7 @@ mod tests {
                 assert!(
                     SortedPositions::from_cooperative_chains(
                         chain.len() + 1,
-                        &[(&owner, chain)],
+                        [(&owner, chain)].into_iter(),
                         &arena
                     )
                     .is_err()

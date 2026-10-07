@@ -159,11 +159,13 @@ pub(super) struct PairIndex<'arena> {
 enum OwnerMode {
     Baseline,
     Data,
+    Monolithic,
 }
 impl OwnerMode {
     fn configured() -> Self {
         match std::env::var("BPE_OWNER_MODE").as_deref() {
             Ok("baseline") => Self::Baseline,
+            Ok("monolithic") => Self::Monolithic,
             _ => Self::Data,
         }
     }

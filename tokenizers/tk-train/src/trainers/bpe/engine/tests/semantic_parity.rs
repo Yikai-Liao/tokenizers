@@ -2,6 +2,29 @@
 use super::*;
 
 #[test]
+fn fragmented_hot_pairs_and_tiny_neighbors_preserve_complete_hf_trace() {
+    let mut words = AHashMap::new();
+    for index in 0..37_u32 {
+        let ending = char::from_u32(0x4e00 + index).unwrap();
+        words.insert(
+            CompactString::from(format!("{}{ending}", "xab".repeat(1537))),
+            u64::from(index % 8),
+        );
+        words.insert(
+            CompactString::from(format!("q{ending}p")),
+            u64::from(index % 3 + 1),
+        );
+    }
+    let trainer = BpeTrainer::builder()
+        .vocab_size(96)
+        .min_frequency(2)
+        .max_token_length(Some(7))
+        .show_progress(false)
+        .build();
+    check(&trainer, &words);
+}
+
+#[test]
 fn weighted_ties_unicode_aa_and_reserved_id_activations() {
     let words = counts(&[
         ("", 1),
