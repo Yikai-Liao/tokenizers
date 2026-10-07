@@ -91,7 +91,12 @@ impl PreparedMerges {
                     write.positions.positions().for_each(|position| {
                         // SAFETY: preparation selected disjoint endpoint spans.
                         // apply holds the mutable corpus borrow until pool join;
-                        // geometry reads immutable ID spans, never token IDs.
+                        // Endpoint geometry reads immutable ID spans. Half-word
+                        // geometry reads atomic bitmap/skip cells inside this
+                        // writer's matched span; the following live coordinate
+                        // stays live as the left boundary of any adjacent write.
+                        // Other writers can change bits in the same bitmap word,
+                        // but cannot change these two successor coordinates.
                         unsafe {
                             corpus.write_endpoints(
                                 matcher.geometry(position),

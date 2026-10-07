@@ -305,6 +305,16 @@ impl<'input> CorpusPlan<'input> {
             weighted_mass,
         })
     }
+    pub(in super::super) fn initial_slot_bits(&self) -> u8 {
+        // Only retained input IDs must fit one cell. Later merge IDs borrow
+        // the following blank cell, even when the target vocabulary is larger.
+        super::slots::slot_bits(
+            self.spans_by_id
+                .iter()
+                .rposition(|&span| span != 0)
+                .map_or(0, |id| id + 1),
+        )
+    }
     pub(in super::super) fn initial_counts_fit_u64(&self) -> bool {
         self.weighted_mass <= u128::from(u64::MAX)
     }
@@ -319,6 +329,24 @@ impl<'input> CorpusPlan<'input> {
     ) -> Result<Corpus<S>> {
         let work = progress.stage("Fill corpus", self.len - 1);
         let tokens = S::from_prepared(&self, workers, &work)?;
+        let spans_by_id = if S::NAVIGATES {
+            Vec::new()
+        } else {
+            self.spans_by_id
+        };
+        // Diagnostic jobs are separate from performance runs.
+        if std::env::var_os("BPE_CORPUS_STATS").is_some() {
+            eprintln!(
+                "BPE_CORPUS_STATS layout={} slots={} allocation_bytes={} shared_span_bytes={} weight_bytes={} words={} policy_reuse={}",
+                S::LAYOUT,
+                tokens.len(),
+                tokens.allocation_bytes(),
+                spans_by_id.capacity() * 8,
+                self.weights.values().len() * 16,
+                self.words.len(),
+                policy == IdentityPolicy::AllowActiveReuse
+            );
+        }
         let word_starts = if policy == IdentityPolicy::AllowActiveReuse {
             self.words.iter().map(|word| word.start).collect()
         } else {
@@ -329,7 +357,7 @@ impl<'input> CorpusPlan<'input> {
             word_starts,
             weights: self.weights,
             unit_weight: self.unit_weight,
-            spans_by_id: self.spans_by_id,
+            spans_by_id,
             occurrence_spans: None,
             scan_whole_words: self.scan_whole_words,
         })

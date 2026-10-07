@@ -375,7 +375,7 @@ impl SelectedRuleIndex {
         if tail == EMPTY {
             return false;
         }
-        let previous = corpus.token(before - 1);
+        let previous = corpus.previous_token(before);
         if tail == MULTIPLE {
             self.multiple.contains_key(&pair_key((previous, prior)))
         } else {
@@ -387,7 +387,11 @@ impl SelectedRuleIndex {
         if head == EMPTY {
             return next;
         }
-        let following = corpus.token(after + corpus.span_by_id(next));
+        let following = corpus.token(if S::NAVIGATES {
+            corpus.next_start(after)
+        } else {
+            after + corpus.span_by_id(next)
+        });
         if head == MULTIPLE {
             self.multiple
                 .get(&pair_key((next, following)))
@@ -460,10 +464,23 @@ impl<'prep, S: SlotStorage> RulePreparation<'prep, S> {
     ) -> Result<()> {
         self.room::<CONTIGUOUS>();
         let weight = self.weights.weight(matched.left_start);
-        let prior = self.corpus.token(matched.left_start - 1);
+        let before_halfword = if S::NAVIGATES {
+            self.corpus.previous_start(matched.left_start)
+        } else {
+            0
+        };
+        let prior = if S::NAVIGATES {
+            self.corpus.token(before_halfword)
+        } else {
+            self.corpus.previous_token(matched.left_start)
+        };
         if prior != WORD_SEPARATOR_ID {
-            let prior_span = self.corpus.span_by_id(prior);
-            let before = matched.left_start - prior_span;
+            let (before, prior_span) = if S::NAVIGATES {
+                (before_halfword, matched.left_start - before_halfword)
+            } else {
+                let span = self.corpus.span_by_id(prior);
+                (matched.left_start - span, span)
+            };
             let left_selected = match neighbors {
                 SelectedNeighbors::Adjacent { previous, .. } => {
                     previous.is_some_and(|start| start + matched.merged_span == matched.left_start)
@@ -495,12 +512,24 @@ impl<'prep, S: SlotStorage> RulePreparation<'prep, S> {
                     selected.final_next(self.corpus, matched.next_start, next)
                 }
             };
+            let final_span = if S::NAVIGATES && self.birth_span_limit == u64::MAX {
+                0
+            } else if S::NAVIGATES {
+                let after = self.corpus.next_start(matched.next_start);
+                if final_next == next {
+                    after - matched.next_start
+                } else {
+                    self.corpus.next_start(after) - matched.next_start
+                }
+            } else {
+                self.corpus.span_by_id(final_next)
+            };
             self.scratch.right::<CONTIGUOUS>(
                 next,
                 final_next,
                 matched.left_start,
                 weight,
-                matched.merged_span + self.corpus.span_by_id(final_next) < self.birth_span_limit,
+                matched.merged_span + final_span < self.birth_span_limit,
             )?;
         }
         Ok(())

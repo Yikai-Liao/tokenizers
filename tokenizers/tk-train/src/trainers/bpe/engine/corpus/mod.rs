@@ -6,11 +6,13 @@
 //! before changing the corpus, while immutable boundaries retain word identity.
 use super::storage::{IntervalCursor, IntervalIndex};
 mod prepare;
+mod prezza;
 mod slots;
 use super::WORD_SEPARATOR_ID;
 #[cfg(test)]
 use crate::progress::TrainingProgress;
 pub(super) use prepare::CorpusPlan;
+pub(super) use prezza::PrezzaSlots;
 pub(super) use slots::{PackedU24Slots, SlotStorage, U16Slots, U32Slots, slot_bits};
 use std::ops::Range;
 #[cfg(test)]
@@ -156,9 +158,41 @@ impl<S: SlotStorage> Corpus<S> {
     }
     #[inline]
     pub(super) fn span(&self, position: u64) -> u64 {
+        if S::NAVIGATES {
+            return self.next_start(position) - position;
+        }
         match &self.occurrence_spans {
             Some(spans) => spans[position as usize],
             None => self.spans_by_id[self.token(position) as usize],
+        }
+    }
+    #[inline]
+    pub(super) fn next_start(&self, position: u64) -> u64 {
+        if S::NAVIGATES {
+            self.slots.next(position as usize) as u64
+        } else {
+            position + self.span(position)
+        }
+    }
+    #[inline]
+    pub(super) fn previous_start(&self, position: u64) -> u64 {
+        if S::NAVIGATES {
+            self.slots.previous(position as usize) as u64
+        } else {
+            let endpoint = position - 1;
+            if self.token(endpoint) == WORD_SEPARATOR_ID {
+                endpoint
+            } else {
+                position - self.span(endpoint)
+            }
+        }
+    }
+    #[inline]
+    pub(super) fn previous_token(&self, position: u64) -> u32 {
+        if S::NAVIGATES {
+            self.token(self.previous_start(position))
+        } else {
+            self.token(position - 1)
         }
     }
     pub(super) fn span_by_id(&self, id: u32) -> u64 {
@@ -168,8 +202,16 @@ impl<S: SlotStorage> Corpus<S> {
         PairMatcher {
             corpus: self,
             pair,
-            left_span: self.spans_by_id[pair.0 as usize],
-            right_span: self.spans_by_id[pair.1 as usize],
+            left_span: if S::NAVIGATES {
+                0
+            } else {
+                self.spans_by_id[pair.0 as usize]
+            },
+            right_span: if S::NAVIGATES {
+                0
+            } else {
+                self.spans_by_id[pair.1 as usize]
+            },
         }
     }
     pub(super) fn word_containing(&self, position: u64) -> usize {
@@ -200,6 +242,11 @@ impl<S: SlotStorage> Corpus<S> {
     }
     pub(super) fn prepare_spans(&mut self, pair: Pair, replacement: u32, reused_active: bool) {
         self.scan_whole_words |= reused_active;
+        // Half-word adjacency encodes each occurrence independently, including
+        // active IDs with different physical spans. No ID-span plane is needed.
+        if S::NAVIGATES {
+            return;
+        }
         let span = self.spans_by_id[pair.0 as usize] + self.spans_by_id[pair.1 as usize];
         if replacement as usize == self.spans_by_id.len() {
             self.spans_by_id.push(if self.occurrence_spans.is_some() {
@@ -281,11 +328,7 @@ impl<S: SlotStorage> Corpus<S> {
 unsafe fn write_endpoints<S: SlotStorage>(slots: &S, matched: PairMatch, replacement: u32) {
     // SAFETY: caller guarantees a reader-free joined phase and disjoint spans.
     unsafe {
-        slots.store(matched.left_start as usize, replacement);
-        if matched.right_start + 1 != matched.next_start {
-            slots.store(matched.right_start as usize, WORD_SEPARATOR_ID);
-        }
-        slots.store((matched.next_start - 1) as usize, replacement);
+        slots.merge(matched, replacement);
     }
 }
 /// A complete immutable word region owns its occurrence-span writes as well.
@@ -322,8 +365,8 @@ impl<S: SlotStorage> WordWriter<'_, S> {
         self.spans[after - 1] = merged;
     }
 }
-/// Fixed rule geometry is cached once. Unequal identity reuse reads its
-/// occurrence plane from the same immutable snapshot instead.
+/// Endpoint geometry caches shared ID spans. Half-word geometry navigates the
+/// live bitmap, so each occurrence supplies its own physical span.
 pub(super) struct PairMatcher<'a, S: SlotStorage> {
     corpus: &'a Corpus<S>,
     pair: Pair,
@@ -333,6 +376,16 @@ pub(super) struct PairMatcher<'a, S: SlotStorage> {
 impl<S: SlotStorage> PairMatcher<'_, S> {
     #[inline]
     pub(super) fn geometry(&self, left_start: u64) -> PairMatch {
+        if S::NAVIGATES {
+            let right_start = self.corpus.next_start(left_start);
+            let next_start = self.corpus.next_start(right_start);
+            return PairMatch {
+                left_start,
+                right_start,
+                next_start,
+                merged_span: next_start - left_start,
+            };
+        }
         let left_span = self
             .corpus
             .occurrence_spans
@@ -355,6 +408,24 @@ impl<S: SlotStorage> PairMatcher<'_, S> {
     pub(super) fn get(&self, left_start: u64) -> Option<PairMatch> {
         if self.corpus.token(left_start) != self.pair.0 {
             return None;
+        }
+        if S::NAVIGATES {
+            let right_start = self.corpus.next_start(left_start);
+            if right_start >= self.corpus.len() as u64
+                || self.corpus.token(right_start) != self.pair.1
+            {
+                return None;
+            }
+            let next_start = self.corpus.next_start(right_start);
+            if next_start >= self.corpus.len() as u64 {
+                return None;
+            }
+            return Some(PairMatch {
+                left_start,
+                right_start,
+                next_start,
+                merged_span: next_start - left_start,
+            });
         }
         let left_span = self
             .corpus

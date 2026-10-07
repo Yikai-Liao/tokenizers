@@ -31,7 +31,18 @@ pub(super) fn prepare<S: SlotStorage>(
             positions
         })
         .collect();
-    let span = corpus.span_by_id(rule.pair.0);
+    let span = if S::NAVIGATES {
+        let Some(position) = valid
+            .iter()
+            .find(|positions| !positions.is_empty())
+            .map(|positions| positions.position(0))
+        else {
+            return Ok(Vec::new());
+        };
+        corpus.span(position)
+    } else {
+        corpus.span_by_id(rule.pair.0)
+    };
     let summaries: Vec<_> = valid
         .iter()
         .map(|positions| {

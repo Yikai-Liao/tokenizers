@@ -171,6 +171,30 @@ impl Training<'_> {
             progress.stage("Compute merges", trainer.vocab_size);
             return Ok(complete_model(trainer, vocabulary, Vec::new()));
         }
+        // Experiment switch is read once, outside all hot loops. Static dispatch
+        // preserves the normal endpoint implementation in the control arm.
+        if std::env::var("BPE_CORPUS_LAYOUT").is_ok_and(|layout| layout == "prezza") {
+            return match prepared_corpus.initial_slot_bits() {
+                16 => self.run::<corpus::PrezzaSlots<corpus::U16Slots>>(
+                    vocabulary,
+                    prepared_corpus,
+                    #[cfg(test)]
+                    birth_observe,
+                ),
+                24 => self.run::<corpus::PrezzaSlots<corpus::PackedU24Slots>>(
+                    vocabulary,
+                    prepared_corpus,
+                    #[cfg(test)]
+                    birth_observe,
+                ),
+                _ => self.run::<corpus::PrezzaSlots<corpus::U32Slots>>(
+                    vocabulary,
+                    prepared_corpus,
+                    #[cfg(test)]
+                    birth_observe,
+                ),
+            };
+        }
         match corpus::slot_bits(trainer.vocab_size.max(vocabulary.len())) {
             16 => self.run::<corpus::U16Slots>(
                 vocabulary,

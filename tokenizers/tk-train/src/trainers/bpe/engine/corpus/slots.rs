@@ -20,6 +20,30 @@ pub(in super::super) fn slot_bits(id_count: usize) -> u8 {
 // The coordinator chooses one storage type before training. Static dispatch
 // keeps layout tests and variable-width bit arithmetic outside endpoint loops.
 pub(in super::super) trait SlotStorage: Send + Sync + Sized {
+    const NAVIGATES: bool = false;
+    const LAYOUT: &'static str;
+    const CELL_BITS: u8;
+    #[cfg(test)]
+    fn from_ids(ids: &[u32]) -> Self;
+    fn allocation_bytes(&self) -> usize;
+    fn next(&self, _position: usize) -> usize {
+        unreachable!()
+    }
+    fn previous(&self, _position: usize) -> usize {
+        unreachable!()
+    }
+    /// # Safety
+    /// Joined writer owns the complete matched span; no token readers overlap.
+    unsafe fn merge(&self, matched: super::PairMatch, replacement: u32) {
+        // SAFETY: the caller owns these disjoint endpoint slots.
+        unsafe {
+            self.store(matched.left_start as usize, replacement);
+            if matched.right_start + 1 != matched.next_start {
+                self.store(matched.right_start as usize, WORD_SEPARATOR_ID);
+            }
+            self.store((matched.next_start - 1) as usize, replacement);
+        }
+    }
     fn from_prepared(
         prepared: &CorpusPlan<'_>,
         workers: usize,
@@ -36,6 +60,15 @@ pub(in super::super) trait SlotStorage: Send + Sync + Sized {
 }
 pub(in super::super) type U32Slots = Vec<AtomicU32>;
 impl SlotStorage for U32Slots {
+    const LAYOUT: &'static str = "endpoint32";
+    const CELL_BITS: u8 = 32;
+    #[cfg(test)]
+    fn from_ids(ids: &[u32]) -> Self {
+        ids.iter().map(|&id| AtomicU32::new(id)).collect()
+    }
+    fn allocation_bytes(&self) -> usize {
+        self.capacity() * 4
+    }
     fn from_prepared(
         prepared: &CorpusPlan<'_>,
         workers: usize,
@@ -63,6 +96,15 @@ impl SlotStorage for U32Slots {
 }
 pub(in super::super) struct U16Slots(Vec<AtomicU16>);
 impl SlotStorage for U16Slots {
+    const LAYOUT: &'static str = "endpoint16";
+    const CELL_BITS: u8 = 16;
+    #[cfg(test)]
+    fn from_ids(ids: &[u32]) -> Self {
+        Self(ids.iter().map(|&id| AtomicU16::new(id as u16)).collect())
+    }
+    fn allocation_bytes(&self) -> usize {
+        self.0.capacity() * 2
+    }
     fn from_prepared(
         prepared: &CorpusPlan<'_>,
         workers: usize,
@@ -109,6 +151,17 @@ impl PackedU24Slots {
     }
 }
 impl SlotStorage for PackedU24Slots {
+    const LAYOUT: &'static str = "endpoint24";
+    const CELL_BITS: u8 = 24;
+    #[cfg(test)]
+    fn from_ids(ids: &[u32]) -> Self {
+        let mut tokens: Vec<_> = ids.iter().map(|&id| Self::bytes(id)).collect();
+        tokens.push(Self::bytes(0));
+        Self { tokens }
+    }
+    fn allocation_bytes(&self) -> usize {
+        self.tokens.capacity() * 3
+    }
     fn from_prepared(
         prepared: &CorpusPlan<'_>,
         workers: usize,

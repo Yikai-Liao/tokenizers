@@ -174,14 +174,11 @@ impl<S: SlotStorage> RulePreparation<'_, S> {
             }
             if let Some(matched) = self.matcher.get(position) {
                 if position != after {
-                    let id = self.corpus.token(position - 1);
+                    let id = self.corpus.previous_token(position);
                     previous = (id != WORD_SEPARATOR_ID).then(|| {
-                        let span = self.corpus.span(position - 1);
-                        LogicalToken {
-                            id,
-                            start: position - span,
-                            span,
-                        }
+                        let start = self.corpus.previous_start(position);
+                        let span = position - start;
+                        LogicalToken { id, start, span }
                     });
                 }
                 previous = Some(self.record_cohort_match(matched, previous)?);
