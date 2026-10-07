@@ -501,6 +501,27 @@ mod tests {
     }
 
     #[test]
+    fn compact_sort_matches_stable_order_at_small_and_dispatch_boundaries() {
+        for count in [0_usize, 1, 511, 512, 513, 263_298, 263_299] {
+            // Exercise one, two and three varying bytes with repeated full keys.
+            for left_limit in [1, 251, 65_536] {
+                let mut records: Vec<_> = (0..count)
+                    .map(|index| {
+                        let sample = index % 997;
+                        let left = sample * 73 % left_limit;
+                        let right = sample * 37 % 251;
+                        CompactKeyedValue::new(((left as u64) << 32) | right as u64, index as u32)
+                    })
+                    .collect();
+                let mut expected = records.clone();
+                expected.sort_by_key(|record| record.key());
+                sort_by_key(&mut records);
+                assert_eq!(records, expected, "count={count}, left_limit={left_limit}");
+            }
+        }
+    }
+
+    #[test]
     fn compact_keys_keep_payload_order_across_dispatch_and_block_boundaries() {
         let mut records: Vec<_> = (0..(BLOCK * 1024 + 13))
             .map(|i| CompactKeyedValue::new(((i * 37) % 251) as u64, i as u32))

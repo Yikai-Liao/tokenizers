@@ -390,12 +390,21 @@ before public model strings are built.
 
 ### Initial grouping
 
-[Initial pair construction](initial_pairs.rs) emits bounded waves of twelve-byte
-records containing a complete `u64` pair key and a local coordinate offset.
-Stable radix grouping keeps physical order within each key. The wave base restores
-full-width positions. Interval weight runs and a unit-weight shortcut supply
+[Initial pair construction](initial_pairs.rs) emits bounded waves of records.
+When both initial token IDs fit in sixteen bits, each record uses eight bytes;
+otherwise it uses twelve. Both representations preserve the complete pair
+identity and a wave-local coordinate offset. Stable radix grouping keeps physical
+order within each key. The wave base restores full-width positions. Interval weight runs and a unit-weight shortcut supply
 weighted counts. Owners can encode initial lists in parallel using resources
 from the worker that executes each task.
+
+For bounded initial IDs, the read-only corpus plan caches retained-symbol IDs in
+a sixteen-bit plane. Word geometry distinguishes separators from valid IDs.
+Initial routing and corpus filling read this plane; the original character-ID
+lookup tables are released after it is filled. Wide IDs retain the decoding path.
+The plane is released after corpus materialization, before merge training. Its
+extra allocation trades memory during initialization for fewer repeated UTF-8
+scans and ID lookups; it does not guarantee a lower process memory peak.
 
 ### Slot and coordinate storage
 
@@ -456,10 +465,12 @@ directory reuse reduce repeated allocation. Complete producers avoid routing
 birth chains and re-encoding them at the owner; split rules still need aggregation.
 Rayon schedules work.
 
-The radix port sorts full 64-bit keys in 12-byte records and preserves incoming
-payload order for equal keys. Its fixed 512-record block uses 3 MiB of scatter
-scratch, nine bytes of metadata per input block, and fixed directory overhead.
-Metadata grows with `n / 512`. The reference paper's square-root space bound does
+The radix port sorts complete pair keys and preserves incoming payload order
+for equal keys. Its block path uses eight-byte compact or twelve-byte full-width
+records. The fixed 512-record block uses 2 MiB or 3 MiB of scatter scratch,
+respectively, plus nine bytes of metadata per input block and fixed directory
+overhead. Small inputs use a separate sort with scratch proportional to input
+size. Block-path metadata grows with `n / 512`. The reference paper's square-root space bound does
 not apply to this fixed-block parameterization.
 
 Performance results depend on the workload and measurement boundary. Follow the

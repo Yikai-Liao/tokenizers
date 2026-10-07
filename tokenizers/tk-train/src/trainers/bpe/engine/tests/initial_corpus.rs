@@ -1,6 +1,38 @@
 //! Coordinate planning, full pair keys, wave boundaries, and materialization.
 use super::*;
 
+struct ForcedFullWidth<'a>(corpus::InitialCorpus<'a>);
+impl corpus::InitialPairSource for ForcedFullWidth<'_> {
+    fn len(&self) -> usize {
+        corpus::InitialPairSource::len(&self.0)
+    }
+
+    fn word_weights(&self) -> &storage::IntervalIndex<u64> {
+        corpus::InitialPairSource::word_weights(&self.0)
+    }
+
+    fn for_each_edge(&self, range: std::ops::Range<usize>, emit: impl FnMut(usize, u64)) {
+        corpus::InitialPairSource::for_each_edge(&self.0, range, emit);
+    }
+}
+
+fn initial_snapshot(
+    table: &initial_pairs::InitialPairTable<'_>,
+) -> std::collections::BTreeMap<u64, (u64, Vec<u64>)> {
+    table
+        .shards
+        .iter()
+        .flat_map(|shard| {
+            shard.iter().map(|(&key, state)| {
+                (
+                    key,
+                    (state.ledger_count_bits, state.positions.iter().collect()),
+                )
+            })
+        })
+        .collect()
+}
+
 #[test]
 fn full_pair_keys_remain_distinct_in_initial_counting() {
     use super::storage::IntervalIndex;
@@ -56,6 +88,166 @@ fn full_pair_keys_remain_distinct_in_initial_counting() {
                 assert_eq!(state.positions.iter().collect::<Vec<_>>(), [position]);
             }
         });
+    }
+}
+
+#[test]
+fn low_id_compact_records_match_forced_full_records_across_small_waves() {
+    use super::storage::IntervalIndex;
+    use std::sync::atomic::AtomicU32;
+
+    // The first and third words contain overlapping AA edges. The second has
+    // zero weight, while the other words have distinct positive weights.
+    let ids = [
+        WORD_SEPARATOR_ID,
+        1,
+        1,
+        1,
+        1,
+        WORD_SEPARATOR_ID,
+        1,
+        2,
+        1,
+        WORD_SEPARATOR_ID,
+        3,
+        3,
+        3,
+        WORD_SEPARATOR_ID,
+        2,
+        2,
+        WORD_SEPARATOR_ID,
+    ];
+    let slots: Vec<_> = ids.into_iter().map(AtomicU32::new).collect();
+    let weights = IntervalIndex::new(vec![1, 6, 10, 14], vec![5, 0, 3, 2]);
+    let workers = 4;
+    let execution = execution::Execution::new(workers).unwrap();
+    let arena = AllocationArena::new(workers, slots.len() - 1);
+    let progress =
+        TrainingProgress::new(false, tk_encode::utils::progress::ProgressFormat::Silent).unwrap();
+    execution.pool.install(|| {
+        let low_id_source = corpus::InitialCorpus {
+            token_ids: &slots,
+            word_weights: &weights,
+        };
+        assert!(corpus::InitialPairSource::compact_keys(&low_id_source));
+
+        for floor in [0, 2] {
+            let compact_source = corpus::InitialCorpus {
+                token_ids: &slots,
+                word_weights: &weights,
+            };
+            let full_source = ForcedFullWidth(corpus::InitialCorpus {
+                token_ids: &slots,
+                word_weights: &weights,
+            });
+            assert!(!corpus::InitialPairSource::compact_keys(&full_source));
+            let compact = initial_pairs::InitialPairTable::build_in_waves(
+                compact_source,
+                floor,
+                &execution,
+                &arena,
+                &progress,
+                3,
+            )
+            .unwrap();
+            let compact_snapshot = initial_snapshot(&compact);
+            let compact_mass = compact.weighted_mass;
+            let compact_max_weight = compact.maximum_word_weight;
+            let full = initial_pairs::InitialPairTable::build_in_waves(
+                full_source,
+                floor,
+                &execution,
+                &arena,
+                &progress,
+                3,
+            )
+            .unwrap();
+            assert_eq!(initial_snapshot(&full), compact_snapshot);
+            assert_eq!(full.weighted_mass, compact_mass);
+            assert_eq!(full.maximum_word_weight, compact_max_weight);
+            assert_eq!(compact_mass, 23);
+        }
+    });
+}
+
+#[test]
+fn dense_and_sparse_owner_directories_keep_duplicate_keys_stable_across_tiles() {
+    use super::storage::IntervalIndex;
+    use std::sync::atomic::AtomicU32;
+
+    let tile = 1 << 18;
+    let slots: Vec<_> = (0..(2 * tile + 3))
+        .map(|index| AtomicU32::new(if index % 2 == 0 { 1 } else { 2 }))
+        .collect();
+    let weights = IntervalIndex::new(vec![0], vec![7]);
+    let mut reference = None;
+    let mut expected_mass = None;
+    for workers in [1, 64, 65] {
+        let execution = execution::Execution::new(workers).unwrap();
+        let arena = AllocationArena::new(workers, slots.len() - 1);
+        let progress =
+            TrainingProgress::new(false, tk_encode::utils::progress::ProgressFormat::Silent)
+                .unwrap();
+        let initial = execution.pool.install(|| {
+            initial_pairs::InitialPairTable::build(
+                corpus::InitialCorpus {
+                    token_ids: &slots,
+                    word_weights: &weights,
+                },
+                1,
+                &execution,
+                &arena,
+                &progress,
+            )
+            .unwrap()
+        });
+        let snapshot = initial_snapshot(&initial);
+        if let Some(reference) = &reference {
+            assert_eq!(&snapshot, reference, "workers={workers}");
+        } else {
+            reference = Some(snapshot.clone());
+        }
+        let edges = (slots.len() - 1) as u128;
+        assert_eq!(initial.weighted_mass, edges * 7);
+        if let Some(mass) = expected_mass {
+            assert_eq!(initial.weighted_mass, mass);
+        } else {
+            expected_mass = Some(initial.weighted_mass);
+        }
+        assert_eq!(initial.maximum_word_weight, 7);
+        assert_eq!(snapshot.len(), 2);
+        let repeated_across_tiles = |pair| {
+            snapshot[&pair_index::pair_key(pair)]
+                .1
+                .iter()
+                .any(|&position| position < tile as u64)
+                && snapshot[&pair_index::pair_key(pair)]
+                    .1
+                    .iter()
+                    .any(|&position| (tile as u64..(2 * tile) as u64).contains(&position))
+                && snapshot[&pair_index::pair_key(pair)]
+                    .1
+                    .iter()
+                    .any(|&position| position >= (2 * tile) as u64)
+        };
+        assert!(repeated_across_tiles((1, 2)));
+        assert!(repeated_across_tiles((2, 1)));
+        assert_eq!(
+            snapshot[&pair_index::pair_key((1, 2))].1.len(),
+            edges as usize / 2
+        );
+        assert_eq!(
+            snapshot[&pair_index::pair_key((2, 1))].1.len(),
+            edges as usize / 2
+        );
+        assert_eq!(
+            snapshot[&pair_index::pair_key((1, 2))].1.last(),
+            Some(&((2 * tile) as u64))
+        );
+        assert_eq!(
+            snapshot[&pair_index::pair_key((2, 1))].1.last(),
+            Some(&((2 * tile + 1) as u64))
+        );
     }
 }
 

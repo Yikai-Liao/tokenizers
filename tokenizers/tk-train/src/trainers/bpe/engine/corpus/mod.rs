@@ -33,6 +33,9 @@ pub(super) struct InitialCorpus<'a> {
 }
 /// Initial routing visits complete keys in ascending physical-coordinate order.
 /// A range owns left endpoints; its final edge may read one token past the range.
+/// During a build, repeated scans of a range emit the same (position, key)
+/// sequence, and `edge_count` returns its length. A true `compact_keys` result
+/// guarantees that both emitted IDs fit in u16.
 pub(super) trait InitialPairSource: Sync {
     fn len(&self) -> usize;
     fn word_weights(&self) -> &IntervalIndex<u64>;
