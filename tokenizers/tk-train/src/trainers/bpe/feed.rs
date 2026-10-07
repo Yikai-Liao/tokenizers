@@ -12,7 +12,7 @@ const LOCAL_KEY_LIMIT: usize = 2048;
 // Amortize the bridge's serialized source `next()` lock across several inputs.
 const FEED_BATCH_SIZE: usize = 32;
 
-fn batches<I, S>(iterator: I) -> impl Iterator<Item = Vec<S>> + Send
+fn batches<I, S>(iterator: I, mut startup_singles: usize) -> impl Iterator<Item = Vec<S>> + Send
 where
     I: Iterator<Item = S> + Send,
     S: Send,
@@ -20,6 +20,11 @@ where
     // Keep one exhaustion state across batches, including a partial final batch.
     let mut iterator = iterator.fuse();
     std::iter::from_fn(move || {
+        if startup_singles > 0 {
+            let item = iterator.next()?;
+            startup_singles -= 1;
+            return Some(vec![item]);
+        }
         let batch: Vec<_> = iterator.by_ref().take(FEED_BATCH_SIZE).collect();
         (!batch.is_empty()).then_some(batch)
     })
@@ -75,7 +80,12 @@ where
 {
     let hash = RandomState::default();
     let new_counts = || Ok(CountMap::with_hasher(hash.clone()));
-    if !get_parallelism() || current_num_threads() == 1 {
+    let parallel_workers = if get_parallelism() {
+        current_num_threads()
+    } else {
+        1
+    };
+    if parallel_workers == 1 {
         // A single worker needs neither shared updates nor a final copy. Keep
         // its map, using the same callback/error handling as the parallel path.
         return iterator
@@ -91,7 +101,11 @@ where
     // iterator would execute callbacks under the bridge's serial next() lock.
     // Local caches absorb repeats; flushes update weighted counts directly,
     // avoiding a separate partition-and-reduce pass over all local entries.
-    let results: Vec<Result<CountMap>> = batches(iterator)
+    // Seed the ambient pool with independent inputs before amortizing the
+    // bridge lock. A short stream of expensive documents would otherwise form
+    // one batch whose callbacks all run serially on the same worker. Source
+    // exhaustion naturally caps these singletons at the available input count.
+    let results: Vec<Result<CountMap>> = batches(iterator, parallel_workers)
         .maybe_par_bridge()
         .flat_map_iter(std::iter::IntoIterator::into_iter)
         .fold(new_counts, |counts, sequence| {
@@ -133,7 +147,7 @@ mod tests {
                 Some(next)
             }
         });
-        let mut batches = batches(source);
+        let mut batches = batches(source, 0);
 
         assert_eq!(pulled.load(std::sync::atomic::Ordering::Relaxed), 0);
         assert_eq!(
@@ -148,6 +162,39 @@ mod tests {
         assert_eq!(
             pulled.load(std::sync::atomic::Ordering::Relaxed),
             FEED_BATCH_SIZE + 1
+        );
+        assert_eq!(batches.next(), None);
+    }
+
+    #[test]
+    fn startup_items_are_singletons_before_full_batches() {
+        const STARTUP: usize = 4;
+        let pulled = std::sync::atomic::AtomicUsize::new(0);
+        let source = std::iter::from_fn(|| {
+            let next = pulled.load(std::sync::atomic::Ordering::Relaxed);
+            if next == STARTUP + FEED_BATCH_SIZE + 2 {
+                None
+            } else {
+                pulled.store(next + 1, std::sync::atomic::Ordering::Relaxed);
+                Some(next)
+            }
+        });
+        let mut batches = batches(source, STARTUP);
+
+        for index in 0..STARTUP {
+            assert_eq!(batches.next(), Some(vec![index]));
+            assert_eq!(pulled.load(std::sync::atomic::Ordering::Relaxed), index + 1);
+        }
+        assert_eq!(
+            batches.next(),
+            Some((STARTUP..STARTUP + FEED_BATCH_SIZE).collect())
+        );
+        assert_eq!(
+            batches.next(),
+            Some(vec![
+                STARTUP + FEED_BATCH_SIZE,
+                STARTUP + FEED_BATCH_SIZE + 1
+            ])
         );
         assert_eq!(batches.next(), None);
     }
@@ -168,19 +215,25 @@ mod tests {
                 }
             })
         }
-        for prefix in [0, 1, 31, 32, 33, 64, 65] {
-            // Establish that this fixture really resumes after its first None.
-            let mut raw = source(prefix);
-            assert_eq!(raw.nth(prefix), None);
-            assert_eq!(raw.next(), Some(usize::MAX));
-            let mut grouped = batches(source(prefix));
-            let mut items = Vec::new();
-            for batch in grouped.by_ref() {
-                items.extend(batch);
+        for startup in [0, 1, 4, FEED_BATCH_SIZE, 128] {
+            for prefix in [0, 1, 3, 4, 5, 31, 32, 33, 35, 36, 37, 64, 65] {
+                // Establish that this fixture really resumes after its first None.
+                let mut raw = source(prefix);
+                assert_eq!(raw.nth(prefix), None);
+                assert_eq!(raw.next(), Some(usize::MAX));
+                let mut grouped = batches(source(prefix), startup);
+                let mut items = Vec::new();
+                for batch in grouped.by_ref() {
+                    items.extend(batch);
+                }
+                assert_eq!(
+                    items,
+                    (0..prefix).collect::<Vec<_>>(),
+                    "startup={startup}, prefix={prefix}"
+                );
+                assert_eq!(grouped.next(), None);
+                assert_eq!(grouped.next(), None);
             }
-            assert_eq!(items, (0..prefix).collect::<Vec<_>>(), "{prefix}");
-            assert_eq!(grouped.next(), None);
-            assert_eq!(grouped.next(), None);
         }
     }
 
