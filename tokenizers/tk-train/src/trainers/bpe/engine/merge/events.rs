@@ -57,6 +57,30 @@ pub(in super::super) struct OwnerRoute {
     // reading them. Offsets need resetting only when there are multiple births.
     grouped_births: Vec<usize>,
     bucket_offsets: Vec<usize>,
+    pub(in super::super) neighbors: Vec<(u32, BirthGroup)>,
+    pub(in super::super) fragments: Vec<BirthFragment>,
+}
+/// Owner-local sum and reverse-linked fragment metadata for one neighbor.
+pub(in super::super) struct BirthGroup {
+    pub(in super::super) weight: u64,
+    pub(in super::super) head: usize,
+    pub(in super::super) occurrences: usize,
+}
+impl Default for BirthGroup {
+    fn default() -> Self {
+        Self {
+            weight: 0,
+            head: usize::MAX,
+            occurrences: 0,
+        }
+    }
+}
+/// Numeric event coordinates can retain empty capacity across joined rounds;
+/// no reference to a previous round's events is stored in the reusable buffer.
+pub(in super::super) struct BirthFragment {
+    pub(in super::super) chunk: usize,
+    pub(in super::super) index: usize,
+    pub(in super::super) next: usize,
 }
 pub(in super::super) struct EventChunk {
     pub(in super::super) chains: PositionChains,
@@ -141,12 +165,16 @@ impl OwnerRoute {
         self.changes.clear();
         self.births.clear();
         self.grouped_births.clear();
+        self.neighbors.clear();
+        self.fragments.clear();
     }
 
     #[cfg(test)]
     pub(in super::super) fn assert_cleared(&self) {
         assert!(self.changes.is_empty(), "routed count actions remain");
         assert!(self.births.is_empty(), "routed birth indices remain");
+        assert!(self.neighbors.is_empty(), "birth sums remain");
+        assert!(self.fragments.is_empty(), "birth fragments remain");
         assert!(
             self.grouped_births.is_empty(),
             "grouping scratch entries remain"

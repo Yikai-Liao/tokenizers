@@ -1,5 +1,5 @@
 //! One pool with reusable ID directories and encoding scratch.
-use super::merge::MergeScratch;
+use super::merge::{MergeScratch, MergeScratchBuffers};
 use super::storage::{IdAccumulator, IdDirectory, PositionEncodingScratch};
 use super::{merge::SelectedRuleIndex, pair_index::ShardRouter};
 use std::sync::Mutex;
@@ -21,9 +21,14 @@ pub(super) static OBSERVED_TASKS: std::sync::atomic::AtomicUsize =
 pub(super) struct Execution {
     pub(super) pool: rayon::ThreadPool,
     encoding: Vec<Mutex<PositionEncodingScratch>>,
-    directories: Vec<Mutex<[IdDirectory; 2]>>,
+    directories: Vec<Mutex<WorkerScratch>>,
     selected: Mutex<SelectedRuleIndex>,
     router: ShardRouter,
+}
+#[derive(Default)]
+struct WorkerScratch {
+    directories: [IdDirectory; 2],
+    merge: MergeScratchBuffers,
 }
 impl Execution {
     pub(super) fn new(workers: usize) -> Result<Self> {
@@ -46,6 +51,7 @@ impl Execution {
             for directory in directories
                 .lock()
                 .unwrap_or_else(|error| error.into_inner())
+                .directories
                 .iter_mut()
             {
                 directory.expect_domain(domain);
@@ -55,7 +61,7 @@ impl Execution {
     pub(super) fn router(&self) -> ShardRouter {
         self.router
     }
-    fn directories(&self) -> std::sync::MutexGuard<'_, [IdDirectory; 2]> {
+    fn directories(&self) -> std::sync::MutexGuard<'_, WorkerScratch> {
         // The caller must finish sequential work before releasing this lease;
         // nested pool work could re-enter the same worker's directory lock.
         self.directories[self.current_worker()]
@@ -72,9 +78,15 @@ impl Execution {
         work: impl FnOnce(&mut MergeScratch) -> Result<T>,
     ) -> Result<T> {
         let mut directories = self.directories();
-        let mut scratch = MergeScratch::new(token_id_count, std::mem::take(&mut *directories));
+        let mut scratch = MergeScratch::new(
+            token_id_count,
+            std::mem::take(&mut directories.directories),
+            std::mem::take(&mut directories.merge),
+        );
         let result = work(&mut scratch);
-        *directories = scratch.into_directories();
+        let (ids, buffers) = scratch.into_reusable();
+        directories.directories = ids;
+        directories.merge = buffers;
         result
     }
     /// Reuse one directory for owner-local accumulation within a joined phase.
@@ -83,15 +95,19 @@ impl Execution {
         &self,
         token_id_count: usize,
         directory_index: usize,
+        entries: &mut Vec<(u32, V)>,
         work: impl FnOnce(&mut IdAccumulator<V>) -> Result<T>,
     ) -> Result<T> {
         let mut directories = self.directories();
-        let mut values = IdAccumulator::with_directory(
+        let mut values = IdAccumulator::with_storage(
             token_id_count,
-            std::mem::take(&mut directories[directory_index]),
+            std::mem::take(&mut directories.directories[directory_index]),
+            std::mem::take(entries),
         );
         let result = work(&mut values);
-        directories[directory_index] = values.into_directory();
+        let (ids, returned_entries) = values.into_storage();
+        directories.directories[directory_index] = ids;
+        *entries = returned_entries;
         result
     }
     pub(super) fn selected_rules(&self) -> std::sync::MutexGuard<'_, SelectedRuleIndex> {
@@ -153,26 +169,32 @@ mod tests {
     fn worker_directories_are_clean_after_errors_and_unwinding() {
         let execution = Execution::new(1).unwrap();
         execution.pool.install(|| {
-            let result = execution.with_accumulator::<u64, ()>(4, 0, |values| {
+            let mut entries = Vec::new();
+            let result = execution.with_accumulator::<u64, ()>(4, 0, &mut entries, |values| {
                 *values.touch(2) = 99;
                 Err("interrupted task".into())
             });
             assert!(result.is_err());
+            assert!(entries.is_empty());
+            let capacity = entries.capacity();
+            assert!(capacity > 0);
             execution
-                .with_accumulator::<u64, _>(4, 0, |values| {
+                .with_accumulator::<u64, _>(4, 0, &mut entries, |values| {
                     assert_eq!(*values.touch(2), 0);
                     Ok(())
                 })
                 .unwrap();
+            assert_eq!(entries.capacity(), capacity);
             let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                let _ = execution.with_accumulator::<u64, ()>(4, 0, |values| {
+                let _ = execution.with_accumulator::<u64, ()>(4, 0, &mut entries, |values| {
                     *values.touch(2) = 99;
                     panic!("task unwound");
                 });
             }));
             assert!(result.is_err());
+            assert!(entries.is_empty());
             execution
-                .with_accumulator::<u64, _>(4, 0, |values| {
+                .with_accumulator::<u64, _>(4, 0, &mut entries, |values| {
                     assert_eq!(*values.touch(2), 0);
                     Ok(())
                 })

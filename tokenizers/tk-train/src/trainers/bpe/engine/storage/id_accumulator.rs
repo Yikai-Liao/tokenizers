@@ -38,7 +38,18 @@ impl<T: Default> IdAccumulator<T> {
     /// an expected capacity hint never prevents a larger actual domain. Shrinking
     /// a later domain retains initialized storage, so invalid IDs beyond that
     /// domain are not guaranteed to panic. Engine callers always pass valid IDs.
-    pub(in super::super) fn with_directory(domain: usize, mut directory: IdDirectory) -> Self {
+    #[cfg(test)]
+    pub(in super::super) fn with_directory(domain: usize, directory: IdDirectory) -> Self {
+        Self::with_storage(domain, directory, Vec::new())
+    }
+    /// Reuse both the directory and empty touched-value allocation. Values from
+    /// the previous job must have retired before transferring this storage.
+    pub(in super::super) fn with_storage(
+        domain: usize,
+        mut directory: IdDirectory,
+        entries: Vec<(u32, T)>,
+    ) -> Self {
+        assert!(entries.is_empty(), "recycled accumulator still owns values");
         // Unique touched IDs are fewer than or equal to this contiguous domain.
         // Domain <= u32::MAX therefore bounds entry indices by u32::MAX-1,
         // leaving NO_ENTRY unavailable as a real entry index. Retained lengths
@@ -48,10 +59,7 @@ impl<T: Default> IdAccumulator<T> {
             "BPE ID domain exceeds the reserved separator"
         );
         directory.ensure_domain(domain);
-        Self {
-            directory,
-            entries: Vec::new(),
-        }
+        Self { directory, entries }
     }
     /// Return a touched value, creating its default value on the first visit.
     #[inline(always)]
@@ -97,10 +105,15 @@ impl<T> IdAccumulator<T> {
         self.entries.len()
     }
     /// Release values and return only reusable ID lookup storage.
+    #[cfg(test)]
     pub(in super::super) fn into_directory(self) -> IdDirectory {
+        self.into_storage().0
+    }
+    /// Reset touched IDs and drop their values while retaining both allocations.
+    pub(in super::super) fn into_storage(self) -> (IdDirectory, Vec<(u32, T)>) {
         let Self {
             mut directory,
-            entries,
+            mut entries,
         } = self;
         if directory.drain_pending {
             // A forgotten Vec::Drain leaked its values and bypassed touched-ID
@@ -108,11 +121,11 @@ impl<T> IdAccumulator<T> {
             directory.indices.fill(NO_ENTRY);
             directory.drain_pending = false;
         } else {
-            for (id, _) in entries {
+            for (id, _) in entries.drain(..) {
                 directory.indices[id as usize] = NO_ENTRY;
             }
         }
-        directory
+        (directory, entries)
     }
 }
 struct IdDrain<'a, T> {

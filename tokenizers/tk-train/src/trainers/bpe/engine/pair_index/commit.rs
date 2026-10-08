@@ -3,7 +3,9 @@
 //! and reduction/encoding of routed births. All owners join before event release.
 use super::super::{
     execution::Execution,
-    merge::{ChangeAction as Action, CompletedBirth, EventChunk, MergeEvents, OwnerRoute},
+    merge::{
+        BirthFragment, BirthGroup, ChangeAction as Action, CompletedBirth, MergeEvents, OwnerRoute,
+    },
     storage::AllocationArena,
 };
 use super::*;
@@ -206,7 +208,7 @@ impl<'arena> PairShard<'arena> {
     #[allow(clippy::too_many_arguments)]
     fn reduce_encode_and_publish_births(
         &mut self,
-        route: &OwnerRoute,
+        route: &mut OwnerRoute,
         events: &MergeEvents,
         identities: usize,
         execution: &Execution,
@@ -224,149 +226,136 @@ impl<'arena> PairShard<'arena> {
         let lease = arena.lease(worker);
         let mut scratch = execution.encoding(worker);
         let mut candidates = Vec::new();
-        execution.with_accumulator::<BirthGroup, _>(identities, 0, |neighbors| {
-            // PERF: One owner-level fragment allocation serves every key
-            // and rule/direction bucket. Per-key vectors would allocate for
-            // each key receiving positions from more than one producer.
-            let mut fragments = Vec::<Fragment<'_>>::new();
-            let mut remaining = route.births.as_slice();
-            while let Some(&first_index) = remaining.first() {
-                let first_ref = &route.changes[first_index];
-                let first = &events.chunks[first_ref.chunk].changes[first_ref.index()];
-                let bucket = first.bucket;
-                let end = remaining.partition_point(|&index| {
-                    let reference = &route.changes[index];
-                    events.chunks[reference.chunk].changes[reference.index()].bucket == bucket
-                });
-                let (births, next) = remaining.split_at(end);
-                remaining = next;
-                let left = bucket & 1 == 0;
-                let pair = key_pair(first.born_key);
-                let replacement = if left { pair.1 } else { pair.0 };
-                for &reference_index in births {
-                    let reference = &route.changes[reference_index];
-                    let chunk = &events.chunks[reference.chunk];
-                    let index = reference.index();
-                    let change = &chunk.changes[index];
-                    let pair = key_pair(change.born_key);
-                    let neighbor = if left { pair.0 } else { pair.1 };
-                    let group = neighbors.touch(neighbor);
-                    group.weight = group
-                        .weight
-                        .checked_add(change.born_weight)
-                        .ok_or("BPE birth frequency exceeds u64")?;
-                    group.occurrences = group
-                        .occurrences
-                        .checked_add(change.positions.len())
-                        .ok_or("BPE birth position count exceeds resident bounds")?;
-                    fragments.push(Fragment {
-                        chunk,
-                        index,
-                        next: group.head,
+        let mut entries = std::mem::take(&mut route.neighbors);
+        let mut fragments = std::mem::take(&mut route.fragments);
+        let result =
+            execution.with_accumulator::<BirthGroup, _>(identities, 0, &mut entries, |neighbors| {
+                // PERF: One owner-level fragment allocation serves every key
+                // and rule/direction bucket. Per-key vectors would allocate for
+                // each key receiving positions from more than one producer.
+                let mut remaining = route.births.as_slice();
+                while let Some(&first_index) = remaining.first() {
+                    let first_ref = &route.changes[first_index];
+                    let first = &events.chunks[first_ref.chunk].changes[first_ref.index()];
+                    let bucket = first.bucket;
+                    let end = remaining.partition_point(|&index| {
+                        let reference = &route.changes[index];
+                        events.chunks[reference.chunk].changes[reference.index()].bucket == bucket
                     });
-                    group.head = fragments.len() - 1;
-                }
-                for (neighbor, group) in neighbors.drain() {
-                    let key = pair_key(if left {
-                        (neighbor, replacement)
-                    } else {
-                        (replacement, neighbor)
-                    });
-                    // PERF: Fresh keys cannot revive. Reduce all producers
-                    // and reject low counts before touching the global map;
-                    // inserting then deleting them causes avoidable growth
-                    // and tombstone churn. Signed ledgers already record
-                    // ordered changes and retain every positive birth cohort,
-                    // including counts below the selection floor.
-                    let count = if policy == IdentityPolicy::FirstActivationOnly {
-                        group.weight
-                    } else {
-                        self.ledger[&key]
-                    };
-                    if if policy == IdentityPolicy::FirstActivationOnly {
-                        count < floor
-                    } else {
-                        (count as i64) <= 0
-                    } {
-                        continue;
-                    }
-                    let mut head = group.head;
-                    // Fresh jobs supply spatially disjoint runs. Identity-reuse
-                    // AA births may combine interleaved left/right chains;
-                    // the common encoder merges those actual overlaps.
-                    let fragments = &fragments;
-                    let sources = std::iter::from_fn(move || {
-                        if head == usize::MAX {
-                            return None;
-                        }
-                        let fragment = &fragments[head];
-                        head = fragment.next;
-                        Some(fragment)
-                    })
-                    .map(|fragment| {
-                        (
-                            &fragment.chunk.chains,
-                            fragment.chunk.changes[fragment.index].positions,
-                        )
-                    });
-                    let positions = if policy == IdentityPolicy::FirstActivationOnly {
-                        // Fresh buckets own disjoint, spatially ordered jobs.
-                        // The count is already complete. Encode their reverse
-                        // traversal without rereading each source's endpoints.
-
-                        SortedPositions::from_reversed_iter(
-                            group.occurrences,
-                            sources.flat_map(|(owner, chain)| owner.reversed(chain)),
-                            &mut scratch,
-                            &lease,
-                        )?
-                    } else {
-                        SortedPositions::from_reversed_chains(sources, &mut scratch, &lease)?
-                    };
-                    debug_assert_eq!(positions.len(), group.occurrences);
-
-                    if policy == IdentityPolicy::FirstActivationOnly {
-                        self.insert_fresh(key, count, positions);
-                    } else {
-                        candidates.push(MergeCandidate {
-                            priority: PairPriority {
-                                key,
-                                priority_count: count,
-                            },
-                            positions,
+                    let (births, next) = remaining.split_at(end);
+                    remaining = next;
+                    let left = bucket & 1 == 0;
+                    let pair = key_pair(first.born_key);
+                    let replacement = if left { pair.1 } else { pair.0 };
+                    for &reference_index in births {
+                        let reference = &route.changes[reference_index];
+                        let chunk = &events.chunks[reference.chunk];
+                        let index = reference.index();
+                        let change = &chunk.changes[index];
+                        let pair = key_pair(change.born_key);
+                        let neighbor = if left { pair.0 } else { pair.1 };
+                        let group = neighbors.touch(neighbor);
+                        group.weight = group
+                            .weight
+                            .checked_add(change.born_weight)
+                            .ok_or("BPE birth frequency exceeds u64")?;
+                        group.occurrences =
+                            group
+                                .occurrences
+                                .checked_add(change.positions.len())
+                                .ok_or("BPE birth position count exceeds resident bounds")?;
+                        fragments.push(BirthFragment {
+                            chunk: reference.chunk,
+                            index,
+                            next: group.head,
                         });
+                        group.head = fragments.len() - 1;
                     }
+                    for (neighbor, group) in neighbors.drain() {
+                        let key = pair_key(if left {
+                            (neighbor, replacement)
+                        } else {
+                            (replacement, neighbor)
+                        });
+                        // PERF: Fresh keys cannot revive. Reduce all producers
+                        // and reject low counts before touching the global map;
+                        // inserting then deleting them causes avoidable growth
+                        // and tombstone churn. Signed ledgers already record
+                        // ordered changes and retain every positive birth cohort,
+                        // including counts below the selection floor.
+                        let count = if policy == IdentityPolicy::FirstActivationOnly {
+                            group.weight
+                        } else {
+                            self.ledger[&key]
+                        };
+                        if if policy == IdentityPolicy::FirstActivationOnly {
+                            count < floor
+                        } else {
+                            (count as i64) <= 0
+                        } {
+                            continue;
+                        }
+                        let mut head = group.head;
+                        // Fresh jobs supply spatially disjoint runs. Identity-reuse
+                        // AA births may combine interleaved left/right chains;
+                        // the common encoder merges those actual overlaps.
+                        let fragments = &fragments;
+                        let sources = std::iter::from_fn(move || {
+                            if head == usize::MAX {
+                                return None;
+                            }
+                            let fragment = &fragments[head];
+                            head = fragment.next;
+                            Some(fragment)
+                        })
+                        .map(|fragment| {
+                            (
+                                &events.chunks[fragment.chunk].chains,
+                                events.chunks[fragment.chunk].changes[fragment.index].positions,
+                            )
+                        });
+                        let positions = if policy == IdentityPolicy::FirstActivationOnly {
+                            // Fresh buckets own disjoint, spatially ordered jobs.
+                            // The count is already complete. Encode their reverse
+                            // traversal without rereading each source's endpoints.
+
+                            SortedPositions::from_reversed_iter(
+                                group.occurrences,
+                                sources.flat_map(|(owner, chain)| owner.reversed(chain)),
+                                &mut scratch,
+                                &lease,
+                            )?
+                        } else {
+                            SortedPositions::from_reversed_chains(sources, &mut scratch, &lease)?
+                        };
+                        debug_assert_eq!(positions.len(), group.occurrences);
+
+                        if policy == IdentityPolicy::FirstActivationOnly {
+                            self.insert_fresh(key, count, positions);
+                        } else {
+                            candidates.push(MergeCandidate {
+                                priority: PairPriority {
+                                    key,
+                                    priority_count: count,
+                                },
+                                positions,
+                            });
+                        }
+                    }
+                    fragments.clear();
                 }
-                fragments.clear();
-            }
 
-            if policy == IdentityPolicy::FirstActivationOnly {
-                // PERF: Refill while this owner is already running. A
-                // separate pool phase would schedule the same owners again.
-                self.prepare_prefix(floor);
-            }
-            Ok(candidates)
-        })
+                if policy == IdentityPolicy::FirstActivationOnly {
+                    // PERF: Refill while this owner is already running. A
+                    // separate pool phase would schedule the same owners again.
+                    self.prepare_prefix(floor);
+                }
+                Ok(candidates)
+            });
+        // Joined owner work has retired every event reference, including on error.
+        fragments.clear();
+        route.neighbors = entries;
+        route.fragments = fragments;
+        result
     }
-}
-
-/// Complete mass and a reverse-linked fragment list for one neighbor in a bucket.
-struct BirthGroup {
-    weight: u64,
-    head: usize,
-    occurrences: usize,
-}
-impl Default for BirthGroup {
-    fn default() -> Self {
-        Self {
-            weight: 0,
-            head: usize::MAX,
-            occurrences: 0,
-        }
-    }
-}
-struct Fragment<'events> {
-    chunk: &'events EventChunk,
-    index: usize,
-    next: usize,
 }

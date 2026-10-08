@@ -69,8 +69,11 @@ fn complete_birth_shape_counts_vector_linked_zero_and_pruned_births() {
     let arena = AllocationArena::new(1, 8);
     execution.pool.install(|| {
         for contiguous in [false, true] {
-            let mut scratch =
-                MergeScratch::new(10, [IdDirectory::default(), IdDirectory::default()]);
+            let mut scratch = MergeScratch::new(
+                10,
+                [IdDirectory::default(), IdDirectory::default()],
+                Default::default(),
+            );
             let rule = MergeRule {
                 pair: (0, 1),
                 replacement: 2,
@@ -290,7 +293,7 @@ fn complete_birth_vectors_preserve_counts_positions_buckets_and_tiny_fallback() 
 
 #[test]
 fn linked_fallback_keeps_full_width_coordinates_and_overflow_order() {
-    let mut scratch = MergeScratch::new(8, Default::default());
+    let mut scratch = MergeScratch::new(8, Default::default(), Default::default());
     let positions = [0, 1 << 32, 1 << 63, u64::MAX];
     for &position in &positions {
         scratch.left::<false>(4, position, 0, true).unwrap();
@@ -513,6 +516,7 @@ fn encoder_error_mid_drain_keeps_unconsumed_vectors_owned_until_scratch_cleanup(
     let execution = Execution::new(4).unwrap();
     let arena = AllocationArena::new(4, 256);
     execution.pool.install(|| {
+        let mut header_capacity = 0;
         let result: Result<()> = execution.with_merge_scratch(12, |scratch| {
             for position in [0, 1, 2] {
                 scratch.left::<true>(4, position, 1, true)?;
@@ -524,6 +528,7 @@ fn encoder_error_mid_drain_keeps_unconsumed_vectors_owned_until_scratch_cleanup(
                 scratch.right::<true>(7, 8, position, 1, true)?;
             }
             assert_eq!(scratch.birth_vectors.len(), 3);
+            header_capacity = scratch.birth_vectors.capacity();
             let rule = MergeRule {
                 pair: (1, 2),
                 replacement: 3,
@@ -545,7 +550,7 @@ fn encoder_error_mid_drain_keeps_unconsumed_vectors_owned_until_scratch_cleanup(
         execution
             .with_merge_scratch(12, |scratch| {
                 assert!(scratch.birth_vectors.is_empty());
-                assert_eq!(scratch.birth_vectors.capacity(), 0);
+                assert_eq!(scratch.birth_vectors.capacity(), header_capacity);
                 for neighbor in [4, 5, 6, 7, 8] {
                     for group in [scratch.left.touch(neighbor), scratch.right.touch(neighbor)] {
                         assert_eq!(

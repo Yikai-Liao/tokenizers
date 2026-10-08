@@ -5,11 +5,13 @@ use super::{
     corpus::{Corpus, SlotStorage},
     storage::{PositionBuffer, SortedPositions},
 };
-pub(super) use events::{ChangeAction, EventChunk, MergeEvents, OwnerRoute, PairChanges};
+pub(super) use events::{
+    BirthFragment, BirthGroup, ChangeAction, EventChunk, MergeEvents, OwnerRoute, PairChanges,
+};
 #[cfg(test)]
 pub(super) use prepare::BirthPaths;
 pub(super) use prepare::{
-    ContiguousBirthPolicy, MergeOptions, MergeScratch, SelectedRuleIndex,
+    ContiguousBirthPolicy, MergeOptions, MergeScratch, MergeScratchBuffers, SelectedRuleIndex,
     prepare_merges_with_births,
 };
 use rayon::prelude::*;

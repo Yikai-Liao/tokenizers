@@ -59,16 +59,28 @@ pub(in super::super) struct MergeScratch {
     // may serve the next rule; coordinate payloads retire at each group's drain.
     birth_vectors: Vec<Vec<u32>>,
 }
+/// Empty touched-entry and promotion-header buffers retained between jobs.
+/// Event chunks and coordinate payloads keep their existing joined lifetimes.
+#[derive(Default)]
+pub(in super::super) struct MergeScratchBuffers {
+    left: Vec<(u32, NeighborChanges)>,
+    right: Vec<(u32, NeighborChanges)>,
+    birth_vectors: Vec<Vec<u32>>,
+}
 impl MergeScratch {
-    pub(in super::super) fn new(token_id_count: usize, directories: [IdDirectory; 2]) -> Self {
+    pub(in super::super) fn new(
+        token_id_count: usize,
+        directories: [IdDirectory; 2],
+        buffers: MergeScratchBuffers,
+    ) -> Self {
         let [left, right] = directories;
         Self {
-            left: IdAccumulator::with_directory(token_id_count, left),
-            right: IdAccumulator::with_directory(token_id_count, right),
+            left: IdAccumulator::with_storage(token_id_count, left, buffers.left),
+            right: IdAccumulator::with_storage(token_id_count, right, buffers.right),
             chains: PositionChains::new(),
             changes: Vec::new(),
             remaining_nodes: PositionChains::MAX_NODES,
-            birth_vectors: Vec::new(),
+            birth_vectors: buffers.birth_vectors,
         }
     }
     /// Sample only a complete eligible task, after collection and before drain.
@@ -81,8 +93,19 @@ impl MergeScratch {
                 .saturating_add(self.right.touched_len()),
         }
     }
-    pub(in super::super) fn into_directories(self) -> [IdDirectory; 2] {
-        [self.left.into_directory(), self.right.into_directory()]
+    pub(in super::super) fn into_reusable(self) -> ([IdDirectory; 2], MergeScratchBuffers) {
+        let (left, left_entries) = self.left.into_storage();
+        let (right, right_entries) = self.right.into_storage();
+        let mut birth_vectors = self.birth_vectors;
+        birth_vectors.clear();
+        (
+            [left, right],
+            MergeScratchBuffers {
+                left: left_entries,
+                right: right_entries,
+                birth_vectors,
+            },
+        )
     }
     // PERF: Rules in one job share their node allocation. Drain only the
     // neighbor directories between rules; handing off nodes here would create
