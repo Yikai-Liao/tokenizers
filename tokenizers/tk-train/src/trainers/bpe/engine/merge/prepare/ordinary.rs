@@ -131,7 +131,8 @@ pub(super) fn prepare<'arena, S: SlotStorage>(
     jobs.into_par_iter()
         .map(|tasks| -> Result<_> {
             execution.with_merge_scratch(token_id_count, |scratch| {
-                let mut outputs = Vec::new();
+                let mut writes = Vec::with_capacity(tasks.len());
+                let mut chunks = Vec::new();
                 let mut births = Vec::new();
                 let mut birth_shape = BirthShape::default();
                 #[cfg(test)]
@@ -177,15 +178,13 @@ pub(super) fn prepare<'arena, S: SlotStorage>(
                             &mut birth_paths,
                         )?
                     };
-                    outputs.push(output);
+                    writes.push(output.0);
+                    chunks.extend(output.1);
                     birth_shape.add(shape);
                 }
-                if let Some((_, chunks)) = outputs.last_mut() {
+                if !writes.is_empty() {
                     chunks.push(scratch.take_chunk());
                 }
-
-                let (writes, chunks): (Vec<_>, Vec<_>) = outputs.into_iter().unzip();
-                let chunks = chunks.into_iter().flatten().collect::<Vec<_>>();
 
                 Ok(PreparedOutput {
                     job: PreparedJob {

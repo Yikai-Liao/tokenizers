@@ -678,7 +678,7 @@ pub(in super::super) fn prepare_merges_with_births<'arena, S: SlotStorage>(
                 options,
             )?
         };
-    let mut jobs = Vec::new();
+    let mut jobs = Vec::with_capacity(outputs.len());
     let mut chunks = Vec::new();
     let mut births = Vec::new();
     let mut birth_shape = BirthShape::default();

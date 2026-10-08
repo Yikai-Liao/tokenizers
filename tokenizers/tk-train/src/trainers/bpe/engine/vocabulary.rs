@@ -263,7 +263,7 @@ impl Vocabulary {
             self.tokens
                 .into_iter()
                 .enumerate()
-                .map(|(id, token)| (token.to_string(), id as u32))
+                .map(|(id, token)| (token.into_string(), id as u32))
                 .collect(),
             merges,
         )
