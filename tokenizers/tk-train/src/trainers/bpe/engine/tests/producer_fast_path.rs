@@ -489,3 +489,105 @@ fn adaptive_birth_kernels_preserve_dense_tiny_wide_affix_and_reuse_trace() {
         }
     }
 }
+
+#[test]
+fn overlapping_commit_errors_and_panics_join_all_corpus_writes() {
+    for workers in [1, 4] {
+        for occurrence_spans in [false, true] {
+            for panics in [false, true] {
+                let words = counts(&[(&"ab".repeat(8192), 3)]);
+                let trainer = BpeTrainer::builder()
+                    .vocab_size(10)
+                    .show_progress(false)
+                    .build();
+                let execution = execution::Execution::new(workers).unwrap();
+                let progress = TrainingProgress::new(false, trainer.progress_format).unwrap();
+                execution.pool.install(|| {
+                    let mut vocab = vocabulary::Vocabulary::initialize(
+                        &trainer,
+                        WordCountsView::from_map(&words),
+                        workers,
+                        &progress,
+                        &mut None,
+                    )
+                    .unwrap();
+                    let plan = corpus::CorpusPlan::build(
+                        WordCountsView::from_map(&words),
+                        &mut vocab,
+                        IdentityPolicy::FirstActivationOnly,
+                        occurrence_spans,
+                        &progress,
+                    )
+                    .unwrap();
+                    let arena = AllocationArena::new(workers, plan.initial_edges());
+                    let initial = initial_pairs::InitialPairTable::build(
+                        &plan, 1, &execution, &arena, &progress,
+                    )
+                    .unwrap();
+                    let mut corpus = plan
+                        .materialize::<corpus::U32Slots>(
+                            workers,
+                            IdentityPolicy::FirstActivationOnly,
+                            &progress,
+                        )
+                        .unwrap();
+                    let mut index = pair_index::PairIndex::from_initial_pairs(
+                        initial,
+                        IdentityPolicy::FirstActivationOnly,
+                        1,
+                    )
+                    .unwrap();
+                    index.begin_selection();
+                    let candidate = index.take_best();
+                    index.end_selection();
+                    let pair = pair_index::key_pair(candidate.priority.key);
+                    let identity = vocab.resolve_merge(vocab.merge_token(pair)).unwrap();
+                    corpus.prepare_spans(pair, identity.id, occurrence_spans);
+                    let positions: Vec<_> = candidate
+                        .positions
+                        .cursor(0..candidate.positions.len())
+                        .collect();
+                    let (prepared, births) = merge::prepare_merges_with_births(
+                        &corpus,
+                        &[merge::MergeRule {
+                            pair,
+                            replacement: identity.id,
+                        }],
+                        &[candidate],
+                        IdentityPolicy::FirstActivationOnly,
+                        vocab.len(),
+                        usize::MAX,
+                        &execution,
+                        &arena,
+                        1,
+                        merge::MergeOptions::default(),
+                    )
+                    .unwrap();
+                    drop(births);
+                    let outcome = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                        prepared.apply_with_commit(&mut corpus, |_| {
+                            if panics {
+                                panic!("injected commit panic");
+                            }
+                            Err("injected commit error".into())
+                        })
+                    }));
+                    if panics {
+                        assert!(outcome.is_err());
+                    } else {
+                        assert_eq!(
+                            outcome.unwrap().unwrap_err().to_string(),
+                            "injected commit error"
+                        );
+                    }
+                    assert!(
+                        positions
+                            .into_iter()
+                            .all(|position| corpus.matcher(pair).get(position).is_none()),
+                        "all planned writes must finish before returning an error or unwinding"
+                    );
+                });
+            }
+        }
+    }
+}

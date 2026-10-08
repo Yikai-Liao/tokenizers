@@ -1,4 +1,4 @@
-//! Owner-local commit after corpus writes join.
+//! Owner-local commit after preparation readers join.
 //! Stable birth grouping precedes ordered counts, completed-birth publication,
 //! and reduction/encoding of routed births. All owners join before event release.
 use super::super::{
@@ -20,13 +20,13 @@ impl<'arena> PairIndex<'arena> {
     ) -> Result<()> {
         self.commit_merges_with_prepared(events, identities, execution, arena, Vec::new())
     }
-    /// Commit the applied batch in one joined owner phase.
-    /// Selection must have ended, restoring fresh prefixes, and writes must have
-    /// joined. Run this phase inside the training pool.
+    /// Commit the prepared batch in one joined owner phase.
+    /// Selection must have ended, restoring fresh prefixes. This phase reads no
+    /// corpus state and may overlap corpus writes inside the same training pool.
     /// Completed births are fresh-only and are moved without decoding; their keys
     /// must not also appear as routed births. Events own chains borrowed by owner
     /// encoders and must remain alive until return. Count/encoding errors can leave
-    /// shards partly changed and corpus writes already applied; discard the attempt.
+    /// shards partly changed; join corpus writes before discarding the attempt.
     pub(in super::super) fn commit_merges_with_prepared(
         &mut self,
         events: &MergeEvents,

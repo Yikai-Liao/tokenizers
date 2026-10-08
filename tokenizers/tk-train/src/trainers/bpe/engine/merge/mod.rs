@@ -54,12 +54,29 @@ pub(super) struct PreparedMerges {
     events: MergeEvents,
 }
 impl PreparedMerges {
+    /// Join corpus writes and a commit that reads only the owned neighbor events.
+    /// Both tasks finish before events are released or an error reaches the caller.
+    /// No worker-local lease is held while launching these nested pool tasks.
+    pub(super) fn apply_with_commit<S: SlotStorage>(
+        self,
+        corpus: &mut Corpus<S>,
+        commit: impl FnOnce(&MergeEvents) -> tk_encode::Result<()> + Send,
+    ) -> tk_encode::Result<()> {
+        let (_, result) = rayon::join(|| self.apply_writes(corpus), || commit(&self.events));
+        result
+    }
+
     /// Consume the plan, apply parallel writes, and return events after join.
     ///
     /// The corpus must still be the snapshot used during preparation. The mutable
     /// borrow excludes safe concurrent access until all writes join, and consuming
     /// `self` prevents applying this plan value twice. There is no rollback.
+    #[cfg(test)]
     pub(super) fn apply<S: SlotStorage>(self, corpus: &mut Corpus<S>) -> MergeEvents {
+        self.apply_writes(corpus);
+        self.events
+    }
+    fn apply_writes<S: SlotStorage>(&self, corpus: &mut Corpus<S>) {
         if corpus.has_occurrence_spans() {
             let regions: Vec<_> = self
                 .jobs
@@ -102,6 +119,5 @@ impl PreparedMerges {
                 }
             });
         }
-        self.events
     }
 }

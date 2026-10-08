@@ -1,7 +1,8 @@
 //! One BPE coordinator over shared vocabulary, corpus, and occurrence storage.
-//! The visible round is select, prepare, release candidates, apply, commit, then
-//! release events. Preparation readers and corpus writers join before the next
-//! phase. Errors discard the attempt; commit may fail after writes/partial counts.
+//! The visible round is select, prepare, release candidates, join corpus writes
+//! with index commit, then release events. Preparation readers join before writes;
+//! writes and owners join before the next round or an error returns. Errors discard
+//! the attempt; commit may fail after writes/partial counts.
 //! Active-ID reuse restarts from original words with the already selected alphabet.
 use crate::trainers::bpe::word_counts::WordCountsView;
 mod aa_parity;
@@ -328,15 +329,15 @@ impl Training<'_> {
             let birth_shape = prepared.birth_shape;
             #[cfg(test)]
             let birth_paths = prepared.birth_paths;
-            let events = prepared.apply(corpus);
-
-            index.commit_merges_with_prepared(
-                &events,
-                vocabulary.len(),
-                execution,
-                arena,
-                prepared_births,
-            )?;
+            prepared.apply_with_commit(corpus, |events| {
+                index.commit_merges_with_prepared(
+                    events,
+                    vocabulary.len(),
+                    execution,
+                    arena,
+                    prepared_births,
+                )
+            })?;
             contiguous_births.observe(birth_shape);
             #[cfg(test)]
             if let Some(observer) = birth_observe.as_mut() {
@@ -347,7 +348,6 @@ impl Training<'_> {
                 });
             }
 
-            drop(events);
             work.learned(merges.len());
         }
         Ok(AttemptOutcome::Complete(merges))
