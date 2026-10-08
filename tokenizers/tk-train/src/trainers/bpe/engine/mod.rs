@@ -140,12 +140,70 @@ struct Training<'a> {
     #[cfg(test)]
     trace: Vec<(tk_encode::models::bpe::Pair, u64, u32)>,
 }
+// Diagnostic worktree only: measure joined phase boundaries, never occurrences.
+struct PhaseProfile {
+    last: std::time::Instant,
+    seconds: [f64; 12],
+    batches: [usize; 257],
+    births: u64,
+    groups: u64,
+    contiguous_rounds: usize,
+}
+impl PhaseProfile {
+    fn new() -> Self {
+        Self {
+            last: std::time::Instant::now(),
+            seconds: [0.0; 12],
+            batches: [0; 257],
+            births: 0,
+            groups: 0,
+            contiguous_rounds: 0,
+        }
+    }
+    fn mark(&mut self, phase: usize) {
+        let now = std::time::Instant::now();
+        self.seconds[phase] += now.duration_since(self.last).as_secs_f64();
+        self.last = now;
+    }
+}
+impl Drop for PhaseProfile {
+    fn drop(&mut self) {
+        let names = [
+            "vocabulary",
+            "corpus_plan",
+            "initial_pairs",
+            "materialize",
+            "pair_index",
+            "select",
+            "prepare",
+            "apply_and_candidates",
+            "commit",
+            "event_release_and_feedback",
+            "state_release",
+            "model_output",
+        ];
+        let phases: std::collections::BTreeMap<_, _> =
+            names.into_iter().zip(self.seconds).collect();
+        let batches: Vec<_> = self
+            .batches
+            .iter()
+            .enumerate()
+            .filter(|(_, count)| **count != 0)
+            .map(|(size, count)| [size, *count])
+            .collect();
+        eprintln!(
+            "{}",
+            serde_json::json!({"diagnostic":"bpe_phases", "phases":phases, "batch_histogram":batches, "sampled_births":self.births, "sampled_groups":self.groups, "contiguous_rounds":self.contiguous_rounds})
+        );
+    }
+}
 impl Training<'_> {
     fn attempt(
         &mut self,
         word_counts: WordCountsView<'_>,
         #[cfg(test)] birth_observe: &mut BirthObserver<'_>,
     ) -> Result<AttemptOutcome> {
+        let mut profile = PhaseProfile::new();
         let trainer = self.trainer;
         let execution = self.execution;
         let progress = self.progress;
@@ -158,6 +216,7 @@ impl Training<'_> {
             progress,
             &mut self.retained_alphabet,
         )?;
+        profile.mark(0);
         let prepared_corpus = corpus::CorpusPlan::build(
             word_counts,
             &mut vocabulary,
@@ -165,6 +224,7 @@ impl Training<'_> {
             trainer.max_token_length.is_some(),
             progress,
         )?;
+        profile.mark(1);
         if vocabulary.len() >= trainer.vocab_size && prepared_corpus.initial_counts_fit_u64() {
             drop(prepared_corpus);
             execution.release_scratch();
@@ -175,18 +235,21 @@ impl Training<'_> {
             16 => self.run::<corpus::U16Slots>(
                 vocabulary,
                 prepared_corpus,
+                &mut profile,
                 #[cfg(test)]
                 birth_observe,
             ),
             24 => self.run::<corpus::PackedU24Slots>(
                 vocabulary,
                 prepared_corpus,
+                &mut profile,
                 #[cfg(test)]
                 birth_observe,
             ),
             _ => self.run::<corpus::U32Slots>(
                 vocabulary,
                 prepared_corpus,
+                &mut profile,
                 #[cfg(test)]
                 birth_observe,
             ),
@@ -197,6 +260,7 @@ impl Training<'_> {
         &mut self,
         mut vocabulary: vocabulary::Vocabulary,
         prepared_corpus: corpus::CorpusPlan<'_>,
+        profile: &mut PhaseProfile,
         #[cfg(test)] birth_observe: &mut BirthObserver<'_>,
     ) -> Result<AttemptOutcome> {
         let trainer = self.trainer;
@@ -217,6 +281,7 @@ impl Training<'_> {
             &arena,
             progress,
         )?;
+        profile.mark(2);
         if vocabulary.len() >= trainer.vocab_size {
             // The total-mass proof was inconclusive. Initial construction has now
             // retained every checked per-key and signed-policy validation.
@@ -240,14 +305,17 @@ impl Training<'_> {
         );
         execution.expect_id_domain(expected_ids);
         let mut corpus = prepared_corpus.materialize::<S>(workers, policy, progress)?;
+        profile.mark(3);
         let mut index =
             pair_index::PairIndex::from_initial_pairs(initial, policy, trainer.min_frequency)?;
+        profile.mark(4);
 
         let merges = match self.merge_loop(
             &mut vocabulary,
             &mut corpus,
             &mut index,
             &arena,
+            profile,
             #[cfg(test)]
             birth_observe,
         )? {
@@ -262,7 +330,10 @@ impl Training<'_> {
         drop(arena);
         execution.release_scratch();
 
-        Ok(complete_model(trainer, vocabulary, merges))
+        profile.mark(10);
+        let model = complete_model(trainer, vocabulary, merges);
+        profile.mark(11);
+        Ok(model)
     }
     /// Complete joined rounds, or request a fresh attempt for active-ID reuse.
     /// Batch candidates and adaptive history belong only to this attempt.
@@ -272,6 +343,7 @@ impl Training<'_> {
         corpus: &mut corpus::Corpus<S>,
         index: &mut pair_index::PairIndex<'arena>,
         arena: &'arena AllocationArena,
+        profile: &mut PhaseProfile,
         #[cfg(test)] birth_observe: &mut BirthObserver<'_>,
     ) -> Result<AttemptOutcome<Vec<tk_encode::models::bpe::Pair>>> {
         let trainer = self.trainer;
@@ -305,6 +377,10 @@ impl Training<'_> {
                 BatchSelection::Finished => break,
                 BatchSelection::RestartForReuse => return Ok(AttemptOutcome::RestartForReuse),
             }
+            profile.mark(5);
+            profile.batches[batch.rules.len()] += 1;
+            profile.contiguous_rounds +=
+                usize::from(contiguous_births.options(merge_options).contiguous_births);
             merges.extend(batch.rules.iter().map(|rule| rule.pair));
             #[cfg(test)]
             let enabled_before = contiguous_births.options(merge_options).contiguous_births;
@@ -321,14 +397,19 @@ impl Training<'_> {
                 contiguous_births.options(merge_options),
             )?;
 
+            profile.mark(6);
             // PERF: Preparation owns all writes and birth events. Selected
             // position lists have no remaining reader; release them before allocating
             // the next generation during commit.
             batch.candidates.clear();
             let birth_shape = prepared.birth_shape;
+            let (births, groups) = birth_shape.diagnostic_totals();
+            profile.births += births as u64;
+            profile.groups += groups as u64;
             #[cfg(test)]
             let birth_paths = prepared.birth_paths;
             let events = prepared.apply(corpus);
+            profile.mark(7);
 
             index.commit_merges_with_prepared(
                 &events,
@@ -337,6 +418,7 @@ impl Training<'_> {
                 arena,
                 prepared_births,
             )?;
+            profile.mark(8);
             contiguous_births.observe(birth_shape);
             #[cfg(test)]
             if let Some(observer) = birth_observe.as_mut() {
@@ -349,6 +431,7 @@ impl Training<'_> {
 
             drop(events);
             work.learned(merges.len());
+            profile.mark(9);
         }
         Ok(AttemptOutcome::Complete(merges))
     }
