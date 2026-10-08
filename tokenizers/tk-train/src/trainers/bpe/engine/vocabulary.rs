@@ -38,14 +38,10 @@ pub(super) struct InitialTokenIds {
     // and unused single-character IDs, but excluding the separator sentinel.
     maximum_initial_id: u32,
 }
-/// The bitmap/rank layout used by tk-encode's SparseFold, with ASCII direct
-/// lookup and non-BMP keys kept separately. Missing characters stay filtered;
-/// training has no inference byte fallback or internal-ID remapping here.
+/// BMP codepoints use one direct lookup. Non-BMP characters retain sparse keys;
+/// neither path remaps token IDs or changes filtered-alphabet behavior.
 struct CharacterIds {
-    ascii: [u32; 128],
-    rows: Box<[u64]>,
-    row_start: Box<[u32]>,
-    symbols: Box<[u32]>,
+    bmp: Box<[u32]>,
     non_bmp: ahash::AHashMap<char, u32>,
 }
 impl CharacterIds {
@@ -59,45 +55,16 @@ impl CharacterIds {
                 non_bmp.insert(character, id);
             }
         }
-        let mut rows = vec![0_u64; 1024];
-        for (codepoint, &id) in bmp.iter().enumerate() {
-            if id != WORD_SEPARATOR_ID {
-                rows[codepoint >> 6] |= 1_u64 << (codepoint & 63);
-            }
-        }
-        let mut row_start = Vec::with_capacity(rows.len());
-        let mut seen = 0;
-        for &row in &rows {
-            row_start.push(seen);
-            seen += row.count_ones();
-        }
-        let mut ascii = [WORD_SEPARATOR_ID; 128];
-        ascii.copy_from_slice(&bmp[..128]);
         Self {
-            ascii,
-            rows: rows.into_boxed_slice(),
-            row_start: row_start.into_boxed_slice(),
-            symbols: bmp
-                .into_iter()
-                .filter(|&id| id != WORD_SEPARATOR_ID)
-                .collect(),
+            bmp: bmp.into_boxed_slice(),
             non_bmp,
         }
     }
     #[inline]
     fn get(&self, character: char) -> u32 {
         let codepoint = character as usize;
-        if codepoint < 128 {
-            self.ascii[codepoint]
-        } else if codepoint < 0x10000 {
-            let row = codepoint >> 6;
-            let column = codepoint & 63;
-            let bits = self.rows[row];
-            if (bits >> column) & 1 == 0 {
-                return WORD_SEPARATOR_ID;
-            }
-            let before = (bits & ((1_u64 << column) - 1)).count_ones();
-            self.symbols[(self.row_start[row] + before) as usize]
+        if codepoint < 0x10000 {
+            self.bmp[codepoint]
         } else {
             self.non_bmp
                 .get(&character)
