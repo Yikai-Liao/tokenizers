@@ -103,12 +103,15 @@ impl Execution {
         // Every pool phase has joined. Output construction no longer needs
         // directories or codec buffers, so release them before duplicating
         // vocabulary strings for the public model.
-        for directory in &self.directories {
-            *directory.lock().unwrap_or_else(|error| error.into_inner()) = Default::default();
-        }
-        for encoding in &self.encoding {
-            *encoding.lock().unwrap_or_else(|error| error.into_inner()) = Default::default();
-        }
+        self.pool.broadcast(|context| {
+            let worker = context.index();
+            *self.directories[worker]
+                .lock()
+                .unwrap_or_else(|error| error.into_inner()) = Default::default();
+            *self.encoding[worker]
+                .lock()
+                .unwrap_or_else(|error| error.into_inner()) = Default::default();
+        });
         *self
             .selected
             .lock()

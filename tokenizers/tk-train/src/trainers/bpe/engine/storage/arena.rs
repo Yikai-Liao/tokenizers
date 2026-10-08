@@ -12,6 +12,17 @@ pub(in super::super) struct AllocationArena {
     cutoff: usize,
 }
 impl AllocationArena {
+    /// Published lists must already be released. Free each allocation cursor's
+    /// chunks on the worker that used that cursor, then join before returning.
+    pub(in super::super) fn release(self, pool: &rayon::ThreadPool) {
+        pool.broadcast(|context| {
+            let mut cursor = self.workers[context.index()]
+                .lock()
+                .unwrap_or_else(|error| error.into_inner());
+            drop(std::mem::take(&mut *cursor));
+        });
+    }
+
     pub(in super::super) fn new(workers: usize, physical_items: usize) -> Self {
         Self {
             workers: (0..workers).map(|_| Mutex::new(Bump::new())).collect(),

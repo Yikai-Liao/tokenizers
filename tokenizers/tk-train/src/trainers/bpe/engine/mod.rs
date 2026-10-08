@@ -257,9 +257,9 @@ impl Training<'_> {
         // Training state does not participate in model output. Release position
         // owners before their arena, and free the corpus and scratch before
         // constructing the public vocabulary and merge strings.
-        drop(index);
+        index.release();
         drop(corpus);
-        drop(arena);
+        arena.release(&execution.pool);
         execution.release_scratch();
 
         Ok(complete_model(trainer, vocabulary, merges))

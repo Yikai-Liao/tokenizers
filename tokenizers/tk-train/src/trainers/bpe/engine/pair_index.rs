@@ -230,6 +230,25 @@ impl PairShard<'_> {
     }
 }
 impl<'arena> PairIndex<'arena> {
+    /// Release position owners in joined pool tasks before their arena is freed.
+    /// Logical shards can migrate between executing workers during training;
+    /// this parallelizes cleanup without claiming allocator-thread affinity.
+    pub(super) fn release(self) {
+        let Self {
+            shards,
+            selection,
+            routes,
+            prepared_births,
+            ..
+        } = self;
+        shards.into_par_iter().for_each(drop);
+        if let Selection::Cohorts { candidates } = selection {
+            candidates.into_vec().into_par_iter().for_each(drop);
+        }
+        drop(routes);
+        drop(prepared_births);
+    }
+
     pub(super) fn from_initial_pairs(
         initial: InitialPairTable<'arena>,
         policy: IdentityPolicy,
