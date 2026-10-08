@@ -135,6 +135,15 @@ struct GroupedWave<R, K> {
     mass: u128,
 }
 
+struct EncodedPartition<'arena> {
+    table: AHashMap<u64, PairState<'arena>>,
+    mass: u128,
+}
+struct EncodedWave<'arena> {
+    tables: Vec<AHashMap<u64, PairState<'arena>>>,
+    mass: u128,
+}
+
 /// Collect fully initialized owner streams for one bounded wave. Count, slice
 /// assignment, producer writes and their join stay within this safety boundary.
 fn collect_wave_records<R: InitialRecord>(
@@ -436,42 +445,76 @@ impl<'arena, C: InitialPairSource> InitialCollector<'_, 'arena, C> {
     }
 
     fn keyed<R: InitialRecord>(&self) -> Result<InitialPairTable<'arena>> {
-        let execution = self.execution;
-        let progress = self.progress;
-        self.collect(|corpus, range, wave_floor, uniform_weight| {
-            let mut buffers = collect_wave_records::<R>(corpus, range.clone(), execution, progress);
-            let records = buffers.iter().map(Vec::len).sum();
-            let sort_work = progress.stage("Sort initial pairs", records);
-            buffers.par_iter_mut().for_each(|records| {
-                radix::sort_by_key(records);
-                sort_work.complete(records.len());
-            });
-            let group_work = progress.stage("Count initial pairs", records);
-            buffers
+        self.collect_encoded(|corpus, range, wave_floor, uniform_weight, single_wave| {
+            let buffers =
+                collect_wave_records::<R>(corpus, range.clone(), self.execution, self.progress);
+            let records: usize = buffers.iter().map(Vec::len).sum();
+            let work = self
+                .progress
+                .stage("Sort, count and encode initial pairs", records * 3);
+            // Finish each owner stream without waiting for another owner's sort
+            // or count. No worker-local resource lease spans a pool operation.
+            let results: Vec<Result<Result<EncodedPartition<'arena>>>> = buffers
                 .into_par_iter()
-                .map(|records| {
+                .map(|mut records| {
+                    radix::sort_by_key(&mut records);
+                    work.complete(records.len());
                     let (groups, mass) = count_groups(
                         &records,
                         range.start,
                         corpus.word_weights(),
                         uniform_weight,
                         wave_floor,
-                        &group_work,
+                        &work,
                     )?;
-                    Ok(GroupedWave {
-                        records,
-                        groups,
-                        keys: (),
-                        mass,
-                    })
+                    let mut table = AHashMap::new();
+                    Ok(self
+                        .encode_partition(
+                            range.start,
+                            single_wave,
+                            &mut table,
+                            GroupedWave {
+                                records,
+                                groups,
+                                keys: (),
+                                mass,
+                            },
+                            &work,
+                        )
+                        .map(|mass| EncodedPartition { table, mass }))
                 })
-                .collect::<Result<Vec<_>>>()
+                .collect();
+            // Join all tasks before deciding errors. Outer results are counting
+            // errors; preserve their precedence over any early encoding failure.
+            // Successful tables remain unpublished until both checks succeed.
+            let counted = results.into_iter().collect::<Result<Vec<_>>>()?;
+            let encoded = counted.into_iter().collect::<Result<Vec<_>>>()?;
+            let mut tables = Vec::with_capacity(encoded.len());
+            let mut mass = 0;
+            for partition in encoded {
+                tables.push(partition.table);
+                mass += partition.mass;
+            }
+            Ok(EncodedWave { tables, mass })
         })
     }
 
     fn collect<R: PositionRecord, K: GroupKeys<R> + Send>(
         &self,
         collect: impl Fn(&C, Range<usize>, u64, Option<u64>) -> Result<Vec<GroupedWave<R, K>>>,
+    ) -> Result<InitialPairTable<'arena>> {
+        self.collect_encoded(|corpus, range, wave_floor, uniform_weight, single_wave| {
+            let mut tables: Vec<_> = (0..self.execution.workers())
+                .map(|_| AHashMap::new())
+                .collect();
+            let grouped = collect(corpus, range.clone(), wave_floor, uniform_weight)?;
+            let mass = self.encode_wave(range.start, single_wave, &mut tables, grouped)?;
+            Ok(EncodedWave { tables, mass })
+        })
+    }
+    fn collect_encoded(
+        &self,
+        collect: impl Fn(&C, Range<usize>, u64, Option<u64>, bool) -> Result<EncodedWave<'arena>>,
     ) -> Result<InitialPairTable<'arena>> {
         let corpus = &self.corpus;
         let minimum_frequency = self.minimum_frequency;
@@ -499,12 +542,9 @@ impl<'arena, C: InitialPairSource> InitialCollector<'_, 'arena, C> {
         };
         for base in (0..corpus.len().saturating_sub(1)).step_by(records_per_wave) {
             let end = (base + records_per_wave).min(corpus.len() - 1);
-            let mut wave_tables: Vec<_> = (0..workers)
-                .map(|_| AHashMap::<u64, PairState<'arena>>::new())
-                .collect();
-            let grouped = collect(corpus, base..end, wave_floor, uniform_weight)?;
-            weighted_mass += self.encode_wave(base, single_wave, &mut wave_tables, grouped)?;
-            self.publish_wave(&mut shards, wave_tables)?;
+            let wave = collect(corpus, base..end, wave_floor, uniform_weight, single_wave)?;
+            weighted_mass += wave.mass;
+            self.publish_wave(&mut shards, wave.tables)?;
         }
         if minimum_frequency != 0 {
             for shard in &mut shards {
@@ -529,53 +569,62 @@ impl<'arena, C: InitialPairSource> InitialCollector<'_, 'arena, C> {
         let masses = tables
             .par_iter_mut()
             .zip(grouped.into_par_iter())
-            .map(|(table, wave)| -> Result<u128> {
-                let GroupedWave {
-                    records,
-                    groups,
-                    keys,
-                    mass,
-                } = wave;
-                let worker = self.execution.current_worker();
-                let lease = self.arena.lease(worker);
-                let mut scratch = self.execution.encoding(worker);
-                table.reserve(groups.len());
-                for (
-                    group,
-                    InitialGroup {
-                        begin,
-                        end,
-                        frequency,
-                    },
-                ) in groups.into_iter().enumerate()
-                {
-                    let positions = records[begin as usize..end as usize]
-                        .iter()
-                        .map(|&record| global_position(base, record));
-                    table.insert(
-                        keys.key(&records, group, begin as usize),
-                        PairState {
-                            ledger_count_bits: frequency,
-                            // A complete zero count has no candidate
-                            // payload. A partial zero count may share
-                            // its key with a positive wave elsewhere.
-                            positions: if single_wave && frequency == 0 {
-                                SortedPositions::new()
-                            } else {
-                                SortedPositions::from_sorted_iter(positions, &mut scratch, &lease)?
-                            },
-                        },
-                    );
-                }
-                // Group scanning and list installation each account
-                // for one pass. Publication remains visible work after
-                // the complete frequencies have been counted.
-                group_work.complete(records.len());
-                // This owner's raw stream is released when its task returns.
-                Ok(mass)
-            })
+            .map(|(table, wave)| self.encode_partition(base, single_wave, table, wave, &group_work))
             .collect::<Result<Vec<_>>>()?;
         Ok(masses.into_iter().sum())
+    }
+    /// Encode one owner sequentially while its worker-local leases are held.
+    fn encode_partition<R: PositionRecord, K: GroupKeys<R>>(
+        &self,
+        base: usize,
+        single_wave: bool,
+        table: &mut AHashMap<u64, PairState<'arena>>,
+        wave: GroupedWave<R, K>,
+        group_work: &WorkProgress,
+    ) -> Result<u128> {
+        let GroupedWave {
+            records,
+            groups,
+            keys,
+            mass,
+        } = wave;
+        let worker = self.execution.current_worker();
+        let lease = self.arena.lease(worker);
+        let mut scratch = self.execution.encoding(worker);
+        table.reserve(groups.len());
+        for (
+            group,
+            InitialGroup {
+                begin,
+                end,
+                frequency,
+            },
+        ) in groups.into_iter().enumerate()
+        {
+            let positions = records[begin as usize..end as usize]
+                .iter()
+                .map(|&record| global_position(base, record));
+            table.insert(
+                keys.key(&records, group, begin as usize),
+                PairState {
+                    ledger_count_bits: frequency,
+                    // A complete zero count has no candidate
+                    // payload. A partial zero count may share
+                    // its key with a positive wave elsewhere.
+                    positions: if single_wave && frequency == 0 {
+                        SortedPositions::new()
+                    } else {
+                        SortedPositions::from_sorted_iter(positions, &mut scratch, &lease)?
+                    },
+                },
+            );
+        }
+        // Group scanning and list installation each account
+        // for one pass. Publication remains visible work after
+        // the complete frequencies have been counted.
+        group_work.complete(records.len());
+        // This owner's raw stream is released when its task returns.
+        Ok(mass)
     }
     fn publish_wave(
         &self,
