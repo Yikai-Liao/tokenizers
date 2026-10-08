@@ -120,6 +120,7 @@ impl<T> IdAccumulator<T> {
             // cleanup. Only this exceptional transfer needs a complete reset.
             directory.indices.fill(NO_ENTRY);
             directory.drain_pending = false;
+            entries.clear();
         } else {
             for (id, _) in entries.drain(..) {
                 directory.indices[id as usize] = NO_ENTRY;
@@ -259,8 +260,13 @@ mod tests {
             for _ in 0..later_drains {
                 drop(counts.drain());
             }
-            let mut counts =
-                IdAccumulator::<usize>::with_directory(domain, counts.into_directory());
+            // New values may be added after a forgotten drain. Transfer must
+            // retire those values as well as the earlier leaked directory IDs.
+            *counts.touch(0) = 23;
+            let (directory, entries) = counts.into_storage();
+            assert!(entries.is_empty());
+            let mut counts = IdAccumulator::<u64>::with_storage(domain, directory, entries);
+            assert_eq!(*counts.touch(0), 0);
             *counts.touch(0) = 99;
             assert_eq!(counts.get(id), None);
             assert_eq!(*counts.touch(id), 0);
