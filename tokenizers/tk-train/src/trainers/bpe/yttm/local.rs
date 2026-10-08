@@ -47,14 +47,15 @@ pub(super) struct Store {
     widths: Option<Vec<Vec<usize>>>,
     pub(super) counts: AHashMap<u64, i128>,
     postings: AHashMap<u64, Vec<Position>>,
-    births: AHashSet<u64>,
+    left_births: AHashSet<u32>,
+    right_births: AHashSet<u32>,
     birth_words: AHashMap<u64, AHashSet<u32>>,
     track_words: bool,
     compressed: bool,
     replacement: Option<u32>,
 }
 impl Store {
-    pub(super) fn build(words: Vec<(Vec<u32>, u64)>, max_length: Option<usize>) -> Result<Self> {
+    pub(super) fn build(words: &[(Vec<u32>, u64)], max_length: Option<usize>) -> Result<Self> {
         let mut store = Self {
             #[cfg(test)]
             hook: None,
@@ -63,17 +64,19 @@ impl Store {
             widths: max_length.map(|_| Vec::new()),
             counts: AHashMap::new(),
             postings: AHashMap::new(),
-            births: AHashSet::new(),
+            left_births: AHashSet::new(),
+            right_births: AHashSet::new(),
             birth_words: AHashMap::new(),
             track_words: false,
             compressed: max_length.is_none(),
             replacement: None,
         };
         for (tokens, weight) in words {
+            let weight = *weight;
             let word = u32::try_from(store.words.len())
                 .map_err(|_| "YTTM local word index exceeds u32")?;
             let mut nodes: Vec<Node> = Vec::new();
-            for val in tokens {
+            for &val in tokens {
                 if let Some(last) = nodes.last_mut()
                     && last.val == val
                     && max_length.is_none()
@@ -176,13 +179,30 @@ impl Store {
         Ok(())
     }
     fn record_birth(&mut self, key: u64, word: u32) {
-        self.births.insert(key);
+        let (left, right) = super::key_pair(key);
+        let replacement = self.replacement.expect("a birth has a replacement");
+        if right == replacement {
+            self.left_births.insert(left);
+        } else {
+            debug_assert_eq!(left, replacement);
+            self.right_births.insert(right);
+        }
         if self.track_words {
             self.birth_words.entry(key).or_default().insert(word);
         }
     }
     pub(super) fn word_count(&self) -> usize {
         self.words.len()
+    }
+    pub(super) fn release_local_storage(&mut self) {
+        // C++ destroys worker-local nodes, postings and birth sets on their
+        // owner thread. Count tables remain available for coordinator cleanup.
+        drop(std::mem::take(&mut self.words));
+        drop(self.widths.take());
+        drop(std::mem::take(&mut self.postings));
+        drop(std::mem::take(&mut self.left_births));
+        drop(std::mem::take(&mut self.right_births));
+        drop(std::mem::take(&mut self.birth_words));
     }
     fn width(&self, word: u32, node: u32) -> usize {
         self.widths
@@ -293,10 +313,6 @@ impl Store {
             Ok(())
         }
     }
-    fn remove_self(&mut self, word: u32, position: u32) -> Result<()> {
-        let val = self.node(word, position).val;
-        self.subtract(pair_key((val, val)), self.self_mass(word, position)?)
-    }
     fn decrement(&mut self, word: u32, position: u32) -> Result<()> {
         let mut node = self.node(word, position);
         debug_assert!(node.len >= 2);
@@ -338,6 +354,8 @@ impl Store {
         if rule.reserved && self.compressed {
             self.expand_runs()?;
         }
+        self.left_births.clear();
+        self.right_births.clear();
         self.replacement = Some(rule.replacement);
         let key = pair_key(rule.pair);
         // Own this occurrence list while appending new postings. A reused ID
@@ -378,15 +396,14 @@ impl Store {
             if a.len < 2 {
                 return Ok(());
             }
-            // Upstream Word::merge reports neighboring changes but leaves
-            // each applied occurrence in the selected pair's score.
-            self.add(
+            // Keep each applied occurrence's upstream credit in the selected
+            // score. Combine it with the removed AA mass in one table update.
+            self.subtract(
                 key,
-                i128::from(self.words[word as usize].weight) * i128::from(a.len / 2),
+                i128::from(self.words[word as usize].weight) * i128::from(a.len - 1 - a.len / 2),
             )?;
             let p0 = a.prev;
             let p3 = a.next;
-            self.remove_self(word, p1)?;
             if p0 != NONE {
                 self.remove_boundary(word, p0)?;
             }
@@ -452,10 +469,10 @@ impl Store {
         if b.len == 0 || b.val != y {
             return Ok(());
         }
-        self.add(key, i128::from(self.words[word as usize].weight))?;
         let p0 = a.prev;
         let p3 = b.next;
-        self.remove_boundary(word, p1)?;
+        // The selected boundary's removal and upstream occurrence credit
+        // cancel exactly. Its score stays unchanged; update only neighbors.
         if p0 != NONE && a.len == 1 {
             self.remove_boundary(word, p0)?;
         }
@@ -562,20 +579,34 @@ impl Store {
         }
         Ok(())
     }
-    pub(super) fn exchange_births(
-        &mut self,
-        births: &mut AHashSet<u64>,
-        words: &mut AHashMap<u64, AHashSet<u32>>,
-    ) {
-        std::mem::swap(&mut self.births, births);
+    pub(super) fn exchange_birth_words(&mut self, words: &mut AHashMap<u64, AHashSet<u32>>) {
         std::mem::swap(&mut self.birth_words, words);
     }
-    pub(super) fn birth_scores_into(&self, scores: &mut Vec<(u64, i128)>) {
-        scores.clear();
-        scores.extend(
-            self.births
-                .iter()
-                .map(|&key| (key, self.counts.get(&key).copied().unwrap_or(0))),
-        );
+    pub(super) fn birth_scores_into(
+        &self,
+        left: &mut AHashMap<u32, i128>,
+        right: &mut AHashMap<u32, i128>,
+    ) {
+        let replacement = self.replacement.expect("completed rule has a replacement");
+        left.clear();
+        right.clear();
+        for &token in &self.left_births {
+            left.insert(
+                token,
+                self.counts
+                    .get(&pair_key((token, replacement)))
+                    .copied()
+                    .unwrap_or(0),
+            );
+        }
+        for &token in &self.right_births {
+            right.insert(
+                token,
+                self.counts
+                    .get(&pair_key((replacement, token)))
+                    .copied()
+                    .unwrap_or(0),
+            );
+        }
     }
 }

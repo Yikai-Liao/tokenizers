@@ -1,17 +1,19 @@
 //! Fixed task/result slots and cooperative count-table access, as in YTTM C++.
-use super::{BpeTrainer, Frontier, Location, Pair, PairPriority, Rule, coordinate, local::Store};
+use super::{
+    BpeTrainer, Frontier, Location, Pair, PairPriority, Rule, coordinate, local::Store, pair_key,
+};
 use ahash::{AHashMap, AHashSet};
 use compact_str::CompactString;
 use std::sync::{
-    Arc, Condvar, Mutex,
+    Arc, Condvar, Mutex, MutexGuard,
     atomic::{AtomicBool, AtomicUsize, Ordering},
 };
 use tk_encode::{Result, utils::progress::ProgressBar};
 
 #[derive(Default)]
 pub(super) struct Buffers {
-    pub(super) scores: Vec<(u64, i128)>,
-    pub(super) births: AHashSet<u64>,
+    pub(super) left: AHashMap<u32, i128>,
+    pub(super) right: AHashMap<u32, i128>,
     pub(super) birth_words: AHashMap<u64, AHashSet<u32>>,
 }
 struct Task {
@@ -75,19 +77,19 @@ impl Ready {
     }
 }
 
-pub(super) struct Driver {
-    owners: Vec<Arc<Owner>>,
+pub(super) struct Driver<'a> {
+    owners: &'a [Arc<Owner>],
     ready: Arc<Ready>,
     received: Vec<usize>,
     recycled: Vec<Vec<Buffers>>,
     stop: Arc<AtomicBool>,
 }
-impl Drop for Driver {
+impl Drop for Driver<'_> {
     fn drop(&mut self) {
         // This guard lives inside thread::scope. Wake every owner before the
         // implicit join, including a worker paused for count-table access.
         self.stop.store(true, Ordering::Release);
-        for owner in &self.owners {
+        for owner in self.owners {
             let _guard = owner
                 .state
                 .lock()
@@ -97,8 +99,8 @@ impl Drop for Driver {
     }
 }
 fn finish_task(store: &mut Store, owner: usize, mut task: Task) -> Payload {
-    store.birth_scores_into(&mut task.buffers.scores);
-    store.exchange_births(&mut task.buffers.births, &mut task.buffers.birth_words);
+    store.birth_scores_into(&mut task.buffers.left, &mut task.buffers.right);
+    store.exchange_birth_words(&mut task.buffers.birth_words);
     Payload {
         owner,
         sequence: task.sequence,
@@ -137,9 +139,9 @@ fn work(owner: &Owner, index: usize, ready: &Ready, stop: &AtomicBool) -> Result
         }
         state
             .store
-            .exchange_births(&mut task.buffers.births, &mut task.buffers.birth_words);
+            .exchange_birth_words(&mut task.buffers.birth_words);
         let positions = state.store.begin_rule(&task.rule, index)?;
-        for position in positions {
+        for &position in &positions {
             state = owner
                 .changed
                 .wait_while(state, |_| {
@@ -151,6 +153,11 @@ fn work(owner: &Owner, index: usize, ready: &Ready, stop: &AtomicBool) -> Result
             }
             state.store.apply_position(&task.rule, position)?;
         }
+        // C++ releases the occurrence lock before erasing the posting list,
+        // then reacquires it to read the completed rule's absolute scores.
+        drop(state);
+        drop(positions);
+        state = owner.state.lock().map_err(|_| "YTTM owner panicked")?;
         #[cfg(test)]
         {
             let observer = state.store.hook.clone();
@@ -172,46 +179,36 @@ fn work(owner: &Owner, index: usize, ready: &Ready, stop: &AtomicBool) -> Result
         sequence += 1;
         owner.completed.store(sequence, Ordering::Release);
         // Do not acquire Ready's wait mutex while holding the owner mutex:
-        // the coordinator scans owner results while holding the wait mutex.
+        // completion notification follows publication outside the owner lock.
         ready.notify();
         state = owner.state.lock().map_err(|_| "YTTM owner panicked")?;
     }
 }
 
-impl Driver {
-    fn pause(&self) {
-        for owner in &self.owners {
-            owner.use_counts.store(false, Ordering::Release);
+/// One C++ coordinator critical section: pause, select, publish, resume.
+pub(super) struct Paused<'a> {
+    owners: &'a [Arc<Owner>],
+    states: Vec<MutexGuard<'a, State>>,
+}
+impl Drop for Paused<'_> {
+    fn drop(&mut self) {
+        // Set every predicate under the same locks used to inspect the stores.
+        // Release all stores before notification, matching the C++ lock scope.
+        for owner in self.owners {
+            owner.use_counts.store(true, Ordering::Release);
+        }
+        self.states.clear();
+        for owner in self.owners {
+            owner.changed.notify_one();
         }
     }
-    pub(super) fn resume(&self) {
-        for owner in &self.owners {
-            if !owner.use_counts.load(Ordering::Acquire) {
-                let _guard = owner
-                    .state
-                    .lock()
-                    .unwrap_or_else(|error| error.into_inner());
-                owner.use_counts.store(true, Ordering::Release);
-                owner.changed.notify_one();
-            }
-        }
-    }
-    fn read_counts<T>(
-        &self,
-        inspect: impl FnOnce(&mut dyn FnMut(u64) -> Result<i128>) -> Result<T>,
-    ) -> Result<T> {
-        self.pause();
-        let states = self
-            .owners
-            .iter()
-            .map(|owner| owner.state.lock().map_err(|_| "YTTM owner panicked"))
-            .collect::<std::result::Result<Vec<_>, _>>()?;
-        inspect(&mut |key| {
-            states.iter().try_fold(0_i128, |count, state| {
-                count
-                    .checked_add(state.store.counts.get(&key).copied().unwrap_or(0))
-                    .ok_or_else(|| "YTTM global score exceeds i128".into())
-            })
+}
+impl Paused<'_> {
+    fn count(&self, key: u64) -> Result<i128> {
+        self.states.iter().try_fold(0_i128, |count, state| {
+            count
+                .checked_add(state.store.counts.get(&key).copied().unwrap_or(0))
+                .ok_or_else(|| "YTTM global score exceeds i128".into())
         })
     }
     pub(super) fn select(
@@ -219,41 +216,62 @@ impl Driver {
         frontier: &mut Frontier,
         active: &[Rule],
     ) -> Result<Option<(PairPriority, Location)>> {
-        self.read_counts(|count| {
-            frontier.queue.top(
-                &mut |key| {
-                    let score = count(key)?;
-                    if score > i128::from(u64::MAX) {
-                        return Err("YTTM global frequency exceeds u64".into());
-                    }
-                    Ok(score as u64)
-                },
-                active,
-                frontier.floor,
-            )
-        })
+        frontier.queue.top(
+            &mut |key| {
+                let score = self.count(key)?;
+                if score > i128::from(u64::MAX) {
+                    return Err("YTTM global frequency exceeds u64".into());
+                }
+                Ok(score as u64)
+            },
+            active,
+            frontier.floor,
+        )
     }
-    pub(super) fn refresh_scores(&self, scores: &mut AHashMap<u64, i128>) -> Result<()> {
-        self.read_counts(|count| {
-            for (&key, value) in scores.iter_mut() {
-                *value = count(key)?;
-            }
-            Ok(())
-        })
-    }
-    pub(super) fn enable_coverage(&mut self) -> Result<Vec<AHashMap<u64, AHashSet<u32>>>> {
-        self.pause();
-        self.owners
-            .iter()
-            .map(|owner| {
-                let mut state = owner.state.lock().map_err(|_| "YTTM owner panicked")?;
-                Ok(state.store.enable_coverage())
-            })
+    pub(super) fn enable_coverage(&mut self) -> Vec<AHashMap<u64, AHashSet<u32>>> {
+        self.states
+            .iter_mut()
+            .map(|state| state.store.enable_coverage())
             .collect()
     }
-    pub(super) fn dispatch(&mut self, sequence: usize, rule: Rule) -> Result<()> {
-        for (index, owner) in self.owners.iter().enumerate() {
-            let mut state = owner.state.lock().map_err(|_| "YTTM owner panicked")?;
+}
+impl<'a> Driver<'a> {
+    pub(super) fn pause(&self) -> Result<Paused<'a>> {
+        for owner in self.owners {
+            owner.use_counts.store(false, Ordering::Release);
+        }
+        let states = self
+            .owners
+            .iter()
+            .map(|owner| owner.state.lock().map_err(|_| "YTTM owner panicked"))
+            .collect::<std::result::Result<Vec<_>, _>>()?;
+        Ok(Paused {
+            owners: self.owners,
+            states,
+        })
+    }
+    pub(super) fn refresh_scores(
+        &self,
+        left: &mut AHashMap<u32, i128>,
+        right: &mut AHashMap<u32, i128>,
+        replacement: u32,
+    ) -> Result<()> {
+        let paused = self.pause()?;
+        for (&token, value) in left.iter_mut() {
+            *value = paused.count(pair_key((token, replacement)))?;
+        }
+        for (&token, value) in right.iter_mut() {
+            *value = paused.count(pair_key((replacement, token)))?;
+        }
+        Ok(())
+    }
+    pub(super) fn dispatch(
+        &mut self,
+        paused: &mut Paused<'a>,
+        sequence: usize,
+        rule: Rule,
+    ) -> Result<()> {
+        for (index, state) in paused.states.iter_mut().enumerate() {
             let slot = &mut state.tasks[sequence % 2];
             if slot.is_some() {
                 return Err("YTTM task slot reused before consumption".into());
@@ -264,10 +282,37 @@ impl Driver {
                 buffers: self.recycled[index].pop().unwrap_or_default(),
             });
         }
-        self.resume();
         Ok(())
     }
-    pub(super) fn receive(&mut self) -> Result<Payload> {
+    // The C++ loop collects every ready owner for the oldest rule in one pass.
+    // Its wait mutex is not held while reading completed result slots.
+    pub(super) fn collect(
+        &mut self,
+        sequence: usize,
+        mut submit: impl FnMut(&mut Payload) -> Result<()>,
+    ) -> Result<bool> {
+        let mut progress = false;
+        for (index, owner) in self.owners.iter().enumerate() {
+            if self.received[index] == sequence
+                && owner.completed.load(Ordering::Acquire) > sequence
+            {
+                let mut payload = owner.results[sequence % 2]
+                    .lock()
+                    .map_err(|_| "YTTM result slot poisoned")?
+                    .take()
+                    .ok_or("YTTM completed task has no result")?;
+                if payload.sequence != sequence || payload.owner != index {
+                    return Err("YTTM completed task sequence mismatch".into());
+                }
+                submit(&mut payload)?;
+                self.received[index] += 1;
+                self.recycled[index].push(payload.buffers);
+                progress = true;
+            }
+        }
+        Ok(progress)
+    }
+    pub(super) fn wait(&self, sequence: usize, done: &[bool]) -> Result<()> {
         let mut error = self
             .ready
             .error
@@ -277,16 +322,10 @@ impl Driver {
             if let Some(message) = &*error {
                 return Err(message.clone().into());
             }
-            for (index, owner) in self.owners.iter().enumerate() {
-                let sequence = self.received[index];
-                if owner.completed.load(Ordering::Acquire) > sequence {
-                    let mut result = owner.results[sequence % 2]
-                        .lock()
-                        .map_err(|_| "YTTM result slot poisoned")?;
-                    let payload = result.take().ok_or("YTTM completed task has no result")?;
-                    self.received[index] += 1;
-                    return Ok(payload);
-                }
+            if self.owners.iter().enumerate().any(|(index, owner)| {
+                !done[index] && owner.completed.load(Ordering::Acquire) > sequence
+            }) {
+                return Ok(());
             }
             error = self
                 .ready
@@ -295,13 +334,10 @@ impl Driver {
                 .map_err(|_| "YTTM completion mutex poisoned")?;
         }
     }
-    pub(super) fn recycle(&mut self, payload: Payload) {
-        self.recycled[payload.owner].push(payload.buffers);
-    }
 }
 
-enum Initial {
-    Shard(Vec<(Vec<u32>, u64)>),
+enum Initial<'a> {
+    Shard(&'a [(Vec<u32>, u64)]),
     #[cfg(test)]
     Store(Box<Store>),
 }
@@ -342,7 +378,12 @@ pub(super) fn run_sharded(
         word_to_id,
         id_to_word,
         progress,
-        shards.into_iter().map(Initial::Shard).collect(),
+        // Like C++, retain the source token arrays on the coordinator through
+        // the scoped join. Workers borrow their contiguous partitions.
+        shards
+            .iter()
+            .map(|shard| Initial::Shard(shard.as_slice()))
+            .collect(),
         None,
         threshold,
     )
@@ -378,7 +419,7 @@ fn run_initial(
     word_to_id: &mut AHashMap<CompactString, u32>,
     id_to_word: &mut Vec<CompactString>,
     progress: &Option<ProgressBar>,
-    initial: Vec<Initial>,
+    initial: Vec<Initial<'_>>,
     frontier: Option<Frontier>,
     threshold: usize,
 ) -> Result<Vec<(Pair, u32)>> {
@@ -412,7 +453,18 @@ fn run_initial(
                         owners[index] = Some(Arc::clone(&owner));
                         startup.changed.notify_one();
                     }
-                    work(&owner, index, &ready, &stop)
+                    let result = work(&owner, index, &ready, &stop);
+                    if stop.load(Ordering::Acquire) {
+                        // The coordinator has finished reading stores. Release
+                        // private allocations here, as C++'s worker scope does;
+                        // leave shared counts and result tables for its cleanup.
+                        let mut state = owner
+                            .state
+                            .lock()
+                            .unwrap_or_else(|error| error.into_inner());
+                        state.store.release_local_storage();
+                    }
+                    result
                 }));
                 match outcome {
                     Ok(Ok(())) => {}
@@ -463,7 +515,7 @@ fn run_initial(
             }
         };
         let mut driver = Driver {
-            owners,
+            owners: &owners,
             ready,
             received: vec![0; workers],
             recycled: (0..workers).map(|_| Vec::with_capacity(2)).collect(),

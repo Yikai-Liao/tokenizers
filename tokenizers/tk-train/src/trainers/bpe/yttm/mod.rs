@@ -319,9 +319,19 @@ impl Frontier {
     }
     fn publish(
         &mut self,
-        scores: AHashMap<u64, i128>,
-        mut birth_words: AHashMap<u64, Vec<AHashSet<u32>>>,
+        left: &mut AHashMap<u32, i128>,
+        right: &mut AHashMap<u32, i128>,
+        replacement: u32,
+        birth_words: &mut AHashMap<u64, Vec<AHashSet<u32>>>,
     ) -> Result<()> {
+        let scores = left
+            .drain()
+            .map(|(token, score)| (pair_key((token, replacement)), score))
+            .chain(
+                right
+                    .drain()
+                    .map(|(token, score)| (pair_key((replacement, token)), score)),
+            );
         for (key, score) in scores {
             if score > i128::from(u64::MAX) {
                 return Err("YTTM global frequency exceeds u64".into());
@@ -345,18 +355,23 @@ impl Frontier {
 struct Pending {
     sequence: usize,
     rule: Rule,
+}
+// Only the oldest rule is collected. Like C++, keep one checklist and one
+// pair of aggregate tables and clear them when that rule commits.
+#[derive(Default)]
+struct Collected {
     done: Vec<bool>,
     completed: usize,
-    scores: AHashMap<u64, i128>,
+    left: AHashMap<u32, i128>,
+    right: AHashMap<u32, i128>,
     birth_words: AHashMap<u64, Vec<AHashSet<u32>>>,
 }
-fn merge_payload(pending: &mut Pending, payload: &mut Payload) -> Result<()> {
+fn merge_payload(pending: &mut Collected, payload: &mut Payload) -> Result<()> {
     if pending.done[payload.owner] {
         return Err("YTTM owner completed one task twice".into());
     }
     pending.done[payload.owner] = true;
     pending.completed += 1;
-    payload.buffers.births.clear();
     for (key, words) in payload.buffers.birth_words.drain() {
         let witnesses = pending
             .birth_words
@@ -364,12 +379,17 @@ fn merge_payload(pending: &mut Pending, payload: &mut Payload) -> Result<()> {
             .or_insert_with(|| (0..pending.done.len()).map(|_| AHashSet::new()).collect());
         witnesses[payload.owner].extend(words);
     }
-    for (key, score) in payload.buffers.scores.drain(..) {
-        let value = pending.scores.entry(key).or_default();
-        *value = value
-            .checked_add(score)
-            .ok_or("YTTM complete task score exceeds i128")?;
+    fn aggregate(target: &mut AHashMap<u32, i128>, source: &mut AHashMap<u32, i128>) -> Result<()> {
+        for (token, score) in source.drain() {
+            let value = target.entry(token).or_default();
+            *value = value
+                .checked_add(score)
+                .ok_or("YTTM complete task score exceeds i128")?;
+        }
+        Ok(())
     }
+    aggregate(&mut pending.left, &mut payload.buffers.left)?;
+    aggregate(&mut pending.right, &mut payload.buffers.right)?;
     Ok(())
 }
 
@@ -385,6 +405,10 @@ fn coordinate(
     let depth = 2;
     let mut sequence = 0;
     let mut pending: VecDeque<Pending> = VecDeque::new();
+    let mut collected = Collected {
+        done: vec![false; workers],
+        ..Collected::default()
+    };
     let mut merges = Vec::new();
     let mut selection_dirty = true;
     loop {
@@ -392,23 +416,40 @@ fn coordinate(
         // already have executed the next rule, whose results remain private.
         while pending
             .front()
-            .is_some_and(|task| task.completed == workers)
+            .is_some_and(|_| collected.completed == workers)
         {
-            let mut task = pending.pop_front().expect("checked pending head");
+            let task = pending.pop_front().expect("checked pending head");
             if task.rule.reserved {
                 // A reused replacement can have pre-existing counts on owners
                 // that saw no positive event. Such rules run with an idle tail.
-                driver.refresh_scores(&mut task.scores)?;
+                driver.refresh_scores(
+                    &mut collected.left,
+                    &mut collected.right,
+                    task.rule.replacement,
+                )?;
             }
-            frontier.publish(task.scores, task.birth_words)?;
+            frontier.publish(
+                &mut collected.left,
+                &mut collected.right,
+                task.rule.replacement,
+                &mut collected.birth_words,
+            )?;
+            collected.done.fill(false);
+            collected.completed = 0;
+            collected.birth_words.clear();
             selection_dirty = true;
         }
+        let mut progress_made = false;
         if selection_dirty && word_to_id.len() < trainer.vocab_size && pending.len() < depth {
+            progress_made = true;
             selection_dirty = false;
-            let active: Vec<_> = pending.iter().map(|task| task.rule.clone()).collect();
-            if let Some((priority, location)) = driver.select(&mut frontier, &active)? {
+            let active = pending
+                .front()
+                .map_or(&[][..], |task| std::slice::from_ref(&task.rule));
+            let mut paused = driver.pause()?;
+            if let Some((priority, location)) = paused.select(&mut frontier, active)? {
                 let pair = key_pair(priority.key);
-                if priority.priority_count >= frontier.floor && !conflicts(pair, &active) {
+                if priority.priority_count >= frontier.floor && !conflicts(pair, active) {
                     let a = &id_to_word[pair.0 as usize];
                     let mut b = id_to_word[pair.1 as usize].as_str();
                     if let Some(prefix) = &trainer.continuing_subword_prefix
@@ -425,7 +466,7 @@ fn coordinate(
                         // birth witness. Its lazy posting list retains exactly
                         // those words. Materialize coverage only at this boundary.
                         if existing.is_some() && !frontier.queue.covered() {
-                            frontier.queue.cover(&driver.enable_coverage()?);
+                            frontier.queue.cover(&paused.enable_coverage());
                         }
                         let words = frontier.queue.pop(location);
                         let replacement = match existing {
@@ -444,15 +485,8 @@ fn coordinate(
                             reserved: existing.is_some(),
                             words,
                         };
-                        driver.dispatch(sequence, rule.clone())?;
-                        pending.push_back(Pending {
-                            sequence,
-                            rule,
-                            done: vec![false; workers],
-                            completed: 0,
-                            scores: AHashMap::new(),
-                            birth_words: AHashMap::new(),
-                        });
+                        driver.dispatch(&mut paused, sequence, rule.clone())?;
+                        pending.push_back(Pending { sequence, rule });
                         sequence += 1;
                         merges.push((pair, replacement));
                         if let Some(progress) = progress {
@@ -464,22 +498,19 @@ fn coordinate(
                             trainer.vocab_size,
                         );
                         selection_dirty = true;
-                        continue;
                     }
                 }
             }
         }
-        driver.resume();
-        if pending.is_empty() {
+        let Some(task) = pending.front() else {
             break;
+        };
+        let sequence = task.sequence;
+        progress_made |=
+            driver.collect(sequence, |payload| merge_payload(&mut collected, payload))?;
+        if !progress_made {
+            driver.wait(sequence, &collected.done)?;
         }
-        let mut payload = driver.receive()?;
-        let task = pending
-            .iter_mut()
-            .find(|task| task.sequence == payload.sequence)
-            .ok_or("YTTM completion refers to an unpublished task")?;
-        merge_payload(task, &mut payload)?;
-        driver.recycle(payload);
     }
     Ok(merges)
 }
@@ -548,8 +579,8 @@ mod tests {
             .map(|(id, token)| (token.clone(), id as u32))
             .collect();
         let stores = vec![
-            Store::build(vec![(vec![0, 1], 1000), (vec![4, 5], 800)], None).unwrap(),
-            Store::build(vec![(vec![2, 3], 900)], None).unwrap(),
+            Store::build(&[(vec![0, 1], 1000), (vec![4, 5], 800)], None).unwrap(),
+            Store::build(&[(vec![2, 3], 900)], None).unwrap(),
         ];
         let frontier = Frontier::new(&stores, 1, 61).unwrap();
         (trainer, ids, tokens, stores, frontier)
@@ -617,7 +648,7 @@ mod tests {
     fn single_owner_runs_on_worker_thread() {
         let (trainer, mut ids, mut tokens, _, _) = fixture();
         let mut store = Store::build(
-            vec![(vec![0, 1], 1000), (vec![2, 3], 900), (vec![4, 5], 800)],
+            &[(vec![0, 1], 1000), (vec![2, 3], 900), (vec![4, 5], 800)],
             None,
         )
         .unwrap();

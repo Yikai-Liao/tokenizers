@@ -370,31 +370,59 @@ impl BpeTrainer {
         let mut words: Vec<Vec<u32>> = Vec::with_capacity(wc.len());
         let mut counts: Vec<u64> = Vec::with_capacity(wc.len());
 
+        // YTTM resolves decoded characters directly through char2id. Include
+        // single-character special tokens as well as the retained alphabet:
+        // upstream authorizes either, including after alphabet filtering.
+        let char_to_id: AHashMap<char, u32> = w2id
+            .iter()
+            .filter_map(|(token, &id)| {
+                let mut chars = token.chars();
+                let character = chars.next()?;
+                chars.next().is_none().then_some((character, id))
+            })
+            .collect();
+
         for (word, count) in wc {
             let mut current_word = Vec::new();
             counts.push(*count);
 
             for (is_first, is_last, c) in word.chars().with_first_and_last() {
-                let mut s = c.to_string();
-                if w2id.contains_key(&CompactString::from(&s)) {
-                    // Found the initial char in the authorized alphabet
-
-                    // Add the `continuing_subword_prefix` if relevant
-                    if !is_first && let Some(prefix) = &self.continuing_subword_prefix {
-                        s.insert_str(0, prefix);
-                    }
-                    // Add the `end_of_word_suffix` if relevant
-                    if is_last && let Some(suffix) = &self.end_of_word_suffix {
-                        s.push_str(suffix);
-                    }
-
-                    // Insert the new formed string if necessary
-                    if !w2id.contains_key(&CompactString::from(&s)) {
-                        id2w.push(CompactString::from(&s));
-                        w2id.insert(CompactString::from(&s), (id2w.len() - 1) as u32);
-                    }
-                    current_word.push(w2id[&CompactString::from(&s)]);
+                let Some(&initial_id) = char_to_id.get(&c) else {
+                    continue;
+                };
+                let prefix = self
+                    .continuing_subword_prefix
+                    .as_deref()
+                    .filter(|prefix| !is_first && !prefix.is_empty());
+                let suffix = self
+                    .end_of_word_suffix
+                    .as_deref()
+                    .filter(|suffix| is_last && !suffix.is_empty());
+                if prefix.is_none() && suffix.is_none() {
+                    current_word.push(initial_id);
+                    continue;
                 }
+
+                // Only affixed forms need string identities. Keep insertion in
+                // input order and first/last positions before alphabet filtering.
+                let mut token = c.to_string();
+                if let Some(prefix) = prefix {
+                    token.insert_str(0, prefix);
+                }
+                if let Some(suffix) = suffix {
+                    token.push_str(suffix);
+                }
+                let token = CompactString::from(token);
+                let id = match w2id.get(&token).copied() {
+                    Some(id) => id,
+                    None => {
+                        let id = id2w.len() as u32;
+                        id2w.push(token.clone());
+                        w2id.insert(token, id);
+                        id
+                    }
+                };
+                current_word.push(id);
             }
             words.push(current_word);
 

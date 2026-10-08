@@ -68,6 +68,50 @@ fn yttm_matches_original_runs_ties_affixes_and_special_id_reuse() {
 }
 
 #[test]
+fn yttm_initial_character_ids_preserve_filtered_affix_positions_and_specials() {
+    let words = [
+        ("文x", 6),
+        ("zxx", 30),
+        ("🙂x", 4),
+        ("x文🙂", 8),
+        ("z", 1),
+        ("zxz", 4),
+        ("", 1),
+    ]
+    .into_iter()
+    .map(|(word, count)| (word.into(), count))
+    .collect();
+    for prefix in [None, Some(""), Some("#")] {
+        for suffix in [None, Some(""), Some("!")] {
+            let mut trainer = BpeTrainer::builder()
+                .vocab_size(25)
+                .show_progress(false)
+                .min_frequency(1)
+                .limit_alphabet(1)
+                .special_tokens(
+                    ["文", "🙂", "#z", "z!"]
+                        .into_iter()
+                        .map(|token| AddedToken::from(token, true))
+                        .collect(),
+                )
+                .build();
+            trainer.continuing_subword_prefix = prefix.map(str::to_owned);
+            trainer.end_of_word_suffix = suffix.map(str::to_owned);
+            let original: reference::BpeTrainer =
+                serde_json::from_value(serde_json::to_value(&trainer).unwrap()).unwrap();
+            let expected = original.do_train(&words).unwrap();
+            for workers in [1, 2, 4] {
+                assert_eq!(
+                    trainer.do_train_with_workers(&words, workers).unwrap(),
+                    expected,
+                    "prefix={prefix:?}, suffix={suffix:?}, workers={workers}"
+                );
+            }
+        }
+    }
+}
+
+#[test]
 fn yttm_matches_original_randomized() {
     let mut random = 0x59e8354a_u64;
     let mut next = || {
