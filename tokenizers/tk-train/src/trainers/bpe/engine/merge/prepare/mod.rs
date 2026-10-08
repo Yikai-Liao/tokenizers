@@ -416,6 +416,7 @@ struct RulePreparation<'prep, S: SlotStorage> {
     /// Strict admission gate for newborn neighbors, in retained-symbol slots.
     /// Initial candidates and the selected merge itself have no extra length gate.
     birth_span_limit: u64,
+    unrestricted_births: bool,
     chunks: Vec<EventChunk>,
     positions: PositionBuffer,
     // PERF: Weighted words are contiguous and often share weights. Cache the
@@ -438,6 +439,9 @@ impl<'prep, S: SlotStorage> RulePreparation<'prep, S> {
             rank,
             matcher: corpus.matcher(rule.pair),
             birth_span_limit,
+            // Every word occupies fewer slots than the corpus because of its
+            // separator. An adjacent newborn cannot reach this strict bound.
+            unrestricted_births: birth_span_limit >= corpus.len() as u64,
             chunks: Vec::new(),
             positions: PositionBuffer::default(),
             weights: corpus.weight_cursor(),
@@ -477,7 +481,8 @@ impl<'prep, S: SlotStorage> RulePreparation<'prep, S> {
                     prior,
                     before,
                     weight,
-                    prior_span + matched.merged_span < self.birth_span_limit,
+                    self.unrestricted_births
+                        || prior_span + matched.merged_span < self.birth_span_limit,
                 )?;
             }
         }
@@ -500,7 +505,9 @@ impl<'prep, S: SlotStorage> RulePreparation<'prep, S> {
                 final_next,
                 matched.left_start,
                 weight,
-                matched.merged_span + self.corpus.span_by_id(final_next) < self.birth_span_limit,
+                self.unrestricted_births
+                    || matched.merged_span + self.corpus.span_by_id(final_next)
+                        < self.birth_span_limit,
             )?;
         }
         Ok(())

@@ -42,6 +42,8 @@ fn affixes_aliases_and_strict_length_boundaries() {
     // empty-affix behavior without repeating every unrelated combination.
     for (_name, prefix, suffix, limit) in [
         ("plain", None, None, None),
+        ("corpus-wide birth gate", None, None, Some(29)),
+        ("below corpus-wide gate", None, None, Some(28)),
         ("zero birth gate", None, None, Some(0)),
         ("unit birth gate", None, None, Some(1)),
         ("exact pair gate", None, None, Some(2)),
