@@ -9,6 +9,31 @@ pub(super) fn prepare<S: SlotStorage>(
     birth_span_limit: u64,
     execution: &Execution,
 ) -> Result<Vec<(PreparedJob, Vec<EventChunk>)>> {
+    let start = std::time::Instant::now();
+    let result = prepare_inner(
+        corpus,
+        rule,
+        candidate,
+        token_id_count,
+        birth_span_limit,
+        execution,
+    );
+    let seconds = start.elapsed().as_secs_f64();
+    eprintln!(
+        "BPE_AA_TIMING {}",
+        serde_json::json!({"seconds":seconds,
+        "candidate_positions":candidate.positions.len(), "ok":result.is_ok()})
+    );
+    result
+}
+fn prepare_inner<S: SlotStorage>(
+    corpus: &Corpus<S>,
+    rule: &MergeRule,
+    candidate: &MergeCandidate<'_>,
+    token_id_count: usize,
+    birth_span_limit: u64,
+    execution: &Execution,
+) -> Result<Vec<(PreparedJob, Vec<EventChunk>)>> {
     let chunk = candidate
         .positions
         .len()
