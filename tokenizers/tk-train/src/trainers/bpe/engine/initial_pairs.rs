@@ -439,17 +439,17 @@ impl<'arena, C: InitialPairSource> InitialCollector<'_, 'arena, C> {
         let execution = self.execution;
         let progress = self.progress;
         self.collect(|corpus, range, wave_floor, uniform_weight| {
-            let mut buffers = collect_wave_records::<R>(corpus, range.clone(), execution, progress);
-            let records = buffers.iter().map(Vec::len).sum();
-            let sort_work = progress.stage("Sort initial pairs", records);
-            buffers.par_iter_mut().for_each(|records| {
-                radix::sort_by_key(records);
-                sort_work.complete(records.len());
-            });
-            let group_work = progress.stage("Count initial pairs", records);
+            let buffers = collect_wave_records::<R>(corpus, range.clone(), execution, progress);
+            let records: usize = buffers.iter().map(Vec::len).sum();
+            // Each owner counts its sorted stream immediately. Raw buffers,
+            // stable sorting, checked frequencies, and the encoding barrier stay
+            // unchanged; only the all-owner sort/count barrier is removed.
+            let group_work = progress.stage("Sort and count initial pairs", records * 2);
             buffers
                 .into_par_iter()
-                .map(|records| {
+                .map(|mut records| {
+                    radix::sort_by_key(&mut records);
+                    group_work.complete(records.len());
                     let (groups, mass) = count_groups(
                         &records,
                         range.start,
