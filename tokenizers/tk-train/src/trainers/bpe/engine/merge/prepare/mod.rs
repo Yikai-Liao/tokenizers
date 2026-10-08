@@ -586,6 +586,9 @@ pub(in super::super) struct BirthShape {
     touched_groups: usize,
 }
 impl BirthShape {
+    pub(in super::super) fn diagnostic_totals(self) -> (usize, usize) {
+        (self.births, self.touched_groups)
+    }
     fn add(&mut self, other: Self) {
         self.births = self.births.saturating_add(other.births);
         self.touched_groups = self.touched_groups.saturating_add(other.touched_groups);
