@@ -3,28 +3,22 @@
 //! Tokenizers compatibility: overlapping self-pair counts, canonical ties,
 //! affixes and reusable vocabulary identities. Each task contains ONE rule.
 mod local;
+mod workers;
 use super::{BpeTrainer, Pair};
 use ahash::{AHashMap, AHashSet};
 use compact_str::CompactString;
 use dary_heap::OctonaryHeap;
 use local::Store;
-use std::{
-    collections::VecDeque,
-    sync::{
-        Arc,
-        atomic::{AtomicBool, Ordering},
-        mpsc,
-    },
-};
+#[cfg(test)]
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::{collections::VecDeque, sync::Arc};
 use tk_encode::{Result, utils::progress::ProgressBar};
+#[cfg(test)]
+use workers::run_owned;
+use workers::{Driver, Payload, run_sharded};
 
 fn pair_key(pair: Pair) -> u64 {
     (u64::from(pair.0) << 32) | u64::from(pair.1)
-}
-fn queue_score(counts: &AHashMap<u64, i128>, key: u64) -> u64 {
-    // Upstream refreshes a signed count with `as u64`; length filtering can
-    // produce negative counts. Preserve that cast for exact merge-list parity.
-    counts.get(&key).copied().unwrap_or(0) as u64
 }
 fn key_pair(key: u64) -> Pair {
     ((key >> 32) as u32, key as u32)
@@ -61,27 +55,6 @@ pub(super) fn worker_count() -> usize {
     } else {
         1
     }
-}
-struct Task {
-    sequence: usize,
-    rule: Rule,
-}
-struct Payload {
-    owner: usize,
-    sequence: usize,
-    deltas: Vec<(u64, i128)>,
-    births: AHashSet<u64>,
-    birth_words: AHashMap<u64, AHashSet<u32>>,
-}
-enum Completion {
-    Done(Payload),
-    Failed(String),
-    Witnesses(usize, AHashMap<u64, AHashSet<u32>>),
-}
-enum Command {
-    Execute(Task),
-    Witnesses,
-    Stop,
 }
 enum Location {
     Big(usize),
@@ -141,17 +114,17 @@ impl HighLow {
     }
     fn top(
         &mut self,
-        counts: &AHashMap<u64, i128>,
+        count: &mut impl FnMut(u64) -> Result<u64>,
         active: &[Rule],
         floor: u64,
-    ) -> Option<(PairPriority, Location)> {
+    ) -> Result<Option<(PairPriority, Location)>> {
         let mut index = 0;
         while index < self.big.len() {
             let pair = key_pair(self.big[index].key);
             // An in-flight boundary remains an upper-bound witness. Do not
             // lower it before the corresponding complete births are published.
             if !conflicts(pair, active) {
-                self.big[index].priority_count = queue_score(counts, self.big[index].key);
+                self.big[index].priority_count = count(self.big[index].key)?;
             }
             if self.big[index].priority_count < self.threshold as u64 {
                 let value = self.big.swap_remove(index);
@@ -163,7 +136,7 @@ impl HighLow {
             }
         }
         if let Some((index, value)) = self.big.iter().enumerate().max_by_key(|(_, value)| **value) {
-            return Some((*value, Location::Big(index)));
+            return Ok(Some((*value, Location::Big(index))));
         }
         loop {
             while self.maximum != 0
@@ -174,22 +147,29 @@ impl HighLow {
             {
                 self.maximum -= 1;
             }
-            let value = self.small.get(self.maximum)?.peek().copied()?;
+            let Some(value) = self
+                .small
+                .get(self.maximum)
+                .and_then(|bucket| bucket.peek())
+                .copied()
+            else {
+                return Ok(None);
+            };
             if conflicts(key_pair(value.key), active) {
-                return Some((value, Location::Small(self.maximum)));
+                return Ok(Some((value, Location::Small(self.maximum))));
             }
-            let count = queue_score(counts, value.key);
-            if value.priority_count == count && count >= floor {
-                return Some((value, Location::Small(self.maximum)));
+            let current_count = count(value.key)?;
+            if value.priority_count == current_count && current_count >= floor {
+                return Ok(Some((value, Location::Small(self.maximum))));
             }
             self.small[self.maximum].pop();
-            if count >= floor {
+            if current_count >= floor {
                 self.push(PairPriority {
                     key: value.key,
-                    priority_count: count,
+                    priority_count: current_count,
                 });
-                if count >= self.threshold as u64 {
-                    return self.top(counts, active, floor);
+                if current_count >= self.threshold as u64 {
+                    return self.top(count, active, floor);
                 }
             }
         }
@@ -241,21 +221,23 @@ impl Queue {
     }
     fn top(
         &mut self,
-        counts: &AHashMap<u64, i128>,
+        count: &mut impl FnMut(u64) -> Result<u64>,
         active: &[Rule],
         floor: u64,
-    ) -> Option<(PairPriority, Location)> {
+    ) -> Result<Option<(PairPriority, Location)>> {
         match self {
-            Self::Plain(queue) => queue.top(counts, active, 1),
+            Self::Plain(queue) => queue.top(count, active, 1),
             Self::Covered(queue) => loop {
-                let value = queue.peek()?;
+                let Some(value) = queue.peek() else {
+                    return Ok(None);
+                };
                 let priority = value.priority;
                 if conflicts(key_pair(priority.key), active) {
-                    return Some((priority, Location::Covered));
+                    return Ok(Some((priority, Location::Covered)));
                 }
-                let count = queue_score(counts, priority.key);
+                let count = count(priority.key)?;
                 if count == priority.priority_count {
-                    return (count >= floor).then_some((priority, Location::Covered));
+                    return Ok((count >= floor).then_some((priority, Location::Covered)));
                 }
                 let mut value = queue.pop().expect("checked covered head");
                 value.priority.priority_count = count;
@@ -311,12 +293,15 @@ impl Queue {
 }
 
 struct Frontier {
-    counts: AHashMap<u64, i128>,
     queue: Queue,
     floor: u64,
 }
 impl Frontier {
-    fn new(stores: &[Store], floor: u64, threshold: usize) -> Result<Self> {
+    fn new<'a>(
+        stores: impl IntoIterator<Item = &'a Store>,
+        floor: u64,
+        threshold: usize,
+    ) -> Result<Self> {
         let mut counts: AHashMap<u64, i128> = AHashMap::new();
         for store in stores {
             for (&key, &amount) in &store.counts {
@@ -330,36 +315,19 @@ impl Frontier {
             return Err("YTTM initial frequency exceeds u64".into());
         }
         let queue = Queue::new(threshold, &counts);
-        Ok(Self {
-            counts,
-            queue,
-            floor,
-        })
+        Ok(Self { queue, floor })
     }
     fn publish(
         &mut self,
-        deltas: AHashMap<u64, i128>,
-        births: AHashSet<u64>,
+        scores: AHashMap<u64, i128>,
         mut birth_words: AHashMap<u64, Vec<AHashSet<u32>>>,
     ) -> Result<()> {
-        for (key, delta) in deltas {
-            let value = self.counts.entry(key).or_default();
-            *value = value
-                .checked_add(delta)
-                .ok_or("YTTM global count exceeds i128")?;
-            if *value > i128::from(u64::MAX) {
+        for (key, score) in scores {
+            if score > i128::from(u64::MAX) {
                 return Err("YTTM global frequency exceeds u64".into());
             }
-            if *value == 0 {
-                self.counts.remove(&key);
-            }
-        }
-        // Tokenizers refreshes witnesses for all positive neighbor events,
-        // including net-zero updates and reused identities, not just new IDs.
-        // Preserve even sub-minimum positive witnesses: upstream can stop at
-        // one before refreshing a later stale witness after identity reuse.
-        for key in births {
-            let count = queue_score(&self.counts, key);
+            // Preserve upstream's signed refresh cast for length-limited scores.
+            let count = score as u64;
             if count > 0 {
                 self.queue.push_birth(
                     PairPriority {
@@ -373,133 +341,34 @@ impl Frontier {
         Ok(())
     }
 }
-struct Driver {
-    local: Option<Store>,
-    senders: Vec<mpsc::Sender<Command>>,
-    receiver: mpsc::Receiver<Completion>,
-    local_ready: VecDeque<Payload>,
-    stop: Arc<AtomicBool>,
-}
-impl Drop for Driver {
-    fn drop(&mut self) {
-        // This guard lives INSIDE thread::scope, so shutdown runs before the
-        // implicit join, including errors, identity restarts, and panics.
-        self.stop.store(true, Ordering::Relaxed);
-        for sender in &self.senders {
-            let _ = sender.send(Command::Stop);
-        }
-    }
-}
-fn execute_task(store: &mut Store, owner: usize, task: Task, stop: &AtomicBool) -> Result<Payload> {
-    #[cfg(test)]
-    let observer = store.hook.clone();
-    #[cfg(test)]
-    if let Some(observer) = &observer {
-        observer(owner, task.sequence, 0, false);
-    }
-    store.run(&task.rule, owner, stop)?;
-    #[cfg(test)]
-    if let Some(observer) = &observer {
-        observer(owner, task.sequence, 0, true);
-    }
-    Ok(Payload {
-        owner,
-        sequence: task.sequence,
-        deltas: store.take_changes(),
-        births: store.take_births(),
-        birth_words: store.take_birth_words(),
-    })
-}
-impl Driver {
-    fn dispatch(&mut self, sequence: usize, rule: Rule) -> Result<()> {
-        if let Some(store) = &mut self.local {
-            self.local_ready.push_back(execute_task(
-                store,
-                0,
-                Task { sequence, rule },
-                &self.stop,
-            )?);
-        } else {
-            for sender in &self.senders {
-                sender
-                    .send(Command::Execute(Task {
-                        sequence,
-                        rule: rule.clone(),
-                    }))
-                    .map_err(|_| "YTTM worker task channel closed")?;
-            }
-        }
-        Ok(())
-    }
-    fn enable_coverage(&mut self) -> Result<Vec<AHashMap<u64, AHashSet<u32>>>> {
-        if let Some(store) = &mut self.local {
-            return Ok(vec![store.enable_coverage()]);
-        }
-        for sender in &self.senders {
-            sender
-                .send(Command::Witnesses)
-                .map_err(|_| "YTTM worker task channel closed")?;
-        }
-        let mut witnesses = vec![AHashMap::new(); self.senders.len()];
-        for _ in 0..self.senders.len() {
-            match self
-                .receiver
-                .recv()
-                .map_err(|_| "YTTM worker completion channel closed")?
-            {
-                Completion::Witnesses(owner, words) => witnesses[owner] = words,
-                Completion::Failed(error) => return Err(error.into()),
-                Completion::Done(_) => return Err("YTTM coverage requires an idle pipeline".into()),
-            }
-        }
-        Ok(witnesses)
-    }
-    fn receive(&mut self) -> Result<Payload> {
-        if self.local.is_some() {
-            return self
-                .local_ready
-                .pop_front()
-                .ok_or_else(|| "YTTM direct owner has no completion".into());
-        }
-        match self
-            .receiver
-            .recv()
-            .map_err(|_| "YTTM worker completion channel closed")?
-        {
-            Completion::Done(payload) => Ok(payload),
-            Completion::Failed(message) => Err(message.into()),
-            Completion::Witnesses(_, _) => Err("unexpected YTTM word coverage response".into()),
-        }
-    }
-}
+
 struct Pending {
     sequence: usize,
     rule: Rule,
     done: Vec<bool>,
     completed: usize,
-    deltas: AHashMap<u64, i128>,
-    births: AHashSet<u64>,
+    scores: AHashMap<u64, i128>,
     birth_words: AHashMap<u64, Vec<AHashSet<u32>>>,
 }
-fn merge_payload(pending: &mut Pending, payload: Payload) -> Result<()> {
+fn merge_payload(pending: &mut Pending, payload: &mut Payload) -> Result<()> {
     if pending.done[payload.owner] {
         return Err("YTTM owner completed one task twice".into());
     }
     pending.done[payload.owner] = true;
     pending.completed += 1;
-    pending.births.extend(payload.births);
-    for (key, words) in payload.birth_words {
+    payload.buffers.births.clear();
+    for (key, words) in payload.buffers.birth_words.drain() {
         let witnesses = pending
             .birth_words
             .entry(key)
             .or_insert_with(|| (0..pending.done.len()).map(|_| AHashSet::new()).collect());
         witnesses[payload.owner].extend(words);
     }
-    for (key, delta) in payload.deltas {
-        let value = pending.deltas.entry(key).or_default();
+    for (key, score) in payload.buffers.scores.drain(..) {
+        let value = pending.scores.entry(key).or_default();
         *value = value
-            .checked_add(delta)
-            .ok_or("YTTM complete task delta exceeds i128")?;
+            .checked_add(score)
+            .ok_or("YTTM complete task score exceeds i128")?;
     }
     Ok(())
 }
@@ -513,27 +382,31 @@ fn coordinate(
     driver: &mut Driver,
     workers: usize,
 ) -> Result<Vec<(Pair, u32)>> {
-    let depth = if workers == 1 { 1 } else { 2 };
+    let depth = 2;
     let mut sequence = 0;
     let mut pending: VecDeque<Pending> = VecDeque::new();
     let mut merges = Vec::new();
+    let mut selection_dirty = true;
     loop {
         // Complete results enter the frontier in rule order; a fast worker may
-        // already have executed the next rule, whose deltas remain private.
+        // already have executed the next rule, whose results remain private.
         while pending
             .front()
             .is_some_and(|task| task.completed == workers)
         {
-            let task = pending.pop_front().expect("checked pending head");
-            frontier.publish(task.deltas, task.births, task.birth_words)?;
+            let mut task = pending.pop_front().expect("checked pending head");
+            if task.rule.reserved {
+                // A reused replacement can have pre-existing counts on owners
+                // that saw no positive event. Such rules run with an idle tail.
+                driver.refresh_scores(&mut task.scores)?;
+            }
+            frontier.publish(task.scores, task.birth_words)?;
+            selection_dirty = true;
         }
-        if word_to_id.len() < trainer.vocab_size && pending.len() < depth {
+        if selection_dirty && word_to_id.len() < trainer.vocab_size && pending.len() < depth {
+            selection_dirty = false;
             let active: Vec<_> = pending.iter().map(|task| task.rule.clone()).collect();
-            if let Some((priority, location)) =
-                frontier
-                    .queue
-                    .top(&frontier.counts, &active, frontier.floor)
-            {
+            if let Some((priority, location)) = driver.select(&mut frontier, &active)? {
                 let pair = key_pair(priority.key);
                 if priority.priority_count >= frontier.floor && !conflicts(pair, &active) {
                     let a = &id_to_word[pair.0 as usize];
@@ -577,8 +450,7 @@ fn coordinate(
                             rule,
                             done: vec![false; workers],
                             completed: 0,
-                            deltas: AHashMap::new(),
-                            births: AHashSet::new(),
+                            scores: AHashMap::new(),
                             birth_words: AHashMap::new(),
                         });
                         sequence += 1;
@@ -591,20 +463,23 @@ fn coordinate(
                             merges.len(),
                             trainer.vocab_size,
                         );
+                        selection_dirty = true;
                         continue;
                     }
                 }
             }
         }
+        driver.resume();
         if pending.is_empty() {
             break;
         }
-        let payload = driver.receive()?;
+        let mut payload = driver.receive()?;
         let task = pending
             .iter_mut()
             .find(|task| task.sequence == payload.sequence)
             .ok_or("YTTM completion refers to an unpublished task")?;
-        merge_payload(task, payload)?;
+        merge_payload(task, &mut payload)?;
+        driver.recycle(payload);
     }
     Ok(merges)
 }
@@ -632,131 +507,19 @@ pub(super) fn train(
     // Same sqrt split as YTTM, applied to the weighted, pre-tokenized input.
     let threshold =
         usize::try_from(mass.isqrt().max(1)).map_err(|_| "YTTM queue threshold exceeds usize")?;
-    let chunk = words.len().div_ceil(workers).max(1);
+    let total = words.len();
+    let mut owner = 0;
     let mut shards: Vec<Vec<(Vec<u32>, u64)>> = (0..workers).map(|_| Vec::new()).collect();
     for (i, word) in words.into_iter().zip(counts).enumerate() {
-        shards[(i / chunk).min(workers - 1)].push(word);
+        while owner + 1 < workers && i >= total * (owner + 1) / workers {
+            owner += 1;
+        }
+        shards[owner].push(word);
     }
     trainer.update_progress(progress, shards.iter().map(Vec::len).sum(), "Count pairs");
-    let stores = std::thread::scope(|scope| {
-        let handles: Vec<_> = shards
-            .into_iter()
-            .map(|shard| scope.spawn(move || Store::build(shard, trainer.max_token_length)))
-            .collect();
-        handles
-            .into_iter()
-            .map(|handle| {
-                handle
-                    .join()
-                    .map_err(|_| "YTTM initialization worker panicked")?
-            })
-            .collect::<Result<Vec<_>>>()
-    })?;
-    let frontier = Frontier::new(&stores, trainer.min_frequency.max(1), threshold)?;
-    trainer.finalize_progress(
-        progress,
-        stores.iter().map(Store::word_count).sum(),
-        "Count pairs",
-    );
-    trainer.update_progress(progress, trainer.vocab_size, "Compute merges");
-    let merges = run_owned(
-        trainer, word_to_id, id_to_word, progress, stores, frontier, workers,
-    )?;
+    let merges = run_sharded(trainer, word_to_id, id_to_word, progress, shards, threshold)?;
     trainer.finalize_progress(progress, merges.len(), "Compute merges");
     Ok(merges)
-}
-
-fn run_owned(
-    trainer: &BpeTrainer,
-    word_to_id: &mut AHashMap<CompactString, u32>,
-    id_to_word: &mut Vec<CompactString>,
-    progress: &Option<ProgressBar>,
-    stores: Vec<Store>,
-    frontier: Frontier,
-    workers: usize,
-) -> Result<Vec<(Pair, u32)>> {
-    let stop = Arc::new(AtomicBool::new(false));
-    let (sender, receiver) = mpsc::channel();
-    if workers == 1 {
-        // Same local state, queue and selection with direct execution: avoid
-        // gratuitous single-core context switches in scaling measurements.
-        let mut driver = Driver {
-            local: stores.into_iter().next(),
-            senders: Vec::new(),
-            receiver,
-            local_ready: VecDeque::new(),
-            stop,
-        };
-        return coordinate(
-            trainer,
-            word_to_id,
-            id_to_word,
-            progress,
-            frontier,
-            &mut driver,
-            workers,
-        );
-    }
-    std::thread::scope(|scope| {
-        let mut senders = Vec::new();
-        for (owner, mut store) in stores.into_iter().enumerate() {
-            let (task_sender, task_receiver) = mpsc::channel();
-            senders.push(task_sender);
-            let sender = sender.clone();
-            let stop = Arc::clone(&stop);
-            scope.spawn(move || {
-                let outcome =
-                    std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| -> Result<()> {
-                        while let Ok(command) = task_receiver.recv() {
-                            if stop.load(Ordering::Relaxed) {
-                                break;
-                            }
-                            match command {
-                                Command::Stop => break,
-                                Command::Witnesses => {
-                                    sender
-                                        .send(Completion::Witnesses(owner, store.enable_coverage()))
-                                        .map_err(|_| "YTTM coordinator exited")?;
-                                }
-                                Command::Execute(task) => {
-                                    let payload = execute_task(&mut store, owner, task, &stop)?;
-                                    sender
-                                        .send(Completion::Done(payload))
-                                        .map_err(|_| "YTTM coordinator exited")?;
-                                }
-                            }
-                        }
-                        Ok(())
-                    }));
-                match outcome {
-                    Ok(Ok(())) => {}
-                    Ok(Err(error)) => {
-                        let _ = sender.send(Completion::Failed(error.to_string()));
-                    }
-                    Err(_) => {
-                        let _ = sender.send(Completion::Failed("YTTM owner panicked".into()));
-                    }
-                }
-            });
-        }
-        drop(sender);
-        let mut driver = Driver {
-            local: None,
-            senders,
-            receiver,
-            local_ready: VecDeque::new(),
-            stop,
-        };
-        coordinate(
-            trainer,
-            word_to_id,
-            id_to_word,
-            progress,
-            frontier,
-            &mut driver,
-            workers,
-        )
-    })
 }
 
 #[cfg(test)]
@@ -848,5 +611,25 @@ mod tests {
             error.to_string().as_str(),
             "YTTM owner panicked" | "YTTM worker task channel closed"
         ));
+    }
+
+    #[test]
+    fn single_owner_runs_on_worker_thread() {
+        let (trainer, mut ids, mut tokens, _, _) = fixture();
+        let mut store = Store::build(
+            vec![(vec![0, 1], 1000), (vec![2, 3], 900), (vec![4, 5], 800)],
+            None,
+        )
+        .unwrap();
+        let coordinator = std::thread::current().id();
+        store.hook = Some(Arc::new(move |owner, _, _, _| {
+            assert_eq!(owner, 0);
+            assert_ne!(std::thread::current().id(), coordinator);
+        }));
+        let stores = vec![store];
+        let frontier = Frontier::new(&stores, 1, 61).unwrap();
+        let merges =
+            run_owned(&trainer, &mut ids, &mut tokens, &None, stores, frontier, 1).unwrap();
+        assert_eq!(merges, [((0, 1), 6), ((2, 3), 7), ((4, 5), 8)]);
     }
 }

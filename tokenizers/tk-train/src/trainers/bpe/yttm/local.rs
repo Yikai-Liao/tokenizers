@@ -6,7 +6,6 @@
 use super::Rule;
 use super::pair_key;
 use ahash::{AHashMap, AHashSet};
-use std::sync::atomic::{AtomicBool, Ordering};
 use tk_encode::Result;
 
 #[cfg(test)]
@@ -31,9 +30,9 @@ impl Node {
     }
 }
 #[derive(Clone, Copy)]
-struct Position {
-    word: u32,
-    node: u32,
+pub(super) struct Position {
+    word: u64,
+    node: u64,
 }
 struct Word {
     nodes: Vec<Node>,
@@ -48,13 +47,11 @@ pub(super) struct Store {
     widths: Option<Vec<Vec<usize>>>,
     pub(super) counts: AHashMap<u64, i128>,
     postings: AHashMap<u64, Vec<Position>>,
-    changes: AHashMap<u64, i128>,
     births: AHashSet<u64>,
     birth_words: AHashMap<u64, AHashSet<u32>>,
     track_words: bool,
     compressed: bool,
     replacement: Option<u32>,
-    tracking: bool,
 }
 impl Store {
     pub(super) fn build(words: Vec<(Vec<u32>, u64)>, max_length: Option<usize>) -> Result<Self> {
@@ -66,13 +63,11 @@ impl Store {
             widths: max_length.map(|_| Vec::new()),
             counts: AHashMap::new(),
             postings: AHashMap::new(),
-            changes: AHashMap::new(),
             births: AHashSet::new(),
             birth_words: AHashMap::new(),
             track_words: false,
             compressed: max_length.is_none(),
             replacement: None,
-            tracking: false,
         };
         for (tokens, weight) in words {
             let word = u32::try_from(store.words.len())
@@ -116,7 +111,6 @@ impl Store {
                 }
             }
         }
-        store.tracking = true;
         Ok(store)
     }
     pub(super) fn enable_coverage(&mut self) -> AHashMap<u64, AHashSet<u32>> {
@@ -126,7 +120,10 @@ impl Store {
             .map(|(&key, positions)| {
                 (
                     key,
-                    positions.iter().map(|position| position.word).collect(),
+                    positions
+                        .iter()
+                        .map(|position| position.word as u32)
+                        .collect(),
                 )
             })
             .collect()
@@ -169,8 +166,8 @@ impl Store {
                         .entry(pair_key((value.val, right)))
                         .or_default()
                         .push(Position {
-                            word: word as u32,
-                            node: node as u32,
+                            word: word as u64,
+                            node: node as u64,
                         });
                 }
             }
@@ -207,15 +204,6 @@ impl Store {
         nodes.push(node);
         Ok(index)
     }
-    fn delta(&mut self, key: u64, amount: i128) -> Result<()> {
-        if self.tracking {
-            let delta = self.changes.entry(key).or_default();
-            *delta = delta
-                .checked_add(amount)
-                .ok_or("YTTM numeric delta exceeds i128")?;
-        }
-        Ok(())
-    }
     fn add(&mut self, key: u64, amount: i128) -> Result<()> {
         if amount == 0 {
             return Ok(());
@@ -224,7 +212,7 @@ impl Store {
         *value = value
             .checked_add(amount)
             .ok_or("YTTM local score exceeds i128")?;
-        self.delta(key, amount)
+        Ok(())
     }
     fn subtract(&mut self, key: u64, amount: i128) -> Result<()> {
         if amount == 0 {
@@ -234,16 +222,9 @@ impl Store {
         *value = value
             .checked_sub(amount)
             .ok_or("YTTM local score exceeds i128")?;
-        if *value == 0 {
-            self.counts.remove(&key);
-        }
-        self.delta(
-            key,
-            amount
-                .checked_neg()
-                .ok_or("YTTM numeric delta exceeds i128")?,
-        )
+        Ok(())
     }
+
     fn boundary_key(&self, word: u32, position: u32) -> u64 {
         let node = self.node(word, position);
         pair_key((node.val, self.node(word, node.next).val))
@@ -264,8 +245,8 @@ impl Store {
         }
         let key = self.boundary_key(word, position);
         self.postings.entry(key).or_default().push(Position {
-            word,
-            node: position,
+            word: u64::from(word),
+            node: u64::from(position),
         });
         if !self.born(key)
             || self.max_length.is_none_or(|max| {
@@ -283,8 +264,8 @@ impl Store {
     fn add_empty_boundary(&mut self, word: u32, position: u32) {
         let key = self.boundary_key(word, position);
         self.postings.entry(key).or_default().push(Position {
-            word,
-            node: position,
+            word: u64::from(word),
+            node: u64::from(position),
         });
     }
     fn self_mass(&self, word: u32, position: u32) -> Result<i128> {
@@ -296,8 +277,8 @@ impl Store {
         let node = self.node(word, position);
         let key = pair_key((node.val, node.val));
         self.postings.entry(key).or_default().push(Position {
-            word,
-            node: position,
+            word: u64::from(word),
+            node: u64::from(position),
         });
         if !self.born(key)
             || self
@@ -353,7 +334,7 @@ impl Store {
         }
         Ok(())
     }
-    pub(super) fn run(&mut self, rule: &Rule, owner: usize, stop: &AtomicBool) -> Result<()> {
+    pub(super) fn begin_rule(&mut self, rule: &Rule, owner: usize) -> Result<Vec<Position>> {
         if rule.reserved && self.compressed {
             self.expand_runs()?;
         }
@@ -365,7 +346,7 @@ impl Store {
         if let Some(witness) = &rule.words {
             let mut retained = Vec::new();
             positions.retain(|position| {
-                if witness[owner].contains(&position.word) {
+                if witness[owner].contains(&(position.word as u32)) {
                     true
                 } else {
                     retained.push(*position);
@@ -376,221 +357,225 @@ impl Store {
                 self.postings.insert(key, retained);
             }
         }
-        if rule.pair.0 == rule.pair.1 {
+        if rule.pair.0 == rule.pair.1 && !self.compressed {
             positions.sort_unstable_by_key(|position| (position.word, position.node));
             positions.dedup_by_key(|position| (position.word, position.node));
         }
+        Ok(positions)
+    }
+    pub(super) fn apply_position(&mut self, rule: &Rule, position: Position) -> Result<()> {
+        let key = pair_key(rule.pair);
         let (x, y) = rule.pair;
         let z = rule.replacement;
-        for position in positions {
-            if stop.load(Ordering::Relaxed) {
-                return Err("YTTM worker stopped".into());
+        // All positions originate from checked u32 local node indices.
+        let word = position.word as u32;
+        let p1 = position.node as u32;
+        let a = self.node(word, p1);
+        if a.len == 0 || a.val != x {
+            return Ok(());
+        }
+        if x == y && self.compressed {
+            if a.len < 2 {
+                return Ok(());
             }
-            let word = position.word;
-            let p1 = position.node;
-            let a = self.node(word, p1);
-            if a.len == 0 || a.val != x {
-                continue;
-            }
-            if x == y && self.compressed {
-                if a.len < 2 {
-                    continue;
-                }
-                // Upstream Word::merge reports neighboring changes but leaves
-                // each applied occurrence in the selected pair's score.
-                self.add(
-                    key,
-                    i128::from(self.words[word as usize].weight) * i128::from(a.len / 2),
-                )?;
-                let p0 = a.prev;
-                let p3 = a.next;
-                self.remove_self(word, p1)?;
-                if p0 != NONE {
-                    self.remove_boundary(word, p0)?;
-                }
-                if p3 != NONE {
-                    self.remove_boundary(word, p1)?;
-                }
-                if a.len.is_multiple_of(2) {
-                    self.set(
-                        word,
-                        p1,
-                        Node {
-                            val: z,
-                            prev: p0,
-                            next: p3,
-                            len: a.len / 2,
-                        },
-                    );
-                    if p0 != NONE {
-                        self.add_boundary(word, p0)?;
-                    }
-                    if p3 != NONE {
-                        self.add_boundary(word, p1)?;
-                    }
-                } else {
-                    let p2 = self.append(
-                        word,
-                        Node {
-                            val: x,
-                            prev: p1,
-                            next: p3,
-                            len: 1,
-                        },
-                    )?;
-                    self.set(
-                        word,
-                        p1,
-                        Node {
-                            val: z,
-                            prev: p0,
-                            next: p2,
-                            len: a.len / 2,
-                        },
-                    );
-                    if p0 != NONE {
-                        self.add_boundary(word, p0)?;
-                    }
-                    self.add_boundary(word, p1)?;
-                    if p3 != NONE {
-                        self.words[word as usize].nodes[p3 as usize].prev = p2;
-                        self.add_boundary(word, p2)?;
-                    }
-                }
-                if a.len / 2 >= 2 {
-                    self.add_self(word, p1)?;
-                }
-                continue;
-            }
-            let p2 = a.next;
-            if p2 == NONE {
-                continue;
-            }
-            let b = self.node(word, p2);
-            if b.len == 0 || b.val != y {
-                continue;
-            }
-            self.add(key, i128::from(self.words[word as usize].weight))?;
+            // Upstream Word::merge reports neighboring changes but leaves
+            // each applied occurrence in the selected pair's score.
+            self.add(
+                key,
+                i128::from(self.words[word as usize].weight) * i128::from(a.len / 2),
+            )?;
             let p0 = a.prev;
-            let p3 = b.next;
-            self.remove_boundary(word, p1)?;
-            if p0 != NONE && a.len == 1 {
+            let p3 = a.next;
+            self.remove_self(word, p1)?;
+            if p0 != NONE {
                 self.remove_boundary(word, p0)?;
             }
-            if p3 != NONE && b.len == 1 {
-                self.remove_boundary(word, p2)?;
+            if p3 != NONE {
+                self.remove_boundary(word, p1)?;
             }
-            match (a.len > 1, b.len > 1) {
-                (true, true) => {
-                    let middle = self.append(
-                        word,
-                        Node {
-                            val: z,
-                            prev: p1,
-                            next: p2,
-                            len: 1,
-                        },
-                    )?;
-                    self.decrement(word, p1)?;
-                    self.decrement(word, p2)?;
-                    self.words[word as usize].nodes[p1 as usize].next = middle;
-                    self.words[word as usize].nodes[p2 as usize].prev = middle;
-                    self.add_boundary(word, p1)?;
-                    self.add_boundary(word, middle)?;
+            if a.len.is_multiple_of(2) {
+                self.set(
+                    word,
+                    p1,
+                    Node {
+                        val: z,
+                        prev: p0,
+                        next: p3,
+                        len: a.len / 2,
+                    },
+                );
+                if p0 != NONE {
+                    self.add_boundary(word, p0)?;
                 }
-                (true, false) => {
-                    self.set(
-                        word,
-                        p2,
-                        Node {
-                            val: z,
-                            prev: p1,
-                            next: p3,
-                            len: 1,
-                        },
-                    );
-                    self.decrement(word, p1)?;
+                if p3 != NONE {
                     self.add_boundary(word, p1)?;
-                    if p3 != NONE {
-                        self.add_boundary(word, p2)?;
-                        self.try_merge(word, p2, p3)?;
-                    }
                 }
-                (false, true) => {
-                    self.set(
-                        word,
-                        p1,
-                        Node {
-                            val: z,
-                            prev: p0,
-                            next: p2,
-                            len: 1,
-                        },
-                    );
-                    self.decrement(word, p2)?;
-                    if p0 != NONE {
-                        self.add_boundary(word, p0)?;
-                    }
+            } else {
+                let p2 = self.append(
+                    word,
+                    Node {
+                        val: x,
+                        prev: p1,
+                        next: p3,
+                        len: 1,
+                    },
+                )?;
+                self.set(
+                    word,
+                    p1,
+                    Node {
+                        val: z,
+                        prev: p0,
+                        next: p2,
+                        len: a.len / 2,
+                    },
+                );
+                if p0 != NONE {
+                    self.add_boundary(word, p0)?;
+                }
+                self.add_boundary(word, p1)?;
+                if p3 != NONE {
+                    self.words[word as usize].nodes[p3 as usize].prev = p2;
+                    self.add_boundary(word, p2)?;
+                }
+            }
+            if a.len / 2 >= 2 {
+                self.add_self(word, p1)?;
+            }
+            return Ok(());
+        }
+        let p2 = a.next;
+        if p2 == NONE {
+            return Ok(());
+        }
+        let b = self.node(word, p2);
+        if b.len == 0 || b.val != y {
+            return Ok(());
+        }
+        self.add(key, i128::from(self.words[word as usize].weight))?;
+        let p0 = a.prev;
+        let p3 = b.next;
+        self.remove_boundary(word, p1)?;
+        if p0 != NONE && a.len == 1 {
+            self.remove_boundary(word, p0)?;
+        }
+        if p3 != NONE && b.len == 1 {
+            self.remove_boundary(word, p2)?;
+        }
+        match (a.len > 1, b.len > 1) {
+            (true, true) => {
+                let middle = self.append(
+                    word,
+                    Node {
+                        val: z,
+                        prev: p1,
+                        next: p2,
+                        len: 1,
+                    },
+                )?;
+                self.decrement(word, p1)?;
+                self.decrement(word, p2)?;
+                self.words[word as usize].nodes[p1 as usize].next = middle;
+                self.words[word as usize].nodes[p2 as usize].prev = middle;
+                self.add_boundary(word, p1)?;
+                self.add_boundary(word, middle)?;
+            }
+            (true, false) => {
+                self.set(
+                    word,
+                    p2,
+                    Node {
+                        val: z,
+                        prev: p1,
+                        next: p3,
+                        len: 1,
+                    },
+                );
+                self.decrement(word, p1)?;
+                self.add_boundary(word, p1)?;
+                if p3 != NONE {
+                    self.add_boundary(word, p2)?;
+                    self.try_merge(word, p2, p3)?;
+                }
+            }
+            (false, true) => {
+                self.set(
+                    word,
+                    p1,
+                    Node {
+                        val: z,
+                        prev: p0,
+                        next: p2,
+                        len: 1,
+                    },
+                );
+                self.decrement(word, p2)?;
+                if p0 != NONE {
+                    self.add_boundary(word, p0)?;
+                }
+                self.add_boundary(word, p1)?;
+                if p0 != NONE {
+                    self.try_merge(word, p0, p1)?;
+                }
+            }
+            (false, false) => {
+                if self.max_length.is_some() {
+                    let width = self
+                        .width(word, p1)
+                        .checked_add(self.width(word, p2))
+                        .ok_or("BPE symbol length overflow")?;
+                    self.widths
+                        .as_mut()
+                        .expect("length-limited words have widths")[word as usize]
+                        [p1 as usize] = width;
+                }
+                self.set(
+                    word,
+                    p1,
+                    Node {
+                        val: z,
+                        prev: p0,
+                        next: p3,
+                        len: 1,
+                    },
+                );
+                self.set(word, p2, Node::dead());
+                if p3 != NONE {
+                    self.words[word as usize].nodes[p3 as usize].prev = p1;
+                }
+                if p0 != NONE {
+                    self.add_boundary(word, p0)?;
+                }
+                if p3 != NONE {
                     self.add_boundary(word, p1)?;
-                    if p0 != NONE {
-                        self.try_merge(word, p0, p1)?;
-                    }
                 }
-                (false, false) => {
-                    if self.max_length.is_some() {
-                        let width = self
-                            .width(word, p1)
-                            .checked_add(self.width(word, p2))
-                            .ok_or("BPE symbol length overflow")?;
-                        self.widths
-                            .as_mut()
-                            .expect("length-limited words have widths")[word as usize]
-                            [p1 as usize] = width;
-                    }
-                    self.set(
-                        word,
-                        p1,
-                        Node {
-                            val: z,
-                            prev: p0,
-                            next: p3,
-                            len: 1,
-                        },
-                    );
-                    self.set(word, p2, Node::dead());
-                    if p3 != NONE {
-                        self.words[word as usize].nodes[p3 as usize].prev = p1;
-                    }
-                    if p0 != NONE {
-                        self.add_boundary(word, p0)?;
-                    }
-                    if p3 != NONE {
-                        self.add_boundary(word, p1)?;
-                    }
-                    let survivor = if p0 != NONE && self.node(word, p0).val == z {
-                        self.try_merge(word, p0, p1)?;
-                        p0
-                    } else {
-                        p1
-                    };
-                    if p3 != NONE {
-                        self.try_merge(word, survivor, p3)?;
-                    }
+                let survivor = if p0 != NONE && self.node(word, p0).val == z {
+                    self.try_merge(word, p0, p1)?;
+                    p0
+                } else {
+                    p1
+                };
+                if p3 != NONE {
+                    self.try_merge(word, survivor, p3)?;
                 }
             }
         }
         Ok(())
     }
-    pub(super) fn take_birth_words(&mut self) -> AHashMap<u64, AHashSet<u32>> {
-        std::mem::take(&mut self.birth_words)
+    pub(super) fn exchange_births(
+        &mut self,
+        births: &mut AHashSet<u64>,
+        words: &mut AHashMap<u64, AHashSet<u32>>,
+    ) {
+        std::mem::swap(&mut self.births, births);
+        std::mem::swap(&mut self.birth_words, words);
     }
-    pub(super) fn take_births(&mut self) -> AHashSet<u64> {
-        std::mem::take(&mut self.births)
-    }
-    pub(super) fn take_changes(&mut self) -> Vec<(u64, i128)> {
-        self.changes
-            .drain()
-            .filter(|(_, amount)| *amount != 0)
-            .collect()
+    pub(super) fn birth_scores_into(&self, scores: &mut Vec<(u64, i128)>) {
+        scores.clear();
+        scores.extend(
+            self.births
+                .iter()
+                .map(|&key| (key, self.counts.get(&key).copied().unwrap_or(0))),
+        );
     }
 }
