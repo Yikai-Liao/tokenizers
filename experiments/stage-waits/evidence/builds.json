@@ -1,0 +1,52 @@
+{
+  "baseline": {
+    "binary_sha256": "070717e030355fb20d7ac13e9a39af744d94afd66179d2ffaa2ab8f7a3da2901",
+    "build_id": "badfc052f99e95b871b75ad85a6e24e3067249bde351ab3af7d4bbc9c799b6a8",
+    "record": "/root/code/tokenizers-bpe-benchmarks/.bench/builds/badfc052f99e95b871b75ad85a6e24e3067249bde351ab3af7d4bbc9c799b6a8/build.json",
+    "source": {
+      "commit": "8faaff79d859bfd6b2417cfe8c93ea2851c3aaca",
+      "dirty": false,
+      "tree": "fda08093a626c8da934f606b26e7d17113bf4d29"
+    }
+  },
+  "diagnostic": {
+    "binary_sha256": "a1b700f48febc9164e04113326c5ebb60d08e3fe636a37751760e1377353b169",
+    "build_id": "9e37fabf2c8dea033cb126e76d66e61d41f70c26910ad576433a3f39ea8ca949",
+    "record": "/root/code/tokenizers-bpe-benchmarks/.bench/builds/9e37fabf2c8dea033cb126e76d66e61d41f70c26910ad576433a3f39ea8ca949/build.json",
+    "source": {
+      "commit": "3465a942645ab82f700e7075d2536bf922ff17c5",
+      "dirty": false,
+      "tree": "7a07d829d39a3db33ac15fd047b6d39ad0865fab"
+    }
+  },
+  "overlap": {
+    "binary_sha256": "419b3a0155ebcff419505c89e2f53463806b75a8b3e4e3633cdccd39b327ee33",
+    "build_id": "988a722121d03818a072b0c8d2cf3fbfdc8c28893b1b243d3f50b4cd51630d07",
+    "record": "/root/code/tokenizers-bpe-benchmarks/.bench/builds/988a722121d03818a072b0c8d2cf3fbfdc8c28893b1b243d3f50b4cd51630d07/build.json",
+    "source": {
+      "commit": "90e85812ff3a5feb5f19cf61c63ddab63d0c3934",
+      "dirty": false,
+      "tree": "66b3342b30a640b71ca215457ca37d556aef8df8"
+    }
+  },
+  "pipeline": {
+    "binary_sha256": "e3bda9bcbe903dafd2ab5e22b477570608b668f1ced6bbae76ef33da0bc20792",
+    "build_id": "8149d986e110c07b7622532465e760168a88f6482eee42aa5e7613705c5aba68",
+    "record": "/root/code/tokenizers-bpe-benchmarks/.bench/builds/8149d986e110c07b7622532465e760168a88f6482eee42aa5e7613705c5aba68/build.json",
+    "source": {
+      "commit": "459d42d8642704477f372d2cd3b5014510d56d3b",
+      "dirty": false,
+      "tree": "9b95f83b97f5ae37a468ed0a045531c879369a18"
+    }
+  },
+  "sortcount": {
+    "binary_sha256": "5e47ca62d9d77558289bc67878290c13bd8eca5d4db35466fb985e3beb486976",
+    "build_id": "b5cf124451362e42f952ac576e11d7930f19fcc1c425ef0668423cb371eca3c5",
+    "record": "/root/code/tokenizers-bpe-benchmarks/.bench/builds/b5cf124451362e42f952ac576e11d7930f19fcc1c425ef0668423cb371eca3c5/build.json",
+    "source": {
+      "commit": "09e9efa40ae3156f66918a7d80bd96266daab167",
+      "dirty": false,
+      "tree": "c80605697bf1d91b7f2ecae06386f1feef98b06d"
+    }
+  }
+}

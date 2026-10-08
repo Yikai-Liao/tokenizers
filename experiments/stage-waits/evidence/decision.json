@@ -1,0 +1,97 @@
+{
+  "cases": {
+    "initial-t4": {
+      "en256-whitespace-v50000": {
+        "pipeline": {
+          "eligible_for_t1": false,
+          "median": 1.1169232541630196,
+          "range": [
+            0.7876504077811649,
+            1.266692404250753
+          ],
+          "samples": [
+            0.7876504077811649,
+            1.266692404250753,
+            1.1169232541630196
+          ]
+        },
+        "sortcount": {
+          "eligible_for_t1": false,
+          "median": 1.0423022613765067,
+          "range": [
+            0.7725790115018254,
+            1.107160319218018
+          ],
+          "samples": [
+            0.7725790115018254,
+            1.107160319218018,
+            1.0423022613765067
+          ]
+        }
+      },
+      "zh256-whitespace-v50000": {
+        "pipeline": {
+          "eligible_for_t1": false,
+          "median": 1.0226457094928336,
+          "range": [
+            0.9751470252412937,
+            1.0286758208057245
+          ],
+          "samples": [
+            0.9751470252412937,
+            1.0286758208057245,
+            1.0226457094928336
+          ]
+        },
+        "sortcount": {
+          "eligible_for_t1": false,
+          "median": 1.0042132196454963,
+          "range": [
+            1.003300676910892,
+            1.024662294690444
+          ],
+          "samples": [
+            1.0042132196454963,
+            1.024662294690444,
+            1.003300676910892
+          ]
+        }
+      }
+    },
+    "overlap-t4": {
+      "en256-whitespace-v50000": {
+        "overlap": {
+          "eligible_for_t1": false,
+          "median": 0.9733764760578463,
+          "range": [
+            0.906390569883854,
+            1.0580254925547738
+          ],
+          "samples": [
+            0.906390569883854,
+            0.9733764760578463,
+            1.0580254925547738
+          ]
+        }
+      },
+      "zh256-whitespace-v50000": {
+        "overlap": {
+          "eligible_for_t1": false,
+          "median": 0.9950127560180166,
+          "range": [
+            0.9320686486396705,
+            1.0081141918909597
+          ],
+          "samples": [
+            1.0081141918909597,
+            0.9950127560180166,
+            0.9320686486396705
+          ]
+        }
+      }
+    }
+  },
+  "eligible_arms": [],
+  "rule": "At least one corpus: all three paired ratios < 1 and median <= 0.95; screening criterion, not statistical significance",
+  "t1": "Skipped under the earlier conditional instruction"
+}

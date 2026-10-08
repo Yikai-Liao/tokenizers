@@ -1,0 +1,38 @@
+{
+  "baseline_source": "8faaff79d859bfd6b2417cfe8c93ea2851c3aaca",
+  "build_profile": {
+    "codegen_units": 1,
+    "lto": "fat",
+    "opt_level": 3,
+    "tk_train_default_features": false
+  },
+  "build_records": {
+    "baseline": {
+      "path": "baseline-build.json.gz",
+      "raw_sha256": "4d2893f68a65ee0cf0eac620ec98abeeb6e57c2ff70422f65e34598cc58aa706",
+      "sha256": "9da46695199c5cc34072bf88423a8041f9c0701b1c954f325efa9a203d5b1bbd"
+    },
+    "diagnostic": {
+      "path": "diagnostic-build.json.gz",
+      "raw_sha256": "5cd2a0a88d32104aaa630ae88d5882c57b37246b185f13f2a730df8cec8649a0",
+      "sha256": "cf71d386374c6b8fec10671f43c4e8e14b81320d6742318da0424530c11c26df"
+    },
+    "overlap": {
+      "path": "overlap-build.json.gz",
+      "raw_sha256": "f38e7ce12a87df9cd32df0e819cdd54d7799eb4a64c143da4b5e1569060c6c5e",
+      "sha256": "a581c918e41ce4329c0363bb172cde45aa558df27e3d739af8361142485802e2"
+    },
+    "pipeline": {
+      "path": "pipeline-build.json.gz",
+      "raw_sha256": "b50bc08677e43989e480fa23354ccd3c62d4a22d531fc20a9b7202ccc1be52ca",
+      "sha256": "44c1604066df7278415850d82f68984d8e99bf57feab8854a5c6cb8b1e5a784b"
+    },
+    "sortcount": {
+      "path": "sortcount-build.json.gz",
+      "raw_sha256": "b86a18d9aa22fb28fc199e9aec66604515a9354852a30c8ef9cf5fbb9c367aee",
+      "sha256": "19bcb9060564ec76c74922b3b4258af113223c3a487f2a3ec7dc576e8aefc226"
+    }
+  },
+  "runner_lock_sha256": "8ceda6c725afdb2c6d8f16049f6e6d1551fb990f408743b04a6517eebd3377a3",
+  "rustflags": ""
+}

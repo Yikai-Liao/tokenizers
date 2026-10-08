@@ -1,0 +1,414 @@
+{
+  "attempted_blocks": 2,
+  "attempts": 4,
+  "cells": [
+    {
+      "case": "zh256-whitespace-v50000",
+      "complete_blocks": 1,
+      "metrics": {
+        "load_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 6.725164979,
+              "median": 6.725164979,
+              "minimum": 6.725164979,
+              "samples": [
+                6.725164979
+              ]
+            },
+            "diagnostic": {
+              "maximum": 6.452927359,
+              "median": 6.452927359,
+              "minimum": 6.452927359,
+              "samples": [
+                6.452927359
+              ]
+            }
+          },
+          "paired_ratios": {
+            "diagnostic": {
+              "median": 0.9595195625906444,
+              "range": [
+                0.9595195625906444,
+                0.9595195625906444
+              ],
+              "samples": [
+                0.9595195625906444
+              ]
+            }
+          }
+        },
+        "process_hwm_kib_before_validation": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 1487032,
+              "median": 1487032,
+              "minimum": 1487032,
+              "samples": [
+                1487032
+              ]
+            },
+            "diagnostic": {
+              "maximum": 1488244,
+              "median": 1488244,
+              "minimum": 1488244,
+              "samples": [
+                1488244
+              ]
+            }
+          },
+          "paired_ratios": {
+            "diagnostic": {
+              "median": 1.000815046347355,
+              "range": [
+                1.000815046347355,
+                1.000815046347355
+              ],
+              "samples": [
+                1.000815046347355
+              ]
+            }
+          }
+        },
+        "process_peak_rss_bytes": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 1523032064,
+              "median": 1523032064,
+              "minimum": 1523032064,
+              "samples": [
+                1523032064
+              ]
+            },
+            "diagnostic": {
+              "maximum": 1524342784,
+              "median": 1524342784,
+              "minimum": 1524342784,
+              "samples": [
+                1524342784
+              ]
+            }
+          },
+          "paired_ratios": {
+            "diagnostic": {
+              "median": 1.0008605990845376,
+              "range": [
+                1.0008605990845376,
+                1.0008605990845376
+              ],
+              "samples": [
+                1.0008605990845376
+              ]
+            }
+          }
+        },
+        "sampled_peak_rss_bytes": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 1523032064,
+              "median": 1523032064,
+              "minimum": 1523032064,
+              "samples": [
+                1523032064
+              ]
+            },
+            "diagnostic": {
+              "maximum": 1524342784,
+              "median": 1524342784,
+              "minimum": 1524342784,
+              "samples": [
+                1524342784
+              ]
+            }
+          },
+          "paired_ratios": {
+            "diagnostic": {
+              "median": 1.0008605990845376,
+              "range": [
+                1.0008605990845376,
+                1.0008605990845376
+              ],
+              "samples": [
+                1.0008605990845376
+              ]
+            }
+          }
+        },
+        "train_cpu_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 23.145364999999998,
+              "median": 23.145364999999998,
+              "minimum": 23.145364999999998,
+              "samples": [
+                23.145364999999998
+              ]
+            },
+            "diagnostic": {
+              "maximum": 21.545001999999997,
+              "median": 21.545001999999997,
+              "minimum": 21.545001999999997,
+              "samples": [
+                21.545001999999997
+              ]
+            }
+          },
+          "paired_ratios": {
+            "diagnostic": {
+              "median": 0.9308560050792026,
+              "range": [
+                0.9308560050792026,
+                0.9308560050792026
+              ],
+              "samples": [
+                0.9308560050792026
+              ]
+            }
+          }
+        },
+        "train_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 7.330004425,
+              "median": 7.330004425,
+              "minimum": 7.330004425,
+              "samples": [
+                7.330004425
+              ]
+            },
+            "diagnostic": {
+              "maximum": 6.976659944,
+              "median": 6.976659944,
+              "minimum": 6.976659944,
+              "samples": [
+                6.976659944
+              ]
+            }
+          },
+          "paired_ratios": {
+            "diagnostic": {
+              "median": 0.9517947793053344,
+              "range": [
+                0.9517947793053344,
+                0.9517947793053344
+              ],
+              "samples": [
+                0.9517947793053344
+              ]
+            }
+          }
+        }
+      },
+      "workers": 4
+    },
+    {
+      "case": "en256-whitespace-v50000",
+      "complete_blocks": 1,
+      "metrics": {
+        "load_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 0.317514972,
+              "median": 0.317514972,
+              "minimum": 0.317514972,
+              "samples": [
+                0.317514972
+              ]
+            },
+            "diagnostic": {
+              "maximum": 0.350062269,
+              "median": 0.350062269,
+              "minimum": 0.350062269,
+              "samples": [
+                0.350062269
+              ]
+            }
+          },
+          "paired_ratios": {
+            "diagnostic": {
+              "median": 1.10250633787436,
+              "range": [
+                1.10250633787436,
+                1.10250633787436
+              ],
+              "samples": [
+                1.10250633787436
+              ]
+            }
+          }
+        },
+        "process_hwm_kib_before_validation": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 139324,
+              "median": 139324,
+              "minimum": 139324,
+              "samples": [
+                139324
+              ]
+            },
+            "diagnostic": {
+              "maximum": 139560,
+              "median": 139560,
+              "minimum": 139560,
+              "samples": [
+                139560
+              ]
+            }
+          },
+          "paired_ratios": {
+            "diagnostic": {
+              "median": 1.001693893370848,
+              "range": [
+                1.001693893370848,
+                1.001693893370848
+              ],
+              "samples": [
+                1.001693893370848
+              ]
+            }
+          }
+        },
+        "process_peak_rss_bytes": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 142786560,
+              "median": 142786560,
+              "minimum": 142786560,
+              "samples": [
+                142786560
+              ]
+            },
+            "diagnostic": {
+              "maximum": 142909440,
+              "median": 142909440,
+              "minimum": 142909440,
+              "samples": [
+                142909440
+              ]
+            }
+          },
+          "paired_ratios": {
+            "diagnostic": {
+              "median": 1.0008605851979346,
+              "range": [
+                1.0008605851979346,
+                1.0008605851979346
+              ],
+              "samples": [
+                1.0008605851979346
+              ]
+            }
+          }
+        },
+        "sampled_peak_rss_bytes": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 142786560,
+              "median": 142786560,
+              "minimum": 142786560,
+              "samples": [
+                142786560
+              ]
+            },
+            "diagnostic": {
+              "maximum": 142880768,
+              "median": 142880768,
+              "minimum": 142880768,
+              "samples": [
+                142880768
+              ]
+            }
+          },
+          "paired_ratios": {
+            "diagnostic": {
+              "median": 1.000659781985083,
+              "range": [
+                1.000659781985083,
+                1.000659781985083
+              ],
+              "samples": [
+                1.000659781985083
+              ]
+            }
+          }
+        },
+        "train_cpu_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 2.115043,
+              "median": 2.115043,
+              "minimum": 2.115043,
+              "samples": [
+                2.115043
+              ]
+            },
+            "diagnostic": {
+              "maximum": 2.2791230000000002,
+              "median": 2.2791230000000002,
+              "minimum": 2.2791230000000002,
+              "samples": [
+                2.2791230000000002
+              ]
+            }
+          },
+          "paired_ratios": {
+            "diagnostic": {
+              "median": 1.0775776189893067,
+              "range": [
+                1.0775776189893067,
+                1.0775776189893067
+              ],
+              "samples": [
+                1.0775776189893067
+              ]
+            }
+          }
+        },
+        "train_seconds": {
+          "by_arm": {
+            "baseline": {
+              "maximum": 1.459862047,
+              "median": 1.459862047,
+              "minimum": 1.459862047,
+              "samples": [
+                1.459862047
+              ]
+            },
+            "diagnostic": {
+              "maximum": 1.29032886,
+              "median": 1.29032886,
+              "minimum": 1.29032886,
+              "samples": [
+                1.29032886
+              ]
+            }
+          },
+          "paired_ratios": {
+            "diagnostic": {
+              "median": 0.8838704058726721,
+              "range": [
+                0.8838704058726721,
+                0.8838704058726721
+              ],
+              "samples": [
+                0.8838704058726721
+              ]
+            }
+          }
+        }
+      },
+      "workers": 4
+    }
+  ],
+  "complete_blocks": 2,
+  "correctness_failed": false,
+  "excluded_blocks": 0,
+  "expected_blocks": 2,
+  "experiment_id": "2f01456d64ecb6e89a045412012e2788627c362e46dc7b8e798ca650bbff8726",
+  "failures": [],
+  "maximum_sampled_swap_bytes": 0,
+  "mode": "core",
+  "performance_conclusion_valid": true,
+  "scaling": []
+}

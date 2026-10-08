@@ -1,0 +1,38 @@
+{
+  "overlap": {
+    "clippy": {
+      "path": "checks/overlap-clippy.log.gz",
+      "raw_sha256": "9a8630fc0062154a36575fdab981f39787607b59a655434c45a4022d13cdb718",
+      "sha256": "7f94e44720c55370728ff0dcf876e5452c8974a49ee2f9e312bd35c9a37fe751"
+    },
+    "tests": {
+      "path": "checks/overlap-tests.log.gz",
+      "raw_sha256": "880e80b22e7610ff5762f9b7cf44fd22dd5ba96020fc6ba01ac55d6b02d0261e",
+      "sha256": "3fbdf19e59f2e90650d8549d516bc0404791d7bc94281459ce5e6f00082f8cde"
+    }
+  },
+  "pipeline": {
+    "clippy": {
+      "path": "checks/pipeline-clippy.log.gz",
+      "raw_sha256": "670f1c4adf899a83ee0250b0ddb77cd09be54355c82b21096c82340114fb063c",
+      "sha256": "47446159d3a72ae1fd7fc741a7bf2df117d247583922f32417a85725a8405333"
+    },
+    "tests": {
+      "path": "checks/pipeline-tests.log.gz",
+      "raw_sha256": "8afc86111a4365862a37f0829e689cd6c2c13ce24360909aeb576c612341a6a7",
+      "sha256": "bbcab48d3af614ebdcf41c108f6d73e0fbb69a3a55486ee1741c8c1350d140a7"
+    }
+  },
+  "sortcount": {
+    "clippy": {
+      "path": "checks/sortcount-clippy.log.gz",
+      "raw_sha256": "3e9a675536b71dd6cfeac25a24220ff04f904c27621cbfb087e760d14f5406e5",
+      "sha256": "da72b93fba291020c943f0d7b0eb430e96282dd3f78af0552718790d2657a7b7"
+    },
+    "tests": {
+      "path": "checks/sortcount-tests.log.gz",
+      "raw_sha256": "6ac6053be7d53773fa9c35373b980644b05c68e44640a288067fb65e0ec2888c",
+      "sha256": "bb289ca77bd32bb43a88a22b3aeefca0c3b8772d9667e8de4306b8a648897d4c"
+    }
+  }
+}

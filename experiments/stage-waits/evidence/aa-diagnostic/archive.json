@@ -1,0 +1,9 @@
+{
+  "attempts": 4,
+  "bytes": 1442864,
+  "members": 63,
+  "model_deduplication": "Sort vocabulary by spelling, preserving IDs and merge order; each verified attempt refers to its identical case model.",
+  "model_values": 2,
+  "path": "raw-metadata-and-models.tar.gz",
+  "sha256": "423d31243b8f438b4248adb8b7453f53ff59f5a4f73b866e1d6a420156a795b0"
+}
