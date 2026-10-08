@@ -464,51 +464,58 @@ mod tests {
 
     #[test]
     fn completed_and_partial_births_publish_once_after_ordered_removals() {
-        for workers in [1, 4] {
-            let execution = Execution::new(workers).unwrap();
-            let arena = AllocationArena::new(workers, 64);
-            execution.pool.install(|| {
-                let old = (0, 1);
-                let complete = (2, 3);
-                let partial = (4, 5);
-                let mut index = PairIndex::from_initial_pairs(
-                    initial(&[(old, 3, 1)], workers, &arena),
-                    IdentityPolicy::FirstActivationOnly,
-                    2,
-                )
-                .unwrap();
-                // Commit follows end_selection, which returns cached fresh
-                // priorities to their heaps before count changes invalidate them.
-                index.begin_selection();
-                index.end_selection();
-                let positions = {
-                    let lease = arena.lease(execution.current_worker());
-                    let mut scratch = super::super::storage::PositionEncodingScratch::default();
-                    SortedPositions::from_sorted(&[9, 12], &mut scratch, &lease).unwrap()
-                };
-                let mut events = MergeEvents {
-                    buckets: 2,
-                    chunks: Vec::new(),
-                };
-                // Each fragment is below the floor; together they must be kept.
-                for position in [2, 7] {
-                    let mut chains = PositionChains::new();
-                    let mut positions = PositionChain::default();
-                    chains.push(&mut positions, position).unwrap();
-                    events.chunks.push(EventChunk {
-                        chains,
-                        changes: vec![PairChanges {
-                            removed_key: pair_key(old),
-                            born_key: pair_key(partial),
-                            removed_weight: 1,
-                            born_weight: 1,
-                            positions,
-                            bucket: 1,
-                        }],
-                    });
-                }
-                index
-                    .commit_merges_with_prepared(
+        for terminal in [false, true] {
+            for workers in [1, 4] {
+                let execution = Execution::new(workers).unwrap();
+                let arena = AllocationArena::new(workers, 64);
+                execution.pool.install(|| {
+                    let commit = if terminal {
+                        PairIndex::commit_terminal_merges
+                    } else {
+                        PairIndex::commit_merges_with_prepared
+                    };
+
+                    let old = (0, 1);
+                    let complete = (2, 3);
+                    let partial = (4, 5);
+                    let mut index = PairIndex::from_initial_pairs(
+                        initial(&[(old, 3, 1)], workers, &arena),
+                        IdentityPolicy::FirstActivationOnly,
+                        2,
+                    )
+                    .unwrap();
+                    // Commit follows end_selection, which returns cached fresh
+                    // priorities to their heaps before count changes invalidate them.
+                    index.begin_selection();
+                    index.end_selection();
+                    let positions = {
+                        let lease = arena.lease(execution.current_worker());
+                        let mut scratch = super::super::storage::PositionEncodingScratch::default();
+                        SortedPositions::from_sorted(&[9, 12], &mut scratch, &lease).unwrap()
+                    };
+                    let mut events = MergeEvents {
+                        buckets: 2,
+                        chunks: Vec::new(),
+                    };
+                    // Each fragment is below the floor; together they must be kept.
+                    for position in [2, 7] {
+                        let mut chains = PositionChains::new();
+                        let mut positions = PositionChain::default();
+                        chains.push(&mut positions, position).unwrap();
+                        events.chunks.push(EventChunk {
+                            chains,
+                            changes: vec![PairChanges {
+                                removed_key: pair_key(old),
+                                born_key: pair_key(partial),
+                                removed_weight: 1,
+                                born_weight: 1,
+                                positions,
+                                bucket: 1,
+                            }],
+                        });
+                    }
+                    commit(
+                        &mut index,
                         &events,
                         6,
                         &execution,
@@ -520,128 +527,160 @@ mod tests {
                         }],
                     )
                     .unwrap();
-                drop(events);
-                index.begin_selection();
-                for (pair, count, expected_positions) in
-                    [(complete, 5, [9, 12]), (partial, 2, [2, 7])]
-                {
-                    assert_eq!(
-                        index.best().unwrap(),
-                        PairPriority {
-                            key: pair_key(pair),
-                            priority_count: count,
+                    drop(events);
+                    if terminal {
+                        for shard in &index.shards {
+                            assert!(!shard.states.contains_key(&pair_key(complete)));
+                            assert!(!shard.states.contains_key(&pair_key(partial)));
                         }
-                    );
-                    assert_eq!(
-                        index.take_best().positions.iter().collect::<Vec<_>>(),
-                        expected_positions,
-                    );
-                }
-                assert!(index.best().is_none(), "no retired key or duplicate birth");
-            });
+                        // The two checked removals retire the old count below
+                        // the selection floor even when publication is omitted.
+                        assert!(
+                            !index.shards[shard_for(pair_key(old), workers)]
+                                .states
+                                .contains_key(&pair_key(old))
+                        );
+                        for route in &index.routes {
+                            route.assert_cleared();
+                        }
+                        return;
+                    }
+                    index.begin_selection();
+                    for (pair, count, expected_positions) in
+                        [(complete, 5, [9, 12]), (partial, 2, [2, 7])]
+                    {
+                        assert_eq!(
+                            index.best().unwrap(),
+                            PairPriority {
+                                key: pair_key(pair),
+                                priority_count: count,
+                            }
+                        );
+                        assert_eq!(
+                            index.take_best().positions.iter().collect::<Vec<_>>(),
+                            expected_positions,
+                        );
+                    }
+                    assert!(index.best().is_none(), "no retired key or duplicate birth");
+                });
+            }
         }
     }
 
     #[test]
     fn reuse_both_checks_removal_before_birth_without_netting() {
-        let execution = Execution::new(1).unwrap();
-        let arena = AllocationArena::new(1, 16);
-        execution.pool.install(|| {
-            let pair = (1, 2);
-            let mut index = PairIndex::from_initial_pairs(
-                initial(&[(pair, i64::MAX as u64, 1)], 1, &arena),
-                IdentityPolicy::AllowActiveReuse,
-                1,
-            )
-            .unwrap();
-            let mut chains = PositionChains::new();
-            let mut positions = PositionChain::default();
-            chains.push(&mut positions, 5).unwrap();
-            let events = MergeEvents {
-                buckets: 2,
-                chunks: vec![EventChunk {
-                    chains,
-                    changes: vec![PairChanges {
-                        removed_key: pair_key(pair),
-                        born_key: pair_key(pair),
-                        removed_weight: 1,
-                        born_weight: 1,
-                        positions,
-                        bucket: 1,
+        for terminal in [false, true] {
+            let execution = Execution::new(1).unwrap();
+            let arena = AllocationArena::new(1, 16);
+            execution.pool.install(|| {
+                let commit = if terminal {
+                    PairIndex::commit_terminal_merges
+                } else {
+                    PairIndex::commit_merges_with_prepared
+                };
+
+                let pair = (1, 2);
+                let mut index = PairIndex::from_initial_pairs(
+                    initial(&[(pair, i64::MAX as u64, 1)], 1, &arena),
+                    IdentityPolicy::AllowActiveReuse,
+                    1,
+                )
+                .unwrap();
+                let mut chains = PositionChains::new();
+                let mut positions = PositionChain::default();
+                chains.push(&mut positions, 5).unwrap();
+                let events = MergeEvents {
+                    buckets: 2,
+                    chunks: vec![EventChunk {
+                        chains,
+                        changes: vec![PairChanges {
+                            removed_key: pair_key(pair),
+                            born_key: pair_key(pair),
+                            removed_weight: 1,
+                            born_weight: 1,
+                            positions,
+                            bucket: 1,
+                        }],
                     }],
-                }],
-            };
-            // Addition first would overflow, although removal first fits.
-            index.commit_merges(&events, 3, &execution, &arena).unwrap();
-            assert_eq!(index.shards[0].ledger[&pair_key(pair)], i64::MAX as u64);
-            index.shards[0]
-                .ledger
-                .insert(pair_key(pair), i64::MIN as u64);
-            // A zero net update still fails at the intermediate subtraction.
-            let error = index
-                .commit_merges(&events, 3, &execution, &arena)
-                .unwrap_err();
-            assert_eq!(
-                error.to_string(),
-                "BPE identity-reuse count subtraction exceeds i64"
-            );
-            for route in &index.routes {
-                route.assert_cleared();
-            }
-            assert!(index.prepared_births.iter().all(Vec::is_empty));
-        });
+                };
+                // Addition first would overflow, although removal first fits.
+                commit(&mut index, &events, 3, &execution, &arena, Vec::new()).unwrap();
+                assert_eq!(index.shards[0].ledger[&pair_key(pair)], i64::MAX as u64);
+                index.shards[0]
+                    .ledger
+                    .insert(pair_key(pair), i64::MIN as u64);
+                // A zero net update still fails at the intermediate subtraction.
+                let error =
+                    commit(&mut index, &events, 3, &execution, &arena, Vec::new()).unwrap_err();
+                assert_eq!(
+                    error.to_string(),
+                    "BPE identity-reuse count subtraction exceeds i64"
+                );
+                for route in &index.routes {
+                    route.assert_cleared();
+                }
+                assert!(index.prepared_births.iter().all(Vec::is_empty));
+            });
+        }
     }
 
     #[test]
     fn fresh_count_error_clears_routed_and_prepared_births_after_join() {
-        let execution = Execution::new(1).unwrap();
-        let arena = AllocationArena::new(1, 16);
-        execution.pool.install(|| {
-            let old = (0, 1);
-            let partial = (2, 3);
-            let complete = (4, 5);
-            let mut index = PairIndex::from_initial_pairs(
-                initial(&[(old, 4, 1)], 1, &arena),
-                IdentityPolicy::FirstActivationOnly,
-                1,
-            )
-            .unwrap();
-            index.begin_selection();
-            index.end_selection();
-            let positions = {
-                let lease = arena.lease(execution.current_worker());
-                let mut scratch = super::super::storage::PositionEncodingScratch::default();
-                SortedPositions::from_sorted(&[9, 12], &mut scratch, &lease).unwrap()
-            };
-            let mut events = MergeEvents {
-                buckets: 2,
-                chunks: Vec::new(),
-            };
-            // Both births route to the sole owner and fill grouping scratch.
-            // The second removal fails after the first has changed the count.
-            for (position, removed_weight) in [(2, 1), (7, 4)] {
-                let mut chains = PositionChains::new();
-                let mut positions = PositionChain::default();
-                chains.push(&mut positions, position).unwrap();
-                events.chunks.push(EventChunk {
-                    chains,
-                    changes: vec![PairChanges {
-                        removed_key: pair_key(old),
-                        born_key: pair_key(partial),
-                        removed_weight,
-                        born_weight: 1,
-                        positions,
-                        bucket: 1,
-                    }],
-                });
-            }
-            let fixture_route = events.route(1);
-            assert_eq!(fixture_route[0].births.len(), 2);
-            // Prepared births are legal only under the fresh policy, and this
-            // complete key is absent from the routed partial births.
-            assert_ne!(complete, partial);
-            let error = index
-                .commit_merges_with_prepared(
+        for terminal in [false, true] {
+            let execution = Execution::new(1).unwrap();
+            let arena = AllocationArena::new(1, 16);
+            execution.pool.install(|| {
+                let commit = if terminal {
+                    PairIndex::commit_terminal_merges
+                } else {
+                    PairIndex::commit_merges_with_prepared
+                };
+
+                let old = (0, 1);
+                let partial = (2, 3);
+                let complete = (4, 5);
+                let mut index = PairIndex::from_initial_pairs(
+                    initial(&[(old, 4, 1)], 1, &arena),
+                    IdentityPolicy::FirstActivationOnly,
+                    1,
+                )
+                .unwrap();
+                index.begin_selection();
+                index.end_selection();
+                let positions = {
+                    let lease = arena.lease(execution.current_worker());
+                    let mut scratch = super::super::storage::PositionEncodingScratch::default();
+                    SortedPositions::from_sorted(&[9, 12], &mut scratch, &lease).unwrap()
+                };
+                let mut events = MergeEvents {
+                    buckets: 2,
+                    chunks: Vec::new(),
+                };
+                // Both births route to the sole owner and fill grouping scratch.
+                // The second removal fails after the first has changed the count.
+                for (position, removed_weight) in [(2, 1), (7, 4)] {
+                    let mut chains = PositionChains::new();
+                    let mut positions = PositionChain::default();
+                    chains.push(&mut positions, position).unwrap();
+                    events.chunks.push(EventChunk {
+                        chains,
+                        changes: vec![PairChanges {
+                            removed_key: pair_key(old),
+                            born_key: pair_key(partial),
+                            removed_weight,
+                            born_weight: 1,
+                            positions,
+                            bucket: 1,
+                        }],
+                    });
+                }
+                let fixture_route = events.route(1);
+                assert_eq!(fixture_route[0].births.len(), 2);
+                // Prepared births are legal only under the fresh policy, and this
+                // complete key is absent from the routed partial births.
+                assert_ne!(complete, partial);
+                let error = commit(
+                    &mut index,
                     &events,
                     6,
                     &execution,
@@ -653,21 +692,22 @@ mod tests {
                     }],
                 )
                 .unwrap_err();
-            assert_eq!(
-                error.to_string(),
-                "BPE fresh removal exceeds the current count"
-            );
-            assert_eq!(index.routes.len(), 1);
-            for route in &index.routes {
-                route.assert_cleared();
-            }
-            assert_eq!(index.prepared_births.len(), 1);
-            assert!(index.prepared_births[0].capacity() >= 1);
-            assert!(index.prepared_births.iter().all(Vec::is_empty));
-            // Cleanup discards buffered entries, not earlier count mutations.
-            // The failed attempt is discarded; selection must not resume.
-            assert_eq!(index.shards[0].states[&pair_key(old)].ledger_count_bits, 3);
-        });
+                assert_eq!(
+                    error.to_string(),
+                    "BPE fresh removal exceeds the current count"
+                );
+                assert_eq!(index.routes.len(), 1);
+                for route in &index.routes {
+                    route.assert_cleared();
+                }
+                assert_eq!(index.prepared_births.len(), 1);
+                assert!(index.prepared_births[0].capacity() >= 1);
+                assert!(index.prepared_births.iter().all(Vec::is_empty));
+                // Cleanup discards buffered entries, not earlier count mutations.
+                // The failed attempt is discarded; selection must not resume.
+                assert_eq!(index.shards[0].states[&pair_key(old)].ledger_count_bits, 3);
+            });
+        }
     }
 
     #[test]

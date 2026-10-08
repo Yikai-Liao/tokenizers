@@ -330,13 +330,23 @@ impl Training<'_> {
             let birth_paths = prepared.birth_paths;
             let events = prepared.apply(corpus);
 
-            index.commit_merges_with_prepared(
-                &events,
-                vocabulary.len(),
-                execution,
-                arena,
-                prepared_births,
-            )?;
+            if vocabulary.len() >= trainer.vocab_size {
+                index.commit_terminal_merges(
+                    &events,
+                    vocabulary.len(),
+                    execution,
+                    arena,
+                    prepared_births,
+                )?;
+            } else {
+                index.commit_merges_with_prepared(
+                    &events,
+                    vocabulary.len(),
+                    execution,
+                    arena,
+                    prepared_births,
+                )?;
+            }
             contiguous_births.observe(birth_shape);
             #[cfg(test)]
             if let Some(observer) = birth_observe.as_mut() {

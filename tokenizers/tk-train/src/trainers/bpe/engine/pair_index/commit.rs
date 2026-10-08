@@ -35,6 +35,30 @@ impl<'arena> PairIndex<'arena> {
         arena: &'arena AllocationArena,
         births: Vec<CompletedBirth<'arena>>,
     ) -> Result<()> {
+        self.commit_merges_impl::<true>(events, identities, execution, arena, births)
+    }
+
+    /// Validate the final batch's ordered counts and position encodings without
+    /// constructing index entries or priorities that no next selection will read.
+    pub(in super::super) fn commit_terminal_merges(
+        &mut self,
+        events: &MergeEvents,
+        identities: usize,
+        execution: &Execution,
+        arena: &'arena AllocationArena,
+        births: Vec<CompletedBirth<'arena>>,
+    ) -> Result<()> {
+        self.commit_merges_impl::<false>(events, identities, execution, arena, births)
+    }
+
+    fn commit_merges_impl<const PUBLISH: bool>(
+        &mut self,
+        events: &MergeEvents,
+        identities: usize,
+        execution: &Execution,
+        arena: &'arena AllocationArena,
+        births: Vec<CompletedBirth<'arena>>,
+    ) -> Result<()> {
         let policy = self.policy;
         let floor = self.minimum_frequency.max(1);
         let router = ShardRouter::new(self.shards.len());
@@ -67,8 +91,8 @@ impl<'arena> PairIndex<'arena> {
                     // It stays before worker leases and ordered count actions.
                     route.group_births(events);
                     shard.apply_ordered_counts(route, events, policy, floor)?;
-                    shard.publish_completed_births(prepared, policy);
-                    shard.reduce_encode_and_publish_births(
+                    shard.publish_completed_births::<PUBLISH>(prepared, policy);
+                    shard.reduce_encode_and_publish_births::<PUBLISH>(
                         route, events, identities, execution, arena, policy, floor,
                     )
                 },
@@ -164,14 +188,16 @@ impl<'arena> PairShard<'arena> {
     /// Publish sole-producer fresh births after ordered counts and before routed
     /// birth reduction. Move the encoded lists directly into index state; each
     /// key must be new here and absent from the remaining routed birth chains.
-    fn publish_completed_births(
+    fn publish_completed_births<const PUBLISH: bool>(
         &mut self,
         births: &mut Vec<CompletedBirth<'arena>>,
         policy: IdentityPolicy,
     ) {
         debug_assert!(births.is_empty() || policy == IdentityPolicy::FirstActivationOnly);
         for birth in births.drain(..) {
-            self.insert_fresh(birth.key, birth.weight, birth.positions);
+            if PUBLISH {
+                self.insert_fresh(birth.key, birth.weight, birth.positions);
+            }
         }
     }
 
@@ -204,7 +230,7 @@ impl<'arena> PairShard<'arena> {
     /// return, within the existing joined owner phase; no per-key position copy or
     /// extra parallel phase is introduced. Errors require discarding the attempt.
     #[allow(clippy::too_many_arguments)]
-    fn reduce_encode_and_publish_births(
+    fn reduce_encode_and_publish_births<const PUBLISH: bool>(
         &mut self,
         route: &OwnerRoute,
         events: &MergeEvents,
@@ -215,7 +241,7 @@ impl<'arena> PairShard<'arena> {
         floor: u64,
     ) -> Result<Vec<MergeCandidate<'arena>>> {
         if route.births.is_empty() {
-            if policy == IdentityPolicy::FirstActivationOnly {
+            if PUBLISH && policy == IdentityPolicy::FirstActivationOnly {
                 self.prepare_prefix(floor);
             }
             return Ok(Vec::new());
@@ -325,7 +351,11 @@ impl<'arena> PairShard<'arena> {
                     };
                     debug_assert_eq!(positions.len(), group.occurrences);
 
-                    if policy == IdentityPolicy::FirstActivationOnly {
+                    if !PUBLISH {
+                        // Encoding still validates sortedness, length and resident
+                        // bounds. Only the unconsumed index/queue state is omitted.
+                        drop(positions);
+                    } else if policy == IdentityPolicy::FirstActivationOnly {
                         self.insert_fresh(key, count, positions);
                     } else {
                         candidates.push(MergeCandidate {
@@ -340,7 +370,7 @@ impl<'arena> PairShard<'arena> {
                 fragments.clear();
             }
 
-            if policy == IdentityPolicy::FirstActivationOnly {
+            if PUBLISH && policy == IdentityPolicy::FirstActivationOnly {
                 // PERF: Refill while this owner is already running. A
                 // separate pool phase would schedule the same owners again.
                 self.prepare_prefix(floor);
