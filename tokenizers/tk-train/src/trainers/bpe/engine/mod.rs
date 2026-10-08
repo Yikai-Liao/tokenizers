@@ -240,8 +240,12 @@ impl Training<'_> {
         );
         execution.expect_id_domain(expected_ids);
         let mut corpus = prepared_corpus.materialize::<S>(workers, policy, progress)?;
-        let mut index =
-            pair_index::PairIndex::from_initial_pairs(initial, policy, trainer.min_frequency)?;
+        let mut index = pair_index::PairIndex::from_initial_pairs(
+            initial,
+            policy,
+            trainer.min_frequency,
+            Some(&vocabulary.ascii_ids()),
+        )?;
 
         let merges = match self.merge_loop(
             &mut vocabulary,

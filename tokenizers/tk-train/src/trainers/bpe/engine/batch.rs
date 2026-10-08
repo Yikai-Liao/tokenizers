@@ -160,6 +160,7 @@ mod tests {
                     initial,
                     IdentityPolicy::FirstActivationOnly,
                     1,
+                    None,
                 )
                 .unwrap();
                 let mut batch = RuleBatch::default();

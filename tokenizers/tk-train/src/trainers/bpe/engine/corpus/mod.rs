@@ -470,7 +470,7 @@ mod tests {
             )
             .unwrap();
             let mut index =
-                PairIndex::from_initial_pairs(initial, IdentityPolicy::AllowActiveReuse, 2)
+                PairIndex::from_initial_pairs(initial, IdentityPolicy::AllowActiveReuse, 2, None)
                     .unwrap();
             for (round, (pair, count, position, replacement, reused)) in [
                 ((0, 1), 3, 1, 3, true),
@@ -559,7 +559,7 @@ mod tests {
             )
             .unwrap();
             let mut index =
-                PairIndex::from_initial_pairs(initial, IdentityPolicy::AllowActiveReuse, 1)
+                PairIndex::from_initial_pairs(initial, IdentityPolicy::AllowActiveReuse, 1, None)
                     .unwrap();
             assert_eq!(index.best().unwrap().priority_count, 3);
             let candidate = index.take_best();

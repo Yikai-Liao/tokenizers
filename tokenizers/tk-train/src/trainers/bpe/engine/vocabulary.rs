@@ -219,6 +219,15 @@ impl Vocabulary {
     pub(super) fn len(&self) -> usize {
         self.tokens.len()
     }
+    /// Plain one-byte token IDs. Decorations and missing characters stay outside
+    /// the ASCII pair grid, independently of their numeric vocabulary IDs.
+    pub(super) fn ascii_ids(&self) -> [u32; 128] {
+        std::array::from_fn(|byte| {
+            self.tokens
+                .get_index_of(std::str::from_utf8(&[byte as u8]).expect("ASCII is UTF-8"))
+                .map_or(WORD_SEPARATOR_ID, |id| id as u32)
+        })
+    }
     pub(super) fn merge_token(&self, pair: Pair) -> MergeToken {
         let left = self.tokens[pair.0 as usize].as_str();
         let right = self.tokens[pair.1 as usize].as_str();

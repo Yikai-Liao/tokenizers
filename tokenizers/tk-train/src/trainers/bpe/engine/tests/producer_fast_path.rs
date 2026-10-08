@@ -124,6 +124,7 @@ fn owner_single_producer_requires_full_task_and_prunes_complete_births() {
                     initial,
                     IdentityPolicy::FirstActivationOnly,
                     2,
+                    None,
                 )
                 .unwrap();
                 let mut rules = Vec::new();

@@ -1,10 +1,12 @@
 //! Frequency interpretation, candidate snapshots, and birth cohort ownership.
 //! Fresh domains can retire low counts permanently. Reusable identities preserve
 //! a signed ledger and a separate position owner for each published birth cohort.
+mod ascii_grid;
 mod commit;
 use super::storage::SortedPositions;
 use super::{IdentityPolicy, initial_pairs::InitialPairTable};
 use ahash::AHashMap;
+use ascii_grid::{AsciiIds, PairStates};
 use dary_heap::OctonaryHeap;
 use rayon::prelude::*;
 use std::{cmp::Ordering, collections::VecDeque};
@@ -131,7 +133,7 @@ struct PairShard<'arena> {
     // Fresh states own position lists. Reusable IDs publish independent cohorts, so
     // their count table stores only numeric ledger bits, including zero/negative
     // values. Exactly one table is populated after initialization.
-    states: AHashMap<u64, PairState<'arena>>,
+    states: PairStates<'arena>,
     ledger: AHashMap<u64, u64>,
     priorities: OctonaryHeap<PairPriority>,
     prefix: VecDeque<PairPriority>,
@@ -234,6 +236,7 @@ impl<'arena> PairIndex<'arena> {
         initial: InitialPairTable<'arena>,
         policy: IdentityPolicy,
         minimum_frequency: u64,
+        ascii_ids: Option<&[u32; 128]>,
     ) -> Result<Self> {
         if policy == IdentityPolicy::AllowActiveReuse
             && (initial.weighted_mass > i64::MAX as u128
@@ -241,6 +244,10 @@ impl<'arena> PairIndex<'arena> {
         {
             return Err("BPE identity-reuse weighted edge mass or word weight exceeds i64".into());
         }
+        let ascii = ascii_ids
+            .filter(|_| policy == IdentityPolicy::FirstActivationOnly)
+            .and_then(AsciiIds::new)
+            .map(std::sync::Arc::new);
         let outputs: Vec<_> = initial
             .shards
             .into_par_iter()
@@ -273,7 +280,7 @@ impl<'arena> PairIndex<'arena> {
                     OctonaryHeap::new()
                 };
                 let mut shard = PairShard {
-                    states,
+                    states: PairStates::new(states, ascii.clone()),
                     ledger,
                     priorities,
                     prefix: VecDeque::with_capacity(4),
@@ -475,6 +482,7 @@ mod tests {
                     initial(&[(old, 3, 1)], workers, &arena),
                     IdentityPolicy::FirstActivationOnly,
                     2,
+                    Some(&std::array::from_fn(|id| id as u32)),
                 )
                 .unwrap();
                 // Commit follows end_selection, which returns cached fresh
@@ -552,6 +560,7 @@ mod tests {
                 initial(&[(pair, i64::MAX as u64, 1)], 1, &arena),
                 IdentityPolicy::AllowActiveReuse,
                 1,
+                None,
             )
             .unwrap();
             let mut chains = PositionChains::new();
@@ -604,6 +613,7 @@ mod tests {
                 initial(&[(old, 4, 1)], 1, &arena),
                 IdentityPolicy::FirstActivationOnly,
                 1,
+                Some(&std::array::from_fn(|id| id as u32)),
             )
             .unwrap();
             index.begin_selection();
@@ -666,7 +676,14 @@ mod tests {
             assert!(index.prepared_births.iter().all(Vec::is_empty));
             // Cleanup discards buffered entries, not earlier count mutations.
             // The failed attempt is discarded; selection must not resume.
-            assert_eq!(index.shards[0].states[&pair_key(old)].ledger_count_bits, 3);
+            assert_eq!(
+                index.shards[0]
+                    .states
+                    .get(&pair_key(old))
+                    .unwrap()
+                    .ledger_count_bits,
+                3
+            );
         });
     }
 
@@ -687,6 +704,7 @@ mod tests {
                 initial(&items, 2, &arena),
                 IdentityPolicy::FirstActivationOnly,
                 3,
+                Some(&std::array::from_fn(|id| id as u32)),
             )
             .unwrap();
             index.prepare_prefixes();
@@ -756,6 +774,7 @@ mod tests {
                 initial(&[(low, 1, 1), (high, 2, 2)], 2, &arena),
                 IdentityPolicy::AllowActiveReuse,
                 1,
+                None,
             )
             .unwrap();
             let events = MergeEvents {
@@ -795,6 +814,7 @@ mod tests {
                 initial(&[(pair, 0, 1), ((3, 4), 10, 2)], 1, &arena),
                 IdentityPolicy::AllowActiveReuse,
                 3,
+                None,
             )
             .unwrap();
             for (position, weight) in [(5, 1), (7, 2)] {
@@ -834,6 +854,7 @@ mod tests {
                 initial(&[(pair, 0, 1)], 1, &arena),
                 IdentityPolicy::AllowActiveReuse,
                 1,
+                None,
             )
             .unwrap();
             let mut chains = PositionChains::new();
@@ -870,6 +891,7 @@ mod tests {
                 initial(&items, 1, &arena),
                 IdentityPolicy::FirstActivationOnly,
                 2,
+                None,
             )
             .unwrap();
             index.end_selection();
