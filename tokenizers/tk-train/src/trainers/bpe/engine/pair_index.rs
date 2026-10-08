@@ -133,8 +133,54 @@ struct PairShard<'arena> {
     // values. Exactly one table is populated after initialization.
     states: AHashMap<u64, PairState<'arena>>,
     ledger: AHashMap<u64, u64>,
-    priorities: OctonaryHeap<PairPriority>,
+    priorities: FreshPriorities,
     prefix: VecDeque<PairPriority>,
+}
+/// Initial snapshots form a sorted cold frontier. Births and repaired snapshots
+/// enter the hot heap; selection always compares both before certifying a head.
+#[derive(Default)]
+struct FreshPriorities {
+    cold: Vec<PairPriority>,
+    hot: OctonaryHeap<PairPriority>,
+}
+impl FreshPriorities {
+    fn from_initial(mut cold: Vec<PairPriority>) -> Self {
+        cold.sort_unstable();
+        Self {
+            cold,
+            hot: OctonaryHeap::new(),
+        }
+    }
+    fn cold_first(&self) -> bool {
+        self.cold
+            .last()
+            .is_some_and(|cold| self.hot.peek().is_none_or(|hot| cold >= hot))
+    }
+    fn peek(&self) -> Option<&PairPriority> {
+        if self.cold_first() {
+            self.cold.last()
+        } else {
+            self.hot.peek()
+        }
+    }
+    fn pop(&mut self) -> Option<PairPriority> {
+        if self.cold_first() {
+            self.cold.pop()
+        } else {
+            self.hot.pop()
+        }
+    }
+    fn push(&mut self, priority: PairPriority) {
+        self.hot.push(priority);
+    }
+    fn repair_head(&mut self, priority: PairPriority) {
+        if self.cold_first() {
+            self.cold.pop();
+            self.hot.push(priority);
+        } else {
+            *self.hot.peek_mut().expect("the observed head exists") = priority;
+        }
+    }
 }
 enum Selection<'arena> {
     Fresh {
@@ -181,7 +227,7 @@ impl PairShard<'_> {
         }
         self.prefix.front().copied()
     }
-    fn heap_exact(&mut self, floor: u64) -> Option<PairPriority> {
+    fn queue_exact(&mut self, floor: u64) -> Option<PairPriority> {
         loop {
             let top = self.priorities.peek().copied()?;
             let Some(state) = self.states.get(&top.key) else {
@@ -197,13 +243,10 @@ impl PairShard<'_> {
             if top.priority_count != count {
                 // Counts of an existing fresh key only decrease. Correcting its
                 // upper bound can reveal another winner; compare again afterward.
-                *self
-                    .priorities
-                    .peek_mut()
-                    .expect("the observed heap head exists") = PairPriority {
+                self.priorities.repair_head(PairPriority {
                     key: top.key,
                     priority_count: count,
-                };
+                });
                 continue;
             }
             return Some(top);
@@ -221,7 +264,7 @@ impl PairShard<'_> {
     }
     fn prepare_prefix(&mut self, floor: u64) {
         for _ in self.prefix.len()..4 {
-            let Some(candidate) = self.heap_exact(floor) else {
+            let Some(candidate) = self.queue_exact(floor) else {
                 break;
             };
             self.priorities.pop();
@@ -248,13 +291,15 @@ impl<'arena> PairIndex<'arena> {
                 let mut candidates = Vec::new();
                 let mut ledger = AHashMap::new();
                 let priorities = if policy == IdentityPolicy::FirstActivationOnly {
-                    states
-                        .iter()
-                        .map(|(&key, state)| PairPriority {
-                            key,
-                            priority_count: state.ledger_count_bits,
-                        })
-                        .collect()
+                    FreshPriorities::from_initial(
+                        states
+                            .iter()
+                            .map(|(&key, state)| PairPriority {
+                                key,
+                                priority_count: state.ledger_count_bits,
+                            })
+                            .collect(),
+                    )
                 } else {
                     ledger =
                         AHashMap::with_capacity_and_hasher(states.len(), states.hasher().clone());
@@ -270,7 +315,7 @@ impl<'arena> PairIndex<'arena> {
                             });
                         }
                     }
-                    OctonaryHeap::new()
+                    FreshPriorities::default()
                 };
                 let mut shard = PairShard {
                     states,
@@ -672,74 +717,86 @@ mod tests {
 
     #[test]
     fn interrupted_frontier_corrects_stale_counts_and_keeps_birth_ties() {
-        let execution = Execution::new(2).unwrap();
-        let arena = AllocationArena::new(2, 6);
-        execution.pool.install(|| {
-            let items = [
-                ((0, 1), 9, 1),
-                ((1, 2), 8, 2),
-                ((2, 3), 8, 3),
-                ((3, 4), 5, 4),
-                ((5, 6), 8, 5),
-                ((6, 7), 7, 6),
-            ];
-            let mut index = PairIndex::from_initial_pairs(
-                initial(&items, 2, &arena),
-                IdentityPolicy::FirstActivationOnly,
-                3,
-            )
-            .unwrap();
-            index.prepare_prefixes();
-            index.begin_selection();
-            assert_eq!(key_pair(index.best().unwrap().key), (0, 1));
-            index.take_best();
-            index.end_selection();
-            let mut chains = PositionChains::new();
-            let mut positions = PositionChain::default();
-            chains.push(&mut positions, 7).unwrap();
-            let mut changes: Vec<_> = [((1, 2), 6), ((2, 3), 4), ((3, 4), 5)]
-                .into_iter()
-                .map(|(pair, weight)| PairChanges {
-                    removed_key: pair_key(pair),
-                    born_key: pair_key((4, 8)),
-                    removed_weight: weight,
-                    born_weight: 0,
-                    positions: PositionChain::default(),
-                    bucket: 1,
-                })
-                .collect();
-            changes.push(PairChanges {
-                removed_key: pair_key((8, 9)),
-                born_key: pair_key((4, 8)),
-                removed_weight: 0,
-                born_weight: 8,
-                positions,
-
-                bucket: 1,
-            });
-            let events = MergeEvents {
-                buckets: 2,
-                chunks: vec![EventChunk { chains, changes }],
-            };
-            index
-                .commit_merges(&events, 10, &execution, &arena)
+        for workers in [1, 2] {
+            let execution = Execution::new(workers).unwrap();
+            let arena = AllocationArena::new(workers, 7);
+            execution.pool.install(|| {
+                let items = [
+                    ((0, 1), 9, 1),
+                    ((1, 2), 8, 2),
+                    ((2, 3), 8, 3),
+                    ((3, 4), 5, 4),
+                    ((5, 6), 8, 5),
+                    ((6, 7), 7, 6),
+                    ((8, 9), 6, 8),
+                ];
+                let mut index = PairIndex::from_initial_pairs(
+                    initial(&items, workers, &arena),
+                    IdentityPolicy::FirstActivationOnly,
+                    3,
+                )
                 .unwrap();
-            drop(events);
-            index.prepare_prefixes();
-            // Independent priority list: descend by frequency, ascend by full pair.
-            let mut expected = vec![((2, 3), 4), ((5, 6), 8), ((6, 7), 7), ((4, 8), 8)];
-            expected.sort_by(|(left, lc), (right, rc)| rc.cmp(lc).then_with(|| left.cmp(right)));
-            for (pair, count) in expected {
+                // Seven snapshots exceed one owner's four-entry prefix: the cold
+                // frontier remains live across interrupted selection and commit.
+                index.prepare_prefixes();
                 index.begin_selection();
-                let winner = index.best().unwrap();
-                assert_eq!((key_pair(winner.key), winner.priority_count), (pair, count));
+                assert_eq!(key_pair(index.best().unwrap().key), (0, 1));
                 index.take_best();
                 index.end_selection();
-            }
-            index.begin_selection();
-            assert!(index.best().is_none());
-            index.end_selection();
-        });
+                let mut chains = PositionChains::new();
+                let mut positions = PositionChain::default();
+                chains.push(&mut positions, 7).unwrap();
+                let mut changes: Vec<_> = [((1, 2), 6), ((2, 3), 4), ((3, 4), 5), ((8, 9), 2)]
+                    .into_iter()
+                    .map(|(pair, weight)| PairChanges {
+                        removed_key: pair_key(pair),
+                        born_key: pair_key((4, 8)),
+                        removed_weight: weight,
+                        born_weight: 0,
+                        positions: PositionChain::default(),
+                        bucket: 1,
+                    })
+                    .collect();
+                changes.push(PairChanges {
+                    removed_key: pair_key((8, 9)),
+                    born_key: pair_key((4, 8)),
+                    removed_weight: 0,
+                    born_weight: 8,
+                    positions,
+
+                    bucket: 1,
+                });
+                let events = MergeEvents {
+                    buckets: 2,
+                    chunks: vec![EventChunk { chains, changes }],
+                };
+                index
+                    .commit_merges(&events, 10, &execution, &arena)
+                    .unwrap();
+                drop(events);
+                index.prepare_prefixes();
+                // Independent priority list: descend by frequency, ascend by full pair.
+                let mut expected = vec![
+                    ((2, 3), 4),
+                    ((5, 6), 8),
+                    ((6, 7), 7),
+                    ((4, 8), 8),
+                    ((8, 9), 4),
+                ];
+                expected
+                    .sort_by(|(left, lc), (right, rc)| rc.cmp(lc).then_with(|| left.cmp(right)));
+                for (pair, count) in expected {
+                    index.begin_selection();
+                    let winner = index.best().unwrap();
+                    assert_eq!((key_pair(winner.key), winner.priority_count), (pair, count));
+                    index.take_best();
+                    index.end_selection();
+                }
+                index.begin_selection();
+                assert!(index.best().is_none());
+                index.end_selection();
+            });
+        }
     }
     #[test]
     fn cohort_negative_count_repairs_only_when_its_snapshot_reaches_the_head() {
