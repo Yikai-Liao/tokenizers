@@ -11,6 +11,7 @@ fn weighted_ties_unicode_aa_and_reserved_id_activations() {
         ("abcabc", 4),
         ("测试测试", 7),
         ("ééé", 2),
+        ("\u{7f}\u{80}\u{ff}\u{100}\u{ffff}\u{10000}\u{10ffff}", 2),
         ("baab", 0),
     ]);
     for special in [
@@ -37,6 +38,7 @@ fn affixes_aliases_and_strict_length_boundaries() {
         ("baaba", 4),
         ("测试测试", 3),
         ("ccc", 1),
+        ("\u{7f}\u{80}\u{ffff}\u{10000}\u{10ffff}", 2),
     ]);
     // Named cases retain the distinct birth gates, identity collisions, and
     // empty-affix behavior without repeating every unrelated combination.
@@ -92,6 +94,7 @@ fn pruning_waits_for_all_birth_producers_and_alphabet_filtering() {
         ("caba", 4),
         ("测试测试", 3),
         ("ccc", 1),
+        ("\u{7f}\u{80}\u{ffff}\u{10000}\u{10ffff}", 2),
     ]);
     check(&trainer, &words);
     // The mainline oracle shares alphabet construction. A literal expectation

@@ -29,7 +29,7 @@ pub(super) struct MergeIdentity {
     pub(super) reused_active_id: bool,
 }
 pub(super) struct InitialTokenIds {
-    characters: Vec<u32>,
+    characters: CharacterIds,
     decorated: Vec<[u32; 3]>,
     prefix: bool,
     suffix: bool,
@@ -37,6 +37,74 @@ pub(super) struct InitialTokenIds {
     // Conservative bound on IDs scan_symbols can emit, including decorations
     // and unused single-character IDs, but excluding the separator sentinel.
     maximum_initial_id: u32,
+}
+/// The bitmap/rank layout used by tk-encode's SparseFold, with ASCII direct
+/// lookup and non-BMP keys kept separately. Missing characters stay filtered;
+/// training has no inference byte fallback or internal-ID remapping here.
+struct CharacterIds {
+    ascii: [u32; 128],
+    rows: Box<[u64]>,
+    row_start: Box<[u32]>,
+    symbols: Box<[u32]>,
+    non_bmp: ahash::AHashMap<char, u32>,
+}
+impl CharacterIds {
+    fn new(mapping: impl Iterator<Item = (char, u32)>) -> Self {
+        let mut bmp = vec![WORD_SEPARATOR_ID; 0x10000];
+        let mut non_bmp = ahash::AHashMap::new();
+        for (character, id) in mapping {
+            if (character as u32) < 0x10000 {
+                bmp[character as usize] = id;
+            } else {
+                non_bmp.insert(character, id);
+            }
+        }
+        let mut rows = vec![0_u64; 1024];
+        for (codepoint, &id) in bmp.iter().enumerate() {
+            if id != WORD_SEPARATOR_ID {
+                rows[codepoint >> 6] |= 1_u64 << (codepoint & 63);
+            }
+        }
+        let mut row_start = Vec::with_capacity(rows.len());
+        let mut seen = 0;
+        for &row in &rows {
+            row_start.push(seen);
+            seen += row.count_ones();
+        }
+        let mut ascii = [WORD_SEPARATOR_ID; 128];
+        ascii.copy_from_slice(&bmp[..128]);
+        Self {
+            ascii,
+            rows: rows.into_boxed_slice(),
+            row_start: row_start.into_boxed_slice(),
+            symbols: bmp
+                .into_iter()
+                .filter(|&id| id != WORD_SEPARATOR_ID)
+                .collect(),
+            non_bmp,
+        }
+    }
+    #[inline]
+    fn get(&self, character: char) -> u32 {
+        let codepoint = character as usize;
+        if codepoint < 128 {
+            self.ascii[codepoint]
+        } else if codepoint < 0x10000 {
+            let row = codepoint >> 6;
+            let column = codepoint & 63;
+            let bits = self.rows[row];
+            if (bits >> column) & 1 == 0 {
+                return WORD_SEPARATOR_ID;
+            }
+            let before = (bits & ((1_u64 << column) - 1)).count_ones();
+            self.symbols[(self.row_start[row] + before) as usize]
+        } else {
+            self.non_bmp
+                .get(&character)
+                .copied()
+                .unwrap_or(WORD_SEPARATOR_ID)
+        }
+    }
 }
 impl Vocabulary {
     pub(super) fn initialize(
@@ -133,23 +201,25 @@ impl Vocabulary {
         word_counts: WordCountsView<'_>,
         work: &WorkProgress,
     ) -> Result<InitialTokenIds> {
+        let mut maximum_initial_id = 0;
+        let characters =
+            CharacterIds::new(self.tokens.iter().enumerate().filter_map(|(id, token)| {
+                let mut chars = token.chars();
+                let character = chars.next()?;
+                if chars.next().is_some() {
+                    return None;
+                }
+                maximum_initial_id = maximum_initial_id.max(id as u32);
+                Some((character, id as u32))
+            }));
         let mut ids = InitialTokenIds {
-            characters: vec![WORD_SEPARATOR_ID; 0x110000],
+            characters,
             decorated: Vec::new(),
             prefix: self.prefix.as_deref().is_some_and(|p| !p.is_empty()),
             suffix: self.suffix.as_deref().is_some_and(|s| !s.is_empty()),
             complete_alphabet: self.plain_ids_resolved,
-            maximum_initial_id: 0,
+            maximum_initial_id,
         };
-        for (id, token) in self.tokens.iter().enumerate() {
-            let mut chars = token.chars();
-            if let Some(character) = chars.next()
-                && chars.next().is_none()
-            {
-                ids.characters[character as usize] = id as u32;
-                ids.maximum_initial_id = ids.maximum_initial_id.max(id as u32);
-            }
-        }
         if ids.prefix || ids.suffix {
             ids.decorated
                 .resize(self.tokens.len(), [WORD_SEPARATOR_ID; 3]);
@@ -163,7 +233,7 @@ impl Vocabulary {
         // Allocate decorated IDs in the input view's traversal before sorting weighted words.
         for (index, word) in word_counts.keys().enumerate() {
             for (byte, character) in word.char_indices() {
-                let plain_id = ids.characters[character as usize];
+                let plain_id = ids.characters.get(character);
                 if plain_id == WORD_SEPARATOR_ID {
                     continue;
                 }
@@ -310,7 +380,7 @@ impl InitialTokenIds {
             text.chars().count()
         } else {
             text.chars()
-                .filter(|&ch| self.characters[ch as usize] != WORD_SEPARATOR_ID)
+                .filter(|&ch| self.characters.get(ch) != WORD_SEPARATOR_ID)
                 .count()
         }
     }
@@ -318,11 +388,11 @@ impl InitialTokenIds {
         !self.prefix && !self.suffix
     }
     pub(super) fn plain_id(&self, character: char) -> Option<u32> {
-        let id = self.characters[character as usize];
+        let id = self.characters.get(character);
         (id != WORD_SEPARATOR_ID).then_some(id)
     }
     pub(super) fn id(&self, character: char, first: bool, last: bool) -> Option<u32> {
-        let plain = self.characters[character as usize];
+        let plain = self.characters.get(character);
         if plain == WORD_SEPARATOR_ID {
             return None;
         }
