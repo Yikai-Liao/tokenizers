@@ -1,0 +1,289 @@
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/initial_pairs.rs b/tokenizers/tk-train/src/trainers/bpe/engine/initial_pairs.rs
+index 5b424d47..f71bcb23 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/initial_pairs.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/initial_pairs.rs
+@@ -412,9 +412,9 @@ impl<'arena, C: InitialPairSource> InitialCollector<'_, 'arena, C> {
+             self.execution.workers(),
+             self.records_per_wave,
+         ) {
+-            return self.bounded(alphabet);
++            eprintln!("BPE_ROUTE bounded"); return self.bounded(alphabet);
+         }
+-        if self.corpus.compact_keys() {
++        eprintln!("BPE_ROUTE keyed"); if self.corpus.compact_keys() {
+             self.keyed::<CompactKeyedValue>()
+         } else {
+             self.keyed::<KeyedValue>()
+@@ -491,6 +491,7 @@ impl<'arena, C: InitialPairSource> InitialCollector<'_, 'arena, C> {
+             .unwrap_or(0);
+         let uniform_weight =
+             (corpus.word_weights().values().len() == 1).then(|| corpus.word_weights().values()[0]);
++        eprintln!("BPE_GEOMETRY {{\"resident_slots\":{},\"physical_edges\":{},\"wave_slots\":{},\"wave_count\":{}}}", corpus.len(),corpus.bounded_edge_count(0..corpus.len().saturating_sub(1)).unwrap_or(0),records_per_wave,corpus.len().saturating_sub(1).div_ceil(records_per_wave));
+         let single_wave = corpus.len() <= records_per_wave;
+         let wave_floor = if single_wave {
+             minimum_frequency
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/mod.rs b/tokenizers/tk-train/src/trainers/bpe/engine/mod.rs
+index 04d4a411..06a92ca3 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/mod.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/mod.rs
+@@ -7,6 +7,8 @@ use crate::trainers::bpe::word_counts::WordCountsView;
+ mod aa_parity;
+ mod batch;
+ mod corpus;
++mod initial_review;
++mod phase_timing;
+ mod execution;
+ mod initial_pairs;
+ mod merge;
+@@ -58,6 +60,7 @@ pub(super) fn train(
+     workers: usize,
+     #[cfg(test)] observe: Option<&mut (dyn FnMut(tk_encode::models::bpe::Pair, u64, u32) + Send)>,
+ ) -> Result<ModelParts> {
++    let _phase_report = phase_timing::Report;
+     train_with_merge_options(
+         trainer,
+         word_counts,
+@@ -151,20 +154,20 @@ impl Training<'_> {
+         let progress = self.progress;
+         let policy = self.policy;
+         let workers = execution.workers();
+-        let mut vocabulary = vocabulary::Vocabulary::initialize(
++        let mut vocabulary = { let _phase = initial_review::stage("vocabulary"); { let _phase = phase_timing::stage(0); vocabulary::Vocabulary::initialize(
+             trainer,
+             word_counts,
+             workers,
+             progress,
+             &mut self.retained_alphabet,
+-        )?;
+-        let prepared_corpus = corpus::CorpusPlan::build(
++        ) } }?;
++        let prepared_corpus = { let _phase = initial_review::stage("corpus_plan"); { let _phase = phase_timing::stage(1); corpus::CorpusPlan::build(
+             word_counts,
+             &mut vocabulary,
+             policy,
+             trainer.max_token_length.is_some(),
+             progress,
+-        )?;
++        ) } }?;
+         if vocabulary.len() >= trainer.vocab_size && prepared_corpus.initial_counts_fit_u64() {
+             drop(prepared_corpus);
+             execution.release_scratch();
+@@ -206,7 +209,7 @@ impl Training<'_> {
+         let workers = execution.workers();
+ 
+         let arena = AllocationArena::new(workers, prepared_corpus.initial_edges());
+-        let initial = initial_pairs::InitialPairTable::build(
++        let initial = { let _phase = initial_review::stage("initial_collect"); { let _phase = phase_timing::stage(2); initial_pairs::InitialPairTable::build(
+             &prepared_corpus,
+             if policy == IdentityPolicy::FirstActivationOnly {
+                 trainer.min_frequency.max(1)
+@@ -216,7 +219,7 @@ impl Training<'_> {
+             execution,
+             &arena,
+             progress,
+-        )?;
++        ) } }?;
+         if vocabulary.len() >= trainer.vocab_size {
+             // The total-mass proof was inconclusive. Initial construction has now
+             // retained every checked per-key and signed-policy validation.
+@@ -239,9 +242,9 @@ impl Training<'_> {
+             prepared_corpus.initial_edges(),
+         );
+         execution.expect_id_domain(expected_ids);
+-        let mut corpus = prepared_corpus.materialize::<S>(workers, policy, progress)?;
++        let mut corpus = { let _phase = initial_review::stage("materialize"); { let _phase = phase_timing::stage(3); prepared_corpus.materialize::<S>(workers, policy, progress) } }?;
+         let mut index =
+-            pair_index::PairIndex::from_initial_pairs(initial, policy, trainer.min_frequency)?;
++            { let _phase = initial_review::stage("initial_publish"); { let _phase = phase_timing::stage(2); pair_index::PairIndex::from_initial_pairs(initial, policy, trainer.min_frequency) } }?;
+ 
+         let merges = match self.merge_loop(
+             &mut vocabulary,
+@@ -257,10 +260,10 @@ impl Training<'_> {
+         // Training state does not participate in model output. Release position
+         // owners before their arena, and free the corpus and scratch before
+         // constructing the public vocabulary and merge strings.
+-        drop(index);
++        { let _phase = phase_timing::stage(8); drop(index);
+         drop(corpus);
+         drop(arena);
+-        execution.release_scratch();
++        execution.release_scratch(); }
+ 
+         Ok(complete_model(trainer, vocabulary, merges))
+     }
+@@ -292,7 +295,7 @@ impl Training<'_> {
+         let mut contiguous_births = merge::ContiguousBirthPolicy::default();
+         let work = progress.stage("Compute merges", trainer.vocab_size);
+         while vocabulary.len() < trainer.vocab_size {
+-            match batch.select(
++            match { let _phase = phase_timing::stage(4); batch.select(
+                 trainer,
+                 vocabulary,
+                 corpus,
+@@ -300,7 +303,7 @@ impl Training<'_> {
+                 policy,
+                 #[cfg(test)]
+                 trace,
+-            )? {
++            ) }? {
+                 BatchSelection::Ready => {}
+                 BatchSelection::Finished => break,
+                 BatchSelection::RestartForReuse => return Ok(AttemptOutcome::RestartForReuse),
+@@ -308,7 +311,7 @@ impl Training<'_> {
+             merges.extend(batch.rules.iter().map(|rule| rule.pair));
+             #[cfg(test)]
+             let enabled_before = contiguous_births.options(merge_options).contiguous_births;
+-            let (prepared, prepared_births) = merge::prepare_merges_with_births(
++            let (prepared, prepared_births) = { let _phase = phase_timing::stage(5); merge::prepare_merges_with_births(
+                 corpus,
+                 &batch.rules,
+                 &batch.candidates,
+@@ -319,24 +322,24 @@ impl Training<'_> {
+                 arena,
+                 trainer.min_frequency.max(1),
+                 contiguous_births.options(merge_options),
+-            )?;
++            ) }?;
+ 
+             // PERF: Preparation owns all writes and birth events. Selected
+             // position lists have no remaining reader; release them before allocating
+             // the next generation during commit.
+-            batch.candidates.clear();
++            { let _phase = phase_timing::stage(5); batch.candidates.clear() };
+             let birth_shape = prepared.birth_shape;
+             #[cfg(test)]
+             let birth_paths = prepared.birth_paths;
+-            let events = prepared.apply(corpus);
++            let events = { let _phase = phase_timing::stage(6); prepared.apply(corpus) };
+ 
+-            index.commit_merges_with_prepared(
++            { let _phase = phase_timing::stage(7); index.commit_merges_with_prepared(
+                 &events,
+                 vocabulary.len(),
+                 execution,
+                 arena,
+                 prepared_births,
+-            )?;
++            ) }?;
+             contiguous_births.observe(birth_shape);
+             #[cfg(test)]
+             if let Some(observer) = birth_observe.as_mut() {
+@@ -347,7 +350,7 @@ impl Training<'_> {
+                 });
+             }
+ 
+-            drop(events);
++            { let _phase = phase_timing::stage(7); drop(events) };
+             work.learned(merges.len());
+         }
+         Ok(AttemptOutcome::Complete(merges))
+@@ -364,7 +367,7 @@ fn complete_model(
+     vocabulary: vocabulary::Vocabulary,
+     merges: Vec<tk_encode::models::bpe::Pair>,
+ ) -> AttemptOutcome {
+-    let (vocab, merges) = vocabulary.into_model_parts(merges);
++    let (vocab, merges) = { let _phase = phase_timing::stage(9); vocabulary.into_model_parts(merges) };
+     AttemptOutcome::Complete((vocab, merges, trainer.special_tokens.clone()))
+ }
+ 
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/storage/arena.rs b/tokenizers/tk-train/src/trainers/bpe/engine/storage/arena.rs
+index 635e24ca..7e79b8d4 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/storage/arena.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/storage/arena.rs
+@@ -13,6 +13,7 @@ pub(in super::super) struct AllocationArena {
+ }
+ impl AllocationArena {
+     pub(in super::super) fn new(workers: usize, physical_items: usize) -> Self {
++        eprintln!("BPE_ARENA {{\"input_items\":{},\"cutoff_bytes\":{}}}", physical_items, ((physical_items as u128 / 256).isqrt() as usize).max(256));
+         Self {
+             workers: (0..workers).map(|_| Mutex::new(Bump::new())).collect(),
+             // A fixed decision for the scope; large buffers remain individually owned.
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/initial_review.rs b/tokenizers/tk-train/src/trainers/bpe/engine/initial_review.rs
+new file mode 100644
+index 00000000..267c859b
+--- /dev/null
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/initial_review.rs
+@@ -0,0 +1,29 @@
++
++use std::time::Instant;
++#[repr(C)]
++struct Timespec { sec: std::os::raw::c_long, nano: std::os::raw::c_long }
++unsafe extern "C" { fn clock_gettime(clock: i32, time: *mut Timespec) -> i32; }
++fn cpu_ns() -> u64 {
++    let mut time = Timespec { sec: 0, nano: 0 };
++    assert_eq!(unsafe { clock_gettime(2, &mut time) }, 0);
++    time.sec as u64 * 1_000_000_000 + time.nano as u64
++}
++fn resident() -> (u64,u64) {
++    let text=std::fs::read_to_string("/proc/self/status").unwrap();
++    let field=|name: &str| text.lines().find(|l|l.starts_with(name)).unwrap().split_whitespace().nth(1).unwrap().parse().unwrap();
++    (field("VmRSS:"),field("VmHWM:"))
++}
++pub(super) struct Stage { name: &'static str, wall: Instant, cpu: u64, rss: u64, hwm: u64 }
++pub(super) fn stage(name: &'static str) -> Stage {
++    let (rss,hwm)=resident();
++    eprintln!("BPE_INIT_BEGIN {{\"name\":\"{}\",\"rss_kib\":{},\"hwm_kib\":{}}}",name,rss,hwm);
++    Stage {name,wall:Instant::now(),cpu:cpu_ns(),rss,hwm}
++}
++impl Drop for Stage {
++    fn drop(&mut self) {
++        let cpu=cpu_ns()-self.cpu;
++        let wall=self.wall.elapsed().as_secs_f64();
++        let (rss,hwm)=resident();
++        eprintln!("BPE_INIT_END {{\"name\":\"{}\",\"wall_seconds\":{},\"cpu_seconds\":{},\"rss_before_kib\":{},\"hwm_before_kib\":{},\"rss_end_kib\":{},\"hwm_end_kib\":{}}}",self.name,wall,cpu as f64/1e9,self.rss,self.hwm,rss,hwm);
++    }
++}
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/phase_timing.rs b/tokenizers/tk-train/src/trainers/bpe/engine/phase_timing.rs
+new file mode 100644
+index 00000000..e246cd6e
+--- /dev/null
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/phase_timing.rs
+@@ -0,0 +1,48 @@
++
++use std::sync::atomic::{AtomicU64, Ordering};
++use std::time::Instant;
++const NAMES: [&str; 10] = ["vocabulary", "corpus_plan", "initial_index", "materialize", "select", "prepare", "apply", "commit", "release", "model_output"];
++static WALL: [AtomicU64; 10] = [const { AtomicU64::new(0) }; 10];
++static CPU: [AtomicU64; 10] = [const { AtomicU64::new(0) }; 10];
++static CALLS: [AtomicU64; 10] = [const { AtomicU64::new(0) }; 10];
++#[repr(C)]
++struct Timespec { sec: std::os::raw::c_long, nano: std::os::raw::c_long }
++unsafe extern "C" { fn clock_gettime(clock: i32, time: *mut Timespec) -> i32; }
++fn cpu_ns() -> u64 {
++    let mut time = Timespec { sec: 0, nano: 0 };
++    // Linux CLOCK_PROCESS_CPUTIME_ID; this host-only diagnostic owns the output.
++    assert_eq!(unsafe { clock_gettime(2, &mut time) }, 0);
++    time.sec as u64 * 1_000_000_000 + time.nano as u64
++}
++static RSS_BEGIN: [AtomicU64; 10] = [const { AtomicU64::new(0) }; 10];
++static RSS_END: [AtomicU64; 10] = [const { AtomicU64::new(0) }; 10];
++static NEW_HWM: [AtomicU64; 10] = [const { AtomicU64::new(0) }; 10];
++fn resident() -> (u64,u64) {
++    let text=std::fs::read_to_string("/proc/self/status").unwrap();
++    let field=|name: &str| text.lines().find(|l|l.starts_with(name)).unwrap().split_whitespace().nth(1).unwrap().parse().unwrap();
++    (field("VmRSS:"),field("VmHWM:"))
++}
++pub(super) struct Stage { index: usize, wall: Instant, cpu: u64, hwm: u64 }
++pub(super) fn stage(index: usize) -> Stage { { let (rss,hwm)=resident(); RSS_BEGIN[index].fetch_max(rss,Ordering::Relaxed); Stage { index, wall: Instant::now(), cpu: cpu_ns(), hwm } } }
++impl Drop for Stage {
++    fn drop(&mut self) {
++        let cpu = cpu_ns() - self.cpu;
++        WALL[self.index].fetch_add(self.wall.elapsed().as_nanos() as u64, Ordering::Relaxed);
++        CPU[self.index].fetch_add(cpu, Ordering::Relaxed);
++        CALLS[self.index].fetch_add(1, Ordering::Relaxed);
++        let (rss,hwm)=resident();
++        RSS_END[self.index].fetch_max(rss,Ordering::Relaxed);
++        if hwm>self.hwm { NEW_HWM[self.index].fetch_max(hwm,Ordering::Relaxed); }
++    }
++}
++pub(super) struct Report;
++impl Drop for Report {
++    fn drop(&mut self) {
++        let rows: Vec<_> = NAMES.iter().enumerate().map(|(i, name)| format!(
++            r#"{{"name":"{}","wall_seconds":{},"cpu_seconds":{},"calls":{},"max_begin_rss_kib":{},"max_end_rss_kib":{},"new_process_hwm_kib":{}}}"#,
++            name, WALL[i].load(Ordering::Relaxed) as f64 / 1e9,
++            CPU[i].load(Ordering::Relaxed) as f64 / 1e9, CALLS[i].load(Ordering::Relaxed), RSS_BEGIN[i].load(Ordering::Relaxed), RSS_END[i].load(Ordering::Relaxed), NEW_HWM[i].load(Ordering::Relaxed)
++        )).collect();
++        eprintln!("BPE_PHASES {{\"stages\":[{}]}}", rows.join(","));
++    }
++}

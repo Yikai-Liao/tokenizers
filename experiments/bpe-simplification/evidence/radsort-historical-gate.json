@@ -1,0 +1,122 @@
+{
+  "experiment": "4-row Full radsort 0.1.1 w6 screen",
+  "generated_unix": 1791201658.0479558,
+  "candidate_binary_sha256": "77f191b2100731985d01867a991556d66916655c18e3f50244651a3dc055427b",
+  "baseline_binary_sha256": "26cab83bd19ce2b566042fffbf5fab44fbbe9c6522c4820b0e19444313a4f327",
+  "workers": 6,
+  "all_cpu_processes_exited": true,
+  "rows": {
+    "zh256": {
+      "baseline": {
+        "status": "ok",
+        "returncode": 0,
+        "core_seconds": 13.337882543,
+        "train_seconds": 13.760886998,
+        "train_cpu_seconds": 69.284221,
+        "maxrss_kib": 1996752,
+        "sampled_peak_rss_bytes": 2042916864,
+        "actual_merges": 82241,
+        "actual_vocab": 100000,
+        "binary_sha256": "26cab83bd19ce2b566042fffbf5fab44fbbe9c6522c4820b0e19444313a4f327",
+        "canonical_model_gate": true
+      },
+      "radsort": {
+        "status": "ok",
+        "returncode": 0,
+        "core_seconds": 12.358079312,
+        "train_seconds": 12.736466502,
+        "train_cpu_seconds": 62.658494000000005,
+        "maxrss_kib": 2598972,
+        "sampled_peak_rss_bytes": 2661806080,
+        "actual_merges": 82241,
+        "actual_vocab": 100000,
+        "binary_sha256": "77f191b2100731985d01867a991556d66916655c18e3f50244651a3dc055427b",
+        "canonical_model_gate": true
+      }
+    },
+    "en16": {
+      "baseline": {
+        "status": "ok",
+        "returncode": 0,
+        "core_seconds": 0.598556599,
+        "train_seconds": 0.632645491,
+        "train_cpu_seconds": 2.886484,
+        "maxrss_kib": 61892,
+        "sampled_peak_rss_bytes": 63750144,
+        "actual_merges": 48249,
+        "actual_vocab": 50000,
+        "binary_sha256": "26cab83bd19ce2b566042fffbf5fab44fbbe9c6522c4820b0e19444313a4f327",
+        "canonical_model_gate": true
+      },
+      "radsort": {
+        "status": "ok",
+        "returncode": 0,
+        "core_seconds": 0.630240877,
+        "train_seconds": 0.672509895,
+        "train_cpu_seconds": 2.947948,
+        "maxrss_kib": 69772,
+        "sampled_peak_rss_bytes": 61829120,
+        "actual_merges": 48249,
+        "actual_vocab": 50000,
+        "binary_sha256": "77f191b2100731985d01867a991556d66916655c18e3f50244651a3dc055427b",
+        "canonical_model_gate": true
+      }
+    }
+  },
+  "comparison": {
+    "zh256": {
+      "core_delta_seconds": -0.979803231,
+      "core_delta_percent": -7.34601783934753,
+      "hwm_delta_kib": 602220,
+      "hwm_delta_mib": 588.10546875,
+      "sampled_peak_rss_delta_bytes": 618889216
+    },
+    "en16": {
+      "core_delta_seconds": 0.031684277999999955,
+      "core_delta_percent": 5.293447278492036,
+      "hwm_delta_kib": 7880,
+      "hwm_delta_mib": 7.6953125,
+      "sampled_peak_rss_delta_bytes": -1921024
+    }
+  },
+  "minimum_gate": "core total no regression and process HWM no increase; canonical model exact for both datasets",
+  "minimum_gate_pass": false,
+  "frozen_source_count_after_screen": 34,
+  "frozen_source_sha256_after_screen": {
+    "sources/full/tokenizers/tk-train/src/trainers/bpe/engine/aa_parity.rs": "40664f009adb4553529d98949dbcb3131495dc40d88b396c1e164c91ffed9c63",
+    "sources/full/tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs": "8da1e454ca8b844a6475ca02d8084c0fd29acccd33672bbc143860ad23d96ed6",
+    "sources/full/tokenizers/tk-train/src/trainers/bpe/engine/execution.rs": "f6fb5cf7b85733f0cde9c96badaa7a0b029d4730400883b80e459af07b5b4c13",
+    "sources/full/tokenizers/tk-train/src/trainers/bpe/engine/initial_pairs.rs": "5aaf56f1aa7dd4e005276f456929c080239c97baffc1cc2da7439cfda17ebbec",
+    "sources/full/tokenizers/tk-train/src/trainers/bpe/engine/merge.rs": "b3f94754f41873cf044696b527f0b05cd2973513bb0b0101471bf58d378f0ad6",
+    "sources/full/tokenizers/tk-train/src/trainers/bpe/engine/mod.rs": "9b5b075b15a8fcd699eeafe5efd505bb06f84f40c8b44b6bc6b180c682ec7918",
+    "sources/full/tokenizers/tk-train/src/trainers/bpe/engine/pair_index.rs": "a0b5ccb69580a7d52d1c8e2ebbefe187e4e60b0210d838e157154375ff37265d",
+    "sources/full/tokenizers/tk-train/src/trainers/bpe/engine/single_producer_diagnostics.rs": "a64c2aa3ca585be24cbdce1323de035142b651226e0d054de7657d51e88f1df8",
+    "sources/full/tokenizers/tk-train/src/trainers/bpe/engine/tests.rs": "c3d2da1581289998e6fa8199a784b6633b5237e3264c1d08191cd2bef6070fba",
+    "sources/full/tokenizers/tk-train/src/trainers/bpe/engine/vocabulary.rs": "aa8581fd4b854ab76b0957b4bcada7f25640271e02677ee651d60d9f622f824b",
+    "sources/full/tokenizers/tk-train/src/trainers/bpe/engine/yttm/local.rs": "6ccaf2266e6b75716127c729946e70a4dd52788cbdfdc92b7540821d798e13c7",
+    "sources/full/tokenizers/tk-train/src/trainers/bpe/engine/yttm.rs": "d0987d5f975a791a4d831627df387bb461bab31c12696281b6abfdd2b7e8c69b",
+    "sources/full/tokenizers/tk-collections/src/radix.rs": "faaaa13d4c7c505221e904e9d754857457c86be97d9a77dd22c13b17ddbee745",
+    "sources/full/tokenizers/tk-collections/Cargo.toml": "0d20e87dc34b97c89efc79701bac1003ff32b19774382ef51d60b1e53d1b9dd8",
+    "sources/full/tokenizers/tk-train/Cargo.toml": "059d9ca8341ef802694438cc594d28d9803428586fbe1d1e78af95eb6a5e8bd8",
+    "sources/full/tokenizers/Cargo.toml": "8dd09d8f3a896dab9291f2a5d2ac7fa06d43bd313c34db9ccd9485cdce661313",
+    "runners/full/Cargo.toml": "80a0fe72e76024e2943762e915576016180023c69f6b9b49270ba3e00e4389af",
+    "runners/full/Cargo.lock": "75e8ee017c994e298cf1212ee624d3e4ba7bed62d05621ef89fd9805c9daac46",
+    "sources/full/tokenizers/tk-train/Cargo.lock": "4a029ab0e4dff3af67a79ac7c6f044a685589938270f7b0495249b4fc5ee382d",
+    "sources/full/tokenizers/Cargo.lock": "9e0065bf129f39e72280f67fb0396dbaaccc51a222f6b3bad785b371f8f4f798",
+    "vendor/radsort/.cargo_vcs_info.json": "a2cf071c3f799282ecdd323716feafecd047e6cc4ad14b7cf8c57bd4e41ae617",
+    "vendor/radsort/.github/workflows/ci.yml": "20ebaa4ecefda65683bfa7b41900ff24a184faa538e2492aa200261129a37fb6",
+    "vendor/radsort/.gitignore": "2ebe6cb6f5289849dce5a8a6cdd77e06b1385302c862982f8e181c4782d19214",
+    "vendor/radsort/Cargo.toml": "fa0f3fba23228b04bc3d5e6f08f13d3cedff011483b5eb1dcf39a9e33b3f81f4",
+    "vendor/radsort/Cargo.toml.orig": "ab9e09b32e1e8f421138417c199ab88a31573eacb0163d380b8134ed9ea46f57",
+    "vendor/radsort/LICENSE-APACHE.txt": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5",
+    "vendor/radsort/LICENSE-MIT.txt": "e25642ae496e90437ee1af3c3cc4b70c570f6a22383c2047f957b955105d7c8e",
+    "vendor/radsort/README.md": "d3fc41f2d7b67df0e554eb0c4147a5c2bc3420116d98d289ebb559ad2d5849d8",
+    "vendor/radsort/RELEASES.md": "ef91f887360720c4e1bb37bd69b4e0d84cb805b85be16c22bad677e8630a0e95",
+    "vendor/radsort/src/double_buffer.rs": "5cb1b4c35315c5dfc9bbf607a83fec74e946c159fe662da158479786c53e95c0",
+    "vendor/radsort/src/lib.rs": "4bd943bfd6482c5d8caca3237f71401006f11dbf5ce15ea4fc3001f76e78144c",
+    "vendor/radsort/src/scalar.rs": "f180fad47bb1c11d7bf7fd48add3e7f5219bd1a7a81301a392d72530c268f355",
+    "vendor/radsort/src/sort.rs": "80d489ee616dded3ef2e182b4747630f0f789c502f9e0a80a1f8674dc280f195",
+    "vendor/radsort/tests/integration_tests.rs": "b969391fe71cecff56c67def5a65a5b7e2de7ba503809ccf94fabb90707da88a"
+  },
+  "raw_results_directory": "/root/code/tokenizers-build/g128-design-validation/agentic-perf-memory-20261004-wuyaAb/scaling-suite-v1/multicore-analysis-v1/radix-radsort-validation-v1/screen-w6"
+}

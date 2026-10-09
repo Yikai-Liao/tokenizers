@@ -1,4 +1,6 @@
-# 阶段诊断与优化依据
+# 历史阶段诊断与优化依据
+
+当前 2100 行源码的测量见 [PERFORMANCE_REVIEW.md](PERFORMANCE_REVIEW.md)。
 
 固定main `e4f787dc`，候选whole `df2e71a1`（1849生产行）；中文ByteLevel固定word map，
 4 workers，50K词表，min frequency2。两边同feature/release profile，一次新诊断，

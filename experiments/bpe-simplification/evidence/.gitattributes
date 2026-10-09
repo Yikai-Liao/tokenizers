@@ -1,0 +1,3 @@
+# Preserve exact unified-diff context and original terminal output in raw evidence.
+full-review-*.patch whitespace=-blank-at-eol
+*review-round2*.log whitespace=-blank-at-eof

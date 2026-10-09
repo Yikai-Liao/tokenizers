@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "source_commit": "4d181c5167f7e70f19990fc37eaa5f3121c89f38",
+  "baseline_sha": "e4f787dc189d9be7192107490d652096cde7480e",
+  "branch": "simplify/bpe-maintenance-20261009",
+  "production_limit": 2100,
+  "test_limit": 800,
+  "source_sha256": {
+    "tokenizers/tk-train/src/trainers/bpe/reference.rs": "63ba2255a7bcd7d0961740e0a8ea9c0e13f15f3468e3cfa1e962c2a09f38306e",
+    "tokenizers/tk-train/src/trainers/bpe/word.rs": "b81cd9c9819c7be9a76b6556fd58f0c1d04fb00992998e224f360aa7706553bd",
+    "tokenizers/tk-train/src/trainers/bpe/mod.rs": "8d4643d033af0e58836c71e9da2b6b033c6ceaa85d16b8a79ada06e42ae7aeb3",
+    "tokenizers/tk-train/src/trainers/bpe/feed.rs": "534b1ab1dee75c81d04b419d41c55fd87f4427fc1135c0a584fe493dc858b045",
+    "tokenizers/tk-train/src/trainers/bpe/word_counts.rs": "ff5df75c686b8e2c9a1454d4acbe19f09f8b13003edb0986d48def72adc77d5d",
+    "tokenizers/tk-train/src/trainers/bpe/parity_trainer.rs": "fae3be904339edd3e4275023d71814f56f376f40e7ce71b639955c91e123c9a7",
+    "tokenizers/tk-train/src/trainers/bpe/engine/vocabulary.rs": "30730661ce515b1a61f0ca60fc6bdc632832b118a7d08330ca874ff77885d54b",
+    "tokenizers/tk-train/src/trainers/bpe/engine/positions.rs": "e07adffa196f246d2e014af968f25511bcadec27a241cbac3bb31f9242d3105f",
+    "tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs": "47db898fccfd76cce7822e6e29b094f00025504442b44586ac31b21bafc83154",
+    "tokenizers/tk-train/src/trainers/bpe/engine/index.rs": "e53fa7f1a9eb79ae9142840ccbdf2821840667137abd208cf08d2bdd1c3ed894",
+    "tokenizers/tk-train/src/trainers/bpe/engine/mod.rs": "8858282626fa23e3b8b4c7bf21248fe09946e6ee512d226c7d8e1ff5e18b1a5b",
+    "tokenizers/tk-train/src/trainers/bpe/engine/merge.rs": "f87eecdc4c388d3069b145669a6bcffe643509031abb9385cb58e6c8725548db",
+    "tokenizers/tk-train/src/trainers/bpe/engine/tests/mod.rs": "312c89d078747a6226ce2e5c1a51623b231c20c64c58694267e70228ac3900a7",
+    "experiments/bpe-simplification/runner/src/feed_stats.rs": "cd317b213cff235d310e0fa5a66e826cad8a390c143a4d8551e0dd142a4a533d",
+    "experiments/bpe-simplification/runner/src/protocol.rs": "127168a11d40812c88718f60c5f3c3422814b43dbe74f8c73e4d738973bdda2f",
+    "experiments/bpe-simplification/runner/src/core.rs": "d0cddccdad6cb9f275ac4c4b29a65b2920e55ca53f20b435dd2bea80f99d0322",
+    "experiments/bpe-simplification/runner/src/model_output.rs": "58fedcea52879ce2028f296b2dcb8ae05866bc6cf6c156b0f1a4803a6c273168",
+    "experiments/bpe-simplification/runner/src/main.rs": "3bf0c679c660cf07760e1c3647c8308ef4ac7d138f45b8dfb5ca2f663b02c4c5",
+    "experiments/bpe-simplification/runner/src/pipeline.rs": "300fe769f662872aecb8496efa695ac43382f319e9e1149bcc6226319ab3ecb9",
+    "experiments/bpe-simplification/runner/src/adapters/tk_train_pr2348.rs": "f2b3030f7546b1d1bf23f06c75cf02e4acbc5e1e2bfbc74c3819c7a5324de1da",
+    "experiments/bpe-simplification/runner/src/adapters/mod.rs": "a5a2dd2147a680afb61c3ff34629d8ca7d1fc2d759e2931be01bf1567436001a",
+    "experiments/bpe-simplification/runner/src/adapters/tk_train_v1.rs": "f5ad7a988e842ed232673bb0c60d0d9392f837edde861a6f71740f2a1536663e"
+  },
+  "inputs": {
+    "en-bytelevel-pipeline": {
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/en256/text.txt",
+      "bytes": 268434441,
+      "sha256": "ae02a7e36df46e6dff26481f054dd4a385d50c4a42a9f166de754ee44fbf6b8a",
+      "workers": 4,
+      "vocab_size": 50000,
+      "min_frequency": 2
+    },
+    "en-bytelevel-core": {
+      "path": "/root/code/tokenizers-perfetto-results/inputs/en-bytelevel/words.json",
+      "bytes": 14071952,
+      "sha256": "4523a34ff64cdba49b0985f32cc923f2c7b005fd67748a0fbec38c44bab437c5",
+      "workers": 4,
+      "vocab_size": 50000,
+      "min_frequency": 2
+    },
+    "zh-bytelevel-pipeline": {
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+      "bytes": 268435162,
+      "sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+      "workers": 4,
+      "vocab_size": 50000,
+      "min_frequency": 2
+    },
+    "zh-bytelevel-core": {
+      "path": "/root/code/tokenizers-perfetto-results/inputs/zh-bytelevel/words.json",
+      "bytes": 437135595,
+      "sha256": "bb796d0b57b87d965b84de249bc5c8e283b700774638d16a40e4ae5171b13ee0",
+      "workers": 4,
+      "vocab_size": 50000,
+      "min_frequency": 2
+    }
+  },
+  "baseline_build": {
+    "source_sha": "e4f787dc189d9be7192107490d652096cde7480e",
+    "sha256": "179e99bf4d74996802c5a475d8ba4a62fcf6e769235dab5c56952b4c76af4074",
+    "cargo_lock_sha256": "fcf01b7de4367dc9b92cb3c7e1900a3ecffdb53be05c286a278a4a2228591909",
+    "command": "PATH=/root/.cargo/bin:$PATH CARGO_TARGET_DIR=/root/code/tokenizers-simplification-results/target CARGO_INCREMENTAL=0 cargo build --release --offline --manifest-path runner-baseline/Cargo.toml -j 2"
+  },
+  "candidate_build": {
+    "binary": "/root/code/tokenizers-simplification-results/bin/review-final",
+    "sha256": "1ab2fbb529c05f13119f46cd77a553099ecd65e7ea5d12a080b4cf0b10db1c97",
+    "source_commit": "4d181c51",
+    "profile": {
+      "opt_level": 3,
+      "lto": "fat",
+      "codegen_units": 1
+    },
+    "features": "tk-train default-features=false; runner default-features=false",
+    "command": "CARGO_TARGET_DIR=/root/code/tokenizers-simplification-results/target CARGO_INCREMENTAL=0 cargo build --release --offline --locked --manifest-path /root/code/tokenizers-simplification-results/runner-candidate/Cargo.toml -j 2"
+  },
+  "toolchain": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "host_cpu": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           46 bits physical, 48 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  6\nOn-line CPU(s) list:                     0-5\nVendor ID:                               GenuineIntel\nModel name:                              Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz\nCPU family:                              6\nModel:                                   85\nThread(s) per core:                      1\nCore(s) per socket:                      1\nSocket(s):                               6\nStepping:                                4\nBogoMIPS:                                4589.21\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon rep_good nopl xtopology cpuid tsc_known_freq pni pclmulqdq ssse3 fma cx16 pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch cpuid_fault pti ssbd ibrs ibpb stibp fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm mpx avx512f avx512dq rdseed adx smap clflushopt clwb avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves arat umip pku ospke md_clear flush_l1d arch_capabilities\nHypervisor vendor:                       KVM\nVirtualization type:                     full\nL1d cache:                               192 KiB (6 instances)\nL1i cache:                               192 KiB (6 instances)\nL2 cache:                                6 MiB (6 instances)\nL3 cache:                                148.5 MiB (6 instances)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0-5\nVulnerability Gather data sampling:      Not affected\nVulnerability Indirect target selection: Mitigation; Aligned branch/return thunks\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Mitigation; PTE Inversion\nVulnerability Mds:                       Mitigation; Clear CPU buffers; SMT Host state unknown\nVulnerability Meltdown:                  Mitigation; PTI\nVulnerability Mmio stale data:           Mitigation; Clear CPU buffers; SMT Host state unknown\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Mitigation; IBRS\nVulnerability Spec rstack overflow:      Not affected\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; IBRS; IBPB conditional; STIBP disabled; RSB filling; PBRSB-eIBRS Not affected; BHI SW loop, KVM SW loop\nVulnerability Srbds:                     Not affected\nVulnerability Tsa:                       Not affected\nVulnerability Tsx async abort:           Mitigation; Clear CPU buffers; SMT Host state unknown\nVulnerability Vmscape:                   Not affected\n",
+  "metrics": "Uninstrumented public do_train / feed+train; process HWM before serialization, complete parsed vocabulary IDs and all ordered merges; independent process, CPU0-3, child swap0.",
+  "performance_label": "review-final-idle",
+  "excluded_label": "review-final: concurrent independent rdst-zh benchmark; retained but excluded"
+}

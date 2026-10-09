@@ -1,35 +1,36 @@
-# Review iteration after the measured delivery
+# Final structural review and performance follow-up
 
-Current review snapshot: 2100 formatted production logic lines and 780 test logic
-lines, including all default BPE tests, the independent reference, public hooks
-and Miri harness. The
-production limit is 2100; the accepted test ceiling is 800.
-Selection states, event routing, corpus construction and trusted codec inputs
-have been tightened. Tests are consolidated around full-model/per-rule parity,
-public integration and shared immutable storage; see the engine coverage map.
+Reviewed Rust source: `4d181c51`; production **2100/2100**, complete default BPE
+test/helper budget **780/800**, counted after rustfmt, excluding blanks and comments.
+Six engine modules contain the full implementation. No production implementation
+was moved outside the counting scope. The optional parity trainer remains unchanged.
 
-Default and no-default native tests, doctests, Clippy with denied warnings, fmt,
-budget and strict Miri passed for this review round. The first fresh structural review found no material issue. Its independent test
-review found undercounted feed/word-count tests and omitted public/codec boundaries.
-The next round fixes the scope and consolidates those contracts; another fresh
-structural/test review follows. Performance of these new changes has not yet been measured;
-the results below belong to the earlier measured source.
+Fresh structural reviews found no material design issue. Independent test reviews
+identified missing public/codec boundaries and two budget-scope omissions; all were
+fixed. The final fresh whole-crate/source/coverage audit of `4d181c51` found no new
+material, actionable issue and independently reproduced 2100/780.
 
-## Earlier measured delivery: <25s core
+Default and no-default native library suites: 17 passed each; no-default doctest:
+1 passed. All-target Clippy with denied warnings, fmt, budget, whitespace and strict
+Miri (2 tests, default borrowing/leak checks) passed. Rust sources are unchanged
+since the tested `e26115c2` revision. See REVIEW-12.md and the engine coverage map.
 
-Final source commit: d19e5bc6, branch simplify/bpe-maintenance-20261009.
-Pinned baseline: Fork main e4f787dc189d9be7192107490d652096cde7480e.
+Uninstrumented final four-case baseline/candidate comparison completed: all eight
+processes have identical complete models and child swap0. Chinese core: **21.248s**,
+CPU68.621s, process HWM3086264KiB. Paired main: 16.004s, CPU52.794s, HWM2555272KiB.
+This is one pair, without a warmup or statistical precision claim. A shared-host
+attempt was explicitly excluded after a concurrent unrelated benchmark was detected.
+See evidence/review-final-runs.json and evidence/manifest-review-final.json.
 
-Uninstrumented Chinese ByteLevel core, 4 workers, 50K vocabulary, min_frequency2:
-23.878528469s, CPU76.444302s, RSS2943096KiB, complete model equality and child swap0.
-Production2074 formatted nonblank noncomment lines; tests1522 including oracle,
-shared helpers and Miri harness. User-approved production limit2100.
+Completed follow-up: joined-stage wall/CPU/RSS attribution and consistent-prefix
+384/512MiB Chinese memory scaling; see PERFORMANCE_REVIEW.md. Uninstrumented whole
+HWM is 20–22% higher; diagnostic initial-stage peaks are 30.8% / 64.3% higher at
+256/512MiB, with observed main bounded waves 1 / 2. All eight follow-up processes
+have exact complete models and swap0. OPTIMIZATION_ROI.md records historical
+net-LOC screening and the rejected owner directory. The cutoff ablation supports
+keeping resident slots; see CUTOFF_ABLATION.md. Earlier delivery numbers and
+exploration remain historical evidence, not the final measurement.
 
-Complete producer publication, compatible batching/parallel aggregation, full-u64
-positions and the dynamic Arena threshold remain. The threshold formula matches
-the baseline; its input is resident slots, whereas the baseline uses initial
-physical edges. This difference is tracked in the cutoff ablation. Four final cases/eight
-processes all match complete baseline models with swap0. Default/no-default tests,
-Clippy, fmt, budget, strict Miri and exact binary rebuild verification passed.
-See REPORT.md and evidence/manifest-final.json for results and practical limits.
-Earlier archived deliveries and experiments remain in git history.
+The final fresh evidence/completion review after correcting the historical owner
+directory control found no new material, actionable finding. Source, input,
+binary, diagnostic patch and measurement-script hashes were independently checked.

@@ -1,0 +1,554 @@
+{
+  "protocol": "Same immutable binary, cutoff input selected by environment; 4 pinned workers, ByteLevel prepared counts, vocab 50000, minimum 2. Only complete within-case paired repetitions summarized.",
+  "source_commit": "378fd5d6",
+  "binary_sha256": "8c7603ef705279f4f6d3801ff342e5059b7b8f15d66bdbf3af52bea00d0b3112",
+  "raw_records": 42,
+  "all_recorded_valid": true,
+  "all_recorded_model_equal": true,
+  "all_recorded_swap_zero": true,
+  "unpaired_records": [
+    {
+      "case": "zh-16MiB",
+      "rep": 2,
+      "variant": "edges"
+    }
+  ],
+  "rows": [
+    {
+      "case": "en-1MiB",
+      "input": {
+        "case": "en-1MiB",
+        "language": "en",
+        "requested_mib": 1,
+        "bytes": 1048348,
+        "source": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/en256/text.txt",
+        "source_prefix_sha256": "c9b98bf3087d07ae77c134a2c03b7de258bb5355d89404271a66980cf10fc50d",
+        "prepared_path": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/en-1MiB/words.json",
+        "prepared_bytes": 375794,
+        "prepared_sha256": "ca34924d0ee2b8b2eb2934f47b234cdf5eafb72c5f5edfc73250441b732257aa",
+        "unique_words": 23448
+      },
+      "paired_repetitions": [
+        1,
+        2
+      ],
+      "slots": {
+        "train_seconds": 0.124731914,
+        "train_cpu_seconds": 0.36403850000000004,
+        "rss_kib": 21348.0,
+        "samples": [
+          {
+            "rep": 1,
+            "seconds": 0.124217958,
+            "rss_kib": 21256
+          },
+          {
+            "rep": 2,
+            "seconds": 0.12524587,
+            "rss_kib": 21440
+          }
+        ]
+      },
+      "edges": {
+        "train_seconds": 0.14636256549999999,
+        "train_cpu_seconds": 0.395441,
+        "rss_kib": 21284.0,
+        "samples": [
+          {
+            "rep": 1,
+            "seconds": 0.133000852,
+            "rss_kib": 21180
+          },
+          {
+            "rep": 2,
+            "seconds": 0.159724279,
+            "rss_kib": 21388
+          }
+        ]
+      },
+      "cutoff": {
+        "mode": "slots",
+        "physical_edges": 163903,
+        "resident_slots": 210800,
+        "edge_cutoff": 256,
+        "slot_cutoff": 256
+      },
+      "slot_over_edge_wall_ratio": 0.8522118587761432,
+      "slot_over_edge_rss_ratio": 1.003006953580154
+    },
+    {
+      "case": "en-16MiB",
+      "input": {
+        "case": "en-16MiB",
+        "language": "en",
+        "requested_mib": 16,
+        "bytes": 16776498,
+        "source": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/en256/text.txt",
+        "source_prefix_sha256": "3291bcfcb313c409713c8042446b35f7f14efdae4f9de79075f78cdf6b20894e",
+        "prepared_path": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/en-16MiB/words.json",
+        "prepared_bytes": 2200615,
+        "prepared_sha256": "699fbfd05555ce104d8c43cfd4a80c9518812d1e276de5d99ba199d4797e2c5a",
+        "unique_words": 133977
+      },
+      "paired_repetitions": [
+        1,
+        2
+      ],
+      "slots": {
+        "train_seconds": 0.5141514075,
+        "train_cpu_seconds": 1.434529,
+        "rss_kib": 44116.0,
+        "samples": [
+          {
+            "rep": 1,
+            "seconds": 0.500997541,
+            "rss_kib": 43912
+          },
+          {
+            "rep": 2,
+            "seconds": 0.527305274,
+            "rss_kib": 44320
+          }
+        ]
+      },
+      "edges": {
+        "train_seconds": 0.474325991,
+        "train_cpu_seconds": 1.3753465,
+        "rss_kib": 44296.0,
+        "samples": [
+          {
+            "rep": 1,
+            "seconds": 0.485134133,
+            "rss_kib": 44320
+          },
+          {
+            "rep": 2,
+            "seconds": 0.463517849,
+            "rss_kib": 44272
+          }
+        ]
+      },
+      "cutoff": {
+        "mode": "slots",
+        "physical_edges": 975728,
+        "resident_slots": 1243683,
+        "edge_cutoff": 256,
+        "slot_cutoff": 256
+      },
+      "slot_over_edge_wall_ratio": 1.0839621215275128,
+      "slot_over_edge_rss_ratio": 0.9959364276684125
+    },
+    {
+      "case": "en-256MiB",
+      "input": {
+        "case": "en-256MiB",
+        "language": "en",
+        "requested_mib": 256,
+        "bytes": 268434441,
+        "source": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/en256/text.txt",
+        "source_prefix_sha256": "ae02a7e36df46e6dff26481f054dd4a385d50c4a42a9f166de754ee44fbf6b8a",
+        "prepared_path": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/en-256MiB/words.json",
+        "prepared_bytes": 14071952,
+        "prepared_sha256": "4523a34ff64cdba49b0985f32cc923f2c7b005fd67748a0fbec38c44bab437c5",
+        "unique_words": 836105
+      },
+      "paired_repetitions": [
+        1,
+        2
+      ],
+      "slots": {
+        "train_seconds": 1.559615186,
+        "train_cpu_seconds": 4.433404,
+        "rss_kib": 192670.0,
+        "samples": [
+          {
+            "rep": 1,
+            "seconds": 1.5856269570000001,
+            "rss_kib": 186492
+          },
+          {
+            "rep": 2,
+            "seconds": 1.533603415,
+            "rss_kib": 198848
+          }
+        ]
+      },
+      "edges": {
+        "train_seconds": 1.544190338,
+        "train_cpu_seconds": 4.428356,
+        "rss_kib": 199108.0,
+        "samples": [
+          {
+            "rep": 1,
+            "seconds": 1.526993702,
+            "rss_kib": 200256
+          },
+          {
+            "rep": 2,
+            "seconds": 1.561386974,
+            "rss_kib": 197960
+          }
+        ]
+      },
+      "cutoff": {
+        "mode": "slots",
+        "physical_edges": 6282501,
+        "resident_slots": 7954712,
+        "edge_cutoff": 256,
+        "slot_cutoff": 256
+      },
+      "slot_over_edge_wall_ratio": 1.0099889551309964,
+      "slot_over_edge_rss_ratio": 0.9676657894208168
+    },
+    {
+      "case": "zh-1MiB",
+      "input": {
+        "case": "zh-1MiB",
+        "language": "zh",
+        "requested_mib": 1,
+        "bytes": 1048514,
+        "source": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+        "source_prefix_sha256": "5f53dcd3b37adea38fb6afa61e99c2dacb1f8e7d2afbb1bdf45413abfd572081",
+        "prepared_path": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/zh-1MiB/words.json",
+        "prepared_bytes": 1984544,
+        "prepared_sha256": "d816991c4248a1e613bf2a2e27d9e0efefffbb4780b6752bf12f6605872e8c6b",
+        "unique_words": 33340
+      },
+      "paired_repetitions": [
+        1,
+        2
+      ],
+      "slots": {
+        "train_seconds": 0.3352033765,
+        "train_cpu_seconds": 0.9636450000000001,
+        "rss_kib": 33966.0,
+        "samples": [
+          {
+            "rep": 1,
+            "seconds": 0.356525134,
+            "rss_kib": 32564
+          },
+          {
+            "rep": 2,
+            "seconds": 0.313881619,
+            "rss_kib": 35368
+          }
+        ]
+      },
+      "edges": {
+        "train_seconds": 0.3903016575,
+        "train_cpu_seconds": 1.087054,
+        "rss_kib": 33394.0,
+        "samples": [
+          {
+            "rep": 1,
+            "seconds": 0.438090785,
+            "rss_kib": 33976
+          },
+          {
+            "rep": 2,
+            "seconds": 0.34251253,
+            "rss_kib": 32812
+          }
+        ]
+      },
+      "cutoff": {
+        "mode": "slots",
+        "physical_edges": 856433,
+        "resident_slots": 923114,
+        "edge_cutoff": 256,
+        "slot_cutoff": 256
+      },
+      "slot_over_edge_wall_ratio": 0.8588315474934922,
+      "slot_over_edge_rss_ratio": 1.0171288255375217
+    },
+    {
+      "case": "zh-16MiB",
+      "input": {
+        "case": "zh-16MiB",
+        "language": "zh",
+        "requested_mib": 16,
+        "bytes": 16776351,
+        "source": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+        "source_prefix_sha256": "ebd64699a917bb0982e9b64d302d94cc08057f43d16bcb5efc041594684c12a6",
+        "prepared_path": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/zh-16MiB/words.json",
+        "prepared_bytes": 29688385,
+        "prepared_sha256": "19ac0d1eef82c0fe4cf537098710a04b67453656ee386c5961ce26b8ccee6c2f",
+        "unique_words": 489783
+      },
+      "paired_repetitions": [
+        1
+      ],
+      "slots": {
+        "train_seconds": 2.460204437,
+        "train_cpu_seconds": 7.209747,
+        "rss_kib": 272328,
+        "samples": [
+          {
+            "rep": 1,
+            "seconds": 2.460204437,
+            "rss_kib": 272328
+          }
+        ]
+      },
+      "edges": {
+        "train_seconds": 2.503959894,
+        "train_cpu_seconds": 7.477952,
+        "rss_kib": 256408,
+        "samples": [
+          {
+            "rep": 1,
+            "seconds": 2.503959894,
+            "rss_kib": 256408
+          }
+        ]
+      },
+      "cutoff": {
+        "mode": "slots",
+        "physical_edges": 12749338,
+        "resident_slots": 13728905,
+        "edge_cutoff": 256,
+        "slot_cutoff": 256
+      },
+      "slot_over_edge_wall_ratio": 0.9825254960733009,
+      "slot_over_edge_rss_ratio": 1.0620885463792082
+    },
+    {
+      "case": "zh-256MiB",
+      "input": {
+        "case": "zh-256MiB",
+        "language": "zh",
+        "requested_mib": 256,
+        "bytes": 268435162,
+        "source": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+        "source_prefix_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+        "prepared_path": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/zh-256MiB/words.json",
+        "prepared_bytes": 437135595,
+        "prepared_sha256": "bb796d0b57b87d965b84de249bc5c8e283b700774638d16a40e4ae5171b13ee0",
+        "unique_words": 6859987
+      },
+      "paired_repetitions": [
+        1
+      ],
+      "slots": {
+        "train_seconds": 24.541989028,
+        "train_cpu_seconds": 78.529917,
+        "rss_kib": 3341904,
+        "samples": [
+          {
+            "rep": 1,
+            "seconds": 24.541989028,
+            "rss_kib": 3341904
+          }
+        ]
+      },
+      "edges": {
+        "train_seconds": 24.050652215,
+        "train_cpu_seconds": 77.20383000000001,
+        "rss_kib": 3204428,
+        "samples": [
+          {
+            "rep": 1,
+            "seconds": 24.050652215,
+            "rss_kib": 3204428
+          }
+        ]
+      },
+      "cutoff": {
+        "mode": "slots",
+        "physical_edges": 189067447,
+        "resident_slots": 202787422,
+        "edge_cutoff": 859,
+        "slot_cutoff": 890
+      },
+      "slot_over_edge_wall_ratio": 1.0204292510908939,
+      "slot_over_edge_rss_ratio": 1.0429018845172993
+    },
+    {
+      "case": "code-1MiB",
+      "input": {
+        "case": "code-1MiB",
+        "language": "code",
+        "requested_mib": 1,
+        "bytes": 1048521,
+        "source": "/root/code/tokenizers-bpe-benchmarks/.bench/ghcr-hf-main-memory-37786232780-1/data/code/text.txt",
+        "source_prefix_sha256": "d0b0c2517f32fa6b4f47102d1d310ca72bb32d29672fc76cd5611d3daff23958",
+        "prepared_path": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/code-1MiB/words.json",
+        "prepared_bytes": 272818,
+        "prepared_sha256": "b2bd3a916f20ff0d40df4c895b06b833375513d2fe385720ce77670063cdb66a",
+        "unique_words": 16251
+      },
+      "paired_repetitions": [
+        1,
+        2
+      ],
+      "slots": {
+        "train_seconds": 0.119904158,
+        "train_cpu_seconds": 0.3654305,
+        "rss_kib": 26204.0,
+        "samples": [
+          {
+            "rep": 1,
+            "seconds": 0.131273923,
+            "rss_kib": 26248
+          },
+          {
+            "rep": 2,
+            "seconds": 0.108534393,
+            "rss_kib": 26160
+          }
+        ]
+      },
+      "edges": {
+        "train_seconds": 0.123615021,
+        "train_cpu_seconds": 0.3729555,
+        "rss_kib": 26168.0,
+        "samples": [
+          {
+            "rep": 1,
+            "seconds": 0.121092854,
+            "rss_kib": 28752
+          },
+          {
+            "rep": 2,
+            "seconds": 0.126137188,
+            "rss_kib": 23584
+          }
+        ]
+      },
+      "cutoff": {
+        "mode": "slots",
+        "physical_edges": 122863,
+        "resident_slots": 155366,
+        "edge_cutoff": 256,
+        "slot_cutoff": 256
+      },
+      "slot_over_edge_wall_ratio": 0.969980484815029,
+      "slot_over_edge_rss_ratio": 1.0013757260776521
+    },
+    {
+      "case": "code-16MiB",
+      "input": {
+        "case": "code-16MiB",
+        "language": "code",
+        "requested_mib": 16,
+        "bytes": 16777188,
+        "source": "/root/code/tokenizers-bpe-benchmarks/.bench/ghcr-hf-main-memory-37786232780-1/data/code/text.txt",
+        "source_prefix_sha256": "e61e0424f35d1acefea7419149b12d667c93a8705b197e1b84c7dab1bf8bce83",
+        "prepared_path": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/code-16MiB/words.json",
+        "prepared_bytes": 2340700,
+        "prepared_sha256": "1a604309db156a77d54a67677b57842b4a2d6fecbbd6cdc5c626379497a08b22",
+        "unique_words": 122897
+      },
+      "paired_repetitions": [
+        1,
+        2
+      ],
+      "slots": {
+        "train_seconds": 0.619933734,
+        "train_cpu_seconds": 1.765314,
+        "rss_kib": 46546.0,
+        "samples": [
+          {
+            "rep": 1,
+            "seconds": 0.612626265,
+            "rss_kib": 46864
+          },
+          {
+            "rep": 2,
+            "seconds": 0.627241203,
+            "rss_kib": 46228
+          }
+        ]
+      },
+      "edges": {
+        "train_seconds": 0.5899938625000001,
+        "train_cpu_seconds": 1.7020485,
+        "rss_kib": 46522.0,
+        "samples": [
+          {
+            "rep": 1,
+            "seconds": 0.572329246,
+            "rss_kib": 46580
+          },
+          {
+            "rep": 2,
+            "seconds": 0.607658479,
+            "rss_kib": 46464
+          }
+        ]
+      },
+      "cutoff": {
+        "mode": "slots",
+        "physical_edges": 1173332,
+        "resident_slots": 1419127,
+        "edge_cutoff": 256,
+        "slot_cutoff": 256
+      },
+      "slot_over_edge_wall_ratio": 1.0507460728034266,
+      "slot_over_edge_rss_ratio": 1.0005158849576545
+    },
+    {
+      "case": "code-256MiB",
+      "input": {
+        "case": "code-256MiB",
+        "language": "code",
+        "requested_mib": 256,
+        "bytes": 268435360,
+        "source": "/root/code/tokenizers-bpe-benchmarks/.bench/ghcr-hf-main-memory-37786232780-1/data/code/text.txt",
+        "source_prefix_sha256": "ee46fb642026e7aa4945bcb942a708f193e763cd5e302946b050c35ab3164a4b",
+        "prepared_path": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/code-256MiB/words.json",
+        "prepared_bytes": 23343030,
+        "prepared_sha256": "489df7b01629e9d7391ad5c32587d62488af99931349293a2fa841ca1bc53b81",
+        "unique_words": 1189381
+      },
+      "paired_repetitions": [
+        1,
+        2
+      ],
+      "slots": {
+        "train_seconds": 2.7423534700000003,
+        "train_cpu_seconds": 8.0239635,
+        "rss_kib": 302902.0,
+        "samples": [
+          {
+            "rep": 1,
+            "seconds": 2.751432496,
+            "rss_kib": 307928
+          },
+          {
+            "rep": 2,
+            "seconds": 2.733274444,
+            "rss_kib": 297876
+          }
+        ]
+      },
+      "edges": {
+        "train_seconds": 2.8091140035,
+        "train_cpu_seconds": 8.0273735,
+        "rss_kib": 294604.0,
+        "samples": [
+          {
+            "rep": 1,
+            "seconds": 2.679438002,
+            "rss_kib": 300480
+          },
+          {
+            "rep": 2,
+            "seconds": 2.938790005,
+            "rss_kib": 288728
+          }
+        ]
+      },
+      "cutoff": {
+        "mode": "slots",
+        "physical_edges": 12661968,
+        "resident_slots": 15040731,
+        "edge_cutoff": 256,
+        "slot_cutoff": 256
+      },
+      "slot_over_edge_wall_ratio": 0.9762343096731497,
+      "slot_over_edge_rss_ratio": 1.0281666236710976
+    }
+  ]
+}

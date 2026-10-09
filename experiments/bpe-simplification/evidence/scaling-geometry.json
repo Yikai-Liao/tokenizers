@@ -1,0 +1,29 @@
+[
+  {
+    "case": "zh-256MiB",
+    "words": 6859987,
+    "initial_characters": 195927434,
+    "physical_edges": 189067447,
+    "resident_slots": 202787422,
+    "empty_words": 0,
+    "derived_main_wave_count": 1
+  },
+  {
+    "case": "zh-384MiB",
+    "words": 10024214,
+    "initial_characters": 288681368,
+    "physical_edges": 278657154,
+    "resident_slots": 298705583,
+    "empty_words": 0,
+    "derived_main_wave_count": 2
+  },
+  {
+    "case": "zh-512MiB",
+    "words": 13035637,
+    "initial_characters": 376883341,
+    "physical_edges": 363847704,
+    "resident_slots": 389918979,
+    "empty_words": 0,
+    "derived_main_wave_count": 2
+  }
+]

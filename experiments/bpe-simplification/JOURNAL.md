@@ -386,3 +386,43 @@ Final-source release rebuild produces the exact measured binary SHA-256.
 REPORT/PHASES, diagnostic patches, inputs/source/build hashes and immutable
 measurements are recorded. This reaches the updated <25s/2100-line goal, while
 remaining slower than main. No extra six-pair noise repetition was added.
+
+## 25. Reviewed contracts and complete default-test budget
+
+Rust snapshot `4d181c51`: production 2100, complete default BPE tests/helpers
+780/800. Explicit Selection, consumed CorpusPlan, owned Route drains and trusted
+Positions inputs close the reviewed contracts. Consolidated tests cover public
+JSON/encode/special tokens, actual pool execution, feed boundaries/errors, strict
+progress schema, long alias cohorts and codec range/full-u64 boundaries.
+Fresh test/budget reviews caught omitted imports and shared wrapper tests; both
+are counted now. The final fresh whole-crate source/coverage audit independently
+confirms 2100/780 and reports no new material issue. Default/no-default library
+suites each pass 17 tests; doctest 1 and strict Miri 2 pass, as do Clippy, fmt,
+budget and whitespace checks. Rust is identical to validated `e26115c2`.
+
+## 26. Exact-source performance, larger Chinese memory and final audit
+
+Excluded review-final after detecting a separate concurrent rdst benchmark.
+review-final-idle covers four cases/eight independent uninstrumented processes:
+complete models match and child swap is zero. Chinese core is 21.248320118s,
+CPU 68.620948s, HWM 3086264KiB; adjacent main is 16.004201270s, CPU 52.793809s,
+HWM 2555272KiB. This meets the 25s core target.
+
+Same-prefix real 384/512MiB data adds four plain processes and four full-stage
+diagnostics, all model-equal with zero swap and concurrent-heavy-process guards.
+Plain whole-HWM overhead is 20.8/22.4/20.5%; initial diagnostic peak overhead is
+30.8% at 256MiB and 64.3% at 512MiB. Actual main route is bounded, with 1/2 waves;
+final uses 16 word chunks and no waves. Independent streaming geometry agrees
+with logs; the source-derived 384MiB wave count is 2. Prepare dominates extra CPU.
+The reports distinguish boundaries and instrumentation gaps; diagnostic totals
+are not used to accept the 25s target.
+
+Cutoff ablation has 42 valid records across three types and three sizes. Retain
+resident slots: eight cases have identical clamped cutoffs, while the differing
+cutoff has only one pair and no stable benefit evidence. Historical net-LOC
+screening and the rejected owner directory are documented. Fresh evidence review
+caught the owner-directory control: that experiment restored compressed writes,
+so its actual baseline is whole-candidate. Corrected the report and archived the
+control record; a new fresh completion review found no new material issue.
+No instrumentation entered delivered Rust. Final reports, records and hashes are
+archived in REPORT, PERFORMANCE_REVIEW, OPTIMIZATION_ROI, CUTOFF_ABLATION and evidence.

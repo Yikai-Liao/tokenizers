@@ -1,0 +1,34 @@
+[
+  {
+    "case": "zh-256MiB",
+    "requested_mib": 256,
+    "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+    "bytes": 268435162,
+    "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+    "prepared_path": "/root/code/tokenizers-perfetto-results/inputs/zh-bytelevel/words.json",
+    "prepared_sha256": "bb796d0b57b87d965b84de249bc5c8e283b700774638d16a40e4ae5171b13ee0",
+    "unique_words": 6859987
+  },
+  {
+    "case": "zh-384MiB",
+    "requested_mib": 384,
+    "path": "/root/code/tokenizers-simplification-results/final-scaling/inputs/zh-384MiB/text.txt",
+    "bytes": 402653152,
+    "source_sha256": "cee7cc37a8a25450d0bf02955c98fb544fb2ed536a27ad55acfae1a8a9a614a5",
+    "prepared_path": "/root/code/tokenizers-simplification-results/final-scaling/inputs/zh-384MiB/words.json",
+    "prepared_sha256": "bb3499054b63804f61ab1ab13c69ffa84442f0ad915ac30544f493cd8163d71f",
+    "prepared_bytes": 643465395,
+    "unique_words": 10024214
+  },
+  {
+    "case": "zh-512MiB",
+    "requested_mib": 512,
+    "path": "/root/code/tokenizers-bpe-benchmarks/.bench/prezza/zh512/text.txt",
+    "bytes": 536870289,
+    "source_sha256": "a0d40d4102cba1e933f25e5ccd17552d2eaebaec4ef770bc39d8e46e740b4d4f",
+    "prepared_path": "/root/code/tokenizers-simplification-results/final-scaling/inputs/zh-512MiB/words.json",
+    "prepared_sha256": "6addcde37de50cc119cce3052a22af5c86b7c0a085748c9c30efb5651abcbd4d",
+    "prepared_bytes": 839693526,
+    "unique_words": 13035637
+  }
+]
