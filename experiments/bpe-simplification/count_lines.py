@@ -40,9 +40,11 @@ def separate_test_items(source):
     masked = re.sub(r'r(\#*)".*?"\1|"(?:\\.|[^"\\])*"', lambda m: ' ' * len(m.group()), text, flags=re.S)
     test_ranges = []
     cursor = 0
-    marker = '#[cfg(test)]'
-    while (start := masked.find(marker, cursor)) >= 0:
-        begin = start + len(marker)
+    # The optional parity feature is off in the default BPE build; its
+    # any(test, feature=...) imports therefore belong to the test budget.
+    marker = re.compile(r'#\[cfg\((?:test|any\(test,\s*feature\s*=\s+\))\)\]')
+    while match := marker.search(masked, cursor):
+        start, begin = match.span()
         following_line = masked[begin:].lstrip().splitlines()[0]
         if following_line.startswith('mut observe:') or following_line == 'None,':
             # This test-only parameter is one rustfmt line, not the train body.
