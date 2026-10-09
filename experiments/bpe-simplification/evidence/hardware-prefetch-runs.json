@@ -1,0 +1,100 @@
+[
+  {
+    "arm": "B",
+    "label": "hardware-prefetch",
+    "case": "en-core-w4-v50000",
+    "block": 1,
+    "warmup": false,
+    "returncode": 0,
+    "subprocess_wall": 2.623868240043521,
+    "max_swap_kib": 0,
+    "min_available_kib": 5128404,
+    "binary_sha256": "be934742903a21538531f3f675c567f4fbc9387f2106fb7cd5c6759700ab59e6",
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/root/code/tokenizers-simplification-results/bin/hardware-prefetch",
+      "/root/code/tokenizers-simplification-results/runs/hardware-prefetch/en-core-w4-v50000/b1-B/job.json"
+    ],
+    "attempt_id": "b1-B",
+    "build_id": "B",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-bytelevel",
+    "metrics": {
+      "load_seconds": 0.49171255,
+      "process_hwm_kib_before_validation": 283784,
+      "train_cpu_seconds": 5.442279,
+      "train_seconds": 2.037547112
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/root/code/tokenizers-simplification-results/runs/hardware-prefetch/en-core-w4-v50000/b1-B/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+    "model_vocab_entries": 50000,
+    "model_merges": 49744,
+    "valid": true
+  },
+  {
+    "arm": "B",
+    "label": "hardware-prefetch",
+    "case": "zh-core-w4-v50000",
+    "block": 1,
+    "warmup": false,
+    "returncode": 0,
+    "subprocess_wall": 47.907205680035986,
+    "max_swap_kib": 0,
+    "min_available_kib": 2009288,
+    "binary_sha256": "be934742903a21538531f3f675c567f4fbc9387f2106fb7cd5c6759700ab59e6",
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/root/code/tokenizers-simplification-results/bin/hardware-prefetch",
+      "/root/code/tokenizers-simplification-results/runs/hardware-prefetch/zh-core-w4-v50000/b1-B/job.json"
+    ],
+    "attempt_id": "b1-B",
+    "build_id": "B",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-bytelevel",
+    "metrics": {
+      "load_seconds": 10.426343823,
+      "process_hwm_kib_before_validation": 3314616,
+      "train_cpu_seconds": 108.105788,
+      "train_seconds": 35.489006689
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/root/code/tokenizers-simplification-results/runs/hardware-prefetch/zh-core-w4-v50000/b1-B/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "model_vocab_entries": 50000,
+    "model_merges": 49744,
+    "valid": true
+  }
+]

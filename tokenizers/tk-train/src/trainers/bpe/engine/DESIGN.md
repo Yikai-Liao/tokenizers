@@ -11,7 +11,9 @@ The index then aggregates complete births and updates count owners in parallel.
 Errors discard the attempt. Reader and owner jobs finish before their borrowed
 state can be dropped. Commit can fail after writes and partial count updates;
 rounds do not promise rollback. Tokens and occurrence spans use ordinary relaxed
-atomic accesses, so the engine has no unsafe pointer or allocation protocol.
+atomic accesses. The only unsafe block is an x86_64 cache-hint intrinsic whose
+address comes from a checked access to the live borrowed slot allocation. Other
+architectures use a no-op hint. There is no unsafe endpoint or allocation protocol.
 Atomics do not replace the disjoint-match and joined-phase semantic requirements.
 
 ## Token identity and initialization

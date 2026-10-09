@@ -189,6 +189,25 @@ impl Corpus {
     pub(super) fn token(&self, position: usize) -> u32 {
         self.tokens.get(position)
     }
+    pub(super) fn prefetch(&self, position: usize) {
+        #[cfg(target_arch = "x86_64")]
+        {
+            let address = match &self.tokens {
+                Slots::Narrow(values) => values.get(position).map(|v| std::ptr::from_ref(v).cast()),
+                Slots::Wide(values) => values.get(position).map(|v| std::ptr::from_ref(v).cast()),
+            };
+            if let Some(address) = address {
+                // SAFETY: get() supplies an address within this live borrowed
+                // allocation. The intrinsic issues only a cache hint; it does
+                // not read or write a logical token or extend its lifetime.
+                unsafe {
+                    std::arch::x86_64::_mm_prefetch(address, std::arch::x86_64::_MM_HINT_T0);
+                }
+            }
+        }
+        #[cfg(not(target_arch = "x86_64"))]
+        let _ = position;
+    }
     pub(super) fn weight_region(&self, position: usize) -> (u64, usize) {
         if self.weight_regions.len() == 1 {
             return (self.weight_regions[0].1, self.len());

@@ -199,3 +199,21 @@ main/head-read采样train CPU74.97/131.85 s，wall24.09/42.93 s（有采样开�
 用户指出main prefetch收益明显，应低行数加入；用户要求今后每轮review用fresh agent。
 旧reviewer已停止复用，新perf_priority_review_fresh正在只读核对机制/收益潜力。
 head-read以诊断检查点提交，不认定保留，不用它的42.93s判断prefetch收益。
+
+## 9. 真正的hardware prefetch，保留进入下一组合
+
+生产1737行，测试1385行；library tests35 passed。
+中英文各一次无采样core，完整模型相同、swap0。
+英文2.038 s / CPU5.44 s / RSS0.271 GiB；中文35.489 s / CPU108.11 s / RSS3.161 GiB。
+相对无ring的geometry38.386s，中文wall少7.5%、CPU少9.2%；英文wall少15.7%。
+不能与head-read的有采样42.927s排名；最终组合仍要相邻复测，RSS无改善证据。
+从main提取16ahead非阻塞_mm_prefetch；保留安全token操作，只有cache hint使用局部unsafe。
+地址由get()给出，其他架构no-op。它与同步head-load不同。
+
+fresh reviewer perf_priority_review_fresh复核了主要潜力：先prefetch，再ownedstream append，再typed cursor。
+owner codec自样本仅7.03%识别engine，不把整个23.3% owner当可消除收益。
+可变restart+owned append须封装entry/byte偏移；预计+70–120行，metadata/RSS待测。
+用户询问Affix coverage/batch：保留prefix/suffix/空值/alias/occurrence spans/strict gate/1-4-8worker的完整模型与逐步trace；
+普通Affix可batch，active reuse退到单rule cohort但内部并行/owner聚合仍保留。
+用户随后明确不增加显式Affix batch断言；未修改该测试，沿用现有覆盖。
+以后review每次fresh agent，不复用旧reviewer。
