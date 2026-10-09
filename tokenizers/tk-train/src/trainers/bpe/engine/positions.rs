@@ -376,19 +376,41 @@ mod tests {
                 (positions, values)
             })
             .collect();
-        rayon::ThreadPoolBuilder::new()
-            .num_threads(2)
-            .build()
-            .unwrap()
-            .install(|| {
-                saved.par_iter().for_each(|(positions, values)| {
-                    let next: Vec<_> = (0..128).map(|i| (1u64 << 63) + i).collect();
-                    let temporary =
-                        Positions::from_sorted(next.iter().copied(), &mut arena.lease()).unwrap();
-                    assert!(temporary.iter().eq(next));
-                    assert!(positions.iter().eq(values.iter().copied()));
-                });
+        if cfg!(miri) {
+            // Isolate storage's concurrency contract from Crossbeam's global
+            // epoch collector, whose deferred reclamation outlives Miri tests.
+            std::thread::scope(|scope| {
+                for (worker, (positions, values)) in saved.iter().enumerate() {
+                    let arena = &arena;
+                    scope.spawn(move || {
+                        let mut lease = Lease {
+                            arena,
+                            cursor: arena.workers[worker % 2].lock().unwrap(),
+                        };
+                        let next: Vec<_> = (0..128).map(|i| (1u64 << 63) + i).collect();
+                        let temporary =
+                            Positions::from_sorted(next.iter().copied(), &mut lease).unwrap();
+                        assert!(temporary.iter().eq(next));
+                        assert!(positions.iter().eq(values.iter().copied()));
+                    });
+                }
             });
+        } else {
+            rayon::ThreadPoolBuilder::new()
+                .num_threads(2)
+                .build()
+                .unwrap()
+                .install(|| {
+                    saved.par_iter().for_each(|(positions, values)| {
+                        let next: Vec<_> = (0..128).map(|i| (1u64 << 63) + i).collect();
+                        let temporary =
+                            Positions::from_sorted(next.iter().copied(), &mut arena.lease())
+                                .unwrap();
+                        assert!(temporary.iter().eq(next));
+                        assert!(positions.iter().eq(values.iter().copied()));
+                    });
+                });
+        }
     }
     #[test]
     fn narrow_builders_promote_without_losing_prior_fragments() {
@@ -440,7 +462,8 @@ mod tests {
         for target in values
             .iter()
             .copied()
-            .chain([0, (1 << 32) - 1, (1 << 63) + 1])
+            .step_by(if cfg!(miri) { RESTART } else { 1 })
+            .chain([0, (1 << 32) - 1, (1 << 63) + 1, u64::MAX])
         {
             assert_eq!(
                 positions.lower_bound(target),

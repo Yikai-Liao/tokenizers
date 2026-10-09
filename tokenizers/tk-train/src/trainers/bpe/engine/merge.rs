@@ -3,7 +3,7 @@ use super::{BpeTrainer, Corpus, PairIndex, Vocabulary, WORD_SEPARATOR_ID, add};
 use super::{
     corpus::Match,
     index::Candidate,
-    positions::{Builder, Positions},
+    positions::{Arena, Builder, Positions},
 };
 use ahash::{AHashMap, AHashSet};
 use rayon::prelude::*;
@@ -20,27 +20,38 @@ pub(super) struct Batch<'arena> {
     restart: bool,
     floor: u64,
 }
-pub(super) struct Change {
+pub(super) struct Change<P> {
     pub(super) removed: Pair,
     pub(super) born: Pair,
     pub(super) removed_weight: u64,
     pub(super) born_weight: u64,
-    pub(super) positions: Builder,
+    pub(super) positions: P,
     pub(super) bucket: usize,
-    pub(super) complete: bool,
 }
-pub(super) struct Prepared {
-    jobs: Vec<Job>,
+pub(super) enum Birth<'arena> {
+    Partial(Builder),
+    Complete(Positions<'arena>),
 }
-struct Job {
+impl Birth<'_> {
+    pub(super) fn is_empty(&self) -> bool {
+        match self {
+            Self::Partial(values) => values.is_empty(),
+            Self::Complete(values) => values.is_empty(),
+        }
+    }
+}
+pub(super) struct Prepared<'arena> {
+    jobs: Vec<Job<'arena>>,
+}
+struct Job<'arena> {
     writes: Writes,
-    changes: Vec<Change>,
+    changes: Vec<Change<Birth<'arena>>>,
 }
 struct Neighbors<'a, 'arena> {
     rule: &'a Rule<'arena>,
     rank: usize,
     directories: &'a mut Directories,
-    changes: [Vec<Change>; 2],
+    changes: [Vec<Change<Builder>>; 2],
     complete: bool,
 }
 #[derive(Default)]
@@ -73,7 +84,7 @@ impl<'a, 'arena> Neighbors<'a, 'arena> {
             complete,
         }
     }
-    fn group(&mut self, neighbor: u32, left: bool) -> &mut Change {
+    fn group(&mut self, neighbor: u32, left: bool) -> &mut Change<Builder> {
         let side = usize::from(!left);
         let slot = &mut self.directories.indices[side][neighbor as usize];
         if *slot == u32::MAX {
@@ -91,7 +102,6 @@ impl<'a, 'arena> Neighbors<'a, 'arena> {
                 born_weight: 0,
                 positions: Builder::default(),
                 bucket: 2 * self.rank + usize::from(!left && neighbor != id),
-                complete: self.complete,
             });
             self.directories.touched.push((side, neighbor as usize));
             *slot =
@@ -121,21 +131,34 @@ impl<'a, 'arena> Neighbors<'a, 'arena> {
         }
         Ok(())
     }
-    fn finish(self, floor: u64) -> Vec<Change> {
-        // Separate directories preserve the reference's left-before-right drain.
-        self.changes
-            .into_iter()
-            .flatten()
-            .filter_map(|mut change| {
-                // Only a whole ordinary producer owns a complete birth count.
-                // Removal actions survive; partial jobs must reduce at the owner.
-                if change.complete && change.born_weight < floor {
-                    change.positions = Builder::default();
-                    change.born_weight = 0;
-                }
-                (change.removed_weight != 0 || !change.positions.is_empty()).then_some(change)
-            })
-            .collect()
+    fn finish(self, floor: u64, arena: &'arena Arena) -> Result<Vec<Change<Birth<'arena>>>> {
+        // Complete ordinary producers prune and encode before owner routing.
+        // Partial jobs retain raw positions until their counts have been reduced.
+        let mut result = Vec::new();
+        let mut lease = arena.lease();
+        for mut change in self.changes.into_iter().flatten() {
+            if self.complete && change.born_weight < floor {
+                change.positions = Builder::default();
+                change.born_weight = 0;
+            }
+            if change.removed_weight == 0 && change.positions.is_empty() {
+                continue;
+            }
+            let positions = if self.complete {
+                Birth::Complete(Positions::from_sorted(change.positions.iter(), &mut lease)?)
+            } else {
+                Birth::Partial(change.positions)
+            };
+            result.push(Change {
+                removed: change.removed,
+                born: change.born,
+                removed_weight: change.removed_weight,
+                born_weight: change.born_weight,
+                bucket: change.bucket,
+                positions,
+            });
+        }
+        Ok(result)
     }
 }
 impl<'arena> Batch<'arena> {
@@ -206,9 +229,14 @@ impl<'arena> Batch<'arena> {
             .iter()
             .map(|rule| (rule.pair, rule.candidate.priority.count, rule.replacement))
     }
-    pub(super) fn prepare(self, corpus: &Corpus, limit: usize) -> Result<Prepared> {
+    pub(super) fn prepare(
+        self,
+        corpus: &Corpus,
+        arena: &'arena Arena,
+        limit: usize,
+    ) -> Result<Prepared<'arena>> {
         if self.reuse {
-            return self.prepare_cohort(corpus, limit);
+            return self.prepare_cohort(corpus, arena, limit);
         }
         let selected: AHashMap<_, _> = self
             .rules
@@ -340,14 +368,19 @@ impl<'arena> Batch<'arena> {
                     }
                     Ok(Job {
                         writes,
-                        changes: neighbors.finish(self.floor),
+                        changes: neighbors.finish(self.floor, arena)?,
                     })
                 },
             )
             .collect::<Result<Vec<_>>>()?;
         Ok(Prepared { jobs })
     }
-    fn prepare_cohort(self, corpus: &Corpus, limit: usize) -> Result<Prepared> {
+    fn prepare_cohort(
+        self,
+        corpus: &Corpus,
+        arena: &'arena Arena,
+        limit: usize,
+    ) -> Result<Prepared<'arena>> {
         let rule = &self.rules[0];
         let mut words: Vec<_> = rule
             .candidate
@@ -429,15 +462,15 @@ impl<'arena> Batch<'arena> {
                 }
                 Ok(Job {
                     writes,
-                    changes: neighbors.finish(self.floor),
+                    changes: neighbors.finish(self.floor, arena)?,
                 })
             })
             .collect::<Result<Vec<_>>>()?;
         Ok(Prepared { jobs })
     }
 }
-impl Prepared {
-    pub(super) fn apply(self, corpus: &Corpus) -> Vec<Vec<Change>> {
+impl<'arena> Prepared<'arena> {
+    pub(super) fn apply(self, corpus: &Corpus) -> Vec<Vec<Change<Birth<'arena>>>> {
         self.jobs
             .into_par_iter()
             .map(|job| {
@@ -581,7 +614,10 @@ mod tests {
             batch.trace().collect::<Vec<_>>(),
             vec![((0, 1), 10, 6), ((2, 3), 9, 7), ((4, 5), 8, 8)]
         );
-        let changes = batch.prepare(&corpus, usize::MAX).unwrap().apply(&corpus);
+        let changes = batch
+            .prepare(&corpus, &arena, usize::MAX)
+            .unwrap()
+            .apply(&corpus);
         index.commit(changes).unwrap();
         assert!(index.best().is_none());
     }

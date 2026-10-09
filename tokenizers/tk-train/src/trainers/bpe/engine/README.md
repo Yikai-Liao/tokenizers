@@ -25,12 +25,16 @@ The implementation is divided by the knowledge each module owns:
   event aggregation, and joined application. The coordinator sees `Batch` and
   `Prepared`, without handling write geometry or neighbor directories.
 - [positions.rs](positions.rs) owns sorted full-u64 streams and restart blocks.
-  It preserves duplicate positions and supports coordinates through `u64::MAX`.
+  Temporary buffers narrow to u32 with automatic full-u64 promotion. Published
+  lists have a two-word descriptor and borrow small allocations from a scoped
+  Arena; its dynamic byte threshold matches main. Duplicate positions and
+  coordinates through `u64::MAX` are preserved.
 
 Compatible batches retain the original priority prefix and permit shared heads
 or shared tails. Crossed endpoints end the batch without skipping a candidate.
 AA and reserved-ID rules run alone. Complete ordinary producers publish directly;
-partial, AA and reuse births aggregate before publication. Commit routes compact
+Complete producers prune before encoding in preparation; partial, AA and reuse
+births aggregate before encoding and publication. Commit routes compact
 metadata references and moves each position stream only once. Active reuse uses
 one cohort at a time; its
 word scans follow the original alias/length-gate conditions.
@@ -43,16 +47,22 @@ cargo test --manifest-path tokenizers/tk-train/Cargo.toml --no-default-features 
 cargo clippy --manifest-path tokenizers/tk-train/Cargo.toml --all-targets
 cargo fmt --manifest-path tokenizers/tk-train/Cargo.toml --check
 python3 experiments/bpe-simplification/count_lines.py
+cargo +nightly miri test --manifest-path experiments/bpe-simplification/miri-codec/Cargo.toml
 ```
 
 The tests compare full vocabulary IDs, ordered merges and per-rule traces with
 an independent small-input reference. Fixed-seed combinations cover thread
 counts, affixes, aliases, zero weights, ties, overlap and strict birth gates.
 Literal expectations cover wide counts and public errors. Codec tests cover the
-entire u64 domain, repeated values and restart boundaries. Public tests retain
+entire u64 domain, repeated values and restart boundaries. The standalone Miri
+harness imports the actual position module and keeps borrow/leak checks enabled.
+Miri samples seek starts and targets around restart boundaries; native tests
+exhaust every start. Native concurrency uses the training Rayon pool; Miri uses
+scoped threads and both allocation cursors to isolate storage from Crossbeam
+collectors that outlive the test. Public tests retain
 feed, model reload, progress and ambient-versus-training pool behavior.
 
-The source-size budget includes all engine modules and test-only code, plus the
+The 2100-line production budget includes all engine modules and test-only code, plus the
 reference and shared oracle helpers. Removing comments or moving implementation
 outside this directory does not reduce the budget. Performance evidence and
 build/input hashes are recorded by the [experiment](../../../../../../experiments/bpe-simplification/STATUS.md).

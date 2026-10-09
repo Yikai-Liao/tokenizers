@@ -2,7 +2,7 @@
 
 ## Joined rounds and ownership
 
-The coordinator owns the vocabulary, corpus and pair index. A selected `Batch`
+The coordinator owns the vocabulary, corpus, pair index and allocation Arena for one attempt. A selected `Batch`
 owns the occurrence lists of its rules. `Batch::prepare` consumes those lists,
 returns owned writes and neighbor changes, and joins all readers before return.
 `Prepared::apply` joins endpoint writers before handing changes to `PairIndex`.
@@ -12,9 +12,9 @@ and updates count owners in parallel.
 Errors discard the attempt. Reader and owner jobs finish before their borrowed
 state can be dropped. Commit can fail after writes and partial count updates;
 rounds do not promise rollback. Tokens and occurrence spans use ordinary relaxed
-atomic accesses. The only unsafe block is an x86_64 cache-hint intrinsic whose
-address comes from a checked access to the live borrowed slot allocation. Other
-architectures use a no-op hint. There is no unsafe endpoint or allocation protocol.
+atomic accesses. Corpus cache hints use an x86_64 intrinsic with addresses from
+checked accesses to live slots; other architectures use a no-op hint. Position
+storage also uses unsafe allocation and payload access, as specified below.
 Atomics do not replace the disjoint-match and joined-phase semantic requirements.
 
 ## Token identity and initialization
@@ -39,8 +39,8 @@ of any ambient pool used by feed.
 ## Construction and task-local aggregation
 
 A borrowed CorpusPlan resolves original symbols and weighted word intervals.
-Initial counting directly builds compressed positions before allocating token
-slots. Materialization consumes the plan and releases thin input references.
+Initial counting gathers sorted temporary positions, reduces counts and freezes
+retained lists before allocating token slots. Materialization consumes the plan and releases thin input references.
 Fresh mode releases its per-word start directory; weights retain only adjacent
 equal-weight regions. Reuse keeps word starts for cohort scan domains.
 
@@ -84,15 +84,14 @@ Fresh owners hold one count and one list per retained pair. Taking a candidate
 removes that state. Old-boundary removal events decrease existing states and
 retire counts below the floor. Each new pair belongs to one producer rule;
 partial jobs aggregate before pruning and publication. An ordinary source that
-covers the whole candidate marks its birth count complete. After local encoding
-it drops births below the floor while preserving removal events; the owner
+covers the whole candidate marks its birth count complete. It first drops births below the floor while preserving removal events, then
+encodes retained lists; the owner
 moves retained lists directly into states and the queue. AA and reuse do not
 enter this shortcut. Small ordinary candidates remain whole by item count; large
-candidates use spatially ordered block ranges. Fresh local lists are
-delta encoded during preparation and streamed to each owner in indexed task
-order. Each key has one producer, so this preserves spatial order without another
+candidates use spatially ordered block ranges. Partial fresh lists remain raw until owner reduction; complete fresh lists
+are encoded during preparation. Both move to each owner in indexed task order. Each key has one producer, so this preserves spatial order without another
 sort. Reuse births can interleave; their full-u64 coordinates are sorted before
-encoding. There is no adaptive birth feedback, linked-node promotion or Arena.
+encoding. There is no adaptive birth feedback or linked-node promotion.
 
 Commit retains one immutable metadata array and owner routes with reusable
 capacity. Each route action is a resident usize record reference and two flags.
@@ -101,11 +100,27 @@ positions still route. Each position stream moves to exactly one owner payload
 vector, in the order of that owner's birth actions. Removal precedes birth for
 each action; owner order is the original producer order. Draining both vectors
 retains capacity. Errors drop active drains; the attempt is discarded after
-owner jobs join. The next commit clears any unprocessed route before reuse.
+owner jobs join. Successful commits drain every route before the next round.
 
-Arena's bulk retirement and end-of-attempt release benefits are deliberately
-forgone at the user's request. Per-list Vec ownership keeps lifetimes explicit
-but leaves allocation/retirement costs in preparation, commit and final release.
+An attempt-scoped Arena owns final small allocations. Its threshold is main's
+`max(256, floor(sqrt(physical_items / 256)))` bytes, computed from the corpus plan.
+The full allocation layout, including length header and restart directory,
+determines whether a list uses Arena storage or an individually owned heap block.
+Each worker has a mutex-protected bump cursor and reusable encoding scratch.
+Leases are held only inside sequential worker closures; no nested parallel work
+runs while a lease is held. Frozen allocations are copied away from scratch and
+remain stable after leases end. Arena storage is never reset during an attempt.
+
+Published `Positions<'arena>` has main's two-word descriptor. One or two values
+use inline flags when the full-width first value and gap fit their fields;
+other lists carry an aligned payload pointer. A low pointer tag identifies Arena
+ownership. Heap lists reconstruct their validated layout for deallocation;
+Arena lists retire without individual free. Inline numeric payloads are never
+dereferenced. Payload readers only read initialized headers, directories and
+streams. The immutable descriptor is Send and Sync because its final allocation
+stays live for its owner or borrowed Arena, and each reader has its own decoder.
+The index, candidates and prepared births borrow the Arena lifetime; joined
+phases and Rust drop order keep it alive until all such lists are released.
 
 Reuse owners retain a signed i64 ledger and the queue owns independent occurrence
 cohorts. Selection repairs the head cohort against the shared ledger, preserving
@@ -135,6 +150,12 @@ span. Limits zero, one and two therefore retain their existing distinct behavior
 
 ## Position encoding
 
+Temporary `Builder` lists store u32 coordinates in small inline buffers or heap
+vectors. A value above `u32::MAX` promotes the buffer to u64 without losing prior
+values. Sorted append moves the first fragment and appends matching storage
+variants directly. This narrowing is an internal representation choice; input,
+iteration, comparisons and the published codec retain the entire u64 domain.
+
 Each block contains at most 128 positions. Its first position is a full-u64
 restart; later positions store unsigned base-128 deltas. Checked monotonic input
 makes reconstruction exact, including a gap of `u64::MAX`. Zero gaps retain
@@ -145,7 +166,7 @@ cohort selection can stream the full list without a corpus-sized bitmap.
 ## Evidence and budget
 
 The baseline is Fork main `e4f787dc189d9be7192107490d652096cde7480e`.
-The user requires at most 2000 formatted production logic lines and no more test
+The user requires at most 2100 formatted production logic lines and no more test
 logic than production, preserving compatible batch aggregation and good module
 boundaries. Performance work prioritizes 4-core Chinese and English ByteLevel.
 The earlier ablation plan supplies behavioral coverage, but its provisional
@@ -164,5 +185,5 @@ The endpoint representation and compatible batching retain the algorithmic
 lineage documented by the original engine: Yikai Liao's efficient BPE prototypes,
 BatchBPE and YouTokenToMe's conditional rule pipeline. The custom BSD radix-sort
 translation has been removed; this engine uses standard sorting and a small
-safe delta stream. Git history and the pinned baseline preserve the original
+delta stream with an immutable, lifetime-scoped allocation descriptor. Git history and the pinned baseline preserve the original
 implementation and its detailed proofs.

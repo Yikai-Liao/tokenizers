@@ -84,8 +84,11 @@ pub(super) fn train(
                 #[cfg(test)]
                 trace.extend(batch.trace());
                 merges.extend(batch.pairs());
-                let prepared =
-                    batch.prepare(&corpus, trainer.max_token_length.unwrap_or(usize::MAX))?;
+                let prepared = batch.prepare(
+                    &corpus,
+                    &arena,
+                    trainer.max_token_length.unwrap_or(usize::MAX),
+                )?;
                 let changes = prepared.apply(&corpus);
                 index.commit(changes)?;
                 work.learned(merges.len());

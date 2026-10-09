@@ -1,5 +1,5 @@
 //! Count owners publish complete lists; the queue repairs stale snapshots lazily.
-use super::merge::Change;
+use super::merge::{Birth, Change};
 use super::{
     CorpusPlan, WORD_SEPARATOR_ID, add,
     positions::{Arena, Builder, Positions},
@@ -75,18 +75,17 @@ struct Event {
     removed_weight: u64,
     born_weight: u64,
     bucket: usize,
-    complete: bool,
 }
 #[derive(Default)]
-struct Route {
+struct Route<'arena> {
     actions: Vec<(usize, bool, bool)>,
     // One stream per birth action, in the same order.
-    positions: Vec<Builder>,
+    positions: Vec<Birth<'arena>>,
 }
 pub(super) struct PairIndex<'arena> {
     arena: &'arena Arena,
     shards: Vec<Shard<'arena>>,
-    routes: Vec<Route>,
+    routes: Vec<Route<'arena>>,
     cohorts: OctonaryHeap<Candidate<'arena>>,
     floor: u64,
     reuse: bool,
@@ -270,7 +269,7 @@ impl<'arena> PairIndex<'arena> {
             positions: state.positions,
         }
     }
-    pub(super) fn commit(&mut self, changes: Vec<Vec<Change>>) -> Result<()> {
+    pub(super) fn commit(&mut self, changes: Vec<Vec<Change<Birth<'arena>>>>) -> Result<()> {
         let workers = self.shards.len();
         self.routes.resize_with(workers, Route::default);
         // Joined commits drain every route; any error aborts this attempt.
@@ -286,7 +285,6 @@ impl<'arena> PairIndex<'arena> {
                 removed_weight: change.removed_weight,
                 born_weight: change.born_weight,
                 bucket: change.bucket,
-                complete: change.complete,
             });
             match (removed, born) {
                 (Some(removed), Some(born)) if removed == born => {
@@ -341,14 +339,15 @@ impl<'arena> PairIndex<'arena> {
                             let count = &mut shard.states.entry(change.born).or_default().count;
                             adjust_signed(count, change.born_weight, false)?;
                         }
-                        if change.complete {
-                            // The complete producer already reduced and pruned.
-                            // Fresh IDs and compatible rules give each birth one producer.
-                            debug_assert!(!reuse && change.born_weight >= floor);
-                            let positions = Positions::from_sorted(positions.iter(), &mut lease)?;
-                            shard.publish(change.born, change.born_weight, positions);
-                            continue;
-                        }
+                        let positions = match positions {
+                            Birth::Complete(positions) => {
+                                // Fresh IDs and compatible rules give each complete birth one producer.
+                                debug_assert!(!reuse && change.born_weight >= floor);
+                                shard.publish(change.born, change.born_weight, positions);
+                                continue;
+                            }
+                            Birth::Partial(positions) => positions,
+                        };
                         let group = groups.entry((change.bucket, change.born)).or_default();
                         add(&mut group.count, change.born_weight)?;
                         if reuse {

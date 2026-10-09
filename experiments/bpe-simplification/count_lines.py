@@ -98,8 +98,10 @@ def main():
     for filename in ['reference.rs', 'word.rs']:
         path = bpe / filename
         tests[filename + ' [oracle and shared helpers]'] = sum(bool(line.strip()) for line in strip_comments(path.read_text()).splitlines())
+    for path in sorted((args.root / 'experiments/bpe-simplification/miri-codec/src').glob('*.rs')):
+        tests[str(path.relative_to(args.root)) + ' [Miri harness]'] = sum(bool(line.strip()) for line in strip_comments(path.read_text()).splitlines())
     report = dict(production=production, tests=tests, production_total=sum(production.values()), test_total=sum(tests.values()),
-                  counting_rule='Nonblank noncomment lines after cargo fmt --check; all engine modules plus cfg(test), oracle/reference and shared Word helpers. No implementation relocated outside engine.')
+                  counting_rule='Nonblank noncomment lines after cargo fmt --check; all engine modules plus cfg(test), oracle/reference, shared Word helpers and Miri harness. No implementation relocated outside engine.')
     report['production_limit'] = args.max_production
     report['within_budget'] = report['production_total'] <= args.max_production and report['test_total'] <= report['production_total']
     content = json.dumps(report, indent=2)
