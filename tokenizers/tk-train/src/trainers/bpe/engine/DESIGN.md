@@ -2,7 +2,8 @@
 
 ## Joined rounds and ownership
 
-The coordinator owns the vocabulary, corpus, pair index and allocation Arena for one attempt. A selected `Batch`
+The coordinator owns the vocabulary, corpus, pair index and allocation Arena for one attempt.
+A selected `Batch`
 owns the occurrence lists of its rules. `Batch::prepare` consumes those lists,
 returns owned writes and neighbor changes, and joins all readers before return.
 `Prepared::apply` joins endpoint writers before handing changes to `PairIndex`.
@@ -40,13 +41,14 @@ of any ambient pool used by feed.
 
 A borrowed CorpusPlan resolves original symbols and weighted word intervals.
 Initial counting gathers sorted temporary positions, reduces counts and freezes
-retained lists before allocating token slots. Materialization consumes the plan and releases thin input references.
+retained lists before allocating token slots. Materialization consumes the plan
+and releases thin input references.
 Fresh mode releases its per-word start directory; weights retain only adjacent
 equal-weight regions. Reuse keeps word starts for cohort scan domains.
 
-Preparation uses Rayon map_init directories scoped to each job. Each side maps
-neighbor IDs to u32 change-entry indices; touched slots are reset before reuse.
-These indices do not represent positions. There is no shared scratch lock or
+Preparation uses Rayon `map_init` to reuse private directories within each
+parallel task. Each side maps neighbor IDs to u32 change-entry indices; touched slots are reset before reuse.
+These indices do not represent positions. The directories have no shared scratch lock or
 assumption relating Rayon worker indices to an external directory array.
 
 ## Fixed-coordinate corpus
@@ -72,11 +74,25 @@ Multiple rules may share a head or a tail, but a selected tail cannot be another
 selected head. Thus their matches and endpoint writes are disjoint. Neighbor
 preparation accounts for adjacent selected rules as their final replacements.
 
-Newborn mass cannot outrank its producer's selected count. New IDs follow old
-IDs in ties. Reserved identities lack that tie bound and run alone. AA selection
-runs alone and greedily accepts valid starts from left to right, with each match
-excluding the next overlapping edge. Preparation and application of the accepted
-AA matches remain parallel; the selection itself is serial.
+Each newborn boundary descends from an old boundary key. Its occurrences are
+a subset of that key's occurrences and retain their word weights, so its total
+mass cannot exceed the witness's count. The witness cannot be an accepted rule:
+merging either side would cross a selected endpoint. Since selection takes a
+prefix without skipping a conflicting winner, the witness cannot precede any
+later accepted rule. A witness below the floor also keeps its newborn below it.
+
+For equal counts, replacing either witness endpoint with a newly appended ID
+increases the pair key. Each appended ID names one producer rule, so all tasks
+for a newborn key share this same witness; their combined mass obeys the bound.
+Together, the frequency and tie bounds prevent newborns from overtaking the
+accepted prefix. Adjacent selected matches emit their shared boundary once,
+from the left match, using both final replacements.
+
+Reserved identities lack the appended-ID tie bound and run alone. An active ID
+collision restarts the whole attempt in reuse mode before any batch is applied.
+AA selection also runs alone and greedily accepts valid starts from left to right,
+with each match excluding the next overlapping edge. Preparation and application
+of accepted AA matches remain parallel; the selection itself is serial.
 
 ## Counts and occurrence publication
 
@@ -84,13 +100,13 @@ Fresh owners hold one count and one list per retained pair. Taking a candidate
 removes that state. Old-boundary removal events decrease existing states and
 retire counts below the floor. Each new pair belongs to one producer rule;
 partial jobs aggregate before pruning and publication. An ordinary source that
-covers the whole candidate marks its birth count complete. It first drops births below the floor while preserving removal events, then
-encodes retained lists; the owner
-moves retained lists directly into states and the queue. AA and reuse do not
+covers the whole candidate marks its birth count complete. It first drops births below the floor while preserving removal
+events, then encodes retained lists; the owner moves retained lists directly into states and the queue. AA and reuse do not
 enter this shortcut. Small ordinary candidates remain whole by item count; large
-candidates use spatially ordered block ranges. Partial fresh lists remain raw until owner reduction; complete fresh lists
-are encoded during preparation. Both move to each owner in indexed task order. Each key has one producer, so this preserves spatial order without another
-sort. Reuse births can interleave; their full-u64 coordinates are sorted before
+candidates use spatially ordered block ranges. Partial fresh lists remain raw until owner reduction; complete
+fresh lists are encoded during preparation. Both move to each owner in indexed
+task order. Each key has one producer, so this preserves spatial order without
+another sort. Reuse births can interleave; their full-u64 coordinates are sorted before
 encoding. There is no adaptive birth feedback or linked-node promotion.
 
 Commit retains one immutable metadata array and owner routes with reusable
@@ -102,8 +118,9 @@ each action; owner order is the original producer order. Draining both vectors
 retains capacity. Errors drop active drains; the attempt is discarded after
 owner jobs join. Successful commits drain every route before the next round.
 
-An attempt-scoped Arena owns final small allocations. Its threshold is main's
-`max(256, floor(sqrt(physical_items / 256)))` bytes, computed from the corpus plan.
+An attempt-scoped Arena owns final small allocations. Its threshold is
+`max(256, floor(sqrt(resident_slots / 256)))` bytes. The corpus plan counts
+token slots and word separators, including the initial separator slot.
 The full allocation layout, including length header and restart directory,
 determines whether a list uses Arena storage or an individually owned heap block.
 Each worker has a mutex-protected bump cursor and reusable encoding scratch.
@@ -111,7 +128,7 @@ Leases are held only inside sequential worker closures; no nested parallel work
 runs while a lease is held. Frozen allocations are copied away from scratch and
 remain stable after leases end. Arena storage is never reset during an attempt.
 
-Published `Positions<'arena>` has main's two-word descriptor. One or two values
+Published `Positions<'arena>` uses a two-word descriptor. One or two values
 use inline flags when the full-width first value and gap fit their fields;
 other lists carry an aligned payload pointer. A low pointer tag identifies Arena
 ownership. Heap lists reconstruct their validated layout for deallocation;
@@ -130,8 +147,7 @@ for each aggregated neighbor change, and left/right drain ordering is retained.
 
 A reuse cohort scans positions until alias reuse or a configured length gate
 requires scanning complete represented words. Whole-word scans may find matches
-outside the historical position list; therefore they are enabled only under the
-same conditions as the baseline. Logical preceding tokens include earlier
+outside the historical position list. Logical preceding tokens include earlier
 matches in that word, retaining intermediate births and removals before writes.
 
 ## Numeric and length rules
@@ -163,21 +179,17 @@ repeated coordinates. Block directories contain resident byte offsets, never
 truncated corpus coordinates. A task reads independent complete blocks; AA and
 cohort selection can stream the full list without a corpus-sized bitmap.
 
-## Evidence and budget
+## Validation
 
-The baseline is Fork main `e4f787dc189d9be7192107490d652096cde7480e`.
-The user requires at most 2100 formatted production logic lines and no more test
-logic than production, preserving compatible batch aggregation and good module
-boundaries. Performance work prioritizes 4-core Chinese and English ByteLevel.
-The earlier ablation plan supplies behavioral coverage, but its provisional
-3%/RSS thresholds were replaced by the hard source-size constraint.
+Full-model comparisons cover vocabulary IDs and complete ordered merges. Small
+fixtures also compare every `(pair, count, replacement ID)` with an independent
+sequential reference. Literal expectations cover numeric limits and alias
+cohorts; codec tests and Miri exercise immutable storage and scoped allocation.
+See [the test coverage map](tests/COVERAGE.md).
 
-Full-model comparisons cover vocabulary IDs and the complete ordered merges;
-small fixtures also compare every `(pair, count, replacement ID)`. Tests alone
-are not performance evidence. The experiment records independent-process paired
-wall time, CPU time, RSS, swap, build/input hashes and model equality. A/A measures
-host noise before candidate comparisons. The current KVM host is not the original
-plan's fixed-frequency laptop, and that limitation accompanies every result.
+Performance evidence belongs to the experiment report: paired independent
+processes record wall time, CPU time, RSS, swap, build/input hashes and model
+equality. Timing results include the host and observed A/A variation.
 
 ## Attribution
 
@@ -185,5 +197,5 @@ The endpoint representation and compatible batching retain the algorithmic
 lineage documented by the original engine: Yikai Liao's efficient BPE prototypes,
 BatchBPE and YouTokenToMe's conditional rule pipeline. The custom BSD radix-sort
 translation has been removed; this engine uses standard sorting and a small
-delta stream with an immutable, lifetime-scoped allocation descriptor. Git history and the pinned baseline preserve the original
-implementation and its detailed proofs.
+delta stream with an immutable, lifetime-scoped allocation descriptor.
+The invariants above describe the safety and ordering requirements used here.

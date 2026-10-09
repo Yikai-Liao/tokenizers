@@ -44,7 +44,7 @@ def separate_test_items(source):
     while (start := masked.find(marker, cursor)) >= 0:
         begin = start + len(marker)
         following_line = masked[begin:].lstrip().splitlines()[0]
-        if following_line.startswith('mut observe:'):
+        if following_line.startswith('mut observe:') or following_line == 'None,':
             # This test-only parameter is one rustfmt line, not the train body.
             declaration = masked.index(following_line, begin)
             end = declaration + len(following_line)
@@ -79,6 +79,7 @@ def main():
     parser.add_argument('--root', type=Path, default=Path(__file__).resolve().parents[2])
     parser.add_argument('--output', type=Path)
     parser.add_argument('--max-production', type=int, default=2100)
+    parser.add_argument('--max-tests', type=int, default=600)
     args = parser.parse_args()
     root = args.root / 'tokenizers/tk-train'
     subprocess.run(['/root/.cargo/bin/cargo', 'fmt', '--manifest-path', str(root / 'Cargo.toml'), '--check'], check=True)
@@ -95,15 +96,18 @@ def main():
             production[name] = prod
             if test:
                 tests[name + ' [cfg(test)]'] = test
-    for filename in ['reference.rs', 'word.rs']:
+    for filename in ['reference.rs']:
         path = bpe / filename
         tests[filename + ' [oracle and shared helpers]'] = sum(bool(line.strip()) for line in strip_comments(path.read_text()).splitlines())
+    _, public_tests = separate_test_items((bpe / 'mod.rs').read_text())
+    tests['mod.rs [cfg(test) public API]'] = public_tests
     for path in sorted((args.root / 'experiments/bpe-simplification/miri-codec/src').glob('*.rs')):
         tests[str(path.relative_to(args.root)) + ' [Miri harness]'] = sum(bool(line.strip()) for line in strip_comments(path.read_text()).splitlines())
     report = dict(production=production, tests=tests, production_total=sum(production.values()), test_total=sum(tests.values()),
-                  counting_rule='Nonblank noncomment lines after cargo fmt --check; all engine modules plus cfg(test), oracle/reference, shared Word helpers and Miri harness. No implementation relocated outside engine.')
+                  counting_rule='Nonblank noncomment lines after cargo fmt --check; all engine implementation; engine/public API cfg(test), independent reference and Miri harness. The oracle no longer uses the optional parity trainer Word. No implementation relocated outside engine.')
     report['production_limit'] = args.max_production
-    report['within_budget'] = report['production_total'] <= args.max_production and report['test_total'] <= report['production_total']
+    report['test_limit'] = args.max_tests
+    report['within_budget'] = report['production_total'] <= args.max_production and report['test_total'] <= args.max_tests
     content = json.dumps(report, indent=2)
     print(content)
     if args.output:

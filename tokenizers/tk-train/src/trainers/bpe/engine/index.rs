@@ -2,7 +2,7 @@
 use super::merge::{Birth, Change};
 use super::{
     CorpusPlan, WORD_SEPARATOR_ID, add,
-    positions::{Arena, Builder, Positions},
+    positions::{Arena, Builder, Input, Positions},
 };
 use crate::progress::TrainingProgress;
 use ahash::AHashMap;
@@ -69,18 +69,31 @@ impl<'arena> Shard<'arena> {
     }
 }
 // Metadata stays borrowed during commit; each position stream has one owner.
-struct Event {
-    removed: Pair,
-    born: Pair,
-    removed_weight: u64,
-    born_weight: u64,
-    bucket: usize,
-}
+type Event = Change<()>;
 #[derive(Default)]
 struct Route<'arena> {
     actions: Vec<(usize, bool, bool)>,
     // One stream per birth action, in the same order.
     positions: Vec<Birth<'arena>>,
+}
+impl<'arena> Route<'arena> {
+    fn push(&mut self, index: usize, remove: bool, birth: Option<Birth<'arena>>) {
+        self.actions.push((index, remove, birth.is_some()));
+        self.positions.extend(birth);
+    }
+    fn drain(&mut self) -> impl Iterator<Item = (usize, bool, Option<Birth<'arena>>)> + '_ {
+        // The two arrays save a large optional payload on removal-only actions.
+        // Both drains own their remaining items, so an error drops unpublished births
+        // and restores empty reusable routes before the failed attempt is discarded.
+        let mut positions = self.positions.drain(..);
+        self.actions.drain(..).map(move |(index, remove, birth)| {
+            (
+                index,
+                remove,
+                birth.then(|| positions.next().expect("each birth owns one stream")),
+            )
+        })
+    }
 }
 pub(super) struct PairIndex<'arena> {
     arena: &'arena Arena,
@@ -95,6 +108,8 @@ fn owner(pair: Pair, workers: usize) -> usize {
     (key.wrapping_mul(0x9e3779b97f4a7c15).rotate_left(23) % workers as u64) as usize
 }
 fn adjust_signed(count: &mut u64, amount: u64, remove: bool) -> Result<()> {
+    // Reuse keeps a signed ledger in u64 bits to preserve the queue's unsigned
+    // ordering. Check each action, not its net delta: intermediate overflow matters.
     let amount = i64::try_from(amount).map_err(|_| "BPE identity-reuse adjustment exceeds i64")?;
     let delta = if remove { -amount } else { amount };
     *count = (*count as i64)
@@ -169,7 +184,8 @@ impl<'arena> PairIndex<'arena> {
                 let mut shard = Shard::default();
                 for (pair, state) in states {
                     if reuse || state.count >= minimum.max(1) {
-                        let positions = Positions::from_sorted(state.positions.iter(), &mut lease)?;
+                        let positions =
+                            Positions::from_sorted(Input::Builder(&state.positions), &mut lease)?;
                         shard.states.insert(
                             pair,
                             State {
@@ -285,22 +301,20 @@ impl<'arena> PairIndex<'arena> {
                 removed_weight: change.removed_weight,
                 born_weight: change.born_weight,
                 bucket: change.bucket,
+                positions: (),
             });
             match (removed, born) {
                 (Some(removed), Some(born)) if removed == born => {
-                    self.routes[removed].actions.push((index, true, true));
+                    self.routes[removed].push(index, true, Some(change.positions));
                 }
                 (removed, born) => {
                     if let Some(removed) = removed {
-                        self.routes[removed].actions.push((index, true, false));
+                        self.routes[removed].push(index, true, None);
                     }
                     if let Some(born) = born {
-                        self.routes[born].actions.push((index, false, true));
+                        self.routes[born].push(index, false, Some(change.positions));
                     }
                 }
-            }
-            if let Some(born) = born {
-                self.routes[born].positions.push(change.positions);
             }
         }
         let reuse = self.reuse;
@@ -314,9 +328,10 @@ impl<'arena> PairIndex<'arena> {
             .map(|(shard, route)| -> Result<_> {
                 let mut lease = arena.lease();
                 let mut groups = AHashMap::<(usize, Pair), Group>::new();
-                let mut positions = route.positions.drain(..);
-                for (index, remove, birth) in route.actions.drain(..) {
+                for (index, remove, birth) in route.drain() {
                     let change = &events[index];
+                    // A boundary removal precedes its replacement birth. Reordering
+                    // these actions changes signed alias counts and their error boundary.
                     if remove {
                         if reuse {
                             let count = &mut shard.states.entry(change.removed).or_default().count;
@@ -331,10 +346,7 @@ impl<'arena> PairIndex<'arena> {
                             }
                         }
                     }
-                    if birth {
-                        let positions = positions
-                            .next()
-                            .expect("each birth owns one position stream");
+                    if let Some(positions) = birth {
                         if reuse {
                             let count = &mut shard.states.entry(change.born).or_default().count;
                             adjust_signed(count, change.born_weight, false)?;
@@ -359,7 +371,6 @@ impl<'arena> PairIndex<'arena> {
                         }
                     }
                 }
-                debug_assert!(positions.next().is_none());
                 let mut candidates = Vec::new();
                 let mut groups: Vec<_> = groups.into_iter().collect();
                 groups.sort_unstable_by_key(|((bucket, pair), _)| (*bucket, *pair));
@@ -369,6 +380,8 @@ impl<'arena> PairIndex<'arena> {
                     } else {
                         state.count
                     };
+                    // A positive reuse ledger publishes a historical birth cohort even
+                    // below the floor; selection applies the floor after correcting its head.
                     if (reuse && (count as i64) <= 0) || (!reuse && count < floor) {
                         continue;
                     }
@@ -379,13 +392,14 @@ impl<'arena> PairIndex<'arena> {
                     if reuse {
                         state.unordered.sort_unstable();
                         let positions =
-                            Positions::from_sorted(state.unordered.iter().copied(), &mut lease)?;
+                            Positions::from_sorted(Input::Slice(&state.unordered), &mut lease)?;
                         candidates.push(Candidate {
                             priority,
                             positions,
                         });
                     } else {
-                        let positions = Positions::from_sorted(state.positions.iter(), &mut lease)?;
+                        let positions =
+                            Positions::from_sorted(Input::Builder(&state.positions), &mut lease)?;
                         shard.publish(pair, count, positions);
                     }
                 }

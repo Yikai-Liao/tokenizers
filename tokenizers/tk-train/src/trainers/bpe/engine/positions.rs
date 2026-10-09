@@ -1,4 +1,4 @@
-//! Main's 16-byte list descriptor: inline pairs, scoped Arena or owned payloads.
+//! Frozen occurrence lists with inline pairs and Arena or owned allocations.
 use bumpalo::Bump;
 use std::{
     alloc::{Layout, alloc, dealloc},
@@ -27,6 +27,8 @@ impl Arena {
         }
     }
     pub(super) fn lease(&self) -> Lease<'_> {
+        // A worker cursor is non-reentrant. Drop the lease before starting any
+        // nested Rayon work: another task on this worker may request the same lock.
         Lease {
             arena: self,
             cursor: self.workers[rayon::current_thread_index().unwrap_or(0) % self.workers.len()]
@@ -108,7 +110,22 @@ impl Builder {
         Ok(())
     }
 }
-// These fields and inline flags are taken from main's SortedPositions.
+// Only concrete storage views reach the allocator. Unlike an arbitrary safe
+// ExactSizeIterator implementation, these views have a trustworthy cardinality.
+pub(super) enum Input<'a> {
+    Builder(&'a Builder),
+    Slice(&'a [u64]),
+}
+impl Input<'_> {
+    fn iter(&self) -> impl DoubleEndedIterator<Item = u64> + ExactSizeIterator + Clone + '_ {
+        match self {
+            Self::Builder(values) => itertools::Either::Left(values.iter()),
+            Self::Slice(values) => itertools::Either::Right(values.iter().copied()),
+        }
+    }
+}
+// Inline lists store the first coordinate in payload and the gap in count bits.
+// Allocated lists store their length and tag the pointer's low bit for Arena ownership.
 #[derive(Default)]
 pub(super) struct Positions<'arena> {
     count_and_flags: usize,
@@ -149,10 +166,8 @@ impl<'arena> Positions<'arena> {
     fn pointer(&self) -> *mut u8 {
         self.payload.map_addr(|a| a & !1)
     }
-    pub(super) fn from_sorted(
-        values: impl DoubleEndedIterator<Item = u64> + ExactSizeIterator + Clone,
-        lease: &mut Lease<'arena>,
-    ) -> Result<Self> {
+    pub(super) fn from_sorted(input: Input<'_>, lease: &mut Lease<'arena>) -> Result<Self> {
+        let values = input.iter();
         let count = values.len();
         if count == 0 {
             return Ok(Self::default());
@@ -256,12 +271,22 @@ impl<'arena> Positions<'arena> {
     pub(super) fn block_count(&self) -> usize {
         self.len().div_ceil(RESTART)
     }
+    pub(super) fn block_ranges(&self, target_items: usize) -> impl Iterator<Item = Range<usize>> {
+        let blocks = target_items.div_ceil(RESTART).max(1);
+        (0..self.block_count())
+            .step_by(blocks)
+            .map(move |begin| begin..(begin + blocks).min(self.block_count()))
+    }
     pub(super) fn iter(&self) -> impl Iterator<Item = u64> + '_ {
         self.read_blocks(0..self.block_count())
     }
     pub(super) fn read_blocks(&self, range: Range<usize>) -> impl Iterator<Item = u64> + '_ {
-        let start = (range.start * RESTART).min(self.len());
-        let end = (range.end * RESTART).min(self.len());
+        // Reject inverted ranges, then clamp before multiplying. If a range starts
+        // past the directory, start == end and no directory pointer is formed.
+        assert!(range.start <= range.end);
+        let blocks = self.block_count();
+        let start = (range.start.min(blocks) * RESTART).min(self.len());
+        let end = (range.end.min(blocks) * RESTART).min(self.len());
         if self.is_empty() || self.count_and_flags & INLINE != 0 {
             let first = self.payload.addr() as u64;
             itertools::Either::Left(
@@ -359,162 +384,95 @@ impl Iterator for Cursor<'_> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
     #[test]
-    fn compact_final_lists_survive_leases_and_parallel_allocations() {
-        use rayon::prelude::*;
+    fn storage_roundtrips_seeks_and_survives_concurrent_cursor_reuse() {
         assert_eq!(
             std::mem::size_of::<Positions<'_>>(),
             2 * std::mem::size_of::<usize>()
         );
         let arena = Arena::new(2, 0);
+        let boundary = [0, u32::MAX as u64, 1 << 32, 1 << 63, u64::MAX];
         let saved: Vec<_> = [0, 1, 2, 3, 127, 128, 129, 257, 1024]
             .into_iter()
             .map(|length| {
-                let values: Vec<_> = (0..length).map(|i| (1u64 << 32) + (i / 3) as u64).collect();
+                let mut values: Vec<_> =
+                    (0..length).map(|i| boundary[i % boundary.len()]).collect();
+                values.sort_unstable();
+                let mut builder = Builder::default();
+                for chunk in values.chunks(17) {
+                    let mut piece = Builder::default();
+                    for &p in chunk {
+                        piece.push(p).unwrap();
+                    }
+                    builder.append(piece).unwrap();
+                }
+                assert!(builder.iter().eq(values.iter().copied()));
                 let positions =
-                    Positions::from_sorted(values.iter().copied(), &mut arena.lease()).unwrap();
+                    Positions::from_sorted(Input::Builder(&builder), &mut arena.lease()).unwrap();
+                assert!(positions.iter().eq(values.iter().copied()));
+                for index in (0..=length)
+                    .step_by(if cfg!(miri) { 127 } else { 1 })
+                    .chain([length])
+                {
+                    assert!(positions.from(index).eq(values[index..].iter().copied()));
+                }
+                for target in boundary {
+                    assert_eq!(
+                        positions.lower_bound(target),
+                        values.partition_point(|&p| p < target)
+                    );
+                }
+                assert!(
+                    positions
+                        .block_ranges(129)
+                        .flat_map(|r| positions.read_blocks(r))
+                        .eq(values.iter().copied())
+                );
+                assert!(
+                    positions
+                        .read_blocks(usize::MAX..usize::MAX)
+                        .next()
+                        .is_none()
+                );
                 (positions, values)
             })
             .collect();
-        if cfg!(miri) {
-            // Isolate storage's concurrency contract from Crossbeam's global
-            // epoch collector, whose deferred reclamation outlives Miri tests.
-            std::thread::scope(|scope| {
-                for (worker, (positions, values)) in saved.iter().enumerate() {
-                    let arena = &arena;
-                    scope.spawn(move || {
-                        let mut lease = Lease {
-                            arena,
-                            cursor: arena.workers[worker % 2].lock().unwrap(),
-                        };
-                        let next: Vec<_> = (0..128).map(|i| (1u64 << 63) + i).collect();
-                        let temporary =
-                            Positions::from_sorted(next.iter().copied(), &mut lease).unwrap();
-                        assert!(temporary.iter().eq(next));
-                        assert!(positions.iter().eq(values.iter().copied()));
-                    });
-                }
-            });
-        } else {
-            rayon::ThreadPoolBuilder::new()
-                .num_threads(2)
-                .build()
-                .unwrap()
-                .install(|| {
-                    saved.par_iter().for_each(|(positions, values)| {
-                        let next: Vec<_> = (0..128).map(|i| (1u64 << 63) + i).collect();
-                        let temporary =
-                            Positions::from_sorted(next.iter().copied(), &mut arena.lease())
-                                .unwrap();
-                        assert!(temporary.iter().eq(next));
-                        assert!(positions.iter().eq(values.iter().copied()));
-                    });
+        // Both worker cursors allocate while published Arena and heap lists are
+        // shared with other threads. No Rayon collector is involved in Miri.
+        std::thread::scope(|scope| {
+            for worker in 0..2 {
+                let arena = &arena;
+                let saved = &saved;
+                scope.spawn(move || {
+                    let mut lease = Lease {
+                        arena,
+                        cursor: arena.workers[worker].lock().unwrap(),
+                    };
+                    let values: Vec<_> = (0..512).map(|i| (1 << 63) + i).collect();
+                    let next = Positions::from_sorted(Input::Slice(&values), &mut lease).unwrap();
+                    assert!(next.iter().eq(values));
+                    for (positions, expected) in saved {
+                        assert!(positions.iter().eq(expected.iter().copied()));
+                    }
                 });
-        }
-    }
-    #[test]
-    fn narrow_builders_promote_without_losing_prior_fragments() {
-        let values = [0, 0, u32::MAX as u64, 1 << 32, 1 << 63, u64::MAX];
-        for split in 0..=values.len() {
-            let mut result = Builder::default();
-            let mut tail = Builder::default();
-            for &position in &values[..split] {
-                result.push(position).unwrap();
             }
-            for &position in &values[split..] {
-                tail.push(position).unwrap();
-            }
-            result.append(tail).unwrap();
-            assert!(result.iter().eq(values));
-            assert!(result.push(0).is_err());
-            assert!(result.iter().eq(values));
-        }
+        });
     }
+
     #[test]
-    fn fragmented_streams_preserve_order_seeks_and_push() {
+    // The inverted range is deliberately passed as malformed decoder input.
+    #[allow(clippy::reversed_empty_ranges)]
+    fn unsafe_storage_rejects_inverted_ranges_and_unsorted_input() {
         let arena = Arena::new(1, 0);
         let mut lease = arena.lease();
+        assert!(Positions::from_sorted(Input::Slice(&[u64::MAX, 0]), &mut lease).is_err());
         let mut builder = Builder::default();
-        let mut values = Vec::new();
-        for length in std::iter::repeat_n(1, 260).chain([0, 7, 127, 2, 128, 129, 17]) {
-            let begin = values.last().copied().unwrap_or(1u64 << 32);
-            let fragment: Vec<_> = (0..length).map(|i| begin + (i / 3) as u64).collect();
-            let mut fragment_builder = Builder::default();
-            for &position in &fragment {
-                fragment_builder.push(position).unwrap();
-            }
-            builder.append(fragment_builder).unwrap();
-            values.extend(fragment);
-        }
-        for value in [1u64 << 63, u64::MAX - 1, u64::MAX] {
-            builder.push(value).unwrap();
-            values.push(value);
-        }
         builder.push(u64::MAX).unwrap();
-        values.push(u64::MAX);
-        let positions = Positions::from_sorted(builder.iter(), &mut lease).unwrap();
-        assert_eq!(positions.iter().collect::<Vec<_>>(), values);
-        for index in (0..=values.len()).filter(|i| {
-            !cfg!(miri) || i.is_multiple_of(127) || i.is_multiple_of(128) || *i == values.len()
-        }) {
-            assert_eq!(positions.from(index).collect::<Vec<_>>(), values[index..]);
-        }
-        for target in values
-            .iter()
-            .copied()
-            .step_by(if cfg!(miri) { RESTART } else { 1 })
-            .chain([0, (1 << 32) - 1, (1 << 63) + 1, u64::MAX])
-        {
-            assert_eq!(
-                positions.lower_bound(target),
-                values.partition_point(|&p| p < target)
-            );
-        }
-        let blocks: Vec<_> = (0..positions.block_count())
-            .flat_map(|i| positions.read_blocks(i..i + 1))
-            .collect();
-        assert_eq!(blocks, values);
         assert!(builder.push(0).is_err());
-        assert_eq!(positions.iter().collect::<Vec<_>>(), values);
-    }
-    #[test]
-    fn full_u64_values_duplicates_and_restart_boundaries_roundtrip() {
-        let mut values = vec![
-            0,
-            0,
-            65535,
-            65536,
-            (1 << 32) - 1,
-            1 << 32,
-            (1 << 32) + 1,
-            (1 << 63) - 1,
-            1 << 63,
-            u64::MAX - 1,
-            u64::MAX,
-        ];
-        let arena = Arena::new(1, 0);
-        let mut lease = arena.lease();
-        for length in [0, 1, 2, 127, 128, 129, 256, 257] {
-            let repeated: Vec<_> = (0..length).map(|i| values[i % values.len()]).collect();
-            let mut sorted = repeated;
-            sorted.sort_unstable();
-            let positions = Positions::from_sorted(sorted.iter().copied(), &mut lease).unwrap();
-            assert_eq!(positions.iter().collect::<Vec<_>>(), sorted);
-            for index in (0..=sorted.len()).filter(|i| {
-                !cfg!(miri) || i.is_multiple_of(127) || i.is_multiple_of(128) || *i == sorted.len()
-            }) {
-                assert_eq!(positions.from(index).collect::<Vec<_>>(), sorted[index..]);
-            }
-            for &target in &values {
-                assert_eq!(
-                    positions.lower_bound(target),
-                    sorted.partition_point(|&p| p < target)
-                );
-            }
-        }
-        assert!(Positions::from_sorted([u64::MAX, 0].into_iter(), &mut lease).is_err());
-        values.resize(129, u64::MAX);
-        values[128] = 0;
-        assert!(Positions::from_sorted(values.iter().copied(), &mut lease).is_err());
+        let values: Vec<_> = (0..129u64).collect();
+        let positions = Positions::from_sorted(Input::Slice(&values), &mut lease).unwrap();
+        let call = std::panic::AssertUnwindSafe(|| positions.read_blocks(1000..0).next());
+        assert!(std::panic::catch_unwind(call).is_err());
     }
 }

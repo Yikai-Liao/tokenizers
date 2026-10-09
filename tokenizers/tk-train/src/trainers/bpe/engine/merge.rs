@@ -3,7 +3,7 @@ use super::{BpeTrainer, Corpus, PairIndex, Vocabulary, WORD_SEPARATOR_ID, add};
 use super::{
     corpus::Match,
     index::Candidate,
-    positions::{Arena, Builder, Positions},
+    positions::{Arena, Builder, Input, Positions},
 };
 use ahash::{AHashMap, AHashSet};
 use rayon::prelude::*;
@@ -17,8 +17,13 @@ struct Rule<'arena> {
 pub(super) struct Batch<'arena> {
     rules: Vec<Rule<'arena>>,
     reuse: bool,
-    restart: bool,
     floor: u64,
+}
+pub(super) enum Selection<'arena> {
+    Finished,
+    // The whole attempt is discarded, including rules already selected in this batch.
+    Restart,
+    Ready(Batch<'arena>),
 }
 pub(super) struct Change<P> {
     pub(super) removed: Pair,
@@ -101,6 +106,8 @@ impl<'a, 'arena> Neighbors<'a, 'arena> {
                 removed_weight: 0,
                 born_weight: 0,
                 positions: Builder::default(),
+                // Both sides can create (id, id); keep them in one birth cohort.
+                // Other right births follow left births in the reference update order.
                 bucket: 2 * self.rank + usize::from(!left && neighbor != id),
             });
             self.directories.touched.push((side, neighbor as usize));
@@ -136,6 +143,8 @@ impl<'a, 'arena> Neighbors<'a, 'arena> {
         // Partial jobs retain raw positions until their counts have been reduced.
         let mut result = Vec::new();
         let mut lease = arena.lease();
+        // Left changes precede right changes. Reuse count actions and the resulting
+        // historical cohorts observe this order even when both sides name one key.
         for mut change in self.changes.into_iter().flatten() {
             if self.complete && change.born_weight < floor {
                 change.positions = Builder::default();
@@ -145,7 +154,10 @@ impl<'a, 'arena> Neighbors<'a, 'arena> {
                 continue;
             }
             let positions = if self.complete {
-                Birth::Complete(Positions::from_sorted(change.positions.iter(), &mut lease)?)
+                Birth::Complete(Positions::from_sorted(
+                    Input::Builder(&change.positions),
+                    &mut lease,
+                )?)
             } else {
                 Birth::Partial(change.positions)
             };
@@ -167,12 +179,11 @@ impl<'arena> Batch<'arena> {
         vocabulary: &mut Vocabulary,
         corpus: &mut Corpus,
         index: &mut PairIndex<'arena>,
-    ) -> Result<Option<Self>> {
+    ) -> Result<Selection<'arena>> {
         let reuse = index.reuse();
         let mut batch = Self {
             rules: Vec::new(),
             reuse,
-            restart: false,
             floor: trainer.min_frequency.max(1),
         };
         let cap = if reuse {
@@ -182,6 +193,10 @@ impl<'arena> Batch<'arena> {
         };
         let mut heads = AHashSet::new();
         let mut tails = AHashSet::new();
+        // Take a priority prefix without skipping conflicts. Crossed endpoints
+        // would consume another rule's input, so only shared heads/tails may batch.
+        // Every newborn has an unselected old boundary as a frequency/tie witness;
+        // see DESIGN.md's compatible batch proof for why it cannot overtake this prefix.
         while batch.rules.len() < cap {
             let Some(priority) = index.best() else {
                 break;
@@ -194,10 +209,11 @@ impl<'arena> Batch<'arena> {
             }
             let token = vocabulary.merge_token(pair);
             if !reuse && vocabulary.reuses_active_id(&token) {
-                batch.restart = true;
-                return Ok(Some(batch));
+                return Ok(Selection::Restart);
             }
             let reserved = token.existing_id.is_some();
+            // A reserved ID need not follow old IDs lexicographically. A singleton
+            // activation needs no argument about its position relative to later rules.
             if reserved && !batch.rules.is_empty() {
                 break;
             }
@@ -215,10 +231,11 @@ impl<'arena> Batch<'arena> {
             heads.insert(pair.0);
             tails.insert(pair.1);
         }
-        Ok((!batch.rules.is_empty()).then_some(batch))
-    }
-    pub(super) fn restart(&self) -> bool {
-        self.restart
+        Ok(if batch.rules.is_empty() {
+            Selection::Finished
+        } else {
+            Selection::Ready(batch)
+        })
     }
     pub(super) fn pairs(&self) -> impl Iterator<Item = Pair> + '_ {
         self.rules.iter().map(|rule| rule.pair)
@@ -284,16 +301,8 @@ impl<'arena> Batch<'arena> {
                     ));
                     continue;
                 }
-                let blocks = ordinary_chunk.div_ceil(128);
-                for begin in (0..positions.block_count()).step_by(blocks) {
-                    tasks.push((
-                        rank,
-                        rule,
-                        Source::Blocks(
-                            positions,
-                            begin..(begin + blocks).min(positions.block_count()),
-                        ),
-                    ));
+                for range in positions.block_ranges(ordinary_chunk) {
+                    tasks.push((rank, rule, Source::Blocks(positions, range)));
                 }
             }
         }
@@ -302,6 +311,8 @@ impl<'arena> Batch<'arena> {
             .map_init(
                 Directories::default,
                 |directories, (rank, rule, positions)| -> Result<_> {
+                    #[cfg(test)]
+                    super::tests::observe_worker();
                     directories.reset(corpus.id_count());
                     let mut neighbors =
                         Neighbors::new(rule, rank, directories, positions.complete());
@@ -328,6 +339,9 @@ impl<'arena> Batch<'arena> {
                                 before != 0
                                     && selected.contains_key(&(corpus.token(before - 1), prior))
                             };
+                            // The selected match on the left owns a shared boundary.
+                            // Its right event emits the final replacements of both rules;
+                            // this match must not emit a second left removal or birth.
                             if !merging {
                                 neighbors.record(
                                     true,
@@ -393,6 +407,8 @@ impl<'arena> Batch<'arena> {
         let jobs = words
             .par_chunks(chunk)
             .map_init(Directories::default, |directories, words| -> Result<_> {
+                #[cfg(test)]
+                super::tests::observe_worker();
                 directories.reset(corpus.id_count());
                 let mut neighbors = Neighbors::new(rule, 0, directories, false);
                 let mut writes = Writes::Occurrences {
@@ -557,7 +573,7 @@ impl Source<'_, '_> {
             Self::Slice(_) => false,
         }
     }
-    // Decode one bounded ring ahead, as in main. Prefetch is a nonblocking
+    // Decode one bounded ring ahead. Prefetch is a nonblocking
     // hint; matching still reads the same joined preparation snapshot in order.
     fn prefetched<'a>(&'a self, corpus: &'a Corpus) -> impl Iterator<Item = usize> + 'a {
         let coordinates = match self {
@@ -581,44 +597,5 @@ impl Source<'_, '_> {
             head = (head + 1) % ring.len();
             Some(position)
         })
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::super::{CorpusPlan, WordCountsView};
-    use super::*;
-    use crate::progress::TrainingProgress;
-    use compact_str::CompactString;
-    #[test]
-    fn independent_priority_rules_are_selected_together() {
-        let trainer = BpeTrainer::builder()
-            .vocab_size(9)
-            .min_frequency(1)
-            .show_progress(false)
-            .build();
-        let words: AHashMap<CompactString, u64> =
-            [("ab".into(), 10), ("cd".into(), 9), ("ef".into(), 8)].into();
-        let progress = TrainingProgress::new(false, trainer.progress_format).unwrap();
-        let view = WordCountsView::from_map(&words);
-        let mut vocabulary =
-            Vocabulary::initialize(&trainer, view, 4, &progress, &mut None).unwrap();
-        let plan = CorpusPlan::build(view, &mut vocabulary, &trainer, false, &progress).unwrap();
-        let arena = super::super::positions::Arena::new(4, plan.items());
-        let mut index = PairIndex::build(&arena, &plan, 1, 4, false, &progress).unwrap();
-        let mut corpus = plan.materialize(&progress);
-        let batch = Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index)
-            .unwrap()
-            .unwrap();
-        assert_eq!(
-            batch.trace().collect::<Vec<_>>(),
-            vec![((0, 1), 10, 6), ((2, 3), 9, 7), ((4, 5), 8, 8)]
-        );
-        let changes = batch
-            .prepare(&corpus, &arena, usize::MAX)
-            .unwrap()
-            .apply(&corpus);
-        index.commit(changes).unwrap();
-        assert!(index.best().is_none());
     }
 }

@@ -9,7 +9,7 @@ mod engine;
 pub mod parity_trainer;
 #[cfg(test)]
 mod reference;
-#[cfg(any(test, feature = "parity-aware-bpe"))]
+#[cfg(feature = "parity-aware-bpe")]
 mod word;
 #[cfg(feature = "parity-aware-bpe")]
 pub use parity_trainer::{ParityBpeTrainer, ParityBpeTrainerBuilder, ParityVariant};
@@ -20,9 +20,9 @@ use compact_str::CompactString;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use tk_encode::vocab::bucket_added_vocabulary::AddedToken;
-// The reference and optional parity trainer use `Word`; production training uses
-// the engine's fixed-coordinate corpus. Both representations are training-only.
-#[cfg(any(test, feature = "parity-aware-bpe"))]
+// The optional parity trainer uses linked words; ordinary training owns a
+// fixed-coordinate corpus. The test oracle uses independent sequential vectors.
+#[cfg(feature = "parity-aware-bpe")]
 use word::{WithFirstLastIterator, Word};
 
 use tk_encode::Result;
@@ -292,24 +292,6 @@ impl BpeTrainer {
         kept.into_iter().map(|(&character, _)| character).collect()
     }
 
-    #[cfg(test)]
-    fn compute_alphabet(
-        &self,
-        wc: &AHashMap<CompactString, u64>,
-        w2id: &mut AHashMap<CompactString, u32>,
-        id2w: &mut Vec<CompactString>,
-    ) {
-        for character in self.select_alphabet(WordCountsView::from_map(wc)) {
-            let mut utf8 = [0; 4];
-            let text: &str = character.encode_utf8(&mut utf8);
-            let token = CompactString::from(text);
-            if !w2id.contains_key(&token) {
-                id2w.push(token.clone());
-                w2id.insert(token, (id2w.len() - 1) as u32);
-            }
-        }
-    }
-
     /// Train the collected weighted words and return vocabulary entries, ordered
     /// merges, and special tokens.
     ///
@@ -419,189 +401,5 @@ impl Trainer for BpeTrainer {
     {
         self.words = feed::count(iterator, &process)?;
         Ok(())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{BpeTrainer, Merges};
-    use ahash::AHashMap;
-    use compact_str::CompactString;
-
-    #[test]
-    fn test_train() {
-        let word_counts: AHashMap<CompactString, u64> = [
-            ("roses".into(), 1),
-            ("are".into(), 2),
-            ("red".into(), 1),
-            ("voilets".into(), 1),
-            ("blue".into(), 1),
-            ("BERT".into(), 1),
-            ("is".into(), 2),
-            ("big".into(), 1),
-            ("and".into(), 1),
-            ("so".into(), 1),
-            ("GPT-2".into(), 1),
-        ]
-        .iter()
-        .cloned()
-        .collect();
-        let trainer = BpeTrainer::builder()
-            .show_progress(false)
-            .min_frequency(2)
-            .build();
-        let (trained_vocab, merges, _special_tokens) = trainer.do_train(&word_counts).unwrap();
-
-        // Vocab should contain all of the characters from the `word_counts` mapping
-        // as well as three merges: 're', 'are', and 'is'.
-        let expected_vocab: AHashMap<String, u32> = [
-            ("-".into(), 0),
-            ("2".into(), 1),
-            ("B".into(), 2),
-            ("E".into(), 3),
-            ("G".into(), 4),
-            ("P".into(), 5),
-            ("R".into(), 6),
-            ("T".into(), 7),
-            ("a".into(), 8),
-            ("b".into(), 9),
-            ("d".into(), 10),
-            ("e".into(), 11),
-            ("g".into(), 12),
-            ("i".into(), 13),
-            ("l".into(), 14),
-            ("n".into(), 15),
-            ("o".into(), 16),
-            ("r".into(), 17),
-            ("s".into(), 18),
-            ("t".into(), 19),
-            ("u".into(), 20),
-            ("v".into(), 21),
-            ("re".into(), 22),
-            ("are".into(), 23),
-            ("is".into(), 24),
-        ]
-        .iter()
-        .cloned()
-        .collect();
-        assert_eq!(trained_vocab, expected_vocab);
-
-        // `merges` is the pair of symbol *strings* per merge, highest priority first -- the on-disk
-        // form, and what `PipelineBPE::from_config` derives its ranks from. Position in
-        // the list is the rank, so the order is part of what is being asserted.
-        let expected_merges: Merges = vec![
-            ("r".into(), "e".into()),  // 'r' + 'e'  -> 're'
-            ("a".into(), "re".into()), // 'a' + 're' -> 'are'
-            ("i".into(), "s".into()),  // 'i' + 's'  -> 'is'
-        ];
-        assert_eq!(merges, expected_merges);
-    }
-    #[test]
-    fn bpe_test_max_token_length_16() {
-        /* bpe_test_max_token_length series of tests test the max_token_length flag of bpetrainer
-        // this is the more robust version that only tests max length of learned tokens
-        // (pre) tokenizer settings or vocab can be easily modified when necessary
-         */
-
-        let max_token_length = 16;
-        let long_word_counts: AHashMap<CompactString, u64> = [
-            ("singlelongtokenwithoutcasechange", 2),
-            ("singleLongTokenWithCamelCaseChange", 2),
-            ("Longsingletokenwithpunctu@t!onwithin", 2),
-            ("Anotherlongsingletokenwithnumberw1th1n", 2),
-            ("짧은한글문자열짧은한", 2),             // korean 10 char
-            ("긴한글문자열긴한글문자열긴한글문", 2), // korean 16 char
-            ("短字符串短字符串短字", 2),             //simplified chinese 10 char
-            ("长字符串长字符串长字符串长字符串", 2), // simp. chinese 16 char
-            ("短い文字列短い文字列", 2),             // japanese 10 char
-            ("長い文字列長い文字列長い文字列長", 2), // japanese 16 char
-            ("so", 2),
-            ("GPT-2", 2),
-        ]
-        .iter()
-        .map(|(key, value)| (CompactString::from(key.to_string()), *value))
-        .collect();
-        let trainer = BpeTrainer::builder()
-            .max_token_length(Some(max_token_length))
-            .show_progress(false)
-            .min_frequency(0)
-            .build();
-        let (vocab, _merges, _special_tokens) = trainer.do_train(&long_word_counts).unwrap();
-        for token in vocab.keys() {
-            assert!(
-                token.chars().count() <= max_token_length,
-                "token too long : {} , chars().count() = {}",
-                token,
-                token.chars().count()
-            )
-        }
-    }
-    #[test]
-    fn bpe_test_max_token_length_direct_assert() {
-        /* more direct version of bpe_test_max_token_length test
-        // directly compares tokens with known expected values.
-        // maybe unstable depending on specific settings or changes.
-         */
-        let long_word_counts: AHashMap<CompactString, u64> = [
-            ("sin", 2),
-            ("Sin", 2),
-            ("Lon", 2),
-            ("Ano", 2),
-            ("짧은한", 2),
-            ("긴한글", 2),
-            ("短字符", 2),
-            ("长字符", 2),
-            ("短い文", 2),
-            ("長い文", 2),
-            ("so", 2),
-            ("GP", 2),
-        ]
-        .iter()
-        .map(|(key, value)| (CompactString::from(key.to_string()), *value))
-        .collect();
-        let trainer = BpeTrainer::builder()
-            .max_token_length(Some(2))
-            .show_progress(false)
-            .min_frequency(0)
-            .build();
-        let (trained_vocab, _merges, _special_tokens) =
-            trainer.do_train(&long_word_counts).unwrap();
-        let expected_vocab: AHashMap<String, u32> = [
-            ("短", 12),
-            ("n", 6),
-            ("i", 5),
-            ("s", 8),
-            ("字符", 23),
-            ("長", 14),
-            ("긴", 17),
-            ("い文", 22),
-            ("L", 2),
-            ("in", 21),
-            ("o", 7),
-            ("은한", 29),
-            ("S", 4),
-            ("P", 3),
-            ("so", 27),
-            ("符", 13),
-            ("文", 11),
-            ("字", 10),
-            ("짧", 19),
-            ("GP", 25),
-            ("글", 16),
-            ("G", 1),
-            ("An", 24),
-            ("长", 15),
-            ("A", 0),
-            ("Lo", 26),
-            ("긴한", 28),
-            ("い", 9),
-            ("한", 20),
-            ("은", 18),
-        ]
-        .iter()
-        .cloned()
-        .map(|(k, v)| (k.to_string(), v))
-        .collect();
-        assert_eq!(trained_vocab, expected_vocab)
     }
 }

@@ -32,7 +32,13 @@ impl Match {
     }
 }
 pub(super) struct CorpusPlan<'input> {
-    corpus: Corpus,
+    // Counting needs geometry and borrowed words, but no resident token plane.
+    // materialize consumes this metadata and constructs the complete Corpus once.
+    starts: Vec<usize>,
+    weight_regions: Vec<(usize, u64)>,
+    unit_region: Option<(usize, usize)>,
+    spans: Vec<usize>,
+    whole_words: bool,
     words: Vec<(&'input CompactString, &'input u64)>,
     ids: InitialTokenIds,
     length: usize,
@@ -93,15 +99,11 @@ impl<'input> CorpusPlan<'input> {
             });
         let slot_bound = vocabulary.len().max(trainer.vocab_size);
         Ok(Self {
-            corpus: Corpus {
-                tokens: Slots::new(0, slot_bound),
-                starts,
-                weight_regions,
-                unit_region,
-                spans: vocabulary.initial_spans(),
-                occurrence_spans: None,
-                whole_words: trainer.max_token_length.is_some(),
-            },
+            starts,
+            weight_regions,
+            unit_region,
+            spans: vocabulary.initial_spans(),
+            whole_words: trainer.max_token_length.is_some(),
             words,
             ids,
             length,
@@ -116,7 +118,7 @@ impl<'input> CorpusPlan<'input> {
         self.words.len()
     }
     pub(super) fn small_pair_domain(&self) -> Option<usize> {
-        (self.corpus.spans.len() <= 256).then_some(self.corpus.spans.len())
+        (self.spans.len() <= 256).then_some(self.spans.len())
     }
     pub(super) fn initial_edges(
         &self,
@@ -125,7 +127,7 @@ impl<'input> CorpusPlan<'input> {
     ) -> Result<()> {
         for word in range {
             let (text, &weight) = self.words[word];
-            let mut position = self.corpus.starts[word];
+            let mut position = self.starts[word];
             let mut previous = None;
             let mut failure = None;
             self.ids.scan_symbols(text, |id| {
@@ -145,7 +147,7 @@ impl<'input> CorpusPlan<'input> {
         }
         Ok(())
     }
-    pub(super) fn materialize(mut self, progress: &TrainingProgress) -> Corpus {
+    pub(super) fn materialize(self, progress: &TrainingProgress) -> Corpus {
         let tokens = Slots::new(self.length, self.slot_bound);
         let work = progress.stage("Materialize corpus", self.length);
         self.words
@@ -154,7 +156,7 @@ impl<'input> CorpusPlan<'input> {
             .for_each(|(word, (text, _))| {
                 #[cfg(test)]
                 super::tests::observe_worker();
-                let start = self.corpus.starts[word];
+                let start = self.starts[word];
                 let mut position = start;
                 self.ids.scan_symbols(text, |id| {
                     tokens.set(position, id);
@@ -163,12 +165,16 @@ impl<'input> CorpusPlan<'input> {
                 });
                 work.complete(position - start + 1);
             });
-        self.corpus.tokens = tokens;
         // Only historical reuse cohorts need a word directory after counting.
-        if !self.reuse {
-            self.corpus.starts = Vec::new();
+        Corpus {
+            tokens,
+            starts: if self.reuse { self.starts } else { Vec::new() },
+            weight_regions: self.weight_regions,
+            unit_region: self.unit_region,
+            spans: self.spans,
+            occurrence_spans: None,
+            whole_words: self.whole_words,
         }
-        self.corpus
     }
 }
 impl Corpus {

@@ -27,17 +27,14 @@ The implementation is divided by the knowledge each module owns:
 - [positions.rs](positions.rs) owns sorted full-u64 streams and restart blocks.
   Temporary buffers narrow to u32 with automatic full-u64 promotion. Published
   lists have a two-word descriptor and borrow small allocations from a scoped
-  Arena; its dynamic byte threshold matches main. Duplicate positions and
+  Arena, selected by a dynamic byte threshold. Duplicate positions and
   coordinates through `u64::MAX` are preserved.
 
 Compatible batches retain the original priority prefix and permit shared heads
 or shared tails. Crossed endpoints end the batch without skipping a candidate.
-AA and reserved-ID rules run alone. Complete ordinary producers publish directly;
-Complete producers prune before encoding in preparation; partial, AA and reuse
-births aggregate before encoding and publication. Commit routes compact
-metadata references and moves each position stream only once. Active reuse uses
-one cohort at a time; its
-word scans follow the original alias/length-gate conditions.
+AA and reserved-ID rules run alone. Complete ordinary producers prune before encoding in preparation and publish
+directly. Partial, AA and reuse births aggregate before encoding and publication. Commit routes compact
+metadata references and moves each position stream only once. Active reuse uses one cohort at a time; its word scans follow the original alias/length-gate conditions.
 
 Run library checks from the repository root:
 
@@ -57,12 +54,12 @@ Literal expectations cover wide counts and public errors. Codec tests cover the
 entire u64 domain, repeated values and restart boundaries. The standalone Miri
 harness imports the actual position module and keeps borrow/leak checks enabled.
 Miri samples seek starts and targets around restart boundaries; native tests
-exhaust every start. Native concurrency uses a Rayon pool; Miri uses
-scoped threads and both allocation cursors to isolate storage from Crossbeam
-collectors that outlive the test. Public tests retain
-feed, model reload, progress and ambient-versus-training pool behavior.
+exhaust every start. Native and Miri allocation tests use scoped threads and both allocation cursors.
+Public tests cover feed, model reload, progress and ambient-versus-training pool
+behavior. [The coverage map](tests/COVERAGE.md) records the combined boundaries.
 
-The 2100-line production budget includes all engine modules and test-only code, plus the
-reference and shared oracle helpers. Removing comments or moving implementation
-outside this directory does not reduce the budget. Performance evidence and
+The 2100-line production budget covers all engine implementation, including any
+logic moved outside this directory. Test-only code, the reference oracle and shared
+test helpers have a separate 600-line limit, with 500 lines as the target.
+Removing comments does not reduce either count. Performance evidence and
 build/input hashes are recorded by the [experiment](../../../../../../experiments/bpe-simplification/STATUS.md).

@@ -9,7 +9,7 @@ use super::{BpeTrainer, word_counts::WordCountsView};
 use crate::progress::TrainingProgress;
 use corpus::{Corpus, CorpusPlan};
 use index::PairIndex;
-use merge::Batch;
+use merge::{Batch, Selection};
 use positions::Arena;
 #[cfg(test)]
 use tk_encode::models::bpe::Pair;
@@ -73,14 +73,15 @@ pub(super) fn train(
             let mut trace = Trace::new();
             let mut restart = false;
             while vocabulary.len() < trainer.vocab_size {
-                let Some(batch) = Batch::select(trainer, &mut vocabulary, &mut corpus, &mut index)?
-                else {
-                    break;
+                let batch = match Batch::select(trainer, &mut vocabulary, &mut corpus, &mut index)?
+                {
+                    Selection::Finished => break,
+                    Selection::Restart => {
+                        restart = true;
+                        break;
+                    }
+                    Selection::Ready(batch) => batch,
                 };
-                if batch.restart() {
-                    restart = true;
-                    break;
-                }
                 #[cfg(test)]
                 trace.extend(batch.trace());
                 merges.extend(batch.pairs());

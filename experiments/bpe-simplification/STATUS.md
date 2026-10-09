@@ -1,4 +1,18 @@
-# Completed: <25s core within 2100 production lines
+# Review iteration after the measured delivery
+
+Current review snapshot: 2100 formatted production logic lines and 600 test logic
+lines, including the independent reference, public hooks and Miri harness. The
+production limit is 2100; the test target is 500 and accepted ceiling is 600.
+Selection states, event routing, corpus construction and trusted codec inputs
+have been tightened. Tests are consolidated around full-model/per-rule parity,
+public integration and shared immutable storage; see the engine coverage map.
+
+Default and no-default native tests, doctests, Clippy with denied warnings, fmt,
+budget and strict Miri passed for this review round. Independent structural and
+test review follows. Performance of these new changes has not yet been measured;
+the results below belong to the earlier measured source.
+
+## Earlier measured delivery: <25s core
 
 Final source commit: d19e5bc6, branch simplify/bpe-maintenance-20261009.
 Pinned baseline: Fork main e4f787dc189d9be7192107490d652096cde7480e.
@@ -9,7 +23,9 @@ Production2074 formatted nonblank noncomment lines; tests1522 including oracle,
 shared helpers and Miri harness. User-approved production limit2100.
 
 Complete producer publication, compatible batching/parallel aggregation, full-u64
-positions and main's dynamic Arena threshold remain. Four final cases/eight
+positions and the dynamic Arena threshold remain. The threshold formula matches
+the baseline; its input is resident slots, whereas the baseline uses initial
+physical edges. This difference is tracked in the cutoff ablation. Four final cases/eight
 processes all match complete baseline models with swap0. Default/no-default tests,
 Clippy, fmt, budget, strict Miri and exact binary rebuild verification passed.
 See REPORT.md and evidence/manifest-final.json for results and practical limits.

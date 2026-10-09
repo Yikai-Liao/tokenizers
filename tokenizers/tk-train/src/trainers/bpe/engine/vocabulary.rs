@@ -34,8 +34,6 @@ pub(super) struct InitialTokenIds {
     prefix: bool,
     suffix: bool,
     complete_alphabet: bool,
-    // Conservative bound on IDs scan_symbols can emit, including decorations
-    // and unused single-character IDs, but excluding the separator sentinel.
 }
 impl Vocabulary {
     pub(super) fn initialize(
