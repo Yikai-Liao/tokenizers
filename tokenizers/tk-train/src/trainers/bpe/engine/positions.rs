@@ -45,34 +45,66 @@ pub(super) struct Lease<'arena> {
     arena: &'arena Arena,
     cursor: MutexGuard<'arena, Worker>,
 }
-// Mutable task buffers remain separate from the published 16-byte descriptor.
-// Two inline coordinates avoid allocating the common tiny neighbor lists.
-#[derive(Default)]
-pub(super) struct Builder(smallvec::SmallVec<[u64; 2]>);
-impl std::ops::Deref for Builder {
-    type Target = [u64];
-    fn deref(&self) -> &[u64] {
-        &self.0
+// Mutable task buffers keep four-byte coordinates until a full-u64 value appears.
+// Small buffers stay inline; promotion preserves every previously stored value.
+pub(super) enum Builder {
+    Narrow(smallvec::SmallVec<[u32; 2]>),
+    Wide(smallvec::SmallVec<[u64; 2]>),
+}
+impl Default for Builder {
+    fn default() -> Self {
+        Self::Narrow(smallvec::SmallVec::new())
     }
 }
 impl Builder {
+    pub(super) fn iter(
+        &self,
+    ) -> impl DoubleEndedIterator<Item = u64> + ExactSizeIterator + Clone + '_ {
+        match self {
+            Self::Narrow(values) => itertools::Either::Left(values.iter().map(|&p| u64::from(p))),
+            Self::Wide(values) => itertools::Either::Right(values.iter().copied()),
+        }
+    }
+    pub(super) fn len(&self) -> usize {
+        self.iter().len()
+    }
+    pub(super) fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
     pub(super) fn push(&mut self, position: u64) -> Result<()> {
-        if self.last().is_some_and(|&last| position < last) {
+        if self.iter().next_back().is_some_and(|last| position < last) {
             return Err("BPE positions are not sorted".into());
         }
-        self.0.push(position);
+        if let Self::Narrow(values) = self {
+            if let Ok(position) = u32::try_from(position) {
+                values.push(position);
+                return Ok(());
+            }
+            *self = Self::Wide(values.iter().map(|&p| u64::from(p)).collect());
+        }
+        if let Self::Wide(values) = self {
+            values.push(position);
+        }
         Ok(())
     }
     pub(super) fn append(&mut self, mut other: Self) -> Result<()> {
         if self.is_empty() {
             std::mem::swap(self, &mut other);
         }
-        if let (Some(&last), Some(&first)) = (self.last(), other.first())
+        if let (Some(last), Some(first)) = (self.iter().next_back(), other.iter().next())
             && first < last
         {
             return Err("BPE positions are not sorted".into());
         }
-        self.0.append(&mut other.0);
+        match (&mut *self, &mut other) {
+            (Self::Narrow(a), Self::Narrow(b)) => a.append(b),
+            (Self::Wide(a), Self::Wide(b)) => a.append(b),
+            _ => {
+                for position in other.iter() {
+                    self.push(position)?;
+                }
+            }
+        }
         Ok(())
     }
 }
@@ -117,7 +149,10 @@ impl<'arena> Positions<'arena> {
     fn pointer(&self) -> *mut u8 {
         self.payload.map_addr(|a| a & !1)
     }
-    pub(super) fn from_sorted(values: &[u64], lease: &mut Lease<'arena>) -> Result<Self> {
+    pub(super) fn from_sorted(
+        values: impl DoubleEndedIterator<Item = u64> + ExactSizeIterator + Clone,
+        lease: &mut Lease<'arena>,
+    ) -> Result<Self> {
         let count = values.len();
         if count == 0 {
             return Ok(Self::default());
@@ -125,8 +160,11 @@ impl<'arena> Positions<'arena> {
         if count >= INLINE {
             return Err("BPE position count exceeds resident bounds".into());
         }
-        let first = values[0];
-        let gap = values[count - 1]
+        let first = values.clone().next().unwrap();
+        let gap = values
+            .clone()
+            .next_back()
+            .unwrap()
             .checked_sub(first)
             .ok_or("BPE positions are not sorted")?;
         if count <= 2 && first <= usize::MAX as u64 && (count == 1 || gap <= DELTA_MASK as u64) {
@@ -140,7 +178,7 @@ impl<'arena> Positions<'arena> {
         worker.bytes.clear();
         worker.offsets.clear();
         let mut previous = 0;
-        for (i, &position) in values.iter().enumerate() {
+        for (i, position) in values.enumerate() {
             let gap = position
                 .checked_sub(previous)
                 .ok_or("BPE positions are not sorted")?;
@@ -333,7 +371,8 @@ mod tests {
             .into_iter()
             .map(|length| {
                 let values: Vec<_> = (0..length).map(|i| (1u64 << 32) + (i / 3) as u64).collect();
-                let positions = Positions::from_sorted(&values, &mut arena.lease()).unwrap();
+                let positions =
+                    Positions::from_sorted(values.iter().copied(), &mut arena.lease()).unwrap();
                 (positions, values)
             })
             .collect();
@@ -344,11 +383,30 @@ mod tests {
             .install(|| {
                 saved.par_iter().for_each(|(positions, values)| {
                     let next: Vec<_> = (0..128).map(|i| (1u64 << 63) + i).collect();
-                    let temporary = Positions::from_sorted(&next, &mut arena.lease()).unwrap();
+                    let temporary =
+                        Positions::from_sorted(next.iter().copied(), &mut arena.lease()).unwrap();
                     assert!(temporary.iter().eq(next));
                     assert!(positions.iter().eq(values.iter().copied()));
                 });
             });
+    }
+    #[test]
+    fn narrow_builders_promote_without_losing_prior_fragments() {
+        let values = [0, 0, u32::MAX as u64, 1 << 32, 1 << 63, u64::MAX];
+        for split in 0..=values.len() {
+            let mut result = Builder::default();
+            let mut tail = Builder::default();
+            for &position in &values[..split] {
+                result.push(position).unwrap();
+            }
+            for &position in &values[split..] {
+                tail.push(position).unwrap();
+            }
+            result.append(tail).unwrap();
+            assert!(result.iter().eq(values));
+            assert!(result.push(0).is_err());
+            assert!(result.iter().eq(values));
+        }
     }
     #[test]
     fn fragmented_streams_preserve_order_seeks_and_push() {
@@ -372,9 +430,11 @@ mod tests {
         }
         builder.push(u64::MAX).unwrap();
         values.push(u64::MAX);
-        let positions = Positions::from_sorted(&builder, &mut lease).unwrap();
+        let positions = Positions::from_sorted(builder.iter(), &mut lease).unwrap();
         assert_eq!(positions.iter().collect::<Vec<_>>(), values);
-        for index in 0..=values.len() {
+        for index in (0..=values.len()).filter(|i| {
+            !cfg!(miri) || i.is_multiple_of(127) || i.is_multiple_of(128) || *i == values.len()
+        }) {
             assert_eq!(positions.from(index).collect::<Vec<_>>(), values[index..]);
         }
         for target in values
@@ -415,9 +475,11 @@ mod tests {
             let repeated: Vec<_> = (0..length).map(|i| values[i % values.len()]).collect();
             let mut sorted = repeated;
             sorted.sort_unstable();
-            let positions = Positions::from_sorted(&sorted, &mut lease).unwrap();
+            let positions = Positions::from_sorted(sorted.iter().copied(), &mut lease).unwrap();
             assert_eq!(positions.iter().collect::<Vec<_>>(), sorted);
-            for index in 0..=sorted.len() {
+            for index in (0..=sorted.len()).filter(|i| {
+                !cfg!(miri) || i.is_multiple_of(127) || i.is_multiple_of(128) || *i == sorted.len()
+            }) {
                 assert_eq!(positions.from(index).collect::<Vec<_>>(), sorted[index..]);
             }
             for &target in &values {
@@ -427,9 +489,9 @@ mod tests {
                 );
             }
         }
-        assert!(Positions::from_sorted(&[u64::MAX, 0], &mut lease).is_err());
+        assert!(Positions::from_sorted([u64::MAX, 0].into_iter(), &mut lease).is_err());
         values.resize(129, u64::MAX);
         values[128] = 0;
-        assert!(Positions::from_sorted(&values, &mut lease).is_err());
+        assert!(Positions::from_sorted(values.iter().copied(), &mut lease).is_err());
     }
 }

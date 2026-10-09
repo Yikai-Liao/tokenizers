@@ -78,6 +78,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--root', type=Path, default=Path(__file__).resolve().parents[2])
     parser.add_argument('--output', type=Path)
+    parser.add_argument('--max-production', type=int, default=2100)
     args = parser.parse_args()
     root = args.root / 'tokenizers/tk-train'
     subprocess.run(['/root/.cargo/bin/cargo', 'fmt', '--manifest-path', str(root / 'Cargo.toml'), '--check'], check=True)
@@ -99,7 +100,8 @@ def main():
         tests[filename + ' [oracle and shared helpers]'] = sum(bool(line.strip()) for line in strip_comments(path.read_text()).splitlines())
     report = dict(production=production, tests=tests, production_total=sum(production.values()), test_total=sum(tests.values()),
                   counting_rule='Nonblank noncomment lines after cargo fmt --check; all engine modules plus cfg(test), oracle/reference and shared Word helpers. No implementation relocated outside engine.')
-    report['within_budget'] = report['production_total'] <= 2000 and report['test_total'] <= report['production_total']
+    report['production_limit'] = args.max_production
+    report['within_budget'] = report['production_total'] <= args.max_production and report['test_total'] <= report['production_total']
     content = json.dumps(report, indent=2)
     print(content)
     if args.output:

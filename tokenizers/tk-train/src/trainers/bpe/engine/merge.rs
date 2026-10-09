@@ -490,7 +490,7 @@ impl Writes {
                 id,
             } => {
                 for coordinate in positions.iter() {
-                    let start = corpus.resident(*coordinate);
+                    let start = corpus.resident(coordinate);
                     corpus.apply(
                         Match {
                             start,

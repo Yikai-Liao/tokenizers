@@ -170,7 +170,7 @@ impl<'arena> PairIndex<'arena> {
                 let mut shard = Shard::default();
                 for (pair, state) in states {
                     if reuse || state.count >= minimum.max(1) {
-                        let positions = Positions::from_sorted(&state.positions, &mut lease)?;
+                        let positions = Positions::from_sorted(state.positions.iter(), &mut lease)?;
                         shard.states.insert(
                             pair,
                             State {
@@ -345,7 +345,7 @@ impl<'arena> PairIndex<'arena> {
                             // The complete producer already reduced and pruned.
                             // Fresh IDs and compatible rules give each birth one producer.
                             debug_assert!(!reuse && change.born_weight >= floor);
-                            let positions = Positions::from_sorted(&positions, &mut lease)?;
+                            let positions = Positions::from_sorted(positions.iter(), &mut lease)?;
                             shard.publish(change.born, change.born_weight, positions);
                             continue;
                         }
@@ -379,13 +379,14 @@ impl<'arena> PairIndex<'arena> {
                     };
                     if reuse {
                         state.unordered.sort_unstable();
-                        let positions = Positions::from_sorted(&state.unordered, &mut lease)?;
+                        let positions =
+                            Positions::from_sorted(state.unordered.iter().copied(), &mut lease)?;
                         candidates.push(Candidate {
                             priority,
                             positions,
                         });
                     } else {
-                        let positions = Positions::from_sorted(&state.positions, &mut lease)?;
+                        let positions = Positions::from_sorted(state.positions.iter(), &mut lease)?;
                         shard.publish(pair, count, positions);
                     }
                 }
