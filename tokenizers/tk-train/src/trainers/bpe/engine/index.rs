@@ -60,30 +60,12 @@ struct Group {
 struct Shard {
     states: AHashMap<Pair, State>,
     queue: OctonaryHeap<Priority>,
-    directory: NeighborDirectory,
 }
-#[derive(Default)]
-struct NeighborDirectory {
-    indices: Vec<usize>,
-    touched: Vec<usize>,
-}
-impl NeighborDirectory {
-    fn reset(&mut self) {
-        for id in self.touched.drain(..) {
-            self.indices[id] = usize::MAX;
-        }
-    }
-    fn index(&mut self, neighbor: u32, next: usize) -> usize {
-        let id = neighbor as usize;
-        if id >= self.indices.len() {
-            self.indices.resize(id + 1, usize::MAX);
-        }
-        let slot = &mut self.indices[id];
-        if *slot == usize::MAX {
-            *slot = next;
-            self.touched.push(id);
-        }
-        *slot
+impl Shard {
+    fn publish(&mut self, pair: Pair, count: u64, positions: Positions) {
+        debug_assert!(!self.states.contains_key(&pair));
+        self.states.insert(pair, State { count, positions });
+        self.queue.push(Priority { pair, count });
     }
 }
 pub(super) struct PairIndex {
@@ -158,23 +140,22 @@ impl PairIndex {
         let shards = routed
             .into_par_iter()
             .map(|pieces| -> Result<_> {
-                let mut groups = AHashMap::<Pair, State>::new();
+                let mut shard = Shard::default();
                 for (pair, state) in pieces {
-                    let total = groups.entry(pair).or_default();
+                    let total = shard.states.entry(pair).or_default();
                     add(&mut total.count, state.count)?;
                     total.positions.append(state.positions)?;
                 }
-                let mut shard = Shard::default();
-                for (pair, group) in groups {
-                    if !reuse && group.count < minimum.max(1) {
-                        continue;
-                    }
-                    let count = group.count;
-                    let positions = group.positions;
-                    shard.states.insert(pair, State { count, positions });
-                    if !reuse {
-                        shard.queue.push(Priority { pair, count });
-                    }
+                shard
+                    .states
+                    .retain(|_, state| reuse || state.count >= minimum.max(1));
+                if !reuse {
+                    shard
+                        .queue
+                        .extend(shard.states.iter().map(|(&pair, state)| Priority {
+                            pair,
+                            count: state.count,
+                        }));
                 }
                 Ok(shard)
             })
@@ -279,14 +260,8 @@ impl PairIndex {
             .shards
             .par_iter_mut()
             .zip(routes)
-            .map(|(shard, mut route)| -> Result<_> {
-                if !reuse {
-                    // Stable bucket order preserves spatial order of fragments.
-                    route.sort_by_key(|(change, _, _)| change.bucket);
-                }
-                let mut groups = Vec::<((usize, Pair), Group)>::new();
-                let mut lookup = AHashMap::<(usize, Pair), usize>::new();
-                let mut bucket = None;
+            .map(|(shard, route)| -> Result<_> {
+                let mut groups = AHashMap::<(usize, Pair), Group>::new();
                 for (change, remove, birth) in route {
                     if remove {
                         if reuse {
@@ -322,45 +297,10 @@ impl PairIndex {
                                 // The complete producer already reduced and pruned.
                                 // Fresh IDs and compatible rules give each birth one producer.
                                 debug_assert!(!reuse && change.born_weight >= floor);
-                                debug_assert!(!shard.states.contains_key(&change.born));
-                                shard.states.insert(
-                                    change.born,
-                                    State {
-                                        count: change.born_weight,
-                                        positions: change.positions,
-                                    },
-                                );
-                                shard.queue.push(Priority {
-                                    pair: change.born,
-                                    count: change.born_weight,
-                                });
+                                shard.publish(change.born, change.born_weight, change.positions);
                                 continue;
                             }
-                            let key = (change.bucket, change.born);
-                            let index = if reuse {
-                                *lookup.entry(key).or_insert_with(|| {
-                                    groups.push((key, Group::default()));
-                                    groups.len() - 1
-                                })
-                            } else {
-                                if bucket != Some(change.bucket) {
-                                    shard.directory.reset();
-                                    bucket = Some(change.bucket);
-                                }
-                                // Even buckets are left neighbors, including (id,id).
-                                let neighbor = if change.bucket % 2 == 0 {
-                                    change.born.0
-                                } else {
-                                    change.born.1
-                                };
-                                let index = shard.directory.index(neighbor, groups.len());
-                                if index == groups.len() {
-                                    groups.push((key, Group::default()));
-                                }
-                                debug_assert_eq!(groups[index].0, key);
-                                index
-                            };
-                            let group = &mut groups[index].1;
+                            let group = groups.entry((change.bucket, change.born)).or_default();
                             add(&mut group.count, change.born_weight)?;
                             if reuse {
                                 group.unordered.extend(change.positions.iter());
@@ -373,9 +313,8 @@ impl PairIndex {
                     }
                 }
                 let mut candidates = Vec::new();
-                if reuse {
-                    groups.sort_unstable_by_key(|((bucket, pair), _)| (*bucket, *pair));
-                }
+                let mut groups: Vec<_> = groups.into_iter().collect();
+                groups.sort_unstable_by_key(|((bucket, pair), _)| (*bucket, *pair));
                 for ((_, pair), mut state) in groups {
                     let count = if reuse {
                         shard.states[&pair].count
@@ -397,15 +336,7 @@ impl PairIndex {
                             positions: Positions::from_sorted(&state.unordered)?,
                         });
                     } else {
-                        debug_assert!(!shard.states.contains_key(&pair));
-                        shard.states.insert(
-                            pair,
-                            State {
-                                count,
-                                positions: state.positions,
-                            },
-                        );
-                        shard.queue.push(priority);
+                        shard.publish(pair, count, state.positions);
                     }
                 }
                 Ok(candidates)

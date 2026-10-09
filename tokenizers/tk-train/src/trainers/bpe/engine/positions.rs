@@ -115,16 +115,8 @@ impl Positions {
             positions: self,
             bytes: &[],
             position: 0,
-            remaining: if range.is_empty() {
-                0
-            } else {
-                self.blocks
-                    .get(range.end - 1)
-                    .map_or(self.count, |b| b.entry)
-                    - self.block(range.start).entry
-            },
             block_remaining: 0,
-            next_block: range.start,
+            blocks: range,
         }
     }
     pub(super) fn lower_bound(&self, target: u64) -> usize {
@@ -148,25 +140,21 @@ struct Cursor<'a> {
     positions: &'a Positions,
     bytes: &'a [u8],
     position: u64,
-    remaining: usize,
     block_remaining: usize,
-    next_block: usize,
+    blocks: Range<usize>,
 }
 impl Iterator for Cursor<'_> {
     type Item = u64;
     fn next(&mut self) -> Option<u64> {
-        if self.remaining == 0 {
-            return None;
-        }
         if self.block_remaining == 0 {
-            let block = self.positions.block(self.next_block);
+            let index = self.blocks.next()?;
+            let block = self.positions.block(index);
             self.block_remaining = self
                 .positions
                 .blocks
-                .get(self.next_block)
+                .get(index)
                 .map_or(self.positions.count, |b| b.entry)
                 - block.entry;
-            self.next_block += 1;
             self.position = block.first;
             self.bytes = &self.positions.bytes[block.byte..];
         } else {
@@ -185,7 +173,6 @@ impl Iterator for Cursor<'_> {
             // Each delta reconstructs an original value, including u64::MAX.
             self.position += delta;
         }
-        self.remaining -= 1;
         self.block_remaining -= 1;
         Some(self.position)
     }

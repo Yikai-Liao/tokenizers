@@ -45,6 +45,8 @@ pub(super) fn train(
                 PairIndex::build(&plan, trainer.min_frequency, workers, reuse, &progress)?;
             if vocabulary.len() >= trainer.vocab_size {
                 progress.stage("Compute merges", trainer.vocab_size);
+                drop(index);
+                drop(plan);
                 let (vocab, merges) = vocabulary.into_model_parts(Vec::new());
                 return Ok((vocab, merges, trainer.special_tokens.clone()));
             }

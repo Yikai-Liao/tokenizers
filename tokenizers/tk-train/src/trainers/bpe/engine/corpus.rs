@@ -98,11 +98,7 @@ impl<'input> CorpusPlan<'input> {
                 starts,
                 weight_regions,
                 unit_region,
-                spans: vocabulary
-                    .initial_spans()
-                    .into_iter()
-                    .map(|n| n as usize)
-                    .collect(),
+                spans: vocabulary.initial_spans(),
                 occurrence_spans: None,
                 whole_words: trainer.max_token_length.is_some(),
             },
@@ -129,7 +125,7 @@ impl<'input> CorpusPlan<'input> {
             let mut position = self.corpus.starts[word];
             let mut previous = None;
             let mut failure = None;
-            self.ids.scan_symbols(text, 0, |id| {
+            self.ids.scan_symbols(text, |id| {
                 if let Some(left) = previous
                     && let Err(error) = emit((left, id), (position - 1) as u64, weight)
                 {
@@ -157,7 +153,7 @@ impl<'input> CorpusPlan<'input> {
                 super::tests::observe_worker();
                 let start = self.corpus.starts[word];
                 let mut position = start;
-                self.ids.scan_symbols(text, 0, |id| {
+                self.ids.scan_symbols(text, |id| {
                     tokens.set(position, id);
                     position += 1;
                     ControlFlow::Continue(())

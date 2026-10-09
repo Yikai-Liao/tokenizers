@@ -203,10 +203,10 @@ impl Vocabulary {
         work.complete(word_counts.len() % 1024);
         Ok(ids)
     }
-    pub(super) fn initial_spans(&self) -> Vec<u64> {
+    pub(super) fn initial_spans(&self) -> Vec<usize> {
         self.active
             .iter()
-            .map(|&active| u64::from(active))
+            .map(|&active| usize::from(active))
             .collect()
     }
     pub(super) fn reuses_active_id(&self, token: &MergeToken) -> bool {
@@ -272,12 +272,11 @@ impl InitialTokenIds {
     pub(super) fn scan_symbols(
         &self,
         word: &str,
-        byte_offset: usize,
         mut emit: impl FnMut(u32) -> std::ops::ControlFlow<()>,
     ) {
         use std::ops::ControlFlow;
         if self.plain() {
-            for character in word[byte_offset..].chars() {
+            for character in word.chars() {
                 if let Some(id) = self.plain_id(character)
                     && emit(id).is_break()
                 {
@@ -285,8 +284,7 @@ impl InitialTokenIds {
                 }
             }
         } else {
-            for (offset, character) in word[byte_offset..].char_indices() {
-                let byte = byte_offset + offset;
+            for (byte, character) in word.char_indices() {
                 if let Some(id) = self.id(
                     character,
                     byte == 0,
