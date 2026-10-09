@@ -1,0 +1,46 @@
+   Compiling esaxx-rs v0.1.10
+   Compiling tk-encode v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-simplification/tokenizers/tk-encode)
+   Compiling tk-serialize v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-simplification/tokenizers/tk-serialize)
+   Compiling tk-train v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-simplification/tokenizers/tk-train)
+    Finished `test` profile [unoptimized] target(s) in 11.13s
+     Running unittests src/lib.rs (/root/code/tokenizers-simplification-results/target/debug/deps/tk_train-6efb102fed97e174)
+
+running 35 tests
+test trainers::bpe::engine::positions::tests::full_u64_values_duplicates_and_restart_boundaries_roundtrip ... ok
+test trainers::bpe::engine::merge::tests::independent_priority_rules_are_selected_together ... ok
+test trainers::bpe::engine::tests::identity_reuse::suffix_identity_reuse_has_literal_mainline_merge_choices ... ok
+test trainers::bpe::engine::tests::public_contract::feed_error_runs_callbacks_without_replacing_previous_counts ... ok
+test trainers::bpe::engine::tests::identity_reuse::affix_first_activations_preserve_reserved_ids_and_model_order ... ok
+test trainers::bpe::engine::tests::public_contract::feed_preserves_flat_counts_and_trainer_equality ... ok
+test trainers::bpe::engine::tests::public_contract::public_json_progress_preserves_upstream_fields ... ok
+test trainers::bpe::engine::tests::public_contract::public_feed_train_and_model_reload_preserve_affixes ... ok
+test trainers::bpe::engine::tests::public_contract::wide_frequencies_and_signed_ledger_boundaries ... ok
+test trainers::bpe::engine::tests::public_contract::zero_merge_paths_preserve_count_overflow_and_signed_policy_checks ... ok
+test trainers::bpe::engine::tests::generated::actual_high_token_ids_keep_pair_order_and_separator_distinct ... ok
+test trainers::bpe::engine::tests::semantic_parity::pruning_waits_for_all_birth_producers_and_alphabet_filtering ... ok
+test trainers::bpe::engine::tests::semantic_parity::affixes_aliases_and_strict_length_boundaries ... ok
+test trainers::bpe::feed::tests::batches_are_lazy_ordered_and_keep_the_final_partial_batch ... ok
+test trainers::bpe::feed::tests::batches_stop_at_first_none_even_when_the_source_resumes ... ok
+test trainers::bpe::feed::tests::startup_items_are_singletons_before_full_batches ... ok
+test trainers::bpe::engine::tests::identity_reuse::cohort_cohort_words_include_stale_addresses_and_zero_weights ... ok
+test trainers::bpe::feed::tests::weighted_flush_and_error_preserve_local_contracts ... ok
+test trainers::bpe::tests::bpe_test_max_token_length_direct_assert ... ok
+test trainers::bpe::tests::bpe_test_max_token_length_16 ... ok
+test trainers::bpe::word::tests::test_merge ... ok
+test trainers::bpe::tests::test_train ... ok
+test trainers::bpe::word::tests::test_merge_max_length ... ok
+test trainers::bpe::word_counts::tests::content_equality_and_flat_serde_ignore_representation_and_order ... ok
+test trainers::unigram::tests::test_initial_alphabet ... ok
+test trainers::tests::trainer_wrapper_train_model_wrapper ... ok
+test trainers::unigram::tests::test_to_log_prob ... ok
+test trainers::bpe::engine::tests::semantic_parity::weighted_ties_unicode_aa_and_reserved_id_activations ... ok
+test trainers::bpe::engine::tests::generated::long_repeats_non_bmp_and_wide_ids_preserve_models ... ok
+test trainers::wordlevel::tests::test_train ... ok
+test trainers::unigram::tests::test_special_tokens ... ok
+test trainers::unigram::tests::test_unigram_chars ... ok
+test trainers::unigram::tests::test_unk_token ... ok
+test trainers::bpe::engine::tests::public_contract::public_thread_policy_in_isolated_processes ... ok
+test trainers::bpe::engine::tests::generated::generated_corpora_keep_complete_models_and_traces ... ok
+
+test result: ok. 35 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.69s
+

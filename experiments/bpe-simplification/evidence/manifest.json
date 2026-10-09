@@ -1,0 +1,94 @@
+{
+  "baseline_sha": "e4f787dc189d9be7192107490d652096cde7480e",
+  "branch": "simplify/bpe-maintenance-20261009",
+  "source_plan_sha256": "0d666cd237d617dd2829ea837f7d5bec4b18af006e0575eb9db8fb6b58518a46",
+  "toolchain": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "cpu": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           46 bits physical, 48 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  6\nOn-line CPU(s) list:                     0-5\nVendor ID:                               GenuineIntel\nModel name:                              Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz\nCPU family:                              6\nModel:                                   85\nThread(s) per core:                      1\nCore(s) per socket:                      1\nSocket(s):                               6\nStepping:                                4\nBogoMIPS:                                4589.21\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon rep_good nopl xtopology cpuid tsc_known_freq pni pclmulqdq ssse3 fma cx16 pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch cpuid_fault pti ssbd ibrs ibpb stibp fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm mpx avx512f avx512dq rdseed adx smap clflushopt clwb avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves arat umip pku ospke md_clear flush_l1d arch_capabilities\nHypervisor vendor:                       KVM\nVirtualization type:                     full\nL1d cache:                               192 KiB (6 instances)\nL1i cache:                               192 KiB (6 instances)\nL2 cache:                                6 MiB (6 instances)\nL3 cache:                                148.5 MiB (6 instances)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0-5\nVulnerability Gather data sampling:      Not affected\nVulnerability Indirect target selection: Mitigation; Aligned branch/return thunks\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Mitigation; PTE Inversion\nVulnerability Mds:                       Mitigation; Clear CPU buffers; SMT Host state unknown\nVulnerability Meltdown:                  Mitigation; PTI\nVulnerability Mmio stale data:           Mitigation; Clear CPU buffers; SMT Host state unknown\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Mitigation; IBRS\nVulnerability Spec rstack overflow:      Not affected\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; IBRS; IBPB conditional; STIBP disabled; RSB filling; PBRSB-eIBRS Not affected; BHI SW loop, KVM SW loop\nVulnerability Srbds:                     Not affected\nVulnerability Tsa:                       Not affected\nVulnerability Tsx async abort:           Mitigation; Clear CPU buffers; SMT Host state unknown\nVulnerability Vmscape:                   Not affected\n",
+  "target_dir": "/root/code/tokenizers-simplification-results/target",
+  "release_profile": {
+    "opt_level": 3,
+    "lto": "fat",
+    "codegen_units": 1
+  },
+  "features": "tk-train default-features=false; runner default-features=false",
+  "environment_limits": [
+    "6 vCPU KVM; not specified 8-core fixed-frequency laptop",
+    "swap already nearly full; record child VmSwap and reject swapped samples",
+    "no performance measurements during builds"
+  ],
+  "decision_budget": "Hard cap: engine production <=2000 rustfmt-formatted nonblank noncomment lines; tests <= production lines. Prioritize simplification and 4-core zh/en ByteLevel performance; select best measured speed/RSS tradeoff within cap, no assumed 3% acceptance limit.",
+  "inputs": {
+    "en-bytelevel-pipeline": {
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/en256/text.txt",
+      "bytes": 268434441,
+      "sha256": "ae02a7e36df46e6dff26481f054dd4a385d50c4a42a9f166de754ee44fbf6b8a",
+      "workers": 4,
+      "vocab_size": 50000,
+      "min_frequency": 2
+    },
+    "en-bytelevel-core": {
+      "path": "/root/code/tokenizers-perfetto-results/inputs/en-bytelevel/words.json",
+      "bytes": 14071952,
+      "sha256": "4523a34ff64cdba49b0985f32cc923f2c7b005fd67748a0fbec38c44bab437c5",
+      "workers": 4,
+      "vocab_size": 50000,
+      "min_frequency": 2
+    },
+    "zh-bytelevel-pipeline": {
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+      "bytes": 268435162,
+      "sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+      "workers": 4,
+      "vocab_size": 50000,
+      "min_frequency": 2
+    },
+    "zh-bytelevel-core": {
+      "path": "/root/code/tokenizers-perfetto-results/inputs/zh-bytelevel/words.json",
+      "bytes": 437135595,
+      "sha256": "bb796d0b57b87d965b84de249bc5c8e283b700774638d16a40e4ae5171b13ee0",
+      "workers": 4,
+      "vocab_size": 50000,
+      "min_frequency": 2
+    }
+  },
+  "builds": {
+    "baseline": {
+      "source_sha": "e4f787dc189d9be7192107490d652096cde7480e",
+      "sha256": "179e99bf4d74996802c5a475d8ba4a62fcf6e769235dab5c56952b4c76af4074",
+      "cargo_lock_sha256": "fcf01b7de4367dc9b92cb3c7e1900a3ecffdb53be05c286a278a4a2228591909",
+      "command": "PATH=/root/.cargo/bin:$PATH CARGO_TARGET_DIR=/root/code/tokenizers-simplification-results/target CARGO_INCREMENTAL=0 cargo build --release --offline --manifest-path runner-baseline/Cargo.toml -j 2"
+    },
+    "compact": {
+      "source_sha_base": "e4f787dc189d9be7192107490d652096cde7480e",
+      "engine_sources_sha256": {
+        "tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs": "b5048bf3e9b11e5e00f9439c1c367a45d258aa79ace5f696e22e334e36954bf3",
+        "tokenizers/tk-train/src/trainers/bpe/engine/index.rs": "747132367e5f8a5453ddeeb02dd8f9bc7a41acc12f6b3608dcf96417adbd530d",
+        "tokenizers/tk-train/src/trainers/bpe/engine/merge.rs": "36efc0f2c59140480e5eb7ca4d077dad0e9e2882e0336a29b2c08375150cc536",
+        "tokenizers/tk-train/src/trainers/bpe/engine/mod.rs": "5f536874d034d94cb3c8457d9877a3f62d5608a7b1e6f31fa391b6c97aa7ce56",
+        "tokenizers/tk-train/src/trainers/bpe/engine/positions.rs": "c61eaadd3c3b2ec73d254e9208bc3ce8dfc5e7081ad936557b4e253606eca724",
+        "tokenizers/tk-train/src/trainers/bpe/engine/tests/generated.rs": "a5331fa3f584396327388b571f2872042bcc1205be9c1a2fc57a377fe1d15b75",
+        "tokenizers/tk-train/src/trainers/bpe/engine/tests/identity_reuse.rs": "79f43215e9f98a41b5c407671ed5b1327775b277ca07a47c83d265d7b0750ab8",
+        "tokenizers/tk-train/src/trainers/bpe/engine/tests/mod.rs": "24774a17bc72ca9ad82920ebf9c837e68f6d91df4780f0d8bdaa0796789c616c",
+        "tokenizers/tk-train/src/trainers/bpe/engine/tests/public_contract.rs": "0229bd3c3d71a81b4bfc9d8166711dbc983284d3748c4c1621db1abb29ca3e9a",
+        "tokenizers/tk-train/src/trainers/bpe/engine/tests/semantic_parity.rs": "b6f6062fe87e3843f126398964e95ab150f3ac45b14f9b7ae76e0e7b2336d905",
+        "tokenizers/tk-train/src/trainers/bpe/engine/vocabulary.rs": "b7dee2716d5cd0c89b95411ae26c6e453bd85b992e2277f66309ab3abe0c14d0"
+      },
+      "sha256": "793c4f448356cf1c63b1f4a8a7c49e3c873ab59ba82dfbfb9bdabfb5aae5a09b",
+      "cargo_lock_sha256": "fcf01b7de4367dc9b92cb3c7e1900a3ecffdb53be05c286a278a4a2228591909",
+      "command": "PATH=/root/.cargo/bin:$PATH CARGO_TARGET_DIR=/root/code/tokenizers-simplification-results/target CARGO_INCREMENTAL=0 cargo build --release --offline --locked --manifest-path runner-candidate/Cargo.toml -j 2"
+    }
+  },
+  "scope": "All engine implementation modules, including logic moved outside engine or delegated through new helpers; tests and reusable reference separately counted.",
+  "cleanup": [
+    {
+      "path": "/root/code/tokenizers-build/main-optimization-tests",
+      "bytes": 17372895242,
+      "reason": "Rust target cache; no running cargo/rustc observed"
+    },
+    {
+      "path": "/root/code/tokenizers-prepare-results/test-target",
+      "bytes": 1596989001,
+      "reason": "Rust target cache; no running cargo/rustc observed"
+    }
+  ]
+}

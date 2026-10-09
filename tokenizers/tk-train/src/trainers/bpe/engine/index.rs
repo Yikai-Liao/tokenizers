@@ -1,0 +1,321 @@
+//! Count owners publish complete lists; the queue repairs stale snapshots lazily.
+use super::merge::Change;
+use super::{Corpus, WORD_SEPARATOR_ID, positions::Positions};
+use crate::progress::TrainingProgress;
+use ahash::AHashMap;
+use dary_heap::OctonaryHeap;
+use rayon::prelude::*;
+use std::cmp::Ordering;
+use tk_encode::{Result, models::bpe::Pair};
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(super) struct Priority {
+    pub(super) pair: Pair,
+    pub(super) count: u64,
+}
+impl Ord for Priority {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.count
+            .cmp(&other.count)
+            .then_with(|| other.pair.cmp(&self.pair))
+    }
+}
+impl PartialOrd for Priority {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+pub(super) struct Candidate {
+    pub(super) priority: Priority,
+    pub(super) positions: Positions,
+}
+impl Eq for Candidate {}
+impl PartialEq for Candidate {
+    fn eq(&self, other: &Self) -> bool {
+        self.priority == other.priority
+    }
+}
+impl Ord for Candidate {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.priority.cmp(&other.priority)
+    }
+}
+impl PartialOrd for Candidate {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+#[derive(Default)]
+struct State {
+    count: u64,
+    positions: Positions,
+}
+#[derive(Default)]
+struct Group {
+    count: u64,
+    positions: Vec<u64>,
+}
+#[derive(Default)]
+struct Shard {
+    states: AHashMap<Pair, State>,
+    queue: OctonaryHeap<Priority>,
+}
+pub(super) struct PairIndex {
+    shards: Vec<Shard>,
+    cohorts: OctonaryHeap<Candidate>,
+    floor: u64,
+    reuse: bool,
+}
+fn owner(pair: Pair, workers: usize) -> usize {
+    let key = (u64::from(pair.0) << 32) | u64::from(pair.1);
+    (key.wrapping_mul(0x9e3779b97f4a7c15).rotate_left(23) % workers as u64) as usize
+}
+fn add(count: &mut u64, amount: u64) -> Result<()> {
+    *count = count
+        .checked_add(amount)
+        .ok_or("BPE pair frequency exceeds u64")?;
+    Ok(())
+}
+impl PairIndex {
+    pub(super) fn build(
+        corpus: &Corpus,
+        minimum: u64,
+        workers: usize,
+        reuse: bool,
+        progress: &TrainingProgress,
+    ) -> Result<Self> {
+        let work = progress.stage("Count initial pairs", corpus.word_count());
+        let chunk = corpus
+            .word_count()
+            .div_ceil(workers.saturating_mul(4))
+            .max(1);
+        let pieces = (0..corpus.word_count())
+            .step_by(chunk)
+            .collect::<Vec<_>>()
+            .into_par_iter()
+            .map(|begin| -> Result<_> {
+                let mut counts = AHashMap::<Pair, State>::new();
+                for word in begin..(begin + chunk).min(corpus.word_count()) {
+                    for p in corpus.word_start(word)..corpus.word_end(word).saturating_sub(1) {
+                        let pair = (corpus.token(p), corpus.token(p + 1));
+                        debug_assert!(pair.0 != WORD_SEPARATOR_ID && pair.1 != WORD_SEPARATOR_ID);
+                        let state = counts.entry(pair).or_default();
+                        add(&mut state.count, corpus.word_weight(word))?;
+                        state.positions.push(p as u64)?;
+                    }
+                }
+                work.complete(chunk.min(corpus.word_count() - begin));
+                Ok(counts)
+            })
+            .collect::<Result<Vec<_>>>()?;
+        let mut routed: Vec<Vec<_>> = (0..workers).map(|_| Vec::new()).collect();
+        for piece in pieces {
+            for (pair, state) in piece {
+                routed[owner(pair, workers)].push((pair, state));
+            }
+        }
+        let shards = routed
+            .into_par_iter()
+            .map(|pieces| -> Result<_> {
+                let mut groups = AHashMap::<Pair, State>::new();
+                for (pair, state) in pieces {
+                    let total = groups.entry(pair).or_default();
+                    add(&mut total.count, state.count)?;
+                    for position in state.positions.iter() {
+                        total.positions.push(position)?;
+                    }
+                }
+                let mut shard = Shard::default();
+                for (pair, group) in groups {
+                    if !reuse && group.count < minimum.max(1) {
+                        continue;
+                    }
+                    let count = group.count;
+                    let positions = group.positions;
+                    shard.states.insert(pair, State { count, positions });
+                    if !reuse {
+                        shard.queue.push(Priority { pair, count });
+                    }
+                }
+                Ok(shard)
+            })
+            .collect::<Result<Vec<_>>>()?;
+        let mut index = Self {
+            shards,
+            cohorts: OctonaryHeap::new(),
+            floor: minimum.max(1),
+            reuse,
+        };
+        if reuse {
+            for shard in &mut index.shards {
+                for (&pair, state) in &mut shard.states {
+                    if state.count == 0 {
+                        continue;
+                    }
+                    index.cohorts.push(Candidate {
+                        priority: Priority {
+                            pair,
+                            count: state.count,
+                        },
+                        positions: std::mem::take(&mut state.positions),
+                    });
+                }
+            }
+        }
+        Ok(index)
+    }
+    pub(super) fn reuse(&self) -> bool {
+        self.reuse
+    }
+    pub(super) fn best(&mut self) -> Option<Priority> {
+        if self.reuse {
+            loop {
+                let top = self.cohorts.peek()?.priority;
+                let count = self.shards[owner(top.pair, self.shards.len())].states[&top.pair].count;
+                if top.count == count {
+                    return (count >= self.floor).then_some(top);
+                }
+                let mut candidate = self.cohorts.pop().expect("observed candidate exists");
+                candidate.priority.count = count;
+                self.cohorts.push(candidate);
+            }
+        }
+        let mut best = None;
+        for shard in &mut self.shards {
+            while let Some(top) = shard.queue.peek().copied() {
+                let Some(state) = shard.states.get(&top.pair) else {
+                    shard.queue.pop();
+                    continue;
+                };
+                if top.count == state.count {
+                    if best.is_none_or(|previous| top > previous) {
+                        best = Some(top);
+                    }
+                    break;
+                }
+                let count = state.count;
+                shard.queue.pop();
+                shard.queue.push(Priority { count, ..top });
+            }
+        }
+        best
+    }
+    pub(super) fn take(&mut self, priority: Priority) -> Candidate {
+        if self.reuse {
+            return self.cohorts.pop().expect("certified cohort exists");
+        }
+        let workers = self.shards.len();
+        let shard = &mut self.shards[owner(priority.pair, workers)];
+        shard.queue.pop();
+        let state = shard
+            .states
+            .remove(&priority.pair)
+            .expect("certified pair exists");
+        Candidate {
+            priority,
+            positions: state.positions,
+        }
+    }
+    pub(super) fn commit(&mut self, changes: Vec<Change>) -> Result<()> {
+        let workers = self.shards.len();
+        let mut routes: Vec<Vec<(usize, bool, bool)>> = (0..workers).map(|_| Vec::new()).collect();
+        for (i, change) in changes.iter().enumerate() {
+            let removed = owner(change.removed, workers);
+            let born = owner(change.born, workers);
+            if removed == born {
+                routes[removed].push((i, true, true));
+            } else {
+                routes[removed].push((i, true, false));
+                routes[born].push((i, false, true));
+            }
+        }
+        let reuse = self.reuse;
+        let floor = self.floor;
+        let births = self
+            .shards
+            .par_iter_mut()
+            .zip(routes)
+            .map(|(shard, route)| -> Result<_> {
+                let mut groups = AHashMap::<(usize, Pair), Group>::new();
+                for (i, remove, birth) in route {
+                    let change = &changes[i];
+                    if remove {
+                        if reuse {
+                            let count = &mut shard.states.entry(change.removed).or_default().count;
+                            let amount = i64::try_from(change.removed_weight)
+                                .map_err(|_| "BPE identity-reuse removal exceeds i64")?;
+                            *count = (*count as i64)
+                                .checked_sub(amount)
+                                .ok_or("BPE identity-reuse count subtraction exceeds i64")?
+                                as u64;
+                        } else if let Some(state) = shard.states.get_mut(&change.removed) {
+                            state.count = state
+                                .count
+                                .checked_sub(change.removed_weight)
+                                .ok_or("BPE fresh removal exceeds the current count")?;
+                            if state.count < floor {
+                                shard.states.remove(&change.removed);
+                            }
+                        }
+                    }
+                    if birth {
+                        if reuse {
+                            let count = &mut shard.states.entry(change.born).or_default().count;
+                            let amount = i64::try_from(change.born_weight)
+                                .map_err(|_| "BPE identity-reuse birth exceeds i64")?;
+                            *count = (*count as i64)
+                                .checked_add(amount)
+                                .ok_or("BPE identity-reuse count addition exceeds i64")?
+                                as u64;
+                        }
+                        if !change.positions.is_empty() {
+                            let group = groups.entry((change.bucket, change.born)).or_default();
+                            add(&mut group.count, change.born_weight)?;
+                            group.positions.extend_from_slice(&change.positions);
+                        }
+                    }
+                }
+                let mut candidates = Vec::new();
+                let mut groups: Vec<_> = groups.into_iter().collect();
+                groups.sort_unstable_by_key(|((bucket, pair), _)| (*bucket, *pair));
+                for ((_, pair), mut state) in groups {
+                    let count = if reuse {
+                        shard.states[&pair].count
+                    } else {
+                        state.count
+                    };
+                    if if reuse {
+                        (count as i64) <= 0
+                    } else {
+                        count < floor
+                    } {
+                        continue;
+                    }
+                    state.positions.sort_unstable();
+                    let priority = Priority { pair, count };
+                    if reuse {
+                        candidates.push(Candidate {
+                            priority,
+                            positions: Positions::from_sorted(&state.positions)?,
+                        });
+                    } else {
+                        debug_assert!(!shard.states.contains_key(&pair));
+                        shard.states.insert(
+                            pair,
+                            State {
+                                count,
+                                positions: Positions::from_sorted(&state.positions)?,
+                            },
+                        );
+                        shard.queue.push(priority);
+                    }
+                }
+                Ok(candidates)
+            })
+            .collect::<Result<Vec<_>>>()?;
+        for candidate in births.into_iter().flatten() {
+            self.cohorts.push(candidate);
+        }
+        Ok(())
+    }
+}

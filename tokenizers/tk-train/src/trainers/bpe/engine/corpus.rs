@@ -1,0 +1,251 @@
+//! Endpoint tokens retain their original coordinates; span metadata skips holes.
+use super::{BpeTrainer, Vocabulary, WORD_SEPARATOR_ID, WordCountsView};
+use crate::progress::TrainingProgress;
+use rayon::prelude::*;
+use std::{
+    ops::ControlFlow,
+    sync::atomic::{AtomicU16, AtomicU32, AtomicUsize, Ordering},
+};
+use tk_encode::{Result, models::bpe::Pair};
+
+pub(super) struct Corpus {
+    tokens: Slots,
+    starts: Vec<usize>,
+    weights: Vec<u64>,
+    spans: Vec<usize>,
+    occurrence_spans: Option<Vec<AtomicUsize>>,
+    whole_words: bool,
+}
+#[derive(Clone, Copy)]
+pub(super) struct Match {
+    pub(super) start: usize,
+    pub(super) right: usize,
+    pub(super) after: usize,
+}
+impl Match {
+    pub(super) fn span(self) -> usize {
+        self.after - self.start
+    }
+}
+impl Corpus {
+    pub(super) fn build(
+        words: WordCountsView<'_>,
+        vocabulary: &mut Vocabulary,
+        trainer: &BpeTrainer,
+        reuse: bool,
+        progress: &TrainingProgress,
+    ) -> Result<Self> {
+        let ids =
+            vocabulary.initial_ids(words, &progress.stage("Resolve initial IDs", words.len()))?;
+        let mut words: Vec<_> = words.iter().collect();
+        words.par_sort_unstable_by(|a, b| b.1.cmp(a.1));
+        let measured: Vec<_> = words
+            .par_iter()
+            .map(|(word, _)| ids.symbol_count(word))
+            .collect();
+        let mut starts = Vec::with_capacity(words.len());
+        let mut weights = Vec::with_capacity(words.len());
+        let mut length = 1usize;
+        let mut mass = 0u128;
+        for (&(_, &weight), &symbols) in words.iter().zip(&measured) {
+            starts.push(length);
+            weights.push(weight);
+            length = length
+                .checked_add(symbols)
+                .and_then(|n| n.checked_add(1))
+                .ok_or("BPE corpus exceeds resident index bounds")?;
+            mass += u128::from(weight) * symbols.saturating_sub(1) as u128;
+        }
+        if length > isize::MAX as usize / std::mem::size_of::<AtomicU32>() {
+            return Err("BPE corpus exceeds resident allocation bounds".into());
+        }
+        if (reuse || !ids.plain())
+            && (mass > i64::MAX as u128 || weights.iter().any(|&w| w > i64::MAX as u64))
+        {
+            return Err("BPE identity-reuse weighted edge mass or word weight exceeds i64".into());
+        }
+        let tokens = Slots::new(length, vocabulary.len().max(trainer.vocab_size));
+        let work = progress.stage("Materialize corpus", length);
+        words
+            .par_iter()
+            .enumerate()
+            .for_each(|(word_index, (word, _))| {
+                #[cfg(test)]
+                super::tests::observe_worker();
+                let mut position = starts[word_index];
+                ids.scan_symbols(word, 0, |id| {
+                    tokens.set(position, id);
+                    position += 1;
+                    ControlFlow::Continue(())
+                });
+                work.complete(measured[word_index] + 1);
+            });
+        Ok(Self {
+            tokens,
+            starts,
+            weights,
+            spans: vocabulary
+                .initial_spans()
+                .into_iter()
+                .map(|n| n as usize)
+                .collect(),
+            occurrence_spans: None,
+            whole_words: trainer.max_token_length.is_some(),
+        })
+    }
+    pub(super) fn len(&self) -> usize {
+        self.tokens.len()
+    }
+    pub(super) fn resident(&self, coordinate: u64) -> usize {
+        let position =
+            usize::try_from(coordinate).expect("corpus coordinate fits resident indexing");
+        assert!(
+            position < self.len(),
+            "coordinate belongs to the resident corpus"
+        );
+        position
+    }
+    #[inline]
+    pub(super) fn token(&self, position: usize) -> u32 {
+        self.tokens.get(position)
+    }
+    pub(super) fn word(&self, position: usize) -> usize {
+        self.starts.partition_point(|&start| start <= position) - 1
+    }
+    pub(super) fn word_start(&self, word: usize) -> usize {
+        self.starts[word]
+    }
+    pub(super) fn word_end(&self, word: usize) -> usize {
+        self.starts.get(word + 1).copied().unwrap_or(self.len()) - 1
+    }
+    pub(super) fn word_count(&self) -> usize {
+        self.starts.len()
+    }
+    pub(super) fn word_weight(&self, word: usize) -> u64 {
+        self.weights[word]
+    }
+    #[inline]
+    pub(super) fn span(&self, position: usize) -> usize {
+        self.occurrence_spans.as_ref().map_or_else(
+            || self.id_span(self.token(position)),
+            |spans| spans[position].load(Ordering::Relaxed),
+        )
+    }
+    pub(super) fn id_span(&self, id: u32) -> usize {
+        self.spans[id as usize]
+    }
+    pub(super) fn matched(&self, position: usize, pair: Pair) -> Option<Match> {
+        if self.token(position) != pair.0 {
+            return None;
+        }
+        let span = self.span(position);
+        let right = position + span;
+        if span == 0 || right >= self.len() || self.token(right) != pair.1 {
+            return None;
+        }
+        let right_span = self.span(right);
+        let after = right + right_span;
+        (right_span != 0 && after < self.len()).then_some(Match {
+            start: position,
+            right,
+            after,
+        })
+    }
+    pub(super) fn whole_words(&self) -> bool {
+        self.whole_words
+    }
+    pub(super) fn prepare_identity(&mut self, pair: Pair, id: u32, active: bool) {
+        self.whole_words |= active;
+        let span = self.id_span(pair.0) + self.id_span(pair.1);
+        if id as usize == self.spans.len() {
+            self.spans.push(span);
+        } else if self.occurrence_spans.is_none() {
+            let old = self.spans[id as usize];
+            if old == 0 || old == span {
+                self.spans[id as usize] = span;
+            } else {
+                let values: Vec<_> = (0..self.len()).map(|_| AtomicUsize::new(0)).collect();
+                for &start in &self.starts {
+                    let mut p = start;
+                    while self.token(p) != WORD_SEPARATOR_ID {
+                        let n = self.id_span(self.token(p));
+                        values[p].store(n, Ordering::Relaxed);
+                        values[p + n - 1].store(n, Ordering::Relaxed);
+                        p += n;
+                    }
+                }
+                self.occurrence_spans = Some(values);
+            }
+        }
+    }
+    // Call only after all preparation readers join. Matches own disjoint endpoint
+    // slots; atomics also keep every individual access safe on error or unwind.
+    pub(super) fn apply(&self, matched: Match, replacement: u32) {
+        self.tokens.set(matched.start, replacement);
+        if matched.right + 1 != matched.after {
+            self.tokens.set(matched.right, WORD_SEPARATOR_ID);
+        }
+        self.tokens.set(matched.after - 1, replacement);
+        if let Some(spans) = &self.occurrence_spans {
+            if matched.right + 1 != matched.after {
+                spans[matched.right].store(0, Ordering::Relaxed);
+            }
+            spans[matched.start].store(matched.span(), Ordering::Relaxed);
+            spans[matched.after - 1].store(matched.span(), Ordering::Relaxed);
+        }
+    }
+}
+
+// A reserved u16 sentinel leaves real IDs 0..65534 available. Wider vocabularies
+// use u32 directly; both planes have the same safe endpoint access protocol.
+enum Slots {
+    Narrow(Vec<AtomicU16>),
+    Wide(Vec<AtomicU32>),
+}
+impl Slots {
+    fn new(length: usize, vocabulary_bound: usize) -> Self {
+        if vocabulary_bound <= u16::MAX as usize {
+            Self::Narrow((0..length).map(|_| AtomicU16::new(u16::MAX)).collect())
+        } else {
+            Self::Wide(
+                (0..length)
+                    .map(|_| AtomicU32::new(WORD_SEPARATOR_ID))
+                    .collect(),
+            )
+        }
+    }
+    fn len(&self) -> usize {
+        match self {
+            Self::Narrow(values) => values.len(),
+            Self::Wide(values) => values.len(),
+        }
+    }
+    #[inline]
+    fn get(&self, position: usize) -> u32 {
+        match self {
+            Self::Narrow(values) => {
+                let id = values[position].load(Ordering::Relaxed);
+                if id == u16::MAX {
+                    WORD_SEPARATOR_ID
+                } else {
+                    u32::from(id)
+                }
+            }
+            Self::Wide(values) => values[position].load(Ordering::Relaxed),
+        }
+    }
+    #[inline]
+    fn set(&self, position: usize, id: u32) {
+        match self {
+            Self::Narrow(values) => {
+                let id = if id == WORD_SEPARATOR_ID {
+                    u16::MAX
+                } else {
+                    u16::try_from(id).expect("vocabulary bound admits narrow endpoint ID")
+                };
+                values[position].store(id, Ordering::Relaxed);
+            }
+            Self::Wide(values) => values[position].store(id, Ordering::Relaxed),
+        }
+    }
+}

@@ -138,7 +138,7 @@ fn public_thread_policy_in_isolated_processes() {
         let parallel = *parallel == "true";
         tk_encode::parallelism::set_num_threads(workers);
         tk_encode::parallelism::set_parallelism(parallel);
-        execution::EXPECTED_WORKERS.store(if parallel { workers } else { 1 }, Ordering::Relaxed);
+        super::EXPECTED_WORKERS.store(if parallel { workers } else { 1 }, Ordering::Relaxed);
         rayon::ThreadPoolBuilder::new()
             .num_threads(ambient)
             .build()
@@ -156,17 +156,17 @@ fn public_thread_policy_in_isolated_processes() {
                     .show_progress(false)
                     .build();
                 let words = counts(&[("aaaaa", 3), ("abcabc", 2), ("测测测", 1)]);
-                execution::OBSERVED_TASKS.store(0, Ordering::Relaxed);
+                super::OBSERVED_TASKS.store(0, Ordering::Relaxed);
                 let parts = trainer.do_train(&words).unwrap();
-                assert!(execution::OBSERVED_TASKS.load(Ordering::Relaxed) > 0);
+                assert!(super::OBSERVED_TASKS.load(Ordering::Relaxed) > 0);
                 assert_eq!(
                     parts,
                     trainer.do_train_observed(&words, |_, _, _| {}).unwrap()
                 );
                 trainer.words = WordCounts::from_map(words);
-                execution::OBSERVED_TASKS.store(0, Ordering::Relaxed);
+                super::OBSERVED_TASKS.store(0, Ordering::Relaxed);
                 assert_eq!(trainer.train_vocab().unwrap(), parts);
-                assert!(execution::OBSERVED_TASKS.load(Ordering::Relaxed) > 0);
+                assert!(super::OBSERVED_TASKS.load(Ordering::Relaxed) > 0);
             });
         return;
     }

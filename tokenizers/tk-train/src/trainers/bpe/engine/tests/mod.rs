@@ -1,5 +1,7 @@
 //! Proof-oriented engine tests; fixtures and oracle comparison helpers are shared.
 use super::*;
+use ahash::AHashMap;
+use compact_str::CompactString;
 use tk_encode::models::bpe::Pair;
 fn counts(items: &[(&str, u64)]) -> AHashMap<CompactString, u64> {
     items
@@ -8,7 +10,7 @@ fn counts(items: &[(&str, u64)]) -> AHashMap<CompactString, u64> {
         .collect()
 }
 pub(super) fn check(trainer: &BpeTrainer, words: &AHashMap<CompactString, u64>) {
-    check_with_workers(trainer, words, &[1, 4]);
+    check_with_workers(trainer, words, &[1, 4, 8]);
 }
 fn check_with_workers(
     trainer: &BpeTrainer,
@@ -23,13 +25,11 @@ fn check_with_workers(
         .unwrap();
     for &workers in workers {
         let mut trace = Vec::<(Pair, u64, u32)>::new();
-        let actual = train_with_merge_options(
+        let actual = train(
             trainer,
             WordCountsView::from_map(words),
             workers,
-            merge::MergeOptions::default(),
             Some(&mut |pair, count, id| trace.push((pair, count, id))),
-            None,
         )
         .unwrap();
         assert_eq!(
@@ -41,9 +41,20 @@ fn check_with_workers(
     }
 }
 
+mod generated;
 mod identity_reuse;
-mod initial_corpus;
-mod producer_fast_path;
 mod public_contract;
-mod routing_and_publication;
 mod semantic_parity;
+
+pub(super) static EXPECTED_WORKERS: std::sync::atomic::AtomicUsize =
+    std::sync::atomic::AtomicUsize::new(0);
+pub(super) static OBSERVED_TASKS: std::sync::atomic::AtomicUsize =
+    std::sync::atomic::AtomicUsize::new(0);
+pub(super) fn observe_worker() {
+    use std::sync::atomic::Ordering;
+    let workers = EXPECTED_WORKERS.load(Ordering::Relaxed);
+    if workers != 0 {
+        assert_eq!(rayon::current_num_threads(), workers);
+        OBSERVED_TASKS.fetch_add(1, Ordering::Relaxed);
+    }
+}
