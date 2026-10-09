@@ -316,3 +316,14 @@ AA保持此前grain，未恢复main多小candidate合并job。保留作为结构
 没有证据支持保留。英文wall明显偏高但CPU无相应增幅；不为机器噪声追加重复。
 本轮仅改Compact写计划为Vec<u64>，birth postings保持压缩；不否定main较窄
 未压缩坐标plane的收益。归档后恢复压缩写计划，再测审查第三项fresh owner目录。
+
+## 19. fresh owner bucket/neighbor目录，未胜出
+
+生产1903行，测试1439行，36默认library tests通过；新代理固定快照未发现阻断。
+英文2.418s / CPU6.11s / RSS0.270GiB；中文32.551s / CPU89.53s / RSS3.132GiB。
+完整模型相同、swap0。相对whole31.048/CPU85.48/RSS2.990没有优势，归档不保留。
+仅替换fresh partial hash groups为stable bucket排序+邻居目录，完整快路及reuse不改。
+目录持有usize全局group索引，避免跨bucket总group数误限u32。
+用户指出多个局部提取无效，要求明确当前阶段差距。停止新增优化；
+先用当前best whole与main相同阶段边界的wall/进程CPU计时定位。
+早期Perf owner4.3x/prepare1.6x不代表当前typed/prefetch后的阶段占比。

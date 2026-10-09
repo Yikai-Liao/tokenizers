@@ -60,6 +60,31 @@ struct Group {
 struct Shard {
     states: AHashMap<Pair, State>,
     queue: OctonaryHeap<Priority>,
+    directory: NeighborDirectory,
+}
+#[derive(Default)]
+struct NeighborDirectory {
+    indices: Vec<usize>,
+    touched: Vec<usize>,
+}
+impl NeighborDirectory {
+    fn reset(&mut self) {
+        for id in self.touched.drain(..) {
+            self.indices[id] = usize::MAX;
+        }
+    }
+    fn index(&mut self, neighbor: u32, next: usize) -> usize {
+        let id = neighbor as usize;
+        if id >= self.indices.len() {
+            self.indices.resize(id + 1, usize::MAX);
+        }
+        let slot = &mut self.indices[id];
+        if *slot == usize::MAX {
+            *slot = next;
+            self.touched.push(id);
+        }
+        *slot
+    }
 }
 pub(super) struct PairIndex {
     shards: Vec<Shard>,
@@ -254,8 +279,14 @@ impl PairIndex {
             .shards
             .par_iter_mut()
             .zip(routes)
-            .map(|(shard, route)| -> Result<_> {
-                let mut groups = AHashMap::<(usize, Pair), Group>::new();
+            .map(|(shard, mut route)| -> Result<_> {
+                if !reuse {
+                    // Stable bucket order preserves spatial order of fragments.
+                    route.sort_by_key(|(change, _, _)| change.bucket);
+                }
+                let mut groups = Vec::<((usize, Pair), Group)>::new();
+                let mut lookup = AHashMap::<(usize, Pair), usize>::new();
+                let mut bucket = None;
                 for (change, remove, birth) in route {
                     if remove {
                         if reuse {
@@ -305,7 +336,31 @@ impl PairIndex {
                                 });
                                 continue;
                             }
-                            let group = groups.entry((change.bucket, change.born)).or_default();
+                            let key = (change.bucket, change.born);
+                            let index = if reuse {
+                                *lookup.entry(key).or_insert_with(|| {
+                                    groups.push((key, Group::default()));
+                                    groups.len() - 1
+                                })
+                            } else {
+                                if bucket != Some(change.bucket) {
+                                    shard.directory.reset();
+                                    bucket = Some(change.bucket);
+                                }
+                                // Even buckets are left neighbors, including (id,id).
+                                let neighbor = if change.bucket % 2 == 0 {
+                                    change.born.0
+                                } else {
+                                    change.born.1
+                                };
+                                let index = shard.directory.index(neighbor, groups.len());
+                                if index == groups.len() {
+                                    groups.push((key, Group::default()));
+                                }
+                                debug_assert_eq!(groups[index].0, key);
+                                index
+                            };
+                            let group = &mut groups[index].1;
                             add(&mut group.count, change.born_weight)?;
                             if reuse {
                                 group.unordered.extend(change.positions.iter());
@@ -318,8 +373,9 @@ impl PairIndex {
                     }
                 }
                 let mut candidates = Vec::new();
-                let mut groups: Vec<_> = groups.into_iter().collect();
-                groups.sort_unstable_by_key(|((bucket, pair), _)| (*bucket, *pair));
+                if reuse {
+                    groups.sort_unstable_by_key(|((bucket, pair), _)| (*bucket, *pair));
+                }
                 for ((_, pair), mut state) in groups {
                     let count = if reuse {
                         shard.states[&pair].count
