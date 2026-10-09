@@ -80,6 +80,17 @@ fn pruning_waits_for_all_birth_producers_and_alphabet_filtering() {
         .show_progress(false)
         .build();
     check(&trainer, &counts(&[("xabp", 1), ("xabq", 1)]));
+    // Each spatial piece is below the floor, while their complete birth is above.
+    // A separate short rule in the same batch is a complete weighted producer.
+    let split = BpeTrainer::builder()
+        .vocab_size(30)
+        .min_frequency(10_000)
+        .show_progress(false)
+        .build();
+    check(
+        &split,
+        &counts(&[(&"ab".repeat(12_000), 1), ("xy", 12_000)]),
+    );
     let trainer = BpeTrainer::builder()
         .vocab_size(30)
         .limit_alphabet(3)

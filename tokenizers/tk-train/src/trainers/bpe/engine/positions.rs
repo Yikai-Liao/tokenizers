@@ -3,54 +3,9 @@ use std::ops::Range;
 use tk_encode::Result;
 
 const RESTART: usize = 128;
-enum Bytes {
-    Inline([u8; 16], usize),
-    Heap(Vec<u8>),
-}
-impl Default for Bytes {
-    fn default() -> Self {
-        Self::Inline([0; 16], 0)
-    }
-}
-impl std::ops::Deref for Bytes {
-    type Target = [u8];
-    fn deref(&self) -> &[u8] {
-        match self {
-            Self::Inline(bytes, length) => &bytes[..*length],
-            Self::Heap(bytes) => bytes,
-        }
-    }
-}
-impl Bytes {
-    fn extend(&mut self, extra: &[u8]) -> Result<()> {
-        if extra.is_empty() {
-            return Ok(());
-        }
-        let length = self
-            .len()
-            .checked_add(extra.len())
-            .ok_or("BPE bytes exceed usize")?;
-        if let Self::Inline(bytes, used) = self {
-            if length <= bytes.len() {
-                bytes[*used..length].copy_from_slice(extra);
-                *used = length;
-                return Ok(());
-            }
-        }
-        if !matches!(self, Self::Heap(_)) {
-            let mut bytes = Vec::with_capacity(length.max(32));
-            bytes.extend_from_slice(self);
-            *self = Self::Heap(bytes);
-        }
-        if let Self::Heap(bytes) = self {
-            bytes.extend_from_slice(extra);
-        }
-        Ok(())
-    }
-}
 #[derive(Default)]
 pub(super) struct Positions {
-    bytes: Bytes,
+    bytes: Vec<u8>,
     blocks: Vec<Block>,
     count: usize,
     first: u64,
@@ -65,6 +20,7 @@ struct Block {
 impl Positions {
     pub(super) fn from_sorted(values: &[u64]) -> Result<Self> {
         let mut result = Self {
+            bytes: Vec::with_capacity(values.len()),
             blocks: Vec::with_capacity(values.len().saturating_sub(1) / RESTART),
             ..Self::default()
         };
@@ -87,15 +43,11 @@ impl Positions {
             });
         } else {
             let mut delta = position - self.last;
-            let mut bytes = [0u8; 10];
-            let mut length = 0;
             while delta >= 128 {
-                bytes[length] = (delta as u8 & 0x7f) | 0x80;
-                length += 1;
+                self.bytes.push((delta as u8 & 0x7f) | 0x80);
                 delta >>= 7;
             }
-            bytes[length] = delta as u8;
-            self.bytes.extend(&bytes[..length + 1])?;
+            self.bytes.push(delta as u8);
         }
         self.last = position;
         self.count += 1;
@@ -103,7 +55,7 @@ impl Positions {
     }
     // Owned sorted pieces can retain their restart boundaries. Copy bytes and
     // directory offsets, rather than decoding and re-encoding every coordinate.
-    pub(super) fn append(&mut self, other: Self) -> Result<()> {
+    pub(super) fn append(&mut self, mut other: Self) -> Result<()> {
         if other.is_empty() {
             return Ok(());
         }
@@ -120,7 +72,6 @@ impl Positions {
             .ok_or("BPE position count exceeds usize")?;
         let byte = self.bytes.len();
         let entry = self.count;
-        self.bytes.extend(&other.bytes)?;
         self.blocks.push(Block {
             first: other.first,
             byte,
@@ -131,6 +82,7 @@ impl Positions {
             byte: byte + b.byte,
             entry: entry + b.entry,
         }));
+        self.bytes.append(&mut other.bytes);
         self.count = count;
         self.last = other.last;
         Ok(())

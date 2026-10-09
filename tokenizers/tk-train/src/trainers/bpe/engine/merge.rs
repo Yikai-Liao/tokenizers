@@ -14,6 +14,7 @@ pub(super) struct Batch {
     rules: Vec<Rule>,
     reuse: bool,
     restart: bool,
+    floor: u64,
 }
 pub(super) struct Change {
     pub(super) removed: Pair,
@@ -22,6 +23,7 @@ pub(super) struct Change {
     pub(super) born_weight: u64,
     pub(super) positions: Positions,
     pub(super) bucket: usize,
+    pub(super) complete: bool,
 }
 pub(super) struct Prepared {
     jobs: Vec<Job>,
@@ -35,6 +37,7 @@ struct Neighbors<'a> {
     rank: usize,
     directories: &'a mut Directories,
     changes: [Vec<Change>; 2],
+    complete: bool,
 }
 #[derive(Default)]
 struct Directories {
@@ -52,12 +55,13 @@ impl Directories {
     }
 }
 impl<'a> Neighbors<'a> {
-    fn new(rule: &'a Rule, rank: usize, directories: &'a mut Directories) -> Self {
+    fn new(rule: &'a Rule, rank: usize, directories: &'a mut Directories, complete: bool) -> Self {
         Self {
             rule,
             rank,
             directories,
             changes: std::array::from_fn(|_| Vec::new()),
+            complete,
         }
     }
     fn group(&mut self, neighbor: u32, left: bool) -> &mut Change {
@@ -78,6 +82,7 @@ impl<'a> Neighbors<'a> {
                 born_weight: 0,
                 positions: Positions::default(),
                 bucket: 2 * self.rank + usize::from(!left && neighbor != id),
+                complete: self.complete,
             });
             self.directories.touched.push((side, neighbor as usize));
             *slot =
@@ -113,9 +118,21 @@ impl<'a> Neighbors<'a> {
         }
         Ok(())
     }
-    fn finish(self) -> Vec<Change> {
+    fn finish(self, floor: u64) -> Vec<Change> {
         // Separate directories preserve the reference's left-before-right drain.
-        self.changes.into_iter().flatten().collect()
+        self.changes
+            .into_iter()
+            .flatten()
+            .filter_map(|mut change| {
+                // Only a whole ordinary producer owns a complete birth count.
+                // Removal actions survive; partial jobs must reduce at the owner.
+                if change.complete && change.born_weight < floor {
+                    change.positions = Positions::default();
+                    change.born_weight = 0;
+                }
+                (change.removed_weight != 0 || !change.positions.is_empty()).then_some(change)
+            })
+            .collect()
     }
 }
 impl Batch {
@@ -130,6 +147,7 @@ impl Batch {
             rules: Vec::new(),
             reuse,
             restart: false,
+            floor: trainer.min_frequency.max(1),
         };
         let cap = if reuse {
             1
@@ -243,7 +261,8 @@ impl Batch {
                 Directories::default,
                 |directories, (rank, rule, positions)| -> Result<_> {
                     directories.reset(corpus.id_count());
-                    let mut neighbors = Neighbors::new(rule, rank, directories);
+                    let mut neighbors =
+                        Neighbors::new(rule, rank, directories, positions.complete());
                     let mut writes = Writes::fresh(rule, corpus);
                     let matcher = corpus.fresh_matcher(rule.pair);
                     let mut weights = None;
@@ -307,7 +326,7 @@ impl Batch {
                     }
                     Ok(Job {
                         writes,
-                        changes: neighbors.finish(),
+                        changes: neighbors.finish(self.floor),
                     })
                 },
             )
@@ -328,7 +347,7 @@ impl Batch {
             .par_chunks(chunk)
             .map_init(Directories::default, |directories, words| -> Result<_> {
                 directories.reset(corpus.id_count());
-                let mut neighbors = Neighbors::new(rule, 0, directories);
+                let mut neighbors = Neighbors::new(rule, 0, directories, false);
                 let mut writes = Writes::Occurrences {
                     positions: Vec::new(),
                     id: rule.replacement,
@@ -396,7 +415,7 @@ impl Batch {
                 }
                 Ok(Job {
                     writes,
-                    changes: neighbors.finish(),
+                    changes: neighbors.finish(self.floor),
                 })
             })
             .collect::<Result<Vec<_>>>()?;
@@ -493,6 +512,14 @@ enum Source<'a> {
     Blocks(&'a Positions, std::ops::Range<usize>),
 }
 impl Source<'_> {
+    fn complete(&self) -> bool {
+        match self {
+            Self::Blocks(positions, range) => {
+                range.start == 0 && range.end == positions.block_count()
+            }
+            Self::Slice(_) => false,
+        }
+    }
     // Decode one bounded ring ahead, as in main. Prefetch is a nonblocking
     // hint; matching still reads the same joined preparation snapshot in order.
     fn prefetched<'a>(&'a self, corpus: &'a Corpus) -> impl Iterator<Item = usize> + 'a {

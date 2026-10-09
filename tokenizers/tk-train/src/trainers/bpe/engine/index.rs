@@ -287,6 +287,24 @@ impl PairIndex {
                                 as u64;
                         }
                         if !change.positions.is_empty() {
+                            if change.complete {
+                                // The complete producer already reduced and pruned.
+                                // Fresh IDs and compatible rules give each birth one producer.
+                                debug_assert!(!reuse && change.born_weight >= floor);
+                                debug_assert!(!shard.states.contains_key(&change.born));
+                                shard.states.insert(
+                                    change.born,
+                                    State {
+                                        count: change.born_weight,
+                                        positions: change.positions,
+                                    },
+                                );
+                                shard.queue.push(Priority {
+                                    pair: change.born,
+                                    count: change.born_weight,
+                                });
+                                continue;
+                            }
                             let group = groups.entry((change.bucket, change.born)).or_default();
                             add(&mut group.count, change.born_weight)?;
                             if reuse {

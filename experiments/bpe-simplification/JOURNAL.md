@@ -284,3 +284,16 @@ Inline16 builder NoArena隔离这份inline及freeze，随后重点测main完整p
 这是Inline16加stack-delta builder，不单独将结果归因于inline。
 用户要求以最少代码拿主要收益，下一项只提取main完整producer floor裁剪
 及owner直接move发布，保留partial/AA/reuse聚合，避免复制全部allocator协议。
+
+## 16. complete producer 前置裁剪与直接发布
+
+生产1838行，测试1439行；36默认library tests通过。
+英文2.109s / CPU5.43s / RSS0.272GiB；中文30.957s / CPU85.44s / RSS3.123GiB。
+完整模型相同、swap0。相对typed历史样本wall近似、CPU略低，不宣称小差异显著。
+恢复typed codec，删除未胜出的Inline/Arena。complete producer在编码后裁剪，
+owner直接move发布；partial/AA/reuse继续完整聚合。没有恢复main的裁剪前直编。
+新增高floor跨多个partial的oracle场景，防止局部误剪。
+此前相邻typed/Inline控制已完成：中文33.301/33.884s，CPU95.25/101.94s；
+不支持保留Inline builder组合。用户明确停止为机器噪声追加重复，后续遵循。
+下一项按main保留项数<=total/workers的小candidate完整，修正按fragment块数过切；
+用一次中英文完整模型测量裁决，不增加汇编/profile。
