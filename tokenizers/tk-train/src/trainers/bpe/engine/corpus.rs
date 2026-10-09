@@ -227,6 +227,9 @@ impl Corpus {
             |spans| spans[position].load(Ordering::Relaxed),
         )
     }
+    pub(super) fn id_count(&self) -> usize {
+        self.spans.len()
+    }
     pub(super) fn id_span(&self, id: u32) -> usize {
         self.spans[id as usize]
     }

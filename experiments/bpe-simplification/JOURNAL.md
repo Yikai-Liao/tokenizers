@@ -138,3 +138,17 @@ main 来源：`corpus/mod.rs::WordWeightCursor`、`corpus/prepare.rs` 的权重�
 此实现未覆盖“少量活跃 ID 位于很大实际 ID 域”的 dense 特化，合法输入仍有通用路径。
 
 下一轮提取 main `Execution` / `IdDirectory` 的 worker scratch 复用，减少重复哈希分配和释放。
+
+## 5. worker scratch，组合筛选检查点
+
+生产 1702 行，测试 1392 行，library tests 35 passed。
+不可变 `bin/scratch`；中英纯训练完整模型相同，child swap=0。
+英文 2.507 s / 0.278 GiB；中文 39.396 s / 2.972 GiB。
+相对上一轮中文 wall 低约5.4%、CPU低约4%，英文更慢；差距接近A/A波动，不能认定明确收益。
+目录直接索引、双侧有序 Change 和 worker 复用在这一组合中尚未隔离。
+保留为可复查的检查点，下一步比较 reviewer 建议的更短 map_init 实现。
+
+用户要求最终依据记录重新筛组合，当前逐轮恢复不是最优组合证明。
+用户要求定期 sub-agent review，已启动只读审查，后续每两轮或组合调整后复审。
+审查建议：map_init 省约25–35行、u32邻居目录约减半内存、initial第一片直接移入而不重编码。
+这些均为待验证假设；U64位置不改，reuse unordered排序不删。

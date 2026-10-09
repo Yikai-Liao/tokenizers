@@ -9,7 +9,7 @@ use super::{BpeTrainer, word_counts::WordCountsView};
 use crate::progress::TrainingProgress;
 use corpus::{Corpus, CorpusPlan};
 use index::PairIndex;
-use merge::Batch;
+use merge::{Batch, Scratch};
 #[cfg(test)]
 use tk_encode::models::bpe::Pair;
 use tk_encode::{
@@ -35,6 +35,7 @@ pub(super) fn train(
         .build()?;
     pool.install(|| {
         let progress = TrainingProgress::new(trainer.show_progress, trainer.progress_format)?;
+        let scratch = Scratch::new(workers);
         let mut alphabet = None;
         let mut reuse = false;
         loop {
@@ -66,8 +67,11 @@ pub(super) fn train(
                 #[cfg(test)]
                 trace.extend(batch.trace());
                 merges.extend(batch.pairs());
-                let prepared =
-                    batch.prepare(&corpus, trainer.max_token_length.unwrap_or(usize::MAX))?;
+                let prepared = batch.prepare(
+                    &corpus,
+                    trainer.max_token_length.unwrap_or(usize::MAX),
+                    &scratch,
+                )?;
                 let changes = prepared.apply(&corpus);
                 index.commit(changes)?;
                 work.learned(merges.len());
@@ -84,6 +88,7 @@ pub(super) fn train(
                     observer(pair, count, id);
                 }
             }
+            drop(scratch);
             let (vocab, merges) = vocabulary.into_model_parts(merges);
             return Ok((vocab, merges, trainer.special_tokens.clone()));
         }

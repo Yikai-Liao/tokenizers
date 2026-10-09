@@ -3,6 +3,7 @@ use super::{BpeTrainer, Corpus, PairIndex, Vocabulary, WORD_SEPARATOR_ID};
 use super::{corpus::Match, index::Candidate, positions::Positions};
 use ahash::{AHashMap, AHashSet};
 use rayon::prelude::*;
+use std::sync::{Mutex, MutexGuard};
 use tk_encode::{Result, models::bpe::Pair};
 
 struct Rule {
@@ -33,31 +34,62 @@ struct Job {
 struct Neighbors<'a> {
     rule: &'a Rule,
     rank: usize,
-    left: AHashMap<u32, usize>,
-    right: AHashMap<u32, usize>,
-    changes: Vec<Change>,
+    directories: &'a mut Directories,
+    changes: [Vec<Change>; 2],
+}
+// As in main's Execution/IdDirectory, leases belong to executing workers.
+// Jobs are sequential while leased; nested pool work would re-enter a lock.
+pub(super) struct Scratch {
+    workers: Vec<Mutex<Directories>>,
+}
+#[derive(Default)]
+struct Directories {
+    indices: [Vec<usize>; 2],
+    touched: Vec<(usize, usize)>,
+}
+impl Directories {
+    fn reset(&mut self, domain: usize) {
+        for (side, id) in self.touched.drain(..) {
+            self.indices[side][id] = usize::MAX;
+        }
+        for values in &mut self.indices {
+            values.resize(domain, usize::MAX);
+        }
+    }
+}
+impl Scratch {
+    pub(super) fn new(workers: usize) -> Self {
+        Self {
+            workers: (0..workers).map(|_| Mutex::default()).collect(),
+        }
+    }
+    fn lease(&self, domain: usize) -> MutexGuard<'_, Directories> {
+        let worker = rayon::current_thread_index().expect("scratch executes in the training pool");
+        let mut directories = self.workers[worker]
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
+        // Clearing on entry also recovers checked errors and poisoned leases.
+        directories.reset(domain);
+        directories
+    }
 }
 impl<'a> Neighbors<'a> {
-    fn new(rule: &'a Rule, rank: usize) -> Self {
+    fn new(rule: &'a Rule, rank: usize, directories: &'a mut Directories) -> Self {
         Self {
             rule,
             rank,
-            left: AHashMap::new(),
-            right: AHashMap::new(),
-            changes: Vec::new(),
+            directories,
+            changes: std::array::from_fn(|_| Vec::new()),
         }
     }
     fn group(&mut self, neighbor: u32, left: bool) -> &mut Change {
-        let directory = if left {
-            &mut self.left
-        } else {
-            &mut self.right
-        };
-        let index = *directory.entry(neighbor).or_insert_with(|| {
+        let side = usize::from(!left);
+        let slot = &mut self.directories.indices[side][neighbor as usize];
+        if *slot == usize::MAX {
             let id = self.rule.replacement;
             let pair = self.rule.pair;
-            let index = self.changes.len();
-            self.changes.push(Change {
+            let index = self.changes[side].len();
+            self.changes[side].push(Change {
                 removed: if left {
                     (neighbor, pair.0)
                 } else {
@@ -69,9 +101,10 @@ impl<'a> Neighbors<'a> {
                 positions: Positions::default(),
                 bucket: 2 * self.rank + usize::from(!left && neighbor != id),
             });
-            index
-        });
-        &mut self.changes[index]
+            self.directories.touched.push((side, neighbor as usize));
+            *slot = index;
+        }
+        &mut self.changes[side][*slot]
     }
     fn record(
         &mut self,
@@ -88,7 +121,11 @@ impl<'a> Neighbors<'a> {
             .checked_add(weight)
             .ok_or("BPE neighbor removal mass exceeds u64")?;
         if admit {
-            let group = self.group(born, left);
+            let group = if removed == born {
+                group
+            } else {
+                self.group(born, left)
+            };
             group.born_weight = group
                 .born_weight
                 .checked_add(weight)
@@ -98,11 +135,8 @@ impl<'a> Neighbors<'a> {
         Ok(())
     }
     fn finish(self) -> Vec<Change> {
-        // Match the reference's removal-before-birth order and left/right drains.
-        let mut changes: Vec<_> = self.changes.into_iter().enumerate().collect();
-        let left: AHashSet<_> = self.left.into_values().collect();
-        changes.sort_unstable_by_key(|(i, _)| (!left.contains(i), *i));
-        changes.into_iter().map(|(_, change)| change).collect()
+        // Separate directories preserve the reference's left-before-right drain.
+        self.changes.into_iter().flatten().collect()
     }
 }
 impl Batch {
@@ -172,9 +206,14 @@ impl Batch {
             .iter()
             .map(|rule| (rule.pair, rule.candidate.priority.count, rule.replacement))
     }
-    pub(super) fn prepare(self, corpus: &Corpus, limit: usize) -> Result<Prepared> {
+    pub(super) fn prepare(
+        self,
+        corpus: &Corpus,
+        limit: usize,
+        scratch: &Scratch,
+    ) -> Result<Prepared> {
         if self.reuse {
-            return self.prepare_cohort(corpus, limit);
+            return self.prepare_cohort(corpus, limit, scratch);
         }
         let selected: AHashMap<_, _> = self
             .rules
@@ -226,7 +265,8 @@ impl Batch {
         let jobs = tasks
             .into_par_iter()
             .map(|(rank, rule, positions)| -> Result<_> {
-                let mut neighbors = Neighbors::new(rule, rank);
+                let mut directories = scratch.lease(corpus.id_count());
+                let mut neighbors = Neighbors::new(rule, rank, &mut directories);
                 let mut writes = Writes::fresh(rule, corpus);
                 let mut weights = None;
                 for coordinate in positions.iter() {
@@ -292,7 +332,7 @@ impl Batch {
             .collect::<Result<Vec<_>>>()?;
         Ok(Prepared { jobs })
     }
-    fn prepare_cohort(self, corpus: &Corpus, limit: usize) -> Result<Prepared> {
+    fn prepare_cohort(self, corpus: &Corpus, limit: usize, scratch: &Scratch) -> Result<Prepared> {
         let rule = &self.rules[0];
         let mut words: Vec<_> = rule
             .candidate
@@ -305,7 +345,8 @@ impl Batch {
         let jobs = words
             .par_chunks(chunk)
             .map(|words| -> Result<_> {
-                let mut neighbors = Neighbors::new(rule, 0);
+                let mut directories = scratch.lease(corpus.id_count());
+                let mut neighbors = Neighbors::new(rule, 0, &mut directories);
                 let mut writes = Writes::Occurrences {
                     positions: Vec::new(),
                     id: rule.replacement,
@@ -507,7 +548,14 @@ mod tests {
             batch.trace().collect::<Vec<_>>(),
             vec![((0, 1), 10, 6), ((2, 3), 9, 7), ((4, 5), 8, 8)]
         );
-        let changes = batch.prepare(&corpus, usize::MAX).unwrap().apply(&corpus);
+        let changes = batch
+            .prepare(
+                &corpus,
+                usize::MAX,
+                &Scratch::new(rayon::current_num_threads()),
+            )
+            .unwrap()
+            .apply(&corpus);
         index.commit(changes).unwrap();
         assert!(index.best().is_none());
     }
