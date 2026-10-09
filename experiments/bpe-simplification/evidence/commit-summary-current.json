@@ -1,0 +1,336 @@
+{
+  "commit-main": {
+    "phases": {
+      "stages": [
+        {
+          "name": "vocabulary",
+          "wall_seconds": 0.552376381,
+          "cpu_seconds": 1.895759969,
+          "calls": 1
+        },
+        {
+          "name": "corpus_plan",
+          "wall_seconds": 0.680822857,
+          "cpu_seconds": 1.645883745,
+          "calls": 1
+        },
+        {
+          "name": "initial_index",
+          "wall_seconds": 3.216662323,
+          "cpu_seconds": 12.052494891,
+          "calls": 2
+        },
+        {
+          "name": "materialize",
+          "wall_seconds": 0.648306045,
+          "cpu_seconds": 2.312457483,
+          "calls": 1
+        },
+        {
+          "name": "select",
+          "wall_seconds": 0.331755953,
+          "cpu_seconds": 0.428535341,
+          "calls": 1646
+        },
+        {
+          "name": "prepare",
+          "wall_seconds": 8.949469054,
+          "cpu_seconds": 30.804943563,
+          "calls": 3292
+        },
+        {
+          "name": "apply",
+          "wall_seconds": 1.353820409,
+          "cpu_seconds": 4.765848844,
+          "calls": 1646
+        },
+        {
+          "name": "commit",
+          "wall_seconds": 2.298708196,
+          "cpu_seconds": 6.891066477,
+          "calls": 3292
+        },
+        {
+          "name": "release",
+          "wall_seconds": 0.192155752,
+          "cpu_seconds": 0.192071627,
+          "calls": 1
+        },
+        {
+          "name": "model_output",
+          "wall_seconds": 0.023949041,
+          "cpu_seconds": 0.023942463,
+          "calls": 1
+        },
+        {
+          "name": "commit_route",
+          "wall_seconds": 0.245251531,
+          "cpu_seconds": 0.240956309,
+          "calls": 1646
+        },
+        {
+          "name": "commit_counts",
+          "wall_seconds": 3.153503268,
+          "cpu_seconds": 3.107854319,
+          "calls": 6579
+        },
+        {
+          "name": "commit_completed",
+          "wall_seconds": 1.891314536,
+          "cpu_seconds": 1.857204695,
+          "calls": 6579
+        },
+        {
+          "name": "commit_partial_group",
+          "wall_seconds": 0.02912159,
+          "cpu_seconds": 0.016963846,
+          "calls": 6579
+        },
+        {
+          "name": "commit_partial_encode_publish",
+          "wall_seconds": 1.014287005,
+          "cpu_seconds": 0.991350145,
+          "calls": 6579
+        },
+        {
+          "name": "commit_loop_mixed",
+          "wall_seconds": 0,
+          "cpu_seconds": 0,
+          "calls": 0
+        },
+        {
+          "name": "commit_partial_finalize",
+          "wall_seconds": 0,
+          "cpu_seconds": 0,
+          "calls": 0
+        },
+        {
+          "name": "commit_cleanup",
+          "wall_seconds": 0,
+          "cpu_seconds": 0,
+          "calls": 0
+        }
+      ]
+    },
+    "record": {
+      "arm": "B",
+      "label": "commit-main",
+      "case": "zh-core-w4-v50000",
+      "block": 1,
+      "warmup": false,
+      "returncode": 0,
+      "subprocess_wall": 31.663434825954027,
+      "max_swap_kib": 0,
+      "min_available_kib": 2463472,
+      "binary_sha256": "00ea79b8e9d0543971155b390198b349aff63ec5055c794afb76e50f4c940463",
+      "command": [
+        "taskset",
+        "-c",
+        "0-3",
+        "/root/code/tokenizers-simplification-results/bin/commit-main",
+        "/root/code/tokenizers-simplification-results/runs/commit-main/zh-core-w4-v50000/b1-B/job.json"
+      ],
+      "attempt_id": "b1-B",
+      "build_id": "B",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-bytelevel",
+      "metrics": {
+        "load_seconds": 11.148618724,
+        "process_hwm_kib_before_validation": 2487336,
+        "train_cpu_seconds": 61.059296,
+        "train_seconds": 18.25146604
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 49744,
+        "actual_vocab": 50000,
+        "model_path": "/root/code/tokenizers-simplification-results/runs/commit-main/zh-core-w4-v50000/b1-B/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4,
+      "model_equal": true,
+      "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+      "model_vocab_entries": 50000,
+      "model_merges": 49744,
+      "valid": true
+    },
+    "diagnostic": true
+  },
+  "commit-lean": {
+    "phases": {
+      "stages": [
+        {
+          "name": "vocabulary",
+          "wall_seconds": 0.644539366,
+          "cpu_seconds": 2.166691212,
+          "calls": 1
+        },
+        {
+          "name": "corpus_plan",
+          "wall_seconds": 0.854662152,
+          "cpu_seconds": 2.138154078,
+          "calls": 1
+        },
+        {
+          "name": "initial_index",
+          "wall_seconds": 3.778279084,
+          "cpu_seconds": 12.991878611,
+          "calls": 1
+        },
+        {
+          "name": "materialize",
+          "wall_seconds": 1.074879381,
+          "cpu_seconds": 3.085843503,
+          "calls": 1
+        },
+        {
+          "name": "select",
+          "wall_seconds": 0.636331201,
+          "cpu_seconds": 0.776648176,
+          "calls": 1646
+        },
+        {
+          "name": "prepare",
+          "wall_seconds": 11.066038274,
+          "cpu_seconds": 39.066023363,
+          "calls": 1646
+        },
+        {
+          "name": "apply",
+          "wall_seconds": 3.330108322,
+          "cpu_seconds": 8.171164413,
+          "calls": 1646
+        },
+        {
+          "name": "commit",
+          "wall_seconds": 6.995890046,
+          "cpu_seconds": 15.061145734,
+          "calls": 1646
+        },
+        {
+          "name": "release",
+          "wall_seconds": 2.875615498,
+          "cpu_seconds": 2.771935359,
+          "calls": 1
+        },
+        {
+          "name": "model_output",
+          "wall_seconds": 0.027063359,
+          "cpu_seconds": 0.027054896,
+          "calls": 1
+        },
+        {
+          "name": "commit_route",
+          "wall_seconds": 2.753200876,
+          "cpu_seconds": 2.734562477,
+          "calls": 1646
+        },
+        {
+          "name": "commit_counts",
+          "wall_seconds": 0,
+          "cpu_seconds": 0,
+          "calls": 0
+        },
+        {
+          "name": "commit_completed",
+          "wall_seconds": 0,
+          "cpu_seconds": 0,
+          "calls": 0
+        },
+        {
+          "name": "commit_partial_group",
+          "wall_seconds": 0,
+          "cpu_seconds": 0,
+          "calls": 0
+        },
+        {
+          "name": "commit_partial_encode_publish",
+          "wall_seconds": 0,
+          "cpu_seconds": 0,
+          "calls": 0
+        },
+        {
+          "name": "commit_loop_mixed",
+          "wall_seconds": 12.197657529,
+          "cpu_seconds": 11.687049848,
+          "calls": 6584
+        },
+        {
+          "name": "commit_partial_finalize",
+          "wall_seconds": 0.088161271,
+          "cpu_seconds": 0.078470775,
+          "calls": 6584
+        },
+        {
+          "name": "commit_cleanup",
+          "wall_seconds": 0,
+          "cpu_seconds": 0,
+          "calls": 0
+        }
+      ]
+    },
+    "record": {
+      "arm": "B",
+      "label": "commit-lean",
+      "case": "zh-core-w4-v50000",
+      "block": 1,
+      "warmup": false,
+      "returncode": 0,
+      "subprocess_wall": 46.21043352596462,
+      "max_swap_kib": 0,
+      "min_available_kib": 1795852,
+      "binary_sha256": "f5c05c04c9347d037979d9f5b2c184e939200a326268f14fab68207d5035d387",
+      "command": [
+        "taskset",
+        "-c",
+        "0-3",
+        "/root/code/tokenizers-simplification-results/bin/commit-lean",
+        "/root/code/tokenizers-simplification-results/runs/commit-lean/zh-core-w4-v50000/b1-B/job.json"
+      ],
+      "attempt_id": "b1-B",
+      "build_id": "B",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-bytelevel",
+      "metrics": {
+        "load_seconds": 10.133835947,
+        "process_hwm_kib_before_validation": 3175712,
+        "train_cpu_seconds": 86.291214,
+        "train_seconds": 31.287496551
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 49744,
+        "actual_vocab": 50000,
+        "model_path": "/root/code/tokenizers-simplification-results/runs/commit-lean/zh-core-w4-v50000/b1-B/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4,
+      "model_equal": true,
+      "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+      "model_vocab_entries": 50000,
+      "model_merges": 49744,
+      "valid": true
+    },
+    "diagnostic": true
+  },
+  "notes": [
+    "Inner owner CPU uses CLOCK_THREAD_CPUTIME_ID and sums workers. Inner wall overlaps: do not sum it as coordinator wall.",
+    "All complete models match fixed main; child swap=0.",
+    "Original loop order/algorithm preserved. Main routing includes completed-birth metadata.",
+    "Routing wall main.24525s vslean2.75320s, +2.50795s; totalcommit2.29871 vs6.99589, +4.69718s. This pair is a finer diagnostic, not a repeat for noise."
+  ]
+}

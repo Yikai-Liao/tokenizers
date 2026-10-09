@@ -1,0 +1,410 @@
+[
+  {
+    "arm": "B",
+    "label": "final",
+    "case": "zh-core-w4-v50000",
+    "block": 1,
+    "warmup": false,
+    "returncode": 0,
+    "subprocess_wall": 46.88388262398075,
+    "max_swap_kib": 0,
+    "min_available_kib": 1810656,
+    "binary_sha256": "ab94f200a195f2bddeb258b1e6df4fe7b03c5012712eb6b91420db3bdd9c7f58",
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/root/code/tokenizers-simplification-results/bin/final",
+      "/root/code/tokenizers-simplification-results/runs/final/zh-core-w4-v50000/b1-B/job.json"
+    ],
+    "attempt_id": "b1-B",
+    "build_id": "B",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-bytelevel",
+    "metrics": {
+      "load_seconds": 13.259855426,
+      "process_hwm_kib_before_validation": 3181424,
+      "train_cpu_seconds": 81.76553299999999,
+      "train_seconds": 29.042728797
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/root/code/tokenizers-simplification-results/runs/final/zh-core-w4-v50000/b1-B/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "model_vocab_entries": 50000,
+    "model_merges": 49744,
+    "valid": true
+  },
+  {
+    "arm": "A",
+    "label": "final",
+    "case": "zh-core-w4-v50000",
+    "block": 1,
+    "warmup": false,
+    "returncode": 0,
+    "subprocess_wall": 32.796091173077,
+    "max_swap_kib": 0,
+    "min_available_kib": 2340792,
+    "binary_sha256": "179e99bf4d74996802c5a475d8ba4a62fcf6e769235dab5c56952b4c76af4074",
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/root/code/tokenizers-simplification-results/bin/baseline",
+      "/root/code/tokenizers-simplification-results/runs/final/zh-core-w4-v50000/b1-A/job.json"
+    ],
+    "attempt_id": "b1-A",
+    "build_id": "A",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-bytelevel",
+    "metrics": {
+      "load_seconds": 11.373022063,
+      "process_hwm_kib_before_validation": 2563520,
+      "train_cpu_seconds": 62.650999999999996,
+      "train_seconds": 19.308174689
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/root/code/tokenizers-simplification-results/runs/final/zh-core-w4-v50000/b1-A/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "model_vocab_entries": 50000,
+    "model_merges": 49744,
+    "valid": true
+  },
+  {
+    "arm": "A",
+    "label": "final",
+    "case": "en-core-w4-v50000",
+    "block": 1,
+    "warmup": false,
+    "returncode": 0,
+    "subprocess_wall": 1.7178929559886456,
+    "max_swap_kib": 0,
+    "min_available_kib": 4719092,
+    "binary_sha256": "179e99bf4d74996802c5a475d8ba4a62fcf6e769235dab5c56952b4c76af4074",
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/root/code/tokenizers-simplification-results/bin/baseline",
+      "/root/code/tokenizers-simplification-results/runs/final/en-core-w4-v50000/b1-A/job.json"
+    ],
+    "attempt_id": "b1-A",
+    "build_id": "A",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-bytelevel",
+    "metrics": {
+      "load_seconds": 0.511813759,
+      "process_hwm_kib_before_validation": 178556,
+      "train_cpu_seconds": 3.190744,
+      "train_seconds": 1.144401347
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/root/code/tokenizers-simplification-results/runs/final/en-core-w4-v50000/b1-A/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+    "model_vocab_entries": 50000,
+    "model_merges": 49744,
+    "valid": true
+  },
+  {
+    "arm": "B",
+    "label": "final",
+    "case": "en-core-w4-v50000",
+    "block": 1,
+    "warmup": false,
+    "returncode": 0,
+    "subprocess_wall": 2.5260406099259853,
+    "max_swap_kib": 0,
+    "min_available_kib": 4617312,
+    "binary_sha256": "ab94f200a195f2bddeb258b1e6df4fe7b03c5012712eb6b91420db3bdd9c7f58",
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/root/code/tokenizers-simplification-results/bin/final",
+      "/root/code/tokenizers-simplification-results/runs/final/en-core-w4-v50000/b1-B/job.json"
+    ],
+    "attempt_id": "b1-B",
+    "build_id": "B",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-bytelevel",
+    "metrics": {
+      "load_seconds": 0.481986136,
+      "process_hwm_kib_before_validation": 283036,
+      "train_cpu_seconds": 5.1171679999999995,
+      "train_seconds": 1.933209487
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/root/code/tokenizers-simplification-results/runs/final/en-core-w4-v50000/b1-B/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+    "model_vocab_entries": 50000,
+    "model_merges": 49744,
+    "valid": true
+  },
+  {
+    "arm": "A",
+    "label": "final",
+    "case": "zh-pipeline-w4-v50000",
+    "block": 1,
+    "warmup": false,
+    "returncode": 0,
+    "subprocess_wall": 28.338711647083983,
+    "max_swap_kib": 0,
+    "min_available_kib": 2423188,
+    "binary_sha256": "179e99bf4d74996802c5a475d8ba4a62fcf6e769235dab5c56952b4c76af4074",
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/root/code/tokenizers-simplification-results/bin/baseline",
+      "/root/code/tokenizers-simplification-results/runs/final/zh-pipeline-w4-v50000/b1-A/job.json"
+    ],
+    "attempt_id": "b1-A",
+    "build_id": "A",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-bytelevel",
+    "metrics": {
+      "feed_seconds": 4.643117406,
+      "feed_unique_utf8_bytes": 389044270,
+      "feed_unique_words": 6859987,
+      "pipeline_cpu_seconds": 82.252854,
+      "pipeline_seconds": 24.206849172,
+      "process_hwm_kib_before_validation": 2490440,
+      "train_cpu_seconds": 65.057506,
+      "train_seconds": 19.563703507
+    },
+    "mode": "pipeline",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/root/code/tokenizers-simplification-results/runs/final/zh-pipeline-w4-v50000/b1-A/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-feed-and-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "model_vocab_entries": 50000,
+    "model_merges": 49744,
+    "valid": true
+  },
+  {
+    "arm": "B",
+    "label": "final",
+    "case": "zh-pipeline-w4-v50000",
+    "block": 1,
+    "warmup": false,
+    "returncode": 0,
+    "subprocess_wall": 38.04248343000654,
+    "max_swap_kib": 0,
+    "min_available_kib": 1785156,
+    "binary_sha256": "ab94f200a195f2bddeb258b1e6df4fe7b03c5012712eb6b91420db3bdd9c7f58",
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/root/code/tokenizers-simplification-results/bin/final",
+      "/root/code/tokenizers-simplification-results/runs/final/zh-pipeline-w4-v50000/b1-B/job.json"
+    ],
+    "attempt_id": "b1-B",
+    "build_id": "B",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-bytelevel",
+    "metrics": {
+      "feed_seconds": 5.233191317,
+      "feed_unique_utf8_bytes": 389044270,
+      "feed_unique_words": 6859987,
+      "pipeline_cpu_seconds": 101.38446,
+      "pipeline_seconds": 33.818925278,
+      "process_hwm_kib_before_validation": 3117292,
+      "train_cpu_seconds": 81.963977,
+      "train_seconds": 28.585727914
+    },
+    "mode": "pipeline",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/root/code/tokenizers-simplification-results/runs/final/zh-pipeline-w4-v50000/b1-B/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-feed-and-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "model_vocab_entries": 50000,
+    "model_merges": 49744,
+    "valid": true
+  },
+  {
+    "arm": "B",
+    "label": "final",
+    "case": "en-pipeline-w4-v50000",
+    "block": 1,
+    "warmup": false,
+    "returncode": 0,
+    "subprocess_wall": 5.956762851914391,
+    "max_swap_kib": 0,
+    "min_available_kib": 4592780,
+    "binary_sha256": "ab94f200a195f2bddeb258b1e6df4fe7b03c5012712eb6b91420db3bdd9c7f58",
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/root/code/tokenizers-simplification-results/bin/final",
+      "/root/code/tokenizers-simplification-results/runs/final/en-pipeline-w4-v50000/b1-B/job.json"
+    ],
+    "attempt_id": "b1-B",
+    "build_id": "B",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-bytelevel",
+    "metrics": {
+      "feed_seconds": 3.999984297,
+      "feed_unique_utf8_bytes": 8056279,
+      "feed_unique_words": 836105,
+      "pipeline_cpu_seconds": 20.474638,
+      "pipeline_seconds": 5.829092339,
+      "process_hwm_kib_before_validation": 282020,
+      "train_cpu_seconds": 4.796990000000001,
+      "train_seconds": 1.829101453
+    },
+    "mode": "pipeline",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/root/code/tokenizers-simplification-results/runs/final/en-pipeline-w4-v50000/b1-B/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-feed-and-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+    "model_vocab_entries": 50000,
+    "model_merges": 49744,
+    "valid": true
+  },
+  {
+    "arm": "A",
+    "label": "final",
+    "case": "en-pipeline-w4-v50000",
+    "block": 1,
+    "warmup": false,
+    "returncode": 0,
+    "subprocess_wall": 5.258927064016461,
+    "max_swap_kib": 0,
+    "min_available_kib": 4681048,
+    "binary_sha256": "179e99bf4d74996802c5a475d8ba4a62fcf6e769235dab5c56952b4c76af4074",
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/root/code/tokenizers-simplification-results/bin/baseline",
+      "/root/code/tokenizers-simplification-results/runs/final/en-pipeline-w4-v50000/b1-A/job.json"
+    ],
+    "attempt_id": "b1-A",
+    "build_id": "A",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-bytelevel",
+    "metrics": {
+      "feed_seconds": 3.990729784,
+      "feed_unique_utf8_bytes": 8056279,
+      "feed_unique_words": 836105,
+      "pipeline_cpu_seconds": 18.881727,
+      "pipeline_seconds": 5.106114106,
+      "process_hwm_kib_before_validation": 185068,
+      "train_cpu_seconds": 3.1486690000000017,
+      "train_seconds": 1.115377456
+    },
+    "mode": "pipeline",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/root/code/tokenizers-simplification-results/runs/final/en-pipeline-w4-v50000/b1-A/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-feed-and-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+    "model_vocab_entries": 50000,
+    "model_merges": 49744,
+    "valid": true
+  }
+]

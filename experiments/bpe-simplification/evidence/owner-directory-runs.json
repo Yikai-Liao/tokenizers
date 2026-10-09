@@ -1,0 +1,100 @@
+[
+  {
+    "arm": "B",
+    "label": "owner-directory",
+    "case": "en-core-w4-v50000",
+    "block": 1,
+    "warmup": false,
+    "returncode": 0,
+    "subprocess_wall": 3.0363232649397105,
+    "max_swap_kib": 0,
+    "min_available_kib": 4676076,
+    "binary_sha256": "3b05f0b2f8d09ad771bd36f6b07f0c83f7f2fe167b4d66a3a7bb12f600c7c984",
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/root/code/tokenizers-simplification-results/bin/owner-directory",
+      "/root/code/tokenizers-simplification-results/runs/owner-directory/en-core-w4-v50000/b1-B/job.json"
+    ],
+    "attempt_id": "b1-B",
+    "build_id": "B",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-bytelevel",
+    "metrics": {
+      "load_seconds": 0.53936291,
+      "process_hwm_kib_before_validation": 283396,
+      "train_cpu_seconds": 6.110338,
+      "train_seconds": 2.418421704
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/root/code/tokenizers-simplification-results/runs/owner-directory/en-core-w4-v50000/b1-B/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+    "model_vocab_entries": 50000,
+    "model_merges": 49744,
+    "valid": true
+  },
+  {
+    "arm": "B",
+    "label": "owner-directory",
+    "case": "zh-core-w4-v50000",
+    "block": 1,
+    "warmup": false,
+    "returncode": 0,
+    "subprocess_wall": 48.53914310899563,
+    "max_swap_kib": 0,
+    "min_available_kib": 1674992,
+    "binary_sha256": "3b05f0b2f8d09ad771bd36f6b07f0c83f7f2fe167b4d66a3a7bb12f600c7c984",
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/root/code/tokenizers-simplification-results/bin/owner-directory",
+      "/root/code/tokenizers-simplification-results/runs/owner-directory/zh-core-w4-v50000/b1-B/job.json"
+    ],
+    "attempt_id": "b1-B",
+    "build_id": "B",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-bytelevel",
+    "metrics": {
+      "load_seconds": 11.161275148,
+      "process_hwm_kib_before_validation": 3284184,
+      "train_cpu_seconds": 89.533383,
+      "train_seconds": 32.551335516
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/root/code/tokenizers-simplification-results/runs/owner-directory/zh-core-w4-v50000/b1-B/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "model_vocab_entries": 50000,
+    "model_merges": 49744,
+    "valid": true
+  }
+]

@@ -68,8 +68,24 @@ impl Shard {
         self.queue.push(Priority { pair, count });
     }
 }
+// Metadata stays borrowed during commit; each position stream has one owner.
+struct Event {
+    removed: Pair,
+    born: Pair,
+    removed_weight: u64,
+    born_weight: u64,
+    bucket: usize,
+    complete: bool,
+}
+#[derive(Default)]
+struct Route {
+    actions: Vec<(usize, bool, bool)>,
+    // One stream per birth action, in the same order.
+    positions: Vec<Positions>,
+}
 pub(super) struct PairIndex {
     shards: Vec<Shard>,
+    routes: Vec<Route>,
     cohorts: OctonaryHeap<Candidate>,
     floor: u64,
     reuse: bool,
@@ -162,6 +178,7 @@ impl PairIndex {
             .collect::<Result<Vec<_>>>()?;
         let mut index = Self {
             shards,
+            routes: Vec::new(),
             cohorts: OctonaryHeap::new(),
             floor: minimum.max(1),
             reuse,
@@ -238,20 +255,40 @@ impl PairIndex {
     }
     pub(super) fn commit(&mut self, changes: Vec<Change>) -> Result<()> {
         let workers = self.shards.len();
-        let mut routes: Vec<Vec<(Change, bool, bool)>> = (0..workers).map(|_| Vec::new()).collect();
+        self.routes.resize_with(workers, Route::default);
+        for route in &mut self.routes {
+            route.actions.clear();
+            route.positions.clear();
+        }
+        let mut events = Vec::with_capacity(changes.len());
         for change in changes {
-            let removed = owner(change.removed, workers);
-            let born = owner(change.born, workers);
-            if removed == born {
-                routes[removed].push((change, true, true));
-            } else {
-                let removal = Change {
-                    positions: Positions::default(),
-                    born_weight: 0,
-                    ..change
-                };
-                routes[removed].push((removal, true, false));
-                routes[born].push((change, false, true));
+            let removed = (change.removed_weight != 0).then(|| owner(change.removed, workers));
+            // Zero-weight births still own positions, including reuse cohorts.
+            let born = (!change.positions.is_empty()).then(|| owner(change.born, workers));
+            let index = events.len();
+            events.push(Event {
+                removed: change.removed,
+                born: change.born,
+                removed_weight: change.removed_weight,
+                born_weight: change.born_weight,
+                bucket: change.bucket,
+                complete: change.complete,
+            });
+            match (removed, born) {
+                (Some(removed), Some(born)) if removed == born => {
+                    self.routes[removed].actions.push((index, true, true));
+                }
+                (removed, born) => {
+                    if let Some(removed) = removed {
+                        self.routes[removed].actions.push((index, true, false));
+                    }
+                    if let Some(born) = born {
+                        self.routes[born].actions.push((index, false, true));
+                    }
+                }
+            }
+            if let Some(born) = born {
+                self.routes[born].positions.push(change.positions);
             }
         }
         let reuse = self.reuse;
@@ -259,10 +296,13 @@ impl PairIndex {
         let births = self
             .shards
             .par_iter_mut()
-            .zip(routes)
+            .zip(self.routes.par_iter_mut())
+            .filter(|(_, route)| !route.actions.is_empty())
             .map(|(shard, route)| -> Result<_> {
                 let mut groups = AHashMap::<(usize, Pair), Group>::new();
-                for (change, remove, birth) in route {
+                let mut positions = route.positions.drain(..);
+                for (index, remove, birth) in route.actions.drain(..) {
+                    let change = &events[index];
                     if remove {
                         if reuse {
                             let count = &mut shard.states.entry(change.removed).or_default().count;
@@ -283,6 +323,9 @@ impl PairIndex {
                         }
                     }
                     if birth {
+                        let positions = positions
+                            .next()
+                            .expect("each birth owns one position stream");
                         if reuse {
                             let count = &mut shard.states.entry(change.born).or_default().count;
                             let amount = i64::try_from(change.born_weight)
@@ -292,26 +335,25 @@ impl PairIndex {
                                 .ok_or("BPE identity-reuse count addition exceeds i64")?
                                 as u64;
                         }
-                        if !change.positions.is_empty() {
-                            if change.complete {
-                                // The complete producer already reduced and pruned.
-                                // Fresh IDs and compatible rules give each birth one producer.
-                                debug_assert!(!reuse && change.born_weight >= floor);
-                                shard.publish(change.born, change.born_weight, change.positions);
-                                continue;
-                            }
-                            let group = groups.entry((change.bucket, change.born)).or_default();
-                            add(&mut group.count, change.born_weight)?;
-                            if reuse {
-                                group.unordered.extend(change.positions.iter());
-                            } else {
-                                // Fresh jobs follow rule rank and spatial ranges. Each
-                                // born key has one producer, so lists concatenate sorted.
-                                group.positions.append(change.positions)?;
-                            }
+                        if change.complete {
+                            // The complete producer already reduced and pruned.
+                            // Fresh IDs and compatible rules give each birth one producer.
+                            debug_assert!(!reuse && change.born_weight >= floor);
+                            shard.publish(change.born, change.born_weight, positions);
+                            continue;
+                        }
+                        let group = groups.entry((change.bucket, change.born)).or_default();
+                        add(&mut group.count, change.born_weight)?;
+                        if reuse {
+                            group.unordered.extend(positions.iter());
+                        } else {
+                            // Fresh jobs follow rule rank and spatial ranges. Each
+                            // born key has one producer, so lists concatenate sorted.
+                            group.positions.append(positions)?;
                         }
                     }
                 }
+                debug_assert!(positions.next().is_none());
                 let mut candidates = Vec::new();
                 let mut groups: Vec<_> = groups.into_iter().collect();
                 groups.sort_unstable_by_key(|((bucket, pair), _)| (*bucket, *pair));

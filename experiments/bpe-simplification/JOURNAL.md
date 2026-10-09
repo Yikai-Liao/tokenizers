@@ -327,3 +327,18 @@ AA保持此前grain，未恢复main多小candidate合并job。保留作为结构
 用户指出多个局部提取无效，要求明确当前阶段差距。停止新增优化；
 先用当前best whole与main相同阶段边界的wall/进程CPU计时定位。
 早期Perf owner4.3x/prepare1.6x不代表当前typed/prefetch后的阶段占比。
+
+## 20. 阶段定位后提取紧凑路由，选为交付
+
+用户接受放弃Arena/end-release收益；取消新共享pool设计。已实现的complete普通快路保留。
+独立计时发现旧route .245/main vs2.753/lean，占commit4.697s差距约53%；
+与此前盲测邻居目录不同，本项只改48B metadata+16B动作引用、payload一次移交、
+容量复用、跳过零removal/空birth。带positions的零权重birth仍路由，reuse动作顺序不改。
+先归档0bb411ad纯删除1819行：去第二initial hash、Cursor多余计数、恒零offset、
+span转换、重复publish，零merge提前dropplan/index。route版本增加39行至1858，测试1439。
+36默认/36nodefault library tests通过，Clippy alltargets Dwarnings/fmt/预算通过。
+最终一对×四case均完整模型一致/swap0：en core1.933 vsmain1.144，zhcore29.043 vs19.308；
+enpipeline5.829 vs5.106，zhpipeline33.819 vs24.207。zhcoreCPU81.766，RSS3.034GiB。
+新fresh reviewer固定route源码未发现回归，两个可读性建议已采纳。
+不追加机器噪声重复，不把累计cleanup+route收益宣称单一因果，也不声明全局最优。
+正式报告/阶段归因/所有archives证据完成；delivery不含实验计时、Arena或条件开关。

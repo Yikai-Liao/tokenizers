@@ -15,13 +15,15 @@ The small ablations in PLAN.md alone cannot meet the hard size cap. The implemen
 
 Artifacts: `/root/code/tokenizers-simplification-results/`. Source and binary hashes, input hashes, machine and compiler settings are recorded in `manifest.json`. Removed rebuildable caches and sizes are in `cleanup.json`. Benchmarking starts only after builds stop. This machine is a 6-vCPU KVM guest, not the plan's fixed-frequency laptop.
 
-Status: the pinned 1456-line archive remains available separately. Current HEAD
-is the 1797-line typed-cursor round, with complete core models matching main:
-English 1.959s and Chinese 30.873s (single exploratory samples). The Arena
-prototype has 1924 production / 1462 test lines; 37 library tests passed and
-performance measurement is running. Hardware prefetch and owned stream append
-precede this round. Each round now uses a fresh read-only reviewer.
-[JOURNAL.md](JOURNAL.md) records all measured variants and their commits.
-Overall combination selection, adjacent baseline/candidate measurements and
-final validation remain pending. No global optimum or comparison against
-PR #2501's other implementations is claimed.
+Status: the pinned 1456-line archive remains separate. The delivery candidate
+currently has 1858 production / 1439 test lines. Default and no-default library
+tests pass (36 each), and all-target Clippy with warnings denied passes. Final
+core/pipeline validation passed for English/Chinese, four workers and 50K
+vocabulary: all complete models match main, child swap is zero. Arena is explicitly forgone at the user's request.
+
+The current phase diagnostics identify compact event routing as about 2.5s of
+the 4.7s commit gap, independently of Arena's end-release benefit. The delivery
+candidate now restores compact references, route capacity reuse and actual-action
+filtering. [PHASES.md](PHASES.md) gives the boundaries and limits of attribution.
+[JOURNAL.md](JOURNAL.md) records measured variants and archive commits. [REPORT.md](REPORT.md) records final selection and measured tradeoffs; no global
+optimum or comparison against PR #2501's other implementations is claimed.

@@ -1,0 +1,236 @@
+{
+  "phase-main": {
+    "stages": [
+      {
+        "name": "vocabulary",
+        "wall_seconds": 0.746906839,
+        "cpu_seconds": 2.286647371,
+        "calls": 1
+      },
+      {
+        "name": "corpus_plan",
+        "wall_seconds": 0.722451658,
+        "cpu_seconds": 1.76469998,
+        "calls": 1
+      },
+      {
+        "name": "initial_index",
+        "wall_seconds": 3.484268165,
+        "cpu_seconds": 12.463398995,
+        "calls": 2
+      },
+      {
+        "name": "materialize",
+        "wall_seconds": 0.756387867,
+        "cpu_seconds": 2.59249226,
+        "calls": 1
+      },
+      {
+        "name": "select",
+        "wall_seconds": 0.355187263,
+        "cpu_seconds": 0.444995325,
+        "calls": 1646
+      },
+      {
+        "name": "prepare",
+        "wall_seconds": 8.889467437,
+        "cpu_seconds": 30.218812507,
+        "calls": 3292
+      },
+      {
+        "name": "apply",
+        "wall_seconds": 1.313305679,
+        "cpu_seconds": 4.564005808,
+        "calls": 1646
+      },
+      {
+        "name": "commit",
+        "wall_seconds": 2.47145869,
+        "cpu_seconds": 7.075451403,
+        "calls": 3292
+      },
+      {
+        "name": "release",
+        "wall_seconds": 0.183089195,
+        "cpu_seconds": 0.18214861,
+        "calls": 1
+      },
+      {
+        "name": "model_output",
+        "wall_seconds": 0.02124359,
+        "cpu_seconds": 0.021239631,
+        "calls": 1
+      }
+    ],
+    "record": {
+      "arm": "B",
+      "label": "phase-main",
+      "case": "zh-core-w4-v50000",
+      "block": 1,
+      "warmup": false,
+      "returncode": 0,
+      "subprocess_wall": 31.87994529993739,
+      "max_swap_kib": 0,
+      "min_available_kib": 2425124,
+      "binary_sha256": "6dded7e426005f82b3e0564d21f98949501f02dc88e51b788f0095ec48d7cf5d",
+      "command": [
+        "taskset",
+        "-c",
+        "0-3",
+        "/root/code/tokenizers-simplification-results/bin/phase-main",
+        "/root/code/tokenizers-simplification-results/runs/phase-main/zh-core-w4-v50000/b1-B/job.json"
+      ],
+      "attempt_id": "b1-B",
+      "build_id": "B",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-bytelevel",
+      "metrics": {
+        "load_seconds": 10.990300386,
+        "process_hwm_kib_before_validation": 2501228,
+        "train_cpu_seconds": 61.664435,
+        "train_seconds": 18.947146291
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 49744,
+        "actual_vocab": 50000,
+        "model_path": "/root/code/tokenizers-simplification-results/runs/phase-main/zh-core-w4-v50000/b1-B/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4,
+      "model_equal": true,
+      "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+      "model_vocab_entries": 50000,
+      "model_merges": 49744,
+      "valid": true
+    },
+    "diagnostic": true
+  },
+  "phase-lean": {
+    "stages": [
+      {
+        "name": "vocabulary",
+        "wall_seconds": 0.641929296,
+        "cpu_seconds": 2.098179759,
+        "calls": 1
+      },
+      {
+        "name": "corpus_plan",
+        "wall_seconds": 0.770619984,
+        "cpu_seconds": 1.841907403,
+        "calls": 1
+      },
+      {
+        "name": "initial_index",
+        "wall_seconds": 3.519632803,
+        "cpu_seconds": 12.091811188,
+        "calls": 1
+      },
+      {
+        "name": "materialize",
+        "wall_seconds": 0.943688182,
+        "cpu_seconds": 2.709194392,
+        "calls": 1
+      },
+      {
+        "name": "select",
+        "wall_seconds": 0.670010038,
+        "cpu_seconds": 0.811836417,
+        "calls": 1646
+      },
+      {
+        "name": "prepare",
+        "wall_seconds": 10.868756727,
+        "cpu_seconds": 38.761225177,
+        "calls": 1646
+      },
+      {
+        "name": "apply",
+        "wall_seconds": 3.418738013,
+        "cpu_seconds": 8.323793828,
+        "calls": 1646
+      },
+      {
+        "name": "commit",
+        "wall_seconds": 7.068567305,
+        "cpu_seconds": 15.348238564,
+        "calls": 1646
+      },
+      {
+        "name": "release",
+        "wall_seconds": 2.773129194,
+        "cpu_seconds": 2.771176561,
+        "calls": 1
+      },
+      {
+        "name": "model_output",
+        "wall_seconds": 0.023141833,
+        "cpu_seconds": 0.023136015,
+        "calls": 1
+      }
+    ],
+    "record": {
+      "arm": "B",
+      "label": "phase-lean",
+      "case": "zh-core-w4-v50000",
+      "block": 1,
+      "warmup": false,
+      "returncode": 0,
+      "subprocess_wall": 43.271517927991226,
+      "max_swap_kib": 0,
+      "min_available_kib": 1794352,
+      "binary_sha256": "2e6068205ed80675518b43299493c5b32e9d67abfe4f969d74d71271884d4b87",
+      "command": [
+        "taskset",
+        "-c",
+        "0-3",
+        "/root/code/tokenizers-simplification-results/bin/phase-lean",
+        "/root/code/tokenizers-simplification-results/runs/phase-lean/zh-core-w4-v50000/b1-B/job.json"
+      ],
+      "attempt_id": "b1-B",
+      "build_id": "B",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-bytelevel",
+      "metrics": {
+        "load_seconds": 10.269457726,
+        "process_hwm_kib_before_validation": 3159676,
+        "train_cpu_seconds": 84.818769,
+        "train_seconds": 30.701996976
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 49744,
+        "actual_vocab": 50000,
+        "model_path": "/root/code/tokenizers-simplification-results/runs/phase-lean/zh-core-w4-v50000/b1-B/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4,
+      "model_equal": true,
+      "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+      "model_vocab_entries": 50000,
+      "model_merges": 49744,
+      "valid": true
+    },
+    "diagnostic": true
+  },
+  "boundary_notes": [
+    "Core bypasses public feed; identical loaded word map.",
+    "Process CPU includes every worker for coarse non-overlapping joined stages.",
+    "main selected-list release belongs to prepare; event release belongs to commit.",
+    "No repeated noise ranking; one new diagnostic pair with model validation."
+  ]
+}

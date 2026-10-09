@@ -1,0 +1,27 @@
+{
+  "production": {
+    "engine/corpus.rs": 376,
+    "engine/index.rs": 357,
+    "engine/merge.rs": 543,
+    "engine/mod.rs": 72,
+    "engine/positions.rs": 186,
+    "engine/vocabulary.rs": 315
+  },
+  "tests": {
+    "engine/corpus.rs [cfg(test)]": 2,
+    "engine/merge.rs [cfg(test)]": 40,
+    "engine/mod.rs [cfg(test)]": 17,
+    "engine/positions.rs [cfg(test)]": 85,
+    "engine/tests/generated.rs": 75,
+    "engine/tests/identity_reuse.rs": 79,
+    "engine/tests/mod.rs": 57,
+    "engine/tests/public_contract.rs": 576,
+    "engine/tests/semantic_parity.rs": 111,
+    "reference.rs [oracle and shared helpers]": 206,
+    "word.rs [oracle and shared helpers]": 191
+  },
+  "production_total": 1849,
+  "test_total": 1439,
+  "counting_rule": "Nonblank noncomment lines after cargo fmt --check; all engine modules plus cfg(test), oracle/reference and shared Word helpers. No implementation relocated outside engine.",
+  "within_budget": true
+}

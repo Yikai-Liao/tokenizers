@@ -29,7 +29,10 @@ The implementation is divided by the knowledge each module owns:
 
 Compatible batches retain the original priority prefix and permit shared heads
 or shared tails. Crossed endpoints end the batch without skipping a candidate.
-AA and reserved-ID rules run alone. Active reuse uses one cohort at a time; its
+AA and reserved-ID rules run alone. Complete ordinary producers publish directly;
+partial, AA and reuse births aggregate before publication. Commit routes compact
+metadata references and moves each position stream only once. Active reuse uses
+one cohort at a time; its
 word scans follow the original alias/length-gate conditions.
 
 Run library checks from the repository root:

@@ -6,7 +6,8 @@ The coordinator owns the vocabulary, corpus and pair index. A selected `Batch`
 owns the occurrence lists of its rules. `Batch::prepare` consumes those lists,
 returns owned writes and neighbor changes, and joins all readers before return.
 `Prepared::apply` joins endpoint writers before handing changes to `PairIndex`.
-The index then aggregates complete births and updates count owners in parallel.
+The index directly publishes complete ordinary births, reduces partial births,
+and updates count owners in parallel.
 
 Errors discard the attempt. Reader and owner jobs finish before their borrowed
 state can be dropped. Commit can fail after writes and partial count updates;
@@ -82,13 +83,29 @@ AA matches remain parallel; the selection itself is serial.
 Fresh owners hold one count and one list per retained pair. Taking a candidate
 removes that state. Old-boundary removal events decrease existing states and
 retire counts below the floor. Each new pair belongs to one producer rule;
-partial jobs aggregate before pruning and publication. Fresh local lists are
+partial jobs aggregate before pruning and publication. An ordinary source that
+covers the whole candidate marks its birth count complete. After local encoding
+it drops births below the floor while preserving removal events; the owner
+moves retained lists directly into states and the queue. AA and reuse do not
+enter this shortcut. Small ordinary candidates remain whole by item count; large
+candidates use spatially ordered block ranges. Fresh local lists are
 delta encoded during preparation and streamed to each owner in indexed task
 order. Each key has one producer, so this preserves spatial order without another
 sort. Reuse births can interleave; their full-u64 coordinates are sorted before
-encoding. No adaptive birth
-feedback, linked-node promotion, arena lease or direct-versus-buffered protocol
-is needed.
+encoding. There is no adaptive birth feedback, linked-node promotion or Arena.
+
+Commit retains one immutable metadata array and owner routes with reusable
+capacity. Each route action is a resident usize record reference and two flags.
+Only nonzero removals and nonempty births route; zero-weight births with
+positions still route. Each position stream moves to exactly one owner payload
+vector, in the order of that owner's birth actions. Removal precedes birth for
+each action; owner order is the original producer order. Draining both vectors
+retains capacity. Errors drop active drains; the attempt is discarded after
+owner jobs join. The next commit clears any unprocessed route before reuse.
+
+Arena's bulk retirement and end-of-attempt release benefits are deliberately
+forgone at the user's request. Per-list Vec ownership keeps lifetimes explicit
+but leaves allocation/retirement costs in preparation, commit and final release.
 
 Reuse owners retain a signed i64 ledger and the queue owns independent occurrence
 cohorts. Selection repairs the head cohort against the shared ledger, preserving
