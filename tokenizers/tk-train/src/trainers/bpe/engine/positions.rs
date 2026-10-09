@@ -16,13 +16,13 @@ const ARENA: usize = 1;
 // Final allocation cursors are leased within sequential worker closures.
 // Published storage survives leases and is never reset during the attempt.
 pub(super) struct Arena {
-    workers: Vec<Mutex<Bump>>,
+    workers: Vec<Mutex<Worker>>,
     cutoff: usize,
 }
 impl Arena {
     pub(super) fn new(workers: usize, items: usize) -> Self {
         Self {
-            workers: (0..workers).map(|_| Mutex::new(Bump::new())).collect(),
+            workers: (0..workers).map(|_| Mutex::default()).collect(),
             cutoff: ((items as u128 / 256).isqrt() as usize).max(256),
         }
     }
@@ -32,16 +32,18 @@ impl Arena {
             cursor: self.workers[rayon::current_thread_index().unwrap_or(0) % self.workers.len()]
                 .lock()
                 .unwrap_or_else(|e| e.into_inner()),
-            bytes: Vec::new(),
-            offsets: Vec::new(),
         }
     }
 }
-pub(super) struct Lease<'arena> {
-    arena: &'arena Arena,
-    cursor: MutexGuard<'arena, Bump>,
+#[derive(Default)]
+struct Worker {
+    bump: Bump,
     bytes: Vec<u8>,
     offsets: Vec<usize>,
+}
+pub(super) struct Lease<'arena> {
+    arena: &'arena Arena,
+    cursor: MutexGuard<'arena, Worker>,
 }
 // Mutable task buffers remain separate from the published 16-byte descriptor.
 // Two inline coordinates avoid allocating the common tiny neighbor lists.
@@ -62,6 +64,9 @@ impl Builder {
         Ok(())
     }
     pub(super) fn append(&mut self, mut other: Self) -> Result<()> {
+        if self.is_empty() {
+            std::mem::swap(self, &mut other);
+        }
         if let (Some(&last), Some(&first)) = (self.last(), other.first())
             && first < last
         {
@@ -131,31 +136,32 @@ impl<'arena> Positions<'arena> {
                 arena_lifetime: PhantomData,
             });
         }
-        lease.bytes.clear();
-        lease.offsets.clear();
+        let worker = &mut *lease.cursor;
+        worker.bytes.clear();
+        worker.offsets.clear();
         let mut previous = 0;
         for (i, &position) in values.iter().enumerate() {
             let gap = position
                 .checked_sub(previous)
                 .ok_or("BPE positions are not sorted")?;
             if i.is_multiple_of(RESTART) {
-                lease.offsets.push(lease.bytes.len());
-                lease.bytes.extend_from_slice(&position.to_le_bytes());
+                worker.offsets.push(worker.bytes.len());
+                worker.bytes.extend_from_slice(&position.to_le_bytes());
             } else {
                 let mut delta = gap;
                 while delta >= 128 {
-                    lease.bytes.push((delta as u8 & 127) | 128);
+                    worker.bytes.push((delta as u8 & 127) | 128);
                     delta >>= 7;
                 }
-                lease.bytes.push(delta as u8);
+                worker.bytes.push(delta as u8);
             }
             previous = position;
         }
-        let allocation = layout(count, lease.bytes.len())?;
+        let allocation = layout(count, worker.bytes.len())?;
         let arena = allocation.size() <= lease.arena.cutoff;
         let pointer = if arena {
-            lease
-                .cursor
+            worker
+                .bump
                 .try_alloc_layout(allocation)
                 .map_err(|_| "BPE position arena allocation failed")?
                 .as_ptr()
@@ -169,18 +175,18 @@ impl<'arena> Positions<'arena> {
         // SAFETY: final layout reserves an aligned length word, optional full
         // restart directory and stream. All bytes read later are initialized here.
         unsafe {
-            pointer.cast::<usize>().write(lease.bytes.len());
-            if lease.offsets.len() > 1 {
+            pointer.cast::<usize>().write(worker.bytes.len());
+            if worker.offsets.len() > 1 {
                 std::ptr::copy_nonoverlapping(
-                    lease.offsets.as_ptr(),
+                    worker.offsets.as_ptr(),
                     pointer.cast::<usize>().add(1),
-                    lease.offsets.len(),
+                    worker.offsets.len(),
                 );
             }
             std::ptr::copy_nonoverlapping(
-                lease.bytes.as_ptr(),
+                worker.bytes.as_ptr(),
                 pointer.add(prefix(count)),
-                lease.bytes.len(),
+                worker.bytes.len(),
             );
         }
         // Arena publication borrows the attempt,

@@ -273,10 +273,7 @@ impl<'arena> PairIndex<'arena> {
     pub(super) fn commit(&mut self, changes: Vec<Vec<Change>>) -> Result<()> {
         let workers = self.shards.len();
         self.routes.resize_with(workers, Route::default);
-        for route in &mut self.routes {
-            route.actions.clear();
-            route.positions.clear();
-        }
+        // Joined commits drain every route; any error aborts this attempt.
         let mut events = Vec::with_capacity(changes.iter().map(Vec::len).sum());
         for change in changes.into_iter().flatten() {
             let removed = (change.removed_weight != 0).then(|| owner(change.removed, workers));
