@@ -342,3 +342,14 @@ enpipeline5.829 vs5.106，zhpipeline33.819 vs24.207。zhcoreCPU81.766，RSS3.034
 新fresh reviewer固定route源码未发现回归，两个可读性建议已采纳。
 不追加机器噪声重复，不把累计cleanup+route收益宣称单一因果，也不声明全局最优。
 正式报告/阶段归因/所有archives证据完成；delivery不含实验计时、Arena或条件开关。
+
+## 21. Main compact descriptor and direct event blocks (1996 lines)
+
+The user reopened Arena and set zh-core <25s as a requirement. Extracted main's
+16B descriptor/inline flags and final scoped Bump allocation, with separate two-inline
+raw U64 builders. Apply passes each job's event block straight to commit, eliminating
+the measured serial 1.59s flatten. 37 library tests pass; full real model matches.
+Uninstrumented zh-core: candidate31.533s CPU93.721 RSS4026736KiB; adjacent main20.842s
+CPU69.081 RSS2560888KiB; both swap0. This combination has not met the target.
+Its raw staging/final encoding must be measured before attributing the regression.
+Production1996/test1470; no source relocated outside the engine.

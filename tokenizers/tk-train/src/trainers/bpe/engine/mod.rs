@@ -10,6 +10,7 @@ use crate::progress::TrainingProgress;
 use corpus::{Corpus, CorpusPlan};
 use index::PairIndex;
 use merge::Batch;
+use positions::Arena;
 #[cfg(test)]
 use tk_encode::models::bpe::Pair;
 use tk_encode::{
@@ -18,6 +19,13 @@ use tk_encode::{
     vocab::bucket_added_vocabulary::AddedToken,
 };
 use vocabulary::Vocabulary;
+
+fn add(count: &mut u64, amount: u64) -> Result<()> {
+    *count = count
+        .checked_add(amount)
+        .ok_or("BPE weighted frequency exceeds u64")?;
+    Ok(())
+}
 
 const WORD_SEPARATOR_ID: u32 = u32::MAX;
 type ModelParts = (Vocab, Merges, Vec<AddedToken>);
@@ -41,12 +49,20 @@ pub(super) fn train(
             let mut vocabulary =
                 Vocabulary::initialize(trainer, words, workers, &progress, &mut alphabet)?;
             let plan = CorpusPlan::build(words, &mut vocabulary, trainer, reuse, &progress)?;
-            let mut index =
-                PairIndex::build(&plan, trainer.min_frequency, workers, reuse, &progress)?;
+            let arena = Arena::new(workers, plan.items());
+            let mut index = PairIndex::build(
+                &arena,
+                &plan,
+                trainer.min_frequency,
+                workers,
+                reuse,
+                &progress,
+            )?;
             if vocabulary.len() >= trainer.vocab_size {
                 progress.stage("Compute merges", trainer.vocab_size);
                 drop(index);
                 drop(plan);
+                drop(arena);
                 let (vocab, merges) = vocabulary.into_model_parts(Vec::new());
                 return Ok((vocab, merges, trainer.special_tokens.clone()));
             }
@@ -80,6 +96,7 @@ pub(super) fn train(
             }
             drop(index);
             drop(corpus);
+            drop(arena);
             #[cfg(test)]
             if let Some(observer) = observe.as_mut() {
                 for (pair, count, id) in trace {

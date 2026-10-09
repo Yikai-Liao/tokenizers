@@ -1,17 +1,21 @@
 //! Compatible selection and snapshot preparation hide endpoint/event bookkeeping.
-use super::{BpeTrainer, Corpus, PairIndex, Vocabulary, WORD_SEPARATOR_ID};
-use super::{corpus::Match, index::Candidate, positions::Positions};
+use super::{BpeTrainer, Corpus, PairIndex, Vocabulary, WORD_SEPARATOR_ID, add};
+use super::{
+    corpus::Match,
+    index::Candidate,
+    positions::{Builder, Positions},
+};
 use ahash::{AHashMap, AHashSet};
 use rayon::prelude::*;
 use tk_encode::{Result, models::bpe::Pair};
 
-struct Rule {
+struct Rule<'arena> {
     pair: Pair,
     replacement: u32,
-    candidate: Candidate,
+    candidate: Candidate<'arena>,
 }
-pub(super) struct Batch {
-    rules: Vec<Rule>,
+pub(super) struct Batch<'arena> {
+    rules: Vec<Rule<'arena>>,
     reuse: bool,
     restart: bool,
     floor: u64,
@@ -21,7 +25,7 @@ pub(super) struct Change {
     pub(super) born: Pair,
     pub(super) removed_weight: u64,
     pub(super) born_weight: u64,
-    pub(super) positions: Positions,
+    pub(super) positions: Builder,
     pub(super) bucket: usize,
     pub(super) complete: bool,
 }
@@ -32,8 +36,8 @@ struct Job {
     writes: Writes,
     changes: Vec<Change>,
 }
-struct Neighbors<'a> {
-    rule: &'a Rule,
+struct Neighbors<'a, 'arena> {
+    rule: &'a Rule<'arena>,
     rank: usize,
     directories: &'a mut Directories,
     changes: [Vec<Change>; 2],
@@ -54,8 +58,13 @@ impl Directories {
         }
     }
 }
-impl<'a> Neighbors<'a> {
-    fn new(rule: &'a Rule, rank: usize, directories: &'a mut Directories, complete: bool) -> Self {
+impl<'a, 'arena> Neighbors<'a, 'arena> {
+    fn new(
+        rule: &'a Rule<'arena>,
+        rank: usize,
+        directories: &'a mut Directories,
+        complete: bool,
+    ) -> Self {
         Self {
             rule,
             rank,
@@ -80,7 +89,7 @@ impl<'a> Neighbors<'a> {
                 born: if left { (neighbor, id) } else { (id, neighbor) },
                 removed_weight: 0,
                 born_weight: 0,
-                positions: Positions::default(),
+                positions: Builder::default(),
                 bucket: 2 * self.rank + usize::from(!left && neighbor != id),
                 complete: self.complete,
             });
@@ -100,20 +109,14 @@ impl<'a> Neighbors<'a> {
         admit: bool,
     ) -> Result<()> {
         let group = self.group(removed, left);
-        group.removed_weight = group
-            .removed_weight
-            .checked_add(weight)
-            .ok_or("BPE neighbor removal mass exceeds u64")?;
+        add(&mut group.removed_weight, weight)?;
         if admit {
             let group = if removed == born {
                 group
             } else {
                 self.group(born, left)
             };
-            group.born_weight = group
-                .born_weight
-                .checked_add(weight)
-                .ok_or("BPE neighbor birth mass exceeds u64")?;
+            add(&mut group.born_weight, weight)?;
             group.positions.push(position as u64)?;
         }
         Ok(())
@@ -127,7 +130,7 @@ impl<'a> Neighbors<'a> {
                 // Only a whole ordinary producer owns a complete birth count.
                 // Removal actions survive; partial jobs must reduce at the owner.
                 if change.complete && change.born_weight < floor {
-                    change.positions = Positions::default();
+                    change.positions = Builder::default();
                     change.born_weight = 0;
                 }
                 (change.removed_weight != 0 || !change.positions.is_empty()).then_some(change)
@@ -135,12 +138,12 @@ impl<'a> Neighbors<'a> {
             .collect()
     }
 }
-impl Batch {
+impl<'arena> Batch<'arena> {
     pub(super) fn select(
         trainer: &BpeTrainer,
         vocabulary: &mut Vocabulary,
         corpus: &mut Corpus,
-        index: &mut PairIndex,
+        index: &mut PairIndex<'arena>,
     ) -> Result<Option<Self>> {
         let reuse = index.reuse();
         let mut batch = Self {
@@ -160,7 +163,7 @@ impl Batch {
             let Some(priority) = index.best() else {
                 break;
             };
-            let pair = priority.pair;
+            let pair = priority.pair();
             if !batch.rules.is_empty()
                 && (pair.0 == pair.1 || tails.contains(&pair.0) || heads.contains(&pair.1))
             {
@@ -434,16 +437,13 @@ impl Batch {
     }
 }
 impl Prepared {
-    pub(super) fn apply(self, corpus: &Corpus) -> Vec<Change> {
+    pub(super) fn apply(self, corpus: &Corpus) -> Vec<Vec<Change>> {
         self.jobs
             .into_par_iter()
             .map(|job| {
                 job.writes.apply(corpus);
                 job.changes
             })
-            .collect::<Vec<_>>()
-            .into_iter()
-            .flatten()
             .collect()
     }
 }
@@ -452,7 +452,7 @@ impl Prepared {
 // sorted starts and one rule geometry. Alias reuse retains occurrence geometry.
 enum Writes {
     Compact {
-        positions: Positions,
+        positions: Builder,
         left: usize,
         total: usize,
         id: u32,
@@ -463,10 +463,10 @@ enum Writes {
     },
 }
 impl Writes {
-    fn fresh(rule: &Rule, corpus: &Corpus) -> Self {
+    fn fresh(rule: &Rule<'_>, corpus: &Corpus) -> Self {
         let left = corpus.id_span(rule.pair.0);
         Self::Compact {
-            positions: Positions::default(),
+            positions: Builder::default(),
             left,
             total: left + corpus.id_span(rule.pair.1),
             id: rule.replacement,
@@ -474,19 +474,12 @@ impl Writes {
     }
     fn record(&mut self, matched: Match) -> Result<()> {
         match self {
-            Self::Compact {
-                positions,
-                left,
-                total,
-                ..
-            } => {
-                debug_assert_eq!(matched.right - matched.start, *left);
-                debug_assert_eq!(matched.span(), *total);
-                positions.push(matched.start as u64)?;
+            Self::Compact { positions, .. } => positions.push(matched.start as u64),
+            Self::Occurrences { positions, .. } => {
+                positions.push(matched);
+                Ok(())
             }
-            Self::Occurrences { positions, .. } => positions.push(matched),
         }
-        Ok(())
     }
     fn apply(self, corpus: &Corpus) {
         match self {
@@ -497,7 +490,7 @@ impl Writes {
                 id,
             } => {
                 for coordinate in positions.iter() {
-                    let start = corpus.resident(coordinate);
+                    let start = corpus.resident(*coordinate);
                     corpus.apply(
                         Match {
                             start,
@@ -518,11 +511,11 @@ impl Writes {
 }
 
 // Source geometry stays private to preparation; both paths emit full-u64 positions.
-enum Source<'a> {
+enum Source<'a, 'arena> {
     Slice(&'a [u64]),
-    Blocks(&'a Positions, std::ops::Range<usize>),
+    Blocks(&'a Positions<'arena>, std::ops::Range<usize>),
 }
-impl Source<'_> {
+impl Source<'_, '_> {
     fn complete(&self) -> bool {
         match self {
             Self::Blocks(positions, range) => {
@@ -534,9 +527,13 @@ impl Source<'_> {
     // Decode one bounded ring ahead, as in main. Prefetch is a nonblocking
     // hint; matching still reads the same joined preparation snapshot in order.
     fn prefetched<'a>(&'a self, corpus: &'a Corpus) -> impl Iterator<Item = usize> + 'a {
-        let mut positions = self
-            .iter()
-            .map(move |coordinate| corpus.resident(coordinate));
+        let coordinates = match self {
+            Self::Slice(values) => itertools::Either::Left(values.iter().copied()),
+            Self::Blocks(positions, range) => {
+                itertools::Either::Right(positions.read_blocks(range.clone()))
+            }
+        };
+        let mut positions = coordinates.map(move |coordinate| corpus.resident(coordinate));
         let mut ring: [Option<usize>; 16] = std::array::from_fn(|_| positions.next());
         for &p in ring.iter().flatten() {
             corpus.prefetch(p);
@@ -551,14 +548,6 @@ impl Source<'_> {
             head = (head + 1) % ring.len();
             Some(position)
         })
-    }
-    fn iter(&self) -> impl Iterator<Item = u64> + '_ {
-        match self {
-            Self::Slice(values) => itertools::Either::Left(values.iter().copied()),
-            Self::Blocks(positions, range) => {
-                itertools::Either::Right(positions.read_blocks(range.clone()))
-            }
-        }
     }
 }
 
@@ -582,7 +571,8 @@ mod tests {
         let mut vocabulary =
             Vocabulary::initialize(&trainer, view, 4, &progress, &mut None).unwrap();
         let plan = CorpusPlan::build(view, &mut vocabulary, &trainer, false, &progress).unwrap();
-        let mut index = PairIndex::build(&plan, 1, 4, false, &progress).unwrap();
+        let arena = super::super::positions::Arena::new(4, plan.items());
+        let mut index = PairIndex::build(&arena, &plan, 1, 4, false, &progress).unwrap();
         let mut corpus = plan.materialize(&progress);
         let batch = Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index)
             .unwrap()

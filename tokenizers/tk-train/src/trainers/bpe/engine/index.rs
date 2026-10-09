@@ -1,71 +1,71 @@
 //! Count owners publish complete lists; the queue repairs stale snapshots lazily.
 use super::merge::Change;
-use super::{CorpusPlan, WORD_SEPARATOR_ID, positions::Positions};
+use super::{
+    CorpusPlan, WORD_SEPARATOR_ID, add,
+    positions::{Arena, Builder, Positions},
+};
 use crate::progress::TrainingProgress;
 use ahash::AHashMap;
 use dary_heap::OctonaryHeap;
 use rayon::prelude::*;
-use std::cmp::Ordering;
+use std::cmp::{Ordering, Reverse};
 use tk_encode::{Result, models::bpe::Pair};
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+// Highest count first, then smallest pair. Field order defines heap priority.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub(super) struct Priority {
-    pub(super) pair: Pair,
     pub(super) count: u64,
+    pair: Reverse<Pair>,
 }
-impl Ord for Priority {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.count
-            .cmp(&other.count)
-            .then_with(|| other.pair.cmp(&self.pair))
+impl Priority {
+    pub(super) fn pair(self) -> Pair {
+        self.pair.0
     }
 }
-impl PartialOrd for Priority {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-pub(super) struct Candidate {
+pub(super) struct Candidate<'arena> {
     pub(super) priority: Priority,
-    pub(super) positions: Positions,
+    pub(super) positions: Positions<'arena>,
 }
-impl Eq for Candidate {}
-impl PartialEq for Candidate {
+impl Eq for Candidate<'_> {}
+impl PartialEq for Candidate<'_> {
     fn eq(&self, other: &Self) -> bool {
         self.priority == other.priority
     }
 }
-impl Ord for Candidate {
+impl Ord for Candidate<'_> {
     fn cmp(&self, other: &Self) -> Ordering {
         self.priority.cmp(&other.priority)
     }
 }
-impl PartialOrd for Candidate {
+impl PartialOrd for Candidate<'_> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 #[derive(Default)]
-struct State {
+struct State<P> {
     count: u64,
-    positions: Positions,
+    positions: P,
 }
 #[derive(Default)]
 struct Group {
     count: u64,
-    positions: Positions,
+    positions: Builder,
     unordered: Vec<u64>,
 }
 #[derive(Default)]
-struct Shard {
-    states: AHashMap<Pair, State>,
+struct Shard<'arena> {
+    states: AHashMap<Pair, State<Positions<'arena>>>,
     queue: OctonaryHeap<Priority>,
 }
-impl Shard {
-    fn publish(&mut self, pair: Pair, count: u64, positions: Positions) {
+impl<'arena> Shard<'arena> {
+    fn publish(&mut self, pair: Pair, count: u64, positions: Positions<'arena>) {
         debug_assert!(!self.states.contains_key(&pair));
         self.states.insert(pair, State { count, positions });
-        self.queue.push(Priority { pair, count });
+        self.queue.push(Priority {
+            count,
+            pair: Reverse(pair),
+        });
     }
 }
 // Metadata stays borrowed during commit; each position stream has one owner.
@@ -81,12 +81,13 @@ struct Event {
 struct Route {
     actions: Vec<(usize, bool, bool)>,
     // One stream per birth action, in the same order.
-    positions: Vec<Positions>,
+    positions: Vec<Builder>,
 }
-pub(super) struct PairIndex {
-    shards: Vec<Shard>,
+pub(super) struct PairIndex<'arena> {
+    arena: &'arena Arena,
+    shards: Vec<Shard<'arena>>,
     routes: Vec<Route>,
-    cohorts: OctonaryHeap<Candidate>,
+    cohorts: OctonaryHeap<Candidate<'arena>>,
     floor: u64,
     reuse: bool,
 }
@@ -94,14 +95,17 @@ fn owner(pair: Pair, workers: usize) -> usize {
     let key = (u64::from(pair.0) << 32) | u64::from(pair.1);
     (key.wrapping_mul(0x9e3779b97f4a7c15).rotate_left(23) % workers as u64) as usize
 }
-fn add(count: &mut u64, amount: u64) -> Result<()> {
-    *count = count
-        .checked_add(amount)
-        .ok_or("BPE pair frequency exceeds u64")?;
+fn adjust_signed(count: &mut u64, amount: u64, remove: bool) -> Result<()> {
+    let amount = i64::try_from(amount).map_err(|_| "BPE identity-reuse adjustment exceeds i64")?;
+    let delta = if remove { -amount } else { amount };
+    *count = (*count as i64)
+        .checked_add(delta)
+        .ok_or("BPE identity-reuse count adjustment exceeds i64")? as u64;
     Ok(())
 }
-impl PairIndex {
+impl<'arena> PairIndex<'arena> {
     pub(super) fn build(
+        arena: &'arena Arena,
         corpus: &CorpusPlan<'_>,
         minimum: u64,
         workers: usize,
@@ -119,10 +123,10 @@ impl PairIndex {
             .into_par_iter()
             .map(|begin| -> Result<_> {
                 let domain = corpus.small_pair_domain();
-                let mut dense: Vec<State> = (0..domain.map_or(0, |n| n * n))
+                let mut dense: Vec<State<Builder>> = (0..domain.map_or(0, |n| n * n))
                     .map(|_| State::default())
                     .collect();
-                let mut counts = AHashMap::<Pair, State>::new();
+                let mut counts = AHashMap::<Pair, State<Builder>>::new();
                 corpus.initial_edges(
                     begin..(begin + chunk).min(corpus.word_count()),
                     |pair, p, weight| {
@@ -156,20 +160,31 @@ impl PairIndex {
         let shards = routed
             .into_par_iter()
             .map(|pieces| -> Result<_> {
-                let mut shard = Shard::default();
+                let mut states = AHashMap::<Pair, State<Builder>>::new();
                 for (pair, state) in pieces {
-                    let total = shard.states.entry(pair).or_default();
+                    let total = states.entry(pair).or_default();
                     add(&mut total.count, state.count)?;
                     total.positions.append(state.positions)?;
                 }
-                shard
-                    .states
-                    .retain(|_, state| reuse || state.count >= minimum.max(1));
+                let mut lease = arena.lease();
+                let mut shard = Shard::default();
+                for (pair, state) in states {
+                    if reuse || state.count >= minimum.max(1) {
+                        let positions = Positions::from_sorted(&state.positions, &mut lease)?;
+                        shard.states.insert(
+                            pair,
+                            State {
+                                count: state.count,
+                                positions,
+                            },
+                        );
+                    }
+                }
                 if !reuse {
                     shard
                         .queue
                         .extend(shard.states.iter().map(|(&pair, state)| Priority {
-                            pair,
+                            pair: Reverse(pair),
                             count: state.count,
                         }));
                 }
@@ -177,6 +192,7 @@ impl PairIndex {
             })
             .collect::<Result<Vec<_>>>()?;
         let mut index = Self {
+            arena,
             shards,
             routes: Vec::new(),
             cohorts: OctonaryHeap::new(),
@@ -191,7 +207,7 @@ impl PairIndex {
                     }
                     index.cohorts.push(Candidate {
                         priority: Priority {
-                            pair,
+                            pair: Reverse(pair),
                             count: state.count,
                         },
                         positions: std::mem::take(&mut state.positions),
@@ -208,7 +224,8 @@ impl PairIndex {
         if self.reuse {
             loop {
                 let top = self.cohorts.peek()?.priority;
-                let count = self.shards[owner(top.pair, self.shards.len())].states[&top.pair].count;
+                let count =
+                    self.shards[owner(top.pair(), self.shards.len())].states[&top.pair()].count;
                 if top.count == count {
                     return (count >= self.floor).then_some(top);
                 }
@@ -220,7 +237,7 @@ impl PairIndex {
         let mut best = None;
         for shard in &mut self.shards {
             while let Some(top) = shard.queue.peek().copied() {
-                let Some(state) = shard.states.get(&top.pair) else {
+                let Some(state) = shard.states.get(&top.pair()) else {
                     shard.queue.pop();
                     continue;
                 };
@@ -237,31 +254,31 @@ impl PairIndex {
         }
         best
     }
-    pub(super) fn take(&mut self, priority: Priority) -> Candidate {
+    pub(super) fn take(&mut self, priority: Priority) -> Candidate<'arena> {
         if self.reuse {
             return self.cohorts.pop().expect("certified cohort exists");
         }
         let workers = self.shards.len();
-        let shard = &mut self.shards[owner(priority.pair, workers)];
+        let shard = &mut self.shards[owner(priority.pair(), workers)];
         shard.queue.pop();
         let state = shard
             .states
-            .remove(&priority.pair)
+            .remove(&priority.pair())
             .expect("certified pair exists");
         Candidate {
             priority,
             positions: state.positions,
         }
     }
-    pub(super) fn commit(&mut self, changes: Vec<Change>) -> Result<()> {
+    pub(super) fn commit(&mut self, changes: Vec<Vec<Change>>) -> Result<()> {
         let workers = self.shards.len();
         self.routes.resize_with(workers, Route::default);
         for route in &mut self.routes {
             route.actions.clear();
             route.positions.clear();
         }
-        let mut events = Vec::with_capacity(changes.len());
-        for change in changes {
+        let mut events = Vec::with_capacity(changes.iter().map(Vec::len).sum());
+        for change in changes.into_iter().flatten() {
             let removed = (change.removed_weight != 0).then(|| owner(change.removed, workers));
             // Zero-weight births still own positions, including reuse cohorts.
             let born = (!change.positions.is_empty()).then(|| owner(change.born, workers));
@@ -293,12 +310,14 @@ impl PairIndex {
         }
         let reuse = self.reuse;
         let floor = self.floor;
+        let arena = self.arena;
         let births = self
             .shards
             .par_iter_mut()
             .zip(self.routes.par_iter_mut())
             .filter(|(_, route)| !route.actions.is_empty())
             .map(|(shard, route)| -> Result<_> {
+                let mut lease = arena.lease();
                 let mut groups = AHashMap::<(usize, Pair), Group>::new();
                 let mut positions = route.positions.drain(..);
                 for (index, remove, birth) in route.actions.drain(..) {
@@ -306,12 +325,7 @@ impl PairIndex {
                     if remove {
                         if reuse {
                             let count = &mut shard.states.entry(change.removed).or_default().count;
-                            let amount = i64::try_from(change.removed_weight)
-                                .map_err(|_| "BPE identity-reuse removal exceeds i64")?;
-                            *count = (*count as i64)
-                                .checked_sub(amount)
-                                .ok_or("BPE identity-reuse count subtraction exceeds i64")?
-                                as u64;
+                            adjust_signed(count, change.removed_weight, true)?;
                         } else if let Some(state) = shard.states.get_mut(&change.removed) {
                             state.count = state
                                 .count
@@ -328,17 +342,13 @@ impl PairIndex {
                             .expect("each birth owns one position stream");
                         if reuse {
                             let count = &mut shard.states.entry(change.born).or_default().count;
-                            let amount = i64::try_from(change.born_weight)
-                                .map_err(|_| "BPE identity-reuse birth exceeds i64")?;
-                            *count = (*count as i64)
-                                .checked_add(amount)
-                                .ok_or("BPE identity-reuse count addition exceeds i64")?
-                                as u64;
+                            adjust_signed(count, change.born_weight, false)?;
                         }
                         if change.complete {
                             // The complete producer already reduced and pruned.
                             // Fresh IDs and compatible rules give each birth one producer.
                             debug_assert!(!reuse && change.born_weight >= floor);
+                            let positions = Positions::from_sorted(&positions, &mut lease)?;
                             shard.publish(change.born, change.born_weight, positions);
                             continue;
                         }
@@ -363,22 +373,23 @@ impl PairIndex {
                     } else {
                         state.count
                     };
-                    if if reuse {
-                        (count as i64) <= 0
-                    } else {
-                        count < floor
-                    } {
+                    if (reuse && (count as i64) <= 0) || (!reuse && count < floor) {
                         continue;
                     }
-                    let priority = Priority { pair, count };
+                    let priority = Priority {
+                        count,
+                        pair: Reverse(pair),
+                    };
                     if reuse {
                         state.unordered.sort_unstable();
+                        let positions = Positions::from_sorted(&state.unordered, &mut lease)?;
                         candidates.push(Candidate {
                             priority,
-                            positions: Positions::from_sorted(&state.unordered)?,
+                            positions,
                         });
                     } else {
-                        shard.publish(pair, count, state.positions);
+                        let positions = Positions::from_sorted(&state.positions, &mut lease)?;
+                        shard.publish(pair, count, positions);
                     }
                 }
                 Ok(candidates)

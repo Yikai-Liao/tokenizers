@@ -109,6 +109,9 @@ impl<'input> CorpusPlan<'input> {
             reuse,
         })
     }
+    pub(super) fn items(&self) -> usize {
+        self.length
+    }
     pub(super) fn word_count(&self) -> usize {
         self.words.len()
     }
