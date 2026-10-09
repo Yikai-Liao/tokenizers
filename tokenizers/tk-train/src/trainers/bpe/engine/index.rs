@@ -1,6 +1,9 @@
 //! Count owners publish complete lists; the queue repairs stale snapshots lazily.
 use super::merge::Change;
-use super::{CorpusPlan, WORD_SEPARATOR_ID, positions::Positions};
+use super::{
+    CorpusPlan, WORD_SEPARATOR_ID,
+    positions::{Arena, Positions},
+};
 use crate::progress::TrainingProgress;
 use ahash::AHashMap;
 use dary_heap::OctonaryHeap;
@@ -25,45 +28,46 @@ impl PartialOrd for Priority {
         Some(self.cmp(other))
     }
 }
-pub(super) struct Candidate {
+pub(super) struct Candidate<'arena> {
     pub(super) priority: Priority,
-    pub(super) positions: Positions,
+    pub(super) positions: Positions<'arena>,
 }
-impl Eq for Candidate {}
-impl PartialEq for Candidate {
+impl Eq for Candidate<'_> {}
+impl PartialEq for Candidate<'_> {
     fn eq(&self, other: &Self) -> bool {
         self.priority == other.priority
     }
 }
-impl Ord for Candidate {
+impl Ord for Candidate<'_> {
     fn cmp(&self, other: &Self) -> Ordering {
         self.priority.cmp(&other.priority)
     }
 }
-impl PartialOrd for Candidate {
+impl PartialOrd for Candidate<'_> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 #[derive(Default)]
-struct State {
+struct State<'arena> {
     count: u64,
-    positions: Positions,
+    positions: Positions<'arena>,
 }
 #[derive(Default)]
-struct Group {
+struct Group<'arena> {
     count: u64,
-    positions: Positions,
+    positions: Positions<'arena>,
     unordered: Vec<u64>,
 }
 #[derive(Default)]
-struct Shard {
-    states: AHashMap<Pair, State>,
+struct Shard<'arena> {
+    states: AHashMap<Pair, State<'arena>>,
     queue: OctonaryHeap<Priority>,
 }
-pub(super) struct PairIndex {
-    shards: Vec<Shard>,
-    cohorts: OctonaryHeap<Candidate>,
+pub(super) struct PairIndex<'arena> {
+    arena: &'arena Arena,
+    shards: Vec<Shard<'arena>>,
+    cohorts: OctonaryHeap<Candidate<'arena>>,
     floor: u64,
     reuse: bool,
 }
@@ -77,8 +81,9 @@ fn add(count: &mut u64, amount: u64) -> Result<()> {
         .ok_or("BPE pair frequency exceeds u64")?;
     Ok(())
 }
-impl PairIndex {
+impl<'arena> PairIndex<'arena> {
     pub(super) fn build(
+        arena: &'arena Arena,
         corpus: &CorpusPlan<'_>,
         minimum: u64,
         workers: usize,
@@ -95,11 +100,12 @@ impl PairIndex {
             .collect::<Vec<_>>()
             .into_par_iter()
             .map(|begin| -> Result<_> {
+                let lease = arena.lease();
                 let domain = corpus.small_pair_domain();
-                let mut dense: Vec<State> = (0..domain.map_or(0, |n| n * n))
+                let mut dense: Vec<State<'arena>> = (0..domain.map_or(0, |n| n * n))
                     .map(|_| State::default())
                     .collect();
-                let mut counts = AHashMap::<Pair, State>::new();
+                let mut counts = AHashMap::<Pair, State<'arena>>::new();
                 corpus.initial_edges(
                     begin..(begin + chunk).min(corpus.word_count()),
                     |pair, p, weight| {
@@ -109,7 +115,7 @@ impl PairIndex {
                             None => counts.entry(pair).or_default(),
                         };
                         add(&mut state.count, weight)?;
-                        state.positions.push(p)
+                        state.positions.push(p, &lease)
                     },
                 )?;
                 work.complete(chunk.min(corpus.word_count() - begin));
@@ -133,11 +139,12 @@ impl PairIndex {
         let shards = routed
             .into_par_iter()
             .map(|pieces| -> Result<_> {
-                let mut groups = AHashMap::<Pair, State>::new();
+                let lease = arena.lease();
+                let mut groups = AHashMap::<Pair, State<'arena>>::new();
                 for (pair, state) in pieces {
                     let total = groups.entry(pair).or_default();
                     add(&mut total.count, state.count)?;
-                    total.positions.append(state.positions)?;
+                    total.positions.append(state.positions, &lease)?;
                 }
                 let mut shard = Shard::default();
                 for (pair, group) in groups {
@@ -155,6 +162,7 @@ impl PairIndex {
             })
             .collect::<Result<Vec<_>>>()?;
         let mut index = Self {
+            arena,
             shards,
             cohorts: OctonaryHeap::new(),
             floor: minimum.max(1),
@@ -214,7 +222,7 @@ impl PairIndex {
         }
         best
     }
-    pub(super) fn take(&mut self, priority: Priority) -> Candidate {
+    pub(super) fn take(&mut self, priority: Priority) -> Candidate<'arena> {
         if self.reuse {
             return self.cohorts.pop().expect("certified cohort exists");
         }
@@ -230,9 +238,10 @@ impl PairIndex {
             positions: state.positions,
         }
     }
-    pub(super) fn commit(&mut self, changes: Vec<Change>) -> Result<()> {
+    pub(super) fn commit(&mut self, changes: Vec<Change<'arena>>) -> Result<()> {
         let workers = self.shards.len();
-        let mut routes: Vec<Vec<(Change, bool, bool)>> = (0..workers).map(|_| Vec::new()).collect();
+        let mut routes: Vec<Vec<(Change<'arena>, bool, bool)>> =
+            (0..workers).map(|_| Vec::new()).collect();
         for change in changes {
             let removed = owner(change.removed, workers);
             let born = owner(change.born, workers);
@@ -249,13 +258,15 @@ impl PairIndex {
             }
         }
         let reuse = self.reuse;
+        let arena = self.arena;
         let floor = self.floor;
         let births = self
             .shards
             .par_iter_mut()
             .zip(routes)
             .map(|(shard, route)| -> Result<_> {
-                let mut groups = AHashMap::<(usize, Pair), Group>::new();
+                let lease = arena.lease();
+                let mut groups = AHashMap::<(usize, Pair), Group<'arena>>::new();
                 for (change, remove, birth) in route {
                     if remove {
                         if reuse {
@@ -294,7 +305,7 @@ impl PairIndex {
                             } else {
                                 // Fresh jobs follow rule rank and spatial ranges. Each
                                 // born key has one producer, so lists concatenate sorted.
-                                group.positions.append(change.positions)?;
+                                group.positions.append(change.positions, &lease)?;
                             }
                         }
                     }
@@ -320,7 +331,7 @@ impl PairIndex {
                         state.unordered.sort_unstable();
                         candidates.push(Candidate {
                             priority,
-                            positions: Positions::from_sorted(&state.unordered)?,
+                            positions: Positions::from_sorted(&state.unordered, &lease)?,
                         });
                     } else {
                         debug_assert!(!shard.states.contains_key(&pair));

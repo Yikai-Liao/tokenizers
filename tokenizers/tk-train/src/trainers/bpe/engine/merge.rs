@@ -1,40 +1,45 @@
 //! Compatible selection and snapshot preparation hide endpoint/event bookkeeping.
 use super::{BpeTrainer, Corpus, PairIndex, Vocabulary, WORD_SEPARATOR_ID};
-use super::{corpus::Match, index::Candidate, positions::Positions};
+use super::{
+    corpus::Match,
+    index::Candidate,
+    positions::{Arena, Lease, Positions},
+};
 use ahash::{AHashMap, AHashSet};
 use rayon::prelude::*;
 use tk_encode::{Result, models::bpe::Pair};
 
-struct Rule {
+struct Rule<'arena> {
     pair: Pair,
     replacement: u32,
-    candidate: Candidate,
+    candidate: Candidate<'arena>,
 }
-pub(super) struct Batch {
-    rules: Vec<Rule>,
+pub(super) struct Batch<'arena> {
+    rules: Vec<Rule<'arena>>,
     reuse: bool,
     restart: bool,
 }
-pub(super) struct Change {
+pub(super) struct Change<'arena> {
     pub(super) removed: Pair,
     pub(super) born: Pair,
     pub(super) removed_weight: u64,
     pub(super) born_weight: u64,
-    pub(super) positions: Positions,
+    pub(super) positions: Positions<'arena>,
     pub(super) bucket: usize,
 }
-pub(super) struct Prepared {
-    jobs: Vec<Job>,
+pub(super) struct Prepared<'arena> {
+    jobs: Vec<Job<'arena>>,
 }
-struct Job {
-    writes: Writes,
-    changes: Vec<Change>,
+struct Job<'arena> {
+    writes: Writes<'arena>,
+    changes: Vec<Change<'arena>>,
 }
-struct Neighbors<'a> {
-    rule: &'a Rule,
+struct Neighbors<'a, 'arena> {
+    lease: &'a Lease<'arena>,
+    rule: &'a Rule<'arena>,
     rank: usize,
     directories: &'a mut Directories,
-    changes: [Vec<Change>; 2],
+    changes: [Vec<Change<'arena>>; 2],
 }
 #[derive(Default)]
 struct Directories {
@@ -51,16 +56,22 @@ impl Directories {
         }
     }
 }
-impl<'a> Neighbors<'a> {
-    fn new(rule: &'a Rule, rank: usize, directories: &'a mut Directories) -> Self {
+impl<'a, 'arena> Neighbors<'a, 'arena> {
+    fn new(
+        rule: &'a Rule<'arena>,
+        rank: usize,
+        directories: &'a mut Directories,
+        lease: &'a Lease<'arena>,
+    ) -> Self {
         Self {
+            lease,
             rule,
             rank,
             directories,
             changes: std::array::from_fn(|_| Vec::new()),
         }
     }
-    fn group(&mut self, neighbor: u32, left: bool) -> &mut Change {
+    fn group(&mut self, neighbor: u32, left: bool) -> &mut Change<'arena> {
         let side = usize::from(!left);
         let slot = &mut self.directories.indices[side][neighbor as usize];
         if *slot == u32::MAX {
@@ -94,6 +105,7 @@ impl<'a> Neighbors<'a> {
         weight: u64,
         admit: bool,
     ) -> Result<()> {
+        let lease = self.lease;
         let group = self.group(removed, left);
         group.removed_weight = group
             .removed_weight
@@ -109,21 +121,21 @@ impl<'a> Neighbors<'a> {
                 .born_weight
                 .checked_add(weight)
                 .ok_or("BPE neighbor birth mass exceeds u64")?;
-            group.positions.push(position as u64)?;
+            group.positions.push(position as u64, lease)?;
         }
         Ok(())
     }
-    fn finish(self) -> Vec<Change> {
+    fn finish(self) -> Vec<Change<'arena>> {
         // Separate directories preserve the reference's left-before-right drain.
         self.changes.into_iter().flatten().collect()
     }
 }
-impl Batch {
+impl<'arena> Batch<'arena> {
     pub(super) fn select(
         trainer: &BpeTrainer,
         vocabulary: &mut Vocabulary,
         corpus: &mut Corpus,
-        index: &mut PairIndex,
+        index: &mut PairIndex<'arena>,
     ) -> Result<Option<Self>> {
         let reuse = index.reuse();
         let mut batch = Self {
@@ -185,9 +197,14 @@ impl Batch {
             .iter()
             .map(|rule| (rule.pair, rule.candidate.priority.count, rule.replacement))
     }
-    pub(super) fn prepare(self, corpus: &Corpus, limit: usize) -> Result<Prepared> {
+    pub(super) fn prepare(
+        self,
+        corpus: &Corpus,
+        limit: usize,
+        arena: &'arena Arena,
+    ) -> Result<Prepared<'arena>> {
         if self.reuse {
-            return self.prepare_cohort(corpus, limit);
+            return self.prepare_cohort(corpus, limit, arena);
         }
         let selected: AHashMap<_, _> = self
             .rules
@@ -242,8 +259,9 @@ impl Batch {
             .map_init(
                 Directories::default,
                 |directories, (rank, rule, positions)| -> Result<_> {
+                    let lease = arena.lease();
                     directories.reset(corpus.id_count());
-                    let mut neighbors = Neighbors::new(rule, rank, directories);
+                    let mut neighbors = Neighbors::new(rule, rank, directories, &lease);
                     let mut writes = Writes::fresh(rule, corpus);
                     let matcher = corpus.fresh_matcher(rule.pair);
                     let mut weights = None;
@@ -303,7 +321,7 @@ impl Batch {
                                 matched.span() + corpus.id_span(born) < limit,
                             )?;
                         }
-                        writes.record(matched)?;
+                        writes.record(matched, &lease)?;
                     }
                     Ok(Job {
                         writes,
@@ -314,7 +332,12 @@ impl Batch {
             .collect::<Result<Vec<_>>>()?;
         Ok(Prepared { jobs })
     }
-    fn prepare_cohort(self, corpus: &Corpus, limit: usize) -> Result<Prepared> {
+    fn prepare_cohort(
+        self,
+        corpus: &Corpus,
+        limit: usize,
+        arena: &'arena Arena,
+    ) -> Result<Prepared<'arena>> {
         let rule = &self.rules[0];
         let mut words: Vec<_> = rule
             .candidate
@@ -327,8 +350,9 @@ impl Batch {
         let jobs = words
             .par_chunks(chunk)
             .map_init(Directories::default, |directories, words| -> Result<_> {
+                let lease = arena.lease();
                 directories.reset(corpus.id_count());
-                let mut neighbors = Neighbors::new(rule, 0, directories);
+                let mut neighbors = Neighbors::new(rule, 0, directories, &lease);
                 let mut writes = Writes::Occurrences {
                     positions: Vec::new(),
                     id: rule.replacement,
@@ -385,7 +409,7 @@ impl Batch {
                                 )?;
                             }
                             previous = Some((rule.replacement, p, matched.span()));
-                            writes.record(matched)?;
+                            writes.record(matched, &lease)?;
                             p = matched.after;
                         } else {
                             let span = corpus.span(p);
@@ -403,8 +427,8 @@ impl Batch {
         Ok(Prepared { jobs })
     }
 }
-impl Prepared {
-    pub(super) fn apply(self, corpus: &Corpus) -> Vec<Change> {
+impl<'arena> Prepared<'arena> {
+    pub(super) fn apply(self, corpus: &Corpus) -> Vec<Change<'arena>> {
         self.jobs
             .into_par_iter()
             .map(|job| {
@@ -420,9 +444,9 @@ impl Prepared {
 
 // Fresh identities have one span per ID, so their snapshot writes need only
 // sorted starts and one rule geometry. Alias reuse retains occurrence geometry.
-enum Writes {
+enum Writes<'arena> {
     Compact {
-        positions: Positions,
+        positions: Positions<'arena>,
         left: usize,
         total: usize,
         id: u32,
@@ -432,8 +456,8 @@ enum Writes {
         id: u32,
     },
 }
-impl Writes {
-    fn fresh(rule: &Rule, corpus: &Corpus) -> Self {
+impl<'arena> Writes<'arena> {
+    fn fresh(rule: &Rule<'arena>, corpus: &Corpus) -> Self {
         let left = corpus.id_span(rule.pair.0);
         Self::Compact {
             positions: Positions::default(),
@@ -442,7 +466,7 @@ impl Writes {
             id: rule.replacement,
         }
     }
-    fn record(&mut self, matched: Match) -> Result<()> {
+    fn record(&mut self, matched: Match, lease: &Lease<'arena>) -> Result<()> {
         match self {
             Self::Compact {
                 positions,
@@ -452,7 +476,7 @@ impl Writes {
             } => {
                 debug_assert_eq!(matched.right - matched.start, *left);
                 debug_assert_eq!(matched.span(), *total);
-                positions.push(matched.start as u64)?;
+                positions.push(matched.start as u64, lease)?;
             }
             Self::Occurrences { positions, .. } => positions.push(matched),
         }
@@ -488,11 +512,11 @@ impl Writes {
 }
 
 // Source geometry stays private to preparation; both paths emit full-u64 positions.
-enum Source<'a> {
+enum Source<'a, 'arena> {
     Slice(&'a [u64]),
-    Blocks(&'a Positions, std::ops::Range<usize>),
+    Blocks(&'a Positions<'arena>, std::ops::Range<usize>),
 }
-impl Source<'_> {
+impl Source<'_, '_> {
     // Decode one bounded ring ahead, as in main. Prefetch is a nonblocking
     // hint; matching still reads the same joined preparation snapshot in order.
     fn prefetched<'a>(&'a self, corpus: &'a Corpus) -> impl Iterator<Item = usize> + 'a {
@@ -544,7 +568,8 @@ mod tests {
         let mut vocabulary =
             Vocabulary::initialize(&trainer, view, 4, &progress, &mut None).unwrap();
         let plan = CorpusPlan::build(view, &mut vocabulary, &trainer, false, &progress).unwrap();
-        let mut index = PairIndex::build(&plan, 1, 4, false, &progress).unwrap();
+        let arena = Arena::new(4);
+        let mut index = PairIndex::build(&arena, &plan, 1, 4, false, &progress).unwrap();
         let mut corpus = plan.materialize(&progress);
         let batch = Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index)
             .unwrap()
@@ -553,7 +578,10 @@ mod tests {
             batch.trace().collect::<Vec<_>>(),
             vec![((0, 1), 10, 6), ((2, 3), 9, 7), ((4, 5), 8, 8)]
         );
-        let changes = batch.prepare(&corpus, usize::MAX).unwrap().apply(&corpus);
+        let changes = batch
+            .prepare(&corpus, usize::MAX, &arena)
+            .unwrap()
+            .apply(&corpus);
         index.commit(changes).unwrap();
         assert!(index.best().is_none());
     }

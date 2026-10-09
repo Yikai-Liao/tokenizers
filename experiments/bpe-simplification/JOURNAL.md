@@ -240,3 +240,14 @@ Block增加实际entry偏移，短块增加metadata；reuse仍decode/sort。
 以单个Cursor跨可变restart，去每块FlatMap；Source用Either去Box动态分派。
 全U64/不齐碎片/任意起读/重复seek的现有codec覆盖通过。
 用户提醒fresh review；新typed_arena_review_fresh审查本轮并评估下一Arena候选。
+
+## 12. Arena 第一版，性能退步，待一次窄修正
+
+生产1924行，测试1462行；37默认library tests通过。
+英文2.018s / CPU5.52s / RSS0.324GiB；中文36.836s / CPU115.74s / RSS3.548GiB。
+完整模型相同、swap0。相比typed cursor中文wall高19.3%、CPU高31.0%，RSS增349MiB。
+本轮明确不认定保留。采用worker-scoped Bump及scope-borrowed Bytes，
+closure内一次lease，8→256增长，大于256转heap；所有资源joined后释放。
+它在编码时增长，与main使用encoding scratch后一次finalize不同。
+独立fresh reviewer未发现阻断；建议10-byte栈缓存一次写delta，减少逐字节extend
+并避免allocation失败留下部分delta。下一轮只测这一窄修正，再裁决当前Arena方案。

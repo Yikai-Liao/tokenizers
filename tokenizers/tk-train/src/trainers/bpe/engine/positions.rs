@@ -1,11 +1,94 @@
 //! Full-u64 delta streams, with independent restart blocks for parallel readers.
+use bumpalo::Bump;
 use std::ops::Range;
+use std::sync::{Mutex, MutexGuard};
 use tk_encode::Result;
 
 const RESTART: usize = 128;
+pub(super) struct Arena(Vec<Mutex<Bump>>);
+impl Arena {
+    pub(super) fn new(workers: usize) -> Self {
+        Self((0..workers).map(|_| Mutex::new(Bump::new())).collect())
+    }
+    pub(super) fn lease(&self) -> Lease<'_> {
+        Lease {
+            cursor: self.0[rayon::current_thread_index().unwrap_or(0) % self.0.len()]
+                .lock()
+                .unwrap_or_else(|e| e.into_inner()),
+        }
+    }
+}
+pub(super) struct Lease<'arena> {
+    cursor: MutexGuard<'arena, Bump>,
+}
+impl<'arena> Lease<'arena> {
+    fn allocate(&self, length: usize) -> Result<&'arena mut [u8]> {
+        let bytes = self
+            .cursor
+            .try_alloc_slice_fill_copy(length, 0u8)
+            .map_err(|_| "BPE position arena allocation failed")?;
+        // Each bump allocation is initialized and disjoint. The arena is never
+        // reset, and its borrow outlives all slices, independently of this lease.
+        Ok(unsafe { std::slice::from_raw_parts_mut(bytes.as_mut_ptr(), bytes.len()) })
+    }
+}
+enum Bytes<'arena> {
+    Heap(Vec<u8>),
+    Small(&'arena mut [u8], usize),
+}
+impl Default for Bytes<'_> {
+    fn default() -> Self {
+        Self::Heap(Vec::new())
+    }
+}
+impl std::ops::Deref for Bytes<'_> {
+    type Target = [u8];
+    fn deref(&self) -> &[u8] {
+        match self {
+            Self::Heap(bytes) => bytes,
+            Self::Small(bytes, length) => &bytes[..*length],
+        }
+    }
+}
+impl<'arena> Bytes<'arena> {
+    fn extend(&mut self, extra: &[u8], lease: &Lease<'arena>) -> Result<()> {
+        if extra.is_empty() {
+            return Ok(());
+        }
+        let length = self
+            .len()
+            .checked_add(extra.len())
+            .ok_or("BPE bytes exceed usize")?;
+        if let Self::Heap(bytes) = self {
+            if !bytes.is_empty() || length > 256 {
+                bytes.extend_from_slice(extra);
+                return Ok(());
+            }
+        }
+        if let Self::Small(bytes, used) = self {
+            if length <= bytes.len() {
+                bytes[*used..length].copy_from_slice(extra);
+                *used = length;
+                return Ok(());
+            }
+        }
+        if length <= 256 {
+            let bytes = lease.allocate(length.next_power_of_two().max(8))?;
+            bytes[..self.len()].copy_from_slice(self);
+            bytes[self.len()..length].copy_from_slice(extra);
+            *self = Self::Small(bytes, length);
+        } else {
+            let mut bytes = Vec::with_capacity(length);
+            bytes.extend_from_slice(self);
+            bytes.extend_from_slice(extra);
+            *self = Self::Heap(bytes);
+        }
+        Ok(())
+    }
+}
 #[derive(Default)]
-pub(super) struct Positions {
-    bytes: Vec<u8>,
+pub(super) struct Positions<'arena> {
+    bytes: Bytes<'arena>,
     blocks: Vec<Block>,
     count: usize,
     first: u64,
@@ -17,19 +100,18 @@ struct Block {
     byte: usize,
     entry: usize,
 }
-impl Positions {
-    pub(super) fn from_sorted(values: &[u64]) -> Result<Self> {
+impl<'arena> Positions<'arena> {
+    pub(super) fn from_sorted(values: &[u64], lease: &Lease<'arena>) -> Result<Self> {
         let mut result = Self {
-            bytes: Vec::with_capacity(values.len()),
             blocks: Vec::with_capacity(values.len().saturating_sub(1) / RESTART),
             ..Self::default()
         };
         for &position in values {
-            result.push(position)?;
+            result.push(position, lease)?;
         }
         Ok(result)
     }
-    pub(super) fn push(&mut self, position: u64) -> Result<()> {
+    pub(super) fn push(&mut self, position: u64, lease: &Lease<'arena>) -> Result<()> {
         if self.count != 0 && position < self.last {
             return Err("BPE positions are not sorted".into());
         }
@@ -44,10 +126,10 @@ impl Positions {
         } else {
             let mut delta = position - self.last;
             while delta >= 128 {
-                self.bytes.push((delta as u8 & 0x7f) | 0x80);
+                self.bytes.extend(&[(delta as u8 & 0x7f) | 0x80], lease)?;
                 delta >>= 7;
             }
-            self.bytes.push(delta as u8);
+            self.bytes.extend(&[delta as u8], lease)?;
         }
         self.last = position;
         self.count += 1;
@@ -55,7 +137,7 @@ impl Positions {
     }
     // Owned sorted pieces can retain their restart boundaries. Copy bytes and
     // directory offsets, rather than decoding and re-encoding every coordinate.
-    pub(super) fn append(&mut self, mut other: Self) -> Result<()> {
+    pub(super) fn append(&mut self, other: Self, lease: &Lease<'arena>) -> Result<()> {
         if other.is_empty() {
             return Ok(());
         }
@@ -72,6 +154,7 @@ impl Positions {
             .ok_or("BPE position count exceeds usize")?;
         let byte = self.bytes.len();
         let entry = self.count;
+        self.bytes.extend(&other.bytes, lease)?;
         self.blocks.push(Block {
             first: other.first,
             byte,
@@ -82,7 +165,6 @@ impl Positions {
             byte: byte + b.byte,
             entry: entry + b.entry,
         }));
-        self.bytes.append(&mut other.bytes);
         self.count = count;
         self.last = other.last;
         Ok(())
@@ -144,15 +226,15 @@ impl Positions {
             .skip(index - self.block(block).entry)
     }
 }
-struct Cursor<'a> {
-    positions: &'a Positions,
+struct Cursor<'a, 'arena> {
+    positions: &'a Positions<'arena>,
     bytes: &'a [u8],
     position: u64,
     remaining: usize,
     block_remaining: usize,
     next_block: usize,
 }
-impl Iterator for Cursor<'_> {
+impl Iterator for Cursor<'_, '_> {
     type Item = u64;
     fn next(&mut self) -> Option<u64> {
         if self.remaining == 0 {
@@ -195,23 +277,49 @@ impl Iterator for Cursor<'_> {
 mod tests {
     use super::*;
     #[test]
+    fn released_leases_keep_disjoint_payloads_live_across_allocations() {
+        use rayon::prelude::*;
+        let arena = Arena::new(2);
+        let mut saved = Vec::new();
+        {
+            let lease = arena.lease();
+            for id in 0..256 {
+                let values: Vec<_> = (0..128).map(|p| (id << 32) + p).collect();
+                saved.push(Positions::from_sorted(&values, &lease).unwrap());
+            }
+        }
+        saved.par_iter().enumerate().for_each(|(id, positions)| {
+            let lease = arena.lease();
+            let large: Vec<_> = (0..512).map(|p| (p * 1024) as u64).collect();
+            let temporary = Positions::from_sorted(&large, &lease).unwrap();
+            assert_eq!(temporary.iter().collect::<Vec<_>>(), large);
+            assert!(
+                positions
+                    .iter()
+                    .eq((0..128).map(|p| ((id as u64) << 32) + p))
+            );
+        });
+    }
+    #[test]
     fn fragmented_streams_preserve_order_seeks_and_push() {
+        let arena = Arena::new(1);
+        let lease = arena.lease();
         let mut positions = Positions::default();
         let mut values = Vec::new();
         for length in std::iter::repeat_n(1, 260).chain([0, 7, 127, 2, 128, 129, 17]) {
             let begin = values.last().copied().unwrap_or(1u64 << 32);
             let fragment: Vec<_> = (0..length).map(|i| begin + (i / 3) as u64).collect();
             positions
-                .append(Positions::from_sorted(&fragment).unwrap())
+                .append(Positions::from_sorted(&fragment, &lease).unwrap(), &lease)
                 .unwrap();
             values.extend(fragment);
         }
         for value in [1u64 << 63, u64::MAX - 1, u64::MAX] {
-            positions.push(value).unwrap();
+            positions.push(value, &lease).unwrap();
             values.push(value);
         }
         positions
-            .append(Positions::from_sorted(&[u64::MAX]).unwrap())
+            .append(Positions::from_sorted(&[u64::MAX], &lease).unwrap(), &lease)
             .unwrap();
         values.push(u64::MAX);
         assert_eq!(positions.iter().collect::<Vec<_>>(), values);
@@ -234,13 +342,15 @@ mod tests {
         assert_eq!(blocks, values);
         assert!(
             positions
-                .append(Positions::from_sorted(&[0]).unwrap())
+                .append(Positions::from_sorted(&[0], &lease).unwrap(), &lease)
                 .is_err()
         );
         assert_eq!(positions.iter().collect::<Vec<_>>(), values);
     }
     #[test]
     fn full_u64_values_duplicates_and_restart_boundaries_roundtrip() {
+        let arena = Arena::new(1);
+        let lease = arena.lease();
         let mut values = vec![
             0,
             0,
@@ -258,7 +368,7 @@ mod tests {
             let repeated: Vec<_> = (0..length).map(|i| values[i % values.len()]).collect();
             let mut sorted = repeated;
             sorted.sort_unstable();
-            let positions = Positions::from_sorted(&sorted).unwrap();
+            let positions = Positions::from_sorted(&sorted, &lease).unwrap();
             assert_eq!(positions.iter().collect::<Vec<_>>(), sorted);
             for index in 0..=sorted.len() {
                 assert_eq!(positions.from(index).collect::<Vec<_>>(), sorted[index..]);
@@ -270,9 +380,9 @@ mod tests {
                 );
             }
         }
-        assert!(Positions::from_sorted(&[u64::MAX, 0]).is_err());
+        assert!(Positions::from_sorted(&[u64::MAX, 0], &lease).is_err());
         values.resize(129, u64::MAX);
         values[128] = 0;
-        assert!(Positions::from_sorted(&values).is_err());
+        assert!(Positions::from_sorted(&values, &lease).is_err());
     }
 }
