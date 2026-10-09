@@ -137,9 +137,7 @@ impl PairIndex {
                 for (pair, state) in pieces {
                     let total = groups.entry(pair).or_default();
                     add(&mut total.count, state.count)?;
-                    for position in state.positions.iter() {
-                        total.positions.push(position)?;
-                    }
+                    total.positions.append(state.positions)?;
                 }
                 let mut shard = Shard::default();
                 for (pair, group) in groups {
@@ -234,15 +232,20 @@ impl PairIndex {
     }
     pub(super) fn commit(&mut self, changes: Vec<Change>) -> Result<()> {
         let workers = self.shards.len();
-        let mut routes: Vec<Vec<(usize, bool, bool)>> = (0..workers).map(|_| Vec::new()).collect();
-        for (i, change) in changes.iter().enumerate() {
+        let mut routes: Vec<Vec<(Change, bool, bool)>> = (0..workers).map(|_| Vec::new()).collect();
+        for change in changes {
             let removed = owner(change.removed, workers);
             let born = owner(change.born, workers);
             if removed == born {
-                routes[removed].push((i, true, true));
+                routes[removed].push((change, true, true));
             } else {
-                routes[removed].push((i, true, false));
-                routes[born].push((i, false, true));
+                let removal = Change {
+                    positions: Positions::default(),
+                    born_weight: 0,
+                    ..change
+                };
+                routes[removed].push((removal, true, false));
+                routes[born].push((change, false, true));
             }
         }
         let reuse = self.reuse;
@@ -253,8 +256,7 @@ impl PairIndex {
             .zip(routes)
             .map(|(shard, route)| -> Result<_> {
                 let mut groups = AHashMap::<(usize, Pair), Group>::new();
-                for (i, remove, birth) in route {
-                    let change = &changes[i];
+                for (change, remove, birth) in route {
                     if remove {
                         if reuse {
                             let count = &mut shard.states.entry(change.removed).or_default().count;
@@ -292,9 +294,7 @@ impl PairIndex {
                             } else {
                                 // Fresh jobs follow rule rank and spatial ranges. Each
                                 // born key has one producer, so lists concatenate sorted.
-                                for position in change.positions.iter() {
-                                    group.positions.push(position)?;
-                                }
+                                group.positions.append(change.positions)?;
                             }
                         }
                     }

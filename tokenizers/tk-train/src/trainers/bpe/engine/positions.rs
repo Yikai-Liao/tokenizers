@@ -15,6 +15,7 @@ pub(super) struct Positions {
 struct Block {
     first: u64,
     byte: usize,
+    entry: usize,
 }
 impl Positions {
     pub(super) fn from_sorted(values: &[u64]) -> Result<Self> {
@@ -34,10 +35,11 @@ impl Positions {
         }
         if self.count == 0 {
             self.first = position;
-        } else if self.count.is_multiple_of(RESTART) {
+        } else if self.count - self.blocks.last().map_or(0, |b| b.entry) == RESTART {
             self.blocks.push(Block {
                 first: position,
                 byte: self.bytes.len(),
+                entry: self.count,
             });
         } else {
             let mut delta = position - self.last;
@@ -51,6 +53,51 @@ impl Positions {
         self.count += 1;
         Ok(())
     }
+    // Owned sorted pieces can retain their restart boundaries. Copy bytes and
+    // directory offsets, rather than decoding and re-encoding every coordinate.
+    pub(super) fn append(&mut self, mut other: Self) -> Result<()> {
+        if other.is_empty() {
+            return Ok(());
+        }
+        if self.is_empty() {
+            *self = other;
+            return Ok(());
+        }
+        if other.first < self.last {
+            return Err("BPE positions are not sorted".into());
+        }
+        let count = self
+            .count
+            .checked_add(other.count)
+            .ok_or("BPE position count exceeds usize")?;
+        let byte = self.bytes.len();
+        let entry = self.count;
+        self.blocks.push(Block {
+            first: other.first,
+            byte,
+            entry,
+        });
+        self.blocks.extend(other.blocks.into_iter().map(|b| Block {
+            first: b.first,
+            byte: byte + b.byte,
+            entry: entry + b.entry,
+        }));
+        self.bytes.append(&mut other.bytes);
+        self.count = count;
+        self.last = other.last;
+        Ok(())
+    }
+    fn block(&self, index: usize) -> Block {
+        if index == 0 {
+            Block {
+                first: self.first,
+                byte: 0,
+                entry: 0,
+            }
+        } else {
+            self.blocks[index - 1]
+        }
+    }
     pub(super) fn len(&self) -> usize {
         self.count
     }
@@ -58,25 +105,18 @@ impl Positions {
         self.count == 0
     }
     pub(super) fn block_count(&self) -> usize {
-        self.count.div_ceil(RESTART)
+        self.blocks.len() + usize::from(!self.is_empty())
     }
     pub(super) fn iter(&self) -> impl Iterator<Item = u64> + '_ {
         self.read_blocks(0..self.block_count())
     }
     pub(super) fn read_blocks(&self, range: Range<usize>) -> impl Iterator<Item = u64> + '_ {
         range.flat_map(|index| {
-            let block = if index == 0 {
-                Block {
-                    first: self.first,
-                    byte: 0,
-                }
-            } else {
-                self.blocks[index - 1]
-            };
+            let block = self.block(index);
             Cursor {
                 bytes: &self.bytes[block.byte..],
                 position: block.first,
-                remaining: (self.count - index * RESTART).min(RESTART),
+                remaining: self.blocks.get(index).map_or(self.count, |b| b.entry) - block.entry,
                 first: true,
             }
         })
@@ -86,15 +126,16 @@ impl Positions {
         if self.is_empty() {
             return 0;
         }
-        block * RESTART
+        self.block(block).entry
             + self
                 .read_blocks(block..block + 1)
                 .take_while(|&p| p < target)
                 .count()
     }
     pub(super) fn from(&self, index: usize) -> impl Iterator<Item = u64> + '_ {
-        self.read_blocks(index / RESTART..self.block_count())
-            .skip(index % RESTART)
+        let block = self.blocks.partition_point(|b| b.entry <= index);
+        self.read_blocks(block..self.block_count())
+            .skip(index - self.block(block).entry)
     }
 }
 struct Cursor<'a> {
@@ -134,6 +175,51 @@ impl Iterator for Cursor<'_> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn fragmented_streams_preserve_order_seeks_and_push() {
+        let mut positions = Positions::default();
+        let mut values = Vec::new();
+        for length in std::iter::repeat_n(1, 260).chain([0, 7, 127, 2, 128, 129, 17]) {
+            let begin = values.last().copied().unwrap_or(1u64 << 32);
+            let fragment: Vec<_> = (0..length).map(|i| begin + (i / 3) as u64).collect();
+            positions
+                .append(Positions::from_sorted(&fragment).unwrap())
+                .unwrap();
+            values.extend(fragment);
+        }
+        for value in [1u64 << 63, u64::MAX - 1, u64::MAX] {
+            positions.push(value).unwrap();
+            values.push(value);
+        }
+        positions
+            .append(Positions::from_sorted(&[u64::MAX]).unwrap())
+            .unwrap();
+        values.push(u64::MAX);
+        assert_eq!(positions.iter().collect::<Vec<_>>(), values);
+        for index in 0..=values.len() {
+            assert_eq!(positions.from(index).collect::<Vec<_>>(), values[index..]);
+        }
+        for target in values
+            .iter()
+            .copied()
+            .chain([0, (1 << 32) - 1, (1 << 63) + 1])
+        {
+            assert_eq!(
+                positions.lower_bound(target),
+                values.partition_point(|&p| p < target)
+            );
+        }
+        let blocks: Vec<_> = (0..positions.block_count())
+            .flat_map(|i| positions.read_blocks(i..i + 1))
+            .collect();
+        assert_eq!(blocks, values);
+        assert!(
+            positions
+                .append(Positions::from_sorted(&[0]).unwrap())
+                .is_err()
+        );
+        assert_eq!(positions.iter().collect::<Vec<_>>(), values);
+    }
     #[test]
     fn full_u64_values_duplicates_and_restart_boundaries_roundtrip() {
         let mut values = vec![

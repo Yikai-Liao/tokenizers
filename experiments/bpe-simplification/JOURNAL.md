@@ -217,3 +217,16 @@ owner codec自样本仅7.03%识别engine，不把整个23.3% owner当可消除�
 普通Affix可batch，active reuse退到单rule cohort但内部并行/owner聚合仍保留。
 用户随后明确不增加显式Affix batch断言；未修改该测试，沿用现有覆盖。
 以后review每次fresh agent，不复用旧reviewer。
+
+## 10. owned stream 拼接，保留进入 typed cursor 比较
+
+生产1776行，测试1430行；默认library tests36 passed。
+英文2.029s / CPU5.30s / RSS0.272GiB；中文32.940s / CPU96.08s / RSS3.143GiB。
+完整词表及merges与main相同，swap0。相对prefetch中文wall低7.2%、CPU低11.1%，
+英文接近，RSS不支持改善结论；仍需相邻复测。
+按值路由Change，fresh及initial保留片段restart后拼接，不再解码重编码。
+Block增加实际entry偏移，短块增加metadata；reuse仍decode/sort。
+新增codec覆盖不齐片段、singleton、重复边界、append后push、所有起读及全U64。
+新fresh reviewer固定源码未发现阻断问题，见REVIEW-4.md。
+用户纠正：停止汇编分析和寻找新方向，先测既定typed cursor，再按总体收益筛选。
+用户追加核对Arena：当前未启用；旧负载诊断存在数秒收益，补为下一项独立候选。
