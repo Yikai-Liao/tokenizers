@@ -1,0 +1,61 @@
+{
+  "label": "head-ring",
+  "command": [
+    "taskset",
+    "-c",
+    "0-3",
+    "perf",
+    "stat",
+    "--json-output",
+    "-o",
+    "/root/code/tokenizers-simplification-results/profiles/zh-core-4-head-ring/stat.json",
+    "-e",
+    "task-clock,cycles,instructions,cache-references,cache-misses,branches,branch-misses",
+    "--",
+    "perf",
+    "record",
+    "-e",
+    "cycles",
+    "-F",
+    "99",
+    "--call-graph",
+    "dwarf,8192",
+    "-o",
+    "/root/code/tokenizers-simplification-results/profiles/zh-core-4-head-ring/perf.data",
+    "--",
+    "/root/code/tokenizers-simplification-results/bin/head-ring",
+    "/root/code/tokenizers-simplification-results/profiles/zh-core-4-head-ring/job.json"
+  ],
+  "diagnostic": true,
+  "model_equal": true,
+  "max_swap_kib": 0,
+  "subprocess_wall": 59.5881745320512,
+  "binary_sha256": "211c5fa9067a92a4008dc46a593d65be0f8ee2a04cf487f1dd4cd93fd1111eaf",
+  "runner": {
+    "attempt_id": "zh-core-4-head-ring",
+    "build_id": "head-ring",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-bytelevel",
+    "metrics": {
+      "load_seconds": 10.690630031,
+      "process_hwm_kib_before_validation": 3256716,
+      "train_cpu_seconds": 131.85371,
+      "train_seconds": 42.92732326
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/root/code/tokenizers-simplification-results/profiles/zh-core-4-head-ring/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  }
+}

@@ -178,3 +178,24 @@ reuse unordered不可删排序；fresh有序串接依赖唯一producer与indexed
 以Corpus::fresh_matcher窄闭包缓存left/total，reuse occurrence matched路径不变。
 暂存以便独立检查，不能据此认定新增22行已获得确定性能收益。
 下一轮单独加入16项安全head-read ring，比硬件unsafe prefetch更易维持原phase边界。
+
+## 8. head-read ring与Perf诊断切换
+
+1719生产行，1385测试行；library tests35 passed。
+16项ring顺序保留，reuse路径不改；暂未有无采样性能结论。
+review #2固定源码，未发现确定问题，但明确同步head-read弱于硬件prefetch。
+用户指出中文仍差约2倍，要求按Perf热点/优化潜力排序。
+暂停新增微优化，以baseline和head-ring固定二进制各一次中文core4/50K诊断：
+perf cycles -F99 / dwarf8192调用栈，并收集cycles/instructions/cache/branch counters。
+诊断运行完整模型比较，记录child swap；不用于无采样性能排名。
+原始数据 profiles/zh-core-4-{baseline,head-ring}/；下一步由样本与热点指令决定实验优先级。
+
+### Perf结果与用户追加方向
+
+main/head-read采样train CPU74.97/131.85 s，wall24.09/42.93 s（有采样开销，不排名）。
+完整模型相同、swap0。owner归属cycles12.76/55.14B、prepare63.22/100.48B，
+二者解释约73%归属cycle差；codec push/FlatMap next自样本约23%可识别engine。
+见PERF.md，优先真hardware prefetch、typed position cursor、fresh owner完整流发布。
+用户指出main prefetch收益明显，应低行数加入；用户要求今后每轮review用fresh agent。
+旧reviewer已停止复用，新perf_priority_review_fresh正在只读核对机制/收益潜力。
+head-read以诊断检查点提交，不认定保留，不用它的42.93s判断prefetch收益。

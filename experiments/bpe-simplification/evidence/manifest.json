@@ -202,6 +202,27 @@
       "command": "PATH=/root/.cargo/bin:$PATH CARGO_TARGET_DIR=/root/code/tokenizers-simplification-results/target CARGO_INCREMENTAL=0 cargo build --release --offline --locked --manifest-path runner-candidate/Cargo.toml -j 2",
       "production_lines": 1703,
       "description": "Cache fixed fresh-rule spans as in main PairMatcher; no read-ahead yet"
+    },
+    "head-ring": {
+      "source_sha_base": "e4f787dc189d9be7192107490d652096cde7480e",
+      "engine_sources_sha256": {
+        "tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs": "27fd3c4d161bb7c8deff0f6ed26b89fe4d80f3e1a4004679cf5a29407b5d0f81",
+        "tokenizers/tk-train/src/trainers/bpe/engine/index.rs": "71695425e43d3cf717eb112ea95b0372b7e590bff9efd33a9d7fcf5324acc718",
+        "tokenizers/tk-train/src/trainers/bpe/engine/merge.rs": "d74ce9e08e440330f119212352103e8c11d2f7f41fc235bb6cfaf697a36fcd8c",
+        "tokenizers/tk-train/src/trainers/bpe/engine/mod.rs": "68f2959d11aed70aeb0c8ca9e440a63289d2940d41e2a825321d86bd00113523",
+        "tokenizers/tk-train/src/trainers/bpe/engine/positions.rs": "f75ddfaff58d2e7af6c97cdcd59510b675b8d4f5d932bf6de31f6ff59ea4fb8c",
+        "tokenizers/tk-train/src/trainers/bpe/engine/tests/generated.rs": "a5331fa3f584396327388b571f2872042bcc1205be9c1a2fc57a377fe1d15b75",
+        "tokenizers/tk-train/src/trainers/bpe/engine/tests/identity_reuse.rs": "79f43215e9f98a41b5c407671ed5b1327775b277ca07a47c83d265d7b0750ab8",
+        "tokenizers/tk-train/src/trainers/bpe/engine/tests/mod.rs": "24774a17bc72ca9ad82920ebf9c837e68f6d91df4780f0d8bdaa0796789c616c",
+        "tokenizers/tk-train/src/trainers/bpe/engine/tests/public_contract.rs": "0229bd3c3d71a81b4bfc9d8166711dbc983284d3748c4c1621db1abb29ca3e9a",
+        "tokenizers/tk-train/src/trainers/bpe/engine/tests/semantic_parity.rs": "b6f6062fe87e3843f126398964e95ab150f3ac45b14f9b7ae76e0e7b2336d905",
+        "tokenizers/tk-train/src/trainers/bpe/engine/vocabulary.rs": "b7dee2716d5cd0c89b95411ae26c6e453bd85b992e2277f66309ab3abe0c14d0"
+      },
+      "sha256": "211c5fa9067a92a4008dc46a593d65be0f8ee2a04cf487f1dd4cd93fd1111eaf",
+      "cargo_lock_sha256": "fcf01b7de4367dc9b92cb3c7e1900a3ecffdb53be05c286a278a4a2228591909",
+      "command": "PATH=/root/.cargo/bin:$PATH CARGO_TARGET_DIR=/root/code/tokenizers-simplification-results/target CARGO_INCREMENTAL=0 cargo build --release --offline --locked --manifest-path runner-candidate/Cargo.toml -j 2",
+      "production_lines": 1719,
+      "description": "Bounded 16-head safe read-ahead on fixed fresh matching; perf diagnostic next"
     }
   },
   "scope": "All engine implementation modules, including logic moved outside engine or delegated through new helpers; tests and reusable reference separately counted.",

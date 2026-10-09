@@ -1,0 +1,203 @@
+ Percent |	Source code & Disassembly of head-ring for cycles (1178 samples, percent: local period)
+-------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3     Disassembly of section .text:
+         :
+         : 5     00000000000eadd0 <<core::iter::adapters::flatten::FlattenCompat<core::iter::adapters::map::Map<core::ops::range::Range<usize>, <tk_train::trainers::bpe::engine::positions::Positions>::read_blocks::{closure#0}>, tk_train::trainers::bpe::engine::positions::Cursor> as core::iter::traits::iterator::Iterator>::next>:
+    4.11 :   eadd0:  push   %r15
+    5.85 :   eadd2:  push   %r14
+    3.23 :   eadd4:  push   %r13
+    0.66 :   eadd6:  push   %r12
+    1.00 :   eadd8:  push   %rbx
+   15.06 :   eadd9:  movzbl 0x38(%rdi),%edx
+    0.51 :   eaddd:  mov    (%rdi),%rcx
+    0.08 :   eade0:  mov    0x30(%rdi),%r10
+    0.56 :   eade4:  test   %rcx,%rcx
+    0.00 :   eade7:  je     eae4c <<core::iter::adapters::flatten::FlattenCompat<core::iter::adapters::map::Map<core::ops::range::Range<usize>, <tk_train::trainers::bpe::engine::positions::Positions>::read_blocks::{closure#0}>, tk_train::trainers::bpe::engine::positions::Cursor> as core::iter::traits::iterator::Iterator>::next+0x7c>
+    0.60 :   eade9:  mov    0x8(%rdi),%rax
+    0.28 :   eaded:  mov    0x10(%rdi),%r8
+    0.43 :   eadf1:  cmp    $0x2,%dl
+    0.00 :   eadf4:  je     eadff <<core::iter::adapters::flatten::FlattenCompat<core::iter::adapters::map::Map<core::ops::range::Range<usize>, <tk_train::trainers::bpe::engine::positions::Positions>::read_blocks::{closure#0}>, tk_train::trainers::bpe::engine::positions::Cursor> as core::iter::traits::iterator::Iterator>::next+0x2f>
+    0.93 :   eadf6:  test   %r10,%r10
+    0.00 :   eadf9:  jne    eae5e <<core::iter::adapters::flatten::FlattenCompat<core::iter::adapters::map::Map<core::ops::range::Range<usize>, <tk_train::trainers::bpe::engine::positions::Positions>::read_blocks::{closure#0}>, tk_train::trainers::bpe::engine::positions::Cursor> as core::iter::traits::iterator::Iterator>::next+0x8e>
+    0.16 :   eadfb:  movb   $0x2,0x38(%rdi)
+    0.56 :   eadff:  cmp    %r8,%rax
+    0.00 :   eae02:  jae    eafbf <<core::iter::adapters::flatten::FlattenCompat<core::iter::adapters::map::Map<core::ops::range::Range<usize>, <tk_train::trainers::bpe::engine::positions::Positions>::read_blocks::{closure#0}>, tk_train::trainers::bpe::engine::positions::Cursor> as core::iter::traits::iterator::Iterator>::next+0x1ef>
+    0.17 :   eae08:  lea    0x1(%rax),%r9
+    0.00 :   eae0c:  mov    %r9,0x8(%rdi)
+    0.00 :   eae10:  test   %rax,%rax
+    0.00 :   eae13:  je     eaef0 <<core::iter::adapters::flatten::FlattenCompat<core::iter::adapters::map::Map<core::ops::range::Range<usize>, <tk_train::trainers::bpe::engine::positions::Positions>::read_blocks::{closure#0}>, tk_train::trainers::bpe::engine::positions::Cursor> as core::iter::traits::iterator::Iterator>::next+0x120>
+    0.00 :   eae19:  lea    -0x1(%rax),%r11
+    0.00 :   eae1d:  mov    0x28(%rcx),%rsi
+    0.09 :   eae21:  cmp    %rsi,%r11
+    0.00 :   eae24:  jae    eb08d <<core::iter::adapters::flatten::FlattenCompat<core::iter::adapters::map::Map<core::ops::range::Range<usize>, <tk_train::trainers::bpe::engine::positions::Positions>::read_blocks::{closure#0}>, tk_train::trainers::bpe::engine::positions::Cursor> as core::iter::traits::iterator::Iterator>::next+0x2bd>
+    0.00 :   eae2a:  mov    0x10(%rcx),%rdx
+    0.00 :   eae2e:  mov    0x20(%rcx),%r10
+    0.00 :   eae32:  shl    $0x4,%r11
+    0.00 :   eae36:  mov    0x8(%r10,%r11,1),%rsi
+    1.56 :   eae3b:  cmp    %rdx,%rsi
+    0.00 :   eae3e:  ja     eb07b <<core::iter::adapters::flatten::FlattenCompat<core::iter::adapters::map::Map<core::ops::range::Range<usize>, <tk_train::trainers::bpe::engine::positions::Positions>::read_blocks::{closure#0}>, tk_train::trainers::bpe::engine::positions::Cursor> as core::iter::traits::iterator::Iterator>::next+0x2ab>
+    0.00 :   eae44:  add    %r11,%r10
+    0.00 :   eae47:  jmp    eaefd <<core::iter::adapters::flatten::FlattenCompat<core::iter::adapters::map::Map<core::ops::range::Range<usize>, <tk_train::trainers::bpe::engine::positions::Positions>::read_blocks::{closure#0}>, tk_train::trainers::bpe::engine::positions::Cursor> as core::iter::traits::iterator::Iterator>::next+0x12d>
+    0.00 :   eae4c:  cmp    $0x2,%dl
+    0.00 :   eae4f:  je     eafbf <<core::iter::adapters::flatten::FlattenCompat<core::iter::adapters::map::Map<core::ops::range::Range<usize>, <tk_train::trainers::bpe::engine::positions::Positions>::read_blocks::{closure#0}>, tk_train::trainers::bpe::engine::positions::Cursor> as core::iter::traits::iterator::Iterator>::next+0x1ef>
+    0.00 :   eae55:  test   %r10,%r10
+    0.00 :   eae58:  je     eafbb <<core::iter::adapters::flatten::FlattenCompat<core::iter::adapters::map::Map<core::ops::range::Range<usize>, <tk_train::trainers::bpe::engine::positions::Positions>::read_blocks::{closure#0}>, tk_train::trainers::bpe::engine::positions::Cursor> as core::iter::traits::iterator::Iterator>::next+0x1eb>
+    0.79 :   eae5e:  cmp    $0x1,%dl
+    0.00 :   eae61:  jne    eae69 <<core::iter::adapters::flatten::FlattenCompat<core::iter::adapters::map::Map<core::ops::range::Range<usize>, <tk_train::trainers::bpe::engine::positions::Positions>::read_blocks::{closure#0}>, tk_train::trainers::bpe::engine::positions::Cursor> as core::iter::traits::iterator::Iterator>::next+0x99>
+    0.00 :   eae63:  mov    0x28(%rdi),%rdx
+    0.00 :   eae67:  jmp    eaee0 <<core::iter::adapters::flatten::FlattenCompat<core::iter::adapters::map::Map<core::ops::range::Range<usize>, <tk_train::trainers::bpe::engine::positions::Positions>::read_blocks::{closure#0}>, tk_train::trainers::bpe::engine::positions::Cursor> as core::iter::traits::iterator::Iterator>::next+0x110>
+    1.34 :   eae69:  mov    0x20(%rdi),%rax
+    0.25 :   eae6d:  test   %rax,%rax
+    0.00 :   eae70:  je     eb041 <<core::iter::adapters::flatten::FlattenCompat<core::iter::adapters::map::Map<core::ops::range::Range<usize>, <tk_train::trainers::bpe::engine::positions::Positions>::read_blocks::{closure#0}>, tk_train::trainers::bpe::engine::positions::Cursor> as core::iter::traits::iterator::Iterator>::next+0x271>
+    0.41 :   eae76:  mov    0x18(%rdi),%rsi
+    0.60 :   eae7a:  lea    (%rsi,%rax,1),%r8
+    2.22 :   eae7e:  dec    %rax
+    0.00 :   eae81:  inc    %rsi
+    0.36 :   eae84:  xor    %edx,%edx
+    0.00 :   eae86:  xor    %ecx,%ecx
+    2.82 :   eae88:  nopl   0x0(%rax,%rax,1)
+    0.25 :   eae90:  mov    %rdx,%r9
+    1.66 :   eae93:  movzbl -0x1(%rsi),%edx
+   14.77 :   eae97:  mov    %edx,%r11d
+    2.09 :   eae9a:  and    $0x7f,%edx
+    1.70 :   eae9d:  shl    %cl,%rdx
+   10.29 :   eaea0:  or     %r9,%rdx
+    0.53 :   eaea3:  test   %r11b,%r11b
+    0.00 :   eaea6:  jns    eaed0 <<core::iter::adapters::flatten::FlattenCompat<core::iter::adapters::map::Map<core::ops::range::Range<usize>, <tk_train::trainers::bpe::engine::positions::Positions>::read_blocks::{closure#0}>, tk_train::trainers::bpe::engine::positions::Cursor> as core::iter::traits::iterator::Iterator>::next+0x100>
+    1.53 :   eaea8:  add    $0x7,%ecx
+    0.94 :   eaeab:  inc    %rsi
+    1.46 :   eaeae:  add    $0xffffffffffffffff,%rax
+    0.00 :   eaeb2:  jb     eae90 <<core::iter::adapters::flatten::FlattenCompat<core::iter::adapters::map::Map<core::ops::range::Range<usize>, <tk_train::trainers::bpe::engine::positions::Positions>::read_blocks::{closure#0}>, tk_train::trainers::bpe::engine::positions::Cursor> as core::iter::traits::iterator::Iterator>::next+0xc0>
+    0.00 :   eaeb4:  mov    %r8,0x18(%rdi)
+    0.00 :   eaeb8:  movq   $0x0,0x20(%rdi)
+    0.00 :   eaec0:  lea    0x241a1(%rip),%rdx        # 10f068 <bitcannon::classify::atom_tables::ATOM_TABLES+0x42a8>
+    0.00 :   eaec7:  xor    %edi,%edi
+    0.00 :   eaec9:  xor    %esi,%esi
+    0.00 :   eaecb:  call   74a1b <core::panicking::panic_bounds_check>
+    4.09 :   eaed0:  mov    %rsi,0x18(%rdi)
+    3.21 :   eaed4:  mov    %rax,0x20(%rdi)
+    2.63 :   eaed8:  add    0x28(%rdi),%rdx
+    0.09 :   eaedc:  mov    %rdx,0x28(%rdi)
+    1.85 :   eaee0:  movb   $0x0,0x38(%rdi)
+    1.33 :   eaee4:  dec    %r10
+    1.39 :   eaee7:  mov    %r10,0x30(%rdi)
+    0.53 :   eaeeb:  jmp    eb06c <<core::iter::adapters::flatten::FlattenCompat<core::iter::adapters::map::Map<core::ops::range::Range<usize>, <tk_train::trainers::bpe::engine::positions::Positions>::read_blocks::{closure#0}>, tk_train::trainers::bpe::engine::positions::Cursor> as core::iter::traits::iterator::Iterator>::next+0x29c>
+    0.00 :   eaef0:  mov    %rcx,%r10
+    0.00 :   eaef3:  add    $0x38,%r10
+    0.07 :   eaef7:  mov    0x10(%rcx),%rdx
+    0.25 :   eaefb:  xor    %esi,%esi
+    0.00 :   eaefd:  sub    %rsi,%rdx
+    0.00 :   eaf00:  add    0x8(%rcx),%rsi
+    0.17 :   eaf04:  mov    %rax,%r11
+    0.07 :   eaf07:  shl    $0x7,%r11
+    0.00 :   eaf0b:  mov    %r11,%rbx
+    0.00 :   eaf0e:  neg    %rbx
+    0.00 :   eaf11:  lea    0x1(,%rax,2),%r14
+    0.00 :   eaf19:  mov    $0x80,%r15d
+    0.00 :   eaf1f:  mov    %rdx,%r12
+    0.00 :   eaf22:  data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+    0.07 :   eaf30:  mov    (%r10),%rdx
+    0.00 :   eaf33:  mov    0x30(%rcx),%r13
+    0.08 :   eaf37:  lea    (%rbx,%r13,1),%r10
+    0.00 :   eaf3b:  cmp    $0x80,%r10
+    0.08 :   eaf42:  cmovae %r15,%r10
+    0.09 :   eaf46:  mov    %rsi,0x18(%rdi)
+    0.00 :   eaf4a:  mov    %r12,0x20(%rdi)
+    0.00 :   eaf4e:  mov    %rdx,0x28(%rdi)
+    0.08 :   eaf52:  mov    %r10,0x30(%rdi)
+    0.07 :   eaf56:  cmp    %r13,%r11
+    0.00 :   eaf59:  jne    eaee0 <<core::iter::adapters::flatten::FlattenCompat<core::iter::adapters::map::Map<core::ops::range::Range<usize>, <tk_train::trainers::bpe::engine::positions::Positions>::read_blocks::{closure#0}>, tk_train::trainers::bpe::engine::positions::Cursor> as core::iter::traits::iterator::Iterator>::next+0x110>
+    0.00 :   eaf5b:  lea    0x1(%rax),%r13
+    0.00 :   eaf5f:  movb   $0x2,0x38(%rdi)
+    0.00 :   eaf63:  cmp    %r8,%r13
+    0.00 :   eaf66:  jae    eafbf <<core::iter::adapters::flatten::FlattenCompat<core::iter::adapters::map::Map<core::ops::range::Range<usize>, <tk_train::trainers::bpe::engine::positions::Positions>::read_blocks::{closure#0}>, tk_train::trainers::bpe::engine::positions::Cursor> as core::iter::traits::iterator::Iterator>::next+0x1ef>
+    0.00 :   eaf68:  lea    0x2(%rax),%rdx
+    0.00 :   eaf6c:  mov    %rdx,0x8(%rdi)
+    0.00 :   eaf70:  mov    0x28(%rcx),%rsi
+    0.00 :   eaf74:  cmp    %rsi,%rax
+    0.00 :   eaf77:  jae    eb090 <<core::iter::adapters::flatten::FlattenCompat<core::iter::adapters::map::Map<core::ops::range::Range<usize>, <tk_train::trainers::bpe::engine::positions::Positions>::read_blocks::{closure#0}>, tk_train::trainers::bpe::engine::positions::Cursor> as core::iter::traits::iterator::Iterator>::next+0x2c0>
+    0.00 :   eaf7d:  mov    0x10(%rcx),%rdx
+    0.00 :   eaf81:  mov    0x20(%rcx),%r10
+    0.00 :   eaf85:  mov    (%r10,%r14,8),%rsi
+    0.00 :   eaf89:  mov    %rdx,%r12
+    0.00 :   eaf8c:  sub    %rsi,%r12
+    0.00 :   eaf8f:  jb     eb07b <<core::iter::adapters::flatten::FlattenCompat<core::iter::adapters::map::Map<core::ops::range::Range<usize>, <tk_train::trainers::bpe::engine::positions::Positions>::read_blocks::{closure#0}>, tk_train::trainers::bpe::engine::positions::Cursor> as core::iter::traits::iterator::Iterator>::next+0x2ab>
+    0.00 :   eaf95:  lea    -0x1(%r9),%rax
+    0.00 :   eaf99:  shl    $0x4,%rax
+    0.00 :   eaf9d:  add    %rax,%r10
+    0.00 :   eafa0:  add    0x8(%rcx),%rsi
+    0.00 :   eafa4:  sub    $0xffffffffffffff80,%r11
+    0.00 :   eafa8:  add    $0xffffffffffffff80,%rbx
+    0.00 :   eafac:  add    $0x2,%r14
+    0.00 :   eafb0:  inc    %r9
+    0.00 :   eafb3:  mov    %r13,%rax
+    0.00 :   eafb6:  jmp    eaf30 <<core::iter::adapters::flatten::FlattenCompat<core::iter::adapters::map::Map<core::ops::range::Range<usize>, <tk_train::trainers::bpe::engine::positions::Positions>::read_blocks::{closure#0}>, tk_train::trainers::bpe::engine::positions::Cursor> as core::iter::traits::iterator::Iterator>::next+0x160>
+    0.00 :   eafbb:  movb   $0x2,0x38(%rdi)
+    0.00 :   eafbf:  movzbl 0x60(%rdi),%ecx
+    0.09 :   eafc3:  cmp    $0x2,%cl
+    0.00 :   eafc6:  jne    eafcf <<core::iter::adapters::flatten::FlattenCompat<core::iter::adapters::map::Map<core::ops::range::Range<usize>, <tk_train::trainers::bpe::engine::positions::Positions>::read_blocks::{closure#0}>, tk_train::trainers::bpe::engine::positions::Cursor> as core::iter::traits::iterator::Iterator>::next+0x1ff>
+    0.00 :   eafc8:  xor    %eax,%eax
+    0.00 :   eafca:  jmp    eb071 <<core::iter::adapters::flatten::FlattenCompat<core::iter::adapters::map::Map<core::ops::range::Range<usize>, <tk_train::trainers::bpe::engine::positions::Positions>::read_blocks::{closure#0}>, tk_train::trainers::bpe::engine::positions::Cursor> as core::iter::traits::iterator::Iterator>::next+0x2a1>
+    0.00 :   eafcf:  mov    0x58(%rdi),%rax
+    0.00 :   eafd3:  test   %rax,%rax
+    0.00 :   eafd6:  je     eafe6 <<core::iter::adapters::flatten::FlattenCompat<core::iter::adapters::map::Map<core::ops::range::Range<usize>, <tk_train::trainers::bpe::engine::positions::Positions>::read_blocks::{closure#0}>, tk_train::trainers::bpe::engine::positions::Cursor> as core::iter::traits::iterator::Iterator>::next+0x216>
+    0.00 :   eafd8:  cmp    $0x1,%cl
+    0.00 :   eafdb:  jne    eaff1 <<core::iter::adapters::flatten::FlattenCompat<core::iter::adapters::map::Map<core::ops::range::Range<usize>, <tk_train::trainers::bpe::engine::positions::Positions>::read_blocks::{closure#0}>, tk_train::trainers::bpe::engine::positions::Cursor> as core::iter::traits::iterator::Iterator>::next+0x221>
+    0.00 :   eafdd:  mov    0x50(%rdi),%rdx
+    0.00 :   eafe1:  jmp    eb061 <<core::iter::adapters::flatten::FlattenCompat<core::iter::adapters::map::Map<core::ops::range::Range<usize>, <tk_train::trainers::bpe::engine::positions::Positions>::read_blocks::{closure#0}>, tk_train::trainers::bpe::engine::positions::Cursor> as core::iter::traits::iterator::Iterator>::next+0x291>
+    0.00 :   eafe6:  movb   $0x2,0x60(%rdi)
+    0.00 :   eafea:  xor    %eax,%eax
+    0.00 :   eafec:  jmp    eb071 <<core::iter::adapters::flatten::FlattenCompat<core::iter::adapters::map::Map<core::ops::range::Range<usize>, <tk_train::trainers::bpe::engine::positions::Positions>::read_blocks::{closure#0}>, tk_train::trainers::bpe::engine::positions::Cursor> as core::iter::traits::iterator::Iterator>::next+0x2a1>
+    0.00 :   eaff1:  mov    0x48(%rdi),%rsi
+    0.00 :   eaff5:  test   %rsi,%rsi
+    0.00 :   eaff8:  je     eb041 <<core::iter::adapters::flatten::FlattenCompat<core::iter::adapters::map::Map<core::ops::range::Range<usize>, <tk_train::trainers::bpe::engine::positions::Positions>::read_blocks::{closure#0}>, tk_train::trainers::bpe::engine::positions::Cursor> as core::iter::traits::iterator::Iterator>::next+0x271>
+    0.00 :   eaffa:  mov    0x40(%rdi),%r8
+    0.00 :   eaffe:  lea    (%r8,%rsi,1),%r9
+    0.00 :   eb002:  dec    %rsi
+    0.00 :   eb005:  inc    %r8
+    0.00 :   eb008:  xor    %edx,%edx
+    0.00 :   eb00a:  xor    %ecx,%ecx
+    0.00 :   eb00c:  nopl   0x0(%rax)
+    0.00 :   eb010:  mov    %rdx,%r10
+    0.00 :   eb013:  movzbl -0x1(%r8),%edx
+    0.00 :   eb018:  mov    %edx,%r11d
+    0.00 :   eb01b:  and    $0x7f,%edx
+    0.00 :   eb01e:  shl    %cl,%rdx
+    0.00 :   eb021:  or     %r10,%rdx
+    0.00 :   eb024:  test   %r11b,%r11b
+    0.00 :   eb027:  jns    eb051 <<core::iter::adapters::flatten::FlattenCompat<core::iter::adapters::map::Map<core::ops::range::Range<usize>, <tk_train::trainers::bpe::engine::positions::Positions>::read_blocks::{closure#0}>, tk_train::trainers::bpe::engine::positions::Cursor> as core::iter::traits::iterator::Iterator>::next+0x281>
+    0.00 :   eb029:  add    $0x7,%ecx
+    0.00 :   eb02c:  inc    %r8
+    0.00 :   eb02f:  add    $0xffffffffffffffff,%rsi
+    0.00 :   eb033:  jb     eb010 <<core::iter::adapters::flatten::FlattenCompat<core::iter::adapters::map::Map<core::ops::range::Range<usize>, <tk_train::trainers::bpe::engine::positions::Positions>::read_blocks::{closure#0}>, tk_train::trainers::bpe::engine::positions::Cursor> as core::iter::traits::iterator::Iterator>::next+0x240>
+    0.00 :   eb035:  mov    %r9,0x40(%rdi)
+    0.00 :   eb039:  movq   $0x0,0x48(%rdi)
+    0.00 :   eb041:  lea    0x24020(%rip),%rdx        # 10f068 <bitcannon::classify::atom_tables::ATOM_TABLES+0x42a8>
+    0.00 :   eb048:  xor    %edi,%edi
+    0.00 :   eb04a:  xor    %esi,%esi
+    0.00 :   eb04c:  call   74a1b <core::panicking::panic_bounds_check>
+    0.00 :   eb051:  mov    %r8,0x40(%rdi)
+    0.00 :   eb055:  mov    %rsi,0x48(%rdi)
+    0.00 :   eb059:  add    0x50(%rdi),%rdx
+    0.00 :   eb05d:  mov    %rdx,0x50(%rdi)
+    0.00 :   eb061:  movb   $0x0,0x60(%rdi)
+    0.00 :   eb065:  dec    %rax
+    0.00 :   eb068:  mov    %rax,0x58(%rdi)
+    0.79 :   eb06c:  mov    $0x1,%eax
+    0.25 :   eb071:  pop    %rbx
+    0.89 :   eb072:  pop    %r12
+    0.17 :   eb074:  pop    %r13
+    0.70 :   eb076:  pop    %r14
+    0.09 :   eb078:  pop    %r15
+    1.00 :   eb07a:  ret
+    0.00 :   eb07b:  lea    0x23256(%rip),%rcx        # 10e2d8 <bitcannon::classify::atom_tables::ATOM_TABLES+0x3518>
+    0.00 :   eb082:  mov    %rsi,%rdi
+    0.00 :   eb085:  mov    %rdx,%rsi
+    0.00 :   eb088:  call   75950 <core::slice::index::slice_index_fail>
+    0.00 :   eb08d:  mov    %r11,%rax
+    0.00 :   eb090:  lea    0x23229(%rip),%rdx        # 10e2c0 <bitcannon::classify::atom_tables::ATOM_TABLES+0x3500>
+    0.00 :   eb097:  mov    %rax,%rdi
+    0.00 :   eb09a:  call   74a1b <core::panicking::panic_bounds_check>

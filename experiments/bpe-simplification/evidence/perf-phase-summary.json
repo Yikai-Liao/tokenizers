@@ -1,0 +1,161 @@
+[
+  {
+    "label": "baseline",
+    "weighted_cycles": 158197552598,
+    "classified_engine_cycles": 127042548686,
+    "phase_cycles": {
+      "outside_or_unknown": 31155003912,
+      "engine_other": 5394154496,
+      "vocabulary": 4265276025,
+      "plan": 67866219,
+      "initial_pairs": 25810137689,
+      "materialize": 5868885057,
+      "merge_prepare": 63224655741,
+      "apply": 9648972364,
+      "owner_commit": 12762601095
+    },
+    "phase_samples": {
+      "outside_or_unknown": 1273,
+      "engine_other": 251,
+      "vocabulary": 204,
+      "plan": 3,
+      "initial_pairs": 1179,
+      "materialize": 251,
+      "merge_prepare": 2895,
+      "apply": 439,
+      "owner_commit": 633
+    },
+    "phase_pct_of_classified": {
+      "engine_other": 4.245943230666965,
+      "vocabulary": 3.3573602459299767,
+      "plan": 0.053420070442493264,
+      "initial_pairs": 20.316136566806975,
+      "materialize": 4.61962162889664,
+      "merge_prepare": 49.76652026815589,
+      "apply": 7.595071465268321,
+      "owner_commit": 10.045926523832742
+    },
+    "codec_self_pct_of_classified_by_phase": {},
+    "phase_first_last_sample": {
+      "outside_or_unknown": [
+        937021.983017,
+        937059.909259
+      ],
+      "engine_other": [
+        937033.996077,
+        937058.077792
+      ],
+      "vocabulary": [
+        937034.078364,
+        937057.37503
+      ],
+      "plan": [
+        937035.049168,
+        937035.073428
+      ],
+      "initial_pairs": [
+        937035.982571,
+        937040.880984
+      ],
+      "materialize": [
+        937040.892907,
+        937041.774184
+      ],
+      "merge_prepare": [
+        937041.806422,
+        937057.857214
+      ],
+      "apply": [
+        937041.906831,
+        937057.366573
+      ],
+      "owner_commit": [
+        937041.916135,
+        937057.852059
+      ]
+    },
+    "note": "Cycle-sample attribution by nearest matching stack frame; engine_other and outside/unknown retained. Not phase wall time. No inclusive sample double counting."
+  },
+  {
+    "label": "head-ring",
+    "weighted_cycles": 269562024500,
+    "classified_engine_cycles": 236657369742,
+    "phase_cycles": {
+      "outside_or_unknown": 32904654758,
+      "engine_other": 14530636264,
+      "vocabulary": 3914000177,
+      "plan": 3786433202,
+      "initial_pairs": 33060640635,
+      "materialize": 5037158146,
+      "merge_prepare": 100484018921,
+      "apply": 20703926602,
+      "owner_commit": 55140555795
+    },
+    "phase_samples": {
+      "outside_or_unknown": 1391,
+      "engine_other": 644,
+      "vocabulary": 166,
+      "plan": 160,
+      "initial_pairs": 1434,
+      "materialize": 211,
+      "merge_prepare": 4495,
+      "apply": 910,
+      "owner_commit": 2594
+    },
+    "phase_pct_of_classified": {
+      "engine_other": 6.139946657837473,
+      "vocabulary": 1.6538678602179087,
+      "plan": 1.5999642040000308,
+      "initial_pairs": 13.969833549254,
+      "materialize": 2.1284602932464884,
+      "merge_prepare": 42.459704099029764,
+      "apply": 8.748481665528136,
+      "owner_commit": 23.2997416708862
+    },
+    "codec_self_pct_of_classified_by_phase": {
+      "initial_pairs": 6.426075021276233,
+      "merge_prepare": 6.515996645196924,
+      "apply": 2.9589601442093763,
+      "owner_commit": 7.032628020477106
+    },
+    "phase_first_last_sample": {
+      "outside_or_unknown": [
+        937063.326161,
+        937121.291397
+      ],
+      "engine_other": [
+        937074.014029,
+        937116.906997
+      ],
+      "vocabulary": [
+        937074.077365,
+        937116.923485
+      ],
+      "plan": [
+        937074.782229,
+        937075.343637
+      ],
+      "initial_pairs": [
+        937075.620358,
+        937080.379136
+      ],
+      "materialize": [
+        937080.737467,
+        937081.354746
+      ],
+      "merge_prepare": [
+        937081.379485,
+        937114.624833
+      ],
+      "apply": [
+        937081.521036,
+        937114.582328
+      ],
+      "owner_commit": [
+        937081.555939,
+        937114.61244
+      ]
+    },
+    "note": "Cycle-sample attribution by nearest matching stack frame; engine_other and outside/unknown retained. Not phase wall time. No inclusive sample double counting."
+  }
+]

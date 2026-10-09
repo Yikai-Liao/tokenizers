@@ -247,9 +247,8 @@ impl Batch {
                     let mut writes = Writes::fresh(rule, corpus);
                     let matcher = corpus.fresh_matcher(rule.pair);
                     let mut weights = None;
-                    for coordinate in positions.iter() {
-                        let p = corpus.resident(coordinate);
-                        let Some(matched) = matcher(p, corpus.token(p)) else {
+                    for (p, head) in positions.heads(corpus) {
+                        let Some(matched) = matcher(p, head) else {
                             continue;
                         };
                         let (weight, end) = match weights {
@@ -494,6 +493,25 @@ enum Source<'a> {
     Blocks(&'a Positions, std::ops::Range<usize>),
 }
 impl Source<'_> {
+    // Like main's bounded prefetch ring, overlap scattered endpoint reads with
+    // consumption. All heads belong to the same immutable preparation snapshot.
+    fn heads<'a>(&'a self, corpus: &'a Corpus) -> impl Iterator<Item = (usize, u32)> + 'a {
+        let mut positions = self.iter();
+        let mut read = move || {
+            positions.next().map(|coordinate| {
+                let p = corpus.resident(coordinate);
+                (p, corpus.token(p))
+            })
+        };
+        let mut ring: [Option<(usize, u32)>; 16] = std::array::from_fn(|_| read());
+        let mut head = 0;
+        std::iter::from_fn(move || {
+            let position = ring[head]?;
+            ring[head] = read();
+            head = (head + 1) % ring.len();
+            Some(position)
+        })
+    }
     fn iter(&self) -> Box<dyn Iterator<Item = u64> + '_> {
         match self {
             Self::Slice(values) => Box::new(values.iter().copied()),

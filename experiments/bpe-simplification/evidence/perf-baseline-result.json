@@ -1,0 +1,61 @@
+{
+  "label": "baseline",
+  "command": [
+    "taskset",
+    "-c",
+    "0-3",
+    "perf",
+    "stat",
+    "--json-output",
+    "-o",
+    "/root/code/tokenizers-simplification-results/profiles/zh-core-4-baseline/stat.json",
+    "-e",
+    "task-clock,cycles,instructions,cache-references,cache-misses,branches,branch-misses",
+    "--",
+    "perf",
+    "record",
+    "-e",
+    "cycles",
+    "-F",
+    "99",
+    "--call-graph",
+    "dwarf,8192",
+    "-o",
+    "/root/code/tokenizers-simplification-results/profiles/zh-core-4-baseline/perf.data",
+    "--",
+    "/root/code/tokenizers-simplification-results/bin/baseline",
+    "/root/code/tokenizers-simplification-results/profiles/zh-core-4-baseline/job.json"
+  ],
+  "diagnostic": true,
+  "model_equal": true,
+  "max_swap_kib": 0,
+  "subprocess_wall": 40.03582849295344,
+  "binary_sha256": "179e99bf4d74996802c5a475d8ba4a62fcf6e769235dab5c56952b4c76af4074",
+  "runner": {
+    "attempt_id": "zh-core-4-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-bytelevel",
+    "metrics": {
+      "load_seconds": 12.022754454,
+      "process_hwm_kib_before_validation": 2552324,
+      "train_cpu_seconds": 74.969491,
+      "train_seconds": 24.092623077
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/root/code/tokenizers-simplification-results/profiles/zh-core-4-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  }
+}
