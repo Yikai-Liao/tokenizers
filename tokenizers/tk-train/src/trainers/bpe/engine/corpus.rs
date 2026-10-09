@@ -233,6 +233,28 @@ impl Corpus {
     pub(super) fn id_span(&self, id: u32) -> usize {
         self.spans[id as usize]
     }
+    // Fresh IDs have fixed geometry. Cache it once per preparation task,
+    // keeping occurrence-dependent alias matching in matched().
+    pub(super) fn fresh_matcher(&self, pair: Pair) -> impl Fn(usize, u32) -> Option<Match> + '_ {
+        debug_assert!(self.occurrence_spans.is_none());
+        let left = self.id_span(pair.0);
+        let total = left + self.id_span(pair.1);
+        move |position, head| {
+            if head != pair.0
+                || left == 0
+                || total == left
+                || position + total >= self.len()
+                || self.token(position + left) != pair.1
+            {
+                return None;
+            }
+            Some(Match {
+                start: position,
+                right: position + left,
+                after: position + total,
+            })
+        }
+    }
     pub(super) fn matched(&self, position: usize, pair: Pair) -> Option<Match> {
         if self.token(position) != pair.0 {
             return None;

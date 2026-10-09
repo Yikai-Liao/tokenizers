@@ -198,11 +198,12 @@ impl Batch {
         let mut starts = Vec::new();
         if aa {
             let rule = &self.rules[0];
+            let matcher = corpus.fresh_matcher(rule.pair);
             let mut after = 0;
             for coordinate in rule.candidate.positions.iter() {
                 let p = corpus.resident(coordinate);
                 if p >= after
-                    && let Some(matched) = corpus.matched(p, rule.pair)
+                    && let Some(matched) = matcher(p, corpus.token(p))
                 {
                     starts.push(coordinate);
                     after = matched.after;
@@ -244,10 +245,11 @@ impl Batch {
                     directories.reset(corpus.id_count());
                     let mut neighbors = Neighbors::new(rule, rank, directories);
                     let mut writes = Writes::fresh(rule, corpus);
+                    let matcher = corpus.fresh_matcher(rule.pair);
                     let mut weights = None;
                     for coordinate in positions.iter() {
                         let p = corpus.resident(coordinate);
-                        let Some(matched) = corpus.matched(p, rule.pair) else {
+                        let Some(matched) = matcher(p, corpus.token(p)) else {
                             continue;
                         };
                         let (weight, end) = match weights {

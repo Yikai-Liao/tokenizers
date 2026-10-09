@@ -1,0 +1,100 @@
+[
+  {
+    "arm": "B",
+    "label": "geometry",
+    "case": "en-core-w4-v50000",
+    "block": 1,
+    "warmup": false,
+    "returncode": 0,
+    "subprocess_wall": 3.0316655630012974,
+    "max_swap_kib": 0,
+    "min_available_kib": 5433340,
+    "binary_sha256": "67071d626ea5f33badaef214686698505f708b1b0c11a65c25582b9fd83ead7b",
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/root/code/tokenizers-simplification-results/bin/geometry",
+      "/root/code/tokenizers-simplification-results/runs/geometry/en-core-w4-v50000/b1-B/job.json"
+    ],
+    "attempt_id": "b1-B",
+    "build_id": "B",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-bytelevel",
+    "metrics": {
+      "load_seconds": 0.482515379,
+      "process_hwm_kib_before_validation": 287624,
+      "train_cpu_seconds": 6.570189,
+      "train_seconds": 2.4167335
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/root/code/tokenizers-simplification-results/runs/geometry/en-core-w4-v50000/b1-B/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+    "model_vocab_entries": 50000,
+    "model_merges": 49744,
+    "valid": true
+  },
+  {
+    "arm": "B",
+    "label": "geometry",
+    "case": "zh-core-w4-v50000",
+    "block": 1,
+    "warmup": false,
+    "returncode": 0,
+    "subprocess_wall": 53.13377301499713,
+    "max_swap_kib": 0,
+    "min_available_kib": 2574720,
+    "binary_sha256": "67071d626ea5f33badaef214686698505f708b1b0c11a65c25582b9fd83ead7b",
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/root/code/tokenizers-simplification-results/bin/geometry",
+      "/root/code/tokenizers-simplification-results/runs/geometry/zh-core-w4-v50000/b1-B/job.json"
+    ],
+    "attempt_id": "b1-B",
+    "build_id": "B",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-bytelevel",
+    "metrics": {
+      "load_seconds": 10.127418768,
+      "process_hwm_kib_before_validation": 3244260,
+      "train_cpu_seconds": 119.01923000000001,
+      "train_seconds": 38.386014728
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/root/code/tokenizers-simplification-results/runs/geometry/zh-core-w4-v50000/b1-B/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "model_vocab_entries": 50000,
+    "model_merges": 49744,
+    "valid": true
+  }
+]

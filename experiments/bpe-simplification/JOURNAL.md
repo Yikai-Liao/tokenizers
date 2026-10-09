@@ -168,3 +168,13 @@ u32仅用于每侧unique-ID目录entry index，U64位置保持不变。
 reuse unordered不可删排序；fresh有序串接依赖唯一producer与indexed collect顺序。
 建议分别测fresh固定几何缓存、head-read ring、小域dense计数消融，再筛少量竞争组合。
 未发现确定数值/U64/并发缺陷；这不是复测或性能保证。下一轮之后安排review #2。
+
+## 7. main固定PairMatcher几何的窄缓存，待最终筛选
+
+生产1703行（+22），测试1385行，library tests35 passed。
+英文2.417 s / CPU6.57 s，中文38.386 s / CPU119.02 s；RSS0.274/3.094 GiB。
+完整模型及全部merges相同，child swap=0。
+相对map_init中文wall低3.8%、CPU低3.6%，英文略慢，仍接近噪声区间。
+以Corpus::fresh_matcher窄闭包缓存left/total，reuse occurrence matched路径不变。
+暂存以便独立检查，不能据此认定新增22行已获得确定性能收益。
+下一轮单独加入16项安全head-read ring，比硬件unsafe prefetch更易维持原phase边界。

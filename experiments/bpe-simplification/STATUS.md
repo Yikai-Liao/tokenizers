@@ -15,4 +15,13 @@ The small ablations in PLAN.md alone cannot meet the hard size cap. The implemen
 
 Artifacts: `/root/code/tokenizers-simplification-results/`. Source and binary hashes, input hashes, machine and compiler settings are recorded in `manifest.json`. Removed rebuildable caches and sizes are in `cleanup.json`. Benchmarking starts only after builds stop. This machine is a 6-vCPU KVM guest, not the plan's fixed-frequency laptop.
 
-Status: 1456 production / 1384 test logic lines; default and no-default library tests pass (35 each), Clippy with warnings denied passes. Four first-run complete models equal main. The archive has a large measured regression and is not the final recommended performance choice. See REPORT.md and evidence/.
+Status: the pinned 1456-line archive passes default/no-default tests and Clippy but
+has a large performance regression. The current working branch has measured
+weight regions, compact write geometry, streamed fresh births, deferred corpus
+materialization and task-local directories. The last measured candidate is 1681
+production / 1385 test lines, with 35 library tests and complete models matching
+main. Fixed fresh-geometry caching is under measurement at 1703 lines.
+[JOURNAL.md](JOURNAL.md) records each commit, source budget and sample; [REVIEW-1.md](REVIEW-1.md)
+records the independent simplification/design audit. Final combination selection
+and neighboring baseline/candidate repeats remain pending. No global optimum or
+speedup over PR #2501's other implementations is claimed.

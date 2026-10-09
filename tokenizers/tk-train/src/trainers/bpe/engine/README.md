@@ -5,8 +5,9 @@ and special tokens. It preserves weighted pair selection and compatible batch
 execution while using one endpoint/event protocol.
 
 The public entry points remain in [the trainer](../mod.rs). Read [mod.rs](mod.rs)
-for the complete workflow: initialize identities and corpus, build the occurrence
-index, select a compatible batch, prepare against a stable snapshot, apply its
+for the complete workflow: initialize identities and a borrowed corpus plan,
+build the compressed occurrence index, materialize endpoints, select a compatible
+batch, prepare against a stable snapshot, apply its
 writes, commit counts and births, then publish the model. Each parallel phase
 joins before the next stage begins. An active identity collision restarts from
 original input and the retained alphabet; speculative merges are discarded.

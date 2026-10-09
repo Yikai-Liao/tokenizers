@@ -33,6 +33,19 @@ public thread/parallelism settings remain outside the engine. Training creates
 one requested-size Rayon pool and installs all its stages there, independently
 of any ambient pool used by feed.
 
+## Construction and task-local aggregation
+
+A borrowed CorpusPlan resolves original symbols and weighted word intervals.
+Initial counting directly builds compressed positions before allocating token
+slots. Materialization consumes the plan and releases thin input references.
+Fresh mode releases its per-word start directory; weights retain only adjacent
+equal-weight regions. Reuse keeps word starts for cohort scan domains.
+
+Preparation uses Rayon map_init directories scoped to each job. Each side maps
+neighbor IDs to u32 change-entry indices; touched slots are reset before reuse.
+These indices do not represent positions. There is no shared scratch lock or
+assumption relating Rayon worker indices to an external directory array.
+
 ## Fixed-coordinate corpus
 
 Words occupy disjoint original-symbol intervals separated by sentinel slots.
@@ -67,8 +80,11 @@ AA matches remain parallel; the selection itself is serial.
 Fresh owners hold one count and one list per retained pair. Taking a candidate
 removes that state. Old-boundary removal events decrease existing states and
 retire counts below the floor. Each new pair belongs to one producer rule;
-partial jobs aggregate before pruning and publication. Local lists are contiguous,
-then sorted and delta encoded into one owned position stream. No adaptive birth
+partial jobs aggregate before pruning and publication. Fresh local lists are
+delta encoded during preparation and streamed to each owner in indexed task
+order. Each key has one producer, so this preserves spatial order without another
+sort. Reuse births can interleave; their full-u64 coordinates are sorted before
+encoding. No adaptive birth
 feedback, linked-node promotion, arena lease or direct-versus-buffered protocol
 is needed.
 
