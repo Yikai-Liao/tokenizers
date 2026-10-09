@@ -112,3 +112,29 @@ main 来源：`corpus/mod.rs::WordWeightCursor`、`corpus/prepare.rs` 的权重�
 不是恢复 arena 或多种 posting 协议。U64 边界、重复位置和跨重启测试继续通过。
 
 下一轮提取 main `CorpusPlan` 的延迟 materialization，暂不恢复分阶段重叠或 wave 协议。
+
+## 4. 延迟 materialization / 小域计数，保留
+
+生产 1656 行（+80），测试 1385 行；library tests 35 passed。
+`bin/deferred-dense`、源 hash、inputs 和原始 samples 保留。
+每语种一次纯训练，完整模型和 ordered merges 等于 main，child swap=0。
+
+| 语种 | 上轮 1576 行 | 本轮 1656 行 | 上轮 RSS GiB | 本轮 RSS GiB |
+|---|---:|---:|---:|---:|
+| 英文 | 2.242 s | 2.323 s | 0.264 | 0.275 |
+| 中文 | 40.223 s | 41.655 s | 3.312 | 2.998 |
+
+中文峰值减少约 322 MiB（9.5%）。wall/CPU 波动幅度不支持声称加速；以降低内存为保留理由。
+英文的十余 MiB 差距包含 map load 的峰值波动，单样本不作精确 RSS 推断。
+
+提取 main `CorpusPlan`：有借用的 plan 先构造压缩初始索引，再消费 plan 分配 token plane，
+释放薄 word 引用。fresh 不再保留 word starts；权重只保留连续区间，不保存每词权重。
+零 merge 仍先验证初始 pair/count，随后跳过 token plane 分配。
+首次测试发现零 merge 少发 `Compute merges` 进度，已补最终空 stage；失败日志保留在原始目录，
+复测 35 passed 才进行性能测量。
+
+提取 main bounded collector 的小 ID 域计数原则：初始 ID 域最多 256 时用直接表，
+更大域继续完整 pair key hashmap。所有位置始终 U64；没有恢复 radix/wave/compact record 协议。
+此实现未覆盖“少量活跃 ID 位于很大实际 ID 域”的 dense 特化，合法输入仍有通用路径。
+
+下一轮提取 main `Execution` / `IdDirectory` 的 worker scratch 复用，减少重复哈希分配和释放。

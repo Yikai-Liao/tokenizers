@@ -480,7 +480,7 @@ impl Source<'_> {
 
 #[cfg(test)]
 mod tests {
-    use super::super::WordCountsView;
+    use super::super::{CorpusPlan, WordCountsView};
     use super::*;
     use crate::progress::TrainingProgress;
     use compact_str::CompactString;
@@ -497,8 +497,9 @@ mod tests {
         let view = WordCountsView::from_map(&words);
         let mut vocabulary =
             Vocabulary::initialize(&trainer, view, 4, &progress, &mut None).unwrap();
-        let mut corpus = Corpus::build(view, &mut vocabulary, &trainer, false, &progress).unwrap();
-        let mut index = PairIndex::build(&corpus, 1, 4, false, &progress).unwrap();
+        let plan = CorpusPlan::build(view, &mut vocabulary, &trainer, false, &progress).unwrap();
+        let mut index = PairIndex::build(&plan, 1, 4, false, &progress).unwrap();
+        let mut corpus = plan.materialize(&progress);
         let batch = Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index)
             .unwrap()
             .unwrap();

@@ -7,7 +7,7 @@ mod vocabulary;
 
 use super::{BpeTrainer, word_counts::WordCountsView};
 use crate::progress::TrainingProgress;
-use corpus::Corpus;
+use corpus::{Corpus, CorpusPlan};
 use index::PairIndex;
 use merge::Batch;
 #[cfg(test)]
@@ -40,9 +40,15 @@ pub(super) fn train(
         loop {
             let mut vocabulary =
                 Vocabulary::initialize(trainer, words, workers, &progress, &mut alphabet)?;
-            let mut corpus = Corpus::build(words, &mut vocabulary, trainer, reuse, &progress)?;
+            let plan = CorpusPlan::build(words, &mut vocabulary, trainer, reuse, &progress)?;
             let mut index =
-                PairIndex::build(&corpus, trainer.min_frequency, workers, reuse, &progress)?;
+                PairIndex::build(&plan, trainer.min_frequency, workers, reuse, &progress)?;
+            if vocabulary.len() >= trainer.vocab_size {
+                progress.stage("Compute merges", trainer.vocab_size);
+                let (vocab, merges) = vocabulary.into_model_parts(Vec::new());
+                return Ok((vocab, merges, trainer.special_tokens.clone()));
+            }
+            let mut corpus = plan.materialize(&progress);
             let work = progress.stage("Compute merges", trainer.vocab_size);
             let mut merges = Vec::new();
             #[cfg(test)]

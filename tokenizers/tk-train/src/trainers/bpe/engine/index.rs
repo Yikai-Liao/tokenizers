@@ -1,6 +1,6 @@
 //! Count owners publish complete lists; the queue repairs stale snapshots lazily.
 use super::merge::Change;
-use super::{Corpus, WORD_SEPARATOR_ID, positions::Positions};
+use super::{CorpusPlan, WORD_SEPARATOR_ID, positions::Positions};
 use crate::progress::TrainingProgress;
 use ahash::AHashMap;
 use dary_heap::OctonaryHeap;
@@ -79,7 +79,7 @@ fn add(count: &mut u64, amount: u64) -> Result<()> {
 }
 impl PairIndex {
     pub(super) fn build(
-        corpus: &Corpus,
+        corpus: &CorpusPlan<'_>,
         minimum: u64,
         workers: usize,
         reuse: bool,
@@ -95,18 +95,33 @@ impl PairIndex {
             .collect::<Vec<_>>()
             .into_par_iter()
             .map(|begin| -> Result<_> {
+                let domain = corpus.small_pair_domain();
+                let mut dense: Vec<State> = (0..domain.map_or(0, |n| n * n))
+                    .map(|_| State::default())
+                    .collect();
                 let mut counts = AHashMap::<Pair, State>::new();
-                for word in begin..(begin + chunk).min(corpus.word_count()) {
-                    for p in corpus.word_start(word)..corpus.word_end(word).saturating_sub(1) {
-                        let pair = (corpus.token(p), corpus.token(p + 1));
+                corpus.initial_edges(
+                    begin..(begin + chunk).min(corpus.word_count()),
+                    |pair, p, weight| {
                         debug_assert!(pair.0 != WORD_SEPARATOR_ID && pair.1 != WORD_SEPARATOR_ID);
-                        let state = counts.entry(pair).or_default();
-                        add(&mut state.count, corpus.word_weight(word))?;
-                        state.positions.push(p as u64)?;
-                    }
-                }
+                        let state = match domain {
+                            Some(n) => &mut dense[pair.0 as usize * n + pair.1 as usize],
+                            None => counts.entry(pair).or_default(),
+                        };
+                        add(&mut state.count, weight)?;
+                        state.positions.push(p)
+                    },
+                )?;
                 work.complete(chunk.min(corpus.word_count() - begin));
-                Ok(counts)
+                Ok(match domain {
+                    Some(n) => dense
+                        .into_iter()
+                        .enumerate()
+                        .filter(|(_, s)| !s.positions.is_empty())
+                        .map(|(key, state)| (((key / n) as u32, (key % n) as u32), state))
+                        .collect::<Vec<_>>(),
+                    None => counts.into_iter().collect(),
+                })
             })
             .collect::<Result<Vec<_>>>()?;
         let mut routed: Vec<Vec<_>> = (0..workers).map(|_| Vec::new()).collect();

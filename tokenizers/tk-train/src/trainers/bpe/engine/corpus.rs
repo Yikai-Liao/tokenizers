@@ -1,6 +1,9 @@
 //! Endpoint tokens retain their original coordinates; span metadata skips holes.
-use super::{BpeTrainer, Vocabulary, WORD_SEPARATOR_ID, WordCountsView};
+use super::{
+    BpeTrainer, Vocabulary, WORD_SEPARATOR_ID, WordCountsView, vocabulary::InitialTokenIds,
+};
 use crate::progress::TrainingProgress;
+use compact_str::CompactString;
 use rayon::prelude::*;
 use std::{
     ops::ControlFlow,
@@ -11,7 +14,6 @@ use tk_encode::{Result, models::bpe::Pair};
 pub(super) struct Corpus {
     tokens: Slots,
     starts: Vec<usize>,
-    weights: Vec<u64>,
     weight_regions: Vec<(usize, u64)>,
     unit_region: Option<(usize, usize)>,
     spans: Vec<usize>,
@@ -29,9 +31,17 @@ impl Match {
         self.after - self.start
     }
 }
-impl Corpus {
+pub(super) struct CorpusPlan<'input> {
+    corpus: Corpus,
+    words: Vec<(&'input CompactString, &'input u64)>,
+    ids: InitialTokenIds,
+    length: usize,
+    slot_bound: usize,
+    reuse: bool,
+}
+impl<'input> CorpusPlan<'input> {
     pub(super) fn build(
-        words: WordCountsView<'_>,
+        words: WordCountsView<'input>,
         vocabulary: &mut Vocabulary,
         trainer: &BpeTrainer,
         reuse: bool,
@@ -46,16 +56,17 @@ impl Corpus {
             .map(|(word, _)| ids.symbol_count(word))
             .collect();
         let mut starts = Vec::with_capacity(words.len());
-        let mut weights = Vec::with_capacity(words.len());
         let mut weight_regions = Vec::new();
         let mut length = 1usize;
         let mut mass = 0u128;
         for (&(_, &weight), &symbols) in words.iter().zip(&measured) {
             starts.push(length);
-            if weights.last() != Some(&weight) {
+            if weight_regions
+                .last()
+                .is_none_or(|&(_, previous)| previous != weight)
+            {
                 weight_regions.push((length, weight));
             }
-            weights.push(weight);
             length = length
                 .checked_add(symbols)
                 .and_then(|n| n.checked_add(1))
@@ -66,26 +77,11 @@ impl Corpus {
             return Err("BPE corpus exceeds resident allocation bounds".into());
         }
         if (reuse || !ids.plain())
-            && (mass > i64::MAX as u128 || weights.iter().any(|&w| w > i64::MAX as u64))
+            && (mass > i64::MAX as u128
+                || words.iter().any(|(_, weight)| **weight > i64::MAX as u64))
         {
             return Err("BPE identity-reuse weighted edge mass or word weight exceeds i64".into());
         }
-        let tokens = Slots::new(length, vocabulary.len().max(trainer.vocab_size));
-        let work = progress.stage("Materialize corpus", length);
-        words
-            .par_iter()
-            .enumerate()
-            .for_each(|(word_index, (word, _))| {
-                #[cfg(test)]
-                super::tests::observe_worker();
-                let mut position = starts[word_index];
-                ids.scan_symbols(word, 0, |id| {
-                    tokens.set(position, id);
-                    position += 1;
-                    ControlFlow::Continue(())
-                });
-                work.complete(measured[word_index] + 1);
-            });
         let unit_region = weight_regions
             .iter()
             .position(|&(_, weight)| weight == 1)
@@ -95,21 +91,88 @@ impl Corpus {
                     weight_regions.get(i + 1).map_or(length, |r| r.0),
                 )
             });
+        let slot_bound = vocabulary.len().max(trainer.vocab_size);
         Ok(Self {
-            tokens,
-            starts,
-            weights,
-            weight_regions,
-            unit_region,
-            spans: vocabulary
-                .initial_spans()
-                .into_iter()
-                .map(|n| n as usize)
-                .collect(),
-            occurrence_spans: None,
-            whole_words: trainer.max_token_length.is_some(),
+            corpus: Corpus {
+                tokens: Slots::new(0, slot_bound),
+                starts,
+                weight_regions,
+                unit_region,
+                spans: vocabulary
+                    .initial_spans()
+                    .into_iter()
+                    .map(|n| n as usize)
+                    .collect(),
+                occurrence_spans: None,
+                whole_words: trainer.max_token_length.is_some(),
+            },
+            words,
+            ids,
+            length,
+            slot_bound,
+            reuse,
         })
     }
+    pub(super) fn word_count(&self) -> usize {
+        self.words.len()
+    }
+    pub(super) fn small_pair_domain(&self) -> Option<usize> {
+        (self.corpus.spans.len() <= 256).then_some(self.corpus.spans.len())
+    }
+    pub(super) fn initial_edges(
+        &self,
+        range: std::ops::Range<usize>,
+        mut emit: impl FnMut(Pair, u64, u64) -> Result<()>,
+    ) -> Result<()> {
+        for word in range {
+            let (text, &weight) = self.words[word];
+            let mut position = self.corpus.starts[word];
+            let mut previous = None;
+            let mut failure = None;
+            self.ids.scan_symbols(text, 0, |id| {
+                if let Some(left) = previous
+                    && let Err(error) = emit((left, id), (position - 1) as u64, weight)
+                {
+                    failure = Some(error);
+                    return ControlFlow::Break(());
+                }
+                previous = Some(id);
+                position += 1;
+                ControlFlow::Continue(())
+            });
+            if let Some(error) = failure {
+                return Err(error);
+            }
+        }
+        Ok(())
+    }
+    pub(super) fn materialize(mut self, progress: &TrainingProgress) -> Corpus {
+        let tokens = Slots::new(self.length, self.slot_bound);
+        let work = progress.stage("Materialize corpus", self.length);
+        self.words
+            .par_iter()
+            .enumerate()
+            .for_each(|(word, (text, _))| {
+                #[cfg(test)]
+                super::tests::observe_worker();
+                let start = self.corpus.starts[word];
+                let mut position = start;
+                self.ids.scan_symbols(text, 0, |id| {
+                    tokens.set(position, id);
+                    position += 1;
+                    ControlFlow::Continue(())
+                });
+                work.complete(position - start + 1);
+            });
+        self.corpus.tokens = tokens;
+        // Only historical reuse cohorts need a word directory after counting.
+        if !self.reuse {
+            self.corpus.starts = Vec::new();
+        }
+        self.corpus
+    }
+}
+impl Corpus {
     pub(super) fn len(&self) -> usize {
         self.tokens.len()
     }
@@ -154,11 +217,8 @@ impl Corpus {
     pub(super) fn word_end(&self, word: usize) -> usize {
         self.starts.get(word + 1).copied().unwrap_or(self.len()) - 1
     }
-    pub(super) fn word_count(&self) -> usize {
-        self.starts.len()
-    }
     pub(super) fn word_weight(&self, word: usize) -> u64 {
-        self.weights[word]
+        self.weight_region(self.word_start(word)).0
     }
     #[inline]
     pub(super) fn span(&self, position: usize) -> usize {
