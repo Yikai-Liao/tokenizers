@@ -33,3 +33,12 @@ SELECT name, COUNT(*) AS slices, ROUND(SUM(dur)/1e6,6) AS wall_ms
 FROM slice GROUP BY name ORDER BY name;
 SELECT name, severity, value FROM stats WHERE value > 0 AND severity IN ('error', 'data_loss');
 SELECT COUNT(*) AS incomplete_slices FROM slice WHERE dur < 0;
+
+-- Non-overlapping task components give CPU time per actual unit of work.
+CREATE PERFETTO TABLE bpe_components AS
+SELECT s.id AS component_id, s.ts, s.dur, tt.utid, s.name
+FROM slice s JOIN thread_track tt ON s.track_id=tt.id
+WHERE s.name IN ('prepare.scan','prepare.finish','commit.counts','commit.completed','commit.encode_publish','commit.aggregate','commit.group','commit.prefix');
+CREATE VIRTUAL TABLE component_cpu USING SPAN_JOIN(bpe_components PARTITIONED utid, bpe_sched PARTITIONED utid);
+SELECT name, ROUND(SUM(dur)/1e6,6) AS component_cpu_ms
+FROM component_cpu GROUP BY name ORDER BY name;

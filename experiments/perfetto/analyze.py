@@ -43,16 +43,17 @@ def analyze_run(run):
  for round_id,names in byround.items():
   if not names.get('round'):continue
   r=names['round'][0]
-  for phase,jobs in [('prepare','prepare.job'),('commit','commit.owner')]:
-   if len(names[phase])!=1:continue
+  for phase,jobs in [('prepare','prepare.job'),('commit','commit.owner'),('apply','apply.job')]:
+   if len(names[phase])!=1 or (phase=='apply' and not names[jobs]):continue
    if phase=='prepare' and names.get('prepare.aa'):
     excluded['aa_rounds']+=1;excluded['aa_duration_ns']+=names[phase][0]['dur'];continue
    row=dict(round=round_id,phase=phase,workers=workers,vocab_before=r['fields'][0],rules=r['fields'][1],raw_positions=r['fields'][2],**parallel_metrics(names[phase][0],names[jobs],workers))
    rows.append(row)
- summary=dict(case=result['case'],workers=workers,arm=result['arm'],rep=result['rep'],pid=pid,threads=len(buffers),slices=len(events),train_seconds=result['metrics']['train_seconds'],trace_training_seconds=training['dur']/1e9,rounds=len(byname['round']),aa=dict(excluded),stages={n:dict(count=len(v),sum_seconds=sum(x['dur'] for x in v)/1e9) for n,v in byname.items() if n in ['select','prepare','apply','commit','release_candidates','release_events','initial_index','materialize','prepare.aa']},subphases={n:dict(count=len(v),sum_seconds=sum(x['dur'] for x in v)/1e9) for n,v in byname.items() if n.startswith(('prepare.','commit.'))})
+ summary=dict(case=result['case'],workers=workers,arm=result['arm'],rep=result['rep'],pid=pid,threads=len(buffers),slices=len(events),train_seconds=result['metrics']['train_seconds'],trace_training_seconds=training['dur']/1e9,rounds=len(byname['round']),aa=dict(excluded),stages={n:dict(count=len(v),sum_seconds=sum(x['dur'] for x in v)/1e9) for n,v in byname.items() if n in ['select','prepare','apply','commit','release_candidates','release_events','initial_index','materialize','prepare.aa','vocabulary','corpus_plan','cleanup','output_model']},subphases={n:dict(count=len(v),sum_seconds=sum(x['dur'] for x in v)/1e9) for n,v in byname.items() if n.startswith(('prepare.','commit.','apply.'))})
  # Scope coverage must agree with true timed call; pool worker count must be complete.
  assert abs(summary['train_seconds']-summary['trace_training_seconds'])<.05
- for phase in ['prepare','commit']:
+ for phase in ['prepare','commit','apply']:
+  if phase=='apply' and not byname['apply.job']:continue
   pr=[r for r in rows if r['phase']==phase]
   s=aggregate(pr);ntrim=math.ceil(len(pr)*.01)
   byloss=sorted(pr,key=lambda r:r['capacity_ns']-r['busy_ns'],reverse=True)
