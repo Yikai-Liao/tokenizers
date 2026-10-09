@@ -79,7 +79,7 @@ def main():
     parser.add_argument('--root', type=Path, default=Path(__file__).resolve().parents[2])
     parser.add_argument('--output', type=Path)
     parser.add_argument('--max-production', type=int, default=2100)
-    parser.add_argument('--max-tests', type=int, default=600)
+    parser.add_argument('--max-tests', type=int, default=800)
     args = parser.parse_args()
     root = args.root / 'tokenizers/tk-train'
     subprocess.run(['/root/.cargo/bin/cargo', 'fmt', '--manifest-path', str(root / 'Cargo.toml'), '--check'], check=True)
@@ -99,12 +99,13 @@ def main():
     for filename in ['reference.rs']:
         path = bpe / filename
         tests[filename + ' [oracle and shared helpers]'] = sum(bool(line.strip()) for line in strip_comments(path.read_text()).splitlines())
-    _, public_tests = separate_test_items((bpe / 'mod.rs').read_text())
-    tests['mod.rs [cfg(test) public API]'] = public_tests
+    for filename in ['mod.rs', 'feed.rs', 'word_counts.rs']:
+        _, public_tests = separate_test_items((bpe / filename).read_text())
+        tests[filename + ' [cfg(test) public API/helpers]'] = public_tests
     for path in sorted((args.root / 'experiments/bpe-simplification/miri-codec/src').glob('*.rs')):
         tests[str(path.relative_to(args.root)) + ' [Miri harness]'] = sum(bool(line.strip()) for line in strip_comments(path.read_text()).splitlines())
     report = dict(production=production, tests=tests, production_total=sum(production.values()), test_total=sum(tests.values()),
-                  counting_rule='Nonblank noncomment lines after cargo fmt --check; all engine implementation; engine/public API cfg(test), independent reference and Miri harness. The oracle no longer uses the optional parity trainer Word. No implementation relocated outside engine.')
+                  counting_rule='Nonblank noncomment lines after cargo fmt --check; all engine implementation; all default BPE cfg(test) including feed/word_counts, independent reference and Miri harness. The oracle no longer uses the optional parity trainer Word. No implementation relocated outside engine.')
     report['production_limit'] = args.max_production
     report['test_limit'] = args.max_tests
     report['within_budget'] = report['production_total'] <= args.max_production and report['test_total'] <= args.max_tests

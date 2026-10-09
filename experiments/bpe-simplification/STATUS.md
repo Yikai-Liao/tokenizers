@@ -1,15 +1,18 @@
 # Review iteration after the measured delivery
 
-Current review snapshot: 2100 formatted production logic lines and 600 test logic
-lines, including the independent reference, public hooks and Miri harness. The
-production limit is 2100; the test target is 500 and accepted ceiling is 600.
+Current review snapshot: 2100 formatted production logic lines and 766 test logic
+lines, including all default BPE tests, the independent reference, public hooks
+and Miri harness. The
+production limit is 2100; the accepted test ceiling is 800.
 Selection states, event routing, corpus construction and trusted codec inputs
 have been tightened. Tests are consolidated around full-model/per-rule parity,
 public integration and shared immutable storage; see the engine coverage map.
 
 Default and no-default native tests, doctests, Clippy with denied warnings, fmt,
-budget and strict Miri passed for this review round. Independent structural and
-test review follows. Performance of these new changes has not yet been measured;
+budget and strict Miri passed for this review round. The first fresh structural review found no material issue. Its independent test
+review found undercounted feed/word-count tests and omitted public/codec boundaries.
+The next round fixes the scope and consolidates those contracts; another fresh
+structural/test review follows. Performance of these new changes has not yet been measured;
 the results below belong to the earlier measured source.
 
 ## Earlier measured delivery: <25s core

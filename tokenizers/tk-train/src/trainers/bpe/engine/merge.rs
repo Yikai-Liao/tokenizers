@@ -312,7 +312,7 @@ impl<'arena> Batch<'arena> {
                 Directories::default,
                 |directories, (rank, rule, positions)| -> Result<_> {
                     #[cfg(test)]
-                    super::tests::observe_worker();
+                    super::tests::observe_worker(super::tests::Phase::FreshPrepare);
                     directories.reset(corpus.id_count());
                     let mut neighbors =
                         Neighbors::new(rule, rank, directories, positions.complete());
@@ -408,7 +408,7 @@ impl<'arena> Batch<'arena> {
             .par_chunks(chunk)
             .map_init(Directories::default, |directories, words| -> Result<_> {
                 #[cfg(test)]
-                super::tests::observe_worker();
+                super::tests::observe_worker(super::tests::Phase::ReusePrepare);
                 directories.reset(corpus.id_count());
                 let mut neighbors = Neighbors::new(rule, 0, directories, false);
                 let mut writes = Writes::Occurrences {

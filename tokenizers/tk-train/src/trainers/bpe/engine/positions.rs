@@ -398,6 +398,9 @@ mod tests {
             .map(|length| {
                 let mut values: Vec<_> =
                     (0..length).map(|i| boundary[i % boundary.len()]).collect();
+                if length == 3 {
+                    values = vec![0, u64::MAX, u64::MAX];
+                }
                 values.sort_unstable();
                 let mut builder = Builder::default();
                 for chunk in values.chunks(17) {
@@ -417,7 +420,10 @@ mod tests {
                 {
                     assert!(positions.from(index).eq(values[index..].iter().copied()));
                 }
-                for target in boundary {
+                for target in boundary
+                    .into_iter()
+                    .flat_map(|p| [p.saturating_sub(1), p, p.saturating_add(1)])
+                {
                     assert_eq!(
                         positions.lower_bound(target),
                         values.partition_point(|&p| p < target)

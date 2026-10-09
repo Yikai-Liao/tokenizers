@@ -155,7 +155,7 @@ impl<'input> CorpusPlan<'input> {
             .enumerate()
             .for_each(|(word, (text, _))| {
                 #[cfg(test)]
-                super::tests::observe_worker();
+                super::tests::observe_worker(super::tests::Phase::Materialize);
                 let start = self.starts[word];
                 let mut position = start;
                 self.ids.scan_symbols(text, |id| {

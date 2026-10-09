@@ -2,6 +2,7 @@
 //! It shares alphabet selection, but no engine index, codec, matching or batch code.
 use super::*;
 use dary_heap::OctonaryHeap;
+use indexmap::IndexSet;
 use std::cmp::{Ordering, Reverse};
 
 struct Merge {
@@ -29,14 +30,6 @@ impl PartialEq for Merge {
 }
 
 impl Eq for Merge {}
-
-fn intern(text: String, ids: &mut AHashMap<String, u32>, tokens: &mut Vec<String>) -> u32 {
-    let next = tokens.len() as u32;
-    *ids.entry(text.clone()).or_insert_with(|| {
-        tokens.push(text);
-        next
-    })
-}
 
 // Literal left-to-right edits preserve intermediate removals and births. Net
 // recounting would lose alias cohorts and the strict neighbor-length birth gate.
@@ -72,13 +65,12 @@ impl BpeTrainer {
         counts: &AHashMap<CompactString, u64>,
         mut observe: impl FnMut(Pair, u64, u32),
     ) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
-        let mut ids = AHashMap::new();
-        let mut tokens = Vec::new();
+        let mut tokens = IndexSet::new();
         for token in &self.special_tokens {
-            intern(token.content.clone(), &mut ids, &mut tokens);
+            tokens.insert(token.content.clone());
         }
         for character in self.select_alphabet(WordCountsView::from_map(counts)) {
-            intern(character.to_string(), &mut ids, &mut tokens);
+            tokens.insert(character.to_string());
         }
         let mut weights = Vec::new();
         let mut words = Vec::new();
@@ -87,7 +79,7 @@ impl BpeTrainer {
             let length = text.chars().count();
             for (i, character) in text.chars().enumerate() {
                 let mut token = character.to_string();
-                if !ids.contains_key(&token) {
+                if !tokens.contains(&token) {
                     continue;
                 }
                 if i != 0
@@ -100,7 +92,7 @@ impl BpeTrainer {
                 {
                     token.push_str(suffix);
                 }
-                word.push((intern(token, &mut ids, &mut tokens), 1));
+                word.push((tokens.insert_full(token).0 as u32, 1));
             }
             words.push(word);
             weights.push(i64::try_from(weight).expect("oracle fixtures use small weights"));
@@ -126,7 +118,7 @@ impl BpeTrainer {
                     });
                 }
             }
-            if ids.len() >= self.vocab_size {
+            if tokens.len() >= self.vocab_size {
                 break;
             }
             let Some(mut top) = queue.pop() else { break };
@@ -143,7 +135,7 @@ impl BpeTrainer {
                 right = right.strip_prefix(prefix).unwrap_or(right);
             }
             let token = format!("{}{right}", tokens[top.pair.0 as usize]);
-            let id = intern(token, &mut ids, &mut tokens);
+            let id = tokens.insert_full(token).0 as u32;
             merges.push((
                 tokens[top.pair.0 as usize].clone(),
                 tokens[top.pair.1 as usize].clone(),
@@ -163,6 +155,11 @@ impl BpeTrainer {
                 }
             }
         }
-        Ok((ids, merges, self.special_tokens.clone()))
+        let vocab = tokens
+            .into_iter()
+            .enumerate()
+            .map(|(id, token)| (token, id as u32))
+            .collect();
+        Ok((vocab, merges, self.special_tokens.clone()))
     }
 }

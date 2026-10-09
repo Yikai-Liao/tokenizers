@@ -59,7 +59,8 @@ Public tests cover feed, model reload, progress and ambient-versus-training pool
 behavior. [The coverage map](tests/COVERAGE.md) records the combined boundaries.
 
 The 2100-line production budget covers all engine implementation, including any
-logic moved outside this directory. Test-only code, the reference oracle and shared
-test helpers have a separate 600-line limit, with 500 lines as the target.
+logic moved outside this directory. All default BPE test-only code, the reference oracle, shared helpers and Miri
+harness have a separate 800-line limit; redundant checks are combined before
+using that allowance.
 Removing comments does not reduce either count. Performance evidence and
 build/input hashes are recorded by the [experiment](../../../../../../experiments/bpe-simplification/STATUS.md).
