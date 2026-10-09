@@ -76,6 +76,27 @@
       "sha256": "793c4f448356cf1c63b1f4a8a7c49e3c873ab59ba82dfbfb9bdabfb5aae5a09b",
       "cargo_lock_sha256": "fcf01b7de4367dc9b92cb3c7e1900a3ecffdb53be05c286a278a4a2228591909",
       "command": "PATH=/root/.cargo/bin:$PATH CARGO_TARGET_DIR=/root/code/tokenizers-simplification-results/target CARGO_INCREMENTAL=0 cargo build --release --offline --locked --manifest-path runner-candidate/Cargo.toml -j 2"
+    },
+    "weight-writes": {
+      "source_sha_base": "e4f787dc189d9be7192107490d652096cde7480e",
+      "engine_sources_sha256": {
+        "tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs": "8cef794c1edc869332bf70940e266ac48df14c8497a8356ba6a9e83848e6f24c",
+        "tokenizers/tk-train/src/trainers/bpe/engine/index.rs": "747132367e5f8a5453ddeeb02dd8f9bc7a41acc12f6b3608dcf96417adbd530d",
+        "tokenizers/tk-train/src/trainers/bpe/engine/merge.rs": "82e7fc2776e326a2d4e3a9802985399feb71f9d4361432320c0dd785aa013b26",
+        "tokenizers/tk-train/src/trainers/bpe/engine/mod.rs": "5f536874d034d94cb3c8457d9877a3f62d5608a7b1e6f31fa391b6c97aa7ce56",
+        "tokenizers/tk-train/src/trainers/bpe/engine/positions.rs": "c61eaadd3c3b2ec73d254e9208bc3ce8dfc5e7081ad936557b4e253606eca724",
+        "tokenizers/tk-train/src/trainers/bpe/engine/tests/generated.rs": "a5331fa3f584396327388b571f2872042bcc1205be9c1a2fc57a377fe1d15b75",
+        "tokenizers/tk-train/src/trainers/bpe/engine/tests/identity_reuse.rs": "79f43215e9f98a41b5c407671ed5b1327775b277ca07a47c83d265d7b0750ab8",
+        "tokenizers/tk-train/src/trainers/bpe/engine/tests/mod.rs": "24774a17bc72ca9ad82920ebf9c837e68f6d91df4780f0d8bdaa0796789c616c",
+        "tokenizers/tk-train/src/trainers/bpe/engine/tests/public_contract.rs": "0229bd3c3d71a81b4bfc9d8166711dbc983284d3748c4c1621db1abb29ca3e9a",
+        "tokenizers/tk-train/src/trainers/bpe/engine/tests/semantic_parity.rs": "b6f6062fe87e3843f126398964e95ab150f3ac45b14f9b7ae76e0e7b2336d905",
+        "tokenizers/tk-train/src/trainers/bpe/engine/vocabulary.rs": "b7dee2716d5cd0c89b95411ae26c6e453bd85b992e2277f66309ab3abe0c14d0"
+      },
+      "sha256": "be4d93ea2f73bb8ae5022905c6cede3132e6160f20cfac58c752951e955ddc13",
+      "cargo_lock_sha256": "fcf01b7de4367dc9b92cb3c7e1900a3ecffdb53be05c286a278a4a2228591909",
+      "command": "PATH=/root/.cargo/bin:$PATH CARGO_TARGET_DIR=/root/code/tokenizers-simplification-results/target CARGO_INCREMENTAL=0 cargo build --release --offline --locked --manifest-path runner-candidate/Cargo.toml -j 2",
+      "production_lines": 1558,
+      "description": "Extract main weight interval cursor and fixed-span compressed write plan"
     }
   },
   "scope": "All engine implementation modules, including logic moved outside engine or delegated through new helpers; tests and reusable reference separately counted.",

@@ -12,6 +12,8 @@ pub(super) struct Corpus {
     tokens: Slots,
     starts: Vec<usize>,
     weights: Vec<u64>,
+    weight_regions: Vec<(usize, u64)>,
+    unit_region: Option<(usize, usize)>,
     spans: Vec<usize>,
     occurrence_spans: Option<Vec<AtomicUsize>>,
     whole_words: bool,
@@ -45,10 +47,14 @@ impl Corpus {
             .collect();
         let mut starts = Vec::with_capacity(words.len());
         let mut weights = Vec::with_capacity(words.len());
+        let mut weight_regions = Vec::new();
         let mut length = 1usize;
         let mut mass = 0u128;
         for (&(_, &weight), &symbols) in words.iter().zip(&measured) {
             starts.push(length);
+            if weights.last() != Some(&weight) {
+                weight_regions.push((length, weight));
+            }
             weights.push(weight);
             length = length
                 .checked_add(symbols)
@@ -80,10 +86,21 @@ impl Corpus {
                 });
                 work.complete(measured[word_index] + 1);
             });
+        let unit_region = weight_regions
+            .iter()
+            .position(|&(_, weight)| weight == 1)
+            .map(|i| {
+                (
+                    weight_regions[i].0,
+                    weight_regions.get(i + 1).map_or(length, |r| r.0),
+                )
+            });
         Ok(Self {
             tokens,
             starts,
             weights,
+            weight_regions,
+            unit_region,
             spans: vocabulary
                 .initial_spans()
                 .into_iter()
@@ -108,6 +125,25 @@ impl Corpus {
     #[inline]
     pub(super) fn token(&self, position: usize) -> u32 {
         self.tokens.get(position)
+    }
+    pub(super) fn weight_region(&self, position: usize) -> (u64, usize) {
+        if self.weight_regions.len() == 1 {
+            return (self.weight_regions[0].1, self.len());
+        }
+        if let Some((begin, end)) = self.unit_region
+            && position >= begin
+            && position < end
+        {
+            return (1, end);
+        }
+        let i = self
+            .weight_regions
+            .partition_point(|&(start, _)| start <= position)
+            - 1;
+        (
+            self.weight_regions[i].1,
+            self.weight_regions.get(i + 1).map_or(self.len(), |r| r.0),
+        )
     }
     pub(super) fn word(&self, position: usize) -> usize {
         self.starts.partition_point(|&start| start <= position) - 1

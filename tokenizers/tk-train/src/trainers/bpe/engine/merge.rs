@@ -27,7 +27,7 @@ pub(super) struct Prepared {
     jobs: Vec<Job>,
 }
 struct Job {
-    writes: Vec<(Match, u32)>,
+    writes: Writes,
     changes: Vec<Change>,
 }
 struct Neighbors<'a> {
@@ -227,19 +227,18 @@ impl Batch {
             .into_par_iter()
             .map(|(rank, rule, positions)| -> Result<_> {
                 let mut neighbors = Neighbors::new(rule, rank);
-                let mut writes = Vec::new();
-                let mut word = None;
+                let mut writes = Writes::fresh(rule, corpus);
+                let mut weights = None;
                 for coordinate in positions.iter() {
                     let p = corpus.resident(coordinate);
                     let Some(matched) = corpus.matched(p, rule.pair) else {
                         continue;
                     };
-                    let iw = match word {
-                        Some((iw, end)) if p < end => iw,
-                        _ => corpus.word(p),
+                    let (weight, end) = match weights {
+                        Some((weight, end)) if p < end => (weight, end),
+                        _ => corpus.weight_region(p),
                     };
-                    word = Some((iw, corpus.word_end(iw) + 1));
-                    let weight = corpus.word_weight(iw);
+                    weights = Some((weight, end));
                     let prior = corpus.token(p - 1);
                     if prior != WORD_SEPARATOR_ID {
                         let span = corpus.id_span(prior);
@@ -283,7 +282,7 @@ impl Batch {
                             matched.span() + corpus.id_span(born) < limit,
                         )?;
                     }
-                    writes.push((matched, rule.replacement));
+                    writes.record(matched)?;
                 }
                 Ok(Job {
                     writes,
@@ -307,7 +306,10 @@ impl Batch {
             .par_chunks(chunk)
             .map(|words| -> Result<_> {
                 let mut neighbors = Neighbors::new(rule, 0);
-                let mut writes = Vec::new();
+                let mut writes = Writes::Occurrences {
+                    positions: Vec::new(),
+                    id: rule.replacement,
+                };
                 for &word in words {
                     let mut previous = None;
                     let mut p = corpus.word_start(word);
@@ -360,7 +362,7 @@ impl Batch {
                                 )?;
                             }
                             previous = Some((rule.replacement, p, matched.span()));
-                            writes.push((matched, rule.replacement));
+                            writes.record(matched)?;
                             p = matched.after;
                         } else {
                             let span = corpus.span(p);
@@ -383,15 +385,82 @@ impl Prepared {
         self.jobs
             .into_par_iter()
             .map(|job| {
-                for (matched, id) in job.writes {
-                    corpus.apply(matched, id);
-                }
+                job.writes.apply(corpus);
                 job.changes
             })
             .collect::<Vec<_>>()
             .into_iter()
             .flatten()
             .collect()
+    }
+}
+
+// Fresh identities have one span per ID, so their snapshot writes need only
+// sorted starts and one rule geometry. Alias reuse retains occurrence geometry.
+enum Writes {
+    Compact {
+        positions: Positions,
+        left: usize,
+        total: usize,
+        id: u32,
+    },
+    Occurrences {
+        positions: Vec<Match>,
+        id: u32,
+    },
+}
+impl Writes {
+    fn fresh(rule: &Rule, corpus: &Corpus) -> Self {
+        let left = corpus.id_span(rule.pair.0);
+        Self::Compact {
+            positions: Positions::default(),
+            left,
+            total: left + corpus.id_span(rule.pair.1),
+            id: rule.replacement,
+        }
+    }
+    fn record(&mut self, matched: Match) -> Result<()> {
+        match self {
+            Self::Compact {
+                positions,
+                left,
+                total,
+                ..
+            } => {
+                debug_assert_eq!(matched.right - matched.start, *left);
+                debug_assert_eq!(matched.span(), *total);
+                positions.push(matched.start as u64)?;
+            }
+            Self::Occurrences { positions, .. } => positions.push(matched),
+        }
+        Ok(())
+    }
+    fn apply(self, corpus: &Corpus) {
+        match self {
+            Self::Compact {
+                positions,
+                left,
+                total,
+                id,
+            } => {
+                for coordinate in positions.iter() {
+                    let start = corpus.resident(coordinate);
+                    corpus.apply(
+                        Match {
+                            start,
+                            right: start + left,
+                            after: start + total,
+                        },
+                        id,
+                    );
+                }
+            }
+            Self::Occurrences { positions, id } => {
+                for matched in positions {
+                    corpus.apply(matched, id);
+                }
+            }
+        }
     }
 }
 
