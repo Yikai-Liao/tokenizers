@@ -1,0 +1,297 @@
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/merge/mod.rs b/tokenizers/tk-train/src/trainers/bpe/engine/merge/mod.rs
+index 37307617..59566f59 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/merge/mod.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/merge/mod.rs
+@@ -13,6 +13,7 @@ pub(super) use prepare::{
+     prepare_merges_with_births,
+ };
+ use rayon::prelude::*;
++use super::phase_timing;
+ use tk_encode::models::bpe::Pair;
+ /// One accepted rule in sequential priority order.
+ #[derive(Clone, Copy)]
+@@ -60,6 +61,7 @@ impl PreparedMerges {
+     /// borrow excludes safe concurrent access until all writes join, and consuming
+     /// `self` prevents applying this plan value twice. There is no rollback.
+     pub(super) fn apply<S: SlotStorage>(self, corpus: &mut Corpus<S>) -> MergeEvents {
++        let _parallel_phase = phase_timing::stage(18);
+         if corpus.has_occurrence_spans() {
+             let regions: Vec<_> = self
+                 .jobs
+@@ -77,6 +79,7 @@ impl PreparedMerges {
+                 .par_iter()
+                 .zip(writers.into_par_iter())
+                 .for_each(|(job, mut writer)| {
++                    let _job_phase = phase_timing::stage(20);
+                     for write in &job.writes {
+                         write
+                             .positions
+@@ -86,6 +89,7 @@ impl PreparedMerges {
+                 });
+         } else {
+             self.jobs.par_iter().for_each(|job| {
++                let _job_phase = phase_timing::stage(20);
+                 for write in &job.writes {
+                     let matcher = corpus.matcher(write.rule.pair);
+                     write.positions.positions().for_each(|position| {
+@@ -102,6 +106,8 @@ impl PreparedMerges {
+                 }
+             });
+         }
++        drop(_parallel_phase);
++        { let _release_phase = phase_timing::stage(19); drop(self.jobs); }
+         self.events
+     }
+ }
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/mod.rs b/tokenizers/tk-train/src/trainers/bpe/engine/mod.rs
+index 04d4a411..6bfd2809 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/mod.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/mod.rs
+@@ -7,6 +7,7 @@ use crate::trainers::bpe::word_counts::WordCountsView;
+ mod aa_parity;
+ mod batch;
+ mod corpus;
++mod phase_timing;
+ mod execution;
+ mod initial_pairs;
+ mod merge;
+@@ -58,6 +59,7 @@ pub(super) fn train(
+     workers: usize,
+     #[cfg(test)] observe: Option<&mut (dyn FnMut(tk_encode::models::bpe::Pair, u64, u32) + Send)>,
+ ) -> Result<ModelParts> {
++    let _phase_report = phase_timing::Report;
+     train_with_merge_options(
+         trainer,
+         word_counts,
+@@ -151,20 +153,20 @@ impl Training<'_> {
+         let progress = self.progress;
+         let policy = self.policy;
+         let workers = execution.workers();
+-        let mut vocabulary = vocabulary::Vocabulary::initialize(
++        let mut vocabulary = { let _phase = phase_timing::stage(0); vocabulary::Vocabulary::initialize(
+             trainer,
+             word_counts,
+             workers,
+             progress,
+             &mut self.retained_alphabet,
+-        )?;
+-        let prepared_corpus = corpus::CorpusPlan::build(
++        ) }?;
++        let prepared_corpus = { let _phase = phase_timing::stage(1); corpus::CorpusPlan::build(
+             word_counts,
+             &mut vocabulary,
+             policy,
+             trainer.max_token_length.is_some(),
+             progress,
+-        )?;
++        ) }?;
+         if vocabulary.len() >= trainer.vocab_size && prepared_corpus.initial_counts_fit_u64() {
+             drop(prepared_corpus);
+             execution.release_scratch();
+@@ -206,7 +208,7 @@ impl Training<'_> {
+         let workers = execution.workers();
+ 
+         let arena = AllocationArena::new(workers, prepared_corpus.initial_edges());
+-        let initial = initial_pairs::InitialPairTable::build(
++        let initial = { let _phase = phase_timing::stage(2); initial_pairs::InitialPairTable::build(
+             &prepared_corpus,
+             if policy == IdentityPolicy::FirstActivationOnly {
+                 trainer.min_frequency.max(1)
+@@ -216,7 +218,7 @@ impl Training<'_> {
+             execution,
+             &arena,
+             progress,
+-        )?;
++        ) }?;
+         if vocabulary.len() >= trainer.vocab_size {
+             // The total-mass proof was inconclusive. Initial construction has now
+             // retained every checked per-key and signed-policy validation.
+@@ -239,9 +241,9 @@ impl Training<'_> {
+             prepared_corpus.initial_edges(),
+         );
+         execution.expect_id_domain(expected_ids);
+-        let mut corpus = prepared_corpus.materialize::<S>(workers, policy, progress)?;
++        let mut corpus = { let _phase = phase_timing::stage(3); prepared_corpus.materialize::<S>(workers, policy, progress) }?;
+         let mut index =
+-            pair_index::PairIndex::from_initial_pairs(initial, policy, trainer.min_frequency)?;
++            { let _phase = phase_timing::stage(2); pair_index::PairIndex::from_initial_pairs(initial, policy, trainer.min_frequency) }?;
+ 
+         let merges = match self.merge_loop(
+             &mut vocabulary,
+@@ -257,10 +259,10 @@ impl Training<'_> {
+         // Training state does not participate in model output. Release position
+         // owners before their arena, and free the corpus and scratch before
+         // constructing the public vocabulary and merge strings.
+-        drop(index);
++        { let _phase = phase_timing::stage(8); drop(index);
+         drop(corpus);
+         drop(arena);
+-        execution.release_scratch();
++        execution.release_scratch(); }
+ 
+         Ok(complete_model(trainer, vocabulary, merges))
+     }
+@@ -292,7 +294,7 @@ impl Training<'_> {
+         let mut contiguous_births = merge::ContiguousBirthPolicy::default();
+         let work = progress.stage("Compute merges", trainer.vocab_size);
+         while vocabulary.len() < trainer.vocab_size {
+-            match batch.select(
++            match { let _phase = phase_timing::stage(4); batch.select(
+                 trainer,
+                 vocabulary,
+                 corpus,
+@@ -300,7 +302,7 @@ impl Training<'_> {
+                 policy,
+                 #[cfg(test)]
+                 trace,
+-            )? {
++            ) }? {
+                 BatchSelection::Ready => {}
+                 BatchSelection::Finished => break,
+                 BatchSelection::RestartForReuse => return Ok(AttemptOutcome::RestartForReuse),
+@@ -308,7 +310,7 @@ impl Training<'_> {
+             merges.extend(batch.rules.iter().map(|rule| rule.pair));
+             #[cfg(test)]
+             let enabled_before = contiguous_births.options(merge_options).contiguous_births;
+-            let (prepared, prepared_births) = merge::prepare_merges_with_births(
++            let (prepared, prepared_births) = { let _phase = phase_timing::stage(5); merge::prepare_merges_with_births(
+                 corpus,
+                 &batch.rules,
+                 &batch.candidates,
+@@ -319,24 +321,24 @@ impl Training<'_> {
+                 arena,
+                 trainer.min_frequency.max(1),
+                 contiguous_births.options(merge_options),
+-            )?;
++            ) }?;
+ 
+             // PERF: Preparation owns all writes and birth events. Selected
+             // position lists have no remaining reader; release them before allocating
+             // the next generation during commit.
+-            batch.candidates.clear();
++            { let _phase = phase_timing::stage(5); batch.candidates.clear() };
+             let birth_shape = prepared.birth_shape;
+             #[cfg(test)]
+             let birth_paths = prepared.birth_paths;
+-            let events = prepared.apply(corpus);
++            let events = { let _phase = phase_timing::stage(6); prepared.apply(corpus) };
+ 
+-            index.commit_merges_with_prepared(
++            { let _phase = phase_timing::stage(7); index.commit_merges_with_prepared(
+                 &events,
+                 vocabulary.len(),
+                 execution,
+                 arena,
+                 prepared_births,
+-            )?;
++            ) }?;
+             contiguous_births.observe(birth_shape);
+             #[cfg(test)]
+             if let Some(observer) = birth_observe.as_mut() {
+@@ -347,7 +349,7 @@ impl Training<'_> {
+                 });
+             }
+ 
+-            drop(events);
++            { let _phase = phase_timing::stage(7); drop(events) };
+             work.learned(merges.len());
+         }
+         Ok(AttemptOutcome::Complete(merges))
+@@ -364,7 +366,7 @@ fn complete_model(
+     vocabulary: vocabulary::Vocabulary,
+     merges: Vec<tk_encode::models::bpe::Pair>,
+ ) -> AttemptOutcome {
+-    let (vocab, merges) = vocabulary.into_model_parts(merges);
++    let (vocab, merges) = { let _phase = phase_timing::stage(9); vocabulary.into_model_parts(merges) };
+     AttemptOutcome::Complete((vocab, merges, trainer.special_tokens.clone()))
+ }
+ 
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/pair_index/commit.rs b/tokenizers/tk-train/src/trainers/bpe/engine/pair_index/commit.rs
+index aea15050..ee610a3f 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/pair_index/commit.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/pair_index/commit.rs
+@@ -7,6 +7,7 @@ use super::super::{
+     storage::AllocationArena,
+ };
+ use super::*;
++use super::super::phase_timing;
+ impl<'arena> PairIndex<'arena> {
+     /// Route aggregates to their count owners, then encode complete birth cohorts.
+     /// Position nodes remain borrowed until every owner has joined.
+@@ -35,6 +36,7 @@ impl<'arena> PairIndex<'arena> {
+         arena: &'arena AllocationArena,
+         births: Vec<CompletedBirth<'arena>>,
+     ) -> Result<()> {
++        let _route_phase = phase_timing::stage(10);
+         let policy = self.policy;
+         let floor = self.minimum_frequency.max(1);
+         let router = ShardRouter::new(self.shards.len());
+@@ -51,6 +53,7 @@ impl<'arena> PairIndex<'arena> {
+             self.prepared_births[router.owner(birth.key)].push(birth);
+         }
+ 
++        drop(_route_phase);
+         let result = self
+             .shards
+             .par_iter_mut()
+@@ -65,12 +68,12 @@ impl<'arena> PairIndex<'arena> {
+                     // PERF: Stable grouping by rule/direction lets each bucket
+                     // reuse one neighbor directory instead of per-pair hash tables.
+                     // It stays before worker leases and ordered count actions.
+-                    route.group_births(events);
+-                    shard.apply_ordered_counts(route, events, policy, floor)?;
+-                    shard.publish_completed_births(prepared, policy);
+-                    shard.reduce_encode_and_publish_births(
++                    { let _phase = phase_timing::stage(13); route.group_births(events) };
++                    { let _phase = phase_timing::stage(11); shard.apply_ordered_counts(route, events, policy, floor) }?;
++                    { let _phase = phase_timing::stage(12); shard.publish_completed_births(prepared, policy) };
++                    { let _phase = phase_timing::stage(14); shard.reduce_encode_and_publish_births(
+                         route, events, identities, execution, arena, policy, floor,
+-                    )
++                    ) }
+                 },
+             )
+             .collect::<Result<Vec<_>>>();
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/phase_timing.rs b/tokenizers/tk-train/src/trainers/bpe/engine/phase_timing.rs
+new file mode 100644
+index 00000000..52ee41dc
+--- /dev/null
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/phase_timing.rs
+@@ -0,0 +1,37 @@
++
++use std::sync::atomic::{AtomicU64, Ordering};
++use std::time::Instant;
++const NAMES: [&str; 22] = ["vocabulary", "corpus_plan", "initial_index", "materialize", "select", "prepare", "apply", "commit", "release", "model_output", "commit_route", "commit_counts", "commit_completed", "commit_partial_group", "commit_partial_encode_publish", "commit_loop_mixed", "commit_partial_finalize", "commit_cleanup", "apply_parallel", "apply_collect_release", "apply_job", "apply_endpoint_loop"];
++static WALL: [AtomicU64; 22] = [const { AtomicU64::new(0) }; 22];
++static CPU: [AtomicU64; 22] = [const { AtomicU64::new(0) }; 22];
++static CALLS: [AtomicU64; 22] = [const { AtomicU64::new(0) }; 22];
++#[repr(C)]
++struct Timespec { sec: std::os::raw::c_long, nano: std::os::raw::c_long }
++unsafe extern "C" { fn clock_gettime(clock: i32, time: *mut Timespec) -> i32; }
++fn cpu_ns(thread: bool) -> u64 {
++    let mut time = Timespec { sec: 0, nano: 0 };
++    // Linux CLOCK_PROCESS_CPUTIME_ID; this host-only diagnostic owns the output.
++    assert_eq!(unsafe { clock_gettime(if thread { 3 } else { 2 }, &mut time) }, 0);
++    time.sec as u64 * 1_000_000_000 + time.nano as u64
++}
++pub(super) struct Stage { index: usize, wall: Instant, cpu: u64 }
++pub(super) fn stage(index: usize) -> Stage { Stage { index, wall: Instant::now(), cpu: cpu_ns((10..18).contains(&index) || index >= 20) } }
++impl Drop for Stage {
++    fn drop(&mut self) {
++        let cpu = cpu_ns((10..18).contains(&self.index) || self.index >= 20) - self.cpu;
++        WALL[self.index].fetch_add(self.wall.elapsed().as_nanos() as u64, Ordering::Relaxed);
++        CPU[self.index].fetch_add(cpu, Ordering::Relaxed);
++        CALLS[self.index].fetch_add(1, Ordering::Relaxed);
++    }
++}
++pub(super) struct Report;
++impl Drop for Report {
++    fn drop(&mut self) {
++        let rows: Vec<_> = NAMES.iter().enumerate().map(|(i, name)| format!(
++            r#"{{"name":"{}","wall_seconds":{},"cpu_seconds":{},"calls":{}}}"#,
++            name, WALL[i].load(Ordering::Relaxed) as f64 / 1e9,
++            CPU[i].load(Ordering::Relaxed) as f64 / 1e9, CALLS[i].load(Ordering::Relaxed)
++        )).collect();
++        eprintln!("BPE_PHASES {{\"stages\":[{}]}}", rows.join(","));
++    }
++}

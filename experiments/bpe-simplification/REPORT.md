@@ -1,76 +1,109 @@
-# 最终简化引擎与取舍
+# 2100 行预算下的简化引擎
 
-交付分支 `simplify/bpe-maintenance-20261009`，固定Fork main基线 `e4f787dc189d9be7192107490d652096cde7480e`。
-引擎生产1858行，相对main5714行减少67.5%；包含独立oracle和共享helpers的测试1439行，
-低于生产预算且相对main6192行减少76.8%。均为rustfmt之后非空、非注释逻辑行。
-实现模块26→6；没有将生产逻辑移出计数范围。
+中文 4 workers、ByteLevel、50K 词表、min_frequency=2 的未插桩 core 训练为
+**23.879 秒**，满足用户要求的 25 秒以内。生产 **2074 行**，包括独立 oracle、
+共享 helpers 和 Miri 引入文件的测试 **1522 行**，均按 rustfmt 后非空非注释行计数。
+相对固定 main 的 5714 / 6192 行，分别减少 63.7% / 75.4%；实现模块从 26 个减为 6 个。
+没有把生产算法移出 engine 来缩小计数范围。
 
-保留完整词表ID、所有ordered merges、兼容优先级前缀批次、并行prepare/apply/owner commit、
-AA左到右选择、reserved/active身份与重启、signed reuse cohort及严格birth length规则。
-posting支持完整U64域，包括独立codec中的u64::MAX；resident分配仍受usize/isize限制。
-Vocabulary、Corpus、PairIndex、Batch/Prepared、Positions各自隐藏身份、几何、优先级、
-快照事件和编码细节；上层训练流程仍可直接阅读。
+分支 `simplify/bpe-maintenance-20261009`，实现提交 `d19e5bc6`。
+语义基线固定为 Fork main `e4f787dc189d9be7192107490d652096cde7480e`。
+用户随后重开 Arena，并把生产上限从 2000 提高到 2100；本报告取代早期 1858 行交付，
+其证据和说明保留在 `2c1daf2b` 的历史中。
 
-Arena优化按用户明确决定放弃，接受其退休/结束释放成本；没有引入共享pool替代协议。
-最终恢复的是紧凑路由：48B只读metadata、16B动作引用（本机64bit）、每posting一次owner
-移交、route容量复用、零removal/空birth过滤。零权重但有positions的birth仍保留，
-owner原序及removal-before-birth不变。完整普通producer直接State+queue快路已保留；
-partial、AA、reuse仍完整聚合。
+## 保留的行为与模块边界
 
-一次相邻main/候选验证覆盖四个case。English/Chinese ByteLevel使用256MiB文本与固定
-word map，4 workers，50K词表，min frequency2。同样opt3/fatLTO/单codegen unit、
-无默认features。机器为6-vCPU Xeon KVM。全部八进程完整model相同、child swap0。
+完整 vocabulary IDs、全部 ordered merges、兼容优先级前缀批次、并行 prepare/apply/owner
+commit、AA 左到右选择、reserved/active 身份与重启、signed reuse cohort 和严格 birth
+length 规则均保留。位置 API 与 codec 支持完整 u64 域，包括 `u64::MAX`；resident
+分配仍按 usize/isize 边界检查。
 
-| case | main train s | lean train s | main pipeline s | lean pipeline s | main RSS GiB | lean RSS GiB |
+上层流程仍是 vocabulary → corpus plan → Arena/index → endpoints → select → prepare →
+apply → commit → model。Vocabulary 隐藏身份，Corpus 隐藏几何，PairIndex 隐藏优先级与
+计数，Batch/Prepared 隐藏匹配和事件，Positions 隐藏存储与生命周期。所有并行阶段在
+下一阶段之前 join；错误丢弃整个 attempt，不承诺回滚已应用的轮次。
+
+本轮恢复的具体机制是：
+
+- 最终列表采用 main 的 16B 描述符和 inline flags。小最终分配借用 attempt Arena，
+  大分配单独拥有堆存储；借用生命周期让 Arena 始终晚于列表释放。
+- Arena 阈值与 main 相同：`max(256, floor(sqrt(physical_items / 256)))` 字节。
+  `physical_items` 来自 `plan.items()`，按含头部、重启目录和数据的完整 layout 判断。
+  每 worker 的编码 scratch 跨轮复用，分配 cursor 只在顺序 closure 内持有。
+- 临时 Builder 常见情况下用 u32，超过范围时无损提升为 u64。首个聚合片段移交
+  所有权；后续排序 append 保持顺序，避免首次复制大列表。
+- 完整 ordinary producer 先按 floor 剪枝，再编码。`Birth::Complete` 交给 owner
+  直接发布；`Birth::Partial` 仍先聚合全部计数，再编码。AA/reuse 不走完整快路。
+- Apply 保留各 job 的事件块，由 commit 消费；紧凑 metadata 引用路由复用容量，
+  每个 birth 列表只移交给一个 owner。零权重但有 positions 的 birth 仍保留。
+
+## 未插桩最终对照
+
+一次相邻 main/候选对照覆盖四个 case，共八个独立进程；完整模型全部一致，child swap0。
+输入是固定 English/Chinese ByteLevel word map 和约 256MiB 文本。两边相同 feature/release
+profile：无默认 features、opt3、fat LTO、一个 codegen unit；4 workers，绑 CPU0–3。
+机器为 6-vCPU Xeon KVM。计时前构建、测试和 Miri 均已退出。
+
+| case | main train s | 简化 train s | main pipeline s | 简化 pipeline s | main RSS GiB | 简化 RSS GiB |
 |---|---:|---:|---:|---:|---:|---:|
-| en-core | 1.144 | 1.933 | 0.000 | 0.000 | 0.170 | 0.270 |
-| zh-core | 19.308 | 29.043 | 0.000 | 0.000 | 2.445 | 3.034 |
-| en-pipeline | 1.115 | 1.829 | 5.106 | 5.829 | 0.176 | 0.269 |
-| zh-pipeline | 19.564 | 28.586 | 24.207 | 33.819 | 2.375 | 2.973 |
+| en-core | 1.080 | 1.425 | — | — | .177 | .191 |
+| zh-core | 19.559 | **23.879** | — | — | 2.348 | 2.807 |
+| en-pipeline | 1.087 | 2.502 | 5.013 | 6.823 | .178 | .174 |
+| zh-pipeline | 17.731 | 24.498 | 23.737 | 29.831 | 2.389 | 2.648 |
 
-core表的pipeline0表示不执行feed。RSS为serialization/validation之前的process HWM，
-包含加载或feed；不是单独engine存储。单对样本不能提供稳定百分比或CI；用户明确要求
-不为机器噪声增加重复，未运行额外六对矩阵。中文core约1.50×main，pipeline总耗时约1.40×；
-英文core约1.69×，pipeline约1.14×。这些是代码上限下的实际退化，不宣称达到main性能。
+Core train 使用公开 do_train 边界；pipeline 总时间包含 feed。RSS 是序列化/校验之前的
+进程 HWM，包含输入加载或 feed，并非 engine 的单独存储。中文 core 的 CPU 时间为
+76.444s，main 为 64.121s。中文 core 仍约为 main 的 1.22 倍；英文 pipeline 训练段也有
+明显差距。达到 25 秒目标不意味着恢复了 main 的全部性能。
 
-阶段定位见[PHASES.md](PHASES.md)。1849行whole候选对main差11.75s中，commit+结束释放
-约占61%，prepare仅约17%；初始索引已基本相同。进一步诊断确认serial routing .245→2.753s，
-占commit4.697s差距约53%。剩余owner混合更新/发布/partial成本尚未逐项因果归因。
-最终1858行组合中文core29.043s，相比whole历史31.048s低约6.5%；
-组合还包括30行纯删除整理，不能将全部差值单独归因到路由。
+这是每 case 一对样本，不能提供稳定百分比或置信区间。按用户要求没有为了噪声追加六对
+重复；最终证据保留真实 wall/CPU/RSS、输入和 binary hashes、affinity、swap 与完整模型
+比对结果。旧主机、旧词表规模和插桩结果没有混入本表。
 
-累计结果用于再次筛选组合，而不是沿迭代顺序默认保留所有机制：
+## 本轮组合筛选与诊断
 
-| 组合/单项 | 生产行 | zh core s | CPU s | RSS GiB | 决策 |
-|---|---:|---:|---:|---:|---|
-| first correct archive | 1456 | 70.92 | — | 3.29 | 独立档案95638077，不作为交付 |
-| weights/fixed writes | 1558 | 46.98 | 136.67 | 3.277 | 保留基础 |
-| stream birth | 1576 | 40.22 | 126.67 | 3.312 | 保留；后续owned append替代转码 |
-| deferred+dense/map_init | 1681 | 39.90 | 123.52 | 3.079 | 保留更短map_init，删除Mutex scratch |
-| cached geometry | 1703 | 38.39 | 119.02 | 3.094 | 保留组合，不独称小增益显著 |
-| hardware prefetch | 1737 | 35.49 | 108.11 | 3.161 | 保留 |
-| owned stream append | 1776 | 32.94 | 96.08 | 3.143 | 保留 |
-| typed cursor | 1797 | 30.87 | 88.38 | 3.207 | 保留 |
-| Arena growth / delta | 1924 / 1928 | 36.84 / 33.91 | 115.74 / 101.37 | 3.548 / 3.504 | 不保留 |
-| Inline16 + payload freeze | 1909 | 35.87 | 101.38 | 3.175 | 不保留，不等价main完整Arena链 |
-| same Inline16 NoArena | 1845 | 34.01 | 101.35 | 3.280 | 不保留；相邻控制也未胜出 |
-| complete / whole candidate | 1838 / 1849 | 30.96 / 31.05 | 85.44 / 85.48 | 3.123 / 2.990 | 保留完整普通快路/whole调度 |
-| raw U64 writes | 1849 | 31.38 | 84.87 | 3.022 | 不保留，整体未受益 |
-| fresh owner directory | 1903 | 32.55 | 89.53 | 3.132 | 不保留，未解决串行路由 |
-| final compact route + cleanup | 1858 | 29.04 | 81.77 | 3.034 | 交付 |
+| 组合 | 生产行 | zh-core s | CPU s | RSS GiB |
+|---|---:|---:|---:|---:|
+| 16B descriptor + 分离 raw builder | 1996 | 31.533 | 93.721 | 3.840 |
+| scratch 复用 + 首片段移交 | 1998 | 27.235 | 83.992 | 4.227 |
+| 再加临时窄缓冲 | 2037 | 24.894 | 78.765 | 3.006 |
+| 再加完整 producer 提前编码 | **2074** | **23.879** | 76.444 | 2.807 |
 
-历史表是不同时间的探索样本，多个条目是累计组合，不能做独立因果差值。
-这是记录内的组合筛选，未穷举所有开关，也不宣称全局最优。各有效轮次均保留commit，
-原始1456行另有独立archive分支。原始主工作区未改动；没有push或新建PR。
+这些是逐次组合的探索样本，不能把相邻差值全部归因于单项机制，也不宣称全局最优。
+对应提交依次为 `cd3b1a83`、`3728bdb2`、`e39c8d76`、`d19e5bc6`。
 
-默认library tests36通过，无默认features36通过；all-target Clippy `-D warnings`、
-rustfmt、格式行预算和git whitespace检查通过。小fixture比较完整模型及每条
-(pair,count,replacement ID)；覆盖affix/alias/zero-weight、wide numeric错误、严格length、
-跨partial floor聚合、fullU64不齐restart/seek、65536真实ID、feed/reload/progress/线程策略。
-独立fresh审查逐轮进行，最终紧凑路由审查见[REVIEW-11.md](REVIEW-11.md)。
+[PHASES.md](PHASES.md) 保留相同 main/1849 行候选的阶段诊断。Apply 的 wall 差 2.103s
+中，串行收集/释放差 1.556s，约占 74%，支持去掉大平面 Change 数组。新的 Arena 描述符
+诊断显示结束释放已降至 .191s，剩余 raw 聚合和 owner 编码仍值得处理。插桩训练时间仅作
+诊断；即使其总时间更短，也没有用来验收 25 秒目标。补丁及逐段数据已归档。
 
-[evidence](evidence/)含final runs、源/二进制/输入hashes、格式行数、测试和阶段证据。
-全部原始测量和immutable binaries保存在`/root/code/tokenizers-simplification-results/`。
-最终源文件已逐个核对与发布runner的hash一致。`run_pairs.py`、`summarize.py`和独立
-诊断脚本用于复核。PR #2501的HF main/Fork YTTM/HF PR #2348三基线未重跑；
-不同主机/词表规模旧结果不混入本报告。
+## 验证与复现
+
+最终源码默认/无默认 features 各 38 项 library tests 和 doctest 通过；all-target Clippy
+`-D warnings`、rustfmt、行预算及 git whitespace 检查通过。小 fixture 比较完整模型和
+每条 `(pair,count,replacement ID)`，覆盖 affix、alias、zero weight、AA、partial floor、
+strict length、wide numeric 错误、65536 真实 IDs、feed/reload/progress/线程策略。
+
+Standalone Miri 直接引入实际 `positions.rs`，四项测试在默认借用与泄漏检查下通过，
+没有设置忽略检查的 flags。Native 用 Rayon pool 验证并发；Miri 用 scoped threads
+及两个 Arena cursor 隔离 Crossbeam 的全局延迟回收。Native 遍历全部 seek 起点；Miri
+重点覆盖首尾、重启边界及 full-u64 值。初次 Rayon 运行的第三方 leak 报告保留在原始
+results；最终严格检查没有该错误。归档 harness 的相对引入路径已另行编译、运行验证。
+
+最终源码再次 release 构建后的 SHA-256 与计时用的不可变 binary 完全相同：
+`8e1e1ee5ed56d153e07a129f8864b5cf5fd3fcf1445fe9108edae27870a681c5`。
+
+```sh
+cargo test --manifest-path tokenizers/tk-train/Cargo.toml
+cargo test --manifest-path tokenizers/tk-train/Cargo.toml --no-default-features
+cargo clippy --manifest-path tokenizers/tk-train/Cargo.toml --all-targets -- -D warnings
+python3 experiments/bpe-simplification/count_lines.py
+cargo +nightly miri test --manifest-path experiments/bpe-simplification/miri-codec/Cargo.toml
+```
+
+完整 input/source/binary hashes 和当前构建口径见 [manifest-final.json](evidence/manifest-final.json)，
+最终八进程记录见 [final-runs.json](evidence/final-runs.json)，格式行数见
+[lines-final.json](evidence/lines-final.json)。原始 records、stdout/stderr 和不可变 binary
+保存在 `/root/code/tokenizers-simplification-results/`。`run_pairs.py --one-pair` 支持在新 label
+下只跑一对 × 四 case；需按 manifest 构建 baseline/候选 binary 并提供相同输入。
+原始主工作区未改动，没有 push 或新建 PR。

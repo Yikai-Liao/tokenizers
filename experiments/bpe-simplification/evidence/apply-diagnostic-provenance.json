@@ -1,0 +1,9 @@
+{
+  "main_base": "e4f787dc189d9be7192107490d652096cde7480e",
+  "lean_base": "df2e71a1b9387a2d0b7ed3ea0e33ef43ce874f8a",
+  "patches": {
+    "apply-main-diagnostic.patch": "8b1964fadc309cbd51cd399b25d0e342e3fb86b6f8de80a748a61408b44affe2",
+    "apply-lean-diagnostic.patch": "6808f8755696bce9e90b5e9d09fcc0c17a590ad377248985a0c95c335bd3676c"
+  },
+  "reproduction": "Apply each patch to its pinned isolated base with git apply; build matching benchmark runner with identical release/features; instrumented training is diagnostic only."
+}

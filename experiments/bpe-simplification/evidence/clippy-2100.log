@@ -1,0 +1,11 @@
+    Blocking waiting for file lock on build directory
+    Checking unicode-width v0.2.2
+    Checking portable-atomic v1.15.0
+    Checking unit-prefix v0.5.2
+    Checking esaxx-rs v0.1.10
+    Checking console v0.16.6
+    Checking indicatif v0.18.6
+    Checking tk-encode v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-simplification/tokenizers/tk-encode)
+    Checking tk-serialize v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-simplification/tokenizers/tk-serialize)
+    Checking tk-train v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-simplification/tokenizers/tk-train)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 10.90s

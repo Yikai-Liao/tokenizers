@@ -1,0 +1,51 @@
+[
+  {
+    "arm": "B",
+    "label": "arena-scratch",
+    "case": "zh-core-w4-v50000",
+    "block": 1,
+    "warmup": false,
+    "returncode": 0,
+    "subprocess_wall": 40.53494221100118,
+    "max_swap_kib": 0,
+    "min_available_kib": 528928,
+    "binary_sha256": "5245f33bdd638b45c9cedee6be864cc552e94c240ee0fd3eb01b171430a98c0d",
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/root/code/tokenizers-simplification-results/bin/arena-scratch",
+      "/root/code/tokenizers-simplification-results/runs/arena-scratch/zh-core-w4-v50000/b1-B/job.json"
+    ],
+    "attempt_id": "b1-B",
+    "build_id": "B",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-bytelevel",
+    "metrics": {
+      "load_seconds": 11.172448124,
+      "process_hwm_kib_before_validation": 4432096,
+      "train_cpu_seconds": 83.991716,
+      "train_seconds": 27.234975847
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/root/code/tokenizers-simplification-results/runs/arena-scratch/zh-core-w4-v50000/b1-B/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "model_vocab_entries": 50000,
+    "model_merges": 49744,
+    "valid": true
+  }
+]

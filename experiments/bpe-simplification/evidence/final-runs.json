@@ -1,21 +1,21 @@
 [
   {
     "arm": "B",
-    "label": "final",
+    "label": "complete-arena",
     "case": "zh-core-w4-v50000",
     "block": 1,
     "warmup": false,
     "returncode": 0,
-    "subprocess_wall": 46.88388262398075,
+    "subprocess_wall": 38.93865161400754,
     "max_swap_kib": 0,
-    "min_available_kib": 1810656,
-    "binary_sha256": "ab94f200a195f2bddeb258b1e6df4fe7b03c5012712eb6b91420db3bdd9c7f58",
+    "min_available_kib": 2010000,
+    "binary_sha256": "8e1e1ee5ed56d153e07a129f8864b5cf5fd3fcf1445fe9108edae27870a681c5",
     "command": [
       "taskset",
       "-c",
       "0-3",
-      "/root/code/tokenizers-simplification-results/bin/final",
-      "/root/code/tokenizers-simplification-results/runs/final/zh-core-w4-v50000/b1-B/job.json"
+      "/root/code/tokenizers-simplification-results/bin/complete-arena",
+      "/root/code/tokenizers-simplification-results/runs/complete-arena/zh-core-w4-v50000/b1-B/job.json"
     ],
     "attempt_id": "b1-B",
     "build_id": "B",
@@ -27,16 +27,16 @@
     ],
     "input_id": "zh-bytelevel",
     "metrics": {
-      "load_seconds": 13.259855426,
-      "process_hwm_kib_before_validation": 3181424,
-      "train_cpu_seconds": 81.76553299999999,
-      "train_seconds": 29.042728797
+      "load_seconds": 10.346448261,
+      "process_hwm_kib_before_validation": 2943096,
+      "train_cpu_seconds": 76.44430200000001,
+      "train_seconds": 23.878528469
     },
     "mode": "core",
     "output": {
       "actual_merges": 49744,
       "actual_vocab": 50000,
-      "model_path": "/root/code/tokenizers-simplification-results/runs/final/zh-core-w4-v50000/b1-B/model.json",
+      "model_path": "/root/code/tokenizers-simplification-results/runs/complete-arena/zh-core-w4-v50000/b1-B/model.json",
       "special_tokens": 0
     },
     "protocol_version": 1,
@@ -50,21 +50,21 @@
   },
   {
     "arm": "A",
-    "label": "final",
+    "label": "complete-arena",
     "case": "zh-core-w4-v50000",
     "block": 1,
     "warmup": false,
     "returncode": 0,
-    "subprocess_wall": 32.796091173077,
+    "subprocess_wall": 31.866006922908127,
     "max_swap_kib": 0,
-    "min_available_kib": 2340792,
+    "min_available_kib": 2479316,
     "binary_sha256": "179e99bf4d74996802c5a475d8ba4a62fcf6e769235dab5c56952b4c76af4074",
     "command": [
       "taskset",
       "-c",
       "0-3",
       "/root/code/tokenizers-simplification-results/bin/baseline",
-      "/root/code/tokenizers-simplification-results/runs/final/zh-core-w4-v50000/b1-A/job.json"
+      "/root/code/tokenizers-simplification-results/runs/complete-arena/zh-core-w4-v50000/b1-A/job.json"
     ],
     "attempt_id": "b1-A",
     "build_id": "A",
@@ -76,16 +76,16 @@
     ],
     "input_id": "zh-bytelevel",
     "metrics": {
-      "load_seconds": 11.373022063,
-      "process_hwm_kib_before_validation": 2563520,
-      "train_cpu_seconds": 62.650999999999996,
-      "train_seconds": 19.308174689
+      "load_seconds": 10.242307112,
+      "process_hwm_kib_before_validation": 2461676,
+      "train_cpu_seconds": 64.121353,
+      "train_seconds": 19.559439976
     },
     "mode": "core",
     "output": {
       "actual_merges": 49744,
       "actual_vocab": 50000,
-      "model_path": "/root/code/tokenizers-simplification-results/runs/final/zh-core-w4-v50000/b1-A/model.json",
+      "model_path": "/root/code/tokenizers-simplification-results/runs/complete-arena/zh-core-w4-v50000/b1-A/model.json",
       "special_tokens": 0
     },
     "protocol_version": 1,
@@ -99,21 +99,21 @@
   },
   {
     "arm": "A",
-    "label": "final",
+    "label": "complete-arena",
     "case": "en-core-w4-v50000",
     "block": 1,
     "warmup": false,
     "returncode": 0,
-    "subprocess_wall": 1.7178929559886456,
+    "subprocess_wall": 1.6203741499921307,
     "max_swap_kib": 0,
-    "min_available_kib": 4719092,
+    "min_available_kib": 4761752,
     "binary_sha256": "179e99bf4d74996802c5a475d8ba4a62fcf6e769235dab5c56952b4c76af4074",
     "command": [
       "taskset",
       "-c",
       "0-3",
       "/root/code/tokenizers-simplification-results/bin/baseline",
-      "/root/code/tokenizers-simplification-results/runs/final/en-core-w4-v50000/b1-A/job.json"
+      "/root/code/tokenizers-simplification-results/runs/complete-arena/en-core-w4-v50000/b1-A/job.json"
     ],
     "attempt_id": "b1-A",
     "build_id": "A",
@@ -125,16 +125,16 @@
     ],
     "input_id": "en-bytelevel",
     "metrics": {
-      "load_seconds": 0.511813759,
-      "process_hwm_kib_before_validation": 178556,
-      "train_cpu_seconds": 3.190744,
-      "train_seconds": 1.144401347
+      "load_seconds": 0.473650486,
+      "process_hwm_kib_before_validation": 185784,
+      "train_cpu_seconds": 2.8819459999999997,
+      "train_seconds": 1.080456854
     },
     "mode": "core",
     "output": {
       "actual_merges": 49744,
       "actual_vocab": 50000,
-      "model_path": "/root/code/tokenizers-simplification-results/runs/final/en-core-w4-v50000/b1-A/model.json",
+      "model_path": "/root/code/tokenizers-simplification-results/runs/complete-arena/en-core-w4-v50000/b1-A/model.json",
       "special_tokens": 0
     },
     "protocol_version": 1,
@@ -148,21 +148,21 @@
   },
   {
     "arm": "B",
-    "label": "final",
+    "label": "complete-arena",
     "case": "en-core-w4-v50000",
     "block": 1,
     "warmup": false,
     "returncode": 0,
-    "subprocess_wall": 2.5260406099259853,
+    "subprocess_wall": 2.019562540925108,
     "max_swap_kib": 0,
-    "min_available_kib": 4617312,
-    "binary_sha256": "ab94f200a195f2bddeb258b1e6df4fe7b03c5012712eb6b91420db3bdd9c7f58",
+    "min_available_kib": 4742468,
+    "binary_sha256": "8e1e1ee5ed56d153e07a129f8864b5cf5fd3fcf1445fe9108edae27870a681c5",
     "command": [
       "taskset",
       "-c",
       "0-3",
-      "/root/code/tokenizers-simplification-results/bin/final",
-      "/root/code/tokenizers-simplification-results/runs/final/en-core-w4-v50000/b1-B/job.json"
+      "/root/code/tokenizers-simplification-results/bin/complete-arena",
+      "/root/code/tokenizers-simplification-results/runs/complete-arena/en-core-w4-v50000/b1-B/job.json"
     ],
     "attempt_id": "b1-B",
     "build_id": "B",
@@ -174,16 +174,16 @@
     ],
     "input_id": "en-bytelevel",
     "metrics": {
-      "load_seconds": 0.481986136,
-      "process_hwm_kib_before_validation": 283036,
-      "train_cpu_seconds": 5.1171679999999995,
-      "train_seconds": 1.933209487
+      "load_seconds": 0.479719416,
+      "process_hwm_kib_before_validation": 200672,
+      "train_cpu_seconds": 4.141017,
+      "train_seconds": 1.425297161
     },
     "mode": "core",
     "output": {
       "actual_merges": 49744,
       "actual_vocab": 50000,
-      "model_path": "/root/code/tokenizers-simplification-results/runs/final/en-core-w4-v50000/b1-B/model.json",
+      "model_path": "/root/code/tokenizers-simplification-results/runs/complete-arena/en-core-w4-v50000/b1-B/model.json",
       "special_tokens": 0
     },
     "protocol_version": 1,
@@ -197,21 +197,21 @@
   },
   {
     "arm": "A",
-    "label": "final",
-    "case": "zh-pipeline-w4-v50000",
+    "label": "complete-arena",
+    "case": "en-pipeline-w4-v50000",
     "block": 1,
     "warmup": false,
     "returncode": 0,
-    "subprocess_wall": 28.338711647083983,
+    "subprocess_wall": 5.1566754271043465,
     "max_swap_kib": 0,
-    "min_available_kib": 2423188,
+    "min_available_kib": 4773240,
     "binary_sha256": "179e99bf4d74996802c5a475d8ba4a62fcf6e769235dab5c56952b4c76af4074",
     "command": [
       "taskset",
       "-c",
       "0-3",
       "/root/code/tokenizers-simplification-results/bin/baseline",
-      "/root/code/tokenizers-simplification-results/runs/final/zh-pipeline-w4-v50000/b1-A/job.json"
+      "/root/code/tokenizers-simplification-results/runs/complete-arena/en-pipeline-w4-v50000/b1-A/job.json"
     ],
     "attempt_id": "b1-A",
     "build_id": "A",
@@ -221,103 +221,50 @@
       2,
       3
     ],
-    "input_id": "zh-bytelevel",
+    "input_id": "en-bytelevel",
     "metrics": {
-      "feed_seconds": 4.643117406,
-      "feed_unique_utf8_bytes": 389044270,
-      "feed_unique_words": 6859987,
-      "pipeline_cpu_seconds": 82.252854,
-      "pipeline_seconds": 24.206849172,
-      "process_hwm_kib_before_validation": 2490440,
-      "train_cpu_seconds": 65.057506,
-      "train_seconds": 19.563703507
+      "feed_seconds": 3.926614132,
+      "feed_unique_utf8_bytes": 8056279,
+      "feed_unique_words": 836105,
+      "pipeline_cpu_seconds": 18.428862000000002,
+      "pipeline_seconds": 5.013123542,
+      "process_hwm_kib_before_validation": 186300,
+      "train_cpu_seconds": 3.1139470000000014,
+      "train_seconds": 1.086501824
     },
     "mode": "pipeline",
     "output": {
       "actual_merges": 49744,
       "actual_vocab": 50000,
-      "model_path": "/root/code/tokenizers-simplification-results/runs/final/zh-pipeline-w4-v50000/b1-A/model.json",
+      "model_path": "/root/code/tokenizers-simplification-results/runs/complete-arena/en-pipeline-w4-v50000/b1-A/model.json",
       "special_tokens": 0
     },
     "protocol_version": 1,
     "timing_boundary": "public-feed-and-train-before-serialization",
     "workers_requested": 4,
     "model_equal": true,
-    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
     "model_vocab_entries": 50000,
     "model_merges": 49744,
     "valid": true
   },
   {
     "arm": "B",
-    "label": "final",
-    "case": "zh-pipeline-w4-v50000",
-    "block": 1,
-    "warmup": false,
-    "returncode": 0,
-    "subprocess_wall": 38.04248343000654,
-    "max_swap_kib": 0,
-    "min_available_kib": 1785156,
-    "binary_sha256": "ab94f200a195f2bddeb258b1e6df4fe7b03c5012712eb6b91420db3bdd9c7f58",
-    "command": [
-      "taskset",
-      "-c",
-      "0-3",
-      "/root/code/tokenizers-simplification-results/bin/final",
-      "/root/code/tokenizers-simplification-results/runs/final/zh-pipeline-w4-v50000/b1-B/job.json"
-    ],
-    "attempt_id": "b1-B",
-    "build_id": "B",
-    "effective_affinity": [
-      0,
-      1,
-      2,
-      3
-    ],
-    "input_id": "zh-bytelevel",
-    "metrics": {
-      "feed_seconds": 5.233191317,
-      "feed_unique_utf8_bytes": 389044270,
-      "feed_unique_words": 6859987,
-      "pipeline_cpu_seconds": 101.38446,
-      "pipeline_seconds": 33.818925278,
-      "process_hwm_kib_before_validation": 3117292,
-      "train_cpu_seconds": 81.963977,
-      "train_seconds": 28.585727914
-    },
-    "mode": "pipeline",
-    "output": {
-      "actual_merges": 49744,
-      "actual_vocab": 50000,
-      "model_path": "/root/code/tokenizers-simplification-results/runs/final/zh-pipeline-w4-v50000/b1-B/model.json",
-      "special_tokens": 0
-    },
-    "protocol_version": 1,
-    "timing_boundary": "public-feed-and-train-before-serialization",
-    "workers_requested": 4,
-    "model_equal": true,
-    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
-    "model_vocab_entries": 50000,
-    "model_merges": 49744,
-    "valid": true
-  },
-  {
-    "arm": "B",
-    "label": "final",
+    "label": "complete-arena",
     "case": "en-pipeline-w4-v50000",
     "block": 1,
     "warmup": false,
     "returncode": 0,
-    "subprocess_wall": 5.956762851914391,
+    "subprocess_wall": 6.987794346990995,
     "max_swap_kib": 0,
-    "min_available_kib": 4592780,
-    "binary_sha256": "ab94f200a195f2bddeb258b1e6df4fe7b03c5012712eb6b91420db3bdd9c7f58",
+    "min_available_kib": 4669896,
+    "binary_sha256": "8e1e1ee5ed56d153e07a129f8864b5cf5fd3fcf1445fe9108edae27870a681c5",
     "command": [
       "taskset",
       "-c",
       "0-3",
-      "/root/code/tokenizers-simplification-results/bin/final",
-      "/root/code/tokenizers-simplification-results/runs/final/en-pipeline-w4-v50000/b1-B/job.json"
+      "/root/code/tokenizers-simplification-results/bin/complete-arena",
+      "/root/code/tokenizers-simplification-results/runs/complete-arena/en-pipeline-w4-v50000/b1-B/job.json"
     ],
     "attempt_id": "b1-B",
     "build_id": "B",
@@ -329,20 +276,20 @@
     ],
     "input_id": "en-bytelevel",
     "metrics": {
-      "feed_seconds": 3.999984297,
+      "feed_seconds": 4.320981253,
       "feed_unique_utf8_bytes": 8056279,
       "feed_unique_words": 836105,
-      "pipeline_cpu_seconds": 20.474638,
-      "pipeline_seconds": 5.829092339,
-      "process_hwm_kib_before_validation": 282020,
-      "train_cpu_seconds": 4.796990000000001,
-      "train_seconds": 1.829101453
+      "pipeline_cpu_seconds": 19.764052,
+      "pipeline_seconds": 6.823132716,
+      "process_hwm_kib_before_validation": 182176,
+      "train_cpu_seconds": 4.031227999999999,
+      "train_seconds": 2.50214531
     },
     "mode": "pipeline",
     "output": {
       "actual_merges": 49744,
       "actual_vocab": 50000,
-      "model_path": "/root/code/tokenizers-simplification-results/runs/final/en-pipeline-w4-v50000/b1-B/model.json",
+      "model_path": "/root/code/tokenizers-simplification-results/runs/complete-arena/en-pipeline-w4-v50000/b1-B/model.json",
       "special_tokens": 0
     },
     "protocol_version": 1,
@@ -356,21 +303,21 @@
   },
   {
     "arm": "A",
-    "label": "final",
-    "case": "en-pipeline-w4-v50000",
+    "label": "complete-arena",
+    "case": "zh-pipeline-w4-v50000",
     "block": 1,
     "warmup": false,
     "returncode": 0,
-    "subprocess_wall": 5.258927064016461,
+    "subprocess_wall": 28.68174175103195,
     "max_swap_kib": 0,
-    "min_available_kib": 4681048,
+    "min_available_kib": 2456724,
     "binary_sha256": "179e99bf4d74996802c5a475d8ba4a62fcf6e769235dab5c56952b4c76af4074",
     "command": [
       "taskset",
       "-c",
       "0-3",
       "/root/code/tokenizers-simplification-results/bin/baseline",
-      "/root/code/tokenizers-simplification-results/runs/final/en-pipeline-w4-v50000/b1-A/job.json"
+      "/root/code/tokenizers-simplification-results/runs/complete-arena/zh-pipeline-w4-v50000/b1-A/job.json"
     ],
     "attempt_id": "b1-A",
     "build_id": "A",
@@ -380,29 +327,82 @@
       2,
       3
     ],
-    "input_id": "en-bytelevel",
+    "input_id": "zh-bytelevel",
     "metrics": {
-      "feed_seconds": 3.990729784,
-      "feed_unique_utf8_bytes": 8056279,
-      "feed_unique_words": 836105,
-      "pipeline_cpu_seconds": 18.881727,
-      "pipeline_seconds": 5.106114106,
-      "process_hwm_kib_before_validation": 185068,
-      "train_cpu_seconds": 3.1486690000000017,
-      "train_seconds": 1.115377456
+      "feed_seconds": 6.005964044,
+      "feed_unique_utf8_bytes": 389044270,
+      "feed_unique_words": 6859987,
+      "pipeline_cpu_seconds": 77.004434,
+      "pipeline_seconds": 23.736666622,
+      "process_hwm_kib_before_validation": 2505376,
+      "train_cpu_seconds": 59.055684,
+      "train_seconds": 17.73069174
     },
     "mode": "pipeline",
     "output": {
       "actual_merges": 49744,
       "actual_vocab": 50000,
-      "model_path": "/root/code/tokenizers-simplification-results/runs/final/en-pipeline-w4-v50000/b1-A/model.json",
+      "model_path": "/root/code/tokenizers-simplification-results/runs/complete-arena/zh-pipeline-w4-v50000/b1-A/model.json",
       "special_tokens": 0
     },
     "protocol_version": 1,
     "timing_boundary": "public-feed-and-train-before-serialization",
     "workers_requested": 4,
     "model_equal": true,
-    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "model_vocab_entries": 50000,
+    "model_merges": 49744,
+    "valid": true
+  },
+  {
+    "arm": "B",
+    "label": "complete-arena",
+    "case": "zh-pipeline-w4-v50000",
+    "block": 1,
+    "warmup": false,
+    "returncode": 0,
+    "subprocess_wall": 35.005328945000656,
+    "max_swap_kib": 0,
+    "min_available_kib": 2154356,
+    "binary_sha256": "8e1e1ee5ed56d153e07a129f8864b5cf5fd3fcf1445fe9108edae27870a681c5",
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/root/code/tokenizers-simplification-results/bin/complete-arena",
+      "/root/code/tokenizers-simplification-results/runs/complete-arena/zh-pipeline-w4-v50000/b1-B/job.json"
+    ],
+    "attempt_id": "b1-B",
+    "build_id": "B",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-bytelevel",
+    "metrics": {
+      "feed_seconds": 5.332420656,
+      "feed_unique_utf8_bytes": 389044270,
+      "feed_unique_words": 6859987,
+      "pipeline_cpu_seconds": 97.301883,
+      "pipeline_seconds": 29.830913981,
+      "process_hwm_kib_before_validation": 2776368,
+      "train_cpu_seconds": 78.042493,
+      "train_seconds": 24.49848494
+    },
+    "mode": "pipeline",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/root/code/tokenizers-simplification-results/runs/complete-arena/zh-pipeline-w4-v50000/b1-B/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-feed-and-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
     "model_vocab_entries": 50000,
     "model_merges": 49744,
     "valid": true

@@ -87,6 +87,7 @@ def main():
     parser.add_argument("label")
     parser.add_argument("--root", type=Path, default=Path("/root/code/tokenizers-simplification-results"))
     parser.add_argument("--aa", action="store_true")
+    parser.add_argument("--one-pair", action="store_true", help="One measured pair per case, without warmup")
     parser.add_argument("--reps", type=int, default=6)
     parser.add_argument("--languages", nargs="+", default=["en", "zh"])
     parser.add_argument("--modes", nargs="+", default=["core", "pipeline"])
@@ -97,11 +98,11 @@ def main():
     cases = [(l, m, w, v) for l in args.languages for m in args.modes
              for w in args.workers for v in args.vocabs]
     rng = random.Random(20261009)
-    for block in range(args.reps + 1):
+    for block in ([1] if args.one_pair else range(args.reps + 1)):
         rng.shuffle(cases)
         for language, mode, workers, vocab in cases:
             arms = ["A", "A2" if args.aa else "B"]
-            if block % 2:
+            if block % 2 and not args.one_pair:
                 arms.reverse()
             for arm in arms:
                 measure(args.root, manifest, arm, args.label, language, mode, workers,

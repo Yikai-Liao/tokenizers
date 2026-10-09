@@ -57,7 +57,7 @@ Literal expectations cover wide counts and public errors. Codec tests cover the
 entire u64 domain, repeated values and restart boundaries. The standalone Miri
 harness imports the actual position module and keeps borrow/leak checks enabled.
 Miri samples seek starts and targets around restart boundaries; native tests
-exhaust every start. Native concurrency uses the training Rayon pool; Miri uses
+exhaust every start. Native concurrency uses a Rayon pool; Miri uses
 scoped threads and both allocation cursors to isolate storage from Crossbeam
 collectors that outlive the test. Public tests retain
 feed, model reload, progress and ambient-versus-training pool behavior.

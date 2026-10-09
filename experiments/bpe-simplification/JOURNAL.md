@@ -353,3 +353,36 @@ Uninstrumented zh-core: candidate31.533s CPU93.721 RSS4026736KiB; adjacent main2
 CPU69.081 RSS2560888KiB; both swap0. This combination has not met the target.
 Its raw staging/final encoding must be measured before attributing the regression.
 Production1996/test1470; no source relocated outside the engine.
+
+## 22. Reused Arena scratch and first-fragment transfer (1998 lines)
+
+Final per-worker scratch now persists across rounds, with a 24B two-inline raw
+builder and direct move of the first initial/partial aggregation fragment.
+Source3728bdb2; native tests and Clippy pass. Uninstrumented zh-core27.234976s,
+CPU83.991716s, RSS4432096KiB, model equal/swap0. Correct but not <25s.
+
+## 23. Lossless narrow temporary buffers (2037 lines)
+
+User raised the production budget to2100. Builder stores u32 until promotion to
+u64 is needed, retaining full-u64 sorted append/iteration. Sourcee39c8d76;
+uninstrumented zh-core24.894249s CPU78.764529s RSS3152508KiB, model equal/swap0.
+No performance assertion is made from instrumented results.
+
+## 24. Complete producer encoding and final acceptance (2074 lines)
+
+Complete producers now prune before encoding and emit immutable Birth::Complete;
+owner publication moves that final descriptor without re-encoding. Partial/AA/
+reuse retain aggregate-before-prune/encode behavior. Source d19e5bc6. Production2074,
+tests1522 including Miri harness; no algorithm moved outside the engine.
+
+Final zh-core23.878528s CPU76.444302s RSS2943096KiB; adjacent main19.559440s.
+All four cases/eight final processes match complete vocab IDs/ordered merges,
+swap0. Both feature configurations38 library tests plus doctest pass; Clippy
+-Dwarnings, fmt, count and whitespace pass. Strict default Miri4 tests pass with
+borrow/leak checks enabled. Miri uses scoped threads to test both allocation
+cursors while native keeps Rayon; native seeks exhaust every start and Miri
+samples restart boundaries. Persisted relative-source harness4 tests also pass.
+Final-source release rebuild produces the exact measured binary SHA-256.
+REPORT/PHASES, diagnostic patches, inputs/source/build hashes and immutable
+measurements are recorded. This reaches the updated <25s/2100-line goal, while
+remaining slower than main. No extra six-pair noise repetition was added.

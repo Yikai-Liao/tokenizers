@@ -1,13 +1,19 @@
 {
   "baseline_sha": "e4f787dc189d9be7192107490d652096cde7480e",
+  "branch": "simplify/bpe-maintenance-20261009",
   "toolchain": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
   "cpu": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           46 bits physical, 48 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  6\nOn-line CPU(s) list:                     0-5\nVendor ID:                               GenuineIntel\nModel name:                              Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz\nCPU family:                              6\nModel:                                   85\nThread(s) per core:                      1\nCore(s) per socket:                      1\nSocket(s):                               6\nStepping:                                4\nBogoMIPS:                                4589.21\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon rep_good nopl xtopology cpuid tsc_known_freq pni pclmulqdq ssse3 fma cx16 pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch cpuid_fault pti ssbd ibrs ibpb stibp fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm mpx avx512f avx512dq rdseed adx smap clflushopt clwb avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves arat umip pku ospke md_clear flush_l1d arch_capabilities\nHypervisor vendor:                       KVM\nVirtualization type:                     full\nL1d cache:                               192 KiB (6 instances)\nL1i cache:                               192 KiB (6 instances)\nL2 cache:                                6 MiB (6 instances)\nL3 cache:                                148.5 MiB (6 instances)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0-5\nVulnerability Gather data sampling:      Not affected\nVulnerability Indirect target selection: Mitigation; Aligned branch/return thunks\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Mitigation; PTE Inversion\nVulnerability Mds:                       Mitigation; Clear CPU buffers; SMT Host state unknown\nVulnerability Meltdown:                  Mitigation; PTI\nVulnerability Mmio stale data:           Mitigation; Clear CPU buffers; SMT Host state unknown\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Mitigation; IBRS\nVulnerability Spec rstack overflow:      Not affected\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; IBRS; IBPB conditional; STIBP disabled; RSB filling; PBRSB-eIBRS Not affected; BHI SW loop, KVM SW loop\nVulnerability Srbds:                     Not affected\nVulnerability Tsa:                       Not affected\nVulnerability Tsx async abort:           Mitigation; Clear CPU buffers; SMT Host state unknown\nVulnerability Vmscape:                   Not affected\n",
-  "features": "tk-train default-features=false; runner default-features=false",
   "release_profile": {
     "opt_level": 3,
     "lto": "fat",
     "codegen_units": 1
   },
+  "features": "tk-train default-features=false; runner default-features=false",
+  "environment_limits": [
+    "6 vCPU KVM; not specified 8-core fixed-frequency laptop",
+    "swap already nearly full; record child VmSwap and reject swapped samples",
+    "no performance measurements during builds"
+  ],
   "inputs": {
     "en-bytelevel-pipeline": {
       "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/en256/text.txt",
@@ -42,34 +48,93 @@
       "min_frequency": 2
     }
   },
-  "builds": {
-    "baseline": {
-      "source_sha": "e4f787dc189d9be7192107490d652096cde7480e",
-      "sha256": "179e99bf4d74996802c5a475d8ba4a62fcf6e769235dab5c56952b4c76af4074",
-      "cargo_lock_sha256": "fcf01b7de4367dc9b92cb3c7e1900a3ecffdb53be05c286a278a4a2228591909",
-      "command": "PATH=/root/.cargo/bin:$PATH CARGO_TARGET_DIR=/root/code/tokenizers-simplification-results/target CARGO_INCREMENTAL=0 cargo build --release --offline --manifest-path runner-baseline/Cargo.toml -j 2"
+  "baseline_build": {
+    "source_sha": "e4f787dc189d9be7192107490d652096cde7480e",
+    "sha256": "179e99bf4d74996802c5a475d8ba4a62fcf6e769235dab5c56952b4c76af4074",
+    "cargo_lock_sha256": "fcf01b7de4367dc9b92cb3c7e1900a3ecffdb53be05c286a278a4a2228591909",
+    "command": "PATH=/root/.cargo/bin:$PATH CARGO_TARGET_DIR=/root/code/tokenizers-simplification-results/target CARGO_INCREMENTAL=0 cargo build --release --offline --manifest-path runner-baseline/Cargo.toml -j 2"
+  },
+  "final_build": {
+    "source_commit": "d19e5bc62ef34990df503883e14c30c9abc7e506",
+    "binary_sha256": "8e1e1ee5ed56d153e07a129f8864b5cf5fd3fcf1445fe9108edae27870a681c5",
+    "rebuilt_binary_sha256": "8e1e1ee5ed56d153e07a129f8864b5cf5fd3fcf1445fe9108edae27870a681c5",
+    "source_files": {
+      "experiments/bpe-simplification/miri-codec/src/lib.rs": "9c7b6a7fa9975bfe20a92c889e79b6f443fab0dae00d113eaa18ca4c44a3c6f3",
+      "tokenizers/tk-train/Cargo.toml": "e94e57006b368bc369d1e0fea1ab69993cf380a01d0de3d4f89d7b78bcc5547e",
+      "tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs": "9e0347f5a0ceb1709daf7e5e04a58980619525bb69386c5bab581348dfc5647d",
+      "tokenizers/tk-train/src/trainers/bpe/engine/index.rs": "3d1f2ffb635862bf6cb9c2ef83880696754c8c5e2c118c0fb7f2b2024f128af0",
+      "tokenizers/tk-train/src/trainers/bpe/engine/merge.rs": "323acdddc508ff37f08f8190802407f79f619bb9b5dd483fa2464d1cb7e06d7f",
+      "tokenizers/tk-train/src/trainers/bpe/engine/mod.rs": "b7f0791bcea0107204e456d6cddd291b056a53b833c306a087edac41cf4c154b",
+      "tokenizers/tk-train/src/trainers/bpe/engine/positions.rs": "776ad17aac7f30de25cf7c4e226e3959576054e53c0ce765a95d71128cb1a9b1",
+      "tokenizers/tk-train/src/trainers/bpe/engine/tests/generated.rs": "a5331fa3f584396327388b571f2872042bcc1205be9c1a2fc57a377fe1d15b75",
+      "tokenizers/tk-train/src/trainers/bpe/engine/tests/identity_reuse.rs": "79f43215e9f98a41b5c407671ed5b1327775b277ca07a47c83d265d7b0750ab8",
+      "tokenizers/tk-train/src/trainers/bpe/engine/tests/mod.rs": "24774a17bc72ca9ad82920ebf9c837e68f6d91df4780f0d8bdaa0796789c616c",
+      "tokenizers/tk-train/src/trainers/bpe/engine/tests/public_contract.rs": "0229bd3c3d71a81b4bfc9d8166711dbc983284d3748c4c1621db1abb29ca3e9a",
+      "tokenizers/tk-train/src/trainers/bpe/engine/tests/semantic_parity.rs": "1a616c17831ad887ee047aa66bf0f6fea062ff186ed5de5f71ba6dc0946b0de0",
+      "tokenizers/tk-train/src/trainers/bpe/engine/vocabulary.rs": "c538300605d84d79b6c98bdf64064791bf9005650a7d5d73c9b0daae01902f74",
+      "tokenizers/tk-train/src/trainers/bpe/reference.rs": "bde2005782acb0f51c42cbbda25d2b526886b98ca7901a9709a4b265ed8af447",
+      "tokenizers/tk-train/src/trainers/bpe/word.rs": "b81cd9c9819c7be9a76b6556fd58f0c1d04fb00992998e224f360aa7706553bd"
     },
-    "final": {
-      "source_sha_base": "e4f787dc189d9be7192107490d652096cde7480e",
-      "engine_sources_sha256": {
+    "runner_lock_sha256": "b0a4e33189592c3c7f5502bb8f0cfc636ea2936698cbbc0b5c1b9a55bbde3aad",
+    "miri_lock_sha256": "41ced35862d6454a2a60b58b3455bbb1b94dcc97c2b25036bb6b1983388f4087",
+    "miri_toolchain": "rustc 1.101.0-nightly (a30aa9064 2026-10-08)",
+    "miri_flags": "none; default borrow and leak checking enabled",
+    "miri_source": "Actual engine/positions.rs, imported by path. Scoped threads replace the test scheduler under cfg(miri); native tests retain Rayon. Native seek starts are exhaustive; Miri samples restart boundaries.",
+    "production_lines": 2074,
+    "test_lines": 1522,
+    "production_limit": 2100,
+    "acceptance": {
+      "zh_core_seconds": 23.878528469,
+      "target_seconds_exclusive": 25,
+      "full_models_equal": true,
+      "final_processes": 8,
+      "max_swap_kib": 0
+    },
+    "build_command": "CARGO_TARGET_DIR=/root/code/tokenizers-simplification-results/target cargo build --release --offline --manifest-path runner-candidate/Cargo.toml",
+    "final_source_rebuild": "All final Rust sources rebuilt; resulting binary SHA-256 exactly matches all final performance runs."
+  },
+  "variants": {
+    "arena-scratch": {
+      "base": "cd3b1a83",
+      "binary_sha256": "5245f33bdd638b45c9cedee6be864cc552e94c240ee0fd3eb01b171430a98c0d",
+      "files": {
         "tokenizers/tk-train/src/trainers/bpe/engine/vocabulary.rs": "c538300605d84d79b6c98bdf64064791bf9005650a7d5d73c9b0daae01902f74",
-        "tokenizers/tk-train/src/trainers/bpe/engine/positions.rs": "9e9b854af09503b6fffc0f7223f7142763a024430d6226a313c257d6e767a165",
-        "tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs": "ebfcc44225c29135340cb9e53fdbf320da16123da24b8d8f99b59be87eb71ab6",
-        "tokenizers/tk-train/src/trainers/bpe/engine/index.rs": "0a6785169534dafe971c642cec7a2f9198c3305ae17b54b7fa15702fa7aae92e",
-        "tokenizers/tk-train/src/trainers/bpe/engine/mod.rs": "3c27cc2f0cc8c362329d39573d4343e46840c6c8550d71fe1890369f6b4e9ea7",
-        "tokenizers/tk-train/src/trainers/bpe/engine/merge.rs": "b1f4f8a038405abc90e28970f1f7c33eaba9538a38a617d1ed399cb8635fd073",
-        "tokenizers/tk-train/src/trainers/bpe/engine/tests/identity_reuse.rs": "79f43215e9f98a41b5c407671ed5b1327775b277ca07a47c83d265d7b0750ab8",
-        "tokenizers/tk-train/src/trainers/bpe/engine/tests/semantic_parity.rs": "1a616c17831ad887ee047aa66bf0f6fea062ff186ed5de5f71ba6dc0946b0de0",
-        "tokenizers/tk-train/src/trainers/bpe/engine/tests/generated.rs": "a5331fa3f584396327388b571f2872042bcc1205be9c1a2fc57a377fe1d15b75",
-        "tokenizers/tk-train/src/trainers/bpe/engine/tests/mod.rs": "24774a17bc72ca9ad82920ebf9c837e68f6d91df4780f0d8bdaa0796789c616c",
-        "tokenizers/tk-train/src/trainers/bpe/engine/tests/public_contract.rs": "0229bd3c3d71a81b4bfc9d8166711dbc983284d3748c4c1621db1abb29ca3e9a"
-      },
-      "sha256": "ab94f200a195f2bddeb258b1e6df4fe7b03c5012712eb6b91420db3bdd9c7f58",
-      "cargo_lock_sha256": "fcf01b7de4367dc9b92cb3c7e1900a3ecffdb53be05c286a278a4a2228591909",
-      "production_lines": 1858,
-      "test_lines": 1439,
-      "description": "Retained measured lean combination plus compact borrowed event routing, owned payloads, reusable capacity; Arena forgone"
+        "tokenizers/tk-train/src/trainers/bpe/engine/positions.rs": "e11f141338152e3c785b80ac7c46ff4920e751f62ab6bb4b1f5dd4b76f1c8520",
+        "tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs": "9e0347f5a0ceb1709daf7e5e04a58980619525bb69386c5bab581348dfc5647d",
+        "tokenizers/tk-train/src/trainers/bpe/engine/index.rs": "b2db70f50e120ebaeae917bc938bc8e9d68646ddc190dcc79a8d9146677f576e",
+        "tokenizers/tk-train/src/trainers/bpe/engine/mod.rs": "83cad9349a0b0ce070129e72e168fc830599f12ff8cbdb32bf487eacf66a5e53",
+        "tokenizers/tk-train/src/trainers/bpe/engine/merge.rs": "54a65cfdfcd24be44b8f77b31dda60b3682b69ecf6c8723b92e0ab8cb1ef1e6f",
+        "tokenizers/tk-train/Cargo.toml": "e94e57006b368bc369d1e0fea1ab69993cf380a01d0de3d4f89d7b78bcc5547e"
+      }
+    },
+    "narrow-arena": {
+      "base": "3728bdb2",
+      "binary_sha256": "3e60ab727cc966917052931f494de0525d77935e93f5954fca5c9833aeb90bb8",
+      "note": "After binary build, only cfg(test) seek sampling changed; production unchanged.",
+      "files": {
+        "tokenizers/tk-train/src/trainers/bpe/engine/vocabulary.rs": "c538300605d84d79b6c98bdf64064791bf9005650a7d5d73c9b0daae01902f74",
+        "tokenizers/tk-train/src/trainers/bpe/engine/positions.rs": "8bac5594164de7d2452055fdb747100dffa15d49bc0a02923373a2bbaea2dd39",
+        "tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs": "9e0347f5a0ceb1709daf7e5e04a58980619525bb69386c5bab581348dfc5647d",
+        "tokenizers/tk-train/src/trainers/bpe/engine/index.rs": "d98732de74721f6edd60ccb855b8425416e6ae1bb7f591bcbb17d81264239415",
+        "tokenizers/tk-train/src/trainers/bpe/engine/mod.rs": "83cad9349a0b0ce070129e72e168fc830599f12ff8cbdb32bf487eacf66a5e53",
+        "tokenizers/tk-train/src/trainers/bpe/engine/merge.rs": "0ba74896e4877873241bc00129e5ce0b55d3bdae6e53e3727b3cbd5304345db5",
+        "tokenizers/tk-train/Cargo.toml": "e94e57006b368bc369d1e0fea1ab69993cf380a01d0de3d4f89d7b78bcc5547e"
+      }
+    },
+    "complete-arena": {
+      "base": "e39c8d76",
+      "binary_sha256": "8e1e1ee5ed56d153e07a129f8864b5cf5fd3fcf1445fe9108edae27870a681c5",
+      "note": "After binary build, only cfg(test) call updated for added Arena argument; production unchanged.",
+      "files": {
+        "tokenizers/tk-train/src/trainers/bpe/engine/vocabulary.rs": "c538300605d84d79b6c98bdf64064791bf9005650a7d5d73c9b0daae01902f74",
+        "tokenizers/tk-train/src/trainers/bpe/engine/positions.rs": "8bac5594164de7d2452055fdb747100dffa15d49bc0a02923373a2bbaea2dd39",
+        "tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs": "9e0347f5a0ceb1709daf7e5e04a58980619525bb69386c5bab581348dfc5647d",
+        "tokenizers/tk-train/src/trainers/bpe/engine/index.rs": "3d1f2ffb635862bf6cb9c2ef83880696754c8c5e2c118c0fb7f2b2024f128af0",
+        "tokenizers/tk-train/src/trainers/bpe/engine/mod.rs": "b7f0791bcea0107204e456d6cddd291b056a53b833c306a087edac41cf4c154b",
+        "tokenizers/tk-train/src/trainers/bpe/engine/merge.rs": "323acdddc508ff37f08f8190802407f79f619bb9b5dd483fa2464d1cb7e06d7f",
+        "tokenizers/tk-train/Cargo.toml": "e94e57006b368bc369d1e0fea1ab69993cf380a01d0de3d4f89d7b78bcc5547e"
+      }
     }
   },
-  "scope": "All engine implementation modules, including logic moved outside engine or delegated through new helpers; tests and reusable reference separately counted."
+  "measurement_policy": "One measured pair per final case, no additional noise repetitions. Three purposeful candidate combination samples. Benchmarks have no instrumentation and ran after all Miri/tests/builds exited."
 }

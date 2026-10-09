@@ -1,0 +1,479 @@
+{
+  "apply-main": {
+    "arm": "B",
+    "label": "apply-main",
+    "case": "zh-core-w4-v50000",
+    "block": 1,
+    "warmup": false,
+    "returncode": 0,
+    "subprocess_wall": 32.50333789095748,
+    "max_swap_kib": 0,
+    "min_available_kib": 2339128,
+    "binary_sha256": "b6c7f7212e3df6ae7d56204e65d9ebb5b56937fb8a90775e7fc2ef3bd51af7e4",
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/root/code/tokenizers-simplification-results/bin/apply-main",
+      "/root/code/tokenizers-simplification-results/runs/apply-main/zh-core-w4-v50000/b1-B/job.json"
+    ],
+    "attempt_id": "b1-B",
+    "build_id": "B",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-bytelevel",
+    "metrics": {
+      "load_seconds": 10.958618999,
+      "process_hwm_kib_before_validation": 2570564,
+      "train_cpu_seconds": 63.74491400000001,
+      "train_seconds": 19.507964948
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/root/code/tokenizers-simplification-results/runs/apply-main/zh-core-w4-v50000/b1-B/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "model_vocab_entries": 50000,
+    "model_merges": 49744,
+    "valid": true,
+    "phases": [
+      {
+        "name": "vocabulary",
+        "wall_seconds": 0.667638824,
+        "cpu_seconds": 2.074680315,
+        "calls": 1
+      },
+      {
+        "name": "corpus_plan",
+        "wall_seconds": 0.753737988,
+        "cpu_seconds": 1.84181526,
+        "calls": 1
+      },
+      {
+        "name": "initial_index",
+        "wall_seconds": 3.324851281,
+        "cpu_seconds": 12.344084725,
+        "calls": 2
+      },
+      {
+        "name": "materialize",
+        "wall_seconds": 0.703327683,
+        "cpu_seconds": 2.611159871,
+        "calls": 1
+      },
+      {
+        "name": "select",
+        "wall_seconds": 0.400831708,
+        "cpu_seconds": 0.493080717,
+        "calls": 1646
+      },
+      {
+        "name": "prepare",
+        "wall_seconds": 9.311686905,
+        "cpu_seconds": 31.186786615,
+        "calls": 3292
+      },
+      {
+        "name": "apply",
+        "wall_seconds": 1.37351183,
+        "cpu_seconds": 4.761671721,
+        "calls": 1646
+      },
+      {
+        "name": "commit",
+        "wall_seconds": 2.742879006,
+        "cpu_seconds": 8.159954499,
+        "calls": 3292
+      },
+      {
+        "name": "release",
+        "wall_seconds": 0.203668104,
+        "cpu_seconds": 0.20267191,
+        "calls": 1
+      },
+      {
+        "name": "model_output",
+        "wall_seconds": 0.022532734,
+        "cpu_seconds": 0.02249489,
+        "calls": 1
+      },
+      {
+        "name": "commit_route",
+        "wall_seconds": 0.272308369,
+        "cpu_seconds": 0.268574311,
+        "calls": 1646
+      },
+      {
+        "name": "commit_counts",
+        "wall_seconds": 4.043325676,
+        "cpu_seconds": 3.984932747,
+        "calls": 6579
+      },
+      {
+        "name": "commit_completed",
+        "wall_seconds": 2.258178054,
+        "cpu_seconds": 2.181762282,
+        "calls": 6579
+      },
+      {
+        "name": "commit_partial_group",
+        "wall_seconds": 0.02974831,
+        "cpu_seconds": 0.018832901,
+        "calls": 6579
+      },
+      {
+        "name": "commit_partial_encode_publish",
+        "wall_seconds": 1.038027052,
+        "cpu_seconds": 1.005845215,
+        "calls": 6579
+      },
+      {
+        "name": "commit_loop_mixed",
+        "wall_seconds": 0,
+        "cpu_seconds": 0,
+        "calls": 0
+      },
+      {
+        "name": "commit_partial_finalize",
+        "wall_seconds": 0,
+        "cpu_seconds": 0,
+        "calls": 0
+      },
+      {
+        "name": "commit_cleanup",
+        "wall_seconds": 0,
+        "cpu_seconds": 0,
+        "calls": 0
+      },
+      {
+        "name": "apply_parallel",
+        "wall_seconds": 1.336816044,
+        "cpu_seconds": 4.646398485,
+        "calls": 1646
+      },
+      {
+        "name": "apply_collect_release",
+        "wall_seconds": 0.031517777,
+        "cpu_seconds": 0.092092857,
+        "calls": 1646
+      },
+      {
+        "name": "apply_job",
+        "wall_seconds": 4.455142379,
+        "cpu_seconds": 4.297045109,
+        "calls": 12207
+      },
+      {
+        "name": "apply_endpoint_loop",
+        "wall_seconds": 0,
+        "cpu_seconds": 0,
+        "calls": 0
+      }
+    ]
+  },
+  "apply-lean": {
+    "arm": "B",
+    "label": "apply-lean",
+    "case": "zh-core-w4-v50000",
+    "block": 1,
+    "warmup": false,
+    "returncode": 0,
+    "subprocess_wall": 47.822718512034044,
+    "max_swap_kib": 0,
+    "min_available_kib": 1696224,
+    "binary_sha256": "e133a9a66281c56b27f2aca3bcbc19bc9488f3da3490b427b565bca8b40f6ec1",
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/root/code/tokenizers-simplification-results/bin/apply-lean",
+      "/root/code/tokenizers-simplification-results/runs/apply-lean/zh-core-w4-v50000/b1-B/job.json"
+    ],
+    "attempt_id": "b1-B",
+    "build_id": "B",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-bytelevel",
+    "metrics": {
+      "load_seconds": 10.910716713,
+      "process_hwm_kib_before_validation": 3259584,
+      "train_cpu_seconds": 87.708441,
+      "train_seconds": 31.64241629
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/root/code/tokenizers-simplification-results/runs/apply-lean/zh-core-w4-v50000/b1-B/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "model_vocab_entries": 50000,
+    "model_merges": 49744,
+    "valid": true,
+    "phases": [
+      {
+        "name": "vocabulary",
+        "wall_seconds": 0.791418186,
+        "cpu_seconds": 2.377102493,
+        "calls": 1
+      },
+      {
+        "name": "corpus_plan",
+        "wall_seconds": 0.863364372,
+        "cpu_seconds": 2.174150186,
+        "calls": 1
+      },
+      {
+        "name": "initial_index",
+        "wall_seconds": 4.057960049,
+        "cpu_seconds": 13.394353847,
+        "calls": 1
+      },
+      {
+        "name": "materialize",
+        "wall_seconds": 1.185299052,
+        "cpu_seconds": 3.366302841,
+        "calls": 1
+      },
+      {
+        "name": "select",
+        "wall_seconds": 0.620478864,
+        "cpu_seconds": 0.772991335,
+        "calls": 1646
+      },
+      {
+        "name": "prepare",
+        "wall_seconds": 10.97194074,
+        "cpu_seconds": 39.33204893,
+        "calls": 1646
+      },
+      {
+        "name": "apply",
+        "wall_seconds": 3.47649083,
+        "cpu_seconds": 8.551810425,
+        "calls": 1646
+      },
+      {
+        "name": "commit",
+        "wall_seconds": 6.604530926,
+        "cpu_seconds": 14.655979939,
+        "calls": 1646
+      },
+      {
+        "name": "release",
+        "wall_seconds": 3.043622671,
+        "cpu_seconds": 3.029874699,
+        "calls": 1
+      },
+      {
+        "name": "model_output",
+        "wall_seconds": 0.023520626,
+        "cpu_seconds": 0.023486561,
+        "calls": 1
+      },
+      {
+        "name": "commit_route",
+        "wall_seconds": 2.621006622,
+        "cpu_seconds": 2.607577981,
+        "calls": 1646
+      },
+      {
+        "name": "commit_counts",
+        "wall_seconds": 0,
+        "cpu_seconds": 0,
+        "calls": 0
+      },
+      {
+        "name": "commit_completed",
+        "wall_seconds": 0,
+        "cpu_seconds": 0,
+        "calls": 0
+      },
+      {
+        "name": "commit_partial_group",
+        "wall_seconds": 0,
+        "cpu_seconds": 0,
+        "calls": 0
+      },
+      {
+        "name": "commit_partial_encode_publish",
+        "wall_seconds": 0,
+        "cpu_seconds": 0,
+        "calls": 0
+      },
+      {
+        "name": "commit_loop_mixed",
+        "wall_seconds": 11.896430378,
+        "cpu_seconds": 11.414743237,
+        "calls": 6584
+      },
+      {
+        "name": "commit_partial_finalize",
+        "wall_seconds": 0.087122237,
+        "cpu_seconds": 0.076940012,
+        "calls": 6584
+      },
+      {
+        "name": "commit_cleanup",
+        "wall_seconds": 0,
+        "cpu_seconds": 0,
+        "calls": 0
+      },
+      {
+        "name": "apply_parallel",
+        "wall_seconds": 1.88345534,
+        "cpu_seconds": 6.776047699,
+        "calls": 1646
+      },
+      {
+        "name": "apply_collect_release",
+        "wall_seconds": 1.587687763,
+        "cpu_seconds": 1.756053921,
+        "calls": 1646
+      },
+      {
+        "name": "apply_job",
+        "wall_seconds": 6.563589877,
+        "cpu_seconds": 6.440779297,
+        "calls": 50028
+      },
+      {
+        "name": "apply_endpoint_loop",
+        "wall_seconds": 6.389554014,
+        "cpu_seconds": 6.260540337,
+        "calls": 50028
+      }
+    ]
+  },
+  "phase-descriptor16": {
+    "arm": "B",
+    "label": "phase-descriptor16",
+    "case": "zh-core-w4-v50000",
+    "block": 1,
+    "warmup": false,
+    "returncode": 0,
+    "subprocess_wall": 38.50821041606832,
+    "max_swap_kib": 0,
+    "min_available_kib": 897536,
+    "binary_sha256": "92fbd7947b50486683e2cae9a8f91ca429bfc74e7935b4e60a22ba238c619640",
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/root/code/tokenizers-simplification-results/bin/phase-descriptor16",
+      "/root/code/tokenizers-simplification-results/runs/phase-descriptor16/zh-core-w4-v50000/b1-B/job.json"
+    ],
+    "attempt_id": "b1-B",
+    "build_id": "B",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-bytelevel",
+    "metrics": {
+      "load_seconds": 10.654909824,
+      "process_hwm_kib_before_validation": 4006004,
+      "train_cpu_seconds": 83.852493,
+      "train_seconds": 25.82871468
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/root/code/tokenizers-simplification-results/runs/phase-descriptor16/zh-core-w4-v50000/b1-B/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "model_vocab_entries": 50000,
+    "model_merges": 49744,
+    "valid": true,
+    "phases": [
+      {
+        "name": "vocabulary",
+        "wall_seconds": 0.602543384,
+        "cpu_seconds": 2.058940319,
+        "calls": 1
+      },
+      {
+        "name": "corpus_plan",
+        "wall_seconds": 0.828481098,
+        "cpu_seconds": 2.056724601,
+        "calls": 1
+      },
+      {
+        "name": "initial_index",
+        "wall_seconds": 4.990057065,
+        "cpu_seconds": 16.949662634,
+        "calls": 1
+      },
+      {
+        "name": "materialize",
+        "wall_seconds": 1.025387967,
+        "cpu_seconds": 2.759909344,
+        "calls": 1
+      },
+      {
+        "name": "select",
+        "wall_seconds": 0.528528926,
+        "cpu_seconds": 0.642146437,
+        "calls": 1646
+      },
+      {
+        "name": "prepare",
+        "wall_seconds": 10.451627254,
+        "cpu_seconds": 37.800772668,
+        "calls": 1646
+      },
+      {
+        "name": "apply",
+        "wall_seconds": 1.900501847,
+        "cpu_seconds": 6.990708388,
+        "calls": 1646
+      },
+      {
+        "name": "commit",
+        "wall_seconds": 5.284888083,
+        "cpu_seconds": 14.322526198,
+        "calls": 1646
+      },
+      {
+        "name": "release",
+        "wall_seconds": 0.190657041,
+        "cpu_seconds": 0.190729474,
+        "calls": 1
+      },
+      {
+        "name": "model_output",
+        "wall_seconds": 0.022247215,
+        "cpu_seconds": 0.022243201,
+        "calls": 1
+      }
+    ]
+  }
+}
