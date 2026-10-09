@@ -1,6 +1,6 @@
 # Review iteration after the measured delivery
 
-Current review snapshot: 2100 formatted production logic lines and 768 test logic
+Current review snapshot: 2100 formatted production logic lines and 780 test logic
 lines, including all default BPE tests, the independent reference, public hooks
 and Miri harness. The
 production limit is 2100; the accepted test ceiling is 800.
