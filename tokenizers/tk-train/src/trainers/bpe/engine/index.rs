@@ -100,7 +100,6 @@ impl<'arena> PairIndex<'arena> {
             .collect::<Vec<_>>()
             .into_par_iter()
             .map(|begin| -> Result<_> {
-                let lease = arena.lease();
                 let domain = corpus.small_pair_domain();
                 let mut dense: Vec<State<'arena>> = (0..domain.map_or(0, |n| n * n))
                     .map(|_| State::default())
@@ -115,7 +114,7 @@ impl<'arena> PairIndex<'arena> {
                             None => counts.entry(pair).or_default(),
                         };
                         add(&mut state.count, weight)?;
-                        state.positions.push(p, &lease)
+                        state.positions.push(p)
                     },
                 )?;
                 work.complete(chunk.min(corpus.word_count() - begin));
@@ -144,7 +143,7 @@ impl<'arena> PairIndex<'arena> {
                 for (pair, state) in pieces {
                     let total = groups.entry(pair).or_default();
                     add(&mut total.count, state.count)?;
-                    total.positions.append(state.positions, &lease)?;
+                    total.positions.append(state.positions)?;
                 }
                 let mut shard = Shard::default();
                 for (pair, group) in groups {
@@ -152,7 +151,8 @@ impl<'arena> PairIndex<'arena> {
                         continue;
                     }
                     let count = group.count;
-                    let positions = group.positions;
+                    let mut positions = group.positions;
+                    positions.freeze(&lease)?;
                     shard.states.insert(pair, State { count, positions });
                     if !reuse {
                         shard.queue.push(Priority { pair, count });
@@ -305,7 +305,7 @@ impl<'arena> PairIndex<'arena> {
                             } else {
                                 // Fresh jobs follow rule rank and spatial ranges. Each
                                 // born key has one producer, so lists concatenate sorted.
-                                group.positions.append(change.positions, &lease)?;
+                                group.positions.append(change.positions)?;
                             }
                         }
                     }
@@ -334,6 +334,7 @@ impl<'arena> PairIndex<'arena> {
                             positions: Positions::from_sorted(&state.unordered, &lease)?,
                         });
                     } else {
+                        state.positions.freeze(&lease)?;
                         debug_assert!(!shard.states.contains_key(&pair));
                         shard.states.insert(
                             pair,

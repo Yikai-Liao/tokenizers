@@ -1,10 +1,6 @@
 //! Compatible selection and snapshot preparation hide endpoint/event bookkeeping.
 use super::{BpeTrainer, Corpus, PairIndex, Vocabulary, WORD_SEPARATOR_ID};
-use super::{
-    corpus::Match,
-    index::Candidate,
-    positions::{Arena, Lease, Positions},
-};
+use super::{corpus::Match, index::Candidate, positions::Positions};
 use ahash::{AHashMap, AHashSet};
 use rayon::prelude::*;
 use tk_encode::{Result, models::bpe::Pair};
@@ -35,7 +31,6 @@ struct Job<'arena> {
     changes: Vec<Change<'arena>>,
 }
 struct Neighbors<'a, 'arena> {
-    lease: &'a Lease<'arena>,
     rule: &'a Rule<'arena>,
     rank: usize,
     directories: &'a mut Directories,
@@ -57,14 +52,8 @@ impl Directories {
     }
 }
 impl<'a, 'arena> Neighbors<'a, 'arena> {
-    fn new(
-        rule: &'a Rule<'arena>,
-        rank: usize,
-        directories: &'a mut Directories,
-        lease: &'a Lease<'arena>,
-    ) -> Self {
+    fn new(rule: &'a Rule<'arena>, rank: usize, directories: &'a mut Directories) -> Self {
         Self {
-            lease,
             rule,
             rank,
             directories,
@@ -105,7 +94,6 @@ impl<'a, 'arena> Neighbors<'a, 'arena> {
         weight: u64,
         admit: bool,
     ) -> Result<()> {
-        let lease = self.lease;
         let group = self.group(removed, left);
         group.removed_weight = group
             .removed_weight
@@ -121,7 +109,7 @@ impl<'a, 'arena> Neighbors<'a, 'arena> {
                 .born_weight
                 .checked_add(weight)
                 .ok_or("BPE neighbor birth mass exceeds u64")?;
-            group.positions.push(position as u64, lease)?;
+            group.positions.push(position as u64)?;
         }
         Ok(())
     }
@@ -197,14 +185,9 @@ impl<'arena> Batch<'arena> {
             .iter()
             .map(|rule| (rule.pair, rule.candidate.priority.count, rule.replacement))
     }
-    pub(super) fn prepare(
-        self,
-        corpus: &Corpus,
-        limit: usize,
-        arena: &'arena Arena,
-    ) -> Result<Prepared<'arena>> {
+    pub(super) fn prepare(self, corpus: &Corpus, limit: usize) -> Result<Prepared<'arena>> {
         if self.reuse {
-            return self.prepare_cohort(corpus, limit, arena);
+            return self.prepare_cohort(corpus, limit);
         }
         let selected: AHashMap<_, _> = self
             .rules
@@ -259,9 +242,8 @@ impl<'arena> Batch<'arena> {
             .map_init(
                 Directories::default,
                 |directories, (rank, rule, positions)| -> Result<_> {
-                    let lease = arena.lease();
                     directories.reset(corpus.id_count());
-                    let mut neighbors = Neighbors::new(rule, rank, directories, &lease);
+                    let mut neighbors = Neighbors::new(rule, rank, directories);
                     let mut writes = Writes::fresh(rule, corpus);
                     let matcher = corpus.fresh_matcher(rule.pair);
                     let mut weights = None;
@@ -321,7 +303,7 @@ impl<'arena> Batch<'arena> {
                                 matched.span() + corpus.id_span(born) < limit,
                             )?;
                         }
-                        writes.record(matched, &lease)?;
+                        writes.record(matched)?;
                     }
                     Ok(Job {
                         writes,
@@ -332,12 +314,7 @@ impl<'arena> Batch<'arena> {
             .collect::<Result<Vec<_>>>()?;
         Ok(Prepared { jobs })
     }
-    fn prepare_cohort(
-        self,
-        corpus: &Corpus,
-        limit: usize,
-        arena: &'arena Arena,
-    ) -> Result<Prepared<'arena>> {
+    fn prepare_cohort(self, corpus: &Corpus, limit: usize) -> Result<Prepared<'arena>> {
         let rule = &self.rules[0];
         let mut words: Vec<_> = rule
             .candidate
@@ -350,9 +327,8 @@ impl<'arena> Batch<'arena> {
         let jobs = words
             .par_chunks(chunk)
             .map_init(Directories::default, |directories, words| -> Result<_> {
-                let lease = arena.lease();
                 directories.reset(corpus.id_count());
-                let mut neighbors = Neighbors::new(rule, 0, directories, &lease);
+                let mut neighbors = Neighbors::new(rule, 0, directories);
                 let mut writes = Writes::Occurrences {
                     positions: Vec::new(),
                     id: rule.replacement,
@@ -409,7 +385,7 @@ impl<'arena> Batch<'arena> {
                                 )?;
                             }
                             previous = Some((rule.replacement, p, matched.span()));
-                            writes.record(matched, &lease)?;
+                            writes.record(matched)?;
                             p = matched.after;
                         } else {
                             let span = corpus.span(p);
@@ -466,7 +442,7 @@ impl<'arena> Writes<'arena> {
             id: rule.replacement,
         }
     }
-    fn record(&mut self, matched: Match, lease: &Lease<'arena>) -> Result<()> {
+    fn record(&mut self, matched: Match) -> Result<()> {
         match self {
             Self::Compact {
                 positions,
@@ -476,7 +452,7 @@ impl<'arena> Writes<'arena> {
             } => {
                 debug_assert_eq!(matched.right - matched.start, *left);
                 debug_assert_eq!(matched.span(), *total);
-                positions.push(matched.start as u64, lease)?;
+                positions.push(matched.start as u64)?;
             }
             Self::Occurrences { positions, .. } => positions.push(matched),
         }
@@ -550,6 +526,7 @@ impl Source<'_, '_> {
 
 #[cfg(test)]
 mod tests {
+    use super::super::positions::Arena;
     use super::super::{CorpusPlan, WordCountsView};
     use super::*;
     use crate::progress::TrainingProgress;
@@ -578,10 +555,7 @@ mod tests {
             batch.trace().collect::<Vec<_>>(),
             vec![((0, 1), 10, 6), ((2, 3), 9, 7), ((4, 5), 8, 8)]
         );
-        let changes = batch
-            .prepare(&corpus, usize::MAX, &arena)
-            .unwrap()
-            .apply(&corpus);
+        let changes = batch.prepare(&corpus, usize::MAX).unwrap().apply(&corpus);
         index.commit(changes).unwrap();
         assert!(index.best().is_none());
     }

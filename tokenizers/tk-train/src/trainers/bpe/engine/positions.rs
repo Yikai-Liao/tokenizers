@@ -33,25 +33,27 @@ impl<'arena> Lease<'arena> {
     }
 }
 enum Bytes<'arena> {
+    Inline([u8; 16], usize),
     Heap(Vec<u8>),
-    Small(&'arena mut [u8], usize),
+    Frozen(&'arena [u8]),
 }
 impl Default for Bytes<'_> {
     fn default() -> Self {
-        Self::Heap(Vec::new())
+        Self::Inline([0; 16], 0)
     }
 }
 impl std::ops::Deref for Bytes<'_> {
     type Target = [u8];
     fn deref(&self) -> &[u8] {
         match self {
+            Self::Inline(bytes, length) => &bytes[..*length],
             Self::Heap(bytes) => bytes,
-            Self::Small(bytes, length) => &bytes[..*length],
+            Self::Frozen(bytes) => bytes,
         }
     }
 }
 impl<'arena> Bytes<'arena> {
-    fn extend(&mut self, extra: &[u8], lease: &Lease<'arena>) -> Result<()> {
+    fn extend(&mut self, extra: &[u8]) -> Result<()> {
         if extra.is_empty() {
             return Ok(());
         }
@@ -59,29 +61,30 @@ impl<'arena> Bytes<'arena> {
             .len()
             .checked_add(extra.len())
             .ok_or("BPE bytes exceed usize")?;
-        if let Self::Heap(bytes) = self {
-            if !bytes.is_empty() || length > 256 {
-                bytes.extend_from_slice(extra);
-                return Ok(());
-            }
-        }
-        if let Self::Small(bytes, used) = self {
+        if let Self::Inline(bytes, used) = self {
             if length <= bytes.len() {
                 bytes[*used..length].copy_from_slice(extra);
                 *used = length;
                 return Ok(());
             }
         }
-        if length <= 256 {
-            let bytes = lease.allocate(length.next_power_of_two().max(8))?;
-            bytes[..self.len()].copy_from_slice(self);
-            bytes[self.len()..length].copy_from_slice(extra);
-            *self = Self::Small(bytes, length);
-        } else {
-            let mut bytes = Vec::with_capacity(length);
+        if !matches!(self, Self::Heap(_)) {
+            let mut bytes = Vec::with_capacity(length.max(32));
             bytes.extend_from_slice(self);
-            bytes.extend_from_slice(extra);
             *self = Self::Heap(bytes);
+        }
+        if let Self::Heap(bytes) = self {
+            bytes.extend_from_slice(extra);
+        }
+        Ok(())
+    }
+    fn freeze(&mut self, lease: &Lease<'arena>) -> Result<()> {
+        if let Self::Heap(bytes) = self {
+            if bytes.len() <= 256 {
+                let frozen = lease.allocate(bytes.len())?;
+                frozen.copy_from_slice(bytes);
+                *self = Self::Frozen(frozen);
+            }
         }
         Ok(())
     }
@@ -107,11 +110,15 @@ impl<'arena> Positions<'arena> {
             ..Self::default()
         };
         for &position in values {
-            result.push(position, lease)?;
+            result.push(position)?;
         }
+        result.freeze(lease)?;
         Ok(result)
     }
-    pub(super) fn push(&mut self, position: u64, lease: &Lease<'arena>) -> Result<()> {
+    pub(super) fn freeze(&mut self, lease: &Lease<'arena>) -> Result<()> {
+        self.bytes.freeze(lease)
+    }
+    pub(super) fn push(&mut self, position: u64) -> Result<()> {
         if self.count != 0 && position < self.last {
             return Err("BPE positions are not sorted".into());
         }
@@ -133,7 +140,7 @@ impl<'arena> Positions<'arena> {
                 delta >>= 7;
             }
             bytes[length] = delta as u8;
-            self.bytes.extend(&bytes[..length + 1], lease)?;
+            self.bytes.extend(&bytes[..length + 1])?;
         }
         self.last = position;
         self.count += 1;
@@ -141,7 +148,7 @@ impl<'arena> Positions<'arena> {
     }
     // Owned sorted pieces can retain their restart boundaries. Copy bytes and
     // directory offsets, rather than decoding and re-encoding every coordinate.
-    pub(super) fn append(&mut self, other: Self, lease: &Lease<'arena>) -> Result<()> {
+    pub(super) fn append(&mut self, other: Self) -> Result<()> {
         if other.is_empty() {
             return Ok(());
         }
@@ -158,7 +165,7 @@ impl<'arena> Positions<'arena> {
             .ok_or("BPE position count exceeds usize")?;
         let byte = self.bytes.len();
         let entry = self.count;
-        self.bytes.extend(&other.bytes, lease)?;
+        self.bytes.extend(&other.bytes)?;
         self.blocks.push(Block {
             first: other.first,
             byte,
@@ -314,16 +321,16 @@ mod tests {
             let begin = values.last().copied().unwrap_or(1u64 << 32);
             let fragment: Vec<_> = (0..length).map(|i| begin + (i / 3) as u64).collect();
             positions
-                .append(Positions::from_sorted(&fragment, &lease).unwrap(), &lease)
+                .append(Positions::from_sorted(&fragment, &lease).unwrap())
                 .unwrap();
             values.extend(fragment);
         }
         for value in [1u64 << 63, u64::MAX - 1, u64::MAX] {
-            positions.push(value, &lease).unwrap();
+            positions.push(value).unwrap();
             values.push(value);
         }
         positions
-            .append(Positions::from_sorted(&[u64::MAX], &lease).unwrap(), &lease)
+            .append(Positions::from_sorted(&[u64::MAX], &lease).unwrap())
             .unwrap();
         values.push(u64::MAX);
         assert_eq!(positions.iter().collect::<Vec<_>>(), values);
@@ -346,7 +353,7 @@ mod tests {
         assert_eq!(blocks, values);
         assert!(
             positions
-                .append(Positions::from_sorted(&[0], &lease).unwrap(), &lease)
+                .append(Positions::from_sorted(&[0], &lease).unwrap())
                 .is_err()
         );
         assert_eq!(positions.iter().collect::<Vec<_>>(), values);

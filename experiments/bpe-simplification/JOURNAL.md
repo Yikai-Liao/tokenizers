@@ -260,3 +260,16 @@ closure内一次lease，8→256增长，大于256转heap；所有资源joined后
 不能据增长式builder否定main的最终一次分配策略；下一轮将Arena局限到owner
 已完整聚合且过floor后的一次freeze，并恢复main内联小payload原则，避免增长退休
 空间与临时Writes进入Arena。随后用相同builder的无Arena控制区分二者收益。
+
+## 14. Inline16 + owner发布时payload freeze，局部提取待控制
+
+生产1909行，测试1460行；37默认library tests通过。
+英文2.234s / CPU5.88s / RSS0.285GiB；中文35.871s / CPU101.38s / RSS3.175GiB。
+完整模型相同、swap0；仍慢于typed，当前不能保留。
+Arena不用于增长和临时Writes，仅在完整owner group过floor后接管17..256bytes。
+独立fresh reviewer核对main实际链，明确这只是payload freeze：仍有每列表heap
+编码Vec、独立blocks、fragment重启，未恢复main16B本体/scratch/完整producer直接alloc。
+前两版增长式原型不是忠实提取main，不能用退化否定main Arena；见REVIEW-7.md。
+用户要求最少代码拿主要收益，并明确Inline可能无收益、需要测试；下一轮相同
+Inline16 builder NoArena隔离这份inline及freeze，随后重点测main完整producer
+前置裁剪及owner直接发布的窄提取，不恢复整个packed codec协议。
