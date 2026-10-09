@@ -307,3 +307,12 @@ owner直接move发布；partial/AA/reuse继续完整聚合。没有恢复main的
 AA保持此前grain，未恢复main多小candidate合并job。保留作为结构合理且内存更好的候选，
 不声称其填平main速度差距。REVIEW-8包含两份新代理的固定源码审查。
 下一项main未压缩写计划仅改数行，净不增长。
+
+## 18. main未压缩写计划窄提取，未取得整体收益
+
+生产1849行，测试1439行；36默认library tests通过。
+英文3.263s / CPU5.26s / RSS0.266GiB；中文31.376s / CPU84.87s / RSS3.022GiB。
+完整模型相同、swap0。中文CPU几乎相同、wall未降、RSS增约32MiB，
+没有证据支持保留。英文wall明显偏高但CPU无相应增幅；不为机器噪声追加重复。
+本轮仅改Compact写计划为Vec<u64>，birth postings保持压缩；不否定main较窄
+未压缩坐标plane的收益。归档后恢复压缩写计划，再测审查第三项fresh owner目录。

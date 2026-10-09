@@ -452,7 +452,7 @@ impl Prepared {
 // sorted starts and one rule geometry. Alias reuse retains occurrence geometry.
 enum Writes {
     Compact {
-        positions: Positions,
+        positions: Vec<u64>,
         left: usize,
         total: usize,
         id: u32,
@@ -466,7 +466,7 @@ impl Writes {
     fn fresh(rule: &Rule, corpus: &Corpus) -> Self {
         let left = corpus.id_span(rule.pair.0);
         Self::Compact {
-            positions: Positions::default(),
+            positions: Vec::new(),
             left,
             total: left + corpus.id_span(rule.pair.1),
             id: rule.replacement,
@@ -482,7 +482,7 @@ impl Writes {
             } => {
                 debug_assert_eq!(matched.right - matched.start, *left);
                 debug_assert_eq!(matched.span(), *total);
-                positions.push(matched.start as u64)?;
+                positions.push(matched.start as u64);
             }
             Self::Occurrences { positions, .. } => positions.push(matched),
         }
@@ -496,7 +496,7 @@ impl Writes {
                 total,
                 id,
             } => {
-                for coordinate in positions.iter() {
+                for coordinate in positions {
                     let start = corpus.resident(coordinate);
                     corpus.apply(
                         Match {
