@@ -152,3 +152,19 @@ main 来源：`corpus/mod.rs::WordWeightCursor`、`corpus/prepare.rs` 的权重�
 用户要求定期 sub-agent review，已启动只读审查，后续每两轮或组合调整后复审。
 审查建议：map_init 省约25–35行、u32邻居目录约减半内存、initial第一片直接移入而不重编码。
 这些均为待验证假设；U64位置不改，reuse unordered排序不删。
+
+## 6. reviewer 建议的 map_init/u32 简化，保留替代 scratch
+
+生产1681行（-21），测试1385行，默认library tests35 passed。
+英文2.302 s、中文39.903 s；CPU分别6.24/123.52 s，RSS分别0.273/3.079 GiB。
+完整模型与全部有序merges一致，child swap=0。
+中文与worker scratch的39.396 s接近，英文回到上两轮区间。
+本轮移除全局Scratch、Mutex、pool-worker-index耦合；接受更少行数和更少隐含约束，
+不声称微小速度或RSS差异有统计显著性。RSS增加约110 MiB，应在最后相邻复測核对。
+u32仅用于每侧unique-ID目录entry index，U64位置保持不变。
+
+只读review #1固定2b55b7f6：现有六模块边界有封装深度，不恢复Execution/arena框架。
+指出scan_symbols零offset参数、initial_spans冗余类型转换可删；initial已直接压缩，
+reuse unordered不可删排序；fresh有序串接依赖唯一producer与indexed collect顺序。
+建议分别测fresh固定几何缓存、head-read ring、小域dense计数消融，再筛少量竞争组合。
+未发现确定数值/U64/并发缺陷；这不是复测或性能保证。下一轮之后安排review #2。

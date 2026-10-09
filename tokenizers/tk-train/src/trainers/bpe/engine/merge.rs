@@ -3,7 +3,6 @@ use super::{BpeTrainer, Corpus, PairIndex, Vocabulary, WORD_SEPARATOR_ID};
 use super::{corpus::Match, index::Candidate, positions::Positions};
 use ahash::{AHashMap, AHashSet};
 use rayon::prelude::*;
-use std::sync::{Mutex, MutexGuard};
 use tk_encode::{Result, models::bpe::Pair};
 
 struct Rule {
@@ -37,40 +36,19 @@ struct Neighbors<'a> {
     directories: &'a mut Directories,
     changes: [Vec<Change>; 2],
 }
-// As in main's Execution/IdDirectory, leases belong to executing workers.
-// Jobs are sequential while leased; nested pool work would re-enter a lock.
-pub(super) struct Scratch {
-    workers: Vec<Mutex<Directories>>,
-}
 #[derive(Default)]
 struct Directories {
-    indices: [Vec<usize>; 2],
+    indices: [Vec<u32>; 2],
     touched: Vec<(usize, usize)>,
 }
 impl Directories {
     fn reset(&mut self, domain: usize) {
         for (side, id) in self.touched.drain(..) {
-            self.indices[side][id] = usize::MAX;
+            self.indices[side][id] = u32::MAX;
         }
         for values in &mut self.indices {
-            values.resize(domain, usize::MAX);
+            values.resize(domain, u32::MAX);
         }
-    }
-}
-impl Scratch {
-    pub(super) fn new(workers: usize) -> Self {
-        Self {
-            workers: (0..workers).map(|_| Mutex::default()).collect(),
-        }
-    }
-    fn lease(&self, domain: usize) -> MutexGuard<'_, Directories> {
-        let worker = rayon::current_thread_index().expect("scratch executes in the training pool");
-        let mut directories = self.workers[worker]
-            .lock()
-            .unwrap_or_else(|e| e.into_inner());
-        // Clearing on entry also recovers checked errors and poisoned leases.
-        directories.reset(domain);
-        directories
     }
 }
 impl<'a> Neighbors<'a> {
@@ -85,7 +63,7 @@ impl<'a> Neighbors<'a> {
     fn group(&mut self, neighbor: u32, left: bool) -> &mut Change {
         let side = usize::from(!left);
         let slot = &mut self.directories.indices[side][neighbor as usize];
-        if *slot == usize::MAX {
+        if *slot == u32::MAX {
             let id = self.rule.replacement;
             let pair = self.rule.pair;
             let index = self.changes[side].len();
@@ -102,9 +80,10 @@ impl<'a> Neighbors<'a> {
                 bucket: 2 * self.rank + usize::from(!left && neighbor != id),
             });
             self.directories.touched.push((side, neighbor as usize));
-            *slot = index;
+            *slot =
+                u32::try_from(index).expect("each neighbor directory is bounded by real token IDs");
         }
-        &mut self.changes[side][*slot]
+        &mut self.changes[side][*slot as usize]
     }
     fn record(
         &mut self,
@@ -206,14 +185,9 @@ impl Batch {
             .iter()
             .map(|rule| (rule.pair, rule.candidate.priority.count, rule.replacement))
     }
-    pub(super) fn prepare(
-        self,
-        corpus: &Corpus,
-        limit: usize,
-        scratch: &Scratch,
-    ) -> Result<Prepared> {
+    pub(super) fn prepare(self, corpus: &Corpus, limit: usize) -> Result<Prepared> {
         if self.reuse {
-            return self.prepare_cohort(corpus, limit, scratch);
+            return self.prepare_cohort(corpus, limit);
         }
         let selected: AHashMap<_, _> = self
             .rules
@@ -264,75 +238,82 @@ impl Batch {
         }
         let jobs = tasks
             .into_par_iter()
-            .map(|(rank, rule, positions)| -> Result<_> {
-                let mut directories = scratch.lease(corpus.id_count());
-                let mut neighbors = Neighbors::new(rule, rank, &mut directories);
-                let mut writes = Writes::fresh(rule, corpus);
-                let mut weights = None;
-                for coordinate in positions.iter() {
-                    let p = corpus.resident(coordinate);
-                    let Some(matched) = corpus.matched(p, rule.pair) else {
-                        continue;
-                    };
-                    let (weight, end) = match weights {
-                        Some((weight, end)) if p < end => (weight, end),
-                        _ => corpus.weight_region(p),
-                    };
-                    weights = Some((weight, end));
-                    let prior = corpus.token(p - 1);
-                    if prior != WORD_SEPARATOR_ID {
-                        let span = corpus.id_span(prior);
-                        let before = p - span;
-                        let merging = if aa {
-                            p >= matched.span()
-                                && starts.binary_search(&((p - matched.span()) as u64)).is_ok()
-                        } else {
-                            before != 0 && selected.contains_key(&(corpus.token(before - 1), prior))
+            .map_init(
+                Directories::default,
+                |directories, (rank, rule, positions)| -> Result<_> {
+                    directories.reset(corpus.id_count());
+                    let mut neighbors = Neighbors::new(rule, rank, directories);
+                    let mut writes = Writes::fresh(rule, corpus);
+                    let mut weights = None;
+                    for coordinate in positions.iter() {
+                        let p = corpus.resident(coordinate);
+                        let Some(matched) = corpus.matched(p, rule.pair) else {
+                            continue;
                         };
-                        if !merging {
+                        let (weight, end) = match weights {
+                            Some((weight, end)) if p < end => (weight, end),
+                            _ => corpus.weight_region(p),
+                        };
+                        weights = Some((weight, end));
+                        let prior = corpus.token(p - 1);
+                        if prior != WORD_SEPARATOR_ID {
+                            let span = corpus.id_span(prior);
+                            let before = p - span;
+                            let merging = if aa {
+                                p >= matched.span()
+                                    && starts.binary_search(&((p - matched.span()) as u64)).is_ok()
+                            } else {
+                                before != 0
+                                    && selected.contains_key(&(corpus.token(before - 1), prior))
+                            };
+                            if !merging {
+                                neighbors.record(
+                                    true,
+                                    prior,
+                                    prior,
+                                    before,
+                                    weight,
+                                    span + matched.span() < limit,
+                                )?;
+                            }
+                        }
+                        let next = corpus.token(matched.after);
+                        if next != WORD_SEPARATOR_ID {
+                            let replacement = if aa {
+                                starts
+                                    .binary_search(&(matched.after as u64))
+                                    .is_ok()
+                                    .then_some(rule.replacement)
+                            } else {
+                                selected
+                                    .get(&(
+                                        next,
+                                        corpus.token(matched.after + corpus.id_span(next)),
+                                    ))
+                                    .copied()
+                            };
+                            let born = replacement.unwrap_or(next);
                             neighbors.record(
-                                true,
-                                prior,
-                                prior,
-                                before,
+                                false,
+                                next,
+                                born,
+                                p,
                                 weight,
-                                span + matched.span() < limit,
+                                matched.span() + corpus.id_span(born) < limit,
                             )?;
                         }
+                        writes.record(matched)?;
                     }
-                    let next = corpus.token(matched.after);
-                    if next != WORD_SEPARATOR_ID {
-                        let replacement = if aa {
-                            starts
-                                .binary_search(&(matched.after as u64))
-                                .is_ok()
-                                .then_some(rule.replacement)
-                        } else {
-                            selected
-                                .get(&(next, corpus.token(matched.after + corpus.id_span(next))))
-                                .copied()
-                        };
-                        let born = replacement.unwrap_or(next);
-                        neighbors.record(
-                            false,
-                            next,
-                            born,
-                            p,
-                            weight,
-                            matched.span() + corpus.id_span(born) < limit,
-                        )?;
-                    }
-                    writes.record(matched)?;
-                }
-                Ok(Job {
-                    writes,
-                    changes: neighbors.finish(),
-                })
-            })
+                    Ok(Job {
+                        writes,
+                        changes: neighbors.finish(),
+                    })
+                },
+            )
             .collect::<Result<Vec<_>>>()?;
         Ok(Prepared { jobs })
     }
-    fn prepare_cohort(self, corpus: &Corpus, limit: usize, scratch: &Scratch) -> Result<Prepared> {
+    fn prepare_cohort(self, corpus: &Corpus, limit: usize) -> Result<Prepared> {
         let rule = &self.rules[0];
         let mut words: Vec<_> = rule
             .candidate
@@ -344,9 +325,9 @@ impl Batch {
         let chunk = words.len().div_ceil(rayon::current_num_threads()).max(1);
         let jobs = words
             .par_chunks(chunk)
-            .map(|words| -> Result<_> {
-                let mut directories = scratch.lease(corpus.id_count());
-                let mut neighbors = Neighbors::new(rule, 0, &mut directories);
+            .map_init(Directories::default, |directories, words| -> Result<_> {
+                directories.reset(corpus.id_count());
+                let mut neighbors = Neighbors::new(rule, 0, directories);
                 let mut writes = Writes::Occurrences {
                     positions: Vec::new(),
                     id: rule.replacement,
@@ -548,14 +529,7 @@ mod tests {
             batch.trace().collect::<Vec<_>>(),
             vec![((0, 1), 10, 6), ((2, 3), 9, 7), ((4, 5), 8, 8)]
         );
-        let changes = batch
-            .prepare(
-                &corpus,
-                usize::MAX,
-                &Scratch::new(rayon::current_num_threads()),
-            )
-            .unwrap()
-            .apply(&corpus);
+        let changes = batch.prepare(&corpus, usize::MAX).unwrap().apply(&corpus);
         index.commit(changes).unwrap();
         assert!(index.best().is_none());
     }
