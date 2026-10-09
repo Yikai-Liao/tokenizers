@@ -273,3 +273,14 @@ Arena不用于增长和临时Writes，仅在完整owner group过floor后接管17
 用户要求最少代码拿主要收益，并明确Inline可能无收益、需要测试；下一轮相同
 Inline16 builder NoArena隔离这份inline及freeze，随后重点测main完整producer
 前置裁剪及owner直接发布的窄提取，不恢复整个packed codec协议。
+
+## 15. 相同Inline16 builder无Arena控制，待相邻复测
+
+生产1845行，测试1430行；36默认library tests通过。
+英文2.181s / CPU5.59s / RSS0.284GiB；中文34.012s / CPU101.35s / RSS3.280GiB。
+完整模型相同、swap0。Arena-freeze组中文CPU101.38s，几乎相同；wall35.87 vs34.01
+尚不能归因。相比历史typed30.87/CPU88.38，本次builder组合不支持保留，
+但须相邻typed/inline复测以排除host频率/负载变化。
+这是Inline16加stack-delta builder，不单独将结果归因于inline。
+用户要求以最少代码拿主要收益，下一项只提取main完整producer floor裁剪
+及owner直接move发布，保留partial/AA/reuse聚合，避免复制全部allocator协议。

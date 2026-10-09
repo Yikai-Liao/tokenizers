@@ -10,7 +10,6 @@ use crate::progress::TrainingProgress;
 use corpus::{Corpus, CorpusPlan};
 use index::PairIndex;
 use merge::Batch;
-use positions::Arena;
 #[cfg(test)]
 use tk_encode::models::bpe::Pair;
 use tk_encode::{
@@ -42,15 +41,8 @@ pub(super) fn train(
             let mut vocabulary =
                 Vocabulary::initialize(trainer, words, workers, &progress, &mut alphabet)?;
             let plan = CorpusPlan::build(words, &mut vocabulary, trainer, reuse, &progress)?;
-            let arena = Arena::new(workers);
-            let mut index = PairIndex::build(
-                &arena,
-                &plan,
-                trainer.min_frequency,
-                workers,
-                reuse,
-                &progress,
-            )?;
+            let mut index =
+                PairIndex::build(&plan, trainer.min_frequency, workers, reuse, &progress)?;
             if vocabulary.len() >= trainer.vocab_size {
                 progress.stage("Compute merges", trainer.vocab_size);
                 let (vocab, merges) = vocabulary.into_model_parts(Vec::new());
@@ -86,7 +78,6 @@ pub(super) fn train(
             }
             drop(index);
             drop(corpus);
-            drop(arena);
             #[cfg(test)]
             if let Some(observer) = observe.as_mut() {
                 for (pair, count, id) in trace {

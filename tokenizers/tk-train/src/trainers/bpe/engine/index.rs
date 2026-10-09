@@ -1,9 +1,6 @@
 //! Count owners publish complete lists; the queue repairs stale snapshots lazily.
 use super::merge::Change;
-use super::{
-    CorpusPlan, WORD_SEPARATOR_ID,
-    positions::{Arena, Positions},
-};
+use super::{CorpusPlan, WORD_SEPARATOR_ID, positions::Positions};
 use crate::progress::TrainingProgress;
 use ahash::AHashMap;
 use dary_heap::OctonaryHeap;
@@ -28,46 +25,45 @@ impl PartialOrd for Priority {
         Some(self.cmp(other))
     }
 }
-pub(super) struct Candidate<'arena> {
+pub(super) struct Candidate {
     pub(super) priority: Priority,
-    pub(super) positions: Positions<'arena>,
+    pub(super) positions: Positions,
 }
-impl Eq for Candidate<'_> {}
-impl PartialEq for Candidate<'_> {
+impl Eq for Candidate {}
+impl PartialEq for Candidate {
     fn eq(&self, other: &Self) -> bool {
         self.priority == other.priority
     }
 }
-impl Ord for Candidate<'_> {
+impl Ord for Candidate {
     fn cmp(&self, other: &Self) -> Ordering {
         self.priority.cmp(&other.priority)
     }
 }
-impl PartialOrd for Candidate<'_> {
+impl PartialOrd for Candidate {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 #[derive(Default)]
-struct State<'arena> {
+struct State {
     count: u64,
-    positions: Positions<'arena>,
+    positions: Positions,
 }
 #[derive(Default)]
-struct Group<'arena> {
+struct Group {
     count: u64,
-    positions: Positions<'arena>,
+    positions: Positions,
     unordered: Vec<u64>,
 }
 #[derive(Default)]
-struct Shard<'arena> {
-    states: AHashMap<Pair, State<'arena>>,
+struct Shard {
+    states: AHashMap<Pair, State>,
     queue: OctonaryHeap<Priority>,
 }
-pub(super) struct PairIndex<'arena> {
-    arena: &'arena Arena,
-    shards: Vec<Shard<'arena>>,
-    cohorts: OctonaryHeap<Candidate<'arena>>,
+pub(super) struct PairIndex {
+    shards: Vec<Shard>,
+    cohorts: OctonaryHeap<Candidate>,
     floor: u64,
     reuse: bool,
 }
@@ -81,9 +77,8 @@ fn add(count: &mut u64, amount: u64) -> Result<()> {
         .ok_or("BPE pair frequency exceeds u64")?;
     Ok(())
 }
-impl<'arena> PairIndex<'arena> {
+impl PairIndex {
     pub(super) fn build(
-        arena: &'arena Arena,
         corpus: &CorpusPlan<'_>,
         minimum: u64,
         workers: usize,
@@ -101,10 +96,10 @@ impl<'arena> PairIndex<'arena> {
             .into_par_iter()
             .map(|begin| -> Result<_> {
                 let domain = corpus.small_pair_domain();
-                let mut dense: Vec<State<'arena>> = (0..domain.map_or(0, |n| n * n))
+                let mut dense: Vec<State> = (0..domain.map_or(0, |n| n * n))
                     .map(|_| State::default())
                     .collect();
-                let mut counts = AHashMap::<Pair, State<'arena>>::new();
+                let mut counts = AHashMap::<Pair, State>::new();
                 corpus.initial_edges(
                     begin..(begin + chunk).min(corpus.word_count()),
                     |pair, p, weight| {
@@ -138,8 +133,7 @@ impl<'arena> PairIndex<'arena> {
         let shards = routed
             .into_par_iter()
             .map(|pieces| -> Result<_> {
-                let lease = arena.lease();
-                let mut groups = AHashMap::<Pair, State<'arena>>::new();
+                let mut groups = AHashMap::<Pair, State>::new();
                 for (pair, state) in pieces {
                     let total = groups.entry(pair).or_default();
                     add(&mut total.count, state.count)?;
@@ -151,8 +145,7 @@ impl<'arena> PairIndex<'arena> {
                         continue;
                     }
                     let count = group.count;
-                    let mut positions = group.positions;
-                    positions.freeze(&lease)?;
+                    let positions = group.positions;
                     shard.states.insert(pair, State { count, positions });
                     if !reuse {
                         shard.queue.push(Priority { pair, count });
@@ -162,7 +155,6 @@ impl<'arena> PairIndex<'arena> {
             })
             .collect::<Result<Vec<_>>>()?;
         let mut index = Self {
-            arena,
             shards,
             cohorts: OctonaryHeap::new(),
             floor: minimum.max(1),
@@ -222,7 +214,7 @@ impl<'arena> PairIndex<'arena> {
         }
         best
     }
-    pub(super) fn take(&mut self, priority: Priority) -> Candidate<'arena> {
+    pub(super) fn take(&mut self, priority: Priority) -> Candidate {
         if self.reuse {
             return self.cohorts.pop().expect("certified cohort exists");
         }
@@ -238,10 +230,9 @@ impl<'arena> PairIndex<'arena> {
             positions: state.positions,
         }
     }
-    pub(super) fn commit(&mut self, changes: Vec<Change<'arena>>) -> Result<()> {
+    pub(super) fn commit(&mut self, changes: Vec<Change>) -> Result<()> {
         let workers = self.shards.len();
-        let mut routes: Vec<Vec<(Change<'arena>, bool, bool)>> =
-            (0..workers).map(|_| Vec::new()).collect();
+        let mut routes: Vec<Vec<(Change, bool, bool)>> = (0..workers).map(|_| Vec::new()).collect();
         for change in changes {
             let removed = owner(change.removed, workers);
             let born = owner(change.born, workers);
@@ -258,15 +249,13 @@ impl<'arena> PairIndex<'arena> {
             }
         }
         let reuse = self.reuse;
-        let arena = self.arena;
         let floor = self.floor;
         let births = self
             .shards
             .par_iter_mut()
             .zip(routes)
             .map(|(shard, route)| -> Result<_> {
-                let lease = arena.lease();
-                let mut groups = AHashMap::<(usize, Pair), Group<'arena>>::new();
+                let mut groups = AHashMap::<(usize, Pair), Group>::new();
                 for (change, remove, birth) in route {
                     if remove {
                         if reuse {
@@ -331,10 +320,9 @@ impl<'arena> PairIndex<'arena> {
                         state.unordered.sort_unstable();
                         candidates.push(Candidate {
                             priority,
-                            positions: Positions::from_sorted(&state.unordered, &lease)?,
+                            positions: Positions::from_sorted(&state.unordered)?,
                         });
                     } else {
-                        state.positions.freeze(&lease)?;
                         debug_assert!(!shard.states.contains_key(&pair));
                         shard.states.insert(
                             pair,

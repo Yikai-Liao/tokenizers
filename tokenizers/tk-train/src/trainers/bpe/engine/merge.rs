@@ -5,36 +5,36 @@ use ahash::{AHashMap, AHashSet};
 use rayon::prelude::*;
 use tk_encode::{Result, models::bpe::Pair};
 
-struct Rule<'arena> {
+struct Rule {
     pair: Pair,
     replacement: u32,
-    candidate: Candidate<'arena>,
+    candidate: Candidate,
 }
-pub(super) struct Batch<'arena> {
-    rules: Vec<Rule<'arena>>,
+pub(super) struct Batch {
+    rules: Vec<Rule>,
     reuse: bool,
     restart: bool,
 }
-pub(super) struct Change<'arena> {
+pub(super) struct Change {
     pub(super) removed: Pair,
     pub(super) born: Pair,
     pub(super) removed_weight: u64,
     pub(super) born_weight: u64,
-    pub(super) positions: Positions<'arena>,
+    pub(super) positions: Positions,
     pub(super) bucket: usize,
 }
-pub(super) struct Prepared<'arena> {
-    jobs: Vec<Job<'arena>>,
+pub(super) struct Prepared {
+    jobs: Vec<Job>,
 }
-struct Job<'arena> {
-    writes: Writes<'arena>,
-    changes: Vec<Change<'arena>>,
+struct Job {
+    writes: Writes,
+    changes: Vec<Change>,
 }
-struct Neighbors<'a, 'arena> {
-    rule: &'a Rule<'arena>,
+struct Neighbors<'a> {
+    rule: &'a Rule,
     rank: usize,
     directories: &'a mut Directories,
-    changes: [Vec<Change<'arena>>; 2],
+    changes: [Vec<Change>; 2],
 }
 #[derive(Default)]
 struct Directories {
@@ -51,8 +51,8 @@ impl Directories {
         }
     }
 }
-impl<'a, 'arena> Neighbors<'a, 'arena> {
-    fn new(rule: &'a Rule<'arena>, rank: usize, directories: &'a mut Directories) -> Self {
+impl<'a> Neighbors<'a> {
+    fn new(rule: &'a Rule, rank: usize, directories: &'a mut Directories) -> Self {
         Self {
             rule,
             rank,
@@ -60,7 +60,7 @@ impl<'a, 'arena> Neighbors<'a, 'arena> {
             changes: std::array::from_fn(|_| Vec::new()),
         }
     }
-    fn group(&mut self, neighbor: u32, left: bool) -> &mut Change<'arena> {
+    fn group(&mut self, neighbor: u32, left: bool) -> &mut Change {
         let side = usize::from(!left);
         let slot = &mut self.directories.indices[side][neighbor as usize];
         if *slot == u32::MAX {
@@ -113,17 +113,17 @@ impl<'a, 'arena> Neighbors<'a, 'arena> {
         }
         Ok(())
     }
-    fn finish(self) -> Vec<Change<'arena>> {
+    fn finish(self) -> Vec<Change> {
         // Separate directories preserve the reference's left-before-right drain.
         self.changes.into_iter().flatten().collect()
     }
 }
-impl<'arena> Batch<'arena> {
+impl Batch {
     pub(super) fn select(
         trainer: &BpeTrainer,
         vocabulary: &mut Vocabulary,
         corpus: &mut Corpus,
-        index: &mut PairIndex<'arena>,
+        index: &mut PairIndex,
     ) -> Result<Option<Self>> {
         let reuse = index.reuse();
         let mut batch = Self {
@@ -185,7 +185,7 @@ impl<'arena> Batch<'arena> {
             .iter()
             .map(|rule| (rule.pair, rule.candidate.priority.count, rule.replacement))
     }
-    pub(super) fn prepare(self, corpus: &Corpus, limit: usize) -> Result<Prepared<'arena>> {
+    pub(super) fn prepare(self, corpus: &Corpus, limit: usize) -> Result<Prepared> {
         if self.reuse {
             return self.prepare_cohort(corpus, limit);
         }
@@ -314,7 +314,7 @@ impl<'arena> Batch<'arena> {
             .collect::<Result<Vec<_>>>()?;
         Ok(Prepared { jobs })
     }
-    fn prepare_cohort(self, corpus: &Corpus, limit: usize) -> Result<Prepared<'arena>> {
+    fn prepare_cohort(self, corpus: &Corpus, limit: usize) -> Result<Prepared> {
         let rule = &self.rules[0];
         let mut words: Vec<_> = rule
             .candidate
@@ -403,8 +403,8 @@ impl<'arena> Batch<'arena> {
         Ok(Prepared { jobs })
     }
 }
-impl<'arena> Prepared<'arena> {
-    pub(super) fn apply(self, corpus: &Corpus) -> Vec<Change<'arena>> {
+impl Prepared {
+    pub(super) fn apply(self, corpus: &Corpus) -> Vec<Change> {
         self.jobs
             .into_par_iter()
             .map(|job| {
@@ -420,9 +420,9 @@ impl<'arena> Prepared<'arena> {
 
 // Fresh identities have one span per ID, so their snapshot writes need only
 // sorted starts and one rule geometry. Alias reuse retains occurrence geometry.
-enum Writes<'arena> {
+enum Writes {
     Compact {
-        positions: Positions<'arena>,
+        positions: Positions,
         left: usize,
         total: usize,
         id: u32,
@@ -432,8 +432,8 @@ enum Writes<'arena> {
         id: u32,
     },
 }
-impl<'arena> Writes<'arena> {
-    fn fresh(rule: &Rule<'arena>, corpus: &Corpus) -> Self {
+impl Writes {
+    fn fresh(rule: &Rule, corpus: &Corpus) -> Self {
         let left = corpus.id_span(rule.pair.0);
         Self::Compact {
             positions: Positions::default(),
@@ -488,11 +488,11 @@ impl<'arena> Writes<'arena> {
 }
 
 // Source geometry stays private to preparation; both paths emit full-u64 positions.
-enum Source<'a, 'arena> {
+enum Source<'a> {
     Slice(&'a [u64]),
-    Blocks(&'a Positions<'arena>, std::ops::Range<usize>),
+    Blocks(&'a Positions, std::ops::Range<usize>),
 }
-impl Source<'_, '_> {
+impl Source<'_> {
     // Decode one bounded ring ahead, as in main. Prefetch is a nonblocking
     // hint; matching still reads the same joined preparation snapshot in order.
     fn prefetched<'a>(&'a self, corpus: &'a Corpus) -> impl Iterator<Item = usize> + 'a {
@@ -526,7 +526,6 @@ impl Source<'_, '_> {
 
 #[cfg(test)]
 mod tests {
-    use super::super::positions::Arena;
     use super::super::{CorpusPlan, WordCountsView};
     use super::*;
     use crate::progress::TrainingProgress;
@@ -545,8 +544,7 @@ mod tests {
         let mut vocabulary =
             Vocabulary::initialize(&trainer, view, 4, &progress, &mut None).unwrap();
         let plan = CorpusPlan::build(view, &mut vocabulary, &trainer, false, &progress).unwrap();
-        let arena = Arena::new(4);
-        let mut index = PairIndex::build(&arena, &plan, 1, 4, false, &progress).unwrap();
+        let mut index = PairIndex::build(&plan, 1, 4, false, &progress).unwrap();
         let mut corpus = plan.materialize(&progress);
         let batch = Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index)
             .unwrap()
