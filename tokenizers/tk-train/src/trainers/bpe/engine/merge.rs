@@ -235,6 +235,9 @@ impl Batch {
             .map(|rule| rule.candidate.positions.len())
             .sum();
         let chunk = total.div_ceil(rayon::current_num_threads() * 4).max(4096);
+        let ordinary_chunk = total
+            .div_ceil(rayon::current_num_threads())
+            .clamp(1, 1 << 26);
         for (rank, rule) in self.rules.iter().enumerate() {
             if aa {
                 for part in starts.chunks(chunk) {
@@ -242,7 +245,15 @@ impl Batch {
                 }
             } else {
                 let positions = &rule.candidate.positions;
-                let blocks = chunk.div_ceil(128);
+                if positions.len() <= ordinary_chunk {
+                    tasks.push((
+                        rank,
+                        rule,
+                        Source::Blocks(positions, 0..positions.block_count()),
+                    ));
+                    continue;
+                }
+                let blocks = ordinary_chunk.div_ceil(128);
                 for begin in (0..positions.block_count()).step_by(blocks) {
                     tasks.push((
                         rank,

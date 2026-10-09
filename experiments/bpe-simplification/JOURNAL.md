@@ -297,3 +297,13 @@ owner直接move发布；partial/AA/reuse继续完整聚合。没有恢复main的
 不支持保留Inline builder组合。用户明确停止为机器噪声追加重复，后续遵循。
 下一项按main保留项数<=total/workers的小candidate完整，修正按fragment块数过切；
 用一次中英文完整模型测量裁决，不增加汇编/profile。
+
+## 17. 按main项数保留完整ordinary candidate
+
+生产1849行，测试1439行，36默认library tests通过。
+英文1.932s / CPU4.96s / RSS0.271GiB；中文31.048s / CPU85.48s / RSS2.990GiB。
+完整模型相同、swap0。中文wall/CPU与complete单项近似，RSS低约135MiB。
+小candidate按len<=ceil(total/workers)整条调度；大candidate保持整块分段，
+AA保持此前grain，未恢复main多小candidate合并job。保留作为结构合理且内存更好的候选，
+不声称其填平main速度差距。REVIEW-8包含两份新代理的固定源码审查。
+下一项main未压缩写计划仅改数行，净不增长。
