@@ -251,3 +251,12 @@ closure内一次lease，8→256增长，大于256转heap；所有资源joined后
 它在编码时增长，与main使用encoding scratch后一次finalize不同。
 独立fresh reviewer未发现阻断；建议10-byte栈缓存一次写delta，减少逐字节extend
 并避免allocation失败留下部分delta。下一轮只测这一窄修正，再裁决当前Arena方案。
+
+## 13. Arena 单次delta写入，仍未胜出
+
+生产1928行，测试1462行；37默认library tests通过。
+英文2.012s / CPU5.55s / RSS0.333GiB；中文33.912s / CPU101.37s / RSS3.504GiB。
+完整模型相同、swap0。比逐字节Arena好，但仍比typed的30.873s/3.207GiB差。
+不能据增长式builder否定main的最终一次分配策略；下一轮将Arena局限到owner
+已完整聚合且过floor后的一次freeze，并恢复main内联小payload原则，避免增长退休
+空间与临时Writes进入Arena。随后用相同builder的无Arena控制区分二者收益。

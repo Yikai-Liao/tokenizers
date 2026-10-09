@@ -27,7 +27,7 @@ impl<'arena> Lease<'arena> {
             .cursor
             .try_alloc_slice_fill_copy(length, 0u8)
             .map_err(|_| "BPE position arena allocation failed")?;
-        // Each bump allocation is initialized and disjoint. The arena is never
+        // SAFETY: Each bump allocation is initialized and disjoint. The arena is never
         // reset, and its borrow outlives all slices, independently of this lease.
         Ok(unsafe { std::slice::from_raw_parts_mut(bytes.as_mut_ptr(), bytes.len()) })
     }
@@ -125,11 +125,15 @@ impl<'arena> Positions<'arena> {
             });
         } else {
             let mut delta = position - self.last;
+            let mut bytes = [0u8; 10];
+            let mut length = 0;
             while delta >= 128 {
-                self.bytes.extend(&[(delta as u8 & 0x7f) | 0x80], lease)?;
+                bytes[length] = (delta as u8 & 0x7f) | 0x80;
+                length += 1;
                 delta >>= 7;
             }
-            self.bytes.extend(&[delta as u8], lease)?;
+            bytes[length] = delta as u8;
+            self.bytes.extend(&bytes[..length + 1], lease)?;
         }
         self.last = position;
         self.count += 1;
