@@ -50,11 +50,14 @@ esaxx-rs = { version = "0.1.10", default-features = false, features = [] }
 indicatif = { version = "0.18", optional = true }
 rayon = "1.10"
 
+libc = { version = "0.2", optional = true }
+
 [features]
 default = ["progressbar", "esaxx_fast"]
 esaxx_fast = ["esaxx-rs/cpp"]
 progressbar = ["indicatif", "tk-encode/progressbar"]
 parity-aware-bpe = []
+bpe-perfetto = ["dep:libc"]
 
 [dev-dependencies]
 tk-serialize = { path = "../tk-serialize", version = "0.1.0-dev.0", features = ["serialize", "bpe", "unigram", "wordpiece", "wordlevel", "normalizers", "unicode-scripts"] }

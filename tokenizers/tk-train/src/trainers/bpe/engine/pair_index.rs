@@ -220,6 +220,18 @@ impl PairShard<'_> {
         }
     }
     fn prepare_prefix(&mut self, floor: u64) {
+        let _span = crate::bpe_perfetto::Span::new(
+            "commit.prefix",
+            2,
+            [
+                self.priorities.len() as u64,
+                self.prefix.len() as u64,
+                0,
+                0,
+                0,
+                0,
+            ],
+        );
         for _ in self.prefix.len()..4 {
             let Some(candidate) = self.heap_exact(floor) else {
                 break;

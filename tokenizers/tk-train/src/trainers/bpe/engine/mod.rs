@@ -79,8 +79,10 @@ fn train_with_merge_options(
     >,
     #[cfg(test)] mut birth_observe: BirthObserver<'_>,
 ) -> Result<ModelParts> {
+    let _training_span =
+        crate::bpe_perfetto::Span::new("training", 1, [workers as u64, 0, 0, 0, 0, 0]);
     let execution = execution::Execution::new(workers)?;
-    execution.pool.install(|| {
+    let result = execution.pool.install(|| {
         let progress = TrainingProgress::new(trainer.show_progress, trainer.progress_format)?;
         // Every attempt begins with first activations. A nonempty affix does
         // not by itself require one-rule cohort execution. Stop before accepting
@@ -126,7 +128,14 @@ fn train_with_merge_options(
                 }
             }
         }
-    })
+    });
+    #[cfg(feature = "bpe-perfetto")]
+    if crate::bpe_perfetto::level() != 0 {
+        // Rayon pool drop need not wait for every TLS destructor. Collect joined
+        // worker buffers explicitly so the runner cannot miss a worker track.
+        execution.pool.broadcast(|_| crate::bpe_perfetto::collect());
+    }
+    result
 }
 /// Shared state for a complete training call, including an identity-reuse restart.
 /// Slot layouts use the same round algorithm and retain this call's alphabet.
@@ -206,6 +215,7 @@ impl Training<'_> {
         let workers = execution.workers();
 
         let arena = AllocationArena::new(workers, prepared_corpus.initial_edges());
+        let initial_span = crate::bpe_perfetto::Span::new("initial_index", 1, [0; 6]);
         let initial = initial_pairs::InitialPairTable::build(
             &prepared_corpus,
             if policy == IdentityPolicy::FirstActivationOnly {
@@ -239,7 +249,10 @@ impl Training<'_> {
             prepared_corpus.initial_edges(),
         );
         execution.expect_id_domain(expected_ids);
+        drop(initial_span);
+        let materialize_span = crate::bpe_perfetto::Span::new("materialize", 1, [0; 6]);
         let mut corpus = prepared_corpus.materialize::<S>(workers, policy, progress)?;
+        drop(materialize_span);
         let mut index =
             pair_index::PairIndex::from_initial_pairs(initial, policy, trainer.min_frequency)?;
 
@@ -292,6 +305,13 @@ impl Training<'_> {
         let mut contiguous_births = merge::ContiguousBirthPolicy::default();
         let work = progress.stage("Compute merges", trainer.vocab_size);
         while vocabulary.len() < trainer.vocab_size {
+            crate::bpe_perfetto::next_round();
+            let mut round_span = crate::bpe_perfetto::Span::new(
+                "round",
+                1,
+                [vocabulary.len() as u64, 0, 0, 0, 0, 0],
+            );
+            let select_span = crate::bpe_perfetto::Span::new("select", 1, [0; 6]);
             match batch.select(
                 trainer,
                 vocabulary,
@@ -305,9 +325,21 @@ impl Training<'_> {
                 BatchSelection::Finished => break,
                 BatchSelection::RestartForReuse => return Ok(AttemptOutcome::RestartForReuse),
             }
+            drop(select_span);
+            round_span.fields[1] = batch.rules.len() as u64;
+            round_span.fields[2] = batch
+                .candidates
+                .iter()
+                .map(|c| c.positions.len() as u64)
+                .sum();
             merges.extend(batch.rules.iter().map(|rule| rule.pair));
             #[cfg(test)]
             let enabled_before = contiguous_births.options(merge_options).contiguous_births;
+            let prepare_span = crate::bpe_perfetto::Span::new(
+                "prepare",
+                1,
+                [batch.rules.len() as u64, round_span.fields[2], 0, 0, 0, 0],
+            );
             let (prepared, prepared_births) = merge::prepare_merges_with_births(
                 corpus,
                 &batch.rules,
@@ -324,12 +356,29 @@ impl Training<'_> {
             // PERF: Preparation owns all writes and birth events. Selected
             // position lists have no remaining reader; release them before allocating
             // the next generation during commit.
+            drop(prepare_span);
+            let release_span = crate::bpe_perfetto::Span::new("release_candidates", 1, [0; 6]);
             batch.candidates.clear();
+            drop(release_span);
             let birth_shape = prepared.birth_shape;
             #[cfg(test)]
             let birth_paths = prepared.birth_paths;
+            let apply_span = crate::bpe_perfetto::Span::new("apply", 1, [0; 6]);
             let events = prepared.apply(corpus);
+            drop(apply_span);
 
+            let commit_span = crate::bpe_perfetto::Span::new(
+                "commit",
+                1,
+                [
+                    events.chunks.len() as u64,
+                    prepared_births.len() as u64,
+                    0,
+                    0,
+                    0,
+                    0,
+                ],
+            );
             index.commit_merges_with_prepared(
                 &events,
                 vocabulary.len(),
@@ -337,6 +386,7 @@ impl Training<'_> {
                 arena,
                 prepared_births,
             )?;
+            drop(commit_span);
             contiguous_births.observe(birth_shape);
             #[cfg(test)]
             if let Some(observer) = birth_observe.as_mut() {
@@ -347,7 +397,9 @@ impl Training<'_> {
                 });
             }
 
+            let release_span = crate::bpe_perfetto::Span::new("release_events", 1, [0; 6]);
             drop(events);
+            drop(release_span);
             work.learned(merges.len());
         }
         Ok(AttemptOutcome::Complete(merges))

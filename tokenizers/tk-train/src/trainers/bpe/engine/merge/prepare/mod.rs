@@ -678,6 +678,11 @@ pub(in super::super) fn prepare_merges_with_births<'arena, S: SlotStorage>(
                 options,
             )?
         };
+    let _assemble_span = crate::bpe_perfetto::Span::new(
+        "prepare.assemble",
+        2,
+        [outputs.len() as u64, 0, 0, 0, 0, 0],
+    );
     let mut jobs = Vec::new();
     let mut chunks = Vec::new();
     let mut births = Vec::new();

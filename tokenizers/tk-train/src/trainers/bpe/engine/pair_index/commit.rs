@@ -38,6 +38,7 @@ impl<'arena> PairIndex<'arena> {
         let policy = self.policy;
         let floor = self.minimum_frequency.max(1);
         let router = ShardRouter::new(self.shards.len());
+        let routing_span = crate::bpe_perfetto::Span::new("commit.route", 1, [0; 6]);
         events.dispatch_into(&mut self.routes, router);
         debug_assert!(births.is_empty() || policy == IdentityPolicy::FirstActivationOnly);
         // Serial metadata routing moves completed births, with no regrouping or
@@ -51,23 +52,55 @@ impl<'arena> PairIndex<'arena> {
             self.prepared_births[router.owner(birth.key)].push(birth);
         }
 
+        drop(routing_span);
         let result = self
             .shards
             .par_iter_mut()
             .zip(self.prepared_births.par_iter_mut())
             .zip(self.routes.par_iter_mut())
+            .enumerate()
             // Owners without changes keep their counts and valid priorities.
             // Leave their lazy queue refill to selection and avoid scheduling
             // empty codec/directory work, at every corpus and vocabulary scale.
-            .filter(|((_, prepared), route)| !route.changes.is_empty() || !prepared.is_empty())
+            .filter(|(_, ((_, prepared), route))| !route.changes.is_empty() || !prepared.is_empty())
             .map(
-                |((shard, prepared), route)| -> Result<Vec<MergeCandidate<'arena>>> {
+                |(owner, ((shard, prepared), route))| -> Result<Vec<MergeCandidate<'arena>>> {
+                    let _owner_span = crate::bpe_perfetto::Span::new(
+                        "commit.owner",
+                        1,
+                        [
+                            owner as u64,
+                            route.changes.len() as u64,
+                            route.births.len() as u64,
+                            prepared.len() as u64,
+                            execution.current_worker() as u64,
+                            0,
+                        ],
+                    );
                     // PERF: Stable grouping by rule/direction lets each bucket
                     // reuse one neighbor directory instead of per-pair hash tables.
                     // It stays before worker leases and ordered count actions.
+                    let group_span = crate::bpe_perfetto::Span::new(
+                        "commit.group",
+                        2,
+                        [route.births.len() as u64, 0, 0, 0, 0, 0],
+                    );
                     route.group_births(events);
+                    drop(group_span);
+                    let counts_span = crate::bpe_perfetto::Span::new(
+                        "commit.counts",
+                        2,
+                        [route.changes.len() as u64, 0, 0, 0, 0, 0],
+                    );
                     shard.apply_ordered_counts(route, events, policy, floor)?;
+                    drop(counts_span);
+                    let publish_span = crate::bpe_perfetto::Span::new(
+                        "commit.completed",
+                        2,
+                        [prepared.len() as u64, 0, 0, 0, 0, 0],
+                    );
                     shard.publish_completed_births(prepared, policy);
+                    drop(publish_span);
                     shard.reduce_encode_and_publish_births(
                         route, events, identities, execution, arena, policy, floor,
                     )
@@ -220,6 +253,11 @@ impl<'arena> PairShard<'arena> {
             }
             return Ok(Vec::new());
         }
+        let _reduce_span = crate::bpe_perfetto::Span::new(
+            "commit.reduce",
+            2,
+            [route.births.len() as u64, 0, 0, 0, 0, 0],
+        );
         let worker = execution.current_worker();
         let lease = arena.lease(worker);
         let mut scratch = execution.encoding(worker);
@@ -243,6 +281,11 @@ impl<'arena> PairShard<'arena> {
                 let left = bucket & 1 == 0;
                 let pair = key_pair(first.born_key);
                 let replacement = if left { pair.1 } else { pair.0 };
+                let aggregate_span = crate::bpe_perfetto::Span::new(
+                    "commit.aggregate",
+                    2,
+                    [bucket as u64, births.len() as u64, 0, 0, 0, 0],
+                );
                 for &reference_index in births {
                     let reference = &route.changes[reference_index];
                     let chunk = &events.chunks[reference.chunk];
@@ -266,7 +309,14 @@ impl<'arena> PairShard<'arena> {
                     });
                     group.head = fragments.len() - 1;
                 }
+                drop(aggregate_span);
+                let mut encode_span = crate::bpe_perfetto::Span::new(
+                    "commit.encode_publish",
+                    2,
+                    [bucket as u64, 0, 0, 0, 0, 0],
+                );
                 for (neighbor, group) in neighbors.drain() {
+                    encode_span.fields[1] += 1;
                     let key = pair_key(if left {
                         (neighbor, replacement)
                     } else {
@@ -290,6 +340,8 @@ impl<'arena> PairShard<'arena> {
                     } {
                         continue;
                     }
+                    encode_span.fields[2] += group.occurrences as u64;
+                    encode_span.fields[3] += 1;
                     let mut head = group.head;
                     // Fresh jobs supply spatially disjoint runs. Identity-reuse
                     // AA births may combine interleaved left/right chains;
@@ -337,6 +389,7 @@ impl<'arena> PairShard<'arena> {
                         });
                     }
                 }
+                drop(encode_span);
                 fragments.clear();
             }
 

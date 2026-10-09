@@ -9,6 +9,11 @@ pub(super) fn prepare<S: SlotStorage>(
     birth_span_limit: u64,
     execution: &Execution,
 ) -> Result<Vec<(PreparedJob, Vec<EventChunk>)>> {
+    let _aa_span = crate::bpe_perfetto::Span::new(
+        "prepare.aa",
+        1,
+        [candidate.positions.len() as u64, 0, 0, 0, 0, 0],
+    );
     let chunk = candidate
         .positions
         .len()
@@ -22,6 +27,11 @@ pub(super) fn prepare<S: SlotStorage>(
     let valid: Vec<_> = ranges
         .into_par_iter()
         .map(|range| {
+            let _span = crate::bpe_perfetto::Span::new(
+                "prepare.aa_validate",
+                1,
+                [(range.end - range.start) as u64, 0, 0, 0, 0, 0],
+            );
             let mut positions = PositionBuffer::default();
             for position in candidate.positions.cursor(range) {
                 if matcher.get(position).is_some() {
@@ -43,6 +53,11 @@ pub(super) fn prepare<S: SlotStorage>(
         .into_par_iter()
         .zip(parities)
         .map(|(positions, parity)| {
+            let _span = crate::bpe_perfetto::Span::new(
+                "prepare.aa_choose",
+                1,
+                [positions.len() as u64, 0, 0, 0, 0, 0],
+            );
             let mut chosen = PositionBuffer::default();
             aa_parity::for_each_selected(positions.positions(), span, parity, |position| {
                 chosen.push_position(position)
@@ -70,6 +85,11 @@ pub(super) fn prepare<S: SlotStorage>(
         .into_par_iter()
         .enumerate()
         .map(|(index, positions)| -> Result<_> {
+            let _span = crate::bpe_perfetto::Span::new(
+                "prepare.aa_job",
+                1,
+                [index as u64, positions.len() as u64, 0, 0, 0, 0],
+            );
             execution.with_merge_scratch(token_id_count, |scratch| {
                 let mut plan = RulePreparation::new(corpus, scratch, rule, 0, birth_span_limit);
                 for (offset, position) in positions.positions().enumerate() {

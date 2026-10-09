@@ -120,6 +120,7 @@ pub(super) fn prepare<'arena, S: SlotStorage>(
     floor: u64,
     options: MergeOptions,
 ) -> Result<Vec<PreparedOutput<'arena>>> {
+    let planning_span = crate::bpe_perfetto::Span::new("prepare.plan", 2, [0; 6]);
     let jobs = position_jobs(
         candidates,
         execution.workers(),
@@ -128,8 +129,22 @@ pub(super) fn prepare<'arena, S: SlotStorage>(
     let mut selected = execution.selected_rules();
     selected.reset(rules, token_id_count);
 
+    drop(planning_span);
     jobs.into_par_iter()
-        .map(|tasks| -> Result<_> {
+        .enumerate()
+        .map(|(job_id, tasks)| -> Result<_> {
+            let _job_span = crate::bpe_perfetto::Span::new(
+                "prepare.job",
+                1,
+                [
+                    job_id as u64,
+                    tasks.len() as u64,
+                    tasks.iter().map(|t| (t.end - t.begin) as u64).sum(),
+                    execution.current_worker() as u64,
+                    0,
+                    0,
+                ],
+            );
             execution.with_merge_scratch(token_id_count, |scratch| {
                 let mut outputs = Vec::new();
                 let mut births = Vec::new();
@@ -217,10 +232,36 @@ fn prepare_task<'arena, const CONTIGUOUS: bool, S: SlotStorage>(
     births: &mut Vec<CompletedBirth<'arena>>,
     #[cfg(test)] birth_paths: &mut BirthPaths,
 ) -> Result<((WritePlan, Vec<EventChunk>), BirthShape)> {
+    let _task_span = crate::bpe_perfetto::Span::new(
+        "prepare.task",
+        2,
+        [
+            task.rank as u64,
+            (task.end - task.begin) as u64,
+            u64::from(task.whole_rule),
+            u64::from(task.encode_births_directly),
+            u64::from(CONTIGUOUS),
+            0,
+        ],
+    );
     let eligible = task.encode_births_directly && plan.corpus.len() <= u32::MAX as usize;
     debug_assert!(!CONTIGUOUS || eligible);
     let nodes_before = plan.scratch.remaining_nodes;
+    let mut scan_span = crate::bpe_perfetto::Span::new(
+        "prepare.scan",
+        2,
+        [
+            task.rank as u64,
+            (task.end - task.begin) as u64,
+            0,
+            u64::from(CONTIGUOUS),
+            0,
+            0,
+        ],
+    );
     prepare_positions::<CONTIGUOUS, S>(&mut plan, positions, task, selected)?;
+    scan_span.fields[2] = plan.positions.len() as u64;
+    drop(scan_span);
     let shape = if eligible {
         // Complete/noflush gives exact B: every actual birth decrements the
         // budget once. Capture C before drains empty both directories. Linked
@@ -237,6 +278,18 @@ fn prepare_task<'arena, const CONTIGUOUS: bool, S: SlotStorage>(
         // after both direction drains. Read before finish consumes its payloads.
         birth_paths.promoted_groups += plan.scratch.birth_vectors.len();
     }
+    let _finish_span = crate::bpe_perfetto::Span::new(
+        "prepare.finish",
+        2,
+        [
+            task.rank as u64,
+            u64::from(task.encode_births_directly),
+            shape.births as u64,
+            shape.touched_groups as u64,
+            0,
+            0,
+        ],
+    );
     let output = if task.encode_births_directly {
         plan.finish_with_births::<CONTIGUOUS>(arena, execution, floor, births)?
     } else {

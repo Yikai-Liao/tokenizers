@@ -14,6 +14,8 @@
 //! input limits.
 
 pub mod added_token_serde;
+#[doc(hidden)]
+pub mod bpe_perfetto;
 mod progress;
 mod trainable;
 mod trainer;
