@@ -8,8 +8,10 @@ pub(super) struct Positions {
     bytes: Vec<u8>,
     blocks: Vec<Block>,
     count: usize,
+    first: u64,
     last: u64,
 }
+#[derive(Clone, Copy)]
 struct Block {
     first: u64,
     byte: usize,
@@ -18,7 +20,7 @@ impl Positions {
     pub(super) fn from_sorted(values: &[u64]) -> Result<Self> {
         let mut result = Self {
             bytes: Vec::with_capacity(values.len()),
-            blocks: Vec::with_capacity(values.len().div_ceil(RESTART)),
+            blocks: Vec::with_capacity(values.len().saturating_sub(1) / RESTART),
             ..Self::default()
         };
         for &position in values {
@@ -30,7 +32,9 @@ impl Positions {
         if self.count != 0 && position < self.last {
             return Err("BPE positions are not sorted".into());
         }
-        if self.count.is_multiple_of(RESTART) {
+        if self.count == 0 {
+            self.first = position;
+        } else if self.count.is_multiple_of(RESTART) {
             self.blocks.push(Block {
                 first: position,
                 byte: self.bytes.len(),
@@ -50,15 +54,25 @@ impl Positions {
     pub(super) fn len(&self) -> usize {
         self.count
     }
+    pub(super) fn is_empty(&self) -> bool {
+        self.count == 0
+    }
     pub(super) fn block_count(&self) -> usize {
-        self.blocks.len()
+        self.count.div_ceil(RESTART)
     }
     pub(super) fn iter(&self) -> impl Iterator<Item = u64> + '_ {
-        self.read_blocks(0..self.blocks.len())
+        self.read_blocks(0..self.block_count())
     }
     pub(super) fn read_blocks(&self, range: Range<usize>) -> impl Iterator<Item = u64> + '_ {
         range.flat_map(|index| {
-            let block = &self.blocks[index];
+            let block = if index == 0 {
+                Block {
+                    first: self.first,
+                    byte: 0,
+                }
+            } else {
+                self.blocks[index - 1]
+            };
             Cursor {
                 bytes: &self.bytes[block.byte..],
                 position: block.first,
@@ -68,11 +82,8 @@ impl Positions {
         })
     }
     pub(super) fn lower_bound(&self, target: u64) -> usize {
-        let block = self
-            .blocks
-            .partition_point(|b| b.first < target)
-            .saturating_sub(1);
-        if self.blocks.is_empty() {
+        let block = self.blocks.partition_point(|b| b.first < target);
+        if self.is_empty() {
             return 0;
         }
         block * RESTART
@@ -82,7 +93,7 @@ impl Positions {
                 .count()
     }
     pub(super) fn from(&self, index: usize) -> impl Iterator<Item = u64> + '_ {
-        self.read_blocks(index / RESTART..self.blocks.len())
+        self.read_blocks(index / RESTART..self.block_count())
             .skip(index % RESTART)
     }
 }

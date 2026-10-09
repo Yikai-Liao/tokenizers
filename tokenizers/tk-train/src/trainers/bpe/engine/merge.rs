@@ -20,7 +20,7 @@ pub(super) struct Change {
     pub(super) born: Pair,
     pub(super) removed_weight: u64,
     pub(super) born_weight: u64,
-    pub(super) positions: Vec<u64>,
+    pub(super) positions: Positions,
     pub(super) bucket: usize,
 }
 pub(super) struct Prepared {
@@ -66,7 +66,7 @@ impl<'a> Neighbors<'a> {
                 born: if left { (neighbor, id) } else { (id, neighbor) },
                 removed_weight: 0,
                 born_weight: 0,
-                positions: Vec::new(),
+                positions: Positions::default(),
                 bucket: 2 * self.rank + usize::from(!left && neighbor != id),
             });
             index
@@ -93,7 +93,7 @@ impl<'a> Neighbors<'a> {
                 .born_weight
                 .checked_add(weight)
                 .ok_or("BPE neighbor birth mass exceeds u64")?;
-            group.positions.push(position as u64);
+            group.positions.push(position as u64)?;
         }
         Ok(())
     }

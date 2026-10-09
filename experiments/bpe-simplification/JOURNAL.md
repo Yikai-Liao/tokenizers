@@ -90,3 +90,25 @@ main 来源：`corpus/mod.rs::WordWeightCursor`、`corpus/prepare.rs` 的权重�
 汇合，可在 owner 上串接已排序位置，减少大 Vec 与重复排序；reuse 保留显式排序。
 参考 main 的 small-posting 处理，避免为 singleton 分配整个 block directory。
 本轮已有效，按用户要求先提交，再实施下一轮。初版 archive 分支不移动。
+
+## 3. fresh birth 流与 singleton 重启，保留
+
+生产 1576 行（+18），测试 1384 行，library tests 35 passed。
+`bin/stream-birth`、source hashes、原始 samples 已保留。
+每语种一次纯训练，完整模型和 ordered merges 均等于 main，child swap=0。
+
+| 语种 | 上轮 1558 行 | 本轮 1576 行 | 本轮 RSS GiB |
+|---|---:|---:|---:|
+| 英文 | 2.345 s | 2.242 s | 0.264 |
+| 中文 | 46.982 s | 40.223 s | 3.312 |
+
+中文 wall 减少约 14.4%，CPU 从 136.67 s 到 126.67 s；英文差距小，单样本不声称微小加速。
+中文 RSS 未改善。增加 18 行保留了 producer 空间顺序和压缩坐标，值得继续保留。
+
+借鉴 main 的 complete producer 编码：fresh 中每个 born pair 只有一个 producer，
+分任务按空间顺序收集后 owner 可串接有序流，不再对 fresh births 再排序。
+压缩直接进入局部邻居组；reuse owner 仍先汇集完整 U64 再排序。
+借鉴 main small posting 的低分配原则，把首个 restart 放在流对象内，singleton 不分配目录；
+不是恢复 arena 或多种 posting 协议。U64 边界、重复位置和跨重启测试继续通过。
+
+下一轮提取 main `CorpusPlan` 的延迟 materialization，暂不恢复分阶段重叠或 wave 协议。

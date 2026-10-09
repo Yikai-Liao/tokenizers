@@ -53,7 +53,8 @@ struct State {
 #[derive(Default)]
 struct Group {
     count: u64,
-    positions: Vec<u64>,
+    positions: Positions,
+    unordered: Vec<u64>,
 }
 #[derive(Default)]
 struct Shard {
@@ -271,7 +272,15 @@ impl PairIndex {
                         if !change.positions.is_empty() {
                             let group = groups.entry((change.bucket, change.born)).or_default();
                             add(&mut group.count, change.born_weight)?;
-                            group.positions.extend_from_slice(&change.positions);
+                            if reuse {
+                                group.unordered.extend(change.positions.iter());
+                            } else {
+                                // Fresh jobs follow rule rank and spatial ranges. Each
+                                // born key has one producer, so lists concatenate sorted.
+                                for position in change.positions.iter() {
+                                    group.positions.push(position)?;
+                                }
+                            }
                         }
                     }
                 }
@@ -291,12 +300,12 @@ impl PairIndex {
                     } {
                         continue;
                     }
-                    state.positions.sort_unstable();
                     let priority = Priority { pair, count };
                     if reuse {
+                        state.unordered.sort_unstable();
                         candidates.push(Candidate {
                             priority,
-                            positions: Positions::from_sorted(&state.positions)?,
+                            positions: Positions::from_sorted(&state.unordered)?,
                         });
                     } else {
                         debug_assert!(!shard.states.contains_key(&pair));
@@ -304,7 +313,7 @@ impl PairIndex {
                             pair,
                             State {
                                 count,
-                                positions: Positions::from_sorted(&state.positions)?,
+                                positions: state.positions,
                             },
                         );
                         shard.queue.push(priority);
