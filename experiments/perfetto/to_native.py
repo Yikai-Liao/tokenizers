@@ -5,6 +5,7 @@ import argparse,json
 from pathlib import Path
 from perfetto.protos.perfetto.trace.perfetto_trace_pb2 import Trace
 SCHEMA={
+ 'vocabulary':['unique_words','initial_alphabet'], 'corpus_plan':['unique_words','initial_edges'], 'apply.job':['rules','positions'],
  'training':['workers'], 'round':['vocab_before','rules','raw_positions'],
  'prepare':['rules','raw_positions'], 'commit':['event_chunks','completed_births'],
  'prepare.job':['job','tasks','raw_positions','worker'],

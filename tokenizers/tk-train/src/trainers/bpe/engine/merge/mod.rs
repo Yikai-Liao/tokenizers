@@ -77,6 +77,18 @@ impl PreparedMerges {
                 .par_iter()
                 .zip(writers.into_par_iter())
                 .for_each(|(job, mut writer)| {
+                    let _span = crate::bpe_perfetto::Span::new(
+                        "apply.job",
+                        1,
+                        [
+                            job.writes.len() as u64,
+                            job.writes.iter().map(|w| w.positions.len() as u64).sum(),
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                    );
                     for write in &job.writes {
                         write
                             .positions
@@ -86,6 +98,18 @@ impl PreparedMerges {
                 });
         } else {
             self.jobs.par_iter().for_each(|job| {
+                let _span = crate::bpe_perfetto::Span::new(
+                    "apply.job",
+                    1,
+                    [
+                        job.writes.len() as u64,
+                        job.writes.iter().map(|w| w.positions.len() as u64).sum(),
+                        0,
+                        0,
+                        0,
+                        0,
+                    ],
+                );
                 for write in &job.writes {
                     let matcher = corpus.matcher(write.rule.pair);
                     write.positions.positions().for_each(|position| {

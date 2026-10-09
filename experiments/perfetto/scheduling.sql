@@ -4,7 +4,7 @@ CREATE PERFETTO TABLE bpe_tasks AS
 SELECT s.id AS task_id, s.ts, s.dur, tt.utid, s.name,
        CAST(EXTRACT_ARG(s.arg_set_id, 'debug.round') AS INT) AS round_id
 FROM slice s JOIN thread_track tt ON s.track_id = tt.id
-WHERE s.name IN ('prepare.job', 'commit.owner', 'prepare.aa_validate', 'prepare.aa_choose', 'prepare.aa_job');
+WHERE s.name IN ('prepare.job', 'commit.owner', 'prepare.aa_validate', 'prepare.aa_choose', 'prepare.aa_job', 'apply.job');
 CREATE PERFETTO TABLE bpe_sched AS
 SELECT sc.id AS sched_id, sc.ts, sc.dur, sc.utid, sc.cpu
 FROM sched sc
@@ -24,7 +24,7 @@ FROM task_states GROUP BY name,state ORDER BY name,state;
 -- A phase is global to the pool, so intersect every worker's states with it.
 CREATE PERFETTO TABLE bpe_phases AS
 SELECT s.id AS phase_id, s.ts, s.dur, s.name AS phase
-FROM slice s WHERE s.name IN ('initial_index','materialize','select','prepare','apply','commit','release_candidates','release_events');
+FROM slice s WHERE s.name IN ('vocabulary','corpus_plan','cleanup','output_model','initial_index','materialize','select','prepare','apply','commit','release_candidates','release_events');
 CREATE VIRTUAL TABLE phase_states USING SPAN_JOIN(bpe_phases, bpe_states PARTITIONED utid);
 SELECT phase, state, ROUND(SUM(dur)/1e6,6) AS ms
 FROM phase_states GROUP BY phase,state ORDER BY phase,state;

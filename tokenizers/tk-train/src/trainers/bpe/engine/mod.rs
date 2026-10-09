@@ -160,6 +160,11 @@ impl Training<'_> {
         let progress = self.progress;
         let policy = self.policy;
         let workers = execution.workers();
+        let mut vocabulary_span = crate::bpe_perfetto::Span::new(
+            "vocabulary",
+            1,
+            [word_counts.len() as u64, 0, 0, 0, 0, 0],
+        );
         let mut vocabulary = vocabulary::Vocabulary::initialize(
             trainer,
             word_counts,
@@ -167,6 +172,13 @@ impl Training<'_> {
             progress,
             &mut self.retained_alphabet,
         )?;
+        vocabulary_span.fields[1] = vocabulary.len() as u64;
+        drop(vocabulary_span);
+        let mut plan_span = crate::bpe_perfetto::Span::new(
+            "corpus_plan",
+            1,
+            [word_counts.len() as u64, 0, 0, 0, 0, 0],
+        );
         let prepared_corpus = corpus::CorpusPlan::build(
             word_counts,
             &mut vocabulary,
@@ -174,6 +186,8 @@ impl Training<'_> {
             trainer.max_token_length.is_some(),
             progress,
         )?;
+        plan_span.fields[1] = prepared_corpus.initial_edges() as u64;
+        drop(plan_span);
         if vocabulary.len() >= trainer.vocab_size && prepared_corpus.initial_counts_fit_u64() {
             drop(prepared_corpus);
             execution.release_scratch();
@@ -270,11 +284,14 @@ impl Training<'_> {
         // Training state does not participate in model output. Release position
         // owners before their arena, and free the corpus and scratch before
         // constructing the public vocabulary and merge strings.
+        let cleanup_span = crate::bpe_perfetto::Span::new("cleanup", 1, [0; 6]);
         drop(index);
         drop(corpus);
         drop(arena);
         execution.release_scratch();
 
+        drop(cleanup_span);
+        let _output_span = crate::bpe_perfetto::Span::new("output_model", 1, [0; 6]);
         Ok(complete_model(trainer, vocabulary, merges))
     }
     /// Complete joined rounds, or request a fresh attempt for active-ID reuse.
