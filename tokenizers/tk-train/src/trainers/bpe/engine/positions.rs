@@ -111,15 +111,21 @@ impl Positions {
         self.read_blocks(0..self.block_count())
     }
     pub(super) fn read_blocks(&self, range: Range<usize>) -> impl Iterator<Item = u64> + '_ {
-        range.flat_map(|index| {
-            let block = self.block(index);
-            Cursor {
-                bytes: &self.bytes[block.byte..],
-                position: block.first,
-                remaining: self.blocks.get(index).map_or(self.count, |b| b.entry) - block.entry,
-                first: true,
-            }
-        })
+        Cursor {
+            positions: self,
+            bytes: &[],
+            position: 0,
+            remaining: if range.is_empty() {
+                0
+            } else {
+                self.blocks
+                    .get(range.end - 1)
+                    .map_or(self.count, |b| b.entry)
+                    - self.block(range.start).entry
+            },
+            block_remaining: 0,
+            next_block: range.start,
+        }
     }
     pub(super) fn lower_bound(&self, target: u64) -> usize {
         let block = self.blocks.partition_point(|b| b.first < target);
@@ -139,10 +145,12 @@ impl Positions {
     }
 }
 struct Cursor<'a> {
+    positions: &'a Positions,
     bytes: &'a [u8],
     position: u64,
     remaining: usize,
-    first: bool,
+    block_remaining: usize,
+    next_block: usize,
 }
 impl Iterator for Cursor<'_> {
     type Item = u64;
@@ -150,7 +158,18 @@ impl Iterator for Cursor<'_> {
         if self.remaining == 0 {
             return None;
         }
-        if !self.first {
+        if self.block_remaining == 0 {
+            let block = self.positions.block(self.next_block);
+            self.block_remaining = self
+                .positions
+                .blocks
+                .get(self.next_block)
+                .map_or(self.positions.count, |b| b.entry)
+                - block.entry;
+            self.next_block += 1;
+            self.position = block.first;
+            self.bytes = &self.positions.bytes[block.byte..];
+        } else {
             let mut delta = 0u64;
             let mut shift = 0;
             loop {
@@ -166,8 +185,8 @@ impl Iterator for Cursor<'_> {
             // Each delta reconstructs an original value, including u64::MAX.
             self.position += delta;
         }
-        self.first = false;
         self.remaining -= 1;
+        self.block_remaining -= 1;
         Some(self.position)
     }
 }

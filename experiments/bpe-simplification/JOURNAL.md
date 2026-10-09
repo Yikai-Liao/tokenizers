@@ -230,3 +230,13 @@ Block增加实际entry偏移，短块增加metadata；reuse仍decode/sort。
 新fresh reviewer固定源码未发现阻断问题，见REVIEW-4.md。
 用户纠正：停止汇编分析和寻找新方向，先测既定typed cursor，再按总体收益筛选。
 用户追加核对Arena：当前未启用；旧负载诊断存在数秒收益，补为下一项独立候选。
+
+## 11. typed spanning cursor，进入组合复测
+
+生产1797行（+21），测试1430行，默认library tests36 passed。
+英文1.959s / CPU5.21s / RSS0.272GiB；中文30.873s / CPU88.38s / RSS3.207GiB。
+完整词表及merges与main相同，swap0。相对owned stream中文wall低6.3%、CPU低8.0%，
+英文低3.5%，单样本不足以区分小差异；RSS增加约66MiB需相邻复测。
+以单个Cursor跨可变restart，去每块FlatMap；Source用Either去Box动态分派。
+全U64/不齐碎片/任意起读/重复seek的现有codec覆盖通过。
+用户提醒fresh review；新typed_arena_review_fresh审查本轮并评估下一Arena候选。

@@ -514,10 +514,12 @@ impl Source<'_> {
             Some(position)
         })
     }
-    fn iter(&self) -> Box<dyn Iterator<Item = u64> + '_> {
+    fn iter(&self) -> impl Iterator<Item = u64> + '_ {
         match self {
-            Self::Slice(values) => Box::new(values.iter().copied()),
-            Self::Blocks(positions, range) => Box::new(positions.read_blocks(range.clone())),
+            Self::Slice(values) => itertools::Either::Left(values.iter().copied()),
+            Self::Blocks(positions, range) => {
+                itertools::Either::Right(positions.read_blocks(range.clone()))
+            }
         }
     }
 }
