@@ -117,9 +117,13 @@ pub(super) struct PairIndex<'arena> {
     reuse: bool,
 }
 
+// Map an ordered pair to its sole count owner, with nonzero workers fixed for
+// the index. Initial counting, queue lookup and commit must use this same mapping.
 fn owner(pair: Pair, workers: usize) -> usize {
-    let key = (u64::from(pair.0) << 32) | u64::from(pair.1);
-    (key.wrapping_mul(0x9e3779b97f4a7c15).rotate_left(23) % workers as u64) as usize
+    // Zero seeds keep routing repeatable within this build, without per-call
+    // randomness. Hash mixing is provided by the existing ahash dependency.
+    const HASHER: ahash::RandomState = ahash::RandomState::with_seeds(0, 0, 0, 0);
+    (HASHER.hash_one(pair) % workers as u64) as usize
 }
 
 fn adjust_signed(count: &mut u64, amount: u64, remove: bool) -> Result<()> {
@@ -222,7 +226,7 @@ impl<'arena> PairIndex<'arena> {
             .zip(self.routes.par_iter_mut())
             .filter(|(_, route)| !route.actions.is_empty())
             .map(|(shard, route)| -> Result<_> {
-                commit_owner(arena, shard, route, &events, reuse, floor)
+                OwnerCommit::new(arena, shard, reuse, floor).commit(route, &events)
             })
             .collect::<Result<Vec<_>>>()?;
 
@@ -359,118 +363,139 @@ fn build_owner<'arena>(
     Ok((shard, candidates))
 }
 
-// A boundary removal precedes its replacement birth. The signed reuse ledger
-// checks each action in that order, including intermediate overflow.
-fn commit_owner<'arena>(
-    arena: &'arena Arena,
-    shard: &mut AHashMap<Pair, u64>,
-    route: &mut Route<'arena>,
-    events: &[Event],
+/// One owner's sequential count update and birth publication within a joined commit.
+/// Borrows its count shard and owns pending groups/candidates plus an executing
+/// worker's lease. Failed work drops unpublished lists; the attempt is discarded.
+struct OwnerCommit<'index, 'arena> {
+    shard: &'index mut AHashMap<Pair, u64>,
     reuse: bool,
     floor: u64,
-) -> Result<Vec<Candidate<'arena>>> {
-    let mut lease = arena.lease();
-    let mut groups = AHashMap::<(usize, Pair), Group>::new();
-    let mut candidates = Vec::new();
-    for (index, remove, birth) in route.drain() {
-        let change = &events[index];
-        if remove {
-            remove_weight(shard, change.removed, change.removed_weight, reuse, floor)?;
-        }
-        if let Some(positions) = birth {
-            if reuse {
-                let count = shard.entry(change.born).or_default();
-                adjust_signed(count, change.born_weight, false)?;
-            }
-            let positions = match positions {
-                Birth::Complete(positions) => {
-                    // Fresh IDs and compatible rules give each complete birth one producer.
-                    debug_assert!(!reuse && change.born_weight >= floor);
-                    debug_assert!(!shard.contains_key(&change.born));
-                    shard.insert(change.born, change.born_weight);
-                    candidates.push(Candidate {
-                        priority: Priority {
-                            count: change.born_weight,
-                            pair: Reverse(change.born),
-                        },
-                        positions,
-                    });
-                    continue;
-                }
-                Birth::Partial(positions) => positions,
-            };
-            let group = groups.entry((change.bucket, change.born)).or_default();
-            add(&mut group.count, change.born_weight)?;
-            if reuse {
-                group.unordered.extend(positions.iter());
-            } else {
-                // Fresh jobs follow rule rank and spatial ranges. Each
-                // born key has one producer, so lists concatenate sorted.
-                group.positions.append(positions)?;
-            }
-        }
-    }
-    publish_groups(shard, groups, &mut candidates, reuse, floor, &mut lease)?;
-    Ok(candidates)
-}
-
-fn remove_weight(
-    shard: &mut AHashMap<Pair, u64>,
-    pair: Pair,
-    weight: u64,
-    reuse: bool,
-    floor: u64,
-) -> Result<()> {
-    if reuse {
-        let count = shard.entry(pair).or_default();
-        adjust_signed(count, weight, true)?;
-    } else if let Some(state) = shard.get_mut(&pair) {
-        *state = state
-            .checked_sub(weight)
-            .ok_or("BPE fresh removal exceeds the current count")?;
-        if *state < floor {
-            shard.remove(&pair);
-        }
-    }
-    Ok(())
-}
-
-fn publish_groups<'arena>(
-    shard: &mut AHashMap<Pair, u64>,
     groups: AHashMap<(usize, Pair), Group>,
-    candidates: &mut Vec<Candidate<'arena>>,
-    reuse: bool,
-    floor: u64,
-    lease: &mut Lease<'arena>,
-) -> Result<()> {
-    // Partial birth groups follow bucket/pair order within this owner. Complete
-    // producers have already published directly into its candidate list.
-    let mut groups: Vec<_> = groups.into_iter().collect();
-    groups.sort_unstable_by_key(|((bucket, pair), _)| (*bucket, *pair));
-    for ((_, pair), mut state) in groups {
-        let count = if reuse { shard[&pair] } else { state.count };
-        // A positive reuse ledger publishes a historical birth cohort even
-        // below the floor; selection applies the floor after correcting its head.
-        if (reuse && (count as i64) <= 0) || (!reuse && count < floor) {
-            continue;
+    candidates: Vec<Candidate<'arena>>,
+    // Drop unpublished buffers before releasing exclusive worker access.
+    lease: Lease<'arena>,
+}
+
+impl<'index, 'arena> OwnerCommit<'index, 'arena> {
+    fn new(
+        arena: &'arena Arena,
+        shard: &'index mut AHashMap<Pair, u64>,
+        reuse: bool,
+        floor: u64,
+    ) -> Self {
+        let lease = arena.lease();
+        Self {
+            shard,
+            reuse,
+            floor,
+            groups: AHashMap::new(),
+            candidates: Vec::new(),
+            lease,
         }
-        let priority = Priority {
-            count,
-            pair: Reverse(pair),
-        };
-        let positions = if reuse {
-            state.unordered.sort_unstable();
-            Positions::from_sorted(Input::Slice(&state.unordered), lease)?
-        } else {
-            debug_assert!(!shard.contains_key(&pair));
-            shard.insert(pair, count);
-            Positions::from_sorted(Input::Builder(&state.positions), lease)?
-        };
-        candidates.push(Candidate {
-            priority,
-            positions,
-        });
     }
 
-    Ok(())
+    // A boundary removal precedes its replacement birth. The signed reuse ledger
+    // checks each action in that order, including intermediate overflow.
+    fn commit(
+        mut self,
+        route: &mut Route<'arena>,
+        events: &[Event],
+    ) -> Result<Vec<Candidate<'arena>>> {
+        for (index, remove, birth) in route.drain() {
+            let change = &events[index];
+            if remove {
+                self.remove_weight(change.removed, change.removed_weight)?;
+            }
+            if let Some(positions) = birth {
+                self.record_birth(change, positions)?;
+            }
+        }
+        self.publish_groups()
+    }
+
+    fn remove_weight(&mut self, pair: Pair, weight: u64) -> Result<()> {
+        if self.reuse {
+            let count = self.shard.entry(pair).or_default();
+            adjust_signed(count, weight, true)?;
+        } else if let Some(state) = self.shard.get_mut(&pair) {
+            *state = state
+                .checked_sub(weight)
+                .ok_or("BPE fresh removal exceeds the current count")?;
+            if *state < self.floor {
+                self.shard.remove(&pair);
+            }
+        }
+        Ok(())
+    }
+
+    fn record_birth(&mut self, change: &Event, positions: Birth<'arena>) -> Result<()> {
+        if self.reuse {
+            let count = self.shard.entry(change.born).or_default();
+            adjust_signed(count, change.born_weight, false)?;
+        }
+        let positions = match positions {
+            Birth::Complete(positions) => {
+                // Fresh IDs and compatible rules give each complete birth one producer.
+                debug_assert!(!self.reuse && change.born_weight >= self.floor);
+                debug_assert!(!self.shard.contains_key(&change.born));
+                self.shard.insert(change.born, change.born_weight);
+                self.candidates.push(Candidate {
+                    priority: Priority {
+                        count: change.born_weight,
+                        pair: Reverse(change.born),
+                    },
+                    positions,
+                });
+                return Ok(());
+            }
+            Birth::Partial(positions) => positions,
+        };
+        let group = self.groups.entry((change.bucket, change.born)).or_default();
+        add(&mut group.count, change.born_weight)?;
+        if self.reuse {
+            group.unordered.extend(positions.iter());
+        } else {
+            // Fresh jobs follow rule rank and spatial ranges. Each
+            // born key has one producer, so lists concatenate sorted.
+            group.positions.append(positions)?;
+        }
+        Ok(())
+    }
+
+    fn publish_groups(mut self) -> Result<Vec<Candidate<'arena>>> {
+        // Partial birth groups follow bucket/pair order within this owner. Complete
+        // producers have already published directly into its candidate list.
+        let mut groups: Vec<_> = self.groups.into_iter().collect();
+        groups.sort_unstable_by_key(|((bucket, pair), _)| (*bucket, *pair));
+        for ((_, pair), mut state) in groups {
+            let count = if self.reuse {
+                self.shard[&pair]
+            } else {
+                state.count
+            };
+            // A positive reuse ledger publishes a historical birth cohort even
+            // below the floor; selection applies the floor after correcting its head.
+            if (self.reuse && (count as i64) <= 0) || (!self.reuse && count < self.floor) {
+                continue;
+            }
+            let priority = Priority {
+                count,
+                pair: Reverse(pair),
+            };
+            let positions = if self.reuse {
+                state.unordered.sort_unstable();
+                Positions::from_sorted(Input::Slice(&state.unordered), &mut self.lease)?
+            } else {
+                debug_assert!(!self.shard.contains_key(&pair));
+                self.shard.insert(pair, count);
+                Positions::from_sorted(Input::Builder(&state.positions), &mut self.lease)?
+            };
+            self.candidates.push(Candidate {
+                priority,
+                positions,
+            });
+        }
+
+        Ok(self.candidates)
+    }
 }

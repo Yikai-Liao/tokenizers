@@ -110,6 +110,20 @@ of accepted AA matches remain parallel; the selection itself is serial.
 
 ## Counts and occurrence publication
 
+Pair ownership uses the existing `ahash` dependency to hash the ordered token-ID
+pair, then reduces it modulo the owner count. Fixed zero seeds make initial
+counting, queue lookup and commit use the same mapping within a build, without
+per-call randomness. This replaces a local multiplier/rotation heuristic; hash
+outputs and owner indices are internal and are not stored in the model format.
+
+`OwnerCommit` encapsulates one owner's sequential commit work. It borrows the count
+shard, fixes the reuse/frequency policy, and owns partial birth groups, pending
+candidates and an executing worker's allocation lease. Its commit method drains
+the route in order, removes old weight before recording each birth, and consumes
+the work state when publishing groups. The coordinator receives only completed
+candidates after owner jobs join. Errors release unpublished storage and discard
+the attempt; the object does not roll back already-applied count changes.
+
 Owners hold counts; one global Candidate priority queue owns fresh lists and
 reuse cohorts. Taking a fresh candidate removes its count key and queue record.
 Old-boundary removal events decrease existing counts and delete keys below the
