@@ -1,0 +1,18 @@
+{
+  "protocol_version": 1,
+  "attempt_id": "zh-whitespace-256MiB-w6",
+  "build_id": "timing",
+  "input_id": "zh-whitespace-256MiB",
+  "mode": "core",
+  "input": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+  "output": "/tmp/bpe-heap-timing-measurements/zh-whitespace-256MiB-w6/model.json",
+  "workers": 6,
+  "pretokenizer": "whitespace",
+  "trainer": {
+    "vocab_size": 50000,
+    "min_frequency": 2,
+    "prefix": null,
+    "suffix": null,
+    "max_token_length": null
+  }
+}

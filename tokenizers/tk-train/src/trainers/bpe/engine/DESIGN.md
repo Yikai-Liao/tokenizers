@@ -107,12 +107,17 @@ of accepted AA matches remain parallel; the selection itself is serial.
 
 ## Counts and occurrence publication
 
-Fresh owners hold one count and one list per retained pair. Taking a candidate
-removes that state. Old-boundary removal events decrease existing states and
-retire counts below the floor. Each new pair belongs to one producer rule;
+Owners hold counts; one global Candidate priority queue owns fresh lists and
+reuse cohorts. Taking a fresh candidate removes its count key and queue record.
+Old-boundary removal events decrease existing counts and delete keys below the
+floor. Their lists survive until the stale queue records reach the head or the
+attempt ends. Selection repairs counts and discards missing fresh keys through
+the same queue loop used for reuse ledgers. Each new pair belongs to one producer rule;
 partial jobs aggregate before pruning and publication. An ordinary source that
 covers the whole candidate marks its birth count complete. It first drops births below the floor while preserving removal
-events, then encodes retained lists; the owner moves retained lists directly into states and the queue. AA and reuse do not
+events, then encodes retained lists; the owner publishes the count and returns an
+owning Candidate. Joined owner results are pushed into the global queue serially.
+AA and reuse do not
 enter this shortcut. Small ordinary candidates remain whole by item count; large
 candidates use spatially ordered block ranges. Partial fresh lists remain raw until owner reduction; complete
 fresh lists are encoded during preparation. Both move to each owner in indexed

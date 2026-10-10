@@ -1,0 +1,18 @@
+{
+  "protocol_version": 1,
+  "attempt_id": "clean-stale-ab-8388608-b0-baseline",
+  "build_id": "baseline",
+  "input_id": "stale-ab-8388608",
+  "mode": "core",
+  "input": "/tmp/bpe-heap-measurements/stale-ab-8388608-words.json",
+  "output": "/tmp/bpe-heap-measurements/clean-stale-ab-8388608-b0-baseline/model.json",
+  "workers": 4,
+  "pretokenizer": "whitespace",
+  "trainer": {
+    "vocab_size": 10000,
+    "min_frequency": 1,
+    "prefix": null,
+    "suffix": null,
+    "max_token_length": null
+  }
+}

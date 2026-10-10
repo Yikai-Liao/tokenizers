@@ -1,0 +1,43 @@
+{
+  "baseline_commit": "177302e2",
+  "candidate_patch_sha256": "dab1336d97454a1321f6d3c3d67b75c77bd7bec5cc33ea1ddedebaa00e4f54dc",
+  "mode": "clean",
+  "binaries": {
+    "baseline": "/tmp/bpe-global-measurements/candidate",
+    "candidate": "/tmp/bpe-heap-clean"
+  },
+  "binary_sha256": {
+    "baseline": "7fd09506bf8aec1d892851a629bf21c104a861ad4d1f9f392b95181e9de6b133",
+    "candidate": "c44b336a8feb92ef1448c4aed4f51674443f17f9e32f013fca6c8f9cda886c6f"
+  },
+  "cases": [
+    {
+      "case": "zh-256MiB",
+      "language": "zh",
+      "requested_mib": 256,
+      "pretokenizer": "bytelevel_regex",
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+      "bytes": 268435162,
+      "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+      "prepared_path": "/root/code/tokenizers-perfetto-results/inputs/zh-bytelevel/words.json",
+      "prepared_sha256": "bb796d0b57b87d965b84de249bc5c8e283b700774638d16a40e4ae5171b13ee0",
+      "prepared_bytes": 437135595
+    },
+    {
+      "case": "zh-whitespace-256MiB",
+      "language": "zh",
+      "requested_mib": 256,
+      "pretokenizer": "whitespace",
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+      "bytes": 268435162,
+      "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+      "prepared_path": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "prepared_sha256": "ed057a8fdb27544ed29f16dde53faa0de8f47f1ee8ac00080974fac5bb435660",
+      "prepared_bytes": 250116097
+    }
+  ],
+  "scope": "public do_train; load and serialization excluded from train time; HWM includes input loading",
+  "diagnostic": "Exact owned Positions layout bytes; excludes allocator metadata. Stage samples after joins. Maps estimate element payload capacities, excludes buckets/control bytes. Arena allocated and worker scratch capacities reported separately.",
+  "design": "Chinese focus: one warmup + three AB/BA alternating pairs per clean real case; synthetic three measured pairs. Diagnostic one pair per case, first commit then every32 commits and finish on Chinese, every commit on synthetic. workers6 affinity0-5; real vocab50k/min2, synthetic vocab10k/min1; no affixes",
+  "limitation": "Shared VM; descriptive observations, no statistical speedup claim."
+}

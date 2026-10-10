@@ -1,0 +1,139 @@
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/index.rs b/tokenizers/tk-train/src/trainers/bpe/engine/index.rs
+index 8429bd20..37b3f65b 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/index.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/index.rs
+@@ -118,6 +118,30 @@ fn adjust_signed(count: &mut u64, amount: u64, remove: bool) -> Result<()> {
+     Ok(())
+ }
+ impl<'arena> PairIndex<'arena> {
++    pub(super) fn diagnostic(&self, stage: &str, merges: usize) {
++        if std::env::var_os("BPE_HEAP_DIAGNOSTIC").is_none() { return; }
++        let owned: usize = self.shards.iter().flat_map(|s| s.states.values()).map(|s| s.positions.diagnostic_owned_bytes()).sum::<usize>() + self.cohorts.iter().map(|c| c.positions.diagnostic_owned_bytes()).sum::<usize>();
++        let stale = 0usize;
++        let stale_records = 0usize;
++        let records = self.shards.iter().map(|s| s.queue.len()).sum::<usize>() + self.cohorts.len();
++        let descriptor_capacity = self.shards.iter().map(|s| s.queue.capacity() * std::mem::size_of::<Priority>()).sum::<usize>() + self.cohorts.capacity() * std::mem::size_of::<Candidate>();
++        let map_entries: usize = self.shards.iter().map(|s| s.states.len()).sum();
++        let map_payload_capacity: usize = self.shards.iter().map(|s| s.states.capacity() * std::mem::size_of::<(Pair, State<Positions>)>()).sum();
++        let (live, peak) = super::positions::diagnostic_totals();
++        let (arena_bytes, scratch_bytes) = self.arena.diagnostic_buffers();
++        let status = std::fs::read_to_string("/proc/self/status").unwrap();
++        let memory = |name: &str| -> usize { status.lines().find(|s| s.starts_with(name)).unwrap().split_whitespace().nth(1).unwrap().parse().unwrap() };
++        eprintln!("BPE_HEAP_DIAGNOSTIC {}", serde_json::json!({
++            "stage": stage, "merges": merges, "reuse": self.reuse,
++            "owned_bytes": owned, "stale_owned_bytes": stale, "stale_records": stale_records,
++            "live_owned_bytes": live, "peak_live_owned_bytes": peak,
++            "queue_records": records, "queue_descriptor_capacity_bytes": descriptor_capacity,
++            "map_entries": map_entries, "map_payload_capacity_bytes": map_payload_capacity,
++            "arena_allocated_bytes": arena_bytes, "scratch_capacity_bytes": scratch_bytes,
++            "rss_kib": memory("VmRSS:"), "hwm_kib": memory("VmHWM:")
++        }));
++    }
++
+     pub(super) fn build(
+         arena: &'arena Arena,
+         corpus: &CorpusPlan<'_>,
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/mod.rs b/tokenizers/tk-train/src/trainers/bpe/engine/mod.rs
+index 8d84ab98..0f6d57e0 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/mod.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/mod.rs
+@@ -58,6 +58,7 @@ pub(super) fn train(
+                 reuse,
+                 &progress,
+             )?;
++            index.diagnostic("initial_index", 0);
+             if vocabulary.len() >= trainer.vocab_size {
+                 progress.stage("Compute merges", trainer.vocab_size);
+                 drop(index);
+@@ -67,11 +68,14 @@ pub(super) fn train(
+                 return Ok((vocab, merges, trainer.special_tokens.clone()));
+             }
+             let mut corpus = plan.materialize(&progress);
++            index.diagnostic("materialized", 0);
+             let work = progress.stage("Compute merges", trainer.vocab_size);
+             let mut merges = Vec::new();
+             #[cfg(test)]
+             let mut trace = Trace::new();
+             let mut restart = false;
++            let mut diagnostic_round = 0usize;
++            let diagnostic_stride = std::env::var("BPE_HEAP_DIAGNOSTIC_STRIDE").ok().and_then(|s| s.parse::<usize>().ok()).unwrap_or(1).max(1);
+             while vocabulary.len() < trainer.vocab_size {
+                 let batch = match Batch::select(trainer, &mut vocabulary, &mut corpus, &mut index)?
+                 {
+@@ -92,8 +96,13 @@ pub(super) fn train(
+                 )?;
+                 let changes = prepared.apply(&corpus);
+                 index.commit(changes)?;
++                diagnostic_round += 1;
++                if diagnostic_round == 1 || diagnostic_round.is_multiple_of(diagnostic_stride) {
++                    index.diagnostic("after_commit", merges.len());
++                }
+                 work.learned(merges.len());
+             }
++            index.diagnostic("finish", merges.len());
+             if restart {
+                 reuse = true;
+                 continue;
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/positions.rs b/tokenizers/tk-train/src/trainers/bpe/engine/positions.rs
+index 61c0e17d..2261fbda 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/positions.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/positions.rs
+@@ -7,6 +7,12 @@ use std::{
+     sync::{Mutex, MutexGuard},
+ };
+ use tk_encode::Result;
++use std::sync::atomic::{AtomicUsize, Ordering as AtomicOrdering};
++static LIVE_OWNED: AtomicUsize = AtomicUsize::new(0);
++static PEAK_OWNED: AtomicUsize = AtomicUsize::new(0);
++pub(super) fn diagnostic_totals() -> (usize, usize) {
++    (LIVE_OWNED.load(AtomicOrdering::Relaxed), PEAK_OWNED.load(AtomicOrdering::Relaxed))
++}
+ const RESTART: usize = 128;
+ const INLINE: usize = 1 << (usize::BITS - 1);
+ const PAIR: usize = 1 << (usize::BITS - 2);
+@@ -26,6 +32,12 @@ impl Arena {
+             cutoff: ((items as u128 / 256).isqrt() as usize).max(256),
+         }
+     }
++    pub(super) fn diagnostic_buffers(&self) -> (usize, usize) {
++        self.workers.iter().fold((0, 0), |(arena, scratch), worker| {
++            let worker = worker.lock().unwrap_or_else(|e| e.into_inner());
++            (arena + worker.bump.allocated_bytes(), scratch + worker.bytes.capacity() + worker.offsets.capacity() * std::mem::size_of::<usize>())
++        })
++    }
+     pub(super) fn lease(&self) -> Lease<'_> {
+         // A worker cursor is non-reentrant. Drop the lease before starting any
+         // nested Rayon work: another task on this worker may request the same lock.
+@@ -200,6 +212,13 @@ impl<'arena> Positions<'arena> {
+     pub(super) fn is_empty(&self) -> bool {
+         self.len() == 0
+     }
++    pub(super) fn diagnostic_owned_bytes(&self) -> usize {
++        if self.is_empty() || self.count_and_flags & INLINE != 0 || self.payload.addr() & ARENA != 0 {
++            return 0;
++        }
++        // SAFETY: the live owned descriptor points to its initialized length word.
++        layout(self.len(), unsafe { self.pointer().cast::<usize>().read() }).unwrap().size()
++    }
+     fn pointer(&self) -> *mut u8 {
+         self.payload.map_addr(|a| a & !1)
+     }
+@@ -267,6 +286,10 @@ impl<'arena> Positions<'arena> {
+         if pointer.is_null() {
+             return Err("BPE position allocation failed".into());
+         }
++        if !arena {
++            let current = LIVE_OWNED.fetch_add(allocation.size(), AtomicOrdering::Relaxed) + allocation.size();
++            PEAK_OWNED.fetch_max(current, AtomicOrdering::Relaxed);
++        }
+         // SAFETY: final layout reserves an aligned length word, optional full
+         // restart directory and stream. All bytes read later are initialized here.
+         unsafe {
+@@ -385,6 +408,7 @@ impl Drop for Positions<'_> {
+             if self.payload.addr() & ARENA == 0 {
+                 let allocation = layout(self.len(), self.pointer().cast::<usize>().read())
+                     .expect("published layout was validated");
++                LIVE_OWNED.fetch_sub(allocation.size(), AtomicOrdering::Relaxed);
+                 dealloc(self.pointer(), allocation);
+             }
+         }

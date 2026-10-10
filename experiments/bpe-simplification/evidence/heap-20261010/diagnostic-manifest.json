@@ -1,0 +1,64 @@
+{
+  "baseline_commit": "177302e2",
+  "candidate_patch_sha256": "dab1336d97454a1321f6d3c3d67b75c77bd7bec5cc33ea1ddedebaa00e4f54dc",
+  "mode": "diagnostic",
+  "binaries": {
+    "baseline": "/tmp/bpe-heap-diagnostic-baseline",
+    "candidate": "/tmp/bpe-heap-diagnostic-candidate"
+  },
+  "binary_sha256": {
+    "baseline": "be33cbc17c6bb12a2a854d26c1372b3f431d05589431a0255064c13a18756e42",
+    "candidate": "c0099da1a4b81edc17e415ba69730c7a1f3e06b015710ba2d131f66667ea33b7"
+  },
+  "cases": [
+    {
+      "case": "zh-256MiB",
+      "language": "zh",
+      "requested_mib": 256,
+      "pretokenizer": "bytelevel_regex",
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+      "bytes": 268435162,
+      "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+      "prepared_path": "/root/code/tokenizers-perfetto-results/inputs/zh-bytelevel/words.json",
+      "prepared_sha256": "bb796d0b57b87d965b84de249bc5c8e283b700774638d16a40e4ae5171b13ee0",
+      "prepared_bytes": 437135595
+    },
+    {
+      "case": "zh-whitespace-256MiB",
+      "language": "zh",
+      "requested_mib": 256,
+      "pretokenizer": "whitespace",
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+      "bytes": 268435162,
+      "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+      "prepared_path": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "prepared_sha256": "ed057a8fdb27544ed29f16dde53faa0de8f47f1ee8ac00080974fac5bb435660",
+      "prepared_bytes": 250116097
+    },
+    {
+      "case": "stale-ab-1048576",
+      "prepared_path": "/tmp/bpe-heap-measurements/stale-ab-1048576-words.json",
+      "prepared_sha256": "7d831ac00c8c3c61d512b417583a480ae20872c71ae36f33751f9a9380a3a009",
+      "pretokenizer": "whitespace",
+      "n": 1048576
+    },
+    {
+      "case": "stale-ab-8388608",
+      "prepared_path": "/tmp/bpe-heap-measurements/stale-ab-8388608-words.json",
+      "prepared_sha256": "cb07678cbb03c5d136e86f901cdea1073d026b54bf656bb1c35a81aca6380423",
+      "pretokenizer": "whitespace",
+      "n": 8388608
+    },
+    {
+      "case": "stale-ab-33554432",
+      "prepared_path": "/tmp/bpe-heap-measurements/stale-ab-33554432-words.json",
+      "prepared_sha256": "e959007bbd3bfcb806e648c608aeb59ed7c814a082578d73509faec2e3a320dc",
+      "pretokenizer": "whitespace",
+      "n": 33554432
+    }
+  ],
+  "scope": "public do_train; load and serialization excluded from train time; HWM includes input loading",
+  "diagnostic": "Exact owned Positions layout bytes; excludes allocator metadata. Stage samples after joins. Maps estimate element payload capacities, excludes buckets/control bytes. Arena allocated and worker scratch capacities reported separately.",
+  "design": "Chinese focus: one warmup + three AB/BA alternating pairs per clean real case; synthetic three measured pairs. Diagnostic one pair per case, first commit then every32 commits and finish on Chinese, every commit on synthetic. workers4 affinity0-3; real vocab50k/min2, synthetic vocab10k/min1; no affixes",
+  "limitation": "Shared VM; descriptive observations, no statistical speedup claim."
+}

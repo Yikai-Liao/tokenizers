@@ -1,0 +1,92 @@
+[
+  {
+    "case": "zh-256MiB",
+    "baseline": {
+      "train_seconds": 19.753965001,
+      "train_cpu_seconds": 65.552663,
+      "process_hwm_kib_before_validation": 2558112
+    },
+    "candidate": {
+      "train_seconds": 19.312006705,
+      "train_cpu_seconds": 64.715856,
+      "process_hwm_kib_before_validation": 2488188
+    },
+    "paired_median_delta_percent": {
+      "train_seconds": -2.6969128120508,
+      "train_cpu_seconds": -2.1777849055498955,
+      "process_hwm_kib_before_validation": -3.107291627575337
+    }
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "baseline": {
+      "train_seconds": 16.774464968,
+      "train_cpu_seconds": 48.722785,
+      "process_hwm_kib_before_validation": 1907468
+    },
+    "candidate": {
+      "train_seconds": 17.660104885,
+      "train_cpu_seconds": 50.376444,
+      "process_hwm_kib_before_validation": 1976768
+    },
+    "paired_median_delta_percent": {
+      "train_seconds": 4.612746409731039,
+      "train_cpu_seconds": 2.9519428126263847,
+      "process_hwm_kib_before_validation": 3.633088471208956
+    }
+  },
+  {
+    "case": "stale-ab-1048576",
+    "baseline": {
+      "train_seconds": 0.106045376,
+      "train_cpu_seconds": 0.112343,
+      "process_hwm_kib_before_validation": 22964
+    },
+    "candidate": {
+      "train_seconds": 0.105572471,
+      "train_cpu_seconds": 0.11240599999999999,
+      "process_hwm_kib_before_validation": 22720
+    },
+    "paired_median_delta_percent": {
+      "train_seconds": -0.16348270572391632,
+      "train_cpu_seconds": -1.041453406086712,
+      "process_hwm_kib_before_validation": -1.0625326598153628
+    }
+  },
+  {
+    "case": "stale-ab-8388608",
+    "baseline": {
+      "train_seconds": 0.813391128,
+      "train_cpu_seconds": 0.820253,
+      "process_hwm_kib_before_validation": 124968
+    },
+    "candidate": {
+      "train_seconds": 0.793882236,
+      "train_cpu_seconds": 0.7963149999999999,
+      "process_hwm_kib_before_validation": 125072
+    },
+    "paired_median_delta_percent": {
+      "train_seconds": -0.7096558126947539,
+      "train_cpu_seconds": -1.3701158194994734,
+      "process_hwm_kib_before_validation": 0.12167787383925432
+    }
+  },
+  {
+    "case": "stale-ab-33554432",
+    "baseline": {
+      "train_seconds": 3.266474634,
+      "train_cpu_seconds": 3.251717,
+      "process_hwm_kib_before_validation": 409308
+    },
+    "candidate": {
+      "train_seconds": 3.154582979,
+      "train_cpu_seconds": 3.1558470000000005,
+      "process_hwm_kib_before_validation": 409368
+    },
+    "paired_median_delta_percent": {
+      "train_seconds": -2.7440311097656767,
+      "train_cpu_seconds": -1.9397664710959717,
+      "process_hwm_kib_before_validation": 0.008795332610156414
+    }
+  }
+]

@@ -1,0 +1,282 @@
+[
+  {
+    "case": "zh-256MiB",
+    "workers": 4,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-heap-timed",
+      "/tmp/bpe-heap-timing-measurements/zh-256MiB-w4/job.json"
+    ],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "concurrent_builds_or_benchmarks": [],
+    "attempt_id": "zh-256MiB-w4",
+    "build_id": "timing",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 10.017010824,
+      "process_hwm_kib_before_validation": 2490792,
+      "train_cpu_seconds": 62.42807499999999,
+      "train_seconds": 19.013086603
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-heap-timing-measurements/zh-256MiB-w4/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "phase": {
+      "best_calls": 51223,
+      "best_ns": 384879864,
+      "birth_records": 7051314,
+      "index_cleanup_ns": 86583256,
+      "initial_ns": 581390,
+      "initial_records": 15049,
+      "serial_birth_push_ns": 328685505,
+      "take_calls": 49744,
+      "take_ns": 74728921
+    },
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true,
+    "phase_seconds": {
+      "initial_ns": 0.00058139,
+      "best_ns": 0.384879864,
+      "take_ns": 0.074728921,
+      "serial_birth_push_ns": 0.328685505,
+      "index_cleanup_ns": 0.086583256
+    },
+    "phase_percent": {
+      "initial_ns": 0.003057841223466918,
+      "best_ns": 2.024289227921948,
+      "take_ns": 0.39303939733914023,
+      "serial_birth_push_ns": 1.7287330135451966,
+      "index_cleanup_ns": 0.45538769063587164
+    },
+    "queue_path_total_seconds": 0.875458936,
+    "queue_path_percent": 4.604507170665624
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "workers": 4,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-heap-timed",
+      "/tmp/bpe-heap-timing-measurements/zh-whitespace-256MiB-w4/job.json"
+    ],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "concurrent_builds_or_benchmarks": [],
+    "attempt_id": "zh-whitespace-256MiB-w4",
+    "build_id": "timing",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.463221976,
+      "process_hwm_kib_before_validation": 1980560,
+      "train_cpu_seconds": 48.101923,
+      "train_seconds": 16.727808775
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-heap-timing-measurements/zh-whitespace-256MiB-w4/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "phase": {
+      "best_calls": 33493,
+      "best_ns": 173027047,
+      "birth_records": 4769069,
+      "index_cleanup_ns": 91580441,
+      "initial_ns": 75783866,
+      "initial_records": 1721017,
+      "serial_birth_push_ns": 200954397,
+      "take_calls": 32241,
+      "take_ns": 47864673
+    },
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true,
+    "phase_seconds": {
+      "initial_ns": 0.075783866,
+      "best_ns": 0.173027047,
+      "take_ns": 0.047864673,
+      "serial_birth_push_ns": 0.200954397,
+      "index_cleanup_ns": 0.091580441
+    },
+    "phase_percent": {
+      "initial_ns": 0.45304120234361067,
+      "best_ns": 1.0343676767670367,
+      "take_ns": 0.28613833194658816,
+      "serial_birth_push_ns": 1.2013193102752935,
+      "index_cleanup_ns": 0.5474742223073984
+    },
+    "queue_path_total_seconds": 0.589210424,
+    "queue_path_percent": 3.5223407436399277
+  },
+  {
+    "case": "zh-256MiB",
+    "workers": 6,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-heap-timed",
+      "/tmp/bpe-heap-timing-measurements/zh-256MiB-w6/job.json"
+    ],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "concurrent_builds_or_benchmarks": [],
+    "attempt_id": "zh-256MiB-w6",
+    "build_id": "timing",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 9.404138706,
+      "process_hwm_kib_before_validation": 2510936,
+      "train_cpu_seconds": 65.254302,
+      "train_seconds": 15.069150164
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-heap-timing-measurements/zh-256MiB-w6/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "phase": {
+      "best_calls": 51223,
+      "best_ns": 382856221,
+      "birth_records": 7051314,
+      "index_cleanup_ns": 85214753,
+      "initial_ns": 496536,
+      "initial_records": 15049,
+      "serial_birth_push_ns": 312224938,
+      "take_calls": 49744,
+      "take_ns": 72850733
+    },
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true,
+    "phase_seconds": {
+      "initial_ns": 0.000496536,
+      "best_ns": 0.382856221,
+      "take_ns": 0.072850733,
+      "serial_birth_push_ns": 0.312224938,
+      "index_cleanup_ns": 0.085214753
+    },
+    "phase_percent": {
+      "initial_ns": 0.003295049784467726,
+      "best_ns": 2.5406623255678906,
+      "take_ns": 0.48344287638754463,
+      "serial_birth_push_ns": 2.0719478842668995,
+      "index_cleanup_ns": 0.5654914316507172
+    },
+    "queue_path_total_seconds": 0.853643181,
+    "queue_path_percent": 5.66483956765752
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "workers": 6,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-heap-timed",
+      "/tmp/bpe-heap-timing-measurements/zh-whitespace-256MiB-w6/job.json"
+    ],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "concurrent_builds_or_benchmarks": [],
+    "attempt_id": "zh-whitespace-256MiB-w6",
+    "build_id": "timing",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.309934037,
+      "process_hwm_kib_before_validation": 1879764,
+      "train_cpu_seconds": 53.854747,
+      "train_seconds": 14.463121338
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-heap-timing-measurements/zh-whitespace-256MiB-w6/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "phase": {
+      "best_calls": 33493,
+      "best_ns": 175639369,
+      "birth_records": 4769069,
+      "index_cleanup_ns": 79289624,
+      "initial_ns": 81178988,
+      "initial_records": 1721017,
+      "serial_birth_push_ns": 215805659,
+      "take_calls": 32241,
+      "take_ns": 51468102
+    },
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true,
+    "phase_seconds": {
+      "initial_ns": 0.081178988,
+      "best_ns": 0.175639369,
+      "take_ns": 0.051468102,
+      "serial_birth_push_ns": 0.215805659,
+      "index_cleanup_ns": 0.079289624
+    },
+    "phase_percent": {
+      "initial_ns": 0.5612826312029381,
+      "best_ns": 1.214394630974505,
+      "take_ns": 0.3558574998937066,
+      "serial_birth_push_ns": 1.492109856210625,
+      "index_cleanup_ns": 0.5482193099747885
+    },
+    "queue_path_total_seconds": 0.603381742,
+    "queue_path_percent": 4.171863928256563
+  }
+]

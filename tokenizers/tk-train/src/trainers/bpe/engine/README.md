@@ -22,7 +22,7 @@ The implementation is divided by the knowledge each module owns:
   Only this module converts full-u64 occurrence coordinates
   to checked resident indices.
 - [index.rs](index.rs) owns exact priority correction, count shards, signed reuse
-  ledgers, cohort queues, and complete birth publication.
+  ledgers, one owning candidate queue, and complete birth publication.
 - [merge.rs](merge.rs) owns compatible selection, read-only preparation, local
   event aggregation, and joined application. The coordinator sees `Batch` and
   `Prepared`, without handling write geometry or neighbor directories.
@@ -31,6 +31,11 @@ The implementation is divided by the knowledge each module owns:
   lists have a two-word descriptor and borrow small allocations from a scoped
   Arena, selected by a dynamic byte threshold. Duplicate positions and
   coordinates through `u64::MAX` are preserved.
+
+This branch experiments with one owning priority queue for fresh lists and reuse
+cohorts. Arena allocation and its dynamic threshold are unchanged. Resource
+measurements and the unresolved equal-priority reuse ordering limit are recorded
+in the [heap experiment](../../../../../../experiments/bpe-simplification/HEAP_EXPERIMENT.md).
 
 Initial collection splits the borrowed plan at whole-word boundaries, with a
 2²⁴-resident-slot block cap. An oversized single word is processed alone. Each

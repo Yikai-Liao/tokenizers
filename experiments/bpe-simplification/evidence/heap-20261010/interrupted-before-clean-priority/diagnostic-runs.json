@@ -1,0 +1,21 @@
+[
+  {
+    "case": "zh-256MiB",
+    "block": 0,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-heap-diagnostic-baseline",
+      "/tmp/bpe-heap-measurements/diagnostic-zh-256MiB-b0-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": -15,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2490968,
+    "subprocess_wall": 31.91911891300697,
+    "valid": false
+  }
+]

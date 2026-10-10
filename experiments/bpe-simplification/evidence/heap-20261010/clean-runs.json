@@ -1,0 +1,1566 @@
+[
+  {
+    "case": "zh-256MiB",
+    "block": 0,
+    "arm": "baseline",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-measurements/candidate",
+      "/tmp/bpe-heap-measurements/clean-zh-256MiB-b0-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2552248,
+    "subprocess_wall": 33.5294662049273,
+    "attempt_id": "clean-zh-256MiB-b0-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 9.399816267,
+      "process_hwm_kib_before_validation": 2562608,
+      "train_cpu_seconds": 64.973886,
+      "train_seconds": 19.320788387
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-heap-measurements/clean-zh-256MiB-b0-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 0,
+    "arm": "candidate",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-heap-clean",
+      "/tmp/bpe-heap-measurements/clean-zh-256MiB-b0-candidate/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2485776,
+    "subprocess_wall": 30.859662503004074,
+    "attempt_id": "clean-zh-256MiB-b0-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 9.054501983,
+      "process_hwm_kib_before_validation": 2485320,
+      "train_cpu_seconds": 65.06858,
+      "train_seconds": 19.67776204
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-heap-measurements/clean-zh-256MiB-b0-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 1,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-heap-clean",
+      "/tmp/bpe-heap-measurements/clean-zh-256MiB-b1-candidate/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2488452,
+    "subprocess_wall": 30.832095257006586,
+    "attempt_id": "clean-zh-256MiB-b1-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 9.564648109,
+      "process_hwm_kib_before_validation": 2488188,
+      "train_cpu_seconds": 64.715856,
+      "train_seconds": 19.312006705
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-heap-measurements/clean-zh-256MiB-b1-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 1,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-measurements/candidate",
+      "/tmp/bpe-heap-measurements/clean-zh-256MiB-b1-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2534544,
+    "subprocess_wall": 31.19049039692618,
+    "attempt_id": "clean-zh-256MiB-b1-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 8.916258287,
+      "process_hwm_kib_before_validation": 2534104,
+      "train_cpu_seconds": 66.712774,
+      "train_seconds": 20.361565088
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-heap-measurements/clean-zh-256MiB-b1-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 2,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-measurements/candidate",
+      "/tmp/bpe-heap-measurements/clean-zh-256MiB-b2-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2557040,
+    "subprocess_wall": 30.375515967956744,
+    "attempt_id": "clean-zh-256MiB-b2-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 8.99722365,
+      "process_hwm_kib_before_validation": 2558112,
+      "train_cpu_seconds": 64.652103,
+      "train_seconds": 19.285313414
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-heap-measurements/clean-zh-256MiB-b2-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 2,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-heap-clean",
+      "/tmp/bpe-heap-measurements/clean-zh-256MiB-b2-candidate/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2479012,
+    "subprocess_wall": 34.043248472968116,
+    "attempt_id": "clean-zh-256MiB-b2-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 9.24636343,
+      "process_hwm_kib_before_validation": 2478624,
+      "train_cpu_seconds": 64.94047499999999,
+      "train_seconds": 19.841577948
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-heap-measurements/clean-zh-256MiB-b2-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 3,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-heap-clean",
+      "/tmp/bpe-heap-measurements/clean-zh-256MiB-b3-candidate/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2495588,
+    "subprocess_wall": 33.47798265598249,
+    "attempt_id": "clean-zh-256MiB-b3-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 9.537134737,
+      "process_hwm_kib_before_validation": 2495328,
+      "train_cpu_seconds": 64.125067,
+      "train_seconds": 19.221217788
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-heap-measurements/clean-zh-256MiB-b3-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 3,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-measurements/candidate",
+      "/tmp/bpe-heap-measurements/clean-zh-256MiB-b3-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2601044,
+    "subprocess_wall": 30.830733195063658,
+    "attempt_id": "clean-zh-256MiB-b3-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 9.121588135,
+      "process_hwm_kib_before_validation": 2600668,
+      "train_cpu_seconds": 65.552663,
+      "train_seconds": 19.753965001
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-heap-measurements/clean-zh-256MiB-b3-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 0,
+    "arm": "baseline",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-measurements/candidate",
+      "/tmp/bpe-heap-measurements/clean-zh-whitespace-256MiB-b0-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1908428,
+    "subprocess_wall": 25.75723804894369,
+    "attempt_id": "clean-zh-whitespace-256MiB-b0-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.291300087,
+      "process_hwm_kib_before_validation": 1907988,
+      "train_cpu_seconds": 48.65474,
+      "train_seconds": 16.767961507
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-heap-measurements/clean-zh-whitespace-256MiB-b0-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 0,
+    "arm": "candidate",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-heap-clean",
+      "/tmp/bpe-heap-measurements/clean-zh-whitespace-256MiB-b0-candidate/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1976664,
+    "subprocess_wall": 26.854439454036765,
+    "attempt_id": "clean-zh-whitespace-256MiB-b0-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.353538721,
+      "process_hwm_kib_before_validation": 1976780,
+      "train_cpu_seconds": 50.967704,
+      "train_seconds": 17.776675135
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-heap-measurements/clean-zh-whitespace-256MiB-b0-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 1,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-heap-clean",
+      "/tmp/bpe-heap-measurements/clean-zh-whitespace-256MiB-b1-candidate/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1976920,
+    "subprocess_wall": 26.651443929993547,
+    "attempt_id": "clean-zh-whitespace-256MiB-b1-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.315602244,
+      "process_hwm_kib_before_validation": 1976768,
+      "train_cpu_seconds": 50.376444,
+      "train_seconds": 17.660104885
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-heap-measurements/clean-zh-whitespace-256MiB-b1-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 1,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-measurements/candidate",
+      "/tmp/bpe-heap-measurements/clean-zh-whitespace-256MiB-b1-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1907648,
+    "subprocess_wall": 24.021802549017593,
+    "attempt_id": "clean-zh-whitespace-256MiB-b1-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.461681858,
+      "process_hwm_kib_before_validation": 1907468,
+      "train_cpu_seconds": 47.251248,
+      "train_seconds": 16.4595453
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-heap-measurements/clean-zh-whitespace-256MiB-b1-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 2,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-measurements/candidate",
+      "/tmp/bpe-heap-measurements/clean-zh-whitespace-256MiB-b2-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1913588,
+    "subprocess_wall": 25.59071745199617,
+    "attempt_id": "clean-zh-whitespace-256MiB-b2-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.315700217,
+      "process_hwm_kib_before_validation": 1913284,
+      "train_cpu_seconds": 48.722785,
+      "train_seconds": 16.774464968
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-heap-measurements/clean-zh-whitespace-256MiB-b2-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 2,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-heap-clean",
+      "/tmp/bpe-heap-measurements/clean-zh-whitespace-256MiB-b2-candidate/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1974028,
+    "subprocess_wall": 26.11046268499922,
+    "attempt_id": "clean-zh-whitespace-256MiB-b2-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.041186429,
+      "process_hwm_kib_before_validation": 1973748,
+      "train_cpu_seconds": 49.637536,
+      "train_seconds": 17.535550959
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-heap-measurements/clean-zh-whitespace-256MiB-b2-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 3,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-heap-clean",
+      "/tmp/bpe-heap-measurements/clean-zh-whitespace-256MiB-b3-candidate/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1982744,
+    "subprocess_wall": 26.74782131705433,
+    "attempt_id": "clean-zh-whitespace-256MiB-b3-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.232342224,
+      "process_hwm_kib_before_validation": 1982976,
+      "train_cpu_seconds": 51.222339,
+      "train_seconds": 17.975376377
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-heap-measurements/clean-zh-whitespace-256MiB-b3-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 3,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-measurements/candidate",
+      "/tmp/bpe-heap-measurements/clean-zh-whitespace-256MiB-b3-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1900916,
+    "subprocess_wall": 24.735196028952487,
+    "attempt_id": "clean-zh-whitespace-256MiB-b3-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.311875302,
+      "process_hwm_kib_before_validation": 1900564,
+      "train_cpu_seconds": 49.75364,
+      "train_seconds": 17.182778384
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-heap-measurements/clean-zh-whitespace-256MiB-b3-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "stale-ab-1048576",
+    "block": 0,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-measurements/candidate",
+      "/tmp/bpe-heap-measurements/clean-stale-ab-1048576-b0-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 21936,
+    "subprocess_wall": 0.15382588398642838,
+    "attempt_id": "clean-stale-ab-1048576-b0-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "stale-ab-1048576",
+    "metrics": {
+      "load_seconds": 0.029711756,
+      "process_hwm_kib_before_validation": 23816,
+      "train_cpu_seconds": 0.112343,
+      "train_seconds": 0.10530594
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 2050,
+      "actual_vocab": 6149,
+      "model_path": "/tmp/bpe-heap-measurements/clean-stale-ab-1048576-b0-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "e56425d84859f8b4c6d4f7fdaf3d7966ea8efaed97c08f4b68855047290ef7b1",
+    "valid": true
+  },
+  {
+    "case": "stale-ab-1048576",
+    "block": 0,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-heap-clean",
+      "/tmp/bpe-heap-measurements/clean-stale-ab-1048576-b0-candidate/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 21476,
+    "subprocess_wall": 0.1534722950309515,
+    "attempt_id": "clean-stale-ab-1048576-b0-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "stale-ab-1048576",
+    "metrics": {
+      "load_seconds": 0.030663422,
+      "process_hwm_kib_before_validation": 22296,
+      "train_cpu_seconds": 0.11117300000000001,
+      "train_seconds": 0.105133783
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 2050,
+      "actual_vocab": 6149,
+      "model_path": "/tmp/bpe-heap-measurements/clean-stale-ab-1048576-b0-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "e56425d84859f8b4c6d4f7fdaf3d7966ea8efaed97c08f4b68855047290ef7b1",
+    "valid": true
+  },
+  {
+    "case": "stale-ab-1048576",
+    "block": 1,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-heap-clean",
+      "/tmp/bpe-heap-measurements/clean-stale-ab-1048576-b1-candidate/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 22476,
+    "subprocess_wall": 0.15367978299036622,
+    "attempt_id": "clean-stale-ab-1048576-b1-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "stale-ab-1048576",
+    "metrics": {
+      "load_seconds": 0.027497426,
+      "process_hwm_kib_before_validation": 23988,
+      "train_cpu_seconds": 0.11240599999999999,
+      "train_seconds": 0.105572471
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 2050,
+      "actual_vocab": 6149,
+      "model_path": "/tmp/bpe-heap-measurements/clean-stale-ab-1048576-b1-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "e56425d84859f8b4c6d4f7fdaf3d7966ea8efaed97c08f4b68855047290ef7b1",
+    "valid": true
+  },
+  {
+    "case": "stale-ab-1048576",
+    "block": 1,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-measurements/candidate",
+      "/tmp/bpe-heap-measurements/clean-stale-ab-1048576-b1-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 21532,
+    "subprocess_wall": 0.15380808198824525,
+    "attempt_id": "clean-stale-ab-1048576-b1-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "stale-ab-1048576",
+    "metrics": {
+      "load_seconds": 0.027147656,
+      "process_hwm_kib_before_validation": 22668,
+      "train_cpu_seconds": 0.118416,
+      "train_seconds": 0.1117893
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 2050,
+      "actual_vocab": 6149,
+      "model_path": "/tmp/bpe-heap-measurements/clean-stale-ab-1048576-b1-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "e56425d84859f8b4c6d4f7fdaf3d7966ea8efaed97c08f4b68855047290ef7b1",
+    "valid": true
+  },
+  {
+    "case": "stale-ab-1048576",
+    "block": 2,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-measurements/candidate",
+      "/tmp/bpe-heap-measurements/clean-stale-ab-1048576-b2-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 22848,
+    "subprocess_wall": 0.15343835297971964,
+    "attempt_id": "clean-stale-ab-1048576-b2-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "stale-ab-1048576",
+    "metrics": {
+      "load_seconds": 0.028681013,
+      "process_hwm_kib_before_validation": 22964,
+      "train_cpu_seconds": 0.11146399999999998,
+      "train_seconds": 0.106045376
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 2050,
+      "actual_vocab": 6149,
+      "model_path": "/tmp/bpe-heap-measurements/clean-stale-ab-1048576-b2-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "e56425d84859f8b4c6d4f7fdaf3d7966ea8efaed97c08f4b68855047290ef7b1",
+    "valid": true
+  },
+  {
+    "case": "stale-ab-1048576",
+    "block": 2,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-heap-clean",
+      "/tmp/bpe-heap-measurements/clean-stale-ab-1048576-b2-candidate/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 21832,
+    "subprocess_wall": 0.1536887380061671,
+    "attempt_id": "clean-stale-ab-1048576-b2-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "stale-ab-1048576",
+    "metrics": {
+      "load_seconds": 0.0307753,
+      "process_hwm_kib_before_validation": 22720,
+      "train_cpu_seconds": 0.11468399999999998,
+      "train_seconds": 0.108263906
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 2050,
+      "actual_vocab": 6149,
+      "model_path": "/tmp/bpe-heap-measurements/clean-stale-ab-1048576-b2-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "e56425d84859f8b4c6d4f7fdaf3d7966ea8efaed97c08f4b68855047290ef7b1",
+    "valid": true
+  },
+  {
+    "case": "stale-ab-8388608",
+    "block": 0,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-measurements/candidate",
+      "/tmp/bpe-heap-measurements/clean-stale-ab-8388608-b0-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 125328,
+    "subprocess_wall": 1.0500830870587379,
+    "attempt_id": "clean-stale-ab-8388608-b0-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "stale-ab-8388608",
+    "metrics": {
+      "load_seconds": 0.214086484,
+      "process_hwm_kib_before_validation": 125084,
+      "train_cpu_seconds": 0.8203909999999999,
+      "train_seconds": 0.813391128
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 2050,
+      "actual_vocab": 6149,
+      "model_path": "/tmp/bpe-heap-measurements/clean-stale-ab-8388608-b0-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "e56425d84859f8b4c6d4f7fdaf3d7966ea8efaed97c08f4b68855047290ef7b1",
+    "valid": true
+  },
+  {
+    "case": "stale-ab-8388608",
+    "block": 0,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-heap-clean",
+      "/tmp/bpe-heap-measurements/clean-stale-ab-8388608-b0-candidate/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 125364,
+    "subprocess_wall": 1.0201692440314218,
+    "attempt_id": "clean-stale-ab-8388608-b0-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "stale-ab-8388608",
+    "metrics": {
+      "load_seconds": 0.20957691,
+      "process_hwm_kib_before_validation": 125004,
+      "train_cpu_seconds": 0.7854949999999999,
+      "train_seconds": 0.778557349
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 2050,
+      "actual_vocab": 6149,
+      "model_path": "/tmp/bpe-heap-measurements/clean-stale-ab-8388608-b0-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "e56425d84859f8b4c6d4f7fdaf3d7966ea8efaed97c08f4b68855047290ef7b1",
+    "valid": true
+  },
+  {
+    "case": "stale-ab-8388608",
+    "block": 1,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-heap-clean",
+      "/tmp/bpe-heap-measurements/clean-stale-ab-8388608-b1-candidate/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 125364,
+    "subprocess_wall": 1.2327591920038685,
+    "attempt_id": "clean-stale-ab-8388608-b1-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "stale-ab-8388608",
+    "metrics": {
+      "load_seconds": 0.220075463,
+      "process_hwm_kib_before_validation": 125148,
+      "train_cpu_seconds": 0.9934230000000002,
+      "train_seconds": 0.993111145
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 2050,
+      "actual_vocab": 6149,
+      "model_path": "/tmp/bpe-heap-measurements/clean-stale-ab-8388608-b1-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "e56425d84859f8b4c6d4f7fdaf3d7966ea8efaed97c08f4b68855047290ef7b1",
+    "valid": true
+  },
+  {
+    "case": "stale-ab-8388608",
+    "block": 1,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-measurements/candidate",
+      "/tmp/bpe-heap-measurements/clean-stale-ab-8388608-b1-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 125300,
+    "subprocess_wall": 1.0457631669705734,
+    "attempt_id": "clean-stale-ab-8388608-b1-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "stale-ab-8388608",
+    "metrics": {
+      "load_seconds": 0.21230684,
+      "process_hwm_kib_before_validation": 124968,
+      "train_cpu_seconds": 0.820253,
+      "train_seconds": 0.815128354
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 2050,
+      "actual_vocab": 6149,
+      "model_path": "/tmp/bpe-heap-measurements/clean-stale-ab-8388608-b1-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "e56425d84859f8b4c6d4f7fdaf3d7966ea8efaed97c08f4b68855047290ef7b1",
+    "valid": true
+  },
+  {
+    "case": "stale-ab-8388608",
+    "block": 2,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-measurements/candidate",
+      "/tmp/bpe-heap-measurements/clean-stale-ab-8388608-b2-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 125260,
+    "subprocess_wall": 1.045993595966138,
+    "attempt_id": "clean-stale-ab-8388608-b2-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "stale-ab-8388608",
+    "metrics": {
+      "load_seconds": 0.21271456,
+      "process_hwm_kib_before_validation": 124920,
+      "train_cpu_seconds": 0.8073770000000001,
+      "train_seconds": 0.799556334
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 2050,
+      "actual_vocab": 6149,
+      "model_path": "/tmp/bpe-heap-measurements/clean-stale-ab-8388608-b2-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "e56425d84859f8b4c6d4f7fdaf3d7966ea8efaed97c08f4b68855047290ef7b1",
+    "valid": true
+  },
+  {
+    "case": "stale-ab-8388608",
+    "block": 2,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-heap-clean",
+      "/tmp/bpe-heap-measurements/clean-stale-ab-8388608-b2-candidate/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 125144,
+    "subprocess_wall": 1.0205373010830954,
+    "attempt_id": "clean-stale-ab-8388608-b2-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "stale-ab-8388608",
+    "metrics": {
+      "load_seconds": 0.210775106,
+      "process_hwm_kib_before_validation": 125072,
+      "train_cpu_seconds": 0.7963149999999999,
+      "train_seconds": 0.793882236
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 2050,
+      "actual_vocab": 6149,
+      "model_path": "/tmp/bpe-heap-measurements/clean-stale-ab-8388608-b2-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "e56425d84859f8b4c6d4f7fdaf3d7966ea8efaed97c08f4b68855047290ef7b1",
+    "valid": true
+  },
+  {
+    "case": "stale-ab-33554432",
+    "block": 0,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-measurements/candidate",
+      "/tmp/bpe-heap-measurements/clean-stale-ab-33554432-b0-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 373840,
+    "subprocess_wall": 4.111232636030763,
+    "attempt_id": "clean-stale-ab-33554432-b0-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "stale-ab-33554432",
+    "metrics": {
+      "load_seconds": 0.840249656,
+      "process_hwm_kib_before_validation": 409272,
+      "train_cpu_seconds": 3.2182739999999996,
+      "train_seconds": 3.243588044
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 2050,
+      "actual_vocab": 6149,
+      "model_path": "/tmp/bpe-heap-measurements/clean-stale-ab-33554432-b0-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "e56425d84859f8b4c6d4f7fdaf3d7966ea8efaed97c08f4b68855047290ef7b1",
+    "valid": true
+  },
+  {
+    "case": "stale-ab-33554432",
+    "block": 0,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-heap-clean",
+      "/tmp/bpe-heap-measurements/clean-stale-ab-33554432-b0-candidate/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 373536,
+    "subprocess_wall": 4.0057219580048695,
+    "attempt_id": "clean-stale-ab-33554432-b0-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "stale-ab-33554432",
+    "metrics": {
+      "load_seconds": 0.835103226,
+      "process_hwm_kib_before_validation": 409368,
+      "train_cpu_seconds": 3.1558470000000005,
+      "train_seconds": 3.154582979
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 2050,
+      "actual_vocab": 6149,
+      "model_path": "/tmp/bpe-heap-measurements/clean-stale-ab-33554432-b0-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "e56425d84859f8b4c6d4f7fdaf3d7966ea8efaed97c08f4b68855047290ef7b1",
+    "valid": true
+  },
+  {
+    "case": "stale-ab-33554432",
+    "block": 1,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-heap-clean",
+      "/tmp/bpe-heap-measurements/clean-stale-ab-33554432-b1-candidate/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 385524,
+    "subprocess_wall": 4.336109112948179,
+    "attempt_id": "clean-stale-ab-33554432-b1-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "stale-ab-33554432",
+    "metrics": {
+      "load_seconds": 1.017811454,
+      "process_hwm_kib_before_validation": 409344,
+      "train_cpu_seconds": 3.2677950000000004,
+      "train_seconds": 3.291784489
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 2050,
+      "actual_vocab": 6149,
+      "model_path": "/tmp/bpe-heap-measurements/clean-stale-ab-33554432-b1-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "e56425d84859f8b4c6d4f7fdaf3d7966ea8efaed97c08f4b68855047290ef7b1",
+    "valid": true
+  },
+  {
+    "case": "stale-ab-33554432",
+    "block": 1,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-measurements/candidate",
+      "/tmp/bpe-heap-measurements/clean-stale-ab-33554432-b1-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 377936,
+    "subprocess_wall": 4.1394518949091434,
+    "attempt_id": "clean-stale-ab-33554432-b1-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "stale-ab-33554432",
+    "metrics": {
+      "load_seconds": 0.853575371,
+      "process_hwm_kib_before_validation": 409308,
+      "train_cpu_seconds": 3.2577100000000003,
+      "train_seconds": 3.274945798
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 2050,
+      "actual_vocab": 6149,
+      "model_path": "/tmp/bpe-heap-measurements/clean-stale-ab-33554432-b1-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "e56425d84859f8b4c6d4f7fdaf3d7966ea8efaed97c08f4b68855047290ef7b1",
+    "valid": true
+  },
+  {
+    "case": "stale-ab-33554432",
+    "block": 2,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-measurements/candidate",
+      "/tmp/bpe-heap-measurements/clean-stale-ab-33554432-b2-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 372928,
+    "subprocess_wall": 4.191602715058252,
+    "attempt_id": "clean-stale-ab-33554432-b2-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "stale-ab-33554432",
+    "metrics": {
+      "load_seconds": 0.898659683,
+      "process_hwm_kib_before_validation": 409480,
+      "train_cpu_seconds": 3.251717,
+      "train_seconds": 3.266474634
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 2050,
+      "actual_vocab": 6149,
+      "model_path": "/tmp/bpe-heap-measurements/clean-stale-ab-33554432-b2-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "e56425d84859f8b4c6d4f7fdaf3d7966ea8efaed97c08f4b68855047290ef7b1",
+    "valid": true
+  },
+  {
+    "case": "stale-ab-33554432",
+    "block": 2,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-heap-clean",
+      "/tmp/bpe-heap-measurements/clean-stale-ab-33554432-b2-candidate/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 375004,
+    "subprocess_wall": 3.9599956669844687,
+    "attempt_id": "clean-stale-ab-33554432-b2-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "stale-ab-33554432",
+    "metrics": {
+      "load_seconds": 0.832164571,
+      "process_hwm_kib_before_validation": 409412,
+      "train_cpu_seconds": 3.081507,
+      "train_seconds": 3.102528305
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 2050,
+      "actual_vocab": 6149,
+      "model_path": "/tmp/bpe-heap-measurements/clean-stale-ab-33554432-b2-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "e56425d84859f8b4c6d4f7fdaf3d7966ea8efaed97c08f4b68855047290ef7b1",
+    "valid": true
+  }
+]

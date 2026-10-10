@@ -1,0 +1,36 @@
+{
+  "binary": "/tmp/bpe-heap-timed",
+  "binary_sha256": "7d7a6733f9006ebae6248ebc2665d392430ae41d83f5e9810762213725b90622",
+  "inputs": [
+    {
+      "case": "zh-256MiB",
+      "language": "zh",
+      "requested_mib": 256,
+      "pretokenizer": "bytelevel_regex",
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+      "bytes": 268435162,
+      "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+      "prepared_path": "/root/code/tokenizers-perfetto-results/inputs/zh-bytelevel/words.json",
+      "prepared_sha256": "bb796d0b57b87d965b84de249bc5c8e283b700774638d16a40e4ae5171b13ee0",
+      "prepared_bytes": 437135595
+    },
+    {
+      "case": "zh-whitespace-256MiB",
+      "language": "zh",
+      "requested_mib": 256,
+      "pretokenizer": "whitespace",
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+      "bytes": 268435162,
+      "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+      "prepared_path": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "prepared_sha256": "ed057a8fdb27544ed29f16dde53faa0de8f47f1ee8ac00080974fac5bb435660",
+      "prepared_bytes": 250116097
+    }
+  ],
+  "workers": [
+    4,
+    6
+  ],
+  "scope": "Initial candidate collect+heapify; best including count certification/lazy repair/stale drops; take including count removal; joined serial birth push; final index cleanup including queue/list/count-map/routes destruction. Nonoverlapping coordinator wall intervals. Instant/atomic instrumentation overhead included; no per-occurrence instrumentation.",
+  "limitations": "One phase profile per case/worker count. Share within instrumented do_train, not baseline vs candidate performance evidence. best/take and index cleanup are queue-path upper bounds including hash lookup/free/count maps, not pure heap CPU. Parallel owner Candidate creation/counting excluded. Six usable CPUs, no extrapolation beyond six."
+}

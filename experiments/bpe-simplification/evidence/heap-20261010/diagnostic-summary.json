@@ -1,0 +1,152 @@
+[
+  {
+    "case": "zh-256MiB",
+    "baseline": {
+      "train_seconds": 23.26875941,
+      "train_cpu_seconds": 70.21480700000001,
+      "process_hwm_kib_before_validation": 2525424,
+      "max_stale_owned_bytes": 0,
+      "max_stale_records": 0,
+      "peak_live_owned_bytes": 590538350,
+      "max_queue_descriptor_capacity_bytes": 123281408,
+      "max_map_payload_capacity_bytes": 234872448,
+      "trace_records": 55
+    },
+    "candidate": {
+      "train_seconds": 60.292877315,
+      "train_cpu_seconds": 105.369078,
+      "process_hwm_kib_before_validation": 2478000,
+      "max_stale_owned_bytes": 241226345,
+      "max_stale_records": 2838812,
+      "peak_live_owned_bytes": 609143017,
+      "max_queue_descriptor_capacity_bytes": 247136256,
+      "max_map_payload_capacity_bytes": 117436128,
+      "trace_records": 55
+    },
+    "paired_median_delta_percent": {
+      "train_seconds": 159.11513481500214,
+      "train_cpu_seconds": 50.0667487414727,
+      "process_hwm_kib_before_validation": -1.8778628855986135
+    }
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "baseline": {
+      "train_seconds": 19.315367054,
+      "train_cpu_seconds": 50.638601,
+      "process_hwm_kib_before_validation": 1892116,
+      "max_stale_owned_bytes": 0,
+      "max_stale_records": 0,
+      "peak_live_owned_bytes": 192928222,
+      "max_queue_descriptor_capacity_bytes": 110145088,
+      "max_map_payload_capacity_bytes": 234879776,
+      "trace_records": 47
+    },
+    "candidate": {
+      "train_seconds": 49.05374438,
+      "train_cpu_seconds": 80.10174500000001,
+      "process_hwm_kib_before_validation": 1973344,
+      "max_stale_owned_bytes": 2559103,
+      "max_stale_records": 2267572,
+      "peak_live_owned_bytes": 192915166,
+      "max_queue_descriptor_capacity_bytes": 220645376,
+      "max_map_payload_capacity_bytes": 117439968,
+      "trace_records": 47
+    },
+    "paired_median_delta_percent": {
+      "train_seconds": 153.96226870998814,
+      "train_cpu_seconds": 58.18317137157878,
+      "process_hwm_kib_before_validation": 4.292971466865669
+    }
+  },
+  {
+    "case": "stale-ab-1048576",
+    "baseline": {
+      "train_seconds": 0.114914799,
+      "train_cpu_seconds": 0.111237,
+      "process_hwm_kib_before_validation": 23520,
+      "max_stale_owned_bytes": 0,
+      "max_stale_records": 0,
+      "peak_live_owned_bytes": 2342943,
+      "max_queue_descriptor_capacity_bytes": 32800,
+      "max_map_payload_capacity_bytes": 114688,
+      "trace_records": 12
+    },
+    "candidate": {
+      "train_seconds": 0.109215608,
+      "train_cpu_seconds": 0.11497700000000001,
+      "process_hwm_kib_before_validation": 23488,
+      "max_stale_owned_bytes": 1171480,
+      "max_stale_records": 1,
+      "peak_live_owned_bytes": 2342943,
+      "max_queue_descriptor_capacity_bytes": 131072,
+      "max_map_payload_capacity_bytes": 57344,
+      "trace_records": 12
+    },
+    "paired_median_delta_percent": {
+      "train_seconds": -4.95949264115233,
+      "train_cpu_seconds": 3.3621906380071342,
+      "process_hwm_kib_before_validation": -0.1360544217687054
+    }
+  },
+  {
+    "case": "stale-ab-8388608",
+    "baseline": {
+      "train_seconds": 0.835273339,
+      "train_cpu_seconds": 0.8373539999999999,
+      "process_hwm_kib_before_validation": 125004,
+      "max_stale_owned_bytes": 0,
+      "max_stale_records": 0,
+      "peak_live_owned_bytes": 18743328,
+      "max_queue_descriptor_capacity_bytes": 32800,
+      "max_map_payload_capacity_bytes": 114688,
+      "trace_records": 12
+    },
+    "candidate": {
+      "train_seconds": 0.79845017,
+      "train_cpu_seconds": 0.8017040000000001,
+      "process_hwm_kib_before_validation": 125140,
+      "max_stale_owned_bytes": 9371672,
+      "max_stale_records": 1,
+      "peak_live_owned_bytes": 18743328,
+      "max_queue_descriptor_capacity_bytes": 131072,
+      "max_map_payload_capacity_bytes": 57344,
+      "trace_records": 12
+    },
+    "paired_median_delta_percent": {
+      "train_seconds": -4.408517221929431,
+      "train_cpu_seconds": -4.257458613680698,
+      "process_hwm_kib_before_validation": 0.10879651851141148
+    }
+  },
+  {
+    "case": "stale-ab-33554432",
+    "baseline": {
+      "train_seconds": 3.111648475,
+      "train_cpu_seconds": 3.067455,
+      "process_hwm_kib_before_validation": 409572,
+      "max_stale_owned_bytes": 0,
+      "max_stale_records": 0,
+      "peak_live_owned_bytes": 74973216,
+      "max_queue_descriptor_capacity_bytes": 32800,
+      "max_map_payload_capacity_bytes": 114688,
+      "trace_records": 12
+    },
+    "candidate": {
+      "train_seconds": 2.957472174,
+      "train_cpu_seconds": 2.951471,
+      "process_hwm_kib_before_validation": 409568,
+      "max_stale_owned_bytes": 37486616,
+      "max_stale_records": 1,
+      "peak_live_owned_bytes": 74973216,
+      "max_queue_descriptor_capacity_bytes": 131072,
+      "max_map_payload_capacity_bytes": 57344,
+      "trace_records": 12
+    },
+    "paired_median_delta_percent": {
+      "train_seconds": -4.954811002550674,
+      "train_cpu_seconds": -3.781114963381682,
+      "process_hwm_kib_before_validation": -0.0009766292617618966
+    }
+  }
+]
