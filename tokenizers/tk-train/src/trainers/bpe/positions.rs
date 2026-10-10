@@ -14,8 +14,9 @@ const PAIR: usize = 1 << (usize::BITS - 2);
 const DELTA_MASK: usize = PAIR - 1;
 const ARENA: usize = 1;
 
-// Final allocation cursors are leased within sequential worker closures.
-// Published storage survives leases and is never reset during the attempt.
+/// Owns small frozen occurrence allocations and encoding scratch for one attempt.
+/// Cursor slots follow executing Rayon workers, independently of pair-count owners.
+/// Published lists borrow this storage; releasing a lease never resets it.
 pub(super) struct Arena {
     workers: Vec<Mutex<Worker>>,
     cutoff: usize,
@@ -25,6 +26,20 @@ impl Arena {
     pub(super) fn new(workers: usize, items: usize) -> Self {
         Self {
             workers: (0..workers).map(|_| Mutex::default()).collect(),
+            // Gentle-growth heuristic: T(N) = max(256 B, 256 B * sqrt(N / 2^24)),
+            // rounded down to bytes. Since 256 / sqrt(2^24) = 1 / 16, the variable
+            // term is sqrt(N / 256). Integer division followed by isqrt preserves
+            // its floor. Up to 16 Mi slots the cutoff is 256 B; 64 Mi gives 512 B,
+            // and 256 Mi gives 1024 B. N counts resident token/separator slots,
+            // including the initial separator, independently of word weights.
+            //
+            // Bump allocation avoids individual small-block alloc/free calls, but
+            // retired blocks remain resident until this attempt ends. Square-root
+            // growth admits larger blocks gradually; blocks above T stay owned
+            // and can be freed individually. The scale/floor are policy choices,
+            // not a fitted optimum or a bound on total retained Arena bytes.
+            // Eligibility uses the entire encoded layout (header/directory/stream),
+            // not the position count; initial fragments explicitly stay owned.
             cutoff: ((items as u128 / 256).isqrt() as usize).max(256),
         }
     }
@@ -41,6 +56,9 @@ impl Arena {
     }
 }
 
+/// One executing worker's bump cursor and reusable codec buffers, leased together.
+/// Bump blocks live for the attempt; bytes and offsets are overwritten per stream.
+/// The enclosing mutex grants mutable access and lets the Arena share a !Sync Bump.
 #[derive(Default)]
 struct Worker {
     bump: Bump,
@@ -76,13 +94,16 @@ impl Worker {
     }
 }
 
+/// Temporary exclusive access to one worker's allocation and encoding state.
+/// Frozen lists borrow the Arena for `'arena`, so they can outlive this guard.
+/// Keep work sequential while held: nested Rayon work could reacquire its mutex.
 pub(super) struct Lease<'arena> {
     arena: &'arena Arena,
     cursor: MutexGuard<'arena, Worker>,
 }
 
-// Mutable task buffers keep four-byte coordinates until a full-u64 value appears.
-// Small buffers stay inline; promotion preserves every previously stored value.
+/// Mutable sorted task positions, narrowed to u32 until a full-u64 value appears.
+/// Small buffers stay inline; promotion preserves every previously stored value.
 pub(super) enum Builder {
     Narrow(smallvec::SmallVec<[u32; 2]>),
     Wide(smallvec::SmallVec<[u64; 2]>),
@@ -157,8 +178,9 @@ impl Builder {
     }
 }
 
-// Only concrete storage views reach the allocator. Unlike an arbitrary safe
-// ExactSizeIterator implementation, these views have a trustworthy cardinality.
+/// Borrowed storage views accepted by the encoder, with a trustworthy cardinality.
+/// Restricting input to these concrete types keeps allocation bounds independent
+/// of arbitrary safe ExactSizeIterator implementations.
 pub(super) enum Input<'a> {
     Builder(&'a Builder),
     Slice(&'a [u64]),
@@ -207,8 +229,10 @@ impl Input<'_> {
     }
 }
 
-// Inline lists store the first coordinate in payload and the gap in count bits.
-// Allocated lists store their length and tag the pointer's low bit for Arena ownership.
+/// Immutable sorted full-u64 positions with independent restart-block readers.
+/// Inline lists store the first coordinate in payload and the gap in count bits.
+/// Allocated lists own a heap block or borrow the Arena, tagged in the pointer's
+/// low bit; dropping an Arena list leaves its block alive for the whole attempt.
 #[derive(Default)]
 pub(super) struct Positions<'arena> {
     count_and_flags: usize,
@@ -443,6 +467,8 @@ impl Drop for Positions<'_> {
     }
 }
 
+/// A reader's private decode state over a borrowed immutable position stream.
+/// Absolute restart seeds bound replay; index/end delimit the requested blocks.
 struct Cursor<'a> {
     bytes: &'a [u8],
     position: u64,

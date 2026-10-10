@@ -7,8 +7,9 @@ use std::fmt;
 type CountMap = AHashMap<CompactString, u64>;
 type Entry = (CompactString, u64);
 
-// Sequential feed retains its map; parallel feed owns unique entries. Keeping
-// both avoids a conversion solely to make their storage types identical.
+/// Frozen trainer-owned word counts, serialized as the same public flat map.
+/// Sequential feed retains its map; parallel feed owns unique entries. Keeping
+/// both avoids a conversion solely to make their storage types identical.
 #[derive(Clone)]
 pub(super) enum WordCounts {
     Map(CountMap),
@@ -95,9 +96,9 @@ impl<'de> Deserialize<'de> for WordCounts {
     }
 }
 
-// Borrow either representation (including public do_train's caller-owned map).
-// Repeated train(&self) calls leave owned counts intact; only thin references
-// are collected and sorted by CorpusPlan.
+/// Borrows either count representation, including do_train's caller-owned map.
+/// Repeated train(&self) calls leave owned counts intact; only thin references
+/// are collected and sorted by CorpusPlan.
 #[derive(Clone, Copy)]
 pub(super) struct WordCountsView<'a> {
     map: Option<&'a CountMap>,

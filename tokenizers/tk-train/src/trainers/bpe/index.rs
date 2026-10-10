@@ -11,7 +11,8 @@ use rayon::prelude::*;
 use std::cmp::{Ordering, Reverse};
 use tk_encode::{Result, models::bpe::Pair, utils::progress::ProgressBar};
 
-// Highest count first, then smallest pair. Field order defines heap priority.
+/// Queue key: highest count first, then smallest pair.
+/// Field order defines heap priority; occurrence payloads never break ties.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub(super) struct Priority {
     pub(super) count: u64,
@@ -24,6 +25,9 @@ impl Priority {
     }
 }
 
+/// Owning queue entry: a possibly stale count snapshot and its occurrence list.
+/// PairIndex corrects the priority against the count shard before selection;
+/// positions remain a historical cohort when identities can be reused.
 pub(super) struct Candidate<'arena> {
     pub(super) priority: Priority,
     pub(super) positions: Positions<'arena>,
@@ -49,12 +53,17 @@ impl PartialOrd for Candidate<'_> {
     }
 }
 
+/// Initial pair count and positions, mutable while counting and frozen for routing.
+/// P changes from Builder to Positions without duplicating the weighted count.
 #[derive(Default)]
 struct State<P> {
     count: u64,
     positions: P,
 }
 
+/// Owner-local partial births for one (producer bucket, pair), awaiting publication.
+/// Fresh fragments concatenate in order; reuse positions accumulate unordered
+/// and are sorted, retaining duplicates, before their historical cohort is frozen.
 #[derive(Default)]
 struct Group {
     count: u64,
@@ -65,6 +74,9 @@ struct Group {
 // Metadata stays borrowed during commit; each position stream has one owner.
 type Event = Change<()>;
 
+/// Reusable actions destined for one pair-count owner, in producer order.
+/// Actions index shared event metadata; the separate birth array owns one stream
+/// per birth action and avoids reserving a payload for removal-only actions.
 #[derive(Default)]
 struct Route<'arena> {
     actions: Vec<(usize, bool, bool)>,
@@ -93,6 +105,9 @@ impl<'arena> Route<'arena> {
     }
 }
 
+/// Authoritative pair-count shards plus an owning queue of occurrence candidates.
+/// Each pair has one count owner; queued priorities are repaired lazily at the head.
+/// Fresh counts retire below the floor; reuse retains the per-action signed ledger.
 pub(super) struct PairIndex<'arena> {
     arena: &'arena Arena,
     shards: Vec<AHashMap<Pair, u64>>,

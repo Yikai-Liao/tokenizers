@@ -10,18 +10,24 @@ use ahash::{AHashMap, AHashSet};
 use rayon::prelude::*;
 use tk_encode::{Result, models::bpe::Pair};
 
+/// One selected pair and resolved replacement ID, owning its candidate positions.
+/// Keeping the candidate binds preparation to the cohort selected by the queue.
 struct Rule<'arena> {
     pair: Pair,
     replacement: u32,
     candidate: Candidate<'arena>,
 }
 
+/// Priority-prefix rules selected for one joined preparation/application round.
+/// Fresh rules have compatible endpoints; active-ID reuse uses a single cohort.
 pub(super) struct Batch<'arena> {
     rules: Vec<Rule<'arena>>,
     reuse: bool,
     floor: u64,
 }
 
+/// Selection outcome for the coordinator: finish, retry the attempt, or prepare.
+/// Restart discards speculative rules and requests historical-cohort training.
 pub(super) enum Selection<'arena> {
     Finished,
     // The whole attempt is discarded, including rules already selected in this batch.
@@ -29,6 +35,10 @@ pub(super) enum Selection<'arena> {
     Ready(Batch<'arena>),
 }
 
+/// One neighbor-edge removal and replacement birth from preparation.
+/// Weights remain separate so commit preserves intermediate signed adjustments;
+/// P carries birth positions, or () for separately routed metadata. Bucket
+/// identifies the producer group used by owner aggregation.
 pub(super) struct Change<P> {
     pub(super) removed: Pair,
     pub(super) born: Pair,
@@ -38,6 +48,9 @@ pub(super) struct Change<P> {
     pub(super) bucket: usize,
 }
 
+/// A birth stream's publication contract: partial aggregation or complete output.
+/// Complete fresh producers have already applied the frequency floor and encoded
+/// their full list; partial streams need owner aggregation before publication.
 pub(super) enum Birth<'arena> {
     // Local fresh counts await owner aggregation before floor admission.
     // Reuse fragments instead follow the owner's per-action signed ledger.
@@ -56,15 +69,22 @@ impl Birth<'_> {
     }
 }
 
+/// Joined preparation output, owning endpoint writes and neighbor events.
+/// Apply joins all writes before returning events for the coordinator's index commit.
 pub(super) struct Prepared<'arena> {
     jobs: Vec<Job<'arena>>,
 }
 
+/// One preparation task's disjoint writes and owned neighbor-event payloads.
+/// The task returns both together so no corpus mutation precedes preparation join.
 struct Job<'arena> {
     writes: Writes,
     changes: Vec<Change<Birth<'arena>>>,
 }
 
+/// Task-local left/right neighbor aggregation for one selected rule.
+/// Borrows reusable lookup directories; owns its groups and decides whether
+/// they cover a complete producer or must be routed as partial fragments.
 struct Neighbors<'a, 'arena> {
     rule: &'a Rule<'arena>,
     rank: usize,
@@ -73,6 +93,8 @@ struct Neighbors<'a, 'arena> {
     complete: bool,
 }
 
+/// Reusable direct-ID lookups from left/right neighbors to task-local group indices.
+/// Only touched slots are reset between tasks; u32::MAX marks an absent group.
 #[derive(Default)]
 struct Directories {
     indices: [Vec<u32>; 2],
@@ -321,8 +343,9 @@ impl<'arena> Batch<'arena> {
     }
 }
 
-// Shared read-only lookup for fresh preparation. Workers own their directories,
-// writes and neighbor events; all reads still refer to the same joined snapshot.
+/// Shared read-only lookup for fresh preparation against one joined corpus snapshot.
+/// Resolves selected endpoints once; workers own their directories, writes and
+/// neighbor events. Self-pairs also retain nonoverlapping left-to-right starts.
 struct FreshSnapshot<'a, 'arena> {
     batch: &'a Batch<'arena>,
     corpus: &'a Corpus,
@@ -647,8 +670,9 @@ impl<'arena> Prepared<'arena> {
     }
 }
 
-// Fresh identities have one span per ID, so their snapshot writes need only
-// sorted starts and one rule geometry. Alias reuse retains occurrence geometry.
+/// Deferred endpoint writes, compact for fresh identities and explicit for reuse.
+/// Fresh identities have one span per ID, so writes need only sorted starts and
+/// one rule geometry. Alias reuse retains each occurrence's snapshot geometry.
 enum Writes {
     Compact {
         positions: Builder,
@@ -712,7 +736,8 @@ impl Writes {
     }
 }
 
-// Source geometry stays private to preparation; both paths emit full-u64 positions.
+/// Borrowed task input: filtered self-pair starts or a candidate's restart blocks.
+/// Source geometry stays private to preparation; both emit full-u64 positions.
 enum Source<'a, 'arena> {
     Slice(&'a [u64]),
     Blocks(&'a Positions<'arena>, std::ops::Range<usize>),

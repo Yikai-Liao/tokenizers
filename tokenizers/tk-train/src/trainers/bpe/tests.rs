@@ -278,6 +278,9 @@ fn feed_training_tokenizer_json_and_encoding_roundtrip() {
 use std::sync::atomic::{AtomicUsize, Ordering};
 static EXPECTED_WORKERS: AtomicUsize = AtomicUsize::new(0);
 static OBSERVED_PHASES: AtomicUsize = AtomicUsize::new(0);
+/// Worker-executed stages observed by the public training subprocess test.
+/// These markers check the requested pool inside materialization and both
+/// preparation paths, rather than inferring it from the caller's ambient pool.
 pub(super) enum Phase {
     Materialize,
     FreshPrepare,

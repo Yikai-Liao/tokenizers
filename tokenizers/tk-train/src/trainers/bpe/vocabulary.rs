@@ -11,6 +11,9 @@ use tk_encode::{
     utils::progress::ProgressBar,
 };
 
+/// Append-only token identities and canonical text for one training attempt.
+/// Reserves special/alphabet IDs, resolves decorated merges, and publishes output;
+/// initial activation spans move to the corpus plan once tokenization is resolved.
 pub(super) struct Vocabulary {
     // Append-only insertion indices are token IDs. Store each string once while
     // supporting both text lookup and direct lookup by ID with the same hasher.
@@ -21,11 +24,16 @@ pub(super) struct Vocabulary {
     plain_ids_resolved: bool,
 }
 
+/// Canonical merge text plus any existing ID, before identity resolution.
+/// Selection checks an existing ID's activation before committing this token.
 pub(super) struct MergeToken {
     pub(super) existing_id: Option<u32>,
     text: CompactString,
 }
 
+/// Immutable character/decorated-ID tables shared by counting and materialization.
+/// Both stages scan the same filtered alphabet and affix interpretation, preserving
+/// identical token sequences without interning strings during parallel scans.
 pub(super) struct InitialTokenIds {
     characters: Vec<u32>,
     decorated: Vec<[u32; 3]>,

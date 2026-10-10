@@ -5,6 +5,8 @@ use dary_heap::OctonaryHeap;
 use indexmap::IndexSet;
 use std::cmp::{Ordering, Reverse};
 
+/// Oracle queue snapshot with the historical set of words containing the pair.
+/// Sequential word edits update a separate ledger used to repair its queued count.
 struct Merge {
     pair: Pair,
     count: u64,

@@ -12,6 +12,9 @@ use std::{
 };
 use tk_encode::{Result, models::bpe::Pair, utils::progress::ProgressBar};
 
+/// Resident token endpoints at fixed original coordinates, with weights and spans.
+/// Merges leave holes; span metadata skips them without moving other occurrences.
+/// Preparation reads a joined snapshot; application writes only disjoint matches.
 pub(super) struct Corpus {
     tokens: Slots,
     starts: Vec<usize>,
@@ -24,6 +27,8 @@ pub(super) struct Corpus {
     whole_words: bool,
 }
 
+/// One accepted occurrence's left start, right start and exclusive merged end.
+/// Coordinates describe the preparation snapshot, before endpoint writes apply.
 #[derive(Clone, Copy)]
 pub(super) struct Match {
     pub(super) start: usize,
@@ -37,9 +42,10 @@ impl Match {
     }
 }
 
+/// Borrowed input and measured coordinate layout for initial pair counting.
+/// Defers the resident token plane until temporary counting buffers retire;
+/// materialization consumes the plan and transfers its metadata to the Corpus.
 pub(super) struct CorpusPlan<'input> {
-    // Counting needs geometry and borrowed words, but no resident token plane.
-    // materialize consumes this metadata and constructs the complete Corpus once.
     starts: Vec<usize>,
     weight_regions: Vec<(usize, u64)>,
     unit_region: Option<(usize, usize)>,
@@ -402,8 +408,9 @@ impl Corpus {
     }
 }
 
-// A reserved u16 sentinel leaves real IDs 0..65534 available. Wider vocabularies
-// use u32 directly; both planes have the same safe endpoint access protocol.
+/// Atomic endpoint plane selected once from the vocabulary ID bound.
+/// A reserved u16 sentinel leaves real IDs 0..65534 available. Wider vocabularies
+/// use u32 directly; both planes have the same safe endpoint access protocol.
 enum Slots {
     Narrow(Vec<AtomicU16>),
     Wide(Vec<AtomicU32>),

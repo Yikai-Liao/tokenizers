@@ -137,11 +137,32 @@ each action; owner order is the original producer order. Draining both vectors
 retains capacity. Errors drop active drains; the attempt is discarded after
 owner jobs join. Successful commits drain every route before the next round.
 
-An attempt-scoped Arena owns final small allocations. Its threshold is
-`max(256, floor(sqrt(resident_slots / 256)))` bytes. The corpus plan counts
-token slots and word separators, including the initial separator slot.
-The full allocation layout, including length header and restart directory,
-determines whether a list uses Arena storage or an individually owned heap block.
+An attempt-scoped Arena owns final small allocations. Its threshold is the
+gentle-growth heuristic `T(N) = max(256 B, floor(256 B * sqrt(N / 2^24)))`,
+where N is the resident slot count. The corpus plan counts token slots and word
+separators, including the initial separator slot; word weights do not multiply N.
+Since `256 / sqrt(2^24) = 1/16`, the variable term is `sqrt(N / 256)` bytes.
+Integer division followed by integer square root gives the same floor. The
+threshold stays at 256 B through 16 Mi slots, becomes 512 B at 64 Mi slots and
+1024 B at 256 Mi slots: quadrupling a corpus doubles the unclamped threshold.
+The scale and floor are allocation policy choices, not a fitted optimal crossover.
+
+Bump allocation avoids individual small-block allocation and free calls. Retired
+Arena blocks remain resident until the attempt ends, so raising the threshold
+also retains more dead storage. Square-root growth admits larger blocks gradually;
+larger individually owned blocks can be freed when their lists retire. The cutoff
+limits each eligible allocation, not total retained Arena bytes. Eligibility uses
+the complete encoded layout, including length header, restart directory and stream,
+rather than the number of positions. Initial index fragments explicitly use owned
+storage so counting/aggregation can release them independently of the Arena.
+
+The original rule used initial physical edges. Resident slots reuse the existing
+plan size without another edge-count field. The
+[input ablation](../../../../../experiments/bpe-simplification/CUTOFF_ABLATION.md)
+compared these inputs: eight of nine cases had the same clamped 256 B threshold;
+the one differing case had only one paired measurement. Those results support
+retaining the simpler input but do not establish an optimal scale or exponent.
+
 Each worker has a mutex-protected bump cursor and reusable encoding scratch.
 Leases are held only inside sequential worker closures; no nested parallel work
 runs while a lease is held. Frozen allocations are copied away from scratch and

@@ -44,6 +44,7 @@ use tk_encode::models::bpe::{BpeConfig, Merges, PipelineBPE, Vocab};
 use tk_encode::parallelism::*;
 use tk_encode::utils::progress::{ProgressBar, ProgressFormat, ProgressStyle};
 
+/// Builder-owned training options, consumed when constructing a BpeTrainer.
 struct Config {
     min_frequency: u64,
     vocab_size: usize,
