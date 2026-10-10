@@ -1,0 +1,1682 @@
+[
+  {
+    "case": "writes-ab-1048576",
+    "block": 0,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-birth-v2-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-ab-1048576-b0-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 28464,
+    "subprocess_wall": 0.18192550900857896,
+    "attempt_id": "clean-writes-ab-1048576-b0-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-ab-1048576",
+    "metrics": {
+      "load_seconds": 0.026743276,
+      "process_hwm_kib_before_validation": 28528,
+      "train_cpu_seconds": 0.22013699999999997,
+      "train_seconds": 0.129927698
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 3,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-ab-1048576-b0-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "9b0634328ccf245af6eef006044cb0418dbd74349d99b8d882f50c0c9bc9cccc",
+    "valid": true
+  },
+  {
+    "case": "writes-ab-1048576",
+    "block": 0,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-write-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-ab-1048576-b0-candidate/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 42172,
+    "subprocess_wall": 0.18360793602187186,
+    "attempt_id": "clean-writes-ab-1048576-b0-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-ab-1048576",
+    "metrics": {
+      "load_seconds": 0.025927434,
+      "process_hwm_kib_before_validation": 72364,
+      "train_cpu_seconds": 0.258765,
+      "train_seconds": 0.144913788
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 3,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-ab-1048576-b0-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "9b0634328ccf245af6eef006044cb0418dbd74349d99b8d882f50c0c9bc9cccc",
+    "valid": true
+  },
+  {
+    "case": "writes-ab-1048576",
+    "block": 1,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-write-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-ab-1048576-b1-candidate/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 42280,
+    "subprocess_wall": 0.18196788395289332,
+    "attempt_id": "clean-writes-ab-1048576-b1-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-ab-1048576",
+    "metrics": {
+      "load_seconds": 0.026139777,
+      "process_hwm_kib_before_validation": 66616,
+      "train_cpu_seconds": 0.227555,
+      "train_seconds": 0.14341585
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 3,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-ab-1048576-b1-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "9b0634328ccf245af6eef006044cb0418dbd74349d99b8d882f50c0c9bc9cccc",
+    "valid": true
+  },
+  {
+    "case": "writes-ab-1048576",
+    "block": 1,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-birth-v2-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-ab-1048576-b1-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 28448,
+    "subprocess_wall": 0.18045131396502256,
+    "attempt_id": "clean-writes-ab-1048576-b1-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-ab-1048576",
+    "metrics": {
+      "load_seconds": 0.024125762,
+      "process_hwm_kib_before_validation": 29668,
+      "train_cpu_seconds": 0.21426199999999998,
+      "train_seconds": 0.131607836
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 3,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-ab-1048576-b1-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "9b0634328ccf245af6eef006044cb0418dbd74349d99b8d882f50c0c9bc9cccc",
+    "valid": true
+  },
+  {
+    "case": "writes-ab-1048576",
+    "block": 2,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-birth-v2-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-ab-1048576-b2-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 28416,
+    "subprocess_wall": 0.18342757096979767,
+    "attempt_id": "clean-writes-ab-1048576-b2-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-ab-1048576",
+    "metrics": {
+      "load_seconds": 0.025943976,
+      "process_hwm_kib_before_validation": 28544,
+      "train_cpu_seconds": 0.203642,
+      "train_seconds": 0.132311318
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 3,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-ab-1048576-b2-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "9b0634328ccf245af6eef006044cb0418dbd74349d99b8d882f50c0c9bc9cccc",
+    "valid": true
+  },
+  {
+    "case": "writes-ab-1048576",
+    "block": 2,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-write-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-ab-1048576-b2-candidate/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 58972,
+    "subprocess_wall": 0.1787234100047499,
+    "attempt_id": "clean-writes-ab-1048576-b2-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-ab-1048576",
+    "metrics": {
+      "load_seconds": 0.025624893,
+      "process_hwm_kib_before_validation": 68996,
+      "train_cpu_seconds": 0.22607900000000003,
+      "train_seconds": 0.138189566
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 3,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-ab-1048576-b2-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "9b0634328ccf245af6eef006044cb0418dbd74349d99b8d882f50c0c9bc9cccc",
+    "valid": true
+  },
+  {
+    "case": "writes-aa-1048576",
+    "block": 0,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-birth-v2-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-aa-1048576-b0-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 40124,
+    "subprocess_wall": 0.23349252494517714,
+    "attempt_id": "clean-writes-aa-1048576-b0-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-aa-1048576",
+    "metrics": {
+      "load_seconds": 0.026074638,
+      "process_hwm_kib_before_validation": 39864,
+      "train_cpu_seconds": 0.37877900000000003,
+      "train_seconds": 0.188302767
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 2,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-aa-1048576-b0-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "8a474df80f9a0395b670d14afd8cb6d1b9d653165384eaa379f23fa7a99360f9",
+    "valid": true
+  },
+  {
+    "case": "writes-aa-1048576",
+    "block": 0,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-write-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-aa-1048576-b0-candidate/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 60156,
+    "subprocess_wall": 0.23281208297703415,
+    "attempt_id": "clean-writes-aa-1048576-b0-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-aa-1048576",
+    "metrics": {
+      "load_seconds": 0.025335391,
+      "process_hwm_kib_before_validation": 60584,
+      "train_cpu_seconds": 0.39805999999999997,
+      "train_seconds": 0.187809964
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 2,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-aa-1048576-b0-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "8a474df80f9a0395b670d14afd8cb6d1b9d653165384eaa379f23fa7a99360f9",
+    "valid": true
+  },
+  {
+    "case": "writes-aa-1048576",
+    "block": 1,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-write-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-aa-1048576-b1-candidate/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 64496,
+    "subprocess_wall": 0.23285266407765448,
+    "attempt_id": "clean-writes-aa-1048576-b1-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-aa-1048576",
+    "metrics": {
+      "load_seconds": 0.02521223,
+      "process_hwm_kib_before_validation": 65040,
+      "train_cpu_seconds": 0.41776800000000003,
+      "train_seconds": 0.192781501
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 2,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-aa-1048576-b1-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "8a474df80f9a0395b670d14afd8cb6d1b9d653165384eaa379f23fa7a99360f9",
+    "valid": true
+  },
+  {
+    "case": "writes-aa-1048576",
+    "block": 1,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-birth-v2-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-aa-1048576-b1-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 39332,
+    "subprocess_wall": 0.23372663301415741,
+    "attempt_id": "clean-writes-aa-1048576-b1-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-aa-1048576",
+    "metrics": {
+      "load_seconds": 0.026261057,
+      "process_hwm_kib_before_validation": 40300,
+      "train_cpu_seconds": 0.388945,
+      "train_seconds": 0.194594427
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 2,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-aa-1048576-b1-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "8a474df80f9a0395b670d14afd8cb6d1b9d653165384eaa379f23fa7a99360f9",
+    "valid": true
+  },
+  {
+    "case": "writes-aa-1048576",
+    "block": 2,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-birth-v2-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-aa-1048576-b2-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 38664,
+    "subprocess_wall": 0.2320506670512259,
+    "attempt_id": "clean-writes-aa-1048576-b2-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-aa-1048576",
+    "metrics": {
+      "load_seconds": 0.02442069,
+      "process_hwm_kib_before_validation": 39436,
+      "train_cpu_seconds": 0.378081,
+      "train_seconds": 0.185427343
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 2,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-aa-1048576-b2-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "8a474df80f9a0395b670d14afd8cb6d1b9d653165384eaa379f23fa7a99360f9",
+    "valid": true
+  },
+  {
+    "case": "writes-aa-1048576",
+    "block": 2,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-write-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-aa-1048576-b2-candidate/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 65040,
+    "subprocess_wall": 0.2333778339670971,
+    "attempt_id": "clean-writes-aa-1048576-b2-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-aa-1048576",
+    "metrics": {
+      "load_seconds": 0.024411223,
+      "process_hwm_kib_before_validation": 65876,
+      "train_cpu_seconds": 0.424396,
+      "train_seconds": 0.193798564
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 2,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-aa-1048576-b2-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "8a474df80f9a0395b670d14afd8cb6d1b9d653165384eaa379f23fa7a99360f9",
+    "valid": true
+  },
+  {
+    "case": "writes-ab-8388608",
+    "block": 0,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-birth-v2-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-ab-8388608-b0-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 228132,
+    "subprocess_wall": 1.103220270946622,
+    "attempt_id": "clean-writes-ab-8388608-b0-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-ab-8388608",
+    "metrics": {
+      "load_seconds": 0.175720653,
+      "process_hwm_kib_before_validation": 235548,
+      "train_cpu_seconds": 1.576773,
+      "train_seconds": 0.911309824
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 3,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-ab-8388608-b0-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "9b0634328ccf245af6eef006044cb0418dbd74349d99b8d882f50c0c9bc9cccc",
+    "valid": true
+  },
+  {
+    "case": "writes-ab-8388608",
+    "block": 0,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-write-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-ab-8388608-b0-candidate/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 408480,
+    "subprocess_wall": 1.0737173979869112,
+    "attempt_id": "clean-writes-ab-8388608-b0-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-ab-8388608",
+    "metrics": {
+      "load_seconds": 0.176190998,
+      "process_hwm_kib_before_validation": 410452,
+      "train_cpu_seconds": 1.457083,
+      "train_seconds": 0.877796785
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 3,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-ab-8388608-b0-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "9b0634328ccf245af6eef006044cb0418dbd74349d99b8d882f50c0c9bc9cccc",
+    "valid": true
+  },
+  {
+    "case": "writes-ab-8388608",
+    "block": 1,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-write-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-ab-8388608-b1-candidate/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 410508,
+    "subprocess_wall": 1.1594372800318524,
+    "attempt_id": "clean-writes-ab-8388608-b1-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-ab-8388608",
+    "metrics": {
+      "load_seconds": 0.186757566,
+      "process_hwm_kib_before_validation": 410368,
+      "train_cpu_seconds": 1.526875,
+      "train_seconds": 0.936439425
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 3,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-ab-8388608-b1-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "9b0634328ccf245af6eef006044cb0418dbd74349d99b8d882f50c0c9bc9cccc",
+    "valid": true
+  },
+  {
+    "case": "writes-ab-8388608",
+    "block": 1,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-birth-v2-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-ab-8388608-b1-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 228272,
+    "subprocess_wall": 1.2032143559772521,
+    "attempt_id": "clean-writes-ab-8388608-b1-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-ab-8388608",
+    "metrics": {
+      "load_seconds": 0.179857869,
+      "process_hwm_kib_before_validation": 235756,
+      "train_cpu_seconds": 1.6256490000000001,
+      "train_seconds": 0.992720849
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 3,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-ab-8388608-b1-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "9b0634328ccf245af6eef006044cb0418dbd74349d99b8d882f50c0c9bc9cccc",
+    "valid": true
+  },
+  {
+    "case": "writes-ab-8388608",
+    "block": 2,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-birth-v2-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-ab-8388608-b2-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 228300,
+    "subprocess_wall": 1.1253041189629585,
+    "attempt_id": "clean-writes-ab-8388608-b2-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-ab-8388608",
+    "metrics": {
+      "load_seconds": 0.177351471,
+      "process_hwm_kib_before_validation": 228216,
+      "train_cpu_seconds": 1.5852609999999998,
+      "train_seconds": 0.912176906
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 3,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-ab-8388608-b2-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "9b0634328ccf245af6eef006044cb0418dbd74349d99b8d882f50c0c9bc9cccc",
+    "valid": true
+  },
+  {
+    "case": "writes-ab-8388608",
+    "block": 2,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-write-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-ab-8388608-b2-candidate/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 410476,
+    "subprocess_wall": 1.073427814990282,
+    "attempt_id": "clean-writes-ab-8388608-b2-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-ab-8388608",
+    "metrics": {
+      "load_seconds": 0.176131566,
+      "process_hwm_kib_before_validation": 410340,
+      "train_cpu_seconds": 1.4953020000000001,
+      "train_seconds": 0.885186565
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 3,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-ab-8388608-b2-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "9b0634328ccf245af6eef006044cb0418dbd74349d99b8d882f50c0c9bc9cccc",
+    "valid": true
+  },
+  {
+    "case": "writes-aa-8388608",
+    "block": 0,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-birth-v2-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-aa-8388608-b0-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 279064,
+    "subprocess_wall": 1.5617461189394817,
+    "attempt_id": "clean-writes-aa-8388608-b0-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-aa-8388608",
+    "metrics": {
+      "load_seconds": 0.180644401,
+      "process_hwm_kib_before_validation": 279052,
+      "train_cpu_seconds": 3.423152,
+      "train_seconds": 1.3566395070000001
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 2,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-aa-8388608-b0-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "8a474df80f9a0395b670d14afd8cb6d1b9d653165384eaa379f23fa7a99360f9",
+    "valid": true
+  },
+  {
+    "case": "writes-aa-8388608",
+    "block": 0,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-write-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-aa-8388608-b0-candidate/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 482992,
+    "subprocess_wall": 1.533421340980567,
+    "attempt_id": "clean-writes-aa-8388608-b0-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-aa-8388608",
+    "metrics": {
+      "load_seconds": 0.179781774,
+      "process_hwm_kib_before_validation": 482864,
+      "train_cpu_seconds": 3.269134,
+      "train_seconds": 1.318953573
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 2,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-aa-8388608-b0-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "8a474df80f9a0395b670d14afd8cb6d1b9d653165384eaa379f23fa7a99360f9",
+    "valid": true
+  },
+  {
+    "case": "writes-aa-8388608",
+    "block": 1,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-write-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-aa-8388608-b1-candidate/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 482556,
+    "subprocess_wall": 1.585173161001876,
+    "attempt_id": "clean-writes-aa-8388608-b1-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-aa-8388608",
+    "metrics": {
+      "load_seconds": 0.182570031,
+      "process_hwm_kib_before_validation": 482460,
+      "train_cpu_seconds": 3.435672,
+      "train_seconds": 1.38865853
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 2,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-aa-8388608-b1-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "8a474df80f9a0395b670d14afd8cb6d1b9d653165384eaa379f23fa7a99360f9",
+    "valid": true
+  },
+  {
+    "case": "writes-aa-8388608",
+    "block": 1,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-birth-v2-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-aa-8388608-b1-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 275280,
+    "subprocess_wall": 1.4855171859962866,
+    "attempt_id": "clean-writes-aa-8388608-b1-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-aa-8388608",
+    "metrics": {
+      "load_seconds": 0.177891579,
+      "process_hwm_kib_before_validation": 275144,
+      "train_cpu_seconds": 3.147387,
+      "train_seconds": 1.280989063
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 2,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-aa-8388608-b1-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "8a474df80f9a0395b670d14afd8cb6d1b9d653165384eaa379f23fa7a99360f9",
+    "valid": true
+  },
+  {
+    "case": "writes-aa-8388608",
+    "block": 2,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-birth-v2-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-aa-8388608-b2-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 279948,
+    "subprocess_wall": 1.6150310511002317,
+    "attempt_id": "clean-writes-aa-8388608-b2-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-aa-8388608",
+    "metrics": {
+      "load_seconds": 0.186862486,
+      "process_hwm_kib_before_validation": 279360,
+      "train_cpu_seconds": 3.425603,
+      "train_seconds": 1.405395853
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 2,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-aa-8388608-b2-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "8a474df80f9a0395b670d14afd8cb6d1b9d653165384eaa379f23fa7a99360f9",
+    "valid": true
+  },
+  {
+    "case": "writes-aa-8388608",
+    "block": 2,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-write-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-aa-8388608-b2-candidate/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 482484,
+    "subprocess_wall": 1.7724539359332994,
+    "attempt_id": "clean-writes-aa-8388608-b2-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-aa-8388608",
+    "metrics": {
+      "load_seconds": 0.182713391,
+      "process_hwm_kib_before_validation": 482344,
+      "train_cpu_seconds": 3.367418,
+      "train_seconds": 1.565820065
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 2,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-aa-8388608-b2-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "8a474df80f9a0395b670d14afd8cb6d1b9d653165384eaa379f23fa7a99360f9",
+    "valid": true
+  },
+  {
+    "case": "writes-ab-33554432",
+    "block": 0,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-birth-v2-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-ab-33554432-b0-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 653912,
+    "subprocess_wall": 4.165649259928614,
+    "attempt_id": "clean-writes-ab-33554432-b0-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-ab-33554432",
+    "metrics": {
+      "load_seconds": 0.707067185,
+      "process_hwm_kib_before_validation": 670480,
+      "train_cpu_seconds": 5.872153,
+      "train_seconds": 3.44904794
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 3,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-ab-33554432-b0-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "9b0634328ccf245af6eef006044cb0418dbd74349d99b8d882f50c0c9bc9cccc",
+    "valid": true
+  },
+  {
+    "case": "writes-ab-33554432",
+    "block": 0,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-write-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-ab-33554432-b0-candidate/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1290032,
+    "subprocess_wall": 4.247170742950402,
+    "attempt_id": "clean-writes-ab-33554432-b0-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-ab-33554432",
+    "metrics": {
+      "load_seconds": 0.698686506,
+      "process_hwm_kib_before_validation": 1309772,
+      "train_cpu_seconds": 6.2689960000000005,
+      "train_seconds": 3.51446812
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 3,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-ab-33554432-b0-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "9b0634328ccf245af6eef006044cb0418dbd74349d99b8d882f50c0c9bc9cccc",
+    "valid": true
+  },
+  {
+    "case": "writes-ab-33554432",
+    "block": 1,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-write-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-ab-33554432-b1-candidate/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1272824,
+    "subprocess_wall": 4.2128407950513065,
+    "attempt_id": "clean-writes-ab-33554432-b1-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-ab-33554432",
+    "metrics": {
+      "load_seconds": 0.691328563,
+      "process_hwm_kib_before_validation": 1294464,
+      "train_cpu_seconds": 6.054803,
+      "train_seconds": 3.484978327
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 3,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-ab-33554432-b1-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "9b0634328ccf245af6eef006044cb0418dbd74349d99b8d882f50c0c9bc9cccc",
+    "valid": true
+  },
+  {
+    "case": "writes-ab-33554432",
+    "block": 1,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-birth-v2-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-ab-33554432-b1-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 662788,
+    "subprocess_wall": 4.268948544980958,
+    "attempt_id": "clean-writes-ab-33554432-b1-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-ab-33554432",
+    "metrics": {
+      "load_seconds": 0.735040077,
+      "process_hwm_kib_before_validation": 665548,
+      "train_cpu_seconds": 6.063967,
+      "train_seconds": 3.5123968960000003
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 3,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-ab-33554432-b1-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "9b0634328ccf245af6eef006044cb0418dbd74349d99b8d882f50c0c9bc9cccc",
+    "valid": true
+  },
+  {
+    "case": "writes-ab-33554432",
+    "block": 2,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-birth-v2-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-ab-33554432-b2-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 622620,
+    "subprocess_wall": 4.424323473009281,
+    "attempt_id": "clean-writes-ab-33554432-b2-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-ab-33554432",
+    "metrics": {
+      "load_seconds": 0.70472302,
+      "process_hwm_kib_before_validation": 633248,
+      "train_cpu_seconds": 6.419689,
+      "train_seconds": 3.69624357
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 3,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-ab-33554432-b2-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "9b0634328ccf245af6eef006044cb0418dbd74349d99b8d882f50c0c9bc9cccc",
+    "valid": true
+  },
+  {
+    "case": "writes-ab-33554432",
+    "block": 2,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-write-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-ab-33554432-b2-candidate/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1279584,
+    "subprocess_wall": 4.440139514976181,
+    "attempt_id": "clean-writes-ab-33554432-b2-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-ab-33554432",
+    "metrics": {
+      "load_seconds": 0.70163781,
+      "process_hwm_kib_before_validation": 1295784,
+      "train_cpu_seconds": 6.377276,
+      "train_seconds": 3.720368969
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 3,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-ab-33554432-b2-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "9b0634328ccf245af6eef006044cb0418dbd74349d99b8d882f50c0c9bc9cccc",
+    "valid": true
+  },
+  {
+    "case": "writes-aa-33554432",
+    "block": 0,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-birth-v2-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-aa-33554432-b0-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1060168,
+    "subprocess_wall": 6.32184203795623,
+    "attempt_id": "clean-writes-aa-33554432-b0-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-aa-33554432",
+    "metrics": {
+      "load_seconds": 0.708987073,
+      "process_hwm_kib_before_validation": 1059952,
+      "train_cpu_seconds": 15.315631999999999,
+      "train_seconds": 5.593482985
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 2,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-aa-33554432-b0-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "8a474df80f9a0395b670d14afd8cb6d1b9d653165384eaa379f23fa7a99360f9",
+    "valid": true
+  },
+  {
+    "case": "writes-aa-33554432",
+    "block": 0,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-write-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-aa-33554432-b0-candidate/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1619916,
+    "subprocess_wall": 6.605842415941879,
+    "attempt_id": "clean-writes-aa-33554432-b0-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-aa-33554432",
+    "metrics": {
+      "load_seconds": 0.872300692,
+      "process_hwm_kib_before_validation": 1620504,
+      "train_cpu_seconds": 15.437576,
+      "train_seconds": 5.695923833
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 2,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-aa-33554432-b0-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "8a474df80f9a0395b670d14afd8cb6d1b9d653165384eaa379f23fa7a99360f9",
+    "valid": true
+  },
+  {
+    "case": "writes-aa-33554432",
+    "block": 1,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-write-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-aa-33554432-b1-candidate/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1604584,
+    "subprocess_wall": 7.434768491075374,
+    "attempt_id": "clean-writes-aa-33554432-b1-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-aa-33554432",
+    "metrics": {
+      "load_seconds": 0.737077385,
+      "process_hwm_kib_before_validation": 1604556,
+      "train_cpu_seconds": 15.06616,
+      "train_seconds": 6.674520047
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 2,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-aa-33554432-b1-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "8a474df80f9a0395b670d14afd8cb6d1b9d653165384eaa379f23fa7a99360f9",
+    "valid": true
+  },
+  {
+    "case": "writes-aa-33554432",
+    "block": 1,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-birth-v2-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-aa-33554432-b1-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1052756,
+    "subprocess_wall": 6.01516155002173,
+    "attempt_id": "clean-writes-aa-33554432-b1-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-aa-33554432",
+    "metrics": {
+      "load_seconds": 0.715545405,
+      "process_hwm_kib_before_validation": 1052600,
+      "train_cpu_seconds": 14.341804,
+      "train_seconds": 5.279963803
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 2,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-aa-33554432-b1-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "8a474df80f9a0395b670d14afd8cb6d1b9d653165384eaa379f23fa7a99360f9",
+    "valid": true
+  },
+  {
+    "case": "writes-aa-33554432",
+    "block": 2,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-5",
+      "/tmp/bpe-birth-v2-clean",
+      "/tmp/bpe-write-pressure-measurements/clean-writes-aa-33554432-b2-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1060108,
+    "subprocess_wall": 6.49516999500338,
+    "attempt_id": "clean-writes-aa-33554432-b2-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "writes-aa-33554432",
+    "metrics": {
+      "load_seconds": 0.715508421,
+      "process_hwm_kib_before_validation": 1059956,
+      "train_cpu_seconds": 14.846022,
+      "train_seconds": 5.75712619
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 1,
+      "actual_vocab": 2,
+      "model_path": "/tmp/bpe-write-pressure-measurements/clean-writes-aa-33554432-b2-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 6,
+    "model_equal": true,
+    "model_sha256": "8a474df80f9a0395b670d14afd8cb6d1b9d653165384eaa379f23fa7a99360f9",
+    "valid": true
+  }
+]

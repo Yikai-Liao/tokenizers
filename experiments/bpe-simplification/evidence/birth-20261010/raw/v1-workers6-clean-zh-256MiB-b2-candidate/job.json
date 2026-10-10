@@ -1,0 +1,18 @@
+{
+  "protocol_version": 1,
+  "attempt_id": "clean-zh-256MiB-b2-candidate",
+  "build_id": "candidate",
+  "input_id": "zh-256MiB",
+  "mode": "core",
+  "input": "/root/code/tokenizers-perfetto-results/inputs/zh-bytelevel/words.json",
+  "output": "/tmp/bpe-birth-scale6-measurements/clean-zh-256MiB-b2-candidate/model.json",
+  "workers": 6,
+  "pretokenizer": "bytelevel_regex",
+  "trainer": {
+    "vocab_size": 50000,
+    "min_frequency": 2,
+    "prefix": null,
+    "suffix": null,
+    "max_token_length": null
+  }
+}

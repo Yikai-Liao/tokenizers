@@ -1,0 +1,26 @@
+[
+  {
+    "command": "cargo fmt --manifest-path tokenizers/tk-train/Cargo.toml --check",
+    "chunk_id": "f6ad48",
+    "wall_time_seconds": 0.187267307,
+    "exit_code": 0,
+    "original_token_count": 0,
+    "output": ""
+  },
+  {
+    "command": "python3 experiments/bpe-simplification/count_lines.py",
+    "chunk_id": "a274be",
+    "wall_time_seconds": 0.295228328,
+    "exit_code": 0,
+    "original_token_count": 299,
+    "output": "{\n  \"production\": {\n    \"engine/corpus.rs\": 401,\n    \"engine/index.rs\": 351,\n    \"engine/merge.rs\": 581,\n    \"engine/mod.rs\": 94,\n    \"engine/positions.rs\": 395,\n    \"engine/vocabulary.rs\": 298\n  },\n  \"tests\": {\n    \"engine/corpus.rs [cfg(test)]\": 2,\n    \"engine/merge.rs [cfg(test)]\": 10,\n    \"engine/mod.rs [cfg(test)]\": 17,\n    \"engine/positions.rs [cfg(test)]\": 109,\n    \"engine/tests/mod.rs\": 443,\n    \"reference.rs [oracle and shared helpers]\": 154,\n    \"mod.rs [cfg(test) public API/helpers]\": 6,\n    \"feed.rs [cfg(test) public API/helpers]\": 0,\n    \"word_counts.rs [cfg(test) public API/helpers]\": 42,\n    \"trainers/mod.rs [cfg(test) BPE wrapper]\": 12,\n    \"experiments/bpe-simplification/miri-codec/src/lib.rs [Miri harness]\": 4\n  },\n  \"production_total\": 2120,\n  \"test_total\": 799,\n  \"counting_rule\": \"Nonblank noncomment lines after cargo fmt --check; all engine implementation; all default BPE cfg(test) including feed/word_counts and the shared trainer wrapper, independent reference and Miri harness. The oracle no longer uses the optional parity trainer Word. No implementation relocated outside engine.\",\n  \"production_limit\": 2200,\n  \"test_limit\": 800,\n  \"within_budget\": true\n}\n"
+  },
+  {
+    "command": "git diff --check; git diff --numstat; git status --short",
+    "chunk_id": "ca1fad",
+    "wall_time_seconds": 0.000035023,
+    "exit_code": 0,
+    "original_token_count": 74,
+    "output": "4\t0\ttokenizers/tk-train/src/trainers/bpe/engine/merge.rs\n M tokenizers/tk-train/src/trainers/bpe/engine/merge.rs\n?? experiments/bpe-simplification/ITERATIVE_SIMPLIFICATION.md\n?? experiments/bpe-simplification/evidence/birth-20261010/\n?? experiments/bpe-simplification/evidence/writes-20261010/\n"
+  }
+]

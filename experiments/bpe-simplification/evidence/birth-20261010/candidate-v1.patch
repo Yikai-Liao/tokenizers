@@ -1,0 +1,237 @@
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/index.rs b/tokenizers/tk-train/src/trainers/bpe/engine/index.rs
+index 2205262d..7ffa2257 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/index.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/index.rs
+@@ -1,5 +1,5 @@
+ //! Count owners publish complete lists; the queue repairs stale snapshots lazily.
+-use super::merge::{Birth, Change};
++use super::merge::Change;
+ use super::{
+     CorpusPlan, WORD_SEPARATOR_ID, add,
+     positions::{Arena, Builder, Input, Positions},
+@@ -47,26 +47,20 @@ struct State<P> {
+     count: u64,
+     positions: P,
+ }
+-#[derive(Default)]
+-struct Group {
+-    count: u64,
+-    positions: Builder,
+-    unordered: Vec<u64>,
+-}
+ // Metadata stays borrowed during commit; each position stream has one owner.
+ type Event = Change<()>;
+ #[derive(Default)]
+ struct Route<'arena> {
+     actions: Vec<(usize, bool, bool)>,
+     // One stream per birth action, in the same order.
+-    positions: Vec<Birth<'arena>>,
++    positions: Vec<Positions<'arena>>,
+ }
+ impl<'arena> Route<'arena> {
+-    fn push(&mut self, index: usize, remove: bool, birth: Option<Birth<'arena>>) {
++    fn push(&mut self, index: usize, remove: bool, birth: Option<Positions<'arena>>) {
+         self.actions.push((index, remove, birth.is_some()));
+         self.positions.extend(birth);
+     }
+-    fn drain(&mut self) -> impl Iterator<Item = (usize, bool, Option<Birth<'arena>>)> + '_ {
++    fn drain(&mut self) -> impl Iterator<Item = (usize, bool, Option<Positions<'arena>>)> + '_ {
+         // The two arrays save a large optional payload on removal-only actions.
+         // Both drains own their remaining items, so an error drops unpublished births
+         // and restores empty reusable routes before the failed attempt is discarded.
+@@ -241,7 +235,7 @@ impl<'arena> PairIndex<'arena> {
+         }
+         candidate
+     }
+-    pub(super) fn commit(&mut self, changes: Vec<Vec<Change<Birth<'arena>>>>) -> Result<()> {
++    pub(super) fn commit(&mut self, changes: Vec<Vec<Change<Positions<'arena>>>>) -> Result<()> {
+         let workers = self.shards.len();
+         self.routes.resize_with(workers, Route::default);
+         // Joined commits drain every route; any error aborts this attempt.
+@@ -283,7 +277,7 @@ impl<'arena> PairIndex<'arena> {
+             .filter(|(_, route)| !route.actions.is_empty())
+             .map(|(shard, route)| -> Result<_> {
+                 let mut lease = arena.lease();
+-                let mut groups = AHashMap::<(usize, Pair), Group>::new();
++                let mut groups = AHashMap::<(usize, Pair), State<Vec<Positions>>>::new();
+                 let mut candidates = Vec::new();
+                 for (index, remove, birth) in route.drain() {
+                     let change = &events[index];
+@@ -307,32 +301,11 @@ impl<'arena> PairIndex<'arena> {
+                             let count = shard.entry(change.born).or_default();
+                             adjust_signed(count, change.born_weight, false)?;
+                         }
+-                        let positions = match positions {
+-                            Birth::Complete(positions) => {
+-                                // Fresh IDs and compatible rules give each complete birth one producer.
+-                                debug_assert!(!reuse && change.born_weight >= floor);
+-                                debug_assert!(!shard.contains_key(&change.born));
+-                                shard.insert(change.born, change.born_weight);
+-                                candidates.push(Candidate {
+-                                    priority: Priority {
+-                                        count: change.born_weight,
+-                                        pair: Reverse(change.born),
+-                                    },
+-                                    positions,
+-                                });
+-                                continue;
+-                            }
+-                            Birth::Partial(positions) => positions,
+-                        };
+                         let group = groups.entry((change.bucket, change.born)).or_default();
+                         add(&mut group.count, change.born_weight)?;
+-                        if reuse {
+-                            group.unordered.extend(positions.iter());
+-                        } else {
+-                            // Fresh jobs follow rule rank and spatial ranges. Each
+-                            // born key has one producer, so lists concatenate sorted.
+-                            group.positions.append(positions)?;
+-                        }
++                        // Fresh jobs follow rule rank and disjoint spatial ranges.
++                        // Reuse keeps fragments until the historical cohort is sorted.
++                        group.positions.push(positions);
+                     }
+                 }
+                 let mut groups: Vec<_> = groups.into_iter().collect();
+@@ -349,12 +322,18 @@ impl<'arena> PairIndex<'arena> {
+                         pair: Reverse(pair),
+                     };
+                     let positions = if reuse {
+-                        state.unordered.sort_unstable();
+-                        Positions::from_sorted(Input::Slice(&state.unordered), &mut lease)?
++                        let mut values: Vec<_> =
++                            state.positions.iter().flat_map(Positions::iter).collect();
++                        values.sort_unstable();
++                        Positions::from_sorted(Input::Slice(&values), &mut lease)?
+                     } else {
+                         debug_assert!(!shard.contains_key(&pair));
+                         shard.insert(pair, count);
+-                        Positions::from_sorted(Input::Builder(&state.positions), &mut lease)?
++                        if state.positions.len() == 1 {
++                            state.positions.pop().unwrap()
++                        } else {
++                            Positions::from_sorted(Input::Fragments(&state.positions), &mut lease)?
++                        }
+                     };
+                     candidates.push(Candidate {
+                         priority,
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/merge.rs b/tokenizers/tk-train/src/trainers/bpe/engine/merge.rs
+index 4b4ef7a5..1d8d5408 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/merge.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/merge.rs
+@@ -33,24 +33,12 @@ pub(super) struct Change<P> {
+     pub(super) positions: P,
+     pub(super) bucket: usize,
+ }
+-pub(super) enum Birth<'arena> {
+-    Partial(Builder),
+-    Complete(Positions<'arena>),
+-}
+-impl Birth<'_> {
+-    pub(super) fn is_empty(&self) -> bool {
+-        match self {
+-            Self::Partial(values) => values.is_empty(),
+-            Self::Complete(values) => values.is_empty(),
+-        }
+-    }
+-}
+ pub(super) struct Prepared<'arena> {
+     jobs: Vec<Job<'arena>>,
+ }
+ struct Job<'arena> {
+     writes: Writes,
+-    changes: Vec<Change<Birth<'arena>>>,
++    changes: Vec<Change<Positions<'arena>>>,
+ }
+ struct Neighbors<'a, 'arena> {
+     rule: &'a Rule<'arena>,
+@@ -138,9 +126,9 @@ impl<'a, 'arena> Neighbors<'a, 'arena> {
+         }
+         Ok(())
+     }
+-    fn finish(self, floor: u64, arena: &'arena Arena) -> Result<Vec<Change<Birth<'arena>>>> {
++    fn finish(self, floor: u64, arena: &'arena Arena) -> Result<Vec<Change<Positions<'arena>>>> {
+         // Complete ordinary producers prune and encode before owner routing.
+-        // Partial jobs retain raw positions until their counts have been reduced.
++        // Partial jobs own compressed fragments until owner reduction admits the total.
+         let mut result = Vec::new();
+         let mut lease = arena.lease();
+         // Left changes precede right changes. Reuse count actions and the resulting
+@@ -154,12 +142,9 @@ impl<'a, 'arena> Neighbors<'a, 'arena> {
+                 continue;
+             }
+             let positions = if self.complete {
+-                Birth::Complete(Positions::from_sorted(
+-                    Input::Builder(&change.positions),
+-                    &mut lease,
+-                )?)
++                Positions::from_sorted(Input::Builder(&change.positions), &mut lease)?
+             } else {
+-                Birth::Partial(change.positions)
++                Positions::from_sorted_owned(Input::Builder(&change.positions), &mut lease)?
+             };
+             result.push(Change {
+                 removed: change.removed,
+@@ -504,7 +489,7 @@ impl<'arena> Batch<'arena> {
+     }
+ }
+ impl<'arena> Prepared<'arena> {
+-    pub(super) fn apply(self, corpus: &Corpus) -> Vec<Vec<Change<Birth<'arena>>>> {
++    pub(super) fn apply(self, corpus: &Corpus) -> Vec<Vec<Change<Positions<'arena>>>> {
+         self.jobs
+             .into_par_iter()
+             .map(|job| {
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/positions.rs b/tokenizers/tk-train/src/trainers/bpe/engine/positions.rs
+index 61c0e17d..9ba2af96 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/positions.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/positions.rs
+@@ -80,7 +80,7 @@ impl Builder {
+         self.push_ordered(position)
+     }
+     // Snapshot scans visit disjoint ordered matches; callers retain that order.
+-    // Generic append/input paths use `push` and keep its validation.
++    // Generic input paths use `push` and keep its validation.
+     pub(super) fn push_ordered(&mut self, position: u64) -> Result<()> {
+         if let Self::Narrow(values) = self {
+             if let Ok(position) = u32::try_from(position) {
+@@ -94,26 +94,6 @@ impl Builder {
+         }
+         Ok(())
+     }
+-    pub(super) fn append(&mut self, mut other: Self) -> Result<()> {
+-        if self.is_empty() {
+-            std::mem::swap(self, &mut other);
+-        }
+-        if let (Some(last), Some(first)) = (self.iter().next_back(), other.iter().next())
+-            && first < last
+-        {
+-            return Err("BPE positions are not sorted".into());
+-        }
+-        match (&mut *self, &mut other) {
+-            (Self::Narrow(a), Self::Narrow(b)) => a.append(b),
+-            (Self::Wide(a), Self::Wide(b)) => a.append(b),
+-            _ => {
+-                for position in other.iter() {
+-                    self.push(position)?;
+-                }
+-            }
+-        }
+-        Ok(())
+-    }
+ }
+ // Only concrete storage views reach the allocator. Unlike an arbitrary safe
+ // ExactSizeIterator implementation, these views have a trustworthy cardinality.
+@@ -450,12 +430,12 @@ mod tests {
+                     let mut piece = Builder::default();
+                     for &p in chunk {
+                         piece.push(p).unwrap();
++                        builder.push(p).unwrap();
+                     }
+                     fragments.push(
+                         Positions::from_sorted_owned(Input::Builder(&piece), &mut arena.lease())
+                             .unwrap(),
+                     );
+-                    builder.append(piece).unwrap();
+                 }
+                 assert!(builder.iter().eq(values.iter().copied()));
+                 fragments.push(Positions::default());

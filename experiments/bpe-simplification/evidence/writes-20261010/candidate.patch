@@ -1,0 +1,120 @@
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/merge.rs b/tokenizers/tk-train/src/trainers/bpe/engine/merge.rs
+index 4b4ef7a5..f238c05f 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/merge.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/merge.rs
+@@ -333,7 +333,7 @@ impl<'arena> Batch<'arena> {
+                     directories.reset(corpus.id_count());
+                     let mut neighbors =
+                         Neighbors::new(rule, rank, directories, positions.complete());
+-                    let mut writes = Writes::fresh(rule, corpus);
++                    let mut writes = Writes::new(rule.replacement);
+                     let matcher = corpus.fresh_matcher(rule.pair);
+                     let mut weights = None;
+                     for p in positions.prefetched(corpus) {
+@@ -396,7 +396,7 @@ impl<'arena> Batch<'arena> {
+                                 matched.span() + corpus.id_span(born) < limit,
+                             )?;
+                         }
+-                        writes.record(matched)?;
++                        writes.record(matched);
+                     }
+                     Ok(Job {
+                         writes,
+@@ -429,10 +429,7 @@ impl<'arena> Batch<'arena> {
+                 super::tests::observe_worker(super::tests::Phase::ReusePrepare);
+                 directories.reset(corpus.id_count());
+                 let mut neighbors = Neighbors::new(rule, 0, directories, false);
+-                let mut writes = Writes::Occurrences {
+-                    positions: Vec::new(),
+-                    id: rule.replacement,
+-                };
++                let mut writes = Writes::new(rule.replacement);
+                 for &word in words {
+                     let mut previous = None;
+                     let mut p = corpus.word_start(word);
+@@ -485,7 +482,7 @@ impl<'arena> Batch<'arena> {
+                                 )?;
+                             }
+                             previous = Some((rule.replacement, p, matched.span()));
+-                            writes.record(matched)?;
++                            writes.record(matched);
+                             p = matched.after;
+                         } else {
+                             let span = corpus.span(p);
+@@ -515,64 +512,24 @@ impl<'arena> Prepared<'arena> {
+     }
+ }
+ 
+-// Fresh identities have one span per ID, so their snapshot writes need only
+-// sorted starts and one rule geometry. Alias reuse retains occurrence geometry.
+-enum Writes {
+-    Compact {
+-        positions: Builder,
+-        left: usize,
+-        total: usize,
+-        id: u32,
+-    },
+-    Occurrences {
+-        positions: Vec<Match>,
+-        id: u32,
+-    },
++// Preparation owns complete matches until the joined snapshot is applied.
++struct Writes {
++    positions: Vec<Match>,
++    id: u32,
+ }
+ impl Writes {
+-    fn fresh(rule: &Rule<'_>, corpus: &Corpus) -> Self {
+-        let left = corpus.id_span(rule.pair.0);
+-        Self::Compact {
+-            positions: Builder::default(),
+-            left,
+-            total: left + corpus.id_span(rule.pair.1),
+-            id: rule.replacement,
++    fn new(id: u32) -> Self {
++        Self {
++            positions: Vec::new(),
++            id,
+         }
+     }
+-    fn record(&mut self, matched: Match) -> Result<()> {
+-        match self {
+-            Self::Compact { positions, .. } => positions.push_ordered(matched.start as u64),
+-            Self::Occurrences { positions, .. } => {
+-                positions.push(matched);
+-                Ok(())
+-            }
+-        }
++    fn record(&mut self, matched: Match) {
++        self.positions.push(matched);
+     }
+     fn apply(self, corpus: &Corpus) {
+-        match self {
+-            Self::Compact {
+-                positions,
+-                left,
+-                total,
+-                id,
+-            } => {
+-                for coordinate in positions.iter() {
+-                    let start = corpus.resident(coordinate);
+-                    corpus.apply(
+-                        Match {
+-                            start,
+-                            right: start + left,
+-                            after: start + total,
+-                        },
+-                        id,
+-                    );
+-                }
+-            }
+-            Self::Occurrences { positions, id } => {
+-                for matched in positions {
+-                    corpus.apply(matched, id);
+-                }
+-            }
++        for matched in self.positions {
++            corpus.apply(matched, self.id);
+         }
+     }
+ }

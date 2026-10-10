@@ -1,0 +1,78 @@
+[
+  {
+    "case": "zh-256MiB",
+    "complete_measured_pairs": 3,
+    "planned_measured_pairs": 3,
+    "baseline": {
+      "train_seconds": 20.206017291,
+      "train_cpu_seconds": 66.18565600000001,
+      "process_hwm_kib_before_validation": 2482512
+    },
+    "candidate": {
+      "train_seconds": 20.669507858,
+      "train_cpu_seconds": 66.929574,
+      "process_hwm_kib_before_validation": 2626276
+    },
+    "paired_median_delta_percent": {
+      "train_seconds": 3.93520836801291,
+      "train_cpu_seconds": 1.1239867441972473,
+      "process_hwm_kib_before_validation": 5.298501024135072
+    },
+    "pairs": [
+      {
+        "block": 1,
+        "delta_percent": {
+          "train_seconds": -0.5621608547907053,
+          "train_cpu_seconds": -1.0628918147178923,
+          "process_hwm_kib_before_validation": 5.169131077391742
+        }
+      },
+      {
+        "block": 2,
+        "delta_percent": {
+          "train_seconds": 4.823012768746238,
+          "train_cpu_seconds": 1.1239867441972473,
+          "process_hwm_kib_before_validation": 5.791069690700379
+        }
+      },
+      {
+        "block": 3,
+        "delta_percent": {
+          "train_seconds": 3.93520836801291,
+          "train_cpu_seconds": 4.0169336701499025,
+          "process_hwm_kib_before_validation": 5.298501024135072
+        }
+      }
+    ]
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "complete_measured_pairs": 1,
+    "planned_measured_pairs": 3,
+    "baseline": {
+      "train_seconds": 17.627282906,
+      "train_cpu_seconds": 50.045655,
+      "process_hwm_kib_before_validation": 1982036
+    },
+    "candidate": {
+      "train_seconds": 18.041858716,
+      "train_cpu_seconds": 50.61429,
+      "process_hwm_kib_before_validation": 1982404
+    },
+    "paired_median_delta_percent": {
+      "train_seconds": 2.3518985439263895,
+      "train_cpu_seconds": 1.1362325060986889,
+      "process_hwm_kib_before_validation": 0.01856676669849122
+    },
+    "pairs": [
+      {
+        "block": 1,
+        "delta_percent": {
+          "train_seconds": 2.3518985439263895,
+          "train_cpu_seconds": 1.1362325060986889,
+          "process_hwm_kib_before_validation": 0.01856676669849122
+        }
+      }
+    ]
+  }
+]

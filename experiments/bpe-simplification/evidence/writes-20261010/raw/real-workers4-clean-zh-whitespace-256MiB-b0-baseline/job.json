@@ -1,0 +1,18 @@
+{
+  "protocol_version": 1,
+  "attempt_id": "clean-zh-whitespace-256MiB-b0-baseline",
+  "build_id": "baseline",
+  "input_id": "zh-whitespace-256MiB",
+  "mode": "core",
+  "input": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+  "output": "/tmp/bpe-write-real-measurements/clean-zh-whitespace-256MiB-b0-baseline/model.json",
+  "workers": 4,
+  "pretokenizer": "whitespace",
+  "trainer": {
+    "vocab_size": 50000,
+    "min_frequency": 2,
+    "prefix": null,
+    "suffix": null,
+    "max_token_length": null
+  }
+}

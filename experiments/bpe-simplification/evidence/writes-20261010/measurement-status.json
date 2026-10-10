@@ -1,0 +1,18 @@
+{
+  "decision": "rejected_by_user; restore original Compact/Occurrences Writes",
+  "measurement_status": "stopped at user rejection; incomplete Whitespace matrix, 6 workers not started",
+  "completed_processes": 12,
+  "completed_measured_pairs": {
+    "zh-256MiB": 3,
+    "zh-whitespace-256MiB": 1
+  },
+  "interrupted_sample": "clean-zh-whitespace-256MiB-b2-baseline",
+  "interrupted_sample_excluded": true,
+  "own_driver_pid": 2668070,
+  "own_child_pid": 2672197,
+  "signals": "SIGTERM",
+  "session_exit_code": 143,
+  "candidate_patch_sha256": "fa86dced33ea3220a0346491e3114de7bf3e64bf03a56d4fa5e37dd26a4db956",
+  "runner_script_sha256": "ba8d8c3a190d847529b5e5838893e2b86ca1e1410c17e567c74224247a13c5b8",
+  "comment": "Driver was adapted from birth experiment; its inherited docstring mentions birth but its binary paths and candidate SHA identify pure Writes. These original executed script bytes are preserved."
+}

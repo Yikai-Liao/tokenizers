@@ -1,0 +1,78 @@
+{
+  "baseline_commit": "3a298346 + compressed birth v2 patch6e9488a57ecc3133850e6bd830d0906dbdb1ba071cbadd5371582c0b8aeff377",
+  "candidate_patch_sha256": "06d08c528e81643d66ef6060c7a0bcc1a6a2e9f37765c79b2549ae7c453da11e",
+  "mode": "clean",
+  "binaries": {
+    "baseline": "/tmp/bpe-birth-v2-clean",
+    "candidate": "/tmp/bpe-write-clean"
+  },
+  "binary_sha256": {
+    "baseline": "5ded6e9708ad40b45c9450827ef3e798b19345c6f8bc544369858d1205ed9df9",
+    "candidate": "6a2c298cb5114dd2756e0bdedd8bebddb273a20f464b70b35ab0442ec09e6bfd"
+  },
+  "cases": [
+    {
+      "case": "writes-ab-1048576",
+      "prepared_path": "/tmp/bpe-write-pressure-inputs/writes-ab-1048576.json",
+      "prepared_sha256": "eca518dad924167c73e54fea0c7491acf9719f9985b1f8001649bb8936cb5bd1",
+      "pretokenizer": "whitespace",
+      "vocab_size": 3,
+      "min_frequency": 1,
+      "n": 1048576,
+      "kind": "ab"
+    },
+    {
+      "case": "writes-aa-1048576",
+      "prepared_path": "/tmp/bpe-write-pressure-inputs/writes-aa-1048576.json",
+      "prepared_sha256": "14bd32d40f37367ab43b22165ee03695b25ae26962374f9b32a60399621d94fb",
+      "pretokenizer": "whitespace",
+      "vocab_size": 2,
+      "min_frequency": 1,
+      "n": 1048576,
+      "kind": "aa"
+    },
+    {
+      "case": "writes-ab-8388608",
+      "prepared_path": "/tmp/bpe-write-pressure-inputs/writes-ab-8388608.json",
+      "prepared_sha256": "f6181877cf547c49622b7355b0fc365888c2ba24c079f68a6d23305a37348dc1",
+      "pretokenizer": "whitespace",
+      "vocab_size": 3,
+      "min_frequency": 1,
+      "n": 8388608,
+      "kind": "ab"
+    },
+    {
+      "case": "writes-aa-8388608",
+      "prepared_path": "/tmp/bpe-write-pressure-inputs/writes-aa-8388608.json",
+      "prepared_sha256": "e5e8861e466cf2ab62dd39e7ba9549b2d2bbfcbc6617b887ae26645f6a0a77c2",
+      "pretokenizer": "whitespace",
+      "vocab_size": 2,
+      "min_frequency": 1,
+      "n": 8388608,
+      "kind": "aa"
+    },
+    {
+      "case": "writes-ab-33554432",
+      "prepared_path": "/tmp/bpe-write-pressure-inputs/writes-ab-33554432.json",
+      "prepared_sha256": "de6d2134b6d1ac58a94b7d650988bbcbd3dae02456ae72f30b04d78fba5ced09",
+      "pretokenizer": "whitespace",
+      "vocab_size": 3,
+      "min_frequency": 1,
+      "n": 33554432,
+      "kind": "ab"
+    },
+    {
+      "case": "writes-aa-33554432",
+      "prepared_path": "/tmp/bpe-write-pressure-inputs/writes-aa-33554432.json",
+      "prepared_sha256": "0a169a4512e50bcc64587dc9f645d18b09b54b44d652232b80d0589aac3fd362",
+      "pretokenizer": "whitespace",
+      "vocab_size": 2,
+      "min_frequency": 1,
+      "n": 33554432,
+      "kind": "aa"
+    }
+  ],
+  "scope": "public do_train; load and serialization excluded from train time; HWM includes input loading",
+  "design": "Long AB/AA writes pressure: three measured AB/BA alternating pairs per case; no warmup; vocab size permits exactly one merge. workers6 affinity0-5; vocab50k/min2; no affixes",
+  "limitation": "Shared VM; descriptive observations, no statistical speedup claim."
+}

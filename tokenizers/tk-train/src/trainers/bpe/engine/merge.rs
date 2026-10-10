@@ -34,7 +34,11 @@ pub(super) struct Change<P> {
     pub(super) bucket: usize,
 }
 pub(super) enum Birth<'arena> {
+    // Local fresh counts await owner aggregation before floor admission.
+    // Reuse fragments instead follow the owner's per-action signed ledger.
     Partial(Builder),
+    // A fresh ordinary producer covers the full candidate and has applied the floor.
+    // Retained lists are ready for direct publication without another encoding pass.
     Complete(Positions<'arena>),
 }
 impl Birth<'_> {

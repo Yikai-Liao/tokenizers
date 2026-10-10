@@ -1,0 +1,21 @@
+{
+  "baseline_commit": "3a298346ffc47ada74eb800714644bf564b9e5c0",
+  "final_logic_equals_baseline": true,
+  "source_changes": "Four Birth contract comments only; both rejected candidates restored",
+  "source_patch_sha256": "5c56edf4f17154dd937f7a2e16b3f214b3726e6ab8607f63e0c868a14d5061d0",
+  "engine_sources_sha256": {
+    "tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs": "f5b183553ab1de43e78fd0efa9f88dae8b534535295459591434b7ecce89c25b",
+    "tokenizers/tk-train/src/trainers/bpe/engine/index.rs": "191de8af497430a99c10a43404933ec051d5e4c3231d318e0e538a0d8cca4cc8",
+    "tokenizers/tk-train/src/trainers/bpe/engine/merge.rs": "e5f22bd9d2a1deef5ce9abf7a11d0c787940dede0c19e1331b7cc034cacfb56c",
+    "tokenizers/tk-train/src/trainers/bpe/engine/mod.rs": "8858282626fa23e3b8b4c7bf21248fe09946e6ee512d226c7d8e1ff5e18b1a5b",
+    "tokenizers/tk-train/src/trainers/bpe/engine/positions.rs": "8dcff088b911b1048e0c301efbfccb0ff9b1e4c0a949bcb7d5d0c341d3e75e9a",
+    "tokenizers/tk-train/src/trainers/bpe/engine/vocabulary.rs": "f114e6cfb2ca22ab2d9392ac61236f90f25e70a89c1c8a19b796160090dc72f0"
+  },
+  "native_tests": "No rerun for comment-only final change; native validation of 3a298346 inherited from evidence/heap-20261010. Rejected candidate test logs retained separately.",
+  "final_checks": "fmt, git diff --check, source equality and line budgets pass",
+  "production_lines": 2120,
+  "test_lines": 799,
+  "independent_review": "final-independent-review.md: 0 new defects; 0 strong further simplification candidates",
+  "known_limit": "Equal-priority reuse-cohort order proof gap remains open",
+  "writes_isolated_worktree_clean": true
+}

@@ -1,0 +1,42 @@
+{
+  "baseline_commit": "3a298346",
+  "candidate_patch_sha256": "c3f7affc48e0ea0aa83d35c2b679369c710655c9ac77edf06871fafe5a8d249d",
+  "mode": "clean",
+  "binaries": {
+    "baseline": "/tmp/bpe-birth-baseline",
+    "candidate": "/tmp/bpe-birth-clean"
+  },
+  "binary_sha256": {
+    "baseline": "c44b336a8feb92ef1448c4aed4f51674443f17f9e32f013fca6c8f9cda886c6f",
+    "candidate": "8a26e1e5423912cddc117f477af3091a39e2647a8be94b18e1c5450e6aacdea4"
+  },
+  "cases": [
+    {
+      "case": "zh-256MiB",
+      "language": "zh",
+      "requested_mib": 256,
+      "pretokenizer": "bytelevel_regex",
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+      "bytes": 268435162,
+      "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+      "prepared_path": "/root/code/tokenizers-perfetto-results/inputs/zh-bytelevel/words.json",
+      "prepared_sha256": "bb796d0b57b87d965b84de249bc5c8e283b700774638d16a40e4ae5171b13ee0",
+      "prepared_bytes": 437135595
+    },
+    {
+      "case": "zh-whitespace-256MiB",
+      "language": "zh",
+      "requested_mib": 256,
+      "pretokenizer": "whitespace",
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+      "bytes": 268435162,
+      "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+      "prepared_path": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "prepared_sha256": "ed057a8fdb27544ed29f16dde53faa0de8f47f1ee8ac00080974fac5bb435660",
+      "prepared_bytes": 250116097
+    }
+  ],
+  "scope": "public do_train; load and serialization excluded from train time; HWM includes input loading",
+  "design": "Chinese focus: one warmup + three AB/BA alternating pairs per case. workers4 affinity0-3; vocab50k/min2; no affixes",
+  "limitation": "Shared VM; descriptive observations, no statistical speedup claim."
+}

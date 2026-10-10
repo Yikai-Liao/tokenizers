@@ -1,0 +1,18 @@
+{
+  "protocol_version": 1,
+  "attempt_id": "clean-writes-aa-8388608-b1-baseline",
+  "build_id": "baseline",
+  "input_id": "writes-aa-8388608",
+  "mode": "core",
+  "input": "/tmp/bpe-write-pressure-inputs/writes-aa-8388608.json",
+  "output": "/tmp/bpe-write-only-pressure-measurements/clean-writes-aa-8388608-b1-baseline/model.json",
+  "workers": 6,
+  "pretokenizer": "whitespace",
+  "trainer": {
+    "vocab_size": 2,
+    "min_frequency": 1,
+    "prefix": null,
+    "suffix": null,
+    "max_token_length": null
+  }
+}

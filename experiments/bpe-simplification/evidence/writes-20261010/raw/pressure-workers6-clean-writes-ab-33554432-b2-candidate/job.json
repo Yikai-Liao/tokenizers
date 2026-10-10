@@ -1,0 +1,18 @@
+{
+  "protocol_version": 1,
+  "attempt_id": "clean-writes-ab-33554432-b2-candidate",
+  "build_id": "candidate",
+  "input_id": "writes-ab-33554432",
+  "mode": "core",
+  "input": "/tmp/bpe-write-pressure-inputs/writes-ab-33554432.json",
+  "output": "/tmp/bpe-write-only-pressure-measurements/clean-writes-ab-33554432-b2-candidate/model.json",
+  "workers": 6,
+  "pretokenizer": "whitespace",
+  "trainer": {
+    "vocab_size": 3,
+    "min_frequency": 1,
+    "prefix": null,
+    "suffix": null,
+    "max_token_length": null
+  }
+}
