@@ -81,6 +81,10 @@ fn generated_models_and_every_rule_match_the_sequential_oracle() {
 
 #[test]
 fn overlap_floor_alias_and_alphabet_boundaries() {
+    check(
+        &trainer(),
+        &counts(&[("abac", 4), ("dbdc", 4), ("abdb", 3), ("acdc", 3)]),
+    );
     // A split producer's local pieces are below the floor; its complete birth is not.
     // Long AA runs separately exercise greedy starts across position restart blocks.
     check(

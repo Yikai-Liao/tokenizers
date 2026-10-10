@@ -1,6 +1,6 @@
 # 在线初始压缩与 prepare 优化：逐项证据
 
-本实验选择 **整词分块＋生产者内压缩，不加 wave 屏障；再加入规则索引和有序写入**。规则索引是 prepare 的主要收益来源。有序写入仅增加 3 行，在已有索引时，两种规模的 prepare CPU 均进一步降低约 2–3%，因此一起保留。候选位于独立工作树，生产 Rust 尚未合入原 2100 行分支。
+本实验选择 **整词分块＋生产者内压缩，不加 wave 屏障；再加入规则索引和有序写入**。规则索引是 prepare 的主要收益来源。有序写入仅增加 3 行，在已有索引时，两种规模的 prepare CPU 均进一步降低约 2–3%，因此一起保留。候选已按用户确认应用到简化分支；用于测量的独立工作树与原始证据仍保留。
 
 完整候选为 **2185 行生产／797 行测试**，符合 2200／800 预算；比原版本多 85／17 行。诊断观察器和 runner 不进入生产补丁。下列数字有不同计时边界：初始阶段峰值、整个训练峰值、prepare CPU 和完整训练墙钟分别报告。
 
@@ -225,6 +225,6 @@ L 增加 17 行生产／4 行测试：只对唯一 head 直接查 counterpart／
 
 干净组合候选已通过默认与无默认特性完整 native 测试（各 17＋1 doctest）、Clippy `-D warnings`、严格 provenance Miri（2 tests）及格式／行数检查。索引初版的 separator 越界由小规模语义测试捕获，在构建性能二进制前已修复；失败日志与修正后验证都保留。
 
-生产补丁：[small-combined.patch](evidence/online-initial/small-combined.patch)。补丁基于 `7e77262b`，只修改生产实现和所需语义测试，可在独立树审阅与应用。未自动合入生产分支。当前报告和证据是本轮实验交付。
+生产补丁：[small-combined.patch](evidence/online-initial/small-combined.patch)。补丁基于 `7e77262b`，只修改生产实现和所需语义测试，已按用户确认应用到简化分支。当前报告和证据记录本轮实验，后续采用记录见 [online-adoption.json](evidence/online-adoption.json)。
 
 原始结果：[runs.jsonl](evidence/online-initial/runs.jsonl)；逐项摘要：[small-ablation-summary.json](evidence/online-initial/small-ablation-summary.json)；分词器摘要：[selected-summary.json](evidence/online-initial/selected-summary.json)；候选构建：[selected-full-manifest.json](evidence/online-initial/selected-full-manifest.json)。

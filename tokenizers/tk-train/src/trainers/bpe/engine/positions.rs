@@ -77,6 +77,11 @@ impl Builder {
         if self.iter().next_back().is_some_and(|last| position < last) {
             return Err("BPE positions are not sorted".into());
         }
+        self.push_ordered(position)
+    }
+    // Snapshot scans visit disjoint ordered matches; callers retain that order.
+    // Generic append/input paths use `push` and keep its validation.
+    pub(super) fn push_ordered(&mut self, position: u64) -> Result<()> {
         if let Self::Narrow(values) = self {
             if let Ok(position) = u32::try_from(position) {
                 values.push(position);
@@ -115,12 +120,44 @@ impl Builder {
 pub(super) enum Input<'a> {
     Builder(&'a Builder),
     Slice(&'a [u64]),
+    Fragments(&'a [Positions<'a>]),
 }
 impl Input<'_> {
-    fn iter(&self) -> impl DoubleEndedIterator<Item = u64> + ExactSizeIterator + Clone + '_ {
+    fn len(&self) -> Result<usize> {
         match self {
-            Self::Builder(values) => itertools::Either::Left(values.iter()),
-            Self::Slice(values) => itertools::Either::Right(values.iter().copied()),
+            Self::Builder(values) => Ok(values.len()),
+            Self::Slice(values) => Ok(values.len()),
+            Self::Fragments(values) => values.iter().try_fold(0usize, |n, p| {
+                n.checked_add(p.len())
+                    .ok_or_else(|| "BPE fragment count exceeds usize".into())
+            }),
+        }
+    }
+    fn bounds(&self) -> Option<(u64, u64)> {
+        match self {
+            Self::Builder(values) => Some((values.iter().next()?, values.iter().next_back()?)),
+            Self::Slice(values) => Some((*values.first()?, *values.last()?)),
+            Self::Fragments(values) => Some((
+                values.iter().find_map(|p| p.iter().next())?,
+                values
+                    .iter()
+                    .rev()
+                    .filter(|p| !p.is_empty())
+                    .find_map(|p| p.from(p.len() - 1).next())?,
+            )),
+        }
+    }
+    fn iter(&self) -> impl Iterator<Item = u64> + '_ {
+        match self {
+            Self::Builder(values) => {
+                itertools::Either::Left(itertools::Either::Left(values.iter()))
+            }
+            Self::Slice(values) => {
+                itertools::Either::Left(itertools::Either::Right(values.iter().copied()))
+            }
+            Self::Fragments(values) => {
+                itertools::Either::Right(values.iter().flat_map(Positions::iter))
+            }
         }
     }
 }
@@ -167,19 +204,24 @@ impl<'arena> Positions<'arena> {
         self.payload.map_addr(|a| a & !1)
     }
     pub(super) fn from_sorted(input: Input<'_>, lease: &mut Lease<'arena>) -> Result<Self> {
+        Self::encode(input, lease, false)
+    }
+    pub(super) fn from_sorted_owned(input: Input<'_>, lease: &mut Lease<'arena>) -> Result<Self> {
+        Self::encode(input, lease, true)
+    }
+    fn encode(input: Input<'_>, lease: &mut Lease<'arena>, owned: bool) -> Result<Self> {
+        let count = input.len()?;
         let values = input.iter();
-        let count = values.len();
         if count == 0 {
             return Ok(Self::default());
         }
         if count >= INLINE {
             return Err("BPE position count exceeds resident bounds".into());
         }
-        let first = values.clone().next().unwrap();
-        let gap = values
-            .clone()
-            .next_back()
-            .unwrap()
+        let (first, last) = input
+            .bounds()
+            .expect("nonempty trusted input has endpoints");
+        let gap = last
             .checked_sub(first)
             .ok_or("BPE positions are not sorted")?;
         if count <= 2 && first <= usize::MAX as u64 && (count == 1 || gap <= DELTA_MASK as u64) {
@@ -211,7 +253,7 @@ impl<'arena> Positions<'arena> {
             previous = position;
         }
         let allocation = layout(count, worker.bytes.len())?;
-        let arena = allocation.size() <= lease.arena.cutoff;
+        let arena = !owned && allocation.size() <= lease.arena.cutoff;
         let pointer = if arena {
             worker
                 .bump
@@ -403,16 +445,24 @@ mod tests {
                 }
                 values.sort_unstable();
                 let mut builder = Builder::default();
+                let mut fragments = vec![Positions::default()];
                 for chunk in values.chunks(17) {
                     let mut piece = Builder::default();
                     for &p in chunk {
                         piece.push(p).unwrap();
                     }
+                    fragments.push(
+                        Positions::from_sorted_owned(Input::Builder(&piece), &mut arena.lease())
+                            .unwrap(),
+                    );
                     builder.append(piece).unwrap();
                 }
                 assert!(builder.iter().eq(values.iter().copied()));
+                fragments.push(Positions::default());
                 let positions =
-                    Positions::from_sorted(Input::Builder(&builder), &mut arena.lease()).unwrap();
+                    Positions::from_sorted(Input::Fragments(&fragments), &mut arena.lease())
+                        .unwrap();
+                drop(fragments);
                 assert!(positions.iter().eq(values.iter().copied()));
                 for index in (0..=length)
                     .step_by(if cfg!(miri) { 127 } else { 1 })
@@ -473,6 +523,11 @@ mod tests {
         let arena = Arena::new(1, 0);
         let mut lease = arena.lease();
         assert!(Positions::from_sorted(Input::Slice(&[u64::MAX, 0]), &mut lease).is_err());
+        for (a, b) in [(&[u64::MAX][..], &[0][..]), (&[0, u64::MAX][..], &[1][..])] {
+            let fragments =
+                [a, b].map(|v| Positions::from_sorted_owned(Input::Slice(v), &mut lease).unwrap());
+            assert!(Positions::from_sorted(Input::Fragments(&fragments), &mut lease).is_err());
+        }
         let mut builder = Builder::default();
         builder.push(u64::MAX).unwrap();
         assert!(builder.push(0).is_err());

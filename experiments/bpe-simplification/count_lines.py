@@ -80,7 +80,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--root', type=Path, default=Path(__file__).resolve().parents[2])
     parser.add_argument('--output', type=Path)
-    parser.add_argument('--max-production', type=int, default=2100)
+    parser.add_argument('--max-production', type=int, default=2200)
     parser.add_argument('--max-tests', type=int, default=800)
     args = parser.parse_args()
     root = args.root / 'tokenizers/tk-train'

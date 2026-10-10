@@ -127,34 +127,26 @@ impl<'arena> PairIndex<'arena> {
         progress: &TrainingProgress,
     ) -> Result<Self> {
         let work = progress.stage("Count initial pairs", corpus.word_count());
-        let chunk = corpus
-            .word_count()
-            .div_ceil(workers.saturating_mul(4))
-            .max(1);
-        let pieces = (0..corpus.word_count())
-            .step_by(chunk)
-            .collect::<Vec<_>>()
+        let pieces = corpus
+            .initial_ranges(if cfg!(test) { 16 } else { 1 << 24 })
             .into_par_iter()
-            .map(|begin| -> Result<_> {
+            .map(|range| -> Result<_> {
                 let domain = corpus.small_pair_domain();
                 let mut dense: Vec<State<Builder>> = (0..domain.map_or(0, |n| n * n))
                     .map(|_| State::default())
                     .collect();
                 let mut counts = AHashMap::<Pair, State<Builder>>::new();
-                corpus.initial_edges(
-                    begin..(begin + chunk).min(corpus.word_count()),
-                    |pair, p, weight| {
-                        debug_assert!(pair.0 != WORD_SEPARATOR_ID && pair.1 != WORD_SEPARATOR_ID);
-                        let state = match domain {
-                            Some(n) => &mut dense[pair.0 as usize * n + pair.1 as usize],
-                            None => counts.entry(pair).or_default(),
-                        };
-                        add(&mut state.count, weight)?;
-                        state.positions.push(p)
-                    },
-                )?;
-                work.complete(chunk.min(corpus.word_count() - begin));
-                Ok(match domain {
+                corpus.initial_edges(range.clone(), |pair, p, weight| {
+                    debug_assert!(pair.0 != WORD_SEPARATOR_ID && pair.1 != WORD_SEPARATOR_ID);
+                    let state = match domain {
+                        Some(n) => &mut dense[pair.0 as usize * n + pair.1 as usize],
+                        None => counts.entry(pair).or_default(),
+                    };
+                    add(&mut state.count, weight)?;
+                    state.positions.push(p)
+                })?;
+                work.complete(range.len());
+                let states = match domain {
                     Some(n) => dense
                         .into_iter()
                         .enumerate()
@@ -162,7 +154,24 @@ impl<'arena> PairIndex<'arena> {
                         .map(|(key, state)| (((key / n) as u32, (key % n) as u32), state))
                         .collect::<Vec<_>>(),
                     None => counts.into_iter().collect(),
-                })
+                };
+                let mut lease = arena.lease();
+                states
+                    .into_iter()
+                    .map(|(pair, state)| {
+                        let positions = Positions::from_sorted_owned(
+                            Input::Builder(&state.positions),
+                            &mut lease,
+                        )?;
+                        Ok((
+                            pair,
+                            State {
+                                count: state.count,
+                                positions,
+                            },
+                        ))
+                    })
+                    .collect::<Result<Vec<_>>>()
             })
             .collect::<Result<Vec<_>>>()?;
         let mut routed: Vec<Vec<_>> = (0..workers).map(|_| Vec::new()).collect();
@@ -174,18 +183,21 @@ impl<'arena> PairIndex<'arena> {
         let shards = routed
             .into_par_iter()
             .map(|pieces| -> Result<_> {
-                let mut states = AHashMap::<Pair, State<Builder>>::new();
+                let mut states = AHashMap::<Pair, State<Vec<Positions>>>::new();
                 for (pair, state) in pieces {
                     let total = states.entry(pair).or_default();
                     add(&mut total.count, state.count)?;
-                    total.positions.append(state.positions)?;
+                    total.positions.push(state.positions);
                 }
                 let mut lease = arena.lease();
                 let mut shard = Shard::default();
-                for (pair, state) in states {
+                for (pair, mut state) in states {
                     if reuse || state.count >= minimum.max(1) {
-                        let positions =
-                            Positions::from_sorted(Input::Builder(&state.positions), &mut lease)?;
+                        let positions = if state.positions.len() == 1 {
+                            state.positions.pop().unwrap()
+                        } else {
+                            Positions::from_sorted(Input::Fragments(&state.positions), &mut lease)?
+                        };
                         shard.states.insert(
                             pair,
                             State {

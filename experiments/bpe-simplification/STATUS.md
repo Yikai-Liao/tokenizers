@@ -1,4 +1,20 @@
-# Final structural review and performance follow-up
+# Adopted online compression and prepare optimizations
+
+The selected combination is now applied on the simplification branch: whole-word
+blocks with producer-local compression, exact selected-rule indexing and monotone
+snapshot appends. The extra wave barrier is omitted. Production is **2185/2200**
+and complete default BPE tests/helpers are **797/800**, counted after rustfmt,
+excluding blanks and comments. The default line checker uses these approved limits.
+
+The adopted Rust files are byte-identical to the previously validated combined
+candidate: default/no-default native suites, Clippy and strict Miri passed before
+selection. The transfer validation and source hashes are recorded in
+`evidence/online-adoption.json`. [ONLINE_COMPRESSION.md](ONLINE_COMPRESSION.md)
+contains the individual and conditional gains, all 24 pretokenizer contrasts and
+the remaining Chinese Whitespace initial-index gap. These single observations do
+not establish a stable whole-training speedup or universal parity with main.
+
+## Previous 2100-line baseline review and performance follow-up
 
 Reviewed Rust source: `4d181c51`; production **2100/2100**, complete default BPE
 test/helper budget **780/800**, counted after rustfmt, excluding blanks and comments.

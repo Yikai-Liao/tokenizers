@@ -1,0 +1,98 @@
+{
+  "base_commit": "95c360198f4018df5dbfdbebd109fea007af129a",
+  "production_patch_base": "7e77262bc4e7bbeb7d21c267565c3e3a53a02ff6",
+  "selected": "online compression + selected-rule index + monotone append",
+  "omitted": [
+    "wave barrier"
+  ],
+  "production_patch": "experiments/bpe-simplification/evidence/online-initial/small-combined.patch",
+  "production_patch_sha256": "77338fd5a30c9984046738f8520d13db86a88d6020681da10c088038fa6be390",
+  "source_matches_validated_candidate": true,
+  "validated_candidate_worktree": "/root/code/tokenizers-workspaces/bpe-small-combined-20261010",
+  "bpe_sources_sha256": {
+    "tokenizers/tk-train/src/trainers/bpe/reference.rs": "63ba2255a7bcd7d0961740e0a8ea9c0e13f15f3468e3cfa1e962c2a09f38306e",
+    "tokenizers/tk-train/src/trainers/bpe/word.rs": "b81cd9c9819c7be9a76b6556fd58f0c1d04fb00992998e224f360aa7706553bd",
+    "tokenizers/tk-train/src/trainers/bpe/mod.rs": "8d4643d033af0e58836c71e9da2b6b033c6ceaa85d16b8a79ada06e42ae7aeb3",
+    "tokenizers/tk-train/src/trainers/bpe/feed.rs": "534b1ab1dee75c81d04b419d41c55fd87f4427fc1135c0a584fe493dc858b045",
+    "tokenizers/tk-train/src/trainers/bpe/word_counts.rs": "ff5df75c686b8e2c9a1454d4acbe19f09f8b13003edb0986d48def72adc77d5d",
+    "tokenizers/tk-train/src/trainers/bpe/parity_trainer.rs": "fae3be904339edd3e4275023d71814f56f376f40e7ce71b639955c91e123c9a7",
+    "tokenizers/tk-train/src/trainers/bpe/engine/vocabulary.rs": "30730661ce515b1a61f0ca60fc6bdc632832b118a7d08330ca874ff77885d54b",
+    "tokenizers/tk-train/src/trainers/bpe/engine/positions.rs": "8dcff088b911b1048e0c301efbfccb0ff9b1e4c0a949bcb7d5d0c341d3e75e9a",
+    "tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs": "c9136999117ebb9bb3bb4758b05c4eda9ad7ec5a94e0b853658810adaaf381f3",
+    "tokenizers/tk-train/src/trainers/bpe/engine/index.rs": "77de6fca037fa910ee84a20528de62999db56a9c3a516c63b64084285fb89448",
+    "tokenizers/tk-train/src/trainers/bpe/engine/mod.rs": "8858282626fa23e3b8b4c7bf21248fe09946e6ee512d226c7d8e1ff5e18b1a5b",
+    "tokenizers/tk-train/src/trainers/bpe/engine/merge.rs": "54b68a1e1b8e992d3387b9f7ca58fb7e9e95c93263be45090c86407f0811015c",
+    "tokenizers/tk-train/src/trainers/bpe/engine/tests/mod.rs": "5282f8c2201cbeb1edd8b702f15854eaa4ad5a5448d426d319de30ad8c34a153"
+  },
+  "default_budget": {
+    "production": 2200,
+    "tests": 800
+  },
+  "counts": {
+    "production": {
+      "engine/corpus.rs": 395,
+      "engine/index.rs": 407,
+      "engine/merge.rs": 581,
+      "engine/mod.rs": 94,
+      "engine/positions.rs": 395,
+      "engine/vocabulary.rs": 313
+    },
+    "tests": {
+      "engine/corpus.rs [cfg(test)]": 2,
+      "engine/merge.rs [cfg(test)]": 10,
+      "engine/mod.rs [cfg(test)]": 17,
+      "engine/positions.rs [cfg(test)]": 109,
+      "engine/tests/mod.rs": 441,
+      "reference.rs [oracle and shared helpers]": 154,
+      "mod.rs [cfg(test) public API/helpers]": 6,
+      "feed.rs [cfg(test) public API/helpers]": 0,
+      "word_counts.rs [cfg(test) public API/helpers]": 42,
+      "trainers/mod.rs [cfg(test) BPE wrapper]": 12,
+      "experiments/bpe-simplification/miri-codec/src/lib.rs [Miri harness]": 4
+    },
+    "production_total": 2185,
+    "test_total": 797,
+    "counting_rule": "Nonblank noncomment lines after cargo fmt --check; all engine implementation; all default BPE cfg(test) including feed/word_counts and the shared trainer wrapper, independent reference and Miri harness. The oracle no longer uses the optional parity trainer Word. No implementation relocated outside engine.",
+    "production_limit": 2200,
+    "test_limit": 800,
+    "within_budget": true
+  },
+  "transfer_checks": [
+    {
+      "label": "adoption-budget",
+      "command": [
+        "python3",
+        "experiments/bpe-simplification/count_lines.py",
+        "--output",
+        "/root/code/tokenizers-workspaces/bpe-simplification/experiments/bpe-simplification/evidence/lines-online-adopted.json"
+      ],
+      "log": "experiments/bpe-simplification/evidence/adoption-budget.log",
+      "log_sha256": "d9e78878d744fb8dcb1f1a2a9d1d7816e303b88a592cb0ee7223992b88404358",
+      "passed": true
+    },
+    {
+      "label": "adoption-default",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "tokenizers/tk-train/Cargo.toml",
+        "-j",
+        "2"
+      ],
+      "log": "experiments/bpe-simplification/evidence/adoption-default.log",
+      "log_sha256": "5c81e914bb7a6b0ae40786c01e41ce28b0c78525d8ec2e09e89dfee8a371606a",
+      "passed": true
+    }
+  ],
+  "prior_validation_manifest": "experiments/bpe-simplification/evidence/online-initial/small-ablation-manifest.json",
+  "prior_validation_reused": [
+    "no-default full suite + doctest",
+    "all-target Clippy -D warnings",
+    "strict-provenance Miri (2 tests)"
+  ],
+  "runner_lock_sha256": "b0a4e33189592c3c7f5502bb8f0cfc636ea2936698cbbc0b5c1b9a55bbde3aad",
+  "crate_lock_sha256": "24b5ae9bedbdcc439a4bc828e4ecea2ba410afad0cabee81a865f94ba46853e1"
+}

@@ -134,7 +134,7 @@ impl<'a, 'arena> Neighbors<'a, 'arena> {
                 self.group(born, left)
             };
             add(&mut group.born_weight, weight)?;
-            group.positions.push(position as u64)?;
+            group.positions.push_ordered(position as u64)?;
         }
         Ok(())
     }
@@ -260,6 +260,23 @@ impl<'arena> Batch<'arena> {
             .iter()
             .map(|rule| (rule.pair, rule.replacement))
             .collect();
+        let mut heads = vec![None; corpus.id_count()];
+        let mut tails = vec![false; corpus.id_count()];
+        for rule in &self.rules {
+            let slot = &mut heads[rule.pair.0 as usize];
+            // The separator cannot be a real rule endpoint; it marks a shared head.
+            *slot = Some(if slot.is_some() {
+                (WORD_SEPARATOR_ID, 0)
+            } else {
+                (rule.pair.1, rule.replacement)
+            });
+            tails[rule.pair.1 as usize] = true;
+        }
+        let selected_id = |pair: Pair| match heads.get(pair.0 as usize).copied().flatten() {
+            Some((right, id)) if right != WORD_SEPARATOR_ID => (right == pair.1).then_some(id),
+            None => None,
+            _ => selected.get(&pair).copied(),
+        };
         let aa = self.rules[0].pair.0 == self.rules[0].pair.1;
         let mut starts = Vec::new();
         if aa {
@@ -337,7 +354,8 @@ impl<'arena> Batch<'arena> {
                                     && starts.binary_search(&((p - matched.span()) as u64)).is_ok()
                             } else {
                                 before != 0
-                                    && selected.contains_key(&(corpus.token(before - 1), prior))
+                                    && tails[prior as usize]
+                                    && selected_id((corpus.token(before - 1), prior)).is_some()
                             };
                             // The selected match on the left owns a shared boundary.
                             // Its right event emits the final replacements of both rules;
@@ -360,13 +378,13 @@ impl<'arena> Batch<'arena> {
                                     .binary_search(&(matched.after as u64))
                                     .is_ok()
                                     .then_some(rule.replacement)
+                            } else if heads[next as usize].is_some() {
+                                selected_id((
+                                    next,
+                                    corpus.token(matched.after + corpus.id_span(next)),
+                                ))
                             } else {
-                                selected
-                                    .get(&(
-                                        next,
-                                        corpus.token(matched.after + corpus.id_span(next)),
-                                    ))
-                                    .copied()
+                                None
                             };
                             let born = replacement.unwrap_or(next);
                             neighbors.record(
@@ -523,7 +541,7 @@ impl Writes {
     }
     fn record(&mut self, matched: Match) -> Result<()> {
         match self {
-            Self::Compact { positions, .. } => positions.push(matched.start as u64),
+            Self::Compact { positions, .. } => positions.push_ordered(matched.start as u64),
             Self::Occurrences { positions, .. } => {
                 positions.push(matched);
                 Ok(())

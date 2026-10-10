@@ -30,6 +30,18 @@ The implementation is divided by the knowledge each module owns:
   Arena, selected by a dynamic byte threshold. Duplicate positions and
   coordinates through `u64::MAX` are preserved.
 
+Initial collection splits the borrowed plan at whole-word boundaries, with a
+2²⁴-resident-slot block cap. An oversized single word is processed alone. Each
+producer compresses its temporary positions before returning, so raw lists retire
+without waiting for every producer. Owned compressed fragments retain complete
+pair counts; global frequency admission precedes final list publication. There is
+no extra wave barrier.
+
+Preparation indexes unique rule heads directly by token ID and checks tail
+presence before left-neighbor lookup. Shared heads fall back to exact pair keys.
+Only monotone snapshot write/birth appenders skip repeated ordering checks;
+general appends and final encoding retain validation.
+
 Compatible batches retain the original priority prefix and permit shared heads
 or shared tails. Crossed endpoints end the batch without skipping a candidate.
 AA and reserved-ID rules run alone. Complete ordinary producers prune before encoding in preparation and publish
@@ -58,7 +70,7 @@ exhaust every start. Native and Miri allocation tests use scoped threads and bot
 Public tests cover feed, model reload, progress and ambient-versus-training pool
 behavior. [The coverage map](tests/COVERAGE.md) records the combined boundaries.
 
-The 2100-line production budget covers all engine implementation, including any
+The 2200-line production budget covers all engine implementation, including any
 logic moved outside this directory. All default BPE test-only code, the reference oracle, shared helpers and Miri
 harness have a separate 800-line limit; redundant checks are combined before
 using that allowance.

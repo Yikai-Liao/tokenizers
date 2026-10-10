@@ -117,6 +117,24 @@ impl<'input> CorpusPlan<'input> {
     pub(super) fn word_count(&self) -> usize {
         self.words.len()
     }
+    // Whole words preserve symbol-scan semantics. A single oversized word is
+    // admitted alone; otherwise each range has at most `slots` resident slots.
+    pub(super) fn initial_ranges(&self, slots: usize) -> Vec<std::ops::Range<usize>> {
+        let mut ranges = Vec::new();
+        let mut begin = 0;
+        while begin < self.word_count() {
+            let mut end = begin + 1;
+            while end < self.word_count()
+                && self.starts.get(end + 1).copied().unwrap_or(self.length) - self.starts[begin]
+                    <= slots
+            {
+                end += 1;
+            }
+            ranges.push(begin..end);
+            begin = end;
+        }
+        ranges
+    }
     pub(super) fn small_pair_domain(&self) -> Option<usize> {
         (self.spans.len() <= 256).then_some(self.spans.len())
     }
