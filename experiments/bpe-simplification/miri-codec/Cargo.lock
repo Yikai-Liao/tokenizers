@@ -3,10 +3,10 @@
 version = 4
 
 [[package]]
-name = "bumpalo"
-version = "3.20.3"
+name = "cfg-if"
+version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "72f5acc6cb2ba439de613abc23857ec3d78374d8ed5ac84e9d11336e87da8649"
+checksum = "4e7648175b45a9a48536d676f68d918270699102aa8dab5496df06904c914600"
 
 [[package]]
 name = "crossbeam-deque"
@@ -52,10 +52,10 @@ dependencies = [
 name = "lean-bpe-codec-check"
 version = "0.0.0"
 dependencies = [
- "bumpalo",
  "itertools",
  "rayon",
  "smallvec",
+ "thread_local",
 ]
 
 [[package]]
@@ -83,3 +83,12 @@ name = "smallvec"
 version = "1.16.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f9395f0f0eee849a9b707b2f06bb92a6a422090e2123bb2ef8e87a0e61892a8e"
+
+[[package]]
+name = "thread_local"
+version = "1.1.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1ad99c4c6d32803332c548b1af0540b357b3f5fc0be8f6c6bfe8b2e6ae784070"
+dependencies = [
+ "cfg-if",
+]

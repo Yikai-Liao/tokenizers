@@ -3,7 +3,7 @@
 ## Joined rounds and ownership
 
 The private `train` coordinator in `mod.rs` owns the vocabulary, corpus, pair index
-and allocation Arena for one attempt. Public inputs and worker policy enter through
+and encoder scratch for one attempt. Public inputs and worker policy enter through
 `BpeTrainer::train_counts`; tests exercise the same coordinator with explicit workers.
 A selected `Batch`
 owns the occurrence lists of its rules. `Batch::prepare` consumes those lists,
@@ -15,9 +15,10 @@ and updates count owners in parallel.
 Errors discard the attempt. Reader and owner jobs finish before their borrowed
 state can be dropped. Commit can fail after writes and partial count updates;
 rounds do not promise rollback. Tokens and occurrence spans use ordinary relaxed
-atomic accesses. Corpus cache hints use an x86_64 intrinsic with addresses from
-checked accesses to live slots; other architectures use a no-op hint. Position
-storage also uses unsafe allocation and payload access, as specified below.
+atomic accesses. Corpus cache hints use `branches` with addresses from checked
+accesses to live slots. Stable x86_64 emits L1 prefetch and stable AArch64 emits
+`prfm pldl1keep`; unsupported targets retain the library fallback. Position
+storage uses owned Box allocations and checked slices, with automatic Send/Sync.
 Atomics do not replace the disjoint-match and joined-phase semantic requirements.
 
 ## Token identity and initialization
@@ -54,6 +55,10 @@ retained lists before allocating token slots. Materialization consumes the plan
 and releases thin input references.
 Fresh mode releases its per-word start directory; weights retain only adjacent
 equal-weight regions. Reuse keeps word starts for cohort scan domains.
+`InitialPairCounts` owns the dense-versus-sparse counting choice and its domain.
+`CohortPreparation` owns one rule's writes and neighbor aggregation through scanning
+and publication. Explicit Empty/Unique/Shared head states replace the shared-head
+separator marker without changing exact pair fallback.
 
 Preparation uses Rayon `map_init` to reuse private directories within each
 parallel task. Each side maps neighbor IDs to u32 change-entry indices; touched slots are reset before reuse.
@@ -118,7 +123,7 @@ outputs and owner indices are internal and are not stored in the model format.
 
 `OwnerCommit` encapsulates one owner's sequential commit work. It borrows the count
 shard, fixes the reuse/frequency policy, and owns partial birth groups, pending
-candidates and an executing worker's allocation lease. Its commit method drains
+candidates and an executing thread's encoder-scratch lease. Its commit method drains
 the route in order, removes old weight before recording each birth, and consumes
 the work state when publishing groups. The coordinator receives only completed
 candidates after owner jobs join. Errors release unpublished storage and discard
@@ -151,47 +156,21 @@ each action; owner order is the original producer order. Draining both vectors
 retains capacity. Errors drop active drains; the attempt is discarded after
 owner jobs join. Successful commits drain every route before the next round.
 
-An attempt-scoped Arena owns final small allocations. Its threshold is the
-gentle-growth heuristic `T(N) = max(256 B, floor(256 B * sqrt(N / 2^24)))`,
-where N is the resident slot count. The corpus plan counts token slots and word
-separators, including the initial separator slot; word weights do not multiply N.
-Since `256 / sqrt(2^24) = 1/16`, the variable term is `sqrt(N / 256)` bytes.
-Integer division followed by integer square root gives the same floor. The
-threshold stays at 256 B through 16 Mi slots, becomes 512 B at 64 Mi slots and
-1024 B at 256 Mi slots: quadrupling a corpus doubles the unclamped threshold.
-The scale and floor are allocation policy choices, not a fitted optimal crossover.
+Published lists use an explicit `Empty`, `One(u64)`, `Two(u64, u64)` or
+`Compressed(Box<[u8]>)` representation. Both inline values retain the full u64
+range. Each compressed list owns its bytes and releases them when its queue,
+fragment or birth owner retires. There is no pointer tag, manual allocation
+layout, ownership-specific destructor or arena lifetime on a frozen list.
+The enum is 24 bytes on the measured 64-bit target; the former descriptor was
+16 bytes. This size tradeoff accompanies earlier release of retired byte storage.
 
-Bump allocation avoids individual small-block allocation and free calls. Retired
-Arena blocks remain resident until the attempt ends, so raising the threshold
-also retains more dead storage. Square-root growth admits larger blocks gradually;
-larger individually owned blocks can be freed when their lists retire. The cutoff
-limits each eligible allocation, not total retained Arena bytes. Eligibility uses
-the complete encoded layout, including length header, restart directory and stream,
-rather than the number of positions. Initial index fragments explicitly use owned
-storage so counting/aggregation can release them independently of the Arena.
-
-The original rule used initial physical edges. Resident slots reuse the existing
-plan size without another edge-count field. The
-[input ablation](../../../../../experiments/bpe-simplification/CUTOFF_ABLATION.md)
-compared these inputs: eight of nine cases had the same clamped 256 B threshold;
-the one differing case had only one paired measurement. Those results support
-retaining the simpler input but do not establish an optimal scale or exponent.
-
-Each worker has a mutex-protected bump cursor and reusable encoding scratch.
-Leases are held only inside sequential worker closures; no nested parallel work
-runs while a lease is held. Frozen allocations are copied away from scratch and
-remain stable after leases end. Arena storage is never reset during an attempt.
-
-Published `Positions<'arena>` uses a two-word descriptor. One or two values
-use inline flags when the full-width first value and gap fit their fields;
-other lists carry an aligned payload pointer. A low pointer tag identifies Arena
-ownership. Heap lists reconstruct their validated layout for deallocation;
-Arena lists retire without individual free. Inline numeric payloads are never
-dereferenced. Payload readers only read initialized headers, directories and
-streams. The immutable descriptor is Send and Sync because its final allocation
-stays live for its owner or borrowed Arena, and each reader has its own decoder.
-The index, candidates and prepared births borrow the Arena lifetime; joined
-phases and Rust drop order keep it alive until all such lists are released.
+`Codec` owns ThreadLocal RefCell workers with reusable byte and offset vectors.
+The RefMut lease prevents reentrant use of one thread's scratch; parallel work
+never starts while that lease is held. Workers stay alive until Codec is dropped,
+including when their creating threads exit. Freezing copies initialized encoded
+bytes into the final owned Box. Readers carry only a borrowed immutable byte
+slice and private decoder state, so they can outlive the scratch lease and Codec.
+The index and preparation objects borrow Codec only to create new lists.
 
 Reuse owners retain a signed i64 ledger and the queue owns independent occurrence
 cohorts. Selection repairs the head cohort against the shared ledger, preserving
@@ -238,7 +217,8 @@ cohort selection can stream the full list without a corpus-sized bitmap.
 Full-model comparisons cover vocabulary IDs and complete ordered merges. Small
 fixtures also compare every `(pair, count, replacement ID)` with an independent
 sequential reference. Literal expectations cover numeric limits and alias
-cohorts; codec tests and Miri exercise immutable storage and scoped allocation.
+cohorts; codec tests and Miri exercise immutable storage, concurrent readers and
+lists that outlive their encoder scratch.
 See [the test coverage map](COVERAGE.md).
 
 Performance evidence belongs to the experiment report: paired independent
@@ -251,5 +231,5 @@ The endpoint representation and compatible batching retain the algorithmic
 lineage documented by the original engine: Yikai Liao's efficient BPE prototypes,
 BatchBPE and YouTokenToMe's conditional rule pipeline. The custom BSD radix-sort
 translation has been removed; this engine uses standard sorting and a small
-delta stream with an immutable, lifetime-scoped allocation descriptor.
+delta stream with immutable owned byte storage.
 The invariants above describe the safety and ordering requirements used here.

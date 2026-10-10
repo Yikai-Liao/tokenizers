@@ -107,7 +107,8 @@ def main():
                 tests[name + ' [cfg(test)]'] = test
     for filename in ['reference.rs']:
         path = bpe / filename
-        tests[filename + ' [oracle and shared helpers]'] = sum(bool(line.strip()) for line in strip_comments(path.read_text()).splitlines())
+        if path.exists():
+            tests[filename + ' [oracle and shared helpers]'] = sum(bool(line.strip()) for line in strip_comments(path.read_text()).splitlines())
     # The shared trainer wrapper's sole default test exercises BpeTrainer.
     _, wrapper_tests = separate_test_items((bpe.parent / 'mod.rs').read_text())
     tests['trainers/mod.rs [cfg(test) BPE wrapper]'] = wrapper_tests

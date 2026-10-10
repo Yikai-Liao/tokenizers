@@ -124,10 +124,6 @@ impl<'input> CorpusPlan<'input> {
         })
     }
 
-    pub(super) fn items(&self) -> usize {
-        self.length
-    }
-
     pub(super) fn word_count(&self) -> usize {
         self.words.len()
     }
@@ -233,24 +229,15 @@ impl Corpus {
     }
 
     pub(super) fn prefetch(&self, position: usize) {
-        #[cfg(target_arch = "x86_64")]
-        {
-            let address = match &self.tokens {
-                Slots::Narrow(values) => values.get(position).map(|v| std::ptr::from_ref(v).cast()),
-                Slots::Wide(values) => values.get(position).map(|v| std::ptr::from_ref(v).cast()),
-            };
-            if let Some(address) = address {
-                // SAFETY: get() supplies an address within this live borrowed
-                // allocation. The intrinsic issues only a cache hint; it does
-                // not read or write a logical token or extend its lifetime.
-                unsafe {
-                    std::arch::x86_64::_mm_prefetch(address, std::arch::x86_64::_MM_HINT_T0);
-                }
-            }
+        let address: Option<*const u8> = match &self.tokens {
+            Slots::Narrow(values) => values.get(position).map(|v| std::ptr::from_ref(v).cast()),
+            Slots::Wide(values) => values.get(position).map(|v| std::ptr::from_ref(v).cast()),
+        };
+        if let Some(address) = address {
+            // Locality zero is L1 on both stable and nightly branches builds,
+            // matching the former x86 T0 hint and covering AArch64 as well.
+            branches::prefetch_read_data::<_, 0>(address);
         }
-
-        #[cfg(not(target_arch = "x86_64"))]
-        let _ = position;
     }
 
     pub(super) fn weight_region(&self, position: usize) -> (u64, usize) {

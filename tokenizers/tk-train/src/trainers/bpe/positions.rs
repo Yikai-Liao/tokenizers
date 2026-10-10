@@ -1,67 +1,35 @@
-//! Frozen occurrence lists with inline pairs and Arena or owned allocations.
-use bumpalo::Bump;
+//! Owned restart/delta occurrence lists with inline pairs and reusable codec scratch.
 use std::{
-    alloc::{Layout, alloc, dealloc},
-    marker::PhantomData,
+    cell::{RefCell, RefMut},
     ops::Range,
-    sync::{Mutex, MutexGuard},
 };
+use thread_local::ThreadLocal;
 use tk_encode::Result;
-
 const RESTART: usize = 128;
-const INLINE: usize = 1 << (usize::BITS - 1);
-const PAIR: usize = 1 << (usize::BITS - 2);
-const DELTA_MASK: usize = PAIR - 1;
-const ARENA: usize = 1;
 
-/// Owns small frozen occurrence allocations and encoding scratch for one attempt.
-/// Cursor slots follow executing Rayon workers, independently of pair-count owners.
-/// Published lists borrow this storage; releasing a lease never resets it.
-pub(super) struct Arena {
-    workers: Vec<Mutex<Worker>>,
-    cutoff: usize,
+/// Reuses the existing per-worker encoder buffers for one training attempt.
+/// Published lists own their bytes; this object retains only temporary scratch.
+pub(super) struct Codec {
+    workers: ThreadLocal<RefCell<Worker>>,
 }
-
-impl Arena {
-    pub(super) fn new(workers: usize, items: usize) -> Self {
+impl Codec {
+    pub(super) fn new(workers: usize) -> Self {
         Self {
-            workers: (0..workers).map(|_| Mutex::default()).collect(),
-            // Gentle-growth heuristic: T(N) = max(256 B, 256 B * sqrt(N / 2^24)),
-            // rounded down to bytes. Since 256 / sqrt(2^24) = 1 / 16, the variable
-            // term is sqrt(N / 256). Integer division followed by isqrt preserves
-            // its floor. Up to 16 Mi slots the cutoff is 256 B; 64 Mi gives 512 B,
-            // and 256 Mi gives 1024 B. N counts resident token/separator slots,
-            // including the initial separator, independently of word weights.
-            //
-            // Bump allocation avoids individual small-block alloc/free calls, but
-            // retired blocks remain resident until this attempt ends. Square-root
-            // growth admits larger blocks gradually; blocks above T stay owned
-            // and can be freed individually. The scale/floor are policy choices,
-            // not a fitted optimum or a bound on total retained Arena bytes.
-            // Eligibility uses the entire encoded layout (header/directory/stream),
-            // not the position count; initial fragments explicitly stay owned.
-            cutoff: ((items as u128 / 256).isqrt() as usize).max(256),
+            workers: ThreadLocal::with_capacity(workers),
         }
     }
-
     pub(super) fn lease(&self) -> Lease<'_> {
-        // A worker cursor is non-reentrant. Drop the lease before starting any
-        // nested Rayon work: another task on this worker may request the same lock.
         Lease {
-            arena: self,
-            cursor: self.workers[rayon::current_thread_index().unwrap_or(0) % self.workers.len()]
-                .lock()
-                .unwrap_or_else(|e| e.into_inner()),
+            cursor: self.workers.get_or_default().borrow_mut(),
         }
     }
 }
 
-/// One executing worker's bump cursor and reusable codec buffers, leased together.
-/// Bump blocks live for the attempt; bytes and offsets are overwritten per stream.
-/// The enclosing mutex grants mutable access and lets the Arena share a !Sync Bump.
+/// One executing thread's reusable codec buffers, borrowed together.
+/// Bytes and offsets are overwritten per stream and reused across freezes.
+/// The RefCell guard grants exclusive access to both scratch buffers.
 #[derive(Default)]
 struct Worker {
-    bump: Bump,
     bytes: Vec<u8>,
     offsets: Vec<usize>,
 }
@@ -94,12 +62,10 @@ impl Worker {
     }
 }
 
-/// Temporary exclusive access to one worker's allocation and encoding state.
-/// Frozen lists borrow the Arena for `'arena`, so they can outlive this guard.
-/// Keep work sequential while held: nested Rayon work could reacquire its mutex.
-pub(super) struct Lease<'arena> {
-    arena: &'arena Arena,
-    cursor: MutexGuard<'arena, Worker>,
+/// Exclusive access to one executing worker's reusable encoder buffers.
+/// Frozen lists own their bytes and can outlive this guard and the Codec.
+pub(super) struct Lease<'codec> {
+    cursor: RefMut<'codec, Worker>,
 }
 
 /// Mutable sorted task positions, narrowed to u32 until a full-u64 value appears.
@@ -184,7 +150,7 @@ impl Builder {
 pub(super) enum Input<'a> {
     Builder(&'a Builder),
     Slice(&'a [u64]),
-    Fragments(&'a [Positions<'a>]),
+    Fragments(&'a [Positions]),
 }
 
 impl Input<'_> {
@@ -229,156 +195,85 @@ impl Input<'_> {
     }
 }
 
-/// Immutable sorted full-u64 positions with independent restart-block readers.
-/// Inline lists store the first coordinate in payload and the gap in count bits.
-/// Allocated lists own a heap block or borrow the Arena, tagged in the pointer's
-/// low bit; dropping an Arena list leaves its block alive for the whole attempt.
+/// Immutable full-u64 lists with inline pairs and owned restart/delta bytes.
+/// The first word holds cardinality; the directory and stream retain their format.
+/// Ownership and automatic Send/Sync come from Box, without raw allocation or borrowed storage.
 #[derive(Default)]
-pub(super) struct Positions<'arena> {
-    count_and_flags: usize,
-    payload: *mut u8,
-    arena_lifetime: PhantomData<&'arena Arena>,
+pub(super) enum Positions {
+    #[default]
+    Empty,
+    One(u64),
+    Two(u64, u64),
+    Compressed(Box<[u8]>),
 }
-
-// SAFETY: lists own their final heap storage or borrow stable Arena
-// storage. Moving a list does not move its allocation; Arena is Send + Sync.
-unsafe impl Send for Positions<'_> {}
-// SAFETY: mutation requires &mut self; borrowed readers own decoder state.
-// All initialized payloads stay live for the list or its training Arena.
-unsafe impl Sync for Positions<'_> {}
-
 fn prefix(count: usize) -> usize {
     let groups = count.div_ceil(RESTART);
     (1 + if groups > 1 { groups } else { 0 }) * std::mem::size_of::<usize>()
 }
-
-fn layout(count: usize, bytes: usize) -> Result<Layout> {
-    Layout::from_size_align(
-        prefix(count)
-            .checked_add(bytes)
-            .ok_or("BPE position layout exceeds usize")?,
-        8,
-    )
-    .map_err(|_| "BPE position allocation exceeds resident bounds".into())
-}
-
-impl<'arena> Positions<'arena> {
-    #[inline]
+impl Positions {
     pub(super) fn len(&self) -> usize {
-        if self.count_and_flags & INLINE == 0 {
-            self.count_and_flags
-        } else {
-            1 + usize::from(self.count_and_flags & PAIR != 0)
+        match self {
+            Self::Empty => 0,
+            Self::One(_) => 1,
+            Self::Two(_, _) => 2,
+            Self::Compressed(bytes) => {
+                usize::from_le_bytes(bytes[..std::mem::size_of::<usize>()].try_into().unwrap())
+            }
         }
     }
-
     pub(super) fn is_empty(&self) -> bool {
         self.len() == 0
     }
-
-    fn pointer(&self) -> *mut u8 {
-        self.payload.map_addr(|a| a & !1)
-    }
-
-    pub(super) fn from_sorted(input: Input<'_>, lease: &mut Lease<'arena>) -> Result<Self> {
-        Self::encode(input, lease, false)
-    }
-
-    pub(super) fn from_sorted_owned(input: Input<'_>, lease: &mut Lease<'arena>) -> Result<Self> {
-        Self::encode(input, lease, true)
-    }
-
-    fn encode(input: Input<'_>, lease: &mut Lease<'arena>, owned: bool) -> Result<Self> {
-        // 1. Validate cardinality and use inline storage for one or two positions.
+    pub(super) fn from_sorted(input: Input<'_>, lease: &mut Lease<'_>) -> Result<Self> {
         let count = input.len()?;
         if count == 0 {
-            return Ok(Self::default());
+            return Ok(Self::Empty);
         }
-        if count >= INLINE {
-            return Err("BPE position count exceeds resident bounds".into());
+        let (first, last) = input.bounds().expect("nonempty input has endpoints");
+        if last < first {
+            return Err("BPE positions are not sorted".into());
         }
-        let (first, last) = input
-            .bounds()
-            .expect("nonempty trusted input has endpoints");
-        let gap = last
-            .checked_sub(first)
-            .ok_or("BPE positions are not sorted")?;
-        if count <= 2 && first <= usize::MAX as u64 && (count == 1 || gap <= DELTA_MASK as u64) {
-            return Ok(Self {
-                count_and_flags: INLINE | if count == 2 { PAIR | gap as usize } else { 0 },
-                payload: std::ptr::without_provenance_mut(first as usize),
-                arena_lifetime: PhantomData,
-            });
+        if count == 1 {
+            return Ok(Self::One(first));
         }
-
-        // 2. Encode restart blocks in the worker's reusable scratch buffers.
+        if count == 2 {
+            return Ok(Self::Two(first, last));
+        }
         let worker = &mut *lease.cursor;
         worker.encode_stream(&input)?;
-
-        // 3. Freeze the stream into its final Arena or owned allocation.
-        let allocation = layout(count, worker.bytes.len())?;
-        let arena = !owned && allocation.size() <= lease.arena.cutoff;
-        let pointer = if arena {
-            worker
-                .bump
-                .try_alloc_layout(allocation)
-                .map_err(|_| "BPE position arena allocation failed")?
-                .as_ptr()
-        } else {
-            // SAFETY: layout is nonzero and validated; null is handled below.
-            unsafe { alloc(allocation) }
-        };
-        if pointer.is_null() {
-            return Err("BPE position allocation failed".into());
-        }
-
-        // SAFETY: final layout reserves an aligned length word, optional full
-        // restart directory and stream. All bytes read later are initialized here.
-        unsafe {
-            pointer.cast::<usize>().write(worker.bytes.len());
-            if worker.offsets.len() > 1 {
-                std::ptr::copy_nonoverlapping(
-                    worker.offsets.as_ptr(),
-                    pointer.cast::<usize>().add(1),
-                    worker.offsets.len(),
-                );
+        let capacity = prefix(count)
+            .checked_add(worker.bytes.len())
+            .ok_or("BPE position layout exceeds usize")?;
+        let mut bytes = Vec::with_capacity(capacity);
+        bytes.extend_from_slice(&count.to_le_bytes());
+        if worker.offsets.len() > 1 {
+            for &offset in &worker.offsets {
+                bytes.extend_from_slice(&offset.to_le_bytes());
             }
-            std::ptr::copy_nonoverlapping(
-                worker.bytes.as_ptr(),
-                pointer.add(prefix(count)),
-                worker.bytes.len(),
-            );
         }
-
-        // Arena publication borrows the attempt,
-        // independently of this cursor lease; no reset or early free is exposed.
-        Ok(Self {
-            count_and_flags: count,
-            payload: pointer.map_addr(|a| a | usize::from(arena)),
-            arena_lifetime: PhantomData,
-        })
+        bytes.extend_from_slice(&worker.bytes);
+        Ok(Self::Compressed(bytes.into_boxed_slice()))
     }
-
     fn bytes(&self) -> &[u8] {
-        // SAFETY: only final-storage readers call this. The prefix is initialized
-        // and its stream length/layout were validated at freeze publication.
-        unsafe {
-            std::slice::from_raw_parts(
-                self.pointer().add(prefix(self.len())),
-                self.pointer().cast::<usize>().read(),
-            )
+        match self {
+            Self::Compressed(bytes) => &bytes[prefix(self.len())..],
+            _ => &[],
         }
     }
-
     fn offset(&self, block: usize) -> usize {
         if block == 0 {
-            0
-        } else {
-            // SAFETY: multi-block final layouts initialize this directory entry.
-            unsafe { self.pointer().cast::<usize>().add(1 + block).read() }
+            return 0;
         }
+        let Self::Compressed(bytes) = self else {
+            unreachable!()
+        };
+        let start = (1 + block) * std::mem::size_of::<usize>();
+        usize::from_le_bytes(
+            bytes[start..start + std::mem::size_of::<usize>()]
+                .try_into()
+                .unwrap(),
+        )
     }
-
     pub(super) fn block_count(&self) -> usize {
         self.len().div_ceil(RESTART)
     }
@@ -401,14 +296,13 @@ impl<'arena> Positions<'arena> {
         let blocks = self.block_count();
         let start = (range.start.min(blocks) * RESTART).min(self.len());
         let end = (range.end.min(blocks) * RESTART).min(self.len());
-        if self.is_empty() || self.count_and_flags & INLINE != 0 {
-            let first = self.payload.addr() as u64;
-            itertools::Either::Left(
-                [first, first + (self.count_and_flags & DELTA_MASK) as u64]
-                    .into_iter()
-                    .take(end)
-                    .skip(start),
-            )
+        if !matches!(self, Self::Compressed(_)) {
+            let values = match self {
+                Self::One(value) => [*value, 0],
+                Self::Two(first, last) => [*first, *last],
+                _ => [0, 0],
+            };
+            itertools::Either::Left(values.into_iter().take(end).skip(start))
         } else {
             let bytes = if start == end {
                 &[]
@@ -448,25 +342,6 @@ impl<'arena> Positions<'arena> {
             .skip(index % RESTART)
     }
 }
-
-impl Drop for Positions<'_> {
-    fn drop(&mut self) {
-        if self.is_empty() || self.count_and_flags & INLINE != 0 {
-            return;
-        }
-
-        // SAFETY: the tag distinguishes owned final allocation and
-        // borrowed Arena. Each owned allocation is reclaimed once with its layout.
-        unsafe {
-            if self.payload.addr() & ARENA == 0 {
-                let allocation = layout(self.len(), self.pointer().cast::<usize>().read())
-                    .expect("published layout was validated");
-                dealloc(self.pointer(), allocation);
-            }
-        }
-    }
-}
-
 /// A reader's private decode state over a borrowed immutable position stream.
 /// Absolute restart seeds bound replay; index/end delimit the requested blocks.
 struct Cursor<'a> {
@@ -510,13 +385,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn storage_roundtrips_seeks_and_survives_concurrent_cursor_reuse() {
-        assert_eq!(
-            std::mem::size_of::<Positions<'_>>(),
-            2 * std::mem::size_of::<usize>()
-        );
-        // 1. Freeze and seek lists across inline, restart, and full-u64 boundaries.
-        let arena = Arena::new(2, 0);
+    fn storage_roundtrips_seeks_and_supports_concurrent_readers() {
+        // Freeze and seek lists across inline, chunk and full-u64 boundaries.
+        let codec = Codec::new(2);
         let boundary = [0, u32::MAX as u64, 1 << 32, 1 << 63, u64::MAX];
         let saved: Vec<_> = [0, 1, 2, 3, 127, 128, 129, 257, 1024]
             .into_iter()
@@ -535,15 +406,14 @@ mod tests {
                         piece.push(p).unwrap();
                     }
                     fragments.push(
-                        Positions::from_sorted_owned(Input::Builder(&piece), &mut arena.lease())
-                            .unwrap(),
+                        Positions::from_sorted(Input::Builder(&piece), &mut codec.lease()).unwrap(),
                     );
                     builder.append(piece).unwrap();
                 }
                 assert!(builder.iter().eq(values.iter().copied()));
                 fragments.push(Positions::default());
                 let positions =
-                    Positions::from_sorted(Input::Fragments(&fragments), &mut arena.lease())
+                    Positions::from_sorted(Input::Fragments(&fragments), &mut codec.lease())
                         .unwrap();
                 drop(fragments);
                 assert!(positions.iter().eq(values.iter().copied()));
@@ -578,19 +448,16 @@ mod tests {
             })
             .collect();
 
-        // 2. Reuse both worker cursors while other threads read published lists.
+        // Independently build lists while other threads read existing owned lists.
         // No Rayon collector is involved in Miri.
         std::thread::scope(|scope| {
-            for worker in 0..2 {
-                let arena = &arena;
+            for _ in 0..2 {
                 let saved = &saved;
+                let codec = &codec;
                 scope.spawn(move || {
-                    let mut lease = Lease {
-                        arena,
-                        cursor: arena.workers[worker].lock().unwrap(),
-                    };
                     let values: Vec<_> = (0..512).map(|i| (1 << 63) + i).collect();
-                    let next = Positions::from_sorted(Input::Slice(&values), &mut lease).unwrap();
+                    let next =
+                        Positions::from_sorted(Input::Slice(&values), &mut codec.lease()).unwrap();
                     assert!(next.iter().eq(values));
                     for (positions, expected) in saved {
                         assert!(positions.iter().eq(expected.iter().copied()));
@@ -598,25 +465,30 @@ mod tests {
                 });
             }
         });
+        drop(codec);
+        for (positions, expected) in saved {
+            assert!(positions.iter().eq(expected));
+        }
     }
 
     #[test]
     // The inverted range is deliberately passed as malformed decoder input.
     #[allow(clippy::reversed_empty_ranges)]
-    fn unsafe_storage_rejects_inverted_ranges_and_unsorted_input() {
-        let arena = Arena::new(1, 0);
-        let mut lease = arena.lease();
-        assert!(Positions::from_sorted(Input::Slice(&[u64::MAX, 0]), &mut lease).is_err());
+    fn storage_rejects_inverted_ranges_and_unsorted_input() {
+        let codec = Codec::new(2);
+        assert!(Positions::from_sorted(Input::Slice(&[u64::MAX, 0]), &mut codec.lease()).is_err());
         for (a, b) in [(&[u64::MAX][..], &[0][..]), (&[0, u64::MAX][..], &[1][..])] {
-            let fragments =
-                [a, b].map(|v| Positions::from_sorted_owned(Input::Slice(v), &mut lease).unwrap());
-            assert!(Positions::from_sorted(Input::Fragments(&fragments), &mut lease).is_err());
+            let fragments = [a, b]
+                .map(|v| Positions::from_sorted(Input::Slice(v), &mut codec.lease()).unwrap());
+            assert!(
+                Positions::from_sorted(Input::Fragments(&fragments), &mut codec.lease()).is_err()
+            );
         }
         let mut builder = Builder::default();
         builder.push(u64::MAX).unwrap();
         assert!(builder.push(0).is_err());
         let values: Vec<_> = (0..129u64).collect();
-        let positions = Positions::from_sorted(Input::Slice(&values), &mut lease).unwrap();
+        let positions = Positions::from_sorted(Input::Slice(&values), &mut codec.lease()).unwrap();
         let call = std::panic::AssertUnwindSafe(|| positions.read_blocks(1000..0).next());
         assert!(std::panic::catch_unwind(call).is_err());
     }

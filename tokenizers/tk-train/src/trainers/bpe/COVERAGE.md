@@ -22,15 +22,15 @@ Literal alphabet expectations independently check that shared selector.
 | Feed flushing, first `None`, duplicate callback words and transactional process errors | Isolated public test at 0/31/32/33/127/128/129/257 items, resumed nonfused input, empty/Unicode/long callback words, bulk 2047/2048/2049 unique words, exact flat counts, full callback count after error and unchanged prior state |
 | Requested training pool versus ambient pool and serial settings | Child processes install an ambient two-thread pool; materialization and both preparation paths check requested pool size and record that each executed; feed callbacks verify ambient worker size and concurrent/serial execution |
 | JSON progress schema, starts and completion | Child-process matrix covers normal/no-bar/zero-merge/empty/Silent; strict JSON parsing, exact three-field schema, initial zero and final actual merge count |
-| Numeric position width, duplicate values, restart blocks, seek, append, promotion and both allocation paths | One matrix of lengths around inline and block boundaries, values through `u64::MAX`, explicit ten-byte deltas, all native seek starts and independent lower-bound expectations for present and gap values |
-| Published list lifetime, shared readers and allocation cursor reuse | Two scoped threads allocate through both cursors while reading earlier Arena and heap lists |
-| Invalid decoder ranges and unsorted construction | Explicit rejection before pointer access; Miri imports this same implementation and tests |
+| Numeric position width, duplicate values, restart blocks, seek, append, promotion and owned byte storage | One matrix of lengths around inline and block boundaries, values through `u64::MAX`, explicit ten-byte deltas, all native seek starts and independent lower-bound expectations for present and gap values |
+| Published list lifetime, shared readers and allocation cursor reuse | Two scoped threads build lists while reading earlier owned lists, then read them again after Codec is dropped |
+| Invalid decoder ranges and unsorted construction | Explicit rejection before byte access; Miri imports this same implementation and tests |
 
 The former fixture files and legacy trainer tests are consolidated into these
 contracts. Their repeated helper infrastructure and overlapping private feed tests are
 replaced by public flat-count/callback contracts. This map describes
 asserted behavior; it does not claim exhaustive coverage of all combinations.
-The storage constructor accepts only a slice or the engine's own builder, so
+The storage constructor accepts only a slice, the engine's own builder or owned-list fragments, so
 arbitrary safe iterators can no longer supply a false allocation cardinality.
 
 The formatted line count includes test hooks, the complete reference oracle,

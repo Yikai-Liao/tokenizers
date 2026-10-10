@@ -1,0 +1,54 @@
+{
+  "baseline_commit": "7de4e0680631fa362fed2bd54af722828b90ce05",
+  "mode": "core",
+  "binaries": {
+    "final-owned": "/tmp/bpe-library-final-owned-bin",
+    "final-tls": "/tmp/bpe-library-final-tls-bin",
+    "sux-hybrid": "/tmp/bpe-library-sux-hybrid-bin",
+    "vers-hybrid": "/tmp/bpe-library-vers-hybrid-bin",
+    "vu-padded": "/tmp/bpe-library-vu-padded-bin"
+  },
+  "binary_sha256": {
+    "final-owned": "fc71b85ef759758ac7a21427bc37df9ea30de2d955fd9a2e2aa0b3f494d0824c",
+    "final-tls": "6e49bc1c151cc64758e0ebd33e0859443fe83b9e88bfe06d934ed76486128558",
+    "sux-hybrid": "ed46ac6fc852c57a247b69bba0545c9df5ef0aa90c084cbcf723ff709bbfa169",
+    "vers-hybrid": "357f8f578a59b6a97f7009cbfb6e3bfc7dbc8ac63bb796fee0e6f7f06fa617f1",
+    "vu-padded": "12937d8dd3890680a47c926c842396803b97c62bffcf4ff37975e7b3a4b0539c"
+  },
+  "patches": {
+    "final-owned": "462755605a3a6527a4b6fbae3299e08af6eed0acf3573c8a759670373df5f4d4",
+    "final-tls": "f5c57740005a5e2a939dfde7690990f5b3c5a0639ea5673d09f561c9946a975b",
+    "sux-hybrid": "17c56d7a60816ab636f95d10a68ce4ae57bebcf8514f2ed6e7c71e072699ed86",
+    "vers-hybrid": "16203e700dc65c9e600650f7a97a3499d3ee7dba4ecef0c7e8b4da16d17cdf22",
+    "vu-padded": "c1f869647fc76b0f45ce27228c1eeecc5c850791310230c981a8f561fa22e71a"
+  },
+  "cases": [
+    {
+      "case": "zh-256MiB",
+      "language": "zh",
+      "requested_mib": 256,
+      "pretokenizer": "bytelevel_regex",
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+      "bytes": 268435162,
+      "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+      "prepared_path": "/root/code/tokenizers-perfetto-results/inputs/zh-bytelevel/words.json",
+      "prepared_sha256": "bb796d0b57b87d965b84de249bc5c8e283b700774638d16a40e4ae5171b13ee0",
+      "prepared_bytes": 437135595
+    },
+    {
+      "case": "zh-whitespace-256MiB",
+      "language": "zh",
+      "requested_mib": 256,
+      "pretokenizer": "whitespace",
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+      "bytes": 268435162,
+      "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+      "prepared_path": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "prepared_sha256": "ed057a8fdb27544ed29f16dde53faa0de8f47f1ee8ac00080974fac5bb435660",
+      "prepared_bytes": 250116097
+    }
+  ],
+  "scope": "core: public do_train, load/serialization excluded; pipeline: public feed + train, validation excluded; HWM includes input and retained counts",
+  "design": "Two Chinese 256 MiB input cases; 1 rotating rounds; first round warmup only when rounds>1; workers4 affinity0-3; vocab50k/min2; no affixes",
+  "limitation": "Shared VM; descriptive observations, no statistical speedup claim."
+}

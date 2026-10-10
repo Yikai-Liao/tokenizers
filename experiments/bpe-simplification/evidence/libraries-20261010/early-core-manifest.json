@@ -1,0 +1,62 @@
+{
+  "baseline_commit": "7de4e0680631fa362fed2bd54af722828b90ce05",
+  "mode": "core",
+  "binaries": {
+    "baseline": "/tmp/bpe-library-baseline-bin",
+    "bitmap": "/tmp/bpe-library-bitmap-bin",
+    "common-structured": "/tmp/bpe-library-common-structured-bin",
+    "sux": "/tmp/bpe-library-sux-bin",
+    "vers": "/tmp/bpe-library-vers-bin",
+    "neighbors": "/tmp/bpe-library-neighbors-bin",
+    "ownership": "/tmp/bpe-library-ownership-bin",
+    "fixedvec": "/tmp/bpe-library-fixedvec-bin"
+  },
+  "binary_sha256": {
+    "baseline": "de07f4aaeb0fbfdf8f096e93d374251e5873079ab4d71bf6a175638c71f1db4e",
+    "bitmap": "9cc8e7786d2bda27b46e37777a921567d9b04fe023deffd01ef3e25444d21b8f",
+    "common-structured": "a27fcae5e9d88130bc29ad8325a4cda533ff7ce4cef85c8c5d8ad7fff20a3b3f",
+    "sux": "9b22e83502f898876d1eb95b136638fc6b950cded23e2d1cf5e533e3a3f771bb",
+    "vers": "0fe88d79c44c0d429db36d9705016064e95459c6f3962b037202ee283b85daa3",
+    "neighbors": "9582dcf3989cfab05e24642bbc3312b404e0f65554b076c8ef502897a2b57fdf",
+    "ownership": "2a8375113d37ea5eb024b72da473385dbe4c3d169bcbec60a0de9c1cfaa3eed1",
+    "fixedvec": "3ed310d3df14664e5a4bef707af494401c301cddf936fdd9c4eecd99535593d6"
+  },
+  "patches": {
+    "bitmap": "a646e862d028a97ffe7b3aa11bc774c326351ea0ef37a525603863450592b07b",
+    "common-structured": "fcb75f3dc9bfec1db7acdb91bdcf26a0d52697b3569be128616ddf06e6085505",
+    "sux": "3714d1cc555331f4a652686d779685736e4b0d11d0da161996e91a546e8d48f0",
+    "vers": "c8f25c5820606e39a5207ba8a061680551a64e4d03cc5e1fed57ee5fdc12c79d",
+    "neighbors": "1a3ebe5ad0a8e85d07c42ec391ad0148e92705474cbfcabfe887fe2dd7892bad",
+    "ownership": "1b8553274471d21b0aae2152ea9495f2e9e06ea3ecc0ebd196961c50981292bd",
+    "fixedvec": "680299ef4a71e6f58435d69a99b9f5bbe8121ce3ef6968c7e3dbf9a139878c18"
+  },
+  "cases": [
+    {
+      "case": "zh-256MiB",
+      "language": "zh",
+      "requested_mib": 256,
+      "pretokenizer": "bytelevel_regex",
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+      "bytes": 268435162,
+      "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+      "prepared_path": "/root/code/tokenizers-perfetto-results/inputs/zh-bytelevel/words.json",
+      "prepared_sha256": "bb796d0b57b87d965b84de249bc5c8e283b700774638d16a40e4ae5171b13ee0",
+      "prepared_bytes": 437135595
+    },
+    {
+      "case": "zh-whitespace-256MiB",
+      "language": "zh",
+      "requested_mib": 256,
+      "pretokenizer": "whitespace",
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+      "bytes": 268435162,
+      "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+      "prepared_path": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "prepared_sha256": "ed057a8fdb27544ed29f16dde53faa0de8f47f1ee8ac00080974fac5bb435660",
+      "prepared_bytes": 250116097
+    }
+  ],
+  "scope": "core: public do_train, load/serialization excluded; pipeline: public feed + train, validation excluded; HWM includes input and retained counts",
+  "design": "Two Chinese 256 MiB input cases; one warmup + three rotating rounds; workers4 affinity0-3; vocab50k/min2; no affixes",
+  "limitation": "Shared VM; descriptive observations, no statistical speedup claim."
+}

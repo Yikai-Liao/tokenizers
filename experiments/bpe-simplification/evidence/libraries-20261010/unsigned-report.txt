@@ -1,0 +1,78 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 17K of event 'cycles:u'
+# Event count (approx.): 240567274954
+#
+# Overhead  Command          Shared Object             Symbol
+# ........  ...............  ........................  .................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................
+#
+    15.55%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtB8_3vec13DrainProducerTjRNtNtNtNtCs2QtKRp0jn1w_8tk_train8trainers3bpe5merge4RuleNtB1J_6SourceEEINtNtB6_8map_with15MapInitConsumerINtNtB6_3map11MapConsumerINtNtB6_10while_some17WhileSomeConsumerNtNtB6_6extend15ListVecConsumerENCINvNvXs2_NtB8_6resultINtNtCsgxBkk5gSRhY_4core6result6ResultppEINtB6_20FromParallelIteratorIB5j_ppEE13from_par_iter2okNtB1J_3JobINtNtCs6i54tJFfzR_5alloc5boxed3BoxDNtNtB5n_5error5ErrorNtNtB5n_6marker4SendNtB7V_4SyncEL_EE0ENvYNtB1J_11DirectoriesNtNtB5n_7default7Default7defaultNCNvMs1_B1J_NtB1J_5Batch7prepare0EEB1P_
+    10.38%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RNvMs3_NtNtNtCs2QtKRp0jn1w_8tk_train8trainers3bpe9positionsNtB5_9Positions11from_sorted
+     4.40%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RNvMs1_NtNtNtCs2QtKRp0jn1w_8tk_train8trainers3bpe9positionsNtB5_7Builder4push
+     4.30%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RNvMs0_NtNtNtCs2QtKRp0jn1w_8tk_train8trainers3bpe6corpusNtB5_6Corpus5apply
+     3.86%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RNvMs1_NtNtNtCs2QtKRp0jn1w_8tk_train8trainers3bpe9positionsNtB5_7Builder12push_ordered
+     3.81%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RNvXs4_NtNtNtCs2QtKRp0jn1w_8tk_train8trainers3bpe9positionsNtB5_6CursorNtNtNtNtCsgxBkk5gSRhY_4core4iter6traits8iterator8Iterator4next
+     3.67%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtB6_3zip11ZipProducerINtNtB8_5slice15IterMutProducerINtNtCshhlmns78w2N_5ahash8hash_map8AHashMapTmmEyEEIB1D_NtNtNtNtCs2QtKRp0jn1w_8tk_train8trainers3bpe5index5RouteEEINtNtB6_6filter14FilterConsumerINtNtB6_3map11MapConsumerIB4s_INtNtB6_10while_some17WhileSomeConsumerNtNtB6_6extend15ListVecConsumerENCINvNvXs2_NtB8_6resultINtNtCsgxBkk5gSRhY_4core6result6ResultppEINtB6_20FromParallelIteratorIB6s_ppEE13from_par_iter2okINtNtCs6i54tJFfzR_5alloc3vec3VecNtB32_9CandidateEINtNtB84_5boxed3BoxDNtNtB6w_5error5ErrorNtNtB6w_6marker4SendNtB9s_4SyncEL_EE0ENCNvMs4_B32_NtB32_9PairIndex6commits_0ENCBa4_0EEB38_
+     3.29%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RNCINvMs_NtNtNtCs2QtKRp0jn1w_8tk_train8trainers3bpe6corpusNtB7_10CorpusPlan13initial_edgesNCNvNtB9_5index11count_range0E0Bd_
+     3.11%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RNvXs2_NtCsbY3TsJcw1Ex_10serde_json4readINtB5_6IoReadINtNtNtNtCs9k3SxhrAWiO_3std2io8buffered9bufreader9BufReaderNtNtBY_2fs4FileEENtB5_4Read9parse_strCsjX6t8mVYPXW_16bpe_bench_runner
+     3.04%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RNvMs0_NtNtNtCs2QtKRp0jn1w_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record
+     3.03%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtB8_3vec13DrainProducerINtNtNtCsgxBkk5gSRhY_4core3ops5range5RangejEEINtNtB6_3map11MapConsumerIB2o_INtNtB6_10while_some17WhileSomeConsumerNtNtB6_6extend15ListVecConsumerENCINvNvXs2_NtB8_6resultINtNtB1L_6result6ResultppEINtB6_20FromParallelIteratorIB4o_ppEE13from_par_iter2okINtNtCs6i54tJFfzR_5alloc3vec3VecTTmmEINtNtNtNtCs2QtKRp0jn1w_8tk_train8trainers3bpe5index5StateNtNtB6m_9positions9PositionsEEEINtNtB5L_5boxed3BoxDNtNtB1L_5error5ErrorNtNtB1L_6marker4SendNtB8n_4SyncEL_EE0ENCNvMs4_B6k_NtB6k_9PairIndex5build0EEB6q_
+     2.58%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtB8_3vec13DrainProducerNtNtNtNtCs2QtKRp0jn1w_8tk_train8trainers3bpe5merge3JobEINtNtB6_3map11MapConsumerINtNtNtB6_7collect8consumer15CollectConsumerINtNtCs6i54tJFfzR_5alloc3vec3VecINtB1G_6ChangeNtB1G_5BirthEEENCNvMs4_B1G_NtB1G_8Prepared5apply0EEB1M_
+     2.47%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtB6_9enumerate17EnumerateProducerINtNtB8_5slice12IterProducerTRNtCsjYadAtXBUws_11compact_str13CompactStringRyEEEINtNtB6_8for_each15ForEachConsumerNCNvMs_NtNtNtCs2QtKRp0jn1w_8tk_train8trainers3bpe6corpusNtB3K_10CorpusPlan11materialize0EEB3Q_
+     2.25%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RNvNtCsjX6t8mVYPXW_16bpe_bench_runner4core3run
+     2.18%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtNtB8_5slice6chunks14ChunksProducerRNtCsjYadAtXBUws_11compact_str13CompactStringEINtNtB6_3map11MapConsumerINtNtNtB6_7collect8consumer15CollectConsumerNtCsjiVPyUsOBU2_11fixedbitset11FixedBitSetENCNvNtNtNtCs2QtKRp0jn1w_8tk_train8trainers3bpe10vocabulary19observed_characters0EEB4y_
+     2.13%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RNvMs0_NtNtNtCs2QtKRp0jn1w_8tk_train8trainers3bpe5mergeNtB5_9Neighbors5group
+     1.92%  bpe-library-uns  libc.so.6                 [.] 0x0000000000172a80
+     1.89%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RNvNtNtCs2QtKRp0jn1w_8tk_train8trainers3bpe13train_attempt
+     1.82%  bpe-library-uns  libc.so.6                 [.] cfree
+     1.65%  bpe-library-uns  libc.so.6                 [.] 0x0000000000172ac0
+     1.61%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RINvYNtNtCshhlmns78w2N_5ahash12random_state11RandomStateNtNtCsgxBkk5gSRhY_4core4hash11BuildHasher8hash_oneRNtCsjYadAtXBUws_11compact_str13CompactStringECs2QtKRp0jn1w_8tk_train
+     1.16%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RINvNtCsbY3TsJcw1Ex_10serde_json4read11next_or_eofINtB2_6IoReadINtNtNtNtCs9k3SxhrAWiO_3std2io8buffered9bufreader9BufReaderNtNtB18_2fs4FileEEECsjX6t8mVYPXW_16bpe_bench_runner
+     1.09%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RNvMs1_NtCsfBDUjroi3FF_9hashbrown3mapINtB5_7HashMapTmmEyNtNtCshhlmns78w2N_5ahash12random_state11RandomStateE6insertCs2QtKRp0jn1w_8tk_train
+     1.02%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RNvNtNtCsgxBkk5gSRhY_4core3str5count14do_count_chars
+     0.94%  bpe-library-uns  libc.so.6                 [.] 0x0000000000172ad7
+     0.91%  bpe-library-uns  libc.so.6                 [.] 0x0000000000172dc9
+     0.81%  bpe-library-uns  libc.so.6                 [.] 0x0000000000172ac5
+     0.80%  bpe-library-uns  libc.so.6                 [.] 0x0000000000172ade
+     0.74%  bpe-library-uns  libc.so.6                 [.] realloc
+     0.71%  bpe-library-uns  libc.so.6                 [.] malloc
+     0.66%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RNvNtNtCsgxBkk5gSRhY_4core3str8converts9from_utf8
+     0.56%  bpe-library-uns  libc.so.6                 [.] 0x00000000000a05cc
+     0.55%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RNvMs0_NtNtNtCs2QtKRp0jn1w_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6finish
+     0.48%  bpe-library-uns  libc.so.6                 [.] 0x0000000000172ae3
+     0.46%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RNvMs2_NtNtNtCs2QtKRp0jn1w_8tk_train8trainers3bpe5mergeNtB5_13FreshSnapshot11selected_id
+     0.42%  bpe-library-uns  libc.so.6                 [.] 0x0000000000173613
+     0.41%  bpe-library-uns  libc.so.6                 [.] 0x0000000000172a83
+     0.41%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RINvMsb_Cs788dPaxphg4_9dary_heapINtB6_4HoleNtNtNtNtCs2QtKRp0jn1w_8tk_train8trainers3bpe5index9CandidateE11max_siblingKj8_EBN_
+     0.39%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtB8_5slice12IterProducerTRNtCsjYadAtXBUws_11compact_str13CompactStringRyEEINtNtB6_3map11MapConsumerINtNtNtB6_7collect8consumer15CollectConsumerjENCNvMs_NtNtNtCs2QtKRp0jn1w_8tk_train8trainers3bpe6corpusNtB3J_10CorpusPlan5builds_0EEB3P_
+     0.33%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RINvXs3_NtCsiPp1x5ZMK5J_10serde_core2deINtNtCsgxBkk5gSRhY_4core6marker11PhantomDataINtNtCs6i54tJFfzR_5alloc3vec3VecTNtCsjYadAtXBUws_11compact_str13CompactStringyEEENtB6_15DeserializeSeed11deserializeQINtNtCsbY3TsJcw1Ex_10serde_json2de12DeserializerINtNtB3h_4read6IoReadINtNtNtNtCs9k3SxhrAWiO_3std2io8buffered9bufreader9BufReaderNtNtB4s_2fs4FileEEEECsjX6t8mVYPXW_16bpe_bench_runner
+     0.29%  bpe-library-uns  libc.so.6                 [.] 0x00000000000a1c28
+     0.26%  bpe-library-uns  libc.so.6                 [.] 0x000000000009eddd
+     0.25%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RINvNtNtCskOCPxHELzib_5rayon5slice4sort7recurseTRNtCsjYadAtXBUws_11compact_str13CompactStringRyENCINvYSBJ_INtB4_16ParallelSliceMutBJ_E20par_sort_unstable_byNCNvMs_NtNtNtCs2QtKRp0jn1w_8tk_train8trainers3bpe6corpusNtB2B_10CorpusPlan5build0E0EB2H_
+     0.24%  bpe-library-uns  [unknown]                 [k] 0xffffffff9b401280
+     0.21%  bpe-library-uns  libc.so.6                 [.] 0x0000000000172ae5
+     0.20%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RINvNvXs7_NtCsbY3TsJcw1Ex_10serde_json2deINtB8_9SeqAccesspENtNtCsiPp1x5ZMK5J_10serde_core2de9SeqAccess17next_element_seed16has_next_elementINtNtBa_4read6IoReadINtNtNtNtCs9k3SxhrAWiO_3std2io8buffered9bufreader9BufReaderNtNtB2G_2fs4FileEEECsjX6t8mVYPXW_16bpe_bench_runner
+     0.20%  bpe-library-uns  libc.so.6                 [.] 0x0000000000172ad5
+     0.19%  bpe-library-uns  libc.so.6                 [.] 0x0000000000172d6d
+     0.19%  bpe-library-uns  libc.so.6                 [.] 0x00000000000a06fd
+     0.19%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RNvMs3_NtNtNtCs2QtKRp0jn1w_8tk_train8trainers3bpe5indexNtB5_5Route4push
+     0.17%  bpe-library-uns  libc.so.6                 [.] 0x00000000001724da
+     0.16%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RINvMs1_NtCsfBDUjroi3FF_9hashbrown3mapINtB6_7HashMapTmmEyNtNtCshhlmns78w2N_5ahash12random_state11RandomStateE6removeBO_ECs2QtKRp0jn1w_8tk_train
+     0.15%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RNvMsc_CsbtXW8PvOBJT_8smallvecINtB5_8SmallVecAmj2_E8try_growCs2QtKRp0jn1w_8tk_train
+     0.14%  bpe-library-uns  libc.so.6                 [.] 0x00000000000a2458
+     0.14%  bpe-library-uns  libc.so.6                 [.] 0x000000000009edc9
+     0.13%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RINvMs6_NtCsfBDUjroi3FF_9hashbrown3rawINtB6_8RawTableTNtCsjYadAtXBUws_11compact_str13CompactStringyEE14reserve_rehashNCINvNtB8_3map11make_hasherBQ_yNtNtCshhlmns78w2N_5ahash12random_state11RandomStateE0ECs2QtKRp0jn1w_8tk_train
+     0.13%  bpe-library-uns  libc.so.6                 [.] 0x0000000000172ab2
+     0.12%  bpe-library-uns  libc.so.6                 [.] 0x000000000009ede3
+     0.12%  bpe-library-uns  libc.so.6                 [.] 0x000000000009f065
+     0.11%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RINvYNtNtCshhlmns78w2N_5ahash12random_state11RandomStateNtNtCsgxBkk5gSRhY_4core4hash11BuildHasher8hash_oneRNtCsjYadAtXBUws_11compact_str13CompactStringECsjX6t8mVYPXW_16bpe_bench_runner
+     0.11%  bpe-library-uns  bpe-library-unsigned-bin  [.] _RINvMs6_NtCsfBDUjroi3FF_9hashbrown3rawINtB6_8RawTableTTmmEyEE14reserve_rehashNCINvNtB8_3map11make_hasherBQ_yNtNtCshhlmns78w2N_5ahash12random_state11RandomStateE0ECs2QtKRp0jn1w_8tk_train
+     0.10%  bpe-library-uns  libc.so.6                 [.] 0x00000000000a1ffa
+
+
+#
+# (Tip: Order by the overhead of source file name and line number: perf report -s srcline)
+#

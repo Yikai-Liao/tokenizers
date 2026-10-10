@@ -31,38 +31,54 @@ where
     })
 }
 
-fn flush(local: &mut CountMap, shared: &SharedCounts) {
-    for (word, count) in local.drain() {
-        shared
-            .entry_sync(word)
-            .and_modify(|total| *total += count)
-            .or_insert(count);
-    }
+/// One fold's bounded distinct-word cache and its shared weighted-count destination.
+/// Full caches flush during collection; finish flushes remaining entries only
+/// after every fold succeeds. Dropping failed work never publishes its remainder.
+struct LocalCounts<'shared> {
+    counts: CountMap,
+    shared: &'shared SharedCounts,
 }
 
-fn add_local(local: &mut CountMap, word: CompactString, shared: &SharedCounts) {
-    match local.entry(word) {
-        Entry::Occupied(mut entry) => *entry.get_mut() += 1,
-        Entry::Vacant(entry) => {
-            entry.insert(1);
-            // Only a new key can fill the cache; repeated words need no size check.
-            if local.len() == LOCAL_KEY_LIMIT {
-                flush(local, shared);
+impl<'shared> LocalCounts<'shared> {
+    fn new(shared: &'shared SharedCounts, hash: RandomState) -> Self {
+        Self {
+            counts: CountMap::with_hasher(hash),
+            shared,
+        }
+    }
+
+    fn add(&mut self, word: CompactString) {
+        match self.counts.entry(word) {
+            Entry::Occupied(mut entry) => *entry.get_mut() += 1,
+            Entry::Vacant(entry) => {
+                entry.insert(1);
+                // Only a new key can fill the cache; repeated words need no size check.
+                if self.counts.len() == LOCAL_KEY_LIMIT {
+                    self.flush();
+                }
             }
         }
     }
+
+    fn flush(&mut self) {
+        for (word, count) in self.counts.drain() {
+            self.shared
+                .entry_sync(word)
+                .and_modify(|total| *total += count)
+                .or_insert(count);
+        }
+    }
+
+    fn finish(mut self) {
+        self.flush();
+    }
 }
 
-fn accumulate<S, F, A>(
-    counts: Result<CountMap>,
-    sequence: S,
-    process: &F,
-    mut add: A,
-) -> Result<CountMap>
+fn accumulate<S, F, C, A>(counts: Result<C>, sequence: S, process: &F, mut add: A) -> Result<C>
 where
     S: AsRef<str>,
     F: Fn(&str) -> Result<Vec<String>>,
-    A: FnMut(&mut CountMap, CompactString),
+    A: FnMut(&mut C, CompactString),
 {
     // Run the callback even after a normal error; retain this fold's first error.
     let words = process(sequence.as_ref());
@@ -106,19 +122,16 @@ where
     // bridge lock. A short stream of expensive documents would otherwise form
     // one batch whose callbacks all run serially on the same worker. Source
     // exhaustion naturally caps these singletons at the available input count.
-    let results: Vec<Result<CountMap>> = batches(iterator, parallel_workers)
+    let results: Vec<Result<LocalCounts<'_>>> = batches(iterator, parallel_workers)
         .maybe_par_bridge()
         .flat_map_iter(std::iter::IntoIterator::into_iter)
-        .fold(new_counts, |counts, sequence| {
-            accumulate(counts, sequence, process, |counts, word| {
-                add_local(counts, word, &shared)
-            })
-        })
+        .fold(
+            || Ok(LocalCounts::new(&shared, hash.clone())),
+            |counts, sequence| accumulate(counts, sequence, process, LocalCounts::add),
+        )
         .collect();
     let locals: Vec<_> = results.into_iter().collect::<Result<Vec<_>>>()?;
-    locals
-        .into_maybe_par_iter()
-        .for_each(|mut local| flush(&mut local, &shared));
+    locals.into_maybe_par_iter().for_each(LocalCounts::finish);
     // Training only traverses counts, so consume keys into an unordered vector
     // instead of paying to allocate and rehash another dictionary. Training
     // sorts borrowed entries; feed retains no frequency ordering or index.

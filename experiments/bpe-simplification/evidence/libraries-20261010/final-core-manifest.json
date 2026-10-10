@@ -1,0 +1,44 @@
+{
+  "baseline_commit": "7de4e0680631fa362fed2bd54af722828b90ce05",
+  "mode": "core",
+  "binaries": {
+    "baseline": "/tmp/bpe-library-baseline-bin",
+    "adopted": "/tmp/bpe-library-adopted-bin"
+  },
+  "binary_sha256": {
+    "baseline": "de07f4aaeb0fbfdf8f096e93d374251e5873079ab4d71bf6a175638c71f1db4e",
+    "adopted": "b7493acdbc1d46fdf6517b97c658327cbedb505e9ba776f04054d072d40b3b04"
+  },
+  "patches": {
+    "adopted": "206cb1765591851502958662d3dab86b2c46bf88920e24b50ac40348cdc18e9c"
+  },
+  "cases": [
+    {
+      "case": "zh-256MiB",
+      "language": "zh",
+      "requested_mib": 256,
+      "pretokenizer": "bytelevel_regex",
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+      "bytes": 268435162,
+      "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+      "prepared_path": "/root/code/tokenizers-perfetto-results/inputs/zh-bytelevel/words.json",
+      "prepared_sha256": "bb796d0b57b87d965b84de249bc5c8e283b700774638d16a40e4ae5171b13ee0",
+      "prepared_bytes": 437135595
+    },
+    {
+      "case": "zh-whitespace-256MiB",
+      "language": "zh",
+      "requested_mib": 256,
+      "pretokenizer": "whitespace",
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+      "bytes": 268435162,
+      "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+      "prepared_path": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "prepared_sha256": "ed057a8fdb27544ed29f16dde53faa0de8f47f1ee8ac00080974fac5bb435660",
+      "prepared_bytes": 250116097
+    }
+  ],
+  "scope": "core: public do_train, load/serialization excluded; pipeline: public feed + train, validation excluded; HWM includes input and retained counts",
+  "design": "Two Chinese 256 MiB input cases; 3 rotating rounds; first round warmup only when rounds>1; workers4 affinity0-3; vocab50k/min2; no affixes",
+  "limitation": "Shared VM; descriptive observations, no statistical speedup claim."
+}

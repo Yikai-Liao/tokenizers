@@ -1,0 +1,21 @@
+{
+  "uname": [
+    "Linux",
+    "us-agent",
+    "6.12.101+deb13-amd64",
+    "#1 SMP PREEMPT_DYNAMIC Debian 6.12.101-1 (2026-08-05)",
+    "x86_64",
+    ""
+  ],
+  "cpuinfo_first_processor": "processor\t: 0\nvendor_id\t: GenuineIntel\ncpu family\t: 6\nmodel\t\t: 85\nmodel name\t: Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz\nstepping\t: 4\nmicrocode\t: 0x2007006\ncpu MHz\t\t: 2294.608\ncache size\t: 25344 KB\nphysical id\t: 0\nsiblings\t: 1\ncore id\t\t: 0\ncpu cores\t: 1\napicid\t\t: 0\ninitial apicid\t: 0\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 22\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon rep_good nopl xtopology cpuid tsc_known_freq pni pclmulqdq ssse3 fma cx16 pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch cpuid_fault pti ssbd ibrs ibpb stibp fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm mpx avx512f avx512dq rdseed adx smap clflushopt clwb avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves arat umip pku ospke md_clear flush_l1d arch_capabilities\nbugs\t\t: cpu_meltdown spectre_v1 spectre_v2 spec_store_bypass l1tf mds swapgs taa mmio_stale_data retbleed bhi ibpb_no_ret its\nbogomips\t: 4589.21\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 46 bits physical, 48 bits virtual\npower management:",
+  "release_profile": {
+    "opt_level": 3,
+    "lto": "fat",
+    "codegen_units": 1
+  },
+  "workers": 4,
+  "affinity": "0-3",
+  "build_command": "cargo build --release --manifest-path experiments/bpe-simplification/runner/Cargo.toml",
+  "miri_flags": "-Zmiri-strict-provenance",
+  "note": "Final two-arm loop runs baseline before adopted in each round. The shared VM and fixed order limit precision; records show actual ordering."
+}

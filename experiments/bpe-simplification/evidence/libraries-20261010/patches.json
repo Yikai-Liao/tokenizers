@@ -1,0 +1,50 @@
+{
+  "adopted.patch.gz": {
+    "decompressed_sha256": "206cb1765591851502958662d3dab86b2c46bf88920e24b50ac40348cdc18e9c",
+    "note": "gzip preserves the original unified diff, including blank context lines."
+  },
+  "vint.patch.gz": {
+    "decompressed_sha256": "e7933e9005b0792ec73b3e0fc607dc94fda8eaad4cacc46d19f822c34f97e95d",
+    "note": "gzip preserves the original unified diff, including blank context lines."
+  },
+  "unsigned-trusted.patch.gz": {
+    "decompressed_sha256": "711f25c5fa8d8cc0306fc4fa8ecfd6b0ee42b2f29f33ea3342cc3906508b43cc",
+    "note": "gzip preserves the original unified diff, including blank context lines."
+  },
+  "sux-hybrid.patch.gz": {
+    "decompressed_sha256": "17c56d7a60816ab636f95d10a68ce4ae57bebcf8514f2ed6e7c71e072699ed86",
+    "note": "gzip preserves the original unified diff, including blank context lines."
+  },
+  "owned-counts.patch.gz": {
+    "decompressed_sha256": "1484d33e7c2c3786b12fa34c55a075b8efc3260aad9ba688981b693c17dea415",
+    "note": "gzip preserves the original unified diff, including blank context lines."
+  },
+  "vu.patch.gz": {
+    "decompressed_sha256": "649068c44a432f859764db9f64e2fb2d215719c207fc845f3e1984d24e54ca49",
+    "note": "gzip preserves the original unified diff, including blank context lines."
+  },
+  "vers-hybrid.patch.gz": {
+    "decompressed_sha256": "16203e700dc65c9e600650f7a97a3499d3ee7dba4ecef0c7e8b4da16d17cdf22",
+    "note": "gzip preserves the original unified diff, including blank context lines."
+  },
+  "unsigned.patch.gz": {
+    "decompressed_sha256": "b9f4dfe3838bc9e5bf4d66aa96c5b4fc601fcbf3d75dd02e8528a4bc5b6ce066",
+    "note": "gzip preserves the original unified diff, including blank context lines."
+  },
+  "tls.patch.gz": {
+    "decompressed_sha256": "d84bb41ff052e16ba11b553ffe93f7f5cb758ea04e80af95e01998ad7f758dc1",
+    "note": "gzip preserves the original unified diff, including blank context lines."
+  },
+  "owned-neighbors.patch.gz": {
+    "decompressed_sha256": "3d20e040857745383c9430dd9f4649223fc2d6a865db7e92e6614e6eed2c1c1b",
+    "note": "gzip preserves the original unified diff, including blank context lines."
+  },
+  "ownership.patch.gz": {
+    "decompressed_sha256": "9df0a9809077ce541b019904f47b97cb4fd26c7d54b5b3abd90d0035d0c5fde6",
+    "note": "gzip preserves the original unified diff, including blank context lines."
+  },
+  "vu-padded.patch.gz": {
+    "decompressed_sha256": "c1f869647fc76b0f45ce27228c1eeecc5c850791310230c981a8f561fa22e71a",
+    "note": "gzip preserves the original unified diff, including blank context lines."
+  }
+}

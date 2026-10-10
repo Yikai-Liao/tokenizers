@@ -30,14 +30,19 @@ The implementation is divided by the knowledge each module owns:
   `Prepared`, without handling write geometry or neighbor directories.
 - [positions.rs](positions.rs) owns sorted full-u64 streams and restart blocks.
   Temporary buffers narrow to u32 with automatic full-u64 promotion. Published
-  lists have a two-word descriptor and borrow small allocations from a scoped
-  Arena, selected by a dynamic byte threshold. Duplicate positions and
-  coordinates through `u64::MAX` are preserved.
+  lists keep one or two values inline and own larger compressed byte slices.
+  ThreadLocal encoder scratch is retained only for the attempt; frozen lists
+  can outlive it. Duplicate positions and coordinates through `u64::MAX` are preserved.
+- [feed.rs](feed.rs) owns streaming batches and bounded local word caches;
+  `LocalCounts` controls cache flushing and successful completion.
+- [word_counts.rs](word_counts.rs) owns borrowed and collected count views,
+  content equality and the flat serialization contract.
 
-This branch experiments with one owning priority queue for fresh lists and reuse
-cohorts. Arena allocation and its dynamic threshold are unchanged. Resource
-measurements and the unresolved equal-priority reuse ordering limit are recorded
+One owning priority queue holds fresh lists and reuse cohorts. Its historical
+resource measurements and equal-priority reuse ordering limitation are recorded
 in the [heap experiment](../../../../../experiments/bpe-simplification/HEAP_EXPERIMENT.md).
+Larger occurrence lists use owned allocations; dropping a list releases its bytes,
+including short compressed lists that previously remained in an attempt arena.
 
 Initial collection splits the borrowed plan at whole-word boundaries, with a
 2²⁴-resident-slot block cap. An oversized single word is processed alone. Each
@@ -73,7 +78,8 @@ Literal expectations cover wide counts and public errors. Codec tests cover the
 entire u64 domain, repeated values and restart boundaries. The standalone Miri
 harness imports the actual position module and keeps borrow/leak checks enabled.
 Miri samples seek starts and targets around restart boundaries; native tests
-exhaust every start. Native and Miri allocation tests use scoped threads and both allocation cursors.
+exhaust every start. Native and Miri storage tests use scoped threads and verify that frozen lists
+remain readable after the encoder scratch and its container are dropped.
 Public tests cover feed, model reload, progress and ambient-versus-training pool
 behavior. [The coverage map](COVERAGE.md) records the combined boundaries.
 

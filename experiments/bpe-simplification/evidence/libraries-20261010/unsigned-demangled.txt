@@ -1,0 +1,62 @@
+15.55% rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::vec::DrainProducer<(usize, &tk_train::trainers::bpe::merge::Rule, tk_train::trainers::bpe::merge::Source)>, rayon::iter::map_with::MapInitConsumer<rayon::iter::map::MapConsumer<rayon::iter::while_some::WhileSomeConsumer<rayon::iter::extend::ListVecConsumer>, <core::result::Result<_, _> as rayon::iter::FromParallelIterator<core::result::Result<_, _>>>::from_par_iter::ok<tk_train::trainers::bpe::merge::Job, alloc::boxed::Box<dyn core::error::Error + core::marker::Send + core::marker::Sync>>::{closure#0}>, <tk_train::trainers::bpe::merge::Directories as core::default::Default>::default, <tk_train::trainers::bpe::merge::Batch>::prepare::{closure#0}>>
+10.38% <tk_train::trainers::bpe::positions::Positions>::from_sorted
+4.40% <tk_train::trainers::bpe::positions::Builder>::push
+4.30% <tk_train::trainers::bpe::corpus::Corpus>::apply
+3.86% <tk_train::trainers::bpe::positions::Builder>::push_ordered
+3.81% <tk_train::trainers::bpe::positions::Cursor as core::iter::traits::iterator::Iterator>::next
+3.67% rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::iter::zip::ZipProducer<rayon::slice::IterMutProducer<ahash::hash_map::AHashMap<(u32, u32), u64>>, rayon::slice::IterMutProducer<tk_train::trainers::bpe::index::Route>>, rayon::iter::filter::FilterConsumer<rayon::iter::map::MapConsumer<rayon::iter::map::MapConsumer<rayon::iter::while_some::WhileSomeConsumer<rayon::iter::extend::ListVecConsumer>, <core::result::Result<_, _> as rayon::iter::FromParallelIterator<core::result::Result<_, _>>>::from_par_iter::ok<alloc::vec::Vec<tk_train::trainers::bpe::index::Candidate>, alloc::boxed::Box<dyn core::error::Error + core::marker::Send + core::marker::Sync>>::{closure#0}>, <tk_train::trainers::bpe::index::PairIndex>::commit::{closure#1}>, <tk_train::trainers::bpe::index::PairIndex>::commit::{closure#0}>>
+3.29% <tk_train::trainers::bpe::corpus::CorpusPlan>::initial_edges::<tk_train::trainers::bpe::index::count_range::{closure#0}>::{closure#0}
+3.11% <serde_json::read::IoRead<std::io::buffered::bufreader::BufReader<std::fs::File>> as serde_json::read::Read>::parse_str
+3.04% <tk_train::trainers::bpe::merge::Neighbors>::record
+3.03% rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::vec::DrainProducer<core::ops::range::Range<usize>>, rayon::iter::map::MapConsumer<rayon::iter::map::MapConsumer<rayon::iter::while_some::WhileSomeConsumer<rayon::iter::extend::ListVecConsumer>, <core::result::Result<_, _> as rayon::iter::FromParallelIterator<core::result::Result<_, _>>>::from_par_iter::ok<alloc::vec::Vec<((u32, u32), tk_train::trainers::bpe::index::State<tk_train::trainers::bpe::positions::Positions>)>, alloc::boxed::Box<dyn core::error::Error + core::marker::Send + core::marker::Sync>>::{closure#0}>, <tk_train::trainers::bpe::index::PairIndex>::build::{closure#0}>>
+2.58% rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::vec::DrainProducer<tk_train::trainers::bpe::merge::Job>, rayon::iter::map::MapConsumer<rayon::iter::collect::consumer::CollectConsumer<alloc::vec::Vec<tk_train::trainers::bpe::merge::Change<tk_train::trainers::bpe::merge::Birth>>>, <tk_train::trainers::bpe::merge::Prepared>::apply::{closure#0}>>
+2.47% rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::iter::enumerate::EnumerateProducer<rayon::slice::IterProducer<(&compact_str::CompactString, &u64)>>, rayon::iter::for_each::ForEachConsumer<<tk_train::trainers::bpe::corpus::CorpusPlan>::materialize::{closure#0}>>
+2.25% bpe_bench_runner::core::run
+2.18% rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::slice::chunks::ChunksProducer<&compact_str::CompactString>, rayon::iter::map::MapConsumer<rayon::iter::collect::consumer::CollectConsumer<fixedbitset::FixedBitSet>, tk_train::trainers::bpe::vocabulary::observed_characters::{closure#0}>>
+2.13% <tk_train::trainers::bpe::merge::Neighbors>::group
+1.92% 0x0000000000172a80
+1.89% tk_train::trainers::bpe::train_attempt
+1.82% cfree
+1.65% 0x0000000000172ac0
+1.61% <ahash::random_state::RandomState as core::hash::BuildHasher>::hash_one::<&compact_str::CompactString>
+1.16% serde_json::read::next_or_eof::<serde_json::read::IoRead<std::io::buffered::bufreader::BufReader<std::fs::File>>>
+1.09% <hashbrown::map::HashMap<(u32, u32), u64, ahash::random_state::RandomState>>::insert
+1.02% core::str::count::do_count_chars
+0.94% 0x0000000000172ad7
+0.91% 0x0000000000172dc9
+0.81% 0x0000000000172ac5
+0.80% 0x0000000000172ade
+0.74% realloc
+0.71% malloc
+0.66% core::str::converts::from_utf8
+0.56% 0x00000000000a05cc
+0.55% <tk_train::trainers::bpe::merge::Neighbors>::finish
+0.48% 0x0000000000172ae3
+0.46% <tk_train::trainers::bpe::merge::FreshSnapshot>::selected_id
+0.42% 0x0000000000173613
+0.41% 0x0000000000172a83
+0.41% <dary_heap::Hole<tk_train::trainers::bpe::index::Candidate>>::max_sibling::<8>
+0.39% rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::slice::IterProducer<(&compact_str::CompactString, &u64)>, rayon::iter::map::MapConsumer<rayon::iter::collect::consumer::CollectConsumer<usize>, <tk_train::trainers::bpe::corpus::CorpusPlan>::build::{closure#1}>>
+0.33% <core::marker::PhantomData<alloc::vec::Vec<(compact_str::CompactString, u64)>> as serde_core::de::DeserializeSeed>::deserialize::<&mut serde_json::de::Deserializer<serde_json::read::IoRead<std::io::buffered::bufreader::BufReader<std::fs::File>>>>
+0.29% 0x00000000000a1c28
+0.26% 0x000000000009eddd
+0.25% rayon::slice::sort::recurse::<(&compact_str::CompactString, &u64), <[(&compact_str::CompactString, &u64)] as rayon::slice::ParallelSliceMut<(&compact_str::CompactString, &u64)>>::par_sort_unstable_by<<tk_train::trainers::bpe::corpus::CorpusPlan>::build::{closure#0}>::{closure#0}>
+0.24% 0xffffffff9b401280
+0.21% 0x0000000000172ae5
+0.20% <serde_json::de::SeqAccess<_> as serde_core::de::SeqAccess>::next_element_seed::has_next_element::<serde_json::read::IoRead<std::io::buffered::bufreader::BufReader<std::fs::File>>>
+0.20% 0x0000000000172ad5
+0.19% 0x0000000000172d6d
+0.19% 0x00000000000a06fd
+0.19% <tk_train::trainers::bpe::index::Route>::push
+0.17% 0x00000000001724da
+0.16% <hashbrown::map::HashMap<(u32, u32), u64, ahash::random_state::RandomState>>::remove::<(u32, u32)>
+0.15% <smallvec::SmallVec<[u32; 2]>>::try_grow
+0.14% 0x00000000000a2458
+0.14% 0x000000000009edc9
+0.13% <hashbrown::raw::RawTable<(compact_str::CompactString, u64)>>::reserve_rehash::<hashbrown::map::make_hasher<compact_str::CompactString, u64, ahash::random_state::RandomState>::{closure#0}>
+0.13% 0x0000000000172ab2
+0.12% 0x000000000009ede3
+0.12% 0x000000000009f065
+0.11% <ahash::random_state::RandomState as core::hash::BuildHasher>::hash_one::<&compact_str::CompactString>
+0.11% <hashbrown::raw::RawTable<((u32, u32), u64)>>::reserve_rehash::<hashbrown::map::make_hasher<(u32, u32), u64, ahash::random_state::RandomState>::{closure#0}>
+0.10% 0x00000000000a1ffa

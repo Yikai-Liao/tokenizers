@@ -1,0 +1,97 @@
+{
+  "actual_order": [
+    {
+      "case": "zh-256MiB",
+      "block": 0,
+      "arm": "baseline",
+      "warmup": true
+    },
+    {
+      "case": "zh-256MiB",
+      "block": 0,
+      "arm": "adopted",
+      "warmup": true
+    },
+    {
+      "case": "zh-256MiB",
+      "block": 1,
+      "arm": "baseline",
+      "warmup": false
+    },
+    {
+      "case": "zh-256MiB",
+      "block": 1,
+      "arm": "adopted",
+      "warmup": false
+    },
+    {
+      "case": "zh-256MiB",
+      "block": 2,
+      "arm": "baseline",
+      "warmup": false
+    },
+    {
+      "case": "zh-256MiB",
+      "block": 2,
+      "arm": "adopted",
+      "warmup": false
+    },
+    {
+      "case": "zh-whitespace-256MiB",
+      "block": 0,
+      "arm": "baseline",
+      "warmup": true
+    },
+    {
+      "case": "zh-whitespace-256MiB",
+      "block": 0,
+      "arm": "adopted",
+      "warmup": true
+    },
+    {
+      "case": "zh-whitespace-256MiB",
+      "block": 1,
+      "arm": "baseline",
+      "warmup": false
+    },
+    {
+      "case": "zh-whitespace-256MiB",
+      "block": 1,
+      "arm": "adopted",
+      "warmup": false
+    },
+    {
+      "case": "zh-whitespace-256MiB",
+      "block": 2,
+      "arm": "baseline",
+      "warmup": false
+    },
+    {
+      "case": "zh-whitespace-256MiB",
+      "block": 2,
+      "arm": "adopted",
+      "warmup": false
+    }
+  ],
+  "clarification": "The generic rotating-round description in the generated manifest does not describe the two-arm order: rotation and reversal cancel, so each pair runs baseline before adopted. All comparisons retain this fixed-order limitation.",
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "miri_compiler": "rustc 1.101.0-nightly (a30aa9064 2026-10-08)\n",
+  "source_sha256": {
+    "tokenizers/tk-train/src/trainers/bpe/corpus.rs": "f13c2a08040463def64e7eddde2f651b5bce7a43981bc5a6565aa2cf82a6721b",
+    "tokenizers/tk-train/src/trainers/bpe/feed.rs": "ddbc4fd103d73ea5cc8bf3778809127b0578474c9da9a29af5be5a76b56f0fec",
+    "tokenizers/tk-train/src/trainers/bpe/index.rs": "8d3d6672d0a237ba1f866edb8d49b6d310a7b8b0e368c356e397e021a4e5713c",
+    "tokenizers/tk-train/src/trainers/bpe/merge.rs": "24d87cb5d9fa1321d14c149549b341aada7bf2351c0770dec67e536630141911",
+    "tokenizers/tk-train/src/trainers/bpe/mod.rs": "29600532d77086ddc9eb914fb1219587688551c8d1a834848981de1343407503",
+    "tokenizers/tk-train/src/trainers/bpe/parity_trainer.rs": "a584152379dc59de167a14f751f37bab8da9c723eddc1c238df21965dd08f37c",
+    "tokenizers/tk-train/src/trainers/bpe/positions.rs": "ecef3af5ca5339658462fe0adf95a9164b0af103c1b83c0449d1b789460ddc12",
+    "tokenizers/tk-train/src/trainers/bpe/tests.rs": "643cbc87abd7394c970fafc146d75f33eaac1cc2cb9b2cb546f6d9ab5a8e733b",
+    "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs": "acc746856945ed88034d715a222c3db7ca08741700930e9ddc24fd159ef7b793",
+    "tokenizers/tk-train/src/trainers/bpe/word.rs": "f9c3bd0a7a8fade42a5643ee6341b4ebf203f7a45aa0a65797e773d1ce21396a",
+    "tokenizers/tk-train/src/trainers/bpe/word_counts.rs": "71a48aabde18143109d48d694fb4a23465ac66015dbeb608110307436da23cb2"
+  },
+  "models_equal": true,
+  "all_child_swap_zero": true,
+  "completed_processes": 12,
+  "measured_pairs_per_case": 2,
+  "warmup_pairs_per_case": 1
+}

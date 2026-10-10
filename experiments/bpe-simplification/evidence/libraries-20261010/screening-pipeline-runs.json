@@ -1,0 +1,218 @@
+[
+  {
+    "case": "zh-256MiB",
+    "block": 0,
+    "arm": "ownership",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-library-ownership-pipeline-bin",
+      "/tmp/bpe-library-screening/pipeline-zh-256MiB-b0-ownership/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2321952,
+    "subprocess_wall": 29.196322403964587,
+    "attempt_id": "pipeline-zh-256MiB-b0-ownership",
+    "build_id": "ownership",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "feed_cpu_seconds": 16.523221000000003,
+      "feed_hwm_kib": 1290084,
+      "feed_rss_kib": 685096,
+      "feed_seconds": 4.45752218,
+      "feed_unique_utf8_bytes": 389044270,
+      "feed_unique_words": 6859987,
+      "pipeline_cpu_seconds": 82.763441,
+      "pipeline_seconds": 25.663056835,
+      "process_hwm_kib_before_validation": 2322072,
+      "train_cpu_seconds": 66.240088,
+      "train_rss_kib": 1514684,
+      "train_seconds": 21.205519556
+    },
+    "mode": "pipeline",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-library-screening/pipeline-zh-256MiB-b0-ownership/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-feed-and-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 0,
+    "arm": "owned-counts",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-library-owned-counts-pipeline-bin",
+      "/tmp/bpe-library-screening/pipeline-zh-256MiB-b0-owned-counts/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2450504,
+    "subprocess_wall": 33.211557891918346,
+    "attempt_id": "pipeline-zh-256MiB-b0-owned-counts",
+    "build_id": "owned-counts",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "feed_cpu_seconds": 19.416518,
+      "feed_hwm_kib": 1289484,
+      "feed_rss_kib": 812832,
+      "feed_seconds": 8.040730457,
+      "feed_unique_utf8_bytes": 389044270,
+      "feed_unique_words": 6859987,
+      "pipeline_cpu_seconds": 84.976472,
+      "pipeline_seconds": 29.051248154,
+      "process_hwm_kib_before_validation": 2450600,
+      "train_cpu_seconds": 65.559708,
+      "train_rss_kib": 1643648,
+      "train_seconds": 21.010501259
+    },
+    "mode": "pipeline",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-library-screening/pipeline-zh-256MiB-b0-owned-counts/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-feed-and-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 0,
+    "arm": "ownership",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-library-ownership-pipeline-bin",
+      "/tmp/bpe-library-screening/pipeline-zh-whitespace-256MiB-b0-ownership/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1787568,
+    "subprocess_wall": 25.75966951798182,
+    "attempt_id": "pipeline-zh-whitespace-256MiB-b0-ownership",
+    "build_id": "ownership",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "feed_cpu_seconds": 12.023177,
+      "feed_hwm_kib": 709184,
+      "feed_rss_kib": 447160,
+      "feed_seconds": 3.278381634,
+      "feed_unique_utf8_bytes": 202251151,
+      "feed_unique_words": 6827958,
+      "pipeline_cpu_seconds": 67.418514,
+      "pipeline_seconds": 23.638256305,
+      "process_hwm_kib_before_validation": 1787340,
+      "train_cpu_seconds": 55.39520400000001,
+      "train_rss_kib": 1196608,
+      "train_seconds": 20.359859031
+    },
+    "mode": "pipeline",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-library-screening/pipeline-zh-whitespace-256MiB-b0-ownership/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-feed-and-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 0,
+    "arm": "owned-counts",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-library-owned-counts-pipeline-bin",
+      "/tmp/bpe-library-screening/pipeline-zh-whitespace-256MiB-b0-owned-counts/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1914996,
+    "subprocess_wall": 28.51461214805022,
+    "attempt_id": "pipeline-zh-whitespace-256MiB-b0-owned-counts",
+    "build_id": "owned-counts",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "feed_cpu_seconds": 16.492153,
+      "feed_hwm_kib": 1049956,
+      "feed_rss_kib": 574480,
+      "feed_seconds": 6.935042609,
+      "feed_unique_utf8_bytes": 202251151,
+      "feed_unique_words": 6827958,
+      "pipeline_cpu_seconds": 70.35414800000001,
+      "pipeline_seconds": 26.582263583,
+      "process_hwm_kib_before_validation": 1915124,
+      "train_cpu_seconds": 53.861833,
+      "train_rss_kib": 1348972,
+      "train_seconds": 19.647213938
+    },
+    "mode": "pipeline",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-library-screening/pipeline-zh-whitespace-256MiB-b0-owned-counts/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-feed-and-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  }
+]

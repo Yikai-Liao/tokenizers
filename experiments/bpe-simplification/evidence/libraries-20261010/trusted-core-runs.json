@@ -1,0 +1,94 @@
+[
+  {
+    "case": "zh-256MiB",
+    "block": 0,
+    "arm": "ownership",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-library-ownership-bin",
+      "/tmp/bpe-library-trusted-screen/core-zh-256MiB-b0-ownership/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2346272,
+    "subprocess_wall": 32.906051680096425,
+    "attempt_id": "core-zh-256MiB-b0-ownership",
+    "build_id": "ownership",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 10.119820396,
+      "process_hwm_kib_before_validation": 2346276,
+      "train_cpu_seconds": 65.561367,
+      "train_seconds": 20.845621581
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-library-trusted-screen/core-zh-256MiB-b0-ownership/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 0,
+    "arm": "unsigned-trusted",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-library-unsigned-trusted-bin",
+      "/tmp/bpe-library-trusted-screen/core-zh-256MiB-b0-unsigned-trusted/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2338380,
+    "subprocess_wall": 35.334932183031924,
+    "attempt_id": "core-zh-256MiB-b0-unsigned-trusted",
+    "build_id": "unsigned-trusted",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 9.8089487,
+      "process_hwm_kib_before_validation": 2338128,
+      "train_cpu_seconds": 75.589123,
+      "train_seconds": 23.668635025
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-library-trusted-screen/core-zh-256MiB-b0-unsigned-trusted/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  }
+]

@@ -1,0 +1,23 @@
+[
+  {
+    "case": "zh-256MiB",
+    "ownership": {
+      "train_seconds": 20.845621581,
+      "train_cpu_seconds": 65.561367,
+      "process_hwm_kib_before_validation": 2346276
+    },
+    "unsigned-trusted": {
+      "train_seconds": 23.668635025,
+      "train_cpu_seconds": 75.589123,
+      "process_hwm_kib_before_validation": 2338128
+    },
+    "reference": "ownership",
+    "paired_median_delta_percent": {
+      "unsigned-trusted": {
+        "train_seconds": 13.542476692434402,
+        "train_cpu_seconds": 15.295221040769324,
+        "process_hwm_kib_before_validation": -0.3472737222730782
+      }
+    }
+  }
+]

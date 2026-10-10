@@ -1,0 +1,64 @@
+{
+  "baseline_commit": "7de4e0680631fa362fed2bd54af722828b90ce05",
+  "baseline_nonblank_noncomment_production": 2746,
+  "adopted_nonblank_noncomment_production": 2691,
+  "delta": -55,
+  "native_tests": 17,
+  "no_default_tests": 17,
+  "no_default_doctests": 1,
+  "strict_miri_tests": 2,
+  "scope": "Eight ordinary BPE modules including API, feed, word counts. Embedded cfg(test) items excluded; test count includes the oracle in tests.rs and Miri harness.",
+  "profile_scope": "Portable release builds; cycles:u sampling includes loading. Profiles are diagnostic, not training-only timings.",
+  "early_matrix": "Stopped after 25 completed valid ByteLevel samples; no missing processes treated as observations.",
+  "final_comparison": {
+    "completed_processes": 12,
+    "measured_pairs_per_case": 2,
+    "all_full_models_equal": true,
+    "all_child_swap_zero": true,
+    "summary": [
+      {
+        "case": "zh-256MiB",
+        "baseline": {
+          "train_seconds": 21.406202813999997,
+          "train_cpu_seconds": 68.85326599999999,
+          "process_hwm_kib_before_validation": 2476978.0
+        },
+        "adopted": {
+          "train_seconds": 21.6873204535,
+          "train_cpu_seconds": 68.8481505,
+          "process_hwm_kib_before_validation": 2340268.0
+        },
+        "reference": "baseline",
+        "paired_median_delta_percent": {
+          "adopted": {
+            "train_seconds": 1.3894573248683428,
+            "train_cpu_seconds": 0.046384993953513476,
+            "process_hwm_kib_before_validation": -5.51822329810484
+          }
+        }
+      },
+      {
+        "case": "zh-whitespace-256MiB",
+        "baseline": {
+          "train_seconds": 20.852655552,
+          "train_cpu_seconds": 59.0150905,
+          "process_hwm_kib_before_validation": 1979874.0
+        },
+        "adopted": {
+          "train_seconds": 20.734954893999998,
+          "train_cpu_seconds": 56.8908375,
+          "process_hwm_kib_before_validation": 1805592.0
+        },
+        "reference": "baseline",
+        "paired_median_delta_percent": {
+          "adopted": {
+            "train_seconds": -0.5529233156320812,
+            "train_cpu_seconds": -3.5853320942458855,
+            "process_hwm_kib_before_validation": -8.803791359052681
+          }
+        }
+      }
+    ]
+  },
+  "text_archive_normalization": "Log and perf text retain content and internal alignment; trailing whitespace and blank EOF lines are removed. Gzipped patches retain exact original bytes."
+}

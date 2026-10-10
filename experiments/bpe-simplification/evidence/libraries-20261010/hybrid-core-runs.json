@@ -1,0 +1,462 @@
+[
+  {
+    "case": "zh-256MiB",
+    "block": 0,
+    "arm": "final-owned",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-library-final-owned-bin",
+      "/tmp/bpe-library-hybrid-screen/core-zh-256MiB-b0-final-owned/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2345728,
+    "subprocess_wall": 32.81600489700213,
+    "attempt_id": "core-zh-256MiB-b0-final-owned",
+    "build_id": "final-owned",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 10.308232847,
+      "process_hwm_kib_before_validation": 2345924,
+      "train_cpu_seconds": 64.856364,
+      "train_seconds": 20.648322472
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-library-hybrid-screen/core-zh-256MiB-b0-final-owned/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 0,
+    "arm": "final-tls",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-library-final-tls-bin",
+      "/tmp/bpe-library-hybrid-screen/core-zh-256MiB-b0-final-tls/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2344588,
+    "subprocess_wall": 32.09569327195641,
+    "attempt_id": "core-zh-256MiB-b0-final-tls",
+    "build_id": "final-tls",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 9.581374427,
+      "process_hwm_kib_before_validation": 2344392,
+      "train_cpu_seconds": 65.436651,
+      "train_seconds": 20.748249407
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-library-hybrid-screen/core-zh-256MiB-b0-final-tls/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 0,
+    "arm": "sux-hybrid",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-library-sux-hybrid-bin",
+      "/tmp/bpe-library-hybrid-screen/core-zh-256MiB-b0-sux-hybrid/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2349052,
+    "subprocess_wall": 37.276970508974046,
+    "attempt_id": "core-zh-256MiB-b0-sux-hybrid",
+    "build_id": "sux-hybrid",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 9.725413272,
+      "process_hwm_kib_before_validation": 2348848,
+      "train_cpu_seconds": 72.287651,
+      "train_seconds": 23.474573515
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-library-hybrid-screen/core-zh-256MiB-b0-sux-hybrid/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 0,
+    "arm": "vers-hybrid",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-library-vers-hybrid-bin",
+      "/tmp/bpe-library-hybrid-screen/core-zh-256MiB-b0-vers-hybrid/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2535544,
+    "subprocess_wall": 44.763543350971304,
+    "attempt_id": "core-zh-256MiB-b0-vers-hybrid",
+    "build_id": "vers-hybrid",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 9.230319655,
+      "process_hwm_kib_before_validation": 2535368,
+      "train_cpu_seconds": 99.708471,
+      "train_seconds": 31.185755949
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-library-hybrid-screen/core-zh-256MiB-b0-vers-hybrid/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 0,
+    "arm": "vu-padded",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-library-vu-padded-bin",
+      "/tmp/bpe-library-hybrid-screen/core-zh-256MiB-b0-vu-padded/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2356420,
+    "subprocess_wall": 38.257775916019455,
+    "attempt_id": "core-zh-256MiB-b0-vu-padded",
+    "build_id": "vu-padded",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 9.637579181,
+      "process_hwm_kib_before_validation": 2356364,
+      "train_cpu_seconds": 77.017878,
+      "train_seconds": 24.17052675
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-library-hybrid-screen/core-zh-256MiB-b0-vu-padded/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 0,
+    "arm": "final-owned",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-library-final-owned-bin",
+      "/tmp/bpe-library-hybrid-screen/core-zh-whitespace-256MiB-b0-final-owned/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1811208,
+    "subprocess_wall": 29.32600217498839,
+    "attempt_id": "core-zh-whitespace-256MiB-b0-final-owned",
+    "build_id": "final-owned",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.884783434,
+      "process_hwm_kib_before_validation": 1811152,
+      "train_cpu_seconds": 54.176427000000004,
+      "train_seconds": 20.194957401
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-library-hybrid-screen/core-zh-whitespace-256MiB-b0-final-owned/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 0,
+    "arm": "final-tls",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-library-final-tls-bin",
+      "/tmp/bpe-library-hybrid-screen/core-zh-whitespace-256MiB-b0-final-tls/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1831576,
+    "subprocess_wall": 29.95929398597218,
+    "attempt_id": "core-zh-whitespace-256MiB-b0-final-tls",
+    "build_id": "final-tls",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.898145909,
+      "process_hwm_kib_before_validation": 1831748,
+      "train_cpu_seconds": 56.72372300000001,
+      "train_seconds": 20.571496327
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-library-hybrid-screen/core-zh-whitespace-256MiB-b0-final-tls/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 0,
+    "arm": "sux-hybrid",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-library-sux-hybrid-bin",
+      "/tmp/bpe-library-hybrid-screen/core-zh-whitespace-256MiB-b0-sux-hybrid/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1897924,
+    "subprocess_wall": 31.035329877980985,
+    "attempt_id": "core-zh-whitespace-256MiB-b0-sux-hybrid",
+    "build_id": "sux-hybrid",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 7.02891221,
+      "process_hwm_kib_before_validation": 1897852,
+      "train_cpu_seconds": 59.038041,
+      "train_seconds": 21.626569534
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-library-hybrid-screen/core-zh-whitespace-256MiB-b0-sux-hybrid/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 0,
+    "arm": "vers-hybrid",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-library-vers-hybrid-bin",
+      "/tmp/bpe-library-hybrid-screen/core-zh-whitespace-256MiB-b0-vers-hybrid/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1913356,
+    "subprocess_wall": 34.17946248501539,
+    "attempt_id": "core-zh-whitespace-256MiB-b0-vers-hybrid",
+    "build_id": "vers-hybrid",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 7.270392955,
+      "process_hwm_kib_before_validation": 1913524,
+      "train_cpu_seconds": 68.530622,
+      "train_seconds": 24.567641687
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-library-hybrid-screen/core-zh-whitespace-256MiB-b0-vers-hybrid/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 0,
+    "arm": "vu-padded",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-library-vu-padded-bin",
+      "/tmp/bpe-library-hybrid-screen/core-zh-whitespace-256MiB-b0-vu-padded/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1831304,
+    "subprocess_wall": 31.81434567994438,
+    "attempt_id": "core-zh-whitespace-256MiB-b0-vu-padded",
+    "build_id": "vu-padded",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 7.238376432,
+      "process_hwm_kib_before_validation": 1831524,
+      "train_cpu_seconds": 61.28870499999999,
+      "train_seconds": 22.261199705
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-library-hybrid-screen/core-zh-whitespace-256MiB-b0-vu-padded/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  }
+]

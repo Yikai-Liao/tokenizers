@@ -1,0 +1,53 @@
+18.27% rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::vec::DrainProducer<(usize, &tk_train::trainers::bpe::merge::Rule, tk_train::trainers::bpe::merge::Source)>, rayon::iter::map_with::MapInitConsumer<rayon::iter::map::MapConsumer<rayon::iter::while_some::WhileSomeConsumer<rayon::iter::extend::ListVecConsumer>, <core::result::Result<_, _> as rayon::iter::FromParallelIterator<core::result::Result<_, _>>>::from_par_iter::ok<tk_train::trainers::bpe::merge::Job, alloc::boxed::Box<dyn core::error::Error + core::marker::Send + core::marker::Sync>>::{closure#0}>, <tk_train::trainers::bpe::merge::Directories as core::default::Default>::default, <tk_train::trainers::bpe::merge::Batch>::prepare::{closure#0}>>
+9.83% <tk_train::trainers::bpe::positions::Positions>::from_sorted
+5.17% <tk_train::trainers::bpe::positions::Builder>::push
+4.50% <tk_train::trainers::bpe::corpus::Corpus>::apply
+4.19% rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::iter::zip::ZipProducer<rayon::slice::IterMutProducer<ahash::hash_map::AHashMap<(u32, u32), u64>>, rayon::slice::IterMutProducer<tk_train::trainers::bpe::index::Route>>, rayon::iter::filter::FilterConsumer<rayon::iter::map::MapConsumer<rayon::iter::map::MapConsumer<rayon::iter::while_some::WhileSomeConsumer<rayon::iter::extend::ListVecConsumer>, <core::result::Result<_, _> as rayon::iter::FromParallelIterator<core::result::Result<_, _>>>::from_par_iter::ok<alloc::vec::Vec<tk_train::trainers::bpe::index::Candidate>, alloc::boxed::Box<dyn core::error::Error + core::marker::Send + core::marker::Sync>>::{closure#0}>, <tk_train::trainers::bpe::index::PairIndex>::commit::{closure#1}>, <tk_train::trainers::bpe::index::PairIndex>::commit::{closure#0}>>
+3.94% <tk_train::trainers::bpe::positions::Builder>::push_ordered
+3.42% <serde_json::read::IoRead<std::io::buffered::bufreader::BufReader<std::fs::File>> as serde_json::read::Read>::parse_str
+3.39% <tk_train::trainers::bpe::corpus::CorpusPlan>::initial_edges::<tk_train::trainers::bpe::index::count_range::{closure#0}>::{closure#0}
+3.32% rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::vec::DrainProducer<core::ops::range::Range<usize>>, rayon::iter::map::MapConsumer<rayon::iter::map::MapConsumer<rayon::iter::while_some::WhileSomeConsumer<rayon::iter::extend::ListVecConsumer>, <core::result::Result<_, _> as rayon::iter::FromParallelIterator<core::result::Result<_, _>>>::from_par_iter::ok<alloc::vec::Vec<((u32, u32), tk_train::trainers::bpe::index::State<tk_train::trainers::bpe::positions::Positions>)>, alloc::boxed::Box<dyn core::error::Error + core::marker::Send + core::marker::Sync>>::{closure#0}>, <tk_train::trainers::bpe::index::PairIndex>::build::{closure#0}>>
+3.11% <tk_train::trainers::bpe::merge::Neighbors>::record
+2.87% rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::vec::DrainProducer<tk_train::trainers::bpe::merge::Job>, rayon::iter::map::MapConsumer<rayon::iter::collect::consumer::CollectConsumer<alloc::vec::Vec<tk_train::trainers::bpe::merge::Change<tk_train::trainers::bpe::merge::Birth>>>, <tk_train::trainers::bpe::merge::Prepared>::apply::{closure#0}>>
+2.78% rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::iter::enumerate::EnumerateProducer<rayon::slice::IterProducer<(&compact_str::CompactString, &u64)>>, rayon::iter::for_each::ForEachConsumer<<tk_train::trainers::bpe::corpus::CorpusPlan>::materialize::{closure#0}>>
+2.61% rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::slice::chunks::ChunksProducer<&compact_str::CompactString>, rayon::iter::map::MapConsumer<rayon::iter::collect::consumer::CollectConsumer<fixedbitset::FixedBitSet>, tk_train::trainers::bpe::vocabulary::observed_characters::{closure#0}>>
+2.44% bpe_bench_runner::core::run
+2.36% <tk_train::trainers::bpe::merge::Neighbors>::group
+2.14% tk_train::trainers::bpe::train_attempt
+1.95% cfree
+1.86% <ahash::random_state::RandomState as core::hash::BuildHasher>::hash_one::<&compact_str::CompactString>
+1.47% core::str::count::do_count_chars
+1.39% 0x000000000009eddd
+1.19% serde_json::read::next_or_eof::<serde_json::read::IoRead<std::io::buffered::bufreader::BufReader<std::fs::File>>>
+1.09% <hashbrown::map::HashMap<(u32, u32), u64, ahash::random_state::RandomState>>::insert
+0.88% 0x0000000000172dc9
+0.86% core::str::converts::from_utf8
+0.86% 0x000000000009ef43
+0.81% realloc
+0.77% <tk_train::trainers::bpe::merge::Neighbors>::finish
+0.68% 0x00000000000a05cc
+0.66% malloc
+0.63% rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::slice::IterProducer<(&compact_str::CompactString, &u64)>, rayon::iter::map::MapConsumer<rayon::iter::collect::consumer::CollectConsumer<usize>, <tk_train::trainers::bpe::corpus::CorpusPlan>::build::{closure#1}>>
+0.60% <tk_train::trainers::bpe::merge::FreshSnapshot>::selected_id
+0.52% 0x0000000000173613
+0.46% 0x00000000000a1c28
+0.44% 0x000000000009ede3
+0.37% <dary_heap::Hole<tk_train::trainers::bpe::index::Candidate>>::max_sibling::<8>
+0.37% rayon::slice::sort::recurse::<(&compact_str::CompactString, &u64), <[(&compact_str::CompactString, &u64)] as rayon::slice::ParallelSliceMut<(&compact_str::CompactString, &u64)>>::par_sort_unstable_by<<tk_train::trainers::bpe::corpus::CorpusPlan>::build::{closure#0}>::{closure#0}>
+0.35% <core::marker::PhantomData<alloc::vec::Vec<(compact_str::CompactString, u64)>> as serde_core::de::DeserializeSeed>::deserialize::<&mut serde_json::de::Deserializer<serde_json::read::IoRead<std::io::buffered::bufreader::BufReader<std::fs::File>>>>
+0.34% 0x000000000009eee6
+0.33% 0x000000000009ef77
+0.25% <tk_train::trainers::bpe::index::Route>::push
+0.25% 0x00000000001724da
+0.25% <serde_json::de::SeqAccess<_> as serde_core::de::SeqAccess>::next_element_seed::has_next_element::<serde_json::read::IoRead<std::io::buffered::bufreader::BufReader<std::fs::File>>>
+0.21% 0x0000000000172d6d
+0.20% 0xffffffff9b401280
+0.19% 0x000000000009ef93
+0.16% <hashbrown::map::HashMap<(u32, u32), u64, ahash::random_state::RandomState>>::remove::<(u32, u32)>
+0.16% 0x00000000000a2458
+0.15% 0x00000000000a06fd
+0.13% <serde_json::de::SeqAccess<serde_json::read::IoRead<std::io::buffered::bufreader::BufReader<std::fs::File>>> as serde_core::de::SeqAccess>::next_element::<u64>
+0.13% 0x00000000000a0490
+0.12% 0x000000000009f065
+0.12% 0x000000000009edc9
+0.11% 0x0000000000172a80

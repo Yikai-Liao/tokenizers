@@ -3,6 +3,7 @@ use super::word_counts::WordCountsView;
 use super::{BpeTrainer, WORD_SEPARATOR_ID};
 use ahash::{AHashMap, RandomState};
 use compact_str::CompactString;
+use fixedbitset::FixedBitSet;
 use indexmap::IndexSet;
 use rayon::prelude::*;
 use tk_encode::{
@@ -84,23 +85,17 @@ impl Vocabulary {
         word_counts: WordCountsView<'_>,
         workers: usize,
     ) -> Result<()> {
-        let mut present = observed_characters(word_counts, workers);
-        let observed = present.clone();
+        let observed = observed_characters(word_counts, workers);
+        let mut present = observed.clone();
         for &character in &trainer.initial_alphabet {
-            let codepoint = character as usize;
-            present[codepoint / 64] |= 1_u64 << (codepoint % 64);
+            present.insert(character as usize);
         }
-        for (word, mut bits) in present.into_iter().enumerate() {
-            while bits != 0 {
-                let codepoint = word * 64 + bits.trailing_zeros() as usize;
-                let character = char::from_u32(codepoint as u32)
-                    .expect("alphabet bits come from valid characters");
-                let mut utf8 = [0; 4];
-                let id = self.intern(character.encode_utf8(&mut utf8))?;
-                self.initial_spans[id as usize] =
-                    usize::from(observed[codepoint / 64] & (1_u64 << (codepoint % 64)) != 0);
-                bits &= bits - 1;
-            }
+        for codepoint in present.ones() {
+            let character =
+                char::from_u32(codepoint as u32).expect("alphabet bits come from valid characters");
+            let mut utf8 = [0; 4];
+            let id = self.intern(character.encode_utf8(&mut utf8))?;
+            self.initial_spans[id as usize] = usize::from(observed.contains(codepoint));
         }
         self.plain_ids_resolved = true;
         Ok(())
@@ -392,27 +387,24 @@ pub(super) fn select_alphabet(trainer: &BpeTrainer, wc: WordCountsView<'_>) -> V
     kept.into_iter().map(|(&character, _)| character).collect()
 }
 
-fn observed_characters(word_counts: WordCountsView<'_>, workers: usize) -> Vec<u64> {
+fn observed_characters(word_counts: WordCountsView<'_>, workers: usize) -> FixedBitSet {
     let words: Vec<_> = word_counts.keys().collect();
     let chunk = words.len().div_ceil(workers).max(1);
     let bitmaps: Vec<_> = words
         .par_chunks(chunk)
         .map(|chunk| {
-            let mut present = vec![0_u64; 0x110000 / 64];
+            let mut present = FixedBitSet::with_capacity(0x110000);
             for word in chunk {
                 for character in word.chars() {
-                    let codepoint = character as usize;
-                    present[codepoint / 64] |= 1_u64 << (codepoint % 64);
+                    present.insert(character as usize);
                 }
             }
             present
         })
         .collect();
-    let mut present = vec![0_u64; 0x110000 / 64];
+    let mut present = FixedBitSet::with_capacity(0x110000);
     for bitmap in bitmaps {
-        for (merged, bits) in present.iter_mut().zip(bitmap) {
-            *merged |= bits;
-        }
+        present.union_with(&bitmap);
     }
     present
 }

@@ -1,0 +1,45 @@
+{
+  "baseline_commit": "7de4e0680631fa362fed2bd54af722828b90ce05",
+  "mode": "pipeline",
+  "binaries": {
+    "ownership": "/tmp/bpe-library-ownership-pipeline-bin",
+    "owned-counts": "/tmp/bpe-library-owned-counts-pipeline-bin"
+  },
+  "binary_sha256": {
+    "ownership": "c06a5cabe08431a6bd5734283467b663eb3e0b8bd2ffd236e96944e9661c314e",
+    "owned-counts": "786815c382fb12b78ad30ad6b3d42c68419987e79d047a9f7baad2eb278d8ec3"
+  },
+  "patches": {
+    "ownership": "9df0a9809077ce541b019904f47b97cb4fd26c7d54b5b3abd90d0035d0c5fde6",
+    "owned-counts": "1484d33e7c2c3786b12fa34c55a075b8efc3260aad9ba688981b693c17dea415"
+  },
+  "cases": [
+    {
+      "case": "zh-256MiB",
+      "language": "zh",
+      "requested_mib": 256,
+      "pretokenizer": "bytelevel_regex",
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+      "bytes": 268435162,
+      "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+      "prepared_path": "/root/code/tokenizers-perfetto-results/inputs/zh-bytelevel/words.json",
+      "prepared_sha256": "bb796d0b57b87d965b84de249bc5c8e283b700774638d16a40e4ae5171b13ee0",
+      "prepared_bytes": 437135595
+    },
+    {
+      "case": "zh-whitespace-256MiB",
+      "language": "zh",
+      "requested_mib": 256,
+      "pretokenizer": "whitespace",
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+      "bytes": 268435162,
+      "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+      "prepared_path": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "prepared_sha256": "ed057a8fdb27544ed29f16dde53faa0de8f47f1ee8ac00080974fac5bb435660",
+      "prepared_bytes": 250116097
+    }
+  ],
+  "scope": "core: public do_train, load/serialization excluded; pipeline: public feed + train, validation excluded; HWM includes input and retained counts",
+  "design": "Two Chinese 256 MiB input cases; 1 rotating rounds; first round warmup only when rounds>1; workers4 affinity0-3; vocab50k/min2; no affixes",
+  "limitation": "Shared VM; descriptive observations, no statistical speedup claim."
+}

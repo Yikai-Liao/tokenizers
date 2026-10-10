@@ -1,0 +1,33 @@
+{
+  "baseline_commit": "7de4e0680631fa362fed2bd54af722828b90ce05",
+  "mode": "core",
+  "binaries": {
+    "ownership": "/tmp/bpe-library-ownership-bin",
+    "unsigned-trusted": "/tmp/bpe-library-unsigned-trusted-bin"
+  },
+  "binary_sha256": {
+    "ownership": "2a8375113d37ea5eb024b72da473385dbe4c3d169bcbec60a0de9c1cfaa3eed1",
+    "unsigned-trusted": "e4da6513ec6fdedf4d46dda922e318abd399819b9077834adbddc3f01d8bc55c"
+  },
+  "patches": {
+    "ownership": "9df0a9809077ce541b019904f47b97cb4fd26c7d54b5b3abd90d0035d0c5fde6",
+    "unsigned-trusted": "711f25c5fa8d8cc0306fc4fa8ecfd6b0ee42b2f29f33ea3342cc3906508b43cc"
+  },
+  "cases": [
+    {
+      "case": "zh-256MiB",
+      "language": "zh",
+      "requested_mib": 256,
+      "pretokenizer": "bytelevel_regex",
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+      "bytes": 268435162,
+      "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+      "prepared_path": "/root/code/tokenizers-perfetto-results/inputs/zh-bytelevel/words.json",
+      "prepared_sha256": "bb796d0b57b87d965b84de249bc5c8e283b700774638d16a40e4ae5171b13ee0",
+      "prepared_bytes": 437135595
+    }
+  ],
+  "scope": "core: public do_train, load/serialization excluded; pipeline: public feed + train, validation excluded; HWM includes input and retained counts",
+  "design": "Two Chinese 256 MiB input cases; 1 rotating rounds; first round warmup only when rounds>1; workers4 affinity0-3; vocab50k/min2; no affixes",
+  "limitation": "Shared VM; descriptive observations, no statistical speedup claim."
+}

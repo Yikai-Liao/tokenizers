@@ -22,7 +22,7 @@ use compact_str::CompactString;
 use corpus::CorpusPlan;
 use index::PairIndex;
 use merge::{Batch, Selection};
-use positions::Arena;
+use positions::Codec;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use tk_encode::vocab::bucket_added_vocabulary::AddedToken;
@@ -466,9 +466,9 @@ fn train_attempt(
 
     // 2. Count and freeze initial pairs before allocating resident token slots.
     trainer.update_progress(progress, plan.word_count(), "Count pairs");
-    let arena = Arena::new(workers, plan.items());
+    let codec = Codec::new(workers);
     let mut index = PairIndex::build(
-        &arena,
+        &codec,
         &plan,
         trainer.min_frequency,
         workers,
@@ -481,7 +481,7 @@ fn train_attempt(
         trainer.finalize_progress(progress, 0, "Compute merges");
         drop(index);
         drop(plan);
-        drop(arena);
+        drop(codec);
         let (vocab, merges) = vocabulary.into_model_parts(Vec::new());
         return Ok(Some((vocab, merges, trainer.special_tokens.clone())));
     }
@@ -508,7 +508,7 @@ fn train_attempt(
         merges.extend(batch.pairs());
         let prepared = batch.prepare(
             &corpus,
-            &arena,
+            &codec,
             trainer.max_token_length.unwrap_or(usize::MAX),
         )?;
         let changes = prepared.apply(&corpus);
@@ -524,7 +524,7 @@ fn train_attempt(
     }
     drop(index);
     drop(corpus);
-    drop(arena);
+    drop(codec);
     #[cfg(test)]
     if let Some(observer) = observe.as_mut() {
         for (pair, count, id) in trace {

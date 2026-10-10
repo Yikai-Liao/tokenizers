@@ -1,0 +1,633 @@
+ Percent |	Source code & Disassembly of bpe-library-vers-bin for cycles:u (4988 samples, percent: local period)
+--------------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      0000000000104180 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1>:
+    0.80 :   104180: push   %r15
+    1.32 :   104182: push   %r14
+    0.56 :   104184: push   %r12
+    0.12 :   104186: push   %rbx
+    0.09 :   104187: push   %rax
+    0.24 :   104188: mov    0x18(%rdi),%r11
+    0.06 :   10418c: mov    0x10(%rdi),%r10
+    0.25 :   104190: xor    %eax,%eax
+    0.12 :   104192: cmp    0x70(%r10),%r11
+    0.00 :   104196: jae    104550 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x3d0>
+    0.57 :   10419c: mov    %rdi,%r8
+    0.08 :   10419f: cmpq   $0x0,(%rdi)
+    0.12 :   1041a3: je     104550 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x3d0>
+    0.07 :   1041a9: cmp    0x8(%r8),%r11
+    0.00 :   1041ad: ja     104a16 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x896>
+    0.24 :   1041b3: mov    %r11,%rdi
+    0.04 :   1041b6: shr    $0xd,%rdi
+    0.06 :   1041ba: mov    0x58(%r10),%rax
+    0.26 :   1041be: cmp    %rax,%rdi
+    0.00 :   1041c1: jae    104a43 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x8c3>
+    0.20 :   1041c7: mov    0x40(%r10),%rsi
+    0.14 :   1041cb: mov    0x50(%r10),%rdx
+    0.18 :   1041cf: mov    %rdi,%rcx
+    0.04 :   1041d2: shl    $0x4,%rcx
+    0.16 :   1041d6: mov    0x8(%rdx,%rcx,1),%rcx
+    1.15 :   1041db: mov    0x20(%r8),%r9
+    0.09 :   1041df: lea    0x1(%r9),%r14
+    0.02 :   1041e3: cmp    %r14,%rsi
+    0.00 :   1041e6: jbe    10425c <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0xdc>
+    0.06 :   1041e8: mov    0x38(%r10),%rbx
+    0.45 :   1041ec: shl    $0xd,%r14
+    0.04 :   1041f0: sub    0x8(%rbx,%r9,8),%r14
+    0.72 :   1041f5: cmp    %r11,%r14
+    0.00 :   1041f8: jbe    10425c <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0xdc>
+    0.33 :   1041fa: cmp    %rsi,%r9
+    0.00 :   1041fd: jae    104a8e <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x90e>
+    0.04 :   104203: mov    %r9,%rax
+    0.00 :   104206: shl    $0x4,%rax
+    0.01 :   10420a: mov    (%rbx,%r9,8),%rcx
+    0.38 :   10420e: shl    $0xd,%r9
+    0.00 :   104212: sub    %r9,%rcx
+    0.00 :   104215: add    %r11,%rcx
+    0.02 :   104218: mov    0x30(%r8),%rdi
+    0.39 :   10421c: mov    %edi,%edx
+    0.06 :   10421e: not    %edx
+    0.00 :   104220: mov    0x28(%r10),%rsi
+    0.08 :   104224: test   $0xf,%dl
+    0.00 :   104227: jne    1046ce <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x54e>
+    0.39 :   10422d: cmp    %rsi,%rdi
+    0.00 :   104230: jae    104544 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x3c4>
+    0.00 :   104236: mov    0x20(%r10),%rdx
+    0.00 :   10423a: mov    %rax,%r9
+    0.04 :   10423d: sub    %rdi,%r9
+    0.27 :   104240: shl    $0x9,%r9
+    0.00 :   104244: movzwl (%rdx,%rdi,2),%edx
+    0.10 :   104248: add    %r9,%rdx
+    0.08 :   10424b: add    %rdx,%rcx
+    0.33 :   10424e: test   %rdi,%rdi
+    0.00 :   104251: jne    1043f5 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x275>
+    0.00 :   104257: jmp    104360 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x1e0>
+    0.02 :   10425c: inc    %rdi
+    0.10 :   10425f: cmp    %rax,%rdi
+    0.00 :   104262: jae    104a70 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x8f0>
+    0.03 :   104268: shl    $0x4,%rdi
+    0.04 :   10426c: mov    0x8(%rdx,%rdi,1),%rax
+    0.07 :   104271: mov    %rax,%rdi
+    0.10 :   104274: sub    %rcx,%rdi
+    0.02 :   104277: cmp    $0x9,%rdi
+    0.00 :   10427b: jb     1042fa <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x17a>
+    0.00 :   10427d: shr    $1,%rdi
+    0.00 :   104280: add    %rcx,%rdi
+    0.00 :   104283: cmp    %rsi,%rdi
+    0.00 :   104286: jae    104a37 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x8b7>
+    0.00 :   10428c: mov    0x38(%r10),%rdx
+    0.00 :   104290: mov    %rdi,%r9
+    0.00 :   104293: shl    $0xd,%r9
+    0.00 :   104297: sub    (%rdx,%rdi,8),%r9
+    0.00 :   10429b: cmp    %r11,%r9
+    0.00 :   10429e: cmova  %rdi,%rax
+    0.00 :   1042a2: cmovbe %rdi,%rcx
+    0.00 :   1042a6: mov    %rax,%rdi
+    0.00 :   1042a9: sub    %rcx,%rdi
+    0.00 :   1042ac: cmp    $0x9,%rdi
+    0.00 :   1042b0: jae    1042cf <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x14f>
+    0.00 :   1042b2: jmp    1042fa <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x17a>
+    0.00 :   1042b4: data16 data16 cs nopw 0x0(%rax,%rax,1)
+    0.00 :   1042c0: mov    %rdi,%rcx
+    0.00 :   1042c3: mov    %rax,%rdi
+    0.00 :   1042c6: sub    %rcx,%rdi
+    0.00 :   1042c9: cmp    $0x8,%rdi
+    0.00 :   1042cd: jbe    1042fa <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x17a>
+    0.00 :   1042cf: shr    $1,%rdi
+    0.00 :   1042d2: add    %rcx,%rdi
+    0.00 :   1042d5: cmp    %rsi,%rdi
+    0.00 :   1042d8: jae    104a37 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x8b7>
+    0.00 :   1042de: mov    %rdi,%r9
+    0.00 :   1042e1: shl    $0xd,%r9
+    0.00 :   1042e5: sub    (%rdx,%rdi,8),%r9
+    0.00 :   1042e9: cmp    %r11,%r9
+    0.00 :   1042ec: jbe    1042c0 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x140>
+    0.00 :   1042ee: mov    %rdi,%rax
+    0.00 :   1042f1: sub    %rcx,%rdi
+    0.00 :   1042f4: cmp    $0x8,%rdi
+    0.00 :   1042f8: ja     1042cf <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x14f>
+    0.13 :   1042fa: lea    0x1(%rcx),%rdx
+    0.00 :   1042fe: cmp    %rdx,%rsi
+    0.00 :   104301: mov    %rdx,%rax
+    0.02 :   104304: cmova  %rsi,%rax
+    0.12 :   104308: dec    %rax
+    0.08 :   10430b: shl    $0xd,%rcx
+    0.02 :   10430f: nop
+    0.06 :   104310: cmp    %rdx,%rsi
+    0.00 :   104313: jbe    104336 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x1b6>
+    0.00 :   104315: mov    0x38(%r10),%rdi
+    0.02 :   104319: add    $0x2000,%rcx
+    0.00 :   104320: mov    %rcx,%r9
+    0.00 :   104323: sub    (%rdi,%rdx,8),%r9
+    0.08 :   104327: inc    %rdx
+    0.02 :   10432a: cmp    %r11,%r9
+    0.00 :   10432d: jbe    104310 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x190>
+    0.00 :   10432f: add    $0xfffffffffffffffe,%rdx
+    0.00 :   104333: mov    %rdx,%rax
+    0.12 :   104336: mov    %rax,0x20(%r8)
+    0.23 :   10433a: cmp    %rsi,%rax
+    0.00 :   10433d: jae    104a7f <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x8ff>
+    0.02 :   104343: mov    0x28(%r10),%rsi
+    0.01 :   104347: mov    0x38(%r10),%rdx
+    0.04 :   10434b: mov    %rax,%rdi
+    0.04 :   10434e: shl    $0xd,%rdi
+    0.00 :   104352: mov    %r11,%rcx
+    0.00 :   104355: sub    %rdi,%rcx
+    0.10 :   104358: add    (%rdx,%rax,8),%rcx
+    0.46 :   10435c: shl    $0x4,%rax
+    0.00 :   104360: mov    %rax,%rdx
+    0.02 :   104363: or     $0x8,%rdx
+    0.10 :   104367: mov    %rax,%rdi
+    0.09 :   10436a: cmp    %rdx,%rsi
+    0.00 :   10436d: jbe    1044d4 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x354>
+    0.00 :   104373: mov    0x20(%r10),%rdi
+    0.04 :   104377: movzwl (%rdi,%rdx,2),%edi
+    0.12 :   10437b: mov    $0x1000,%r9d
+    0.00 :   104381: sub    %rdi,%r9
+    0.04 :   104384: cmp    %r9,%rcx
+    0.27 :   104387: cmovb  %rax,%rdx
+    0.00 :   10438b: mov    %rdx,%rdi
+    0.01 :   10438e: lea    0x4(%rdi),%rdx
+    0.02 :   104392: cmp    %rdx,%rsi
+    0.00 :   104395: ja     1044e1 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x361>
+    0.01 :   10439b: lea    0x2(%rdi),%rdx
+    0.00 :   10439f: cmp    %rdx,%rsi
+    0.00 :   1043a2: jbe    10450c <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x38c>
+    0.00 :   1043a8: mov    0x20(%r10),%r9
+    0.14 :   1043ac: mov    %rdx,%rbx
+    0.02 :   1043af: sub    %rax,%rbx
+    0.00 :   1043b2: shl    $0x9,%rbx
+    0.00 :   1043b6: movzwl 0x4(%r9,%rdi,2),%r9d
+    0.08 :   1043bc: sub    %r9,%rbx
+    0.19 :   1043bf: cmp    %rbx,%rcx
+    0.24 :   1043c2: cmovae %rdx,%rdi
+    0.04 :   1043c6: lea    0x1(%rdi),%rdx
+    0.08 :   1043ca: cmp    %rdx,%rsi
+    0.00 :   1043cd: ja     104519 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x399>
+    0.00 :   1043d3: mov    %rdi,0x30(%r8)
+    0.00 :   1043d7: cmp    %rsi,%rdi
+    0.00 :   1043da: jae    104544 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x3c4>
+    0.00 :   1043e0: mov    0x20(%r10),%rdx
+    0.00 :   1043e4: sub    %rdi,%rax
+    0.02 :   1043e7: shl    $0x9,%rax
+    0.18 :   1043eb: movzwl (%rdx,%rdi,2),%edx
+    0.35 :   1043ef: add    %rax,%rdx
+    0.09 :   1043f2: add    %rdx,%rcx
+    0.09 :   1043f5: inc    %r11
+    0.04 :   1043f8: mov    %r11,0x18(%r8)
+    0.08 :   1043fc: shl    $0x9,%rdi
+    0.22 :   104400: mov    %rdi,%rax
+    0.12 :   104403: shr    $0x6,%rax
+    0.00 :   104407: mov    0x10(%r10),%rsi
+    0.12 :   10440b: cmp    %rsi,%rax
+    0.00 :   10440e: jae    104a52 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x8d2>
+    0.50 :   104414: mov    0x8(%r10),%r9
+    0.12 :   104418: mov    (%r9,%rax,8),%r8
+    0.59 :   10441c: mov    %r8,%rdx
+    0.02 :   10441f: shr    $1,%rdx
+    0.41 :   104422: movabs $0x5555555555555555,%r11
+    0.16 :   10442c: and    %r11,%rdx
+    0.18 :   10442f: mov    %r8,%rbx
+    0.00 :   104432: sub    %rdx,%rbx
+    0.60 :   104435: movabs $0x3333333333333333,%r10
+    0.11 :   10443f: mov    %rbx,%rdx
+    0.02 :   104442: and    %r10,%rdx
+    0.07 :   104445: shr    $0x2,%rbx
+    0.39 :   104449: and    %r10,%rbx
+    0.21 :   10444c: add    %rdx,%rbx
+    0.87 :   10444f: mov    %rbx,%r15
+    0.04 :   104452: shr    $0x4,%r15
+    0.06 :   104456: add    %rbx,%r15
+    0.08 :   104459: movabs $0xf0f0f0f0f0f0f0f,%rbx
+    1.29 :   104463: and    %rbx,%r15
+    0.49 :   104466: movabs $0x101010101010101,%r14
+    0.02 :   104470: imul   %r14,%r15
+    0.25 :   104474: shr    $0x38,%r15
+    0.23 :   104478: mov    %rcx,%rdx
+    0.10 :   10447b: sub    %r15,%rdx
+    0.00 :   10447e: jae    104555 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x3d5>
+    0.14 :   104484: mov    $0x1,%eax
+    0.07 :   104489: mov    $0x1,%edx
+    0.00 :   10448e: shl    %cl,%rdx
+    0.10 :   104491: test   %r8,%r8
+    0.00 :   104494: je     1046bc <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x53c>
+    0.00 :   10449a: xor    %ecx,%ecx
+    0.00 :   10449c: nopl   0x0(%rax)
+    0.28 :   1044a0: mov    %rax,%rsi
+    0.83 :   1044a3: and    %rdx,%rsi
+    0.64 :   1044a6: mov    %r8,%r9
+    0.51 :   1044a9: neg    %r9
+    0.37 :   1044ac: and    %r8,%r9
+    0.80 :   1044af: test   %rsi,%rsi
+    0.56 :   1044b2: cmove  %rsi,%r9
+    0.42 :   1044b6: or     %r9,%rcx
+    0.70 :   1044b9: lea    -0x1(%r8),%rsi
+    0.63 :   1044bd: add    %rax,%rax
+    0.37 :   1044c0: and    %rsi,%r8
+    0.00 :   1044c3: jne    1044a0 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x320>
+    0.22 :   1044c5: mov    $0x40,%edx
+    0.25 :   1044ca: tzcnt  %rcx,%rdx
+    0.06 :   1044cf: jmp    1046c1 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x541>
+    0.00 :   1044d4: lea    0x4(%rdi),%rdx
+    0.00 :   1044d8: cmp    %rdx,%rsi
+    0.00 :   1044db: jbe    10439b <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x21b>
+    0.08 :   1044e1: mov    0x20(%r10),%r9
+    0.12 :   1044e5: mov    %rdx,%rbx
+    0.00 :   1044e8: sub    %rax,%rbx
+    0.00 :   1044eb: shl    $0x9,%rbx
+    0.02 :   1044ef: movzwl 0x8(%r9,%rdi,2),%r9d
+    0.16 :   1044f5: sub    %r9,%rbx
+    0.10 :   1044f8: cmp    %rbx,%rcx
+    0.22 :   1044fb: cmovae %rdx,%rdi
+    0.04 :   1044ff: lea    0x2(%rdi),%rdx
+    0.00 :   104503: cmp    %rdx,%rsi
+    0.00 :   104506: ja     1043a8 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x228>
+    0.05 :   10450c: lea    0x1(%rdi),%rdx
+    0.03 :   104510: cmp    %rdx,%rsi
+    0.00 :   104513: jbe    1043d3 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x253>
+    0.12 :   104519: mov    0x20(%r10),%r9
+    0.00 :   10451d: mov    %rdx,%rbx
+    0.02 :   104520: sub    %rax,%rbx
+    0.00 :   104523: shl    $0x9,%rbx
+    0.08 :   104527: movzwl 0x2(%r9,%rdi,2),%r9d
+    0.29 :   10452d: sub    %r9,%rbx
+    0.23 :   104530: cmp    %rbx,%rcx
+    0.17 :   104533: cmovae %rdx,%rdi
+    0.20 :   104537: mov    %rdi,0x30(%r8)
+    0.23 :   10453b: cmp    %rsi,%rdi
+    0.00 :   10453e: jb     1043e0 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x260>
+    0.00 :   104544: lea    0x68fd(%rip),%rdx        # 10ae48 <bitcannon::classify::atom_tables::ATOM_TABLES+0x4208>
+    0.00 :   10454b: call   7279b <core::panicking::panic_bounds_check>
+    0.00 :   104550: jmp    104a16 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x896>
+    0.40 :   104555: mov    %rax,%rcx
+    0.02 :   104558: or     $0x1,%rcx
+    0.08 :   10455c: cmp    %rsi,%rcx
+    0.00 :   10455f: jae    104a61 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x8e1>
+    0.12 :   104565: mov    (%r9,%rcx,8),%r15
+    0.35 :   104569: mov    %r15,%rcx
+    0.01 :   10456c: shr    $1,%rcx
+    0.02 :   10456f: and    %r11,%rcx
+    0.12 :   104572: mov    %r15,%r8
+    0.31 :   104575: sub    %rcx,%r8
+    0.06 :   104578: mov    %r8,%rcx
+    0.00 :   10457b: and    %r10,%rcx
+    0.21 :   10457e: shr    $0x2,%r8
+    0.39 :   104582: and    %r10,%r8
+    0.19 :   104585: add    %rcx,%r8
+    0.01 :   104588: mov    %r8,%rcx
+    0.22 :   10458b: shr    $0x4,%rcx
+    0.69 :   10458f: add    %r8,%rcx
+    0.18 :   104592: and    %rbx,%rcx
+    0.02 :   104595: imul   %r14,%rcx
+    0.40 :   104599: shr    $0x38,%rcx
+    0.34 :   10459d: mov    %rdx,%r8
+    0.06 :   1045a0: sub    %rcx,%r8
+    0.00 :   1045a3: jae    104604 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x484>
+    0.17 :   1045a5: or     $0x40,%rdi
+    0.10 :   1045a9: mov    $0x1,%eax
+    0.00 :   1045ae: mov    $0x1,%esi
+    0.06 :   1045b3: mov    %edx,%ecx
+    0.06 :   1045b5: shl    %cl,%rsi
+    0.10 :   1045b8: test   %r15,%r15
+    0.00 :   1045bb: je     104a06 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x886>
+    0.02 :   1045c1: xor    %ecx,%ecx
+    0.00 :   1045c3: data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+    0.30 :   1045d0: mov    %rax,%rdx
+    0.64 :   1045d3: and    %rsi,%rdx
+    0.67 :   1045d6: mov    %r15,%r8
+    0.25 :   1045d9: neg    %r8
+    0.38 :   1045dc: and    %r15,%r8
+    0.76 :   1045df: test   %rdx,%rdx
+    0.75 :   1045e2: cmove  %rdx,%r8
+    0.49 :   1045e6: or     %r8,%rcx
+    0.68 :   1045e9: lea    -0x1(%r15),%rdx
+    0.50 :   1045ed: add    %rax,%rax
+    0.46 :   1045f0: and    %rdx,%r15
+    0.00 :   1045f3: jne    1045d0 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x450>
+    0.64 :   1045f5: mov    $0x40,%eax
+    0.44 :   1045fa: tzcnt  %rcx,%rax
+    0.27 :   1045ff: jmp    104a0b <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x88b>
+    0.28 :   104604: mov    %rax,%rcx
+    0.13 :   104607: or     $0x2,%rcx
+    0.08 :   10460b: cmp    %rsi,%rcx
+    0.00 :   10460e: jae    104a61 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x8e1>
+    0.06 :   104614: mov    (%r9,%rcx,8),%rdx
+    0.30 :   104618: mov    %rdx,%rcx
+    0.06 :   10461b: shr    $1,%rcx
+    0.06 :   10461e: and    %r11,%rcx
+    0.04 :   104621: mov    %rdx,%r15
+    0.12 :   104624: sub    %rcx,%r15
+    0.14 :   104627: mov    %r15,%rcx
+    0.10 :   10462a: and    %r10,%rcx
+    0.06 :   10462d: shr    $0x2,%r15
+    0.12 :   104631: and    %r10,%r15
+    0.14 :   104634: add    %rcx,%r15
+    0.09 :   104637: mov    %r15,%r12
+    0.04 :   10463a: shr    $0x4,%r12
+    0.21 :   10463e: add    %r15,%r12
+    0.16 :   104641: and    %rbx,%r12
+    0.14 :   104644: imul   %r14,%r12
+    0.19 :   104648: shr    $0x38,%r12
+    0.12 :   10464c: mov    %r8,%rcx
+    0.09 :   10464f: sub    %r12,%rcx
+    0.00 :   104652: jae    1046fd <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x57d>
+    0.21 :   104658: mov    $0x1,%eax
+    0.06 :   10465d: mov    $0x1,%esi
+    0.00 :   104662: mov    %r8d,%ecx
+    0.02 :   104665: shl    %cl,%rsi
+    0.06 :   104668: test   %rdx,%rdx
+    0.00 :   10466b: je     10484f <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x6cf>
+    0.00 :   104671: xor    %ecx,%ecx
+    0.00 :   104673: data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+    0.33 :   104680: mov    %rax,%r8
+    0.62 :   104683: and    %rsi,%r8
+    0.69 :   104686: mov    %rdx,%r9
+    0.29 :   104689: neg    %r9
+    0.34 :   10468c: and    %rdx,%r9
+    0.85 :   10468f: test   %r8,%r8
+    0.36 :   104692: cmove  %r8,%r9
+    0.37 :   104696: or     %r9,%rcx
+    0.65 :   104699: lea    -0x1(%rdx),%r8
+    0.57 :   10469d: add    %rax,%rax
+    0.46 :   1046a0: and    %r8,%rdx
+    0.00 :   1046a3: jne    104680 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x500>
+    0.25 :   1046a5: mov    $0x40,%eax
+    0.27 :   1046aa: tzcnt  %rcx,%rax
+    0.02 :   1046af: lea    (%rdi,%rax,1),%rdx
+    0.00 :   1046b3: add    $0x80,%rdx
+    0.04 :   1046ba: jmp    1046c4 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x544>
+    0.00 :   1046bc: mov    $0x40,%edx
+    0.00 :   1046c1: or     %rdi,%rdx
+    0.18 :   1046c4: mov    $0x1,%eax
+    0.08 :   1046c9: jmp    104a16 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x896>
+    0.30 :   1046ce: lea    0x1(%rdi),%rdx
+    0.02 :   1046d2: cmp    %rdx,%rsi
+    0.00 :   1046d5: jbe    104360 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x1e0>
+    0.04 :   1046db: mov    0x20(%r10),%r9
+    0.00 :   1046df: sub    %rax,%rdx
+    0.27 :   1046e2: shl    $0x9,%rdx
+    0.02 :   1046e6: movzwl 0x2(%r9,%rdi,2),%r9d
+    0.29 :   1046ec: sub    %r9,%rdx
+    0.12 :   1046ef: cmp    %rcx,%rdx
+    0.00 :   1046f2: ja     10422d <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0xad>
+    0.00 :   1046f8: jmp    104360 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x1e0>
+    0.26 :   1046fd: mov    %rax,%r8
+    0.06 :   104700: or     $0x3,%r8
+    0.04 :   104704: cmp    %rsi,%r8
+    0.00 :   104707: jae    104a9d <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x91d>
+    0.06 :   10470d: mov    (%r9,%r8,8),%rdx
+    0.12 :   104711: mov    %rdx,%r8
+    0.11 :   104714: shr    $1,%r8
+    0.08 :   104717: and    %r11,%r8
+    0.10 :   10471a: mov    %rdx,%r15
+    0.06 :   10471d: sub    %r8,%r15
+    0.12 :   104720: mov    %r15,%r8
+    0.06 :   104723: and    %r10,%r8
+    0.04 :   104726: shr    $0x2,%r15
+    0.10 :   10472a: and    %r10,%r15
+    0.10 :   10472d: add    %r8,%r15
+    0.20 :   104730: mov    %r15,%r12
+    0.06 :   104733: shr    $0x4,%r12
+    0.19 :   104737: add    %r15,%r12
+    0.28 :   10473a: and    %rbx,%r12
+    0.04 :   10473d: imul   %r14,%r12
+    0.49 :   104741: shr    $0x38,%r12
+    0.26 :   104745: mov    %rcx,%r8
+    0.00 :   104748: sub    %r12,%r8
+    0.00 :   10474b: jae    10479a <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x61a>
+    0.18 :   10474d: or     $0xc0,%rdi
+    0.04 :   104754: mov    $0x1,%eax
+    0.00 :   104759: mov    $0x1,%esi
+    0.00 :   10475e: shl    %cl,%rsi
+    0.00 :   104761: test   %rdx,%rdx
+    0.00 :   104764: je     104a06 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x886>
+    0.00 :   10476a: xor    %ecx,%ecx
+    0.02 :   10476c: nopl   0x0(%rax)
+    0.42 :   104770: mov    %rax,%r8
+    0.59 :   104773: and    %rsi,%r8
+    0.65 :   104776: mov    %rdx,%r9
+    0.45 :   104779: neg    %r9
+    0.31 :   10477c: and    %rdx,%r9
+    1.04 :   10477f: test   %r8,%r8
+    0.50 :   104782: cmove  %r8,%r9
+    0.36 :   104786: or     %r9,%rcx
+    0.68 :   104789: lea    -0x1(%rdx),%r8
+    0.53 :   10478d: add    %rax,%rax
+    0.38 :   104790: and    %r8,%rdx
+    0.00 :   104793: jne    104770 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x5f0>
+    0.11 :   104795: jmp    1045f5 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x475>
+    0.16 :   10479a: mov    %rax,%rcx
+    0.02 :   10479d: or     $0x4,%rcx
+    0.04 :   1047a1: cmp    %rsi,%rcx
+    0.00 :   1047a4: jae    104a61 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x8e1>
+    0.02 :   1047aa: mov    (%r9,%rcx,8),%r15
+    0.18 :   1047ae: mov    %r15,%rcx
+    0.10 :   1047b1: shr    $1,%rcx
+    0.02 :   1047b4: and    %r11,%rcx
+    0.00 :   1047b7: mov    %r15,%rdx
+    0.04 :   1047ba: sub    %rcx,%rdx
+    0.12 :   1047bd: mov    %rdx,%rcx
+    0.13 :   1047c0: and    %r10,%rcx
+    0.08 :   1047c3: shr    $0x2,%rdx
+    0.14 :   1047c7: and    %r10,%rdx
+    0.16 :   1047ca: add    %rcx,%rdx
+    0.10 :   1047cd: mov    %rdx,%rcx
+    0.05 :   1047d0: shr    $0x4,%rcx
+    0.21 :   1047d4: add    %rdx,%rcx
+    0.20 :   1047d7: and    %rbx,%rcx
+    0.08 :   1047da: imul   %r14,%rcx
+    0.09 :   1047de: shr    $0x38,%rcx
+    0.10 :   1047e2: mov    %r8,%rdx
+    0.04 :   1047e5: sub    %rcx,%rdx
+    0.00 :   1047e8: jae    104864 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x6e4>
+    0.14 :   1047ea: mov    $0x1,%eax
+    0.17 :   1047ef: mov    $0x1,%edx
+    0.00 :   1047f4: mov    %r8d,%ecx
+    0.00 :   1047f7: shl    %cl,%rdx
+    0.06 :   1047fa: test   %r15,%r15
+    0.00 :   1047fd: je     104998 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x818>
+    0.00 :   104803: xor    %ecx,%ecx
+    0.04 :   104805: data16 cs nopw 0x0(%rax,%rax,1)
+    0.37 :   104810: mov    %rax,%rsi
+    0.76 :   104813: and    %rdx,%rsi
+    0.72 :   104816: mov    %r15,%r8
+    0.41 :   104819: neg    %r8
+    0.49 :   10481c: and    %r15,%r8
+    0.81 :   10481f: test   %rsi,%rsi
+    0.54 :   104822: cmove  %rsi,%r8
+    0.67 :   104826: or     %r8,%rcx
+    0.44 :   104829: lea    -0x1(%r15),%rsi
+    0.49 :   10482d: add    %rax,%rax
+    0.42 :   104830: and    %rsi,%r15
+    0.00 :   104833: jne    104810 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x690>
+    0.26 :   104835: mov    $0x40,%eax
+    0.19 :   10483a: tzcnt  %rcx,%rax
+    0.00 :   10483f: lea    (%rdi,%rax,1),%rdx
+    0.06 :   104843: add    $0x100,%rdx
+    0.04 :   10484a: jmp    1046c4 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x544>
+    0.00 :   10484f: mov    $0x40,%eax
+    0.00 :   104854: lea    (%rdi,%rax,1),%rdx
+    0.00 :   104858: add    $0x80,%rdx
+    0.00 :   10485f: jmp    1046c4 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x544>
+    0.16 :   104864: mov    %rax,%rcx
+    0.04 :   104867: or     $0x5,%rcx
+    0.00 :   10486b: cmp    %rsi,%rcx
+    0.00 :   10486e: jae    104a61 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x8e1>
+    0.06 :   104874: mov    (%r9,%rcx,8),%r8
+    0.11 :   104878: mov    %r8,%rcx
+    0.06 :   10487b: shr    $1,%rcx
+    0.04 :   10487e: and    %r11,%rcx
+    0.08 :   104881: mov    %r8,%r15
+    0.04 :   104884: sub    %rcx,%r15
+    0.04 :   104887: mov    %r15,%rcx
+    0.04 :   10488a: and    %r10,%rcx
+    0.10 :   10488d: shr    $0x2,%r15
+    0.04 :   104891: and    %r10,%r15
+    0.08 :   104894: add    %rcx,%r15
+    0.02 :   104897: mov    %r15,%r12
+    0.04 :   10489a: shr    $0x4,%r12
+    0.11 :   10489e: add    %r15,%r12
+    0.08 :   1048a1: and    %rbx,%r12
+    0.02 :   1048a4: imul   %r14,%r12
+    0.12 :   1048a8: shr    $0x38,%r12
+    0.08 :   1048ac: mov    %rdx,%rcx
+    0.00 :   1048af: sub    %r12,%rcx
+    0.00 :   1048b2: jae    1048ff <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x77f>
+    0.08 :   1048b4: or     $0x140,%rdi
+    0.06 :   1048bb: mov    $0x1,%eax
+    0.00 :   1048c0: mov    $0x1,%esi
+    0.02 :   1048c5: mov    %edx,%ecx
+    0.02 :   1048c7: shl    %cl,%rsi
+    0.04 :   1048ca: test   %r8,%r8
+    0.00 :   1048cd: je     104a06 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x886>
+    0.04 :   1048d3: xor    %ecx,%ecx
+    0.51 :   1048d5: mov    %rax,%rdx
+    0.55 :   1048d8: and    %rsi,%rdx
+    0.56 :   1048db: mov    %r8,%r9
+    0.57 :   1048de: neg    %r9
+    0.40 :   1048e1: and    %r8,%r9
+    0.92 :   1048e4: test   %rdx,%rdx
+    0.51 :   1048e7: cmove  %rdx,%r9
+    0.55 :   1048eb: or     %r9,%rcx
+    0.61 :   1048ee: lea    -0x1(%r8),%rdx
+    0.69 :   1048f2: add    %rax,%rax
+    0.22 :   1048f5: and    %rdx,%r8
+    0.00 :   1048f8: jne    1048d5 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x755>
+    0.28 :   1048fa: jmp    1045f5 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x475>
+    0.08 :   1048ff: mov    %rax,%r8
+    0.06 :   104902: or     $0x6,%r8
+    0.08 :   104906: cmp    %rsi,%r8
+    0.00 :   104909: jae    104a9d <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x91d>
+    0.00 :   10490f: mov    (%r9,%r8,8),%rdx
+    0.10 :   104913: mov    %rdx,%r8
+    0.04 :   104916: shr    $1,%r8
+    0.10 :   104919: and    %r11,%r8
+    0.02 :   10491c: mov    %rdx,%r11
+    0.02 :   10491f: sub    %r8,%r11
+    0.02 :   104922: mov    %r11,%r8
+    0.02 :   104925: and    %r10,%r8
+    0.00 :   104928: shr    $0x2,%r11
+    0.02 :   10492c: and    %r10,%r11
+    0.02 :   10492f: add    %r8,%r11
+    0.02 :   104932: mov    %r11,%r8
+    0.06 :   104935: shr    $0x4,%r8
+    0.04 :   104939: add    %r11,%r8
+    0.10 :   10493c: and    %rbx,%r8
+    0.08 :   10493f: imul   %r14,%r8
+    0.00 :   104943: shr    $0x38,%r8
+    0.08 :   104947: cmp    %r8,%rcx
+    0.00 :   10494a: jae    1049ad <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x82d>
+    0.22 :   10494c: mov    $0x1,%eax
+    0.10 :   104951: mov    $0x1,%esi
+    0.00 :   104956: shl    %cl,%rsi
+    0.12 :   104959: test   %rdx,%rdx
+    0.00 :   10495c: je     104a22 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x8a2>
+    0.02 :   104962: xor    %ecx,%ecx
+    0.39 :   104964: mov    %rax,%r8
+    0.54 :   104967: and    %rsi,%r8
+    0.45 :   10496a: mov    %rdx,%r9
+    0.43 :   10496d: neg    %r9
+    0.39 :   104970: and    %rdx,%r9
+    0.85 :   104973: test   %r8,%r8
+    0.61 :   104976: cmove  %r8,%r9
+    0.39 :   10497a: or     %r9,%rcx
+    0.68 :   10497d: lea    -0x1(%rdx),%r8
+    0.44 :   104981: add    %rax,%rax
+    0.31 :   104984: and    %r8,%rdx
+    0.00 :   104987: jne    104964 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x7e4>
+    0.18 :   104989: mov    $0x40,%eax
+    0.16 :   10498e: tzcnt  %rcx,%rax
+    0.02 :   104993: jmp    104a27 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x8a7>
+    0.00 :   104998: mov    $0x40,%eax
+    0.00 :   10499d: lea    (%rdi,%rax,1),%rdx
+    0.00 :   1049a1: add    $0x100,%rdx
+    0.00 :   1049a8: jmp    1046c4 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x544>
+    0.08 :   1049ad: sub    %r8d,%ecx
+    0.02 :   1049b0: mov    $0x1,%edx
+    0.04 :   1049b5: shl    %cl,%rdx
+    0.02 :   1049b8: or     $0x7,%rax
+    0.00 :   1049bc: cmp    %rsi,%rax
+    0.00 :   1049bf: jae    104aac <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x92c>
+    0.00 :   1049c5: or     $0x1c0,%rdi
+    0.02 :   1049cc: mov    (%r9,%rax,8),%rax
+    0.08 :   1049d0: test   %rax,%rax
+    0.00 :   1049d3: je     104a06 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x886>
+    0.00 :   1049d5: mov    $0x1,%esi
+    0.00 :   1049da: xor    %ecx,%ecx
+    0.30 :   1049dc: mov    %rsi,%r8
+    1.01 :   1049df: and    %rdx,%r8
+    1.42 :   1049e2: mov    %rax,%r9
+    0.25 :   1049e5: neg    %r9
+    0.24 :   1049e8: and    %rax,%r9
+    2.04 :   1049eb: test   %r8,%r8
+    1.26 :   1049ee: cmove  %r8,%r9
+    0.49 :   1049f2: or     %r9,%rcx
+    1.27 :   1049f5: lea    -0x1(%rax),%r8
+    0.55 :   1049f9: add    %rsi,%rsi
+    0.32 :   1049fc: and    %r8,%rax
+    0.00 :   1049ff: jne    1049dc <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x85c>
+    0.12 :   104a01: jmp    1045f5 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x475>
+    0.00 :   104a06: mov    $0x40,%eax
+    0.00 :   104a0b: add    %rax,%rdi
+    0.14 :   104a0e: mov    $0x1,%eax
+    0.04 :   104a13: mov    %rdi,%rdx
+    0.34 :   104a16: add    $0x8,%rsp
+    0.70 :   104a1a: pop    %rbx
+    1.19 :   104a1b: pop    %r12
+    0.15 :   104a1d: pop    %r14
+    0.30 :   104a1f: pop    %r15
+    0.00 :   104a21: ret
+    0.00 :   104a22: mov    $0x40,%eax
+    0.00 :   104a27: lea    (%rdi,%rax,1),%rdx
+    0.04 :   104a2b: add    $0x180,%rdx
+    0.04 :   104a32: jmp    1046c4 <<vers_vecs::bit_vec::fast_rs_vec::iter::SelectIter<false>>::select_next_1+0x544>
+    0.00 :   104a37: lea    0x637a(%rip),%rdx        # 10adb8 <bitcannon::classify::atom_tables::ATOM_TABLES+0x4178>
+    0.00 :   104a3e: call   7279b <core::panicking::panic_bounds_check>
+    0.00 :   104a43: lea    0x63fe(%rip),%rdx        # 10ae48 <bitcannon::classify::atom_tables::ATOM_TABLES+0x4208>
+    0.00 :   104a4a: mov    %rax,%rsi
+    0.00 :   104a4d: call   7279b <core::panicking::panic_bounds_check>
+    0.00 :   104a52: lea    0x6377(%rip),%rdx        # 10add0 <bitcannon::classify::atom_tables::ATOM_TABLES+0x4190>
+    0.00 :   104a59: mov    %rax,%rdi
+    0.00 :   104a5c: call   7279b <core::panicking::panic_bounds_check>
+    0.00 :   104a61: lea    0x6368(%rip),%rdx        # 10add0 <bitcannon::classify::atom_tables::ATOM_TABLES+0x4190>
+    0.00 :   104a68: mov    %rcx,%rdi
+    0.00 :   104a6b: call   7279b <core::panicking::panic_bounds_check>
+    0.00 :   104a70: lea    0x6329(%rip),%rdx        # 10ada0 <bitcannon::classify::atom_tables::ATOM_TABLES+0x4160>
+    0.00 :   104a77: mov    %rax,%rsi
+    0.00 :   104a7a: call   7279b <core::panicking::panic_bounds_check>
+    0.00 :   104a7f: lea    0x63c2(%rip),%rdx        # 10ae48 <bitcannon::classify::atom_tables::ATOM_TABLES+0x4208>
+    0.00 :   104a86: mov    %rax,%rdi
+    0.00 :   104a89: call   7279b <core::panicking::panic_bounds_check>
+    0.00 :   104a8e: lea    0x63b3(%rip),%rdx        # 10ae48 <bitcannon::classify::atom_tables::ATOM_TABLES+0x4208>
+    0.00 :   104a95: mov    %r9,%rdi
+    0.00 :   104a98: call   7279b <core::panicking::panic_bounds_check>
+    0.00 :   104a9d: lea    0x632c(%rip),%rdx        # 10add0 <bitcannon::classify::atom_tables::ATOM_TABLES+0x4190>
+    0.00 :   104aa4: mov    %r8,%rdi
+    0.00 :   104aa7: call   7279b <core::panicking::panic_bounds_check>
+    0.00 :   104aac: lea    0x6335(%rip),%rdx        # 10ade8 <bitcannon::classify::atom_tables::ATOM_TABLES+0x41a8>
+    0.00 :   104ab3: mov    %rax,%rdi
+    0.00 :   104ab6: call   7279b <core::panicking::panic_bounds_check>

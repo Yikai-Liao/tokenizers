@@ -3,7 +3,7 @@ use super::{
     BpeTrainer, WORD_SEPARATOR_ID, add,
     corpus::{Corpus, Match},
     index::{Candidate, PairIndex},
-    positions::{Arena, Builder, Input, Positions},
+    positions::{Builder, Codec, Input, Positions},
     vocabulary::Vocabulary,
 };
 use ahash::{AHashMap, AHashSet};
@@ -12,27 +12,27 @@ use tk_encode::{Result, models::bpe::Pair};
 
 /// One selected pair and resolved replacement ID, owning its candidate positions.
 /// Keeping the candidate binds preparation to the cohort selected by the queue.
-struct Rule<'arena> {
+struct Rule {
     pair: Pair,
     replacement: u32,
-    candidate: Candidate<'arena>,
+    candidate: Candidate,
 }
 
 /// Priority-prefix rules selected for one joined preparation/application round.
 /// Fresh rules have compatible endpoints; active-ID reuse uses a single cohort.
-pub(super) struct Batch<'arena> {
-    rules: Vec<Rule<'arena>>,
+pub(super) struct Batch {
+    rules: Vec<Rule>,
     reuse: bool,
     floor: u64,
 }
 
 /// Selection outcome for the coordinator: finish, retry the attempt, or prepare.
 /// Restart discards speculative rules and requests historical-cohort training.
-pub(super) enum Selection<'arena> {
+pub(super) enum Selection {
     Finished,
     // The whole attempt is discarded, including rules already selected in this batch.
     Restart,
-    Ready(Batch<'arena>),
+    Ready(Batch),
 }
 
 /// One neighbor-edge removal and replacement birth from preparation.
@@ -51,16 +51,16 @@ pub(super) struct Change<P> {
 /// A birth stream's publication contract: partial aggregation or complete output.
 /// Complete fresh producers have already applied the frequency floor and encoded
 /// their full list; partial streams need owner aggregation before publication.
-pub(super) enum Birth<'arena> {
+pub(super) enum Birth {
     // Local fresh counts await owner aggregation before floor admission.
     // Reuse fragments instead follow the owner's per-action signed ledger.
     Partial(Builder),
     // A fresh ordinary producer covers the full candidate and has applied the floor.
     // Retained lists are ready for direct publication without another encoding pass.
-    Complete(Positions<'arena>),
+    Complete(Positions),
 }
 
-impl Birth<'_> {
+impl Birth {
     pub(super) fn is_empty(&self) -> bool {
         match self {
             Self::Partial(values) => values.is_empty(),
@@ -71,22 +71,22 @@ impl Birth<'_> {
 
 /// Joined preparation output, owning endpoint writes and neighbor events.
 /// Apply joins all writes before returning events for the coordinator's index commit.
-pub(super) struct Prepared<'arena> {
-    jobs: Vec<Job<'arena>>,
+pub(super) struct Prepared {
+    jobs: Vec<Job>,
 }
 
 /// One preparation task's disjoint writes and owned neighbor-event payloads.
 /// The task returns both together so no corpus mutation precedes preparation join.
-struct Job<'arena> {
+struct Job {
     writes: Writes,
-    changes: Vec<Change<Birth<'arena>>>,
+    changes: Vec<Change<Birth>>,
 }
 
 /// Task-local left/right neighbor aggregation for one selected rule.
 /// Borrows reusable lookup directories; owns its groups and decides whether
 /// they cover a complete producer or must be routed as partial fragments.
-struct Neighbors<'a, 'arena> {
-    rule: &'a Rule<'arena>,
+struct Neighbors<'a> {
+    rule: &'a Rule,
     rank: usize,
     directories: &'a mut Directories,
     changes: [Vec<Change<Builder>>; 2],
@@ -112,13 +112,8 @@ impl Directories {
     }
 }
 
-impl<'a, 'arena> Neighbors<'a, 'arena> {
-    fn new(
-        rule: &'a Rule<'arena>,
-        rank: usize,
-        directories: &'a mut Directories,
-        complete: bool,
-    ) -> Self {
+impl<'a> Neighbors<'a> {
+    fn new(rule: &'a Rule, rank: usize, directories: &'a mut Directories, complete: bool) -> Self {
         Self {
             rule,
             rank,
@@ -179,11 +174,11 @@ impl<'a, 'arena> Neighbors<'a, 'arena> {
         Ok(())
     }
 
-    fn finish(self, floor: u64, arena: &'arena Arena) -> Result<Vec<Change<Birth<'arena>>>> {
+    fn finish(self, floor: u64, codec: &Codec) -> Result<Vec<Change<Birth>>> {
         // Complete ordinary producers prune and encode before owner routing.
         // Partial jobs retain raw positions until their counts have been reduced.
         let mut result = Vec::new();
-        let mut lease = arena.lease();
+        let mut lease = codec.lease();
         // Left changes precede right changes. Reuse count actions and the resulting
         // historical cohorts observe this order even when both sides name one key.
         for mut change in self.changes.into_iter().flatten() {
@@ -215,13 +210,13 @@ impl<'a, 'arena> Neighbors<'a, 'arena> {
     }
 }
 
-impl<'arena> Batch<'arena> {
+impl Batch {
     pub(super) fn select(
         trainer: &BpeTrainer,
         vocabulary: &mut Vocabulary,
         corpus: &mut Corpus,
-        index: &mut PairIndex<'arena>,
-    ) -> Result<Selection<'arena>> {
+        index: &mut PairIndex<'_>,
+    ) -> Result<Selection> {
         let reuse = index.reuse();
         let mut batch = Self {
             rules: Vec::new(),
@@ -291,18 +286,13 @@ impl<'arena> Batch<'arena> {
             .map(|rule| (rule.pair, rule.candidate.priority.count, rule.replacement))
     }
 
-    pub(super) fn prepare(
-        self,
-        corpus: &Corpus,
-        arena: &'arena Arena,
-        limit: usize,
-    ) -> Result<Prepared<'arena>> {
+    pub(super) fn prepare(self, corpus: &Corpus, codec: &Codec, limit: usize) -> Result<Prepared> {
         if self.reuse {
-            return self.prepare_cohort(corpus, arena, limit);
+            return self.prepare_cohort(corpus, codec, limit);
         }
 
         // 1. Resolve the selected rules against this joined corpus snapshot.
-        let snapshot = FreshSnapshot::new(&self, corpus, arena, limit);
+        let snapshot = FreshSnapshot::new(&self, corpus, codec, limit);
 
         // 2. Split ordered candidate streams into independent preparation jobs.
         let tasks = snapshot.tasks();
@@ -315,12 +305,7 @@ impl<'arena> Batch<'arena> {
         Ok(Prepared { jobs })
     }
 
-    fn prepare_cohort(
-        self,
-        corpus: &Corpus,
-        arena: &'arena Arena,
-        limit: usize,
-    ) -> Result<Prepared<'arena>> {
+    fn prepare_cohort(self, corpus: &Corpus, codec: &Codec, limit: usize) -> Result<Prepared> {
         // 1. Restrict the historical cohort to its unique word owners.
         let rule = &self.rules[0];
         let mut words: Vec<_> = rule
@@ -336,51 +321,57 @@ impl<'arena> Batch<'arena> {
         let jobs = words
             .par_chunks(chunk)
             .map_init(Directories::default, |directories, words| -> Result<_> {
-                prepare_cohort_job(rule, corpus, arena, limit, self.floor, directories, words)
+                CohortPreparation::new(rule, corpus, codec, limit, self.floor, directories)
+                    .prepare(words)
             })
             .collect::<Result<Vec<_>>>()?;
         Ok(Prepared { jobs })
     }
 }
 
+/// Lookup state for a selected head: absent, one right endpoint, or several rules.
+/// Shared heads fall back to the selected-pair table without using a token sentinel.
+#[derive(Clone, Copy)]
+enum Head {
+    Empty,
+    Unique { right: u32, replacement: u32 },
+    Shared,
+}
+
 /// Shared read-only lookup for fresh preparation against one joined corpus snapshot.
 /// Resolves selected endpoints once; workers own their directories, writes and
 /// neighbor events. Self-pairs also retain nonoverlapping left-to-right starts.
-struct FreshSnapshot<'a, 'arena> {
-    batch: &'a Batch<'arena>,
+struct FreshSnapshot<'a> {
+    batch: &'a Batch,
     corpus: &'a Corpus,
-    arena: &'arena Arena,
+    codec: &'a Codec,
     limit: usize,
     selected: AHashMap<Pair, u32>,
-    heads: Vec<Option<(u32, u32)>>,
+    heads: Vec<Head>,
     tails: Vec<bool>,
     self_pair: bool,
     starts: Vec<u64>,
 }
 
-impl<'a, 'arena> FreshSnapshot<'a, 'arena> {
-    fn new(
-        batch: &'a Batch<'arena>,
-        corpus: &'a Corpus,
-        arena: &'arena Arena,
-        limit: usize,
-    ) -> Self {
+impl<'a> FreshSnapshot<'a> {
+    fn new(batch: &'a Batch, corpus: &'a Corpus, codec: &'a Codec, limit: usize) -> Self {
         // 1. Resolve shared endpoints once for all workers in this batch.
         let selected: AHashMap<_, _> = batch
             .rules
             .iter()
             .map(|rule| (rule.pair, rule.replacement))
             .collect();
-        let mut heads = vec![None; corpus.id_count()];
+        let mut heads = vec![Head::Empty; corpus.id_count()];
         let mut tails = vec![false; corpus.id_count()];
         for rule in &batch.rules {
             let slot = &mut heads[rule.pair.0 as usize];
-            // The separator cannot be a real rule endpoint; it marks a shared head.
-            *slot = Some(if slot.is_some() {
-                (WORD_SEPARATOR_ID, 0)
-            } else {
-                (rule.pair.1, rule.replacement)
-            });
+            *slot = match slot {
+                Head::Empty => Head::Unique {
+                    right: rule.pair.1,
+                    replacement: rule.replacement,
+                },
+                _ => Head::Shared,
+            };
             tails[rule.pair.1 as usize] = true;
         }
 
@@ -404,7 +395,7 @@ impl<'a, 'arena> FreshSnapshot<'a, 'arena> {
         Self {
             batch,
             corpus,
-            arena,
+            codec,
             limit,
             selected,
             heads,
@@ -415,14 +406,14 @@ impl<'a, 'arena> FreshSnapshot<'a, 'arena> {
     }
 
     fn selected_id(&self, pair: Pair) -> Option<u32> {
-        match self.heads.get(pair.0 as usize).copied().flatten() {
-            Some((right, id)) if right != WORD_SEPARATOR_ID => (right == pair.1).then_some(id),
-            None => None,
-            _ => self.selected.get(&pair).copied(),
+        match self.heads.get(pair.0 as usize) {
+            Some(&Head::Unique { right, replacement }) => (right == pair.1).then_some(replacement),
+            Some(Head::Shared) => self.selected.get(&pair).copied(),
+            _ => None,
         }
     }
 
-    fn tasks(&self) -> Vec<(usize, &Rule<'arena>, Source<'_, 'arena>)> {
+    fn tasks(&self) -> Vec<(usize, &Rule, Source<'_>)> {
         let mut tasks = Vec::new();
         let total: usize = self
             .batch
@@ -461,9 +452,9 @@ impl<'a, 'arena> FreshSnapshot<'a, 'arena> {
         &self,
         directories: &mut Directories,
         rank: usize,
-        rule: &Rule<'arena>,
-        positions: Source<'_, 'arena>,
-    ) -> Result<Job<'arena>> {
+        rule: &Rule,
+        positions: Source<'_>,
+    ) -> Result<Job> {
         #[cfg(test)]
         super::tests::observe_worker(super::tests::Phase::FreshPrepare);
         directories.reset(self.corpus.id_count());
@@ -486,13 +477,13 @@ impl<'a, 'arena> FreshSnapshot<'a, 'arena> {
         }
         Ok(Job {
             writes,
-            changes: neighbors.finish(self.batch.floor, self.arena)?,
+            changes: neighbors.finish(self.batch.floor, self.codec)?,
         })
     }
 
     fn record_left(
         &self,
-        neighbors: &mut Neighbors<'_, 'arena>,
+        neighbors: &mut Neighbors<'_>,
         p: usize,
         matched: Match,
         weight: u64,
@@ -533,8 +524,8 @@ impl<'a, 'arena> FreshSnapshot<'a, 'arena> {
 
     fn record_right(
         &self,
-        neighbors: &mut Neighbors<'_, 'arena>,
-        rule: &Rule<'arena>,
+        neighbors: &mut Neighbors<'_>,
+        rule: &Rule,
         p: usize,
         matched: Match,
         weight: u64,
@@ -546,7 +537,7 @@ impl<'a, 'arena> FreshSnapshot<'a, 'arena> {
                     .binary_search(&(matched.after as u64))
                     .is_ok()
                     .then_some(rule.replacement)
-            } else if self.heads[next as usize].is_some() {
+            } else if !matches!(self.heads[next as usize], Head::Empty) {
                 self.selected_id((
                     next,
                     self.corpus.token(matched.after + self.corpus.id_span(next)),
@@ -568,98 +559,122 @@ impl<'a, 'arena> FreshSnapshot<'a, 'arena> {
     }
 }
 
-fn prepare_cohort_job<'arena>(
-    rule: &Rule<'arena>,
-    corpus: &Corpus,
-    arena: &'arena Arena,
+/// One reuse task's sequential word scans, deferred writes and neighbor events.
+/// Borrows the joined corpus and rule; all words in this task share its admission
+/// policy and directories. Finishing transfers both outputs without applying them.
+struct CohortPreparation<'task> {
+    writes: Writes,
+    neighbors: Neighbors<'task>,
+    corpus: &'task Corpus,
+    codec: &'task Codec,
+
     limit: usize,
     floor: u64,
-    directories: &mut Directories,
-    words: &[usize],
-) -> Result<Job<'arena>> {
-    #[cfg(test)]
-    super::tests::observe_worker(super::tests::Phase::ReusePrepare);
-    directories.reset(corpus.id_count());
-    let mut neighbors = Neighbors::new(rule, 0, directories, false);
-    let mut writes = Writes::Occurrences {
-        positions: Vec::new(),
-        id: rule.replacement,
-    };
-    for &word in words {
-        prepare_cohort_word(rule, corpus, word, limit, &mut neighbors, &mut writes)?;
-    }
-    Ok(Job {
-        writes,
-        changes: neighbors.finish(floor, arena)?,
-    })
 }
 
-// Within one word each accepted merge changes the next left neighbor. Keep this
-// scan sequential, even though separate word chunks are prepared in parallel.
-fn prepare_cohort_word(
-    rule: &Rule<'_>,
-    corpus: &Corpus,
-    word: usize,
-    limit: usize,
-    neighbors: &mut Neighbors<'_, '_>,
-    writes: &mut Writes,
-) -> Result<()> {
-    let mut previous = None;
-    let mut p = corpus.word_start(word);
-    let start = rule.candidate.positions.lower_bound(p as u64);
-    let mut positions = rule.candidate.positions.from(start).peekable();
-    while p < corpus.word_end(word) {
-        // Full-word scans are required only after alias reuse or a length
-        // gate. Otherwise the selected cohort defines the scan domain.
-        if !corpus.whole_words() {
-            while positions.peek().is_some_and(|&start| start < p as u64) {
+impl<'task> CohortPreparation<'task> {
+    fn new(
+        rule: &'task Rule,
+        corpus: &'task Corpus,
+        codec: &'task Codec,
+
+        limit: usize,
+        floor: u64,
+        directories: &'task mut Directories,
+    ) -> Self {
+        #[cfg(test)]
+        super::tests::observe_worker(super::tests::Phase::ReusePrepare);
+        directories.reset(corpus.id_count());
+        let neighbors = Neighbors::new(rule, 0, directories, false);
+        let writes = Writes::Occurrences {
+            positions: Vec::new(),
+            id: rule.replacement,
+        };
+        Self {
+            writes,
+            neighbors,
+            corpus,
+            codec,
+            limit,
+            floor,
+        }
+    }
+
+    fn prepare(mut self, words: &[usize]) -> Result<Job> {
+        for &word in words {
+            self.prepare_word(word)?;
+        }
+        Ok(Job {
+            writes: self.writes,
+            changes: self.neighbors.finish(self.floor, self.codec)?,
+        })
+    }
+
+    // Within one word each accepted merge changes the next left neighbor. Keep
+    // this sequential while separate word chunks prepare in parallel.
+    fn prepare_word(&mut self, word: usize) -> Result<()> {
+        let rule = self.neighbors.rule;
+        let corpus = self.corpus;
+        let limit = self.limit;
+        let neighbors = &mut self.neighbors;
+        let writes = &mut self.writes;
+        let mut previous = None;
+        let mut p = corpus.word_start(word);
+        let start = rule.candidate.positions.lower_bound(p as u64);
+        let mut positions = rule.candidate.positions.from(start).peekable();
+        while p < corpus.word_end(word) {
+            // Full-word scans are required only after alias reuse or a length
+            // gate. Otherwise the selected cohort defines the scan domain.
+            if !corpus.whole_words() {
+                while positions.peek().is_some_and(|&start| start < p as u64) {
+                    positions.next();
+                }
+                let Some(coordinate) = positions.peek().copied() else {
+                    break;
+                };
+                let next = corpus.resident(coordinate);
+                if next >= corpus.word_end(word) {
+                    break;
+                }
+                if next != p {
+                    let id = corpus.token(next - 1);
+                    previous = (id != WORD_SEPARATOR_ID)
+                        .then(|| (id, next - corpus.span(next - 1), corpus.span(next - 1)));
+                    p = next;
+                }
                 positions.next();
             }
-            let Some(coordinate) = positions.peek().copied() else {
-                break;
-            };
-            let next = corpus.resident(coordinate);
-            if next >= corpus.word_end(word) {
-                break;
+            if let Some(matched) = corpus.matched(p, rule.pair) {
+                let weight = corpus.word_weight(word);
+                if let Some((id, start, span)) = previous {
+                    neighbors.record(true, id, id, start, weight, span + matched.span() < limit)?;
+                }
+                let next = corpus.token(matched.after);
+                if next != WORD_SEPARATOR_ID {
+                    neighbors.record(
+                        false,
+                        next,
+                        next,
+                        p,
+                        weight,
+                        matched.span() + corpus.span(matched.after) < limit,
+                    )?;
+                }
+                previous = Some((rule.replacement, p, matched.span()));
+                writes.record(matched)?;
+                p = matched.after;
+            } else {
+                let span = corpus.span(p);
+                previous = Some((corpus.token(p), p, span));
+                p += span.max(1);
             }
-            if next != p {
-                let id = corpus.token(next - 1);
-                previous = (id != WORD_SEPARATOR_ID)
-                    .then(|| (id, next - corpus.span(next - 1), corpus.span(next - 1)));
-                p = next;
-            }
-            positions.next();
         }
-        if let Some(matched) = corpus.matched(p, rule.pair) {
-            let weight = corpus.word_weight(word);
-            if let Some((id, start, span)) = previous {
-                neighbors.record(true, id, id, start, weight, span + matched.span() < limit)?;
-            }
-            let next = corpus.token(matched.after);
-            if next != WORD_SEPARATOR_ID {
-                neighbors.record(
-                    false,
-                    next,
-                    next,
-                    p,
-                    weight,
-                    matched.span() + corpus.span(matched.after) < limit,
-                )?;
-            }
-            previous = Some((rule.replacement, p, matched.span()));
-            writes.record(matched)?;
-            p = matched.after;
-        } else {
-            let span = corpus.span(p);
-            previous = Some((corpus.token(p), p, span));
-            p += span.max(1);
-        }
+        Ok(())
     }
-    Ok(())
 }
 
-impl<'arena> Prepared<'arena> {
-    pub(super) fn apply(self, corpus: &Corpus) -> Vec<Vec<Change<Birth<'arena>>>> {
+impl Prepared {
+    pub(super) fn apply(self, corpus: &Corpus) -> Vec<Vec<Change<Birth>>> {
         self.jobs
             .into_par_iter()
             .map(|job| {
@@ -687,7 +702,7 @@ enum Writes {
 }
 
 impl Writes {
-    fn fresh(rule: &Rule<'_>, corpus: &Corpus) -> Self {
+    fn fresh(rule: &Rule, corpus: &Corpus) -> Self {
         let left = corpus.id_span(rule.pair.0);
         Self::Compact {
             positions: Builder::default(),
@@ -738,12 +753,12 @@ impl Writes {
 
 /// Borrowed task input: filtered self-pair starts or a candidate's restart blocks.
 /// Source geometry stays private to preparation; both emit full-u64 positions.
-enum Source<'a, 'arena> {
+enum Source<'a> {
     Slice(&'a [u64]),
-    Blocks(&'a Positions<'arena>, std::ops::Range<usize>),
+    Blocks(&'a Positions, std::ops::Range<usize>),
 }
 
-impl Source<'_, '_> {
+impl Source<'_> {
     fn complete(&self) -> bool {
         match self {
             Self::Blocks(positions, range) => {

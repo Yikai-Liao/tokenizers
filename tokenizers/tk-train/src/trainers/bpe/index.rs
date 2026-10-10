@@ -3,7 +3,7 @@ use super::merge::{Birth, Change};
 use super::{
     WORD_SEPARATOR_ID, add,
     corpus::CorpusPlan,
-    positions::{Arena, Builder, Input, Lease, Positions},
+    positions::{Builder, Codec, Input, Lease, Positions},
 };
 use ahash::AHashMap;
 use dary_heap::OctonaryHeap;
@@ -28,26 +28,26 @@ impl Priority {
 /// Owning queue entry: a possibly stale count snapshot and its occurrence list.
 /// PairIndex corrects the priority against the count shard before selection;
 /// positions remain a historical cohort when identities can be reused.
-pub(super) struct Candidate<'arena> {
+pub(super) struct Candidate {
     pub(super) priority: Priority,
-    pub(super) positions: Positions<'arena>,
+    pub(super) positions: Positions,
 }
 
-impl Eq for Candidate<'_> {}
+impl Eq for Candidate {}
 
-impl PartialEq for Candidate<'_> {
+impl PartialEq for Candidate {
     fn eq(&self, other: &Self) -> bool {
         self.priority == other.priority
     }
 }
 
-impl Ord for Candidate<'_> {
+impl Ord for Candidate {
     fn cmp(&self, other: &Self) -> Ordering {
         self.priority.cmp(&other.priority)
     }
 }
 
-impl PartialOrd for Candidate<'_> {
+impl PartialOrd for Candidate {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
@@ -78,19 +78,19 @@ type Event = Change<()>;
 /// Actions index shared event metadata; the separate birth array owns one stream
 /// per birth action and avoids reserving a payload for removal-only actions.
 #[derive(Default)]
-struct Route<'arena> {
+struct Route {
     actions: Vec<(usize, bool, bool)>,
     // One stream per birth action, in the same order.
-    positions: Vec<Birth<'arena>>,
+    positions: Vec<Birth>,
 }
 
-impl<'arena> Route<'arena> {
-    fn push(&mut self, index: usize, remove: bool, birth: Option<Birth<'arena>>) {
+impl Route {
+    fn push(&mut self, index: usize, remove: bool, birth: Option<Birth>) {
         self.actions.push((index, remove, birth.is_some()));
         self.positions.extend(birth);
     }
 
-    fn drain(&mut self) -> impl Iterator<Item = (usize, bool, Option<Birth<'arena>>)> + '_ {
+    fn drain(&mut self) -> impl Iterator<Item = (usize, bool, Option<Birth>)> + '_ {
         // The two arrays save a large optional payload on removal-only actions.
         // Both drains own their remaining items, so an error drops unpublished births
         // and restores empty reusable routes before the failed attempt is discarded.
@@ -108,11 +108,11 @@ impl<'arena> Route<'arena> {
 /// Authoritative pair-count shards plus an owning queue of occurrence candidates.
 /// Each pair has one count owner; queued priorities are repaired lazily at the head.
 /// Fresh counts retire below the floor; reuse retains the per-action signed ledger.
-pub(super) struct PairIndex<'arena> {
-    arena: &'arena Arena,
+pub(super) struct PairIndex<'codec> {
+    codec: &'codec Codec,
     shards: Vec<AHashMap<Pair, u64>>,
-    routes: Vec<Route<'arena>>,
-    queue: OctonaryHeap<Candidate<'arena>>,
+    routes: Vec<Route>,
+    queue: OctonaryHeap<Candidate>,
     floor: u64,
     reuse: bool,
 }
@@ -137,9 +137,9 @@ fn adjust_signed(count: &mut u64, amount: u64, remove: bool) -> Result<()> {
     Ok(())
 }
 
-impl<'arena> PairIndex<'arena> {
+impl<'codec> PairIndex<'codec> {
     pub(super) fn build(
-        arena: &'arena Arena,
+        codec: &'codec Codec,
         corpus: &CorpusPlan<'_>,
         minimum: u64,
         workers: usize,
@@ -150,7 +150,7 @@ impl<'arena> PairIndex<'arena> {
         let pieces = corpus
             .initial_ranges(if cfg!(test) { 16 } else { 1 << 24 })
             .into_par_iter()
-            .map(|range| count_range(arena, corpus, range, progress))
+            .map(|range| count_range(codec, corpus, range, progress))
             .collect::<Result<Vec<_>>>()?;
 
         // 2. Route ordered fragments to the sole count owner of each pair.
@@ -164,11 +164,11 @@ impl<'arena> PairIndex<'arena> {
         // 3. Aggregate counts, admit pairs, and concatenate their sorted fragments.
         let owners = routed
             .into_par_iter()
-            .map(|pieces| build_owner(arena, pieces, minimum.max(1), reuse))
+            .map(|pieces| build_owner(codec, pieces, minimum.max(1), reuse))
             .collect::<Result<Vec<_>>>()?;
         let (shards, candidates): (Vec<_>, Vec<_>) = owners.into_iter().unzip();
         Ok(Self {
-            arena,
+            codec,
             shards,
             routes: Vec::new(),
             queue: candidates.into_iter().flatten().collect(),
@@ -200,7 +200,7 @@ impl<'arena> PairIndex<'arena> {
         }
     }
 
-    pub(super) fn take(&mut self, priority: Priority) -> Candidate<'arena> {
+    pub(super) fn take(&mut self, priority: Priority) -> Candidate {
         let candidate = self.queue.pop().expect("certified candidate exists");
         debug_assert_eq!(candidate.priority, priority);
         if !self.reuse {
@@ -212,21 +212,21 @@ impl<'arena> PairIndex<'arena> {
         candidate
     }
 
-    pub(super) fn commit(&mut self, changes: Vec<Vec<Change<Birth<'arena>>>>) -> Result<()> {
+    pub(super) fn commit(&mut self, changes: Vec<Vec<Change<Birth>>>) -> Result<()> {
         // 1. Route each removal and birth to its count owner.
         let events = self.route_changes(changes);
 
         // 2. Apply owner-local actions and encode their birth cohorts in parallel.
         let reuse = self.reuse;
         let floor = self.floor;
-        let arena = self.arena;
+        let codec = self.codec;
         let births = self
             .shards
             .par_iter_mut()
             .zip(self.routes.par_iter_mut())
             .filter(|(_, route)| !route.actions.is_empty())
             .map(|(shard, route)| -> Result<_> {
-                OwnerCommit::new(arena, shard, reuse, floor).commit(route, &events)
+                OwnerCommit::new(codec, shard, reuse, floor).commit(route, &events)
             })
             .collect::<Result<Vec<_>>>()?;
 
@@ -237,7 +237,7 @@ impl<'arena> PairIndex<'arena> {
         Ok(())
     }
 
-    fn route_changes(&mut self, changes: Vec<Vec<Change<Birth<'arena>>>>) -> Vec<Event> {
+    fn route_changes(&mut self, changes: Vec<Vec<Change<Birth>>>) -> Vec<Event> {
         let workers = self.shards.len();
         self.routes.resize_with(workers, Route::default);
         // Joined commits drain every route; any error aborts this attempt.
@@ -275,46 +275,76 @@ impl<'arena> PairIndex<'arena> {
 
 // Initial fragments own their storage: an owner may discard or concatenate them
 // after range counting joins, without retaining every worker's temporary builder.
-type InitialPiece<'arena> = Vec<(Pair, State<Positions<'arena>>)>;
+type InitialPiece = Vec<(Pair, State<Positions>)>;
 
-fn count_range<'arena>(
-    arena: &'arena Arena,
+/// Range-local initial counts, choosing dense pair keys only for a small ID domain.
+/// The domain travels with its array; sparse counting owns no unused dense plane.
+/// Recording preserves each pair's ordered positions before storage is frozen.
+enum InitialPairCounts {
+    Dense {
+        domain: usize,
+        states: Vec<State<Builder>>,
+    },
+    Sparse(AHashMap<Pair, State<Builder>>),
+}
+
+impl InitialPairCounts {
+    fn new(domain: Option<usize>) -> Self {
+        match domain {
+            Some(domain) => Self::Dense {
+                domain,
+                states: (0..domain * domain).map(|_| State::default()).collect(),
+            },
+            None => Self::Sparse(AHashMap::new()),
+        }
+    }
+
+    fn record(&mut self, pair: Pair, position: u64, weight: u64) -> Result<()> {
+        let state = match self {
+            Self::Dense { domain, states } => {
+                &mut states[pair.0 as usize * *domain + pair.1 as usize]
+            }
+            Self::Sparse(states) => states.entry(pair).or_default(),
+        };
+        add(&mut state.count, weight)?;
+        state.positions.push(position)
+    }
+
+    fn into_states(self) -> Vec<(Pair, State<Builder>)> {
+        match self {
+            Self::Dense { domain, states } => states
+                .into_iter()
+                .enumerate()
+                .filter(|(_, state)| !state.positions.is_empty())
+                .map(|(key, state)| (((key / domain) as u32, (key % domain) as u32), state))
+                .collect(),
+            Self::Sparse(states) => states.into_iter().collect(),
+        }
+    }
+}
+
+fn count_range(
+    codec: &Codec,
+
     corpus: &CorpusPlan<'_>,
     range: std::ops::Range<usize>,
     progress: &Option<ProgressBar>,
-) -> Result<InitialPiece<'arena>> {
-    let domain = corpus.small_pair_domain();
-    let mut dense: Vec<State<Builder>> = (0..domain.map_or(0, |n| n * n))
-        .map(|_| State::default())
-        .collect();
-    let mut counts = AHashMap::<Pair, State<Builder>>::new();
+) -> Result<InitialPiece> {
+    let mut counts = InitialPairCounts::new(corpus.small_pair_domain());
     corpus.initial_edges(range.clone(), |pair, p, weight| {
         debug_assert!(pair.0 != WORD_SEPARATOR_ID && pair.1 != WORD_SEPARATOR_ID);
-        let state = match domain {
-            Some(n) => &mut dense[pair.0 as usize * n + pair.1 as usize],
-            None => counts.entry(pair).or_default(),
-        };
-        add(&mut state.count, weight)?;
-        state.positions.push(p)
+        counts.record(pair, p, weight)
     })?;
     if let Some(p) = progress {
         p.inc(range.len() as u64);
     }
-    let states = match domain {
-        Some(n) => dense
-            .into_iter()
-            .enumerate()
-            .filter(|(_, s)| !s.positions.is_empty())
-            .map(|(key, state)| (((key / n) as u32, (key % n) as u32), state))
-            .collect::<Vec<_>>(),
-        None => counts.into_iter().collect(),
-    };
-    let mut lease = arena.lease();
+    let states = counts.into_states();
+
+    let mut lease = codec.lease();
     states
         .into_iter()
         .map(|(pair, state)| {
-            let positions =
-                Positions::from_sorted_owned(Input::Builder(&state.positions), &mut lease)?;
+            let positions = Positions::from_sorted(Input::Builder(&state.positions), &mut lease)?;
             Ok((
                 pair,
                 State {
@@ -326,19 +356,19 @@ fn count_range<'arena>(
         .collect::<Result<Vec<_>>>()
 }
 
-fn build_owner<'arena>(
-    arena: &'arena Arena,
-    pieces: InitialPiece<'arena>,
+fn build_owner(
+    codec: &Codec,
+    pieces: InitialPiece,
     floor: u64,
     reuse: bool,
-) -> Result<(AHashMap<Pair, u64>, Vec<Candidate<'arena>>)> {
+) -> Result<(AHashMap<Pair, u64>, Vec<Candidate>)> {
     let mut states = AHashMap::<Pair, State<Vec<Positions>>>::new();
     for (pair, state) in pieces {
         let total = states.entry(pair).or_default();
         add(&mut total.count, state.count)?;
         total.positions.push(state.positions);
     }
-    let mut lease = arena.lease();
+    let mut lease = codec.lease();
     let mut shard = AHashMap::new();
     let mut candidates = Vec::new();
     for (pair, mut state) in states {
@@ -366,24 +396,24 @@ fn build_owner<'arena>(
 /// One owner's sequential count update and birth publication within a joined commit.
 /// Borrows its count shard and owns pending groups/candidates plus an executing
 /// worker's lease. Failed work drops unpublished lists; the attempt is discarded.
-struct OwnerCommit<'index, 'arena> {
+struct OwnerCommit<'index, 'codec> {
     shard: &'index mut AHashMap<Pair, u64>,
     reuse: bool,
     floor: u64,
     groups: AHashMap<(usize, Pair), Group>,
-    candidates: Vec<Candidate<'arena>>,
+    candidates: Vec<Candidate>,
     // Drop unpublished buffers before releasing exclusive worker access.
-    lease: Lease<'arena>,
+    lease: Lease<'codec>,
 }
 
-impl<'index, 'arena> OwnerCommit<'index, 'arena> {
+impl<'index, 'codec> OwnerCommit<'index, 'codec> {
     fn new(
-        arena: &'arena Arena,
+        codec: &'codec Codec,
         shard: &'index mut AHashMap<Pair, u64>,
         reuse: bool,
         floor: u64,
     ) -> Self {
-        let lease = arena.lease();
+        let lease = codec.lease();
         Self {
             shard,
             reuse,
@@ -396,11 +426,7 @@ impl<'index, 'arena> OwnerCommit<'index, 'arena> {
 
     // A boundary removal precedes its replacement birth. The signed reuse ledger
     // checks each action in that order, including intermediate overflow.
-    fn commit(
-        mut self,
-        route: &mut Route<'arena>,
-        events: &[Event],
-    ) -> Result<Vec<Candidate<'arena>>> {
+    fn commit(mut self, route: &mut Route, events: &[Event]) -> Result<Vec<Candidate>> {
         for (index, remove, birth) in route.drain() {
             let change = &events[index];
             if remove {
@@ -428,7 +454,7 @@ impl<'index, 'arena> OwnerCommit<'index, 'arena> {
         Ok(())
     }
 
-    fn record_birth(&mut self, change: &Event, positions: Birth<'arena>) -> Result<()> {
+    fn record_birth(&mut self, change: &Event, positions: Birth) -> Result<()> {
         if self.reuse {
             let count = self.shard.entry(change.born).or_default();
             adjust_signed(count, change.born_weight, false)?;
@@ -462,7 +488,7 @@ impl<'index, 'arena> OwnerCommit<'index, 'arena> {
         Ok(())
     }
 
-    fn publish_groups(mut self) -> Result<Vec<Candidate<'arena>>> {
+    fn publish_groups(mut self) -> Result<Vec<Candidate>> {
         // Partial birth groups follow bucket/pair order within this owner. Complete
         // producers have already published directly into its candidate list.
         let mut groups: Vec<_> = self.groups.into_iter().collect();

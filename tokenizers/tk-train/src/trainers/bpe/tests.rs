@@ -196,8 +196,8 @@ fn ready_batch_applies_independent_rules_together() {
     let progress = trainer.setup_progress();
     let mut vocabulary = Vocabulary::initialize(&trainer, view, 4, &mut None).unwrap();
     let plan = CorpusPlan::build(view, &mut vocabulary, &trainer, false, &progress).unwrap();
-    let arena = Arena::new(4, plan.items());
-    let mut index = PairIndex::build(&arena, &plan, 1, 4, false, &progress).unwrap();
+    let codec = Codec::new(4);
+    let mut index = PairIndex::build(&codec, &plan, 1, 4, false, &progress).unwrap();
     let mut corpus = plan.materialize();
     let Selection::Ready(batch) =
         Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index).unwrap()
@@ -205,7 +205,7 @@ fn ready_batch_applies_independent_rules_together() {
         panic!("expected ready batch")
     };
     assert_eq!(batch.pairs().collect::<Vec<_>>(), [(0, 1), (2, 3), (4, 5)]);
-    let prepared = batch.prepare(&corpus, &arena, usize::MAX).unwrap();
+    let prepared = batch.prepare(&corpus, &codec, usize::MAX).unwrap();
     index.commit(prepared.apply(&corpus)).unwrap();
     assert!(matches!(
         Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index).unwrap(),
