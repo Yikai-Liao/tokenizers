@@ -4,22 +4,33 @@ mod feed;
 mod word_counts;
 use word_counts::{WordCounts, WordCountsView};
 
-mod engine;
+mod corpus;
+mod index;
+mod merge;
 #[cfg(feature = "parity-aware-bpe")]
 pub mod parity_trainer;
+mod positions;
 #[cfg(test)]
 mod reference;
+#[cfg(test)]
+mod tests;
+mod vocabulary;
 #[cfg(feature = "parity-aware-bpe")]
 mod word;
 #[cfg(feature = "parity-aware-bpe")]
 pub use parity_trainer::{ParityBpeTrainer, ParityBpeTrainerBuilder, ParityVariant};
 
-use crate::Trainer;
+use crate::{Trainer, progress::TrainingProgress};
 use ahash::{AHashMap, AHashSet};
 use compact_str::CompactString;
+use corpus::CorpusPlan;
+use index::PairIndex;
+use merge::{Batch, Selection};
+use positions::Arena;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use tk_encode::vocab::bucket_added_vocabulary::AddedToken;
+use vocabulary::Vocabulary;
 // The optional parity trainer uses linked words; ordinary training owns a
 // fixed-coordinate corpus. The test oracle uses independent sequential vectors.
 #[cfg(feature = "parity-aware-bpe")]
@@ -256,42 +267,6 @@ impl BpeTrainer {
         self.words.len()
     }
 
-    /// Select the alphabet with the existing frequency-tie and codepoint order.
-    fn select_alphabet(&self, wc: WordCountsView<'_>) -> Vec<char> {
-        // Compute the alphabet from seen words
-        let mut alphabet: AHashMap<char, usize> = AHashMap::new();
-        for (word, count) in wc.iter() {
-            for c in word.chars() {
-                *alphabet.entry(c).or_default() += *count as usize;
-            }
-        }
-
-        // Also include anything from the provided initial alphabet
-        for c in &self.initial_alphabet {
-            *alphabet.entry(*c).or_default() = usize::MAX;
-        }
-
-        let mut kept = alphabet.iter().collect::<Vec<_>>();
-
-        // Compute the number of chars to remove from the alphabet
-        // If `limit_alphabet < initial_alphabet.len()`, some of these initial characters
-        // will be removed
-        let to_remove = self
-            .limit_alphabet
-            .map(|limit| alphabet.len().saturating_sub(limit))
-            .unwrap_or(0);
-
-        // Remove the unwanted chars
-        if to_remove > 0 {
-            kept.sort_unstable_by_key(|k| *k.1);
-            kept.drain(..to_remove);
-        }
-
-        // Keep the initial alphabet (sorted for determinism)
-        kept.sort_unstable_by_key(|k| *k.0 as u32);
-        kept.into_iter().map(|(&character, _)| character).collect()
-    }
-
     /// Train the collected weighted words and return vocabulary entries, ordered
     /// merges, and special tokens.
     ///
@@ -361,7 +336,7 @@ impl BpeTrainer {
         } else {
             1
         };
-        engine::train(
+        train(
             self,
             word_counts,
             workers,
@@ -369,6 +344,99 @@ impl BpeTrainer {
             None,
         )
     }
+}
+
+fn add(count: &mut u64, amount: u64) -> Result<()> {
+    *count = count
+        .checked_add(amount)
+        .ok_or("BPE weighted frequency exceeds u64")?;
+    Ok(())
+}
+
+const WORD_SEPARATOR_ID: u32 = u32::MAX;
+type ModelParts = (Vocab, Merges, Vec<AddedToken>);
+#[cfg(test)]
+type Trace = Vec<(Pair, u64, u32)>;
+
+fn train(
+    trainer: &BpeTrainer,
+    words: WordCountsView<'_>,
+    workers: usize,
+    #[cfg(test)] mut observe: Option<&mut (dyn FnMut(Pair, u64, u32) + Send)>,
+) -> Result<ModelParts> {
+    let pool = rayon::ThreadPoolBuilder::new()
+        .num_threads(workers)
+        .build()?;
+    pool.install(|| {
+        let progress = TrainingProgress::new(trainer.show_progress, trainer.progress_format)?;
+        let mut alphabet = None;
+        let mut reuse = false;
+        loop {
+            let mut vocabulary =
+                Vocabulary::initialize(trainer, words, workers, &progress, &mut alphabet)?;
+            let plan = CorpusPlan::build(words, &mut vocabulary, trainer, reuse, &progress)?;
+            let arena = Arena::new(workers, plan.items());
+            let mut index = PairIndex::build(
+                &arena,
+                &plan,
+                trainer.min_frequency,
+                workers,
+                reuse,
+                &progress,
+            )?;
+            if vocabulary.len() >= trainer.vocab_size {
+                progress.stage("Compute merges", trainer.vocab_size);
+                drop(index);
+                drop(plan);
+                drop(arena);
+                let (vocab, merges) = vocabulary.into_model_parts(Vec::new());
+                return Ok((vocab, merges, trainer.special_tokens.clone()));
+            }
+            let mut corpus = plan.materialize(&progress);
+            let work = progress.stage("Compute merges", trainer.vocab_size);
+            let mut merges = Vec::new();
+            #[cfg(test)]
+            let mut trace = Trace::new();
+            let mut restart = false;
+            while vocabulary.len() < trainer.vocab_size {
+                let batch = match Batch::select(trainer, &mut vocabulary, &mut corpus, &mut index)?
+                {
+                    Selection::Finished => break,
+                    Selection::Restart => {
+                        restart = true;
+                        break;
+                    }
+                    Selection::Ready(batch) => batch,
+                };
+                #[cfg(test)]
+                trace.extend(batch.trace());
+                merges.extend(batch.pairs());
+                let prepared = batch.prepare(
+                    &corpus,
+                    &arena,
+                    trainer.max_token_length.unwrap_or(usize::MAX),
+                )?;
+                let changes = prepared.apply(&corpus);
+                index.commit(changes)?;
+                work.learned(merges.len());
+            }
+            if restart {
+                reuse = true;
+                continue;
+            }
+            drop(index);
+            drop(corpus);
+            drop(arena);
+            #[cfg(test)]
+            if let Some(observer) = observe.as_mut() {
+                for (pair, count, id) in trace {
+                    observer(pair, count, id);
+                }
+            }
+            let (vocab, merges) = vocabulary.into_model_parts(merges);
+            return Ok((vocab, merges, trainer.special_tokens.clone()));
+        }
+    })
 }
 
 impl Trainer for BpeTrainer {

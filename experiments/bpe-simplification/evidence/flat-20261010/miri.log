@@ -1,0 +1,199 @@
+   Compiling lean-bpe-codec-check v0.0.0 (/root/code/tokenizers-workspaces/bpe-heap-experiment/experiments/bpe-simplification/miri-codec)
+warning: constant `RESTART` is never used
+  --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:10:7
+   |
+10 | const RESTART: usize = 128;
+   |       ^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: constant `INLINE` is never used
+  --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:11:7
+   |
+11 | const INLINE: usize = 1 << (usize::BITS - 1);
+   |       ^^^^^^
+
+warning: constant `PAIR` is never used
+  --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:12:7
+   |
+12 | const PAIR: usize = 1 << (usize::BITS - 2);
+   |       ^^^^
+
+warning: constant `DELTA_MASK` is never used
+  --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:13:7
+   |
+13 | const DELTA_MASK: usize = PAIR - 1;
+   |       ^^^^^^^^^^
+
+warning: constant `ARENA` is never used
+  --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:14:7
+   |
+14 | const ARENA: usize = 1;
+   |       ^^^^^
+
+warning: struct `Arena` is never constructed
+  --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:18:19
+   |
+18 | pub(super) struct Arena {
+   |                   ^^^^^
+
+warning: associated items `new` and `lease` are never used
+  --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:23:19
+   |
+22 | impl Arena {
+   | ---------- associated items in this implementation
+23 |     pub(super) fn new(workers: usize, items: usize) -> Self {
+   |                   ^^^
+...
+29 |     pub(super) fn lease(&self) -> Lease<'_> {
+   |                   ^^^^^
+
+warning: struct `Worker` is never constructed
+  --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:41:8
+   |
+41 | struct Worker {
+   |        ^^^^^^
+
+warning: struct `Lease` is never constructed
+  --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:46:19
+   |
+46 | pub(super) struct Lease<'arena> {
+   |                   ^^^^^
+
+warning: enum `Builder` is never used
+  --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:52:17
+   |
+52 | pub(super) enum Builder {
+   |                 ^^^^^^^
+
+warning: methods `iter`, `len`, `is_empty`, `push`, `push_ordered`, and `append` are never used
+  --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:62:19
+   |
+61 | impl Builder {
+   | ------------ methods in this implementation
+62 |     pub(super) fn iter(
+   |                   ^^^^
+...
+70 |     pub(super) fn len(&self) -> usize {
+   |                   ^^^
+...
+73 |     pub(super) fn is_empty(&self) -> bool {
+   |                   ^^^^^^^^
+...
+76 |     pub(super) fn push(&mut self, position: u64) -> Result<()> {
+   |                   ^^^^
+...
+84 |     pub(super) fn push_ordered(&mut self, position: u64) -> Result<()> {
+   |                   ^^^^^^^^^^^^
+...
+97 |     pub(super) fn append(&mut self, mut other: Self) -> Result<()> {
+   |                   ^^^^^^
+
+warning: enum `Input` is never used
+   --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:120:17
+    |
+120 | pub(super) enum Input<'a> {
+    |                 ^^^^^
+
+warning: methods `len`, `bounds`, and `iter` are never used
+   --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:126:8
+    |
+125 | impl Input<'_> {
+    | -------------- methods in this implementation
+126 |     fn len(&self) -> Result<usize> {
+    |        ^^^
+...
+136 |     fn bounds(&self) -> Option<(u64, u64)> {
+    |        ^^^^^^
+...
+150 |     fn iter(&self) -> impl Iterator<Item = u64> + '_ {
+    |        ^^^^
+
+warning: struct `Positions` is never constructed
+   --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:167:19
+    |
+167 | pub(super) struct Positions<'arena> {
+    |                   ^^^^^^^^^
+
+warning: function `prefix` is never used
+   --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:178:4
+    |
+178 | fn prefix(count: usize) -> usize {
+    |    ^^^^^^
+
+warning: function `layout` is never used
+   --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:182:4
+    |
+182 | fn layout(count: usize, bytes: usize) -> Result<Layout> {
+    |    ^^^^^^
+
+warning: multiple associated items are never used
+   --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:193:19
+    |
+191 | impl<'arena> Positions<'arena> {
+    | ------------------------------ associated items in this implementation
+192 |     #[inline]
+193 |     pub(super) fn len(&self) -> usize {
+    |                   ^^^
+...
+200 |     pub(super) fn is_empty(&self) -> bool {
+    |                   ^^^^^^^^
+...
+203 |     fn pointer(&self) -> *mut u8 {
+    |        ^^^^^^^
+...
+206 |     pub(super) fn from_sorted(input: Input<'_>, lease: &mut Lease<'arena>) -> Result<Self> {
+    |                   ^^^^^^^^^^^
+...
+209 |     pub(super) fn from_sorted_owned(input: Input<'_>, lease: &mut Lease<'arena>) -> Result<Self> {
+    |                   ^^^^^^^^^^^^^^^^^
+...
+212 |     fn encode(input: Input<'_>, lease: &mut Lease<'arena>, owned: bool) -> Result<Self> {
+    |        ^^^^^^
+...
+295 |     fn bytes(&self) -> &[u8] {
+    |        ^^^^^
+...
+305 |     fn offset(&self, block: usize) -> usize {
+    |        ^^^^^^
+...
+313 |     pub(super) fn block_count(&self) -> usize {
+    |                   ^^^^^^^^^^^
+...
+316 |     pub(super) fn block_ranges(&self, target_items: usize) -> impl Iterator<Item = Range<usize>> {
+    |                   ^^^^^^^^^^^^
+...
+322 |     pub(super) fn iter(&self) -> impl Iterator<Item = u64> + '_ {
+    |                   ^^^^
+...
+325 |     pub(super) fn read_blocks(&self, range: Range<usize>) -> impl Iterator<Item = u64> + '_ {
+    |                   ^^^^^^^^^^^
+...
+354 |     pub(super) fn lower_bound(&self, target: u64) -> usize {
+    |                   ^^^^^^^^^^^
+...
+372 |     pub(super) fn from(&self, index: usize) -> impl Iterator<Item = u64> + '_ {
+    |                   ^^^^
+
+warning: struct `Cursor` is never constructed
+   --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:393:8
+    |
+393 | struct Cursor<'a> {
+    |        ^^^^^^
+
+warning: `lean-bpe-codec-check` (lib) generated 18 warnings
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.44s
+     Running unittests src/lib.rs (/tmp/bpe-birth-miri/miri/x86_64-unknown-linux-gnu/debug/build/lean-bpe-codec-check/5bed763a616adcca/out/lean_bpe_codec_check-5bed763a616adcca)
+
+running 2 tests
+test positions::tests::storage_roundtrips_seeks_and_survives_concurrent_cursor_reuse ... ok
+test positions::tests::unsafe_storage_rejects_inverted_ranges_and_unsorted_input ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 20.98s
+
+   Doc-tests lean_bpe_codec_check
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

@@ -347,7 +347,7 @@ fn check_feed_contracts(trainer: &mut BpeTrainer, parallel: bool) {
             }
         }
         let mut equivalent = trainer.clone();
-        equivalent.words = super::super::word_counts::WordCounts::from_map(expected.clone());
+        equivalent.words = super::word_counts::WordCounts::from_map(expected.clone());
         assert_eq!(*trainer, equivalent);
         let stored = serde_json::to_value(&trainer).unwrap();
         assert_eq!(stored["words"], serde_json::to_value(expected).unwrap());
@@ -377,8 +377,7 @@ fn check_feed_contracts(trainer: &mut BpeTrainer, parallel: bool) {
 fn public_pools_feed_flush_errors_and_progress_matrix() {
     use tk_encode::utils::progress::ProgressFormat;
     const CHILD: &str = "BPE_PUBLIC_TEST_CHILD";
-    const TEST: &str =
-        "trainers::bpe::engine::tests::public_pools_feed_flush_errors_and_progress_matrix";
+    const TEST: &str = "trainers::bpe::tests::public_pools_feed_flush_errors_and_progress_matrix";
     if let Ok(setting) = std::env::var(CHILD) {
         let parallel = setting != "serial";
         tk_encode::parallelism::set_num_threads(4);

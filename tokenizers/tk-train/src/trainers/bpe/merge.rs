@@ -1,9 +1,10 @@
 //! Compatible selection and snapshot preparation hide endpoint/event bookkeeping.
-use super::{BpeTrainer, Corpus, PairIndex, Vocabulary, WORD_SEPARATOR_ID, add};
 use super::{
-    corpus::Match,
-    index::Candidate,
+    BpeTrainer, WORD_SEPARATOR_ID, add,
+    corpus::{Corpus, Match},
+    index::{Candidate, PairIndex},
     positions::{Arena, Builder, Input, Positions},
+    vocabulary::Vocabulary,
 };
 use ahash::{AHashMap, AHashSet};
 use rayon::prelude::*;

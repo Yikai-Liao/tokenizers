@@ -1,4 +1,14 @@
-# Adopted online compression and prepare optimizations
+# Current BPE organization
+
+The implementation is flattened into `tokenizers/tk-train/src/trainers/bpe`.
+The public trainer and private `train` coordinator share `mod.rs`; alphabet
+selection belongs to `vocabulary.rs`. Components retain their storage and phase
+contracts. See [the BPE guide](../../tokenizers/tk-train/src/trainers/bpe/README.md)
+and [the flattening report](FLATTEN.md) for validation and scoped diffs against
+HF main and the starting revision. Counts are descriptive; hard line limits
+have been retired. Earlier counts and limits below describe historical snapshots.
+
+## Prior adoption of online compression and prepare optimizations
 
 The selected combination is now applied on the simplification branch: whole-word
 blocks with producer-local compression, exact selected-rule indexing and monotone

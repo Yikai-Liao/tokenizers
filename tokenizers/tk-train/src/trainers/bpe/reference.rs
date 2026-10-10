@@ -69,7 +69,7 @@ impl BpeTrainer {
         for token in &self.special_tokens {
             tokens.insert(token.content.clone());
         }
-        for character in self.select_alphabet(WordCountsView::from_map(counts)) {
+        for character in vocabulary::select_alphabet(self, WordCountsView::from_map(counts)) {
             tokens.insert(character.to_string());
         }
         let mut weights = Vec::new();

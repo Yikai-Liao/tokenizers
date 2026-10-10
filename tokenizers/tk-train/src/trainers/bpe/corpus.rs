@@ -1,6 +1,8 @@
 //! Endpoint tokens retain their original coordinates; span metadata skips holes.
 use super::{
-    BpeTrainer, Vocabulary, WORD_SEPARATOR_ID, WordCountsView, vocabulary::InitialTokenIds,
+    BpeTrainer, WORD_SEPARATOR_ID,
+    vocabulary::{InitialTokenIds, Vocabulary},
+    word_counts::WordCountsView,
 };
 use crate::progress::TrainingProgress;
 use compact_str::CompactString;

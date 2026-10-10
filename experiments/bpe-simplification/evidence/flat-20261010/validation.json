@@ -1,0 +1,50 @@
+{
+  "base": "245ac0ffaff8927c36b9d97ee0326f5e96edec41",
+  "upstream": "fb49a29223724a96f26e061bec8ec7517aa14177",
+  "sources": {
+    "tokenizers/tk-train/src/trainers/bpe/corpus.rs": "dc1f282b562087906058265f541beead2a970892a8816416bd75738259550f8f",
+    "tokenizers/tk-train/src/trainers/bpe/feed.rs": "534b1ab1dee75c81d04b419d41c55fd87f4427fc1135c0a584fe493dc858b045",
+    "tokenizers/tk-train/src/trainers/bpe/index.rs": "de2df0119c8cea9e382f84589bfd9824cde6140b387827ce96718fd2b90adba4",
+    "tokenizers/tk-train/src/trainers/bpe/merge.rs": "f78938f06a48dd8d724736eab8e4078f70e720b71e8582edcec29aae5a65077f",
+    "tokenizers/tk-train/src/trainers/bpe/mod.rs": "4d47283260184765a0a4b94b8da71d746463d2ed5fd8f069744d7fc973031dc8",
+    "tokenizers/tk-train/src/trainers/bpe/parity_trainer.rs": "fae3be904339edd3e4275023d71814f56f376f40e7ce71b639955c91e123c9a7",
+    "tokenizers/tk-train/src/trainers/bpe/positions.rs": "8dcff088b911b1048e0c301efbfccb0ff9b1e4c0a949bcb7d5d0c341d3e75e9a",
+    "tokenizers/tk-train/src/trainers/bpe/reference.rs": "6fac6a8c93d5981c22309eb2d7e79262404e6bfa0a8e68492b0bb7ab561cf8c7",
+    "tokenizers/tk-train/src/trainers/bpe/tests/mod.rs": "adf965d48433a65b787246461cd6faa66a5a618bd9b45a4a094a6b7861c633e7",
+    "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs": "ed0b01440a2a678b71ec7441909b9194815073fb5ae6cd8e6b400e636167d624",
+    "tokenizers/tk-train/src/trainers/bpe/word.rs": "b81cd9c9819c7be9a76b6556fd58f0c1d04fb00992998e224f360aa7706553bd",
+    "tokenizers/tk-train/src/trainers/bpe/word_counts.rs": "ff5df75c686b8e2c9a1454d4acbe19f09f8b13003edb0986d48def72adc77d5d",
+    "tokenizers/tk-train/src/trainers/mod.rs": "c92d2fd3871638b00daaabdb22007ee79d1a58961ecac637b0b15846acc6c2bd",
+    "tokenizers/tk-train/src/trainers/wordpiece.rs": "d274b244a8ad07e115bad65b0c71eaeaca37f33b7a0af8f7a24c06d1344c4596",
+    "experiments/bpe-simplification/miri-codec/src/lib.rs": "374b7f2326ccb1793d8c6581e9f3a03a0d1542457421ef1a4522ec656a19b201"
+  },
+  "commands": [
+    "/root/.cargo/bin/cargo fmt --manifest-path tokenizers/tk-train/Cargo.toml --check",
+    "/root/.cargo/bin/cargo test --locked --manifest-path tokenizers/tk-train/Cargo.toml --target-dir /tmp/bpe-global-tests",
+    "/root/.cargo/bin/cargo test --locked --manifest-path tokenizers/tk-train/Cargo.toml --no-default-features --target-dir /tmp/bpe-global-tests",
+    "/root/.cargo/bin/cargo clippy --locked --manifest-path tokenizers/tk-train/Cargo.toml --all-targets --target-dir /tmp/bpe-global-tests -- -D warnings",
+    "env -u MIRIFLAGS -u RUSTFLAGS /root/.cargo/bin/cargo +nightly miri test --locked --manifest-path experiments/bpe-simplification/miri-codec/Cargo.toml --target-dir /tmp/bpe-birth-miri",
+    "python3 experiments/bpe-simplification/count_lines.py --change-base 245ac0ff --output experiments/bpe-simplification/evidence/flat-20261010/counts-after.json",
+    "python3 experiments/bpe-simplification/evidence/flat-20261010/verify_migration.py"
+  ],
+  "results": {
+    "default_unit_tests": 17,
+    "default_doctests": 1,
+    "nodefault_unit_tests": 17,
+    "nodefault_doctests": 1,
+    "miri_tests": 2,
+    "miri_doctests": 0,
+    "clippy_exit": 0,
+    "source_checks": 7
+  },
+  "flags": "MIRIFLAGS and RUSTFLAGS unset for Miri; default borrowing and leak checks enabled.",
+  "performance": "No benchmark rerun; relocation does not establish a speedup.",
+  "parity_feature_check": {
+    "command": "/root/.cargo/bin/cargo check --locked --manifest-path tokenizers/tk-train/Cargo.toml --features parity-aware-bpe --target-dir /tmp/bpe-global-tests",
+    "exit": 101,
+    "error": "E0432 unresolved import super::BPE",
+    "status": "Existing unavailable legacy feature; same stale import in main and starting revision. Outside flattening validation."
+  },
+  "implementation_patch_sha256": "d06c803c8fc57f18b3217c528de789b4ec9da2e338a5c4ffcf639d77363b8ad6",
+  "patch_scope": "All tracked implementation, tooling and guide changes from starting revision. Added report/evidence files excluded to avoid self-reference."
+}

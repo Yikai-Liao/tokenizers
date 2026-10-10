@@ -1,8 +1,8 @@
 //! Vocabulary identity and canonical output strings, independent of position storage.
+use super::word_counts::WordCountsView;
 use super::{BpeTrainer, WORD_SEPARATOR_ID};
 use crate::progress::{TrainingProgress, WorkProgress};
-use crate::trainers::bpe::word_counts::WordCountsView;
-use ahash::RandomState;
+use ahash::{AHashMap, RandomState};
 use compact_str::CompactString;
 use indexmap::IndexSet;
 use rayon::prelude::*;
@@ -53,7 +53,7 @@ impl Vocabulary {
         if trainer.limit_alphabet.is_some() {
             // Preserve the existing frequency-tie selector for limited alphabets.
             let characters =
-                retained_alphabet.get_or_insert_with(|| trainer.select_alphabet(word_counts));
+                retained_alphabet.get_or_insert_with(|| select_alphabet(trainer, word_counts));
             for &character in characters.iter() {
                 let mut utf8 = [0; 4];
                 vocabulary.intern(character.encode_utf8(&mut utf8))?;
@@ -307,4 +307,40 @@ impl InitialTokenIds {
             self.decorated[plain as usize][flags - 1]
         })
     }
+}
+
+/// Select the alphabet with the existing frequency-tie and codepoint order.
+pub(super) fn select_alphabet(trainer: &BpeTrainer, wc: WordCountsView<'_>) -> Vec<char> {
+    // Compute the alphabet from seen words
+    let mut alphabet: AHashMap<char, usize> = AHashMap::new();
+    for (word, count) in wc.iter() {
+        for c in word.chars() {
+            *alphabet.entry(c).or_default() += *count as usize;
+        }
+    }
+
+    // Also include anything from the provided initial alphabet
+    for c in &trainer.initial_alphabet {
+        *alphabet.entry(*c).or_default() = usize::MAX;
+    }
+
+    let mut kept = alphabet.iter().collect::<Vec<_>>();
+
+    // Compute the number of chars to remove from the alphabet
+    // If `limit_alphabet < initial_alphabet.len()`, some of these initial characters
+    // will be removed
+    let to_remove = trainer
+        .limit_alphabet
+        .map(|limit| alphabet.len().saturating_sub(limit))
+        .unwrap_or(0);
+
+    // Remove the unwanted chars
+    if to_remove > 0 {
+        kept.sort_unstable_by_key(|k| *k.1);
+        kept.drain(..to_remove);
+    }
+
+    // Keep the initial alphabet (sorted for determinism)
+    kept.sort_unstable_by_key(|k| *k.0 as u32);
+    kept.into_iter().map(|(&character, _)| character).collect()
 }

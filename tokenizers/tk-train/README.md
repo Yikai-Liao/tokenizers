@@ -15,7 +15,7 @@ reference only. Drive a trainer directly instead: `feed`, then `train`.
 [`BpeTrainer`] documents the BPE training entry points, execution policy, and
 input limits.
 
-The [BPE engine guide](src/trainers/bpe/engine/README.md) describes the
+The [BPE training guide](src/trainers/bpe/README.md) describes the
 implementation, correctness checks, and performance measurement boundaries.
 
 [`tk_encode`]: ../tk-encode/src/lib.rs

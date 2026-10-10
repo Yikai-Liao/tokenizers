@@ -2,7 +2,7 @@
 
 {{readme}}
 
-The [BPE engine guide](src/trainers/bpe/engine/README.md) describes the
+The [BPE training guide](src/trainers/bpe/README.md) describes the
 implementation, correctness checks, and performance measurement boundaries.
 
 [`tk_encode`]: ../tk-encode/src/lib.rs

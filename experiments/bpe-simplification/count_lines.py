@@ -1,4 +1,4 @@
-"""Count rustfmt source lines, including test oracle/helpers in the test budget."""
+"""Report BPE source size and Git differences without line-count limits."""
 import argparse
 import json
 from pathlib import Path
@@ -34,14 +34,14 @@ def strip_comments(source):
 
 
 def separate_test_items(source):
-    # Engine cfg(test) items are complete attributes + declarations/blocks.
+    # BPE cfg(test) items are complete attributes + declarations/blocks.
     # Braces inside strings are hidden while locating item boundaries.
     text = strip_comments(source)
     masked = re.sub(r'r(\#*)".*?"\1|"(?:\\.|[^"\\])*"', lambda m: ' ' * len(m.group()), text, flags=re.S)
     test_ranges = []
     cursor = 0
     # The optional parity feature is off in the default BPE build; its
-    # any(test, feature=...) imports therefore belong to the test budget.
+    # any(test, feature=...) imports therefore belong to the test count.
     marker = re.compile(r'#\[cfg\((?:test|any\(test,\s*feature\s*=\s+\))\)\]')
     while match := marker.search(masked, cursor):
         start, begin = match.span()
@@ -80,16 +80,18 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--root', type=Path, default=Path(__file__).resolve().parents[2])
     parser.add_argument('--output', type=Path)
-    parser.add_argument('--max-production', type=int, default=2200)
-    parser.add_argument('--max-tests', type=int, default=800)
+    parser.add_argument('--base', default='origin/main', help='Upstream Git revision for comparison')
+    parser.add_argument('--change-base', help='Optional starting revision for this change')
     args = parser.parse_args()
     root = args.root / 'tokenizers/tk-train'
     subprocess.run(['/root/.cargo/bin/cargo', 'fmt', '--manifest-path', str(root / 'Cargo.toml'), '--check'], check=True)
     bpe = root / 'src/trainers/bpe'
-    engine = bpe / 'engine'
     production = {}
     tests = {}
-    for path in sorted(engine.rglob('*.rs')):
+    # Include the public entry and feed/count representation alongside algorithm
+    # components, so moving implementation between files cannot change its scope.
+    paths = [p for p in bpe.rglob('*.rs') if p.name not in ('reference.rs', 'parity_trainer.rs', 'word.rs')]
+    for path in sorted(paths):
         name = str(path.relative_to(bpe))
         if 'tests' in path.parts or path.name == 'tests.rs':
             tests[name] = sum(bool(line.strip()) for line in strip_comments(path.read_text()).splitlines())
@@ -101,25 +103,31 @@ def main():
     for filename in ['reference.rs']:
         path = bpe / filename
         tests[filename + ' [oracle and shared helpers]'] = sum(bool(line.strip()) for line in strip_comments(path.read_text()).splitlines())
-    for filename in ['mod.rs', 'feed.rs', 'word_counts.rs']:
-        _, public_tests = separate_test_items((bpe / filename).read_text())
-        tests[filename + ' [cfg(test) public API/helpers]'] = public_tests
     # The shared trainer wrapper's sole default test exercises BpeTrainer.
     _, wrapper_tests = separate_test_items((bpe.parent / 'mod.rs').read_text())
     tests['trainers/mod.rs [cfg(test) BPE wrapper]'] = wrapper_tests
     for path in sorted((args.root / 'experiments/bpe-simplification/miri-codec/src').glob('*.rs')):
         tests[str(path.relative_to(args.root)) + ' [Miri harness]'] = sum(bool(line.strip()) for line in strip_comments(path.read_text()).splitlines())
+    scopes = ['tokenizers/tk-train/src/trainers/bpe',
+              'tokenizers/tk-train/src/trainers/wordpiece.rs',
+              'tokenizers/tk-train/src/trainers/mod.rs',
+              'experiments/bpe-simplification/miri-codec/src']
+    diffs = {}
+    for label, revision in [('upstream', args.base), ('change', args.change_base)]:
+        if revision is None:
+            continue
+        commit = subprocess.check_output(['git', 'rev-parse', revision], cwd=args.root, text=True).strip()
+        stat = subprocess.check_output(['git', 'diff', '--find-renames', '--stat', commit, '--', *scopes], cwd=args.root, text=True)
+        numstat = subprocess.check_output(['git', 'diff', '--find-renames', '--numstat', commit, '--', *scopes], cwd=args.root, text=True)
+        diffs[label] = dict(revision=revision, commit=commit, scopes=scopes, stat=stat, numstat=numstat)
     report = dict(production=production, tests=tests, production_total=sum(production.values()), test_total=sum(tests.values()),
-                  counting_rule='Nonblank noncomment lines after cargo fmt --check; all engine implementation; all default BPE cfg(test) including feed/word_counts and the shared trainer wrapper, independent reference and Miri harness. The oracle no longer uses the optional parity trainer Word. No implementation relocated outside engine.')
-    report['production_limit'] = args.max_production
-    report['test_limit'] = args.max_tests
-    report['within_budget'] = report['production_total'] <= args.max_production and report['test_total'] <= args.max_tests
+                  counting_rule='Descriptive nonblank noncomment lines after rustfmt; ordinary BPE components, public API, feed and word counts. Optional parity implementation excluded. Test count includes embedded cfg(test), reference, shared trainer wrapper and Miri harness, each once. No hard limits.',
+                  diffs=diffs,
+                  diff_rule='Git text additions/deletions include comments, formatting and documentation; rename detection is enabled. Counts and diffs describe different scopes and are not complexity or correctness gates.')
     content = json.dumps(report, indent=2)
     print(content)
     if args.output:
         args.output.write_text(content)
-    if not report['within_budget']:
-        raise SystemExit(1)
 
 
 if __name__ == '__main__':

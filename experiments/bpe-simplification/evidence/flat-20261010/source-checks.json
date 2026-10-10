@@ -1,0 +1,9 @@
+{
+  "coordinator_body_byte_equal": true,
+  "positions_byte_equal": true,
+  "corpus_index_merge_bodies_byte_equal": true,
+  "alphabet_body_equal_after_receiver_rename_and_whitespace": true,
+  "rejected_writes_and_birth_preserved": true,
+  "public_config_builder_trainer_and_entry_equal_after_selector_move": true,
+  "public_trainer_impl_byte_equal": true
+}

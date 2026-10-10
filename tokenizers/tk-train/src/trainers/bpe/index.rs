@@ -1,7 +1,8 @@
 //! Count owners publish complete lists; the queue repairs stale snapshots lazily.
 use super::merge::{Birth, Change};
 use super::{
-    CorpusPlan, WORD_SEPARATOR_ID, add,
+    WORD_SEPARATOR_ID, add,
+    corpus::CorpusPlan,
     positions::{Arena, Builder, Input, Positions},
 };
 use crate::progress::TrainingProgress;

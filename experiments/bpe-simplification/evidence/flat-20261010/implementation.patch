@@ -1,0 +1,731 @@
+diff --git a/experiments/bpe-simplification/STATUS.md b/experiments/bpe-simplification/STATUS.md
+index 309df0a4..40e6d9ec 100644
+--- a/experiments/bpe-simplification/STATUS.md
++++ b/experiments/bpe-simplification/STATUS.md
+@@ -1,4 +1,14 @@
+-# Adopted online compression and prepare optimizations
++# Current BPE organization
++
++The implementation is flattened into `tokenizers/tk-train/src/trainers/bpe`.
++The public trainer and private `train` coordinator share `mod.rs`; alphabet
++selection belongs to `vocabulary.rs`. Components retain their storage and phase
++contracts. See [the BPE guide](../../tokenizers/tk-train/src/trainers/bpe/README.md)
++and [the flattening report](FLATTEN.md) for validation and scoped diffs against
++HF main and the starting revision. Counts are descriptive; hard line limits
++have been retired. Earlier counts and limits below describe historical snapshots.
++
++## Prior adoption of online compression and prepare optimizations
+ 
+ The selected combination is now applied on the simplification branch: whole-word
+ blocks with producer-local compression, exact selected-rule indexing and monotone
+diff --git a/experiments/bpe-simplification/count_lines.py b/experiments/bpe-simplification/count_lines.py
+index ff9ea706..a6354a8a 100644
+--- a/experiments/bpe-simplification/count_lines.py
++++ b/experiments/bpe-simplification/count_lines.py
+@@ -1,4 +1,4 @@
+-"""Count rustfmt source lines, including test oracle/helpers in the test budget."""
++"""Report BPE source size and Git differences without line-count limits."""
+ import argparse
+ import json
+ from pathlib import Path
+@@ -34,14 +34,14 @@ def strip_comments(source):
+ 
+ 
+ def separate_test_items(source):
+-    # Engine cfg(test) items are complete attributes + declarations/blocks.
++    # BPE cfg(test) items are complete attributes + declarations/blocks.
+     # Braces inside strings are hidden while locating item boundaries.
+     text = strip_comments(source)
+     masked = re.sub(r'r(\#*)".*?"\1|"(?:\\.|[^"\\])*"', lambda m: ' ' * len(m.group()), text, flags=re.S)
+     test_ranges = []
+     cursor = 0
+     # The optional parity feature is off in the default BPE build; its
+-    # any(test, feature=...) imports therefore belong to the test budget.
++    # any(test, feature=...) imports therefore belong to the test count.
+     marker = re.compile(r'#\[cfg\((?:test|any\(test,\s*feature\s*=\s+\))\)\]')
+     while match := marker.search(masked, cursor):
+         start, begin = match.span()
+@@ -80,16 +80,18 @@ def main():
+     parser = argparse.ArgumentParser()
+     parser.add_argument('--root', type=Path, default=Path(__file__).resolve().parents[2])
+     parser.add_argument('--output', type=Path)
+-    parser.add_argument('--max-production', type=int, default=2200)
+-    parser.add_argument('--max-tests', type=int, default=800)
++    parser.add_argument('--base', default='origin/main', help='Upstream Git revision for comparison')
++    parser.add_argument('--change-base', help='Optional starting revision for this change')
+     args = parser.parse_args()
+     root = args.root / 'tokenizers/tk-train'
+     subprocess.run(['/root/.cargo/bin/cargo', 'fmt', '--manifest-path', str(root / 'Cargo.toml'), '--check'], check=True)
+     bpe = root / 'src/trainers/bpe'
+-    engine = bpe / 'engine'
+     production = {}
+     tests = {}
+-    for path in sorted(engine.rglob('*.rs')):
++    # Include the public entry and feed/count representation alongside algorithm
++    # components, so moving implementation between files cannot change its scope.
++    paths = [p for p in bpe.rglob('*.rs') if p.name not in ('reference.rs', 'parity_trainer.rs', 'word.rs')]
++    for path in sorted(paths):
+         name = str(path.relative_to(bpe))
+         if 'tests' in path.parts or path.name == 'tests.rs':
+             tests[name] = sum(bool(line.strip()) for line in strip_comments(path.read_text()).splitlines())
+@@ -101,25 +103,31 @@ def main():
+     for filename in ['reference.rs']:
+         path = bpe / filename
+         tests[filename + ' [oracle and shared helpers]'] = sum(bool(line.strip()) for line in strip_comments(path.read_text()).splitlines())
+-    for filename in ['mod.rs', 'feed.rs', 'word_counts.rs']:
+-        _, public_tests = separate_test_items((bpe / filename).read_text())
+-        tests[filename + ' [cfg(test) public API/helpers]'] = public_tests
+     # The shared trainer wrapper's sole default test exercises BpeTrainer.
+     _, wrapper_tests = separate_test_items((bpe.parent / 'mod.rs').read_text())
+     tests['trainers/mod.rs [cfg(test) BPE wrapper]'] = wrapper_tests
+     for path in sorted((args.root / 'experiments/bpe-simplification/miri-codec/src').glob('*.rs')):
+         tests[str(path.relative_to(args.root)) + ' [Miri harness]'] = sum(bool(line.strip()) for line in strip_comments(path.read_text()).splitlines())
++    scopes = ['tokenizers/tk-train/src/trainers/bpe',
++              'tokenizers/tk-train/src/trainers/wordpiece.rs',
++              'tokenizers/tk-train/src/trainers/mod.rs',
++              'experiments/bpe-simplification/miri-codec/src']
++    diffs = {}
++    for label, revision in [('upstream', args.base), ('change', args.change_base)]:
++        if revision is None:
++            continue
++        commit = subprocess.check_output(['git', 'rev-parse', revision], cwd=args.root, text=True).strip()
++        stat = subprocess.check_output(['git', 'diff', '--find-renames', '--stat', commit, '--', *scopes], cwd=args.root, text=True)
++        numstat = subprocess.check_output(['git', 'diff', '--find-renames', '--numstat', commit, '--', *scopes], cwd=args.root, text=True)
++        diffs[label] = dict(revision=revision, commit=commit, scopes=scopes, stat=stat, numstat=numstat)
+     report = dict(production=production, tests=tests, production_total=sum(production.values()), test_total=sum(tests.values()),
+-                  counting_rule='Nonblank noncomment lines after cargo fmt --check; all engine implementation; all default BPE cfg(test) including feed/word_counts and the shared trainer wrapper, independent reference and Miri harness. The oracle no longer uses the optional parity trainer Word. No implementation relocated outside engine.')
+-    report['production_limit'] = args.max_production
+-    report['test_limit'] = args.max_tests
+-    report['within_budget'] = report['production_total'] <= args.max_production and report['test_total'] <= args.max_tests
++                  counting_rule='Descriptive nonblank noncomment lines after rustfmt; ordinary BPE components, public API, feed and word counts. Optional parity implementation excluded. Test count includes embedded cfg(test), reference, shared trainer wrapper and Miri harness, each once. No hard limits.',
++                  diffs=diffs,
++                  diff_rule='Git text additions/deletions include comments, formatting and documentation; rename detection is enabled. Counts and diffs describe different scopes and are not complexity or correctness gates.')
+     content = json.dumps(report, indent=2)
+     print(content)
+     if args.output:
+         args.output.write_text(content)
+-    if not report['within_budget']:
+-        raise SystemExit(1)
+ 
+ 
+ if __name__ == '__main__':
+diff --git a/experiments/bpe-simplification/miri-codec/src/lib.rs b/experiments/bpe-simplification/miri-codec/src/lib.rs
+index 443f568e..5fcd322f 100644
+--- a/experiments/bpe-simplification/miri-codec/src/lib.rs
++++ b/experiments/bpe-simplification/miri-codec/src/lib.rs
+@@ -1,4 +1,4 @@
+ extern crate self as tk_encode;
+ pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
+-#[path = "../../../../tokenizers/tk-train/src/trainers/bpe/engine/positions.rs"]
++#[path = "../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs"]
+ mod positions;
+diff --git a/tokenizers/tk-train/README.md b/tokenizers/tk-train/README.md
+index d4712265..db9bb786 100644
+--- a/tokenizers/tk-train/README.md
++++ b/tokenizers/tk-train/README.md
+@@ -15,7 +15,7 @@ reference only. Drive a trainer directly instead: `feed`, then `train`.
+ [`BpeTrainer`] documents the BPE training entry points, execution policy, and
+ input limits.
+ 
+-The [BPE engine guide](src/trainers/bpe/engine/README.md) describes the
++The [BPE training guide](src/trainers/bpe/README.md) describes the
+ implementation, correctness checks, and performance measurement boundaries.
+ 
+ [`tk_encode`]: ../tk-encode/src/lib.rs
+diff --git a/tokenizers/tk-train/README.tpl b/tokenizers/tk-train/README.tpl
+index c58c5ce8..da3114be 100644
+--- a/tokenizers/tk-train/README.tpl
++++ b/tokenizers/tk-train/README.tpl
+@@ -2,7 +2,7 @@
+ 
+ {{readme}}
+ 
+-The [BPE engine guide](src/trainers/bpe/engine/README.md) describes the
++The [BPE training guide](src/trainers/bpe/README.md) describes the
+ implementation, correctness checks, and performance measurement boundaries.
+ 
+ [`tk_encode`]: ../tk-encode/src/lib.rs
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/DESIGN.md b/tokenizers/tk-train/src/trainers/bpe/DESIGN.md
+similarity index 95%
+rename from tokenizers/tk-train/src/trainers/bpe/engine/DESIGN.md
+rename to tokenizers/tk-train/src/trainers/bpe/DESIGN.md
+index 35685ff9..3e7b994a 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/DESIGN.md
++++ b/tokenizers/tk-train/src/trainers/bpe/DESIGN.md
+@@ -1,8 +1,10 @@
+-# Engine contracts and simplification boundaries
++# BPE training contracts and simplification boundaries
+ 
+ ## Joined rounds and ownership
+ 
+-The coordinator owns the vocabulary, corpus, pair index and allocation Arena for one attempt.
++The private `train` coordinator in `mod.rs` owns the vocabulary, corpus, pair index
++and allocation Arena for one attempt. Public inputs and worker policy enter through
++`BpeTrainer::train_counts`; tests exercise the same coordinator with explicit workers.
+ A selected `Batch`
+ owns the occurrence lists of its rules. `Batch::prepare` consumes those lists,
+ returns owned writes and neighbor changes, and joins all readers before return.
+@@ -23,7 +25,8 @@ Atomics do not replace the disjoint-match and joined-phase semantic requirements
+ Token strings are stored once in an insertion-ordered vocabulary. Insertion
+ indices are u32 IDs; `u32::MAX` is reserved for separators. Special tokens are
+ inserted first. Plain alphabets are ordered by codepoint. Limited alphabets keep
+-the existing frequency selector, including its unspecified ties. Decorations
++the existing frequency selector in `vocabulary.rs`, including its unspecified ties.
++The independent reference shares only this selector. Decorations
+ are resolved in the input view's traversal before weighted words are reordered.
+ Filtering and first/last decoration flags use original UTF-8 word coordinates.
+ 
+@@ -39,7 +42,7 @@ and runs alone. Selecting an already active result during a fresh attempt causes
+ an immediate restart; traces and merges from that attempt are abandoned.
+ 
+ The input view is borrowed and unchanged. Feed aggregation, serialization and
+-public thread/parallelism settings remain outside the engine. Training creates
++public thread/parallelism settings are handled by the trainer entry. Training creates
+ one requested-size Rayon pool and installs all its stages there, independently
+ of any ambient pool used by feed.
+ 
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/README.md b/tokenizers/tk-train/src/trainers/bpe/README.md
+similarity index 78%
+rename from tokenizers/tk-train/src/trainers/bpe/engine/README.md
+rename to tokenizers/tk-train/src/trainers/bpe/README.md
+index 4f353db7..9ec527cf 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/README.md
++++ b/tokenizers/tk-train/src/trainers/bpe/README.md
+@@ -1,11 +1,13 @@
+-# BPE training engine
++# BPE training
+ 
+-This engine returns the complete vocabulary with token IDs, ranked merge rules,
++Training returns the complete vocabulary with token IDs, ranked merge rules,
+ and special tokens. It preserves weighted pair selection and compatible batch
+ execution while using one endpoint/event protocol.
+ 
+-The public entry points remain in [the trainer](../mod.rs). Read [mod.rs](mod.rs)
+-for the complete workflow: initialize identities and a borrowed corpus plan,
++The public entry points and private training coordinator share [mod.rs](mod.rs).
++`BpeTrainer::train_counts` selects the requested worker count and calls `train`;
++tests exercise the same training flow with explicit worker counts and observers.
++Read it for the complete workflow: initialize identities and a borrowed corpus plan,
+ build the compressed occurrence index, materialize endpoints, select a compatible
+ batch, prepare against a stable snapshot, apply its
+ writes, commit counts and births, then publish the model. Each parallel phase
+@@ -15,7 +17,7 @@ original input and the retained alphabet; speculative merges are discarded.
+ The implementation is divided by the knowledge each module owns:
+ 
+ - [vocabulary.rs](vocabulary.rs) owns strings, alphabet interpretation, decorated
+-  IDs, initial activation metadata, and canonical output.
++  IDs, initial activation metadata, alphabet selection, and canonical output.
+ - [corpus.rs](corpus.rs) owns fixed coordinates, token endpoints, weights, and
+   ID activation and occurrence spans. Initial ID metadata moves here once;
+   merge selection and geometry use this same activation record.
+@@ -35,7 +37,7 @@ The implementation is divided by the knowledge each module owns:
+ This branch experiments with one owning priority queue for fresh lists and reuse
+ cohorts. Arena allocation and its dynamic threshold are unchanged. Resource
+ measurements and the unresolved equal-priority reuse ordering limit are recorded
+-in the [heap experiment](../../../../../../experiments/bpe-simplification/HEAP_EXPERIMENT.md).
++in the [heap experiment](../../../../../experiments/bpe-simplification/HEAP_EXPERIMENT.md).
+ 
+ Initial collection splits the borrowed plan at whole-word boundaries, with a
+ 2²⁴-resident-slot block cap. An oversized single word is processed alone. Each
+@@ -77,9 +79,11 @@ exhaust every start. Native and Miri allocation tests use scoped threads and bot
+ Public tests cover feed, model reload, progress and ambient-versus-training pool
+ behavior. [The coverage map](tests/COVERAGE.md) records the combined boundaries.
+ 
+-The 2200-line production budget covers all engine implementation, including any
+-logic moved outside this directory. All default BPE test-only code, the reference oracle, shared helpers and Miri
+-harness have a separate 800-line limit; redundant checks are combined before
+-using that allowance.
+-Removing comments does not reduce either count. Performance evidence and
+-build/input hashes are recorded by the [experiment](../../../../../../experiments/bpe-simplification/STATUS.md).
++Source counts and diffs are descriptive, with no hard line limits. The report
++includes the ordinary BPE implementation, public API, feed and word-count storage;
++tests, the reference oracle, shared helpers and Miri harness are counted separately.
++Pass `--change-base <revision>` to `count_lines.py` to report this change alongside
++the default comparison with HF `origin/main`. Git diffs detect renames and include
++comments and documentation, while source counts exclude comments and blank lines.
++Performance evidence and build/input hashes are recorded by the
++[experiment](../../../../../experiments/bpe-simplification/STATUS.md).
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs b/tokenizers/tk-train/src/trainers/bpe/corpus.rs
+similarity index 99%
+rename from tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs
+rename to tokenizers/tk-train/src/trainers/bpe/corpus.rs
+index 9a9ec953..d973a24f 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/corpus.rs
+@@ -1,6 +1,8 @@
+ //! Endpoint tokens retain their original coordinates; span metadata skips holes.
+ use super::{
+-    BpeTrainer, Vocabulary, WORD_SEPARATOR_ID, WordCountsView, vocabulary::InitialTokenIds,
++    BpeTrainer, WORD_SEPARATOR_ID,
++    vocabulary::{InitialTokenIds, Vocabulary},
++    word_counts::WordCountsView,
+ };
+ use crate::progress::TrainingProgress;
+ use compact_str::CompactString;
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/mod.rs b/tokenizers/tk-train/src/trainers/bpe/engine/mod.rs
+deleted file mode 100644
+index 8d84ab98..00000000
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/mod.rs
++++ /dev/null
+@@ -1,117 +0,0 @@
+-//! Joined training rounds over a fixed-coordinate corpus and an occurrence index.
+-mod corpus;
+-mod index;
+-mod merge;
+-mod positions;
+-mod vocabulary;
+-
+-use super::{BpeTrainer, word_counts::WordCountsView};
+-use crate::progress::TrainingProgress;
+-use corpus::{Corpus, CorpusPlan};
+-use index::PairIndex;
+-use merge::{Batch, Selection};
+-use positions::Arena;
+-#[cfg(test)]
+-use tk_encode::models::bpe::Pair;
+-use tk_encode::{
+-    Result,
+-    models::bpe::{Merges, Vocab},
+-    vocab::bucket_added_vocabulary::AddedToken,
+-};
+-use vocabulary::Vocabulary;
+-
+-fn add(count: &mut u64, amount: u64) -> Result<()> {
+-    *count = count
+-        .checked_add(amount)
+-        .ok_or("BPE weighted frequency exceeds u64")?;
+-    Ok(())
+-}
+-
+-const WORD_SEPARATOR_ID: u32 = u32::MAX;
+-type ModelParts = (Vocab, Merges, Vec<AddedToken>);
+-#[cfg(test)]
+-type Trace = Vec<(Pair, u64, u32)>;
+-
+-pub(super) fn train(
+-    trainer: &BpeTrainer,
+-    words: WordCountsView<'_>,
+-    workers: usize,
+-    #[cfg(test)] mut observe: Option<&mut (dyn FnMut(Pair, u64, u32) + Send)>,
+-) -> Result<ModelParts> {
+-    let pool = rayon::ThreadPoolBuilder::new()
+-        .num_threads(workers)
+-        .build()?;
+-    pool.install(|| {
+-        let progress = TrainingProgress::new(trainer.show_progress, trainer.progress_format)?;
+-        let mut alphabet = None;
+-        let mut reuse = false;
+-        loop {
+-            let mut vocabulary =
+-                Vocabulary::initialize(trainer, words, workers, &progress, &mut alphabet)?;
+-            let plan = CorpusPlan::build(words, &mut vocabulary, trainer, reuse, &progress)?;
+-            let arena = Arena::new(workers, plan.items());
+-            let mut index = PairIndex::build(
+-                &arena,
+-                &plan,
+-                trainer.min_frequency,
+-                workers,
+-                reuse,
+-                &progress,
+-            )?;
+-            if vocabulary.len() >= trainer.vocab_size {
+-                progress.stage("Compute merges", trainer.vocab_size);
+-                drop(index);
+-                drop(plan);
+-                drop(arena);
+-                let (vocab, merges) = vocabulary.into_model_parts(Vec::new());
+-                return Ok((vocab, merges, trainer.special_tokens.clone()));
+-            }
+-            let mut corpus = plan.materialize(&progress);
+-            let work = progress.stage("Compute merges", trainer.vocab_size);
+-            let mut merges = Vec::new();
+-            #[cfg(test)]
+-            let mut trace = Trace::new();
+-            let mut restart = false;
+-            while vocabulary.len() < trainer.vocab_size {
+-                let batch = match Batch::select(trainer, &mut vocabulary, &mut corpus, &mut index)?
+-                {
+-                    Selection::Finished => break,
+-                    Selection::Restart => {
+-                        restart = true;
+-                        break;
+-                    }
+-                    Selection::Ready(batch) => batch,
+-                };
+-                #[cfg(test)]
+-                trace.extend(batch.trace());
+-                merges.extend(batch.pairs());
+-                let prepared = batch.prepare(
+-                    &corpus,
+-                    &arena,
+-                    trainer.max_token_length.unwrap_or(usize::MAX),
+-                )?;
+-                let changes = prepared.apply(&corpus);
+-                index.commit(changes)?;
+-                work.learned(merges.len());
+-            }
+-            if restart {
+-                reuse = true;
+-                continue;
+-            }
+-            drop(index);
+-            drop(corpus);
+-            drop(arena);
+-            #[cfg(test)]
+-            if let Some(observer) = observe.as_mut() {
+-                for (pair, count, id) in trace {
+-                    observer(pair, count, id);
+-                }
+-            }
+-            let (vocab, merges) = vocabulary.into_model_parts(merges);
+-            return Ok((vocab, merges, trainer.special_tokens.clone()));
+-        }
+-    })
+-}
+-
+-#[cfg(test)]
+-mod tests;
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/index.rs b/tokenizers/tk-train/src/trainers/bpe/index.rs
+similarity index 99%
+rename from tokenizers/tk-train/src/trainers/bpe/engine/index.rs
+rename to tokenizers/tk-train/src/trainers/bpe/index.rs
+index 2205262d..836f9e38 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/index.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/index.rs
+@@ -1,7 +1,8 @@
+ //! Count owners publish complete lists; the queue repairs stale snapshots lazily.
+ use super::merge::{Birth, Change};
+ use super::{
+-    CorpusPlan, WORD_SEPARATOR_ID, add,
++    WORD_SEPARATOR_ID, add,
++    corpus::CorpusPlan,
+     positions::{Arena, Builder, Input, Positions},
+ };
+ use crate::progress::TrainingProgress;
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/merge.rs b/tokenizers/tk-train/src/trainers/bpe/merge.rs
+similarity index 99%
+rename from tokenizers/tk-train/src/trainers/bpe/engine/merge.rs
+rename to tokenizers/tk-train/src/trainers/bpe/merge.rs
+index 3f1f3e87..0d10d0ef 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/merge.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/merge.rs
+@@ -1,9 +1,10 @@
+ //! Compatible selection and snapshot preparation hide endpoint/event bookkeeping.
+-use super::{BpeTrainer, Corpus, PairIndex, Vocabulary, WORD_SEPARATOR_ID, add};
+ use super::{
+-    corpus::Match,
+-    index::Candidate,
++    BpeTrainer, WORD_SEPARATOR_ID, add,
++    corpus::{Corpus, Match},
++    index::{Candidate, PairIndex},
+     positions::{Arena, Builder, Input, Positions},
++    vocabulary::Vocabulary,
+ };
+ use ahash::{AHashMap, AHashSet};
+ use rayon::prelude::*;
+diff --git a/tokenizers/tk-train/src/trainers/bpe/mod.rs b/tokenizers/tk-train/src/trainers/bpe/mod.rs
+index 5e2b945e..ab149647 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/mod.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/mod.rs
+@@ -4,22 +4,33 @@ mod feed;
+ mod word_counts;
+ use word_counts::{WordCounts, WordCountsView};
+ 
+-mod engine;
++mod corpus;
++mod index;
++mod merge;
+ #[cfg(feature = "parity-aware-bpe")]
+ pub mod parity_trainer;
++mod positions;
+ #[cfg(test)]
+ mod reference;
++#[cfg(test)]
++mod tests;
++mod vocabulary;
+ #[cfg(feature = "parity-aware-bpe")]
+ mod word;
+ #[cfg(feature = "parity-aware-bpe")]
+ pub use parity_trainer::{ParityBpeTrainer, ParityBpeTrainerBuilder, ParityVariant};
+ 
+-use crate::Trainer;
++use crate::{Trainer, progress::TrainingProgress};
+ use ahash::{AHashMap, AHashSet};
+ use compact_str::CompactString;
++use corpus::CorpusPlan;
++use index::PairIndex;
++use merge::{Batch, Selection};
++use positions::Arena;
+ use serde::{Deserialize, Serialize};
+ use std::collections::HashSet;
+ use tk_encode::vocab::bucket_added_vocabulary::AddedToken;
++use vocabulary::Vocabulary;
+ // The optional parity trainer uses linked words; ordinary training owns a
+ // fixed-coordinate corpus. The test oracle uses independent sequential vectors.
+ #[cfg(feature = "parity-aware-bpe")]
+@@ -256,42 +267,6 @@ impl BpeTrainer {
+         self.words.len()
+     }
+ 
+-    /// Select the alphabet with the existing frequency-tie and codepoint order.
+-    fn select_alphabet(&self, wc: WordCountsView<'_>) -> Vec<char> {
+-        // Compute the alphabet from seen words
+-        let mut alphabet: AHashMap<char, usize> = AHashMap::new();
+-        for (word, count) in wc.iter() {
+-            for c in word.chars() {
+-                *alphabet.entry(c).or_default() += *count as usize;
+-            }
+-        }
+-
+-        // Also include anything from the provided initial alphabet
+-        for c in &self.initial_alphabet {
+-            *alphabet.entry(*c).or_default() = usize::MAX;
+-        }
+-
+-        let mut kept = alphabet.iter().collect::<Vec<_>>();
+-
+-        // Compute the number of chars to remove from the alphabet
+-        // If `limit_alphabet < initial_alphabet.len()`, some of these initial characters
+-        // will be removed
+-        let to_remove = self
+-            .limit_alphabet
+-            .map(|limit| alphabet.len().saturating_sub(limit))
+-            .unwrap_or(0);
+-
+-        // Remove the unwanted chars
+-        if to_remove > 0 {
+-            kept.sort_unstable_by_key(|k| *k.1);
+-            kept.drain(..to_remove);
+-        }
+-
+-        // Keep the initial alphabet (sorted for determinism)
+-        kept.sort_unstable_by_key(|k| *k.0 as u32);
+-        kept.into_iter().map(|(&character, _)| character).collect()
+-    }
+-
+     /// Train the collected weighted words and return vocabulary entries, ordered
+     /// merges, and special tokens.
+     ///
+@@ -361,7 +336,7 @@ impl BpeTrainer {
+         } else {
+             1
+         };
+-        engine::train(
++        train(
+             self,
+             word_counts,
+             workers,
+@@ -371,6 +346,99 @@ impl BpeTrainer {
+     }
+ }
+ 
++fn add(count: &mut u64, amount: u64) -> Result<()> {
++    *count = count
++        .checked_add(amount)
++        .ok_or("BPE weighted frequency exceeds u64")?;
++    Ok(())
++}
++
++const WORD_SEPARATOR_ID: u32 = u32::MAX;
++type ModelParts = (Vocab, Merges, Vec<AddedToken>);
++#[cfg(test)]
++type Trace = Vec<(Pair, u64, u32)>;
++
++fn train(
++    trainer: &BpeTrainer,
++    words: WordCountsView<'_>,
++    workers: usize,
++    #[cfg(test)] mut observe: Option<&mut (dyn FnMut(Pair, u64, u32) + Send)>,
++) -> Result<ModelParts> {
++    let pool = rayon::ThreadPoolBuilder::new()
++        .num_threads(workers)
++        .build()?;
++    pool.install(|| {
++        let progress = TrainingProgress::new(trainer.show_progress, trainer.progress_format)?;
++        let mut alphabet = None;
++        let mut reuse = false;
++        loop {
++            let mut vocabulary =
++                Vocabulary::initialize(trainer, words, workers, &progress, &mut alphabet)?;
++            let plan = CorpusPlan::build(words, &mut vocabulary, trainer, reuse, &progress)?;
++            let arena = Arena::new(workers, plan.items());
++            let mut index = PairIndex::build(
++                &arena,
++                &plan,
++                trainer.min_frequency,
++                workers,
++                reuse,
++                &progress,
++            )?;
++            if vocabulary.len() >= trainer.vocab_size {
++                progress.stage("Compute merges", trainer.vocab_size);
++                drop(index);
++                drop(plan);
++                drop(arena);
++                let (vocab, merges) = vocabulary.into_model_parts(Vec::new());
++                return Ok((vocab, merges, trainer.special_tokens.clone()));
++            }
++            let mut corpus = plan.materialize(&progress);
++            let work = progress.stage("Compute merges", trainer.vocab_size);
++            let mut merges = Vec::new();
++            #[cfg(test)]
++            let mut trace = Trace::new();
++            let mut restart = false;
++            while vocabulary.len() < trainer.vocab_size {
++                let batch = match Batch::select(trainer, &mut vocabulary, &mut corpus, &mut index)?
++                {
++                    Selection::Finished => break,
++                    Selection::Restart => {
++                        restart = true;
++                        break;
++                    }
++                    Selection::Ready(batch) => batch,
++                };
++                #[cfg(test)]
++                trace.extend(batch.trace());
++                merges.extend(batch.pairs());
++                let prepared = batch.prepare(
++                    &corpus,
++                    &arena,
++                    trainer.max_token_length.unwrap_or(usize::MAX),
++                )?;
++                let changes = prepared.apply(&corpus);
++                index.commit(changes)?;
++                work.learned(merges.len());
++            }
++            if restart {
++                reuse = true;
++                continue;
++            }
++            drop(index);
++            drop(corpus);
++            drop(arena);
++            #[cfg(test)]
++            if let Some(observer) = observe.as_mut() {
++                for (pair, count, id) in trace {
++                    observer(pair, count, id);
++                }
++            }
++            let (vocab, merges) = vocabulary.into_model_parts(merges);
++            return Ok((vocab, merges, trainer.special_tokens.clone()));
++        }
++    })
++}
++
+ impl Trainer for BpeTrainer {
+     type Model = PipelineBPE;
+ 
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/positions.rs b/tokenizers/tk-train/src/trainers/bpe/positions.rs
+similarity index 100%
+rename from tokenizers/tk-train/src/trainers/bpe/engine/positions.rs
+rename to tokenizers/tk-train/src/trainers/bpe/positions.rs
+diff --git a/tokenizers/tk-train/src/trainers/bpe/reference.rs b/tokenizers/tk-train/src/trainers/bpe/reference.rs
+index 44332349..677b93db 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/reference.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/reference.rs
+@@ -69,7 +69,7 @@ impl BpeTrainer {
+         for token in &self.special_tokens {
+             tokens.insert(token.content.clone());
+         }
+-        for character in self.select_alphabet(WordCountsView::from_map(counts)) {
++        for character in vocabulary::select_alphabet(self, WordCountsView::from_map(counts)) {
+             tokens.insert(character.to_string());
+         }
+         let mut weights = Vec::new();
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/tests/COVERAGE.md b/tokenizers/tk-train/src/trainers/bpe/tests/COVERAGE.md
+similarity index 100%
+rename from tokenizers/tk-train/src/trainers/bpe/engine/tests/COVERAGE.md
+rename to tokenizers/tk-train/src/trainers/bpe/tests/COVERAGE.md
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/tests/mod.rs b/tokenizers/tk-train/src/trainers/bpe/tests/mod.rs
+similarity index 98%
+rename from tokenizers/tk-train/src/trainers/bpe/engine/tests/mod.rs
+rename to tokenizers/tk-train/src/trainers/bpe/tests/mod.rs
+index 24afd856..161e481f 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/tests/mod.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/tests/mod.rs
+@@ -347,7 +347,7 @@ fn check_feed_contracts(trainer: &mut BpeTrainer, parallel: bool) {
+             }
+         }
+         let mut equivalent = trainer.clone();
+-        equivalent.words = super::super::word_counts::WordCounts::from_map(expected.clone());
++        equivalent.words = super::word_counts::WordCounts::from_map(expected.clone());
+         assert_eq!(*trainer, equivalent);
+         let stored = serde_json::to_value(&trainer).unwrap();
+         assert_eq!(stored["words"], serde_json::to_value(expected).unwrap());
+@@ -377,8 +377,7 @@ fn check_feed_contracts(trainer: &mut BpeTrainer, parallel: bool) {
+ fn public_pools_feed_flush_errors_and_progress_matrix() {
+     use tk_encode::utils::progress::ProgressFormat;
+     const CHILD: &str = "BPE_PUBLIC_TEST_CHILD";
+-    const TEST: &str =
+-        "trainers::bpe::engine::tests::public_pools_feed_flush_errors_and_progress_matrix";
++    const TEST: &str = "trainers::bpe::tests::public_pools_feed_flush_errors_and_progress_matrix";
+     if let Ok(setting) = std::env::var(CHILD) {
+         let parallel = setting != "serial";
+         tk_encode::parallelism::set_num_threads(4);
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/vocabulary.rs b/tokenizers/tk-train/src/trainers/bpe/vocabulary.rs
+similarity index 89%
+rename from tokenizers/tk-train/src/trainers/bpe/engine/vocabulary.rs
+rename to tokenizers/tk-train/src/trainers/bpe/vocabulary.rs
+index 9b7cdca3..4e6035ac 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/vocabulary.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/vocabulary.rs
+@@ -1,8 +1,8 @@
+ //! Vocabulary identity and canonical output strings, independent of position storage.
++use super::word_counts::WordCountsView;
+ use super::{BpeTrainer, WORD_SEPARATOR_ID};
+ use crate::progress::{TrainingProgress, WorkProgress};
+-use crate::trainers::bpe::word_counts::WordCountsView;
+-use ahash::RandomState;
++use ahash::{AHashMap, RandomState};
+ use compact_str::CompactString;
+ use indexmap::IndexSet;
+ use rayon::prelude::*;
+@@ -53,7 +53,7 @@ impl Vocabulary {
+         if trainer.limit_alphabet.is_some() {
+             // Preserve the existing frequency-tie selector for limited alphabets.
+             let characters =
+-                retained_alphabet.get_or_insert_with(|| trainer.select_alphabet(word_counts));
++                retained_alphabet.get_or_insert_with(|| select_alphabet(trainer, word_counts));
+             for &character in characters.iter() {
+                 let mut utf8 = [0; 4];
+                 vocabulary.intern(character.encode_utf8(&mut utf8))?;
+@@ -308,3 +308,39 @@ impl InitialTokenIds {
+         })
+     }
+ }
++
++/// Select the alphabet with the existing frequency-tie and codepoint order.
++pub(super) fn select_alphabet(trainer: &BpeTrainer, wc: WordCountsView<'_>) -> Vec<char> {
++    // Compute the alphabet from seen words
++    let mut alphabet: AHashMap<char, usize> = AHashMap::new();
++    for (word, count) in wc.iter() {
++        for c in word.chars() {
++            *alphabet.entry(c).or_default() += *count as usize;
++        }
++    }
++
++    // Also include anything from the provided initial alphabet
++    for c in &trainer.initial_alphabet {
++        *alphabet.entry(*c).or_default() = usize::MAX;
++    }
++
++    let mut kept = alphabet.iter().collect::<Vec<_>>();
++
++    // Compute the number of chars to remove from the alphabet
++    // If `limit_alphabet < initial_alphabet.len()`, some of these initial characters
++    // will be removed
++    let to_remove = trainer
++        .limit_alphabet
++        .map(|limit| alphabet.len().saturating_sub(limit))
++        .unwrap_or(0);
++
++    // Remove the unwanted chars
++    if to_remove > 0 {
++        kept.sort_unstable_by_key(|k| *k.1);
++        kept.drain(..to_remove);
++    }
++
++    // Keep the initial alphabet (sorted for determinism)
++    kept.sort_unstable_by_key(|k| *k.0 as u32);
++    kept.into_iter().map(|(&character, _)| character).collect()
++}

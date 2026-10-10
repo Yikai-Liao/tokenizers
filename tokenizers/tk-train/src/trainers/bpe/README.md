@@ -1,11 +1,13 @@
-# BPE training engine
+# BPE training
 
-This engine returns the complete vocabulary with token IDs, ranked merge rules,
+Training returns the complete vocabulary with token IDs, ranked merge rules,
 and special tokens. It preserves weighted pair selection and compatible batch
 execution while using one endpoint/event protocol.
 
-The public entry points remain in [the trainer](../mod.rs). Read [mod.rs](mod.rs)
-for the complete workflow: initialize identities and a borrowed corpus plan,
+The public entry points and private training coordinator share [mod.rs](mod.rs).
+`BpeTrainer::train_counts` selects the requested worker count and calls `train`;
+tests exercise the same training flow with explicit worker counts and observers.
+Read it for the complete workflow: initialize identities and a borrowed corpus plan,
 build the compressed occurrence index, materialize endpoints, select a compatible
 batch, prepare against a stable snapshot, apply its
 writes, commit counts and births, then publish the model. Each parallel phase
@@ -15,7 +17,7 @@ original input and the retained alphabet; speculative merges are discarded.
 The implementation is divided by the knowledge each module owns:
 
 - [vocabulary.rs](vocabulary.rs) owns strings, alphabet interpretation, decorated
-  IDs, initial activation metadata, and canonical output.
+  IDs, initial activation metadata, alphabet selection, and canonical output.
 - [corpus.rs](corpus.rs) owns fixed coordinates, token endpoints, weights, and
   ID activation and occurrence spans. Initial ID metadata moves here once;
   merge selection and geometry use this same activation record.
@@ -35,7 +37,7 @@ The implementation is divided by the knowledge each module owns:
 This branch experiments with one owning priority queue for fresh lists and reuse
 cohorts. Arena allocation and its dynamic threshold are unchanged. Resource
 measurements and the unresolved equal-priority reuse ordering limit are recorded
-in the [heap experiment](../../../../../../experiments/bpe-simplification/HEAP_EXPERIMENT.md).
+in the [heap experiment](../../../../../experiments/bpe-simplification/HEAP_EXPERIMENT.md).
 
 Initial collection splits the borrowed plan at whole-word boundaries, with a
 2²⁴-resident-slot block cap. An oversized single word is processed alone. Each
@@ -77,9 +79,11 @@ exhaust every start. Native and Miri allocation tests use scoped threads and bot
 Public tests cover feed, model reload, progress and ambient-versus-training pool
 behavior. [The coverage map](tests/COVERAGE.md) records the combined boundaries.
 
-The 2200-line production budget covers all engine implementation, including any
-logic moved outside this directory. All default BPE test-only code, the reference oracle, shared helpers and Miri
-harness have a separate 800-line limit; redundant checks are combined before
-using that allowance.
-Removing comments does not reduce either count. Performance evidence and
-build/input hashes are recorded by the [experiment](../../../../../../experiments/bpe-simplification/STATUS.md).
+Source counts and diffs are descriptive, with no hard line limits. The report
+includes the ordinary BPE implementation, public API, feed and word-count storage;
+tests, the reference oracle, shared helpers and Miri harness are counted separately.
+Pass `--change-base <revision>` to `count_lines.py` to report this change alongside
+the default comparison with HF `origin/main`. Git diffs detect renames and include
+comments and documentation, while source counts exclude comments and blank lines.
+Performance evidence and build/input hashes are recorded by the
+[experiment](../../../../../experiments/bpe-simplification/STATUS.md).

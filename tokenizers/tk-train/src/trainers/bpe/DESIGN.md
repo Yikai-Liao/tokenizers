@@ -1,8 +1,10 @@
-# Engine contracts and simplification boundaries
+# BPE training contracts and simplification boundaries
 
 ## Joined rounds and ownership
 
-The coordinator owns the vocabulary, corpus, pair index and allocation Arena for one attempt.
+The private `train` coordinator in `mod.rs` owns the vocabulary, corpus, pair index
+and allocation Arena for one attempt. Public inputs and worker policy enter through
+`BpeTrainer::train_counts`; tests exercise the same coordinator with explicit workers.
 A selected `Batch`
 owns the occurrence lists of its rules. `Batch::prepare` consumes those lists,
 returns owned writes and neighbor changes, and joins all readers before return.
@@ -23,7 +25,8 @@ Atomics do not replace the disjoint-match and joined-phase semantic requirements
 Token strings are stored once in an insertion-ordered vocabulary. Insertion
 indices are u32 IDs; `u32::MAX` is reserved for separators. Special tokens are
 inserted first. Plain alphabets are ordered by codepoint. Limited alphabets keep
-the existing frequency selector, including its unspecified ties. Decorations
+the existing frequency selector in `vocabulary.rs`, including its unspecified ties.
+The independent reference shares only this selector. Decorations
 are resolved in the input view's traversal before weighted words are reordered.
 Filtering and first/last decoration flags use original UTF-8 word coordinates.
 
@@ -39,7 +42,7 @@ and runs alone. Selecting an already active result during a fresh attempt causes
 an immediate restart; traces and merges from that attempt are abandoned.
 
 The input view is borrowed and unchanged. Feed aggregation, serialization and
-public thread/parallelism settings remain outside the engine. Training creates
+public thread/parallelism settings are handled by the trainer entry. Training creates
 one requested-size Rayon pool and installs all its stages there, independently
 of any ambient pool used by feed.
 
