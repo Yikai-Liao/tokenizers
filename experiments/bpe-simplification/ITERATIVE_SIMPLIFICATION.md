@@ -275,3 +275,29 @@ encoding 断言。本轮没有追加性能测量。
 rustfmt 后用语法树补函数间空行，保留文档与属性相邻，跳过 raw string
 中的伪函数。独立临时 Git fixture 验证只读检查、重复执行稳定以及未改文件
 字节完全不变。提交上游 PR 前可以一并删除脚本与临时目录规则。
+
+## positions 关键注释、测试整理与中文 256 MiB 复测
+
+补齐压缩布局与目录偏移基准、lower_bound 退一块的理由、内联数组的零填充、
+跨 restart 的非递减校验，以及 Cursor 依赖内部编码格式和已知元素数的前提。
+bytes 改为 compressed_bytes，要求 Compressed 变体，内联误用走 unreachable。
+PairIndex::best 就地说明等 pair／priority 仍可能对应不同位置 cohort，保留
+pop→修正→push，避免 peek_mut 改变同优先级批次顺序。
+
+五个存储测试目的保留；删除 SmallVec 自身操作与重复空片段准备，用小表
+保留分片边界案例，降序 restart 检查移入非法输入测试。测试由 219 → 187
+格式化行，Positions 全文件由 507 → 487 行；精确字节、单片段原指针复用、
+跨块重复值、u64 边界、并发读和 Miri 采样均保留。17 项 no-default 普通
+BPE 检查、all-target Clippy（warnings denied）与变更文件格式检查通过，
+沿用排除的既有 tokenizer encoding 断言。
+
+按用户要求，以接口调整前的 26aa5926 为基线，对当前借用 Chunk／坐标
+迭代实现重新测量中文 256 MiB 的 ByteLevel 和 Whitespace。各做一个排除
+的预热与四组交替正式配对：CPU／wall／峰值 RSS 中位差分别为
++0.81%／+0.87%／−0.43%，以及 −0.15%／+0.89%／−0.56%。20 次
+完整模型一致，无 swap、无并行构建或测试。ByteLevel 前两组 CPU 曾为
++2.93%，完整四组降至 +0.81%，不能由早期样本归因于 Chunk。
+用户决定零点几的差异不继续优化；尚未构建的单字节解码试改已撤回，
+保留源码与本轮已测快照哈希一致。
+协议、源码、构建与二进制哈希、逐次数据和参考模型见
+[中文读取接口复测](evidence/positions-read-20261011/README.md)。

@@ -1,15 +1,11 @@
 //! Owned nondecreasing position sequences with inline pairs and restart/delta bytes.
 //! Construction writes directly into the final Vec, then transfers ownership to Box.
-//! Compressed layout: usize element count, a usize offset per block only when
-//! there are multiple blocks, then the data area. Offsets are relative to that
-//! area; a single block omits the directory. Each block starts with a little-endian
-//! u64 coordinate, followed by unsigned LEB128 gaps for its remaining values.
 use std::ops::Range;
 use tk_encode::Result;
-
 const RESTART: usize = 128;
 
 /// Immutable full-u64 lists with inline pairs and owned restart/delta bytes.
+/// The first word holds cardinality; the directory and stream retain their format.
 /// Ownership and automatic Send/Sync come from Box, without raw allocation or borrowed storage.
 #[derive(Default)]
 pub(super) enum Positions {
@@ -19,7 +15,10 @@ pub(super) enum Positions {
     Two(u64, u64),
     Compressed(Box<[u8]>),
 }
-
+fn prefix(count: usize) -> usize {
+    let groups = count.div_ceil(RESTART);
+    (1 + if groups > 1 { groups } else { 0 }) * std::mem::size_of::<usize>()
+}
 impl Positions {
     pub(super) fn len(&self) -> usize {
         match self {
@@ -31,11 +30,9 @@ impl Positions {
             }
         }
     }
-
     pub(super) fn is_empty(&self) -> bool {
         self.len() == 0
     }
-
     /// Construct from nondecreasing coordinates, preserving duplicates.
     pub(super) fn from_sorted(values: &[u64]) -> Result<Self> {
         Self::encode(values.len(), values.iter().copied())
@@ -58,7 +55,7 @@ impl Positions {
         Self::encode(count, fragments.iter().flat_map(Self::iter))
     }
 
-    // Only a slice and owned fragment lengths supply cardinality.
+    // Only the owned buffer, a slice, and fragment lengths supply cardinality.
     // The iterator stays private; safe Vec writes require no trusted-iterator or
     // uninitialized-memory protocol. Tiny lists bypass encoding entirely.
     fn encode(count: usize, mut values: impl Iterator<Item = u64>) -> Result<Self> {
@@ -96,8 +93,6 @@ impl Positions {
         bytes[..std::mem::size_of::<usize>()].copy_from_slice(&count.to_le_bytes());
         let mut previous = 0;
         for (index, position) in values.enumerate() {
-            // Restart seeds are written absolutely, but this subtraction still
-            // checks nondecreasing order across the preceding block boundary.
             let gap = position
                 .checked_sub(previous)
                 .ok_or("BPE positions are not sorted")?;
@@ -121,18 +116,12 @@ impl Positions {
         }
         Ok(Self::Compressed(bytes.into_boxed_slice()))
     }
-
-    /// Return the compressed data area after the count and optional directory.
-    /// Only Compressed has this storage; callers must establish that variant.
-    fn compressed_bytes(&self) -> &[u8] {
-        let Self::Compressed(bytes) = self else {
-            unreachable!("inline positions have no compressed data area")
-        };
-        let groups = self.block_count();
-        let prefix = (1 + if groups > 1 { groups } else { 0 }) * std::mem::size_of::<usize>();
-        &bytes[prefix..]
+    fn bytes(&self) -> &[u8] {
+        match self {
+            Self::Compressed(bytes) => &bytes[prefix(self.len())..],
+            _ => &[],
+        }
     }
-
     fn offset(&self, block: usize) -> usize {
         if block == 0 {
             return 0;
@@ -147,33 +136,22 @@ impl Positions {
                 .unwrap(),
         )
     }
-
-    fn block_count(&self) -> usize {
+    pub(super) fn block_count(&self) -> usize {
         self.len().div_ceil(RESTART)
     }
 
-    fn block_ranges(&self, target_items: usize) -> impl Iterator<Item = Range<usize>> {
+    pub(super) fn block_ranges(&self, target_items: usize) -> impl Iterator<Item = Range<usize>> {
         let blocks = target_items.div_ceil(RESTART).max(1);
         (0..self.block_count())
             .step_by(blocks)
             .map(move |begin| begin..(begin + blocks).min(self.block_count()))
     }
 
-    /// Borrow read-only fragments, rounding the target up to an independent restart.
-    /// Empty lists yield no fragments; short lists yield one. No values are copied
-    /// or decoded until a fragment is iterated.
-    pub(super) fn chunks(&self, target_items: usize) -> impl Iterator<Item = Chunk<'_>> {
-        self.block_ranges(target_items).map(move |blocks| Chunk {
-            positions: self,
-            blocks,
-        })
-    }
-
     pub(super) fn iter(&self) -> impl Iterator<Item = u64> + '_ {
         self.read_blocks(0..self.block_count())
     }
 
-    fn read_blocks(&self, range: Range<usize>) -> impl Iterator<Item = u64> + '_ {
+    pub(super) fn read_blocks(&self, range: Range<usize>) -> impl Iterator<Item = u64> + '_ {
         // Reject inverted ranges, then clamp before multiplying. If a range starts
         // past the directory, start == end and no directory pointer is formed.
         assert!(range.start <= range.end);
@@ -181,8 +159,6 @@ impl Positions {
         let start = (range.start.min(blocks) * RESTART).min(self.len());
         let end = (range.end.min(blocks) * RESTART).min(self.len());
         if !matches!(self, Self::Compressed(_)) {
-            // Zero fills the fixed-size array, not a sentinel: zero is a valid
-            // coordinate. The actual list length truncates the unused entries.
             let values = match self {
                 Self::One(value) => [*value, 0],
                 Self::Two(first, last) => [*first, *last],
@@ -193,7 +169,7 @@ impl Positions {
             let bytes = if start == end {
                 &[]
             } else {
-                &self.compressed_bytes()[self.offset(range.start)..]
+                &self.bytes()[self.offset(range.start)..]
             };
             itertools::Either::Right(Cursor {
                 bytes,
@@ -204,7 +180,7 @@ impl Positions {
         }
     }
 
-    fn lower_bound(&self, target: u64) -> usize {
+    pub(super) fn lower_bound(&self, target: u64) -> usize {
         let mut begin = 0;
         let mut end = self.block_count();
         while begin < end {
@@ -215,9 +191,6 @@ impl Positions {
                 end = mid;
             }
         }
-        // The binary search finds the first restart seed at or above target.
-        // Its predecessor can contain the first match near its tail, including
-        // duplicates spanning the boundary, so scan that block before advancing.
         let block = begin.saturating_sub(1);
         block * RESTART
             + self
@@ -227,41 +200,13 @@ impl Positions {
     }
 
     /// Iterates from a list index, rather than a corpus coordinate.
-    fn iter_from(&self, index: usize) -> impl Iterator<Item = u64> + '_ {
+    pub(super) fn iter_from(&self, index: usize) -> impl Iterator<Item = u64> + '_ {
         self.read_blocks(index / RESTART..self.block_count())
             .skip(index % RESTART)
     }
-
-    /// Iterate all coordinates at or above the target, including repeated values.
-    pub(super) fn iter_from_value(&self, target: u64) -> impl Iterator<Item = u64> + '_ {
-        self.iter_from(self.lower_bound(target))
-    }
 }
-
-/// A borrowed read-only fragment whose storage boundaries stay inside this module.
-pub(super) struct Chunk<'a> {
-    positions: &'a Positions,
-    blocks: Range<usize>,
-}
-
-impl Chunk<'_> {
-    pub(super) fn len(&self) -> usize {
-        let count = self.positions.len();
-        let start = (self.blocks.start * RESTART).min(count);
-        let end = (self.blocks.end * RESTART).min(count);
-        end - start
-    }
-
-    pub(super) fn iter(&self) -> impl Iterator<Item = u64> + '_ {
-        self.positions.read_blocks(self.blocks.clone())
-    }
-}
-
 /// A reader's private decode state over a borrowed immutable position stream.
 /// Absolute restart seeds bound replay; index/end delimit the requested blocks.
-/// Bytes come only from the internal encoder, and the known element count ends
-/// iteration. Its format guarantees complete seeds, bounded gaps and exact sums,
-/// permitting direct indexing and addition; this does not validate external bytes.
 struct Cursor<'a> {
     bytes: &'a [u8],
     position: u64,
@@ -301,39 +246,6 @@ impl Iterator for Cursor<'_> {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn chunks_cover_lists_without_losing_duplicates_at_fragment_boundaries() {
-        for length in [0, 1, 2, 3, 127, 128, 129, 255, 256, 257, 1024] {
-            // Equal coordinates span both restart and fragment boundaries.
-            let values: Vec<_> = (0..length).map(|index| (index / 200) as u64).collect();
-            let positions = Positions::from_sorted(&values).unwrap();
-            for target in [0, 1, 127, 128, 129, 130, 255, 256, 257, usize::MAX] {
-                let chunks: Vec<_> = positions.chunks(target).collect();
-                for chunk in &chunks {
-                    assert!(chunk.len() > 0);
-                    assert_eq!(chunk.iter().count(), chunk.len());
-                }
-                assert!(
-                    chunks
-                        .iter()
-                        .flat_map(Chunk::iter)
-                        .eq(values.iter().copied())
-                );
-            }
-        }
-
-        // The requested target rounds up, so length > target can still be complete.
-        for (length, target, expected) in [
-            (129, 128, vec![128, 1]),
-            (129, 129, vec![129]),
-            (255, 129, vec![255]),
-        ] {
-            let positions = Positions::from_sorted(&vec![7; length]).unwrap();
-            let lengths: Vec<_> = positions.chunks(target).map(|chunk| chunk.len()).collect();
-            assert_eq!(lengths, expected);
-        }
-    }
 
     #[test]
     fn concat_preserves_duplicates_and_reuses_a_single_nonempty_fragment() {
@@ -385,6 +297,10 @@ mod tests {
         expected.extend_from_slice(&u64::MAX.to_le_bytes());
         assert_eq!(&**bytes, expected);
         assert!(positions.iter().eq(values));
+
+        let mut descending_at_restart = vec![1; 129];
+        descending_at_restart[128] = 0;
+        assert!(Positions::from_sorted(&descending_at_restart).is_err());
     }
 
     #[test]
@@ -400,17 +316,25 @@ mod tests {
                     values = vec![0, u64::MAX, u64::MAX];
                 }
                 values.sort_unstable();
-                let positions = Positions::from_sorted(&values).unwrap();
-                let fragments = values
-                    .chunks(17)
-                    .map(|chunk| Positions::from_sorted(chunk).unwrap())
-                    .collect();
+                let mut buffer = smallvec::SmallVec::<[u64; 2]>::new();
+                let mut fragments = vec![Positions::default()];
+                for chunk in values.chunks(17) {
+                    let mut piece = smallvec::SmallVec::<[u64; 2]>::new();
+                    for &p in chunk {
+                        piece.push(p);
+                    }
+                    fragments.push(Positions::from_sorted(chunk).unwrap());
+                    buffer.append(&mut piece);
+                }
+                assert!(buffer.iter().copied().eq(values.iter().copied()));
                 assert!(
-                    Positions::concat(fragments)
+                    Positions::from_sorted(&buffer)
                         .unwrap()
                         .iter()
                         .eq(values.iter().copied())
                 );
+                fragments.push(Positions::default());
+                let positions = Positions::concat(fragments).unwrap();
                 assert!(positions.iter().eq(values.iter().copied()));
                 for index in (0..=length)
                     .step_by(if cfg!(miri) { 127 } else { 1 })
@@ -430,13 +354,13 @@ mod tests {
                         positions.lower_bound(target),
                         values.partition_point(|&p| p < target)
                     );
-                    assert!(
-                        positions.iter_from_value(target).eq(values
-                            .iter()
-                            .copied()
-                            .filter(|&position| position >= target))
-                    );
                 }
+                assert!(
+                    positions
+                        .block_ranges(129)
+                        .flat_map(|r| positions.read_blocks(r))
+                        .eq(values.iter().copied())
+                );
                 assert!(
                     positions
                         .read_blocks(usize::MAX..usize::MAX)
@@ -476,9 +400,6 @@ mod tests {
             let fragments = [a, b].map(|v| Positions::from_sorted(v).unwrap());
             assert!(Positions::concat(fragments.into()).is_err());
         }
-        let mut descending_at_restart = vec![1; 129];
-        descending_at_restart[128] = 0;
-        assert!(Positions::from_sorted(&descending_at_restart).is_err());
         let values: Vec<_> = (0..129u64).collect();
         let positions = Positions::from_sorted(&values).unwrap();
         let call = std::panic::AssertUnwindSafe(|| positions.read_blocks(1000..0).next());

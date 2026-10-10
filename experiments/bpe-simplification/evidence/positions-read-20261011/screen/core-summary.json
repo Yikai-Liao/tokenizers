@@ -1,0 +1,44 @@
+[
+  {
+    "case": "zh-bytelevel_regex-256MiB",
+    "before": {
+      "train_seconds": 21.194263587000002,
+      "train_cpu_seconds": 66.467533,
+      "process_hwm_kib_before_validation": 2475164.0
+    },
+    "after": {
+      "train_seconds": 21.3218099135,
+      "train_cpu_seconds": 66.0796535,
+      "process_hwm_kib_before_validation": 2451640.0
+    },
+    "reference": "before",
+    "paired_median_delta_percent": {
+      "after": {
+        "train_seconds": 0.8693303608576675,
+        "train_cpu_seconds": 0.8054839427327543,
+        "process_hwm_kib_before_validation": -0.4307730340214255
+      }
+    }
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "before": {
+      "train_seconds": 21.4752470425,
+      "train_cpu_seconds": 58.115379999999995,
+      "process_hwm_kib_before_validation": 1850528.0
+    },
+    "after": {
+      "train_seconds": 21.5986620265,
+      "train_cpu_seconds": 58.197582,
+      "process_hwm_kib_before_validation": 1834622.0
+    },
+    "reference": "before",
+    "paired_median_delta_percent": {
+      "after": {
+        "train_seconds": 0.892035324284568,
+        "train_cpu_seconds": -0.1461036171811314,
+        "process_hwm_kib_before_validation": -0.5570415346455027
+      }
+    }
+  }
+]

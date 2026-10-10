@@ -204,8 +204,6 @@ impl PairIndex {
             if top.count == count {
                 return (count >= self.floor).then_some(top);
             }
-            // Equal pair/priority entries can own different occurrence cohorts.
-            // Keep pop/update/push: peek_mut can change their tie selection order.
             let mut candidate = self.queue.pop().expect("observed candidate exists");
             candidate.priority.count = count;
             self.queue.push(candidate);

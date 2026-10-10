@@ -1,0 +1,46 @@
+{
+  "bpe_tests": {
+    "command": [
+      "/root/.cargo/bin/cargo",
+      "test",
+      "--offline",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--no-default-features",
+      "--lib",
+      "trainers::bpe::",
+      "--",
+      "--skip",
+      "feed_training_tokenizer_json_and_encoding_roundtrip"
+    ],
+    "environment": {
+      "CARGO_TARGET_DIR": "/tmp/bpe-global-tests"
+    },
+    "passed": 17,
+    "failed": 0,
+    "excluded_existing_assertion": "feed_training_tokenizer_json_and_encoding_roundtrip"
+  },
+  "clippy": {
+    "command": [
+      "/root/.cargo/bin/cargo",
+      "clippy",
+      "--offline",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--no-default-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0
+  },
+  "format": "uv run experiments/bpe-simplification/format-changed.py --check <positions.rs> <index.rs>",
+  "performance": {
+    "runs": 20,
+    "formal_runs": 16,
+    "complete_models_equal": true,
+    "zero_swap": true,
+    "concurrent_builds_or_benchmarks": false
+  }
+}
