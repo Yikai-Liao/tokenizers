@@ -1,0 +1,44 @@
+[
+  {
+    "case": "zh-256MiB",
+    "baseline": {
+      "train_seconds": 21.514960411,
+      "train_cpu_seconds": 68.21224,
+      "process_hwm_kib_before_validation": 2343846.0
+    },
+    "candidate": {
+      "train_seconds": 20.980086623,
+      "train_cpu_seconds": 66.702907,
+      "process_hwm_kib_before_validation": 2344670.0
+    },
+    "reference": "baseline",
+    "paired_median_delta_percent": {
+      "candidate": {
+        "train_seconds": -2.470472446302802,
+        "train_cpu_seconds": -2.2116112216309105,
+        "process_hwm_kib_before_validation": 0.0352347748864168
+      }
+    }
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "baseline": {
+      "train_seconds": 20.070332618000002,
+      "train_cpu_seconds": 54.457557,
+      "process_hwm_kib_before_validation": 1827054.0
+    },
+    "candidate": {
+      "train_seconds": 20.0694748875,
+      "train_cpu_seconds": 55.5779255,
+      "process_hwm_kib_before_validation": 1791484.0
+    },
+    "reference": "baseline",
+    "paired_median_delta_percent": {
+      "candidate": {
+        "train_seconds": 0.028189541886353142,
+        "train_cpu_seconds": 2.0910142267375975,
+        "process_hwm_kib_before_validation": -1.9343629530786
+      }
+    }
+  }
+]

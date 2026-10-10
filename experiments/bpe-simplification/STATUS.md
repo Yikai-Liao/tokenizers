@@ -8,25 +8,55 @@ and [the flattening report](FLATTEN.md) for validation and scoped diffs against
 HF main and the starting revision. Counts are descriptive; hard line limits
 have been retired. Earlier counts and limits below describe historical snapshots.
 
-## Serde delegation, heap repair and fixed-size storage audit, 2026-10-10
+## Serde delegation and state simplification, 2026-10-10
 
-WordCounts serialization delegates its Map representation to the existing map's
-Serialize implementation and its Entries representation to Serializer::collect_map
-over borrowed key/value pairs. It retains the flat-map format, entry traversal and
-exact length hint without collecting another container or adding a dependency.
-Deserialization and content equality are unchanged.
+The final implementation retains WordCounts Map.serialize and Entries.collect_map
+with the same flat-map format and no additional allocation or dependency.
+A standalone preallocated-Vec serialization comparison observes Entries CPU
++4.65% and Map +0.98%; JSON bytes match and both implementations allocate zero
+inside this measurement. The user explicitly chose to retain collect_map and
+accept its local serialization cost.
 
-PairIndex::best repairs a stale queue head through dary_heap::PeekMut instead of
-popping and reinserting its owning candidate. Dropping the modified guard restores
-heap order; retired pairs are removed through PeekMut::pop. This delegates heap
-maintenance to the existing octonary heap and retains lazy count certification.
-No timing comparison was run, so this change makes no measured speedup claim.
+PairIndex::best returns to one pop/push certification implementation. Initial
+PeekMut timing is inconsistent across the two inputs. An injected pair with two
+historical cohorts (snapshot counts 10/5, current count 5) shows that equal-priority
+cohort selection can change the complete merge trace. This is a directed queue
+state, not proof of a naturally failing corpus. The retained regression checks
+all expected rules and the entire vocabulary/merge model. A fresh/reuse branch
+was rejected in favor of the unified previous protocol.
 
-Both default and no-default-feature library suites pass all 17 tests, including
-generated full-model and per-rule comparisons with the sequential oracle.
-All-target Clippy passes with warnings denied; the two changed Rust files pass
-rustfmt and the diff passes whitespace checks. Whole-crate rustfmt still reports
-pre-existing import-order differences in five untouched files.
+The five state/interface simplifications remove infallible Result propagation,
+return symbol-scan break reasons directly, store an unfed Trainer in Builder,
+collect reuse word IDs through adjacent deduplication, and read Rule's pair from
+its owning Candidate instead of a duplicate field. Sorting and overflow checks,
+UTF-8 affix boundaries, public builder methods and serialized fields are retained.
+Initial dense-count staging and frozen-position storage are unchanged.
+
+Collection-only measurements with actual Positions iteration show a tradeoff:
+with 64 occurrences per word, Vec capacity falls from 2 MiB to 32 KiB and CPU
+falls about 6.6%; with no/low duplication, capacity is unchanged and CPU rises
+about 7–9%. Both low-duplicate implementations grow through 16 reallocations.
+This is not a whole-reuse training or process-RSS measurement.
+
+The final d4e3fa45 / a31898fa training comparison uses two Chinese 256 MiB inputs,
+four workers on CPUs 0–3, identical locked release builds, excluded warmup, then
+BA and AB formal blocks. Public training timing excludes loading, serialization
+and validation; these no-affix cases use fresh training. All 12 full models match
+and measured swap is zero. Median paired changes are:
+
+| Input | Wall | CPU | HWM |
+| --- | ---: | ---: | ---: |
+| ByteLevel | -2.77% | -1.83% | +0.09% |
+| Whitespace | +1.36% | +1.88% | -0.59% |
+
+Individual formal changes reverse direction within each input; these small-sample
+shared-VM observations do not establish a stable performance gain. Default and
+no-default-feature library suites each pass all 20 tests, including generated
+per-rule/full-model oracle comparisons at 1, 4 and 8 workers. All-target Clippy
+passes with warnings denied, changed files pass rustfmt and whitespace checks.
+Whole-crate rustfmt still has pre-existing import-order differences in five
+untouched files. Complete protocols, sources, raw samples, model hashes and
+validation are in [the comparison report](evidence/serde-heap-simplification-20261010/README.md).
 
 The fixed-size storage audit found these Box-slice candidates; none were changed:
 

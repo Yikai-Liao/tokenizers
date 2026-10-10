@@ -1,0 +1,44 @@
+[
+  {
+    "case": "zh-256MiB",
+    "baseline": {
+      "train_seconds": 21.7402395065,
+      "train_cpu_seconds": 68.3909975,
+      "process_hwm_kib_before_validation": 2344484.0
+    },
+    "candidate": {
+      "train_seconds": 21.1043045265,
+      "train_cpu_seconds": 67.08846500000001,
+      "process_hwm_kib_before_validation": 2346604.0
+    },
+    "reference": "baseline",
+    "paired_median_delta_percent": {
+      "candidate": {
+        "train_seconds": -2.7660966350191107,
+        "train_cpu_seconds": -1.8284723338560407,
+        "process_hwm_kib_before_validation": 0.09088195317891734
+      }
+    }
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "baseline": {
+      "train_seconds": 19.4352735725,
+      "train_cpu_seconds": 53.05927799999999,
+      "process_hwm_kib_before_validation": 1810664.0
+    },
+    "candidate": {
+      "train_seconds": 19.6833778035,
+      "train_cpu_seconds": 54.017638000000005,
+      "process_hwm_kib_before_validation": 1799582.0
+    },
+    "reference": "baseline",
+    "paired_median_delta_percent": {
+      "candidate": {
+        "train_seconds": 1.3569407254067354,
+        "train_cpu_seconds": 1.8841951202765217,
+        "process_hwm_kib_before_validation": -0.5943730331372021
+      }
+    }
+  }
+]

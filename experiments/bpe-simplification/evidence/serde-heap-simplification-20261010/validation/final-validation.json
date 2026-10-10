@@ -1,0 +1,16 @@
+{
+  "final_source_commit": "a31898fa0320bbd2f1023143c8e453c8c471bac3",
+  "full_models_equal_across_initial_and_final_comparisons": true,
+  "initial_complete_runs": 12,
+  "final_complete_runs": 12,
+  "final_formal_runs": 8,
+  "final_excluded_warmups": 4,
+  "all_final_runs_zero_swap": true,
+  "no_concurrent_builds_or_task_benchmarks": true,
+  "source_hashes_match_final_commit": true,
+  "default_library_tests": 20,
+  "no_default_library_tests": 20,
+  "all_target_clippy_warnings_denied": true,
+  "changed_files_rustfmt": true,
+  "diff_whitespace_check": true
+}

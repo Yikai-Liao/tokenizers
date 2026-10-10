@@ -1,0 +1,21 @@
+   Compiling tk-train v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-heap-experiment/tokenizers/tk-train)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 5.29s
+     Running unittests src/lib.rs (/tmp/bpe-global-tests/debug/deps/tk_train-15897e568e447ca3)
+
+running 1 test
+
+thread 'trainers::bpe::index::tests::equal_pair_cohorts_preserve_each_merge_and_model_after_count_repair' (2965201) panicked at src/trainers/bpe/index.rs:634:9:
+assertion `left == right` failed: cohort selection must preserve every merge
+  left: [((6, 7), 5, 0), ((3, 0), 8, 9), ((6, 7), 5, 0), ((3, 0), 8, 9), ((9, 8), 4, 10), ((0, 8), 1, 11), ((0, 8), 1, 11), ((5, 11), 1, 12)]
+ right: [((6, 7), 5, 0), ((6, 7), 5, 0), ((3, 0), 8, 9), ((3, 0), 8, 9), ((9, 8), 4, 10), ((0, 8), 1, 11), ((0, 8), 1, 11), ((5, 11), 1, 12)]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test trainers::bpe::index::tests::equal_pair_cohorts_preserve_each_merge_and_model_after_count_repair ... FAILED
+
+failures:
+
+failures:
+    trainers::bpe::index::tests::equal_pair_cohorts_preserve_each_merge_and_model_after_count_repair
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 17 filtered out; finished in 0.07s
+
+error: test failed, to rerun pass `--lib`
