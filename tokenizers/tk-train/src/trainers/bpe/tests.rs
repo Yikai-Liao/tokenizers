@@ -98,13 +98,14 @@ fn overlap_floor_alias_and_alphabet_boundaries() {
         &counts(&[("abac", 4), ("dbdc", 4), ("abdb", 3), ("acdc", 3)]),
     );
     // A split producer's local pieces are below the floor; its complete birth is not.
-    // Long AA runs separately exercise greedy starts across position restart blocks.
+    // 8195 AA symbols yield 4097 greedy starts, crossing both restart blocks
+    // and the 4096-start task boundary even with one worker.
     check(
         &trainer(),
         &counts(&[("ab", 3), ("cd", 3), ("aaaaa", 0), ("", 7)]),
     );
     let repeated = "ab".repeat(12_000);
-    let aa = "a".repeat(4097);
+    let aa = "a".repeat(8195);
     let words = counts(&[(&repeated, 1), ("xy", 12_000), (&aa, 3)]);
     let mut trainer = trainer();
     trainer.min_frequency = 10_000;

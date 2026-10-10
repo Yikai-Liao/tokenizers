@@ -11,7 +11,7 @@ Literal alphabet expectations independently check that shared selector.
 | --- | --- |
 | Weighted ordering, equal counts, empty words, zero weights, Unicode and duplicate reserved strings | Fixed-seed model combinations plus an explicit equal-count fixture |
 | Affixes, activated identity reuse, unactivated reserved IDs and restart behavior | Generated prefix/suffix combinations, duplicate specials, literal `baaba` traces, and 128 long words with interleaved zero/positive weights across three affix/gate settings; a reserved long merge activates after occurrence geometry is established |
-| AA overlap and position restart boundaries | A 4097-symbol AA run and generated repeated words |
+| AA overlap and position restart boundaries | An 8195-symbol AA run spans restart blocks and two preparation jobs even at one worker; full model/rule agreement and generated repeated words |
 | Complete and partial birth pruning | Long AB producer split across workers, a competing complete XY producer, and complete-model/trace comparison; 127/129/257 repeated ABC groups check rounded whole fragments versus partial publication and full model/rule agreement |
 | Strict newborn length admission, including limits 0, 1 and 2 | Generated length gates and independent sequential neighbor admission |
 | Filtered symbols, forced alphabet and decorations | Generated filtered/decorated models, a filtered training fixture, and literal alphabet IDs |

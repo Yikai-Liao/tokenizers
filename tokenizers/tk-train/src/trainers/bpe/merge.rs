@@ -1,4 +1,4 @@
-//! Compatible selection and snapshot preparation hide endpoint/event bookkeeping.
+//! Select compatible rules and complete each batch with joined parallel phases.
 use super::{
     BpeTrainer, WORD_SEPARATOR_ID, add,
     corpus::{Corpus, Match},
@@ -318,8 +318,8 @@ impl Batch {
         let tasks = snapshot.tasks();
         let jobs = tasks
             .into_par_iter()
-            .map_init(Directories::default, |directories, (rank, rule, source)| {
-                snapshot.prepare_job(directories, rank, rule, source)
+            .map_init(Directories::default, |directories, (rank, source)| {
+                snapshot.prepare_job(directories, rank, source)
             })
             .collect::<Result<Vec<_>>>()?;
         Ok(jobs)
@@ -341,7 +341,7 @@ impl Batch {
         let jobs = words
             .par_chunks(chunk)
             .map_init(Directories::default, |directories, words| -> Result<_> {
-                CohortPreparation::new(rule, corpus, limit, self.floor, directories).prepare(words)
+                CohortPreparation::prepare(rule, corpus, words, limit, self.floor, directories)
             })
             .collect::<Result<Vec<_>>>()?;
         Ok(jobs)
@@ -449,7 +449,7 @@ impl<'a> FreshSnapshot<'a> {
         }
     }
 
-    fn tasks(&self) -> Vec<(usize, &Rule, Source<'_>)> {
+    fn tasks(&self) -> Vec<(usize, Source<'_>)> {
         let mut tasks = Vec::new();
         let total: usize = self
             .batch
@@ -465,13 +465,13 @@ impl<'a> FreshSnapshot<'a> {
             match &self.matches {
                 FreshMatches::SelfPair(starts) => {
                     for part in starts.chunks(chunk) {
-                        tasks.push((rank, rule, Source::Slice(part)));
+                        tasks.push((rank, Source::Slice(part)));
                     }
                 }
                 FreshMatches::Ordinary(_) => {
                     let positions = &rule.candidate.positions;
                     for chunk in positions.chunks(ordinary_chunk) {
-                        tasks.push((rank, rule, Source::Chunk(chunk)));
+                        tasks.push((rank, Source::Chunk(chunk)));
                     }
                 }
             }
@@ -483,11 +483,11 @@ impl<'a> FreshSnapshot<'a> {
         &self,
         directories: &mut Directories,
         rank: usize,
-        rule: &Rule,
         positions: Source<'_>,
     ) -> Result<Job> {
         #[cfg(test)]
         super::tests::observe_worker(super::tests::Phase::FreshPrepare);
+        let rule = &self.batch.rules[rank];
         directories.reset(self.corpus.id_count());
         let mut neighbors = Neighbors::new(
             rule,
@@ -507,8 +507,7 @@ impl<'a> FreshSnapshot<'a> {
                 _ => self.corpus.weight_region(p),
             };
             weights = Some((weight, end));
-            self.record_left(&mut neighbors, p, matched, weight)?;
-            self.record_right(&mut neighbors, rule, p, matched, weight)?;
+            self.record_neighbors(&mut neighbors, p, matched, weight)?;
             writes.record(matched);
         }
         Ok(Job {
@@ -517,13 +516,17 @@ impl<'a> FreshSnapshot<'a> {
         })
     }
 
-    fn record_left(
+    // Between adjacent selected matches, the left match owns the shared boundary:
+    // it emits the removal and the birth using both final replacement IDs. The
+    // right match skips that left edge, including when matches span separate jobs.
+    fn record_neighbors(
         &self,
         neighbors: &mut Neighbors<'_>,
         p: usize,
         matched: Match,
         weight: u64,
     ) -> Result<()> {
+        // Left edge: register it only if the preceding match does not own it.
         let prior = self.corpus.token(p - 1);
         if prior != WORD_SEPARATOR_ID {
             let span = self.corpus.id_span(prior);
@@ -541,9 +544,6 @@ impl<'a> FreshSnapshot<'a> {
                             .is_some()
                 }
             };
-            // The selected match on the left owns a shared boundary.
-            // Its right event emits the final replacements of both rules;
-            // this match must not emit a second left removal or birth.
             if !merging {
                 neighbors.record(
                     true,
@@ -555,24 +555,15 @@ impl<'a> FreshSnapshot<'a> {
                 )?;
             }
         }
-        Ok(())
-    }
 
-    fn record_right(
-        &self,
-        neighbors: &mut Neighbors<'_>,
-        rule: &Rule,
-        p: usize,
-        matched: Match,
-        weight: u64,
-    ) -> Result<()> {
+        // Right edge: include the following match's replacement when selected.
         let next = self.corpus.token(matched.after);
         if next != WORD_SEPARATOR_ID {
             let replacement = match &self.matches {
                 FreshMatches::SelfPair(starts) => starts
                     .binary_search(&(matched.after as u64))
                     .is_ok()
-                    .then_some(rule.replacement),
+                    .then_some(neighbors.rule.replacement),
                 FreshMatches::Ordinary(selected)
                     if !matches!(selected.heads[next as usize], Head::Empty) =>
                 {
@@ -604,45 +595,36 @@ struct CohortPreparation<'task> {
     writes: Writes,
     neighbors: Neighbors<'task>,
     corpus: &'task Corpus,
-
     limit: usize,
-    floor: u64,
 }
 
 impl<'task> CohortPreparation<'task> {
-    fn new(
+    fn prepare(
         rule: &'task Rule,
         corpus: &'task Corpus,
-
+        words: &[usize],
         limit: usize,
         floor: u64,
         directories: &'task mut Directories,
-    ) -> Self {
+    ) -> Result<Job> {
         #[cfg(test)]
         super::tests::observe_worker(super::tests::Phase::ReusePrepare);
         directories.reset(corpus.id_count());
-        let neighbors = Neighbors::new(rule, 0, directories, false);
-        let writes = Writes::Occurrences {
-            positions: Vec::new(),
-            id: rule.replacement,
-        };
-        Self {
-            writes,
-            neighbors,
+        let mut task = Self {
+            writes: Writes::Occurrences {
+                positions: Vec::new(),
+                id: rule.replacement,
+            },
+            neighbors: Neighbors::new(rule, 0, directories, false),
             corpus,
-
             limit,
-            floor,
-        }
-    }
-
-    fn prepare(mut self, words: &[usize]) -> Result<Job> {
+        };
         for &word in words {
-            self.prepare_word(word)?;
+            task.prepare_word(word)?;
         }
         Ok(Job {
-            writes: self.writes,
-            changes: self.neighbors.finish(self.floor)?,
+            writes: task.writes,
+            changes: task.neighbors.finish(floor)?,
         })
     }
 
@@ -854,8 +836,8 @@ mod tests {
                     panic!("expected ready batch")
                 };
                 assert_eq!(batch.pairs().collect::<Vec<_>>(), [(0, 1), (2, 3)]);
-                // AB prepares valid deferred writes before CD fails. Duplicate CD's
-                // start to overflow its left-neighbor count during preparation.
+                // AB has valid deferred writes. Duplicate CD's start to overflow
+                // its left-neighbor count during preparation.
                 let start = batch.rules[1].candidate.positions.iter().next().unwrap();
                 batch.rules[1].candidate.positions =
                     Positions::from_sorted(&[start, start]).unwrap();
@@ -906,8 +888,7 @@ mod tests {
                 let snapshot = FreshSnapshot::new(&batch, &corpus, usize::MAX);
                 let tasks = snapshot.tasks();
                 assert_eq!(tasks.len(), expected_lengths.len());
-                for ((rank, rule, source), expected_len) in tasks.into_iter().zip(&expected_lengths)
-                {
+                for ((rank, source), expected_len) in tasks.into_iter().zip(&expected_lengths) {
                     let Source::Chunk(chunk) = &source else {
                         panic!("expected ordinary positions fragment")
                     };
@@ -915,7 +896,7 @@ mod tests {
                     let complete = expected_lengths.len() == 1;
                     assert_eq!(source.complete(repetitions), complete);
                     let job = snapshot
-                        .prepare_job(&mut Directories::default(), rank, rule, source)
+                        .prepare_job(&mut Directories::default(), rank, source)
                         .unwrap();
                     assert!(!job.changes.is_empty());
                     assert!(

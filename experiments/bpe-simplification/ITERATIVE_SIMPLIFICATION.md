@@ -301,3 +301,31 @@ BPE 检查、all-target Clippy（warnings denied）与变更文件格式检查�
 保留源码与本轮已测快照哈希一致。
 协议、源码、构建与二进制哈希、逐次数据和参考模型见
 [中文读取接口复测](evidence/positions-read-20261011/README.md)。
+
+
+## Merge 完整批次与扫描边界
+
+以 d1ede6dd（98524a4 之后的注释与测试整理）为基线，先单独提交完整批次
+入口，再整理内部准备流程。Batch::commit 消费选中的规则，依次汇合并行
+准备、汇合并行端点写入、调用 PairIndex::commit 并行更新各 owner。
+删除 Prepared 类型及外层 prepare→apply→index.commit 协议；训练循环
+只负责选择、记录规则、执行批次和更新进度。准备失败不会写入端点；
+提交仍可能在写入或部分计数更新之后失败，错误需废弃整个训练尝试。
+
+Fresh 的左右事件放进 record_neighbors，共同说明相邻选中匹配之间的
+边界由左侧匹配负责，右侧跳过重复登记，即使两个匹配属于不同任务。
+任务只携带 rank 与借用位置片段，由 snapshot 按 rank 取得 Rule，删除
+rank 与 Rule 引用必须相符的双重身份。CohortPreparation::prepare 收回
+构造和执行顺序，任务入口负责初始化、逐词调用及收尾；prepare_word
+保持完整顺序扫描。floor 只用于收尾，移出扫描上下文。Job、两种写入
+几何、Partial／Complete、Directories／touched 和 FreshSnapshot 保留。
+
+两个阶段各通过 18 项 no-default BPE 检查，完整模型及逐条规则与独立
+顺序实现在 1／4／8 workers 下比较；沿用排除的既有 tokenizer encoding
+断言。新增准备失败回归：一个独立任务可正常准备，另一个任务在邻接
+计数累加时溢出，三种线程数下所有端点保持原值。原 AA 测例只有 4097
+个符号，覆盖 restart 块但未跨准备任务；扩到 8195 个符号产生 4097 个
+非重叠起点，确保一个线程下也跨 4096 起点的任务边界。affix/reuse、
+严格长度门限、零权重、完整／部分发布和等优先级历史 cohort 顺序均回归。
+最终 all-target Clippy（warnings denied）与变更文件格式检查通过。
+本轮未测性能，不据结构调整声称吞吐或内存收益。

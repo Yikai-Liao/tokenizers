@@ -57,9 +57,18 @@ and releases thin input references.
 Fresh mode releases its per-word start directory; weights retain only adjacent
 equal-weight regions. Reuse keeps word starts for cohort scan domains.
 `InitialPairCounts` owns the dense-versus-sparse counting choice and its domain.
-`CohortPreparation` owns one rule's writes and neighbor aggregation through scanning
-and publication. Explicit Empty/Unique/Shared head states replace the shared-head
-separator marker without changing exact pair fallback.
+`CohortPreparation::prepare` initializes one task, scans its words and finishes
+neighbor events through a single entry point. Its private context keeps writes,
+neighbor aggregation and geometry together; `prepare_word` retains the sequential
+scan and its evolving previous neighbor. The publication floor is only needed at
+task completion and stays out of the scan context.
+
+Fresh task inputs carry a rule rank and a borrowed position fragment; the snapshot
+resolves the rule by rank. `record_neighbors` keeps both sides of one match together:
+between adjacent selected matches, the left match owns the shared boundary and
+emits both final replacement IDs. The right match skips its left event, including
+across task boundaries. Explicit Empty/Unique/Shared head states retain exact
+pair fallback for shared heads.
 
 Preparation uses Rayon `map_init` to reuse private directories within each
 parallel task. Each side maps neighbor IDs to u32 change-entry indices; touched slots are reset before reuse.
