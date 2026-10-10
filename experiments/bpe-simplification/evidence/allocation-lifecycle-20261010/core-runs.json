@@ -1,0 +1,3986 @@
+[
+  {
+    "case": "zh-256MiB",
+    "block": 0,
+    "arm": "arena",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-allocation-arena-bin",
+      "/tmp/bpe-allocation-confirmation/core-zh-256MiB-b0-arena/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2483652,
+    "subprocess_wall": 32.732681130990386,
+    "attempt_id": "core-zh-256MiB-b0-arena",
+    "build_id": "arena",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 9.699139413,
+      "process_hwm_kib_before_validation": 2483416,
+      "train_cpu_seconds": 68.188085,
+      "train_seconds": 21.246296631
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-allocation-confirmation/core-zh-256MiB-b0-arena/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "diagnostic": {
+      "counts": [
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 8777,
+          "arena_bytes": 1579798,
+          "arena_retires": 0,
+          "freed_bytes": 374724752,
+          "heap_allocations": 118342,
+          "heap_bytes": 746899971,
+          "heap_frees": 113032,
+          "inline_lists": 37795,
+          "small_heap_allocations": 81126
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 30963,
+          "freed_bytes": 222731663,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 26721,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 4215095,
+          "arena_bytes": 283441702,
+          "arena_retires": 20873,
+          "freed_bytes": 340313391,
+          "heap_allocations": 88233,
+          "heap_bytes": 486298577,
+          "heap_frees": 28474,
+          "inline_lists": 2695041,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 28822,
+          "arena_bytes": 1433463,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 306,
+          "heap_bytes": 20024360,
+          "heap_frees": 0,
+          "inline_lists": 23817,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 4200858,
+          "freed_bytes": 315453102,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 38654,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        }
+      ],
+      "phases": [
+        "vocabulary",
+        "plan",
+        "initial",
+        "materialize",
+        "select",
+        "prepare",
+        "apply",
+        "commit",
+        "drop_index",
+        "drop_corpus",
+        "drop_codec",
+        "model"
+      ],
+      "retained_bump_bytes": 536863808,
+      "retained_scratch_capacity_bytes": 13369344,
+      "small_cutoff": 890,
+      "times": [
+        [
+          0.45478634,
+          1.6585583489999998
+        ],
+        [
+          0.60922896,
+          1.541024385
+        ],
+        [
+          4.181518912,
+          15.424195358999999
+        ],
+        [
+          1.245833448,
+          3.0778860770000023
+        ],
+        [
+          0.5729526639999999,
+          0.5948785410001101
+        ],
+        [
+          9.122836059,
+          32.614470046000086
+        ],
+        [
+          1.570741945000001,
+          5.708816619999702
+        ],
+        [
+          3.2447047339999955,
+          7.309544720999657
+        ],
+        [
+          0.152600231,
+          0.15226759200000117
+        ],
+        [
+          0.024673573,
+          0.024611633999995775
+        ],
+        [
+          0.021172644,
+          0.021174459999997453
+        ],
+        [
+          0.021653204,
+          0.021655851000005555
+        ]
+      ]
+    },
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 0,
+    "arm": "arena-off",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-allocation-arena-off-bin",
+      "/tmp/bpe-allocation-confirmation/core-zh-256MiB-b0-arena-off/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2293716,
+    "subprocess_wall": 31.447192642022856,
+    "attempt_id": "core-zh-256MiB-b0-arena-off",
+    "build_id": "arena-off",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 9.572206419,
+      "process_hwm_kib_before_validation": 2293740,
+      "train_cpu_seconds": 64.494785,
+      "train_seconds": 20.055993206
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-allocation-confirmation/core-zh-256MiB-b0-arena-off/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "diagnostic": {
+      "counts": [
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 374724752,
+          "heap_allocations": 127119,
+          "heap_bytes": 748479769,
+          "heap_frees": 113032,
+          "inline_lists": 37795,
+          "small_heap_allocations": 89903
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 241146659,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 57684,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 351709931,
+          "heap_allocations": 4303328,
+          "heap_bytes": 769740279,
+          "heap_frees": 49347,
+          "inline_lists": 2695041,
+          "small_heap_allocations": 4215095
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 29128,
+          "heap_bytes": 21457823,
+          "heap_frees": 0,
+          "inline_lists": 23817,
+          "small_heap_allocations": 28822
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 572096529,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 4239512,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        }
+      ],
+      "phases": [
+        "vocabulary",
+        "plan",
+        "initial",
+        "materialize",
+        "select",
+        "prepare",
+        "apply",
+        "commit",
+        "drop_index",
+        "drop_corpus",
+        "drop_codec",
+        "model"
+      ],
+      "retained_bump_bytes": 0,
+      "retained_scratch_capacity_bytes": 15466496,
+      "small_cutoff": 890,
+      "times": [
+        [
+          0.497222106,
+          1.7665427529999995
+        ],
+        [
+          0.619109099,
+          1.619060408000001
+        ],
+        [
+          4.010027526,
+          15.195424234
+        ],
+        [
+          0.904899631,
+          2.6559824560000003
+        ],
+        [
+          0.5267809850000004,
+          0.5528919559998897
+        ],
+        [
+          7.986815716000006,
+          29.059082347000324
+        ],
+        [
+          1.562135665000003,
+          5.729263735999265
+        ],
+        [
+          2.9787767089999972,
+          6.932623309999936
+        ],
+        [
+          0.901879345,
+          0.9013617260000046
+        ],
+        [
+          0.024143019,
+          0.024146302999994873
+        ],
+        [
+          0.000188371,
+          0.00018848199999865756
+        ],
+        [
+          0.021673744,
+          0.021678152999996314
+        ]
+      ]
+    },
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 0,
+    "arm": "box-mutex",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-allocation-box-mutex-bin",
+      "/tmp/bpe-allocation-confirmation/core-zh-256MiB-b0-box-mutex/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2343132,
+    "subprocess_wall": 33.70987526001409,
+    "attempt_id": "core-zh-256MiB-b0-box-mutex",
+    "build_id": "box-mutex",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 9.581370617,
+      "process_hwm_kib_before_validation": 2342780,
+      "train_cpu_seconds": 71.75879400000001,
+      "train_seconds": 22.347734226
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-allocation-confirmation/core-zh-256MiB-b0-box-mutex/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "diagnostic": {
+      "counts": [
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 374724752,
+          "heap_allocations": 127119,
+          "heap_bytes": 748479769,
+          "heap_frees": 113032,
+          "inline_lists": 37795,
+          "small_heap_allocations": 89903
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 241146659,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 57684,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 351709931,
+          "heap_allocations": 4303328,
+          "heap_bytes": 769740279,
+          "heap_frees": 49347,
+          "inline_lists": 2695041,
+          "small_heap_allocations": 4215095
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 29128,
+          "heap_bytes": 21457823,
+          "heap_frees": 0,
+          "inline_lists": 23817,
+          "small_heap_allocations": 28822
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 572096529,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 4239512,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        }
+      ],
+      "phases": [
+        "vocabulary",
+        "plan",
+        "initial",
+        "materialize",
+        "select",
+        "prepare",
+        "apply",
+        "commit",
+        "drop_index",
+        "drop_corpus",
+        "drop_codec",
+        "model"
+      ],
+      "retained_bump_bytes": 0,
+      "retained_scratch_capacity_bytes": 13369344,
+      "small_cutoff": 890,
+      "times": [
+        [
+          0.501486138,
+          1.7852811800000001
+        ],
+        [
+          0.686243401,
+          1.798112583
+        ],
+        [
+          5.45286502,
+          20.327054968000002
+        ],
+        [
+          0.841653127,
+          2.381796600999998
+        ],
+        [
+          0.5777534999999991,
+          0.5963460389999042
+        ],
+        [
+          8.136386701999985,
+          30.294511991000036
+        ],
+        [
+          1.546806439000001,
+          5.719883408999685
+        ],
+        [
+          3.607843608000008,
+          7.846058242999845
+        ],
+        [
+          0.92669589,
+          0.9257993370000008
+        ],
+        [
+          0.025826721,
+          0.025831022000005532
+        ],
+        [
+          0.000161031,
+          0.00016139199999543052
+        ],
+        [
+          0.021293199,
+          0.021154401000003986
+        ]
+      ]
+    },
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 0,
+    "arm": "box-tls",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-allocation-box-tls-bin",
+      "/tmp/bpe-allocation-confirmation/core-zh-256MiB-b0-box-tls/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2342868,
+    "subprocess_wall": 32.554153984063305,
+    "attempt_id": "core-zh-256MiB-b0-box-tls",
+    "build_id": "box-tls",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 9.999729257,
+      "process_hwm_kib_before_validation": 2342960,
+      "train_cpu_seconds": 64.307565,
+      "train_seconds": 20.766057139
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-allocation-confirmation/core-zh-256MiB-b0-box-tls/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "diagnostic": {
+      "counts": [
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 374724752,
+          "heap_allocations": 127119,
+          "heap_bytes": 748479769,
+          "heap_frees": 113032,
+          "inline_lists": 37795,
+          "small_heap_allocations": 89903
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 241146659,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 57684,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 351709931,
+          "heap_allocations": 4303328,
+          "heap_bytes": 769740279,
+          "heap_frees": 49347,
+          "inline_lists": 2695041,
+          "small_heap_allocations": 4215095
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 29128,
+          "heap_bytes": 21457823,
+          "heap_frees": 0,
+          "inline_lists": 23817,
+          "small_heap_allocations": 28822
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 572096529,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 4239512,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        }
+      ],
+      "phases": [
+        "vocabulary",
+        "plan",
+        "initial",
+        "materialize",
+        "select",
+        "prepare",
+        "apply",
+        "commit",
+        "drop_index",
+        "drop_corpus",
+        "drop_codec",
+        "model"
+      ],
+      "retained_bump_bytes": 0,
+      "retained_scratch_capacity_bytes": 13369344,
+      "small_cutoff": 890,
+      "times": [
+        [
+          0.504608886,
+          1.763750601
+        ],
+        [
+          0.675294486,
+          1.702749613
+        ],
+        [
+          3.96592123,
+          14.730089910999999
+        ],
+        [
+          0.935481549,
+          2.434685070999997
+        ],
+        [
+          0.5409950149999994,
+          0.562778137999949
+        ],
+        [
+          7.986145272,
+          28.517464309000182
+        ],
+        [
+          1.5902262560000002,
+          5.888247692000068
+        ],
+        [
+          3.54320721,
+          7.670086211999919
+        ],
+        [
+          0.951092754,
+          0.950350580999995
+        ],
+        [
+          0.026275078,
+          0.026078678999994054
+        ],
+        [
+          7.1415e-05,
+          7.134300000188887e-05
+        ],
+        [
+          0.021082211,
+          0.02108780300000035
+        ]
+      ]
+    },
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 1,
+    "arm": "box-tls",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-allocation-box-tls-bin",
+      "/tmp/bpe-allocation-confirmation/core-zh-256MiB-b1-box-tls/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2340984,
+    "subprocess_wall": 33.30086937604938,
+    "attempt_id": "core-zh-256MiB-b1-box-tls",
+    "build_id": "box-tls",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 10.296189437,
+      "process_hwm_kib_before_validation": 2340720,
+      "train_cpu_seconds": 65.675265,
+      "train_seconds": 21.10725535
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-allocation-confirmation/core-zh-256MiB-b1-box-tls/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "diagnostic": {
+      "counts": [
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 374724752,
+          "heap_allocations": 127119,
+          "heap_bytes": 748479769,
+          "heap_frees": 113032,
+          "inline_lists": 37795,
+          "small_heap_allocations": 89903
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 241146659,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 57684,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 351709931,
+          "heap_allocations": 4303328,
+          "heap_bytes": 769740279,
+          "heap_frees": 49347,
+          "inline_lists": 2695041,
+          "small_heap_allocations": 4215095
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 29128,
+          "heap_bytes": 21457823,
+          "heap_frees": 0,
+          "inline_lists": 23817,
+          "small_heap_allocations": 28822
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 572096529,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 4239512,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        }
+      ],
+      "phases": [
+        "vocabulary",
+        "plan",
+        "initial",
+        "materialize",
+        "select",
+        "prepare",
+        "apply",
+        "commit",
+        "drop_index",
+        "drop_corpus",
+        "drop_codec",
+        "model"
+      ],
+      "retained_bump_bytes": 0,
+      "retained_scratch_capacity_bytes": 15466496,
+      "small_cutoff": 890,
+      "times": [
+        [
+          0.635861748,
+          2.080689389
+        ],
+        [
+          0.680063611,
+          1.7949685590000009
+        ],
+        [
+          4.217390086,
+          15.371523547999999
+        ],
+        [
+          0.796787943,
+          2.2708854699999996
+        ],
+        [
+          0.5276105450000003,
+          0.5461084540001799
+        ],
+        [
+          8.022252995999995,
+          28.955319497000055
+        ],
+        [
+          1.5392756719999994,
+          5.7220820410000215
+        ],
+        [
+          3.649606018999994,
+          7.88346803200011
+        ],
+        [
+          0.965841301,
+          0.9612925100000069
+        ],
+        [
+          0.024760448,
+          0.024763985999996407
+        ],
+        [
+          9.207e-05,
+          9.194099999376704e-05
+        ],
+        [
+          0.024506134,
+          0.024511691000000724
+        ]
+      ]
+    },
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 1,
+    "arm": "box-mutex",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-allocation-box-mutex-bin",
+      "/tmp/bpe-allocation-confirmation/core-zh-256MiB-b1-box-mutex/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2344420,
+    "subprocess_wall": 34.340156112099066,
+    "attempt_id": "core-zh-256MiB-b1-box-mutex",
+    "build_id": "box-mutex",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 9.928712673,
+      "process_hwm_kib_before_validation": 2344412,
+      "train_cpu_seconds": 70.91218699999999,
+      "train_seconds": 22.471169089
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-allocation-confirmation/core-zh-256MiB-b1-box-mutex/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "diagnostic": {
+      "counts": [
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 374724752,
+          "heap_allocations": 127119,
+          "heap_bytes": 748479769,
+          "heap_frees": 113032,
+          "inline_lists": 37795,
+          "small_heap_allocations": 89903
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 241146659,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 57684,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 351709931,
+          "heap_allocations": 4303328,
+          "heap_bytes": 769740279,
+          "heap_frees": 49347,
+          "inline_lists": 2695041,
+          "small_heap_allocations": 4215095
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 29128,
+          "heap_bytes": 21457823,
+          "heap_frees": 0,
+          "inline_lists": 23817,
+          "small_heap_allocations": 28822
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 572096529,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 4239512,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        }
+      ],
+      "phases": [
+        "vocabulary",
+        "plan",
+        "initial",
+        "materialize",
+        "select",
+        "prepare",
+        "apply",
+        "commit",
+        "drop_index",
+        "drop_corpus",
+        "drop_codec",
+        "model"
+      ],
+      "retained_bump_bytes": 0,
+      "retained_scratch_capacity_bytes": 15466496,
+      "small_cutoff": 890,
+      "times": [
+        [
+          0.512691318,
+          1.7536211160000015
+        ],
+        [
+          0.630187274,
+          1.6216328330000014
+        ],
+        [
+          5.1368162139999995,
+          19.028895774000002
+        ],
+        [
+          0.816783448,
+          2.3093357640000036
+        ],
+        [
+          0.5689444249999999,
+          0.5916241489998555
+        ],
+        [
+          8.381190798999986,
+          30.54999022899976
+        ],
+        [
+          1.5947579719999985,
+          5.865086772999845
+        ],
+        [
+          3.8073254130000023,
+          8.153788251999927
+        ],
+        [
+          0.948654442,
+          0.9464983459999985
+        ],
+        [
+          0.02678973,
+          0.02676034799999627
+        ],
+        [
+          0.000179797,
+          0.00017994499999929303
+        ],
+        [
+          0.022200897,
+          0.02220393300000012
+        ]
+      ]
+    },
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 1,
+    "arm": "arena-off",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-allocation-arena-off-bin",
+      "/tmp/bpe-allocation-confirmation/core-zh-256MiB-b1-arena-off/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2292232,
+    "subprocess_wall": 32.24285834201146,
+    "attempt_id": "core-zh-256MiB-b1-arena-off",
+    "build_id": "arena-off",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 9.822044827,
+      "process_hwm_kib_before_validation": 2292128,
+      "train_cpu_seconds": 65.520997,
+      "train_seconds": 20.57828235
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-allocation-confirmation/core-zh-256MiB-b1-arena-off/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "diagnostic": {
+      "counts": [
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 374724752,
+          "heap_allocations": 127119,
+          "heap_bytes": 748479769,
+          "heap_frees": 113032,
+          "inline_lists": 37795,
+          "small_heap_allocations": 89903
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 241146659,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 57684,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 351709931,
+          "heap_allocations": 4303328,
+          "heap_bytes": 769740279,
+          "heap_frees": 49347,
+          "inline_lists": 2695041,
+          "small_heap_allocations": 4215095
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 29128,
+          "heap_bytes": 21457823,
+          "heap_frees": 0,
+          "inline_lists": 23817,
+          "small_heap_allocations": 28822
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 572096529,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 4239512,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        }
+      ],
+      "phases": [
+        "vocabulary",
+        "plan",
+        "initial",
+        "materialize",
+        "select",
+        "prepare",
+        "apply",
+        "commit",
+        "drop_index",
+        "drop_corpus",
+        "drop_codec",
+        "model"
+      ],
+      "retained_bump_bytes": 0,
+      "retained_scratch_capacity_bytes": 15466496,
+      "small_cutoff": 890,
+      "times": [
+        [
+          0.591335399,
+          1.954405808999999
+        ],
+        [
+          0.663431133,
+          1.7647504219999988
+        ],
+        [
+          4.132146104,
+          15.321335644000001
+        ],
+        [
+          0.908596653,
+          2.693142715999997
+        ],
+        [
+          0.5497698759999995,
+          0.5722877230001799
+        ],
+        [
+          8.056252650000005,
+          29.279096953999872
+        ],
+        [
+          1.5821580110000033,
+          5.805568369000117
+        ],
+        [
+          3.064574516000003,
+          7.088668749999869
+        ],
+        [
+          0.955992033,
+          0.955472254
+        ],
+        [
+          0.026736681,
+          0.026740775999996913
+        ],
+        [
+          8.5728e-05,
+          8.643399999641588e-05
+        ],
+        [
+          0.021963305,
+          0.02197046999999941
+        ]
+      ]
+    },
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 1,
+    "arm": "arena",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-allocation-arena-bin",
+      "/tmp/bpe-allocation-confirmation/core-zh-256MiB-b1-arena/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2471508,
+    "subprocess_wall": 36.082886999007314,
+    "attempt_id": "core-zh-256MiB-b1-arena",
+    "build_id": "arena",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 9.49143547,
+      "process_hwm_kib_before_validation": 2471404,
+      "train_cpu_seconds": 71.59658400000001,
+      "train_seconds": 22.299118484
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-allocation-confirmation/core-zh-256MiB-b1-arena/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "diagnostic": {
+      "counts": [
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 8777,
+          "arena_bytes": 1579798,
+          "arena_retires": 0,
+          "freed_bytes": 374724752,
+          "heap_allocations": 118342,
+          "heap_bytes": 746899971,
+          "heap_frees": 113032,
+          "inline_lists": 37795,
+          "small_heap_allocations": 81126
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 30963,
+          "freed_bytes": 222731663,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 26721,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 4215095,
+          "arena_bytes": 283441702,
+          "arena_retires": 20873,
+          "freed_bytes": 340313391,
+          "heap_allocations": 88233,
+          "heap_bytes": 486298577,
+          "heap_frees": 28474,
+          "inline_lists": 2695041,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 28822,
+          "arena_bytes": 1433463,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 306,
+          "heap_bytes": 20024360,
+          "heap_frees": 0,
+          "inline_lists": 23817,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 4200858,
+          "freed_bytes": 315453102,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 38654,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        }
+      ],
+      "phases": [
+        "vocabulary",
+        "plan",
+        "initial",
+        "materialize",
+        "select",
+        "prepare",
+        "apply",
+        "commit",
+        "drop_index",
+        "drop_corpus",
+        "drop_codec",
+        "model"
+      ],
+      "retained_bump_bytes": 536863808,
+      "retained_scratch_capacity_bytes": 15466496,
+      "small_cutoff": 890,
+      "times": [
+        [
+          0.515626686,
+          1.7696455269999998
+        ],
+        [
+          0.628911942,
+          1.654289993999999
+        ],
+        [
+          4.045372227,
+          15.281619625
+        ],
+        [
+          0.996810491,
+          2.7593735509999995
+        ],
+        [
+          0.6153554319999999,
+          0.6433365349998112
+        ],
+        [
+          9.903708251999971,
+          35.39202729400009
+        ],
+        [
+          1.7112587789999998,
+          6.215581513999986
+        ],
+        [
+          3.6438466449999924,
+          7.6309745129999556
+        ],
+        [
+          0.149961705,
+          0.14976664100001358
+        ],
+        [
+          0.025283833,
+          0.02528771599999402
+        ],
+        [
+          0.015796393,
+          0.015799311999998622
+        ],
+        [
+          0.021007824,
+          0.0210103590000017
+        ]
+      ]
+    },
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 0,
+    "arm": "arena",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-allocation-arena-bin",
+      "/tmp/bpe-allocation-confirmation/core-zh-whitespace-256MiB-b0-arena/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1974684,
+    "subprocess_wall": 29.65325686300639,
+    "attempt_id": "core-zh-whitespace-256MiB-b0-arena",
+    "build_id": "arena",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.804957645,
+      "process_hwm_kib_before_validation": 1974612,
+      "train_cpu_seconds": 58.166236999999995,
+      "train_seconds": 20.480899026
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-allocation-confirmation/core-zh-whitespace-256MiB-b0-arena/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "diagnostic": {
+      "counts": [
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 1187544,
+          "arena_bytes": 83872144,
+          "arena_retires": 0,
+          "freed_bytes": 192631101,
+          "heap_allocations": 2348345,
+          "heap_bytes": 303401879,
+          "heap_frees": 2289009,
+          "inline_lists": 4857312,
+          "small_heap_allocations": 2257870
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 693,
+          "freed_bytes": 3413465,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 3375,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 2592933,
+          "arena_bytes": 122199384,
+          "arena_retires": 2840,
+          "freed_bytes": 92853514,
+          "heap_allocations": 19178,
+          "heap_bytes": 26307775,
+          "heap_frees": 29356,
+          "inline_lists": 2047383,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 67273,
+          "arena_bytes": 3721371,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 1228,
+          "heap_bytes": 3588219,
+          "heap_frees": 0,
+          "inline_lists": 41074,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 3844217,
+          "freed_bytes": 44399793,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 47011,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        }
+      ],
+      "phases": [
+        "vocabulary",
+        "plan",
+        "initial",
+        "materialize",
+        "select",
+        "prepare",
+        "apply",
+        "commit",
+        "drop_index",
+        "drop_corpus",
+        "drop_codec",
+        "model"
+      ],
+      "retained_bump_bytes": 268429056,
+      "retained_scratch_capacity_bytes": 1495040,
+      "small_cutoff": 552,
+      "times": [
+        [
+          0.347273904,
+          1.0726751499999994
+        ],
+        [
+          0.538916905,
+          1.2778357629999997
+        ],
+        [
+          11.864577116,
+          34.078960619
+        ],
+        [
+          0.455952987,
+          1.409854752000001
+        ],
+        [
+          0.3192511910000002,
+          0.33444287999989797
+        ],
+        [
+          3.674424244999996,
+          12.187091832999805
+        ],
+        [
+          0.4035525530000003,
+          1.3920402410000747
+        ],
+        [
+          2.6656521250000003,
+          6.188030898999791
+        ],
+        [
+          0.136143702,
+          0.13613560199999597
+        ],
+        [
+          0.012738595,
+          0.012599901999990948
+        ],
+        [
+          0.025552602,
+          0.025448640000007572
+        ],
+        [
+          0.016486493,
+          0.01648719499999629
+        ]
+      ]
+    },
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 0,
+    "arm": "arena-off",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-allocation-arena-off-bin",
+      "/tmp/bpe-allocation-confirmation/core-zh-whitespace-256MiB-b0-arena-off/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1658188,
+    "subprocess_wall": 28.757421522052027,
+    "attempt_id": "core-zh-whitespace-256MiB-b0-arena-off",
+    "build_id": "arena-off",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 7.048707315,
+      "process_hwm_kib_before_validation": 1658412,
+      "train_cpu_seconds": 55.781966,
+      "train_seconds": 20.526800197
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-allocation-confirmation/core-zh-whitespace-256MiB-b0-arena-off/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "diagnostic": {
+      "counts": [
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 192631101,
+          "heap_allocations": 3535889,
+          "heap_bytes": 387274023,
+          "heap_frees": 2289009,
+          "inline_lists": 4857312,
+          "small_heap_allocations": 3445414
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 3661120,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 4068,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 93714156,
+          "heap_allocations": 2612111,
+          "heap_bytes": 148507159,
+          "heap_frees": 32196,
+          "inline_lists": 2047383,
+          "small_heap_allocations": 2592933
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 68501,
+          "heap_bytes": 7309590,
+          "heap_frees": 0,
+          "inline_lists": 41074,
+          "small_heap_allocations": 67273
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 253084395,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 3891228,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        }
+      ],
+      "phases": [
+        "vocabulary",
+        "plan",
+        "initial",
+        "materialize",
+        "select",
+        "prepare",
+        "apply",
+        "commit",
+        "drop_index",
+        "drop_corpus",
+        "drop_codec",
+        "model"
+      ],
+      "retained_bump_bytes": 0,
+      "retained_scratch_capacity_bytes": 1495040,
+      "small_cutoff": 552,
+      "times": [
+        [
+          0.340789116,
+          1.0831226460000005
+        ],
+        [
+          0.572221154,
+          1.4583922650000005
+        ],
+        [
+          11.479503222,
+          33.108172306
+        ],
+        [
+          0.468296628,
+          1.5047364889999955
+        ],
+        [
+          0.27646579999999976,
+          0.3005190679999501
+        ],
+        [
+          3.094062288000001,
+          10.1719346679999
+        ],
+        [
+          0.4011790990000007,
+          1.3670858909998316
+        ],
+        [
+          2.394440172999997,
+          5.285476751999894
+        ],
+        [
+          1.446896328,
+          1.4367213569999961
+        ],
+        [
+          0.010812294,
+          0.010815129999997453
+        ],
+        [
+          0.004475663,
+          0.004276121000003741
+        ],
+        [
+          0.017240543,
+          0.01724663299999918
+        ]
+      ]
+    },
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 0,
+    "arm": "box-mutex",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-allocation-box-mutex-bin",
+      "/tmp/bpe-allocation-confirmation/core-zh-whitespace-256MiB-b0-box-mutex/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1788596,
+    "subprocess_wall": 28.54980726609938,
+    "attempt_id": "core-zh-whitespace-256MiB-b0-box-mutex",
+    "build_id": "box-mutex",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.678528768,
+      "process_hwm_kib_before_validation": 1788656,
+      "train_cpu_seconds": 53.234077,
+      "train_seconds": 19.552230353
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-allocation-confirmation/core-zh-whitespace-256MiB-b0-box-mutex/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "diagnostic": {
+      "counts": [
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 192631101,
+          "heap_allocations": 3535889,
+          "heap_bytes": 387274023,
+          "heap_frees": 2289009,
+          "inline_lists": 4857312,
+          "small_heap_allocations": 3445414
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 3661120,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 4068,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 93714156,
+          "heap_allocations": 2612111,
+          "heap_bytes": 148507159,
+          "heap_frees": 32196,
+          "inline_lists": 2047383,
+          "small_heap_allocations": 2592933
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 68501,
+          "heap_bytes": 7309590,
+          "heap_frees": 0,
+          "inline_lists": 41074,
+          "small_heap_allocations": 67273
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 253084395,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 3891228,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        }
+      ],
+      "phases": [
+        "vocabulary",
+        "plan",
+        "initial",
+        "materialize",
+        "select",
+        "prepare",
+        "apply",
+        "commit",
+        "drop_index",
+        "drop_corpus",
+        "drop_codec",
+        "model"
+      ],
+      "retained_bump_bytes": 0,
+      "retained_scratch_capacity_bytes": 1495040,
+      "small_cutoff": 552,
+      "times": [
+        [
+          0.404471689,
+          1.1141656830000004
+        ],
+        [
+          0.54500041,
+          1.253422865
+        ],
+        [
+          10.843189424,
+          31.355889844999997
+        ],
+        [
+          0.432279276,
+          1.3543259939999999
+        ],
+        [
+          0.27072252599999996,
+          0.28807464600016175
+        ],
+        [
+          2.7968603750000005,
+          9.596439862000025
+        ],
+        [
+          0.35501498999999986,
+          1.2784563239998832
+        ],
+        [
+          2.573367331000003,
+          5.6497532540001245
+        ],
+        [
+          1.284834942,
+          1.2823826909999951
+        ],
+        [
+          0.010554666,
+          0.010557833000000016
+        ],
+        [
+          0.00031402,
+          0.00031448100000375234
+        ],
+        [
+          0.016947505,
+          0.01695166999999742
+        ]
+      ]
+    },
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 0,
+    "arm": "box-tls",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-allocation-box-tls-bin",
+      "/tmp/bpe-allocation-confirmation/core-zh-whitespace-256MiB-b0-box-tls/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1797376,
+    "subprocess_wall": 30.260938579100184,
+    "attempt_id": "core-zh-whitespace-256MiB-b0-box-tls",
+    "build_id": "box-tls",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.779423526,
+      "process_hwm_kib_before_validation": 1797252,
+      "train_cpu_seconds": 56.054507,
+      "train_seconds": 20.951892664
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-allocation-confirmation/core-zh-whitespace-256MiB-b0-box-tls/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "diagnostic": {
+      "counts": [
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 192631101,
+          "heap_allocations": 3535889,
+          "heap_bytes": 387274023,
+          "heap_frees": 2289009,
+          "inline_lists": 4857312,
+          "small_heap_allocations": 3445414
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 3661120,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 4068,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 93714156,
+          "heap_allocations": 2612111,
+          "heap_bytes": 148507159,
+          "heap_frees": 32196,
+          "inline_lists": 2047383,
+          "small_heap_allocations": 2592933
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 68501,
+          "heap_bytes": 7309590,
+          "heap_frees": 0,
+          "inline_lists": 41074,
+          "small_heap_allocations": 67273
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 253084395,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 3891228,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        }
+      ],
+      "phases": [
+        "vocabulary",
+        "plan",
+        "initial",
+        "materialize",
+        "select",
+        "prepare",
+        "apply",
+        "commit",
+        "drop_index",
+        "drop_corpus",
+        "drop_codec",
+        "model"
+      ],
+      "retained_bump_bytes": 0,
+      "retained_scratch_capacity_bytes": 1495040,
+      "small_cutoff": 552,
+      "times": [
+        [
+          0.373540913,
+          1.1137424420000004
+        ],
+        [
+          0.522176722,
+          1.2661865399999996
+        ],
+        [
+          10.933479739,
+          31.382557958999996
+        ],
+        [
+          0.533183565,
+          1.612133256
+        ],
+        [
+          0.3428299859999998,
+          0.3588436379998825
+        ],
+        [
+          3.2712685919999944,
+          10.729294509000106
+        ],
+        [
+          0.4331184050000004,
+          1.4394983619999238
+        ],
+        [
+          3.0583934890000113,
+          6.662663406999997
+        ],
+        [
+          1.431725353,
+          1.4292552389999997
+        ],
+        [
+          0.010992445,
+          0.010995783999995012
+        ],
+        [
+          0.000376299,
+          0.00037782600000468847
+        ],
+        [
+          0.018291134,
+          0.018295610999999212
+        ]
+      ]
+    },
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 1,
+    "arm": "box-tls",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-allocation-box-tls-bin",
+      "/tmp/bpe-allocation-confirmation/core-zh-whitespace-256MiB-b1-box-tls/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1809392,
+    "subprocess_wall": 29.031176997930743,
+    "attempt_id": "core-zh-whitespace-256MiB-b1-box-tls",
+    "build_id": "box-tls",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.831792851,
+      "process_hwm_kib_before_validation": 1809456,
+      "train_cpu_seconds": 53.564937,
+      "train_seconds": 19.902829193
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-allocation-confirmation/core-zh-whitespace-256MiB-b1-box-tls/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "diagnostic": {
+      "counts": [
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 192631101,
+          "heap_allocations": 3535889,
+          "heap_bytes": 387274023,
+          "heap_frees": 2289009,
+          "inline_lists": 4857312,
+          "small_heap_allocations": 3445414
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 3661120,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 4068,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 93714156,
+          "heap_allocations": 2612111,
+          "heap_bytes": 148507159,
+          "heap_frees": 32196,
+          "inline_lists": 2047383,
+          "small_heap_allocations": 2592933
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 68501,
+          "heap_bytes": 7309590,
+          "heap_frees": 0,
+          "inline_lists": 41074,
+          "small_heap_allocations": 67273
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 253084395,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 3891228,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        }
+      ],
+      "phases": [
+        "vocabulary",
+        "plan",
+        "initial",
+        "materialize",
+        "select",
+        "prepare",
+        "apply",
+        "commit",
+        "drop_index",
+        "drop_corpus",
+        "drop_codec",
+        "model"
+      ],
+      "retained_bump_bytes": 0,
+      "retained_scratch_capacity_bytes": 1495040,
+      "small_cutoff": 552,
+      "times": [
+        [
+          0.350074008,
+          1.0754440580000004
+        ],
+        [
+          0.537818296,
+          1.280571815
+        ],
+        [
+          11.258560398,
+          31.667868968
+        ],
+        [
+          0.424076989,
+          1.310981708
+        ],
+        [
+          0.2560057340000003,
+          0.2711091419999576
+        ],
+        [
+          2.7314870369999986,
+          9.388683723000291
+        ],
+        [
+          0.35630931400000065,
+          1.2905625119998803
+        ],
+        [
+          2.6376225260000035,
+          5.926897797000258
+        ],
+        [
+          1.305019169,
+          1.2904970920000025
+        ],
+        [
+          0.010973374,
+          0.010976461999995024
+        ],
+        [
+          0.00035,
+          0.0003500919999979146
+        ],
+        [
+          0.016091357,
+          0.01609369900000246
+        ]
+      ]
+    },
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 1,
+    "arm": "box-mutex",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-allocation-box-mutex-bin",
+      "/tmp/bpe-allocation-confirmation/core-zh-whitespace-256MiB-b1-box-mutex/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1790876,
+    "subprocess_wall": 29.936542358947918,
+    "attempt_id": "core-zh-whitespace-256MiB-b1-box-mutex",
+    "build_id": "box-mutex",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.870689334,
+      "process_hwm_kib_before_validation": 1790888,
+      "train_cpu_seconds": 55.843025000000004,
+      "train_seconds": 20.761106238
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-allocation-confirmation/core-zh-whitespace-256MiB-b1-box-mutex/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "diagnostic": {
+      "counts": [
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 192631101,
+          "heap_allocations": 3535889,
+          "heap_bytes": 387274023,
+          "heap_frees": 2289009,
+          "inline_lists": 4857312,
+          "small_heap_allocations": 3445414
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 3661120,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 4068,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 93714156,
+          "heap_allocations": 2612111,
+          "heap_bytes": 148507159,
+          "heap_frees": 32196,
+          "inline_lists": 2047383,
+          "small_heap_allocations": 2592933
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 68501,
+          "heap_bytes": 7309590,
+          "heap_frees": 0,
+          "inline_lists": 41074,
+          "small_heap_allocations": 67273
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 253084395,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 3891228,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        }
+      ],
+      "phases": [
+        "vocabulary",
+        "plan",
+        "initial",
+        "materialize",
+        "select",
+        "prepare",
+        "apply",
+        "commit",
+        "drop_index",
+        "drop_corpus",
+        "drop_codec",
+        "model"
+      ],
+      "retained_bump_bytes": 0,
+      "retained_scratch_capacity_bytes": 1495040,
+      "small_cutoff": 552,
+      "times": [
+        [
+          0.339031926,
+          1.1092526080000003
+        ],
+        [
+          0.524586511,
+          1.247960675999999
+        ],
+        [
+          11.288428958,
+          32.621686283
+        ],
+        [
+          0.439051679,
+          1.3728545399999987
+        ],
+        [
+          0.29817654699999996,
+          0.3132025119998687
+        ],
+        [
+          3.1214791239999986,
+          10.172822273999941
+        ],
+        [
+          0.4099465260000004,
+          1.3623220579999327
+        ],
+        [
+          2.9455491870000055,
+          6.240240670000148
+        ],
+        [
+          1.3429322240000001,
+          1.3417946440000037
+        ],
+        [
+          0.011002228,
+          0.010952424999999266
+        ],
+        [
+          0.000182522,
+          0.00018336899999837897
+        ],
+        [
+          0.017350628,
+          0.017353265000004114
+        ]
+      ]
+    },
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 1,
+    "arm": "arena-off",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-allocation-arena-off-bin",
+      "/tmp/bpe-allocation-confirmation/core-zh-whitespace-256MiB-b1-arena-off/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1639212,
+    "subprocess_wall": 27.256903566070832,
+    "attempt_id": "core-zh-whitespace-256MiB-b1-arena-off",
+    "build_id": "arena-off",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 7.11803064,
+      "process_hwm_kib_before_validation": 1638844,
+      "train_cpu_seconds": 53.049042,
+      "train_seconds": 19.118146543
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-allocation-confirmation/core-zh-whitespace-256MiB-b1-arena-off/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "diagnostic": {
+      "counts": [
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 192631101,
+          "heap_allocations": 3535889,
+          "heap_bytes": 387274023,
+          "heap_frees": 2289009,
+          "inline_lists": 4857312,
+          "small_heap_allocations": 3445414
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 3661120,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 4068,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 93714156,
+          "heap_allocations": 2612111,
+          "heap_bytes": 148507159,
+          "heap_frees": 32196,
+          "inline_lists": 2047383,
+          "small_heap_allocations": 2592933
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 68501,
+          "heap_bytes": 7309590,
+          "heap_frees": 0,
+          "inline_lists": 41074,
+          "small_heap_allocations": 67273
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 253084395,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 3891228,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        }
+      ],
+      "phases": [
+        "vocabulary",
+        "plan",
+        "initial",
+        "materialize",
+        "select",
+        "prepare",
+        "apply",
+        "commit",
+        "drop_index",
+        "drop_corpus",
+        "drop_codec",
+        "model"
+      ],
+      "retained_bump_bytes": 0,
+      "retained_scratch_capacity_bytes": 1495040,
+      "small_cutoff": 552,
+      "times": [
+        [
+          0.301867653,
+          1.029016896
+        ],
+        [
+          0.541652983,
+          1.35826986
+        ],
+        [
+          10.794101688,
+          31.42829031
+        ],
+        [
+          0.462404627,
+          1.447099962000003
+        ],
+        [
+          0.24974504299999983,
+          0.27097132799996615
+        ],
+        [
+          2.7370803379999953,
+          9.506386811999981
+        ],
+        [
+          0.36096497099999975,
+          1.3142262210001618
+        ],
+        [
+          2.1816001350000014,
+          5.1988928789999065
+        ],
+        [
+          1.415379063,
+          1.4082535129999982
+        ],
+        [
+          0.012773447,
+          0.01277612499999492
+        ],
+        [
+          0.027206646,
+          0.027211331000003725
+        ],
+        [
+          0.01576615,
+          0.015768993999998315
+        ]
+      ]
+    },
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 1,
+    "arm": "arena",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-allocation-arena-bin",
+      "/tmp/bpe-allocation-confirmation/core-zh-whitespace-256MiB-b1-arena/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1978788,
+    "subprocess_wall": 30.018768443958834,
+    "attempt_id": "core-zh-whitespace-256MiB-b1-arena",
+    "build_id": "arena",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.779511012,
+      "process_hwm_kib_before_validation": 1978452,
+      "train_cpu_seconds": 58.283322000000005,
+      "train_seconds": 20.850530648
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-allocation-confirmation/core-zh-whitespace-256MiB-b1-arena/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "diagnostic": {
+      "counts": [
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 1187544,
+          "arena_bytes": 83872144,
+          "arena_retires": 0,
+          "freed_bytes": 192631101,
+          "heap_allocations": 2348345,
+          "heap_bytes": 303401879,
+          "heap_frees": 2289009,
+          "inline_lists": 4857312,
+          "small_heap_allocations": 2257870
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 693,
+          "freed_bytes": 3413465,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 3375,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 2592933,
+          "arena_bytes": 122199384,
+          "arena_retires": 2840,
+          "freed_bytes": 92853514,
+          "heap_allocations": 19178,
+          "heap_bytes": 26307775,
+          "heap_frees": 29356,
+          "inline_lists": 2047383,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 67273,
+          "arena_bytes": 3721371,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 1228,
+          "heap_bytes": 3588219,
+          "heap_frees": 0,
+          "inline_lists": 41074,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 3844217,
+          "freed_bytes": 44399793,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 47011,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        },
+        {
+          "arena_allocations": 0,
+          "arena_bytes": 0,
+          "arena_retires": 0,
+          "freed_bytes": 0,
+          "heap_allocations": 0,
+          "heap_bytes": 0,
+          "heap_frees": 0,
+          "inline_lists": 0,
+          "small_heap_allocations": 0
+        }
+      ],
+      "phases": [
+        "vocabulary",
+        "plan",
+        "initial",
+        "materialize",
+        "select",
+        "prepare",
+        "apply",
+        "commit",
+        "drop_index",
+        "drop_corpus",
+        "drop_codec",
+        "model"
+      ],
+      "retained_bump_bytes": 268429056,
+      "retained_scratch_capacity_bytes": 1495040,
+      "small_cutoff": 552,
+      "times": [
+        [
+          0.382375499,
+          1.086864362
+        ],
+        [
+          0.533132748,
+          1.2631736509999998
+        ],
+        [
+          11.589447868,
+          32.707090101000006
+        ],
+        [
+          0.557244252,
+          1.7107441160000008
+        ],
+        [
+          0.34547232099999986,
+          0.3632945689998479
+        ],
+        [
+          3.777053921999996,
+          12.626722861999966
+        ],
+        [
+          0.4740064569999988,
+          1.6396628170001435
+        ],
+        [
+          2.950501513000006,
+          6.648144280000103
+        ],
+        [
+          0.149266049,
+          0.14125364800000284
+        ],
+        [
+          0.014943419,
+          0.014869483000012451
+        ],
+        [
+          0.029785277,
+          0.0279368000000062
+        ],
+        [
+          0.025102938,
+          0.019692521999999713
+        ]
+      ]
+    },
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  }
+]

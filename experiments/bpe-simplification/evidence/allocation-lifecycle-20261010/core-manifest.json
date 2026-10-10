@@ -1,0 +1,53 @@
+{
+  "baseline_commit": "7de4e068 (Arena controls); 1396e736 (Box controls)",
+  "mode": "core",
+  "binaries": {
+    "arena": "/tmp/bpe-allocation-arena-bin",
+    "arena-off": "/tmp/bpe-allocation-arena-off-bin",
+    "box-mutex": "/tmp/bpe-allocation-box-mutex-bin",
+    "box-tls": "/tmp/bpe-allocation-box-tls-bin"
+  },
+  "binary_sha256": {
+    "arena": "4edf4832112b1f44116e1be9fca5510c832983157900b64af06be1b34fe319a3",
+    "arena-off": "a9ce6c14c09aa3c38eb7147c2eaae60657317bf9e8b6a8a04f4eeca1e978ec5b",
+    "box-mutex": "cb6f3b89b6c0beb1b56950399d31e0f923aafc7f9b8ad08a970cf55db66aaeab",
+    "box-tls": "a2736f373a6ab29b39b356cafc4d6b6c772675e876ee962d8b95f1d2152be00b"
+  },
+  "patches": {
+    "arena": "3da4d7e4647530d63602c527d7589be5390218022c5f75e7445132cbc104a134",
+    "arena-off": "bb47db30ce1898bcba7663b95f60e7122855a060e2cd959aa05882700a9ce2b2",
+    "box-mutex": "f35e7844e84b25437bae6417409a1e4bc127ef2b8143237f96e4737df103e185",
+    "box-tls": "9c3c6bdc5269a42e72b41b67bca31033a70c04dc135a3b176403f547d84884a3"
+  },
+  "cases": [
+    {
+      "case": "zh-256MiB",
+      "language": "zh",
+      "requested_mib": 256,
+      "pretokenizer": "bytelevel_regex",
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+      "bytes": 268435162,
+      "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+      "prepared_path": "/root/code/tokenizers-perfetto-results/inputs/zh-bytelevel/words.json",
+      "prepared_sha256": "bb796d0b57b87d965b84de249bc5c8e283b700774638d16a40e4ae5171b13ee0",
+      "prepared_bytes": 437135595
+    },
+    {
+      "case": "zh-whitespace-256MiB",
+      "language": "zh",
+      "requested_mib": 256,
+      "pretokenizer": "whitespace",
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+      "bytes": 268435162,
+      "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+      "prepared_path": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "prepared_sha256": "ed057a8fdb27544ed29f16dde53faa0de8f47f1ee8ac00080974fac5bb435660",
+      "prepared_bytes": 250116097
+    }
+  ],
+  "scope": "core: public do_train, load/serialization excluded; pipeline: public feed + train, validation excluded; HWM includes input and retained counts",
+  "warmup_enabled": false,
+  "order_method": "reverse whole arm order in odd blocks",
+  "design": "Instrumented controls, TLS counts and coarse phase clocks; Two Chinese 256 MiB input cases; 2 rotating rounds (order rotates by one arm each block, no cancelling reversal); first round warmup only when rounds>1 and warmup_enabled; workers4 affinity0-3; vocab50k/min2; no affixes",
+  "limitation": "Shared VM; instrumentation overhead is included. Causal Arena on/off and Box Mutex/TLS pairs share all other source within each pair; old/new storage comparisons also include ownership descriptor/common helper changes. No exact speedup attribution across revisions."
+}

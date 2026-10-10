@@ -1,0 +1,14 @@
+   Compiling tk-train v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-allocation-diagnostic/tokenizers/tk-train)
+warning: variable does not need to be mutable
+   --> /root/code/tokenizers-workspaces/bpe-allocation-diagnostic/tokenizers/tk-train/src/trainers/bpe/mod.rs:477:9
+    |
+477 |     let mut codec = Codec::new(workers);
+    |         ----^^^^^
+    |         |
+    |         help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: `tk-train` (lib) generated 1 warning (run `cargo fix --lib -p tk-train` to apply 1 suggestion)
+   Compiling bpe-bench-runner v0.1.0 (/root/code/tokenizers-workspaces/bpe-allocation-diagnostic/experiments/bpe-simplification/runner)
+    Finished `release` profile [optimized] target(s) in 36.13s

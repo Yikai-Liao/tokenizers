@@ -1,0 +1,24 @@
+   Compiling tk-train v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-allocation-diagnostic/tokenizers/tk-train)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 5.20s
+     Running unittests src/lib.rs (/tmp/bpe-global-tests/debug/deps/tk_train-a8bada2fd5c371a2)
+
+running 17 tests
+test trainers::bpe::positions::tests::storage_rejects_inverted_ranges_and_unsorted_input ... ok
+test trainers::bpe::positions::tests::storage_roundtrips_seeks_and_supports_concurrent_readers ... ok
+test trainers::bpe::tests::ready_batch_applies_independent_rules_together ... ok
+test trainers::bpe::tests::feed_training_tokenizer_json_and_encoding_roundtrip ... ok
+test trainers::bpe::word_counts::tests::content_equality_and_flat_serde_ignore_representation_and_order ... ok
+test trainers::tests::trainer_wrapper_train_model_wrapper ... ok
+test trainers::unigram::tests::test_initial_alphabet ... ok
+test trainers::unigram::tests::test_special_tokens ... ok
+test trainers::unigram::tests::test_to_log_prob ... ok
+test trainers::unigram::tests::test_unigram_chars ... ok
+test trainers::bpe::tests::count_domains_and_zero_merge_validation ... ok
+test trainers::wordlevel::tests::test_train ... ok
+test trainers::unigram::tests::test_unk_token ... ok
+test trainers::bpe::tests::real_wide_ids_preserve_pair_order_and_separator_distinction ... ok
+test trainers::bpe::tests::overlap_floor_alias_and_alphabet_boundaries ... ok
+test trainers::bpe::tests::public_pools_feed_flush_errors_and_progress_matrix ... ok
+test trainers::bpe::tests::generated_models_and_every_rule_match_the_sequential_oracle ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.79s

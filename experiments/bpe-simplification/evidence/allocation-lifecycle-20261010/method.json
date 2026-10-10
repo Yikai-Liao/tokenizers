@@ -1,0 +1,21 @@
+{
+  "arms": [
+    "arena",
+    "arena-off",
+    "box-mutex",
+    "box-tls"
+  ],
+  "design": "Two Chinese 256 MiB inputs; two measured rounds per input; ABCD then DCBA; no excluded warmup; 4 Rayon workers, affinity 0-3, vocab50k/min2/plain; no simultaneous compilation, Miri or benchmark",
+  "timing": "public do_train; input load and serialization excluded; TLS event counters and coarse phase clocks INCLUDED",
+  "cpu_clock": "CLOCK_PROCESS_CPUTIME_ID; non-overlapping joined stages; Linux x86_64 repr(C) timespec",
+  "counts": "Only final frozen compressed blocks; builder temporary allocations excluded; heap allocation/free count and requested byte totals; Arena block publication/handle retirement counts separately; count<=2 inline publication tracked",
+  "controls": "Arena on/off differs only in cutoff field. Box Mutex/TLS replaces scratch mechanism; ThreadLocal capacity sampled after index drop to permit mutable iteration. Both pair controls share the other source. Arena vs Box also includes accepted FixedBitSet/cache hints/common-helper changes; stage observations cannot individually assign their effects.",
+  "cleanup": "Explicit index, corpus, Codec/Arena drops before model output and public timer ends; capacity reading and diagnostics report are outside phase timers but inside public do_train.",
+  "validation": {
+    "native_training_tests_per_arm": 17,
+    "native_actual_storage_tests": 8,
+    "strict_provenance_miri_actual_storage_tests": 8,
+    "source_harness_byte_identity": true
+  },
+  "retained_storage": "Bump::allocated_bytes before Arena drop, including unused chunk capacity; scratch Vec capacities in bytes; neither is an RSS measurement."
+}

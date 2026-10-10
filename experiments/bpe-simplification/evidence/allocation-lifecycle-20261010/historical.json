@@ -1,0 +1,8 @@
+{
+  "commit": "df2e71a1b9387a2d0b7ed3ea0e33ef43ce874f8a",
+  "path": "tokenizers/tk-train/src/trainers/bpe/engine/positions.rs",
+  "sha256": "0de31c80326ffe05abab7999b54f8e0e0843da4f6dfbd4b077da3ca85b41c25d",
+  "measured_resource_release_wall_seconds": 2.773129194,
+  "comparison_main_release_wall_seconds": 0.183089195,
+  "source": "Existing phase-summary-current.json and phase-provenance.json in this repository. This older dual-Vec storage version is not an Arena on/off control for current storage."
+}

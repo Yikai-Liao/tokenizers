@@ -1,0 +1,84 @@
+[
+  {
+    "case": "zh-256MiB",
+    "arena": {
+      "train_seconds": 21.7727075575,
+      "train_cpu_seconds": 69.8923345,
+      "process_hwm_kib_before_validation": 2477410.0
+    },
+    "arena-off": {
+      "train_seconds": 20.317137778,
+      "train_cpu_seconds": 65.007891,
+      "process_hwm_kib_before_validation": 2292934.0
+    },
+    "box-mutex": {
+      "train_seconds": 22.4094516575,
+      "train_cpu_seconds": 71.33549049999999,
+      "process_hwm_kib_before_validation": 2343596.0
+    },
+    "box-tls": {
+      "train_seconds": 20.9366562445,
+      "train_cpu_seconds": 64.99141499999999,
+      "process_hwm_kib_before_validation": 2341840.0
+    },
+    "reference": "arena",
+    "paired_median_delta_percent": {
+      "arena-off": {
+        "train_seconds": -6.659731633220323,
+        "train_cpu_seconds": -6.951101863018049,
+        "process_hwm_kib_before_validation": -7.445859900230212
+      },
+      "box-mutex": {
+        "train_seconds": 2.9778485447292447,
+        "train_cpu_seconds": 2.1403256097062173,
+        "process_hwm_kib_before_validation": -5.400730914597135
+      },
+      "box-tls": {
+        "train_seconds": -3.8026167442463903,
+        "train_cpu_seconds": -6.980649721410637,
+        "process_hwm_kib_before_validation": -5.4718012584072495
+      }
+    }
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "arena": {
+      "train_seconds": 20.665714837,
+      "train_cpu_seconds": 58.2247795,
+      "process_hwm_kib_before_validation": 1976532.0
+    },
+    "arena-off": {
+      "train_seconds": 19.82247337,
+      "train_cpu_seconds": 54.415504,
+      "process_hwm_kib_before_validation": 1648628.0
+    },
+    "box-mutex": {
+      "train_seconds": 20.156668295499998,
+      "train_cpu_seconds": 54.538551,
+      "process_hwm_kib_before_validation": 1789772.0
+    },
+    "box-tls": {
+      "train_seconds": 20.4273609285,
+      "train_cpu_seconds": 54.809722,
+      "process_hwm_kib_before_validation": 1803354.0
+    },
+    "reference": "arena",
+    "paired_median_delta_percent": {
+      "arena-off": {
+        "train_seconds": -4.042234116852395,
+        "train_cpu_seconds": -6.53990723840237,
+        "process_hwm_kib_before_validation": -16.589305923602527
+      },
+      "box-mutex": {
+        "train_seconds": -2.4815995479799238,
+        "train_cpu_seconds": -6.333188360339331,
+        "process_hwm_kib_before_validation": -9.448842478878682
+      },
+      "box-tls": {
+        "train_seconds": -1.1227711838704635,
+        "train_cpu_seconds": -5.863054426202819,
+        "process_hwm_kib_before_validation": -8.761923702999901
+      }
+    }
+  }
+]

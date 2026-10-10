@@ -1,0 +1,10 @@
+{
+  "timed_processes": 16,
+  "all_models_equal": true,
+  "models_equal_to_accepted_uninstrumented_1396e736": true,
+  "all_child_swap_zero": true,
+  "all_no_concurrent_builds_or_benchmarks": true,
+  "all_frozen_heap_allocation_and_free_counts_match": true,
+  "all_arena_handle_publication_and_retirement_counts_match": true,
+  "stopped_further_ablation_at_user_request": true
+}

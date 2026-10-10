@@ -1,0 +1,37 @@
+   Compiling crossbeam-utils v0.8.23
+   Compiling proc-macro2 v1.0.107
+   Compiling crossbeam-epoch v0.9.21
+   Compiling quote v1.0.47
+   Compiling unicode-ident v1.0.26
+   Compiling serde_core v1.0.229
+   Compiling crossbeam-deque v0.8.8
+   Compiling rayon-core v1.13.0
+   Compiling zmij v1.0.23
+   Compiling either v1.19.0
+   Compiling serde_json v1.0.151
+   Compiling serde v1.0.229
+   Compiling cfg-if v1.0.5
+   Compiling itoa v1.0.18
+   Compiling memchr v2.8.3
+   Compiling thread_local v1.1.10
+   Compiling itertools v0.14.0
+   Compiling syn v3.0.7
+   Compiling smallvec v1.16.3
+   Compiling bumpalo v3.20.3
+   Compiling rayon v1.12.0
+   Compiling serde_derive v1.0.229
+   Compiling bpe-allocation-diagnostic-storage-check v0.0.0 (/tmp/bpe-allocation-harness)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 8.14s
+     Running unittests src/lib.rs (/tmp/bpe-allocation-miri/miri/x86_64-unknown-linux-gnu/debug/build/bpe-allocation-diagnostic-storage-check/f6072eac2bc8f926/out/bpe_allocation_diagnostic_storage_check-f6072eac2bc8f926)
+
+running 8 tests
+test arena::tests::storage_roundtrips_seeks_and_survives_concurrent_cursor_reuse ... ok
+test arena::tests::unsafe_storage_rejects_inverted_ranges_and_unsorted_input ... ok
+test arena_off::tests::storage_roundtrips_seeks_and_survives_concurrent_cursor_reuse ... ok
+test arena_off::tests::unsafe_storage_rejects_inverted_ranges_and_unsorted_input ... ok
+test box_mutex::tests::storage_rejects_inverted_ranges_and_unsorted_input ... ok
+test box_mutex::tests::storage_roundtrips_seeks_and_supports_concurrent_readers ... ok
+test box_tls::tests::storage_rejects_inverted_ranges_and_unsorted_input ... ok
+test box_tls::tests::storage_roundtrips_seeks_and_supports_concurrent_readers ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 87.44s

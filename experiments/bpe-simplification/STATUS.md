@@ -8,6 +8,77 @@ and [the flattening report](FLATTEN.md) for validation and scoped diffs against
 HF main and the starting revision. Counts are descriptive; hard line limits
 have been retired. Earlier counts and limits below describe historical snapshots.
 
+## Arena removal and cleanup diagnosis, 2026-10-10
+
+Individual compressed-block deallocation returns with owned Box storage. It is
+inside the public training timer: the coordinator explicitly drops the index,
+corpus and Codec before building the model. Codec owns a `thread_local::ThreadLocal`
+container; its Drop destroys buckets and each initialized Worker, including its
+scratch Vecs. Frozen blocks are owned by positions rather than that container.
+They do not wait for Rayon worker threads to exit.
+
+The completed diagnosis compares four instrumented implementations. Arena on/off
+uses `7de4e068`, differing only in its allocation cutoff. Box Mutex/ThreadLocal
+uses accepted `1396e736`, changing the scratch mechanism. Both within-pair controls
+share other source; cross-revision comparisons also contain the accepted alphabet,
+cache-hint and common-helper changes. Counts record frozen payload publications
+and retirements, with TLS bookkeeping and joined coarse wall/process-CPU clocks.
+Instrumentation is included in the numbers below. These shared-VM observations
+explain the cleanup boundary and phase differences; they are not new production
+speedup claims.
+
+| Input | Storage | Total wall / CPU (s) | Final cleanup (s) | HWM (MiB) |
+| --- | --- | --- | --- | --- |
+| ByteLevel | arena | 21.77 / 69.89 | 0.195 | 2419.3 |
+| ByteLevel | arena-off | 20.32 / 65.01 | 0.955 | 2239.2 |
+| ByteLevel | box-mutex | 22.41 / 71.34 | 0.964 | 2288.7 |
+| ByteLevel | box-tls | 20.94 / 64.99 | 0.984 | 2287.0 |
+| Whitespace | arena | 20.67 / 58.22 | 0.184 | 1930.2 |
+| Whitespace | arena-off | 19.82 / 54.42 | 1.459 | 1610.0 |
+| Whitespace | box-mutex | 20.16 / 54.54 | 1.325 | 1747.8 |
+| Whitespace | box-tls | 20.43 / 54.81 | 1.380 | 1761.1 |
+
+The current Box/ThreadLocal implementation adds about **0.79 / 1.20 seconds** of
+final cleanup versus Arena for ByteLevel / Whitespace. Its final index drop frees
+**4,239,512 / 3,891,228** compressed allocations: **95.07% / 62.60%** of all frozen
+heap allocations. Consequently, shifting deallocation into earlier training stages
+is not the explanation for the small overall time difference. Every measured
+process has matching frozen heap allocation/free counts; Arena publication/handle
+retirement counts also match. The retained encoder scratch is about 13.75 / 1.43
+MiB and its explicit container drop is timed separately.
+
+The direct Arena-off control also restores final free costs while showing lower
+whole-training CPU in both inputs. In ByteLevel, its preparation wall median drops
+from 9.51 to 8.02 seconds, exceeding the added 0.76 seconds of cleanup. Arena retains
+512 / 256 MiB of allocated bump chunks, including unused capacity; turning its
+allocation off reduces measured process HWM by 7.45% / 16.59%. These observations
+identify phase and memory-policy differences. They do not distinguish allocator,
+cache, TLB or instruction-path contributions.
+
+ThreadLocal versus Box Mutex improves ByteLevel initial-index CPU from 19.68 to
+15.05 seconds in this diagnosis. The Whitespace whole-training CPU difference is
++0.61%, so removing Mutex is not a universal explanation for the offset. No further
+microarchitectural attribution was attempted after the user stopped ablation.
+
+The historical **2.773-second** cleanup at `df2e71a1` used a position object owning
+separate bytes and restart-directory Vecs. Even tiny nonempty lists reserved byte
+storage. Current 0–2-position lists are inline, and larger lists have one final
+compressed allocation. Therefore that historical cleanup burden cannot be carried
+unchanged into an Arena on/off comparison of today's representation. This run
+counts 2,756,653 / 6,945,769 inline publications; those counts are publications,
+not counts of unique lists still resident at completion.
+
+Both Chinese 256 MiB inputs use four workers pinned to CPUs 0–3, vocabulary 50,000,
+minimum frequency two, and no affixes. Two measured rounds use ABCD then DCBA,
+with no excluded warmup. All **16 processes** produce the full accepted model,
+report zero child swap and have no concurrent compilation or benchmark. Each
+instrumented trainer passes 17 native tests; the byte-identical actual position
+sources pass eight native storage tests and eight strict-provenance Miri tests.
+Exact sources, locks, hashes, harnesses and raw runs are saved in
+[evidence/allocation-lifecycle-20261010](evidence/allocation-lifecycle-20261010).
+Production code remains the accepted owned/ThreadLocal implementation; diagnostics
+are archived experiment artifacts. Further ablation stopped at the user's request.
+
 ## Sparse neighbor libraries, 2026-10-10
 
 This experiment replaces only the left/right neighbor grouping in `merge.rs`,

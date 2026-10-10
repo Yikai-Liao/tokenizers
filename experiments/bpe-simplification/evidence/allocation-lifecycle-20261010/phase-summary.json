@@ -1,0 +1,656 @@
+[
+  {
+    "case": "zh-256MiB",
+    "arms": {
+      "arena": {
+        "samples": 2,
+        "metrics": {
+          "train_seconds": 21.7727075575,
+          "train_cpu_seconds": 69.8923345,
+          "process_hwm_kib_before_validation": 2477410.0
+        },
+        "phases": {
+          "vocabulary": {
+            "wall_seconds": 0.48520651299999995,
+            "cpu_seconds": 1.7141019379999998
+          },
+          "plan": {
+            "wall_seconds": 0.619070451,
+            "cpu_seconds": 1.5976571894999996
+          },
+          "initial": {
+            "wall_seconds": 4.1134455695,
+            "cpu_seconds": 15.352907492
+          },
+          "materialize": {
+            "wall_seconds": 1.1213219694999998,
+            "cpu_seconds": 2.918629814000001
+          },
+          "select": {
+            "wall_seconds": 0.5941540479999998,
+            "cpu_seconds": 0.6191075379999607
+          },
+          "prepare": {
+            "wall_seconds": 9.513272155499987,
+            "cpu_seconds": 34.00324867000009
+          },
+          "apply": {
+            "wall_seconds": 1.6410003620000004,
+            "cpu_seconds": 5.962199066999844
+          },
+          "commit": {
+            "wall_seconds": 3.444275689499994,
+            "cpu_seconds": 7.470259616999806
+          },
+          "drop_index": {
+            "wall_seconds": 0.15128096800000002,
+            "cpu_seconds": 0.15101711650000738
+          },
+          "drop_corpus": {
+            "wall_seconds": 0.024978702999999998,
+            "cpu_seconds": 0.024949674999994897
+          },
+          "drop_codec": {
+            "wall_seconds": 0.018484518499999998,
+            "cpu_seconds": 0.018486885999998037
+          },
+          "model": {
+            "wall_seconds": 0.021330514000000002,
+            "cpu_seconds": 0.021333105000003627
+          }
+        },
+        "totals": {
+          "arena_allocations": 4252694.0,
+          "arena_bytes": 286454963.0,
+          "arena_retires": 4252694.0,
+          "freed_bytes": 1253222908.0,
+          "heap_allocations": 206881.0,
+          "heap_bytes": 1253222908.0,
+          "heap_frees": 206881.0,
+          "inline_lists": 2756653.0,
+          "small_heap_allocations": 81126.0
+        },
+        "ending_heap_frees": 38654.0,
+        "ending_free_percent": 18.684171093527198,
+        "retained_bump_bytes": 536863808.0,
+        "retained_scratch_capacity_bytes": 14417920.0,
+        "all_heap_allocations_released": true,
+        "all_arena_handles_retired": true
+      },
+      "arena-off": {
+        "samples": 2,
+        "metrics": {
+          "train_seconds": 20.317137778,
+          "train_cpu_seconds": 65.007891,
+          "process_hwm_kib_before_validation": 2292934.0
+        },
+        "phases": {
+          "vocabulary": {
+            "wall_seconds": 0.5442787525,
+            "cpu_seconds": 1.8604742809999992
+          },
+          "plan": {
+            "wall_seconds": 0.6412701160000001,
+            "cpu_seconds": 1.691905415
+          },
+          "initial": {
+            "wall_seconds": 4.071086815,
+            "cpu_seconds": 15.258379939000001
+          },
+          "materialize": {
+            "wall_seconds": 0.9067481420000001,
+            "cpu_seconds": 2.6745625859999986
+          },
+          "select": {
+            "wall_seconds": 0.5382754304999999,
+            "cpu_seconds": 0.5625898395000348
+          },
+          "prepare": {
+            "wall_seconds": 8.021534183000005,
+            "cpu_seconds": 29.169089650500098
+          },
+          "apply": {
+            "wall_seconds": 1.5721468380000032,
+            "cpu_seconds": 5.767416052499691
+          },
+          "commit": {
+            "wall_seconds": 3.0216756125,
+            "cpu_seconds": 7.0106460299999025
+          },
+          "drop_index": {
+            "wall_seconds": 0.928935689,
+            "cpu_seconds": 0.9284169900000023
+          },
+          "drop_corpus": {
+            "wall_seconds": 0.02543985,
+            "cpu_seconds": 0.025443539499995893
+          },
+          "drop_codec": {
+            "wall_seconds": 0.0001370495,
+            "cpu_seconds": 0.00013745799999753672
+          },
+          "model": {
+            "wall_seconds": 0.0218185245,
+            "cpu_seconds": 0.02182431149999786
+          }
+        },
+        "totals": {
+          "arena_allocations": 0.0,
+          "arena_bytes": 0.0,
+          "arena_retires": 0.0,
+          "freed_bytes": 1539677871.0,
+          "heap_allocations": 4459575.0,
+          "heap_bytes": 1539677871.0,
+          "heap_frees": 4459575.0,
+          "inline_lists": 2756653.0,
+          "small_heap_allocations": 4333820.0
+        },
+        "ending_heap_frees": 4239512.0,
+        "ending_free_percent": 95.06538179086573,
+        "retained_bump_bytes": 0.0,
+        "retained_scratch_capacity_bytes": 15466496.0,
+        "all_heap_allocations_released": true,
+        "all_arena_handles_retired": true
+      },
+      "box-mutex": {
+        "samples": 2,
+        "metrics": {
+          "train_seconds": 22.4094516575,
+          "train_cpu_seconds": 71.33549049999999,
+          "process_hwm_kib_before_validation": 2343596.0
+        },
+        "phases": {
+          "vocabulary": {
+            "wall_seconds": 0.507088728,
+            "cpu_seconds": 1.7694511480000008
+          },
+          "plan": {
+            "wall_seconds": 0.6582153374999999,
+            "cpu_seconds": 1.7098727080000007
+          },
+          "initial": {
+            "wall_seconds": 5.294840617,
+            "cpu_seconds": 19.677975371000002
+          },
+          "materialize": {
+            "wall_seconds": 0.8292182875,
+            "cpu_seconds": 2.3455661825000007
+          },
+          "select": {
+            "wall_seconds": 0.5733489624999994,
+            "cpu_seconds": 0.5939850939998799
+          },
+          "prepare": {
+            "wall_seconds": 8.258788750499985,
+            "cpu_seconds": 30.4222511099999
+          },
+          "apply": {
+            "wall_seconds": 1.5707822054999996,
+            "cpu_seconds": 5.792485090999765
+          },
+          "commit": {
+            "wall_seconds": 3.707584510500005,
+            "cpu_seconds": 7.999923247499886
+          },
+          "drop_index": {
+            "wall_seconds": 0.937675166,
+            "cpu_seconds": 0.9361488414999997
+          },
+          "drop_corpus": {
+            "wall_seconds": 0.0263082255,
+            "cpu_seconds": 0.0262956850000009
+          },
+          "drop_codec": {
+            "wall_seconds": 0.00017041400000000003,
+            "cpu_seconds": 0.00017066849999736178
+          },
+          "model": {
+            "wall_seconds": 0.021747047999999998,
+            "cpu_seconds": 0.021679167000002053
+          }
+        },
+        "totals": {
+          "arena_allocations": 0.0,
+          "arena_bytes": 0.0,
+          "arena_retires": 0.0,
+          "freed_bytes": 1539677871.0,
+          "heap_allocations": 4459575.0,
+          "heap_bytes": 1539677871.0,
+          "heap_frees": 4459575.0,
+          "inline_lists": 2756653.0,
+          "small_heap_allocations": 4333820.0
+        },
+        "ending_heap_frees": 4239512.0,
+        "ending_free_percent": 95.06538179086573,
+        "retained_bump_bytes": 0.0,
+        "retained_scratch_capacity_bytes": 14417920.0,
+        "all_heap_allocations_released": true,
+        "all_arena_handles_retired": true
+      },
+      "box-tls": {
+        "samples": 2,
+        "metrics": {
+          "train_seconds": 20.9366562445,
+          "train_cpu_seconds": 64.99141499999999,
+          "process_hwm_kib_before_validation": 2341840.0
+        },
+        "phases": {
+          "vocabulary": {
+            "wall_seconds": 0.570235317,
+            "cpu_seconds": 1.9222199949999998
+          },
+          "plan": {
+            "wall_seconds": 0.6776790484999999,
+            "cpu_seconds": 1.7488590860000004
+          },
+          "initial": {
+            "wall_seconds": 4.0916556580000005,
+            "cpu_seconds": 15.0508067295
+          },
+          "materialize": {
+            "wall_seconds": 0.866134746,
+            "cpu_seconds": 2.3527852704999983
+          },
+          "select": {
+            "wall_seconds": 0.5343027799999998,
+            "cpu_seconds": 0.5544432960000645
+          },
+          "prepare": {
+            "wall_seconds": 8.004199133999997,
+            "cpu_seconds": 28.73639190300012
+          },
+          "apply": {
+            "wall_seconds": 1.564750964,
+            "cpu_seconds": 5.805164866500045
+          },
+          "commit": {
+            "wall_seconds": 3.5964066144999967,
+            "cpu_seconds": 7.776777122000015
+          },
+          "drop_index": {
+            "wall_seconds": 0.9584670275,
+            "cpu_seconds": 0.955821545500001
+          },
+          "drop_corpus": {
+            "wall_seconds": 0.025517763,
+            "cpu_seconds": 0.02542133249999523
+          },
+          "drop_codec": {
+            "wall_seconds": 8.17425e-05,
+            "cpu_seconds": 8.164199999782795e-05
+          },
+          "model": {
+            "wall_seconds": 0.0227941725,
+            "cpu_seconds": 0.022799747000000536
+          }
+        },
+        "totals": {
+          "arena_allocations": 0.0,
+          "arena_bytes": 0.0,
+          "arena_retires": 0.0,
+          "freed_bytes": 1539677871.0,
+          "heap_allocations": 4459575.0,
+          "heap_bytes": 1539677871.0,
+          "heap_frees": 4459575.0,
+          "inline_lists": 2756653.0,
+          "small_heap_allocations": 4333820.0
+        },
+        "ending_heap_frees": 4239512.0,
+        "ending_free_percent": 95.06538179086573,
+        "retained_bump_bytes": 0.0,
+        "retained_scratch_capacity_bytes": 14417920.0,
+        "all_heap_allocations_released": true,
+        "all_arena_handles_retired": true
+      }
+    },
+    "paired_median_delta_percent": {
+      "arena_to_arena-off": {
+        "train_seconds": -6.659731633220323,
+        "train_cpu_seconds": -6.951101863018049,
+        "process_hwm_kib_before_validation": -7.445859900230212
+      },
+      "box-mutex_to_box-tls": {
+        "train_seconds": -6.57359438263036,
+        "train_cpu_seconds": -8.884397922952331,
+        "process_hwm_kib_before_validation": -0.07489883626481952
+      },
+      "arena-off_to_box-mutex": {
+        "train_seconds": 10.312591144635086,
+        "train_cpu_seconds": 9.745563428181981,
+        "process_hwm_kib_before_validation": 2.209508708791319
+      },
+      "arena_to_box-tls": {
+        "train_seconds": -3.8026167442463903,
+        "train_cpu_seconds": -6.980649721410637,
+        "process_hwm_kib_before_validation": -5.4718012584072495
+      }
+    }
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "arms": {
+      "arena": {
+        "samples": 2,
+        "metrics": {
+          "train_seconds": 20.665714837,
+          "train_cpu_seconds": 58.2247795,
+          "process_hwm_kib_before_validation": 1976532.0
+        },
+        "phases": {
+          "vocabulary": {
+            "wall_seconds": 0.3648247015,
+            "cpu_seconds": 1.0797697559999997
+          },
+          "plan": {
+            "wall_seconds": 0.5360248265,
+            "cpu_seconds": 1.2705047069999997
+          },
+          "initial": {
+            "wall_seconds": 11.727012492,
+            "cpu_seconds": 33.39302536
+          },
+          "materialize": {
+            "wall_seconds": 0.5065986195000001,
+            "cpu_seconds": 1.560299434000001
+          },
+          "select": {
+            "wall_seconds": 0.33236175600000006,
+            "cpu_seconds": 0.34886872449987294
+          },
+          "prepare": {
+            "wall_seconds": 3.725739083499996,
+            "cpu_seconds": 12.406907347499885
+          },
+          "apply": {
+            "wall_seconds": 0.43877950499999957,
+            "cpu_seconds": 1.515851529000109
+          },
+          "commit": {
+            "wall_seconds": 2.808076819000003,
+            "cpu_seconds": 6.418087589499947
+          },
+          "drop_index": {
+            "wall_seconds": 0.1427048755,
+            "cpu_seconds": 0.1386946249999994
+          },
+          "drop_corpus": {
+            "wall_seconds": 0.013841006999999999,
+            "cpu_seconds": 0.0137346925000017
+          },
+          "drop_codec": {
+            "wall_seconds": 0.0276689395,
+            "cpu_seconds": 0.026692720000006886
+          },
+          "model": {
+            "wall_seconds": 0.0207947155,
+            "cpu_seconds": 0.018089858499998
+          }
+        },
+        "totals": {
+          "arena_allocations": 3847750.0,
+          "arena_bytes": 209792899.0,
+          "arena_retires": 3847750.0,
+          "freed_bytes": 333297873.0,
+          "heap_allocations": 2368751.0,
+          "heap_bytes": 333297873.0,
+          "heap_frees": 2368751.0,
+          "inline_lists": 6945769.0,
+          "small_heap_allocations": 2257870.0
+        },
+        "ending_heap_frees": 47011.0,
+        "ending_free_percent": 1.984632407543047,
+        "retained_bump_bytes": 268429056.0,
+        "retained_scratch_capacity_bytes": 1495040.0,
+        "all_heap_allocations_released": true,
+        "all_arena_handles_retired": true
+      },
+      "arena-off": {
+        "samples": 2,
+        "metrics": {
+          "train_seconds": 19.82247337,
+          "train_cpu_seconds": 54.415504,
+          "process_hwm_kib_before_validation": 1648628.0
+        },
+        "phases": {
+          "vocabulary": {
+            "wall_seconds": 0.3213283845,
+            "cpu_seconds": 1.0560697710000002
+          },
+          "plan": {
+            "wall_seconds": 0.5569370684999999,
+            "cpu_seconds": 1.4083310625000003
+          },
+          "initial": {
+            "wall_seconds": 11.136802455,
+            "cpu_seconds": 32.268231308
+          },
+          "materialize": {
+            "wall_seconds": 0.4653506275,
+            "cpu_seconds": 1.4759182254999992
+          },
+          "select": {
+            "wall_seconds": 0.2631054214999998,
+            "cpu_seconds": 0.2857451979999581
+          },
+          "prepare": {
+            "wall_seconds": 2.9155713129999983,
+            "cpu_seconds": 9.83916073999994
+          },
+          "apply": {
+            "wall_seconds": 0.3810720350000002,
+            "cpu_seconds": 1.3406560559999967
+          },
+          "commit": {
+            "wall_seconds": 2.288020153999999,
+            "cpu_seconds": 5.2421848154999005
+          },
+          "drop_index": {
+            "wall_seconds": 1.4311376955,
+            "cpu_seconds": 1.4224874349999972
+          },
+          "drop_corpus": {
+            "wall_seconds": 0.0117928705,
+            "cpu_seconds": 0.011795627499996186
+          },
+          "drop_codec": {
+            "wall_seconds": 0.0158411545,
+            "cpu_seconds": 0.015743726000003733
+          },
+          "model": {
+            "wall_seconds": 0.016503346500000002,
+            "cpu_seconds": 0.016507813499998747
+          }
+        },
+        "totals": {
+          "arena_allocations": 0.0,
+          "arena_bytes": 0.0,
+          "arena_retires": 0.0,
+          "freed_bytes": 543090772.0,
+          "heap_allocations": 6216501.0,
+          "heap_bytes": 543090772.0,
+          "heap_frees": 6216501.0,
+          "inline_lists": 6945769.0,
+          "small_heap_allocations": 6105620.0
+        },
+        "ending_heap_frees": 3891228.0,
+        "ending_free_percent": 62.59514797793807,
+        "retained_bump_bytes": 0.0,
+        "retained_scratch_capacity_bytes": 1495040.0,
+        "all_heap_allocations_released": true,
+        "all_arena_handles_retired": true
+      },
+      "box-mutex": {
+        "samples": 2,
+        "metrics": {
+          "train_seconds": 20.156668295499998,
+          "train_cpu_seconds": 54.538551,
+          "process_hwm_kib_before_validation": 1789772.0
+        },
+        "phases": {
+          "vocabulary": {
+            "wall_seconds": 0.37175180750000003,
+            "cpu_seconds": 1.1117091455000003
+          },
+          "plan": {
+            "wall_seconds": 0.5347934605,
+            "cpu_seconds": 1.2506917704999996
+          },
+          "initial": {
+            "wall_seconds": 11.065809191,
+            "cpu_seconds": 31.988788063999998
+          },
+          "materialize": {
+            "wall_seconds": 0.43566547749999995,
+            "cpu_seconds": 1.3635902669999993
+          },
+          "select": {
+            "wall_seconds": 0.28444953649999993,
+            "cpu_seconds": 0.3006385790000152
+          },
+          "prepare": {
+            "wall_seconds": 2.9591697494999996,
+            "cpu_seconds": 9.884631067999983
+          },
+          "apply": {
+            "wall_seconds": 0.38248075800000014,
+            "cpu_seconds": 1.320389190999908
+          },
+          "commit": {
+            "wall_seconds": 2.759458259000004,
+            "cpu_seconds": 5.944996962000136
+          },
+          "drop_index": {
+            "wall_seconds": 1.313883583,
+            "cpu_seconds": 1.3120886674999994
+          },
+          "drop_corpus": {
+            "wall_seconds": 0.010778447,
+            "cpu_seconds": 0.010755128999999641
+          },
+          "drop_codec": {
+            "wall_seconds": 0.000248271,
+            "cpu_seconds": 0.00024892500000106565
+          },
+          "model": {
+            "wall_seconds": 0.0171490665,
+            "cpu_seconds": 0.017152467500000768
+          }
+        },
+        "totals": {
+          "arena_allocations": 0.0,
+          "arena_bytes": 0.0,
+          "arena_retires": 0.0,
+          "freed_bytes": 543090772.0,
+          "heap_allocations": 6216501.0,
+          "heap_bytes": 543090772.0,
+          "heap_frees": 6216501.0,
+          "inline_lists": 6945769.0,
+          "small_heap_allocations": 6105620.0
+        },
+        "ending_heap_frees": 3891228.0,
+        "ending_free_percent": 62.59514797793807,
+        "retained_bump_bytes": 0.0,
+        "retained_scratch_capacity_bytes": 1495040.0,
+        "all_heap_allocations_released": true,
+        "all_arena_handles_retired": true
+      },
+      "box-tls": {
+        "samples": 2,
+        "metrics": {
+          "train_seconds": 20.4273609285,
+          "train_cpu_seconds": 54.809722,
+          "process_hwm_kib_before_validation": 1803354.0
+        },
+        "phases": {
+          "vocabulary": {
+            "wall_seconds": 0.3618074605,
+            "cpu_seconds": 1.0945932500000004
+          },
+          "plan": {
+            "wall_seconds": 0.529997509,
+            "cpu_seconds": 1.2733791774999998
+          },
+          "initial": {
+            "wall_seconds": 11.0960200685,
+            "cpu_seconds": 31.5252134635
+          },
+          "materialize": {
+            "wall_seconds": 0.478630277,
+            "cpu_seconds": 1.461557482
+          },
+          "select": {
+            "wall_seconds": 0.29941786000000004,
+            "cpu_seconds": 0.31497638999992006
+          },
+          "prepare": {
+            "wall_seconds": 3.0013778144999965,
+            "cpu_seconds": 10.058989116000198
+          },
+          "apply": {
+            "wall_seconds": 0.3947138595000005,
+            "cpu_seconds": 1.365030436999902
+          },
+          "commit": {
+            "wall_seconds": 2.8480080075000074,
+            "cpu_seconds": 6.294780602000127
+          },
+          "drop_index": {
+            "wall_seconds": 1.368372261,
+            "cpu_seconds": 1.3598761655000011
+          },
+          "drop_corpus": {
+            "wall_seconds": 0.010982909499999999,
+            "cpu_seconds": 0.010986122999995018
+          },
+          "drop_codec": {
+            "wall_seconds": 0.0003631495,
+            "cpu_seconds": 0.00036395900000130155
+          },
+          "model": {
+            "wall_seconds": 0.0171912455,
+            "cpu_seconds": 0.017194655000000836
+          }
+        },
+        "totals": {
+          "arena_allocations": 0.0,
+          "arena_bytes": 0.0,
+          "arena_retires": 0.0,
+          "freed_bytes": 543090772.0,
+          "heap_allocations": 6216501.0,
+          "heap_bytes": 543090772.0,
+          "heap_frees": 6216501.0,
+          "inline_lists": 6945769.0,
+          "small_heap_allocations": 6105620.0
+        },
+        "ending_heap_frees": 3891228.0,
+        "ending_free_percent": 62.59514797793807,
+        "retained_bump_bytes": 0.0,
+        "retained_scratch_capacity_bytes": 1495040.0,
+        "all_heap_allocations_released": true,
+        "all_arena_handles_retired": true
+      }
+    },
+    "paired_median_delta_percent": {
+      "arena_to_arena-off": {
+        "train_seconds": -4.042234116852395,
+        "train_cpu_seconds": -6.53990723840237,
+        "process_hwm_kib_before_validation": -16.589305923602527
+      },
+      "box-mutex_to_box-tls": {
+        "train_seconds": 1.5122595640329415,
+        "train_cpu_seconds": 0.6093584715928304,
+        "process_hwm_kib_before_validation": 0.7586941964455529
+      },
+      "arena-off_to_box-mutex": {
+        "train_seconds": 1.9229630848226984,
+        "train_cpu_seconds": 0.34960352423428187,
+        "process_hwm_kib_before_validation": 8.565526062279961
+      },
+      "arena_to_box-tls": {
+        "train_seconds": -1.1227711838704635,
+        "train_cpu_seconds": -5.863054426202819,
+        "process_hwm_kib_before_validation": -8.761923702999901
+      }
+    }
+  }
+]
