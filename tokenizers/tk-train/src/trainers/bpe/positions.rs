@@ -124,7 +124,8 @@ impl Builder {
 
     pub(super) fn append(&mut self, mut other: Self) -> Result<()> {
         if self.is_empty() {
-            std::mem::swap(self, &mut other);
+            *self = other;
+            return Ok(());
         }
         if let (Some(last), Some(first)) = (self.iter().next_back(), other.iter().next())
             && first < last

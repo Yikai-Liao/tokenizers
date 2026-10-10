@@ -183,8 +183,7 @@ impl Vocabulary {
             if plain_id == WORD_SEPARATOR_ID {
                 continue;
             }
-            let flags = usize::from(ids.prefix && byte != 0)
-                | (usize::from(ids.suffix && byte + character.len_utf8() == word.len()) << 1);
+            let flags = ids.decoration_flags(byte == 0, byte + character.len_utf8() == word.len());
             let id = self.decorated_id(ids, plain_id, character, flags, decorated)?;
             self.initial_spans[id as usize] = 1;
         }
@@ -340,12 +339,16 @@ impl InitialTokenIds {
         if plain == WORD_SEPARATOR_ID {
             return None;
         }
-        let flags = usize::from(self.prefix && !first) | (usize::from(self.suffix && last) << 1);
+        let flags = self.decoration_flags(first, last);
         Some(if flags == 0 {
             plain
         } else {
             self.decorated[plain as usize][flags - 1]
         })
+    }
+
+    fn decoration_flags(&self, first: bool, last: bool) -> usize {
+        usize::from(self.prefix && !first) | (usize::from(self.suffix && last) << 1)
     }
 }
 

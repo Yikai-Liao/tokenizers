@@ -64,11 +64,27 @@ struct State<P> {
 /// Owner-local partial births for one (producer bucket, pair), awaiting publication.
 /// Fresh fragments concatenate in order; reuse positions accumulate unordered
 /// and are sorted, retaining duplicates, before their historical cohort is frozen.
-#[derive(Default)]
 struct Group {
     count: u64,
-    positions: Builder,
-    unordered: Vec<u64>,
+    positions: GroupPositions,
+}
+
+enum GroupPositions {
+    Ordered(Builder),
+    Unordered(Vec<u64>),
+}
+
+impl Group {
+    fn new(reuse: bool) -> Self {
+        Self {
+            count: 0,
+            positions: if reuse {
+                GroupPositions::Unordered(Vec::new())
+            } else {
+                GroupPositions::Ordered(Builder::default())
+            },
+        }
+    }
 }
 
 // Metadata stays borrowed during commit; each position stream has one owner.
@@ -476,14 +492,18 @@ impl<'index, 'codec> OwnerCommit<'index, 'codec> {
             }
             Birth::Partial(positions) => positions,
         };
-        let group = self.groups.entry((change.bucket, change.born)).or_default();
+        let group = self
+            .groups
+            .entry((change.bucket, change.born))
+            .or_insert_with(|| Group::new(self.reuse));
         add(&mut group.count, change.born_weight)?;
-        if self.reuse {
-            group.unordered.extend(positions.iter());
-        } else {
-            // Fresh jobs follow rule rank and spatial ranges. Each
-            // born key has one producer, so lists concatenate sorted.
-            group.positions.append(positions)?;
+        match &mut group.positions {
+            GroupPositions::Unordered(values) => values.extend(positions.iter()),
+            GroupPositions::Ordered(values) => {
+                // Fresh jobs follow rule rank and spatial ranges. Each
+                // born key has one producer, so lists concatenate sorted.
+                values.append(positions)?;
+            }
         }
         Ok(())
     }
@@ -508,13 +528,16 @@ impl<'index, 'codec> OwnerCommit<'index, 'codec> {
                 count,
                 pair: Reverse(pair),
             };
-            let positions = if self.reuse {
-                state.unordered.sort_unstable();
-                Positions::from_sorted(Input::Slice(&state.unordered), &mut self.lease)?
-            } else {
-                debug_assert!(!self.shard.contains_key(&pair));
-                self.shard.insert(pair, count);
-                Positions::from_sorted(Input::Builder(&state.positions), &mut self.lease)?
+            let positions = match &mut state.positions {
+                GroupPositions::Unordered(values) => {
+                    values.sort_unstable();
+                    Positions::from_sorted(Input::Slice(values), &mut self.lease)?
+                }
+                GroupPositions::Ordered(values) => {
+                    debug_assert!(!self.shard.contains_key(&pair));
+                    self.shard.insert(pair, count);
+                    Positions::from_sorted(Input::Builder(values), &mut self.lease)?
+                }
             };
             self.candidates.push(Candidate {
                 priority,

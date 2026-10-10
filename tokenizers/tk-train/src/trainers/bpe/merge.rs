@@ -351,23 +351,30 @@ struct FreshSnapshot<'a> {
     corpus: &'a Corpus,
     codec: &'a Codec,
     limit: usize,
+    matches: FreshMatches,
+}
+
+enum FreshMatches {
+    Ordinary(SelectedRules),
+    SelfPair(Vec<u64>),
+}
+
+struct SelectedRules {
     selected: AHashMap<Pair, u32>,
     heads: Vec<Head>,
     tails: Vec<bool>,
-    self_pair: bool,
-    starts: Vec<u64>,
 }
 
-impl<'a> FreshSnapshot<'a> {
-    fn new(batch: &'a Batch, corpus: &'a Corpus, codec: &'a Codec, limit: usize) -> Self {
-        // 1. Resolve shared endpoints once for all workers in this batch.
+impl SelectedRules {
+    fn new(batch: &Batch, id_count: usize) -> Self {
+        // Resolve shared endpoints once for all workers in an ordinary batch.
         let selected: AHashMap<_, _> = batch
             .rules
             .iter()
             .map(|rule| (rule.pair(), rule.replacement))
             .collect();
-        let mut heads = vec![Head::Empty; corpus.id_count()];
-        let mut tails = vec![false; corpus.id_count()];
+        let mut heads = vec![Head::Empty; id_count];
+        let mut tails = vec![false; id_count];
         for rule in &batch.rules {
             let slot = &mut heads[rule.pair().0 as usize];
             *slot = match slot {
@@ -380,10 +387,29 @@ impl<'a> FreshSnapshot<'a> {
             tails[rule.pair().1 as usize] = true;
         }
 
-        // 2. Self-pairs overlap: retain only the left-to-right nonoverlapping starts.
-        let self_pair = batch.rules[0].pair().0 == batch.rules[0].pair().1;
-        let mut starts = Vec::new();
-        if self_pair {
+        Self {
+            selected,
+            heads,
+            tails,
+        }
+    }
+
+    fn selected_id(&self, pair: Pair) -> Option<u32> {
+        match self.heads.get(pair.0 as usize) {
+            Some(&Head::Unique { right, replacement }) => (right == pair.1).then_some(replacement),
+            Some(Head::Shared) => self.selected.get(&pair).copied(),
+            _ => None,
+        }
+    }
+}
+
+impl<'a> FreshSnapshot<'a> {
+    fn new(batch: &'a Batch, corpus: &'a Corpus, codec: &'a Codec, limit: usize) -> Self {
+        let pair = batch.rules[0].pair();
+        let matches = if pair.0 == pair.1 {
+            // Self-pairs overlap: retain left-to-right nonoverlapping starts.
+            // They use start membership rather than ordinary endpoint lookup.
+            let mut starts = Vec::new();
             let rule = &batch.rules[0];
             let matcher = corpus.fresh_matcher(rule.pair());
             let mut after = 0;
@@ -396,25 +422,16 @@ impl<'a> FreshSnapshot<'a> {
                     after = matched.after;
                 }
             }
-        }
+            FreshMatches::SelfPair(starts)
+        } else {
+            FreshMatches::Ordinary(SelectedRules::new(batch, corpus.id_count()))
+        };
         Self {
             batch,
             corpus,
             codec,
             limit,
-            selected,
-            heads,
-            tails,
-            self_pair,
-            starts,
-        }
-    }
-
-    fn selected_id(&self, pair: Pair) -> Option<u32> {
-        match self.heads.get(pair.0 as usize) {
-            Some(&Head::Unique { right, replacement }) => (right == pair.1).then_some(replacement),
-            Some(Head::Shared) => self.selected.get(&pair).copied(),
-            _ => None,
+            matches,
         }
     }
 
@@ -431,22 +448,25 @@ impl<'a> FreshSnapshot<'a> {
             .div_ceil(rayon::current_num_threads())
             .clamp(1, 1 << 26);
         for (rank, rule) in self.batch.rules.iter().enumerate() {
-            if self.self_pair {
-                for part in self.starts.chunks(chunk) {
-                    tasks.push((rank, rule, Source::Slice(part)));
+            match &self.matches {
+                FreshMatches::SelfPair(starts) => {
+                    for part in starts.chunks(chunk) {
+                        tasks.push((rank, rule, Source::Slice(part)));
+                    }
                 }
-            } else {
-                let positions = &rule.candidate.positions;
-                if positions.len() <= ordinary_chunk {
-                    tasks.push((
-                        rank,
-                        rule,
-                        Source::Blocks(positions, 0..positions.block_count()),
-                    ));
-                    continue;
-                }
-                for range in positions.block_ranges(ordinary_chunk) {
-                    tasks.push((rank, rule, Source::Blocks(positions, range)));
+                FreshMatches::Ordinary(_) => {
+                    let positions = &rule.candidate.positions;
+                    if positions.len() <= ordinary_chunk {
+                        tasks.push((
+                            rank,
+                            rule,
+                            Source::Blocks(positions, 0..positions.block_count()),
+                        ));
+                        continue;
+                    }
+                    for range in positions.block_ranges(ordinary_chunk) {
+                        tasks.push((rank, rule, Source::Blocks(positions, range)));
+                    }
                 }
             }
         }
@@ -497,18 +517,18 @@ impl<'a> FreshSnapshot<'a> {
         if prior != WORD_SEPARATOR_ID {
             let span = self.corpus.id_span(prior);
             let before = p - span;
-            let merging = if self.self_pair {
-                p >= matched.span()
-                    && self
-                        .starts
-                        .binary_search(&((p - matched.span()) as u64))
-                        .is_ok()
-            } else {
-                before != 0
-                    && self.tails[prior as usize]
-                    && self
-                        .selected_id((self.corpus.token(before - 1), prior))
-                        .is_some()
+            let merging = match &self.matches {
+                FreshMatches::SelfPair(starts) => {
+                    p >= matched.span()
+                        && starts.binary_search(&((p - matched.span()) as u64)).is_ok()
+                }
+                FreshMatches::Ordinary(selected) => {
+                    before != 0
+                        && selected.tails[prior as usize]
+                        && selected
+                            .selected_id((self.corpus.token(before - 1), prior))
+                            .is_some()
+                }
             };
             // The selected match on the left owns a shared boundary.
             // Its right event emits the final replacements of both rules;
@@ -537,18 +557,20 @@ impl<'a> FreshSnapshot<'a> {
     ) -> Result<()> {
         let next = self.corpus.token(matched.after);
         if next != WORD_SEPARATOR_ID {
-            let replacement = if self.self_pair {
-                self.starts
+            let replacement = match &self.matches {
+                FreshMatches::SelfPair(starts) => starts
                     .binary_search(&(matched.after as u64))
                     .is_ok()
-                    .then_some(rule.replacement)
-            } else if !matches!(self.heads[next as usize], Head::Empty) {
-                self.selected_id((
-                    next,
-                    self.corpus.token(matched.after + self.corpus.id_span(next)),
-                ))
-            } else {
-                None
+                    .then_some(rule.replacement),
+                FreshMatches::Ordinary(selected)
+                    if !matches!(selected.heads[next as usize], Head::Empty) =>
+                {
+                    selected.selected_id((
+                        next,
+                        self.corpus.token(matched.after + self.corpus.id_span(next)),
+                    ))
+                }
+                FreshMatches::Ordinary(_) => None,
             };
             let born = replacement.unwrap_or(next);
             neighbors.record(

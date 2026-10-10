@@ -378,6 +378,11 @@ fn add(count: &mut u64, amount: u64) -> Result<()> {
 const WORD_SEPARATOR_ID: u32 = u32::MAX;
 type ModelParts = (Vocab, Merges, Vec<AddedToken>);
 
+enum AttemptOutcome {
+    Complete(ModelParts),
+    RestartForReuse,
+}
+
 #[cfg(test)]
 type Trace = Vec<(Pair, u64, u32)>;
 
@@ -395,7 +400,7 @@ fn train(
         let mut alphabet = None;
         let mut reuse = false;
         loop {
-            if let Some(parts) = train_attempt(
+            match train_attempt(
                 trainer,
                 words,
                 workers,
@@ -405,18 +410,17 @@ fn train(
                 #[cfg(test)]
                 &mut observe,
             )? {
-                return Ok(parts);
+                AttemptOutcome::Complete(parts) => return Ok(parts),
+                // An active-ID collision discards the fresh attempt. Retain the
+                // selected alphabet so frequency ties cannot change on the retry.
+                AttemptOutcome::RestartForReuse => reuse = true,
             }
-
-            // An active-ID collision discards the fresh attempt. Retain the
-            // selected alphabet so frequency ties cannot change on the retry.
-            reuse = true;
         }
     })
 }
 
-// None requests a retry with historical cohorts. Only a completed attempt
-// publishes model parts and its test trace; failed fresh attempts stay private.
+// Only a completed attempt publishes model parts and its test trace;
+// fresh attempts that request historical cohorts stay private.
 fn train_attempt(
     trainer: &BpeTrainer,
     words: WordCountsView<'_>,
@@ -425,7 +429,7 @@ fn train_attempt(
     alphabet: &mut Option<Vec<char>>,
     progress: &Option<ProgressBar>,
     #[cfg(test)] observe: &mut Option<&mut (dyn FnMut(Pair, u64, u32) + Send)>,
-) -> Result<Option<ModelParts>> {
+) -> Result<AttemptOutcome> {
     // 1. Resolve the vocabulary and tokenize borrowed input into a corpus plan.
     let mut vocabulary = Vocabulary::initialize(trainer, words, workers, alphabet)?;
     trainer.update_progress(progress, words.len(), "Tokenize words");
@@ -451,7 +455,11 @@ fn train_attempt(
         drop(plan);
         drop(codec);
         let (vocab, merges) = vocabulary.into_model_parts(Vec::new());
-        return Ok(Some((vocab, merges, trainer.special_tokens.clone())));
+        return Ok(AttemptOutcome::Complete((
+            vocab,
+            merges,
+            trainer.special_tokens.clone(),
+        )));
     }
 
     // 3. Select compatible batches, prepare snapshot edits, then commit joined jobs.
@@ -460,13 +468,12 @@ fn train_attempt(
     let mut merges = Vec::new();
     #[cfg(test)]
     let mut trace = Trace::new();
-    let mut restart = false;
     while vocabulary.len() < trainer.vocab_size {
         let batch = match Batch::select(trainer, &mut vocabulary, &mut corpus, &mut index)? {
             Selection::Finished => break,
             Selection::Restart => {
-                restart = true;
-                break;
+                trainer.finalize_progress(progress, merges.len(), "Compute merges");
+                return Ok(AttemptOutcome::RestartForReuse);
             }
             Selection::Ready(batch) => batch,
         };
@@ -487,9 +494,6 @@ fn train_attempt(
         trainer.emit_json_progress("Compute merges", merges.len(), trainer.vocab_size);
     }
     trainer.finalize_progress(progress, merges.len(), "Compute merges");
-    if restart {
-        return Ok(None);
-    }
     drop(index);
     drop(corpus);
     drop(codec);
@@ -500,7 +504,11 @@ fn train_attempt(
         }
     }
     let (vocab, merges) = vocabulary.into_model_parts(merges);
-    Ok(Some((vocab, merges, trainer.special_tokens.clone())))
+    Ok(AttemptOutcome::Complete((
+        vocab,
+        merges,
+        trainer.special_tokens.clone(),
+    )))
 }
 
 impl Trainer for BpeTrainer {
