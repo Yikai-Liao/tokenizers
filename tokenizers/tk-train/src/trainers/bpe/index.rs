@@ -133,13 +133,13 @@ pub(super) struct PairIndex<'codec> {
     reuse: bool,
 }
 
-// Map an ordered pair to its sole count owner, with nonzero workers fixed for
+// Map an ordered pair to its sole count owner, with a nonzero shard count fixed for
 // the index. Initial counting, queue lookup and commit must use this same mapping.
-fn owner(pair: Pair, workers: usize) -> usize {
+fn owner(pair: Pair, shard_count: usize) -> usize {
     // Zero seeds keep routing repeatable within this build, without per-call
     // randomness. Hash mixing is provided by the existing ahash dependency.
     const HASHER: ahash::RandomState = ahash::RandomState::with_seeds(0, 0, 0, 0);
-    (HASHER.hash_one(pair) % workers as u64) as usize
+    (HASHER.hash_one(pair) % shard_count as u64) as usize
 }
 
 fn adjust_signed(count: &mut u64, amount: u64, remove: bool) -> Result<()> {
@@ -158,7 +158,7 @@ impl<'codec> PairIndex<'codec> {
         codec: &'codec Codec,
         corpus: &CorpusPlan<'_>,
         minimum: u64,
-        workers: usize,
+        shard_count: usize,
         reuse: bool,
         progress: &Option<ProgressBar>,
     ) -> Result<Self> {
@@ -170,10 +170,10 @@ impl<'codec> PairIndex<'codec> {
             .collect::<Result<Vec<_>>>()?;
 
         // 2. Route ordered fragments to the sole count owner of each pair.
-        let mut routed: Vec<Vec<_>> = (0..workers).map(|_| Vec::new()).collect();
+        let mut routed: Vec<Vec<_>> = (0..shard_count).map(|_| Vec::new()).collect();
         for piece in pieces {
             for (pair, state) in piece {
-                routed[owner(pair, workers)].push((pair, state));
+                routed[owner(pair, shard_count)].push((pair, state));
             }
         }
 
@@ -220,8 +220,8 @@ impl<'codec> PairIndex<'codec> {
         let candidate = self.queue.pop().expect("certified candidate exists");
         debug_assert_eq!(candidate.priority, priority);
         if !self.reuse {
-            let workers = self.shards.len();
-            self.shards[owner(priority.pair(), workers)]
+            let shard_count = self.shards.len();
+            self.shards[owner(priority.pair(), shard_count)]
                 .remove(&priority.pair())
                 .expect("certified pair exists");
         }
@@ -254,14 +254,14 @@ impl<'codec> PairIndex<'codec> {
     }
 
     fn route_changes(&mut self, changes: Vec<Vec<Change<Birth>>>) -> Vec<Event> {
-        let workers = self.shards.len();
-        self.routes.resize_with(workers, Route::default);
+        let shard_count = self.shards.len();
+        self.routes.resize_with(shard_count, Route::default);
         // Joined commits drain every route; any error aborts this attempt.
         let mut events = Vec::with_capacity(changes.iter().map(Vec::len).sum());
         for change in changes.into_iter().flatten() {
-            let removed = (change.removed_weight != 0).then(|| owner(change.removed, workers));
+            let removed = (change.removed_weight != 0).then(|| owner(change.removed, shard_count));
             // Zero-weight births still own positions, including reuse cohorts.
-            let born = (!change.positions.is_empty()).then(|| owner(change.born, workers));
+            let born = (!change.positions.is_empty()).then(|| owner(change.born, shard_count));
             let index = events.len();
             events.push(Event {
                 removed: change.removed,
@@ -410,15 +410,15 @@ fn build_owner(
 }
 
 /// One owner's sequential count update and birth publication within a joined commit.
-/// Borrows its count shard and owns pending groups/candidates plus an executing
-/// worker's lease. Failed work drops unpublished lists; the attempt is discarded.
+/// Borrows its count shard and owns pending groups/candidates plus an exclusive
+/// codec scratch lease. Failed work drops unpublished lists; the attempt is discarded.
 struct OwnerCommit<'index, 'codec> {
     shard: &'index mut AHashMap<Pair, u64>,
     reuse: bool,
     floor: u64,
     groups: AHashMap<(usize, Pair), Group>,
     candidates: Vec<Candidate>,
-    // Drop unpublished buffers before releasing exclusive worker access.
+    // Drop unpublished buffers before releasing exclusive codec scratch access.
     lease: Lease<'codec>,
 }
 
@@ -585,7 +585,7 @@ mod tests {
             ids.id('c', false, false).unwrap(),
         );
         let plan = CorpusPlan::build(view, &mut vocabulary, &trainer, true, &progress).unwrap();
-        // Either cohort creates the active "abac" alias. The heavier cohort
+        // Either cohort reuses the activated "abac" identity. The heavier cohort
         // raises its left neighbor's existing count above the other cohort.
         let mut cohorts = [Vec::new(), Vec::new()];
         plan.initial_edges(0..plan.word_count(), |edge, position, weight| {

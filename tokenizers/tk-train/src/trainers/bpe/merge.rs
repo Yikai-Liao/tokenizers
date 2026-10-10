@@ -25,7 +25,7 @@ impl Rule {
 }
 
 /// Priority-prefix rules selected for one joined preparation/application round.
-/// Fresh rules have compatible endpoints; active-ID reuse uses a single cohort.
+/// Fresh rules have compatible endpoints; reuse mode selects a single cohort.
 pub(super) struct Batch {
     rules: Vec<Rule>,
     reuse: bool,
@@ -251,7 +251,11 @@ impl Batch {
                 break;
             }
             let token = vocabulary.merge_token(pair);
-            if !reuse && token.existing_id.is_some_and(|id| corpus.is_active(id)) {
+            if !reuse
+                && token
+                    .existing_id
+                    .is_some_and(|id| corpus.has_been_activated(id))
+            {
                 return Ok(Selection::Restart);
             }
             let reserved = token.existing_id.is_some();
@@ -344,7 +348,7 @@ enum Head {
 }
 
 /// Shared read-only lookup for fresh preparation against one joined corpus snapshot.
-/// Resolves selected endpoints once; workers own their directories, writes and
+/// Resolves selected endpoints once; tasks own their directories, writes and
 /// neighbor events. Self-pairs also retain nonoverlapping left-to-right starts.
 struct FreshSnapshot<'a> {
     batch: &'a Batch,
@@ -367,7 +371,7 @@ struct SelectedRules {
 
 impl SelectedRules {
     fn new(batch: &Batch, id_count: usize) -> Self {
-        // Resolve shared endpoints once for all workers in an ordinary batch.
+        // Resolve shared endpoints once for all tasks in an ordinary batch.
         let selected: AHashMap<_, _> = batch
             .rules
             .iter()
@@ -394,7 +398,7 @@ impl SelectedRules {
         }
     }
 
-    fn selected_id(&self, pair: Pair) -> Option<u32> {
+    fn replacement(&self, pair: Pair) -> Option<u32> {
         match self.heads.get(pair.0 as usize) {
             Some(&Head::Unique { right, replacement }) => (right == pair.1).then_some(replacement),
             Some(Head::Shared) => self.selected.get(&pair).copied(),
@@ -526,7 +530,7 @@ impl<'a> FreshSnapshot<'a> {
                     before != 0
                         && selected.tails[prior as usize]
                         && selected
-                            .selected_id((self.corpus.token(before - 1), prior))
+                            .replacement((self.corpus.token(before - 1), prior))
                             .is_some()
                 }
             };
@@ -565,7 +569,7 @@ impl<'a> FreshSnapshot<'a> {
                 FreshMatches::Ordinary(selected)
                     if !matches!(selected.heads[next as usize], Head::Empty) =>
                 {
-                    selected.selected_id((
+                    selected.replacement((
                         next,
                         self.corpus.token(matched.after + self.corpus.id_span(next)),
                     ))
@@ -647,8 +651,8 @@ impl<'task> CohortPreparation<'task> {
         let writes = &mut self.writes;
         let mut previous = None;
         let mut p = corpus.word_start(word);
-        let start = rule.candidate.positions.lower_bound(p as u64);
-        let mut positions = rule.candidate.positions.from(start).peekable();
+        let index = rule.candidate.positions.lower_bound(p as u64);
+        let mut positions = rule.candidate.positions.iter_from(index).peekable();
         while p < corpus.word_end(word) {
             // Full-word scans are required only after alias reuse or a length
             // gate. Otherwise the selected cohort defines the scan domain.

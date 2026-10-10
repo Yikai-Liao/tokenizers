@@ -11,8 +11,9 @@ Read it for the complete workflow: initialize identities and a borrowed corpus p
 build the compressed occurrence index, materialize endpoints, select a compatible
 batch, prepare against a stable snapshot, apply its
 writes, commit counts and births, then publish the model. Each parallel phase
-joins before the next stage begins. An active identity collision restarts from
-original input and the retained alphabet; speculative merges are discarded.
+joins before the next stage begins. A collision with a previously activated
+identity restarts from original input and the retained alphabet; speculative
+merges are discarded.
 
 The implementation is divided by the knowledge each module owns:
 
@@ -60,7 +61,8 @@ Compatible batches retain the original priority prefix and permit shared heads
 or shared tails. Crossed endpoints end the batch without skipping a candidate.
 AA and reserved-ID rules run alone. Complete ordinary producers prune before encoding in preparation and publish
 directly. Partial, AA and reuse births aggregate before encoding and publication. Commit routes compact
-metadata references and moves each position stream only once. Active reuse uses one cohort at a time; its word scans follow the original alias/length-gate conditions.
+metadata references and moves each position stream only once. Reuse mode selects
+one cohort at a time; its word scans follow the original alias/length-gate conditions.
 
 Run library checks from the repository root:
 

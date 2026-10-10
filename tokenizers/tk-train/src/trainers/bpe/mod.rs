@@ -411,7 +411,7 @@ fn train(
                 &mut observe,
             )? {
                 AttemptOutcome::Complete(parts) => return Ok(parts),
-                // An active-ID collision discards the fresh attempt. Retain the
+                // An activated-ID collision discards the fresh attempt. Retain the
                 // selected alphabet so frequency ties cannot change on the retry.
                 AttemptOutcome::RestartForReuse => reuse = true,
             }

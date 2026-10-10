@@ -335,12 +335,13 @@ impl Corpus {
         self.whole_words
     }
 
-    pub(super) fn is_active(&self, id: u32) -> bool {
+    /// Activation history persists after an ID's last occurrence is consumed.
+    pub(super) fn has_been_activated(&self, id: u32) -> bool {
         self.spans.get(id as usize).is_some_and(|&span| span != 0)
     }
 
     pub(super) fn prepare_identity(&mut self, pair: Pair, id: u32) {
-        self.whole_words |= self.is_active(id);
+        self.whole_words |= self.has_been_activated(id);
         // Once aliases need occurrence geometry, keep only activation here.
         // Summing representative ID spans would grow with repeated alias reuse.
         let span = if self.occurrence_spans.is_some() {

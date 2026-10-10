@@ -31,15 +31,15 @@ The independent reference shares only this selector. Decorations
 are resolved in the input view's traversal before weighted words are reordered.
 Filtering and first/last decoration flags use original UTF-8 word coordinates.
 
-Vocabulary constructs initial ID spans (zero for inactive, one for active) and
+Vocabulary constructs initial ID spans (zero for unactivated, one for activated) and
 moves the table into CorpusPlan. After materialization Corpus alone records ID
 activation. Resolving a merge string returns its ID; the corpus determines
-whether that ID was already active and prepares its geometry. Vocabulary keeps
+whether that ID has been activated and prepares its geometry. Vocabulary keeps
 no activation mirror that must be updated during merges.
 
 Each attempt starts from original weighted words. The selected alphabet is
-retained through a reuse restart. A reserved but inactive result keeps its ID
-and runs alone. Selecting an already active result during a fresh attempt causes
+retained through a reuse restart. A reserved but unactivated result keeps its ID
+and runs alone. Selecting a previously activated result during a fresh attempt causes
 an immediate restart; traces and merges from that attempt are abandoned.
 
 The input view is borrowed and unchanged. Feed aggregation, serialization and
@@ -69,13 +69,13 @@ assumption relating Rayon worker indices to an external directory array.
 
 Words occupy disjoint original-symbol intervals separated by sentinel slots.
 A logical token stores its ID at its first and last retained-symbol coordinates.
-Its span skips interior holes. Initially spans are one for active IDs. Fresh
+Its span skips interior holes. Initially spans are one for activated IDs. Fresh
 identities have a single span, so one ID-to-span table describes the corpus.
-When an active alias acquires unequal spans, the corpus initializes a separate
+When an activated alias acquires unequal spans, the corpus initializes a separate
 occurrence-span plane from the current logical words. All subsequent geometry
 reads the occurrence endpoints; it does not infer length from token text.
 The ID table still grows with the vocabulary and marks every activated ID as
-nonzero, including previously inactive reserved IDs. Once the occurrence plane
+nonzero, including previously unactivated reserved IDs. Once the occurrence plane
 exists, new ID metadata only needs an activation marker; it no longer sums
 representative ID spans. Activation means that an ID has ever been used, even
 after its last occurrence is consumed.
@@ -107,8 +107,9 @@ Together, the frequency and tie bounds prevent newborns from overtaking the
 accepted prefix. Adjacent selected matches emit their shared boundary once,
 from the left match, using both final replacements.
 
-Reserved identities lack the appended-ID tie bound and run alone. An active ID
-collision restarts the whole attempt in reuse mode before any batch is applied.
+Reserved identities lack the appended-ID tie bound and run alone. A previously
+activated ID collision restarts the whole attempt in reuse mode before the
+conflicting batch is applied.
 AA selection also runs alone and greedily accepts valid starts from left to right,
 with each match excluding the next overlapping edge. Preparation and application
 of accepted AA matches remain parallel; the selection itself is serial.
@@ -164,11 +165,13 @@ layout, ownership-specific destructor or arena lifetime on a frozen list.
 The enum is 24 bytes on the measured 64-bit target; the former descriptor was
 16 bytes. This size tradeoff accompanies earlier release of retired byte storage.
 
-`Codec` owns ThreadLocal RefCell workers with reusable byte and offset vectors.
-The RefMut lease prevents reentrant use of one thread's scratch; parallel work
-never starts while that lease is held. Workers stay alive until Codec is dropped,
-including when their creating threads exit. Freezing copies initialized encoded
-bytes into the final owned Box. Readers carry only a borrowed immutable byte
+`Codec` owns ThreadLocal RefCell `CodecScratch` values with reusable byte and
+offset vectors for position encoding.
+The RefMut lease prevents reentrant use of one thread's scratch. A lease holder
+does not start nested parallel work; other threads use independent scratch.
+Scratch values stay alive until Codec is
+dropped, including when their creating threads exit. Freezing copies initialized
+encoded bytes into the final owned Box. Readers carry only a borrowed immutable byte
 slice and private decoder state, so they can outlive the scratch lease and Codec.
 The index and preparation objects borrow Codec only to create new lists.
 

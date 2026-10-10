@@ -34,7 +34,8 @@ The production diff adds 57 lines. Its maintenance benefit is fewer implicit
 valid-buffer rules and state translations, with no new module, trait framework
 or duplicated event algorithm. The extra enum constructors and matches make
 the existing mode distinctions explicit. `Birth`, `Writes`, dense initial-count
-staging, frozen positions, arena thresholds and heap certification are retained.
+staging, owned frozen positions, reusable codec scratch and heap certification
+are retained.
 
 ## Builds and comparison protocol
 
@@ -43,8 +44,9 @@ and `snapshot` (1–5, the final source). Exact ordinary BPE sources are under
 [source](source); unchanged parity source is available at the baseline commit.
 [builds.json](builds.json) records source and binary hashes, compiler version,
 build command and release settings. The runner uses opt-level 3, fat LTO and one
-codegen unit with no default training features. The final working sources match
-the archived `snapshot` source hashes.
+codegen unit with no default training features. The retained sources at
+`1e3f87bf3b1928f8ddfca8556806c13d9639e6db` match the archived `snapshot` source
+hashes; subsequent internal naming changes are outside this measurement.
 
 The local changes did not produce identical release `.text` or `.rodata`
 sections; [local-sections.json](local-sections.json) records that check. Training

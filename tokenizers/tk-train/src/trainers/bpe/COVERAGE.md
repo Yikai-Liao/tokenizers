@@ -10,7 +10,7 @@ Literal alphabet expectations independently check that shared selector.
 | Contract | Combined coverage |
 | --- | --- |
 | Weighted ordering, equal counts, empty words, zero weights, Unicode and duplicate reserved strings | Fixed-seed model combinations plus an explicit equal-count fixture |
-| Affixes, active identity reuse, inactive reserved IDs and restart behavior | Generated prefix/suffix combinations, duplicate specials, literal `baaba` traces, and 128 long words with interleaved zero/positive weights across three affix/gate settings; a reserved long merge activates after occurrence geometry is established |
+| Affixes, activated identity reuse, unactivated reserved IDs and restart behavior | Generated prefix/suffix combinations, duplicate specials, literal `baaba` traces, and 128 long words with interleaved zero/positive weights across three affix/gate settings; a reserved long merge activates after occurrence geometry is established |
 | AA overlap and position restart boundaries | A 4097-symbol AA run and generated repeated words |
 | Complete and partial birth pruning | Long AB producer split across workers, a competing complete XY producer, and complete-model/trace comparison |
 | Strict newborn length admission, including limits 0, 1 and 2 | Generated length gates and independent sequential neighbor admission |
@@ -23,7 +23,7 @@ Literal alphabet expectations independently check that shared selector.
 | Requested training pool versus ambient pool and serial settings | Child processes install an ambient two-thread pool; materialization and both preparation paths check requested pool size and record that each executed; feed callbacks verify ambient worker size and concurrent/serial execution |
 | JSON progress schema, starts and completion | Child-process matrix covers normal/no-bar/zero-merge/empty/Silent; strict JSON parsing, exact three-field schema, initial zero and final actual merge count |
 | Numeric position width, duplicate values, restart blocks, seek, append, promotion and owned byte storage | One matrix of lengths around inline and block boundaries, values through `u64::MAX`, explicit ten-byte deltas, all native seek starts and independent lower-bound expectations for present and gap values |
-| Published list lifetime, shared readers and allocation cursor reuse | Two scoped threads build lists while reading earlier owned lists, then read them again after Codec is dropped |
+| Published list lifetime, shared readers and position encoder scratch reuse | Two scoped threads build lists while reading earlier owned lists, then read them again after Codec is dropped |
 | Invalid decoder ranges and unsorted construction | Explicit rejection before byte access; Miri imports this same implementation and tests |
 
 The former fixture files and legacy trainer tests are consolidated into these

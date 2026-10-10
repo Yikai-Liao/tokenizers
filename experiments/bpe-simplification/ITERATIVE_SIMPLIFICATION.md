@@ -163,3 +163,28 @@ default／no-default 各 20 项现有 library tests、all-target Clippy（warnin
 denied）、改动文件 rustfmt 与 diff 检查通过。完整源码、逐次模型验证、布局
 probe、input／source／binary 哈希、测量命令与日志见
 [本轮记录](evidence/readability-20261010/README.md)。
+
+## flat 分支的内部命名校准
+
+在 `04553f26` 上完成独立 clarity／软件设计审查，并以 Hugging Face 官方
+main 的 `fb49a292` 核对命名惯例。保留结构边界，修正以下内部名称：
+`Corpus::has_been_activated` 明确激活历史在最后一次出现消失后仍保留；
+`CodecScratch` 明确位置压缩的复用 byte／offset 缓冲，相关字段和局部量用
+scratch；`Positions::iter_from` 明确返回迭代器，调用处用 index 区分列表
+下标与语料坐标；`SelectedRules::replacement` 明确查表返回替换 token ID。
+上游的 EncodeScratch 服务于 tokenizer encode，职责不同，因此不直接沿用
+该名称。真正的解码 Cursor、SelectedRules、FreshMatches 等名称保留。
+Codec 构造参数 num_threads 表示预期执行线程数，仅用于预留 scratch 容量；
+index 的路由参数及局部量改为 shard_count，明确 count owner 分片与执行线程
+没有绑定关系。任务本地目录与 codec scratch lease 的旧 worker 描述同步修正。
+
+同步修正 README／DESIGN／COVERAGE 的历史激活和缓冲说明，以及上一轮记录
+误写的 arena thresholds。证据文档的源码哈希比对明确指向当时的保留提交，
+历史源码快照和原始测量数据保持原样。
+改名后由独立 sub-agent 复核完整普通 BPE 源码、测试、调用点和当前文档。
+发现的角色描述、测试身份复用说明、restart 时序和 lease 并行范围歧义均已
+修正；最终 diff 未发现剩余命名遗漏或源码与文档矛盾。真实执行线程的
+workers／parallel_workers 与解码 Cursor 保留。
+本轮只涉及命名、注释和格式，运算、分支顺序、分配与数据布局均未改动；
+未重新执行性能基准。default／no-default 各 20 项现有 library tests 和
+all-target Clippy（warnings denied）通过，改动文件 rustfmt 与 diff 检查通过。

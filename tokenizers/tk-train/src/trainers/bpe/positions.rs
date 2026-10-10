@@ -7,20 +7,21 @@ use thread_local::ThreadLocal;
 use tk_encode::Result;
 const RESTART: usize = 128;
 
-/// Reuses the existing per-worker encoder buffers for one training attempt.
+/// Reuses per-thread position encoder buffers for one training attempt.
 /// Published lists own their bytes; this object retains only temporary scratch.
 pub(super) struct Codec {
-    workers: ThreadLocal<RefCell<Worker>>,
+    scratch: ThreadLocal<RefCell<CodecScratch>>,
 }
 impl Codec {
-    pub(super) fn new(workers: usize) -> Self {
+    /// Reserves scratch capacity for the expected number of executing threads.
+    pub(super) fn new(num_threads: usize) -> Self {
         Self {
-            workers: ThreadLocal::with_capacity(workers),
+            scratch: ThreadLocal::with_capacity(num_threads),
         }
     }
     pub(super) fn lease(&self) -> Lease<'_> {
         Lease {
-            cursor: self.workers.get_or_default().borrow_mut(),
+            scratch: self.scratch.get_or_default().borrow_mut(),
         }
     }
 }
@@ -29,12 +30,12 @@ impl Codec {
 /// Bytes and offsets are overwritten per stream and reused across freezes.
 /// The RefCell guard grants exclusive access to both scratch buffers.
 #[derive(Default)]
-struct Worker {
+struct CodecScratch {
     bytes: Vec<u8>,
     offsets: Vec<usize>,
 }
 
-impl Worker {
+impl CodecScratch {
     // Each restart stores an absolute coordinate; the rest of its block stores
     // varint gaps. Reset both buffers together so offsets address this stream.
     fn encode_stream(&mut self, input: &Input<'_>) -> Result<()> {
@@ -62,10 +63,10 @@ impl Worker {
     }
 }
 
-/// Exclusive access to one executing worker's reusable encoder buffers.
+/// Exclusive access to one thread's reusable position encoder buffers.
 /// Frozen lists own their bytes and can outlive this guard and the Codec.
 pub(super) struct Lease<'codec> {
-    cursor: RefMut<'codec, Worker>,
+    scratch: RefMut<'codec, CodecScratch>,
 }
 
 /// Mutable sorted task positions, narrowed to u32 until a full-u64 value appears.
@@ -176,7 +177,7 @@ impl Input<'_> {
                     .iter()
                     .rev()
                     .filter(|p| !p.is_empty())
-                    .find_map(|p| p.from(p.len() - 1).next())?,
+                    .find_map(|p| p.iter_from(p.len() - 1).next())?,
             )),
         }
     }
@@ -240,19 +241,19 @@ impl Positions {
         if count == 2 {
             return Ok(Self::Two(first, last));
         }
-        let worker = &mut *lease.cursor;
-        worker.encode_stream(&input)?;
+        let scratch = &mut *lease.scratch;
+        scratch.encode_stream(&input)?;
         let capacity = prefix(count)
-            .checked_add(worker.bytes.len())
+            .checked_add(scratch.bytes.len())
             .ok_or("BPE position layout exceeds usize")?;
         let mut bytes = Vec::with_capacity(capacity);
         bytes.extend_from_slice(&count.to_le_bytes());
-        if worker.offsets.len() > 1 {
-            for &offset in &worker.offsets {
+        if scratch.offsets.len() > 1 {
+            for &offset in &scratch.offsets {
                 bytes.extend_from_slice(&offset.to_le_bytes());
             }
         }
-        bytes.extend_from_slice(&worker.bytes);
+        bytes.extend_from_slice(&scratch.bytes);
         Ok(Self::Compressed(bytes.into_boxed_slice()))
     }
     fn bytes(&self) -> &[u8] {
@@ -338,7 +339,8 @@ impl Positions {
                 .count()
     }
 
-    pub(super) fn from(&self, index: usize) -> impl Iterator<Item = u64> + '_ {
+    /// Iterates from a list index, rather than a corpus coordinate.
+    pub(super) fn iter_from(&self, index: usize) -> impl Iterator<Item = u64> + '_ {
         self.read_blocks(index / RESTART..self.block_count())
             .skip(index % RESTART)
     }
@@ -422,7 +424,11 @@ mod tests {
                     .step_by(if cfg!(miri) { 127 } else { 1 })
                     .chain([length])
                 {
-                    assert!(positions.from(index).eq(values[index..].iter().copied()));
+                    assert!(
+                        positions
+                            .iter_from(index)
+                            .eq(values[index..].iter().copied())
+                    );
                 }
                 for target in boundary
                     .into_iter()
