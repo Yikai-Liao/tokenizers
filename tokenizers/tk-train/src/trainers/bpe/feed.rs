@@ -7,6 +7,7 @@ use tk_encode::{Result, parallelism::*};
 
 type CountMap = AHashMap<CompactString, u64>;
 type SharedCounts = scc::HashMap<CompactString, u64, RandomState>;
+
 // Cap distinct local keys; strings and callback output are not byte-bounded.
 const LOCAL_KEY_LIMIT: usize = 2048;
 // Amortize the bridge's serialized source `next()` lock across several inputs.

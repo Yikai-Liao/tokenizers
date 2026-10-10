@@ -20,10 +20,12 @@ pub(super) struct Vocabulary {
     suffix: Option<String>,
     plain_ids_resolved: bool,
 }
+
 pub(super) struct MergeToken {
     pub(super) existing_id: Option<u32>,
     text: CompactString,
 }
+
 pub(super) struct InitialTokenIds {
     characters: Vec<u32>,
     decorated: Vec<[u32; 3]>,
@@ -31,6 +33,7 @@ pub(super) struct InitialTokenIds {
     suffix: bool,
     complete_alphabet: bool,
 }
+
 impl Vocabulary {
     pub(super) fn initialize(
         trainer: &BpeTrainer,
@@ -45,9 +48,12 @@ impl Vocabulary {
             suffix: trainer.end_of_word_suffix.clone(),
             plain_ids_resolved: false,
         };
+        // 1. Reserve special IDs before inserting the codepoint-ordered alphabet.
         for token in &trainer.special_tokens {
             vocabulary.intern(token.content.as_str())?;
         }
+
+        // 2. Preserve the limited selector, or collect all observed characters.
         if trainer.limit_alphabet.is_some() {
             // Preserve the existing frequency-tie selector for limited alphabets.
             let characters =
@@ -57,48 +63,41 @@ impl Vocabulary {
                 vocabulary.intern(character.encode_utf8(&mut utf8))?;
             }
         } else {
-            let words: Vec<_> = word_counts.keys().collect();
-            let chunk = words.len().div_ceil(workers).max(1);
-            let bitmaps: Vec<_> = words
-                .par_chunks(chunk)
-                .map(|chunk| {
-                    let mut present = vec![0_u64; 0x110000 / 64];
-                    for word in chunk {
-                        for character in word.chars() {
-                            let codepoint = character as usize;
-                            present[codepoint / 64] |= 1_u64 << (codepoint % 64);
-                        }
-                    }
-                    present
-                })
-                .collect();
-            let mut present = vec![0_u64; 0x110000 / 64];
-            for bitmap in bitmaps {
-                for (merged, bits) in present.iter_mut().zip(bitmap) {
-                    *merged |= bits;
-                }
-            }
-            let observed = present.clone();
-            for &character in &trainer.initial_alphabet {
-                let codepoint = character as usize;
-                present[codepoint / 64] |= 1_u64 << (codepoint % 64);
-            }
-            for (word, mut bits) in present.into_iter().enumerate() {
-                while bits != 0 {
-                    let codepoint = word * 64 + bits.trailing_zeros() as usize;
-                    let character = char::from_u32(codepoint as u32)
-                        .expect("alphabet bits come from valid characters");
-                    let mut utf8 = [0; 4];
-                    let id = vocabulary.intern(character.encode_utf8(&mut utf8))?;
-                    vocabulary.initial_spans[id as usize] =
-                        usize::from(observed[codepoint / 64] & (1_u64 << (codepoint % 64)) != 0);
-                    bits &= bits - 1;
-                }
-            }
-            vocabulary.plain_ids_resolved = true;
+            vocabulary.initialize_unlimited_alphabet(trainer, word_counts, workers)?;
         }
         Ok(vocabulary)
     }
+
+    // With no limit, a parallel presence bitmap replaces weighted frequency
+    // counting. Codepoint traversal still determines the alphabet's token IDs.
+    fn initialize_unlimited_alphabet(
+        &mut self,
+        trainer: &BpeTrainer,
+        word_counts: WordCountsView<'_>,
+        workers: usize,
+    ) -> Result<()> {
+        let mut present = observed_characters(word_counts, workers);
+        let observed = present.clone();
+        for &character in &trainer.initial_alphabet {
+            let codepoint = character as usize;
+            present[codepoint / 64] |= 1_u64 << (codepoint % 64);
+        }
+        for (word, mut bits) in present.into_iter().enumerate() {
+            while bits != 0 {
+                let codepoint = word * 64 + bits.trailing_zeros() as usize;
+                let character = char::from_u32(codepoint as u32)
+                    .expect("alphabet bits come from valid characters");
+                let mut utf8 = [0; 4];
+                let id = self.intern(character.encode_utf8(&mut utf8))?;
+                self.initial_spans[id as usize] =
+                    usize::from(observed[codepoint / 64] & (1_u64 << (codepoint % 64)) != 0);
+                bits &= bits - 1;
+            }
+        }
+        self.plain_ids_resolved = true;
+        Ok(())
+    }
+
     fn intern(&mut self, text: &str) -> Result<u32> {
         if let Some(id) = self.tokens.get_index_of(text) {
             return Ok(id as u32);
@@ -107,6 +106,7 @@ impl Vocabulary {
         self.initial_spans.push(0);
         Ok(id)
     }
+
     // The caller has established that this text is absent. No vocabulary
     // mutation can intervene before this insertion on the coordinator.
     fn insert_new_token(&mut self, token: CompactString) -> Result<u32> {
@@ -118,11 +118,13 @@ impl Vocabulary {
         debug_assert!(inserted && index == id as usize);
         Ok(id)
     }
+
     pub(super) fn initial_ids(
         &mut self,
         word_counts: WordCountsView<'_>,
         progress: &Option<ProgressBar>,
     ) -> Result<InitialTokenIds> {
+        // 1. Map existing character IDs before any decorated identities are inserted.
         let mut ids = InitialTokenIds {
             characters: vec![WORD_SEPARATOR_ID; 0x110000],
             decorated: Vec::new(),
@@ -148,47 +150,13 @@ impl Vocabulary {
             }
             return Ok(ids);
         }
+
+        // 2. Activate retained symbols in input traversal order. Sorting words first
+        // would change the IDs allocated for previously unseen decorated strings.
         self.initial_spans.fill(0);
         let mut decorated = String::new();
-        // Allocate decorated IDs in the input view's traversal before sorting weighted words.
         for (index, word) in word_counts.keys().enumerate() {
-            for (byte, character) in word.char_indices() {
-                let plain_id = ids.characters[character as usize];
-                if plain_id == WORD_SEPARATOR_ID {
-                    continue;
-                }
-                let flags = usize::from(ids.prefix && byte != 0)
-                    | (usize::from(ids.suffix && byte + character.len_utf8() == word.len()) << 1);
-                let id = if flags == 0 {
-                    plain_id
-                } else {
-                    let cached = ids.decorated[plain_id as usize][flags - 1];
-                    if cached != WORD_SEPARATOR_ID {
-                        cached
-                    } else {
-                        decorated.clear();
-                        if flags & 1 != 0 {
-                            decorated.push_str(
-                                self.prefix
-                                    .as_deref()
-                                    .expect("prefix flag requires a prefix"),
-                            );
-                        }
-                        decorated.push(character);
-                        if flags & 2 != 0 {
-                            decorated.push_str(
-                                self.suffix
-                                    .as_deref()
-                                    .expect("suffix flag requires a suffix"),
-                            );
-                        }
-                        let id = self.intern(&decorated)?;
-                        ids.decorated[plain_id as usize][flags - 1] = id;
-                        id
-                    }
-                };
-                self.initial_spans[id as usize] = 1;
-            }
+            self.activate_word(word, &mut ids, &mut decorated)?;
             if (index + 1) % 1024 == 0
                 && let Some(p) = progress
             {
@@ -200,12 +168,74 @@ impl Vocabulary {
         }
         Ok(ids)
     }
+
+    fn activate_word(
+        &mut self,
+        word: &str,
+        ids: &mut InitialTokenIds,
+        decorated: &mut String,
+    ) -> Result<()> {
+        for (byte, character) in word.char_indices() {
+            let plain_id = ids.characters[character as usize];
+            if plain_id == WORD_SEPARATOR_ID {
+                continue;
+            }
+            let flags = usize::from(ids.prefix && byte != 0)
+                | (usize::from(ids.suffix && byte + character.len_utf8() == word.len()) << 1);
+            let id = self.decorated_id(ids, plain_id, character, flags, decorated)?;
+            self.initial_spans[id as usize] = 1;
+        }
+
+        Ok(())
+    }
+
+    // Cache each affix combination by plain character ID. The reusable string
+    // buffer avoids allocating again when a decorated identity already exists.
+    fn decorated_id(
+        &mut self,
+        ids: &mut InitialTokenIds,
+        plain_id: u32,
+        character: char,
+        flags: usize,
+        decorated: &mut String,
+    ) -> Result<u32> {
+        if flags == 0 {
+            return Ok(plain_id);
+        }
+        let cached = ids.decorated[plain_id as usize][flags - 1];
+        if cached != WORD_SEPARATOR_ID {
+            return Ok(cached);
+        }
+
+        decorated.clear();
+        if flags & 1 != 0 {
+            decorated.push_str(
+                self.prefix
+                    .as_deref()
+                    .expect("prefix flag requires a prefix"),
+            );
+        }
+        decorated.push(character);
+        if flags & 2 != 0 {
+            decorated.push_str(
+                self.suffix
+                    .as_deref()
+                    .expect("suffix flag requires a suffix"),
+            );
+        }
+        let id = self.intern(decorated)?;
+        ids.decorated[plain_id as usize][flags - 1] = id;
+        Ok(id)
+    }
+
     pub(super) fn take_initial_spans(&mut self) -> Vec<usize> {
         std::mem::take(&mut self.initial_spans)
     }
+
     pub(super) fn len(&self) -> usize {
         self.tokens.len()
     }
+
     pub(super) fn merge_token(&self, pair: Pair) -> MergeToken {
         let left = self.tokens[pair.0 as usize].as_str();
         let right = self.tokens[pair.1 as usize].as_str();
@@ -222,6 +252,7 @@ impl Vocabulary {
             text,
         }
     }
+
     pub(super) fn resolve_merge(&mut self, token: MergeToken) -> Result<u32> {
         match token.existing_id {
             Some(id) => Ok(id),
@@ -230,6 +261,7 @@ impl Vocabulary {
             None => self.insert_new_token(token.text),
         }
     }
+
     pub(super) fn into_model_parts(self, merges: Vec<Pair>) -> (Vocab, Merges) {
         let merges = merges
             .into_iter()
@@ -250,6 +282,7 @@ impl Vocabulary {
         )
     }
 }
+
 impl InitialTokenIds {
     /// Interpret filtering and decorations against original UTF-8 coordinates.
     /// The plain path chooses its loop once and avoids per-symbol affix checks.
@@ -281,6 +314,7 @@ impl InitialTokenIds {
             }
         }
     }
+
     pub(super) fn symbol_count(&self, text: &str) -> usize {
         if self.complete_alphabet {
             text.chars().count()
@@ -290,13 +324,16 @@ impl InitialTokenIds {
                 .count()
         }
     }
+
     pub(super) fn plain(&self) -> bool {
         !self.prefix && !self.suffix
     }
+
     pub(super) fn plain_id(&self, character: char) -> Option<u32> {
         let id = self.characters[character as usize];
         (id != WORD_SEPARATOR_ID).then_some(id)
     }
+
     pub(super) fn id(&self, character: char, first: bool, last: bool) -> Option<u32> {
         let plain = self.characters[character as usize];
         if plain == WORD_SEPARATOR_ID {
@@ -345,4 +382,29 @@ pub(super) fn select_alphabet(trainer: &BpeTrainer, wc: WordCountsView<'_>) -> V
     // Keep the initial alphabet (sorted for determinism)
     kept.sort_unstable_by_key(|k| *k.0 as u32);
     kept.into_iter().map(|(&character, _)| character).collect()
+}
+
+fn observed_characters(word_counts: WordCountsView<'_>, workers: usize) -> Vec<u64> {
+    let words: Vec<_> = word_counts.keys().collect();
+    let chunk = words.len().div_ceil(workers).max(1);
+    let bitmaps: Vec<_> = words
+        .par_chunks(chunk)
+        .map(|chunk| {
+            let mut present = vec![0_u64; 0x110000 / 64];
+            for word in chunk {
+                for character in word.chars() {
+                    let codepoint = character as usize;
+                    present[codepoint / 64] |= 1_u64 << (codepoint % 64);
+                }
+            }
+            present
+        })
+        .collect();
+    let mut present = vec![0_u64; 0x110000 / 64];
+    for bitmap in bitmaps {
+        for (merged, bits) in present.iter_mut().zip(bitmap) {
+            *merged |= bits;
+        }
+    }
+    present
 }

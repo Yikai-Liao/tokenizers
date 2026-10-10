@@ -23,17 +23,20 @@ pub(super) struct Corpus {
     occurrence_spans: Option<Vec<AtomicUsize>>,
     whole_words: bool,
 }
+
 #[derive(Clone, Copy)]
 pub(super) struct Match {
     pub(super) start: usize,
     pub(super) right: usize,
     pub(super) after: usize,
 }
+
 impl Match {
     pub(super) fn span(self) -> usize {
         self.after - self.start
     }
 }
+
 pub(super) struct CorpusPlan<'input> {
     // Counting needs geometry and borrowed words, but no resident token plane.
     // materialize consumes this metadata and constructs the complete Corpus once.
@@ -48,6 +51,7 @@ pub(super) struct CorpusPlan<'input> {
     slot_bound: usize,
     reuse: bool,
 }
+
 impl<'input> CorpusPlan<'input> {
     pub(super) fn build(
         words: WordCountsView<'input>,
@@ -113,12 +117,15 @@ impl<'input> CorpusPlan<'input> {
             reuse,
         })
     }
+
     pub(super) fn items(&self) -> usize {
         self.length
     }
+
     pub(super) fn word_count(&self) -> usize {
         self.words.len()
     }
+
     // Whole words preserve symbol-scan semantics. A single oversized word is
     // admitted alone; otherwise each range has at most `slots` resident slots.
     pub(super) fn initial_ranges(&self, slots: usize) -> Vec<std::ops::Range<usize>> {
@@ -137,9 +144,11 @@ impl<'input> CorpusPlan<'input> {
         }
         ranges
     }
+
     pub(super) fn small_pair_domain(&self) -> Option<usize> {
         (self.spans.len() <= 256).then_some(self.spans.len())
     }
+
     pub(super) fn initial_edges(
         &self,
         range: std::ops::Range<usize>,
@@ -167,6 +176,7 @@ impl<'input> CorpusPlan<'input> {
         }
         Ok(())
     }
+
     pub(super) fn materialize(self) -> Corpus {
         let tokens = Slots::new(self.length, self.slot_bound);
         self.words
@@ -195,10 +205,12 @@ impl<'input> CorpusPlan<'input> {
         }
     }
 }
+
 impl Corpus {
     pub(super) fn len(&self) -> usize {
         self.tokens.len()
     }
+
     pub(super) fn resident(&self, coordinate: u64) -> usize {
         let position =
             usize::try_from(coordinate).expect("corpus coordinate fits resident indexing");
@@ -208,10 +220,12 @@ impl Corpus {
         );
         position
     }
+
     #[inline]
     pub(super) fn token(&self, position: usize) -> u32 {
         self.tokens.get(position)
     }
+
     pub(super) fn prefetch(&self, position: usize) {
         #[cfg(target_arch = "x86_64")]
         {
@@ -228,9 +242,11 @@ impl Corpus {
                 }
             }
         }
+
         #[cfg(not(target_arch = "x86_64"))]
         let _ = position;
     }
+
     pub(super) fn weight_region(&self, position: usize) -> (u64, usize) {
         if self.weight_regions.len() == 1 {
             return (self.weight_regions[0].1, self.len());
@@ -250,18 +266,23 @@ impl Corpus {
             self.weight_regions.get(i + 1).map_or(self.len(), |r| r.0),
         )
     }
+
     pub(super) fn word(&self, position: usize) -> usize {
         self.starts.partition_point(|&start| start <= position) - 1
     }
+
     pub(super) fn word_start(&self, word: usize) -> usize {
         self.starts[word]
     }
+
     pub(super) fn word_end(&self, word: usize) -> usize {
         self.starts.get(word + 1).copied().unwrap_or(self.len()) - 1
     }
+
     pub(super) fn word_weight(&self, word: usize) -> u64 {
         self.weight_region(self.word_start(word)).0
     }
+
     #[inline]
     pub(super) fn span(&self, position: usize) -> usize {
         self.occurrence_spans.as_ref().map_or_else(
@@ -269,12 +290,15 @@ impl Corpus {
             |spans| spans[position].load(Ordering::Relaxed),
         )
     }
+
     pub(super) fn id_count(&self) -> usize {
         self.spans.len()
     }
+
     pub(super) fn id_span(&self, id: u32) -> usize {
         self.spans[id as usize]
     }
+
     // Fresh IDs have fixed geometry. Cache it once per preparation task,
     // keeping occurrence-dependent alias matching in matched().
     pub(super) fn fresh_matcher(&self, pair: Pair) -> impl Fn(usize, u32) -> Option<Match> + '_ {
@@ -297,6 +321,7 @@ impl Corpus {
             })
         }
     }
+
     pub(super) fn matched(&self, position: usize, pair: Pair) -> Option<Match> {
         if self.token(position) != pair.0 {
             return None;
@@ -314,12 +339,15 @@ impl Corpus {
             after,
         })
     }
+
     pub(super) fn whole_words(&self) -> bool {
         self.whole_words
     }
+
     pub(super) fn is_active(&self, id: u32) -> bool {
         self.spans.get(id as usize).is_some_and(|&span| span != 0)
     }
+
     pub(super) fn prepare_identity(&mut self, pair: Pair, id: u32) {
         self.whole_words |= self.is_active(id);
         // Once aliases need occurrence geometry, keep only activation here.
@@ -334,21 +362,28 @@ impl Corpus {
         } else {
             let old = self.spans[id as usize];
             if self.occurrence_spans.is_none() && old != 0 && old != span {
-                let values: Vec<_> = (0..self.len()).map(|_| AtomicUsize::new(0)).collect();
-                for &start in &self.starts {
-                    let mut p = start;
-                    while self.token(p) != WORD_SEPARATOR_ID {
-                        let n = self.id_span(self.token(p));
-                        values[p].store(n, Ordering::Relaxed);
-                        values[p + n - 1].store(n, Ordering::Relaxed);
-                        p += n;
-                    }
-                }
-                self.occurrence_spans = Some(values);
+                // Preserve each occurrence's old geometry before changing this
+                // ID's representative span. Reused IDs can have several lengths.
+                self.materialize_occurrence_spans();
             }
             self.spans[id as usize] = span;
         }
     }
+
+    fn materialize_occurrence_spans(&mut self) {
+        let values: Vec<_> = (0..self.len()).map(|_| AtomicUsize::new(0)).collect();
+        for &start in &self.starts {
+            let mut p = start;
+            while self.token(p) != WORD_SEPARATOR_ID {
+                let n = self.id_span(self.token(p));
+                values[p].store(n, Ordering::Relaxed);
+                values[p + n - 1].store(n, Ordering::Relaxed);
+                p += n;
+            }
+        }
+        self.occurrence_spans = Some(values);
+    }
+
     // Call only after all preparation readers join. Matches own disjoint endpoint
     // slots; atomics also keep every individual access safe on error or unwind.
     pub(super) fn apply(&self, matched: Match, replacement: u32) {
@@ -373,6 +408,7 @@ enum Slots {
     Narrow(Vec<AtomicU16>),
     Wide(Vec<AtomicU32>),
 }
+
 impl Slots {
     fn new(length: usize, vocabulary_bound: usize) -> Self {
         if vocabulary_bound <= u16::MAX as usize {
@@ -385,12 +421,14 @@ impl Slots {
             )
         }
     }
+
     fn len(&self) -> usize {
         match self {
             Self::Narrow(values) => values.len(),
             Self::Wide(values) => values.len(),
         }
     }
+
     #[inline]
     fn get(&self, position: usize) -> u32 {
         match self {
@@ -405,6 +443,7 @@ impl Slots {
             Self::Wide(values) => values[position].load(Ordering::Relaxed),
         }
     }
+
     #[inline]
     fn set(&self, position: usize, id: u32) {
         match self {

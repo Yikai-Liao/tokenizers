@@ -1,10 +1,7 @@
 #![allow(clippy::map_entry)]
 
-mod feed;
-mod word_counts;
-use word_counts::{WordCounts, WordCountsView};
-
 mod corpus;
+mod feed;
 mod index;
 mod merge;
 #[cfg(feature = "parity-aware-bpe")]
@@ -17,6 +14,7 @@ mod tests;
 mod vocabulary;
 #[cfg(feature = "parity-aware-bpe")]
 mod word;
+mod word_counts;
 #[cfg(feature = "parity-aware-bpe")]
 pub use parity_trainer::{ParityBpeTrainer, ParityBpeTrainerBuilder, ParityVariant};
 
@@ -31,12 +29,15 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use tk_encode::vocab::bucket_added_vocabulary::AddedToken;
 use vocabulary::Vocabulary;
+use word_counts::{WordCounts, WordCountsView};
+
 // The optional parity trainer uses linked words; ordinary training owns a
 // fixed-coordinate corpus. The test oracle uses independent sequential vectors.
 #[cfg(feature = "parity-aware-bpe")]
 use word::{WithFirstLastIterator, Word};
 
 use tk_encode::Result;
+
 #[cfg(any(test, feature = "parity-aware-bpe"))]
 use tk_encode::models::bpe::Pair;
 use tk_encode::models::bpe::{BpeConfig, Merges, PipelineBPE, Vocab};
@@ -156,6 +157,7 @@ impl BpeTrainerBuilder {
         self.config.end_of_word_suffix = Some(suffix);
         self
     }
+
     /// Set the exclusive span limit for newly created adjacent pairs.
     ///
     /// See [`BpeTrainer::max_token_length`] for units and the initial-pair exception.
@@ -309,6 +311,7 @@ impl BpeTrainer {
             p.set_length(len as u64);
             p.reset();
         }
+
         // Emit initial JSON progress for this stage
         self.emit_json_progress(message, 0, len);
     }
@@ -356,12 +359,18 @@ impl BpeTrainer {
     /// # Errors
     ///
     /// Returns an error on overflow or underflow in checked `u64` pair, birth,
-    /// or removal arithmetic, or in checked `i64` active-reuse ledger updates.
-    /// Nonempty affixes and active reuse also require the maximum word weight and
+    /// or removal arithmetic, or in checked `i64` identity-reuse ledger updates.
+    /// A merge reuses an identity when its result string resolves to an ID already
+    /// activated as an input symbol or an earlier merge result. This includes IDs
+    /// whose last occurrence has since disappeared. A new ID or an unactivated
+    /// reserved ID is a first activation.
+    ///
+    /// Nonempty affixes and identity reuse require the maximum word weight and
     /// initial weighted edge mass (the sum of each word's weight times its retained
     /// adjacent-pair count) to fit in `i64::MAX`. The affix check applies even when
-    /// the initial vocabulary already meets the target size. Plain first-activation
-    /// input has no total-`u64` mass limit when every individual pair count fits.
+    /// the initial vocabulary already meets the target size. Without nonempty
+    /// affixes or identity reuse, there is no total-`u64` mass limit when every
+    /// individual pair count fits.
     ///
     /// Pool creation, progress setup, vocabulary or corpus size bounds, and fallible position
     /// storage operations can also return errors. Feed counting and limited-alphabet
@@ -401,6 +410,7 @@ fn add(count: &mut u64, amount: u64) -> Result<()> {
 
 const WORD_SEPARATOR_ID: u32 = u32::MAX;
 type ModelParts = (Vocab, Merges, Vec<AddedToken>);
+
 #[cfg(test)]
 type Trace = Vec<(Pair, u64, u32)>;
 
@@ -418,80 +428,112 @@ fn train(
         let mut alphabet = None;
         let mut reuse = false;
         loop {
-            let mut vocabulary = Vocabulary::initialize(trainer, words, workers, &mut alphabet)?;
-            trainer.update_progress(&progress, words.len(), "Tokenize words");
-            let plan = CorpusPlan::build(words, &mut vocabulary, trainer, reuse, &progress)?;
-            trainer.finalize_progress(&progress, plan.word_count(), "Tokenize words");
-            trainer.update_progress(&progress, plan.word_count(), "Count pairs");
-            let arena = Arena::new(workers, plan.items());
-            let mut index = PairIndex::build(
-                &arena,
-                &plan,
-                trainer.min_frequency,
+            if let Some(parts) = train_attempt(
+                trainer,
+                words,
                 workers,
                 reuse,
+                &mut alphabet,
                 &progress,
-            )?;
-            trainer.finalize_progress(&progress, plan.word_count(), "Count pairs");
-            if vocabulary.len() >= trainer.vocab_size {
-                trainer.update_progress(&progress, trainer.vocab_size, "Compute merges");
-                trainer.finalize_progress(&progress, 0, "Compute merges");
-                drop(index);
-                drop(plan);
-                drop(arena);
-                let (vocab, merges) = vocabulary.into_model_parts(Vec::new());
-                return Ok((vocab, merges, trainer.special_tokens.clone()));
-            }
-            let mut corpus = plan.materialize();
-            trainer.update_progress(&progress, trainer.vocab_size, "Compute merges");
-            let mut merges = Vec::new();
-            #[cfg(test)]
-            let mut trace = Trace::new();
-            let mut restart = false;
-            while vocabulary.len() < trainer.vocab_size {
-                let batch = match Batch::select(trainer, &mut vocabulary, &mut corpus, &mut index)?
-                {
-                    Selection::Finished => break,
-                    Selection::Restart => {
-                        restart = true;
-                        break;
-                    }
-                    Selection::Ready(batch) => batch,
-                };
                 #[cfg(test)]
-                trace.extend(batch.trace());
-                let previous_len = merges.len();
-                merges.extend(batch.pairs());
-                let prepared = batch.prepare(
-                    &corpus,
-                    &arena,
-                    trainer.max_token_length.unwrap_or(usize::MAX),
-                )?;
-                let changes = prepared.apply(&corpus);
-                index.commit(changes)?;
-                if let Some(p) = &progress {
-                    p.inc((merges.len() - previous_len) as u64);
-                }
-                trainer.emit_json_progress("Compute merges", merges.len(), trainer.vocab_size);
+                &mut observe,
+            )? {
+                return Ok(parts);
             }
-            trainer.finalize_progress(&progress, merges.len(), "Compute merges");
-            if restart {
-                reuse = true;
-                continue;
-            }
-            drop(index);
-            drop(corpus);
-            drop(arena);
-            #[cfg(test)]
-            if let Some(observer) = observe.as_mut() {
-                for (pair, count, id) in trace {
-                    observer(pair, count, id);
-                }
-            }
-            let (vocab, merges) = vocabulary.into_model_parts(merges);
-            return Ok((vocab, merges, trainer.special_tokens.clone()));
+
+            // An active-ID collision discards the fresh attempt. Retain the
+            // selected alphabet so frequency ties cannot change on the retry.
+            reuse = true;
         }
     })
+}
+
+// None requests a retry with historical cohorts. Only a completed attempt
+// publishes model parts and its test trace; failed fresh attempts stay private.
+fn train_attempt(
+    trainer: &BpeTrainer,
+    words: WordCountsView<'_>,
+    workers: usize,
+    reuse: bool,
+    alphabet: &mut Option<Vec<char>>,
+    progress: &Option<ProgressBar>,
+    #[cfg(test)] observe: &mut Option<&mut (dyn FnMut(Pair, u64, u32) + Send)>,
+) -> Result<Option<ModelParts>> {
+    // 1. Resolve the vocabulary and tokenize borrowed input into a corpus plan.
+    let mut vocabulary = Vocabulary::initialize(trainer, words, workers, alphabet)?;
+    trainer.update_progress(progress, words.len(), "Tokenize words");
+    let plan = CorpusPlan::build(words, &mut vocabulary, trainer, reuse, progress)?;
+    trainer.finalize_progress(progress, plan.word_count(), "Tokenize words");
+
+    // 2. Count and freeze initial pairs before allocating resident token slots.
+    trainer.update_progress(progress, plan.word_count(), "Count pairs");
+    let arena = Arena::new(workers, plan.items());
+    let mut index = PairIndex::build(
+        &arena,
+        &plan,
+        trainer.min_frequency,
+        workers,
+        reuse,
+        progress,
+    )?;
+    trainer.finalize_progress(progress, plan.word_count(), "Count pairs");
+    if vocabulary.len() >= trainer.vocab_size {
+        trainer.update_progress(progress, trainer.vocab_size, "Compute merges");
+        trainer.finalize_progress(progress, 0, "Compute merges");
+        drop(index);
+        drop(plan);
+        drop(arena);
+        let (vocab, merges) = vocabulary.into_model_parts(Vec::new());
+        return Ok(Some((vocab, merges, trainer.special_tokens.clone())));
+    }
+
+    // 3. Select compatible batches, prepare snapshot edits, then commit joined jobs.
+    let mut corpus = plan.materialize();
+    trainer.update_progress(progress, trainer.vocab_size, "Compute merges");
+    let mut merges = Vec::new();
+    #[cfg(test)]
+    let mut trace = Trace::new();
+    let mut restart = false;
+    while vocabulary.len() < trainer.vocab_size {
+        let batch = match Batch::select(trainer, &mut vocabulary, &mut corpus, &mut index)? {
+            Selection::Finished => break,
+            Selection::Restart => {
+                restart = true;
+                break;
+            }
+            Selection::Ready(batch) => batch,
+        };
+        #[cfg(test)]
+        trace.extend(batch.trace());
+        let previous_len = merges.len();
+        merges.extend(batch.pairs());
+        let prepared = batch.prepare(
+            &corpus,
+            &arena,
+            trainer.max_token_length.unwrap_or(usize::MAX),
+        )?;
+        let changes = prepared.apply(&corpus);
+        index.commit(changes)?;
+        if let Some(p) = progress {
+            p.inc((merges.len() - previous_len) as u64);
+        }
+        trainer.emit_json_progress("Compute merges", merges.len(), trainer.vocab_size);
+    }
+    trainer.finalize_progress(progress, merges.len(), "Compute merges");
+    if restart {
+        return Ok(None);
+    }
+    drop(index);
+    drop(corpus);
+    drop(arena);
+    #[cfg(test)]
+    if let Some(observer) = observe.as_mut() {
+        for (pair, count, id) in trace {
+            observer(pair, count, id);
+        }
+    }
+    let (vocab, merges) = vocabulary.into_model_parts(merges);
+    Ok(Some((vocab, merges, trainer.special_tokens.clone())))
 }
 
 impl Trainer for BpeTrainer {

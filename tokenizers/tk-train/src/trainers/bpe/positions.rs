@@ -7,6 +7,7 @@ use std::{
     sync::{Mutex, MutexGuard},
 };
 use tk_encode::Result;
+
 const RESTART: usize = 128;
 const INLINE: usize = 1 << (usize::BITS - 1);
 const PAIR: usize = 1 << (usize::BITS - 2);
@@ -19,6 +20,7 @@ pub(super) struct Arena {
     workers: Vec<Mutex<Worker>>,
     cutoff: usize,
 }
+
 impl Arena {
     pub(super) fn new(workers: usize, items: usize) -> Self {
         Self {
@@ -26,6 +28,7 @@ impl Arena {
             cutoff: ((items as u128 / 256).isqrt() as usize).max(256),
         }
     }
+
     pub(super) fn lease(&self) -> Lease<'_> {
         // A worker cursor is non-reentrant. Drop the lease before starting any
         // nested Rayon work: another task on this worker may request the same lock.
@@ -37,27 +40,60 @@ impl Arena {
         }
     }
 }
+
 #[derive(Default)]
 struct Worker {
     bump: Bump,
     bytes: Vec<u8>,
     offsets: Vec<usize>,
 }
+
+impl Worker {
+    // Each restart stores an absolute coordinate; the rest of its block stores
+    // varint gaps. Reset both buffers together so offsets address this stream.
+    fn encode_stream(&mut self, input: &Input<'_>) -> Result<()> {
+        self.bytes.clear();
+        self.offsets.clear();
+        let mut previous = 0;
+        for (i, position) in input.iter().enumerate() {
+            let gap = position
+                .checked_sub(previous)
+                .ok_or("BPE positions are not sorted")?;
+            if i.is_multiple_of(RESTART) {
+                self.offsets.push(self.bytes.len());
+                self.bytes.extend_from_slice(&position.to_le_bytes());
+            } else {
+                let mut delta = gap;
+                while delta >= 128 {
+                    self.bytes.push((delta as u8 & 127) | 128);
+                    delta >>= 7;
+                }
+                self.bytes.push(delta as u8);
+            }
+            previous = position;
+        }
+        Ok(())
+    }
+}
+
 pub(super) struct Lease<'arena> {
     arena: &'arena Arena,
     cursor: MutexGuard<'arena, Worker>,
 }
+
 // Mutable task buffers keep four-byte coordinates until a full-u64 value appears.
 // Small buffers stay inline; promotion preserves every previously stored value.
 pub(super) enum Builder {
     Narrow(smallvec::SmallVec<[u32; 2]>),
     Wide(smallvec::SmallVec<[u64; 2]>),
 }
+
 impl Default for Builder {
     fn default() -> Self {
         Self::Narrow(smallvec::SmallVec::new())
     }
 }
+
 impl Builder {
     pub(super) fn iter(
         &self,
@@ -67,18 +103,22 @@ impl Builder {
             Self::Wide(values) => itertools::Either::Right(values.iter().copied()),
         }
     }
+
     pub(super) fn len(&self) -> usize {
         self.iter().len()
     }
+
     pub(super) fn is_empty(&self) -> bool {
         self.len() == 0
     }
+
     pub(super) fn push(&mut self, position: u64) -> Result<()> {
         if self.iter().next_back().is_some_and(|last| position < last) {
             return Err("BPE positions are not sorted".into());
         }
         self.push_ordered(position)
     }
+
     // Snapshot scans visit disjoint ordered matches; callers retain that order.
     // Generic append/input paths use `push` and keep its validation.
     pub(super) fn push_ordered(&mut self, position: u64) -> Result<()> {
@@ -94,6 +134,7 @@ impl Builder {
         }
         Ok(())
     }
+
     pub(super) fn append(&mut self, mut other: Self) -> Result<()> {
         if self.is_empty() {
             std::mem::swap(self, &mut other);
@@ -115,6 +156,7 @@ impl Builder {
         Ok(())
     }
 }
+
 // Only concrete storage views reach the allocator. Unlike an arbitrary safe
 // ExactSizeIterator implementation, these views have a trustworthy cardinality.
 pub(super) enum Input<'a> {
@@ -122,6 +164,7 @@ pub(super) enum Input<'a> {
     Slice(&'a [u64]),
     Fragments(&'a [Positions<'a>]),
 }
+
 impl Input<'_> {
     fn len(&self) -> Result<usize> {
         match self {
@@ -133,6 +176,7 @@ impl Input<'_> {
             }),
         }
     }
+
     fn bounds(&self) -> Option<(u64, u64)> {
         match self {
             Self::Builder(values) => Some((values.iter().next()?, values.iter().next_back()?)),
@@ -147,6 +191,7 @@ impl Input<'_> {
             )),
         }
     }
+
     fn iter(&self) -> impl Iterator<Item = u64> + '_ {
         match self {
             Self::Builder(values) => {
@@ -161,6 +206,7 @@ impl Input<'_> {
         }
     }
 }
+
 // Inline lists store the first coordinate in payload and the gap in count bits.
 // Allocated lists store their length and tag the pointer's low bit for Arena ownership.
 #[derive(Default)]
@@ -169,16 +215,19 @@ pub(super) struct Positions<'arena> {
     payload: *mut u8,
     arena_lifetime: PhantomData<&'arena Arena>,
 }
+
 // SAFETY: lists own their final heap storage or borrow stable Arena
 // storage. Moving a list does not move its allocation; Arena is Send + Sync.
 unsafe impl Send for Positions<'_> {}
 // SAFETY: mutation requires &mut self; borrowed readers own decoder state.
 // All initialized payloads stay live for the list or its training Arena.
 unsafe impl Sync for Positions<'_> {}
+
 fn prefix(count: usize) -> usize {
     let groups = count.div_ceil(RESTART);
     (1 + if groups > 1 { groups } else { 0 }) * std::mem::size_of::<usize>()
 }
+
 fn layout(count: usize, bytes: usize) -> Result<Layout> {
     Layout::from_size_align(
         prefix(count)
@@ -188,6 +237,7 @@ fn layout(count: usize, bytes: usize) -> Result<Layout> {
     )
     .map_err(|_| "BPE position allocation exceeds resident bounds".into())
 }
+
 impl<'arena> Positions<'arena> {
     #[inline]
     pub(super) fn len(&self) -> usize {
@@ -197,21 +247,26 @@ impl<'arena> Positions<'arena> {
             1 + usize::from(self.count_and_flags & PAIR != 0)
         }
     }
+
     pub(super) fn is_empty(&self) -> bool {
         self.len() == 0
     }
+
     fn pointer(&self) -> *mut u8 {
         self.payload.map_addr(|a| a & !1)
     }
+
     pub(super) fn from_sorted(input: Input<'_>, lease: &mut Lease<'arena>) -> Result<Self> {
         Self::encode(input, lease, false)
     }
+
     pub(super) fn from_sorted_owned(input: Input<'_>, lease: &mut Lease<'arena>) -> Result<Self> {
         Self::encode(input, lease, true)
     }
+
     fn encode(input: Input<'_>, lease: &mut Lease<'arena>, owned: bool) -> Result<Self> {
+        // 1. Validate cardinality and use inline storage for one or two positions.
         let count = input.len()?;
-        let values = input.iter();
         if count == 0 {
             return Ok(Self::default());
         }
@@ -231,27 +286,12 @@ impl<'arena> Positions<'arena> {
                 arena_lifetime: PhantomData,
             });
         }
+
+        // 2. Encode restart blocks in the worker's reusable scratch buffers.
         let worker = &mut *lease.cursor;
-        worker.bytes.clear();
-        worker.offsets.clear();
-        let mut previous = 0;
-        for (i, position) in values.enumerate() {
-            let gap = position
-                .checked_sub(previous)
-                .ok_or("BPE positions are not sorted")?;
-            if i.is_multiple_of(RESTART) {
-                worker.offsets.push(worker.bytes.len());
-                worker.bytes.extend_from_slice(&position.to_le_bytes());
-            } else {
-                let mut delta = gap;
-                while delta >= 128 {
-                    worker.bytes.push((delta as u8 & 127) | 128);
-                    delta >>= 7;
-                }
-                worker.bytes.push(delta as u8);
-            }
-            previous = position;
-        }
+        worker.encode_stream(&input)?;
+
+        // 3. Freeze the stream into its final Arena or owned allocation.
         let allocation = layout(count, worker.bytes.len())?;
         let arena = !owned && allocation.size() <= lease.arena.cutoff;
         let pointer = if arena {
@@ -267,6 +307,7 @@ impl<'arena> Positions<'arena> {
         if pointer.is_null() {
             return Err("BPE position allocation failed".into());
         }
+
         // SAFETY: final layout reserves an aligned length word, optional full
         // restart directory and stream. All bytes read later are initialized here.
         unsafe {
@@ -284,6 +325,7 @@ impl<'arena> Positions<'arena> {
                 worker.bytes.len(),
             );
         }
+
         // Arena publication borrows the attempt,
         // independently of this cursor lease; no reset or early free is exposed.
         Ok(Self {
@@ -292,6 +334,7 @@ impl<'arena> Positions<'arena> {
             arena_lifetime: PhantomData,
         })
     }
+
     fn bytes(&self) -> &[u8] {
         // SAFETY: only final-storage readers call this. The prefix is initialized
         // and its stream length/layout were validated at freeze publication.
@@ -302,6 +345,7 @@ impl<'arena> Positions<'arena> {
             )
         }
     }
+
     fn offset(&self, block: usize) -> usize {
         if block == 0 {
             0
@@ -310,18 +354,22 @@ impl<'arena> Positions<'arena> {
             unsafe { self.pointer().cast::<usize>().add(1 + block).read() }
         }
     }
+
     pub(super) fn block_count(&self) -> usize {
         self.len().div_ceil(RESTART)
     }
+
     pub(super) fn block_ranges(&self, target_items: usize) -> impl Iterator<Item = Range<usize>> {
         let blocks = target_items.div_ceil(RESTART).max(1);
         (0..self.block_count())
             .step_by(blocks)
             .map(move |begin| begin..(begin + blocks).min(self.block_count()))
     }
+
     pub(super) fn iter(&self) -> impl Iterator<Item = u64> + '_ {
         self.read_blocks(0..self.block_count())
     }
+
     pub(super) fn read_blocks(&self, range: Range<usize>) -> impl Iterator<Item = u64> + '_ {
         // Reject inverted ranges, then clamp before multiplying. If a range starts
         // past the directory, start == end and no directory pointer is formed.
@@ -351,6 +399,7 @@ impl<'arena> Positions<'arena> {
             })
         }
     }
+
     pub(super) fn lower_bound(&self, target: u64) -> usize {
         let mut begin = 0;
         let mut end = self.block_count();
@@ -369,16 +418,19 @@ impl<'arena> Positions<'arena> {
                 .take_while(|&p| p < target)
                 .count()
     }
+
     pub(super) fn from(&self, index: usize) -> impl Iterator<Item = u64> + '_ {
         self.read_blocks(index / RESTART..self.block_count())
             .skip(index % RESTART)
     }
 }
+
 impl Drop for Positions<'_> {
     fn drop(&mut self) {
         if self.is_empty() || self.count_and_flags & INLINE != 0 {
             return;
         }
+
         // SAFETY: the tag distinguishes owned final allocation and
         // borrowed Arena. Each owned allocation is reclaimed once with its layout.
         unsafe {
@@ -390,14 +442,17 @@ impl Drop for Positions<'_> {
         }
     }
 }
+
 struct Cursor<'a> {
     bytes: &'a [u8],
     position: u64,
     index: usize,
     end: usize,
 }
+
 impl Iterator for Cursor<'_> {
     type Item = u64;
+
     fn next(&mut self) -> Option<u64> {
         if self.index == self.end {
             return None;
@@ -423,6 +478,7 @@ impl Iterator for Cursor<'_> {
         Some(self.position)
     }
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -433,6 +489,7 @@ mod tests {
             std::mem::size_of::<Positions<'_>>(),
             2 * std::mem::size_of::<usize>()
         );
+        // 1. Freeze and seek lists across inline, restart, and full-u64 boundaries.
         let arena = Arena::new(2, 0);
         let boundary = [0, u32::MAX as u64, 1 << 32, 1 << 63, u64::MAX];
         let saved: Vec<_> = [0, 1, 2, 3, 127, 128, 129, 257, 1024]
@@ -494,8 +551,9 @@ mod tests {
                 (positions, values)
             })
             .collect();
-        // Both worker cursors allocate while published Arena and heap lists are
-        // shared with other threads. No Rayon collector is involved in Miri.
+
+        // 2. Reuse both worker cursors while other threads read published lists.
+        // No Rayon collector is involved in Miri.
         std::thread::scope(|scope| {
             for worker in 0..2 {
                 let arena = &arena;

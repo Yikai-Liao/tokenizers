@@ -283,6 +283,7 @@ pub(super) enum Phase {
     FreshPrepare,
     ReusePrepare,
 }
+
 pub(super) fn observe_worker(phase: Phase) {
     let expected = EXPECTED_WORKERS.load(Ordering::Relaxed);
     if expected != 0 {
@@ -293,69 +294,10 @@ pub(super) fn observe_worker(phase: Phase) {
 
 fn check_feed_contracts(trainer: &mut BpeTrainer, parallel: bool) {
     for boundary in [0, 31, 32, 33, 127, 128, 129, 257] {
-        // One callback alone crosses the local key limit; the public
-        // reference is a flat multiset, independent of batching and flushes.
-        let outputs = [
-            Vec::new(),
-            vec!["shared".into(), "shared".into()],
-            vec![
-                "".into(),
-                "中文🙂".into(),
-                "e\u{301}".into(),
-                "long".repeat(2048),
-            ],
-            (0..2047 + boundary % 3)
-                .map(|i| format!("word{i}"))
-                .collect(),
-        ];
-        let mut index = 0;
-        let input = std::iter::from_fn(move || {
-            let current = index;
-            index += 1;
-            (current != boundary && current <= boundary + 1).then(|| current.to_string())
-        });
-        let participants = AtomicUsize::new(0);
-        let calls = AtomicUsize::new(0);
-        trainer
-            .feed(input, |s| {
-                assert_eq!(rayon::current_num_threads(), 2);
-                calls.fetch_add(1, Ordering::Relaxed);
-                let index = s.parse::<usize>().unwrap();
-                participants.fetch_or(
-                    1 << rayon::current_thread_index().unwrap(),
-                    Ordering::Relaxed,
-                );
-                if parallel && index < 2 {
-                    let deadline = Instant::now() + Duration::from_secs(5);
-                    while participants.load(Ordering::Relaxed).count_ones() < 2 {
-                        assert!(
-                            Instant::now() < deadline,
-                            "feed callbacks did not run independently"
-                        );
-                        std::thread::yield_now();
-                    }
-                }
-                Ok(outputs[index % outputs.len()].clone())
-            })
-            .unwrap();
-        assert_eq!(calls.load(Ordering::Relaxed), boundary);
-        assert!(parallel || participants.load(Ordering::Relaxed).count_ones() <= 1);
-        let mut expected = AHashMap::<CompactString, u64>::new();
-        for index in 0..boundary {
-            for word in &outputs[index % outputs.len()] {
-                *expected.entry(word.as_str().into()).or_default() += 1;
-            }
-        }
-        let mut equivalent = trainer.clone();
-        equivalent.words = super::word_counts::WordCounts::from_map(expected.clone());
-        assert_eq!(*trainer, equivalent);
-        let stored = serde_json::to_value(&trainer).unwrap();
-        assert_eq!(stored["words"], serde_json::to_value(expected).unwrap());
-        assert_eq!(
-            *trainer,
-            serde_json::from_value::<BpeTrainer>(stored).unwrap()
-        );
+        check_feed_boundary(trainer, parallel, boundary);
     }
+
+    // A callback error must leave the trainer's previously collected words intact.
     let calls = AtomicUsize::new(0);
     let previous = trainer.clone();
     let error = trainer
@@ -373,48 +315,79 @@ fn check_feed_contracts(trainer: &mut BpeTrainer, parallel: bool) {
     assert_eq!(*trainer, previous);
 }
 
+fn check_feed_boundary(trainer: &mut BpeTrainer, parallel: bool, boundary: usize) {
+    // One callback alone crosses the local key limit; the public
+    // reference is a flat multiset, independent of batching and flushes.
+    let outputs = [
+        Vec::new(),
+        vec!["shared".into(), "shared".into()],
+        vec![
+            "".into(),
+            "中文🙂".into(),
+            "e\u{301}".into(),
+            "long".repeat(2048),
+        ],
+        (0..2047 + boundary % 3)
+            .map(|i| format!("word{i}"))
+            .collect(),
+    ];
+    let mut index = 0;
+    // Deliberately resume once after the first None. Feed must keep its first
+    // exhaustion state, so only the first `boundary` inputs reach the callback.
+    let input = std::iter::from_fn(move || {
+        let current = index;
+        index += 1;
+        (current != boundary && current <= boundary + 1).then(|| current.to_string())
+    });
+    let participants = AtomicUsize::new(0);
+    let calls = AtomicUsize::new(0);
+    trainer
+        .feed(input, |s| {
+            assert_eq!(rayon::current_num_threads(), 2);
+            calls.fetch_add(1, Ordering::Relaxed);
+            let index = s.parse::<usize>().unwrap();
+            participants.fetch_or(
+                1 << rayon::current_thread_index().unwrap(),
+                Ordering::Relaxed,
+            );
+            if parallel && index < 2 {
+                let deadline = Instant::now() + Duration::from_secs(5);
+                while participants.load(Ordering::Relaxed).count_ones() < 2 {
+                    assert!(
+                        Instant::now() < deadline,
+                        "feed callbacks did not run independently"
+                    );
+                    std::thread::yield_now();
+                }
+            }
+            Ok(outputs[index % outputs.len()].clone())
+        })
+        .unwrap();
+    assert_eq!(calls.load(Ordering::Relaxed), boundary);
+    assert!(parallel || participants.load(Ordering::Relaxed).count_ones() <= 1);
+    let mut expected = AHashMap::<CompactString, u64>::new();
+    for index in 0..boundary {
+        for word in &outputs[index % outputs.len()] {
+            *expected.entry(word.as_str().into()).or_default() += 1;
+        }
+    }
+    let mut equivalent = trainer.clone();
+    equivalent.words = super::word_counts::WordCounts::from_map(expected.clone());
+    assert_eq!(*trainer, equivalent);
+    let stored = serde_json::to_value(&trainer).unwrap();
+    assert_eq!(stored["words"], serde_json::to_value(expected).unwrap());
+    assert_eq!(
+        *trainer,
+        serde_json::from_value::<BpeTrainer>(stored).unwrap()
+    );
+}
+
 #[test]
 fn public_pools_feed_flush_errors_and_progress_matrix() {
-    use tk_encode::utils::progress::ProgressFormat;
     const CHILD: &str = "BPE_PUBLIC_TEST_CHILD";
     const TEST: &str = "trainers::bpe::tests::public_pools_feed_flush_errors_and_progress_matrix";
     if let Ok(setting) = std::env::var(CHILD) {
-        let parallel = setting != "serial";
-        tk_encode::parallelism::set_num_threads(4);
-        tk_encode::parallelism::set_parallelism(parallel);
-        EXPECTED_WORKERS.store(if parallel { 4 } else { 1 }, Ordering::Relaxed);
-        rayon::ThreadPoolBuilder::new()
-            .num_threads(2)
-            .build()
-            .unwrap()
-            .install(|| {
-                let mut trainer = trainer();
-                if matches!(setting.as_str(), "parallel" | "serial") {
-                    check_feed_contracts(&mut trainer, parallel);
-                }
-                trainer.end_of_word_suffix = Some("a".into());
-                trainer.do_train(&counts(&[("baaba", 1)])).unwrap();
-                // Materialization and historical-cohort preparation both ran.
-                assert_eq!(OBSERVED_PHASES.load(Ordering::Relaxed), 0b101);
-                trainer.end_of_word_suffix = None;
-                trainer.show_progress = setting != "no-bar";
-                trainer.progress_format = if setting == "silent" {
-                    ProgressFormat::Silent
-                } else {
-                    ProgressFormat::JsonLines
-                };
-                trainer.vocab_size = if setting == "zero" { 2 } else { 64 };
-                let words = if setting == "empty" {
-                    AHashMap::new()
-                } else {
-                    counts(&[("ab", 3), ("cd", 2)])
-                };
-                let (_, merges, _) = trainer.do_train(&words).unwrap();
-                if !merges.is_empty() {
-                    assert_eq!(OBSERVED_PHASES.load(Ordering::Relaxed), 0b111);
-                }
-                println!("BPE_MERGE_COUNT={}", merges.len());
-            });
+        run_public_training_child(&setting);
         return;
     }
     for setting in ["parallel", "serial", "no-bar", "zero", "empty", "silent"] {
@@ -428,40 +401,85 @@ fn public_pools_feed_flush_errors_and_progress_matrix() {
             "{}",
             String::from_utf8_lossy(&result.stderr)
         );
-        let output = String::from_utf8(result.stderr).unwrap();
-        if setting == "silent" {
-            assert!(output.is_empty());
-            continue;
-        }
-        let records: Vec<serde_json::Value> = output
-            .lines()
-            .map(|s| serde_json::from_str(s).unwrap())
-            .collect();
-        let mut stages = std::collections::HashSet::new();
-        for record in &records {
-            assert_eq!(record.as_object().unwrap().len(), 3);
-            assert!(record["current"].is_u64() && record["total"].is_u64());
-            if stages.insert(record["stage"].as_str().unwrap()) {
-                assert_eq!(record["current"], 0);
-            }
-        }
-        assert_eq!(
-            stages,
-            ["Tokenize words", "Count pairs", "Compute merges"].into()
-        );
-        let stdout = String::from_utf8(result.stdout).unwrap();
-        let count: u64 = stdout
-            .lines()
-            .find_map(|s| s.strip_prefix("BPE_MERGE_COUNT="))
-            .unwrap()
-            .parse()
-            .unwrap();
-        let finished = records
-            .iter()
-            .rev()
-            .find(|r| r["stage"] == "Compute merges")
-            .unwrap();
-        assert_eq!(finished["current"], count);
-        assert_eq!(finished["total"], count);
+        check_progress_records(setting, result);
     }
+}
+
+// The child owns process-wide parallelism settings; the parent checks its output.
+fn run_public_training_child(setting: &str) {
+    use tk_encode::utils::progress::ProgressFormat;
+    let parallel = setting != "serial";
+    tk_encode::parallelism::set_num_threads(4);
+    tk_encode::parallelism::set_parallelism(parallel);
+    EXPECTED_WORKERS.store(if parallel { 4 } else { 1 }, Ordering::Relaxed);
+    rayon::ThreadPoolBuilder::new()
+        .num_threads(2)
+        .build()
+        .unwrap()
+        .install(|| {
+            let mut trainer = trainer();
+            if matches!(setting, "parallel" | "serial") {
+                check_feed_contracts(&mut trainer, parallel);
+            }
+            trainer.end_of_word_suffix = Some("a".into());
+            trainer.do_train(&counts(&[("baaba", 1)])).unwrap();
+            // Materialization and historical-cohort preparation both ran.
+            assert_eq!(OBSERVED_PHASES.load(Ordering::Relaxed), 0b101);
+            trainer.end_of_word_suffix = None;
+            trainer.show_progress = setting != "no-bar";
+            trainer.progress_format = if setting == "silent" {
+                ProgressFormat::Silent
+            } else {
+                ProgressFormat::JsonLines
+            };
+            trainer.vocab_size = if setting == "zero" { 2 } else { 64 };
+            let words = if setting == "empty" {
+                AHashMap::new()
+            } else {
+                counts(&[("ab", 3), ("cd", 2)])
+            };
+            let (_, merges, _) = trainer.do_train(&words).unwrap();
+            if !merges.is_empty() {
+                assert_eq!(OBSERVED_PHASES.load(Ordering::Relaxed), 0b111);
+            }
+            println!("BPE_MERGE_COUNT={}", merges.len());
+        });
+}
+
+fn check_progress_records(setting: &str, result: std::process::Output) {
+    let output = String::from_utf8(result.stderr).unwrap();
+    if setting == "silent" {
+        assert!(output.is_empty());
+        return;
+    }
+    let records: Vec<serde_json::Value> = output
+        .lines()
+        .map(|s| serde_json::from_str(s).unwrap())
+        .collect();
+    let mut stages = std::collections::HashSet::new();
+    for record in &records {
+        assert_eq!(record.as_object().unwrap().len(), 3);
+        assert!(record["current"].is_u64() && record["total"].is_u64());
+        if stages.insert(record["stage"].as_str().unwrap()) {
+            assert_eq!(record["current"], 0);
+        }
+    }
+    assert_eq!(
+        stages,
+        ["Tokenize words", "Count pairs", "Compute merges"].into()
+    );
+    let stdout = String::from_utf8(result.stdout).unwrap();
+    let count: u64 = stdout
+        .lines()
+        .find_map(|s| s.strip_prefix("BPE_MERGE_COUNT="))
+        .unwrap()
+        .parse()
+        .unwrap();
+    let finished = records
+        .iter()
+        .rev()
+        .find(|r| r["stage"] == "Compute merges")
+        .unwrap();
+    assert_eq!(finished["current"], count);
+    assert_eq!(finished["total"], count);
 }
