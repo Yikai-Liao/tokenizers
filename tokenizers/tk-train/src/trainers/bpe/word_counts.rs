@@ -1,7 +1,7 @@
 //! Frozen owned counts, with an unchanged flat-map public representation.
 use ahash::AHashMap;
 use compact_str::CompactString;
-use serde::{Deserialize, Deserializer, Serialize, Serializer, ser::SerializeMap};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt;
 
 type CountMap = AHashMap<CompactString, u64>;
@@ -82,11 +82,12 @@ impl Eq for WordCounts {}
 
 impl Serialize for WordCounts {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(Some(self.len()))?;
-        for (word, count) in self.view().iter() {
-            map.serialize_entry(word, count)?;
+        match self {
+            Self::Map(map) => map.serialize(serializer),
+            Self::Entries(entries) => {
+                serializer.collect_map(entries.iter().map(|(word, count)| (word, count)))
+            }
         }
-        map.end()
     }
 }
 

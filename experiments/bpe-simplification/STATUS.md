@@ -8,6 +8,47 @@ and [the flattening report](FLATTEN.md) for validation and scoped diffs against
 HF main and the starting revision. Counts are descriptive; hard line limits
 have been retired. Earlier counts and limits below describe historical snapshots.
 
+## Serde delegation, heap repair and fixed-size storage audit, 2026-10-10
+
+WordCounts serialization delegates its Map representation to the existing map's
+Serialize implementation and its Entries representation to Serializer::collect_map
+over borrowed key/value pairs. It retains the flat-map format, entry traversal and
+exact length hint without collecting another container or adding a dependency.
+Deserialization and content equality are unchanged.
+
+PairIndex::best repairs a stale queue head through dary_heap::PeekMut instead of
+popping and reinserting its owning candidate. Dropping the modified guard restores
+heap order; retired pairs are removed through PeekMut::pop. This delegates heap
+maintenance to the existing octonary heap and retains lazy count certification.
+No timing comparison was run, so this change makes no measured speedup claim.
+
+Both default and no-default-feature library suites pass all 17 tests, including
+generated full-model and per-rule comparisons with the sequential oracle.
+All-target Clippy passes with warnings denied; the two changed Rust files pass
+rustfmt and the diff passes whitespace checks. Whole-crate rustfmt still reports
+pre-existing import-order differences in five untouched files.
+
+The fixed-size storage audit found these Box-slice candidates; none were changed:
+
+| Storage | Reason / practical benefit |
+| --- | --- |
+| CorpusPlan / Corpus starts and weight_regions; CorpusPlan words | Length stops changing after planning. Weight regions can retain spare capacity from repeated pushes. |
+| Corpus Slots and occurrence_spans | Coordinate count stays fixed; atomic element updates work through slices. |
+| InitialTokenIds characters and decorated | Characters have a fixed Unicode domain; decorated entries are resized once, then only elements change. |
+| FreshSnapshot heads and tails | Length is fixed for one preparation snapshot; there is no subsequent resize. |
+| PairIndex shards and outer routes | Owner count is fixed; individual maps and each Route's reusable Vecs remain mutable. Initializing outer routes at build would remove its repeated resize call. |
+
+A host layout probe using the current type declarations and cached dependencies
+finds Vec / Box slice descriptors of 24 / 16 bytes, InitialTokenIds of 56 / 40,
+and Slots of 32 / 24. WordCounts and InitialPairCounts remain 64 bytes when only
+their Vec variant becomes a Box slice, because the map variant controls enum size.
+Feed already reserves the exact final entry count, so boxing WordCounts::Entries
+has little apparent memory benefit. These are descriptor sizes, not resident
+payload measurements. Box conversion does not remove the allocation/free of each
+buffer. Corpus spans, codec buffers, neighbor directories and route contents keep
+Vec because they grow or reuse their capacity; short-lived batch/job/event outputs
+are lower-priority candidates because conversion can add a capacity-shrink step.
+
 ## Arena removal and cleanup diagnosis, 2026-10-10
 
 Individual compressed-block deallocation returns with owned Box storage. It is

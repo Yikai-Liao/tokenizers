@@ -6,7 +6,7 @@ use super::{
     positions::{Builder, Codec, Input, Lease, Positions},
 };
 use ahash::AHashMap;
-use dary_heap::OctonaryHeap;
+use dary_heap::{OctonaryHeap, PeekMut};
 use rayon::prelude::*;
 use std::cmp::{Ordering, Reverse};
 use tk_encode::{Result, models::bpe::Pair, utils::progress::ProgressBar};
@@ -183,20 +183,19 @@ impl<'codec> PairIndex<'codec> {
 
     pub(super) fn best(&mut self) -> Option<Priority> {
         loop {
-            let top = self.queue.peek()?.priority;
+            let mut candidate = self.queue.peek_mut()?;
+            let top = candidate.priority;
             let Some(&count) = self.shards[owner(top.pair(), self.shards.len())].get(&top.pair())
             else {
                 // Fresh counts retire below the floor. Their stale payloads are
                 // reclaimed when they reach the head of this owning queue.
-                self.queue.pop();
+                PeekMut::pop(candidate);
                 continue;
             };
             if top.count == count {
                 return (count >= self.floor).then_some(top);
             }
-            let mut candidate = self.queue.pop().expect("observed candidate exists");
             candidate.priority.count = count;
-            self.queue.push(candidate);
         }
     }
 
