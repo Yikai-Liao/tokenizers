@@ -247,12 +247,8 @@ impl BpeTrainer {
     /// Returns the training errors described in [`Self::do_train`], including the
     /// signed input limits for nonempty affixes even when no merge is needed.
     pub fn train_vocab(&self) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
-        self.do_train_impl(
-            self.words.view(),
-            None,
-            #[cfg(test)]
-            None,
-        )
+        self.do_train_impl(self.words.view(), None)
+            .map(|result| result.parts)
     }
 
     /// Train weighted words and return vocabulary entries, ordered merges, and
@@ -290,20 +286,15 @@ impl BpeTrainer {
         &self,
         word_counts: &AHashMap<CompactString, u64>,
     ) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
-        self.do_train_impl(
-            WordCountsView::from_map(word_counts),
-            None,
-            #[cfg(test)]
-            None,
-        )
+        self.do_train_impl(WordCountsView::from_map(word_counts), None)
+            .map(|result| result.parts)
     }
 
     fn do_train_impl(
         &self,
         words: WordCountsView<'_>,
         workers: Option<usize>,
-        #[cfg(test)] mut observe: Option<&mut (dyn FnMut(Pair, u64, u32) + Send)>,
-    ) -> Result<ModelParts> {
+    ) -> Result<TrainingResult> {
         let workers = workers.unwrap_or_else(|| {
             if get_parallelism() {
                 num_threads().max(1)
@@ -317,28 +308,30 @@ impl BpeTrainer {
         pool.install(|| {
             let progress = self.setup_progress();
             let mut alphabet = None;
-            let mut reuse = false;
-            loop {
-                match self.train_attempt(
-                    words,
-                    workers,
-                    reuse,
-                    &mut alphabet,
-                    &progress,
-                    #[cfg(test)]
-                    &mut observe,
-                )? {
-                    AttemptOutcome::Complete(parts) => return Ok(parts),
-                    // An activated-ID collision discards the fresh attempt. Retain the
-                    // selected alphabet so frequency ties cannot change on the retry.
-                    AttemptOutcome::RestartForReuse => reuse = true,
+            let outcome = self.train_attempt(words, workers, false, &mut alphabet, &progress)?;
+            let outcome = match outcome {
+                // A previously activated ID requires historical cohorts. Discard
+                // the fresh attempt, retaining its limited alphabet so frequency
+                // ties cannot select different characters on the reuse attempt.
+                AttemptOutcome::RestartForReuse => {
+                    self.train_attempt(words, workers, true, &mut alphabet, &progress)?
                 }
+                complete @ AttemptOutcome::Complete(_) => complete,
+            };
+            match outcome {
+                AttemptOutcome::Complete(result) => Ok(TrainingResult {
+                    parts: (result.vocab, result.merges, self.special_tokens.clone()),
+                    #[cfg(test)]
+                    trace: result.trace,
+                }),
+                AttemptOutcome::RestartForReuse => Err(
+                    "BPE internal invariant violated: identity-reuse attempt requested another restart"
+                        .into(),
+                ),
             }
         })
     }
 
-    // Only a completed attempt publishes model parts and its test trace;
-    // fresh attempts that request historical cohorts stay private.
     fn train_attempt(
         &self,
         words: WordCountsView<'_>,
@@ -346,7 +339,6 @@ impl BpeTrainer {
         reuse: bool,
         alphabet: &mut Option<Vec<char>>,
         progress: &Option<ProgressBar>,
-        #[cfg(test)] observe: &mut Option<&mut (dyn FnMut(Pair, u64, u32) + Send)>,
     ) -> Result<AttemptOutcome> {
         // 1. Resolve the vocabulary and tokenize borrowed input into a corpus plan.
         let mut vocabulary = Vocabulary::initialize(self, words, workers, alphabet)?;
@@ -354,67 +346,62 @@ impl BpeTrainer {
         let plan = CorpusPlan::build(words, &mut vocabulary, self, reuse, progress)?;
         self.finalize_progress(progress, plan.word_count(), "Tokenize words");
 
-        // 2. Count and freeze initial pairs before allocating resident token slots.
+        // 2. Freeze initial pairs first: their temporary counting buffers retire
+        // before resident corpus slots are allocated. Even a zero-merge call must
+        // run the plan's numeric checks and the index's checked pair counting.
         self.update_progress(progress, plan.word_count(), "Count pairs");
         let mut index = PairIndex::build(&plan, self.min_frequency, workers, reuse, progress)?;
         self.finalize_progress(progress, plan.word_count(), "Count pairs");
-        if vocabulary.len() >= self.vocab_size {
-            self.update_progress(progress, self.vocab_size, "Compute merges");
-            self.finalize_progress(progress, 0, "Compute merges");
-            drop(index);
-            drop(plan);
-            let (vocab, merges) = vocabulary.into_model_parts(Vec::new());
-            return Ok(AttemptOutcome::Complete((
-                vocab,
-                merges,
-                self.special_tokens.clone(),
-            )));
-        }
 
-        // 3. Select compatible batches, record their rules, and complete each round.
-        let mut corpus = plan.materialize();
-        self.update_progress(progress, self.vocab_size, "Compute merges");
         let mut merges = Vec::new();
         #[cfg(test)]
         let mut trace = Trace::new();
-        while vocabulary.len() < self.vocab_size {
-            let batch = match Batch::select(self, &mut vocabulary, &mut corpus, &mut index)? {
-                Selection::Finished => break,
-                Selection::Restart => {
-                    self.finalize_progress(progress, merges.len(), "Compute merges");
-                    return Ok(AttemptOutcome::RestartForReuse);
+        self.update_progress(progress, self.vocab_size, "Compute merges");
+        if vocabulary.len() < self.vocab_size {
+            // 3. Only attempts needing merges allocate resident endpoints.
+            let mut corpus = plan.materialize();
+            while vocabulary.len() < self.vocab_size {
+                let batch = match Batch::select(self, &mut vocabulary, &mut corpus, &mut index)? {
+                    Selection::Finished => break,
+                    Selection::Restart => {
+                        self.finalize_progress(progress, merges.len(), "Compute merges");
+                        return Ok(AttemptOutcome::RestartForReuse);
+                    }
+                    Selection::Ready(batch) => batch,
+                };
+                #[cfg(test)]
+                trace.extend(batch.trace());
+                let previous_len = merges.len();
+                merges.extend(batch.pairs());
+                batch.commit(
+                    &mut corpus,
+                    &mut index,
+                    self.max_token_length.unwrap_or(usize::MAX),
+                )?;
+                if let Some(p) = progress {
+                    p.inc((merges.len() - previous_len) as u64);
                 }
-                Selection::Ready(batch) => batch,
-            };
-            #[cfg(test)]
-            trace.extend(batch.trace());
-            let previous_len = merges.len();
-            merges.extend(batch.pairs());
-            batch.commit(
-                &mut corpus,
-                &mut index,
-                self.max_token_length.unwrap_or(usize::MAX),
-            )?;
-            if let Some(p) = progress {
-                p.inc((merges.len() - previous_len) as u64);
+                self.emit_json_progress("Compute merges", merges.len(), self.vocab_size);
             }
-            self.emit_json_progress("Compute merges", merges.len(), self.vocab_size);
+            drop(index);
+            drop(corpus);
+        } else {
+            drop(index);
+            drop(plan);
         }
+
+        // 4. Large attempt storage is gone before output strings and the final
+        // vocabulary map are built, keeping their allocations from overlapping.
         self.finalize_progress(progress, merges.len(), "Compute merges");
-        drop(index);
-        drop(corpus);
-        #[cfg(test)]
-        if let Some(observer) = observe.as_mut() {
-            for (pair, count, id) in trace {
-                observer(pair, count, id);
-            }
-        }
         let (vocab, merges) = vocabulary.into_model_parts(merges);
-        Ok(AttemptOutcome::Complete((
+        // Only success carries a trace out of the attempt. Errors and restart
+        // requests discard every speculative rule along with its local storage.
+        Ok(AttemptOutcome::Complete(AttemptResult {
             vocab,
             merges,
-            self.special_tokens.clone(),
-        )))
+            #[cfg(test)]
+            trace,
+        }))
     }
 
     /// Setup a progress bar if asked to show progress (only for Indicatif format)
@@ -488,8 +475,21 @@ fn add(count: &mut u64, amount: u64) -> Result<()> {
 const WORD_SEPARATOR_ID: u32 = u32::MAX;
 type ModelParts = (Vocab, Merges, Vec<AddedToken>);
 
+struct TrainingResult {
+    parts: ModelParts,
+    #[cfg(test)]
+    trace: Trace,
+}
+
+struct AttemptResult {
+    vocab: Vocab,
+    merges: Merges,
+    #[cfg(test)]
+    trace: Trace,
+}
+
 enum AttemptOutcome {
-    Complete(ModelParts),
+    Complete(AttemptResult),
     RestartForReuse,
 }
 

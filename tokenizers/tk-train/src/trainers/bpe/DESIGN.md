@@ -6,7 +6,9 @@
 flow. `do_train` and `train_vocab` borrow a `WordCountsView` and enter it directly;
 the Trainer implementation adapts `train_vocab` results into a replacement model.
 The private `train_attempt` owns the vocabulary, corpus and pair index for one attempt.
-Tests exercise this same coordinator with explicit workers.
+Tests exercise this same coordinator with explicit workers and inspect its successful
+result, whose trace field exists only under `cfg(test)`. No test callback enters
+the production call chain.
 A selected `Batch` owns the occurrence lists of its rules. The coordinator records
 those rules and calls `Batch::commit` to complete the round. Merge first prepares
 owned writes and neighbor changes in parallel and joins all readers. Only after
@@ -43,7 +45,11 @@ no activation mirror that must be updated during merges.
 Each attempt starts from original weighted words. The selected alphabet is
 retained through a reuse restart. A reserved but unactivated result keeps its ID
 and runs alone. Selecting a previously activated result during a fresh attempt causes
-an immediate restart; traces and merges from that attempt are abandoned.
+an immediate restart; vocabulary, index, corpus, traces and merges from that attempt
+are abandoned. The core permits one fresh-to-reuse switch. A restart request from
+the reuse attempt is an internal invariant error. The successful attempt returns
+vocabulary and merges with its test-only trace; the core then clones special tokens
+once to assemble the public result.
 
 The input view is borrowed and unchanged. Feed aggregation, serialization and
 public thread/parallelism settings are handled by the trainer entry. Training creates
@@ -54,8 +60,12 @@ of any ambient pool used by feed.
 
 A borrowed CorpusPlan resolves original symbols and weighted word intervals.
 Initial counting gathers sorted temporary positions, reduces counts and freezes
-retained lists before allocating token slots. Materialization consumes the plan
-and releases thin input references.
+retained lists before allocating token slots. Zero-merge calls still perform all
+plan and initial-index checks, then discard both without materialization.
+Materialization consumes the plan and releases thin input references. On successful
+merge attempts the index and corpus are explicitly released before output strings
+and the final vocabulary map are built. Both paths share progress completion and
+model-part construction.
 Fresh mode releases its per-word start directory; weights retain only adjacent
 equal-weight regions. Reuse keeps word starts for cohort scan domains.
 `InitialPairCounts` owns the dense-versus-sparse counting choice and its domain.

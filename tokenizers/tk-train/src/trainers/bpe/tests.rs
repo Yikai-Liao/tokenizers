@@ -21,23 +21,15 @@ fn trainer() -> BpeTrainer {
 }
 
 fn check(trainer: &BpeTrainer, words: &AHashMap<CompactString, u64>) -> Vec<(Pair, u64, u32)> {
-    let mut expected_trace = Vec::new();
-    let expected = trainer
-        .do_train_observed(words, |p, n, id| expected_trace.push((p, n, id)))
-        .unwrap();
+    let expected = trainer.do_train_reference(words).unwrap();
     for workers in [1, 4, 8] {
-        let mut actual_trace = Vec::new();
         let actual = trainer
-            .do_train_impl(
-                WordCountsView::from_map(words),
-                Some(workers),
-                Some(&mut |p, n, id| actual_trace.push((p, n, id))),
-            )
+            .do_train_impl(WordCountsView::from_map(words), Some(workers))
             .unwrap();
-        assert_eq!(actual_trace, expected_trace, "workers={workers}");
-        assert_eq!(actual, expected, "workers={workers}");
+        assert_eq!(actual.trace, expected.trace, "workers={workers}");
+        assert_eq!(actual.parts, expected.parts, "workers={workers}");
     }
-    expected_trace
+    expected.trace
 }
 
 #[test]
@@ -172,15 +164,13 @@ fn real_wide_ids_preserve_pair_order_and_separator_distinction() {
 fn count_domains_and_zero_merge_validation() {
     let mut trainer = trainer();
     for weight in [u32::MAX as u64 + 17, u64::MAX] {
-        let mut trace = Vec::new();
-        trainer
+        let result = trainer
             .do_train_impl(
                 WordCountsView::from_map(&counts(&[("ab", weight)])),
                 Some(2),
-                Some(&mut |p, n, id| trace.push((p, n, id))),
             )
             .unwrap();
-        assert_eq!(trace, [((0, 1), weight, 2)]);
+        assert_eq!(result.trace, [((0, 1), weight, 2)]);
     }
     for target in [0, 2, 64] {
         trainer.vocab_size = target;
@@ -207,6 +197,7 @@ fn borrowed_stored_and_fed_counts_remain_reusable() {
     let words = counts(&[("ab测", 2), ("ab", 1), ("测", 1), ("", 1)]);
     let original = words.clone();
     let mut trainer = trainer();
+    trainer.special_tokens = vec![AddedToken::from("[UNK]", true)];
     let expected = trainer.do_train(&words).unwrap();
     trainer
         .feed(input.into_iter(), |s| Ok(vec![s.to_owned()]))
@@ -216,6 +207,16 @@ fn borrowed_stored_and_fed_counts_remain_reusable() {
         assert_eq!(trainer.train_vocab().unwrap(), expected);
         assert_eq!(trainer, stored);
     }
+    let mut model = PipelineBPE::from_config(BpeConfig {
+        vocab: [("old".into(), 0)].into(),
+        ..Default::default()
+    })
+    .unwrap();
+    assert_eq!(trainer.train(&mut model).unwrap(), expected.2);
+    let config = model.to_config().unwrap();
+    assert_eq!(config.vocab, expected.0);
+    assert_eq!(config.merges, expected.1);
+    assert_eq!(trainer, stored);
     let restored: BpeTrainer =
         serde_json::from_value(serde_json::to_value(&trainer).unwrap()).unwrap();
     assert_eq!(restored.train_vocab().unwrap(), expected);
@@ -264,6 +265,52 @@ fn training_and_model_construction_errors_preserve_the_previous_model() {
             .contains("affixes too long")
     );
     assert_eq!(model.to_config().unwrap().vocab, original);
+}
+
+#[test]
+fn reuse_restart_keeps_the_alphabet_and_returns_only_the_successful_trace() {
+    let mut trainer = trainer();
+    trainer.end_of_word_suffix = Some("a".into());
+    trainer.limit_alphabet = Some(4);
+    // XY commits before AA resolves to an already activated decorated ID.
+    // Its speculative trace must not precede the successful attempt's XY rule.
+    let words = counts(&[("xy", 3), ("baaba", 1)]);
+    let expected = trainer.do_train_reference(&words).unwrap();
+    assert_eq!(expected.trace[0].1, 3);
+    for workers in [1, 4, 8] {
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(workers)
+            .build()
+            .unwrap()
+            .install(|| {
+                let view = WordCountsView::from_map(&words);
+                let progress = trainer.setup_progress();
+                let mut alphabet = None;
+                assert!(matches!(
+                    trainer
+                        .train_attempt(view, workers, false, &mut alphabet, &progress)
+                        .unwrap(),
+                    AttemptOutcome::RestartForReuse
+                ));
+                let retained = alphabet.clone();
+                assert!(retained.is_some());
+                let AttemptOutcome::Complete(result) = trainer
+                    .train_attempt(view, workers, true, &mut alphabet, &progress)
+                    .unwrap()
+                else {
+                    panic!("reuse attempt must complete")
+                };
+                assert_eq!(alphabet, retained);
+                assert_eq!(
+                    (result.vocab, result.merges, trainer.special_tokens.clone()),
+                    expected.parts
+                );
+                assert_eq!(result.trace, expected.trace);
+                let result = trainer.do_train_impl(view, Some(workers)).unwrap();
+                assert_eq!(result.parts, expected.parts);
+                assert_eq!(result.trace, expected.trace);
+            });
+    }
 }
 
 #[test]
@@ -635,11 +682,10 @@ mod reference {
     }
 
     impl BpeTrainer {
-        pub(super) fn do_train_observed(
+        pub(super) fn do_train_reference(
             &self,
             counts: &AHashMap<CompactString, u64>,
-            mut observe: impl FnMut(Pair, u64, u32),
-        ) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
+        ) -> Result<TrainingResult> {
             // 1. Insert special tokens and the selected alphabet before word tokenization.
             let mut tokens = IndexSet::new();
             for token in &self.special_tokens {
@@ -664,6 +710,7 @@ mod reference {
             }
             let mut queue = OctonaryHeap::new();
             let mut merges = Vec::new();
+            let mut trace = Trace::new();
 
             // 4. Repair priorities and apply one rule at a time with literal word edits.
             loop {
@@ -698,7 +745,7 @@ mod reference {
                     tokens[top.pair.0 as usize].clone(),
                     tokens[top.pair.1 as usize].clone(),
                 ));
-                observe(top.pair, top.count, id);
+                trace.push((top.pair, top.count, id));
                 for i in top.words {
                     for (pair, change) in merge_word(
                         &mut words[i],
@@ -718,7 +765,10 @@ mod reference {
                 .enumerate()
                 .map(|(id, token)| (token, id as u32))
                 .collect();
-            Ok((vocab, merges, self.special_tokens.clone()))
+            Ok(TrainingResult {
+                parts: (vocab, merges, self.special_tokens.clone()),
+                trace,
+            })
         }
     }
 

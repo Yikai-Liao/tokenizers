@@ -4,16 +4,25 @@ Training returns the complete vocabulary with token IDs, ranked merge rules,
 and special tokens. It preserves weighted pair selection and compatible batch
 execution while using one endpoint/event protocol.
 
-The public entry points and private training coordinator share [mod.rs](mod.rs).
-`BpeTrainer::do_train_impl` selects the requested worker count and owns the pool and retries;
-tests exercise the same training flow with explicit worker counts and observers.
-Read it for the complete workflow: initialize identities and a borrowed corpus plan,
-build the compressed occurrence index, materialize endpoints, select a compatible
-batch, record its rules, complete the batch with `Batch::commit`, then publish
-the model. Merge joins snapshot preparation before endpoint writes and joins
-those writes before the index updates count owners and publishes births. A collision with a previously activated
-identity restarts from original input and the retained alphabet; speculative
-merges are discarded.
+The public entry points and private training methods share [mod.rs](mod.rs).
+`do_train` borrows the caller's map; `train_vocab` borrows the collected map or
+frozen entries. Both enter `do_train_impl`, which selects workers, installs a
+dedicated pool and progress context, and runs one fresh attempt with at most one
+identity-reuse retry. The Trainer implementation builds and replaces the model
+from `train_vocab` results. Tests enter the real core with explicit workers and
+inspect the successful result's test-only trace.
+
+Read `train_attempt` for the complete workflow: initialize identities and a
+borrowed corpus plan, build the compressed occurrence index, materialize endpoints
+when merges are needed, select a compatible batch, record its rules, complete it
+with `Batch::commit`, then publish the model parts. Merge joins snapshot
+preparation before endpoint writes and joins those writes before index updates.
+A collision with a previously activated identity discards the fresh attempt and
+restarts from original input and the retained alphabet. Errors and restart requests
+return no trace or speculative model parts. Zero-merge calls retain numeric and
+initial-index checks without allocating corpus slots; all successful paths release
+large attempt structures before building output. Special tokens are cloned once
+by the core after success.
 
 The implementation is divided by the knowledge each module owns:
 

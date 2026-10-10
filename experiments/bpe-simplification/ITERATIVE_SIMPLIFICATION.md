@@ -329,3 +329,47 @@ rank 与 Rule 引用必须相符的双重身份。CohortPreparation::prepare 收
 严格长度门限、零权重、完整／部分发布和等优先级历史 cohort 顺序均回归。
 最终 all-target Clippy（warnings denied）与变更文件格式检查通过。
 本轮未测性能，不据结构调整声称吞吐或内存收益。
+
+
+## 训练入口、成功结果与一次模式切换
+
+以 9ecbd0cd 为基线，第一步单独提交 36bc3b18：公开 do_train、train_vocab
+直接借用 WordCountsView 进入 do_train_impl；Trainer::train 使用 train_vocab
+后构造并替换模型。删除 train_counts，把专用 pool、进度和重试的真实核心
+与完整 train_attempt 移入 BpeTrainer，公开训练方法后紧接这两个私有方法，
+进度辅助和 model_options 放到后面。显式 workers 直接进入真实核心，默认
+策略只保留一份。第一步不改变 attempt 内部逻辑与大结构释放时点。
+
+第二步删除测试回调参数与回放。成功的 attempt 返回词表、merges，以及
+cfg(test) 下的 trace；核心只在成功后克隆一次 special_tokens 来组装公开
+返回值。fresh 遇到已激活身份时最多切换一次到 reuse，保留第一次选中的
+有限 alphabet；reuse 再要求重启返回明确的内部不变量错误。这是控制流
+表达的收敛，并未据此确认原实现存在无限循环故障。
+
+零 merge 仍完整执行 CorpusPlan 数值检查和初始 PairIndex 构建检查，
+随后释放 index 与 plan，不 materialize corpus。正常路径释放 index 和
+corpus 后才构造最终模型部件；两条成功路径共享进度完成与输出生成。
+WordCounts 的 Map／冻结条目、序列化及重复训练保留，没有新增公共 trait
+或为了适配复制输入字符串。已在上一轮独立提交的 Batch::commit 继续封装
+准备、写入、索引更新的 join 顺序，本轮不改动 Merge。
+
+第一步通过 20 项、第二步通过 21 项 no-default BPE 检查，完整模型及
+成功轨迹仍与独立顺序实现按 1／4／8 workers 比较。新增 Map／条目数组／
+feed 的公开结果与重复训练检查、成功模型替换，以及数值训练失败和已成功
+训练但 reader 拒绝超长 affix 时保留旧模型。独立重试语料让 XY 先提交，再
+遇到已激活 AA 身份，确认保留 alphabet 且成功轨迹不重复 speculative XY。
+进度子进程额外断言零 merge 没有 materialize／prepare 工作。最终 all-target
+Clippy（warnings denied）和仅 mod.rs／tests.rs 的格式检查通过；沿用排除
+的既有 tokenizer encoding 断言。
+
+两步各使用同一中文 256 MiB 的 ByteLevel／Whitespace 冻结计数，各一个
+排除的预热与两组 BA／AB 正式配对，4 workers 固定 CPU 0–3。第一步相对
+原基线的 CPU／wall／峰值 RSS 为 +2.33%／+3.70%／+0.59%（ByteLevel）
+及 +0.36%／−0.54%／+0.48%（Whitespace）；第二步相对第一步为
++3.46%／+3.77%／−0.64% 及 −1.68%／−2.49%／+0.29%。两轮是不同
+测量序列，不能把百分比连乘成最终版本相对原基线的估计。24 次完整模型
+一致，观察到的 swap 为零；16 次正式样本，无并发构建或测试。两组配对
+只作描述性观察，不据此声称稳定的性能收益。峰值变化较小，且大结构释放
+仍位于输出构造之前，没有新增常驻 corpus 或输入适配副本。协议、逐次
+数据、三份源码及构建／输入／二进制哈希见
+[训练核心整理验证](evidence/training-core-20261011/README.md)。
