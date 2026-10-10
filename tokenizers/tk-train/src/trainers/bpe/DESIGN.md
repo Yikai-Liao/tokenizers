@@ -5,12 +5,13 @@
 The private `train` coordinator in `mod.rs` owns the vocabulary, corpus, pair index
 for one attempt. Public inputs and worker policy enter through
 `BpeTrainer::train_counts`; tests exercise the same coordinator with explicit workers.
-A selected `Batch`
-owns the occurrence lists of its rules. `Batch::prepare` consumes those lists,
-returns owned writes and neighbor changes, and joins all readers before return.
-`Prepared::apply` joins endpoint writers before handing changes to `PairIndex`.
-The index directly publishes complete ordinary births, reduces partial births,
-and updates count owners in parallel.
+A selected `Batch` owns the occurrence lists of its rules. The coordinator records
+those rules and calls `Batch::commit` to complete the round. Merge first prepares
+owned writes and neighbor changes in parallel and joins all readers. Only after
+successful preparation does it apply endpoint writes in parallel; those writers
+join before `PairIndex::commit` directly publishes complete ordinary births,
+reduces partial births and updates count owners in parallel. Preparation and
+application remain separate passes so every reader observes the same corpus.
 
 Errors discard the attempt. Reader and owner jobs finish before their borrowed
 state can be dropped. Commit can fail after writes and partial count updates;

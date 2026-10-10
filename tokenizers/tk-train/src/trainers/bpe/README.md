@@ -9,9 +9,9 @@ The public entry points and private training coordinator share [mod.rs](mod.rs).
 tests exercise the same training flow with explicit worker counts and observers.
 Read it for the complete workflow: initialize identities and a borrowed corpus plan,
 build the compressed occurrence index, materialize endpoints, select a compatible
-batch, prepare against a stable snapshot, apply its
-writes, commit counts and births, then publish the model. Each parallel phase
-joins before the next stage begins. A collision with a previously activated
+batch, record its rules, complete the batch with `Batch::commit`, then publish
+the model. Merge joins snapshot preparation before endpoint writes and joins
+those writes before the index updates count owners and publishes births. A collision with a previously activated
 identity restarts from original input and the retained alphabet; speculative
 merges are discarded.
 
@@ -27,8 +27,8 @@ The implementation is divided by the knowledge each module owns:
 - [index.rs](index.rs) owns exact priority correction, count shards, signed reuse
   ledgers, one owning candidate queue, and complete birth publication.
 - [merge.rs](merge.rs) owns compatible selection, read-only preparation, local
-  event aggregation, and joined application. The coordinator sees `Batch` and
-  `Prepared`, without handling write geometry or neighbor directories.
+  event aggregation, and a complete joined round. The coordinator selects a
+  `Batch`, records its rules and commits it; Merge owns the execution order.
 - [positions.rs](positions.rs) owns sorted full-u64 streams and restart blocks.
   Producers use `SmallVec<[u64; 2]>` and construct immutable lists directly.
   Empty, one-value and two-value lists stay inline; longer lists own compressed

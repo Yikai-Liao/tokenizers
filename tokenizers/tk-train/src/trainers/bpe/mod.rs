@@ -452,7 +452,7 @@ fn train_attempt(
         )));
     }
 
-    // 3. Select compatible batches, prepare snapshot edits, then commit joined jobs.
+    // 3. Select compatible batches, record their rules, and complete each round.
     let mut corpus = plan.materialize();
     trainer.update_progress(progress, trainer.vocab_size, "Compute merges");
     let mut merges = Vec::new();
@@ -471,9 +471,11 @@ fn train_attempt(
         trace.extend(batch.trace());
         let previous_len = merges.len();
         merges.extend(batch.pairs());
-        let prepared = batch.prepare(&corpus, trainer.max_token_length.unwrap_or(usize::MAX))?;
-        let changes = prepared.apply(&corpus);
-        index.commit(changes)?;
+        batch.commit(
+            &mut corpus,
+            &mut index,
+            trainer.max_token_length.unwrap_or(usize::MAX),
+        )?;
         if let Some(p) = progress {
             p.inc((merges.len() - previous_len) as u64);
         }

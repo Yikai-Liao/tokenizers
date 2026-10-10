@@ -605,8 +605,7 @@ mod tests {
                 };
             trace.extend(batch.trace());
             merges.extend(batch.pairs());
-            let prepared = batch.prepare(&corpus, usize::MAX).unwrap();
-            index.commit(prepared.apply(&corpus)).unwrap();
+            batch.commit(&mut corpus, &mut index, usize::MAX).unwrap();
         }
         (trace, vocabulary.into_model_parts(merges))
     }

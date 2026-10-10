@@ -16,7 +16,8 @@ Literal alphabet expectations independently check that shared selector.
 | Strict newborn length admission, including limits 0, 1 and 2 | Generated length gates and independent sequential neighbor admission |
 | Filtered symbols, forced alphabet and decorations | Generated filtered/decorated models, a filtered training fixture, and literal alphabet IDs |
 | Full token IDs beyond 16 bits and separator distinction | 65536 reserved IDs followed by ordinary training and literal ID expectation |
-| Joined compatible rules | Explicit three-rule batch preparation, application and commit, then finished selection |
+| Joined compatible rules | Explicit three-rule `Batch::commit`, then finished selection |
+| Preparation failure before writes | An independent valid job precedes a neighbor-count overflow; `Batch::commit` fails with every endpoint unchanged at 1, 4 and 8 workers |
 | Full-u64 counts, per-key overflow, signed reuse limits and validation before zero merges | Literal success/error cases repeated with vocabulary targets 0, 2 and 64 |
 | Public feed, trainer serialization, special-token return, model options and tokenizer JSON reload | Feed-to-training integration and complete serialized model equality and three literal input-to-ID expectations before/after tokenizer JSON reload |
 | Feed flushing, first `None`, duplicate callback words and transactional process errors | Isolated public test at 0/31/32/33/127/128/129/257 items, resumed nonfused input, empty/Unicode/long callback words, bulk 2047/2048/2049 unique words, exact flat counts, full callback count after error and unchanged prior state |

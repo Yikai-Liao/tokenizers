@@ -33,7 +33,7 @@ pub(super) struct Batch {
     floor: u64,
 }
 
-/// Selection outcome for the coordinator: finish, retry the attempt, or prepare.
+/// Selection outcome for the coordinator: finish, retry the attempt, or commit.
 /// Restart discards speculative rules and requests historical-cohort training.
 pub(super) enum Selection {
     Finished,
@@ -74,12 +74,6 @@ impl Birth {
             Self::Complete(values) => values.is_empty(),
         }
     }
-}
-
-/// Joined preparation output, owning endpoint writes and neighbor events.
-/// Apply joins all writes before returning events for the coordinator's index commit.
-pub(super) struct Prepared {
-    jobs: Vec<Job>,
 }
 
 /// One preparation task's disjoint writes and owned neighbor-event payloads.
@@ -292,7 +286,27 @@ impl Batch {
             .map(|rule| (rule.pair(), rule.candidate.priority.count, rule.replacement))
     }
 
-    pub(super) fn prepare(self, corpus: &Corpus, limit: usize) -> Result<Prepared> {
+    /// Complete one selected batch, joining preparation before writes and writes
+    /// before parallel index updates. Preparation errors leave endpoints unchanged;
+    /// later errors can follow writes or count updates. Discard the attempt on error.
+    pub(super) fn commit(
+        self,
+        corpus: &mut Corpus,
+        index: &mut PairIndex,
+        limit: usize,
+    ) -> Result<()> {
+        let jobs = self.prepare(corpus, limit)?;
+        let changes = jobs
+            .into_par_iter()
+            .map(|job| {
+                job.writes.apply(corpus);
+                job.changes
+            })
+            .collect();
+        index.commit(changes)
+    }
+
+    fn prepare(self, corpus: &Corpus, limit: usize) -> Result<Vec<Job>> {
         if self.reuse {
             return self.prepare_cohort(corpus, limit);
         }
@@ -308,10 +322,10 @@ impl Batch {
                 snapshot.prepare_job(directories, rank, rule, source)
             })
             .collect::<Result<Vec<_>>>()?;
-        Ok(Prepared { jobs })
+        Ok(jobs)
     }
 
-    fn prepare_cohort(self, corpus: &Corpus, limit: usize) -> Result<Prepared> {
+    fn prepare_cohort(self, corpus: &Corpus, limit: usize) -> Result<Vec<Job>> {
         // 1. Restrict the historical cohort to its unique word owners.
         let rule = &self.rules[0];
         let words: Vec<_> = rule
@@ -330,7 +344,7 @@ impl Batch {
                 CohortPreparation::new(rule, corpus, limit, self.floor, directories).prepare(words)
             })
             .collect::<Result<Vec<_>>>()?;
-        Ok(Prepared { jobs })
+        Ok(jobs)
     }
 }
 
@@ -698,18 +712,6 @@ impl<'task> CohortPreparation<'task> {
     }
 }
 
-impl Prepared {
-    pub(super) fn apply(self, corpus: &Corpus) -> Vec<Vec<Change<Birth>>> {
-        self.jobs
-            .into_par_iter()
-            .map(|job| {
-                job.writes.apply(corpus);
-                job.changes
-            })
-            .collect()
-    }
-}
-
 /// Deferred endpoint writes, compact for fresh identities and explicit for reuse.
 /// Fresh identities have one span per ID, so writes need only sorted starts and
 /// one rule geometry. Alias reuse retains each occurrence's snapshot geometry.
@@ -821,6 +823,52 @@ impl Source<'_> {
 mod tests {
     use super::super::{WordCountsView, corpus::CorpusPlan};
     use super::*;
+
+    #[test]
+    fn preparation_failure_leaves_all_endpoints_unchanged() {
+        for workers in [1, 4, 8] {
+            let pool = rayon::ThreadPoolBuilder::new()
+                .num_threads(workers)
+                .build()
+                .unwrap();
+            pool.install(|| {
+                let trainer = BpeTrainer::builder()
+                    .vocab_size(16)
+                    .min_frequency(1)
+                    .show_progress(false)
+                    .build();
+                let words = [("ab".into(), u64::MAX), ("xcd".into(), u64::MAX)]
+                    .into_iter()
+                    .collect();
+                let view = WordCountsView::from_map(&words);
+                let progress = trainer.setup_progress();
+                let mut vocabulary =
+                    Vocabulary::initialize(&trainer, view, workers, &mut None).unwrap();
+                let plan =
+                    CorpusPlan::build(view, &mut vocabulary, &trainer, false, &progress).unwrap();
+                let mut index = PairIndex::build(&plan, 1, workers, false, &progress).unwrap();
+                let mut corpus = plan.materialize();
+                let Selection::Ready(mut batch) =
+                    Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index).unwrap()
+                else {
+                    panic!("expected ready batch")
+                };
+                assert_eq!(batch.pairs().collect::<Vec<_>>(), [(0, 1), (2, 3)]);
+                // AB prepares valid deferred writes before CD fails. Duplicate CD's
+                // start to overflow its left-neighbor count during preparation.
+                let start = batch.rules[1].candidate.positions.iter().next().unwrap();
+                batch.rules[1].candidate.positions =
+                    Positions::from_sorted(&[start, start]).unwrap();
+                let before: Vec<_> = (0..corpus.len()).map(|p| corpus.token(p)).collect();
+                let error = batch
+                    .commit(&mut corpus, &mut index, usize::MAX)
+                    .unwrap_err();
+                assert!(error.to_string().contains("exceeds u64"), "{error}");
+                let after: Vec<_> = (0..corpus.len()).map(|p| corpus.token(p)).collect();
+                assert_eq!(after, before, "workers={workers}");
+            });
+        }
+    }
 
     #[test]
     fn aligned_fragments_keep_complete_and_partial_publication() {

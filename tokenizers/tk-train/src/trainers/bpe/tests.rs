@@ -216,8 +216,7 @@ fn ready_batch_applies_independent_rules_together() {
         panic!("expected ready batch")
     };
     assert_eq!(batch.pairs().collect::<Vec<_>>(), [(0, 1), (2, 3), (4, 5)]);
-    let prepared = batch.prepare(&corpus, usize::MAX).unwrap();
-    index.commit(prepared.apply(&corpus)).unwrap();
+    batch.commit(&mut corpus, &mut index, usize::MAX).unwrap();
     assert!(matches!(
         Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index).unwrap(),
         Selection::Finished
