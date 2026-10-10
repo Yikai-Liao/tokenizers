@@ -1,0 +1,403 @@
+{
+  "base_commit": "9f5b553dba61dba45a75021f4292997c16359dfb",
+  "patch_sha256": "1fb4e64ca74d386894401dea6b9f0f24a64f2659852dc1e248ae0ba1f4b27b88",
+  "binary_sha256": "9055bdbf7d01de5eabe2b28f4b37a958d34f5a4087ba50cdb85859808d05cb4a",
+  "source_sha256": {
+    "positions.rs": "1406ee2d660906849032daf2622d512476b404c28cc55a7c5628dfbf914767d0",
+    "index.rs": "dbc67de50b4f6cafc4c6b1c785c391ebafaebb84f48045a443f3f8ac90a667e4",
+    "merge.rs": "447cc43aa0ebad66d3470a84aedd4c52125793d6bc137cf6f53dcfa5cecaad31"
+  },
+  "scope": "Cumulative freeze calls, not unique or simultaneously resident lists. Instrumented runs are excluded from performance samples.",
+  "runs": {
+    "zh-whitespace-min2": {
+      "command": [
+        "taskset",
+        "-c",
+        "0-3",
+        "/tmp/bpe-box-probe-bin",
+        "/tmp/bpe-box-position-probe/zh-whitespace-min2/job.json"
+      ],
+      "job": {
+        "protocol_version": 1,
+        "attempt_id": "position-length-probe-zh-whitespace-min2",
+        "build_id": "box-position-probe",
+        "input_id": "zh-whitespace-min2",
+        "mode": "core",
+        "input": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+        "output": "/tmp/bpe-box-position-probe/zh-whitespace-min2/model.json",
+        "workers": 4,
+        "pretokenizer": "whitespace",
+        "trainer": {
+          "vocab_size": 50000,
+          "min_frequency": 2,
+          "prefix": null,
+          "suffix": null,
+          "max_token_length": null
+        }
+      },
+      "stdout": {
+        "attempt_id": "position-length-probe-zh-whitespace-min2",
+        "build_id": "box-position-probe",
+        "effective_affinity": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "input_id": "zh-whitespace-min2",
+        "metrics": {
+          "load_seconds": 7.782347266,
+          "process_hwm_kib_before_validation": 1787872,
+          "train_cpu_seconds": 62.252061999999995,
+          "train_seconds": 23.259376915
+        },
+        "mode": "core",
+        "output": {
+          "actual_merges": 32241,
+          "actual_vocab": 50000,
+          "model_path": "/tmp/bpe-box-position-probe/zh-whitespace-min2/model.json",
+          "special_tokens": 0
+        },
+        "protocol_version": 1,
+        "timing_boundary": "public-do-train-before-serialization",
+        "workers_requested": 4
+      },
+      "stderr": "BPE_POSITION_LENGTHS {\"initial_weight_buckets\":[\"0\",\"1\",\"2+\"],\"initial_weights\":[[0,0,0],[0,3343442,126719],[0,0,1048004],[0,0,2300928]],\"length_buckets\":[\"0\",\"1\",\"2\",\"3+\"],\"lists\":[[0,3470161,1048004,2300928],[0,0,339147,1234961],[8149164,199140,1848243,2612111],[0,3542,37532,68501],[0,0,0,0]],\"phases\":[\"initial_range\",\"initial_owner\",\"complete_birth\",\"owner_commit\",\"other\"],\"positions\":[[0,3470161,2096008,58871688],[0,0,678294,62321232],[0,199140,3696486,34609738],[0,3542,75064,2254892],[0,0,0,0]],\"requested_payload_bytes\":[[0,55522576,20675854,192915166],[0,0,6781708,194358857],[0,3186240,36853811,148507159],[0,56672,748331,7309590],[0,0,0,0]]}\n",
+      "statistics": {
+        "initial_weight_buckets": [
+          "0",
+          "1",
+          "2+"
+        ],
+        "initial_weights": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            3343442,
+            126719
+          ],
+          [
+            0,
+            0,
+            1048004
+          ],
+          [
+            0,
+            0,
+            2300928
+          ]
+        ],
+        "length_buckets": [
+          "0",
+          "1",
+          "2",
+          "3+"
+        ],
+        "lists": [
+          [
+            0,
+            3470161,
+            1048004,
+            2300928
+          ],
+          [
+            0,
+            0,
+            339147,
+            1234961
+          ],
+          [
+            8149164,
+            199140,
+            1848243,
+            2612111
+          ],
+          [
+            0,
+            3542,
+            37532,
+            68501
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "phases": [
+          "initial_range",
+          "initial_owner",
+          "complete_birth",
+          "owner_commit",
+          "other"
+        ],
+        "positions": [
+          [
+            0,
+            3470161,
+            2096008,
+            58871688
+          ],
+          [
+            0,
+            0,
+            678294,
+            62321232
+          ],
+          [
+            0,
+            199140,
+            3696486,
+            34609738
+          ],
+          [
+            0,
+            3542,
+            75064,
+            2254892
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "requested_payload_bytes": [
+          [
+            0,
+            55522576,
+            20675854,
+            192915166
+          ],
+          [
+            0,
+            0,
+            6781708,
+            194358857
+          ],
+          [
+            0,
+            3186240,
+            36853811,
+            148507159
+          ],
+          [
+            0,
+            56672,
+            748331,
+            7309590
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ]
+        ]
+      },
+      "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+      "model_equal_to_timed_reference": true
+    },
+    "zh-whitespace-min3": {
+      "command": [
+        "taskset",
+        "-c",
+        "0-3",
+        "/tmp/bpe-box-probe-bin",
+        "/tmp/bpe-box-position-probe/zh-whitespace-min3/job.json"
+      ],
+      "job": {
+        "protocol_version": 1,
+        "attempt_id": "position-length-probe-zh-whitespace-min3",
+        "build_id": "box-position-probe",
+        "input_id": "zh-whitespace-min3",
+        "mode": "core",
+        "input": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+        "output": "/tmp/bpe-box-position-probe/zh-whitespace-min3/model.json",
+        "workers": 4,
+        "pretokenizer": "whitespace",
+        "trainer": {
+          "vocab_size": 50000,
+          "min_frequency": 3,
+          "prefix": null,
+          "suffix": null,
+          "max_token_length": null
+        }
+      },
+      "stdout": {
+        "attempt_id": "position-length-probe-zh-whitespace-min3",
+        "build_id": "box-position-probe",
+        "effective_affinity": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "input_id": "zh-whitespace-min3",
+        "metrics": {
+          "load_seconds": 6.965017763,
+          "process_hwm_kib_before_validation": 1658892,
+          "train_cpu_seconds": 55.317099999999996,
+          "train_seconds": 20.281876584
+        },
+        "mode": "core",
+        "output": {
+          "actual_merges": 32241,
+          "actual_vocab": 50000,
+          "model_path": "/tmp/bpe-box-position-probe/zh-whitespace-min3/model.json",
+          "special_tokens": 0
+        },
+        "protocol_version": 1,
+        "timing_boundary": "public-do-train-before-serialization",
+        "workers_requested": 4
+      },
+      "stderr": "BPE_POSITION_LENGTHS {\"initial_weight_buckets\":[\"0\",\"1\",\"2+\"],\"initial_weights\":[[0,0,0],[0,3343442,126719],[0,0,1048004],[0,0,2300928]],\"length_buckets\":[\"0\",\"1\",\"2\",\"3+\"],\"lists\":[[0,3470161,1048004,2300928],[0,0,25915,1234961],[10039452,47631,107722,2612111],[0,879,2070,68501],[0,0,0,0]],\"phases\":[\"initial_range\",\"initial_owner\",\"complete_birth\",\"owner_commit\",\"other\"],\"positions\":[[0,3470161,2096008,58871688],[0,0,51830,62321232],[0,47631,215444,34609738],[0,879,4140,2254892],[0,0,0,0]],\"requested_payload_bytes\":[[0,55522576,20675854,192915166],[0,0,518300,194358857],[0,762096,2147635,148507159],[0,14064,41258,7309590],[0,0,0,0]]}\n",
+      "statistics": {
+        "initial_weight_buckets": [
+          "0",
+          "1",
+          "2+"
+        ],
+        "initial_weights": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            3343442,
+            126719
+          ],
+          [
+            0,
+            0,
+            1048004
+          ],
+          [
+            0,
+            0,
+            2300928
+          ]
+        ],
+        "length_buckets": [
+          "0",
+          "1",
+          "2",
+          "3+"
+        ],
+        "lists": [
+          [
+            0,
+            3470161,
+            1048004,
+            2300928
+          ],
+          [
+            0,
+            0,
+            25915,
+            1234961
+          ],
+          [
+            10039452,
+            47631,
+            107722,
+            2612111
+          ],
+          [
+            0,
+            879,
+            2070,
+            68501
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "phases": [
+          "initial_range",
+          "initial_owner",
+          "complete_birth",
+          "owner_commit",
+          "other"
+        ],
+        "positions": [
+          [
+            0,
+            3470161,
+            2096008,
+            58871688
+          ],
+          [
+            0,
+            0,
+            51830,
+            62321232
+          ],
+          [
+            0,
+            47631,
+            215444,
+            34609738
+          ],
+          [
+            0,
+            879,
+            4140,
+            2254892
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "requested_payload_bytes": [
+          [
+            0,
+            55522576,
+            20675854,
+            192915166
+          ],
+          [
+            0,
+            0,
+            518300,
+            194358857
+          ],
+          [
+            0,
+            762096,
+            2147635,
+            148507159
+          ],
+          [
+            0,
+            14064,
+            41258,
+            7309590
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ]
+        ]
+      },
+      "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+      "model_equal_to_timed_reference": true
+    }
+  }
+}

@@ -188,3 +188,38 @@ workers／parallel_workers 与解码 Cursor 保留。
 本轮只涉及命名、注释和格式，运算、分支顺序、分配与数据布局均未改动；
 未重新执行性能基准。default／no-default 各 20 项现有 library tests 和
 all-target Clippy（warnings denied）通过，改动文件 rustfmt 与 diff 检查通过。
+
+## 所有冻结 positions 改用 Box 字节流
+
+按用户要求移除 Empty／One／Two 内联特化，所有非空列表统一使用原有
+restart／delta 编码，空列表使用空 Box。positions.rs 的生产代码净减少
+48 行（334 → 286，排除测试、注释和空行）；x86-64 的 Positions 从
+24 → 16 bytes，Candidate 从 40 → 32 bytes。保留 full-u64 坐标、检查算术、
+独立所有权和并发只读迭代。代码已在 `9f5b553d` 推送。
+
+四种真实 256 MiB 输入分别做一个排除的热身和四组正式交替配对。
+英文 ByteLevel 的 CPU／wall 配对中位差为 −2.99%／−1.98%，峰值 +0.14%；
+英文 Whitespace 为 +1.15%／+4.57%，峰值 +10.41%，绝对增加约 13.7 MiB，
+用户接受该英文低基数增长。中文 ByteLevel 为 −3.48%／−3.67%，峰值 −1.65%；
+中文 Whitespace 为 +5.26%／+6.23%，峰值 −2.16%。所有 40 次完整模型一致，
+无 swap、无并发构建或基准。
+
+针对中文 Whitespace 的 VPS 波动疑问，再分别以 min_frequency 2／3 做
+各四组正式配对。阈值 2 的 CPU 中位差为 +4.94%，合并两轮八组为 +5.26%；
+此前约 9.8% 只是单次配对，不能作为整体结果。阈值 3 的差距降至 +2.64%，
+尚不能认定相同。whole-process perf 指令／周期中位差分别为
++1.27%／+4.13% 和 +0.34%／+1.67%；该边界含加载和序列化，且使用 VPS
+虚拟 PMU，因此只能辅助说明额外工作，不能精确归因训练 CPU。
+
+独立诊断统计的是累计冻结调用，不是唯一或同时驻留列表：阈值 2 时
+非空列表中的 52.77% 长度为 1／2。初始化单位置列表的局部权重有 96.35%
+为 1，符合用户判断，但初始化先冻结再汇总全局频率。提高阈值到 3 后，
+complete-birth 的短列表从 2,047,383 → 155,353，初始化的 4,518,165 个
+短列表不变。用户随后要求优先尝试全局过滤后再编码，再评估内联容量；
+该后续实验的成本、语料规模和分布另行记录，不混入本轮保留结果。
+
+普通 BPE 范围的 12 项测试通过（按用户要求排除既有 tokenizer encoding
+roundtrip 问题）；all-target no-default Clippy（warnings denied）、改动文件
+rustfmt 与 diff 检查通过。测量排除加载和模型序列化，峰值则含 caller map。
+完整源码、布局、逐次数据、模型哈希、诊断 patch 与计数口径见
+[Box-only 记录](evidence/box-only-20261010/README.md)。

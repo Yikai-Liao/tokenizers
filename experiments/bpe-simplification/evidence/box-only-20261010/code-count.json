@@ -1,0 +1,8 @@
+{
+  "before": 334,
+  "after": 286,
+  "added": 19,
+  "deleted": 67,
+  "net_removed": 48,
+  "scope": "positions.rs only; exclude test items, comments, doc comments and blank lines; preserve formatting"
+}

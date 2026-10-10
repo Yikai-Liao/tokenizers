@@ -1,0 +1,44 @@
+[
+  {
+    "case": "zh-whitespace-min2",
+    "enum": {
+      "train_seconds": 22.01511871,
+      "train_cpu_seconds": 59.200246500000006,
+      "process_hwm_kib_before_validation": 1810014.0
+    },
+    "box": {
+      "train_seconds": 23.6085853955,
+      "train_cpu_seconds": 63.189398000000004,
+      "process_hwm_kib_before_validation": 1789816.0
+    },
+    "reference": "enum",
+    "paired_median_delta_percent": {
+      "box": {
+        "train_seconds": 6.309120592140626,
+        "train_cpu_seconds": 4.936621035105338,
+        "process_hwm_kib_before_validation": -1.091054531640534
+      }
+    }
+  },
+  {
+    "case": "zh-whitespace-min3",
+    "enum": {
+      "train_seconds": 21.336022909,
+      "train_cpu_seconds": 58.4797535,
+      "process_hwm_kib_before_validation": 1693072.0
+    },
+    "box": {
+      "train_seconds": 22.2768811045,
+      "train_cpu_seconds": 60.2762265,
+      "process_hwm_kib_before_validation": 1670596.0
+    },
+    "reference": "enum",
+    "paired_median_delta_percent": {
+      "box": {
+        "train_seconds": 2.33045904693312,
+        "train_cpu_seconds": 2.6384726968233796,
+        "process_hwm_kib_before_validation": -1.7125869519001247
+      }
+    }
+  }
+]

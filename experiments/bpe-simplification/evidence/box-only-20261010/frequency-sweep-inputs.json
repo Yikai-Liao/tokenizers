@@ -1,0 +1,40 @@
+[
+  {
+    "case": "zh-whitespace-min2",
+    "language": "zh",
+    "requested_mib": 256,
+    "pretokenizer": "whitespace",
+    "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+    "bytes": 268435162,
+    "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+    "prepared_path": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+    "prepared_sha256": "ed057a8fdb27544ed29f16dde53faa0de8f47f1ee8ac00080974fac5bb435660",
+    "prepared_bytes": 250116097,
+    "trainer": {
+      "vocab_size": 50000,
+      "min_frequency": 2,
+      "prefix": null,
+      "suffix": null,
+      "max_token_length": null
+    }
+  },
+  {
+    "case": "zh-whitespace-min3",
+    "language": "zh",
+    "requested_mib": 256,
+    "pretokenizer": "whitespace",
+    "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+    "bytes": 268435162,
+    "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+    "prepared_path": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+    "prepared_sha256": "ed057a8fdb27544ed29f16dde53faa0de8f47f1ee8ac00080974fac5bb435660",
+    "prepared_bytes": 250116097,
+    "trainer": {
+      "vocab_size": 50000,
+      "min_frequency": 3,
+      "prefix": null,
+      "suffix": null,
+      "max_token_length": null
+    }
+  }
+]

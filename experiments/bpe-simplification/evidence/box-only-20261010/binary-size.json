@@ -1,0 +1,12 @@
+{
+  "enum": {
+    "file_bytes": 1394824,
+    "text_bytes": 835004,
+    "rodata_bytes": 97724
+  },
+  "box": {
+    "file_bytes": 1401536,
+    "text_bytes": 832684,
+    "rodata_bytes": 97724
+  }
+}

@@ -1,0 +1,34 @@
+/tmp/bpe-box-enum-bin  :
+section                 size      addr
+.interp                   28       736
+.note.ABI-tag             32       764
+.note.gnu.build-id        36       796
+.dynsym                 1968       832
+.gnu.version             164      2800
+.gnu.version_r           288      2964
+.gnu.hash                 28      3256
+.dynstr                 1235      3284
+.rela.dyn              20520      4520
+.rela.plt                 48     25040
+.gcc_except_table      22164     25088
+.rodata                97724     47296
+.eh_frame_hdr          10364    145020
+.eh_frame              73656    155384
+.text                 835004    233136
+.init                     23   1068140
+.fini                      9   1068164
+.plt                      48   1068176
+.tdata                    65   1072320
+.tbss                    336   1072392
+.fini_array                8   1072392
+.init_array               16   1072400
+.data.rel.ro           19440   1072512
+.dynamic                 448   1091952
+.got                     640   1092400
+.got.plt                  40   1093040
+.relro_padding           552   1093080
+.tm_clone_table            0   1097176
+.data                   3616   1097176
+.bss                     824   1100792
+.comment                 170         0
+Total                1089494

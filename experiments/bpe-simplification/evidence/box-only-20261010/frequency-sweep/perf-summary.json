@@ -1,0 +1,62 @@
+[
+  {
+    "case": "zh-whitespace-min2",
+    "scope": "whole process including loading, serialization and all threads; hardware counters are supplied by the VPS virtual PMU",
+    "enum": {
+      "instructions": 95619745219.5,
+      "cycles": 195276324106.5,
+      "task-clock": 68540.265,
+      "context-switches": 52802.5,
+      "minor-faults": 1069667.5,
+      "major-faults": 0.0,
+      "instructions_per_cycle": 0.4895673260568947
+    },
+    "box": {
+      "instructions": 96818752848.0,
+      "cycles": 204523230185.0,
+      "task-clock": 71651.965,
+      "context-switches": 53122.5,
+      "minor-faults": 1035887.0,
+      "major-faults": 0.0,
+      "instructions_per_cycle": 0.4727529516354383
+    },
+    "paired_median_delta_percent": {
+      "instructions": 1.2714087607436642,
+      "cycles": 4.129559878083533,
+      "task-clock": 3.6996591972148107,
+      "context-switches": -2.3939852675667392,
+      "minor-faults": -3.274232601330662,
+      "instructions_per_cycle": -2.770198888236558
+    }
+  },
+  {
+    "case": "zh-whitespace-min3",
+    "scope": "whole process including loading, serialization and all threads; hardware counters are supplied by the VPS virtual PMU",
+    "enum": {
+      "instructions": 94235029081.5,
+      "cycles": 195356823791.5,
+      "task-clock": 68538.745,
+      "context-switches": 51932.0,
+      "minor-faults": 1007121.5,
+      "major-faults": 0.0,
+      "instructions_per_cycle": 0.4823412416737154
+    },
+    "box": {
+      "instructions": 94542575947.0,
+      "cycles": 198415736076.0,
+      "task-clock": 70084.285,
+      "context-switches": 57225.0,
+      "minor-faults": 985273.5,
+      "major-faults": 0.0,
+      "instructions_per_cycle": 0.4762695293154654
+    },
+    "paired_median_delta_percent": {
+      "instructions": 0.34071970072434565,
+      "cycles": 1.6692683989834034,
+      "task-clock": 1.5069949491219092,
+      "context-switches": 7.914340413600518,
+      "minor-faults": -2.2883177767041687,
+      "instructions_per_cycle": -1.334606170806324
+    }
+  }
+]

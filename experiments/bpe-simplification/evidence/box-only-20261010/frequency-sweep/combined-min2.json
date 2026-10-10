@@ -1,0 +1,81 @@
+{
+  "pairs": [
+    {
+      "batch": "zh-whitespace-256MiB",
+      "block": 1,
+      "delta_percent": {
+        "train_seconds": 9.475331271746823,
+        "train_cpu_seconds": 9.754658540254235,
+        "process_hwm_kib_before_validation": 0.2053686680790534
+      }
+    },
+    {
+      "batch": "zh-whitespace-256MiB",
+      "block": 2,
+      "delta_percent": {
+        "train_seconds": 3.28326096891014,
+        "train_cpu_seconds": 4.323681199949125,
+        "process_hwm_kib_before_validation": -3.874558376780879
+      }
+    },
+    {
+      "batch": "zh-whitespace-256MiB",
+      "block": 3,
+      "delta_percent": {
+        "train_seconds": 5.881452007545107,
+        "train_cpu_seconds": 6.201340520775145,
+        "process_hwm_kib_before_validation": -0.947505721950137
+      }
+    },
+    {
+      "batch": "zh-whitespace-256MiB",
+      "block": 4,
+      "delta_percent": {
+        "train_seconds": 6.585230481720039,
+        "train_cpu_seconds": 4.2560905074753075,
+        "process_hwm_kib_before_validation": -3.3773756209133254
+      }
+    },
+    {
+      "batch": "zh-whitespace-min2",
+      "block": 1,
+      "delta_percent": {
+        "train_seconds": 3.0777027420142877,
+        "train_cpu_seconds": 2.2981488640950287,
+        "process_hwm_kib_before_validation": 0.30450124487273467
+      }
+    },
+    {
+      "batch": "zh-whitespace-min2",
+      "block": 2,
+      "delta_percent": {
+        "train_seconds": 9.540538442266966,
+        "train_cpu_seconds": 7.575093206115646,
+        "process_hwm_kib_before_validation": 1.274720603762658
+      }
+    },
+    {
+      "batch": "zh-whitespace-min2",
+      "block": 3,
+      "delta_percent": {
+        "train_seconds": 1.9835258459938387,
+        "train_cpu_seconds": 0.783431731588502,
+        "process_hwm_kib_before_validation": -3.432232226991938
+      }
+    },
+    {
+      "batch": "zh-whitespace-min2",
+      "block": 4,
+      "delta_percent": {
+        "train_seconds": 14.212348618082672,
+        "train_cpu_seconds": 12.814251918540286,
+        "process_hwm_kib_before_validation": -2.4866103081538027
+      }
+    }
+  ],
+  "paired_median_delta_percent": {
+    "train_seconds": 6.233341244632573,
+    "train_cpu_seconds": 5.262510860362135,
+    "process_hwm_kib_before_validation": -1.7170580150519699
+  }
+}

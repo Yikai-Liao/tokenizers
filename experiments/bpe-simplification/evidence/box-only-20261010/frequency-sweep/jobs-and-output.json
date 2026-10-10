@@ -1,0 +1,982 @@
+{
+  "core-zh-whitespace-min2-b0-enum": {
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "core-zh-whitespace-min2-b0-enum",
+      "build_id": "enum",
+      "input_id": "zh-whitespace-min2",
+      "mode": "core",
+      "input": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "output": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min2-b0-enum/model.json",
+      "workers": 4,
+      "pretokenizer": "whitespace",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": {
+      "attempt_id": "core-zh-whitespace-min2-b0-enum",
+      "build_id": "enum",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-whitespace-min2",
+      "metrics": {
+        "load_seconds": 7.455417407,
+        "process_hwm_kib_before_validation": 1833108,
+        "train_cpu_seconds": 61.152910999999996,
+        "train_seconds": 22.49941909
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 32241,
+        "actual_vocab": 50000,
+        "model_path": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min2-b0-enum/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    },
+    "stderr": "",
+    "perf_csv": "# started on Sat Oct 10 23:09:59 2026\n\n95693938367;;instructions;70978385311;100.00;0.48;insn per cycle\n200560834961;;cycles;70978385311;100.00;;\n70978.39;msec;task-clock;70978385311;100.00;2.199;CPUs utilized\n54206;;context-switches;70978385311;100.00;763.697;/sec\n1069831;;minor-faults;70978385311;100.00;15.073;K/sec\n0;;major-faults;70978385311;100.00;0.000;/sec\n"
+  },
+  "core-zh-whitespace-min2-b0-box": {
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "core-zh-whitespace-min2-b0-box",
+      "build_id": "box",
+      "input_id": "zh-whitespace-min2",
+      "mode": "core",
+      "input": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "output": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min2-b0-box/model.json",
+      "workers": 4,
+      "pretokenizer": "whitespace",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": {
+      "attempt_id": "core-zh-whitespace-min2-b0-box",
+      "build_id": "box",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-whitespace-min2",
+      "metrics": {
+        "load_seconds": 7.381369015,
+        "process_hwm_kib_before_validation": 1770836,
+        "train_cpu_seconds": 61.316577,
+        "train_seconds": 22.918485996
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 32241,
+        "actual_vocab": 50000,
+        "model_path": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min2-b0-box/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    },
+    "stderr": "",
+    "perf_csv": "# started on Sat Oct 10 23:10:32 2026\n\n97002618468;;instructions;71043573317;100.00;0.48;insn per cycle\n203025566750;;cycles;71043573317;100.00;;\n71043.57;msec;task-clock;71043573317;100.00;2.176;CPUs utilized\n52847;;context-switches;71043573317;100.00;743.867;/sec\n1054162;;minor-faults;71043573317;100.00;14.838;K/sec\n0;;major-faults;71043573317;100.00;0.000;/sec\n"
+  },
+  "core-zh-whitespace-min2-b1-box": {
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "core-zh-whitespace-min2-b1-box",
+      "build_id": "box",
+      "input_id": "zh-whitespace-min2",
+      "mode": "core",
+      "input": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "output": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min2-b1-box/model.json",
+      "workers": 4,
+      "pretokenizer": "whitespace",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": {
+      "attempt_id": "core-zh-whitespace-min2-b1-box",
+      "build_id": "box",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-whitespace-min2",
+      "metrics": {
+        "load_seconds": 7.159069705,
+        "process_hwm_kib_before_validation": 1791968,
+        "train_cpu_seconds": 60.064665,
+        "train_seconds": 22.436318398
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 32241,
+        "actual_vocab": 50000,
+        "model_path": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min2-b1-box/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    },
+    "stderr": "",
+    "perf_csv": "# started on Sat Oct 10 23:11:04 2026\n\n96905077027;;instructions;69599508714;100.00;0.48;insn per cycle\n200357296226;;cycles;69599508714;100.00;;\n69599.51;msec;task-clock;69599508714;100.00;2.175;CPUs utilized\n50472;;context-switches;69599508714;100.00;725.178;/sec\n1035235;;minor-faults;69599508714;100.00;14.874;K/sec\n0;;major-faults;69599508714;100.00;0.000;/sec\n"
+  },
+  "core-zh-whitespace-min2-b1-enum": {
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "core-zh-whitespace-min2-b1-enum",
+      "build_id": "enum",
+      "input_id": "zh-whitespace-min2",
+      "mode": "core",
+      "input": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "output": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min2-b1-enum/model.json",
+      "workers": 4,
+      "pretokenizer": "whitespace",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": {
+      "attempt_id": "core-zh-whitespace-min2-b1-enum",
+      "build_id": "enum",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-whitespace-min2",
+      "metrics": {
+        "load_seconds": 6.955852624,
+        "process_hwm_kib_before_validation": 1786528,
+        "train_cpu_seconds": 58.715300000000006,
+        "train_seconds": 21.766412911
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 32241,
+        "actual_vocab": 50000,
+        "model_path": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min2-b1-enum/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    },
+    "stderr": "",
+    "perf_csv": "# started on Sat Oct 10 23:11:37 2026\n\n95537681912;;instructions;67933219769;100.00;0.49;insn per cycle\n195266191498;;cycles;67933219769;100.00;;\n67933.22;msec;task-clock;67933219769;100.00;2.190;CPUs utilized\n51885;;context-switches;67933219769;100.00;763.765;/sec\n1070990;;minor-faults;67933219769;100.00;15.765;K/sec\n0;;major-faults;67933219769;100.00;0.000;/sec\n"
+  },
+  "core-zh-whitespace-min2-b2-enum": {
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "core-zh-whitespace-min2-b2-enum",
+      "build_id": "enum",
+      "input_id": "zh-whitespace-min2",
+      "mode": "core",
+      "input": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "output": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min2-b2-enum/model.json",
+      "workers": 4,
+      "pretokenizer": "whitespace",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": {
+      "attempt_id": "core-zh-whitespace-min2-b2-enum",
+      "build_id": "enum",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-whitespace-min2",
+      "metrics": {
+        "load_seconds": 6.973151238,
+        "process_hwm_kib_before_validation": 1769172,
+        "train_cpu_seconds": 59.685193,
+        "train_seconds": 22.263824509
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 32241,
+        "actual_vocab": 50000,
+        "model_path": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min2-b2-enum/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    },
+    "stderr": "",
+    "perf_csv": "# started on Sat Oct 10 23:12:08 2026\n\n95664139805;;instructions;69147313994;100.00;0.49;insn per cycle\n195286456715;;cycles;69147313994;100.00;;\n69147.31;msec;task-clock;69147313994;100.00;2.179;CPUs utilized\n55167;;context-switches;69147313994;100.00;797.818;/sec\n1068420;;minor-faults;69147313994;100.00;15.451;K/sec\n0;;major-faults;69147313994;100.00;0.000;/sec\n"
+  },
+  "core-zh-whitespace-min2-b2-box": {
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "core-zh-whitespace-min2-b2-box",
+      "build_id": "box",
+      "input_id": "zh-whitespace-min2",
+      "mode": "core",
+      "input": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "output": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min2-b2-box/model.json",
+      "workers": 4,
+      "pretokenizer": "whitespace",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": {
+      "attempt_id": "core-zh-whitespace-min2-b2-box",
+      "build_id": "box",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-whitespace-min2",
+      "metrics": {
+        "load_seconds": 7.287614053,
+        "process_hwm_kib_before_validation": 1791724,
+        "train_cpu_seconds": 64.20640200000001,
+        "train_seconds": 24.387913245
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 32241,
+        "actual_vocab": 50000,
+        "model_path": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min2-b2-box/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    },
+    "stderr": "",
+    "perf_csv": "# started on Sat Oct 10 23:12:40 2026\n\n96629600210;;instructions;72567673388;100.00;0.47;insn per cycle\n206323765947;;cycles;72567673388;100.00;;\n72567.67;msec;task-clock;72567673388;100.00;2.216;CPUs utilized\n54028;;context-switches;72567673388;100.00;744.519;/sec\n1031556;;minor-faults;72567673388;100.00;14.215;K/sec\n0;;major-faults;72567673388;100.00;0.000;/sec\n"
+  },
+  "core-zh-whitespace-min2-b3-box": {
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "core-zh-whitespace-min2-b3-box",
+      "build_id": "box",
+      "input_id": "zh-whitespace-min2",
+      "mode": "core",
+      "input": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "output": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min2-b3-box/model.json",
+      "workers": 4,
+      "pretokenizer": "whitespace",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": {
+      "attempt_id": "core-zh-whitespace-min2-b3-box",
+      "build_id": "box",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-whitespace-min2",
+      "metrics": {
+        "load_seconds": 7.140487233,
+        "process_hwm_kib_before_validation": 1770852,
+        "train_cpu_seconds": 62.172394,
+        "train_seconds": 23.107002278
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 32241,
+        "actual_vocab": 50000,
+        "model_path": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min2-b3-box/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    },
+    "stderr": "",
+    "perf_csv": "# started on Sat Oct 10 23:13:13 2026\n\n96732428669;;instructions;70736257708;100.00;0.48;insn per cycle\n202722694423;;cycles;70736257708;100.00;;\n70736.26;msec;task-clock;70736257708;100.00;2.233;CPUs utilized\n52217;;context-switches;70736257708;100.00;738.193;/sec\n1036539;;minor-faults;70736257708;100.00;14.654;K/sec\n0;;major-faults;70736257708;100.00;0.000;/sec\n"
+  },
+  "core-zh-whitespace-min2-b3-enum": {
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "core-zh-whitespace-min2-b3-enum",
+      "build_id": "enum",
+      "input_id": "zh-whitespace-min2",
+      "mode": "core",
+      "input": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "output": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min2-b3-enum/model.json",
+      "workers": 4,
+      "pretokenizer": "whitespace",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": {
+      "attempt_id": "core-zh-whitespace-min2-b3-enum",
+      "build_id": "enum",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-whitespace-min2",
+      "metrics": {
+        "load_seconds": 7.312786221,
+        "process_hwm_kib_before_validation": 1833792,
+        "train_cpu_seconds": 61.689102,
+        "train_seconds": 22.657583258
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 32241,
+        "actual_vocab": 50000,
+        "model_path": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min2-b3-enum/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    },
+    "stderr": "",
+    "perf_csv": "# started on Sat Oct 10 23:13:45 2026\n\n95669015029;;instructions;71336700618;100.00;0.47;insn per cycle\n204695661020;;cycles;71336700618;100.00;;\n71336.70;msec;task-clock;71336700618;100.00;2.208;CPUs utilized\n53720;;context-switches;71336700618;100.00;753.049;/sec\n1070915;;minor-faults;71336700618;100.00;15.012;K/sec\n0;;major-faults;71336700618;100.00;0.000;/sec\n"
+  },
+  "core-zh-whitespace-min2-b4-enum": {
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "core-zh-whitespace-min2-b4-enum",
+      "build_id": "enum",
+      "input_id": "zh-whitespace-min2",
+      "mode": "core",
+      "input": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "output": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min2-b4-enum/model.json",
+      "workers": 4,
+      "pretokenizer": "whitespace",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": {
+      "attempt_id": "core-zh-whitespace-min2-b4-enum",
+      "build_id": "enum",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-whitespace-min2",
+      "metrics": {
+        "load_seconds": 7.001354467,
+        "process_hwm_kib_before_validation": 1833500,
+        "train_cpu_seconds": 57.686044,
+        "train_seconds": 21.109948972
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 32241,
+        "actual_vocab": 50000,
+        "model_path": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min2-b4-enum/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    },
+    "stderr": "",
+    "perf_csv": "# started on Sat Oct 10 23:14:17 2026\n\n95575350634;;instructions;67051638325;100.00;0.50;insn per cycle\n192194462441;;cycles;67051638325;100.00;;\n67051.64;msec;task-clock;67051638325;100.00;2.194;CPUs utilized\n51823;;context-switches;67051638325;100.00;772.882;/sec\n1061986;;minor-faults;67051638325;100.00;15.838;K/sec\n0;;major-faults;67051638325;100.00;0.000;/sec\n"
+  },
+  "core-zh-whitespace-min2-b4-box": {
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "core-zh-whitespace-min2-b4-box",
+      "build_id": "box",
+      "input_id": "zh-whitespace-min2",
+      "mode": "core",
+      "input": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "output": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min2-b4-box/model.json",
+      "workers": 4,
+      "pretokenizer": "whitespace",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": {
+      "attempt_id": "core-zh-whitespace-min2-b4-box",
+      "build_id": "box",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-whitespace-min2",
+      "metrics": {
+        "load_seconds": 7.586356619,
+        "process_hwm_kib_before_validation": 1787908,
+        "train_cpu_seconds": 65.078079,
+        "train_seconds": 24.110168513
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 32241,
+        "actual_vocab": 50000,
+        "model_path": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min2-b4-box/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    },
+    "stderr": "",
+    "perf_csv": "# started on Sat Oct 10 23:14:48 2026\n\n97068246463;;instructions;74987894787;100.00;0.46;insn per cycle\n213305594739;;cycles;74987894787;100.00;;\n74987.89;msec;task-clock;74987894787;100.00;2.205;CPUs utilized\n55195;;context-switches;74987894787;100.00;736.052;/sec\n1047299;;minor-faults;74987894787;100.00;13.966;K/sec\n0;;major-faults;74987894787;100.00;0.000;/sec\n"
+  },
+  "core-zh-whitespace-min3-b0-enum": {
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "core-zh-whitespace-min3-b0-enum",
+      "build_id": "enum",
+      "input_id": "zh-whitespace-min3",
+      "mode": "core",
+      "input": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "output": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min3-b0-enum/model.json",
+      "workers": 4,
+      "pretokenizer": "whitespace",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 3,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": {
+      "attempt_id": "core-zh-whitespace-min3-b0-enum",
+      "build_id": "enum",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-whitespace-min3",
+      "metrics": {
+        "load_seconds": 7.122941646,
+        "process_hwm_kib_before_validation": 1694480,
+        "train_cpu_seconds": 58.32017999999999,
+        "train_seconds": 21.387543141
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 32241,
+        "actual_vocab": 50000,
+        "model_path": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min3-b0-enum/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    },
+    "stderr": "",
+    "perf_csv": "# started on Sat Oct 10 23:15:23 2026\n\n94210370830;;instructions;67811978089;100.00;0.48;insn per cycle\n194263733611;;cycles;67811978089;100.00;;\n67811.98;msec;task-clock;67811978089;100.00;2.196;CPUs utilized\n58327;;context-switches;67811978089;100.00;860.128;/sec\n1009326;;minor-faults;67811978089;100.00;14.884;K/sec\n0;;major-faults;67811978089;100.00;0.000;/sec\n"
+  },
+  "core-zh-whitespace-min3-b0-box": {
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "core-zh-whitespace-min3-b0-box",
+      "build_id": "box",
+      "input_id": "zh-whitespace-min3",
+      "mode": "core",
+      "input": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "output": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min3-b0-box/model.json",
+      "workers": 4,
+      "pretokenizer": "whitespace",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 3,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": {
+      "attempt_id": "core-zh-whitespace-min3-b0-box",
+      "build_id": "box",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-whitespace-min3",
+      "metrics": {
+        "load_seconds": 7.5018033509999995,
+        "process_hwm_kib_before_validation": 1681600,
+        "train_cpu_seconds": 63.280524,
+        "train_seconds": 22.80580786
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 32241,
+        "actual_vocab": 50000,
+        "model_path": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min3-b0-box/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    },
+    "stderr": "",
+    "perf_csv": "# started on Sat Oct 10 23:15:54 2026\n\n94249694252;;instructions;71904745918;100.00;0.46;insn per cycle\n206395308630;;cycles;71904745918;100.00;;\n71904.75;msec;task-clock;71904745918;100.00;2.287;CPUs utilized\n58880;;context-switches;71904745918;100.00;818.861;/sec\n983867;;minor-faults;71904745918;100.00;13.683;K/sec\n0;;major-faults;71904745918;100.00;0.000;/sec\n"
+  },
+  "core-zh-whitespace-min3-b1-box": {
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "core-zh-whitespace-min3-b1-box",
+      "build_id": "box",
+      "input_id": "zh-whitespace-min3",
+      "mode": "core",
+      "input": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "output": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min3-b1-box/model.json",
+      "workers": 4,
+      "pretokenizer": "whitespace",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 3,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": {
+      "attempt_id": "core-zh-whitespace-min3-b1-box",
+      "build_id": "box",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-whitespace-min3",
+      "metrics": {
+        "load_seconds": 7.145227037,
+        "process_hwm_kib_before_validation": 1680644,
+        "train_cpu_seconds": 59.899958,
+        "train_seconds": 22.2271665
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 32241,
+        "actual_vocab": 50000,
+        "model_path": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min3-b1-box/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    },
+    "stderr": "",
+    "perf_csv": "# started on Sat Oct 10 23:16:26 2026\n\n94549173684;;instructions;69525387686;100.00;0.48;insn per cycle\n198913086043;;cycles;69525387686;100.00;;\n69525.39;msec;task-clock;69525387686;100.00;2.180;CPUs utilized\n58483;;context-switches;69525387686;100.00;841.175;/sec\n979810;;minor-faults;69525387686;100.00;14.093;K/sec\n0;;major-faults;69525387686;100.00;0.000;/sec\n"
+  },
+  "core-zh-whitespace-min3-b1-enum": {
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "core-zh-whitespace-min3-b1-enum",
+      "build_id": "enum",
+      "input_id": "zh-whitespace-min3",
+      "mode": "core",
+      "input": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "output": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min3-b1-enum/model.json",
+      "workers": 4,
+      "pretokenizer": "whitespace",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 3,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": {
+      "attempt_id": "core-zh-whitespace-min3-b1-enum",
+      "build_id": "enum",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-whitespace-min3",
+      "metrics": {
+        "load_seconds": 7.807846213,
+        "process_hwm_kib_before_validation": 1702764,
+        "train_cpu_seconds": 59.22005599999999,
+        "train_seconds": 21.571858235
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 32241,
+        "actual_vocab": 50000,
+        "model_path": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min3-b1-enum/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    },
+    "stderr": "",
+    "perf_csv": "# started on Sat Oct 10 23:16:58 2026\n\n94196216636;;instructions;69557890002;100.00;0.48;insn per cycle\n197026505752;;cycles;69557890002;100.00;;\n69557.89;msec;task-clock;69557890002;100.00;2.177;CPUs utilized\n53862;;context-switches;69557890002;100.00;774.348;/sec\n1006023;;minor-faults;69557890002;100.00;14.463;K/sec\n0;;major-faults;69557890002;100.00;0.000;/sec\n"
+  },
+  "core-zh-whitespace-min3-b2-enum": {
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "core-zh-whitespace-min3-b2-enum",
+      "build_id": "enum",
+      "input_id": "zh-whitespace-min3",
+      "mode": "core",
+      "input": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "output": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min3-b2-enum/model.json",
+      "workers": 4,
+      "pretokenizer": "whitespace",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 3,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": {
+      "attempt_id": "core-zh-whitespace-min3-b2-enum",
+      "build_id": "enum",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-whitespace-min3",
+      "metrics": {
+        "load_seconds": 7.316052936,
+        "process_hwm_kib_before_validation": 1661932,
+        "train_cpu_seconds": 57.735088999999995,
+        "train_seconds": 21.100187583
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 32241,
+        "actual_vocab": 50000,
+        "model_path": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min3-b2-enum/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    },
+    "stderr": "",
+    "perf_csv": "# started on Sat Oct 10 23:17:30 2026\n\n94246889691;;instructions;67595001130;100.00;0.49;insn per cycle\n193687141831;;cycles;67595001130;100.00;;\n67595.00;msec;task-clock;67595001130;100.00;2.184;CPUs utilized\n52184;;context-switches;67595001130;100.00;772.010;/sec\n1008475;;minor-faults;67595001130;100.00;14.919;K/sec\n0;;major-faults;67595001130;100.00;0.000;/sec\n"
+  },
+  "core-zh-whitespace-min3-b2-box": {
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "core-zh-whitespace-min3-b2-box",
+      "build_id": "box",
+      "input_id": "zh-whitespace-min3",
+      "mode": "core",
+      "input": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "output": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min3-b2-box/model.json",
+      "workers": 4,
+      "pretokenizer": "whitespace",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 3,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": {
+      "attempt_id": "core-zh-whitespace-min3-b2-box",
+      "build_id": "box",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-whitespace-min3",
+      "metrics": {
+        "load_seconds": 7.685282614,
+        "process_hwm_kib_before_validation": 1681784,
+        "train_cpu_seconds": 56.703387000000006,
+        "train_seconds": 20.940024872
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 32241,
+        "actual_vocab": 50000,
+        "model_path": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min3-b2-box/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    },
+    "stderr": "",
+    "perf_csv": "# started on Sat Oct 10 23:18:01 2026\n\n94535978210;;instructions;66802770281;100.00;0.50;insn per cycle\n189989936565;;cycles;66802770281;100.00;;\n66802.77;msec;task-clock;66802770281;100.00;2.153;CPUs utilized\n55967;;context-switches;66802770281;100.00;837.795;/sec\n986941;;minor-faults;66802770281;100.00;14.774;K/sec\n0;;major-faults;66802770281;100.00;0.000;/sec\n"
+  },
+  "core-zh-whitespace-min3-b3-box": {
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "core-zh-whitespace-min3-b3-box",
+      "build_id": "box",
+      "input_id": "zh-whitespace-min3",
+      "mode": "core",
+      "input": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "output": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min3-b3-box/model.json",
+      "workers": 4,
+      "pretokenizer": "whitespace",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 3,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": {
+      "attempt_id": "core-zh-whitespace-min3-b3-box",
+      "build_id": "box",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-whitespace-min3",
+      "metrics": {
+        "load_seconds": 7.543501292,
+        "process_hwm_kib_before_validation": 1646660,
+        "train_cpu_seconds": 60.652495,
+        "train_seconds": 22.745466849
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 32241,
+        "actual_vocab": 50000,
+        "model_path": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min3-b3-box/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    },
+    "stderr": "",
+    "perf_csv": "# started on Sat Oct 10 23:18:32 2026\n\n94448629308;;instructions;70643182585;100.00;0.48;insn per cycle\n197918386109;;cycles;70643182585;100.00;;\n70643.18;msec;task-clock;70643182585;100.00;2.158;CPUs utilized\n55294;;context-switches;70643182585;100.00;782.722;/sec\n983606;;minor-faults;70643182585;100.00;13.924;K/sec\n0;;major-faults;70643182585;100.00;0.000;/sec\n"
+  },
+  "core-zh-whitespace-min3-b3-enum": {
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "core-zh-whitespace-min3-b3-enum",
+      "build_id": "enum",
+      "input_id": "zh-whitespace-min3",
+      "mode": "core",
+      "input": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "output": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min3-b3-enum/model.json",
+      "workers": 4,
+      "pretokenizer": "whitespace",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 3,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": {
+      "attempt_id": "core-zh-whitespace-min3-b3-enum",
+      "build_id": "enum",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-whitespace-min3",
+      "metrics": {
+        "load_seconds": 7.287443752,
+        "process_hwm_kib_before_validation": 1689524,
+        "train_cpu_seconds": 57.73945100000001,
+        "train_seconds": 20.779489137
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 32241,
+        "actual_vocab": 50000,
+        "model_path": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min3-b3-enum/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    },
+    "stderr": "",
+    "perf_csv": "# started on Sat Oct 10 23:19:05 2026\n\n94223168472;;instructions;67385658207;100.00;0.49;insn per cycle\n193315522901;;cycles;67385658207;100.00;;\n67385.66;msec;task-clock;67385658207;100.00;2.213;CPUs utilized\n51680;;context-switches;67385658207;100.00;766.929;/sec\n1008220;;minor-faults;67385658207;100.00;14.962;K/sec\n0;;major-faults;67385658207;100.00;0.000;/sec\n"
+  },
+  "core-zh-whitespace-min3-b4-enum": {
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "core-zh-whitespace-min3-b4-enum",
+      "build_id": "enum",
+      "input_id": "zh-whitespace-min3",
+      "mode": "core",
+      "input": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "output": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min3-b4-enum/model.json",
+      "workers": 4,
+      "pretokenizer": "whitespace",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 3,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": {
+      "attempt_id": "core-zh-whitespace-min3-b4-enum",
+      "build_id": "enum",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-whitespace-min3",
+      "metrics": {
+        "load_seconds": 7.380272306,
+        "process_hwm_kib_before_validation": 1696620,
+        "train_cpu_seconds": 59.784135000000006,
+        "train_seconds": 21.969995069
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 32241,
+        "actual_vocab": 50000,
+        "model_path": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min3-b4-enum/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    },
+    "stderr": "",
+    "perf_csv": "# started on Sat Oct 10 23:19:36 2026\n\n94266234186;;instructions;69482490411;100.00;0.47;insn per cycle\n199173384092;;cycles;69482490411;100.00;;\n69482.49;msec;task-clock;69482490411;100.00;2.193;CPUs utilized\n51353;;context-switches;69482490411;100.00;739.078;/sec\n997787;;minor-faults;69482490411;100.00;14.360;K/sec\n0;;major-faults;69482490411;100.00;0.000;/sec\n"
+  },
+  "core-zh-whitespace-min3-b4-box": {
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "core-zh-whitespace-min3-b4-box",
+      "build_id": "box",
+      "input_id": "zh-whitespace-min3",
+      "mode": "core",
+      "input": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "output": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min3-b4-box/model.json",
+      "workers": 4,
+      "pretokenizer": "whitespace",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 3,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": {
+      "attempt_id": "core-zh-whitespace-min3-b4-box",
+      "build_id": "box",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-whitespace-min3",
+      "metrics": {
+        "load_seconds": 7.063248042,
+        "process_hwm_kib_before_validation": 1660548,
+        "train_cpu_seconds": 62.25253299999999,
+        "train_seconds": 22.326595709
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 32241,
+        "actual_vocab": 50000,
+        "model_path": "/tmp/bpe-box-frequency-sweep/core-zh-whitespace-min3-b4-box/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    },
+    "stderr": "",
+    "perf_csv": "# started on Sat Oct 10 23:20:08 2026\n\n94672779903;;instructions;71609150239;100.00;0.46;insn per cycle\n205567194387;;cycles;71609150239;100.00;;\n71609.15;msec;task-clock;71609150239;100.00;2.259;CPUs utilized\n60375;;context-switches;71609150239;100.00;843.119;/sec\n993104;;minor-faults;71609150239;100.00;13.868;K/sec\n0;;major-faults;71609150239;100.00;0.000;/sec\n"
+  }
+}

@@ -1,0 +1,1842 @@
+[
+  {
+    "case": "en-256MiB",
+    "block": 0,
+    "arm": "enum",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-enum-bin",
+      "/tmp/bpe-box-real/core-en-256MiB-b0-enum/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 163628,
+    "subprocess_wall": 2.4792884199414402,
+    "attempt_id": "core-en-256MiB-b0-enum",
+    "build_id": "enum",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-256MiB",
+    "metrics": {
+      "load_seconds": 0.454004966,
+      "process_hwm_kib_before_validation": 163108,
+      "train_cpu_seconds": 4.275898,
+      "train_seconds": 1.9684297229999999
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-en-256MiB-b0-enum/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+    "valid": true
+  },
+  {
+    "case": "en-256MiB",
+    "block": 0,
+    "arm": "box",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-box-bin",
+      "/tmp/bpe-box-real/core-en-256MiB-b0-box/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 171064,
+    "subprocess_wall": 2.402113802032545,
+    "attempt_id": "core-en-256MiB-b0-box",
+    "build_id": "box",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-256MiB",
+    "metrics": {
+      "load_seconds": 0.474196829,
+      "process_hwm_kib_before_validation": 170688,
+      "train_cpu_seconds": 4.163632,
+      "train_seconds": 1.8530611590000001
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-en-256MiB-b0-box/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+    "valid": true
+  },
+  {
+    "case": "en-256MiB",
+    "block": 1,
+    "arm": "box",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-box-bin",
+      "/tmp/bpe-box-real/core-en-256MiB-b1-box/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 171576,
+    "subprocess_wall": 2.299664580030367,
+    "attempt_id": "core-en-256MiB-b1-box",
+    "build_id": "box",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-256MiB",
+    "metrics": {
+      "load_seconds": 0.449751325,
+      "process_hwm_kib_before_validation": 170996,
+      "train_cpu_seconds": 4.016405000000001,
+      "train_seconds": 1.780264252
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-en-256MiB-b1-box/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+    "valid": true
+  },
+  {
+    "case": "en-256MiB",
+    "block": 1,
+    "arm": "enum",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-enum-bin",
+      "/tmp/bpe-box-real/core-en-256MiB-b1-enum/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 171720,
+    "subprocess_wall": 2.3485038219951093,
+    "attempt_id": "core-en-256MiB-b1-enum",
+    "build_id": "enum",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-256MiB",
+    "metrics": {
+      "load_seconds": 0.478109737,
+      "process_hwm_kib_before_validation": 171336,
+      "train_cpu_seconds": 4.159676999999999,
+      "train_seconds": 1.809841017
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-en-256MiB-b1-enum/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+    "valid": true
+  },
+  {
+    "case": "en-256MiB",
+    "block": 2,
+    "arm": "enum",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-enum-bin",
+      "/tmp/bpe-box-real/core-en-256MiB-b2-enum/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 172076,
+    "subprocess_wall": 2.3204732969170436,
+    "attempt_id": "core-en-256MiB-b2-enum",
+    "build_id": "enum",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-256MiB",
+    "metrics": {
+      "load_seconds": 0.453129868,
+      "process_hwm_kib_before_validation": 171628,
+      "train_cpu_seconds": 4.144278,
+      "train_seconds": 1.804576579
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-en-256MiB-b2-enum/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+    "valid": true
+  },
+  {
+    "case": "en-256MiB",
+    "block": 2,
+    "arm": "box",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-box-bin",
+      "/tmp/bpe-box-real/core-en-256MiB-b2-box/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 171752,
+    "subprocess_wall": 2.5359728849725798,
+    "attempt_id": "core-en-256MiB-b2-box",
+    "build_id": "box",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-256MiB",
+    "metrics": {
+      "load_seconds": 0.457795741,
+      "process_hwm_kib_before_validation": 171300,
+      "train_cpu_seconds": 4.5176430000000005,
+      "train_seconds": 1.991265418
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-en-256MiB-b2-box/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+    "valid": true
+  },
+  {
+    "case": "en-256MiB",
+    "block": 3,
+    "arm": "box",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-box-bin",
+      "/tmp/bpe-box-real/core-en-256MiB-b3-box/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 173016,
+    "subprocess_wall": 2.203246737946756,
+    "attempt_id": "core-en-256MiB-b3-box",
+    "build_id": "box",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-256MiB",
+    "metrics": {
+      "load_seconds": 0.422310313,
+      "process_hwm_kib_before_validation": 172556,
+      "train_cpu_seconds": 3.864824,
+      "train_seconds": 1.710837594
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-en-256MiB-b3-box/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+    "valid": true
+  },
+  {
+    "case": "en-256MiB",
+    "block": 3,
+    "arm": "enum",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-enum-bin",
+      "/tmp/bpe-box-real/core-en-256MiB-b3-enum/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 170692,
+    "subprocess_wall": 2.3500156820518896,
+    "attempt_id": "core-en-256MiB-b3-enum",
+    "build_id": "enum",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-256MiB",
+    "metrics": {
+      "load_seconds": 0.447580545,
+      "process_hwm_kib_before_validation": 170180,
+      "train_cpu_seconds": 4.141394,
+      "train_seconds": 1.832561438
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-en-256MiB-b3-enum/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+    "valid": true
+  },
+  {
+    "case": "en-256MiB",
+    "block": 4,
+    "arm": "enum",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-enum-bin",
+      "/tmp/bpe-box-real/core-en-256MiB-b4-enum/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 171444,
+    "subprocess_wall": 2.2684001530287787,
+    "attempt_id": "core-en-256MiB-b4-enum",
+    "build_id": "enum",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-256MiB",
+    "metrics": {
+      "load_seconds": 0.435182877,
+      "process_hwm_kib_before_validation": 170716,
+      "train_cpu_seconds": 4.017025,
+      "train_seconds": 1.7579590120000002
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-en-256MiB-b4-enum/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+    "valid": true
+  },
+  {
+    "case": "en-256MiB",
+    "block": 4,
+    "arm": "box",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-box-bin",
+      "/tmp/bpe-box-real/core-en-256MiB-b4-box/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 171804,
+    "subprocess_wall": 2.2178523720940575,
+    "attempt_id": "core-en-256MiB-b4-box",
+    "build_id": "box",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-256MiB",
+    "metrics": {
+      "load_seconds": 0.427743936,
+      "process_hwm_kib_before_validation": 171520,
+      "train_cpu_seconds": 3.9153969999999996,
+      "train_seconds": 1.7170504279999999
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-en-256MiB-b4-box/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+    "valid": true
+  },
+  {
+    "case": "en-whitespace-256MiB",
+    "block": 0,
+    "arm": "enum",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-enum-bin",
+      "/tmp/bpe-box-real/core-en-whitespace-256MiB-b0-enum/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 140060,
+    "subprocess_wall": 2.1162900819908828,
+    "attempt_id": "core-en-whitespace-256MiB-b0-enum",
+    "build_id": "enum",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 0.348688559,
+      "process_hwm_kib_before_validation": 139740,
+      "train_cpu_seconds": 4.027661,
+      "train_seconds": 1.721291532
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 44917,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-en-whitespace-256MiB-b0-enum/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6",
+    "valid": true
+  },
+  {
+    "case": "en-whitespace-256MiB",
+    "block": 0,
+    "arm": "box",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-box-bin",
+      "/tmp/bpe-box-real/core-en-whitespace-256MiB-b0-box/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 148256,
+    "subprocess_wall": 2.0196356690721586,
+    "attempt_id": "core-en-whitespace-256MiB-b0-box",
+    "build_id": "box",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 0.373433778,
+      "process_hwm_kib_before_validation": 153740,
+      "train_cpu_seconds": 3.64145,
+      "train_seconds": 1.5767160310000001
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 44917,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-en-whitespace-256MiB-b0-box/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6",
+    "valid": true
+  },
+  {
+    "case": "en-whitespace-256MiB",
+    "block": 1,
+    "arm": "box",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-box-bin",
+      "/tmp/bpe-box-real/core-en-whitespace-256MiB-b1-box/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 153776,
+    "subprocess_wall": 2.021773246000521,
+    "attempt_id": "core-en-whitespace-256MiB-b1-box",
+    "build_id": "box",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 0.359976403,
+      "process_hwm_kib_before_validation": 154188,
+      "train_cpu_seconds": 3.601055,
+      "train_seconds": 1.596473525
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 44917,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-en-whitespace-256MiB-b1-box/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6",
+    "valid": true
+  },
+  {
+    "case": "en-whitespace-256MiB",
+    "block": 1,
+    "arm": "enum",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-enum-bin",
+      "/tmp/bpe-box-real/core-en-whitespace-256MiB-b1-enum/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 139632,
+    "subprocess_wall": 1.964556965045631,
+    "attempt_id": "core-en-whitespace-256MiB-b1-enum",
+    "build_id": "enum",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 0.381138751,
+      "process_hwm_kib_before_validation": 139128,
+      "train_cpu_seconds": 3.5678430000000003,
+      "train_seconds": 1.515891888
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 44917,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-en-whitespace-256MiB-b1-enum/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6",
+    "valid": true
+  },
+  {
+    "case": "en-whitespace-256MiB",
+    "block": 2,
+    "arm": "enum",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-enum-bin",
+      "/tmp/bpe-box-real/core-en-whitespace-256MiB-b2-enum/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 139540,
+    "subprocess_wall": 1.9873601039871573,
+    "attempt_id": "core-en-whitespace-256MiB-b2-enum",
+    "build_id": "enum",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 0.375696673,
+      "process_hwm_kib_before_validation": 138872,
+      "train_cpu_seconds": 3.64973,
+      "train_seconds": 1.5459791219999999
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 44917,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-en-whitespace-256MiB-b2-enum/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6",
+    "valid": true
+  },
+  {
+    "case": "en-whitespace-256MiB",
+    "block": 2,
+    "arm": "box",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-box-bin",
+      "/tmp/bpe-box-real/core-en-whitespace-256MiB-b2-box/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 142636,
+    "subprocess_wall": 2.0252062500221655,
+    "attempt_id": "core-en-whitespace-256MiB-b2-box",
+    "build_id": "box",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 0.365048171,
+      "process_hwm_kib_before_validation": 152952,
+      "train_cpu_seconds": 3.699911,
+      "train_seconds": 1.607346308
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 44917,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-en-whitespace-256MiB-b2-box/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6",
+    "valid": true
+  },
+  {
+    "case": "en-whitespace-256MiB",
+    "block": 3,
+    "arm": "box",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-box-bin",
+      "/tmp/bpe-box-real/core-en-whitespace-256MiB-b3-box/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 139264,
+    "subprocess_wall": 2.041172961005941,
+    "attempt_id": "core-en-whitespace-256MiB-b3-box",
+    "build_id": "box",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 0.398979817,
+      "process_hwm_kib_before_validation": 153112,
+      "train_cpu_seconds": 3.560389,
+      "train_seconds": 1.586496312
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 44917,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-en-whitespace-256MiB-b3-box/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6",
+    "valid": true
+  },
+  {
+    "case": "en-whitespace-256MiB",
+    "block": 3,
+    "arm": "enum",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-enum-bin",
+      "/tmp/bpe-box-real/core-en-whitespace-256MiB-b3-enum/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 138828,
+    "subprocess_wall": 2.116317552048713,
+    "attempt_id": "core-en-whitespace-256MiB-b3-enum",
+    "build_id": "enum",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 0.360422447,
+      "process_hwm_kib_before_validation": 138340,
+      "train_cpu_seconds": 4.003474000000001,
+      "train_seconds": 1.7141805730000002
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 44917,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-en-whitespace-256MiB-b3-enum/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6",
+    "valid": true
+  },
+  {
+    "case": "en-whitespace-256MiB",
+    "block": 4,
+    "arm": "enum",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-enum-bin",
+      "/tmp/bpe-box-real/core-en-whitespace-256MiB-b4-enum/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 139924,
+    "subprocess_wall": 2.042260631104,
+    "attempt_id": "core-en-whitespace-256MiB-b4-enum",
+    "build_id": "enum",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 0.425795418,
+      "process_hwm_kib_before_validation": 139652,
+      "train_cpu_seconds": 3.645316,
+      "train_seconds": 1.564029675
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 44917,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-en-whitespace-256MiB-b4-enum/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6",
+    "valid": true
+  },
+  {
+    "case": "en-whitespace-256MiB",
+    "block": 4,
+    "arm": "box",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-box-bin",
+      "/tmp/bpe-box-real/core-en-whitespace-256MiB-b4-box/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 150628,
+    "subprocess_wall": 2.0910765830194578,
+    "attempt_id": "core-en-whitespace-256MiB-b4-box",
+    "build_id": "box",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 0.376205969,
+      "process_hwm_kib_before_validation": 151968,
+      "train_cpu_seconds": 3.7483880000000003,
+      "train_seconds": 1.644884889
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 44917,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-en-whitespace-256MiB-b4-box/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 0,
+    "arm": "enum",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-enum-bin",
+      "/tmp/bpe-box-real/core-zh-256MiB-b0-enum/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2345232,
+    "subprocess_wall": 34.67968190810643,
+    "attempt_id": "core-zh-256MiB-b0-enum",
+    "build_id": "enum",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 10.984472329,
+      "process_hwm_kib_before_validation": 2345284,
+      "train_cpu_seconds": 68.883446,
+      "train_seconds": 21.850209187
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-zh-256MiB-b0-enum/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 0,
+    "arm": "box",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-box-bin",
+      "/tmp/bpe-box-real/core-zh-256MiB-b0-box/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2302324,
+    "subprocess_wall": 33.32119004789274,
+    "attempt_id": "core-zh-256MiB-b0-box",
+    "build_id": "box",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 10.115108014,
+      "process_hwm_kib_before_validation": 2302288,
+      "train_cpu_seconds": 66.64640399999999,
+      "train_seconds": 21.402057412
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-zh-256MiB-b0-box/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 1,
+    "arm": "box",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-box-bin",
+      "/tmp/bpe-box-real/core-zh-256MiB-b1-box/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2304184,
+    "subprocess_wall": 33.67825471598189,
+    "attempt_id": "core-zh-256MiB-b1-box",
+    "build_id": "box",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 10.214039195,
+      "process_hwm_kib_before_validation": 2304036,
+      "train_cpu_seconds": 66.630578,
+      "train_seconds": 21.236830419
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-zh-256MiB-b1-box/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 1,
+    "arm": "enum",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-enum-bin",
+      "/tmp/bpe-box-real/core-zh-256MiB-b1-enum/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2359000,
+    "subprocess_wall": 34.048620635061525,
+    "attempt_id": "core-zh-256MiB-b1-enum",
+    "build_id": "enum",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 10.41898818,
+      "process_hwm_kib_before_validation": 2358960,
+      "train_cpu_seconds": 68.688918,
+      "train_seconds": 21.707950905
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-zh-256MiB-b1-enum/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 2,
+    "arm": "enum",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-enum-bin",
+      "/tmp/bpe-box-real/core-zh-256MiB-b2-enum/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2343692,
+    "subprocess_wall": 33.61430402996484,
+    "attempt_id": "core-zh-256MiB-b2-enum",
+    "build_id": "enum",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 10.81983525,
+      "process_hwm_kib_before_validation": 2343480,
+      "train_cpu_seconds": 66.717004,
+      "train_seconds": 20.985523246
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-zh-256MiB-b2-enum/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 2,
+    "arm": "box",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-box-bin",
+      "/tmp/bpe-box-real/core-zh-256MiB-b2-box/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2315292,
+    "subprocess_wall": 34.31329708197154,
+    "attempt_id": "core-zh-256MiB-b2-box",
+    "build_id": "box",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 10.477134415,
+      "process_hwm_kib_before_validation": 2315224,
+      "train_cpu_seconds": 65.382495,
+      "train_seconds": 21.497285421
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-zh-256MiB-b2-box/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 3,
+    "arm": "box",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-box-bin",
+      "/tmp/bpe-box-real/core-zh-256MiB-b3-box/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2307488,
+    "subprocess_wall": 32.566600820980966,
+    "attempt_id": "core-zh-256MiB-b3-box",
+    "build_id": "box",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 10.281670143,
+      "process_hwm_kib_before_validation": 2307512,
+      "train_cpu_seconds": 64.99247299999999,
+      "train_seconds": 20.458586741
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-zh-256MiB-b3-box/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 3,
+    "arm": "enum",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-enum-bin",
+      "/tmp/bpe-box-real/core-zh-256MiB-b3-enum/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2340484,
+    "subprocess_wall": 34.73483886104077,
+    "attempt_id": "core-zh-256MiB-b3-enum",
+    "build_id": "enum",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 10.289725482,
+      "process_hwm_kib_before_validation": 2340592,
+      "train_cpu_seconds": 68.556567,
+      "train_seconds": 22.553348894
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-zh-256MiB-b3-enum/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 4,
+    "arm": "enum",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-enum-bin",
+      "/tmp/bpe-box-real/core-zh-256MiB-b4-enum/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2344592,
+    "subprocess_wall": 33.55662906891666,
+    "attempt_id": "core-zh-256MiB-b4-enum",
+    "build_id": "enum",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 9.898014211,
+      "process_hwm_kib_before_validation": 2344636,
+      "train_cpu_seconds": 68.238738,
+      "train_seconds": 21.731795948
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-zh-256MiB-b4-enum/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 4,
+    "arm": "box",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-box-bin",
+      "/tmp/bpe-box-real/core-zh-256MiB-b4-box/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2300420,
+    "subprocess_wall": 32.647171329008415,
+    "attempt_id": "core-zh-256MiB-b4-box",
+    "build_id": "box",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 10.156828812,
+      "process_hwm_kib_before_validation": 2300232,
+      "train_cpu_seconds": 65.530423,
+      "train_seconds": 20.609114994
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-zh-256MiB-b4-box/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 0,
+    "arm": "enum",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-enum-bin",
+      "/tmp/bpe-box-real/core-zh-whitespace-256MiB-b0-enum/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1833372,
+    "subprocess_wall": 29.332754661911167,
+    "attempt_id": "core-zh-whitespace-256MiB-b0-enum",
+    "build_id": "enum",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 7.444074119,
+      "process_hwm_kib_before_validation": 1833332,
+      "train_cpu_seconds": 57.048788,
+      "train_seconds": 20.642661209
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-zh-whitespace-256MiB-b0-enum/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 0,
+    "arm": "box",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-box-bin",
+      "/tmp/bpe-box-real/core-zh-whitespace-256MiB-b0-box/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1786940,
+    "subprocess_wall": 31.895752969081514,
+    "attempt_id": "core-zh-whitespace-256MiB-b0-box",
+    "build_id": "box",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 7.222452128,
+      "process_hwm_kib_before_validation": 1787104,
+      "train_cpu_seconds": 60.792631,
+      "train_seconds": 22.307579717
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-zh-whitespace-256MiB-b0-box/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 1,
+    "arm": "box",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-box-bin",
+      "/tmp/bpe-box-real/core-zh-whitespace-256MiB-b1-box/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1791920,
+    "subprocess_wall": 31.89830559201073,
+    "attempt_id": "core-zh-whitespace-256MiB-b1-box",
+    "build_id": "box",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 7.046263506,
+      "process_hwm_kib_before_validation": 1791676,
+      "train_cpu_seconds": 61.180006999999996,
+      "train_seconds": 22.565241681
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-zh-whitespace-256MiB-b1-box/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 1,
+    "arm": "enum",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-enum-bin",
+      "/tmp/bpe-box-real/core-zh-whitespace-256MiB-b1-enum/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1788420,
+    "subprocess_wall": 29.00030860095285,
+    "attempt_id": "core-zh-whitespace-256MiB-b1-enum",
+    "build_id": "enum",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 7.375555588,
+      "process_hwm_kib_before_validation": 1788004,
+      "train_cpu_seconds": 55.742515,
+      "train_seconds": 20.612170266
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-zh-whitespace-256MiB-b1-enum/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 2,
+    "arm": "enum",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-enum-bin",
+      "/tmp/bpe-box-real/core-zh-whitespace-256MiB-b2-enum/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1841896,
+    "subprocess_wall": 29.530455045052804,
+    "attempt_id": "core-zh-whitespace-256MiB-b2-enum",
+    "build_id": "enum",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 7.014982853,
+      "process_hwm_kib_before_validation": 1842068,
+      "train_cpu_seconds": 57.03575000000001,
+      "train_seconds": 21.242954051
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-zh-whitespace-256MiB-b2-enum/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 2,
+    "arm": "box",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-box-bin",
+      "/tmp/bpe-box-real/core-zh-whitespace-256MiB-b2-box/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1770476,
+    "subprocess_wall": 31.87514497002121,
+    "attempt_id": "core-zh-whitespace-256MiB-b2-box",
+    "build_id": "box",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 7.520685423,
+      "process_hwm_kib_before_validation": 1770696,
+      "train_cpu_seconds": 59.501794,
+      "train_seconds": 21.94041567
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-zh-whitespace-256MiB-b2-box/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 3,
+    "arm": "box",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-box-bin",
+      "/tmp/bpe-box-real/core-zh-whitespace-256MiB-b3-box/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1770956,
+    "subprocess_wall": 32.332947422983125,
+    "attempt_id": "core-zh-whitespace-256MiB-b3-box",
+    "build_id": "box",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 7.08892829,
+      "process_hwm_kib_before_validation": 1770912,
+      "train_cpu_seconds": 61.24280100000001,
+      "train_seconds": 22.72726102
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-zh-whitespace-256MiB-b3-box/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 3,
+    "arm": "enum",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-enum-bin",
+      "/tmp/bpe-box-real/core-zh-whitespace-256MiB-b3-enum/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1787692,
+    "subprocess_wall": 29.784467517049052,
+    "attempt_id": "core-zh-whitespace-256MiB-b3-enum",
+    "build_id": "enum",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 7.24033645,
+      "process_hwm_kib_before_validation": 1787852,
+      "train_cpu_seconds": 57.666693,
+      "train_seconds": 21.464818048
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-zh-whitespace-256MiB-b3-enum/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 4,
+    "arm": "enum",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-enum-bin",
+      "/tmp/bpe-box-real/core-zh-whitespace-256MiB-b4-enum/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1832868,
+    "subprocess_wall": 31.4764525690116,
+    "attempt_id": "core-zh-whitespace-256MiB-b4-enum",
+    "build_id": "enum",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 7.663804352,
+      "process_hwm_kib_before_validation": 1832784,
+      "train_cpu_seconds": 58.40207100000001,
+      "train_seconds": 21.374123896
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-zh-whitespace-256MiB-b4-enum/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 4,
+    "arm": "box",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-box-box-bin",
+      "/tmp/bpe-box-real/core-zh-whitespace-256MiB-b4-box/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1770984,
+    "subprocess_wall": 30.72851481102407,
+    "attempt_id": "core-zh-whitespace-256MiB-b4-box",
+    "build_id": "box",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.8492734330000005,
+      "process_hwm_kib_before_validation": 1770884,
+      "train_cpu_seconds": 60.887716,
+      "train_seconds": 22.781659218
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-box-real/core-zh-whitespace-256MiB-b4-box/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  }
+]

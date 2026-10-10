@@ -1,0 +1,302 @@
+[
+  {
+    "case": "zh-whitespace-min2",
+    "arm": "enum",
+    "block": 0,
+    "warmup": true,
+    "counters": {
+      "instructions": 95693938367.0,
+      "cycles": 200560834961.0,
+      "task-clock": 70978.39,
+      "context-switches": 54206.0,
+      "minor-faults": 1069831.0,
+      "major-faults": 0.0,
+      "instructions_per_cycle": 0.47713173105610646
+    }
+  },
+  {
+    "case": "zh-whitespace-min2",
+    "arm": "box",
+    "block": 0,
+    "warmup": true,
+    "counters": {
+      "instructions": 97002618468.0,
+      "cycles": 203025566750.0,
+      "task-clock": 71043.57,
+      "context-switches": 52847.0,
+      "minor-faults": 1054162.0,
+      "major-faults": 0.0,
+      "instructions_per_cycle": 0.4777852367108341
+    }
+  },
+  {
+    "case": "zh-whitespace-min2",
+    "arm": "box",
+    "block": 1,
+    "warmup": false,
+    "counters": {
+      "instructions": 96905077027.0,
+      "cycles": 200357296226.0,
+      "task-clock": 69599.51,
+      "context-switches": 50472.0,
+      "minor-faults": 1035235.0,
+      "major-faults": 0.0,
+      "instructions_per_cycle": 0.4836613332897672
+    }
+  },
+  {
+    "case": "zh-whitespace-min2",
+    "arm": "enum",
+    "block": 1,
+    "warmup": false,
+    "counters": {
+      "instructions": 95537681912.0,
+      "cycles": 195266191498.0,
+      "task-clock": 67933.22,
+      "context-switches": 51885.0,
+      "minor-faults": 1070990.0,
+      "major-faults": 0.0,
+      "instructions_per_cycle": 0.4892689368245221
+    }
+  },
+  {
+    "case": "zh-whitespace-min2",
+    "arm": "enum",
+    "block": 2,
+    "warmup": false,
+    "counters": {
+      "instructions": 95664139805.0,
+      "cycles": 195286456715.0,
+      "task-clock": 69147.31,
+      "context-switches": 55167.0,
+      "minor-faults": 1068420.0,
+      "major-faults": 0.0,
+      "instructions_per_cycle": 0.48986571528926726
+    }
+  },
+  {
+    "case": "zh-whitespace-min2",
+    "arm": "box",
+    "block": 2,
+    "warmup": false,
+    "counters": {
+      "instructions": 96629600210.0,
+      "cycles": 206323765947.0,
+      "task-clock": 72567.67,
+      "context-switches": 54028.0,
+      "minor-faults": 1031556.0,
+      "major-faults": 0.0,
+      "instructions_per_cycle": 0.4683396494169363
+    }
+  },
+  {
+    "case": "zh-whitespace-min2",
+    "arm": "box",
+    "block": 3,
+    "warmup": false,
+    "counters": {
+      "instructions": 96732428669.0,
+      "cycles": 202722694423.0,
+      "task-clock": 70736.26,
+      "context-switches": 52217.0,
+      "minor-faults": 1036539.0,
+      "major-faults": 0.0,
+      "instructions_per_cycle": 0.47716625385394035
+    }
+  },
+  {
+    "case": "zh-whitespace-min2",
+    "arm": "enum",
+    "block": 3,
+    "warmup": false,
+    "counters": {
+      "instructions": 95669015029.0,
+      "cycles": 204695661020.0,
+      "task-clock": 71336.7,
+      "context-switches": 53720.0,
+      "minor-faults": 1070915.0,
+      "major-faults": 0.0,
+      "instructions_per_cycle": 0.4673719733592817
+    }
+  },
+  {
+    "case": "zh-whitespace-min2",
+    "arm": "enum",
+    "block": 4,
+    "warmup": false,
+    "counters": {
+      "instructions": 95575350634.0,
+      "cycles": 192194462441.0,
+      "task-clock": 67051.64,
+      "context-switches": 51823.0,
+      "minor-faults": 1061986.0,
+      "major-faults": 0.0,
+      "instructions_per_cycle": 0.4972846221484648
+    }
+  },
+  {
+    "case": "zh-whitespace-min2",
+    "arm": "box",
+    "block": 4,
+    "warmup": false,
+    "counters": {
+      "instructions": 97068246463.0,
+      "cycles": 213305594739.0,
+      "task-clock": 74987.89,
+      "context-switches": 55195.0,
+      "minor-faults": 1047299.0,
+      "major-faults": 0.0,
+      "instructions_per_cycle": 0.4550665751724533
+    }
+  },
+  {
+    "case": "zh-whitespace-min3",
+    "arm": "enum",
+    "block": 0,
+    "warmup": true,
+    "counters": {
+      "instructions": 94210370830.0,
+      "cycles": 194263733611.0,
+      "task-clock": 67811.98,
+      "context-switches": 58327.0,
+      "minor-faults": 1009326.0,
+      "major-faults": 0.0,
+      "instructions_per_cycle": 0.4849611869328626
+    }
+  },
+  {
+    "case": "zh-whitespace-min3",
+    "arm": "box",
+    "block": 0,
+    "warmup": true,
+    "counters": {
+      "instructions": 94249694252.0,
+      "cycles": 206395308630.0,
+      "task-clock": 71904.75,
+      "context-switches": 58880.0,
+      "minor-faults": 983867.0,
+      "major-faults": 0.0,
+      "instructions_per_cycle": 0.4566464949111765
+    }
+  },
+  {
+    "case": "zh-whitespace-min3",
+    "arm": "box",
+    "block": 1,
+    "warmup": false,
+    "counters": {
+      "instructions": 94549173684.0,
+      "cycles": 198913086043.0,
+      "task-clock": 69525.39,
+      "context-switches": 58483.0,
+      "minor-faults": 979810.0,
+      "major-faults": 0.0,
+      "instructions_per_cycle": 0.47532907746230857
+    }
+  },
+  {
+    "case": "zh-whitespace-min3",
+    "arm": "enum",
+    "block": 1,
+    "warmup": false,
+    "counters": {
+      "instructions": 94196216636.0,
+      "cycles": 197026505752.0,
+      "task-clock": 69557.89,
+      "context-switches": 53862.0,
+      "minor-faults": 1006023.0,
+      "major-faults": 0.0,
+      "instructions_per_cycle": 0.4780890585075192
+    }
+  },
+  {
+    "case": "zh-whitespace-min3",
+    "arm": "enum",
+    "block": 2,
+    "warmup": false,
+    "counters": {
+      "instructions": 94246889691.0,
+      "cycles": 193687141831.0,
+      "task-clock": 67595.0,
+      "context-switches": 52184.0,
+      "minor-faults": 1008475.0,
+      "major-faults": 0.0,
+      "instructions_per_cycle": 0.48659342483991164
+    }
+  },
+  {
+    "case": "zh-whitespace-min3",
+    "arm": "box",
+    "block": 2,
+    "warmup": false,
+    "counters": {
+      "instructions": 94535978210.0,
+      "cycles": 189989936565.0,
+      "task-clock": 66802.77,
+      "context-switches": 55967.0,
+      "minor-faults": 986941.0,
+      "major-faults": 0.0,
+      "instructions_per_cycle": 0.4975841348189357
+    }
+  },
+  {
+    "case": "zh-whitespace-min3",
+    "arm": "box",
+    "block": 3,
+    "warmup": false,
+    "counters": {
+      "instructions": 94448629308.0,
+      "cycles": 197918386109.0,
+      "task-clock": 70643.18,
+      "context-switches": 55294.0,
+      "minor-faults": 983606.0,
+      "major-faults": 0.0,
+      "instructions_per_cycle": 0.4772099811686223
+    }
+  },
+  {
+    "case": "zh-whitespace-min3",
+    "arm": "enum",
+    "block": 3,
+    "warmup": false,
+    "counters": {
+      "instructions": 94223168472.0,
+      "cycles": 193315522901.0,
+      "task-clock": 67385.66,
+      "context-switches": 51680.0,
+      "minor-faults": 1008220.0,
+      "major-faults": 0.0,
+      "instructions_per_cycle": 0.48740611751211105
+    }
+  },
+  {
+    "case": "zh-whitespace-min3",
+    "arm": "enum",
+    "block": 4,
+    "warmup": false,
+    "counters": {
+      "instructions": 94266234186.0,
+      "cycles": 199173384092.0,
+      "task-clock": 69482.49,
+      "context-switches": 51353.0,
+      "minor-faults": 997787.0,
+      "major-faults": 0.0,
+      "instructions_per_cycle": 0.4732873050068656
+    }
+  },
+  {
+    "case": "zh-whitespace-min3",
+    "arm": "box",
+    "block": 4,
+    "warmup": false,
+    "counters": {
+      "instructions": 94672779903.0,
+      "cycles": 205567194387.0,
+      "task-clock": 71609.15,
+      "context-switches": 60375.0,
+      "minor-faults": 993104.0,
+      "major-faults": 0.0,
+      "instructions_per_cycle": 0.4605442039782349
+    }
+  }
+]
