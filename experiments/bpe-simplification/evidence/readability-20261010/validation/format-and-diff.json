@@ -1,0 +1,30 @@
+[
+  {
+    "command": [
+      "/root/.cargo/bin/rustfmt",
+      "--check",
+      "--edition",
+      "2024",
+      "--config",
+      "skip_children=true",
+      "tokenizers/tk-train/src/trainers/bpe/mod.rs",
+      "tokenizers/tk-train/src/trainers/bpe/positions.rs",
+      "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs",
+      "tokenizers/tk-train/src/trainers/bpe/index.rs",
+      "tokenizers/tk-train/src/trainers/bpe/merge.rs"
+    ],
+    "returncode": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "returncode": 0,
+    "stdout": "",
+    "stderr": ""
+  }
+]

@@ -1,0 +1,554 @@
+[
+  {
+    "case": "aa",
+    "block": 0,
+    "arm": "baseline",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-readability-baseline-bin",
+      "/tmp/bpe-readability-directed/core-aa-b0-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 493748,
+    "subprocess_wall": 5.180054850992747,
+    "attempt_id": "core-aa-b0-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "aa",
+    "metrics": {
+      "load_seconds": 0.347717542,
+      "process_hwm_kib_before_validation": 493588,
+      "train_cpu_seconds": 13.017963,
+      "train_seconds": 4.746614944
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 4085,
+      "actual_vocab": 4096,
+      "model_path": "/tmp/bpe-readability-directed/core-aa-b0-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8be87a818dbd7f8fc3c2cfb8a2fa8d6be678e4745be3bea04b4230633cc32de7",
+    "valid": true
+  },
+  {
+    "case": "aa",
+    "block": 0,
+    "arm": "snapshot",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-readability-snapshot-bin",
+      "/tmp/bpe-readability-directed/core-aa-b0-snapshot/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 495688,
+    "subprocess_wall": 5.318465469987132,
+    "attempt_id": "core-aa-b0-snapshot",
+    "build_id": "snapshot",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "aa",
+    "metrics": {
+      "load_seconds": 0.345372423,
+      "process_hwm_kib_before_validation": 495724,
+      "train_cpu_seconds": 13.222417,
+      "train_seconds": 4.867182309
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 4085,
+      "actual_vocab": 4096,
+      "model_path": "/tmp/bpe-readability-directed/core-aa-b0-snapshot/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8be87a818dbd7f8fc3c2cfb8a2fa8d6be678e4745be3bea04b4230633cc32de7",
+    "valid": true
+  },
+  {
+    "case": "aa",
+    "block": 1,
+    "arm": "snapshot",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-readability-snapshot-bin",
+      "/tmp/bpe-readability-directed/core-aa-b1-snapshot/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 499848,
+    "subprocess_wall": 5.350806244066916,
+    "attempt_id": "core-aa-b1-snapshot",
+    "build_id": "snapshot",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "aa",
+    "metrics": {
+      "load_seconds": 0.354031341,
+      "process_hwm_kib_before_validation": 500616,
+      "train_cpu_seconds": 13.266919999999999,
+      "train_seconds": 4.905219714
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 4085,
+      "actual_vocab": 4096,
+      "model_path": "/tmp/bpe-readability-directed/core-aa-b1-snapshot/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8be87a818dbd7f8fc3c2cfb8a2fa8d6be678e4745be3bea04b4230633cc32de7",
+    "valid": true
+  },
+  {
+    "case": "aa",
+    "block": 1,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-readability-baseline-bin",
+      "/tmp/bpe-readability-directed/core-aa-b1-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 489208,
+    "subprocess_wall": 5.324895802070387,
+    "attempt_id": "core-aa-b1-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "aa",
+    "metrics": {
+      "load_seconds": 0.373346789,
+      "process_hwm_kib_before_validation": 488928,
+      "train_cpu_seconds": 13.236701,
+      "train_seconds": 4.850656617
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 4085,
+      "actual_vocab": 4096,
+      "model_path": "/tmp/bpe-readability-directed/core-aa-b1-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8be87a818dbd7f8fc3c2cfb8a2fa8d6be678e4745be3bea04b4230633cc32de7",
+    "valid": true
+  },
+  {
+    "case": "aa",
+    "block": 2,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-readability-baseline-bin",
+      "/tmp/bpe-readability-directed/core-aa-b2-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 489624,
+    "subprocess_wall": 5.260377906030044,
+    "attempt_id": "core-aa-b2-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "aa",
+    "metrics": {
+      "load_seconds": 0.344257834,
+      "process_hwm_kib_before_validation": 489436,
+      "train_cpu_seconds": 13.115936,
+      "train_seconds": 4.820185235
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 4085,
+      "actual_vocab": 4096,
+      "model_path": "/tmp/bpe-readability-directed/core-aa-b2-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8be87a818dbd7f8fc3c2cfb8a2fa8d6be678e4745be3bea04b4230633cc32de7",
+    "valid": true
+  },
+  {
+    "case": "aa",
+    "block": 2,
+    "arm": "snapshot",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-readability-snapshot-bin",
+      "/tmp/bpe-readability-directed/core-aa-b2-snapshot/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 498028,
+    "subprocess_wall": 5.332275294000283,
+    "attempt_id": "core-aa-b2-snapshot",
+    "build_id": "snapshot",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "aa",
+    "metrics": {
+      "load_seconds": 0.348673409,
+      "process_hwm_kib_before_validation": 497708,
+      "train_cpu_seconds": 13.225627000000001,
+      "train_seconds": 4.878962418
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 4085,
+      "actual_vocab": 4096,
+      "model_path": "/tmp/bpe-readability-directed/core-aa-b2-snapshot/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8be87a818dbd7f8fc3c2cfb8a2fa8d6be678e4745be3bea04b4230633cc32de7",
+    "valid": true
+  },
+  {
+    "case": "reuse",
+    "block": 0,
+    "arm": "baseline",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-readability-baseline-bin",
+      "/tmp/bpe-readability-directed/core-reuse-b0-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 416004,
+    "subprocess_wall": 3.3407381479628384,
+    "attempt_id": "core-reuse-b0-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "reuse",
+    "metrics": {
+      "load_seconds": 0.156020513,
+      "process_hwm_kib_before_validation": 440540,
+      "train_cpu_seconds": 5.451918999999999,
+      "train_seconds": 3.138257351
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 4083,
+      "actual_vocab": 4096,
+      "model_path": "/tmp/bpe-readability-directed/core-reuse-b0-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8fa9455f1c21978becc4b7980dfa04c49f6e7422354d2c1c74ab96614c378c7d",
+    "valid": true
+  },
+  {
+    "case": "reuse",
+    "block": 0,
+    "arm": "snapshot",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-readability-snapshot-bin",
+      "/tmp/bpe-readability-directed/core-reuse-b0-snapshot/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 433976,
+    "subprocess_wall": 3.382649121922441,
+    "attempt_id": "core-reuse-b0-snapshot",
+    "build_id": "snapshot",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "reuse",
+    "metrics": {
+      "load_seconds": 0.182392234,
+      "process_hwm_kib_before_validation": 446164,
+      "train_cpu_seconds": 5.363624,
+      "train_seconds": 3.160582489
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 4083,
+      "actual_vocab": 4096,
+      "model_path": "/tmp/bpe-readability-directed/core-reuse-b0-snapshot/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8fa9455f1c21978becc4b7980dfa04c49f6e7422354d2c1c74ab96614c378c7d",
+    "valid": true
+  },
+  {
+    "case": "reuse",
+    "block": 1,
+    "arm": "snapshot",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-readability-snapshot-bin",
+      "/tmp/bpe-readability-directed/core-reuse-b1-snapshot/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 443148,
+    "subprocess_wall": 3.316745007992722,
+    "attempt_id": "core-reuse-b1-snapshot",
+    "build_id": "snapshot",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "reuse",
+    "metrics": {
+      "load_seconds": 0.164564731,
+      "process_hwm_kib_before_validation": 442844,
+      "train_cpu_seconds": 5.341836,
+      "train_seconds": 3.102565761
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 4083,
+      "actual_vocab": 4096,
+      "model_path": "/tmp/bpe-readability-directed/core-reuse-b1-snapshot/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8fa9455f1c21978becc4b7980dfa04c49f6e7422354d2c1c74ab96614c378c7d",
+    "valid": true
+  },
+  {
+    "case": "reuse",
+    "block": 1,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-readability-baseline-bin",
+      "/tmp/bpe-readability-directed/core-reuse-b1-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 443832,
+    "subprocess_wall": 3.4225166239775717,
+    "attempt_id": "core-reuse-b1-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "reuse",
+    "metrics": {
+      "load_seconds": 0.158714695,
+      "process_hwm_kib_before_validation": 443712,
+      "train_cpu_seconds": 5.575019999999999,
+      "train_seconds": 3.198903785
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 4083,
+      "actual_vocab": 4096,
+      "model_path": "/tmp/bpe-readability-directed/core-reuse-b1-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8fa9455f1c21978becc4b7980dfa04c49f6e7422354d2c1c74ab96614c378c7d",
+    "valid": true
+  },
+  {
+    "case": "reuse",
+    "block": 2,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-readability-baseline-bin",
+      "/tmp/bpe-readability-directed/core-reuse-b2-baseline/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 451796,
+    "subprocess_wall": 3.2586721180705354,
+    "attempt_id": "core-reuse-b2-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "reuse",
+    "metrics": {
+      "load_seconds": 0.157956428,
+      "process_hwm_kib_before_validation": 451572,
+      "train_cpu_seconds": 5.3829780000000005,
+      "train_seconds": 3.054895518
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 4083,
+      "actual_vocab": 4096,
+      "model_path": "/tmp/bpe-readability-directed/core-reuse-b2-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8fa9455f1c21978becc4b7980dfa04c49f6e7422354d2c1c74ab96614c378c7d",
+    "valid": true
+  },
+  {
+    "case": "reuse",
+    "block": 2,
+    "arm": "snapshot",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-readability-snapshot-bin",
+      "/tmp/bpe-readability-directed/core-reuse-b2-snapshot/job.json"
+    ],
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 439604,
+    "subprocess_wall": 3.1892109640175477,
+    "attempt_id": "core-reuse-b2-snapshot",
+    "build_id": "snapshot",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "reuse",
+    "metrics": {
+      "load_seconds": 0.159051636,
+      "process_hwm_kib_before_validation": 446824,
+      "train_cpu_seconds": 5.256542,
+      "train_seconds": 2.990244159
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 4083,
+      "actual_vocab": 4096,
+      "model_path": "/tmp/bpe-readability-directed/core-reuse-b2-snapshot/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8fa9455f1c21978becc4b7980dfa04c49f6e7422354d2c1c74ab96614c378c7d",
+    "valid": true
+  }
+]

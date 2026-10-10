@@ -1,0 +1,32 @@
+{
+  "environment": {
+    "CARGO_TARGET_DIR": "/tmp/bpe-global-tests"
+  },
+  "commands": [
+    [
+      "cargo",
+      "test",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--lib"
+    ],
+    [
+      "cargo",
+      "test",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--lib",
+      "--no-default-features"
+    ],
+    [
+      "cargo",
+      "clippy",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ]
+  ]
+}

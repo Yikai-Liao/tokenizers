@@ -1,0 +1,84 @@
+[
+  {
+    "case": "zh-256MiB",
+    "baseline": {
+      "train_seconds": 21.9433228325,
+      "train_cpu_seconds": 67.9187955,
+      "process_hwm_kib_before_validation": 2349720.0
+    },
+    "local": {
+      "train_seconds": 21.585133104,
+      "train_cpu_seconds": 68.06841800000001,
+      "process_hwm_kib_before_validation": 2341464.0
+    },
+    "group": {
+      "train_seconds": 20.914813674,
+      "train_cpu_seconds": 66.64004249999999,
+      "process_hwm_kib_before_validation": 2342890.0
+    },
+    "snapshot": {
+      "train_seconds": 21.5702227315,
+      "train_cpu_seconds": 67.8301875,
+      "process_hwm_kib_before_validation": 2346414.0
+    },
+    "reference": "baseline",
+    "paired_median_delta_percent": {
+      "local": {
+        "train_seconds": -1.643402921805237,
+        "train_cpu_seconds": 0.207572461666794,
+        "process_hwm_kib_before_validation": -0.3513558135121997
+      },
+      "group": {
+        "train_seconds": -4.693630291846295,
+        "train_cpu_seconds": -1.883964049059511,
+        "process_hwm_kib_before_validation": -0.29015815309480497
+      },
+      "snapshot": {
+        "train_seconds": -1.6973311179356576,
+        "train_cpu_seconds": -0.12861725501567833,
+        "process_hwm_kib_before_validation": -0.14049755233768724
+      }
+    }
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "baseline": {
+      "train_seconds": 21.796478326,
+      "train_cpu_seconds": 57.941025999999994,
+      "process_hwm_kib_before_validation": 1788452.0
+    },
+    "local": {
+      "train_seconds": 21.170694175999998,
+      "train_cpu_seconds": 56.633511500000004,
+      "process_hwm_kib_before_validation": 1787232.0
+    },
+    "group": {
+      "train_seconds": 21.4728641365,
+      "train_cpu_seconds": 57.980848,
+      "process_hwm_kib_before_validation": 1829288.0
+    },
+    "snapshot": {
+      "train_seconds": 21.467536024,
+      "train_cpu_seconds": 57.5503155,
+      "process_hwm_kib_before_validation": 1786482.0
+    },
+    "reference": "baseline",
+    "paired_median_delta_percent": {
+      "local": {
+        "train_seconds": -2.8306833610415194,
+        "train_cpu_seconds": -2.2590918070311994,
+        "process_hwm_kib_before_validation": -0.053328521016138275
+      },
+      "group": {
+        "train_seconds": -1.3489172344910814,
+        "train_cpu_seconds": 0.16254063636502192,
+        "process_hwm_kib_before_validation": 2.299037864737563
+      },
+      "snapshot": {
+        "train_seconds": -1.4247740285826485,
+        "train_cpu_seconds": -0.6375133488225215,
+        "process_hwm_kib_before_validation": -0.09507460988035232
+      }
+    }
+  }
+]

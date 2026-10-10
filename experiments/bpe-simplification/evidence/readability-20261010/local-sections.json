@@ -1,0 +1,22 @@
+{
+  "baseline": {
+    ".text": {
+      "bytes": 836028,
+      "sha256": "15132c6ff90ee8ccaf1b8ca64df7318267107f8094b4cc3fb143ba32d38103fb"
+    },
+    ".rodata": {
+      "bytes": 97724,
+      "sha256": "054e6ec952615b7c9e2314ece29e1e3178ef249a9a4d536460f9c61b20637ec3"
+    }
+  },
+  "local": {
+    ".text": {
+      "bytes": 836188,
+      "sha256": "79addb988a47f671208b3a65841d35cf7591c8af9d3bb8e23cbf702b0d2921ac"
+    },
+    ".rodata": {
+      "bytes": 97724,
+      "sha256": "f2902746e60a870198c1fc6906abebd1f344da1e4c0517cb744c6edca4229f81"
+    }
+  }
+}

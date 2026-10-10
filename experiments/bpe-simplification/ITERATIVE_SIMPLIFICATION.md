@@ -131,3 +131,35 @@ signed action 次序、historical cohort、完整 u64 和 scoped owned／Arena �
 恢复校验和命令输出见 [validation.json](evidence/iterations-20261010/validation.json)。
 用户要求的“测试、成本测量、fresh review，直到没有值得试验的新思路”迭代
 据此结束，没有为维持迭代而再引入已拒绝方案。
+
+## flat 分支的状态表达与互斥存储整理
+
+本轮基线为 `simplify/bpe-flat-20261010` 的 `499fd7ab`，按软件设计哲学与
+clarity 的代码表达规则重新审查，范围排除 parity。保留五项整理：attempt
+显式返回 Complete／RestartForReuse；统一初始化与扫描的装饰位计算；空
+Builder 接管后直接返回；Group 的 ordered／unordered 缓冲改为互斥表示；
+FreshSnapshot 的普通查表与 AA starts 改为互斥表示。共享 neighbor 算法、
+Birth／Writes 双表示和既有存储边界继续保留。
+
+生产实现增加 57 行，收益是减少隐含有效缓冲规则和状态转译。当前目标平台
+Group 布局由 64 降至 40 字节；AA 不再构造普通 selected／heads／tails。
+各项依次构建和验证，再比较 baseline、局部整理、Group、完整版本四个累积
+版本。冻结中文 ByteLevel／Whitespace 各排除一组预热，保留两组正式轮换
+测量，四 workers 固定在 CPU 0–3；24 次完整模型均一致，child swap 均为 0。
+
+| 完整版本相对本轮基线 | wall 成对变化 | CPU 成对变化 | HWM 成对变化 |
+| --- | ---: | ---: | ---: |
+| 中文 ByteLevel 256 MiB | −1.70% | −0.13% | −0.14% |
+| 中文 Whitespace 256 MiB | −1.42% | −0.64% | −0.10% |
+| 长 AA 定向负载 | +1.17% | +0.53% | +2.04% |
+| affix／reuse 定向负载 | −2.56% | −3.27% | −0.62% |
+
+定向负载各排除 AB 预热，再比较正式 BA／AB；12 次完整模型均一致，无 swap。
+AA 的正式 HWM 中位数由 489,182 增至 499,162 KiB，约多 9.7 MiB；该差异已在
+推送前向用户报告。用户接受约 1%–2% 量级差异，决定保留，并授权直接推送。
+本轮不声称普遍提速或所有负载的峰值内存不回退，布局缩小也不等于 RSS 必降。
+
+default／no-default 各 20 项现有 library tests、all-target Clippy（warnings
+denied）、改动文件 rustfmt 与 diff 检查通过。完整源码、逐次模型验证、布局
+probe、input／source／binary 哈希、测量命令与日志见
+[本轮记录](evidence/readability-20261010/README.md)。

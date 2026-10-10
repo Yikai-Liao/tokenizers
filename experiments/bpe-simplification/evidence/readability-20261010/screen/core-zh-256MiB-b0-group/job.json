@@ -1,0 +1,18 @@
+{
+  "protocol_version": 1,
+  "attempt_id": "core-zh-256MiB-b0-group",
+  "build_id": "group",
+  "input_id": "zh-256MiB",
+  "mode": "core",
+  "input": "/root/code/tokenizers-perfetto-results/inputs/zh-bytelevel/words.json",
+  "output": "/tmp/bpe-readability-screen/core-zh-256MiB-b0-group/model.json",
+  "workers": 4,
+  "pretokenizer": "bytelevel_regex",
+  "trainer": {
+    "vocab_size": 50000,
+    "min_frequency": 2,
+    "prefix": null,
+    "suffix": null,
+    "max_token_length": null
+  }
+}

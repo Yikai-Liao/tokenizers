@@ -1,0 +1,25 @@
+{
+  "commit": "499fd7abeb9e7a60ae8fffcf62b1bc694cd02761",
+  "source_hashes": {
+    "vocabulary.rs": "8e992baba0cd6b85bfa7e7adc417694960b942c6511d4334da5992db5e13641d",
+    "word.rs": "f9c3bd0a7a8fade42a5643ee6341b4ebf203f7a45aa0a65797e773d1ce21396a",
+    "positions.rs": "7e7c553cd9b2901e91dc9194709d2368a22eaa78fd13e53096d69b9f084babd8",
+    "corpus.rs": "be306df58ed10642f30fac7b09006a3d07de05d1f60867b841e7073b78a85e48",
+    "index.rs": "f591a70831b1e7485f09b07f1fdd41662c1e82da9d51f84b102a8741f005aec7",
+    "tests.rs": "be14ce73331603393a6f1967eca46113ebd001fe8e3a75987deb604afa236c7f",
+    "mod.rs": "20acb3773d65b7907b6c1a52990b4716b404b0145ab026b15a39be990b441e02",
+    "feed.rs": "ddbc4fd103d73ea5cc8bf3778809127b0578474c9da9a29af5be5a76b56f0fec",
+    "merge.rs": "0cea3bf16117c7b0c2b434f3939b91bb2171ec0a19a3c43333b1558a798c9ced",
+    "word_counts.rs": "eb78ccea99544dc915f3c406ad77349ddc080ecfb7a5d36253bd8d80275ebf4d"
+  },
+  "binary_sha256": "aa5d64b58a72b9e3898dc71a80a97ff3d28cf97bcbeaca1eecd2e596749be514",
+  "command": [
+    "cargo",
+    "build",
+    "--locked",
+    "--release",
+    "--manifest-path",
+    "experiments/bpe-simplification/runner/Cargo.toml"
+  ],
+  "target": "/tmp/bpe-global-release-target"
+}

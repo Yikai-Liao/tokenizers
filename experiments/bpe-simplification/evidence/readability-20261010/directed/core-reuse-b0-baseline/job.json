@@ -1,0 +1,18 @@
+{
+  "protocol_version": 1,
+  "attempt_id": "core-reuse-b0-baseline",
+  "build_id": "baseline",
+  "input_id": "reuse",
+  "mode": "core",
+  "input": "/tmp/bpe-readability-directed-inputs/reuse.json",
+  "output": "/tmp/bpe-readability-directed/core-reuse-b0-baseline/model.json",
+  "workers": 4,
+  "pretokenizer": "Whitespace",
+  "trainer": {
+    "vocab_size": 4096,
+    "min_frequency": 2,
+    "prefix": null,
+    "suffix": "a",
+    "max_token_length": null
+  }
+}

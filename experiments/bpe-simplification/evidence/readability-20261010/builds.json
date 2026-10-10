@@ -1,0 +1,85 @@
+{
+  "builds": {
+    "baseline": {
+      "baseline_commit": "499fd7abeb9e7a60ae8fffcf62b1bc694cd02761",
+      "source_hashes": {
+        "vocabulary.rs": "8e992baba0cd6b85bfa7e7adc417694960b942c6511d4334da5992db5e13641d",
+        "word.rs": "f9c3bd0a7a8fade42a5643ee6341b4ebf203f7a45aa0a65797e773d1ce21396a",
+        "positions.rs": "7e7c553cd9b2901e91dc9194709d2368a22eaa78fd13e53096d69b9f084babd8",
+        "corpus.rs": "be306df58ed10642f30fac7b09006a3d07de05d1f60867b841e7073b78a85e48",
+        "index.rs": "f591a70831b1e7485f09b07f1fdd41662c1e82da9d51f84b102a8741f005aec7",
+        "tests.rs": "be14ce73331603393a6f1967eca46113ebd001fe8e3a75987deb604afa236c7f",
+        "mod.rs": "20acb3773d65b7907b6c1a52990b4716b404b0145ab026b15a39be990b441e02",
+        "feed.rs": "ddbc4fd103d73ea5cc8bf3778809127b0578474c9da9a29af5be5a76b56f0fec",
+        "merge.rs": "0cea3bf16117c7b0c2b434f3939b91bb2171ec0a19a3c43333b1558a798c9ced",
+        "word_counts.rs": "eb78ccea99544dc915f3c406ad77349ddc080ecfb7a5d36253bd8d80275ebf4d"
+      },
+      "binary_sha256": "d2b9bab3b840143752b8bc460a7f8f06158b0044bc4c20d4cc3119791f8ec3c8"
+    },
+    "local": {
+      "baseline_commit": "499fd7abeb9e7a60ae8fffcf62b1bc694cd02761",
+      "source_hashes": {
+        "vocabulary.rs": "88cb2c722e86c6de79fa3e2a70fb86a6a01828520830b40291b2f6b73a0e044e",
+        "word.rs": "f9c3bd0a7a8fade42a5643ee6341b4ebf203f7a45aa0a65797e773d1ce21396a",
+        "positions.rs": "261180add7e37bb1b8132c4bc8a943418ac8e717bcea4273c434f741a8c2ce78",
+        "corpus.rs": "be306df58ed10642f30fac7b09006a3d07de05d1f60867b841e7073b78a85e48",
+        "index.rs": "f591a70831b1e7485f09b07f1fdd41662c1e82da9d51f84b102a8741f005aec7",
+        "tests.rs": "be14ce73331603393a6f1967eca46113ebd001fe8e3a75987deb604afa236c7f",
+        "mod.rs": "3ee29feea40b1370e0096e62dbbb9ce8dbc9817051815f8c329c245b58fd2b13",
+        "feed.rs": "ddbc4fd103d73ea5cc8bf3778809127b0578474c9da9a29af5be5a76b56f0fec",
+        "merge.rs": "0cea3bf16117c7b0c2b434f3939b91bb2171ec0a19a3c43333b1558a798c9ced",
+        "word_counts.rs": "eb78ccea99544dc915f3c406ad77349ddc080ecfb7a5d36253bd8d80275ebf4d"
+      },
+      "binary_sha256": "b5297253657d100b7bf8978b2e7cf1ba05a724f99ae66e8ad357e43aa49626a4"
+    },
+    "group": {
+      "baseline_commit": "499fd7abeb9e7a60ae8fffcf62b1bc694cd02761",
+      "source_hashes": {
+        "vocabulary.rs": "88cb2c722e86c6de79fa3e2a70fb86a6a01828520830b40291b2f6b73a0e044e",
+        "word.rs": "f9c3bd0a7a8fade42a5643ee6341b4ebf203f7a45aa0a65797e773d1ce21396a",
+        "positions.rs": "261180add7e37bb1b8132c4bc8a943418ac8e717bcea4273c434f741a8c2ce78",
+        "corpus.rs": "be306df58ed10642f30fac7b09006a3d07de05d1f60867b841e7073b78a85e48",
+        "index.rs": "652ce66db7516f1653837d29f4c00e20a1ad346e77b2a19be3d1aa15a22daff3",
+        "tests.rs": "be14ce73331603393a6f1967eca46113ebd001fe8e3a75987deb604afa236c7f",
+        "mod.rs": "3ee29feea40b1370e0096e62dbbb9ce8dbc9817051815f8c329c245b58fd2b13",
+        "feed.rs": "ddbc4fd103d73ea5cc8bf3778809127b0578474c9da9a29af5be5a76b56f0fec",
+        "merge.rs": "0cea3bf16117c7b0c2b434f3939b91bb2171ec0a19a3c43333b1558a798c9ced",
+        "word_counts.rs": "eb78ccea99544dc915f3c406ad77349ddc080ecfb7a5d36253bd8d80275ebf4d"
+      },
+      "binary_sha256": "8763e571e5fd2a65622ed3f444aae5260c62ddeb1932dc868c88a11a23951b0b"
+    },
+    "snapshot": {
+      "baseline_commit": "499fd7abeb9e7a60ae8fffcf62b1bc694cd02761",
+      "source_hashes": {
+        "vocabulary.rs": "88cb2c722e86c6de79fa3e2a70fb86a6a01828520830b40291b2f6b73a0e044e",
+        "word.rs": "f9c3bd0a7a8fade42a5643ee6341b4ebf203f7a45aa0a65797e773d1ce21396a",
+        "positions.rs": "261180add7e37bb1b8132c4bc8a943418ac8e717bcea4273c434f741a8c2ce78",
+        "corpus.rs": "be306df58ed10642f30fac7b09006a3d07de05d1f60867b841e7073b78a85e48",
+        "index.rs": "652ce66db7516f1653837d29f4c00e20a1ad346e77b2a19be3d1aa15a22daff3",
+        "tests.rs": "be14ce73331603393a6f1967eca46113ebd001fe8e3a75987deb604afa236c7f",
+        "mod.rs": "3ee29feea40b1370e0096e62dbbb9ce8dbc9817051815f8c329c245b58fd2b13",
+        "feed.rs": "ddbc4fd103d73ea5cc8bf3778809127b0578474c9da9a29af5be5a76b56f0fec",
+        "merge.rs": "586e479546edfe1435876b1f5aac5e7dd5e68bc8fae256239901daa8e59d972a",
+        "word_counts.rs": "eb78ccea99544dc915f3c406ad77349ddc080ecfb7a5d36253bd8d80275ebf4d"
+      },
+      "binary_sha256": "3553ac4701a8c25b95d0152fb90e122dac5ff9803df3aeeb8b8b6ca645cc7049"
+    }
+  },
+  "command": [
+    "cargo",
+    "build",
+    "--locked",
+    "--release",
+    "--manifest-path",
+    "experiments/bpe-simplification/runner/Cargo.toml"
+  ],
+  "environment": {
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_TARGET_DIR": "/tmp/bpe-global-release-target"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "lto": "fat",
+  "opt_level": 3,
+  "codegen_units": 1,
+  "retained_source_commit": "1e3f87bf3b1928f8ddfca8556806c13d9639e6db"
+}
