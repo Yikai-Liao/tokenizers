@@ -8,8 +8,6 @@ mod merge;
 pub mod parity_trainer;
 mod positions;
 #[cfg(test)]
-mod reference;
-#[cfg(test)]
 mod tests;
 mod vocabulary;
 #[cfg(feature = "parity-aware-bpe")]

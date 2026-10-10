@@ -63,7 +63,6 @@ Run library checks from the repository root:
 cargo test --manifest-path tokenizers/tk-train/Cargo.toml --lib
 cargo test --manifest-path tokenizers/tk-train/Cargo.toml --no-default-features --lib
 cargo clippy --manifest-path tokenizers/tk-train/Cargo.toml --all-targets
-python3 experiments/bpe-simplification/count_lines.py
 cargo +nightly miri test --manifest-path experiments/bpe-simplification/miri-codec/Cargo.toml
 ```
 
