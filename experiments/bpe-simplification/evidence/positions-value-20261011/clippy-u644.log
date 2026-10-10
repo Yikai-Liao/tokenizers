@@ -1,0 +1,10 @@
+    Updating crates.io index
+     Locking 165 packages to latest Rust 1.98.1 compatible versions
+      Adding compact_str v0.9.1 (available: v0.10.0)
+      Adding itertools v0.14.0 (available: v0.15.0)
+    Checking bitcannon v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-positions-u64-20261011/tokenizers/bitcannon)
+    Checking tk-encode v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-positions-u64-20261011/tokenizers/tk-encode)
+    Checking tk-convert v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-positions-u64-20261011/tokenizers/tk-convert)
+    Checking tk-serialize v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-positions-u64-20261011/tokenizers/tk-serialize)
+    Checking tk-train v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-positions-u64-20261011/tokenizers/tk-train)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 6.30s

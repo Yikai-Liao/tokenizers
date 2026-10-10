@@ -1,0 +1,2 @@
+Positions=24 Buffer=32 Candidate=40 usize=8
+SmallVec_u64_2=24 SmallVec_u64_4=40

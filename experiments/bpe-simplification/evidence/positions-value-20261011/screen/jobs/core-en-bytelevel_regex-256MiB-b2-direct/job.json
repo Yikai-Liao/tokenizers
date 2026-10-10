@@ -1,0 +1,18 @@
+{
+  "protocol_version": 1,
+  "attempt_id": "core-en-bytelevel_regex-256MiB-b2-direct",
+  "build_id": "direct",
+  "input_id": "en-bytelevel_regex-256MiB",
+  "mode": "core",
+  "input": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/en-256MiB/words.json",
+  "output": "/tmp/bpe-positions-value-screen/core-en-bytelevel_regex-256MiB-b2-direct/model.json",
+  "workers": 4,
+  "pretokenizer": "bytelevel_regex",
+  "trainer": {
+    "vocab_size": 50000,
+    "min_frequency": 2,
+    "prefix": null,
+    "suffix": null,
+    "max_token_length": null
+  }
+}

@@ -1,0 +1,4 @@
+{"case": "aa", "block": 0, "arm": "enum", "valid": true, "metrics": {"load_seconds": 0.353871323, "process_hwm_kib_before_validation": 492048, "train_cpu_seconds": 13.091496, "train_seconds": 4.9723984340000005}}
+{"case": "aa", "block": 0, "arm": "u642", "valid": true, "metrics": {"load_seconds": 0.352079217, "process_hwm_kib_before_validation": 628680, "train_cpu_seconds": 12.736734, "train_seconds": 4.794449563}}
+{"case": "reuse", "block": 0, "arm": "enum", "valid": true, "metrics": {"load_seconds": 0.154691965, "process_hwm_kib_before_validation": 444040, "train_cpu_seconds": 5.572673, "train_seconds": 3.163187834}}
+{"case": "reuse", "block": 0, "arm": "u642", "valid": true, "metrics": {"load_seconds": 0.158335729, "process_hwm_kib_before_validation": 476404, "train_cpu_seconds": 5.1526320000000005, "train_seconds": 2.8940980769999998}}

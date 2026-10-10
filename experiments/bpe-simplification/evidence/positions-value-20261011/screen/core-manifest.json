@@ -1,0 +1,322 @@
+{
+  "baseline_commit": "0416ae7a97bbc55f47f7969f4bdb04e8cfed1eff",
+  "box_commit": "9f5b553dba61dba45a75021f4292997c16359dfb",
+  "builds": {
+    "baseline_commit": "0416ae7a97bbc55f47f7969f4bdb04e8cfed1eff",
+    "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+    "command": [
+      "/root/.cargo/bin/cargo",
+      "build",
+      "--locked",
+      "--release",
+      "--manifest-path",
+      "experiments/bpe-simplification/runner/Cargo.toml"
+    ],
+    "environment": {
+      "CARGO_TARGET_DIR": "/tmp/bpe-box-release-target",
+      "CARGO_INCREMENTAL": "0"
+    },
+    "profile": {
+      "opt_level": 3,
+      "lto": "fat",
+      "codegen_units": 1
+    },
+    "runner_lock_sha256": "0596707fba61b7733a79ef408ea7df33e3699d78a7281b84305a388ff5eb36b9",
+    "builds": {
+      "box": {
+        "inline_capacity_bytes": null,
+        "binary": "/tmp/bpe-box-box-bin",
+        "binary_sha256": "b38426e44fd1e8dd951a46f88fd679e9e95b86cb1d2c44b7ca690409bf2f402d",
+        "source_hashes": {
+          "tokenizers/tk-train/src/trainers/bpe/corpus.rs": "080d55611b17b7b250e197f183daaaf4469ba8e50f583f19148e1e0b69f979ae",
+          "tokenizers/tk-train/src/trainers/bpe/feed.rs": "ddbc4fd103d73ea5cc8bf3778809127b0578474c9da9a29af5be5a76b56f0fec",
+          "tokenizers/tk-train/src/trainers/bpe/index.rs": "ce9a59182f7c19424d0d79e48a89559d56e6bf3968dbfb85ebf3032d066e201c",
+          "tokenizers/tk-train/src/trainers/bpe/merge.rs": "d68ee622aa4045573d1ef3c82dc88ffe951efb32fca68111856cda9db5035da0",
+          "tokenizers/tk-train/src/trainers/bpe/mod.rs": "d1e2f80c79af4e132b882f08c03ac46972f47a1f089165ccda2627b5c7f4c031",
+          "tokenizers/tk-train/src/trainers/bpe/positions.rs": "30e1fb48ac05c359e0d2c5300ddf303093e03f3bf4ba88389b559754781568bb",
+          "tokenizers/tk-train/src/trainers/bpe/tests.rs": "be14ce73331603393a6f1967eca46113ebd001fe8e3a75987deb604afa236c7f",
+          "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs": "88cb2c722e86c6de79fa3e2a70fb86a6a01828520830b40291b2f6b73a0e044e",
+          "tokenizers/tk-train/src/trainers/bpe/word.rs": "f9c3bd0a7a8fade42a5643ee6341b4ebf203f7a45aa0a65797e773d1ce21396a",
+          "tokenizers/tk-train/src/trainers/bpe/word_counts.rs": "eb78ccea99544dc915f3c406ad77349ddc080ecfb7a5d36253bd8d80275ebf4d"
+        }
+      },
+      "enum": {
+        "inline_capacity_bytes": null,
+        "binary": "/tmp/bpe-box-enum-bin",
+        "binary_sha256": "5f7343564bc0590804377e4df144f24847437e9778c86b9ca1a545a622adf447",
+        "source_hashes": {
+          "tokenizers/tk-train/src/trainers/bpe/corpus.rs": "080d55611b17b7b250e197f183daaaf4469ba8e50f583f19148e1e0b69f979ae",
+          "tokenizers/tk-train/src/trainers/bpe/feed.rs": "ddbc4fd103d73ea5cc8bf3778809127b0578474c9da9a29af5be5a76b56f0fec",
+          "tokenizers/tk-train/src/trainers/bpe/index.rs": "ce9a59182f7c19424d0d79e48a89559d56e6bf3968dbfb85ebf3032d066e201c",
+          "tokenizers/tk-train/src/trainers/bpe/merge.rs": "d68ee622aa4045573d1ef3c82dc88ffe951efb32fca68111856cda9db5035da0",
+          "tokenizers/tk-train/src/trainers/bpe/mod.rs": "d1e2f80c79af4e132b882f08c03ac46972f47a1f089165ccda2627b5c7f4c031",
+          "tokenizers/tk-train/src/trainers/bpe/positions.rs": "6bf232dd5b03fdbbb50fc398d5d165c5bbaa1fd7ec56cc66b7cf0947e701e786",
+          "tokenizers/tk-train/src/trainers/bpe/tests.rs": "be14ce73331603393a6f1967eca46113ebd001fe8e3a75987deb604afa236c7f",
+          "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs": "88cb2c722e86c6de79fa3e2a70fb86a6a01828520830b40291b2f6b73a0e044e",
+          "tokenizers/tk-train/src/trainers/bpe/word.rs": "f9c3bd0a7a8fade42a5643ee6341b4ebf203f7a45aa0a65797e773d1ce21396a",
+          "tokenizers/tk-train/src/trainers/bpe/word_counts.rs": "eb78ccea99544dc915f3c406ad77349ddc080ecfb7a5d36253bd8d80275ebf4d"
+        }
+      },
+      "direct": {
+        "binary": "/tmp/bpe-positions-value-direct-bin",
+        "binary_sha256": "08902235cc2aacfa427498dada0da2b151f1c461b2b57a701cc7a4a22b5a4c28",
+        "storage": "narrow Buffer, direct Vec encoding, Enum inline pairs",
+        "source_hashes": {
+          "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs": "88cb2c722e86c6de79fa3e2a70fb86a6a01828520830b40291b2f6b73a0e044e",
+          "tokenizers/tk-train/src/trainers/bpe/word.rs": "f9c3bd0a7a8fade42a5643ee6341b4ebf203f7a45aa0a65797e773d1ce21396a",
+          "tokenizers/tk-train/src/trainers/bpe/positions.rs": "d7b6ef4eaeb3fd3f667ebe2f17f103d60b409ca27101c1b673d54b99bed2b20c",
+          "tokenizers/tk-train/src/trainers/bpe/corpus.rs": "080d55611b17b7b250e197f183daaaf4469ba8e50f583f19148e1e0b69f979ae",
+          "tokenizers/tk-train/src/trainers/bpe/index.rs": "fbc3179c1e0c965121f74ef6dc440aa2d26ae9ed899fbde64ff727e2e31387d0",
+          "tokenizers/tk-train/src/trainers/bpe/tests.rs": "24621d3ee2a2a314030e33a2433f4fd40f047d842db12ef587449deb3a86718f",
+          "tokenizers/tk-train/src/trainers/bpe/mod.rs": "726d8c4a8ed4cd168ccb0d163b7ac3daf72297d650ef03d10aa19b50bbb66b42",
+          "tokenizers/tk-train/src/trainers/bpe/feed.rs": "ddbc4fd103d73ea5cc8bf3778809127b0578474c9da9a29af5be5a76b56f0fec",
+          "tokenizers/tk-train/src/trainers/bpe/merge.rs": "3a185196b8f4cc8d6b5a6ae34e6a944b0d324235bcabda506c875389586b26cb",
+          "tokenizers/tk-train/src/trainers/bpe/word_counts.rs": "eb78ccea99544dc915f3c406ad77349ddc080ecfb7a5d36253bd8d80275ebf4d"
+        },
+        "cargo_toml_sha256": "ea8d81126e19c7d3d14b1903dc71f0e23bf493846be394233c2f65c9745fe151",
+        "runner_lock_sha256": "3c695073bb1e4176d8e7ec1500f9e4fb8883d23e115ef7da244b68e46946f9d6",
+        "command": [
+          "/root/.cargo/bin/cargo",
+          "build",
+          "--offline",
+          "--release",
+          "--manifest-path",
+          "experiments/bpe-simplification/runner/Cargo.toml"
+        ]
+      },
+      "u642": {
+        "binary": "/tmp/bpe-positions-value-u642-bin",
+        "binary_sha256": "246fda9880b0a8121b4082ed45a7fe7405215484e854409adc8119eddb6218ce",
+        "storage": "SmallVec<[u64; 2]>, no Buffer, direct encoding, Enum inline pairs",
+        "source_hashes": {
+          "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs": "88cb2c722e86c6de79fa3e2a70fb86a6a01828520830b40291b2f6b73a0e044e",
+          "tokenizers/tk-train/src/trainers/bpe/word.rs": "f9c3bd0a7a8fade42a5643ee6341b4ebf203f7a45aa0a65797e773d1ce21396a",
+          "tokenizers/tk-train/src/trainers/bpe/positions.rs": "e86e5d38c1dafdfe4b6d2d4bdc175dec5c3d0e66673020c07ba9c5d663d51884",
+          "tokenizers/tk-train/src/trainers/bpe/corpus.rs": "080d55611b17b7b250e197f183daaaf4469ba8e50f583f19148e1e0b69f979ae",
+          "tokenizers/tk-train/src/trainers/bpe/index.rs": "a06ce8c5c57dff1c2dbab7dadf94ce463d7c0e569626cb45a11c45beaa964647",
+          "tokenizers/tk-train/src/trainers/bpe/tests.rs": "24621d3ee2a2a314030e33a2433f4fd40f047d842db12ef587449deb3a86718f",
+          "tokenizers/tk-train/src/trainers/bpe/mod.rs": "726d8c4a8ed4cd168ccb0d163b7ac3daf72297d650ef03d10aa19b50bbb66b42",
+          "tokenizers/tk-train/src/trainers/bpe/feed.rs": "ddbc4fd103d73ea5cc8bf3778809127b0578474c9da9a29af5be5a76b56f0fec",
+          "tokenizers/tk-train/src/trainers/bpe/merge.rs": "f1d06f3fac046c4f54e26a7fc0ec6556c89df1ae6d2c7e4df6d60615e5e7ebbd",
+          "tokenizers/tk-train/src/trainers/bpe/word_counts.rs": "eb78ccea99544dc915f3c406ad77349ddc080ecfb7a5d36253bd8d80275ebf4d"
+        },
+        "cargo_toml_sha256": "ea8d81126e19c7d3d14b1903dc71f0e23bf493846be394233c2f65c9745fe151",
+        "runner_lock_sha256": "3c695073bb1e4176d8e7ec1500f9e4fb8883d23e115ef7da244b68e46946f9d6",
+        "command": [
+          "/root/.cargo/bin/cargo",
+          "build",
+          "--locked",
+          "--offline",
+          "--release",
+          "--manifest-path",
+          "experiments/bpe-simplification/runner/Cargo.toml"
+        ]
+      },
+      "u644": {
+        "binary": "/tmp/bpe-positions-value-u644-bin",
+        "binary_sha256": "a4f8d71627133fc8460bd0eda7a62fd4b3285a5be68794191873435c6a26a490",
+        "storage": "SmallVec<[u64; 4]>, no Buffer, direct encoding, Enum inline pairs",
+        "source_hashes": {
+          "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs": "88cb2c722e86c6de79fa3e2a70fb86a6a01828520830b40291b2f6b73a0e044e",
+          "tokenizers/tk-train/src/trainers/bpe/word.rs": "f9c3bd0a7a8fade42a5643ee6341b4ebf203f7a45aa0a65797e773d1ce21396a",
+          "tokenizers/tk-train/src/trainers/bpe/positions.rs": "c406621ebefcd4a1136eb64435b920fbfc561b22e41424fc75ac7278e071fd34",
+          "tokenizers/tk-train/src/trainers/bpe/corpus.rs": "080d55611b17b7b250e197f183daaaf4469ba8e50f583f19148e1e0b69f979ae",
+          "tokenizers/tk-train/src/trainers/bpe/index.rs": "696a25170e39b6d3f5f174de37f8f14a24f926e60001286e5f3529fbd204a356",
+          "tokenizers/tk-train/src/trainers/bpe/tests.rs": "24621d3ee2a2a314030e33a2433f4fd40f047d842db12ef587449deb3a86718f",
+          "tokenizers/tk-train/src/trainers/bpe/mod.rs": "726d8c4a8ed4cd168ccb0d163b7ac3daf72297d650ef03d10aa19b50bbb66b42",
+          "tokenizers/tk-train/src/trainers/bpe/feed.rs": "ddbc4fd103d73ea5cc8bf3778809127b0578474c9da9a29af5be5a76b56f0fec",
+          "tokenizers/tk-train/src/trainers/bpe/merge.rs": "9a13e7196e2987e5b06564713f2cd59f4545a5fe51c5451694f68ee347390dde",
+          "tokenizers/tk-train/src/trainers/bpe/word_counts.rs": "eb78ccea99544dc915f3c406ad77349ddc080ecfb7a5d36253bd8d80275ebf4d"
+        },
+        "cargo_toml_sha256": "ea8d81126e19c7d3d14b1903dc71f0e23bf493846be394233c2f65c9745fe151",
+        "runner_lock_sha256": "3c695073bb1e4176d8e7ec1500f9e4fb8883d23e115ef7da244b68e46946f9d6",
+        "command": [
+          "/root/.cargo/bin/cargo",
+          "build",
+          "--locked",
+          "--offline",
+          "--release",
+          "--manifest-path",
+          "experiments/bpe-simplification/runner/Cargo.toml"
+        ]
+      }
+    },
+    "box_commit": "9f5b553dba61dba45a75021f4292997c16359dfb",
+    "candidate_parent_commit": "8d7624f86f1341e3fb7c52ae5813ff527ceb2b48",
+    "rustc_current": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n"
+  },
+  "mode": "core",
+  "binaries": {
+    "enum": "/tmp/bpe-box-enum-bin",
+    "direct": "/tmp/bpe-positions-value-direct-bin",
+    "u642": "/tmp/bpe-positions-value-u642-bin",
+    "u644": "/tmp/bpe-positions-value-u644-bin"
+  },
+  "binary_sha256": {
+    "enum": "5f7343564bc0590804377e4df144f24847437e9778c86b9ca1a545a622adf447",
+    "direct": "08902235cc2aacfa427498dada0da2b151f1c461b2b57a701cc7a4a22b5a4c28",
+    "u642": "246fda9880b0a8121b4082ed45a7fe7405215484e854409adc8119eddb6218ce",
+    "u644": "a4f8d71627133fc8460bd0eda7a62fd4b3285a5be68794191873435c6a26a490"
+  },
+  "cases": [
+    {
+      "case": "en-bytelevel_regex-16MiB",
+      "language": "en",
+      "requested_mib": 16,
+      "pretokenizer": "bytelevel_regex",
+      "path": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/en-16MiB/text.txt",
+      "bytes": 16776498,
+      "source_sha256": "3291bcfcb313c409713c8042446b35f7f14efdae4f9de79075f78cdf6b20894e",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      },
+      "prepared_path": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/en-16MiB/words.json",
+      "prepared_sha256": "699fbfd05555ce104d8c43cfd4a80c9518812d1e276de5d99ba199d4797e2c5a",
+      "prepared_bytes": 2200615
+    },
+    {
+      "case": "en-whitespace-16MiB",
+      "language": "en",
+      "requested_mib": 16,
+      "pretokenizer": "whitespace",
+      "path": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/en-16MiB/text.txt",
+      "bytes": 16776498,
+      "source_sha256": "3291bcfcb313c409713c8042446b35f7f14efdae4f9de79075f78cdf6b20894e",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      },
+      "prepared_path": "/tmp/bpe-initial-filter-inputs/en-whitespace-16MiB/words.json",
+      "prepared_sha256": "b6ec886473a83b4a90bd469d9b6f5193627b553dab4115d0418061f235f4c94b",
+      "prepared_bytes": 1729375
+    },
+    {
+      "case": "en-bytelevel_regex-256MiB",
+      "language": "en",
+      "requested_mib": 256,
+      "pretokenizer": "bytelevel_regex",
+      "path": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/en-256MiB/text.txt",
+      "bytes": 268434441,
+      "source_sha256": "ae02a7e36df46e6dff26481f054dd4a385d50c4a42a9f166de754ee44fbf6b8a",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      },
+      "prepared_path": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/en-256MiB/words.json",
+      "prepared_sha256": "4523a34ff64cdba49b0985f32cc923f2c7b005fd67748a0fbec38c44bab437c5",
+      "prepared_bytes": 14071952
+    },
+    {
+      "case": "en-whitespace-256MiB",
+      "language": "en",
+      "requested_mib": 256,
+      "pretokenizer": "whitespace",
+      "path": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/en-256MiB/text.txt",
+      "bytes": 268434441,
+      "source_sha256": "ae02a7e36df46e6dff26481f054dd4a385d50c4a42a9f166de754ee44fbf6b8a",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      },
+      "prepared_path": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/en-whitespace-256MiB/words.json",
+      "prepared_sha256": "0e146cd7d9fd31c547c84c5bfea2424bb05ae02905cf2608f4d7aa980f6bdb2d",
+      "prepared_bytes": 10900666
+    },
+    {
+      "case": "zh-bytelevel_regex-16MiB",
+      "language": "zh",
+      "requested_mib": 16,
+      "pretokenizer": "bytelevel_regex",
+      "path": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/zh-16MiB/text.txt",
+      "bytes": 16776351,
+      "source_sha256": "ebd64699a917bb0982e9b64d302d94cc08057f43d16bcb5efc041594684c12a6",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      },
+      "prepared_path": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/zh-16MiB/words.json",
+      "prepared_sha256": "19ac0d1eef82c0fe4cf537098710a04b67453656ee386c5961ce26b8ccee6c2f",
+      "prepared_bytes": 29688385
+    },
+    {
+      "case": "zh-whitespace-16MiB",
+      "language": "zh",
+      "requested_mib": 16,
+      "pretokenizer": "whitespace",
+      "path": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/zh-16MiB/text.txt",
+      "bytes": 16776351,
+      "source_sha256": "ebd64699a917bb0982e9b64d302d94cc08057f43d16bcb5efc041594684c12a6",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      },
+      "prepared_path": "/tmp/bpe-initial-filter-inputs/zh-whitespace-16MiB/words.json",
+      "prepared_sha256": "cc8d3ed837a05c34313f61a761db0ddb20fc1366d35a72ddcd934ea3aa47e13c",
+      "prepared_bytes": 17059568
+    },
+    {
+      "case": "zh-bytelevel_regex-256MiB",
+      "language": "zh",
+      "requested_mib": 256,
+      "pretokenizer": "bytelevel_regex",
+      "path": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/zh-256MiB/text.txt",
+      "bytes": 268435162,
+      "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      },
+      "prepared_path": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/zh-256MiB/words.json",
+      "prepared_sha256": "bb796d0b57b87d965b84de249bc5c8e283b700774638d16a40e4ae5171b13ee0",
+      "prepared_bytes": 437135595
+    },
+    {
+      "case": "zh-whitespace-256MiB",
+      "language": "zh",
+      "requested_mib": 256,
+      "pretokenizer": "whitespace",
+      "path": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/zh-256MiB/text.txt",
+      "bytes": 268435162,
+      "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      },
+      "prepared_path": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "prepared_sha256": "ed057a8fdb27544ed29f16dde53faa0de8f47f1ee8ac00080974fac5bb435660",
+      "prepared_bytes": 250116097
+    }
+  ],
+  "perf_enabled": false,
+  "perf_counter_scope": "whole subprocess, including input load and model serialization; training metrics still exclude both",
+  "scope": "core: public do_train, load/serialization excluded; pipeline: public feed + train, validation excluded; HWM includes input and retained counts",
+  "warmup_enabled": true,
+  "order_method": "reverse whole arm order in odd blocks",
+  "design": "8 frozen input cases with per-case trainer settings; 3 blocks, first block warmup when enabled; workers4 affinity0-3",
+  "limitation": "Shared VM; descriptive observations, no statistical speedup claim."
+}

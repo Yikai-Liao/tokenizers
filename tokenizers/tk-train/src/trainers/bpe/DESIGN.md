@@ -3,7 +3,7 @@
 ## Joined rounds and ownership
 
 The private `train` coordinator in `mod.rs` owns the vocabulary, corpus, pair index
-and encoder scratch for one attempt. Public inputs and worker policy enter through
+for one attempt. Public inputs and worker policy enter through
 `BpeTrainer::train_counts`; tests exercise the same coordinator with explicit workers.
 A selected `Batch`
 owns the occurrence lists of its rules. `Batch::prepare` consumes those lists,
@@ -18,7 +18,7 @@ rounds do not promise rollback. Tokens and occurrence spans use ordinary relaxed
 atomic accesses. Corpus cache hints use `branches` with addresses from checked
 accesses to live slots. Stable x86_64 emits L1 prefetch and stable AArch64 emits
 `prfm pldl1keep`; unsupported targets retain the library fallback. Position
-storage uses owned Box allocations and checked slices, with automatic Send/Sync.
+storage uses inline values or owned Box allocations and checked slices, with automatic Send/Sync.
 Atomics do not replace the disjoint-match and joined-phase semantic requirements.
 
 ## Token identity and initialization
@@ -124,7 +124,7 @@ outputs and owner indices are internal and are not stored in the model format.
 
 `OwnerCommit` encapsulates one owner's sequential commit work. It borrows the count
 shard, fixes the reuse/frequency policy, and owns partial birth groups, pending
-candidates and an executing thread's encoder-scratch lease. Its commit method drains
+candidates. Its commit method drains
 the route in order, removes old weight before recording each birth, and consumes
 the work state when publishing groups. The coordinator receives only completed
 candidates after owner jobs join. Errors release unpublished storage and discard
@@ -157,23 +157,20 @@ each action; owner order is the original producer order. Draining both vectors
 retains capacity. Errors drop active drains; the attempt is discarded after
 owner jobs join. Successful commits drain every route before the next round.
 
-Published lists use a single `Box<[u8]>` representation. Empty lists have an empty
-slice; every nonempty list uses the full-u64 restart/delta format, including lists
-with only one or two positions. Each list owns its bytes and releases them when
-its queue, fragment or birth owner retires. There is no pointer tag, manual allocation
-layout, ownership-specific destructor or arena lifetime on a frozen list.
-The wrapper is 16 bytes on the measured 64-bit target, down from the 24-byte enum.
-One- and two-position lists now allocate encoded storage instead of staying inline.
+Published lists use an Enum with Empty, One and Two inline cases and an owned
+`Box<[u8]>` for longer restart/delta streams. The Enum is 24 bytes on the measured
+64-bit target. Each list releases its bytes when its queue, fragment or birth
+owner retires. Ownership and Send/Sync follow from its fields.
 
-`Codec` owns ThreadLocal RefCell `CodecScratch` values with reusable byte and
-offset vectors for position encoding.
-The RefMut lease prevents reentrant use of one thread's scratch. A lease holder
-does not start nested parallel work; other threads use independent scratch.
-Scratch values stay alive until Codec is
-dropped, including when their creating threads exit. Freezing copies initialized
-encoded bytes into the final owned Box. Readers carry only a borrowed immutable byte
-slice and private decoder state, so they can outlive the scratch lease and Codec.
-The index and preparation objects borrow Codec only to create new lists.
+`Positions::from_sorted` accepts a nondecreasing u64 slice; `Positions::concat`
+consumes ordered fragments, drops empty fragments, and returns a sole nonempty
+fragment unchanged. Multiple fragments are encoded in order, preserving
+duplicates and rejecting descending coordinates. Construction writes directly
+into an owned Vec, fills restart offsets in its reserved prefix, and converts
+it to Box. Larger gaps can grow Vec and boxing may copy or reallocate; one
+encoding pass does not promise one allocation. Readers borrow immutable bytes
+and carry private decoder state. No encoder service, lease or scratch lifetime
+is carried through the index or preparation objects.
 
 Reuse owners retain a signed i64 ledger and the queue owns independent occurrence
 cohorts. Selection repairs the head cohort against the shared ledger, preserving
@@ -202,11 +199,12 @@ span. Limits zero, one and two therefore retain their existing distinct behavior
 
 ## Position encoding
 
-Temporary `Builder` lists store u32 coordinates in small inline buffers or heap
-vectors. A value above `u32::MAX` promotes the buffer to u64 without losing prior
-values. Sorted append moves the first fragment and appends matching storage
-variants directly. This narrowing is an internal representation choice; input,
-iteration, comparisons and the published codec retain the entire u64 domain.
+Temporary lists use library `SmallVec<[u64; 2]>` directly. Every coordinate
+retains its full width, with two values inline before heap storage is needed.
+Fresh producers visit coordinates in order and can move the first partial
+fragment to its owner; subsequent fragments append in producer order. Reuse
+groups retain an unordered Vec and sort before construction. The immutable
+constructor validates the resulting nondecreasing sequence.
 
 Each block contains at most 128 positions. Its first position is a full-u64
 restart; later positions store unsigned base-128 deltas. Checked monotonic input
@@ -220,8 +218,8 @@ cohort selection can stream the full list without a corpus-sized bitmap.
 Full-model comparisons cover vocabulary IDs and complete ordered merges. Small
 fixtures also compare every `(pair, count, replacement ID)` with an independent
 sequential reference. Literal expectations cover numeric limits and alias
-cohorts; codec tests and Miri exercise immutable storage, concurrent readers and
-lists that outlive their encoder scratch.
+cohorts; storage tests and Miri exercise immutable storage, concurrent readers,
+owned concatenation, and exact restart/delta bytes when the output Vec grows.
 See [the test coverage map](COVERAGE.md).
 
 Performance evidence belongs to the experiment report: paired independent

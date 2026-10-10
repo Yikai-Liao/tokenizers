@@ -1,0 +1,154 @@
+[
+  {
+    "case": "en-bytelevel_regex-16MiB",
+    "language": "en",
+    "requested_mib": 16,
+    "pretokenizer": "bytelevel_regex",
+    "path": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/en-16MiB/text.txt",
+    "bytes": 16776498,
+    "source_sha256": "3291bcfcb313c409713c8042446b35f7f14efdae4f9de79075f78cdf6b20894e",
+    "trainer": {
+      "vocab_size": 50000,
+      "min_frequency": 2,
+      "prefix": null,
+      "suffix": null,
+      "max_token_length": null
+    },
+    "prepared_path": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/en-16MiB/words.json",
+    "prepared_sha256": "699fbfd05555ce104d8c43cfd4a80c9518812d1e276de5d99ba199d4797e2c5a",
+    "prepared_bytes": 2200615
+  },
+  {
+    "case": "en-whitespace-16MiB",
+    "language": "en",
+    "requested_mib": 16,
+    "pretokenizer": "whitespace",
+    "path": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/en-16MiB/text.txt",
+    "bytes": 16776498,
+    "source_sha256": "3291bcfcb313c409713c8042446b35f7f14efdae4f9de79075f78cdf6b20894e",
+    "trainer": {
+      "vocab_size": 50000,
+      "min_frequency": 2,
+      "prefix": null,
+      "suffix": null,
+      "max_token_length": null
+    },
+    "prepared_path": "/tmp/bpe-initial-filter-inputs/en-whitespace-16MiB/words.json",
+    "prepared_sha256": "b6ec886473a83b4a90bd469d9b6f5193627b553dab4115d0418061f235f4c94b",
+    "prepared_bytes": 1729375
+  },
+  {
+    "case": "en-bytelevel_regex-256MiB",
+    "language": "en",
+    "requested_mib": 256,
+    "pretokenizer": "bytelevel_regex",
+    "path": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/en-256MiB/text.txt",
+    "bytes": 268434441,
+    "source_sha256": "ae02a7e36df46e6dff26481f054dd4a385d50c4a42a9f166de754ee44fbf6b8a",
+    "trainer": {
+      "vocab_size": 50000,
+      "min_frequency": 2,
+      "prefix": null,
+      "suffix": null,
+      "max_token_length": null
+    },
+    "prepared_path": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/en-256MiB/words.json",
+    "prepared_sha256": "4523a34ff64cdba49b0985f32cc923f2c7b005fd67748a0fbec38c44bab437c5",
+    "prepared_bytes": 14071952
+  },
+  {
+    "case": "en-whitespace-256MiB",
+    "language": "en",
+    "requested_mib": 256,
+    "pretokenizer": "whitespace",
+    "path": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/en-256MiB/text.txt",
+    "bytes": 268434441,
+    "source_sha256": "ae02a7e36df46e6dff26481f054dd4a385d50c4a42a9f166de754ee44fbf6b8a",
+    "trainer": {
+      "vocab_size": 50000,
+      "min_frequency": 2,
+      "prefix": null,
+      "suffix": null,
+      "max_token_length": null
+    },
+    "prepared_path": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/en-whitespace-256MiB/words.json",
+    "prepared_sha256": "0e146cd7d9fd31c547c84c5bfea2424bb05ae02905cf2608f4d7aa980f6bdb2d",
+    "prepared_bytes": 10900666
+  },
+  {
+    "case": "zh-bytelevel_regex-16MiB",
+    "language": "zh",
+    "requested_mib": 16,
+    "pretokenizer": "bytelevel_regex",
+    "path": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/zh-16MiB/text.txt",
+    "bytes": 16776351,
+    "source_sha256": "ebd64699a917bb0982e9b64d302d94cc08057f43d16bcb5efc041594684c12a6",
+    "trainer": {
+      "vocab_size": 50000,
+      "min_frequency": 2,
+      "prefix": null,
+      "suffix": null,
+      "max_token_length": null
+    },
+    "prepared_path": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/zh-16MiB/words.json",
+    "prepared_sha256": "19ac0d1eef82c0fe4cf537098710a04b67453656ee386c5961ce26b8ccee6c2f",
+    "prepared_bytes": 29688385
+  },
+  {
+    "case": "zh-whitespace-16MiB",
+    "language": "zh",
+    "requested_mib": 16,
+    "pretokenizer": "whitespace",
+    "path": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/zh-16MiB/text.txt",
+    "bytes": 16776351,
+    "source_sha256": "ebd64699a917bb0982e9b64d302d94cc08057f43d16bcb5efc041594684c12a6",
+    "trainer": {
+      "vocab_size": 50000,
+      "min_frequency": 2,
+      "prefix": null,
+      "suffix": null,
+      "max_token_length": null
+    },
+    "prepared_path": "/tmp/bpe-initial-filter-inputs/zh-whitespace-16MiB/words.json",
+    "prepared_sha256": "cc8d3ed837a05c34313f61a761db0ddb20fc1366d35a72ddcd934ea3aa47e13c",
+    "prepared_bytes": 17059568
+  },
+  {
+    "case": "zh-bytelevel_regex-256MiB",
+    "language": "zh",
+    "requested_mib": 256,
+    "pretokenizer": "bytelevel_regex",
+    "path": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/zh-256MiB/text.txt",
+    "bytes": 268435162,
+    "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+    "trainer": {
+      "vocab_size": 50000,
+      "min_frequency": 2,
+      "prefix": null,
+      "suffix": null,
+      "max_token_length": null
+    },
+    "prepared_path": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/zh-256MiB/words.json",
+    "prepared_sha256": "bb796d0b57b87d965b84de249bc5c8e283b700774638d16a40e4ae5171b13ee0",
+    "prepared_bytes": 437135595
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "language": "zh",
+    "requested_mib": 256,
+    "pretokenizer": "whitespace",
+    "path": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/zh-256MiB/text.txt",
+    "bytes": 268435162,
+    "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+    "trainer": {
+      "vocab_size": 50000,
+      "min_frequency": 2,
+      "prefix": null,
+      "suffix": null,
+      "max_token_length": null
+    },
+    "prepared_path": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+    "prepared_sha256": "ed057a8fdb27544ed29f16dde53faa0de8f47f1ee8ac00080974fac5bb435660",
+    "prepared_bytes": 250116097
+  }
+]

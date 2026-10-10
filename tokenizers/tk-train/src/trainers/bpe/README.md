@@ -30,10 +30,10 @@ The implementation is divided by the knowledge each module owns:
   event aggregation, and joined application. The coordinator sees `Batch` and
   `Prepared`, without handling write geometry or neighbor directories.
 - [positions.rs](positions.rs) owns sorted full-u64 streams and restart blocks.
-  Temporary buffers narrow to u32 with automatic full-u64 promotion. Published
-  lists own compressed byte slices, with an empty slice for an empty list.
-  ThreadLocal encoder scratch is retained only for the attempt; frozen lists
-  can outlive it. Duplicate positions and coordinates through `u64::MAX` are preserved.
+  Producers use `SmallVec<[u64; 2]>` and construct immutable lists directly.
+  Empty, one-value and two-value lists stay inline; longer lists own compressed
+  byte slices. Construction accepts a sorted slice or consumes ordered fragments
+  without an encoder service. Duplicates and coordinates through `u64::MAX` are preserved.
 - [feed.rs](feed.rs) owns streaming batches and bounded local word caches;
   `LocalCounts` controls cache flushing and successful completion.
 - [word_counts.rs](word_counts.rs) owns borrowed and collected count views,
@@ -76,12 +76,12 @@ cargo +nightly miri test --manifest-path experiments/bpe-simplification/miri-cod
 The tests compare full vocabulary IDs, ordered merges and per-rule traces with
 an independent small-input reference. Fixed-seed combinations cover thread
 counts, affixes, aliases, zero weights, ties, overlap and strict birth gates.
-Literal expectations cover wide counts and public errors. Codec tests cover the
+Literal expectations cover wide counts and public errors. Position storage tests cover the
 entire u64 domain, repeated values and restart boundaries. The standalone Miri
 harness imports the actual position module and keeps borrow/leak checks enabled.
 Miri samples seek starts and targets around restart boundaries; native tests
 exhaust every start. Native and Miri storage tests use scoped threads and verify that frozen lists
-remain readable after the encoder scratch and its container are dropped.
+remain readable after their construction inputs are dropped.
 Public tests cover feed, model reload, progress and ambient-versus-training pool
 behavior. [The coverage map](COVERAGE.md) records the combined boundaries.
 

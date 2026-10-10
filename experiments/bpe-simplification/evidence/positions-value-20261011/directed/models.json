@@ -1,0 +1,18 @@
+{
+  "aa": {
+    "file": "models/aa.json.gz",
+    "sha256": "8be87a818dbd7f8fc3c2cfb8a2fa8d6be678e4745be3bea04b4230633cc32de7",
+    "all_runs_equal": true,
+    "model_sha256_values": [
+      "8be87a818dbd7f8fc3c2cfb8a2fa8d6be678e4745be3bea04b4230633cc32de7"
+    ]
+  },
+  "reuse": {
+    "file": "models/reuse.json.gz",
+    "sha256": "8fa9455f1c21978becc4b7980dfa04c49f6e7422354d2c1c74ab96614c378c7d",
+    "all_runs_equal": true,
+    "model_sha256_values": [
+      "8fa9455f1c21978becc4b7980dfa04c49f6e7422354d2c1c74ab96614c378c7d"
+    ]
+  }
+}

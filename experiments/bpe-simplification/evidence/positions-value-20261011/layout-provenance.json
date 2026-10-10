@@ -1,0 +1,20 @@
+{
+  "command": [
+    "/root/.cargo/bin/rustc",
+    "--edition=2024",
+    "experiments/bpe-simplification/evidence/positions-value-20261011/positions-layout.rs",
+    "--extern",
+    "smallvec=/tmp/bpe-global-tests/debug/deps/libsmallvec-03aab5613ead8f29.rlib",
+    "--extern",
+    "itertools=/tmp/bpe-global-tests/debug/deps/libitertools-22af5ae084f6fa23.rlib",
+    "-L",
+    "dependency=/tmp/bpe-global-tests/debug/deps",
+    "-o",
+    "/tmp/bpe-positions-value-layout"
+  ],
+  "dependency_sha256": {
+    "/tmp/bpe-global-tests/debug/deps/libsmallvec-03aab5613ead8f29.rlib": "cf15897eaf6e46410eccb466f185bdaef1c44647c636f2f16e7bf3eb6774e9d8",
+    "/tmp/bpe-global-tests/debug/deps/libitertools-22af5ae084f6fa23.rlib": "5dd90e2625a15d04514195be9f001e0c522dc08e1ed41a3affcbf8e771328ac1"
+  },
+  "note": "Probe ran against the actual narrow-control source before the production container was removed. Its module path now points to that identical frozen source. Positions and both SmallVec capacities retain their measured layouts."
+}

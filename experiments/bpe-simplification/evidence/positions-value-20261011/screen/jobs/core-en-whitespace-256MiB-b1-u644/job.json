@@ -1,0 +1,18 @@
+{
+  "protocol_version": 1,
+  "attempt_id": "core-en-whitespace-256MiB-b1-u644",
+  "build_id": "u644",
+  "input_id": "en-whitespace-256MiB",
+  "mode": "core",
+  "input": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/en-whitespace-256MiB/words.json",
+  "output": "/tmp/bpe-positions-value-screen/core-en-whitespace-256MiB-b1-u644/model.json",
+  "workers": 4,
+  "pretokenizer": "whitespace",
+  "trainer": {
+    "vocab_size": 50000,
+    "min_frequency": 2,
+    "prefix": null,
+    "suffix": null,
+    "max_token_length": null
+  }
+}

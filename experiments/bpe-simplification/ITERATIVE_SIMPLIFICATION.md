@@ -223,3 +223,34 @@ roundtrip 问题）；all-target no-default Clippy（warnings denied）、改动
 rustfmt 与 diff 检查通过。测量排除加载和模型序列化，峰值则含 caller map。
 完整源码、布局、逐次数据、模型哈希、诊断 patch 与计数口径见
 [Box-only 记录](evidence/box-only-20261010/README.md)。
+
+## positions 独立构造与统一 u64 临时存储
+
+按用户要求恢复冻结列表的 Empty／One／Two／Compressed Enum，保留短列表
+内联，移除 Codec、CodecScratch、Lease、Input、临时编码 scratch 和 tk-train
+的 thread_local 依赖。Positions 接收有序 slice，或消费有序 fragments；单个
+非空 fragment 直接返回。较长列表在最终 Vec 中一遍写入 restart／delta，
+填充前缀目录再转 Box；Vec 增长及 boxing 仍可能重新分配。
+
+随后移除自定义 Builder／Buffer 与 u32→u64 promotion，生产端直接使用
+`SmallVec<[u64; 2]>`。冻结 Positions 为 24 bytes，Candidate 为 40 bytes；
+临时 SmallVec 为 24 bytes。u64/4 控制为 40 bytes，未显示稳定收益。
+用户优先考虑大规模、低重复中文输入，并接受数个百分点的 CPU 波动，
+选择统一 u64/2；提出的 u32/4 后续比较在构建、测量前取消。
+
+已完成的四种 256 MiB 输入，相对原 Enum＋编码 scratch 的正式配对中位差
+（CPU／wall／峰值 RSS）：英文 ByteLevel −3.12%／−6.49%／+8.30%；
+英文 Whitespace +6.09%／+5.10%／+17.84%；中文 ByteLevel
++1.01%／+2.83%／+5.28%；中文 Whitespace +2.79%／+1.49%／+0.37%。
+每个输入仅两组正式配对，属于 VPS 上的描述性观察；不声称普遍提速或
+内存改善。u32 阈值是预处理、去重后原始符号及分隔符的坐标，不能从原文
+GB 数直接推断 promotion；本轮没有 GB 规模测量。
+
+四种表示、八个 16／256 MiB 输入的 96 次 screen，加 AA／reuse 的四次
+定向完整模型比较，共 100 次模型一致且无 swap。首版直接编码的 14 项
+普通 BPE 检查通过，已有 tokenizer encoding 断言在未改 baseline 同样失败，
+按用户指示排除。direct/narrow 与 u64/4 的 all-target Clippy（warnings
+denied）通过，最终 u64/2 完成 release 构建与逐模型比较；保留源码哈希
+与测量快照完全一致。用户要求停止追加测量并直接整理推送。
+完整源码、已有逐次数据、协议、模型与哈希见
+[positions 构造记录](evidence/positions-value-20261011/README.md)。

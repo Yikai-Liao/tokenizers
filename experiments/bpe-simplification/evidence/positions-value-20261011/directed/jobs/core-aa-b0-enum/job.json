@@ -1,0 +1,18 @@
+{
+  "protocol_version": 1,
+  "attempt_id": "core-aa-b0-enum",
+  "build_id": "enum",
+  "input_id": "aa",
+  "mode": "core",
+  "input": "/tmp/bpe-readability-directed-inputs/aa.json",
+  "output": "/tmp/bpe-positions-value-directed/core-aa-b0-enum/model.json",
+  "workers": 4,
+  "pretokenizer": "Whitespace",
+  "trainer": {
+    "vocab_size": 4096,
+    "min_frequency": 2,
+    "prefix": null,
+    "suffix": null,
+    "max_token_length": null
+  }
+}

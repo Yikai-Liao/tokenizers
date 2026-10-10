@@ -1,0 +1,18 @@
+{
+  "protocol_version": 1,
+  "attempt_id": "core-zh-whitespace-16MiB-b2-u644",
+  "build_id": "u644",
+  "input_id": "zh-whitespace-16MiB",
+  "mode": "core",
+  "input": "/tmp/bpe-initial-filter-inputs/zh-whitespace-16MiB/words.json",
+  "output": "/tmp/bpe-positions-value-screen/core-zh-whitespace-16MiB-b2-u644/model.json",
+  "workers": 4,
+  "pretokenizer": "whitespace",
+  "trainer": {
+    "vocab_size": 50000,
+    "min_frequency": 2,
+    "prefix": null,
+    "suffix": null,
+    "max_token_length": null
+  }
+}

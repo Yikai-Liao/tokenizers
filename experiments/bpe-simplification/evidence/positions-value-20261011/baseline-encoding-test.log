@@ -1,0 +1,35 @@
+    Updating crates.io index
+     Locking 166 packages to latest Rust 1.98.1 compatible versions
+      Adding compact_str v0.9.1 (available: v0.10.0)
+      Adding itertools v0.14.0 (available: v0.15.0)
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+   Compiling bitcannon v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-positions-value-baseline-20261011/tokenizers/bitcannon)
+   Compiling thread_local v1.1.10
+   Compiling tk-encode v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-positions-value-baseline-20261011/tokenizers/tk-encode)
+   Compiling tk-convert v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-positions-value-baseline-20261011/tokenizers/tk-convert)
+   Compiling tk-serialize v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-positions-value-baseline-20261011/tokenizers/tk-serialize)
+   Compiling tk-train v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-positions-value-baseline-20261011/tokenizers/tk-train)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 15.90s
+     Running unittests src/lib.rs (/tmp/bpe-global-tests/debug/deps/tk_train-742e8a855f285ba5)
+
+running 1 test
+test trainers::bpe::tests::feed_training_tokenizer_json_and_encoding_roundtrip ... FAILED
+
+failures:
+
+---- trainers::bpe::tests::feed_training_tokenizer_json_and_encoding_roundtrip stdout ----
+
+thread 'trainers::bpe::tests::feed_training_tokenizer_json_and_encoding_roundtrip' (3128787) panicked at src/trainers/bpe/tests.rs:271:13:
+assertion `left == right` failed: 测
+  left: [PipelineToken(3)]
+ right: [6]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    trainers::bpe::tests::feed_training_tokenizer_json_and_encoding_roundtrip
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 19 filtered out; finished in 0.13s
+
+error: test failed, to rerun pass `--lib`

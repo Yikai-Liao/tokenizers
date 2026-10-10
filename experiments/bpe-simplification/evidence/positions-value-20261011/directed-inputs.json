@@ -1,0 +1,30 @@
+[
+  {
+    "language": "zh",
+    "case": "aa",
+    "prepared_path": "/tmp/bpe-readability-directed-inputs/aa.json",
+    "prepared_sha256": "a652822e22a52c0e62f24d35f43575981414b579583926bd6aacd7a5a29ca1b2",
+    "pretokenizer": "Whitespace",
+    "trainer": {
+      "vocab_size": 4096,
+      "min_frequency": 2,
+      "prefix": null,
+      "suffix": null,
+      "max_token_length": null
+    }
+  },
+  {
+    "language": "zh",
+    "case": "reuse",
+    "prepared_path": "/tmp/bpe-readability-directed-inputs/reuse.json",
+    "prepared_sha256": "f08476a6483b0f8f66056ad455e5290a088176587591050ded9f7c1c8f40aa13",
+    "pretokenizer": "Whitespace",
+    "trainer": {
+      "vocab_size": 4096,
+      "min_frequency": 2,
+      "prefix": null,
+      "suffix": "a",
+      "max_token_length": null
+    }
+  }
+]

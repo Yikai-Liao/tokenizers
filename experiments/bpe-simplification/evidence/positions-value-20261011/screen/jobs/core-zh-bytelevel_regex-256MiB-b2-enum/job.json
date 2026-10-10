@@ -1,0 +1,18 @@
+{
+  "protocol_version": 1,
+  "attempt_id": "core-zh-bytelevel_regex-256MiB-b2-enum",
+  "build_id": "enum",
+  "input_id": "zh-bytelevel_regex-256MiB",
+  "mode": "core",
+  "input": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/zh-256MiB/words.json",
+  "output": "/tmp/bpe-positions-value-screen/core-zh-bytelevel_regex-256MiB-b2-enum/model.json",
+  "workers": 4,
+  "pretokenizer": "bytelevel_regex",
+  "trainer": {
+    "vocab_size": 50000,
+    "min_frequency": 2,
+    "prefix": null,
+    "suffix": null,
+    "max_token_length": null
+  }
+}
