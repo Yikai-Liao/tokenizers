@@ -6,7 +6,7 @@ use super::{
     positions::{Builder, Codec, Input, Lease, Positions},
 };
 use ahash::AHashMap;
-use dary_heap::{OctonaryHeap, PeekMut};
+use dary_heap::OctonaryHeap;
 use rayon::prelude::*;
 use std::cmp::{Ordering, Reverse};
 use tk_encode::{Result, models::bpe::Pair, utils::progress::ProgressBar};
@@ -183,19 +183,20 @@ impl<'codec> PairIndex<'codec> {
 
     pub(super) fn best(&mut self) -> Option<Priority> {
         loop {
-            let mut candidate = self.queue.peek_mut()?;
-            let top = candidate.priority;
+            let top = self.queue.peek()?.priority;
             let Some(&count) = self.shards[owner(top.pair(), self.shards.len())].get(&top.pair())
             else {
                 // Fresh counts retire below the floor. Their stale payloads are
                 // reclaimed when they reach the head of this owning queue.
-                PeekMut::pop(candidate);
+                self.queue.pop();
                 continue;
             };
             if top.count == count {
                 return (count >= self.floor).then_some(top);
             }
+            let mut candidate = self.queue.pop().expect("observed candidate exists");
             candidate.priority.count = count;
+            self.queue.push(candidate);
         }
     }
 
@@ -522,5 +523,130 @@ impl<'index, 'codec> OwnerCommit<'index, 'codec> {
         }
 
         Ok(self.candidates)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::trainers::bpe::{
+        BpeTrainer, Trace,
+        merge::{Batch, Selection},
+        vocabulary::Vocabulary,
+        word_counts::WordCountsView,
+    };
+    use tk_encode::{
+        models::bpe::{Merges, Vocab},
+        vocab::bucket_added_vocabulary::AddedToken,
+    };
+
+    type Outcome = (Trace, (Vocab, Merges));
+
+    fn train_with_equal_cohorts() -> Outcome {
+        let mut trainer = BpeTrainer::builder()
+            .vocab_size(64)
+            .min_frequency(1)
+            .show_progress(false)
+            .build();
+        trainer.continuing_subword_prefix = Some("ab".into());
+        trainer.end_of_word_suffix = Some("c".into());
+        trainer.special_tokens = vec![AddedToken::from("abac", true)];
+        let mut words = AHashMap::with_hasher(ahash::RandomState::with_seeds(11, 13, 17, 19));
+        words.extend([("pacx".into(), 4), ("yacx".into(), 1), ("pa".into(), 4)]);
+        let view = WordCountsView::from_map(&words);
+        let progress = trainer.setup_progress();
+        let mut vocabulary = Vocabulary::initialize(&trainer, view, 1, &mut None).unwrap();
+        let ids = vocabulary.initial_ids(view, &progress).unwrap();
+        let pair = (
+            ids.id('a', false, false).unwrap(),
+            ids.id('c', false, false).unwrap(),
+        );
+        let plan = CorpusPlan::build(view, &mut vocabulary, &trainer, true, &progress).unwrap();
+        // Either cohort creates the active "abac" alias. The heavier cohort
+        // raises its left neighbor's existing count above the other cohort.
+        let mut cohorts = [Vec::new(), Vec::new()];
+        plan.initial_edges(0..plan.word_count(), |edge, position, weight| {
+            if edge == pair {
+                cohorts[usize::from(weight == 1)].push(position);
+            }
+            Ok(())
+        })
+        .unwrap();
+        assert_eq!(cohorts.each_ref().map(|values| values.len()), [1, 1]);
+        let codec = Codec::new(1);
+        let mut index = PairIndex::build(&codec, &plan, 1, 1, true, &progress).unwrap();
+        assert_eq!(index.shards[0][&pair], 5);
+        let mut candidates = index.queue.into_vec();
+        candidates.retain(|candidate| candidate.priority.pair() != pair);
+        for (positions, count) in cohorts.into_iter().zip([10, 5]) {
+            candidates.push(Candidate {
+                priority: Priority {
+                    count,
+                    pair: Reverse(pair),
+                },
+                positions: Positions::from_sorted(Input::Slice(&positions), &mut codec.lease())
+                    .unwrap(),
+            });
+        }
+        index.queue = candidates.into_iter().collect();
+        let mut corpus = plan.materialize();
+        let mut trace = Vec::new();
+        let mut merges = Vec::new();
+        while vocabulary.len() < trainer.vocab_size {
+            let batch =
+                match Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index).unwrap() {
+                    Selection::Ready(batch) => batch,
+                    Selection::Finished => break,
+                    Selection::Restart => panic!("reuse cannot request another attempt"),
+                };
+            trace.extend(batch.trace());
+            merges.extend(batch.pairs());
+            let prepared = batch.prepare(&corpus, &codec, usize::MAX).unwrap();
+            index.commit(prepared.apply(&corpus)).unwrap();
+        }
+        (trace, vocabulary.into_model_parts(merges))
+    }
+
+    #[test]
+    fn equal_pair_cohorts_preserve_each_merge_and_model_after_count_repair() {
+        let actual = train_with_equal_cohorts();
+        assert_eq!(
+            actual.0,
+            vec![
+                ((6, 7), 5, 0),
+                ((6, 7), 5, 0),
+                ((3, 0), 8, 9),
+                ((3, 0), 8, 9),
+                ((9, 8), 4, 10),
+                ((0, 8), 1, 11),
+                ((0, 8), 1, 11),
+                ((5, 11), 1, 12),
+            ],
+            "count repair must preserve the historical cohort merge order"
+        );
+        let tokens = [
+            "abac", "a", "c", "p", "x", "y", "aba", "abc", "abxc", "pac", "pacxc", "abacxc",
+            "yacxc",
+        ];
+        let vocab = tokens
+            .iter()
+            .enumerate()
+            .map(|(id, text)| ((*text).to_owned(), id as u32))
+            .collect();
+        let merges = actual
+            .0
+            .iter()
+            .map(|&(pair, _, _)| {
+                (
+                    tokens[pair.0 as usize].to_owned(),
+                    tokens[pair.1 as usize].to_owned(),
+                )
+            })
+            .collect();
+        assert_eq!(
+            actual.1,
+            (vocab, merges),
+            "cohort repair must preserve the complete model"
+        );
     }
 }

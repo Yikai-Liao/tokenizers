@@ -7,15 +7,21 @@ use super::{
     vocabulary::Vocabulary,
 };
 use ahash::{AHashMap, AHashSet};
+use itertools::Itertools;
 use rayon::prelude::*;
 use tk_encode::{Result, models::bpe::Pair};
 
 /// One selected pair and resolved replacement ID, owning its candidate positions.
 /// Keeping the candidate binds preparation to the cohort selected by the queue.
 struct Rule {
-    pair: Pair,
     replacement: u32,
     candidate: Candidate,
+}
+
+impl Rule {
+    fn pair(&self) -> Pair {
+        self.candidate.priority.pair()
+    }
 }
 
 /// Priority-prefix rules selected for one joined preparation/application round.
@@ -128,7 +134,7 @@ impl<'a> Neighbors<'a> {
         let slot = &mut self.directories.indices[side][neighbor as usize];
         if *slot == u32::MAX {
             let id = self.rule.replacement;
-            let pair = self.rule.pair;
+            let pair = self.rule.pair();
             let index = self.changes[side].len();
             self.changes[side].push(Change {
                 removed: if left {
@@ -169,7 +175,7 @@ impl<'a> Neighbors<'a> {
                 self.group(born, left)
             };
             add(&mut group.born_weight, weight)?;
-            group.positions.push_ordered(position as u64)?;
+            group.positions.push_ordered(position as u64);
         }
         Ok(())
     }
@@ -258,7 +264,6 @@ impl Batch {
             let replacement = vocabulary.resolve_merge(token)?;
             corpus.prepare_identity(pair, replacement);
             batch.rules.push(Rule {
-                pair,
                 replacement,
                 candidate,
             });
@@ -276,14 +281,14 @@ impl Batch {
     }
 
     pub(super) fn pairs(&self) -> impl Iterator<Item = Pair> + '_ {
-        self.rules.iter().map(|rule| rule.pair)
+        self.rules.iter().map(|rule| rule.pair())
     }
 
     #[cfg(test)]
     pub(super) fn trace(&self) -> impl Iterator<Item = (Pair, u64, u32)> + '_ {
         self.rules
             .iter()
-            .map(|rule| (rule.pair, rule.candidate.priority.count, rule.replacement))
+            .map(|rule| (rule.pair(), rule.candidate.priority.count, rule.replacement))
     }
 
     pub(super) fn prepare(self, corpus: &Corpus, codec: &Codec, limit: usize) -> Result<Prepared> {
@@ -308,13 +313,13 @@ impl Batch {
     fn prepare_cohort(self, corpus: &Corpus, codec: &Codec, limit: usize) -> Result<Prepared> {
         // 1. Restrict the historical cohort to its unique word owners.
         let rule = &self.rules[0];
-        let mut words: Vec<_> = rule
+        let words: Vec<_> = rule
             .candidate
             .positions
             .iter()
             .map(|p| corpus.word(corpus.resident(p)))
+            .dedup()
             .collect();
-        words.dedup();
 
         // 2. Prepare separate word chunks; edits within each word remain ordered.
         let chunk = words.len().div_ceil(rayon::current_num_threads()).max(1);
@@ -359,28 +364,28 @@ impl<'a> FreshSnapshot<'a> {
         let selected: AHashMap<_, _> = batch
             .rules
             .iter()
-            .map(|rule| (rule.pair, rule.replacement))
+            .map(|rule| (rule.pair(), rule.replacement))
             .collect();
         let mut heads = vec![Head::Empty; corpus.id_count()];
         let mut tails = vec![false; corpus.id_count()];
         for rule in &batch.rules {
-            let slot = &mut heads[rule.pair.0 as usize];
+            let slot = &mut heads[rule.pair().0 as usize];
             *slot = match slot {
                 Head::Empty => Head::Unique {
-                    right: rule.pair.1,
+                    right: rule.pair().1,
                     replacement: rule.replacement,
                 },
                 _ => Head::Shared,
             };
-            tails[rule.pair.1 as usize] = true;
+            tails[rule.pair().1 as usize] = true;
         }
 
         // 2. Self-pairs overlap: retain only the left-to-right nonoverlapping starts.
-        let self_pair = batch.rules[0].pair.0 == batch.rules[0].pair.1;
+        let self_pair = batch.rules[0].pair().0 == batch.rules[0].pair().1;
         let mut starts = Vec::new();
         if self_pair {
             let rule = &batch.rules[0];
-            let matcher = corpus.fresh_matcher(rule.pair);
+            let matcher = corpus.fresh_matcher(rule.pair());
             let mut after = 0;
             for coordinate in rule.candidate.positions.iter() {
                 let p = corpus.resident(coordinate);
@@ -460,7 +465,7 @@ impl<'a> FreshSnapshot<'a> {
         directories.reset(self.corpus.id_count());
         let mut neighbors = Neighbors::new(rule, rank, directories, positions.complete());
         let mut writes = Writes::fresh(rule, self.corpus);
-        let matcher = self.corpus.fresh_matcher(rule.pair);
+        let matcher = self.corpus.fresh_matcher(rule.pair());
         let mut weights = None;
         for p in positions.prefetched(self.corpus) {
             let Some(matched) = matcher(p, self.corpus.token(p)) else {
@@ -473,7 +478,7 @@ impl<'a> FreshSnapshot<'a> {
             weights = Some((weight, end));
             self.record_left(&mut neighbors, p, matched, weight)?;
             self.record_right(&mut neighbors, rule, p, matched, weight)?;
-            writes.record(matched)?;
+            writes.record(matched);
         }
         Ok(Job {
             writes,
@@ -644,7 +649,7 @@ impl<'task> CohortPreparation<'task> {
                 }
                 positions.next();
             }
-            if let Some(matched) = corpus.matched(p, rule.pair) {
+            if let Some(matched) = corpus.matched(p, rule.pair()) {
                 let weight = corpus.word_weight(word);
                 if let Some((id, start, span)) = previous {
                     neighbors.record(true, id, id, start, weight, span + matched.span() < limit)?;
@@ -661,7 +666,7 @@ impl<'task> CohortPreparation<'task> {
                     )?;
                 }
                 previous = Some((rule.replacement, p, matched.span()));
-                writes.record(matched)?;
+                writes.record(matched);
                 p = matched.after;
             } else {
                 let span = corpus.span(p);
@@ -703,21 +708,20 @@ enum Writes {
 
 impl Writes {
     fn fresh(rule: &Rule, corpus: &Corpus) -> Self {
-        let left = corpus.id_span(rule.pair.0);
+        let left = corpus.id_span(rule.pair().0);
         Self::Compact {
             positions: Builder::default(),
             left,
-            total: left + corpus.id_span(rule.pair.1),
+            total: left + corpus.id_span(rule.pair().1),
             id: rule.replacement,
         }
     }
 
-    fn record(&mut self, matched: Match) -> Result<()> {
+    fn record(&mut self, matched: Match) {
         match self {
             Self::Compact { positions, .. } => positions.push_ordered(matched.start as u64),
             Self::Occurrences { positions, .. } => {
                 positions.push(matched);
-                Ok(())
             }
         }
     }

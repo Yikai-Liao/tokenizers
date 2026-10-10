@@ -290,18 +290,16 @@ impl InitialTokenIds {
     /// Interpret filtering and decorations against original UTF-8 coordinates.
     /// The plain path chooses its loop once and avoids per-symbol affix checks.
     #[inline]
-    pub(super) fn scan_symbols(
+    pub(super) fn scan_symbols<B>(
         &self,
         word: &str,
-        mut emit: impl FnMut(u32) -> std::ops::ControlFlow<()>,
-    ) {
+        mut emit: impl FnMut(u32) -> std::ops::ControlFlow<B>,
+    ) -> std::ops::ControlFlow<B> {
         use std::ops::ControlFlow;
         if self.plain() {
             for character in word.chars() {
-                if let Some(id) = self.plain_id(character)
-                    && emit(id).is_break()
-                {
-                    break;
+                if let Some(id) = self.plain_id(character) {
+                    emit(id)?;
                 }
             }
         } else {
@@ -310,12 +308,12 @@ impl InitialTokenIds {
                     character,
                     byte == 0,
                     byte + character.len_utf8() == word.len(),
-                ) && emit(id) == ControlFlow::Break(())
-                {
-                    break;
+                ) {
+                    emit(id)?;
                 }
             }
         }
+        ControlFlow::Continue(())
     }
 
     pub(super) fn symbol_count(&self, text: &str) -> usize {

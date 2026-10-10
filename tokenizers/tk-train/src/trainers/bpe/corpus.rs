@@ -160,19 +160,17 @@ impl<'input> CorpusPlan<'input> {
             let (text, &weight) = self.words[word];
             let mut position = self.starts[word];
             let mut previous = None;
-            let mut failure = None;
-            self.ids.scan_symbols(text, |id| {
+            let flow = self.ids.scan_symbols(text, |id| {
                 if let Some(left) = previous
                     && let Err(error) = emit((left, id), (position - 1) as u64, weight)
                 {
-                    failure = Some(error);
-                    return ControlFlow::Break(());
+                    return ControlFlow::Break(error);
                 }
                 previous = Some(id);
                 position += 1;
                 ControlFlow::Continue(())
             });
-            if let Some(error) = failure {
+            if let ControlFlow::Break(error) = flow {
                 return Err(error);
             }
         }
@@ -189,10 +187,10 @@ impl<'input> CorpusPlan<'input> {
                 super::tests::observe_worker(super::tests::Phase::Materialize);
                 let start = self.starts[word];
                 let mut position = start;
-                self.ids.scan_symbols(text, |id| {
+                let _ = self.ids.scan_symbols(text, |id| {
                     tokens.set(position, id);
                     position += 1;
-                    ControlFlow::Continue(())
+                    ControlFlow::<()>::Continue(())
                 });
             });
         // Only historical reuse cohorts need a word directory after counting.

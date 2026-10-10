@@ -674,3 +674,122 @@ mod reference {
         (words, weights)
     }
 }
+
+#[test]
+fn builder_defaults_options_and_serialization_remain_compatible() {
+    let default = BpeTrainer::default();
+    assert_eq!(BpeTrainerBuilder::default().build(), default);
+    assert_eq!(BpeTrainerBuilder::new().build(), default);
+    assert_eq!(BpeTrainer::new(0, 30000), default);
+    let expected_json = serde_json::json!({
+        "min_frequency": 0, "vocab_size": 30000, "show_progress": true,
+        "special_tokens": [], "limit_alphabet": null, "initial_alphabet": [],
+        "continuing_subword_prefix": null, "end_of_word_suffix": null,
+        "max_token_length": null, "words": {}
+    });
+    assert_eq!(serde_json::to_value(&default).unwrap(), expected_json);
+    assert_eq!(
+        serde_json::from_value::<BpeTrainer>(expected_json).unwrap(),
+        default
+    );
+    let configured = BpeTrainerBuilder::new()
+        .min_frequency(3)
+        .vocab_size(128)
+        .show_progress(false)
+        .progress_format(ProgressFormat::JsonLines)
+        .special_tokens(vec![AddedToken::from("<s>", true)])
+        .limit_alphabet(20)
+        .initial_alphabet(HashSet::from(['猫', 'a']))
+        .continuing_subword_prefix("##".into())
+        .end_of_word_suffix("</w>".into())
+        .max_token_length(Some(7))
+        .build();
+    let expected = BpeTrainer {
+        min_frequency: 3,
+        vocab_size: 128,
+        show_progress: false,
+        progress_format: ProgressFormat::JsonLines,
+        special_tokens: vec![AddedToken::from("<s>", true)],
+        limit_alphabet: Some(20),
+        initial_alphabet: AHashSet::from_iter(['猫', 'a']),
+        continuing_subword_prefix: Some("##".into()),
+        end_of_word_suffix: Some("</w>".into()),
+        max_token_length: Some(7),
+        words: WordCounts::default(),
+    };
+    assert_eq!(configured, expected);
+    let json = serde_json::to_value(&configured).unwrap();
+    assert!(json.get("progress_format").is_none());
+    let restored: BpeTrainer = serde_json::from_value(json).unwrap();
+    assert_eq!(
+        restored,
+        BpeTrainer {
+            progress_format: ProgressFormat::default(),
+            ..expected
+        }
+    );
+}
+
+#[test]
+fn symbol_scan_returns_the_break_reason_and_preserves_utf8_affix_boundaries() {
+    use std::ops::ControlFlow;
+    let words = counts(&[("é🙂é", 2), ("🙂é", 1)]);
+    for decorated in [false, true] {
+        let mut trainer = trainer();
+        if decorated {
+            trainer.continuing_subword_prefix = Some("##".into());
+            trainer.end_of_word_suffix = Some("</w>".into());
+        }
+        let view = WordCountsView::from_map(&words);
+        let progress = trainer.setup_progress();
+        let mut vocabulary = Vocabulary::initialize(&trainer, view, 1, &mut None).unwrap();
+        let ids = vocabulary.initial_ids(view, &progress).unwrap();
+        for (text, expected) in [
+            (
+                "é🙂",
+                [
+                    ids.id('é', true, false).unwrap(),
+                    ids.id('🙂', false, true).unwrap(),
+                ],
+            ),
+            (
+                "qé🙂z",
+                [
+                    ids.id('é', false, false).unwrap(),
+                    ids.id('🙂', false, false).unwrap(),
+                ],
+            ),
+        ] {
+            let mut emitted = Vec::new();
+            assert_eq!(
+                ids.scan_symbols(text, |id| {
+                    emitted.push(id);
+                    ControlFlow::<()>::Continue(())
+                }),
+                ControlFlow::Continue(())
+            );
+            assert_eq!(emitted, expected);
+        }
+        let mut calls = 0;
+        let reason = ids.scan_symbols("é🙂é", |_| {
+            calls += 1;
+            if calls == 2 {
+                ControlFlow::Break("stop")
+            } else {
+                ControlFlow::Continue(())
+            }
+        });
+        assert_eq!(reason, ControlFlow::Break("stop"));
+        assert_eq!(calls, 2);
+        let plan = CorpusPlan::build(view, &mut vocabulary, &trainer, true, &progress).unwrap();
+        let mut edges = 0;
+        let error = plan
+            .initial_edges(0..plan.word_count(), |_, _, _| {
+                edges += 1;
+                Err("edge failure".into())
+            })
+            .unwrap_err();
+        assert_eq!(error.to_string(), "edge failure");
+        assert_eq!(edges, 1);
+    }
+}

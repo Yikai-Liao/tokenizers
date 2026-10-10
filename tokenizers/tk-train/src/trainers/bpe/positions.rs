@@ -103,23 +103,23 @@ impl Builder {
         if self.iter().next_back().is_some_and(|last| position < last) {
             return Err("BPE positions are not sorted".into());
         }
-        self.push_ordered(position)
+        self.push_ordered(position);
+        Ok(())
     }
 
     // Snapshot scans visit disjoint ordered matches; callers retain that order.
     // Generic append/input paths use `push` and keep its validation.
-    pub(super) fn push_ordered(&mut self, position: u64) -> Result<()> {
+    pub(super) fn push_ordered(&mut self, position: u64) {
         if let Self::Narrow(values) = self {
             if let Ok(position) = u32::try_from(position) {
                 values.push(position);
-                return Ok(());
+                return;
             }
             *self = Self::Wide(values.iter().map(|&p| u64::from(p)).collect());
         }
         if let Self::Wide(values) = self {
             values.push(position);
         }
-        Ok(())
     }
 
     pub(super) fn append(&mut self, mut other: Self) -> Result<()> {

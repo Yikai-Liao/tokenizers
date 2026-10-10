@@ -42,43 +42,11 @@ use tk_encode::models::bpe::{BpeConfig, Merges, PipelineBPE, Vocab};
 use tk_encode::parallelism::*;
 use tk_encode::utils::progress::{ProgressBar, ProgressFormat, ProgressStyle};
 
-/// Builder-owned training options, consumed when constructing a BpeTrainer.
-struct Config {
-    min_frequency: u64,
-    vocab_size: usize,
-    show_progress: bool,
-    progress_format: ProgressFormat,
-    special_tokens: Vec<AddedToken>,
-    limit_alphabet: Option<usize>,
-    initial_alphabet: AHashSet<char>,
-    continuing_subword_prefix: Option<String>,
-    end_of_word_suffix: Option<String>,
-    max_token_length: Option<usize>,
-}
-
 /// A `BpeTrainerBuilder` can be used to create a `BpeTrainer` with a custom
 /// configuration.
+#[derive(Default)]
 pub struct BpeTrainerBuilder {
-    config: Config,
-}
-
-impl Default for BpeTrainerBuilder {
-    fn default() -> Self {
-        Self {
-            config: Config {
-                min_frequency: 0,
-                vocab_size: 30000,
-                show_progress: true,
-                progress_format: ProgressFormat::default(),
-                special_tokens: vec![],
-                limit_alphabet: None,
-                initial_alphabet: AHashSet::new(),
-                continuing_subword_prefix: None,
-                end_of_word_suffix: None,
-                max_token_length: None,
-            },
-        }
-    }
+    trainer: BpeTrainer,
 }
 
 impl BpeTrainerBuilder {
@@ -90,21 +58,21 @@ impl BpeTrainerBuilder {
     /// Set the expected minimum frequency
     #[must_use]
     pub fn min_frequency(mut self, frequency: u64) -> Self {
-        self.config.min_frequency = frequency;
+        self.trainer.min_frequency = frequency;
         self
     }
 
     /// Set the vocabulary size
     #[must_use]
     pub fn vocab_size(mut self, size: usize) -> Self {
-        self.config.vocab_size = size;
+        self.trainer.vocab_size = size;
         self
     }
 
     /// Set whether to show progress
     #[must_use]
     pub fn show_progress(mut self, show: bool) -> Self {
-        self.config.show_progress = show;
+        self.trainer.show_progress = show;
         self
     }
 
@@ -116,21 +84,21 @@ impl BpeTrainerBuilder {
     /// - `Silent`: No progress output
     #[must_use]
     pub fn progress_format(mut self, format: ProgressFormat) -> Self {
-        self.config.progress_format = format;
+        self.trainer.progress_format = format;
         self
     }
 
     /// Set the special tokens
     #[must_use]
     pub fn special_tokens(mut self, tokens: Vec<AddedToken>) -> Self {
-        self.config.special_tokens = tokens;
+        self.trainer.special_tokens = tokens;
         self
     }
 
     /// Set whether to limit the alphabet
     #[must_use]
     pub fn limit_alphabet(mut self, limit: usize) -> Self {
-        self.config.limit_alphabet = Some(limit);
+        self.trainer.limit_alphabet = Some(limit);
         self
     }
 
@@ -139,21 +107,21 @@ impl BpeTrainerBuilder {
     pub fn initial_alphabet(mut self, alphabet: HashSet<char>) -> Self {
         let mut initial_alphabet = AHashSet::with_capacity(alphabet.len());
         initial_alphabet.extend(alphabet);
-        self.config.initial_alphabet = initial_alphabet;
+        self.trainer.initial_alphabet = initial_alphabet;
         self
     }
 
     /// Set the continuing_subword_prefix
     #[must_use]
     pub fn continuing_subword_prefix(mut self, prefix: String) -> Self {
-        self.config.continuing_subword_prefix = Some(prefix);
+        self.trainer.continuing_subword_prefix = Some(prefix);
         self
     }
 
     /// Set the end_of_word_suffix
     #[must_use]
     pub fn end_of_word_suffix(mut self, suffix: String) -> Self {
-        self.config.end_of_word_suffix = Some(suffix);
+        self.trainer.end_of_word_suffix = Some(suffix);
         self
     }
 
@@ -162,25 +130,13 @@ impl BpeTrainerBuilder {
     /// See [`BpeTrainer::max_token_length`] for units and the initial-pair exception.
     #[must_use]
     pub fn max_token_length(mut self, max_token_length: Option<usize>) -> Self {
-        self.config.max_token_length = max_token_length;
+        self.trainer.max_token_length = max_token_length;
         self
     }
 
     /// Constructs the final BpeTrainer
     pub fn build(self) -> BpeTrainer {
-        BpeTrainer {
-            min_frequency: self.config.min_frequency,
-            vocab_size: self.config.vocab_size,
-            show_progress: self.config.show_progress,
-            progress_format: self.config.progress_format,
-            special_tokens: self.config.special_tokens,
-            limit_alphabet: self.config.limit_alphabet,
-            initial_alphabet: self.config.initial_alphabet,
-            continuing_subword_prefix: self.config.continuing_subword_prefix,
-            end_of_word_suffix: self.config.end_of_word_suffix,
-            max_token_length: self.config.max_token_length,
-            words: WordCounts::default(),
-        }
+        self.trainer
     }
 }
 
@@ -245,7 +201,19 @@ pub struct BpeTrainer {
 
 impl Default for BpeTrainer {
     fn default() -> Self {
-        Self::builder().build()
+        Self {
+            min_frequency: 0,
+            vocab_size: 30000,
+            show_progress: true,
+            progress_format: ProgressFormat::default(),
+            special_tokens: Vec::new(),
+            limit_alphabet: None,
+            initial_alphabet: AHashSet::new(),
+            continuing_subword_prefix: None,
+            end_of_word_suffix: None,
+            max_token_length: None,
+            words: WordCounts::default(),
+        }
     }
 }
 
