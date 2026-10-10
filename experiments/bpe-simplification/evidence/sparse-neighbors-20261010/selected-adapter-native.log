@@ -1,0 +1,15 @@
+   Compiling bpe-sparse-adapter-check v0.0.0 (/tmp/bpe-sparse-harness)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.88s
+     Running unittests src/lib.rs (/tmp/bpe-global-tests/debug/deps/bpe_sparse_adapter_check-43ad8fbd053efeab)
+
+running 2 tests
+test cranelift_selected::neighbor_order_reuse_floor_and_failed_task_cleanup ... ok
+test indexmap_selected::neighbor_order_reuse_floor_and_failed_task_cleanup ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (/tmp/bpe-global-tests/debug/deps/bpe_sparse_adapter_check-038ee453d22c17bd)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

@@ -1,0 +1,64 @@
+[
+  {
+    "case": "zh-256MiB",
+    "baseline": {
+      "train_seconds": 21.6773873715,
+      "train_cpu_seconds": 68.1283555,
+      "process_hwm_kib_before_validation": 2347670.0
+    },
+    "cranelift-selected": {
+      "train_seconds": 23.4147998535,
+      "train_cpu_seconds": 73.02758899999999,
+      "process_hwm_kib_before_validation": 2346826.0
+    },
+    "indexmap-selected": {
+      "train_seconds": 22.262670373,
+      "train_cpu_seconds": 70.24716000000001,
+      "process_hwm_kib_before_validation": 2346712.0
+    },
+    "reference": "baseline",
+    "paired_median_delta_percent": {
+      "cranelift-selected": {
+        "train_seconds": 8.053903835581073,
+        "train_cpu_seconds": 7.266913846823392,
+        "process_hwm_kib_before_validation": -0.036007815851163416
+      },
+      "indexmap-selected": {
+        "train_seconds": 2.691407430855852,
+        "train_cpu_seconds": 3.101879326869872,
+        "process_hwm_kib_before_validation": -0.04076870300019353
+      }
+    }
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "baseline": {
+      "train_seconds": 19.920319175499998,
+      "train_cpu_seconds": 54.6010675,
+      "process_hwm_kib_before_validation": 1811148.0
+    },
+    "cranelift-selected": {
+      "train_seconds": 21.4990947035,
+      "train_cpu_seconds": 59.613578000000004,
+      "process_hwm_kib_before_validation": 1821822.0
+    },
+    "indexmap-selected": {
+      "train_seconds": 21.032329273000002,
+      "train_cpu_seconds": 57.29239,
+      "process_hwm_kib_before_validation": 1787726.0
+    },
+    "reference": "baseline",
+    "paired_median_delta_percent": {
+      "cranelift-selected": {
+        "train_seconds": 7.975879372712014,
+        "train_cpu_seconds": 9.19323152828161,
+        "process_hwm_kib_before_validation": 0.5982291936143525
+      },
+      "indexmap-selected": {
+        "train_seconds": 5.5527489259266645,
+        "train_cpu_seconds": 4.901296513964304,
+        "process_hwm_kib_before_validation": -1.2786633654101487
+      }
+    }
+  }
+]

@@ -8,6 +8,128 @@ and [the flattening report](FLATTEN.md) for validation and scoped diffs against
 HF main and the starting revision. Counts are descriptive; hard line limits
 have been retired. Earlier counts and limits below describe historical snapshots.
 
+## Sparse neighbor libraries, 2026-10-10
+
+This experiment replaces only the left/right neighbor grouping in `merge.rs`,
+using the accepted owned-position/ThreadLocal implementation at `1396e736` as
+control. All candidates retain Rayon `map_init` scratch reuse, partial/complete
+birth contracts, and first-seen left-before-right event order. The earlier
+IndexMap candidate allocated a fresh map per task; its time result combines hashing
+and lost reuse. A reused IndexMap is therefore included as a diagnostic control.
+
+### API and maintenance cost
+
+| Library | Exact version | Net production lines | Extra normal/build packages | Adaptation and maturity |
+| --- | --- | --- | --- | --- |
+| sparsley | 0.1.0 | −8 | 2 | `entry` and allocation-retaining `drain` fit directly; first release 2026-10-04 |
+| xsparseset | 0.2.5 | +2 | 1 | Vec storage requires usize keys; remove-last and reverse restore order; latest release/update 2022-10-10 |
+| bevy_ecs | 0.20.0 | −1 | 35 | `get_or_insert_with`; remove-last and reverse; actively maintained Bevy project, defaults disabled and only std enabled |
+| cranelift-entity | 0.136.2 | +23 | 4 | Key type and value-key adapter; pop and reverse; actively maintained Wasmtime/Cranelift project |
+| IndexMap diagnostic | existing 2.14.2 | -8 | 0 | Reused hash maps and ordered drain; previous fresh-map result is not a pure hashing comparison |
+
+Line changes use the same ordinary production scope and exclude blank/comment/test
+lines after rustfmt (control 2691). Extra packages are the exact added normal/build
+nodes on the Linux runner's selected feature graph, including the library itself;
+optional and inactive target-specific lock entries are excluded. Bevy adds 56 lock
+entries but only 35 normal/build nodes under these features. Cranelift uses its
+entity container crate, without the code-generation backend. Current declared
+MSRVs are 1.92 / unspecified / 1.95 / 1.96 respectively. These observations do not
+make an existing project-wide MSRV promise.
+
+All four remove the handwritten sparse-directory/touched-slot invariant. The BPE
+side/weight/publication rules remain application code. Some API adaptations restore
+complexity: Cranelift values must carry their key, and three libraries lack an
+owning ordered drain. Our remove-last/pop adapters reverse each published side
+independently; left still precedes right. No individual removal occurs while groups
+are being accumulated. Reuse reset also clears any payload left by a failed task.
+`sparsley` has the closest API fit, but its short release history provides little
+production evidence. Project history and maintenance activity are evidence for
+maturity, rather than a proof of correctness. Versions and registry/repository
+snapshots are recorded in the evidence directory. Primary sources:
+[sparsley](https://github.com/LilDojd/sparsley),
+[xsparseset](https://github.com/xstater/xsparseset),
+[Bevy](https://github.com/bevyengine/bevy), and
+[Cranelift](https://github.com/bytecodealliance/wasmtime/tree/main/cranelift/entity).
+
+### Memory mechanism
+
+The allocation probe imports the actual adapter headers and actual Builder/Codec
+source. It counts requested live allocator bytes, after warming ahash's global seed,
+with empty position payloads and two sides. At a key domain of 1,000,000 and 24
+live groups per side, current / sparsley / xsparseset / Bevy / Cranelift retained
+storage after publication is **8,001,088 / 8,006,882 / 16,005,184 / 16,004,928 /
+8,005,184 bytes**. The latter two 16 MB maps use machine-word sparse slots on
+this 64-bit host, versus u32 slots in the other three. This measures a controlled
+map shape, not the real workload's token-domain or group-size distribution.
+
+Reusing dense values has a second cost: their allocations coexist with the returned
+change vector. With domain 50,000 and 10,000 groups per side, live requested bytes
+at publication are **3,283,648 / 5,249,826 / 5,780,800 / 5,649,728 / 5,380,800**
+in the same order. After returned changes are dropped, reusable maps retain more
+capacity than the current directories. All probe allocations release when the
+owning scratch and Codec are dropped. IndexMap avoids a domain-sized directory,
+but pays hashing costs. Full-training HWM below establishes whether these structural
+costs materially affect the real process.
+
+### Training measurements and selection
+
+| Candidate | ByteLevel wall / CPU / HWM | Whitespace wall / CPU / HWM |
+| --- | --- | --- |
+| sparsley | -0.15% / -1.64% / -0.04% | +8.14% / +6.03% / -1.34% |
+| xsparseset | +4.86% / +2.87% / +0.25% | +8.36% / +10.68% / -1.44% |
+| bevy | +6.28% / +4.37% / +0.06% | +12.12% / +13.71% / -2.56% |
+| cranelift | -0.32% / -1.00% / -0.05% | +6.53% / +6.12% / -1.41% |
+| indexmap | +3.69% / +2.38% / -0.21% | +3.21% / +1.20% / -1.20% |
+
+Screening uses one process per arm per Chinese 256 MiB input, four workers pinned
+to CPUs 0–3, vocabulary 50,000, minimum frequency two and no affixes. The public
+`do_train` timer excludes input loading and serialization. HWM includes loaded
+input and retained counts. Every process checks the entire model against the
+control and records child swap and concurrent-build/benchmark detection. These
+shared-VM single observations screen candidates; small differences need repetition.
+
+The final confirmation compares the control, a reduced Cranelift adapter and a
+reused IndexMap adapter in two measured rounds per input, ABC then CBA. No round
+is excluded as warmup. Earlier screening had already exercised the inputs, but
+there is no dedicated warmup guarantee. The final adapters contain +12 / −17
+production lines respectively, relative to the control.
+
+| Final adapter | ByteLevel wall / CPU / HWM | Whitespace wall / CPU / HWM |
+| --- | --- | --- |
+| Cranelift | +8.05% / +7.27% / −0.04% | +7.98% / +9.19% / +0.60% |
+| Reused IndexMap | +2.69% / +3.10% / −0.04% | +5.55% / +4.90% / −1.28% |
+
+All 24 timed processes across screening and confirmation publish equal full
+models and report zero child swap, with no concurrent build or benchmark.
+Cranelift ByteLevel CPU differs substantially between its two final observations
+(77.78 and 68.28 seconds), so the median is descriptive rather than a stable
+estimate of an 8% penalty. Its Whitespace observations both cost about 59.6 CPU
+seconds against 54.0–55.2 for the control. Neither finalist establishes a useful
+whole-training improvement.
+
+**Decision: retain the existing direct directories.** Among the four requested
+libraries, Cranelift provides the strongest combination of active maintenance,
+u32 sparse storage and measured screening performance. Its key and ordered
+publication adapters nevertheless increase application code, and confirmation
+shows a material cost without a memory gain. Sparsley's ordered drain is a better
+API fit and removes eight production lines, but its first-release maturity and
+Whitespace cost do not justify adoption. xsparseset and Bevy double sparse-slot
+width on this host, add little code reduction, and are slower in screening.
+Reused IndexMap removes 17 lines with no added dependency; its 3–5% observed CPU
+cost still outweighs that small reduction for this performance-sensitive path.
+The earlier fresh-map IndexMap result should not be used to attribute its entire
+10.47% CPU penalty to hashing.
+
+Each candidate's default library suite passes 17 tests, including every generated
+merge against the sequential oracle. A harness extracts byte-identical actual
+neighbor adapter headers, stubs the unused training coordinator types and imports
+the real position module. Native and strict-provenance Miri each pass eight adapter
+cases: baseline, four libraries, reused IndexMap and the two reduced final adapters. Cases cover event order,
+side buckets, partial output, complete floor/encoding, failed-task cleanup and
+key reuse. This validates the exercised integration paths, not every public API
+in each third-party crate. Source/lock/input/binary hashes, full-model comparisons,
+raw runs, allocation CSV and primary-source metadata accompany the report.
+
 ## Ownership and library simplification, 2026-10-10
 
 The selected implementation combines owned position lists, ThreadLocal encoder
@@ -46,7 +168,7 @@ owned restart/delta storage unless a different control is named.
 | unsigned-varint / vint64 / vu128 | wall +13.35% / +24.23% / +11.04% | mixed; the control run was unusually slow | Retain the existing codec |
 | unsigned-varint with trusted unwrap_unchecked | wall +13.54%, CPU +15.30% | Not repeated after clear ByteLevel loss | Reject |
 | vu128 with eight initialized padding bytes | wall +17.06%, CPU +18.75% | wall +10.23%, CPU +13.13% | Reject; removing tail copies did not recover cost |
-| Neighbor IndexMap | wall +7.64%, CPU +10.47% | Control timing varied | Keep direct directories |
+| Earlier fresh-map neighbor IndexMap (see reused-map experiment above) | wall +7.64%, CPU +10.47% | Control timing varied | Keep direct directories |
 | WordCounts IndexMap, public feed + train | feed RSS +18.64%, pipeline wall +13.20%, peak +5.54% | feed RSS +28.47%, pipeline wall +12.45%, peak +7.15% | Keep the Map/Entries representation |
 | FixedVec Builder, earlier SUx control | CPU roughly +15%; no net source reduction across the scope | Not repeated | Keep SmallVec promotion |
 | ThreadLocal scratch | Later screen wall +0.48%, CPU +0.89%, peak −0.07% | wall +1.86%, CPU +4.70%, peak +1.14% | Include in the final combination check |

@@ -1,0 +1,7 @@
+    Updating crates.io index
+     Locking 1 package to latest Rust 1.98.1 compatible version
+      Adding xsparseset v0.2.5
+   Compiling xsparseset v0.2.5
+   Compiling tk-train v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-heap-experiment/tokenizers/tk-train)
+   Compiling bpe-bench-runner v0.1.0 (/root/code/tokenizers-workspaces/bpe-heap-experiment/experiments/bpe-simplification/runner)
+    Finished `release` profile [optimized] target(s) in 34.84s

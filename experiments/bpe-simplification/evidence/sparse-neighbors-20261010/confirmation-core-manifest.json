@@ -1,0 +1,49 @@
+{
+  "baseline_commit": "1396e736644db06ed2b7168fc6bebe9183afd7dc",
+  "mode": "core",
+  "binaries": {
+    "baseline": "/tmp/bpe-sparse-baseline-bin",
+    "cranelift-selected": "/tmp/bpe-sparse-cranelift-selected-bin",
+    "indexmap-selected": "/tmp/bpe-sparse-indexmap-selected-bin"
+  },
+  "binary_sha256": {
+    "baseline": "b7493acdbc1d46fdf6517b97c658327cbedb505e9ba776f04054d072d40b3b04",
+    "cranelift-selected": "f978a10901c6c3da9c2601f2cb957c05bd850683d8238cccb535b4ca2c6b3de0",
+    "indexmap-selected": "e46f924125a230cdb6ee336a7cf569213f059fabbdf0dec2ce5dc5839f5bae89"
+  },
+  "patches": {
+    "cranelift-selected": "c11fa6dd793fab395a5a598bb385502afd20845698ec39dbcf36b5d0582b390a",
+    "indexmap-selected": "ce8bdd4c9b8ba1732b86aef0a9ce81049b0a2f2f3c8df55a7e3037b8c485f0ac"
+  },
+  "cases": [
+    {
+      "case": "zh-256MiB",
+      "language": "zh",
+      "requested_mib": 256,
+      "pretokenizer": "bytelevel_regex",
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+      "bytes": 268435162,
+      "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+      "prepared_path": "/root/code/tokenizers-perfetto-results/inputs/zh-bytelevel/words.json",
+      "prepared_sha256": "bb796d0b57b87d965b84de249bc5c8e283b700774638d16a40e4ae5171b13ee0",
+      "prepared_bytes": 437135595
+    },
+    {
+      "case": "zh-whitespace-256MiB",
+      "language": "zh",
+      "requested_mib": 256,
+      "pretokenizer": "whitespace",
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+      "bytes": 268435162,
+      "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+      "prepared_path": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "prepared_sha256": "ed057a8fdb27544ed29f16dde53faa0de8f47f1ee8ac00080974fac5bb435660",
+      "prepared_bytes": 250116097
+    }
+  ],
+  "scope": "core: public do_train, load/serialization excluded; pipeline: public feed + train, validation excluded; HWM includes input and retained counts",
+  "warmup_enabled": false,
+  "order_method": "reverse whole arm order in odd blocks",
+  "design": "Two Chinese 256 MiB input cases; 2 rotating rounds (order rotates by one arm each block, no cancelling reversal); first round warmup only when rounds>1 and warmup_enabled; workers4 affinity0-3; vocab50k/min2; no affixes",
+  "limitation": "Shared VM; descriptive observations, no statistical speedup claim."
+}

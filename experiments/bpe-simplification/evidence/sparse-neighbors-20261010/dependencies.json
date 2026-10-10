@@ -1,0 +1,78 @@
+[
+  {
+    "arm": "baseline",
+    "additional_normal_and_build_packages": [],
+    "removed_packages": []
+  },
+  {
+    "arm": "sparsley",
+    "additional_normal_and_build_packages": [
+      "sparsley v0.1.0",
+      "sparsley-diagram v0.1.0 (proc-macro)"
+    ],
+    "removed_packages": []
+  },
+  {
+    "arm": "xsparseset",
+    "additional_normal_and_build_packages": [
+      "xsparseset v0.2.5"
+    ],
+    "removed_packages": []
+  },
+  {
+    "arm": "bevy",
+    "additional_normal_and_build_packages": [
+      "arrayvec v0.7.8",
+      "async-task v4.7.1",
+      "atomic-waker v1.1.2",
+      "bevy_ecs v0.20.0",
+      "bevy_ecs_macro_logic v0.20.0",
+      "bevy_ecs_macros v0.20.0 (proc-macro)",
+      "bevy_macro_utils v0.20.0",
+      "bevy_platform v0.20.0",
+      "bevy_ptr v0.20.0",
+      "bevy_tasks v0.20.0",
+      "bevy_utils v0.20.0",
+      "bumpalo v3.20.3",
+      "concurrent-queue v2.5.0",
+      "convert_case v0.10.0",
+      "crossbeam-queue v0.3.14",
+      "derive_more v2.1.1",
+      "derive_more-impl v2.1.1 (proc-macro)",
+      "disqualified v1.1.0",
+      "futures-core v0.3.34",
+      "futures-lite v2.6.1",
+      "mutants v0.0.3 (proc-macro)",
+      "nonmax v0.5.5",
+      "pin-project-lite v0.2.17",
+      "rustc-hash v2.1.3",
+      "rustc_version v0.4.1",
+      "semver v1.0.28",
+      "slotmap v1.1.1",
+      "spin v0.12.3",
+      "toml_datetime v1.1.2+spec-1.1.0",
+      "toml_edit v0.25.17+spec-1.1.0",
+      "toml_parser v1.1.5+spec-1.1.0",
+      "unicode-xid v0.2.6",
+      "unsynn v0.3.0",
+      "variadics_please v2.0.0 (proc-macro)",
+      "winnow v1.0.4"
+    ],
+    "removed_packages": []
+  },
+  {
+    "arm": "cranelift",
+    "additional_normal_and_build_packages": [
+      "cranelift-bitset v0.136.2",
+      "cranelift-entity v0.136.2",
+      "libm v0.2.16",
+      "wasmtime-internal-core v49.0.2"
+    ],
+    "removed_packages": []
+  },
+  {
+    "arm": "indexmap",
+    "additional_normal_and_build_packages": [],
+    "removed_packages": []
+  }
+]

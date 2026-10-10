@@ -1,0 +1,78 @@
+   Compiling proc-macro2 v1.0.107
+   Compiling foldhash v0.2.0
+   Compiling version_check v0.9.5
+   Compiling equivalent v1.0.2
+   Compiling winnow v1.0.4
+   Compiling hashbrown v0.17.1
+   Compiling unicode-segmentation v1.13.3
+   Compiling toml_datetime v1.1.2+spec-1.1.0
+   Compiling convert_case v0.10.0
+   Compiling indexmap v2.14.2
+   Compiling hashbrown v0.16.1
+   Compiling libc v0.2.190
+   Compiling spin v0.12.3
+   Compiling quote v1.0.47
+   Compiling syn v2.0.119
+   Compiling unicode-xid v0.2.6
+   Compiling wasmtime-internal-core v49.0.2
+   Compiling bevy_platform v0.20.0
+   Compiling syn v3.0.7
+   Compiling toml_parser v1.1.5+spec-1.1.0
+   Compiling slotmap v1.1.1
+   Compiling getrandom v0.3.4
+   Compiling zerocopy v0.8.62
+   Compiling pin-project-lite v0.2.17
+   Compiling thiserror v2.0.21
+   Compiling mutants v0.0.3
+   Compiling toml_edit v0.25.17+spec-1.1.0
+   Compiling futures-core v0.3.34
+   Compiling rustc-hash v2.1.3
+   Compiling futures-lite v2.6.1
+   Compiling unsynn v0.3.0
+   Compiling ahash v0.8.12
+   Compiling crossbeam-queue v0.3.14
+   Compiling async-task v4.7.1
+   Compiling disqualified v1.1.0
+   Compiling atomic-waker v1.1.2
+   Compiling variadics_please v2.0.0
+   Compiling cranelift-bitset v0.136.2
+   Compiling bevy_utils v0.20.0
+   Compiling concurrent-queue v2.5.0
+   Compiling bumpalo v3.20.3
+   Compiling arrayvec v0.7.8
+   Compiling smallvec v1.16.3
+   Compiling fixedbitset v0.5.7
+   Compiling nonmax v0.5.5
+   Compiling once_cell v1.21.4
+   Compiling bevy_ptr v0.20.0
+   Compiling sparsley-diagram v0.1.0
+   Compiling cranelift-entity v0.136.2
+   Compiling xsparseset v0.2.5
+   Compiling thiserror-impl v2.0.21
+   Compiling bevy_macro_utils v0.20.0
+   Compiling bevy_ecs_macro_logic v0.20.0
+   Compiling sparsley v0.1.0
+   Compiling derive_more-impl v2.1.1
+   Compiling bevy_ecs_macros v0.20.0
+   Compiling derive_more v2.1.1
+   Compiling bevy_tasks v0.20.0
+   Compiling bevy_ecs v0.20.0
+   Compiling bpe-sparse-adapter-check v0.0.0 (/tmp/bpe-sparse-harness)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 33.55s
+     Running unittests src/lib.rs (/tmp/bpe-library-miri/miri/x86_64-unknown-linux-gnu/debug/build/bpe-sparse-adapter-check/1cc675330d0e632c/out/bpe_sparse_adapter_check-1cc675330d0e632c)
+
+running 6 tests
+test baseline::neighbor_order_reuse_floor_and_failed_task_cleanup ... ok
+test bevy::neighbor_order_reuse_floor_and_failed_task_cleanup ... ok
+test cranelift::neighbor_order_reuse_floor_and_failed_task_cleanup ... ok
+test indexmap::neighbor_order_reuse_floor_and_failed_task_cleanup ... ok
+test sparsley::neighbor_order_reuse_floor_and_failed_task_cleanup ... ok
+test xsparseset::neighbor_order_reuse_floor_and_failed_task_cleanup ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 2.29s
+
+     Running unittests src/main.rs (/tmp/bpe-library-miri/miri/x86_64-unknown-linux-gnu/debug/build/bpe-sparse-adapter-check/ab63435bbd7bd410/out/bpe_sparse_adapter_check-ab63435bbd7bd410)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s

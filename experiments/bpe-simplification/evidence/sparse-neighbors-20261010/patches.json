@@ -1,0 +1,50 @@
+[
+  {
+    "arm": "sparsley",
+    "base_commit": "1396e736644db06ed2b7168fc6bebe9183afd7dc",
+    "patch_uncompressed_sha256": "ee3aa0aa6ec602bb36754b22ef173175985f660da6f2018e6bc072d7a73b6389",
+    "binary_sha256": "5126d92a45b0dd423e624ba4785865dd4bfc289799ab07cadf8eb1d02d48a6d7"
+  },
+  {
+    "arm": "xsparseset",
+    "base_commit": "1396e736644db06ed2b7168fc6bebe9183afd7dc",
+    "patch_uncompressed_sha256": "a5e89d9138e562a73e27fbcb292ea7af94e2bfa4fad2a726bb78dc31ca215b79",
+    "binary_sha256": "868976bfd71c4bd58e9dbe71fc795a173ad061d64a79d931a45667b17b889ec6"
+  },
+  {
+    "arm": "bevy",
+    "base_commit": "1396e736644db06ed2b7168fc6bebe9183afd7dc",
+    "patch_uncompressed_sha256": "712d48a1189293205e85b56ee35f1be0afd293576bbb13c4f18a88c75e70a336",
+    "binary_sha256": "07d7770d9be9c49b8a8d191c39e76c02145d1a8c865f7a12fb10a208c19858b3"
+  },
+  {
+    "arm": "cranelift",
+    "base_commit": "1396e736644db06ed2b7168fc6bebe9183afd7dc",
+    "patch_uncompressed_sha256": "5acd86d3c33fef668ab088b8b5175cca7223c587e53b79a608c79cfcee7a0d47",
+    "binary_sha256": "067007bf30a8c6d7aa9b489234fccb15eb3e774fefaf96c62b9014f84cc23406"
+  },
+  {
+    "arm": "indexmap",
+    "base_commit": "1396e736644db06ed2b7168fc6bebe9183afd7dc",
+    "patch_uncompressed_sha256": "70c5b02c2a510911fb980a1c52580549fa669ae9094ee6a86a926f6a8a847e9e",
+    "binary_sha256": "007f465f32ecb0d7fc6ccf10dc499956f9cc76093b33a7c745abf1f259914478"
+  },
+  {
+    "arm": "baseline",
+    "source_commit": "1396e736644db06ed2b7168fc6bebe9183afd7dc",
+    "binary_sha256": "b7493acdbc1d46fdf6517b97c658327cbedb505e9ba776f04054d072d40b3b04",
+    "source": "The accepted immutable adopted binary from the preceding ownership/TLS validation."
+  },
+  {
+    "arm": "cranelift-selected",
+    "base_commit": "1396e736644db06ed2b7168fc6bebe9183afd7dc",
+    "patch_uncompressed_sha256": "c11fa6dd793fab395a5a598bb385502afd20845698ec39dbcf36b5d0582b390a",
+    "binary_sha256": "f978a10901c6c3da9c2601f2cb957c05bd850683d8238cccb535b4ca2c6b3de0"
+  },
+  {
+    "arm": "indexmap-selected",
+    "base_commit": "1396e736644db06ed2b7168fc6bebe9183afd7dc",
+    "patch_uncompressed_sha256": "ce8bdd4c9b8ba1732b86aef0a9ce81049b0a2f2f3c8df55a7e3037b8c485f0ac",
+    "binary_sha256": "e46f924125a230cdb6ee336a7cf569213f059fabbdf0dec2ce5dc5839f5bae89"
+  }
+]

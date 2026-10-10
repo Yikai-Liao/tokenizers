@@ -1,0 +1,261 @@
+[
+  {
+    "package": "sparsley",
+    "crate": {
+      "created_at": "2026-10-04T02:51:53.154126Z",
+      "updated_at": "2026-10-04T02:51:53.154126Z",
+      "downloads": 11,
+      "recent_downloads": 11,
+      "repository": "https://github.com/LilDojd/sparsley",
+      "max_stable_version": "0.1.0"
+    },
+    "version_count": 1,
+    "recent_versions": [
+      {
+        "num": "0.1.0",
+        "created_at": "2026-10-04T02:51:53.154126Z",
+        "downloads": 11,
+        "rust_version": "1.92",
+        "yanked": false
+      }
+    ]
+  },
+  {
+    "package": "xsparseset",
+    "crate": {
+      "created_at": "2021-08-23T09:05:33.021739Z",
+      "updated_at": "2022-10-10T09:19:51.369144Z",
+      "downloads": 9981,
+      "recent_downloads": 92,
+      "repository": "https://github.com/xstater/xsparseset/",
+      "max_stable_version": "0.2.5"
+    },
+    "version_count": 8,
+    "recent_versions": [
+      {
+        "num": "0.2.5",
+        "created_at": "2022-10-10T09:19:51.369144Z",
+        "downloads": 1886,
+        "rust_version": null,
+        "yanked": false
+      },
+      {
+        "num": "0.2.4",
+        "created_at": "2022-08-30T03:23:17.326523Z",
+        "downloads": 1174,
+        "rust_version": null,
+        "yanked": false
+      },
+      {
+        "num": "0.2.3",
+        "created_at": "2022-08-27T20:45:16.751759Z",
+        "downloads": 1141,
+        "rust_version": null,
+        "yanked": false
+      },
+      {
+        "num": "0.2.2",
+        "created_at": "2022-08-27T18:17:35.416062Z",
+        "downloads": 1123,
+        "rust_version": null,
+        "yanked": false
+      },
+      {
+        "num": "0.2.1",
+        "created_at": "2022-08-06T20:55:24.160166Z",
+        "downloads": 1137,
+        "rust_version": null,
+        "yanked": false
+      },
+      {
+        "num": "0.2.0",
+        "created_at": "2022-08-06T18:51:07.912375Z",
+        "downloads": 1149,
+        "rust_version": null,
+        "yanked": false
+      },
+      {
+        "num": "0.1.5",
+        "created_at": "2021-08-23T09:10:37.197253Z",
+        "downloads": 1167,
+        "rust_version": null,
+        "yanked": false
+      },
+      {
+        "num": "0.1.4",
+        "created_at": "2021-08-23T09:05:33.021739Z",
+        "downloads": 1197,
+        "rust_version": null,
+        "yanked": false
+      }
+    ]
+  },
+  {
+    "package": "bevy_ecs",
+    "crate": {
+      "created_at": "2020-08-10T01:30:37.924537Z",
+      "updated_at": "2026-10-08T22:30:30.102891Z",
+      "downloads": 9356659,
+      "recent_downloads": 2116888,
+      "repository": "https://github.com/bevyengine/bevy",
+      "max_stable_version": "0.20.0"
+    },
+    "version_count": 65,
+    "recent_versions": [
+      {
+        "num": "0.20.0",
+        "created_at": "2026-10-08T22:30:30.102891Z",
+        "downloads": 5800,
+        "rust_version": "1.95.0",
+        "yanked": false
+      },
+      {
+        "num": "0.20.0-rc.2",
+        "created_at": "2026-09-28T19:58:53.122628Z",
+        "downloads": 5386,
+        "rust_version": "1.95.0",
+        "yanked": false
+      },
+      {
+        "num": "0.20.0-rc.1",
+        "created_at": "2026-09-15T21:46:48.940528Z",
+        "downloads": 2826,
+        "rust_version": "1.95.0",
+        "yanked": false
+      },
+      {
+        "num": "0.19.1",
+        "created_at": "2026-08-13T00:06:28.170484Z",
+        "downloads": 374145,
+        "rust_version": "1.95.0",
+        "yanked": false
+      },
+      {
+        "num": "0.19.0",
+        "created_at": "2026-06-19T20:13:31.081992Z",
+        "downloads": 382598,
+        "rust_version": "1.95.0",
+        "yanked": false
+      },
+      {
+        "num": "0.19.0-rc.3",
+        "created_at": "2026-06-10T11:50:32.475319Z",
+        "downloads": 2960,
+        "rust_version": "1.95.0",
+        "yanked": false
+      },
+      {
+        "num": "0.19.0-rc.2",
+        "created_at": "2026-05-22T07:45:27.009704Z",
+        "downloads": 6579,
+        "rust_version": "1.95.0",
+        "yanked": false
+      },
+      {
+        "num": "0.19.0-rc.1",
+        "created_at": "2026-05-13T10:55:13.408573Z",
+        "downloads": 2675,
+        "rust_version": "1.95.0",
+        "yanked": false
+      },
+      {
+        "num": "0.18.1",
+        "created_at": "2026-03-04T01:21:29.498956Z",
+        "downloads": 703918,
+        "rust_version": "1.89.0",
+        "yanked": false
+      },
+      {
+        "num": "0.18.0",
+        "created_at": "2026-01-13T21:14:44.903706Z",
+        "downloads": 375591,
+        "rust_version": "1.89.0",
+        "yanked": false
+      }
+    ]
+  },
+  {
+    "package": "cranelift-entity",
+    "crate": {
+      "created_at": "2018-07-13T16:27:03.779090Z",
+      "updated_at": "2026-10-05T14:52:15.565675Z",
+      "downloads": 53723253,
+      "recent_downloads": 13546118,
+      "repository": "https://github.com/bytecodealliance/wasmtime",
+      "max_stable_version": "0.136.2"
+    },
+    "version_count": 271,
+    "recent_versions": [
+      {
+        "num": "0.137.0-rc.1",
+        "created_at": "2026-10-05T14:52:15.565675Z",
+        "downloads": 186,
+        "rust_version": "1.97.0",
+        "yanked": false
+      },
+      {
+        "num": "0.135.5",
+        "created_at": "2026-10-02T19:29:20.260084Z",
+        "downloads": 108382,
+        "rust_version": "1.95.0",
+        "yanked": false
+      },
+      {
+        "num": "0.135.4",
+        "created_at": "2026-10-02T17:53:36.381391Z",
+        "downloads": 56996,
+        "rust_version": "1.95.0",
+        "yanked": false
+      },
+      {
+        "num": "0.123.17",
+        "created_at": "2026-10-02T16:47:02.947128Z",
+        "downloads": 29185,
+        "rust_version": "1.86.0",
+        "yanked": false
+      },
+      {
+        "num": "0.136.2",
+        "created_at": "2026-10-02T16:46:52.659712Z",
+        "downloads": 90786,
+        "rust_version": "1.96.0",
+        "yanked": false
+      },
+      {
+        "num": "0.136.1",
+        "created_at": "2026-09-24T19:17:48.402950Z",
+        "downloads": 86346,
+        "rust_version": "1.96.0",
+        "yanked": false
+      },
+      {
+        "num": "0.123.16",
+        "created_at": "2026-09-24T19:08:51.601924Z",
+        "downloads": 38590,
+        "rust_version": "1.86.0",
+        "yanked": false
+      },
+      {
+        "num": "0.135.3",
+        "created_at": "2026-09-24T18:57:24.721647Z",
+        "downloads": 92185,
+        "rust_version": "1.95.0",
+        "yanked": false
+      },
+      {
+        "num": "0.136.0",
+        "created_at": "2026-09-21T15:27:58.705571Z",
+        "downloads": 34321,
+        "rust_version": "1.96.0",
+        "yanked": false
+      },
+      {
+        "num": "0.135.2",
+        "created_at": "2026-09-10T19:15:14.985623Z",
+        "downloads": 149088,
+        "rust_version": "1.95.0",
+        "yanked": false
+      }
+    ]
+  }
+]

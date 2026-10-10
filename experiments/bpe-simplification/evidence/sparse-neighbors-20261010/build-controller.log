@@ -1,0 +1,25 @@
+sparsley: tests
+sparsley: tests passed in 13.0s
+sparsley: build
+sparsley: build passed in 36.7s
+sparsley: immutable binary ready
+xsparseset: tests
+xsparseset: tests passed in 11.7s
+xsparseset: build
+xsparseset: build passed in 34.9s
+xsparseset: immutable binary ready
+bevy: tests
+bevy: tests passed in 40.2s
+bevy: build
+bevy: build passed in 72.2s
+bevy: immutable binary ready
+cranelift: tests
+cranelift: tests passed in 13.3s
+cranelift: build
+cranelift: build passed in 38.0s
+cranelift: immutable binary ready
+indexmap: tests
+indexmap: tests passed in 11.1s
+indexmap: build
+indexmap: build passed in 37.9s
+indexmap: immutable binary ready

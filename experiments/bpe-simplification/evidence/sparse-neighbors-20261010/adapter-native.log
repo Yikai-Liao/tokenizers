@@ -1,0 +1,49 @@
+    Updating crates.io index
+     Locking 123 packages to latest Rust 1.98.1 compatible versions
+      Adding itertools v0.14.0 (available: v0.15.0)
+   Compiling hashbrown v0.17.1
+   Compiling unicode-segmentation v1.13.3
+   Compiling hashbrown v0.16.1
+   Compiling libc v0.2.190
+   Compiling thiserror v2.0.21
+   Compiling ahash v0.8.12
+   Compiling convert_case v0.10.0
+   Compiling either v1.19.0
+   Compiling indexmap v2.14.2
+   Compiling wasmtime-internal-core v49.0.2
+   Compiling derive_more-impl v2.1.1
+   Compiling bevy_platform v0.20.0
+   Compiling cranelift-bitset v0.136.2
+   Compiling toml_edit v0.25.17+spec-1.1.0
+   Compiling once_cell v1.21.4
+   Compiling bevy_utils v0.20.0
+   Compiling fixedbitset v0.5.7
+   Compiling cranelift-entity v0.136.2
+   Compiling rayon v1.12.0
+   Compiling getrandom v0.3.4
+   Compiling itertools v0.14.0
+   Compiling bevy_macro_utils v0.20.0
+   Compiling bevy_ecs_macro_logic v0.20.0
+   Compiling bevy_ecs_macros v0.20.0
+   Compiling derive_more v2.1.1
+   Compiling bevy_tasks v0.20.0
+   Compiling bevy_ecs v0.20.0
+   Compiling bpe-sparse-adapter-check v0.0.0 (/tmp/bpe-sparse-harness)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 26.89s
+     Running unittests src/lib.rs (/tmp/bpe-global-tests/debug/deps/bpe_sparse_adapter_check-43ad8fbd053efeab)
+
+running 6 tests
+test baseline::neighbor_order_reuse_floor_and_failed_task_cleanup ... ok
+test bevy::neighbor_order_reuse_floor_and_failed_task_cleanup ... ok
+test cranelift::neighbor_order_reuse_floor_and_failed_task_cleanup ... ok
+test indexmap::neighbor_order_reuse_floor_and_failed_task_cleanup ... ok
+test sparsley::neighbor_order_reuse_floor_and_failed_task_cleanup ... ok
+test xsparseset::neighbor_order_reuse_floor_and_failed_task_cleanup ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (/tmp/bpe-global-tests/debug/deps/bpe_sparse_adapter_check-038ee453d22c17bd)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

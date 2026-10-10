@@ -1,0 +1,40 @@
+{
+  "production": {
+    "corpus.rs": 392,
+    "feed.rs": 113,
+    "index.rs": 429,
+    "merge.rs": 664,
+    "mod.rs": 305,
+    "positions.rs": 333,
+    "vocabulary.rs": 344,
+    "word_counts.rs": 103
+  },
+  "tests": {
+    "corpus.rs [cfg(test)]": 2,
+    "merge.rs [cfg(test)]": 10,
+    "mod.rs [cfg(test)]": 87,
+    "positions.rs [cfg(test)]": 106,
+    "tests.rs": 620,
+    "word_counts.rs [cfg(test)]": 42,
+    "trainers/mod.rs [cfg(test) BPE wrapper]": 12,
+    "experiments/bpe-simplification/miri-codec/src/lib.rs [Miri harness]": 4
+  },
+  "production_total": 2683,
+  "test_total": 883,
+  "counting_rule": "Descriptive nonblank noncomment lines after rustfmt; ordinary BPE components, public API, feed and word counts. Optional parity implementation excluded. Test count includes embedded cfg(test), reference, shared trainer wrapper and Miri harness, each once. No hard limits.",
+  "diffs": {
+    "upstream": {
+      "revision": "1396e736",
+      "commit": "1396e736644db06ed2b7168fc6bebe9183afd7dc",
+      "scopes": [
+        "tokenizers/tk-train/src/trainers/bpe",
+        "tokenizers/tk-train/src/trainers/wordpiece.rs",
+        "tokenizers/tk-train/src/trainers/mod.rs",
+        "experiments/bpe-simplification/miri-codec/src"
+      ],
+      "stat": " tokenizers/tk-train/src/trainers/bpe/merge.rs | 97 +++++++++++----------------\n 1 file changed, 41 insertions(+), 56 deletions(-)\n",
+      "numstat": "41\t56\ttokenizers/tk-train/src/trainers/bpe/merge.rs\n"
+    }
+  },
+  "diff_rule": "Git text additions/deletions include comments, formatting and documentation; rename detection is enabled. Counts and diffs describe different scopes and are not complexity or correctness gates."
+}

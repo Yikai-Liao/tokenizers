@@ -1,0 +1,58 @@
+{
+  "date": "2026-10-10",
+  "platform": "Linux-6.12.101+deb13-amd64-x86_64-with-glibc2.41",
+  "machine": "x86_64",
+  "processor": "",
+  "affinity_available": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "training_affinity": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "workers": 4,
+  "baseline_commit": "1396e736644db06ed2b7168fc6bebe9183afd7dc",
+  "release_profile": {
+    "opt_level": 3,
+    "lto": "fat",
+    "codegen_units": 1,
+    "target_cpu": "portable default; no target-cpu=native or BMI2 override"
+  },
+  "screen_design": "One process per arm/input; no excluded warmup. All six arms, same order per input. Used to screen for large costs, not to establish small wins.",
+  "confirmation_design": "Three arms, two measured rounds per input, ABC then CBA; no excluded warmup; no builds/Miri concurrently.",
+  "scope": "public do_train timer excludes load and serialization; child HWM before validation includes loaded counts and all training data; complete JSON model comparison; max child swap must be zero",
+  "inputs": [
+    {
+      "case": "zh-256MiB",
+      "language": "zh",
+      "requested_mib": 256,
+      "pretokenizer": "bytelevel_regex",
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+      "bytes": 268435162,
+      "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+      "prepared_path": "/root/code/tokenizers-perfetto-results/inputs/zh-bytelevel/words.json",
+      "prepared_sha256": "bb796d0b57b87d965b84de249bc5c8e283b700774638d16a40e4ae5171b13ee0",
+      "prepared_bytes": 437135595
+    },
+    {
+      "case": "zh-whitespace-256MiB",
+      "language": "zh",
+      "requested_mib": 256,
+      "pretokenizer": "whitespace",
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+      "bytes": 268435162,
+      "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+      "prepared_path": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "prepared_sha256": "ed057a8fdb27544ed29f16dde53faa0de8f47f1ee8ac00080974fac5bb435660",
+      "prepared_bytes": 250116097
+    }
+  ],
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n"
+}

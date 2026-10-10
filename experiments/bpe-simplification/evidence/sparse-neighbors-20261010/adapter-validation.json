@@ -1,0 +1,57 @@
+{
+  "native_suite_each_variant": 17,
+  "native_adapter_cases": 8,
+  "strict_provenance_miri_adapter_cases": 8,
+  "case_contracts": [
+    "left-before-right and first-seen neighbor order",
+    "signed ledger weights and side bucket identity",
+    "complete frequency-floor pruning and position encoding",
+    "partial publication payloads",
+    "failed-task cleanup and key reuse"
+  ],
+  "source_headers": [
+    {
+      "arm": "sparsley",
+      "merge_sha256": "b6c1c76994d339053d4be778551186d763823501efa8ada409e92fbdb6fbaa8d",
+      "adapter_header_sha256": "29d1a99a5732c2ee58d1f539b47ccb5e76d2c4cbf2e74dcc38432d8bfd4ec080",
+      "harness_header_matches_production": true
+    },
+    {
+      "arm": "xsparseset",
+      "merge_sha256": "6e581a2ddeb4cf9126fd4116ec0f6bdcf41d967296fa8bf9d1ab4d26121f1818",
+      "adapter_header_sha256": "4f80e5cf4697b8b34d3bf6afa7a12b991f14db83b114cb7a87cab88afd72bc81",
+      "harness_header_matches_production": true
+    },
+    {
+      "arm": "bevy",
+      "merge_sha256": "249ff6f84c9315ce10a34b8d26901d8095b833de129e9b22fd929b13db23e4a5",
+      "adapter_header_sha256": "cf763072b4d4dc61edb90b84a2d4403431f7274cb2ae26a6e08db07a967904dc",
+      "harness_header_matches_production": true
+    },
+    {
+      "arm": "cranelift",
+      "merge_sha256": "331ba057b88525c57ae3ae525b95ac071fcdcd2e4f0d6e0d07b9e1d821a1746b",
+      "adapter_header_sha256": "44facc7a0095bda6e3501d729e91dd85dbff1d63b1b57d8fd805913db1786757",
+      "harness_header_matches_production": true
+    },
+    {
+      "arm": "indexmap",
+      "merge_sha256": "d012e0bf4e1f9684051c8a7ba89dbc47f3229f74917e028df53083ae05470d27",
+      "adapter_header_sha256": "5d2b7b740404b9134c7bd853d78a860b773fc55dc0b2e79f6651eb85068ca7b0",
+      "harness_header_matches_production": true
+    },
+    {
+      "arm": "cranelift-selected",
+      "merge_sha256": "93fc443efd68a37f977456909040efb286c8d64e594ce9da5e3dfbd48a0d2096",
+      "adapter_header_sha256": "3724544759b8d553a8a5f4802b1432a40baea214cd001190857ec38fc1d56ed8",
+      "harness_header_matches_production": true
+    },
+    {
+      "arm": "indexmap-selected",
+      "merge_sha256": "4f414c78354f44b7d3537f6e91b3c7ca667a945c298ae1705ec86364d7446435",
+      "adapter_header_sha256": "cd431e631403e5d8ccd87380ccd8b5fefb4c923228ab70357a1ca8bb8aee182e",
+      "harness_header_matches_production": true
+    }
+  ],
+  "allocation_probe": "actual adapters + actual Positions/Builder; requested allocator bytes after prewarming ahash seed; payload positions empty, 24 or 10000 groups per side; domain includes maximum used ID; not real-workload distribution"
+}

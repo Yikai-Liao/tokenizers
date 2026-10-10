@@ -1,0 +1,106 @@
+"""Compare reused third-party sparse neighbor maps against the accepted owned/TLS implementation."""
+import hashlib
+import json
+import os
+from pathlib import Path
+import statistics
+import subprocess
+import time
+
+WORKERS = int(os.environ.get('BPE_MEASURE_WORKERS','4'))
+ROOT = Path(os.environ.get('BPE_MEASURE_ROOT','/tmp/bpe-sparse-measurements'))
+ROOT.mkdir(parents=True,exist_ok=True)
+
+def digest(path):
+    h = hashlib.sha256()
+    with Path(path).open('rb') as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b''):
+            h.update(block)
+    return h.hexdigest()
+
+real = json.loads(Path('/root/code/tokenizers-simplification-results/online-initial/input-pretokenizers.json').read_text())
+mode = os.environ.get('BPE_MEASURE_MODE','core')
+arms = os.environ.get('BPE_MEASURE_ARMS','baseline,bitmap,common,sux,vers,neighbors').split(',')
+binaries = {arm:f'/tmp/bpe-sparse-{arm}'+('-pipeline-bin' if mode=='pipeline' else '-bin') for arm in arms}
+cases = [item for item in real if item['language']=='zh']
+case_filter = os.environ.get('BPE_MEASURE_CASE')
+if case_filter: cases = [item for item in cases if item['case'] == case_filter]
+repeats = int(os.environ.get('BPE_MEASURE_ROUNDS','4'))
+warmup = os.environ.get('BPE_MEASURE_WARMUP','1') == '1'
+reverse_blocks = os.environ.get('BPE_MEASURE_ORDER','rotate') == 'reverse'
+records_path = ROOT / f'{mode}-runs.json'
+records = json.loads(records_path.read_text()) if records_path.exists() else []
+manifest = dict(baseline_commit='1396e736644db06ed2b7168fc6bebe9183afd7dc', mode=mode, binaries=binaries, binary_sha256={k:digest(v) for k,v in binaries.items()},
+    patches={arm:digest(f'/tmp/bpe-sparse-variants/{arm}.patch') for arm in arms if arm!='baseline'}, cases=cases,
+    scope='core: public do_train, load/serialization excluded; pipeline: public feed + train, validation excluded; HWM includes input and retained counts',
+    warmup_enabled=warmup, order_method='reverse whole arm order in odd blocks' if reverse_blocks else 'rotate order by one arm in each block',
+    design=f'Two Chinese 256 MiB input cases; {repeats} rotating rounds (order rotates by one arm each block, no cancelling reversal); first round warmup only when rounds>1 and warmup_enabled; workers{WORKERS} affinity0-{WORKERS-1}; vocab50k/min2; no affixes',
+    limitation='Shared VM; descriptive observations, no statistical speedup claim.')
+(ROOT / f'{mode}-manifest.json').write_text(json.dumps(manifest, indent=2))
+for item in cases:
+    assert digest(item['prepared_path']) == item['prepared_sha256']
+    if mode=='pipeline': assert digest(item['path']) == item['source_sha256']
+    previous = next((r for r in records if r["case"] == item["case"]), None)
+    reference = json.loads((ROOT / f'{mode}-{item["case"]}-b{previous["block"]}-{previous["arm"]}' / "model.json").read_text()) if previous else None
+    repeats = int(os.environ.get('BPE_MEASURE_ROUNDS','4'))
+    for block in range(repeats):
+        rotation = block % len(arms)
+        order = (arms[::-1] if block % 2 else arms[:]) if reverse_blocks else arms[rotation:]+arms[:rotation]
+        for arm in order:
+            if any(r["case"] == item["case"] and r["block"] == block and r["arm"] == arm for r in records): continue
+            competitors = []
+            for entry in Path('/proc').iterdir():
+                if not entry.name.isdigit(): continue
+                try:
+                    comm = (entry / 'comm').read_text().strip()
+                    exe = str((entry / 'exe').resolve())
+                    if comm in ('cargo','rustc') or comm.startswith('bpe-bench') or exe in binaries.values() or exe in ('/tmp/bpe-birth-baseline','/tmp/bpe-birth-clean','/tmp/bpe-write-only-clean','/tmp/bpe-global-measurements/candidate','/tmp/bpe-heap-clean','/tmp/bpe-heap-diagnostic-baseline','/tmp/bpe-heap-diagnostic-candidate'):
+                        competitors.append((int(entry.name),comm))
+                except (FileNotFoundError,ProcessLookupError): pass
+            if competitors: raise RuntimeError(f'Concurrent build/benchmark: {competitors}')
+            out = ROOT / f'{mode}-{item["case"]}-b{block}-{arm}'
+            out.mkdir(exist_ok=False)
+            job = dict(protocol_version=1, attempt_id=out.name, build_id=arm, input_id=item['case'], mode=mode, input=item['path'] if mode=='pipeline' else item['prepared_path'], output=str(out/'model.json'), workers=WORKERS, pretokenizer=item['pretokenizer'], trainer=dict(vocab_size=10000 if 'n' in item else 50000,min_frequency=1 if 'n' in item else 2,prefix=None,suffix=None,max_token_length=None))
+            (out/'job.json').write_text(json.dumps(job,indent=2))
+            command = ['taskset','-c',f'0-{WORKERS-1}',binaries[arm],str(out/'job.json')]
+            env = {k:v for k,v in os.environ.items() if not k.startswith(('BPE_TRACE_','TK_WORD_COUNTS_CACHE','TK_WRITE_WORD_COUNTS_CACHE','BPE_HEAP_DIAGNOSTIC'))}
+            swap = rss = 0
+            start = time.monotonic()
+            with (out/'stdout.log').open('w') as stdout, (out/'stderr.log').open('w') as stderr:
+                process = subprocess.Popen(command,stdout=stdout,stderr=stderr,env=env)
+                while process.poll() is None:
+                    try:
+                        status = Path(f'/proc/{process.pid}/status').read_text().splitlines()
+                        field = lambda name: next((int(s.split()[1]) for s in status if s.startswith(name)),0)
+                        swap = max(swap, field('VmSwap:'))
+                        rss = max(rss, field('VmRSS:'))
+                    except (FileNotFoundError,ProcessLookupError): pass
+                    time.sleep(.025)
+            record = dict(case=item['case'],block=block,arm=arm,warmup=block==0 and repeats>1 and warmup,command=command,concurrent_builds_or_benchmarks=competitors,returncode=process.returncode,max_swap_kib=swap,sampled_max_rss_kib=rss,subprocess_wall=time.monotonic()-start)
+            if process.returncode == 0:
+                record.update(json.loads((out/'stdout.log').read_text()))
+                actual = json.loads((out/'model.json').read_text())
+                if reference is None: reference = actual
+                record['model_equal'] = actual == reference
+                record['model_sha256'] = digest(out/'model.json')
+                record['valid'] = record['model_equal'] and swap == 0
+            else: record['valid'] = False
+            records.append(record)
+            (ROOT/f'{mode}-runs.json').write_text(json.dumps(records,indent=2))
+            print(json.dumps({k:record.get(k) for k in ('case','block','arm','valid','metrics')}),flush=True)
+            if not record['valid']: raise RuntimeError(f'Invalid sample {out}; evidence retained')
+summary = []
+for item in cases:
+    rows = [r for r in records if r['case']==item['case'] and not r['warmup']]
+    if not rows: continue
+    row = dict(case=item['case'])
+    keys = ['train_seconds','train_cpu_seconds','process_hwm_kib_before_validation']
+    if mode=='pipeline': keys += ['feed_seconds','feed_cpu_seconds','feed_hwm_kib','feed_rss_kib','train_rss_kib','pipeline_seconds','pipeline_cpu_seconds']
+    for arm in binaries:
+        arm_rows = [r for r in rows if r['arm']==arm]
+        row[arm] = {k:statistics.median(r['metrics'][k] for r in arm_rows) for k in keys}
+    ref = arms[0]
+    row['reference'] = ref
+    row['paired_median_delta_percent'] = {arm:{k:statistics.median((next(r for r in rows if r['arm']==arm and r['block']==block)['metrics'][k]/next(r for r in rows if r['arm']==ref and r['block']==block)['metrics'][k]-1)*100 for block in sorted(set(r['block'] for r in rows))) for k in keys} for arm in arms[1:]}
+    summary.append(row)
+(ROOT/f'{mode}-summary.json').write_text(json.dumps(summary,indent=2))

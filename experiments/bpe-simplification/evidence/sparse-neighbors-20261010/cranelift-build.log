@@ -1,0 +1,14 @@
+    Updating crates.io index
+     Locking 4 packages to latest Rust 1.98.1 compatible versions
+      Adding cranelift-bitset v0.136.2
+      Adding cranelift-entity v0.136.2
+      Adding libm v0.2.16
+      Adding wasmtime-internal-core v49.0.2
+   Compiling hashbrown v0.17.1
+   Compiling wasmtime-internal-core v49.0.2
+   Compiling indexmap v2.14.2
+   Compiling cranelift-bitset v0.136.2
+   Compiling cranelift-entity v0.136.2
+   Compiling tk-train v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-heap-experiment/tokenizers/tk-train)
+   Compiling bpe-bench-runner v0.1.0 (/root/code/tokenizers-workspaces/bpe-heap-experiment/experiments/bpe-simplification/runner)
+    Finished `release` profile [optimized] target(s) in 37.92s

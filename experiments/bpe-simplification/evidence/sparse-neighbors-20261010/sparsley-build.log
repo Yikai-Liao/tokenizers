@@ -1,0 +1,9 @@
+    Updating crates.io index
+     Locking 2 packages to latest Rust 1.98.1 compatible versions
+      Adding sparsley v0.1.0
+      Adding sparsley-diagram v0.1.0
+   Compiling sparsley-diagram v0.1.0
+   Compiling sparsley v0.1.0
+   Compiling tk-train v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-heap-experiment/tokenizers/tk-train)
+   Compiling bpe-bench-runner v0.1.0 (/root/code/tokenizers-workspaces/bpe-heap-experiment/experiments/bpe-simplification/runner)
+    Finished `release` profile [optimized] target(s) in 36.62s

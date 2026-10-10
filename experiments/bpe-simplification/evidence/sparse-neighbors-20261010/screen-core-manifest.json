@@ -1,0 +1,56 @@
+{
+  "baseline_commit": "1396e736644db06ed2b7168fc6bebe9183afd7dc",
+  "mode": "core",
+  "binaries": {
+    "baseline": "/tmp/bpe-sparse-baseline-bin",
+    "sparsley": "/tmp/bpe-sparse-sparsley-bin",
+    "xsparseset": "/tmp/bpe-sparse-xsparseset-bin",
+    "bevy": "/tmp/bpe-sparse-bevy-bin",
+    "cranelift": "/tmp/bpe-sparse-cranelift-bin",
+    "indexmap": "/tmp/bpe-sparse-indexmap-bin"
+  },
+  "binary_sha256": {
+    "baseline": "b7493acdbc1d46fdf6517b97c658327cbedb505e9ba776f04054d072d40b3b04",
+    "sparsley": "5126d92a45b0dd423e624ba4785865dd4bfc289799ab07cadf8eb1d02d48a6d7",
+    "xsparseset": "868976bfd71c4bd58e9dbe71fc795a173ad061d64a79d931a45667b17b889ec6",
+    "bevy": "07d7770d9be9c49b8a8d191c39e76c02145d1a8c865f7a12fb10a208c19858b3",
+    "cranelift": "067007bf30a8c6d7aa9b489234fccb15eb3e774fefaf96c62b9014f84cc23406",
+    "indexmap": "007f465f32ecb0d7fc6ccf10dc499956f9cc76093b33a7c745abf1f259914478"
+  },
+  "patches": {
+    "sparsley": "ee3aa0aa6ec602bb36754b22ef173175985f660da6f2018e6bc072d7a73b6389",
+    "xsparseset": "a5e89d9138e562a73e27fbcb292ea7af94e2bfa4fad2a726bb78dc31ca215b79",
+    "bevy": "712d48a1189293205e85b56ee35f1be0afd293576bbb13c4f18a88c75e70a336",
+    "cranelift": "5acd86d3c33fef668ab088b8b5175cca7223c587e53b79a608c79cfcee7a0d47",
+    "indexmap": "70c5b02c2a510911fb980a1c52580549fa669ae9094ee6a86a926f6a8a847e9e"
+  },
+  "cases": [
+    {
+      "case": "zh-256MiB",
+      "language": "zh",
+      "requested_mib": 256,
+      "pretokenizer": "bytelevel_regex",
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+      "bytes": 268435162,
+      "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+      "prepared_path": "/root/code/tokenizers-perfetto-results/inputs/zh-bytelevel/words.json",
+      "prepared_sha256": "bb796d0b57b87d965b84de249bc5c8e283b700774638d16a40e4ae5171b13ee0",
+      "prepared_bytes": 437135595
+    },
+    {
+      "case": "zh-whitespace-256MiB",
+      "language": "zh",
+      "requested_mib": 256,
+      "pretokenizer": "whitespace",
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+      "bytes": 268435162,
+      "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+      "prepared_path": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "prepared_sha256": "ed057a8fdb27544ed29f16dde53faa0de8f47f1ee8ac00080974fac5bb435660",
+      "prepared_bytes": 250116097
+    }
+  ],
+  "scope": "core: public do_train, load/serialization excluded; pipeline: public feed + train, validation excluded; HWM includes input and retained counts",
+  "design": "Two Chinese 256 MiB input cases; 1 rotating rounds (order rotates by one arm each block, no cancelling reversal); first round warmup only when rounds>1; workers4 affinity0-3; vocab50k/min2; no affixes",
+  "limitation": "Shared VM; descriptive observations, no statistical speedup claim."
+}
