@@ -1,0 +1,38 @@
+Frozen before performance measurements, 2026-10-10.
+
+Base source: 7e77262b (production Rust equals the previously completed 2100-line version).
+Inputs: existing immutable prepared Chinese 256MiB and 512MiB prefixes; exact hashes verified.
+Job: core/public do_train, 4 workers, CPU affinity 0-3, vocabulary 50,000, min_frequency 2.
+No progress bar, release opt3/fat LTO/codegen-units1, default target CPU; runner Cargo.lock pinned.
+
+Factorial matrix: raw-all, online-all, raw-wave, online-wave, plus original baseline.
+All four experimental arms share one frozen binary and 2^24 resident-slot whole-word blocks.
+raw means a collection join happens before encoding that batch's temporary lists.
+online means the same temporary encoding runs inside each completed producer closure.
+all admits all blocks through one Rayon collection; wave admits four blocks then joins.
+Every arm ultimately retains owned compressed fragments, aggregates complete per-pair counts,
+and reads fragments to encode final lists. Global floor/reuse admission is identical.
+One oversized word is processed alone; the fixed slot cap excludes that documented exception.
+
+Diagnostic: two repetitions per arm per size, forward then reverse arm order (20 processes).
+Only one joined initial-index phase is instrumented, with process CPU and /proc RSS/HWM endpoints.
+new_process_hwm records a phase peak only when it exceeds the already established process HWM.
+Observer cost and geometry logging are present; do not use these as the uninstrumented 25-second gate.
+
+Plain validation: original immutable production binary versus clean online-all candidate,
+three repetitions per size, AB/BA/AB (12 processes). One plain online-wave sample per size
+is supplementary (2 processes). No internal observer or diagnostic prints in plain jobs.
+Total planned measured processes: 34. No separate process warmups; source hashing preloads input files.
+No tuning after observations unless a separately labeled follow-up is explicitly recorded.
+
+Every job checks the complete vocabulary IDs and ordered merge list against the immutable
+main-generated reference, records binary SHA, samples own RSS/HWM/swap and host availability,
+refuses concurrent cargo/rustc/benchmark jobs, and terminates only its own process on interference,
+swapping, low host availability, or timeout. Failed/interfered jobs are excluded, never silently reused.
+
+Candidate without experimental switches: 2165 production lines (+65), 793 test lines (+13).
+Tests use small physical blocks to exercise fragment joins; release blocks use 2^24 slots.
+Default/no-default semantic suites, Clippy, fmt and strict-provenance codec Miri precede measurement.
+Primary question: does early raw release explain memory savings, and what remains for a wave barrier
+after the online pipeline already limits active raw blocks? Whole-training HWM and wall time must
+be reported separately from initial-index phase measurements.

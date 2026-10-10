@@ -1,0 +1,577 @@
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs b/tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs
+index 79d88619..8fd39622 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs
+@@ -117,6 +117,24 @@ impl<'input> CorpusPlan<'input> {
+     pub(super) fn word_count(&self) -> usize {
+         self.words.len()
+     }
++    // Whole words preserve symbol-scan semantics. A single oversized word is
++    // admitted alone; otherwise each range has at most `slots` resident slots.
++    pub(super) fn initial_ranges(&self, slots: usize) -> Vec<std::ops::Range<usize>> {
++        let mut ranges = Vec::new();
++        let mut begin = 0;
++        while begin < self.word_count() {
++            let mut end = begin + 1;
++            while end < self.word_count()
++                && self.starts.get(end + 1).copied().unwrap_or(self.length) - self.starts[begin]
++                    <= slots
++            {
++                end += 1;
++            }
++            ranges.push(begin..end);
++            begin = end;
++        }
++        ranges
++    }
+     pub(super) fn small_pair_domain(&self) -> Option<usize> {
+         (self.spans.len() <= 256).then_some(self.spans.len())
+     }
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/index.rs b/tokenizers/tk-train/src/trainers/bpe/engine/index.rs
+index 8df88388..8429bd20 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/index.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/index.rs
+@@ -127,34 +127,26 @@ impl<'arena> PairIndex<'arena> {
+         progress: &TrainingProgress,
+     ) -> Result<Self> {
+         let work = progress.stage("Count initial pairs", corpus.word_count());
+-        let chunk = corpus
+-            .word_count()
+-            .div_ceil(workers.saturating_mul(4))
+-            .max(1);
+-        let pieces = (0..corpus.word_count())
+-            .step_by(chunk)
+-            .collect::<Vec<_>>()
++        let pieces = corpus
++            .initial_ranges(if cfg!(test) { 16 } else { 1 << 24 })
+             .into_par_iter()
+-            .map(|begin| -> Result<_> {
++            .map(|range| -> Result<_> {
+                 let domain = corpus.small_pair_domain();
+                 let mut dense: Vec<State<Builder>> = (0..domain.map_or(0, |n| n * n))
+                     .map(|_| State::default())
+                     .collect();
+                 let mut counts = AHashMap::<Pair, State<Builder>>::new();
+-                corpus.initial_edges(
+-                    begin..(begin + chunk).min(corpus.word_count()),
+-                    |pair, p, weight| {
+-                        debug_assert!(pair.0 != WORD_SEPARATOR_ID && pair.1 != WORD_SEPARATOR_ID);
+-                        let state = match domain {
+-                            Some(n) => &mut dense[pair.0 as usize * n + pair.1 as usize],
+-                            None => counts.entry(pair).or_default(),
+-                        };
+-                        add(&mut state.count, weight)?;
+-                        state.positions.push(p)
+-                    },
+-                )?;
+-                work.complete(chunk.min(corpus.word_count() - begin));
+-                Ok(match domain {
++                corpus.initial_edges(range.clone(), |pair, p, weight| {
++                    debug_assert!(pair.0 != WORD_SEPARATOR_ID && pair.1 != WORD_SEPARATOR_ID);
++                    let state = match domain {
++                        Some(n) => &mut dense[pair.0 as usize * n + pair.1 as usize],
++                        None => counts.entry(pair).or_default(),
++                    };
++                    add(&mut state.count, weight)?;
++                    state.positions.push(p)
++                })?;
++                work.complete(range.len());
++                let states = match domain {
+                     Some(n) => dense
+                         .into_iter()
+                         .enumerate()
+@@ -162,7 +154,24 @@ impl<'arena> PairIndex<'arena> {
+                         .map(|(key, state)| (((key / n) as u32, (key % n) as u32), state))
+                         .collect::<Vec<_>>(),
+                     None => counts.into_iter().collect(),
+-                })
++                };
++                let mut lease = arena.lease();
++                states
++                    .into_iter()
++                    .map(|(pair, state)| {
++                        let positions = Positions::from_sorted_owned(
++                            Input::Builder(&state.positions),
++                            &mut lease,
++                        )?;
++                        Ok((
++                            pair,
++                            State {
++                                count: state.count,
++                                positions,
++                            },
++                        ))
++                    })
++                    .collect::<Result<Vec<_>>>()
+             })
+             .collect::<Result<Vec<_>>>()?;
+         let mut routed: Vec<Vec<_>> = (0..workers).map(|_| Vec::new()).collect();
+@@ -174,18 +183,21 @@ impl<'arena> PairIndex<'arena> {
+         let shards = routed
+             .into_par_iter()
+             .map(|pieces| -> Result<_> {
+-                let mut states = AHashMap::<Pair, State<Builder>>::new();
++                let mut states = AHashMap::<Pair, State<Vec<Positions>>>::new();
+                 for (pair, state) in pieces {
+                     let total = states.entry(pair).or_default();
+                     add(&mut total.count, state.count)?;
+-                    total.positions.append(state.positions)?;
++                    total.positions.push(state.positions);
+                 }
+                 let mut lease = arena.lease();
+                 let mut shard = Shard::default();
+-                for (pair, state) in states {
++                for (pair, mut state) in states {
+                     if reuse || state.count >= minimum.max(1) {
+-                        let positions =
+-                            Positions::from_sorted(Input::Builder(&state.positions), &mut lease)?;
++                        let positions = if state.positions.len() == 1 {
++                            state.positions.pop().unwrap()
++                        } else {
++                            Positions::from_sorted(Input::Fragments(&state.positions), &mut lease)?
++                        };
+                         shard.states.insert(
+                             pair,
+                             State {
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/merge.rs b/tokenizers/tk-train/src/trainers/bpe/engine/merge.rs
+index 7ae56461..b7ff5317 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/merge.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/merge.rs
+@@ -6,6 +6,7 @@ use super::{
+     positions::{Arena, Builder, Input, Positions},
+ };
+ use ahash::{AHashMap, AHashSet};
++use super::prepare_detail;
+ use rayon::prelude::*;
+ use tk_encode::{Result, models::bpe::Pair};
+ 
+@@ -139,6 +140,8 @@ impl<'a, 'arena> Neighbors<'a, 'arena> {
+         Ok(())
+     }
+     fn finish(self, floor: u64, arena: &'arena Arena) -> Result<Vec<Change<Birth<'arena>>>> {
++        let _finish=prepare_detail::stage(9);
++        prepare_detail::count(8,self.changes.iter().map(Vec::len).sum());
+         // Complete ordinary producers prune and encode before owner routing.
+         // Partial jobs retain raw positions until their counts have been reduced.
+         let mut result = Vec::new();
+@@ -252,15 +255,21 @@ impl<'arena> Batch<'arena> {
+         arena: &'arena Arena,
+         limit: usize,
+     ) -> Result<Prepared<'arena>> {
++        let _mode=prepare_detail::stage(if self.reuse {5}else if self.rules[0].pair.0==self.rules[0].pair.1 {4}else{3});
++        prepare_detail::count(0,self.rules.len());
++        prepare_detail::count(1,self.rules.iter().map(|r|r.candidate.positions.len()).sum());
+         if self.reuse {
+             return self.prepare_cohort(corpus, arena, limit);
+         }
++        let _selected=prepare_detail::stage(0);
+         let selected: AHashMap<_, _> = self
+             .rules
+             .iter()
+             .map(|rule| (rule.pair, rule.replacement))
+             .collect();
++        drop(_selected);
+         let aa = self.rules[0].pair.0 == self.rules[0].pair.1;
++        let _prepass=prepare_detail::stage(1);
+         let mut starts = Vec::new();
+         if aa {
+             let rule = &self.rules[0];
+@@ -276,6 +285,8 @@ impl<'arena> Batch<'arena> {
+                 }
+             }
+         }
++        drop(_prepass);
++        let _partition=prepare_detail::stage(2);
+         let mut tasks = Vec::new();
+         let total: usize = self
+             .rules
+@@ -306,6 +317,12 @@ impl<'arena> Batch<'arena> {
+                 }
+             }
+         }
++        if !aa {
++            prepare_detail::count(2,tasks.len());
++            prepare_detail::count(3,tasks.len());
++            for (_,_,p) in &tasks { prepare_detail::count(if p.complete() {4}else{5},1); }
++        }
++        drop(_partition);
+         let jobs = tasks
+             .into_par_iter()
+             .map_init(
+@@ -313,16 +330,24 @@ impl<'arena> Batch<'arena> {
+                 |directories, (rank, rule, positions)| -> Result<_> {
+                     #[cfg(test)]
+                     super::tests::observe_worker(super::tests::Phase::FreshPrepare);
++                    let _worker=prepare_detail::stage(6);
++                    let _setup=prepare_detail::stage(7);
+                     directories.reset(corpus.id_count());
+                     let mut neighbors =
+                         Neighbors::new(rule, rank, directories, positions.complete());
+                     let mut writes = Writes::fresh(rule, corpus);
+                     let matcher = corpus.fresh_matcher(rule.pair);
+                     let mut weights = None;
++                    drop(_setup);
++                    let _scan=prepare_detail::stage(8);
++                    let mut visited=0;
++                    let mut matched_count=0;
+                     for p in positions.prefetched(corpus) {
++                        visited+=1;
+                         let Some(matched) = matcher(p, corpus.token(p)) else {
+                             continue;
+                         };
++                        matched_count+=1;
+                         let (weight, end) = match weights {
+                             Some((weight, end)) if p < end => (weight, end),
+                             _ => corpus.weight_region(p),
+@@ -380,6 +405,9 @@ impl<'arena> Batch<'arena> {
+                         }
+                         writes.record(matched)?;
+                     }
++                    prepare_detail::count(6,visited);
++                    prepare_detail::count(7,matched_count);
++                    drop(_scan);
+                     Ok(Job {
+                         writes,
+                         changes: neighbors.finish(self.floor, arena)?,
+@@ -387,6 +415,7 @@ impl<'arena> Batch<'arena> {
+                 },
+             )
+             .collect::<Result<Vec<_>>>()?;
++        { let _release=prepare_detail::stage(11); drop(self); }
+         Ok(Prepared { jobs })
+     }
+     fn prepare_cohort(
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/mod.rs b/tokenizers/tk-train/src/trainers/bpe/engine/mod.rs
+index 8d84ab98..814971a9 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/mod.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/mod.rs
+@@ -1,5 +1,7 @@
+ //! Joined training rounds over a fixed-coordinate corpus and an occurrence index.
+ mod corpus;
++mod phase_timing;
++mod prepare_detail;
+ mod index;
+ mod merge;
+ mod positions;
+@@ -38,6 +40,8 @@ pub(super) fn train(
+     workers: usize,
+     #[cfg(test)] mut observe: Option<&mut (dyn FnMut(Pair, u64, u32) + Send)>,
+ ) -> Result<ModelParts> {
++    let _phase_report = phase_timing::Report;
++    let _prepare_report = prepare_detail::Report;
+     let pool = rayon::ThreadPoolBuilder::new()
+         .num_threads(workers)
+         .build()?;
+@@ -47,33 +51,34 @@ pub(super) fn train(
+         let mut reuse = false;
+         loop {
+             let mut vocabulary =
+-                Vocabulary::initialize(trainer, words, workers, &progress, &mut alphabet)?;
+-            let plan = CorpusPlan::build(words, &mut vocabulary, trainer, reuse, &progress)?;
++                { let _phase = phase_timing::stage(0); Vocabulary::initialize(trainer, words, workers, &progress, &mut alphabet) }?;
++            let plan = { let _phase = phase_timing::stage(1); CorpusPlan::build(words, &mut vocabulary, trainer, reuse, &progress) }?;
++            eprintln!("BPE_GEOMETRY {{\"resident_slots\":{},\"word_count\":{},\"initial_block_slot_cap\":16777216,\"initial_mode\":\"online-all\",\"bounded_waves\":false}}", plan.items(),plan.word_count());
+             let arena = Arena::new(workers, plan.items());
+-            let mut index = PairIndex::build(
++            let mut index = { let _phase = phase_timing::stage(2); PairIndex::build(
+                 &arena,
+                 &plan,
+                 trainer.min_frequency,
+                 workers,
+                 reuse,
+                 &progress,
+-            )?;
++            ) }?;
+             if vocabulary.len() >= trainer.vocab_size {
+                 progress.stage("Compute merges", trainer.vocab_size);
+-                drop(index);
++                { let _phase = phase_timing::stage(8); drop(index);
+                 drop(plan);
+-                drop(arena);
+-                let (vocab, merges) = vocabulary.into_model_parts(Vec::new());
++                drop(arena); }
++                let (vocab, merges) = { let _phase = phase_timing::stage(9); vocabulary.into_model_parts(Vec::new()) };
+                 return Ok((vocab, merges, trainer.special_tokens.clone()));
+             }
+-            let mut corpus = plan.materialize(&progress);
++            let mut corpus = { let _phase = phase_timing::stage(3); plan.materialize(&progress) };
+             let work = progress.stage("Compute merges", trainer.vocab_size);
+             let mut merges = Vec::new();
+             #[cfg(test)]
+             let mut trace = Trace::new();
+             let mut restart = false;
+             while vocabulary.len() < trainer.vocab_size {
+-                let batch = match Batch::select(trainer, &mut vocabulary, &mut corpus, &mut index)?
++                let batch = match { let _phase = phase_timing::stage(4); Batch::select(trainer, &mut vocabulary, &mut corpus, &mut index) }?
+                 {
+                     Selection::Finished => break,
+                     Selection::Restart => {
+@@ -85,29 +90,29 @@ pub(super) fn train(
+                 #[cfg(test)]
+                 trace.extend(batch.trace());
+                 merges.extend(batch.pairs());
+-                let prepared = batch.prepare(
++                let prepared = { let _phase = phase_timing::stage(5); batch.prepare(
+                     &corpus,
+                     &arena,
+                     trainer.max_token_length.unwrap_or(usize::MAX),
+-                )?;
+-                let changes = prepared.apply(&corpus);
+-                index.commit(changes)?;
++                ) }?;
++                let changes = { let _phase = phase_timing::stage(6); prepared.apply(&corpus) };
++                { let _phase = phase_timing::stage(7); index.commit(changes) }?;
+                 work.learned(merges.len());
+             }
+             if restart {
+                 reuse = true;
+                 continue;
+             }
+-            drop(index);
++            { let _phase = phase_timing::stage(8); drop(index);
+             drop(corpus);
+-            drop(arena);
++            drop(arena); }
+             #[cfg(test)]
+             if let Some(observer) = observe.as_mut() {
+                 for (pair, count, id) in trace {
+                     observer(pair, count, id);
+                 }
+             }
+-            let (vocab, merges) = vocabulary.into_model_parts(merges);
++            let (vocab, merges) = { let _phase = phase_timing::stage(9); vocabulary.into_model_parts(merges) };
+             return Ok((vocab, merges, trainer.special_tokens.clone()));
+         }
+     })
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/positions.rs b/tokenizers/tk-train/src/trainers/bpe/engine/positions.rs
+index ac092339..ed41a8d0 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/positions.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/positions.rs
+@@ -115,12 +115,44 @@ impl Builder {
+ pub(super) enum Input<'a> {
+     Builder(&'a Builder),
+     Slice(&'a [u64]),
++    Fragments(&'a [Positions<'a>]),
+ }
+ impl Input<'_> {
+-    fn iter(&self) -> impl DoubleEndedIterator<Item = u64> + ExactSizeIterator + Clone + '_ {
++    fn len(&self) -> Result<usize> {
+         match self {
+-            Self::Builder(values) => itertools::Either::Left(values.iter()),
+-            Self::Slice(values) => itertools::Either::Right(values.iter().copied()),
++            Self::Builder(values) => Ok(values.len()),
++            Self::Slice(values) => Ok(values.len()),
++            Self::Fragments(values) => values.iter().try_fold(0usize, |n, p| {
++                n.checked_add(p.len())
++                    .ok_or_else(|| "BPE fragment count exceeds usize".into())
++            }),
++        }
++    }
++    fn bounds(&self) -> Option<(u64, u64)> {
++        match self {
++            Self::Builder(values) => Some((values.iter().next()?, values.iter().next_back()?)),
++            Self::Slice(values) => Some((*values.first()?, *values.last()?)),
++            Self::Fragments(values) => Some((
++                values.iter().find_map(|p| p.iter().next())?,
++                values
++                    .iter()
++                    .rev()
++                    .filter(|p| !p.is_empty())
++                    .find_map(|p| p.from(p.len() - 1).next())?,
++            )),
++        }
++    }
++    fn iter(&self) -> impl Iterator<Item = u64> + '_ {
++        match self {
++            Self::Builder(values) => {
++                itertools::Either::Left(itertools::Either::Left(values.iter()))
++            }
++            Self::Slice(values) => {
++                itertools::Either::Left(itertools::Either::Right(values.iter().copied()))
++            }
++            Self::Fragments(values) => {
++                itertools::Either::Right(values.iter().flat_map(Positions::iter))
++            }
+         }
+     }
+ }
+@@ -167,19 +199,24 @@ impl<'arena> Positions<'arena> {
+         self.payload.map_addr(|a| a & !1)
+     }
+     pub(super) fn from_sorted(input: Input<'_>, lease: &mut Lease<'arena>) -> Result<Self> {
++        Self::encode(input, lease, false)
++    }
++    pub(super) fn from_sorted_owned(input: Input<'_>, lease: &mut Lease<'arena>) -> Result<Self> {
++        Self::encode(input, lease, true)
++    }
++    fn encode(input: Input<'_>, lease: &mut Lease<'arena>, owned: bool) -> Result<Self> {
++        let count = input.len()?;
+         let values = input.iter();
+-        let count = values.len();
+         if count == 0 {
+             return Ok(Self::default());
+         }
+         if count >= INLINE {
+             return Err("BPE position count exceeds resident bounds".into());
+         }
+-        let first = values.clone().next().unwrap();
+-        let gap = values
+-            .clone()
+-            .next_back()
+-            .unwrap()
++        let (first, last) = input
++            .bounds()
++            .expect("nonempty trusted input has endpoints");
++        let gap = last
+             .checked_sub(first)
+             .ok_or("BPE positions are not sorted")?;
+         if count <= 2 && first <= usize::MAX as u64 && (count == 1 || gap <= DELTA_MASK as u64) {
+@@ -211,7 +248,7 @@ impl<'arena> Positions<'arena> {
+             previous = position;
+         }
+         let allocation = layout(count, worker.bytes.len())?;
+-        let arena = allocation.size() <= lease.arena.cutoff;
++        let arena = !owned && allocation.size() <= lease.arena.cutoff;
+         let pointer = if arena {
+             worker
+                 .bump
+@@ -403,16 +440,24 @@ mod tests {
+                 }
+                 values.sort_unstable();
+                 let mut builder = Builder::default();
++                let mut fragments = vec![Positions::default()];
+                 for chunk in values.chunks(17) {
+                     let mut piece = Builder::default();
+                     for &p in chunk {
+                         piece.push(p).unwrap();
+                     }
++                    fragments.push(
++                        Positions::from_sorted_owned(Input::Builder(&piece), &mut arena.lease())
++                            .unwrap(),
++                    );
+                     builder.append(piece).unwrap();
+                 }
+                 assert!(builder.iter().eq(values.iter().copied()));
++                fragments.push(Positions::default());
+                 let positions =
+-                    Positions::from_sorted(Input::Builder(&builder), &mut arena.lease()).unwrap();
++                    Positions::from_sorted(Input::Fragments(&fragments), &mut arena.lease())
++                        .unwrap();
++                drop(fragments);
+                 assert!(positions.iter().eq(values.iter().copied()));
+                 for index in (0..=length)
+                     .step_by(if cfg!(miri) { 127 } else { 1 })
+@@ -473,6 +518,11 @@ mod tests {
+         let arena = Arena::new(1, 0);
+         let mut lease = arena.lease();
+         assert!(Positions::from_sorted(Input::Slice(&[u64::MAX, 0]), &mut lease).is_err());
++        for (a, b) in [(&[u64::MAX][..], &[0][..]), (&[0, u64::MAX][..], &[1][..])] {
++            let fragments =
++                [a, b].map(|v| Positions::from_sorted_owned(Input::Slice(v), &mut lease).unwrap());
++            assert!(Positions::from_sorted(Input::Fragments(&fragments), &mut lease).is_err());
++        }
+         let mut builder = Builder::default();
+         builder.push(u64::MAX).unwrap();
+         assert!(builder.push(0).is_err());
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/phase_timing.rs b/tokenizers/tk-train/src/trainers/bpe/engine/phase_timing.rs
+new file mode 100644
+index 00000000..e246cd6e
+--- /dev/null
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/phase_timing.rs
+@@ -0,0 +1,48 @@
++
++use std::sync::atomic::{AtomicU64, Ordering};
++use std::time::Instant;
++const NAMES: [&str; 10] = ["vocabulary", "corpus_plan", "initial_index", "materialize", "select", "prepare", "apply", "commit", "release", "model_output"];
++static WALL: [AtomicU64; 10] = [const { AtomicU64::new(0) }; 10];
++static CPU: [AtomicU64; 10] = [const { AtomicU64::new(0) }; 10];
++static CALLS: [AtomicU64; 10] = [const { AtomicU64::new(0) }; 10];
++#[repr(C)]
++struct Timespec { sec: std::os::raw::c_long, nano: std::os::raw::c_long }
++unsafe extern "C" { fn clock_gettime(clock: i32, time: *mut Timespec) -> i32; }
++fn cpu_ns() -> u64 {
++    let mut time = Timespec { sec: 0, nano: 0 };
++    // Linux CLOCK_PROCESS_CPUTIME_ID; this host-only diagnostic owns the output.
++    assert_eq!(unsafe { clock_gettime(2, &mut time) }, 0);
++    time.sec as u64 * 1_000_000_000 + time.nano as u64
++}
++static RSS_BEGIN: [AtomicU64; 10] = [const { AtomicU64::new(0) }; 10];
++static RSS_END: [AtomicU64; 10] = [const { AtomicU64::new(0) }; 10];
++static NEW_HWM: [AtomicU64; 10] = [const { AtomicU64::new(0) }; 10];
++fn resident() -> (u64,u64) {
++    let text=std::fs::read_to_string("/proc/self/status").unwrap();
++    let field=|name: &str| text.lines().find(|l|l.starts_with(name)).unwrap().split_whitespace().nth(1).unwrap().parse().unwrap();
++    (field("VmRSS:"),field("VmHWM:"))
++}
++pub(super) struct Stage { index: usize, wall: Instant, cpu: u64, hwm: u64 }
++pub(super) fn stage(index: usize) -> Stage { { let (rss,hwm)=resident(); RSS_BEGIN[index].fetch_max(rss,Ordering::Relaxed); Stage { index, wall: Instant::now(), cpu: cpu_ns(), hwm } } }
++impl Drop for Stage {
++    fn drop(&mut self) {
++        let cpu = cpu_ns() - self.cpu;
++        WALL[self.index].fetch_add(self.wall.elapsed().as_nanos() as u64, Ordering::Relaxed);
++        CPU[self.index].fetch_add(cpu, Ordering::Relaxed);
++        CALLS[self.index].fetch_add(1, Ordering::Relaxed);
++        let (rss,hwm)=resident();
++        RSS_END[self.index].fetch_max(rss,Ordering::Relaxed);
++        if hwm>self.hwm { NEW_HWM[self.index].fetch_max(hwm,Ordering::Relaxed); }
++    }
++}
++pub(super) struct Report;
++impl Drop for Report {
++    fn drop(&mut self) {
++        let rows: Vec<_> = NAMES.iter().enumerate().map(|(i, name)| format!(
++            r#"{{"name":"{}","wall_seconds":{},"cpu_seconds":{},"calls":{},"max_begin_rss_kib":{},"max_end_rss_kib":{},"new_process_hwm_kib":{}}}"#,
++            name, WALL[i].load(Ordering::Relaxed) as f64 / 1e9,
++            CPU[i].load(Ordering::Relaxed) as f64 / 1e9, CALLS[i].load(Ordering::Relaxed), RSS_BEGIN[i].load(Ordering::Relaxed), RSS_END[i].load(Ordering::Relaxed), NEW_HWM[i].load(Ordering::Relaxed)
++        )).collect();
++        eprintln!("BPE_PHASES {{\"stages\":[{}]}}", rows.join(","));
++    }
++}
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/prepare_detail.rs b/tokenizers/tk-train/src/trainers/bpe/engine/prepare_detail.rs
+new file mode 100644
+index 00000000..8a257a40
+--- /dev/null
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/prepare_detail.rs
+@@ -0,0 +1,42 @@
++//! Host-only preparation attribution. Worker durations overlap; thread CPU is additive.
++use std::sync::atomic::{AtomicU64, Ordering};
++use std::time::Instant;
++const NAMES: [&str; 12] = ["selected_index", "aa_prepass", "task_partition", "ordinary_joined", "aa_joined", "reuse_joined", "worker_total", "worker_setup", "scan_collect", "finish_encode", "postjoin_gather", "candidate_release"];
++const COUNTERS: [&str; 9] = ["rules", "candidate_positions", "ordinary_jobs", "ordinary_tasks", "complete_tasks", "partial_tasks", "scan_positions", "matched_positions", "neighbor_groups"];
++static WALL: [AtomicU64; 12] = [const { AtomicU64::new(0) }; 12];
++static CPU: [AtomicU64; 12] = [const { AtomicU64::new(0) }; 12];
++static CALLS: [AtomicU64; 12] = [const { AtomicU64::new(0) }; 12];
++static COUNTS: [AtomicU64; 9] = [const { AtomicU64::new(0) }; 9];
++#[repr(C)]
++struct Timespec { sec: std::os::raw::c_long, nano: std::os::raw::c_long }
++unsafe extern "C" { fn clock_gettime(clock: i32, time: *mut Timespec) -> i32; }
++fn cpu_ns(clock: i32) -> u64 {
++    let mut time = Timespec { sec: 0, nano: 0 };
++    assert_eq!(unsafe { clock_gettime(clock, &mut time) }, 0);
++    time.sec as u64 * 1_000_000_000 + time.nano as u64
++}
++pub(super) struct Stage { index: usize, wall: Instant, cpu: u64, clock: i32 }
++pub(super) fn stage(index: usize) -> Stage {
++    let clock = if (6..=9).contains(&index) { 3 } else { 2 }; // Linux THREAD / PROCESS CPU
++    Stage { index, wall: Instant::now(), cpu: cpu_ns(clock), clock }
++}
++impl Drop for Stage {
++    fn drop(&mut self) {
++        let cpu = cpu_ns(self.clock) - self.cpu;
++        WALL[self.index].fetch_add(self.wall.elapsed().as_nanos() as u64, Ordering::Relaxed);
++        CPU[self.index].fetch_add(cpu, Ordering::Relaxed);
++        CALLS[self.index].fetch_add(1, Ordering::Relaxed);
++    }
++}
++pub(super) fn count(index: usize, value: usize) { COUNTS[index].fetch_add(value as u64, Ordering::Relaxed); }
++pub(super) struct Report;
++impl Drop for Report {
++    fn drop(&mut self) {
++        let rows: Vec<_> = NAMES.iter().enumerate().map(|(i,name)| format!(
++            r#"{{"name":"{}","wall_seconds":{},"cpu_seconds":{},"calls":{},"cpu_clock":"{}"}}"#,
++            name,WALL[i].load(Ordering::Relaxed) as f64 / 1e9,CPU[i].load(Ordering::Relaxed) as f64 / 1e9,CALLS[i].load(Ordering::Relaxed),if (6..=9).contains(&i) { "thread" } else { "process" }
++        )).collect();
++        let counters: Vec<_> = COUNTERS.iter().enumerate().map(|(i,name)| format!(r#""{}":{}"#,name,COUNTS[i].load(Ordering::Relaxed))).collect();
++        eprintln!("BPE_PREPARE_DETAIL {{\"stages\":[{}],\"counters\":{{{}}}}}",rows.join(","),counters.join(","));
++    }
++}

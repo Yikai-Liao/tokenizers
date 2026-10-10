@@ -1,0 +1,18 @@
+{
+  "protocol_version": 1,
+  "attempt_id": "diagnostic-1-raw-all",
+  "build_id": "raw-all",
+  "input_id": "zh-256MiB",
+  "mode": "core",
+  "input": "/root/code/tokenizers-perfetto-results/inputs/zh-bytelevel/words.json",
+  "output": "/root/code/tokenizers-simplification-results/online-initial/runs/diagnostic/zh-256MiB/01-raw-all/model.json",
+  "workers": 4,
+  "pretokenizer": "bytelevel_regex",
+  "trainer": {
+    "vocab_size": 50000,
+    "min_frequency": 2,
+    "prefix": null,
+    "suffix": null,
+    "max_token_length": null
+  }
+}

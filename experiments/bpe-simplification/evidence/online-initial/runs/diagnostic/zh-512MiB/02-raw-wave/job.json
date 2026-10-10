@@ -1,0 +1,18 @@
+{
+  "protocol_version": 1,
+  "attempt_id": "diagnostic-2-raw-wave",
+  "build_id": "raw-wave",
+  "input_id": "zh-512MiB",
+  "mode": "core",
+  "input": "/root/code/tokenizers-simplification-results/final-scaling/inputs/zh-512MiB/words.json",
+  "output": "/root/code/tokenizers-simplification-results/online-initial/runs/diagnostic/zh-512MiB/02-raw-wave/model.json",
+  "workers": 4,
+  "pretokenizer": "bytelevel_regex",
+  "trainer": {
+    "vocab_size": 50000,
+    "min_frequency": 2,
+    "prefix": null,
+    "suffix": null,
+    "max_token_length": null
+  }
+}

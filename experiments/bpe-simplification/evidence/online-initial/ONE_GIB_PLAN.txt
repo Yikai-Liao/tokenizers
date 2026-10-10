@@ -1,0 +1,15 @@
+Supplement requested before completion of the 256/512MiB diagnostic matrix.
+Use an actual 1024MiB ordered prefix from the exact pinned Wikimedia revision,
+with byte-for-byte verification of the existing 512MiB prefix. No paragraph replication.
+Keep all binary hashes, codec, 2^24-slot blocks, 4-block wave barrier, four workers,
+affinity 0-3, 50k vocabulary and min-frequency 2 fixed. Do not rebuild or tune.
+Preparation and reference creation occur between measured jobs, with no overlap.
+One original-main plain run creates the complete-model reference and is separately labeled.
+Diagnostic matrix: baseline and all four factorial arms, n=2, forward then reverse.
+Plain baseline/candidate: n=3, AB/BA/AB; supplementary online-wave n=1.
+Total supplemental core runs: 18. Same resource and interference guard as initial plan.
+If the host cannot finish an arm without swapping or <512MiB host availability,
+retain its failure/log/samples, exclude its time/HWM from completed comparisons,
+and continue the other planned arms. Never treat an aborted HWM as a full peak.
+All baseline/candidate successful outputs must equal the original-main reference.
+Do not change any production implementation based on these observations.

@@ -1,0 +1,130 @@
+{
+  "arms": [
+    {
+      "arm": "main",
+      "base_commit": "e4f787dc189d9be7192107490d652096cde7480e",
+      "worktree": "/root/code/tokenizers-workspaces/bpe-prepare-detail-main-20261010",
+      "command": [
+        "cargo",
+        "build",
+        "--release",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/root/code/tokenizers-workspaces/bpe-prepare-detail-main-20261010/experiments/bpe-simplification/runner/Cargo.toml",
+        "-j",
+        "2"
+      ],
+      "binary": "/root/code/tokenizers-simplification-results/online-initial/bin/bpe-bench-prepare-detail-main",
+      "binary_sha256": "9b9b0d87929bee495314c33290dd974697ffe79c82f02dbb83c4a4f2880b270a",
+      "patch": "/root/code/tokenizers-simplification-results/online-initial/prepare-detail-main.patch",
+      "patch_sha256": "a52f149ff2e4240cd99f86f625f4c8e85ed1054c7ae2113d3b5f03ad71af9b7d",
+      "sources_sha256": {
+        "tokenizers/tk-train/src/trainers/bpe/engine/aa_parity.rs": "9b1dae3ad5d807d805e04e3a2f86b3ac01720ba7aa32d7c1aa4a421752ca3d7a",
+        "tokenizers/tk-train/src/trainers/bpe/engine/batch.rs": "3d5d8b931df60a90a835002e7888b4b8cf39aab4382a0d50fd9fa8e1e4ec910e",
+        "tokenizers/tk-train/src/trainers/bpe/engine/corpus/mod.rs": "eb82fd038df81e364e55d376f61c389dcce420e6e334b9914f9456420479dc32",
+        "tokenizers/tk-train/src/trainers/bpe/engine/corpus/prepare.rs": "ee8a141547843ad9a2b76960dd6bcac70edfddefabf8f4c8345caedf0a31c009",
+        "tokenizers/tk-train/src/trainers/bpe/engine/corpus/slots.rs": "1016d4c5dfba3c8892de0649c8060d7b2e8d0a1ff29255ae065b89c26233acc6",
+        "tokenizers/tk-train/src/trainers/bpe/engine/execution.rs": "3c4685196724692a12528c95e9c6fbc32ae80901062e070427d4e7e494d574ed",
+        "tokenizers/tk-train/src/trainers/bpe/engine/initial_pairs/bounded.rs": "ec9bea04b2779ba971e7924878719d8b62153ad53064480c33a21410f44030d2",
+        "tokenizers/tk-train/src/trainers/bpe/engine/initial_pairs.rs": "eefc660b7024900f4da8a26521d3fc4f9607a0a179ed75dd93cddb970d1feaa8",
+        "tokenizers/tk-train/src/trainers/bpe/engine/initial_review.rs": "1caa111d54fba99f0f9ab04925d244aebc2e7788d9c752f27a980156e436ad28",
+        "tokenizers/tk-train/src/trainers/bpe/engine/merge/events.rs": "1baeeecfa5c14882243d987a6277902b1db18d2d46e31c8c28b7bb72adcf0d33",
+        "tokenizers/tk-train/src/trainers/bpe/engine/merge/mod.rs": "d0fa4da7cd87db9f6efe9f077df223a11e25b331b949185e022ff9ba01ebb3d1",
+        "tokenizers/tk-train/src/trainers/bpe/engine/merge/prepare/aa.rs": "0de9e90f0a25e51aae1002e4bbbfd6484e0d72f6a8c0954c954f8f6a3643cf25",
+        "tokenizers/tk-train/src/trainers/bpe/engine/merge/prepare/cohort.rs": "38409841a12252e3b2b53c42d2f692d6531157b5d94250446b341565f3905cc1",
+        "tokenizers/tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs": "11fa2e545d866b7d9ffbb250286f9e4224d76909429c8ac4a63a727bf1ce4619",
+        "tokenizers/tk-train/src/trainers/bpe/engine/merge/prepare/ordinary.rs": "71c152a04ca5022d54a459dfd6d30e6e635d54290b18f38e7ba7f1e8cf2eda6a",
+        "tokenizers/tk-train/src/trainers/bpe/engine/merge/prepare/tests.rs": "e9f5d9737a32b10ebedec0b884b80ba42c4be3a5ddb93f934085f5ff4d0a978a",
+        "tokenizers/tk-train/src/trainers/bpe/engine/mod.rs": "8b13e4145f860a19541b234a051364ddfc22f2631dafdbd6fb8760ec45b33a26",
+        "tokenizers/tk-train/src/trainers/bpe/engine/pair_index/commit.rs": "12f1003fb11b4dd66c91a20002f2cc78940def343bd35f26c98c4c37d9f4db7a",
+        "tokenizers/tk-train/src/trainers/bpe/engine/pair_index.rs": "db4eb4bfdac5c62823fc1d1393028d9165a34997ff6493a71b04e12f4f1919f4",
+        "tokenizers/tk-train/src/trainers/bpe/engine/phase_timing.rs": "345206a5a5b37081ca07f2f887e28cc7df4c3ea6984ceb401c09acfb9a72a19d",
+        "tokenizers/tk-train/src/trainers/bpe/engine/prepare_detail.rs": "9ae9268497af4ffe0f783c4ce89eb08383190e82fdf318546d4fe9010b4b1684",
+        "tokenizers/tk-train/src/trainers/bpe/engine/storage/arena.rs": "373e0ba1aa5334f7e0c46115f4cd76ae91e654a85d7623d78ab59ec5927aa928",
+        "tokenizers/tk-train/src/trainers/bpe/engine/storage/id_accumulator.rs": "b4b56487df8a1d9faf99a5ab9e197f782c7de5e24ab5cb4adb58ad8a6d358088",
+        "tokenizers/tk-train/src/trainers/bpe/engine/storage/interval_index.rs": "f4378f53781d1a4719b3512991f54d83cb1649fa5421ff2cc3d8eeb5e2875088",
+        "tokenizers/tk-train/src/trainers/bpe/engine/storage/mod.rs": "229c859e28f2505c934bb0d10fc09e6f42f0b717592926bbbd080a406f7f1d65",
+        "tokenizers/tk-train/src/trainers/bpe/engine/storage/position_chains.rs": "5b76bcb8be26275b8f6588e73a4e1f6ef8739ffa07921ec1976048353e207ba1",
+        "tokenizers/tk-train/src/trainers/bpe/engine/storage/position_storage.rs": "1399652ef94fff79455a2e2d51e66ad63453bafca18773c3ecb395bf74ac7e5a",
+        "tokenizers/tk-train/src/trainers/bpe/engine/storage/radix.rs": "aa22c9428902e2136f0ebcdf2359402128dc15dd70c64fca8c7f83a4810e656d",
+        "tokenizers/tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs": "f6d0ed0a41d25c4c5bb01c5c37004bd6f3c92bf36bcc4583852c7fb7638fcbab",
+        "tokenizers/tk-train/src/trainers/bpe/engine/tests/identity_reuse.rs": "4fbd75e36abbd33ef6d787dc48bf390da7c9e459076f1ee0c782bbcb9e0b1e84",
+        "tokenizers/tk-train/src/trainers/bpe/engine/tests/initial_corpus.rs": "823001de450eb11c6bb5fd77f36dba9885e5d15b041a150abe011e5d41d28a9e",
+        "tokenizers/tk-train/src/trainers/bpe/engine/tests/mod.rs": "c3a5b2f8463ce853ca08a26710aeff56651b97d1e2842f89365aee55f38f04e8",
+        "tokenizers/tk-train/src/trainers/bpe/engine/tests/producer_fast_path.rs": "8133bc52937182c9a086997bd52c71844b4548d22aa6f8cd20f719a4952374c0",
+        "tokenizers/tk-train/src/trainers/bpe/engine/tests/public_contract.rs": "ea6c761e150beb7a1eff1d65e277ce5323b9a42feffeba465efbc8300fcac14e",
+        "tokenizers/tk-train/src/trainers/bpe/engine/tests/routing_and_publication.rs": "22186705b1192e280cd8db3c1c3e5bc2dd4a5e398706e9f9aa3af2ca857e30e8",
+        "tokenizers/tk-train/src/trainers/bpe/engine/tests/semantic_parity.rs": "b6f6062fe87e3843f126398964e95ab150f3ac45b14f9b7ae76e0e7b2336d905",
+        "tokenizers/tk-train/src/trainers/bpe/engine/vocabulary.rs": "91652a91e3b719e71992c25c9d973a70111c08304d2e25a2e45d89fee3e91ca7"
+      },
+      "runner_lock_sha256": "fcf01b7de4367dc9b92cb3c7e1900a3ecffdb53be05c286a278a4a2228591909",
+      "runner_sources_sha256": {
+        "experiments/bpe-simplification/runner/src/adapters/mod.rs": "a5a2dd2147a680afb61c3ff34629d8ca7d1fc2d759e2931be01bf1567436001a",
+        "experiments/bpe-simplification/runner/src/adapters/tk_train_pr2348.rs": "f2b3030f7546b1d1bf23f06c75cf02e4acbc5e1e2bfbc74c3819c7a5324de1da",
+        "experiments/bpe-simplification/runner/src/adapters/tk_train_v1.rs": "f5ad7a988e842ed232673bb0c60d0d9392f837edde861a6f71740f2a1536663e",
+        "experiments/bpe-simplification/runner/src/core.rs": "d0cddccdad6cb9f275ac4c4b29a65b2920e55ca53f20b435dd2bea80f99d0322",
+        "experiments/bpe-simplification/runner/src/feed_stats.rs": "cd317b213cff235d310e0fa5a66e826cad8a390c143a4d8551e0dd142a4a533d",
+        "experiments/bpe-simplification/runner/src/main.rs": "3bf0c679c660cf07760e1c3647c8308ef4ac7d138f45b8dfb5ca2f663b02c4c5",
+        "experiments/bpe-simplification/runner/src/model_output.rs": "58fedcea52879ce2028f296b2dcb8ae05866bc6cf6c156b0f1a4803a6c273168",
+        "experiments/bpe-simplification/runner/src/pipeline.rs": "300fe769f662872aecb8496efa695ac43382f319e9e1149bcc6226319ab3ecb9",
+        "experiments/bpe-simplification/runner/src/protocol.rs": "127168a11d40812c88718f60c5f3c3422814b43dbe74f8c73e4d738973bdda2f"
+      }
+    },
+    {
+      "arm": "candidate",
+      "base_commit": "7e77262b",
+      "worktree": "/root/code/tokenizers-workspaces/bpe-prepare-detail-candidate-20261010",
+      "command": [
+        "cargo",
+        "build",
+        "--release",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/root/code/tokenizers-workspaces/bpe-prepare-detail-candidate-20261010/experiments/bpe-simplification/runner/Cargo.toml",
+        "-j",
+        "2"
+      ],
+      "binary": "/root/code/tokenizers-simplification-results/online-initial/bin/bpe-bench-prepare-detail-candidate",
+      "binary_sha256": "81a7f588e6c5bbcd6ec9206a98cdee9c65a94939929a64b1b98ae4c4a8ca2b60",
+      "patch": "/root/code/tokenizers-simplification-results/online-initial/prepare-detail-candidate.patch",
+      "patch_sha256": "25600f68c59002c5d1d149703197a643b496c18921be539839f234a6eacb94c1",
+      "sources_sha256": {
+        "tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs": "c9136999117ebb9bb3bb4758b05c4eda9ad7ec5a94e0b853658810adaaf381f3",
+        "tokenizers/tk-train/src/trainers/bpe/engine/index.rs": "77de6fca037fa910ee84a20528de62999db56a9c3a516c63b64084285fb89448",
+        "tokenizers/tk-train/src/trainers/bpe/engine/merge.rs": "091e542daca15ca130e3ba9f21e03cdc57e4f6c900e70dfe27921b2364223890",
+        "tokenizers/tk-train/src/trainers/bpe/engine/mod.rs": "6b5669031dfdbd292c8eeb501e6a872b66968cb6002fb57339f68d82abc7fc64",
+        "tokenizers/tk-train/src/trainers/bpe/engine/phase_timing.rs": "345206a5a5b37081ca07f2f887e28cc7df4c3ea6984ceb401c09acfb9a72a19d",
+        "tokenizers/tk-train/src/trainers/bpe/engine/positions.rs": "d6565a456b0d8f8e3e9b62769ee13c8361fda62778b1b86b6f26abbcc0e39712",
+        "tokenizers/tk-train/src/trainers/bpe/engine/prepare_detail.rs": "9ae9268497af4ffe0f783c4ce89eb08383190e82fdf318546d4fe9010b4b1684",
+        "tokenizers/tk-train/src/trainers/bpe/engine/tests/mod.rs": "312c89d078747a6226ce2e5c1a51623b231c20c64c58694267e70228ac3900a7",
+        "tokenizers/tk-train/src/trainers/bpe/engine/vocabulary.rs": "30730661ce515b1a61f0ca60fc6bdc632832b118a7d08330ca874ff77885d54b"
+      },
+      "runner_lock_sha256": "b0a4e33189592c3c7f5502bb8f0cfc636ea2936698cbbc0b5c1b9a55bbde3aad",
+      "runner_sources_sha256": {
+        "experiments/bpe-simplification/runner/src/adapters/mod.rs": "a5a2dd2147a680afb61c3ff34629d8ca7d1fc2d759e2931be01bf1567436001a",
+        "experiments/bpe-simplification/runner/src/adapters/tk_train_pr2348.rs": "f2b3030f7546b1d1bf23f06c75cf02e4acbc5e1e2bfbc74c3819c7a5324de1da",
+        "experiments/bpe-simplification/runner/src/adapters/tk_train_v1.rs": "f5ad7a988e842ed232673bb0c60d0d9392f837edde861a6f71740f2a1536663e",
+        "experiments/bpe-simplification/runner/src/core.rs": "d0cddccdad6cb9f275ac4c4b29a65b2920e55ca53f20b435dd2bea80f99d0322",
+        "experiments/bpe-simplification/runner/src/feed_stats.rs": "cd317b213cff235d310e0fa5a66e826cad8a390c143a4d8551e0dd142a4a533d",
+        "experiments/bpe-simplification/runner/src/main.rs": "3bf0c679c660cf07760e1c3647c8308ef4ac7d138f45b8dfb5ca2f663b02c4c5",
+        "experiments/bpe-simplification/runner/src/model_output.rs": "58fedcea52879ce2028f296b2dcb8ae05866bc6cf6c156b0f1a4803a6c273168",
+        "experiments/bpe-simplification/runner/src/pipeline.rs": "300fe769f662872aecb8496efa695ac43382f319e9e1149bcc6226319ab3ecb9",
+        "experiments/bpe-simplification/runner/src/protocol.rs": "127168a11d40812c88718f60c5f3c3422814b43dbe74f8c73e4d738973bdda2f"
+      }
+    }
+  ],
+  "profile": {
+    "opt_level": 3,
+    "lto": "fat",
+    "codegen_units": 1
+  },
+  "workers": 4,
+  "affinity": [
+    0,
+    1,
+    2,
+    3
+  ]
+}

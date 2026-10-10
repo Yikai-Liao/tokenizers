@@ -1,0 +1,8 @@
+Selected after all eight detailed 2x2 small-optimization observations: combined.
+Retain dense exact-key rule lookup (principal scan improvement), ordered monotone append (conditional prepare CPU reductions 2.2%/2.9% with +3 production lines); omit wave barrier because its conditional initial-peak saving after online encoding was absent in the first factorial matrix.
+Clean budget 2185 production,797 tests, against2200/800. All performance claims single-observation/exploratory with temporal host variability; no robust percentage claimed.
+Contrast fixed EN/ZH256MiB raw corpora, ByteLevel(regex) and Unicode Whitespace.
+All arms frozen before measurements; original main and2100 baseline share existing ten-stage timers; selected has the identical observer.
+Four configs *three arms(main,baseline,candidate) *one core =12 jobs, then same12 complete pipeline jobs.
+Order per config main->baseline->candidate, no reverse. Affinity0-3, workers4,vocab50000,min_frequency2. Exact complete model identity against same-case main reference; swap/foreign-compiler guards.
+Report feed/train/pipeline and initial/prepare wall+CPU separately, plus whole train HWM. Relative overhead vs main compared within the same pretokenizer; no raw ByteLevel vs Whitespace duration used as optimization effect.

@@ -1,0 +1,5 @@
+User explicitly requires individual and conditional marginal gains and whether every optimization should be retained.
+Before any small-ablation performance job: use the complete 2x2 optimization matrix on two existing immutable sizes, 512MiB then1GiB, each control->ordered->lookup->combined once. Eight processes total, no reverse rounds.
+The 512MiB contrast checks whether CPU attribution is consistent at another scale; memory does not receive a repeated-round acceptance gate.
+For each size report O-C, L-C, OL-C and both conditional additions OL-L and OL-O in scan CPU, joined prepare CPU/wall, full train CPU/wall and HWM. Compute interaction OL-O-L+C; do not allocate the combined gain by assumption.
+User asks to decide which to keep, so retained production patch is selected AFTER these observations, with line budget and correctness evidence. Small/noisy changes remain uncertain rather than being declared robust wins.

@@ -1,0 +1,195 @@
+{
+  "base_commit": "7e77262bc4e7bbeb7d21c267565c3e3a53a02ff6",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)",
+  "profile": {
+    "opt_level": 3,
+    "lto": "fat",
+    "codegen_units": 1
+  },
+  "features": "runner defaults=[]; tk-train default-features=false",
+  "target_cpu": "compiler default; no RUSTFLAGS",
+  "baseline_plain": {
+    "path": "/root/code/tokenizers-simplification-results/bin/review-final",
+    "sha256": "1ab2fbb529c05f13119f46cd77a553099ecd65e7ea5d12a080b4cf0b10db1c97"
+  },
+  "block_slot_cap": 16777216,
+  "wave_block_count": 4,
+  "builds": [
+    {
+      "arm": "experimental",
+      "worktree": "/root/code/tokenizers-workspaces/bpe-online-experiment-20261010",
+      "command": [
+        "cargo",
+        "build",
+        "--release",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/root/code/tokenizers-workspaces/bpe-online-experiment-20261010/experiments/bpe-simplification/runner/Cargo.toml",
+        "-j",
+        "2"
+      ],
+      "binary": "/root/code/tokenizers-simplification-results/online-initial/bin/bpe-bench-experimental",
+      "binary_sha256": "8958ebd9c72702009c37088560080e5adef5054a47dc89cfada930366a0d8a81",
+      "patch": "/root/code/tokenizers-simplification-results/online-initial/experimental.patch",
+      "patch_sha256": "75b6e5e762616e13b9d26ec4709c3260a6b70f12d373fa5068a3729ff880d953",
+      "sources_sha256": {
+        "tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs": "0aa2c51be3cb082d6c19118a2c034267e03d028d3402e99849380b58403f3a58",
+        "tokenizers/tk-train/src/trainers/bpe/engine/index.rs": "25e95f790557f5e812dcd55e6cff9c8245a91792c2b27486d2db4cd63593d5de",
+        "tokenizers/tk-train/src/trainers/bpe/engine/initial_experiment.rs": "55e90927a42d915c059de73c2724c8887f660872c14b76b0aab2abf4b1bcd137",
+        "tokenizers/tk-train/src/trainers/bpe/engine/initial_probe.rs": "a261942cfa0da9a543d5acde823ebbd2e914fd28db29307ce453763d6d6d9b6a",
+        "tokenizers/tk-train/src/trainers/bpe/engine/merge.rs": "f87eecdc4c388d3069b145669a6bcffe643509031abb9385cb58e6c8725548db",
+        "tokenizers/tk-train/src/trainers/bpe/engine/mod.rs": "9a62c3b6bc1b8b6b4de2273a9d8de8ed75b92bb5627fb458613ea821a1f877fc",
+        "tokenizers/tk-train/src/trainers/bpe/engine/positions.rs": "a993166cb7fd617258174cbe7cf0822294efaa0be0815e7a4cbcd56b16322932",
+        "tokenizers/tk-train/src/trainers/bpe/engine/tests/mod.rs": "312c89d078747a6226ce2e5c1a51623b231c20c64c58694267e70228ac3900a7",
+        "tokenizers/tk-train/src/trainers/bpe/engine/vocabulary.rs": "30730661ce515b1a61f0ca60fc6bdc632832b118a7d08330ca874ff77885d54b"
+      },
+      "runner_lock_sha256": "b0a4e33189592c3c7f5502bb8f0cfc636ea2936698cbbc0b5c1b9a55bbde3aad",
+      "runner_sources_sha256": {
+        "experiments/bpe-simplification/runner/src/adapters/mod.rs": "a5a2dd2147a680afb61c3ff34629d8ca7d1fc2d759e2931be01bf1567436001a",
+        "experiments/bpe-simplification/runner/src/adapters/tk_train_pr2348.rs": "f2b3030f7546b1d1bf23f06c75cf02e4acbc5e1e2bfbc74c3819c7a5324de1da",
+        "experiments/bpe-simplification/runner/src/adapters/tk_train_v1.rs": "f5ad7a988e842ed232673bb0c60d0d9392f837edde861a6f71740f2a1536663e",
+        "experiments/bpe-simplification/runner/src/core.rs": "d0cddccdad6cb9f275ac4c4b29a65b2920e55ca53f20b435dd2bea80f99d0322",
+        "experiments/bpe-simplification/runner/src/feed_stats.rs": "cd317b213cff235d310e0fa5a66e826cad8a390c143a4d8551e0dd142a4a533d",
+        "experiments/bpe-simplification/runner/src/main.rs": "3bf0c679c660cf07760e1c3647c8308ef4ac7d138f45b8dfb5ca2f663b02c4c5",
+        "experiments/bpe-simplification/runner/src/model_output.rs": "58fedcea52879ce2028f296b2dcb8ae05866bc6cf6c156b0f1a4803a6c273168",
+        "experiments/bpe-simplification/runner/src/pipeline.rs": "300fe769f662872aecb8496efa695ac43382f319e9e1149bcc6226319ab3ecb9",
+        "experiments/bpe-simplification/runner/src/protocol.rs": "127168a11d40812c88718f60c5f3c3422814b43dbe74f8c73e4d738973bdda2f"
+      }
+    },
+    {
+      "arm": "baseline-probe",
+      "worktree": "/root/code/tokenizers-workspaces/bpe-online-baseline-probe-20261010",
+      "command": [
+        "cargo",
+        "build",
+        "--release",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/root/code/tokenizers-workspaces/bpe-online-baseline-probe-20261010/experiments/bpe-simplification/runner/Cargo.toml",
+        "-j",
+        "2"
+      ],
+      "binary": "/root/code/tokenizers-simplification-results/online-initial/bin/bpe-bench-baseline-probe",
+      "binary_sha256": "80189a164b5f4017387b5b85bbd6a449bb078da33c3d83338b5f3d635ed4e255",
+      "patch": "/root/code/tokenizers-simplification-results/online-initial/baseline-probe.patch",
+      "patch_sha256": "4acdd56b8154b82d46dbf7dbe8eb06e1e6453050200e04de80eed4881ab65f72",
+      "sources_sha256": {
+        "tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs": "47db898fccfd76cce7822e6e29b094f00025504442b44586ac31b21bafc83154",
+        "tokenizers/tk-train/src/trainers/bpe/engine/index.rs": "873183938a0859c75989e82eec176a50cc9051731a682a5641d97d565fd47afa",
+        "tokenizers/tk-train/src/trainers/bpe/engine/initial_probe.rs": "a261942cfa0da9a543d5acde823ebbd2e914fd28db29307ce453763d6d6d9b6a",
+        "tokenizers/tk-train/src/trainers/bpe/engine/merge.rs": "f87eecdc4c388d3069b145669a6bcffe643509031abb9385cb58e6c8725548db",
+        "tokenizers/tk-train/src/trainers/bpe/engine/mod.rs": "9a62c3b6bc1b8b6b4de2273a9d8de8ed75b92bb5627fb458613ea821a1f877fc",
+        "tokenizers/tk-train/src/trainers/bpe/engine/positions.rs": "e07adffa196f246d2e014af968f25511bcadec27a241cbac3bb31f9242d3105f",
+        "tokenizers/tk-train/src/trainers/bpe/engine/tests/mod.rs": "312c89d078747a6226ce2e5c1a51623b231c20c64c58694267e70228ac3900a7",
+        "tokenizers/tk-train/src/trainers/bpe/engine/vocabulary.rs": "30730661ce515b1a61f0ca60fc6bdc632832b118a7d08330ca874ff77885d54b"
+      },
+      "runner_lock_sha256": "b0a4e33189592c3c7f5502bb8f0cfc636ea2936698cbbc0b5c1b9a55bbde3aad",
+      "runner_sources_sha256": {
+        "experiments/bpe-simplification/runner/src/adapters/mod.rs": "a5a2dd2147a680afb61c3ff34629d8ca7d1fc2d759e2931be01bf1567436001a",
+        "experiments/bpe-simplification/runner/src/adapters/tk_train_pr2348.rs": "f2b3030f7546b1d1bf23f06c75cf02e4acbc5e1e2bfbc74c3819c7a5324de1da",
+        "experiments/bpe-simplification/runner/src/adapters/tk_train_v1.rs": "f5ad7a988e842ed232673bb0c60d0d9392f837edde861a6f71740f2a1536663e",
+        "experiments/bpe-simplification/runner/src/core.rs": "d0cddccdad6cb9f275ac4c4b29a65b2920e55ca53f20b435dd2bea80f99d0322",
+        "experiments/bpe-simplification/runner/src/feed_stats.rs": "cd317b213cff235d310e0fa5a66e826cad8a390c143a4d8551e0dd142a4a533d",
+        "experiments/bpe-simplification/runner/src/main.rs": "3bf0c679c660cf07760e1c3647c8308ef4ac7d138f45b8dfb5ca2f663b02c4c5",
+        "experiments/bpe-simplification/runner/src/model_output.rs": "58fedcea52879ce2028f296b2dcb8ae05866bc6cf6c156b0f1a4803a6c273168",
+        "experiments/bpe-simplification/runner/src/pipeline.rs": "300fe769f662872aecb8496efa695ac43382f319e9e1149bcc6226319ab3ecb9",
+        "experiments/bpe-simplification/runner/src/protocol.rs": "127168a11d40812c88718f60c5f3c3422814b43dbe74f8c73e4d738973bdda2f"
+      }
+    },
+    {
+      "arm": "candidate",
+      "worktree": "/root/code/tokenizers-workspaces/bpe-online-candidate-20261010",
+      "command": [
+        "cargo",
+        "build",
+        "--release",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/root/code/tokenizers-workspaces/bpe-online-candidate-20261010/experiments/bpe-simplification/runner/Cargo.toml",
+        "-j",
+        "2"
+      ],
+      "binary": "/root/code/tokenizers-simplification-results/online-initial/bin/bpe-bench-candidate",
+      "binary_sha256": "9d51be2dbc6edd4a71902abb130066902b59cd89345d0147372b5fce33b5810b",
+      "patch": "/root/code/tokenizers-simplification-results/online-initial/candidate.patch",
+      "patch_sha256": "e4899e958c37b7ffed22f7e23f38b30e5b7aa9b999f9add0ad9f74715b590a57",
+      "sources_sha256": {
+        "tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs": "c9136999117ebb9bb3bb4758b05c4eda9ad7ec5a94e0b853658810adaaf381f3",
+        "tokenizers/tk-train/src/trainers/bpe/engine/index.rs": "77de6fca037fa910ee84a20528de62999db56a9c3a516c63b64084285fb89448",
+        "tokenizers/tk-train/src/trainers/bpe/engine/merge.rs": "f87eecdc4c388d3069b145669a6bcffe643509031abb9385cb58e6c8725548db",
+        "tokenizers/tk-train/src/trainers/bpe/engine/mod.rs": "8858282626fa23e3b8b4c7bf21248fe09946e6ee512d226c7d8e1ff5e18b1a5b",
+        "tokenizers/tk-train/src/trainers/bpe/engine/positions.rs": "d6565a456b0d8f8e3e9b62769ee13c8361fda62778b1b86b6f26abbcc0e39712",
+        "tokenizers/tk-train/src/trainers/bpe/engine/tests/mod.rs": "312c89d078747a6226ce2e5c1a51623b231c20c64c58694267e70228ac3900a7",
+        "tokenizers/tk-train/src/trainers/bpe/engine/vocabulary.rs": "30730661ce515b1a61f0ca60fc6bdc632832b118a7d08330ca874ff77885d54b"
+      },
+      "runner_lock_sha256": "b0a4e33189592c3c7f5502bb8f0cfc636ea2936698cbbc0b5c1b9a55bbde3aad",
+      "runner_sources_sha256": {
+        "experiments/bpe-simplification/runner/src/adapters/mod.rs": "a5a2dd2147a680afb61c3ff34629d8ca7d1fc2d759e2931be01bf1567436001a",
+        "experiments/bpe-simplification/runner/src/adapters/tk_train_pr2348.rs": "f2b3030f7546b1d1bf23f06c75cf02e4acbc5e1e2bfbc74c3819c7a5324de1da",
+        "experiments/bpe-simplification/runner/src/adapters/tk_train_v1.rs": "f5ad7a988e842ed232673bb0c60d0d9392f837edde861a6f71740f2a1536663e",
+        "experiments/bpe-simplification/runner/src/core.rs": "d0cddccdad6cb9f275ac4c4b29a65b2920e55ca53f20b435dd2bea80f99d0322",
+        "experiments/bpe-simplification/runner/src/feed_stats.rs": "cd317b213cff235d310e0fa5a66e826cad8a390c143a4d8551e0dd142a4a533d",
+        "experiments/bpe-simplification/runner/src/main.rs": "3bf0c679c660cf07760e1c3647c8308ef4ac7d138f45b8dfb5ca2f663b02c4c5",
+        "experiments/bpe-simplification/runner/src/model_output.rs": "58fedcea52879ce2028f296b2dcb8ae05866bc6cf6c156b0f1a4803a6c273168",
+        "experiments/bpe-simplification/runner/src/pipeline.rs": "300fe769f662872aecb8496efa695ac43382f319e9e1149bcc6226319ab3ecb9",
+        "experiments/bpe-simplification/runner/src/protocol.rs": "127168a11d40812c88718f60c5f3c3422814b43dbe74f8c73e4d738973bdda2f"
+      }
+    }
+  ],
+  "candidate_lines": {
+    "production": {
+      "engine/corpus.rs": 395,
+      "engine/index.rs": 407,
+      "engine/merge.rs": 564,
+      "engine/mod.rs": 94,
+      "engine/positions.rs": 392,
+      "engine/vocabulary.rs": 313
+    },
+    "tests": {
+      "engine/corpus.rs [cfg(test)]": 2,
+      "engine/merge.rs [cfg(test)]": 10,
+      "engine/mod.rs [cfg(test)]": 17,
+      "engine/positions.rs [cfg(test)]": 109,
+      "engine/tests/mod.rs": 437,
+      "reference.rs [oracle and shared helpers]": 154,
+      "mod.rs [cfg(test) public API/helpers]": 6,
+      "feed.rs [cfg(test) public API/helpers]": 0,
+      "word_counts.rs [cfg(test) public API/helpers]": 42,
+      "trainers/mod.rs [cfg(test) BPE wrapper]": 12,
+      "experiments/bpe-simplification/miri-codec/src/lib.rs [Miri harness]": 4
+    },
+    "production_total": 2165,
+    "test_total": 793,
+    "counting_rule": "Nonblank noncomment lines after cargo fmt --check; all engine implementation; all default BPE cfg(test) including feed/word_counts and the shared trainer wrapper, independent reference and Miri harness. The oracle no longer uses the optional parity trainer Word. No implementation relocated outside engine.",
+    "production_limit": 2200,
+    "test_limit": 800,
+    "within_budget": true
+  },
+  "measurement_script_sha256": "6115e7810bdc32f63daa24ded7da8a1e5cefbfda9c3972ad0cd3c4f407c592d7",
+  "inputs": [
+    {
+      "case": "zh-256MiB",
+      "requested_mib": 256,
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+      "bytes": 268435162,
+      "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+      "prepared_path": "/root/code/tokenizers-perfetto-results/inputs/zh-bytelevel/words.json",
+      "prepared_sha256": "bb796d0b57b87d965b84de249bc5c8e283b700774638d16a40e4ae5171b13ee0",
+      "unique_words": 6859987
+    },
+    {
+      "case": "zh-512MiB",
+      "requested_mib": 512,
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/prezza/zh512/text.txt",
+      "bytes": 536870289,
+      "source_sha256": "a0d40d4102cba1e933f25e5ccd17552d2eaebaec4ef770bc39d8e46e740b4d4f",
+      "prepared_path": "/root/code/tokenizers-simplification-results/final-scaling/inputs/zh-512MiB/words.json",
+      "prepared_sha256": "6addcde37de50cc119cce3052a22af5c86b7c0a085748c9c30efb5651abcbd4d",
+      "prepared_bytes": 839693526,
+      "unique_words": 13035637
+    }
+  ]
+}

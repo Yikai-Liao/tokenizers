@@ -1,0 +1,18 @@
+{
+  "protocol_version": 1,
+  "attempt_id": "phases-1-main",
+  "build_id": "main",
+  "input_id": "zh-1024MiB",
+  "mode": "core",
+  "input": "/root/code/tokenizers-simplification-results/online-initial/one-gib/words.json",
+  "output": "/root/code/tokenizers-simplification-results/online-initial/runs/phases/zh-1024MiB/01-main/model.json",
+  "workers": 4,
+  "pretokenizer": "bytelevel_regex",
+  "trainer": {
+    "vocab_size": 50000,
+    "min_frequency": 2,
+    "prefix": null,
+    "suffix": null,
+    "max_token_length": null
+  }
+}

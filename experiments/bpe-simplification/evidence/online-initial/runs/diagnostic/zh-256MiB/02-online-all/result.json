@@ -1,0 +1,73 @@
+{
+  "case": "zh-256MiB",
+  "arm": "online-all",
+  "kind": "diagnostic",
+  "repeat": 2,
+  "command": [
+    "taskset",
+    "-c",
+    "0-3",
+    "/root/code/tokenizers-simplification-results/online-initial/bin/bpe-bench-experimental",
+    "/root/code/tokenizers-simplification-results/online-initial/runs/diagnostic/zh-256MiB/02-online-all/job.json"
+  ],
+  "environment": {
+    "BPE_INITIAL_EXPERIMENT": "online-all",
+    "BPE_INITIAL_DIAGNOSTIC": "1"
+  },
+  "binary_sha256": "8958ebd9c72702009c37088560080e5adef5054a47dc89cfada930366a0d8a81",
+  "returncode": 0,
+  "failure": null,
+  "elapsed_seconds": 35.97691361501347,
+  "foreign_processes": [],
+  "max_swap_kib": 0,
+  "minimum_available_kib": 7874552,
+  "attempt_id": "diagnostic-2-online-all",
+  "build_id": "online-all",
+  "effective_affinity": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "input_id": "zh-256MiB",
+  "metrics": {
+    "load_seconds": 9.778109012,
+    "process_hwm_kib_before_validation": 2535168,
+    "train_cpu_seconds": 76.11667200000001,
+    "train_seconds": 24.038290019
+  },
+  "mode": "core",
+  "output": {
+    "actual_merges": 49744,
+    "actual_vocab": 50000,
+    "model_path": "/root/code/tokenizers-simplification-results/online-initial/runs/diagnostic/zh-256MiB/02-online-all/model.json",
+    "special_tokens": 0
+  },
+  "protocol_version": 1,
+  "timing_boundary": "public-do-train-before-serialization",
+  "workers_requested": 4,
+  "model_equal": true,
+  "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+  "geometry": [
+    {
+      "mode": "online-all",
+      "blocks": 13,
+      "waves": 1,
+      "block_slot_cap": 16777216,
+      "max_block_slots": 16777212,
+      "max_block_words": 871463
+    }
+  ],
+  "initial_phase": [
+    {
+      "wall_seconds": 4.240509033,
+      "cpu_seconds": 15.775619443999998,
+      "begin_rss_kib": 875512,
+      "end_rss_kib": 1526784,
+      "begin_hwm_kib": 1059436,
+      "end_hwm_kib": 1526784,
+      "new_process_hwm_kib": 1526784
+    }
+  ],
+  "valid": true
+}

@@ -1,0 +1,243 @@
+{
+  "case": "zh-512MiB",
+  "arm": "combined",
+  "kind": "prepare-ablation",
+  "repeat": 1,
+  "comparison_repeat": 1,
+  "command": [
+    "taskset",
+    "-c",
+    "0-3",
+    "/root/code/tokenizers-simplification-results/online-initial/bin/bpe-bench-small-detail-combined",
+    "/root/code/tokenizers-simplification-results/online-initial/runs/prepare-ablation/zh-512MiB/01-combined/job.json"
+  ],
+  "environment": {},
+  "binary_sha256": "552357f82561b84333bc0795df8652742f648b9d2dedf0d4832759436d8f4f8e",
+  "returncode": 0,
+  "failure": null,
+  "elapsed_seconds": 64.74469806498382,
+  "foreign_processes": [],
+  "max_swap_kib": 0,
+  "minimum_available_kib": 7036352,
+  "attempt_id": "prepare-ablation-1-combined",
+  "build_id": "combined",
+  "effective_affinity": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "input_id": "zh-512MiB",
+  "metrics": {
+    "load_seconds": 17.917365472,
+    "process_hwm_kib_before_validation": 4938604,
+    "train_cpu_seconds": 122.74311800000001,
+    "train_seconds": 37.281818397
+  },
+  "mode": "core",
+  "output": {
+    "actual_merges": 49744,
+    "actual_vocab": 50000,
+    "model_path": "/root/code/tokenizers-simplification-results/online-initial/runs/prepare-ablation/zh-512MiB/01-combined/model.json",
+    "special_tokens": 0
+  },
+  "protocol_version": 1,
+  "timing_boundary": "public-do-train-before-serialization",
+  "workers_requested": 4,
+  "model_equal": true,
+  "model_sha256": "3801e5ba79dd3bd89b0697371bf52f958d80879e6819e494edcd89c9a41d1d06",
+  "geometry": [],
+  "initial_phase": [],
+  "phases": [
+    {
+      "name": "vocabulary",
+      "wall_seconds": 1.206430327,
+      "cpu_seconds": 4.34989173,
+      "calls": 1,
+      "max_begin_rss_kib": 1386816,
+      "max_end_rss_kib": 1388024,
+      "new_process_hwm_kib": 0
+    },
+    {
+      "name": "corpus_plan",
+      "wall_seconds": 1.271366209,
+      "cpu_seconds": 3.677356734,
+      "calls": 1,
+      "max_begin_rss_kib": 1388024,
+      "max_end_rss_kib": 1697740,
+      "new_process_hwm_kib": 0
+    },
+    {
+      "name": "initial_index",
+      "wall_seconds": 7.878393768,
+      "cpu_seconds": 28.931818467,
+      "calls": 1,
+      "max_begin_rss_kib": 1697744,
+      "max_end_rss_kib": 3001460,
+      "new_process_hwm_kib": 3001460
+    },
+    {
+      "name": "materialize",
+      "wall_seconds": 1.806368317,
+      "cpu_seconds": 5.727311425,
+      "calls": 1,
+      "max_begin_rss_kib": 3001460,
+      "max_end_rss_kib": 3457496,
+      "new_process_hwm_kib": 3762796
+    },
+    {
+      "name": "select",
+      "wall_seconds": 0.501906544,
+      "cpu_seconds": 0.497631717,
+      "calls": 1758,
+      "max_begin_rss_kib": 4841636,
+      "max_end_rss_kib": 4841636,
+      "new_process_hwm_kib": 4538200
+    },
+    {
+      "name": "prepare",
+      "wall_seconds": 16.194792709,
+      "cpu_seconds": 57.825607427,
+      "calls": 1758,
+      "max_begin_rss_kib": 4841636,
+      "max_end_rss_kib": 4843704,
+      "new_process_hwm_kib": 4538404
+    },
+    {
+      "name": "apply",
+      "wall_seconds": 2.504106552,
+      "cpu_seconds": 9.093405067,
+      "calls": 1758,
+      "max_begin_rss_kib": 4843704,
+      "max_end_rss_kib": 4843704,
+      "new_process_hwm_kib": 0
+    },
+    {
+      "name": "commit",
+      "wall_seconds": 4.770216951,
+      "cpu_seconds": 11.076997263,
+      "calls": 1758,
+      "max_begin_rss_kib": 4843704,
+      "max_end_rss_kib": 4843704,
+      "new_process_hwm_kib": 4938604
+    },
+    {
+      "name": "release",
+      "wall_seconds": 0.188964111,
+      "cpu_seconds": 0.187493382,
+      "calls": 1,
+      "max_begin_rss_kib": 4843704,
+      "max_end_rss_kib": 2724980,
+      "new_process_hwm_kib": 0
+    },
+    {
+      "name": "model_output",
+      "wall_seconds": 0.02233731,
+      "cpu_seconds": 0.022331805,
+      "calls": 1,
+      "max_begin_rss_kib": 2724980,
+      "max_end_rss_kib": 2724980,
+      "new_process_hwm_kib": 0
+    }
+  ],
+  "prepare_detail": {
+    "stages": [
+      {
+        "name": "selected_index",
+        "wall_seconds": 0.146312975,
+        "cpu_seconds": 0.143290383,
+        "calls": 1758,
+        "cpu_clock": "process"
+      },
+      {
+        "name": "aa_prepass",
+        "wall_seconds": 0.024075093,
+        "cpu_seconds": 0.021658023,
+        "calls": 1758,
+        "cpu_clock": "process"
+      },
+      {
+        "name": "task_partition",
+        "wall_seconds": 0.013107464,
+        "cpu_seconds": 0.010787622,
+        "calls": 1758,
+        "cpu_clock": "process"
+      },
+      {
+        "name": "ordinary_joined",
+        "wall_seconds": 16.085051288,
+        "cpu_seconds": 57.711019595,
+        "calls": 1586,
+        "cpu_clock": "process"
+      },
+      {
+        "name": "aa_joined",
+        "wall_seconds": 0.103470562,
+        "cpu_seconds": 0.106704074,
+        "calls": 172,
+        "cpu_clock": "process"
+      },
+      {
+        "name": "reuse_joined",
+        "wall_seconds": 0,
+        "cpu_seconds": 0,
+        "calls": 0,
+        "cpu_clock": "process"
+      },
+      {
+        "name": "worker_total",
+        "wall_seconds": 58.224302826,
+        "cpu_seconds": 56.688653197,
+        "calls": 50084,
+        "cpu_clock": "thread"
+      },
+      {
+        "name": "worker_setup",
+        "wall_seconds": 1.932535022,
+        "cpu_seconds": 1.802912411,
+        "calls": 50084,
+        "cpu_clock": "thread"
+      },
+      {
+        "name": "scan_collect",
+        "wall_seconds": 45.58158427,
+        "cpu_seconds": 44.388316225,
+        "calls": 50084,
+        "cpu_clock": "thread"
+      },
+      {
+        "name": "finish_encode",
+        "wall_seconds": 10.548913784,
+        "cpu_seconds": 10.164529208,
+        "calls": 50084,
+        "cpu_clock": "thread"
+      },
+      {
+        "name": "postjoin_gather",
+        "wall_seconds": 0,
+        "cpu_seconds": 0,
+        "calls": 0,
+        "cpu_clock": "process"
+      },
+      {
+        "name": "candidate_release",
+        "wall_seconds": 0.04079665,
+        "cpu_seconds": 0.059452176,
+        "calls": 1758,
+        "cpu_clock": "process"
+      }
+    ],
+    "counters": {
+      "rules": 49744,
+      "candidate_positions": 311856998,
+      "ordinary_jobs": 49908,
+      "ordinary_tasks": 49908,
+      "complete_tasks": 49300,
+      "partial_tasks": 608,
+      "scan_positions": 311737978,
+      "matched_positions": 299664139,
+      "neighbor_groups": 26149552
+    }
+  },
+  "valid": true
+}

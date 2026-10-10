@@ -1,0 +1,9 @@
+Declared after preparation attribution and before builds or measurements.
+Attribution: scan/collect thread CPU 72.192 main vs102.050 online candidate; finish17.834 vs17.704; scan accounts for~92% of extra joined prepare CPU.
+Four arms, same detailed observer and frozen online-all base: control, ordered-push only, dense-rule lookup only, combined.
+Ordered-push removes repeated last-position checks only in monotone snapshot birth/write appenders. Generic Builder::push/append and final encoder keep validation; promotion/allocation behavior unchanged.
+Dense lookup uses head-indexed unique counterpart/replacement entries, tail presence gate, and exact original hash fallback for shared heads. Same compatible batch selection and alias/reuse handling.
+Clean formatted source budgets control2165/793, ordered2168/793, lookup2182/797, combined2185/797. No source minification; changed test exercises a batch with shared heads and tails.
+Validate all three clean candidates natively, combined default/no-default/doc/Clippy and strict Miri. Then freeze all three diagnostic binaries before any measurement.
+One 1GiB core sample per arm in order control,ordered,lookup,combined. CPUs0-3, workers4, vocab50K,min2. No reverse order. All existing swap/foreign-build guards and full model equality.
+Compare scan/collect and whole prepare CPU/wall, total train, HWM separately. Single samples are exploratory; carry raw timings and host-period limitations.

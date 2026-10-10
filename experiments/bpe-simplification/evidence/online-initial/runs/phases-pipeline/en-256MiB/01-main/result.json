@@ -1,0 +1,148 @@
+{
+  "case": "en-256MiB",
+  "arm": "main",
+  "kind": "phases-pipeline",
+  "repeat": 1,
+  "comparison_repeat": 1,
+  "command": [
+    "taskset",
+    "-c",
+    "0-3",
+    "/root/code/tokenizers-simplification-results/bin/full-review-main-geometry",
+    "/root/code/tokenizers-simplification-results/online-initial/runs/phases-pipeline/en-256MiB/01-main/job.json"
+  ],
+  "environment": {},
+  "binary_sha256": "b4b51b4e0c335be1080a0f80e0e9b18a09b92f3baaecdef750b9cbc9e90b8deb",
+  "returncode": 0,
+  "failure": null,
+  "elapsed_seconds": 6.064471113029867,
+  "foreign_processes": [],
+  "max_swap_kib": 0,
+  "minimum_available_kib": 11954352,
+  "attempt_id": "phases-pipeline-1-main",
+  "build_id": "main",
+  "effective_affinity": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "input_id": "en-256MiB",
+  "metrics": {
+    "feed_seconds": 4.206132937,
+    "feed_unique_utf8_bytes": 8056279,
+    "feed_unique_words": 836105,
+    "pipeline_cpu_seconds": 20.412621,
+    "pipeline_seconds": 5.9161529569999995,
+    "process_hwm_kib_before_validation": 166644,
+    "train_cpu_seconds": 3.865998000000001,
+    "train_seconds": 1.710012994
+  },
+  "mode": "pipeline",
+  "output": {
+    "actual_merges": 49744,
+    "actual_vocab": 50000,
+    "model_path": "/root/code/tokenizers-simplification-results/online-initial/runs/phases-pipeline/en-256MiB/01-main/model.json",
+    "special_tokens": 0
+  },
+  "protocol_version": 1,
+  "timing_boundary": "public-feed-and-train-before-serialization",
+  "workers_requested": 4,
+  "model_equal": true,
+  "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+  "geometry": [],
+  "initial_phase": [],
+  "phases": [
+    {
+      "name": "vocabulary",
+      "wall_seconds": 0.018885311,
+      "cpu_seconds": 0.03533845,
+      "calls": 1,
+      "max_begin_rss_kib": 35332,
+      "max_end_rss_kib": 43064,
+      "new_process_hwm_kib": 0
+    },
+    {
+      "name": "corpus_plan",
+      "wall_seconds": 0.065881149,
+      "cpu_seconds": 0.105760265,
+      "calls": 1,
+      "max_begin_rss_kib": 43068,
+      "max_end_rss_kib": 69040,
+      "new_process_hwm_kib": 69040
+    },
+    {
+      "name": "initial_index",
+      "wall_seconds": 0.108614153,
+      "cpu_seconds": 0.323991672,
+      "calls": 2,
+      "max_begin_rss_kib": 92052,
+      "max_end_rss_kib": 92052,
+      "new_process_hwm_kib": 91988
+    },
+    {
+      "name": "materialize",
+      "wall_seconds": 0.019614764,
+      "cpu_seconds": 0.076098941,
+      "calls": 1,
+      "max_begin_rss_kib": 91988,
+      "max_end_rss_kib": 92052,
+      "new_process_hwm_kib": 92052
+    },
+    {
+      "name": "select",
+      "wall_seconds": 0.149327836,
+      "cpu_seconds": 0.146824096,
+      "calls": 1335,
+      "max_begin_rss_kib": 166580,
+      "max_end_rss_kib": 166580,
+      "new_process_hwm_kib": 166576
+    },
+    {
+      "name": "prepare",
+      "wall_seconds": 0.485626778,
+      "cpu_seconds": 1.378449163,
+      "calls": 2670,
+      "max_begin_rss_kib": 166580,
+      "max_end_rss_kib": 166580,
+      "new_process_hwm_kib": 166556
+    },
+    {
+      "name": "apply",
+      "wall_seconds": 0.071182006,
+      "cpu_seconds": 0.182690853,
+      "calls": 1335,
+      "max_begin_rss_kib": 166580,
+      "max_end_rss_kib": 166580,
+      "new_process_hwm_kib": 0
+    },
+    {
+      "name": "commit",
+      "wall_seconds": 0.23196017,
+      "cpu_seconds": 0.626795757,
+      "calls": 2670,
+      "max_begin_rss_kib": 166580,
+      "max_end_rss_kib": 166580,
+      "new_process_hwm_kib": 166580
+    },
+    {
+      "name": "release",
+      "wall_seconds": 0.008987063,
+      "cpu_seconds": 0.008978957,
+      "calls": 1,
+      "max_begin_rss_kib": 166580,
+      "max_end_rss_kib": 166580,
+      "new_process_hwm_kib": 0
+    },
+    {
+      "name": "model_output",
+      "wall_seconds": 0.025297104,
+      "cpu_seconds": 0.025291097,
+      "calls": 1,
+      "max_begin_rss_kib": 166580,
+      "max_end_rss_kib": 166580,
+      "new_process_hwm_kib": 0
+    }
+  ],
+  "valid": true
+}

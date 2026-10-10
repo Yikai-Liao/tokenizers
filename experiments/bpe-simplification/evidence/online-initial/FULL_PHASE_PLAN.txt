@@ -1,0 +1,14 @@
+User requested joined-stage attribution instead of uninstrumented timings.
+1GiB same immutable prepared ByteLevel map; main/prototype two adjacent pairs,
+AB then BA. Ten disjoint joined phases: vocabulary, corpus_plan, initial_index,
+materialize, select, prepare, apply, commit, release, model_output. Record wall,
+CLOCK_PROCESS_CPUTIME, RSS begin/end and newly established process HWM. Same profile,
+4 workers, affinity 0-3, vocabulary 50k and min_frequency 2. Complete model equality,
+resource guards and full raw logs. Main's nested initial-collection observer is
+additional geometry/memory evidence; do not add nested CPU/wall to the ten-stage sum.
+Report public train minus sum(stages) as observer/coordinator/unattributed gap.
+The new adjacent total gap may differ from the earlier uninstrumented-main /
+initial-only-prototype single-run 23%; never force that earlier percentage onto
+new phase measurements. Clean production prototype remains frozen at +65 lines.
+Keep ByteLevel/Whitespace English+Chinese 256MiB comparison using all three
+fully instrumented binaries; define its exact run order before launching it.

@@ -1,0 +1,12 @@
+Full phase contrast, declared before preparation or measurements.
+Immutable frozen main / current 2100-line baseline / 2165-line online candidate from full-phase-manifest.json.
+Raw 256 MiB per language, English and Chinese; ByteLevel regex and Whitespace.
+Core: 2 rounds per case, main-baseline-candidate then candidate-baseline-main. 24 processes.
+Pipeline: 1 round per case, main-baseline-candidate. 12 processes.
+Serial preparation AFTER four 1 GiB phase runs; serial measurement, CPUs 0-3, 4 workers, 50K vocabulary, min frequency 2.
+All ten stages instrumented in every arm; public training/pipeline time and process CPU reported with stage sums and unassigned gaps.
+Full model equality, own swap/available-memory guard and foreign build/benchmark guard.
+Repeated rounds measure CPU/wall variability; memory not a statistical acceptance gate.
+No uninstrumented follow-up in this plan.
+
+User later cancelled reverse-order rounds before any pretokenizer preparation. Core now one round (12 processes), pipeline still one round (12). Detailed preparation attribution takes priority.

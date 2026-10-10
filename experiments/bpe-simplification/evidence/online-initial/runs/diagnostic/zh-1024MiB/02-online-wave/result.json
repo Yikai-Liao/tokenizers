@@ -1,0 +1,73 @@
+{
+  "case": "zh-1024MiB",
+  "arm": "online-wave",
+  "kind": "diagnostic",
+  "repeat": 2,
+  "command": [
+    "taskset",
+    "-c",
+    "0-3",
+    "/root/code/tokenizers-simplification-results/online-initial/bin/bpe-bench-experimental",
+    "/root/code/tokenizers-simplification-results/online-initial/runs/diagnostic/zh-1024MiB/02-online-wave/job.json"
+  ],
+  "environment": {
+    "BPE_INITIAL_EXPERIMENT": "online-wave",
+    "BPE_INITIAL_DIAGNOSTIC": "1"
+  },
+  "binary_sha256": "8958ebd9c72702009c37088560080e5adef5054a47dc89cfada930366a0d8a81",
+  "returncode": 0,
+  "failure": null,
+  "elapsed_seconds": 189.45055720594246,
+  "foreign_processes": [],
+  "max_swap_kib": 0,
+  "minimum_available_kib": 1430332,
+  "attempt_id": "diagnostic-2-online-wave",
+  "build_id": "online-wave",
+  "effective_affinity": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "input_id": "zh-1024MiB",
+  "metrics": {
+    "load_seconds": 42.421254394,
+    "process_hwm_kib_before_validation": 8549720,
+    "train_cpu_seconds": 286.948465,
+    "train_seconds": 124.930724568
+  },
+  "mode": "core",
+  "output": {
+    "actual_merges": 49744,
+    "actual_vocab": 50000,
+    "model_path": "/root/code/tokenizers-simplification-results/online-initial/runs/diagnostic/zh-1024MiB/02-online-wave/model.json",
+    "special_tokens": 0
+  },
+  "protocol_version": 1,
+  "timing_boundary": "public-do-train-before-serialization",
+  "workers_requested": 4,
+  "model_equal": true,
+  "model_sha256": "33336b93cf6f95c286fe1b43f314eca7e57a0bb08deca9a955a868ee62cf3aea",
+  "geometry": [
+    {
+      "mode": "online-wave",
+      "blocks": 45,
+      "waves": 12,
+      "block_slot_cap": 16777216,
+      "max_block_slots": 16777216,
+      "max_block_words": 1192509
+    }
+  ],
+  "initial_phase": [
+    {
+      "wall_seconds": 36.035083155,
+      "cpu_seconds": 66.242791342,
+      "begin_rss_kib": 3275480,
+      "end_rss_kib": 5815456,
+      "begin_hwm_kib": 4003080,
+      "end_hwm_kib": 5815456,
+      "new_process_hwm_kib": 5815456
+    }
+  ],
+  "valid": true
+}

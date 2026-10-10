@@ -1,0 +1,22 @@
+User-requested ByteLevel BPE versus non-ByteLevel overhead comparison.
+Non-ByteLevel selected explicitly: Whitespace (not WhitespaceSplit or none).
+English and Chinese, same immutable raw 256MiB corpora per language; workers 4,
+affinity 0-3, vocabulary 50k, min-frequency 2, no prefix/suffix/length cap.
+ByteLevel means the existing runner's GPT2 regex + byte-to-Unicode normalization
+with the full 256-character initial alphabet; no injected line-prefix space.
+Whitespace uses the public Unicode Whitespace pretokenizer and corpus alphabet.
+Within each language/pretokenizer compare original Fork main, unchanged 2100-line
+simplification, and the frozen 2165-line immediately-compressed prototype.
+Core excludes preprocessing; each mode uses one prepared map shared by all arms,
+fixed lexical reconstruction and hash seeds [11,13,17,19]. Core n=3, rotating order
+M/B/C, C/M/B, B/C/M; reuse the exact Chinese ByteLevel core samples in the prior plan.
+Public pipeline n=1 per arm/mode/language separately reports feed, training, total,
+process CPU and HWM. Full pipeline models must equal the prepared-core reference.
+Each configuration's model is compared only within that same pretokenizer, never
+between ByteLevel and Whitespace vocabularies. Main creates new Whitespace references.
+Report per-configuration simplified/main ratios and their difference in percentage
+points, with raw ranges. Do not compare absolute times as if pretokenizers produced
+the same physical corpus. No pass threshold is invented for the user's 'close'.
+All three production binaries remain frozen; no rebuilding or tuning. Preparation
+runs serially only after the prior 61-job plans finish. Same memory/interference
+checks and complete IDs/ordered-merges validation. Adds 27 core + 12 pipeline jobs.

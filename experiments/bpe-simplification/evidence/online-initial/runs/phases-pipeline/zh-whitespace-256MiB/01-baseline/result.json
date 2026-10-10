@@ -1,0 +1,148 @@
+{
+  "case": "zh-whitespace-256MiB",
+  "arm": "baseline",
+  "kind": "phases-pipeline",
+  "repeat": 1,
+  "comparison_repeat": 1,
+  "command": [
+    "taskset",
+    "-c",
+    "0-3",
+    "/root/code/tokenizers-simplification-results/bin/full-review-final",
+    "/root/code/tokenizers-simplification-results/online-initial/runs/phases-pipeline/zh-whitespace-256MiB/01-baseline/job.json"
+  ],
+  "environment": {},
+  "binary_sha256": "c95b23409be882374fe8b27fa57c20e42fadd148386ac80d3f131d02c79c74ab",
+  "returncode": 0,
+  "failure": null,
+  "elapsed_seconds": 22.473621661076322,
+  "foreign_processes": [],
+  "max_swap_kib": 0,
+  "minimum_available_kib": 9988376,
+  "attempt_id": "phases-pipeline-1-baseline",
+  "build_id": "baseline",
+  "effective_affinity": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "input_id": "zh-whitespace-256MiB",
+  "metrics": {
+    "feed_seconds": 3.555267594,
+    "feed_unique_utf8_bytes": 202251151,
+    "feed_unique_words": 6827958,
+    "pipeline_cpu_seconds": 60.328143999999995,
+    "pipeline_seconds": 19.484789017,
+    "process_hwm_kib_before_validation": 2098576,
+    "train_cpu_seconds": 47.102207,
+    "train_seconds": 15.929514765
+  },
+  "mode": "pipeline",
+  "output": {
+    "actual_merges": 32241,
+    "actual_vocab": 50000,
+    "model_path": "/root/code/tokenizers-simplification-results/online-initial/runs/phases-pipeline/zh-whitespace-256MiB/01-baseline/model.json",
+    "special_tokens": 0
+  },
+  "protocol_version": 1,
+  "timing_boundary": "public-feed-and-train-before-serialization",
+  "workers_requested": 4,
+  "model_equal": true,
+  "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+  "geometry": [],
+  "initial_phase": [],
+  "phases": [
+    {
+      "name": "vocabulary",
+      "wall_seconds": 0.327713059,
+      "cpu_seconds": 1.1277454,
+      "calls": 1,
+      "max_begin_rss_kib": 444712,
+      "max_end_rss_kib": 446624,
+      "new_process_hwm_kib": 0
+    },
+    {
+      "name": "corpus_plan",
+      "wall_seconds": 0.446957427,
+      "cpu_seconds": 1.155983883,
+      "calls": 1,
+      "max_begin_rss_kib": 446628,
+      "max_end_rss_kib": 611012,
+      "new_process_hwm_kib": 0
+    },
+    {
+      "name": "initial_index",
+      "wall_seconds": 8.431228559,
+      "cpu_seconds": 26.312744681,
+      "calls": 1,
+      "max_begin_rss_kib": 611012,
+      "max_end_rss_kib": 1428704,
+      "new_process_hwm_kib": 2098576
+    },
+    {
+      "name": "materialize",
+      "wall_seconds": 0.394249148,
+      "cpu_seconds": 1.391043528,
+      "calls": 1,
+      "max_begin_rss_kib": 1428704,
+      "max_end_rss_kib": 1421200,
+      "new_process_hwm_kib": 0
+    },
+    {
+      "name": "select",
+      "wall_seconds": 0.234172821,
+      "cpu_seconds": 0.232244393,
+      "calls": 1390,
+      "max_begin_rss_kib": 1996420,
+      "max_end_rss_kib": 1996420,
+      "new_process_hwm_kib": 0
+    },
+    {
+      "name": "prepare",
+      "wall_seconds": 2.892974365,
+      "cpu_seconds": 9.881724285,
+      "calls": 1390,
+      "max_begin_rss_kib": 1996420,
+      "max_end_rss_kib": 1996472,
+      "new_process_hwm_kib": 0
+    },
+    {
+      "name": "apply",
+      "wall_seconds": 0.33603085,
+      "cpu_seconds": 1.052738945,
+      "calls": 1390,
+      "max_begin_rss_kib": 1996472,
+      "max_end_rss_kib": 1996472,
+      "new_process_hwm_kib": 0
+    },
+    {
+      "name": "commit",
+      "wall_seconds": 2.145102207,
+      "cpu_seconds": 4.892651425,
+      "calls": 1390,
+      "max_begin_rss_kib": 1996472,
+      "max_end_rss_kib": 1996472,
+      "new_process_hwm_kib": 0
+    },
+    {
+      "name": "release",
+      "wall_seconds": 0.08699853,
+      "cpu_seconds": 0.086818157,
+      "calls": 1,
+      "max_begin_rss_kib": 1996472,
+      "max_end_rss_kib": 1193120,
+      "new_process_hwm_kib": 0
+    },
+    {
+      "name": "model_output",
+      "wall_seconds": 0.018981524,
+      "cpu_seconds": 0.018973799,
+      "calls": 1,
+      "max_begin_rss_kib": 1193120,
+      "max_end_rss_kib": 1193120,
+      "new_process_hwm_kib": 0
+    }
+  ],
+  "valid": true
+}

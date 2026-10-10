@@ -426,3 +426,8 @@ so its actual baseline is whole-candidate. Corrected the report and archived the
 control record; a new fresh completion review found no new material issue.
 No instrumentation entered delivered Rust. Final reports, records and hashes are
 archived in REPORT, PERFORMANCE_REVIEW, OPTIMIZATION_ROI, CUTOFF_ABLATION and evidence.
+
+
+## 2026-10-10：在线压缩和 prepare 逐项对照
+
+完成初始分块／在线压缩／wave 矩阵、1 GiB 十阶段及 prepare 细分、512 MiB 与 1 GiB 的 C/O/L/OL 单项与条件对照，以及英文／中文 ByteLevel／Whitespace 共 24 个 core 与 pipeline 对照。选择保留在线压缩、精确规则索引和单调有序追加，省略 wave；干净候选 2185／797 行，通过 2200／800 预算。生产补丁仍留在独立树，当前提交只交付报告与证据。各项收益、中文 Whitespace 的初始索引回退和单次时序限制见 [ONLINE_COMPRESSION.md](ONLINE_COMPRESSION.md)。

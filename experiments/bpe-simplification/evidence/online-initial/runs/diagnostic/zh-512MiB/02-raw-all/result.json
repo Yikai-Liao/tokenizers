@@ -1,0 +1,73 @@
+{
+  "case": "zh-512MiB",
+  "arm": "raw-all",
+  "kind": "diagnostic",
+  "repeat": 2,
+  "command": [
+    "taskset",
+    "-c",
+    "0-3",
+    "/root/code/tokenizers-simplification-results/online-initial/bin/bpe-bench-experimental",
+    "/root/code/tokenizers-simplification-results/online-initial/runs/diagnostic/zh-512MiB/02-raw-all/job.json"
+  ],
+  "environment": {
+    "BPE_INITIAL_EXPERIMENT": "raw-all",
+    "BPE_INITIAL_DIAGNOSTIC": "1"
+  },
+  "binary_sha256": "8958ebd9c72702009c37088560080e5adef5054a47dc89cfada930366a0d8a81",
+  "returncode": 0,
+  "failure": null,
+  "elapsed_seconds": 69.44771134399343,
+  "foreign_processes": [],
+  "max_swap_kib": 0,
+  "minimum_available_kib": 5211436,
+  "attempt_id": "diagnostic-2-raw-all",
+  "build_id": "raw-all",
+  "effective_affinity": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "input_id": "zh-512MiB",
+  "metrics": {
+    "load_seconds": 19.093778524,
+    "process_hwm_kib_before_validation": 5355332,
+    "train_cpu_seconds": 133.377202,
+    "train_seconds": 39.916700768
+  },
+  "mode": "core",
+  "output": {
+    "actual_merges": 49744,
+    "actual_vocab": 50000,
+    "model_path": "/root/code/tokenizers-simplification-results/online-initial/runs/diagnostic/zh-512MiB/02-raw-all/model.json",
+    "special_tokens": 0
+  },
+  "protocol_version": 1,
+  "timing_boundary": "public-do-train-before-serialization",
+  "workers_requested": 4,
+  "model_equal": true,
+  "model_sha256": "3801e5ba79dd3bd89b0697371bf52f958d80879e6819e494edcd89c9a41d1d06",
+  "geometry": [
+    {
+      "mode": "raw-all",
+      "blocks": 24,
+      "waves": 1,
+      "block_slot_cap": 16777216,
+      "max_block_slots": 16777216,
+      "max_block_words": 1084148
+    }
+  ],
+  "initial_phase": [
+    {
+      "wall_seconds": 7.758018864,
+      "cpu_seconds": 28.719931382000002,
+      "begin_rss_kib": 1697692,
+      "end_rss_kib": 3581948,
+      "begin_hwm_kib": 2065080,
+      "end_hwm_kib": 3581948,
+      "new_process_hwm_kib": 3581948
+    }
+  ],
+  "valid": true
+}

@@ -1,0 +1,15 @@
+Added in response to the user asking whether the prototype whole-training peak
+is now close to original main. All binaries, inputs and parameters remain fixed.
+Preserved run_experiment_initial.py and run_one_gib_initial.py exactly before editing.
+Completed 256/512 diagnostic jobs used the initial driver. The completed 1GiB
+reference run and already in-flight 1GiB diagnostic driver use the initial 1GiB
+driver. Future plain jobs use the extended drivers.
+Add original-main plain samples adjacent to baseline/candidate within each repeat:
+repeat 1: main, baseline, candidate; repeat 2: candidate, main, baseline;
+repeat 3: baseline, candidate, main. Existing supplementary online-wave stays after r1.
+256/512MiB: original-main plain repeat IDs 1/2/3.
+1GiB: the earlier main repeat 1 creates the reference and is reported separately;
+formal main repeats 2/3/4 match comparison_repeat 1/2/3 alongside baseline/candidate.
+Added nine main processes. Total frozen plans now contain 61 core processes,
+including the separate 1GiB reference sample. Memory-guard failures remain excluded.
+No production source changes, rebuilding, block-size tuning or altered guard thresholds.

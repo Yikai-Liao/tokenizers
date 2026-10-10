@@ -1,0 +1,94 @@
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/index.rs b/tokenizers/tk-train/src/trainers/bpe/engine/index.rs
+index 8df88388..e0313856 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/index.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/index.rs
+@@ -126,6 +126,7 @@ impl<'arena> PairIndex<'arena> {
+         reuse: bool,
+         progress: &TrainingProgress,
+     ) -> Result<Self> {
++        let _probe = super::initial_probe::start();
+         let work = progress.stage("Count initial pairs", corpus.word_count());
+         let chunk = corpus
+             .word_count()
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/mod.rs b/tokenizers/tk-train/src/trainers/bpe/engine/mod.rs
+index 8d84ab98..52952459 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/mod.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/mod.rs
+@@ -1,6 +1,7 @@
+ //! Joined training rounds over a fixed-coordinate corpus and an occurrence index.
+ mod corpus;
+ mod index;
++mod initial_probe;
+ mod merge;
+ mod positions;
+ mod vocabulary;
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/initial_probe.rs b/tokenizers/tk-train/src/trainers/bpe/engine/initial_probe.rs
+new file mode 100644
+index 00000000..2e9837d9
+--- /dev/null
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/initial_probe.rs
+@@ -0,0 +1,64 @@
++//! Host-only phase observer for this isolated experiment.
++use std::time::Instant;
++
++#[repr(C)]
++struct Timespec {
++    sec: std::os::raw::c_long,
++    nano: std::os::raw::c_long,
++}
++unsafe extern "C" {
++    fn clock_gettime(clock: i32, time: *mut Timespec) -> i32;
++}
++fn cpu() -> f64 {
++    let mut time = Timespec { sec: 0, nano: 0 };
++    // SAFETY: successful CLOCK_PROCESS_CPUTIME_ID initializes this local record.
++    assert_eq!(unsafe { clock_gettime(2, &mut time) }, 0);
++    time.sec as f64 + time.nano as f64 / 1e9
++}
++fn memory() -> (usize, usize) {
++    let text = std::fs::read_to_string("/proc/self/status").unwrap();
++    let field = |name| {
++        text.lines()
++            .find(|l| l.starts_with(name))
++            .unwrap()
++            .split_whitespace()
++            .nth(1)
++            .unwrap()
++            .parse()
++            .unwrap()
++    };
++    (field("VmRSS:"), field("VmHWM:"))
++}
++pub(super) struct Probe {
++    wall: Instant,
++    cpu: f64,
++    rss: usize,
++    hwm: usize,
++}
++pub(super) fn start() -> Option<Probe> {
++    std::env::var_os("BPE_INITIAL_DIAGNOSTIC")?;
++    let (rss, hwm) = memory();
++    Some(Probe {
++        wall: Instant::now(),
++        cpu: cpu(),
++        rss,
++        hwm,
++    })
++}
++impl Drop for Probe {
++    fn drop(&mut self) {
++        let elapsed_cpu = cpu() - self.cpu;
++        let wall = self.wall.elapsed().as_secs_f64();
++        let (rss, hwm) = memory();
++        eprintln!(
++            "BPE_INITIAL_PHASE {{\"wall_seconds\":{},\"cpu_seconds\":{},\"begin_rss_kib\":{},\"end_rss_kib\":{},\"begin_hwm_kib\":{},\"end_hwm_kib\":{},\"new_process_hwm_kib\":{}}}",
++            wall,
++            elapsed_cpu,
++            self.rss,
++            rss,
++            self.hwm,
++            hwm,
++            if hwm > self.hwm { hwm } else { 0 }
++        );
++    }
++}

@@ -1,0 +1,33 @@
+   Compiling tk-train v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-online-experiment-20261010/tokenizers/tk-train)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.12s
+     Running unittests src/lib.rs (/root/code/tokenizers-simplification-results/target/debug/deps/tk_train-f9a217df66d08f7f)
+
+running 17 tests
+test trainers::bpe::engine::positions::tests::unsafe_storage_rejects_inverted_ranges_and_unsorted_input ... ok
+test trainers::bpe::engine::positions::tests::storage_roundtrips_seeks_and_survives_concurrent_cursor_reuse ... ok
+test trainers::bpe::engine::tests::ready_batch_applies_independent_rules_together ... ok
+test trainers::bpe::engine::tests::feed_training_tokenizer_json_and_encoding_roundtrip ... ok
+test trainers::bpe::word_counts::tests::content_equality_and_flat_serde_ignore_representation_and_order ... ok
+test trainers::tests::trainer_wrapper_train_model_wrapper ... ok
+test trainers::unigram::tests::test_initial_alphabet ... ok
+test trainers::bpe::engine::tests::count_domains_and_zero_merge_validation ... ok
+test trainers::unigram::tests::test_to_log_prob ... ok
+test trainers::unigram::tests::test_special_tokens ... ok
+test trainers::unigram::tests::test_unigram_chars ... ok
+test trainers::wordlevel::tests::test_train ... ok
+test trainers::unigram::tests::test_unk_token ... ok
+test trainers::bpe::engine::tests::real_wide_ids_preserve_pair_order_and_separator_distinction ... ok
+test trainers::bpe::engine::tests::overlap_floor_alias_and_alphabet_boundaries ... ok
+test trainers::bpe::engine::tests::public_pools_feed_flush_errors_and_progress_matrix ... ok
+test trainers::bpe::engine::tests::generated_models_and_every_rule_match_the_sequential_oracle ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.46s
+
+   Doc-tests tk_train
+
+running 1 test
+test src/trainers/bpe/mod.rs - trainers::bpe::BpeTrainer (line 179) ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+all doctests ran in 1.03s; merged doctests compilation took 0.96s

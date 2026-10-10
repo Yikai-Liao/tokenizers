@@ -1,0 +1,367 @@
+{
+  "arms": [
+    {
+      "base_commit": "7e77262b",
+      "worktree": "/root/code/tokenizers-workspaces/bpe-prepare-detail-candidate-20261010",
+      "command": [
+        "cargo",
+        "build",
+        "--release",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/root/code/tokenizers-workspaces/bpe-prepare-detail-candidate-20261010/experiments/bpe-simplification/runner/Cargo.toml",
+        "-j",
+        "2"
+      ],
+      "binary": "/root/code/tokenizers-simplification-results/online-initial/bin/bpe-bench-prepare-detail-candidate",
+      "binary_sha256": "81a7f588e6c5bbcd6ec9206a98cdee9c65a94939929a64b1b98ae4c4a8ca2b60",
+      "patch": "/root/code/tokenizers-simplification-results/online-initial/prepare-detail-candidate.patch",
+      "patch_sha256": "25600f68c59002c5d1d149703197a643b496c18921be539839f234a6eacb94c1",
+      "sources_sha256": {
+        "tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs": "c9136999117ebb9bb3bb4758b05c4eda9ad7ec5a94e0b853658810adaaf381f3",
+        "tokenizers/tk-train/src/trainers/bpe/engine/index.rs": "77de6fca037fa910ee84a20528de62999db56a9c3a516c63b64084285fb89448",
+        "tokenizers/tk-train/src/trainers/bpe/engine/merge.rs": "091e542daca15ca130e3ba9f21e03cdc57e4f6c900e70dfe27921b2364223890",
+        "tokenizers/tk-train/src/trainers/bpe/engine/mod.rs": "6b5669031dfdbd292c8eeb501e6a872b66968cb6002fb57339f68d82abc7fc64",
+        "tokenizers/tk-train/src/trainers/bpe/engine/phase_timing.rs": "345206a5a5b37081ca07f2f887e28cc7df4c3ea6984ceb401c09acfb9a72a19d",
+        "tokenizers/tk-train/src/trainers/bpe/engine/positions.rs": "d6565a456b0d8f8e3e9b62769ee13c8361fda62778b1b86b6f26abbcc0e39712",
+        "tokenizers/tk-train/src/trainers/bpe/engine/prepare_detail.rs": "9ae9268497af4ffe0f783c4ce89eb08383190e82fdf318546d4fe9010b4b1684",
+        "tokenizers/tk-train/src/trainers/bpe/engine/tests/mod.rs": "312c89d078747a6226ce2e5c1a51623b231c20c64c58694267e70228ac3900a7",
+        "tokenizers/tk-train/src/trainers/bpe/engine/vocabulary.rs": "30730661ce515b1a61f0ca60fc6bdc632832b118a7d08330ca874ff77885d54b"
+      },
+      "runner_lock_sha256": "b0a4e33189592c3c7f5502bb8f0cfc636ea2936698cbbc0b5c1b9a55bbde3aad",
+      "runner_sources_sha256": {
+        "experiments/bpe-simplification/runner/src/adapters/mod.rs": "a5a2dd2147a680afb61c3ff34629d8ca7d1fc2d759e2931be01bf1567436001a",
+        "experiments/bpe-simplification/runner/src/adapters/tk_train_pr2348.rs": "f2b3030f7546b1d1bf23f06c75cf02e4acbc5e1e2bfbc74c3819c7a5324de1da",
+        "experiments/bpe-simplification/runner/src/adapters/tk_train_v1.rs": "f5ad7a988e842ed232673bb0c60d0d9392f837edde861a6f71740f2a1536663e",
+        "experiments/bpe-simplification/runner/src/core.rs": "d0cddccdad6cb9f275ac4c4b29a65b2920e55ca53f20b435dd2bea80f99d0322",
+        "experiments/bpe-simplification/runner/src/feed_stats.rs": "cd317b213cff235d310e0fa5a66e826cad8a390c143a4d8551e0dd142a4a533d",
+        "experiments/bpe-simplification/runner/src/main.rs": "3bf0c679c660cf07760e1c3647c8308ef4ac7d138f45b8dfb5ca2f663b02c4c5",
+        "experiments/bpe-simplification/runner/src/model_output.rs": "58fedcea52879ce2028f296b2dcb8ae05866bc6cf6c156b0f1a4803a6c273168",
+        "experiments/bpe-simplification/runner/src/pipeline.rs": "300fe769f662872aecb8496efa695ac43382f319e9e1149bcc6226319ab3ecb9",
+        "experiments/bpe-simplification/runner/src/protocol.rs": "127168a11d40812c88718f60c5f3c3422814b43dbe74f8c73e4d738973bdda2f"
+      },
+      "arm": "control"
+    },
+    {
+      "arm": "ordered",
+      "base_commit": "7e77262b",
+      "worktree": "/root/code/tokenizers-workspaces/bpe-small-detail-ordered-20261010",
+      "production_worktree": "/root/code/tokenizers-workspaces/bpe-small-ordered-20261010",
+      "command": [
+        "cargo",
+        "build",
+        "--release",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/root/code/tokenizers-workspaces/bpe-small-detail-ordered-20261010/experiments/bpe-simplification/runner/Cargo.toml",
+        "-j",
+        "2"
+      ],
+      "binary": "/root/code/tokenizers-simplification-results/online-initial/bin/bpe-bench-small-detail-ordered",
+      "binary_sha256": "10a6baa3afd5bd5b2a7441ef166a21c15079966502a61392bbd0e07aa9865ac3",
+      "patch": "/root/code/tokenizers-simplification-results/online-initial/small-detail-ordered.patch",
+      "patch_sha256": "f3e398a9211dccf3f2b2859551cdbeb17481d65f53e7ce0d0f433beae337882c",
+      "production_patch": "/root/code/tokenizers-simplification-results/online-initial/small-ordered.patch",
+      "production_patch_sha256": "330017406183b163ed9741909e20240fede1617c1ea5f3a506bcbd42fd6b94ac",
+      "sources_sha256": {
+        "tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs": "c9136999117ebb9bb3bb4758b05c4eda9ad7ec5a94e0b853658810adaaf381f3",
+        "tokenizers/tk-train/src/trainers/bpe/engine/index.rs": "77de6fca037fa910ee84a20528de62999db56a9c3a516c63b64084285fb89448",
+        "tokenizers/tk-train/src/trainers/bpe/engine/merge.rs": "b80d6826c15622dc6f9ace2e7545067c7d13acdc2032886884c5486a1b51da0b",
+        "tokenizers/tk-train/src/trainers/bpe/engine/mod.rs": "6b5669031dfdbd292c8eeb501e6a872b66968cb6002fb57339f68d82abc7fc64",
+        "tokenizers/tk-train/src/trainers/bpe/engine/phase_timing.rs": "345206a5a5b37081ca07f2f887e28cc7df4c3ea6984ceb401c09acfb9a72a19d",
+        "tokenizers/tk-train/src/trainers/bpe/engine/positions.rs": "8dcff088b911b1048e0c301efbfccb0ff9b1e4c0a949bcb7d5d0c341d3e75e9a",
+        "tokenizers/tk-train/src/trainers/bpe/engine/prepare_detail.rs": "9ae9268497af4ffe0f783c4ce89eb08383190e82fdf318546d4fe9010b4b1684",
+        "tokenizers/tk-train/src/trainers/bpe/engine/tests/mod.rs": "312c89d078747a6226ce2e5c1a51623b231c20c64c58694267e70228ac3900a7",
+        "tokenizers/tk-train/src/trainers/bpe/engine/vocabulary.rs": "30730661ce515b1a61f0ca60fc6bdc632832b118a7d08330ca874ff77885d54b"
+      },
+      "runner_lock_sha256": "b0a4e33189592c3c7f5502bb8f0cfc636ea2936698cbbc0b5c1b9a55bbde3aad",
+      "runner_sources_sha256": {
+        "experiments/bpe-simplification/runner/src/adapters/mod.rs": "a5a2dd2147a680afb61c3ff34629d8ca7d1fc2d759e2931be01bf1567436001a",
+        "experiments/bpe-simplification/runner/src/adapters/tk_train_pr2348.rs": "f2b3030f7546b1d1bf23f06c75cf02e4acbc5e1e2bfbc74c3819c7a5324de1da",
+        "experiments/bpe-simplification/runner/src/adapters/tk_train_v1.rs": "f5ad7a988e842ed232673bb0c60d0d9392f837edde861a6f71740f2a1536663e",
+        "experiments/bpe-simplification/runner/src/core.rs": "d0cddccdad6cb9f275ac4c4b29a65b2920e55ca53f20b435dd2bea80f99d0322",
+        "experiments/bpe-simplification/runner/src/feed_stats.rs": "cd317b213cff235d310e0fa5a66e826cad8a390c143a4d8551e0dd142a4a533d",
+        "experiments/bpe-simplification/runner/src/main.rs": "3bf0c679c660cf07760e1c3647c8308ef4ac7d138f45b8dfb5ca2f663b02c4c5",
+        "experiments/bpe-simplification/runner/src/model_output.rs": "58fedcea52879ce2028f296b2dcb8ae05866bc6cf6c156b0f1a4803a6c273168",
+        "experiments/bpe-simplification/runner/src/pipeline.rs": "300fe769f662872aecb8496efa695ac43382f319e9e1149bcc6226319ab3ecb9",
+        "experiments/bpe-simplification/runner/src/protocol.rs": "127168a11d40812c88718f60c5f3c3422814b43dbe74f8c73e4d738973bdda2f"
+      }
+    },
+    {
+      "arm": "lookup",
+      "base_commit": "7e77262b",
+      "worktree": "/root/code/tokenizers-workspaces/bpe-small-detail-lookup-20261010",
+      "production_worktree": "/root/code/tokenizers-workspaces/bpe-small-lookup-20261010",
+      "command": [
+        "cargo",
+        "build",
+        "--release",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/root/code/tokenizers-workspaces/bpe-small-detail-lookup-20261010/experiments/bpe-simplification/runner/Cargo.toml",
+        "-j",
+        "2"
+      ],
+      "binary": "/root/code/tokenizers-simplification-results/online-initial/bin/bpe-bench-small-detail-lookup",
+      "binary_sha256": "4c8091cff1f3348d8c2cc4d03616efd12ed67d695ce77198dec96f5c69479137",
+      "patch": "/root/code/tokenizers-simplification-results/online-initial/small-detail-lookup.patch",
+      "patch_sha256": "c2e11604cb886a6ac70ae334ca65f90bb16f1a404cdf9496d627b88dba4e20b4",
+      "production_patch": "/root/code/tokenizers-simplification-results/online-initial/small-lookup.patch",
+      "production_patch_sha256": "46491fb81a15f2abc6ccd02ad44a0532e061502732fbb29a6160e0a4ecd39541",
+      "sources_sha256": {
+        "tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs": "c9136999117ebb9bb3bb4758b05c4eda9ad7ec5a94e0b853658810adaaf381f3",
+        "tokenizers/tk-train/src/trainers/bpe/engine/index.rs": "77de6fca037fa910ee84a20528de62999db56a9c3a516c63b64084285fb89448",
+        "tokenizers/tk-train/src/trainers/bpe/engine/merge.rs": "35527957b54e2e150c80e32c1141cb252ff0e868eecc1dfbc21ca28b7feaec7b",
+        "tokenizers/tk-train/src/trainers/bpe/engine/mod.rs": "6b5669031dfdbd292c8eeb501e6a872b66968cb6002fb57339f68d82abc7fc64",
+        "tokenizers/tk-train/src/trainers/bpe/engine/phase_timing.rs": "345206a5a5b37081ca07f2f887e28cc7df4c3ea6984ceb401c09acfb9a72a19d",
+        "tokenizers/tk-train/src/trainers/bpe/engine/positions.rs": "d6565a456b0d8f8e3e9b62769ee13c8361fda62778b1b86b6f26abbcc0e39712",
+        "tokenizers/tk-train/src/trainers/bpe/engine/prepare_detail.rs": "9ae9268497af4ffe0f783c4ce89eb08383190e82fdf318546d4fe9010b4b1684",
+        "tokenizers/tk-train/src/trainers/bpe/engine/tests/mod.rs": "3017faeaf382d9ddd2f077894b53cca2577736c15887141a3e58f4fee6f05ecb",
+        "tokenizers/tk-train/src/trainers/bpe/engine/vocabulary.rs": "30730661ce515b1a61f0ca60fc6bdc632832b118a7d08330ca874ff77885d54b"
+      },
+      "runner_lock_sha256": "b0a4e33189592c3c7f5502bb8f0cfc636ea2936698cbbc0b5c1b9a55bbde3aad",
+      "runner_sources_sha256": {
+        "experiments/bpe-simplification/runner/src/adapters/mod.rs": "a5a2dd2147a680afb61c3ff34629d8ca7d1fc2d759e2931be01bf1567436001a",
+        "experiments/bpe-simplification/runner/src/adapters/tk_train_pr2348.rs": "f2b3030f7546b1d1bf23f06c75cf02e4acbc5e1e2bfbc74c3819c7a5324de1da",
+        "experiments/bpe-simplification/runner/src/adapters/tk_train_v1.rs": "f5ad7a988e842ed232673bb0c60d0d9392f837edde861a6f71740f2a1536663e",
+        "experiments/bpe-simplification/runner/src/core.rs": "d0cddccdad6cb9f275ac4c4b29a65b2920e55ca53f20b435dd2bea80f99d0322",
+        "experiments/bpe-simplification/runner/src/feed_stats.rs": "cd317b213cff235d310e0fa5a66e826cad8a390c143a4d8551e0dd142a4a533d",
+        "experiments/bpe-simplification/runner/src/main.rs": "3bf0c679c660cf07760e1c3647c8308ef4ac7d138f45b8dfb5ca2f663b02c4c5",
+        "experiments/bpe-simplification/runner/src/model_output.rs": "58fedcea52879ce2028f296b2dcb8ae05866bc6cf6c156b0f1a4803a6c273168",
+        "experiments/bpe-simplification/runner/src/pipeline.rs": "300fe769f662872aecb8496efa695ac43382f319e9e1149bcc6226319ab3ecb9",
+        "experiments/bpe-simplification/runner/src/protocol.rs": "127168a11d40812c88718f60c5f3c3422814b43dbe74f8c73e4d738973bdda2f"
+      }
+    },
+    {
+      "arm": "combined",
+      "base_commit": "7e77262b",
+      "worktree": "/root/code/tokenizers-workspaces/bpe-small-detail-combined-20261010",
+      "production_worktree": "/root/code/tokenizers-workspaces/bpe-small-combined-20261010",
+      "command": [
+        "cargo",
+        "build",
+        "--release",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/root/code/tokenizers-workspaces/bpe-small-detail-combined-20261010/experiments/bpe-simplification/runner/Cargo.toml",
+        "-j",
+        "2"
+      ],
+      "binary": "/root/code/tokenizers-simplification-results/online-initial/bin/bpe-bench-small-detail-combined",
+      "binary_sha256": "552357f82561b84333bc0795df8652742f648b9d2dedf0d4832759436d8f4f8e",
+      "patch": "/root/code/tokenizers-simplification-results/online-initial/small-detail-combined.patch",
+      "patch_sha256": "173d82dbf1caf40e830be3dce1b96743af0d79c6e790ebe2f4c210a19abbb948",
+      "production_patch": "/root/code/tokenizers-simplification-results/online-initial/small-combined.patch",
+      "production_patch_sha256": "77338fd5a30c9984046738f8520d13db86a88d6020681da10c088038fa6be390",
+      "sources_sha256": {
+        "tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs": "c9136999117ebb9bb3bb4758b05c4eda9ad7ec5a94e0b853658810adaaf381f3",
+        "tokenizers/tk-train/src/trainers/bpe/engine/index.rs": "77de6fca037fa910ee84a20528de62999db56a9c3a516c63b64084285fb89448",
+        "tokenizers/tk-train/src/trainers/bpe/engine/merge.rs": "0c0a729477727af81d9af50289831e49f9efa8d9bb05fe9e0524238a3deda9b1",
+        "tokenizers/tk-train/src/trainers/bpe/engine/mod.rs": "6b5669031dfdbd292c8eeb501e6a872b66968cb6002fb57339f68d82abc7fc64",
+        "tokenizers/tk-train/src/trainers/bpe/engine/phase_timing.rs": "345206a5a5b37081ca07f2f887e28cc7df4c3ea6984ceb401c09acfb9a72a19d",
+        "tokenizers/tk-train/src/trainers/bpe/engine/positions.rs": "8dcff088b911b1048e0c301efbfccb0ff9b1e4c0a949bcb7d5d0c341d3e75e9a",
+        "tokenizers/tk-train/src/trainers/bpe/engine/prepare_detail.rs": "9ae9268497af4ffe0f783c4ce89eb08383190e82fdf318546d4fe9010b4b1684",
+        "tokenizers/tk-train/src/trainers/bpe/engine/tests/mod.rs": "3017faeaf382d9ddd2f077894b53cca2577736c15887141a3e58f4fee6f05ecb",
+        "tokenizers/tk-train/src/trainers/bpe/engine/vocabulary.rs": "30730661ce515b1a61f0ca60fc6bdc632832b118a7d08330ca874ff77885d54b"
+      },
+      "runner_lock_sha256": "b0a4e33189592c3c7f5502bb8f0cfc636ea2936698cbbc0b5c1b9a55bbde3aad",
+      "runner_sources_sha256": {
+        "experiments/bpe-simplification/runner/src/adapters/mod.rs": "a5a2dd2147a680afb61c3ff34629d8ca7d1fc2d759e2931be01bf1567436001a",
+        "experiments/bpe-simplification/runner/src/adapters/tk_train_pr2348.rs": "f2b3030f7546b1d1bf23f06c75cf02e4acbc5e1e2bfbc74c3819c7a5324de1da",
+        "experiments/bpe-simplification/runner/src/adapters/tk_train_v1.rs": "f5ad7a988e842ed232673bb0c60d0d9392f837edde861a6f71740f2a1536663e",
+        "experiments/bpe-simplification/runner/src/core.rs": "d0cddccdad6cb9f275ac4c4b29a65b2920e55ca53f20b435dd2bea80f99d0322",
+        "experiments/bpe-simplification/runner/src/feed_stats.rs": "cd317b213cff235d310e0fa5a66e826cad8a390c143a4d8551e0dd142a4a533d",
+        "experiments/bpe-simplification/runner/src/main.rs": "3bf0c679c660cf07760e1c3647c8308ef4ac7d138f45b8dfb5ca2f663b02c4c5",
+        "experiments/bpe-simplification/runner/src/model_output.rs": "58fedcea52879ce2028f296b2dcb8ae05866bc6cf6c156b0f1a4803a6c273168",
+        "experiments/bpe-simplification/runner/src/pipeline.rs": "300fe769f662872aecb8496efa695ac43382f319e9e1149bcc6226319ab3ecb9",
+        "experiments/bpe-simplification/runner/src/protocol.rs": "127168a11d40812c88718f60c5f3c3422814b43dbe74f8c73e4d738973bdda2f"
+      }
+    }
+  ],
+  "validation": [
+    {
+      "label": "small-ordered-native",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/root/code/tokenizers-workspaces/bpe-small-ordered-20261010/tokenizers/tk-train/Cargo.toml",
+        "--no-default-features",
+        "-j",
+        "2"
+      ],
+      "log": "/root/code/tokenizers-simplification-results/online-initial/validation/small-ordered-native.log"
+    },
+    {
+      "label": "small-lookup-native",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/root/code/tokenizers-workspaces/bpe-small-lookup-20261010/tokenizers/tk-train/Cargo.toml",
+        "--no-default-features",
+        "-j",
+        "2"
+      ],
+      "log": "/root/code/tokenizers-simplification-results/online-initial/validation/small-lookup-native.log"
+    },
+    {
+      "label": "small-combined-native",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/root/code/tokenizers-workspaces/bpe-small-combined-20261010/tokenizers/tk-train/Cargo.toml",
+        "--no-default-features",
+        "-j",
+        "2"
+      ],
+      "log": "/root/code/tokenizers-simplification-results/online-initial/validation/small-combined-native.log"
+    },
+    {
+      "label": "small-combined-default",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/root/code/tokenizers-workspaces/bpe-small-combined-20261010/tokenizers/tk-train/Cargo.toml",
+        "trainers::bpe",
+        "-j",
+        "2"
+      ],
+      "log": "/root/code/tokenizers-simplification-results/online-initial/validation/small-combined-default.log"
+    },
+    {
+      "label": "small-combined-doc",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/root/code/tokenizers-workspaces/bpe-small-combined-20261010/tokenizers/tk-train/Cargo.toml",
+        "--no-default-features",
+        "--doc",
+        "-j",
+        "2"
+      ],
+      "log": "/root/code/tokenizers-simplification-results/online-initial/validation/small-combined-doc.log"
+    },
+    {
+      "label": "small-combined-clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/root/code/tokenizers-workspaces/bpe-small-combined-20261010/tokenizers/tk-train/Cargo.toml",
+        "--no-default-features",
+        "--all-targets",
+        "-j",
+        "2",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "log": "/root/code/tokenizers-simplification-results/online-initial/validation/small-combined-clippy.log"
+    },
+    {
+      "label": "small-combined-miri",
+      "command": [
+        "cargo",
+        "+nightly",
+        "miri",
+        "test",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/root/code/tokenizers-workspaces/bpe-small-combined-20261010/experiments/bpe-simplification/miri-codec/Cargo.toml"
+      ],
+      "log": "/root/code/tokenizers-simplification-results/online-initial/validation/small-combined-miri.log"
+    },
+    {
+      "label": "build-small-detail-ordered",
+      "command": [
+        "cargo",
+        "build",
+        "--release",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/root/code/tokenizers-workspaces/bpe-small-detail-ordered-20261010/experiments/bpe-simplification/runner/Cargo.toml",
+        "-j",
+        "2"
+      ],
+      "log": "/root/code/tokenizers-simplification-results/online-initial/validation/build-small-detail-ordered.log"
+    },
+    {
+      "label": "build-small-detail-lookup",
+      "command": [
+        "cargo",
+        "build",
+        "--release",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/root/code/tokenizers-workspaces/bpe-small-detail-lookup-20261010/experiments/bpe-simplification/runner/Cargo.toml",
+        "-j",
+        "2"
+      ],
+      "log": "/root/code/tokenizers-simplification-results/online-initial/validation/build-small-detail-lookup.log"
+    },
+    {
+      "label": "build-small-detail-combined",
+      "command": [
+        "cargo",
+        "build",
+        "--release",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/root/code/tokenizers-workspaces/bpe-small-detail-combined-20261010/experiments/bpe-simplification/runner/Cargo.toml",
+        "-j",
+        "2"
+      ],
+      "log": "/root/code/tokenizers-simplification-results/online-initial/validation/build-small-detail-combined.log"
+    },
+    {
+      "label": "small-combined-default-full",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/root/code/tokenizers-workspaces/bpe-small-combined-20261010/tokenizers/tk-train/Cargo.toml",
+        "-j",
+        "2"
+      ],
+      "log": "/root/code/tokenizers-simplification-results/online-initial/validation/small-combined-default-full.log"
+    }
+  ],
+  "profile": {
+    "opt_level": 3,
+    "lto": "fat",
+    "codegen_units": 1
+  },
+  "workers": 4,
+  "affinity": [
+    0,
+    1,
+    2,
+    3
+  ]
+}

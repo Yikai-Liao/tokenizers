@@ -1,0 +1,63 @@
+{
+  "case": "zh-256MiB",
+  "arm": "baseline",
+  "kind": "diagnostic",
+  "repeat": 2,
+  "command": [
+    "taskset",
+    "-c",
+    "0-3",
+    "/root/code/tokenizers-simplification-results/online-initial/bin/bpe-bench-baseline-probe",
+    "/root/code/tokenizers-simplification-results/online-initial/runs/diagnostic/zh-256MiB/02-baseline/job.json"
+  ],
+  "environment": {
+    "BPE_INITIAL_DIAGNOSTIC": "1"
+  },
+  "binary_sha256": "80189a164b5f4017387b5b85bbd6a449bb078da33c3d83338b5f3d635ed4e255",
+  "returncode": 0,
+  "failure": null,
+  "elapsed_seconds": 36.72569434705656,
+  "foreign_processes": [],
+  "max_swap_kib": 0,
+  "minimum_available_kib": 6937280,
+  "attempt_id": "diagnostic-2-baseline",
+  "build_id": "baseline",
+  "effective_affinity": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "input_id": "zh-256MiB",
+  "metrics": {
+    "load_seconds": 9.769138361,
+    "process_hwm_kib_before_validation": 3097120,
+    "train_cpu_seconds": 71.74639300000001,
+    "train_seconds": 22.526497334
+  },
+  "mode": "core",
+  "output": {
+    "actual_merges": 49744,
+    "actual_vocab": 50000,
+    "model_path": "/root/code/tokenizers-simplification-results/online-initial/runs/diagnostic/zh-256MiB/02-baseline/model.json",
+    "special_tokens": 0
+  },
+  "protocol_version": 1,
+  "timing_boundary": "public-do-train-before-serialization",
+  "workers_requested": 4,
+  "model_equal": true,
+  "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+  "geometry": [],
+  "initial_phase": [
+    {
+      "wall_seconds": 4.045906005,
+      "cpu_seconds": 12.9848408,
+      "begin_rss_kib": 875372,
+      "end_rss_kib": 2490232,
+      "begin_hwm_kib": 1058876,
+      "end_hwm_kib": 2609044,
+      "new_process_hwm_kib": 2609044
+    }
+  ],
+  "valid": true
+}

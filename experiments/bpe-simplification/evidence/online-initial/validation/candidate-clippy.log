@@ -1,0 +1,6 @@
+    Checking bitcannon v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-online-candidate-20261010/tokenizers/bitcannon)
+    Checking tk-encode v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-online-candidate-20261010/tokenizers/tk-encode)
+    Checking tk-convert v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-online-candidate-20261010/tokenizers/tk-convert)
+    Checking tk-serialize v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-online-candidate-20261010/tokenizers/tk-serialize)
+    Checking tk-train v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-online-candidate-20261010/tokenizers/tk-train)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 7.48s

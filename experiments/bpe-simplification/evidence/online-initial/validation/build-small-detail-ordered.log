@@ -1,0 +1,6 @@
+   Compiling bitcannon v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-small-detail-ordered-20261010/tokenizers/bitcannon)
+   Compiling tk-convert v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-small-detail-ordered-20261010/tokenizers/tk-convert)
+   Compiling tk-encode v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-small-detail-ordered-20261010/tokenizers/tk-encode)
+   Compiling tk-train v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-small-detail-ordered-20261010/tokenizers/tk-train)
+   Compiling bpe-bench-runner v0.1.0 (/root/code/tokenizers-workspaces/bpe-small-detail-ordered-20261010/experiments/bpe-simplification/runner)
+    Finished `release` profile [optimized] target(s) in 43.97s

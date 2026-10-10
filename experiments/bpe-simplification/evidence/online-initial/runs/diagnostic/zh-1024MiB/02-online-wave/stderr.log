@@ -1,0 +1,2 @@
+BPE_INITIAL_GEOMETRY {"mode":"online-wave","blocks":45,"waves":12,"block_slot_cap":16777216,"max_block_slots":16777216,"max_block_words":1192509}
+BPE_INITIAL_PHASE {"wall_seconds":36.035083155,"cpu_seconds":66.242791342,"begin_rss_kib":3275480,"end_rss_kib":5815456,"begin_hwm_kib":4003080,"end_hwm_kib":5815456,"new_process_hwm_kib":5815456}

@@ -1,0 +1,73 @@
+{
+  "case": "zh-1024MiB",
+  "arm": "raw-wave",
+  "kind": "diagnostic",
+  "repeat": 1,
+  "command": [
+    "taskset",
+    "-c",
+    "0-3",
+    "/root/code/tokenizers-simplification-results/online-initial/bin/bpe-bench-experimental",
+    "/root/code/tokenizers-simplification-results/online-initial/runs/diagnostic/zh-1024MiB/01-raw-wave/job.json"
+  ],
+  "environment": {
+    "BPE_INITIAL_EXPERIMENT": "raw-wave",
+    "BPE_INITIAL_DIAGNOSTIC": "1"
+  },
+  "binary_sha256": "8958ebd9c72702009c37088560080e5adef5054a47dc89cfada930366a0d8a81",
+  "returncode": 0,
+  "failure": null,
+  "elapsed_seconds": 139.2241492170142,
+  "foreign_processes": [],
+  "max_swap_kib": 0,
+  "minimum_available_kib": 3459228,
+  "attempt_id": "diagnostic-1-raw-wave",
+  "build_id": "raw-wave",
+  "effective_affinity": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "input_id": "zh-1024MiB",
+  "metrics": {
+    "load_seconds": 48.277095996,
+    "process_hwm_kib_before_validation": 8554988,
+    "train_cpu_seconds": 270.50302300000004,
+    "train_seconds": 82.846132131
+  },
+  "mode": "core",
+  "output": {
+    "actual_merges": 49744,
+    "actual_vocab": 50000,
+    "model_path": "/root/code/tokenizers-simplification-results/online-initial/runs/diagnostic/zh-1024MiB/01-raw-wave/model.json",
+    "special_tokens": 0
+  },
+  "protocol_version": 1,
+  "timing_boundary": "public-do-train-before-serialization",
+  "workers_requested": 4,
+  "model_equal": true,
+  "model_sha256": "33336b93cf6f95c286fe1b43f314eca7e57a0bb08deca9a955a868ee62cf3aea",
+  "geometry": [
+    {
+      "mode": "raw-wave",
+      "blocks": 45,
+      "waves": 12,
+      "block_slot_cap": 16777216,
+      "max_block_slots": 16777216,
+      "max_block_words": 1192509
+    }
+  ],
+  "initial_phase": [
+    {
+      "wall_seconds": 19.922237079,
+      "cpu_seconds": 63.418788815,
+      "begin_rss_kib": 3275468,
+      "end_rss_kib": 5834008,
+      "begin_hwm_kib": 4002916,
+      "end_hwm_kib": 5834008,
+      "new_process_hwm_kib": 5834008
+    }
+  ],
+  "valid": true
+}

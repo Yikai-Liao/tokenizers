@@ -1,0 +1,11 @@
+User-directed scope change: split the observed ~23% main/prototype timing gap
+across joined phases, instead of continuing queued uninstrumented comparisons.
+Stopped the idle pretokenizer waiter and outer sequence. A raw-wave repeat finished
+while these were being stopped and online-all repeat 2 had already started. Let
+that current job finish and validate; directory guards halt the old diagnostic
+driver before the remaining raw-all/baseline repeats. Preserve exact actual counts.
+Keep the requested ByteLevel/Whitespace comparison, now with joined-stage observers.
+Memory matrix at 256/512MiB has 2 full repetitions; 1GiB has the full forward matrix
+and a partial reverse order. Do not describe all originally planned jobs as complete.
+Queued plain/main plans and the unstarted pretokenizer plan are superseded.
+Freeze additional diagnostic binaries before starting any new measurement.

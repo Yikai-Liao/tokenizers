@@ -1,0 +1,148 @@
+{
+  "case": "en-whitespace-256MiB",
+  "arm": "main",
+  "kind": "phases-pipeline",
+  "repeat": 1,
+  "comparison_repeat": 1,
+  "command": [
+    "taskset",
+    "-c",
+    "0-3",
+    "/root/code/tokenizers-simplification-results/bin/full-review-main-geometry",
+    "/root/code/tokenizers-simplification-results/online-initial/runs/phases-pipeline/en-whitespace-256MiB/01-main/job.json"
+  ],
+  "environment": {},
+  "binary_sha256": "b4b51b4e0c335be1080a0f80e0e9b18a09b92f3baaecdef750b9cbc9e90b8deb",
+  "returncode": 0,
+  "failure": null,
+  "elapsed_seconds": 5.482903439085931,
+  "foreign_processes": [],
+  "max_swap_kib": 0,
+  "minimum_available_kib": 11923764,
+  "attempt_id": "phases-pipeline-1-main",
+  "build_id": "main",
+  "effective_affinity": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "input_id": "en-whitespace-256MiB",
+  "metrics": {
+    "feed_seconds": 3.877359012,
+    "feed_unique_utf8_bytes": 5678955,
+    "feed_unique_words": 724596,
+    "pipeline_cpu_seconds": 18.888617,
+    "pipeline_seconds": 5.40873575,
+    "process_hwm_kib_before_validation": 146772,
+    "train_cpu_seconds": 3.560744999999999,
+    "train_seconds": 1.53137188
+  },
+  "mode": "pipeline",
+  "output": {
+    "actual_merges": 44917,
+    "actual_vocab": 50000,
+    "model_path": "/root/code/tokenizers-simplification-results/online-initial/runs/phases-pipeline/en-whitespace-256MiB/01-main/model.json",
+    "special_tokens": 0
+  },
+  "protocol_version": 1,
+  "timing_boundary": "public-feed-and-train-before-serialization",
+  "workers_requested": 4,
+  "model_equal": true,
+  "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6",
+  "geometry": [],
+  "initial_phase": [],
+  "phases": [
+    {
+      "name": "vocabulary",
+      "wall_seconds": 0.011445395,
+      "cpu_seconds": 0.024830108,
+      "calls": 1,
+      "max_begin_rss_kib": 31456,
+      "max_end_rss_kib": 38528,
+      "new_process_hwm_kib": 0
+    },
+    {
+      "name": "corpus_plan",
+      "wall_seconds": 0.057945283,
+      "cpu_seconds": 0.106325209,
+      "calls": 1,
+      "max_begin_rss_kib": 38532,
+      "max_end_rss_kib": 61100,
+      "new_process_hwm_kib": 0
+    },
+    {
+      "name": "initial_index",
+      "wall_seconds": 0.126985201,
+      "cpu_seconds": 0.413908215,
+      "calls": 2,
+      "max_begin_rss_kib": 97500,
+      "max_end_rss_kib": 97560,
+      "new_process_hwm_kib": 97560
+    },
+    {
+      "name": "materialize",
+      "wall_seconds": 0.017214483,
+      "cpu_seconds": 0.065796831,
+      "calls": 1,
+      "max_begin_rss_kib": 97436,
+      "max_end_rss_kib": 97500,
+      "new_process_hwm_kib": 97500
+    },
+    {
+      "name": "select",
+      "wall_seconds": 0.11371632,
+      "cpu_seconds": 0.112071466,
+      "calls": 1491,
+      "max_begin_rss_kib": 146580,
+      "max_end_rss_kib": 146580,
+      "new_process_hwm_kib": 146580
+    },
+    {
+      "name": "prepare",
+      "wall_seconds": 0.378543671,
+      "cpu_seconds": 1.107356176,
+      "calls": 2982,
+      "max_begin_rss_kib": 146580,
+      "max_end_rss_kib": 146580,
+      "new_process_hwm_kib": 146552
+    },
+    {
+      "name": "apply",
+      "wall_seconds": 0.062911176,
+      "cpu_seconds": 0.150572111,
+      "calls": 1491,
+      "max_begin_rss_kib": 146580,
+      "max_end_rss_kib": 146580,
+      "new_process_hwm_kib": 0
+    },
+    {
+      "name": "commit",
+      "wall_seconds": 0.19131228,
+      "cpu_seconds": 0.526137924,
+      "calls": 2982,
+      "max_begin_rss_kib": 146580,
+      "max_end_rss_kib": 146580,
+      "new_process_hwm_kib": 145992
+    },
+    {
+      "name": "release",
+      "wall_seconds": 0.004554104,
+      "cpu_seconds": 0.004548837,
+      "calls": 1,
+      "max_begin_rss_kib": 146580,
+      "max_end_rss_kib": 146580,
+      "new_process_hwm_kib": 0
+    },
+    {
+      "name": "model_output",
+      "wall_seconds": 0.019646515,
+      "cpu_seconds": 0.019638575,
+      "calls": 1,
+      "max_begin_rss_kib": 146580,
+      "max_end_rss_kib": 146580,
+      "new_process_hwm_kib": 0
+    }
+  ],
+  "valid": true
+}

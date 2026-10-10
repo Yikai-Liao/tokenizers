@@ -1,0 +1,51 @@
+{
+  "case": "zh-1024MiB",
+  "arm": "main",
+  "kind": "plain",
+  "repeat": 1,
+  "command": [
+    "taskset",
+    "-c",
+    "0-3",
+    "/root/code/tokenizers-simplification-results/bin/baseline",
+    "/root/code/tokenizers-simplification-results/online-initial/runs/plain/zh-1024MiB/01-main/job.json"
+  ],
+  "environment": {},
+  "binary_sha256": "179e99bf4d74996802c5a475d8ba4a62fcf6e769235dab5c56952b4c76af4074",
+  "returncode": 0,
+  "failure": null,
+  "elapsed_seconds": 141.55707611201797,
+  "foreign_processes": [],
+  "max_swap_kib": 0,
+  "minimum_available_kib": 2175588,
+  "attempt_id": "plain-1-main",
+  "build_id": "main",
+  "effective_affinity": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "input_id": "zh-1024MiB",
+  "metrics": {
+    "load_seconds": 44.245840109,
+    "process_hwm_kib_before_validation": 8779044,
+    "train_cpu_seconds": 253.93168799999998,
+    "train_seconds": 75.718682477
+  },
+  "mode": "core",
+  "output": {
+    "actual_merges": 49744,
+    "actual_vocab": 50000,
+    "model_path": "/root/code/tokenizers-simplification-results/online-initial/runs/plain/zh-1024MiB/01-main/model.json",
+    "special_tokens": 0
+  },
+  "protocol_version": 1,
+  "timing_boundary": "public-do-train-before-serialization",
+  "workers_requested": 4,
+  "model_equal": true,
+  "model_sha256": "33336b93cf6f95c286fe1b43f314eca7e57a0bb08deca9a955a868ee62cf3aea",
+  "geometry": [],
+  "initial_phase": [],
+  "valid": true
+}

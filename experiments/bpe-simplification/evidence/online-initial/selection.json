@@ -1,0 +1,15 @@
+{
+  "selected": "combined",
+  "production": 2185,
+  "tests": 797,
+  "limits": {
+    "production": 2200,
+    "tests": 800
+  },
+  "evidence": "small-ablation-summary.json",
+  "n_per_arm_per_size": 1,
+  "omitted": [
+    "wave barrier"
+  ],
+  "reason": "Lookup principal gain; ordered append +3LOC has same-sign conditional prepare CPU reduction at512MiB and1GiB. Exploratory timings, no stable full-training speedup asserted."
+}

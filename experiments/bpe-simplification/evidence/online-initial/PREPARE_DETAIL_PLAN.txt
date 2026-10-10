@@ -1,0 +1,7 @@
+Declared before detailed builds and runs.
+Two isolated worktrees clone the frozen full-phase main and online candidate. No production tuning.
+Common timer uses CLOCK_PROCESS_CPUTIME for joined ordinary/AA/reuse totals and coordinator work, CLOCK_THREAD_CPUTIME for worker setup, scan/collect, finish, and overlapping worker total. Worker wall sums overlap and must not be summed into joined wall.
+One atomic addition per task/phase, local visited/matched counters in scans, no occurrence-level clocks or atomics.
+1 GiB ByteLevel prepared map, main then candidate once. Same CPUs 0-3, workers4, vocabulary50K, min2, full model equivalence and resource guards. No reverse repetitions.
+After attribution, isolate a small optimization against the same online candidate. Judge measured prepare CPU/wall, whole HWM/time, semantics, and formatted 2200/800 budget.
+ByteLevel/Whitespace comparison remains outstanding, reduced to one main/current/candidate core and pipeline per English/Chinese 256MiB input (12+12 processes), no reverse repetitions.

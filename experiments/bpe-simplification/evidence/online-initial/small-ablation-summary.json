@@ -1,0 +1,396 @@
+[
+  {
+    "case": "zh-512MiB",
+    "n_per_arm": 1,
+    "metrics": {
+      "control": {
+        "train_wall": 38.069133027,
+        "train_cpu": 124.809607,
+        "hwm_kib": 4867872,
+        "prepare_wall": 17.771230341,
+        "prepare_cpu": 63.702007162,
+        "scan_thread_cpu": 51.112229343,
+        "finish_thread_cpu": 9.512140093,
+        "setup_thread_cpu": 1.734957277,
+        "selected_process_cpu": 0.005991742
+      },
+      "ordered": {
+        "train_wall": 39.331295756,
+        "train_cpu": 129.672813,
+        "hwm_kib": 4840712,
+        "prepare_wall": 17.704820321,
+        "prepare_cpu": 63.43278577,
+        "scan_thread_cpu": 50.431745949,
+        "finish_thread_cpu": 9.815123789,
+        "setup_thread_cpu": 1.850144292,
+        "selected_process_cpu": 0.005824629
+      },
+      "lookup": {
+        "train_wall": 37.165857373,
+        "train_cpu": 123.119037,
+        "hwm_kib": 4794236,
+        "prepare_wall": 16.526097063,
+        "prepare_cpu": 59.124795541,
+        "scan_thread_cpu": 46.111821669,
+        "finish_thread_cpu": 9.692900887,
+        "setup_thread_cpu": 1.808504071,
+        "selected_process_cpu": 0.155238996
+      },
+      "combined": {
+        "train_wall": 37.281818397,
+        "train_cpu": 122.74311800000001,
+        "hwm_kib": 4938604,
+        "prepare_wall": 16.194792709,
+        "prepare_cpu": 57.825607427,
+        "scan_thread_cpu": 44.388316225,
+        "finish_thread_cpu": 10.164529208,
+        "setup_thread_cpu": 1.802912411,
+        "selected_process_cpu": 0.143290383
+      }
+    },
+    "effects": {
+      "train_wall": {
+        "ordered_gain": -1.2621627290000035,
+        "lookup_gain": 0.903275653999998,
+        "combined_gain": 0.7873146299999974,
+        "ordered_added_to_lookup": -0.11596102400000063,
+        "lookup_added_to_ordered": 2.049477359000001,
+        "interaction_gain": 1.1462017049999957,
+        "ordered_gain_percent": -3.315449101782361,
+        "lookup_gain_percent": 2.3727245203072065,
+        "combined_gain_percent": 2.068118098307113
+      },
+      "train_cpu": {
+        "ordered_gain": -4.863205999999991,
+        "lookup_gain": 1.690569999999994,
+        "combined_gain": 2.06648899999999,
+        "ordered_added_to_lookup": 0.3759189999999961,
+        "lookup_added_to_ordered": 6.929694999999981,
+        "interaction_gain": 5.239125000000001,
+        "ordered_gain_percent": -3.8964997301850257,
+        "lookup_gain_percent": 1.3545191276822095,
+        "combined_gain_percent": 1.6557130894579213
+      },
+      "hwm_kib": {
+        "ordered_gain": 27160,
+        "lookup_gain": 73636,
+        "combined_gain": -70732,
+        "ordered_added_to_lookup": -144368,
+        "lookup_added_to_ordered": -97892,
+        "interaction_gain": -171528,
+        "ordered_gain_percent": 0.5579440051012023,
+        "lookup_gain_percent": 1.5126938424017722,
+        "combined_gain_percent": -1.4530373847134848
+      },
+      "prepare_wall": {
+        "ordered_gain": 0.06641001999999929,
+        "lookup_gain": 1.2451332779999973,
+        "combined_gain": 1.5764376319999975,
+        "ordered_added_to_lookup": 0.33130435400000025,
+        "lookup_added_to_ordered": 1.5100276119999982,
+        "interaction_gain": 0.26489433400000095,
+        "ordered_gain_percent": 0.3736939915003226,
+        "lookup_gain_percent": 7.0064551193585665,
+        "combined_gain_percent": 8.870728710116365
+      },
+      "prepare_cpu": {
+        "ordered_gain": 0.2692213919999986,
+        "lookup_gain": 4.577211621000004,
+        "combined_gain": 5.876399735,
+        "ordered_added_to_lookup": 1.2991881139999961,
+        "lookup_added_to_ordered": 5.607178343000001,
+        "interaction_gain": 1.0299667220000046,
+        "ordered_gain_percent": 0.42262623109401265,
+        "lookup_gain_percent": 7.185349135639852,
+        "combined_gain_percent": 9.224826652723486
+      },
+      "scan_thread_cpu": {
+        "ordered_gain": 0.6804833939999995,
+        "lookup_gain": 5.000407674000002,
+        "combined_gain": 6.723913118000006,
+        "ordered_added_to_lookup": 1.7235054440000042,
+        "lookup_added_to_ordered": 6.043429724000006,
+        "interaction_gain": 1.0430220499999976,
+        "ordered_gain_percent": 1.3313514255726628,
+        "lookup_gain_percent": 9.783192277612569,
+        "combined_gain_percent": 13.155194372129005
+      },
+      "finish_thread_cpu": {
+        "ordered_gain": -0.3029836960000001,
+        "lookup_gain": -0.1807607940000011,
+        "combined_gain": -0.6523891150000001,
+        "ordered_added_to_lookup": -0.47162832099999896,
+        "lookup_added_to_ordered": -0.349405419,
+        "interaction_gain": -0.16864462500000066,
+        "ordered_gain_percent": -3.1852316412262085,
+        "lookup_gain_percent": -1.900316776589774,
+        "combined_gain_percent": -6.858489347524373
+      },
+      "setup_thread_cpu": {
+        "ordered_gain": -0.11518701500000006,
+        "lookup_gain": -0.07354679400000008,
+        "combined_gain": -0.0679551340000002,
+        "ordered_added_to_lookup": 0.005591659999999887,
+        "lookup_added_to_ordered": 0.047231880999999865,
+        "interaction_gain": 0.12077867500000017,
+        "ordered_gain_percent": -6.639184522121236,
+        "lookup_gain_percent": -4.239112684502149,
+        "combined_gain_percent": -3.9168188693098407
+      },
+      "selected_process_cpu": {
+        "ordered_gain": 0.00016711300000000085,
+        "lookup_gain": -0.149247254,
+        "combined_gain": -0.137298641,
+        "ordered_added_to_lookup": 0.011948612999999997,
+        "lookup_added_to_ordered": -0.137465754,
+        "interaction_gain": 0.0117815,
+        "ordered_gain_percent": 2.7890553364948096,
+        "lookup_gain_percent": -2490.8825179722357,
+        "combined_gain_percent": -2291.4645023100124
+      }
+    },
+    "scan_counts": {
+      "control": {
+        "rules": 49744,
+        "candidate_positions": 311856998,
+        "ordinary_jobs": 49908,
+        "ordinary_tasks": 49908,
+        "complete_tasks": 49300,
+        "partial_tasks": 608,
+        "scan_positions": 311737978,
+        "matched_positions": 299664139,
+        "neighbor_groups": 26149552
+      },
+      "ordered": {
+        "rules": 49744,
+        "candidate_positions": 311856998,
+        "ordinary_jobs": 49908,
+        "ordinary_tasks": 49908,
+        "complete_tasks": 49300,
+        "partial_tasks": 608,
+        "scan_positions": 311737978,
+        "matched_positions": 299664139,
+        "neighbor_groups": 26149552
+      },
+      "lookup": {
+        "rules": 49744,
+        "candidate_positions": 311856998,
+        "ordinary_jobs": 49908,
+        "ordinary_tasks": 49908,
+        "complete_tasks": 49300,
+        "partial_tasks": 608,
+        "scan_positions": 311737978,
+        "matched_positions": 299664139,
+        "neighbor_groups": 26149552
+      },
+      "combined": {
+        "rules": 49744,
+        "candidate_positions": 311856998,
+        "ordinary_jobs": 49908,
+        "ordinary_tasks": 49908,
+        "complete_tasks": 49300,
+        "partial_tasks": 608,
+        "scan_positions": 311737978,
+        "matched_positions": 299664139,
+        "neighbor_groups": 26149552
+      }
+    }
+  },
+  {
+    "case": "zh-1024MiB",
+    "n_per_arm": 1,
+    "metrics": {
+      "control": {
+        "train_wall": 84.784088875,
+        "train_cpu": 290.71134,
+        "hwm_kib": 8566252,
+        "prepare_wall": 42.49705972,
+        "prepare_cpu": 154.401577959,
+        "scan_thread_cpu": 131.273850638,
+        "finish_thread_cpu": 17.971292785,
+        "setup_thread_cpu": 3.48614331,
+        "selected_process_cpu": 0.006494074
+      },
+      "ordered": {
+        "train_wall": 79.87649345,
+        "train_cpu": 271.713133,
+        "hwm_kib": 8553372,
+        "prepare_wall": 35.937186486,
+        "prepare_cpu": 129.464493619,
+        "scan_thread_cpu": 105.908694994,
+        "finish_thread_cpu": 18.546803354,
+        "setup_thread_cpu": 3.376230413,
+        "selected_process_cpu": 0.006356785
+      },
+      "lookup": {
+        "train_wall": 73.068919969,
+        "train_cpu": 248.33511099999998,
+        "hwm_kib": 8520088,
+        "prepare_wall": 32.884798022,
+        "prepare_cpu": 118.674288235,
+        "scan_thread_cpu": 95.612467663,
+        "finish_thread_cpu": 18.102291815,
+        "setup_thread_cpu": 3.227812002,
+        "selected_process_cpu": 0.192732023
+      },
+      "combined": {
+        "train_wall": 71.502391057,
+        "train_cpu": 244.734223,
+        "hwm_kib": 8555192,
+        "prepare_wall": 32.005704855,
+        "prepare_cpu": 115.23690954,
+        "scan_thread_cpu": 91.9261925,
+        "finish_thread_cpu": 18.408415483,
+        "setup_thread_cpu": 3.157287018,
+        "selected_process_cpu": 0.197362561
+      }
+    },
+    "effects": {
+      "train_wall": {
+        "ordered_gain": 4.907595424999997,
+        "lookup_gain": 11.715168905999988,
+        "combined_gain": 13.281697817999998,
+        "ordered_added_to_lookup": 1.5665289120000097,
+        "lookup_added_to_ordered": 8.374102393000001,
+        "interaction_gain": -3.341066512999987,
+        "ordered_gain_percent": 5.7883448299308,
+        "lookup_gain_percent": 13.81765029435187,
+        "combined_gain_percent": 15.665318804783816
+      },
+      "train_cpu": {
+        "ordered_gain": 18.99820699999998,
+        "lookup_gain": 42.37622900000002,
+        "combined_gain": 45.97711700000002,
+        "ordered_added_to_lookup": 3.6008879999999976,
+        "lookup_added_to_ordered": 26.97891000000004,
+        "interaction_gain": -15.397318999999925,
+        "ordered_gain_percent": 6.535075996691418,
+        "lookup_gain_percent": 14.576737529399445,
+        "combined_gain_percent": 15.815384773087976
+      },
+      "hwm_kib": {
+        "ordered_gain": 12880,
+        "lookup_gain": 46164,
+        "combined_gain": 11060,
+        "ordered_added_to_lookup": -35104,
+        "lookup_added_to_ordered": -1820,
+        "interaction_gain": -47984,
+        "ordered_gain_percent": 0.15035747255625914,
+        "lookup_gain_percent": 0.5389054629726046,
+        "combined_gain_percent": 0.1291113079559182
+      },
+      "prepare_wall": {
+        "ordered_gain": 6.559873234000001,
+        "lookup_gain": 9.612261698000005,
+        "combined_gain": 10.491354865000005,
+        "ordered_added_to_lookup": 0.8790931670000006,
+        "lookup_added_to_ordered": 3.931481631000004,
+        "interaction_gain": -5.680780067000001,
+        "ordered_gain_percent": 15.436063758812914,
+        "lookup_gain_percent": 22.618651175710102,
+        "combined_gain_percent": 24.68724879820934
+      },
+      "prepare_cpu": {
+        "ordered_gain": 24.937084340000013,
+        "lookup_gain": 35.727289724,
+        "combined_gain": 39.16466841900001,
+        "ordered_added_to_lookup": 3.4373786950000067,
+        "lookup_added_to_ordered": 14.227584078999996,
+        "interaction_gain": -21.499705645000006,
+        "ordered_gain_percent": 16.15079629990688,
+        "lookup_gain_percent": 23.139199868467063,
+        "combined_gain_percent": 25.36545865444448
+      },
+      "scan_thread_cpu": {
+        "ordered_gain": 25.365155643999998,
+        "lookup_gain": 35.661382974999995,
+        "combined_gain": 39.347658138,
+        "ordered_added_to_lookup": 3.686275163000005,
+        "lookup_added_to_ordered": 13.982502494000002,
+        "interaction_gain": -21.678880481000007,
+        "ordered_gain_percent": 19.322321635819765,
+        "lookup_gain_percent": 27.16564098766297,
+        "combined_gain_percent": 29.97372130608469
+      },
+      "finish_thread_cpu": {
+        "ordered_gain": -0.5755105690000022,
+        "lookup_gain": -0.13099903000000168,
+        "combined_gain": -0.4371226979999996,
+        "ordered_added_to_lookup": -0.3061236679999979,
+        "lookup_added_to_ordered": 0.1383878710000026,
+        "interaction_gain": 0.26938690100000784,
+        "ordered_gain_percent": -3.2023882526712852,
+        "lookup_gain_percent": -0.7289349273155348,
+        "combined_gain_percent": -2.4323386371227027
+      },
+      "setup_thread_cpu": {
+        "ordered_gain": 0.10991289700000006,
+        "lookup_gain": 0.25833130800000026,
+        "combined_gain": 0.3288562920000002,
+        "ordered_added_to_lookup": 0.07052498399999996,
+        "lookup_added_to_ordered": 0.21894339500000015,
+        "interaction_gain": -0.039387912999999664,
+        "ordered_gain_percent": 3.152850793159162,
+        "lookup_gain_percent": 7.410232025143002,
+        "combined_gain_percent": 9.433240769439287
+      },
+      "selected_process_cpu": {
+        "ordered_gain": 0.00013728899999999964,
+        "lookup_gain": -0.186237949,
+        "combined_gain": -0.190868487,
+        "ordered_added_to_lookup": -0.00463053799999999,
+        "lookup_added_to_ordered": -0.191005776,
+        "interaction_gain": -0.0047678269999999745,
+        "ordered_gain_percent": 2.1140658391019205,
+        "lookup_gain_percent": -2867.8137791469576,
+        "combined_gain_percent": -2939.1178326578975
+      }
+    },
+    "scan_counts": {
+      "control": {
+        "rules": 49744,
+        "candidate_positions": 592058258,
+        "ordinary_jobs": 49950,
+        "ordinary_tasks": 49950,
+        "complete_tasks": 49248,
+        "partial_tasks": 702,
+        "scan_positions": 591821980,
+        "matched_positions": 568585911,
+        "neighbor_groups": 38338332
+      },
+      "ordered": {
+        "rules": 49744,
+        "candidate_positions": 592058258,
+        "ordinary_jobs": 49950,
+        "ordinary_tasks": 49950,
+        "complete_tasks": 49248,
+        "partial_tasks": 702,
+        "scan_positions": 591821980,
+        "matched_positions": 568585911,
+        "neighbor_groups": 38338332
+      },
+      "lookup": {
+        "rules": 49744,
+        "candidate_positions": 592058258,
+        "ordinary_jobs": 49950,
+        "ordinary_tasks": 49950,
+        "complete_tasks": 49248,
+        "partial_tasks": 702,
+        "scan_positions": 591821980,
+        "matched_positions": 568585911,
+        "neighbor_groups": 38338332
+      },
+      "combined": {
+        "rules": 49744,
+        "candidate_positions": 592058258,
+        "ordinary_jobs": 49950,
+        "ordinary_tasks": 49950,
+        "complete_tasks": 49248,
+        "partial_tasks": 702,
+        "scan_positions": 591821980,
+        "matched_positions": 568585911,
+        "neighbor_groups": 38338332
+      }
+    }
+  }
+]

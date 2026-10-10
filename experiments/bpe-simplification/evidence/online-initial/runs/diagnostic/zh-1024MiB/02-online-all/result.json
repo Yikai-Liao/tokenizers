@@ -1,0 +1,73 @@
+{
+  "case": "zh-1024MiB",
+  "arm": "online-all",
+  "kind": "diagnostic",
+  "repeat": 2,
+  "command": [
+    "taskset",
+    "-c",
+    "0-3",
+    "/root/code/tokenizers-simplification-results/online-initial/bin/bpe-bench-experimental",
+    "/root/code/tokenizers-simplification-results/online-initial/runs/diagnostic/zh-1024MiB/02-online-all/job.json"
+  ],
+  "environment": {
+    "BPE_INITIAL_EXPERIMENT": "online-all",
+    "BPE_INITIAL_DIAGNOSTIC": "1"
+  },
+  "binary_sha256": "8958ebd9c72702009c37088560080e5adef5054a47dc89cfada930366a0d8a81",
+  "returncode": 0,
+  "failure": null,
+  "elapsed_seconds": 143.29436668695416,
+  "foreign_processes": [],
+  "max_swap_kib": 0,
+  "minimum_available_kib": 2686396,
+  "attempt_id": "diagnostic-2-online-all",
+  "build_id": "online-all",
+  "effective_affinity": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "input_id": "zh-1024MiB",
+  "metrics": {
+    "load_seconds": 42.437617983,
+    "process_hwm_kib_before_validation": 8522520,
+    "train_cpu_seconds": 260.337557,
+    "train_seconds": 79.078491775
+  },
+  "mode": "core",
+  "output": {
+    "actual_merges": 49744,
+    "actual_vocab": 50000,
+    "model_path": "/root/code/tokenizers-simplification-results/online-initial/runs/diagnostic/zh-1024MiB/02-online-all/model.json",
+    "special_tokens": 0
+  },
+  "protocol_version": 1,
+  "timing_boundary": "public-do-train-before-serialization",
+  "workers_requested": 4,
+  "model_equal": true,
+  "model_sha256": "33336b93cf6f95c286fe1b43f314eca7e57a0bb08deca9a955a868ee62cf3aea",
+  "geometry": [
+    {
+      "mode": "online-all",
+      "blocks": 45,
+      "waves": 1,
+      "block_slot_cap": 16777216,
+      "max_block_slots": 16777216,
+      "max_block_words": 1192509
+    }
+  ],
+  "initial_phase": [
+    {
+      "wall_seconds": 15.124795631,
+      "cpu_seconds": 56.034099695,
+      "begin_rss_kib": 3275316,
+      "end_rss_kib": 5822936,
+      "begin_hwm_kib": 4003096,
+      "end_hwm_kib": 5822936,
+      "new_process_hwm_kib": 5822936
+    }
+  ],
+  "valid": true
+}

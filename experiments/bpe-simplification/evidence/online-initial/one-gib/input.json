@@ -1,0 +1,89 @@
+{
+  "case": "zh-1024MiB",
+  "requested_mib": 1024,
+  "path": "/root/code/tokenizers-simplification-results/online-initial/one-gib/raw/text.txt",
+  "bytes": 1073741749,
+  "source_sha256": "4f375a10f171be4e9903fe0040538da5051235eb119a6bb07e3f3d06c004b248",
+  "prepared_path": "/root/code/tokenizers-simplification-results/online-initial/one-gib/words.json",
+  "prepared_sha256": "64abb060e91e6fb2da43cb3461029c411ba608cdbafd9c5565d078b7558405ee",
+  "prepared_bytes": 1595411286,
+  "unique_words": 24500472,
+  "prefix_512_sha256": "a0d40d4102cba1e933f25e5ccd17552d2eaebaec4ef770bc39d8e46e740b4d4f",
+  "source_manifest": {
+    "schema_version": 1,
+    "kind": "text",
+    "path": "text.txt",
+    "sha256": "4f375a10f171be4e9903fe0040538da5051235eb119a6bb07e3f3d06c004b248",
+    "bytes": 1073741749,
+    "line_protocol": "UTF-8 lines; remove LF and optional CR; preserve other whitespace",
+    "input_id": "57b6e64cc619079982084e1e73e387c3ad6fa33334cb6428261c871e84a4f8f1",
+    "recipe": {
+      "dataset": {
+        "schema_version": 1,
+        "dataset": "wikimedia/wikipedia",
+        "revision": "b04c8d1ceb2f5cd4588862100d08de323dccfbaa",
+        "configuration": "20231101.zh",
+        "license": "CC BY-SA 3.0 / GFDL; see upstream dataset card",
+        "metadata_source": "https://huggingface.co/api/datasets/wikimedia/wikipedia/tree/b04c8d1ceb2f5cd4588862100d08de323dccfbaa/20231101.zh",
+        "shards": [
+          {
+            "url": "https://huggingface.co/datasets/wikimedia/wikipedia/resolve/b04c8d1ceb2f5cd4588862100d08de323dccfbaa/20231101.zh/train-00000-of-00006.parquet",
+            "sha256": "853ddf4a138c792ad7386d6de831788f96326c03e1e3349f7a315498392e8b56",
+            "bytes": 587109027
+          },
+          {
+            "url": "https://huggingface.co/datasets/wikimedia/wikipedia/resolve/b04c8d1ceb2f5cd4588862100d08de323dccfbaa/20231101.zh/train-00001-of-00006.parquet",
+            "sha256": "038b08e5aae38b5a1671794cee3fa0d4952c0d00fa0890a903d2de3f3fe5f703",
+            "bytes": 263629009
+          },
+          {
+            "url": "https://huggingface.co/datasets/wikimedia/wikipedia/resolve/b04c8d1ceb2f5cd4588862100d08de323dccfbaa/20231101.zh/train-00002-of-00006.parquet",
+            "sha256": "ec8f6c0dd1418b8fcd454278fb4f2bc7cd0ce8312f29c80b672533942601338f",
+            "bytes": 126796358
+          },
+          {
+            "url": "https://huggingface.co/datasets/wikimedia/wikipedia/resolve/b04c8d1ceb2f5cd4588862100d08de323dccfbaa/20231101.zh/train-00003-of-00006.parquet",
+            "sha256": "4884e4933fa91f46dc9bf711db8be07f368da59b8cfc2e00e895a65a3284cbb1",
+            "bytes": 262039932
+          },
+          {
+            "url": "https://huggingface.co/datasets/wikimedia/wikipedia/resolve/b04c8d1ceb2f5cd4588862100d08de323dccfbaa/20231101.zh/train-00004-of-00006.parquet",
+            "sha256": "415a5cd235a359a009c6bd6d488c3d9ee81ed3220b9f33fd04214558bc5150cd",
+            "bytes": 256719920
+          },
+          {
+            "url": "https://huggingface.co/datasets/wikimedia/wikipedia/resolve/b04c8d1ceb2f5cd4588862100d08de323dccfbaa/20231101.zh/train-00005-of-00006.parquet",
+            "sha256": "803ae27118b1daf9be4403b57b679b8ce065fbffdfdea0c33c517255c17478df",
+            "bytes": 224856014
+          }
+        ]
+      },
+      "size_mib": 1024,
+      "tool_sha256": "63fc4ab5fa4d05f7db209ab95ec00df03ddee60b85d9fb2a1434e1e9a0b2b16c",
+      "normalization": "Unicode whitespace collapse; strip; LF",
+      "paragraph_bytes": [
+        32,
+        8192
+      ],
+      "selection": "ordered nested prefix"
+    },
+    "used_shards": [
+      {
+        "url": "https://huggingface.co/datasets/wikimedia/wikipedia/resolve/b04c8d1ceb2f5cd4588862100d08de323dccfbaa/20231101.zh/train-00000-of-00006.parquet",
+        "sha256": "853ddf4a138c792ad7386d6de831788f96326c03e1e3349f7a315498392e8b56",
+        "bytes": 587109027
+      },
+      {
+        "url": "https://huggingface.co/datasets/wikimedia/wikipedia/resolve/b04c8d1ceb2f5cd4588862100d08de323dccfbaa/20231101.zh/train-00001-of-00006.parquet",
+        "sha256": "038b08e5aae38b5a1671794cee3fa0d4952c0d00fa0890a903d2de3f3fe5f703",
+        "bytes": 263629009
+      }
+    ],
+    "lines": 3159381,
+    "availability": {
+      "requested_bytes": 1073741824,
+      "actual_bytes": 1073741749,
+      "status": "target_reached"
+    }
+  }
+}

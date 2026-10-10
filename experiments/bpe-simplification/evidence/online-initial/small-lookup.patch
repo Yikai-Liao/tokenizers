@@ -1,0 +1,338 @@
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs b/tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs
+index 79d88619..8fd39622 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs
+@@ -117,6 +117,24 @@ impl<'input> CorpusPlan<'input> {
+     pub(super) fn word_count(&self) -> usize {
+         self.words.len()
+     }
++    // Whole words preserve symbol-scan semantics. A single oversized word is
++    // admitted alone; otherwise each range has at most `slots` resident slots.
++    pub(super) fn initial_ranges(&self, slots: usize) -> Vec<std::ops::Range<usize>> {
++        let mut ranges = Vec::new();
++        let mut begin = 0;
++        while begin < self.word_count() {
++            let mut end = begin + 1;
++            while end < self.word_count()
++                && self.starts.get(end + 1).copied().unwrap_or(self.length) - self.starts[begin]
++                    <= slots
++            {
++                end += 1;
++            }
++            ranges.push(begin..end);
++            begin = end;
++        }
++        ranges
++    }
+     pub(super) fn small_pair_domain(&self) -> Option<usize> {
+         (self.spans.len() <= 256).then_some(self.spans.len())
+     }
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/index.rs b/tokenizers/tk-train/src/trainers/bpe/engine/index.rs
+index 8df88388..8429bd20 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/index.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/index.rs
+@@ -127,34 +127,26 @@ impl<'arena> PairIndex<'arena> {
+         progress: &TrainingProgress,
+     ) -> Result<Self> {
+         let work = progress.stage("Count initial pairs", corpus.word_count());
+-        let chunk = corpus
+-            .word_count()
+-            .div_ceil(workers.saturating_mul(4))
+-            .max(1);
+-        let pieces = (0..corpus.word_count())
+-            .step_by(chunk)
+-            .collect::<Vec<_>>()
++        let pieces = corpus
++            .initial_ranges(if cfg!(test) { 16 } else { 1 << 24 })
+             .into_par_iter()
+-            .map(|begin| -> Result<_> {
++            .map(|range| -> Result<_> {
+                 let domain = corpus.small_pair_domain();
+                 let mut dense: Vec<State<Builder>> = (0..domain.map_or(0, |n| n * n))
+                     .map(|_| State::default())
+                     .collect();
+                 let mut counts = AHashMap::<Pair, State<Builder>>::new();
+-                corpus.initial_edges(
+-                    begin..(begin + chunk).min(corpus.word_count()),
+-                    |pair, p, weight| {
+-                        debug_assert!(pair.0 != WORD_SEPARATOR_ID && pair.1 != WORD_SEPARATOR_ID);
+-                        let state = match domain {
+-                            Some(n) => &mut dense[pair.0 as usize * n + pair.1 as usize],
+-                            None => counts.entry(pair).or_default(),
+-                        };
+-                        add(&mut state.count, weight)?;
+-                        state.positions.push(p)
+-                    },
+-                )?;
+-                work.complete(chunk.min(corpus.word_count() - begin));
+-                Ok(match domain {
++                corpus.initial_edges(range.clone(), |pair, p, weight| {
++                    debug_assert!(pair.0 != WORD_SEPARATOR_ID && pair.1 != WORD_SEPARATOR_ID);
++                    let state = match domain {
++                        Some(n) => &mut dense[pair.0 as usize * n + pair.1 as usize],
++                        None => counts.entry(pair).or_default(),
++                    };
++                    add(&mut state.count, weight)?;
++                    state.positions.push(p)
++                })?;
++                work.complete(range.len());
++                let states = match domain {
+                     Some(n) => dense
+                         .into_iter()
+                         .enumerate()
+@@ -162,7 +154,24 @@ impl<'arena> PairIndex<'arena> {
+                         .map(|(key, state)| (((key / n) as u32, (key % n) as u32), state))
+                         .collect::<Vec<_>>(),
+                     None => counts.into_iter().collect(),
+-                })
++                };
++                let mut lease = arena.lease();
++                states
++                    .into_iter()
++                    .map(|(pair, state)| {
++                        let positions = Positions::from_sorted_owned(
++                            Input::Builder(&state.positions),
++                            &mut lease,
++                        )?;
++                        Ok((
++                            pair,
++                            State {
++                                count: state.count,
++                                positions,
++                            },
++                        ))
++                    })
++                    .collect::<Result<Vec<_>>>()
+             })
+             .collect::<Result<Vec<_>>>()?;
+         let mut routed: Vec<Vec<_>> = (0..workers).map(|_| Vec::new()).collect();
+@@ -174,18 +183,21 @@ impl<'arena> PairIndex<'arena> {
+         let shards = routed
+             .into_par_iter()
+             .map(|pieces| -> Result<_> {
+-                let mut states = AHashMap::<Pair, State<Builder>>::new();
++                let mut states = AHashMap::<Pair, State<Vec<Positions>>>::new();
+                 for (pair, state) in pieces {
+                     let total = states.entry(pair).or_default();
+                     add(&mut total.count, state.count)?;
+-                    total.positions.append(state.positions)?;
++                    total.positions.push(state.positions);
+                 }
+                 let mut lease = arena.lease();
+                 let mut shard = Shard::default();
+-                for (pair, state) in states {
++                for (pair, mut state) in states {
+                     if reuse || state.count >= minimum.max(1) {
+-                        let positions =
+-                            Positions::from_sorted(Input::Builder(&state.positions), &mut lease)?;
++                        let positions = if state.positions.len() == 1 {
++                            state.positions.pop().unwrap()
++                        } else {
++                            Positions::from_sorted(Input::Fragments(&state.positions), &mut lease)?
++                        };
+                         shard.states.insert(
+                             pair,
+                             State {
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/merge.rs b/tokenizers/tk-train/src/trainers/bpe/engine/merge.rs
+index 7ae56461..314d3de9 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/merge.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/merge.rs
+@@ -260,6 +260,23 @@ impl<'arena> Batch<'arena> {
+             .iter()
+             .map(|rule| (rule.pair, rule.replacement))
+             .collect();
++        let mut heads = vec![None; corpus.id_count()];
++        let mut tails = vec![false; corpus.id_count()];
++        for rule in &self.rules {
++            let slot = &mut heads[rule.pair.0 as usize];
++            // The separator cannot be a real rule endpoint; it marks a shared head.
++            *slot = Some(if slot.is_some() {
++                (WORD_SEPARATOR_ID, 0)
++            } else {
++                (rule.pair.1, rule.replacement)
++            });
++            tails[rule.pair.1 as usize] = true;
++        }
++        let selected_id = |pair: Pair| match heads.get(pair.0 as usize).copied().flatten() {
++            Some((right, id)) if right != WORD_SEPARATOR_ID => (right == pair.1).then_some(id),
++            None => None,
++            _ => selected.get(&pair).copied(),
++        };
+         let aa = self.rules[0].pair.0 == self.rules[0].pair.1;
+         let mut starts = Vec::new();
+         if aa {
+@@ -337,7 +354,8 @@ impl<'arena> Batch<'arena> {
+                                     && starts.binary_search(&((p - matched.span()) as u64)).is_ok()
+                             } else {
+                                 before != 0
+-                                    && selected.contains_key(&(corpus.token(before - 1), prior))
++                                    && tails[prior as usize]
++                                    && selected_id((corpus.token(before - 1), prior)).is_some()
+                             };
+                             // The selected match on the left owns a shared boundary.
+                             // Its right event emits the final replacements of both rules;
+@@ -360,13 +378,13 @@ impl<'arena> Batch<'arena> {
+                                     .binary_search(&(matched.after as u64))
+                                     .is_ok()
+                                     .then_some(rule.replacement)
++                            } else if heads[next as usize].is_some() {
++                                selected_id((
++                                    next,
++                                    corpus.token(matched.after + corpus.id_span(next)),
++                                ))
+                             } else {
+-                                selected
+-                                    .get(&(
+-                                        next,
+-                                        corpus.token(matched.after + corpus.id_span(next)),
+-                                    ))
+-                                    .copied()
++                                None
+                             };
+                             let born = replacement.unwrap_or(next);
+                             neighbors.record(
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/positions.rs b/tokenizers/tk-train/src/trainers/bpe/engine/positions.rs
+index ac092339..ed41a8d0 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/positions.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/positions.rs
+@@ -115,12 +115,44 @@ impl Builder {
+ pub(super) enum Input<'a> {
+     Builder(&'a Builder),
+     Slice(&'a [u64]),
++    Fragments(&'a [Positions<'a>]),
+ }
+ impl Input<'_> {
+-    fn iter(&self) -> impl DoubleEndedIterator<Item = u64> + ExactSizeIterator + Clone + '_ {
++    fn len(&self) -> Result<usize> {
+         match self {
+-            Self::Builder(values) => itertools::Either::Left(values.iter()),
+-            Self::Slice(values) => itertools::Either::Right(values.iter().copied()),
++            Self::Builder(values) => Ok(values.len()),
++            Self::Slice(values) => Ok(values.len()),
++            Self::Fragments(values) => values.iter().try_fold(0usize, |n, p| {
++                n.checked_add(p.len())
++                    .ok_or_else(|| "BPE fragment count exceeds usize".into())
++            }),
++        }
++    }
++    fn bounds(&self) -> Option<(u64, u64)> {
++        match self {
++            Self::Builder(values) => Some((values.iter().next()?, values.iter().next_back()?)),
++            Self::Slice(values) => Some((*values.first()?, *values.last()?)),
++            Self::Fragments(values) => Some((
++                values.iter().find_map(|p| p.iter().next())?,
++                values
++                    .iter()
++                    .rev()
++                    .filter(|p| !p.is_empty())
++                    .find_map(|p| p.from(p.len() - 1).next())?,
++            )),
++        }
++    }
++    fn iter(&self) -> impl Iterator<Item = u64> + '_ {
++        match self {
++            Self::Builder(values) => {
++                itertools::Either::Left(itertools::Either::Left(values.iter()))
++            }
++            Self::Slice(values) => {
++                itertools::Either::Left(itertools::Either::Right(values.iter().copied()))
++            }
++            Self::Fragments(values) => {
++                itertools::Either::Right(values.iter().flat_map(Positions::iter))
++            }
+         }
+     }
+ }
+@@ -167,19 +199,24 @@ impl<'arena> Positions<'arena> {
+         self.payload.map_addr(|a| a & !1)
+     }
+     pub(super) fn from_sorted(input: Input<'_>, lease: &mut Lease<'arena>) -> Result<Self> {
++        Self::encode(input, lease, false)
++    }
++    pub(super) fn from_sorted_owned(input: Input<'_>, lease: &mut Lease<'arena>) -> Result<Self> {
++        Self::encode(input, lease, true)
++    }
++    fn encode(input: Input<'_>, lease: &mut Lease<'arena>, owned: bool) -> Result<Self> {
++        let count = input.len()?;
+         let values = input.iter();
+-        let count = values.len();
+         if count == 0 {
+             return Ok(Self::default());
+         }
+         if count >= INLINE {
+             return Err("BPE position count exceeds resident bounds".into());
+         }
+-        let first = values.clone().next().unwrap();
+-        let gap = values
+-            .clone()
+-            .next_back()
+-            .unwrap()
++        let (first, last) = input
++            .bounds()
++            .expect("nonempty trusted input has endpoints");
++        let gap = last
+             .checked_sub(first)
+             .ok_or("BPE positions are not sorted")?;
+         if count <= 2 && first <= usize::MAX as u64 && (count == 1 || gap <= DELTA_MASK as u64) {
+@@ -211,7 +248,7 @@ impl<'arena> Positions<'arena> {
+             previous = position;
+         }
+         let allocation = layout(count, worker.bytes.len())?;
+-        let arena = allocation.size() <= lease.arena.cutoff;
++        let arena = !owned && allocation.size() <= lease.arena.cutoff;
+         let pointer = if arena {
+             worker
+                 .bump
+@@ -403,16 +440,24 @@ mod tests {
+                 }
+                 values.sort_unstable();
+                 let mut builder = Builder::default();
++                let mut fragments = vec![Positions::default()];
+                 for chunk in values.chunks(17) {
+                     let mut piece = Builder::default();
+                     for &p in chunk {
+                         piece.push(p).unwrap();
+                     }
++                    fragments.push(
++                        Positions::from_sorted_owned(Input::Builder(&piece), &mut arena.lease())
++                            .unwrap(),
++                    );
+                     builder.append(piece).unwrap();
+                 }
+                 assert!(builder.iter().eq(values.iter().copied()));
++                fragments.push(Positions::default());
+                 let positions =
+-                    Positions::from_sorted(Input::Builder(&builder), &mut arena.lease()).unwrap();
++                    Positions::from_sorted(Input::Fragments(&fragments), &mut arena.lease())
++                        .unwrap();
++                drop(fragments);
+                 assert!(positions.iter().eq(values.iter().copied()));
+                 for index in (0..=length)
+                     .step_by(if cfg!(miri) { 127 } else { 1 })
+@@ -473,6 +518,11 @@ mod tests {
+         let arena = Arena::new(1, 0);
+         let mut lease = arena.lease();
+         assert!(Positions::from_sorted(Input::Slice(&[u64::MAX, 0]), &mut lease).is_err());
++        for (a, b) in [(&[u64::MAX][..], &[0][..]), (&[0, u64::MAX][..], &[1][..])] {
++            let fragments =
++                [a, b].map(|v| Positions::from_sorted_owned(Input::Slice(v), &mut lease).unwrap());
++            assert!(Positions::from_sorted(Input::Fragments(&fragments), &mut lease).is_err());
++        }
+         let mut builder = Builder::default();
+         builder.push(u64::MAX).unwrap();
+         assert!(builder.push(0).is_err());
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/tests/mod.rs b/tokenizers/tk-train/src/trainers/bpe/engine/tests/mod.rs
+index 7874143c..bee67c4e 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/tests/mod.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/tests/mod.rs
+@@ -81,6 +81,10 @@ fn generated_models_and_every_rule_match_the_sequential_oracle() {
+ 
+ #[test]
+ fn overlap_floor_alias_and_alphabet_boundaries() {
++    check(
++        &trainer(),
++        &counts(&[("abac", 4), ("dbdc", 4), ("abdb", 3), ("acdc", 3)]),
++    );
+     // A split producer's local pieces are below the floor; its complete birth is not.
+     // Long AA runs separately exercise greedy starts across position restart blocks.
+     check(
