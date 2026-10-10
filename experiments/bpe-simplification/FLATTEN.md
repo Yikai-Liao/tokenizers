@@ -86,11 +86,11 @@ the test logs and the broadened count scope.
 
 A separate review compared the flattened implementation with main and nearby
 usable components. It found zero responsibility merges that need immediate
-action. The meaningful follow-up candidate is sharing `feed` and `WordCounts`
-with WordLevel under the private `trainers` module. WordLevel could consume a
-borrowed count view directly and keep its frequency-descending, lexical-tie
-selection rule. Before adoption it needs independent serde, failure-state,
-callback, ambient-pool and performance validation. It is not included here.
+action. It also identified possible shared `feed` and `WordCounts` storage with
+WordLevel, a separate whole-word vocabulary model. That proposal requires changes
+outside `bpe` and has been withdrawn under the confirmed BPE-only code scope.
+WordLevel was not modified. With that scope and the unavailable parity path,
+this review found no further actionable responsibility-merging candidate.
 
 The review initially identified duplicated alphabet selection in parity. A
 subsequent actual `cargo check --features parity-aware-bpe` failed with E0432:

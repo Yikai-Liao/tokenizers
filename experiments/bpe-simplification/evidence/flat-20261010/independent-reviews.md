@@ -23,12 +23,15 @@ instrumentation paths were checked.
 ## Integration review with main
 
 Result after the parity clarification: zero immediate responsibility-merging
-issues. One valid follow-up candidate remains: private shared feed/count storage
-for BPE and WordLevel. The initial alphabet sharing proposal with parity was
+issues. The reviewer proposed private shared feed/count storage for BPE and
+WordLevel. The user subsequently confirmed that code changes must stay within
+`bpe`; that proposal is outside scope and has been withdrawn. WordLevel was not
+modified. No actionable responsibility-merging candidate remains within scope.
+The initial alphabet sharing proposal with parity was
 withdrawn after the actual feature check failed because `super::BPE` is missing;
 the same stale reference exists in main and the starting revision.
 
-WordLevel can borrow count entries and retain its own descending-frequency,
+For the historical proposal, WordLevel could borrow count entries and retain its own descending-frequency,
 lexical-tie sorting without rebuilding a map. A complete follow-up must verify
 flat serde, Unicode tie ordering, duplicates, preservation of old state on
 failure, callback execution after errors and ambient-pool behavior. Small-input,
