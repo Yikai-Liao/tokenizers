@@ -12,6 +12,13 @@ abstraction.
 Starting revision: `245ac0ffaff8927c36b9d97ee0326f5e96edec41`.
 HF main comparison: `fb49a29223724a96f26e061bec8ec7517aa14177` (`origin/main`).
 
+The tables and archived validation below record the flattening snapshot
+`5f7f08c3`. Subsequent cleanup moved the single test module to `tests.rs` and
+restored inherited import-order-only changes in Unigram, WordLevel, WordPiece
+and the trainer wrapper to main. Current formatting checks target BPE explicitly
+so sibling trainers retain upstream formatting. No sibling trainer behavior was
+changed.
+
 ## Preserved behavior
 
 The coordinator remains one private function. Its body is byte-identical to the

@@ -84,8 +84,12 @@ def main():
     parser.add_argument('--change-base', help='Optional starting revision for this change')
     args = parser.parse_args()
     root = args.root / 'tokenizers/tk-train'
-    subprocess.run(['/root/.cargo/bin/cargo', 'fmt', '--manifest-path', str(root / 'Cargo.toml'), '--check'], check=True)
     bpe = root / 'src/trainers/bpe'
+    # Check only this change's source scope; upstream sibling trainers retain
+    # their original import ordering instead of acquiring formatter-only diffs.
+    subprocess.run(['/root/.cargo/bin/rustfmt', '--edition', '2024', '--check',
+                    '--config', 'skip_children=true',
+                    *map(str, sorted(bpe.rglob('*.rs')))], check=True)
     production = {}
     tests = {}
     # Include the public entry and feed/count representation alongside algorithm

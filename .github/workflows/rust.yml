@@ -160,8 +160,8 @@ jobs:
       - name: Lint with RustFmt
         run: cargo fmt --all -- --check
 
-      - name: Format training
-        run: cargo fmt --manifest-path tk-train/Cargo.toml --all -- --check
+      - name: Format BPE training
+        run: rustfmt --edition 2024 --check --config skip_children=true tk-train/src/trainers/bpe/*.rs
 
   readme:
     permissions:
