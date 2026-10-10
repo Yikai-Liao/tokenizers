@@ -63,7 +63,6 @@ Run library checks from the repository root:
 cargo test --manifest-path tokenizers/tk-train/Cargo.toml --lib
 cargo test --manifest-path tokenizers/tk-train/Cargo.toml --no-default-features --lib
 cargo clippy --manifest-path tokenizers/tk-train/Cargo.toml --all-targets
-rustfmt --edition 2024 --check --config skip_children=true tokenizers/tk-train/src/trainers/bpe/*.rs
 python3 experiments/bpe-simplification/count_lines.py
 cargo +nightly miri test --manifest-path experiments/bpe-simplification/miri-codec/Cargo.toml
 ```
@@ -79,6 +78,14 @@ exhaust every start. Native and Miri allocation tests use scoped threads and bot
 Public tests cover feed, model reload, progress and ambient-versus-training pool
 behavior. [The coverage map](COVERAGE.md) records the combined boundaries.
 
+Progress uses the upstream `ProgressBar`, `ProgressStyle` and `ProgressFormat`.
+The trainer's original helpers retain the Tokenize words, Count pairs and Compute
+merges stages. Parallel collectors increment the bar at work-block boundaries;
+the coordinator reports merges after each joined batch. There is no additional
+progress thread, channel or timer.
+
+The counting command also checks formatting of ordinary BPE and its tests;
+sibling trainers and unchanged legacy parity files retain upstream formatting.
 Source counts and diffs are descriptive, with no hard line limits. The report
 includes the ordinary BPE implementation, public API, feed and word-count storage;
 tests, the reference oracle, shared helpers and Miri harness are counted separately.

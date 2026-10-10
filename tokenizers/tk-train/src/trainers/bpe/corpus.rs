@@ -4,14 +4,13 @@ use super::{
     vocabulary::{InitialTokenIds, Vocabulary},
     word_counts::WordCountsView,
 };
-use crate::progress::TrainingProgress;
 use compact_str::CompactString;
 use rayon::prelude::*;
 use std::{
     ops::ControlFlow,
     sync::atomic::{AtomicU16, AtomicU32, AtomicUsize, Ordering},
 };
-use tk_encode::{Result, models::bpe::Pair};
+use tk_encode::{Result, models::bpe::Pair, utils::progress::ProgressBar};
 
 pub(super) struct Corpus {
     tokens: Slots,
@@ -55,10 +54,9 @@ impl<'input> CorpusPlan<'input> {
         vocabulary: &mut Vocabulary,
         trainer: &BpeTrainer,
         reuse: bool,
-        progress: &TrainingProgress,
+        progress: &Option<ProgressBar>,
     ) -> Result<Self> {
-        let ids =
-            vocabulary.initial_ids(words, &progress.stage("Resolve initial IDs", words.len()))?;
+        let ids = vocabulary.initial_ids(words, progress)?;
         let mut words: Vec<_> = words.iter().collect();
         words.par_sort_unstable_by(|a, b| b.1.cmp(a.1));
         let measured: Vec<_> = words
@@ -169,9 +167,8 @@ impl<'input> CorpusPlan<'input> {
         }
         Ok(())
     }
-    pub(super) fn materialize(self, progress: &TrainingProgress) -> Corpus {
+    pub(super) fn materialize(self) -> Corpus {
         let tokens = Slots::new(self.length, self.slot_bound);
-        let work = progress.stage("Materialize corpus", self.length);
         self.words
             .par_iter()
             .enumerate()
@@ -185,7 +182,6 @@ impl<'input> CorpusPlan<'input> {
                     position += 1;
                     ControlFlow::Continue(())
                 });
-                work.complete(position - start + 1);
             });
         // Only historical reuse cohorts need a word directory after counting.
         Corpus {

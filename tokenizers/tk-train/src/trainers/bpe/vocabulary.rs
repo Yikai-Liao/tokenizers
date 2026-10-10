@@ -1,7 +1,6 @@
 //! Vocabulary identity and canonical output strings, independent of position storage.
 use super::word_counts::WordCountsView;
 use super::{BpeTrainer, WORD_SEPARATOR_ID};
-use crate::progress::{TrainingProgress, WorkProgress};
 use ahash::{AHashMap, RandomState};
 use compact_str::CompactString;
 use indexmap::IndexSet;
@@ -9,6 +8,7 @@ use rayon::prelude::*;
 use tk_encode::{
     Result,
     models::bpe::{Merges, Pair, Vocab},
+    utils::progress::ProgressBar,
 };
 
 pub(super) struct Vocabulary {
@@ -36,7 +36,6 @@ impl Vocabulary {
         trainer: &BpeTrainer,
         word_counts: WordCountsView<'_>,
         workers: usize,
-        progress: &TrainingProgress,
         retained_alphabet: &mut Option<Vec<char>>,
     ) -> Result<Self> {
         let mut vocabulary = Self {
@@ -49,7 +48,6 @@ impl Vocabulary {
         for token in &trainer.special_tokens {
             vocabulary.intern(token.content.as_str())?;
         }
-        let work = progress.stage("Compute alphabet", word_counts.len());
         if trainer.limit_alphabet.is_some() {
             // Preserve the existing frequency-tie selector for limited alphabets.
             let characters =
@@ -58,7 +56,6 @@ impl Vocabulary {
                 let mut utf8 = [0; 4];
                 vocabulary.intern(character.encode_utf8(&mut utf8))?;
             }
-            work.complete(word_counts.len());
         } else {
             let words: Vec<_> = word_counts.keys().collect();
             let chunk = words.len().div_ceil(workers).max(1);
@@ -72,7 +69,6 @@ impl Vocabulary {
                             present[codepoint / 64] |= 1_u64 << (codepoint % 64);
                         }
                     }
-                    work.complete(chunk.len());
                     present
                 })
                 .collect();
@@ -125,7 +121,7 @@ impl Vocabulary {
     pub(super) fn initial_ids(
         &mut self,
         word_counts: WordCountsView<'_>,
-        work: &WorkProgress,
+        progress: &Option<ProgressBar>,
     ) -> Result<InitialTokenIds> {
         let mut ids = InitialTokenIds {
             characters: vec![WORD_SEPARATOR_ID; 0x110000],
@@ -147,7 +143,9 @@ impl Vocabulary {
                 .resize(self.tokens.len(), [WORD_SEPARATOR_ID; 3]);
         }
         if !ids.prefix && !ids.suffix && self.plain_ids_resolved {
-            work.complete(word_counts.len());
+            if let Some(p) = progress {
+                p.inc(word_counts.len() as u64);
+            }
             return Ok(ids);
         }
         self.initial_spans.fill(0);
@@ -191,11 +189,15 @@ impl Vocabulary {
                 };
                 self.initial_spans[id as usize] = 1;
             }
-            if (index + 1) % 1024 == 0 {
-                work.complete(1024);
+            if (index + 1) % 1024 == 0
+                && let Some(p) = progress
+            {
+                p.inc(1024);
             }
         }
-        work.complete(word_counts.len() % 1024);
+        if let Some(p) = progress {
+            p.inc((word_counts.len() % 1024) as u64);
+        }
         Ok(ids)
     }
     pub(super) fn take_initial_spans(&mut self) -> Vec<usize> {

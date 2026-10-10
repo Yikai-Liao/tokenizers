@@ -5,12 +5,11 @@ use super::{
     corpus::CorpusPlan,
     positions::{Arena, Builder, Input, Positions},
 };
-use crate::progress::TrainingProgress;
 use ahash::AHashMap;
 use dary_heap::OctonaryHeap;
 use rayon::prelude::*;
 use std::cmp::{Ordering, Reverse};
-use tk_encode::{Result, models::bpe::Pair};
+use tk_encode::{Result, models::bpe::Pair, utils::progress::ProgressBar};
 
 // Highest count first, then smallest pair. Field order defines heap priority.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
@@ -110,9 +109,8 @@ impl<'arena> PairIndex<'arena> {
         minimum: u64,
         workers: usize,
         reuse: bool,
-        progress: &TrainingProgress,
+        progress: &Option<ProgressBar>,
     ) -> Result<Self> {
-        let work = progress.stage("Count initial pairs", corpus.word_count());
         let pieces = corpus
             .initial_ranges(if cfg!(test) { 16 } else { 1 << 24 })
             .into_par_iter()
@@ -131,7 +129,9 @@ impl<'arena> PairIndex<'arena> {
                     add(&mut state.count, weight)?;
                     state.positions.push(p)
                 })?;
-                work.complete(range.len());
+                if let Some(p) = progress {
+                    p.inc(range.len() as u64);
+                }
                 let states = match domain {
                     Some(n) => dense
                         .into_iter()

@@ -85,11 +85,12 @@ def main():
     args = parser.parse_args()
     root = args.root / 'tokenizers/tk-train'
     bpe = root / 'src/trainers/bpe'
-    # Check only this change's source scope; upstream sibling trainers retain
-    # their original import ordering instead of acquiring formatter-only diffs.
+    # Check ordinary BPE and its tests; upstream sibling trainers and legacy
+    # parity files retain their original formatting.
+    format_paths = [p for p in bpe.rglob('*.rs') if p.name not in ('parity_trainer.rs', 'word.rs')]
     subprocess.run(['/root/.cargo/bin/rustfmt', '--edition', '2024', '--check',
                     '--config', 'skip_children=true',
-                    *map(str, sorted(bpe.rglob('*.rs')))], check=True)
+                    *map(str, sorted(format_paths))], check=True)
     production = {}
     tests = {}
     # Include the public entry and feed/count representation alongside algorithm

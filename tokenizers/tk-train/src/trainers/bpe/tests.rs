@@ -193,12 +193,12 @@ fn ready_batch_applies_independent_rules_together() {
     let trainer = trainer();
     let words = counts(&[("ab", 10), ("cd", 9), ("ef", 8)]);
     let view = WordCountsView::from_map(&words);
-    let progress = TrainingProgress::new(false, trainer.progress_format).unwrap();
-    let mut vocabulary = Vocabulary::initialize(&trainer, view, 4, &progress, &mut None).unwrap();
+    let progress = trainer.setup_progress();
+    let mut vocabulary = Vocabulary::initialize(&trainer, view, 4, &mut None).unwrap();
     let plan = CorpusPlan::build(view, &mut vocabulary, &trainer, false, &progress).unwrap();
     let arena = Arena::new(4, plan.items());
     let mut index = PairIndex::build(&arena, &plan, 1, 4, false, &progress).unwrap();
-    let mut corpus = plan.materialize(&progress);
+    let mut corpus = plan.materialize();
     let Selection::Ready(batch) =
         Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index).unwrap()
     else {
@@ -445,6 +445,10 @@ fn public_pools_feed_flush_errors_and_progress_matrix() {
                 assert_eq!(record["current"], 0);
             }
         }
+        assert_eq!(
+            stages,
+            ["Tokenize words", "Count pairs", "Compute merges"].into()
+        );
         let stdout = String::from_utf8(result.stdout).unwrap();
         let count: u64 = stdout
             .lines()

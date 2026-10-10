@@ -12,14 +12,37 @@ abstraction.
 Starting revision: `245ac0ffaff8927c36b9d97ee0326f5e96edec41`.
 HF main comparison: `fb49a29223724a96f26e061bec8ec7517aa14177` (`origin/main`).
 
-The tables and archived validation below record the flattening snapshot
+The archived source comparisons, tables and validation below record the flattening snapshot
 `5f7f08c3`. Subsequent cleanup moved the single test module to `tests.rs` and
 restored inherited import-order-only changes in Unigram, WordLevel, WordPiece
 and the trainer wrapper to main. Current formatting checks target BPE explicitly
 so sibling trainers retain upstream formatting. No sibling trainer behavior was
 changed.
 
-## Preserved behavior
+The later scope cleanup removes the custom progress implementation entirely.
+The four original BpeTrainer helpers are restored byte-for-byte from main and
+use its existing ProgressBar, ProgressStyle and ProgressFormat. Tokenize words,
+Count pairs and Compute merges retain their original stage names and JSON schema.
+Parallel collectors update the bar at work-block boundaries; the coordinator
+reports merges after each joined batch. No additional progress thread, channel
+or timer remains. The existing public matrix also asserts the three literal
+upstream stage names.
+
+The crate root, top-level training README, CI workflow and Python configuration
+are restored to main; the added README template is removed.
+Legacy parity and word sources also match main. Outside the training BPE source
+and its colocated guides, retained integration changes are its required Cargo
+dependencies and the existing affix/empty-input fold fix inside the encoding
+BPE module, with its regression test. Experiment tools and historical evidence
+remain separate from production code.
+
+Current production is 2611 descriptive lines, including the restored upstream
+progress helpers. Default tests/helpers are 800 lines. Default and no-default
+suites each pass 17 unit tests and 1 doctest after the cleanup; all-target Clippy passes
+with denied warnings. These are follow-up results, separate from the archived
+flattening snapshot below.
+
+## Preserved behavior in the flattening snapshot
 
 The coordinator remains one private function. Its body is byte-identical to the
 old `engine::train`, with only `pub(super)` removed from the declaration. `train_counts` still
@@ -78,7 +101,7 @@ of this flattening. Raw per-file additions and deletions are available in
 also records its exact scope. These metrics describe the changes and do not
 measure complexity or correctness.
 
-## Validation and independent review
+## Validation and independent review of the flattening snapshot
 
 Default and no-default suites each passed 17 unit tests and 1 doctest. All-target
 Clippy passed with warnings denied. Formatting and source migration checks

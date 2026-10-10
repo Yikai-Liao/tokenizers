@@ -20,7 +20,7 @@ mod word;
 #[cfg(feature = "parity-aware-bpe")]
 pub use parity_trainer::{ParityBpeTrainer, ParityBpeTrainerBuilder, ParityVariant};
 
-use crate::{Trainer, progress::TrainingProgress};
+use crate::Trainer;
 use ahash::{AHashMap, AHashSet};
 use compact_str::CompactString;
 use corpus::CorpusPlan;
@@ -41,7 +41,7 @@ use tk_encode::Result;
 use tk_encode::models::bpe::Pair;
 use tk_encode::models::bpe::{BpeConfig, Merges, PipelineBPE, Vocab};
 use tk_encode::parallelism::*;
-use tk_encode::utils::progress::ProgressFormat;
+use tk_encode::utils::progress::{ProgressBar, ProgressFormat, ProgressStyle};
 
 struct Config {
     min_frequency: u64,
@@ -267,6 +267,52 @@ impl BpeTrainer {
         self.words.len()
     }
 
+    /// Setup a progress bar if asked to show progress (only for Indicatif format)
+    fn setup_progress(&self) -> Option<ProgressBar> {
+        if self.show_progress && self.progress_format == ProgressFormat::Indicatif {
+            let p = ProgressBar::new(0);
+            p.set_style(
+                ProgressStyle::default_bar()
+                    .template("[{elapsed_precise}] {msg:<30!} {wide_bar} {pos:<9!}/{len:>9!}")
+                    .expect("Invalid progress template"),
+            );
+            Some(p)
+        } else {
+            None
+        }
+    }
+
+    /// Emit JSON progress line to stderr (for JsonLines format)
+    fn emit_json_progress(&self, stage: &str, current: usize, total: usize) {
+        if self.progress_format == ProgressFormat::JsonLines {
+            eprintln!(
+                r#"{{"stage":"{}","current":{},"total":{}}}"#,
+                stage, current, total
+            );
+        }
+    }
+
+    /// Set the progress bar in the finish state
+    fn finalize_progress(&self, p: &Option<ProgressBar>, final_len: usize, stage: &str) {
+        if let Some(p) = p {
+            p.set_length(final_len as u64);
+            p.finish();
+            println!();
+        }
+        self.emit_json_progress(stage, final_len, final_len);
+    }
+
+    /// Update the progress bar with the new provided length and message
+    fn update_progress(&self, p: &Option<ProgressBar>, len: usize, message: &'static str) {
+        if let Some(p) = p {
+            p.set_message(message);
+            p.set_length(len as u64);
+            p.reset();
+        }
+        // Emit initial JSON progress for this stage
+        self.emit_json_progress(message, 0, len);
+    }
+
     /// Train the collected weighted words and return vocabulary entries, ordered
     /// merges, and special tokens.
     ///
@@ -368,13 +414,15 @@ fn train(
         .num_threads(workers)
         .build()?;
     pool.install(|| {
-        let progress = TrainingProgress::new(trainer.show_progress, trainer.progress_format)?;
+        let progress = trainer.setup_progress();
         let mut alphabet = None;
         let mut reuse = false;
         loop {
-            let mut vocabulary =
-                Vocabulary::initialize(trainer, words, workers, &progress, &mut alphabet)?;
+            let mut vocabulary = Vocabulary::initialize(trainer, words, workers, &mut alphabet)?;
+            trainer.update_progress(&progress, words.len(), "Tokenize words");
             let plan = CorpusPlan::build(words, &mut vocabulary, trainer, reuse, &progress)?;
+            trainer.finalize_progress(&progress, plan.word_count(), "Tokenize words");
+            trainer.update_progress(&progress, plan.word_count(), "Count pairs");
             let arena = Arena::new(workers, plan.items());
             let mut index = PairIndex::build(
                 &arena,
@@ -384,16 +432,18 @@ fn train(
                 reuse,
                 &progress,
             )?;
+            trainer.finalize_progress(&progress, plan.word_count(), "Count pairs");
             if vocabulary.len() >= trainer.vocab_size {
-                progress.stage("Compute merges", trainer.vocab_size);
+                trainer.update_progress(&progress, trainer.vocab_size, "Compute merges");
+                trainer.finalize_progress(&progress, 0, "Compute merges");
                 drop(index);
                 drop(plan);
                 drop(arena);
                 let (vocab, merges) = vocabulary.into_model_parts(Vec::new());
                 return Ok((vocab, merges, trainer.special_tokens.clone()));
             }
-            let mut corpus = plan.materialize(&progress);
-            let work = progress.stage("Compute merges", trainer.vocab_size);
+            let mut corpus = plan.materialize();
+            trainer.update_progress(&progress, trainer.vocab_size, "Compute merges");
             let mut merges = Vec::new();
             #[cfg(test)]
             let mut trace = Trace::new();
@@ -410,6 +460,7 @@ fn train(
                 };
                 #[cfg(test)]
                 trace.extend(batch.trace());
+                let previous_len = merges.len();
                 merges.extend(batch.pairs());
                 let prepared = batch.prepare(
                     &corpus,
@@ -418,8 +469,12 @@ fn train(
                 )?;
                 let changes = prepared.apply(&corpus);
                 index.commit(changes)?;
-                work.learned(merges.len());
+                if let Some(p) = &progress {
+                    p.inc((merges.len() - previous_len) as u64);
+                }
+                trainer.emit_json_progress("Compute merges", merges.len(), trainer.vocab_size);
             }
+            trainer.finalize_progress(&progress, merges.len(), "Compute merges");
             if restart {
                 reuse = true;
                 continue;
