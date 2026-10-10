@@ -235,6 +235,188 @@ impl BpeTrainer {
         self.words.len()
     }
 
+    /// Train the collected weighted words and return vocabulary entries, ordered
+    /// merges, and special tokens.
+    ///
+    /// Stored counts remain available for subsequent calls. Execution policy and
+    /// numeric limits are the same as for [`Self::do_train`]. The WordPiece trainer
+    /// uses these parts to reinterpret the vocabulary without building BPE merge tables.
+    ///
+    /// # Errors
+    ///
+    /// Returns the training errors described in [`Self::do_train`], including the
+    /// signed input limits for nonempty affixes even when no merge is needed.
+    pub fn train_vocab(&self) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
+        self.do_train_impl(
+            self.words.view(),
+            None,
+            #[cfg(test)]
+            None,
+        )
+    }
+
+    /// Train weighted words and return vocabulary entries, ordered merges, and
+    /// special tokens for registration by the caller.
+    ///
+    /// These parts populate [`BpeConfig`] for [`PipelineBPE::from_config`]. The
+    /// WordPiece trainer consumes the vocabulary without building BPE merge tables.
+    /// The input map is borrowed and remains unchanged.
+    ///
+    /// Training uses a dedicated Rayon pool sized by
+    /// [`tk_encode::parallelism::num_threads`], or one worker when parallelism is
+    /// disabled. [`Trainer::feed`] uses the ambient pool, including one installed
+    /// by the caller.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error on overflow or underflow in checked `u64` pair, birth,
+    /// or removal arithmetic, or in checked `i64` identity-reuse ledger updates.
+    /// A merge reuses an identity when its result string resolves to an ID already
+    /// activated as an input symbol or an earlier merge result. This includes IDs
+    /// whose last occurrence has since disappeared. A new ID or an unactivated
+    /// reserved ID is a first activation.
+    ///
+    /// Nonempty affixes and identity reuse require the maximum word weight and
+    /// initial weighted edge mass (the sum of each word's weight times its retained
+    /// adjacent-pair count) to fit in `i64::MAX`. The affix check applies even when
+    /// the initial vocabulary already meets the target size. Without nonempty
+    /// affixes or identity reuse, there is no total-`u64` mass limit when every
+    /// individual pair count fits.
+    ///
+    /// Pool creation, progress setup, vocabulary or corpus size bounds, and fallible position
+    /// storage operations can also return errors. Feed counting and limited-alphabet
+    /// frequency accumulation use ordinary addition rather than these checked rules.
+    pub fn do_train(
+        &self,
+        word_counts: &AHashMap<CompactString, u64>,
+    ) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
+        self.do_train_impl(
+            WordCountsView::from_map(word_counts),
+            None,
+            #[cfg(test)]
+            None,
+        )
+    }
+
+    fn do_train_impl(
+        &self,
+        words: WordCountsView<'_>,
+        workers: Option<usize>,
+        #[cfg(test)] mut observe: Option<&mut (dyn FnMut(Pair, u64, u32) + Send)>,
+    ) -> Result<ModelParts> {
+        let workers = workers.unwrap_or_else(|| {
+            if get_parallelism() {
+                num_threads().max(1)
+            } else {
+                1
+            }
+        });
+        let pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(workers)
+            .build()?;
+        pool.install(|| {
+            let progress = self.setup_progress();
+            let mut alphabet = None;
+            let mut reuse = false;
+            loop {
+                match self.train_attempt(
+                    words,
+                    workers,
+                    reuse,
+                    &mut alphabet,
+                    &progress,
+                    #[cfg(test)]
+                    &mut observe,
+                )? {
+                    AttemptOutcome::Complete(parts) => return Ok(parts),
+                    // An activated-ID collision discards the fresh attempt. Retain the
+                    // selected alphabet so frequency ties cannot change on the retry.
+                    AttemptOutcome::RestartForReuse => reuse = true,
+                }
+            }
+        })
+    }
+
+    // Only a completed attempt publishes model parts and its test trace;
+    // fresh attempts that request historical cohorts stay private.
+    fn train_attempt(
+        &self,
+        words: WordCountsView<'_>,
+        workers: usize,
+        reuse: bool,
+        alphabet: &mut Option<Vec<char>>,
+        progress: &Option<ProgressBar>,
+        #[cfg(test)] observe: &mut Option<&mut (dyn FnMut(Pair, u64, u32) + Send)>,
+    ) -> Result<AttemptOutcome> {
+        // 1. Resolve the vocabulary and tokenize borrowed input into a corpus plan.
+        let mut vocabulary = Vocabulary::initialize(self, words, workers, alphabet)?;
+        self.update_progress(progress, words.len(), "Tokenize words");
+        let plan = CorpusPlan::build(words, &mut vocabulary, self, reuse, progress)?;
+        self.finalize_progress(progress, plan.word_count(), "Tokenize words");
+
+        // 2. Count and freeze initial pairs before allocating resident token slots.
+        self.update_progress(progress, plan.word_count(), "Count pairs");
+        let mut index = PairIndex::build(&plan, self.min_frequency, workers, reuse, progress)?;
+        self.finalize_progress(progress, plan.word_count(), "Count pairs");
+        if vocabulary.len() >= self.vocab_size {
+            self.update_progress(progress, self.vocab_size, "Compute merges");
+            self.finalize_progress(progress, 0, "Compute merges");
+            drop(index);
+            drop(plan);
+            let (vocab, merges) = vocabulary.into_model_parts(Vec::new());
+            return Ok(AttemptOutcome::Complete((
+                vocab,
+                merges,
+                self.special_tokens.clone(),
+            )));
+        }
+
+        // 3. Select compatible batches, record their rules, and complete each round.
+        let mut corpus = plan.materialize();
+        self.update_progress(progress, self.vocab_size, "Compute merges");
+        let mut merges = Vec::new();
+        #[cfg(test)]
+        let mut trace = Trace::new();
+        while vocabulary.len() < self.vocab_size {
+            let batch = match Batch::select(self, &mut vocabulary, &mut corpus, &mut index)? {
+                Selection::Finished => break,
+                Selection::Restart => {
+                    self.finalize_progress(progress, merges.len(), "Compute merges");
+                    return Ok(AttemptOutcome::RestartForReuse);
+                }
+                Selection::Ready(batch) => batch,
+            };
+            #[cfg(test)]
+            trace.extend(batch.trace());
+            let previous_len = merges.len();
+            merges.extend(batch.pairs());
+            batch.commit(
+                &mut corpus,
+                &mut index,
+                self.max_token_length.unwrap_or(usize::MAX),
+            )?;
+            if let Some(p) = progress {
+                p.inc((merges.len() - previous_len) as u64);
+            }
+            self.emit_json_progress("Compute merges", merges.len(), self.vocab_size);
+        }
+        self.finalize_progress(progress, merges.len(), "Compute merges");
+        drop(index);
+        drop(corpus);
+        #[cfg(test)]
+        if let Some(observer) = observe.as_mut() {
+            for (pair, count, id) in trace {
+                observer(pair, count, id);
+            }
+        }
+        let (vocab, merges) = vocabulary.into_model_parts(merges);
+        Ok(AttemptOutcome::Complete((
+            vocab,
+            merges,
+            self.special_tokens.clone(),
+        )))
+    }
+
     /// Setup a progress bar if asked to show progress (only for Indicatif format)
     fn setup_progress(&self) -> Option<ProgressBar> {
         if self.show_progress && self.progress_format == ProgressFormat::Indicatif {
@@ -282,21 +464,6 @@ impl BpeTrainer {
         self.emit_json_progress(message, 0, len);
     }
 
-    /// Train the collected weighted words and return vocabulary entries, ordered
-    /// merges, and special tokens.
-    ///
-    /// Stored counts remain available for subsequent calls. Execution policy and
-    /// numeric limits are the same as for [`Self::do_train`]. The WordPiece trainer
-    /// uses these parts to reinterpret the vocabulary without building BPE merge tables.
-    ///
-    /// # Errors
-    ///
-    /// Returns the training errors described in [`Self::do_train`], including the
-    /// signed input limits for nonempty affixes even when no merge is needed.
-    pub fn train_vocab(&self) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
-        self.train_counts(self.words.view())
-    }
-
     /// The runtime options a trained model is built with.
     ///
     /// The two affixes are the only settings a BPE trainer decides: everything else in
@@ -308,62 +475,6 @@ impl BpeTrainer {
             end_of_word_suffix: self.end_of_word_suffix.clone(),
             ..Default::default()
         }
-    }
-
-    /// Train weighted words and return vocabulary entries, ordered merges, and
-    /// special tokens for registration by the caller.
-    ///
-    /// These parts populate [`BpeConfig`] for [`PipelineBPE::from_config`]. The
-    /// WordPiece trainer consumes the vocabulary without building BPE merge tables.
-    /// The input map is borrowed and remains unchanged.
-    ///
-    /// Training uses a dedicated Rayon pool sized by
-    /// [`tk_encode::parallelism::num_threads`], or one worker when parallelism is
-    /// disabled. [`Trainer::feed`] uses the ambient pool, including one installed
-    /// by the caller.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error on overflow or underflow in checked `u64` pair, birth,
-    /// or removal arithmetic, or in checked `i64` identity-reuse ledger updates.
-    /// A merge reuses an identity when its result string resolves to an ID already
-    /// activated as an input symbol or an earlier merge result. This includes IDs
-    /// whose last occurrence has since disappeared. A new ID or an unactivated
-    /// reserved ID is a first activation.
-    ///
-    /// Nonempty affixes and identity reuse require the maximum word weight and
-    /// initial weighted edge mass (the sum of each word's weight times its retained
-    /// adjacent-pair count) to fit in `i64::MAX`. The affix check applies even when
-    /// the initial vocabulary already meets the target size. Without nonempty
-    /// affixes or identity reuse, there is no total-`u64` mass limit when every
-    /// individual pair count fits.
-    ///
-    /// Pool creation, progress setup, vocabulary or corpus size bounds, and fallible position
-    /// storage operations can also return errors. Feed counting and limited-alphabet
-    /// frequency accumulation use ordinary addition rather than these checked rules.
-    pub fn do_train(
-        &self,
-        word_counts: &AHashMap<CompactString, u64>,
-    ) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
-        self.train_counts(WordCountsView::from_map(word_counts))
-    }
-
-    fn train_counts(
-        &self,
-        word_counts: WordCountsView<'_>,
-    ) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
-        let workers = if get_parallelism() {
-            num_threads().max(1)
-        } else {
-            1
-        };
-        train(
-            self,
-            word_counts,
-            workers,
-            #[cfg(test)]
-            None,
-        )
     }
 }
 
@@ -385,126 +496,13 @@ enum AttemptOutcome {
 #[cfg(test)]
 type Trace = Vec<(Pair, u64, u32)>;
 
-fn train(
-    trainer: &BpeTrainer,
-    words: WordCountsView<'_>,
-    workers: usize,
-    #[cfg(test)] mut observe: Option<&mut (dyn FnMut(Pair, u64, u32) + Send)>,
-) -> Result<ModelParts> {
-    let pool = rayon::ThreadPoolBuilder::new()
-        .num_threads(workers)
-        .build()?;
-    pool.install(|| {
-        let progress = trainer.setup_progress();
-        let mut alphabet = None;
-        let mut reuse = false;
-        loop {
-            match train_attempt(
-                trainer,
-                words,
-                workers,
-                reuse,
-                &mut alphabet,
-                &progress,
-                #[cfg(test)]
-                &mut observe,
-            )? {
-                AttemptOutcome::Complete(parts) => return Ok(parts),
-                // An activated-ID collision discards the fresh attempt. Retain the
-                // selected alphabet so frequency ties cannot change on the retry.
-                AttemptOutcome::RestartForReuse => reuse = true,
-            }
-        }
-    })
-}
-
-// Only a completed attempt publishes model parts and its test trace;
-// fresh attempts that request historical cohorts stay private.
-fn train_attempt(
-    trainer: &BpeTrainer,
-    words: WordCountsView<'_>,
-    workers: usize,
-    reuse: bool,
-    alphabet: &mut Option<Vec<char>>,
-    progress: &Option<ProgressBar>,
-    #[cfg(test)] observe: &mut Option<&mut (dyn FnMut(Pair, u64, u32) + Send)>,
-) -> Result<AttemptOutcome> {
-    // 1. Resolve the vocabulary and tokenize borrowed input into a corpus plan.
-    let mut vocabulary = Vocabulary::initialize(trainer, words, workers, alphabet)?;
-    trainer.update_progress(progress, words.len(), "Tokenize words");
-    let plan = CorpusPlan::build(words, &mut vocabulary, trainer, reuse, progress)?;
-    trainer.finalize_progress(progress, plan.word_count(), "Tokenize words");
-
-    // 2. Count and freeze initial pairs before allocating resident token slots.
-    trainer.update_progress(progress, plan.word_count(), "Count pairs");
-    let mut index = PairIndex::build(&plan, trainer.min_frequency, workers, reuse, progress)?;
-    trainer.finalize_progress(progress, plan.word_count(), "Count pairs");
-    if vocabulary.len() >= trainer.vocab_size {
-        trainer.update_progress(progress, trainer.vocab_size, "Compute merges");
-        trainer.finalize_progress(progress, 0, "Compute merges");
-        drop(index);
-        drop(plan);
-        let (vocab, merges) = vocabulary.into_model_parts(Vec::new());
-        return Ok(AttemptOutcome::Complete((
-            vocab,
-            merges,
-            trainer.special_tokens.clone(),
-        )));
-    }
-
-    // 3. Select compatible batches, record their rules, and complete each round.
-    let mut corpus = plan.materialize();
-    trainer.update_progress(progress, trainer.vocab_size, "Compute merges");
-    let mut merges = Vec::new();
-    #[cfg(test)]
-    let mut trace = Trace::new();
-    while vocabulary.len() < trainer.vocab_size {
-        let batch = match Batch::select(trainer, &mut vocabulary, &mut corpus, &mut index)? {
-            Selection::Finished => break,
-            Selection::Restart => {
-                trainer.finalize_progress(progress, merges.len(), "Compute merges");
-                return Ok(AttemptOutcome::RestartForReuse);
-            }
-            Selection::Ready(batch) => batch,
-        };
-        #[cfg(test)]
-        trace.extend(batch.trace());
-        let previous_len = merges.len();
-        merges.extend(batch.pairs());
-        batch.commit(
-            &mut corpus,
-            &mut index,
-            trainer.max_token_length.unwrap_or(usize::MAX),
-        )?;
-        if let Some(p) = progress {
-            p.inc((merges.len() - previous_len) as u64);
-        }
-        trainer.emit_json_progress("Compute merges", merges.len(), trainer.vocab_size);
-    }
-    trainer.finalize_progress(progress, merges.len(), "Compute merges");
-    drop(index);
-    drop(corpus);
-    #[cfg(test)]
-    if let Some(observer) = observe.as_mut() {
-        for (pair, count, id) in trace {
-            observer(pair, count, id);
-        }
-    }
-    let (vocab, merges) = vocabulary.into_model_parts(merges);
-    Ok(AttemptOutcome::Complete((
-        vocab,
-        merges,
-        trainer.special_tokens.clone(),
-    )))
-}
-
 impl Trainer for BpeTrainer {
     type Model = PipelineBPE;
 
     /// Train the collected words and replace the model using the trainer's affixes.
     /// Return special tokens for registration by the caller.
     fn train(&self, model: &mut PipelineBPE) -> Result<Vec<AddedToken>> {
-        let (vocab, merges, special_tokens) = self.train_counts(self.words.view())?;
+        let (vocab, merges, special_tokens) = self.train_vocab()?;
         *model = PipelineBPE::from_config(BpeConfig {
             vocab,
             merges,

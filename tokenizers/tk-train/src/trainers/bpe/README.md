@@ -5,7 +5,7 @@ and special tokens. It preserves weighted pair selection and compatible batch
 execution while using one endpoint/event protocol.
 
 The public entry points and private training coordinator share [mod.rs](mod.rs).
-`BpeTrainer::train_counts` selects the requested worker count and calls `train`;
+`BpeTrainer::do_train_impl` selects the requested worker count and owns the pool and retries;
 tests exercise the same training flow with explicit worker counts and observers.
 Read it for the complete workflow: initialize identities and a borrowed corpus plan,
 build the compressed occurrence index, materialize endpoints, select a compatible

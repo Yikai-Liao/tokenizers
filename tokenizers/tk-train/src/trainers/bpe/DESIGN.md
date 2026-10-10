@@ -2,9 +2,11 @@
 
 ## Joined rounds and ownership
 
-The private `train` coordinator in `mod.rs` owns the vocabulary, corpus, pair index
-for one attempt. Public inputs and worker policy enter through
-`BpeTrainer::train_counts`; tests exercise the same coordinator with explicit workers.
+`BpeTrainer::do_train_impl` in `mod.rs` owns the dedicated pool, progress and retry
+flow. `do_train` and `train_vocab` borrow a `WordCountsView` and enter it directly;
+the Trainer implementation adapts `train_vocab` results into a replacement model.
+The private `train_attempt` owns the vocabulary, corpus and pair index for one attempt.
+Tests exercise this same coordinator with explicit workers.
 A selected `Batch` owns the occurrence lists of its rules. The coordinator records
 those rules and calls `Batch::commit` to complete the round. Merge first prepares
 owned writes and neighbor changes in parallel and joins all readers. Only after

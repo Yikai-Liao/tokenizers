@@ -27,13 +27,13 @@ fn check(trainer: &BpeTrainer, words: &AHashMap<CompactString, u64>) -> Vec<(Pai
         .unwrap();
     for workers in [1, 4, 8] {
         let mut actual_trace = Vec::new();
-        let actual = train(
-            trainer,
-            WordCountsView::from_map(words),
-            workers,
-            Some(&mut |p, n, id| actual_trace.push((p, n, id))),
-        )
-        .unwrap();
+        let actual = trainer
+            .do_train_impl(
+                WordCountsView::from_map(words),
+                Some(workers),
+                Some(&mut |p, n, id| actual_trace.push((p, n, id))),
+            )
+            .unwrap();
         assert_eq!(actual_trace, expected_trace, "workers={workers}");
         assert_eq!(actual, expected, "workers={workers}");
     }
@@ -173,13 +173,13 @@ fn count_domains_and_zero_merge_validation() {
     let mut trainer = trainer();
     for weight in [u32::MAX as u64 + 17, u64::MAX] {
         let mut trace = Vec::new();
-        train(
-            &trainer,
-            WordCountsView::from_map(&counts(&[("ab", weight)])),
-            2,
-            Some(&mut |p, n, id| trace.push((p, n, id))),
-        )
-        .unwrap();
+        trainer
+            .do_train_impl(
+                WordCountsView::from_map(&counts(&[("ab", weight)])),
+                Some(2),
+                Some(&mut |p, n, id| trace.push((p, n, id))),
+            )
+            .unwrap();
         assert_eq!(trace, [((0, 1), weight, 2)]);
     }
     for target in [0, 2, 64] {
@@ -199,6 +199,71 @@ fn count_domains_and_zero_merge_validation() {
             );
         }
     }
+}
+
+#[test]
+fn borrowed_stored_and_fed_counts_remain_reusable() {
+    let input = ["ab测", "ab测", "ab", "测", ""];
+    let words = counts(&[("ab测", 2), ("ab", 1), ("测", 1), ("", 1)]);
+    let original = words.clone();
+    let mut trainer = trainer();
+    let expected = trainer.do_train(&words).unwrap();
+    trainer
+        .feed(input.into_iter(), |s| Ok(vec![s.to_owned()]))
+        .unwrap();
+    let stored = trainer.clone();
+    for _ in 0..2 {
+        assert_eq!(trainer.train_vocab().unwrap(), expected);
+        assert_eq!(trainer, stored);
+    }
+    let restored: BpeTrainer =
+        serde_json::from_value(serde_json::to_value(&trainer).unwrap()).unwrap();
+    assert_eq!(restored.train_vocab().unwrap(), expected);
+
+    // Decorated IDs depend on traversal order, so both private representations
+    // borrow the same order here rather than rehashing the input.
+    trainer.continuing_subword_prefix = Some("##".into());
+    trainer.end_of_word_suffix = Some("</w>".into());
+    let expected = trainer.do_train(&words).unwrap();
+    for stored in [
+        WordCounts::from_map(words.clone()),
+        WordCounts::from_entries(words.iter().map(|(word, &n)| (word.clone(), n)).collect()),
+    ] {
+        trainer.words = stored;
+        let before = trainer.clone();
+        for _ in 0..2 {
+            assert_eq!(trainer.train_vocab().unwrap(), expected);
+            assert_eq!(trainer, before);
+        }
+    }
+    assert_eq!(words, original);
+}
+
+#[test]
+fn training_and_model_construction_errors_preserve_the_previous_model() {
+    let mut model = PipelineBPE::from_config(BpeConfig {
+        vocab: [("old".into(), 0)].into(),
+        ..Default::default()
+    })
+    .unwrap();
+    let original = model.to_config().unwrap().vocab;
+    let mut trainer = trainer();
+    trainer.words = WordCounts::from_map(counts(&[("abab", u64::MAX)]));
+    assert!(trainer.train(&mut model).is_err());
+    assert_eq!(model.to_config().unwrap().vocab, original);
+
+    trainer.words = WordCounts::from_map(counts(&[("ab", 1)]));
+    trainer.end_of_word_suffix = Some("s".repeat(64));
+    // Training succeeds, but the model reader rejects its oversized affix.
+    assert!(trainer.train_vocab().is_ok());
+    assert!(
+        trainer
+            .train(&mut model)
+            .unwrap_err()
+            .to_string()
+            .contains("affixes too long")
+    );
+    assert_eq!(model.to_config().unwrap().vocab, original);
 }
 
 #[test]
@@ -452,10 +517,15 @@ fn run_public_training_child(setting: &str) {
             } else {
                 counts(&[("ab", 3), ("cd", 2)])
             };
+            OBSERVED_PHASES.store(0, Ordering::Relaxed);
             let (_, merges, _) = trainer.do_train(&words).unwrap();
-            if !merges.is_empty() {
-                assert_eq!(OBSERVED_PHASES.load(Ordering::Relaxed), 0b111);
-            }
+            assert_eq!(
+                OBSERVED_PHASES.load(Ordering::Relaxed),
+                match setting {
+                    "zero" | "empty" => 0,
+                    _ => 0b011,
+                }
+            );
             println!("BPE_MERGE_COUNT={}", merges.len());
         });
 }
