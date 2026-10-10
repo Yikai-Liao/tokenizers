@@ -12,7 +12,7 @@ Literal alphabet expectations independently check that shared selector.
 | Weighted ordering, equal counts, empty words, zero weights, Unicode and duplicate reserved strings | Fixed-seed model combinations plus an explicit equal-count fixture |
 | Affixes, activated identity reuse, unactivated reserved IDs and restart behavior | Generated prefix/suffix combinations, duplicate specials, literal `baaba` traces, and 128 long words with interleaved zero/positive weights across three affix/gate settings; a reserved long merge activates after occurrence geometry is established |
 | AA overlap and position restart boundaries | A 4097-symbol AA run and generated repeated words |
-| Complete and partial birth pruning | Long AB producer split across workers, a competing complete XY producer, and complete-model/trace comparison |
+| Complete and partial birth pruning | Long AB producer split across workers, a competing complete XY producer, and complete-model/trace comparison; 127/129/257 repeated ABC groups check rounded whole fragments versus partial publication and full model/rule agreement |
 | Strict newborn length admission, including limits 0, 1 and 2 | Generated length gates and independent sequential neighbor admission |
 | Filtered symbols, forced alphabet and decorations | Generated filtered/decorated models, a filtered training fixture, and literal alphabet IDs |
 | Full token IDs beyond 16 bits and separator distinction | 65536 reserved IDs followed by ordinary training and literal ID expectation |
@@ -24,6 +24,7 @@ Literal alphabet expectations independently check that shared selector.
 | JSON progress schema, starts and completion | Child-process matrix covers normal/no-bar/zero-merge/empty/Silent; strict JSON parsing, exact three-field schema, initial zero and final actual merge count |
 | Numeric position width, duplicate values, restart blocks, seek, concatenation and owned byte storage | One matrix of empty and small lists and lengths around block boundaries, values through `u64::MAX`, explicit ten-byte deltas, all native seek starts and independent lower-bound expectations for present and gap values |
 | Published list lifetime and shared readers | Two scoped threads construct lists while reading earlier owned lists, then read the saved lists again after the threads join |
+| Borrowed chunks and coordinate-based seeking | Concatenated chunk iteration equals the full list for empty/short/restart-boundary lists, duplicated coordinates across boundaries and targets 0/1/127/128/129/130/255/256/257/usize::MAX; value-based seek equals independently filtered coordinates |
 | Direct encoding format and concat ownership | Literal restart directory and ten-byte gap bytes after output Vec growth; duplicate preservation, empty fragment removal and pointer identity of the sole nonempty fragment |
 | Invalid decoder ranges and unsorted construction | Explicit rejection before byte access; Miri imports this same implementation and tests |
 
@@ -31,7 +32,7 @@ The former fixture files and legacy trainer tests are consolidated into these
 contracts. Their repeated helper infrastructure and overlapping private feed tests are
 replaced by public flat-count/callback contracts. This map describes
 asserted behavior; it does not claim exhaustive coverage of all combinations.
-The storage constructor accepts only a slice, the engine's own builder or owned-list fragments, so
+The storage constructor accepts only a slice or owned-list fragments, so
 arbitrary safe iterators can no longer supply a false allocation cardinality.
 
 The formatted line count includes test hooks, the complete reference oracle,

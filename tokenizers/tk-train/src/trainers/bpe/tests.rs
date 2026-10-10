@@ -80,6 +80,18 @@ fn generated_models_and_every_rule_match_the_sequential_oracle() {
 }
 
 #[test]
+fn aligned_complete_and_split_producers_match_the_sequential_model() {
+    for repetitions in [127, 129, 257] {
+        let mut trainer = trainer();
+        trainer.min_frequency = repetitions as u64;
+        // Split fragments' local counts fall below the floor, while the complete
+        // birth reaches it. Rounding can also retain one complete producer.
+        let words = counts(&[(&"abc".repeat(repetitions), 1)]);
+        check(&trainer, &words);
+    }
+}
+
+#[test]
 fn overlap_floor_alias_and_alphabet_boundaries() {
     check(
         &trainer(),

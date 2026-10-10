@@ -206,6 +206,15 @@ fragment to its owner; subsequent fragments append in producer order. Reuse
 groups retain an unordered Vec and sort before construction. The immutable
 constructor validates the resulting nondecreasing sequence.
 
+The read interface exposes full iteration, `iter_from_value(coordinate)` and
+borrowed `chunks(target_items)`. Chunks round their target up to restart boundaries
+inside Positions and expose only `len()` and `iter()`. They neither allocate
+per-fragment storage nor decode ahead of iteration. Merge preparation stores the
+borrowed chunk instead of a range of compression blocks. An ordinary producer
+is complete when its actual chunk length equals the candidate length, including
+cases where alignment produces one chunk larger than the target. Filtered AA
+starts remain partial even when a single slice contains them all.
+
 Each block contains at most 128 positions. Its first position is a full-u64
 restart; later positions store unsigned base-128 deltas. Checked monotonic input
 makes reconstruction exact, including a gap of `u64::MAX`. Zero gaps retain

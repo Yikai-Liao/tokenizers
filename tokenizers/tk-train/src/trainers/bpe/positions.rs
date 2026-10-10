@@ -2,6 +2,7 @@
 //! Construction writes directly into the final Vec, then transfers ownership to Box.
 use std::ops::Range;
 use tk_encode::Result;
+
 const RESTART: usize = 128;
 
 /// Immutable full-u64 lists with inline pairs and owned restart/delta bytes.
@@ -15,10 +16,7 @@ pub(super) enum Positions {
     Two(u64, u64),
     Compressed(Box<[u8]>),
 }
-fn prefix(count: usize) -> usize {
-    let groups = count.div_ceil(RESTART);
-    (1 + if groups > 1 { groups } else { 0 }) * std::mem::size_of::<usize>()
-}
+
 impl Positions {
     pub(super) fn len(&self) -> usize {
         match self {
@@ -30,9 +28,11 @@ impl Positions {
             }
         }
     }
+
     pub(super) fn is_empty(&self) -> bool {
         self.len() == 0
     }
+
     /// Construct from nondecreasing coordinates, preserving duplicates.
     pub(super) fn from_sorted(values: &[u64]) -> Result<Self> {
         Self::encode(values.len(), values.iter().copied())
@@ -55,7 +55,7 @@ impl Positions {
         Self::encode(count, fragments.iter().flat_map(Self::iter))
     }
 
-    // Only the owned buffer, a slice, and fragment lengths supply cardinality.
+    // Only a slice and owned fragment lengths supply cardinality.
     // The iterator stays private; safe Vec writes require no trusted-iterator or
     // uninitialized-memory protocol. Tiny lists bypass encoding entirely.
     fn encode(count: usize, mut values: impl Iterator<Item = u64>) -> Result<Self> {
@@ -116,12 +116,19 @@ impl Positions {
         }
         Ok(Self::Compressed(bytes.into_boxed_slice()))
     }
+
     fn bytes(&self) -> &[u8] {
         match self {
-            Self::Compressed(bytes) => &bytes[prefix(self.len())..],
+            Self::Compressed(bytes) => {
+                let groups = self.block_count();
+                let prefix =
+                    (1 + if groups > 1 { groups } else { 0 }) * std::mem::size_of::<usize>();
+                &bytes[prefix..]
+            }
             _ => &[],
         }
     }
+
     fn offset(&self, block: usize) -> usize {
         if block == 0 {
             return 0;
@@ -136,22 +143,33 @@ impl Positions {
                 .unwrap(),
         )
     }
-    pub(super) fn block_count(&self) -> usize {
+
+    fn block_count(&self) -> usize {
         self.len().div_ceil(RESTART)
     }
 
-    pub(super) fn block_ranges(&self, target_items: usize) -> impl Iterator<Item = Range<usize>> {
+    fn block_ranges(&self, target_items: usize) -> impl Iterator<Item = Range<usize>> {
         let blocks = target_items.div_ceil(RESTART).max(1);
         (0..self.block_count())
             .step_by(blocks)
             .map(move |begin| begin..(begin + blocks).min(self.block_count()))
     }
 
+    /// Borrow read-only fragments, rounding the target up to an independent restart.
+    /// Empty lists yield no fragments; short lists yield one. No values are copied
+    /// or decoded until a fragment is iterated.
+    pub(super) fn chunks(&self, target_items: usize) -> impl Iterator<Item = Chunk<'_>> {
+        self.block_ranges(target_items).map(move |blocks| Chunk {
+            positions: self,
+            blocks,
+        })
+    }
+
     pub(super) fn iter(&self) -> impl Iterator<Item = u64> + '_ {
         self.read_blocks(0..self.block_count())
     }
 
-    pub(super) fn read_blocks(&self, range: Range<usize>) -> impl Iterator<Item = u64> + '_ {
+    fn read_blocks(&self, range: Range<usize>) -> impl Iterator<Item = u64> + '_ {
         // Reject inverted ranges, then clamp before multiplying. If a range starts
         // past the directory, start == end and no directory pointer is formed.
         assert!(range.start <= range.end);
@@ -180,7 +198,7 @@ impl Positions {
         }
     }
 
-    pub(super) fn lower_bound(&self, target: u64) -> usize {
+    fn lower_bound(&self, target: u64) -> usize {
         let mut begin = 0;
         let mut end = self.block_count();
         while begin < end {
@@ -200,11 +218,36 @@ impl Positions {
     }
 
     /// Iterates from a list index, rather than a corpus coordinate.
-    pub(super) fn iter_from(&self, index: usize) -> impl Iterator<Item = u64> + '_ {
+    fn iter_from(&self, index: usize) -> impl Iterator<Item = u64> + '_ {
         self.read_blocks(index / RESTART..self.block_count())
             .skip(index % RESTART)
     }
+
+    /// Iterate all coordinates at or above the target, including repeated values.
+    pub(super) fn iter_from_value(&self, target: u64) -> impl Iterator<Item = u64> + '_ {
+        self.iter_from(self.lower_bound(target))
+    }
 }
+
+/// A borrowed read-only fragment whose storage boundaries stay inside this module.
+pub(super) struct Chunk<'a> {
+    positions: &'a Positions,
+    blocks: Range<usize>,
+}
+
+impl Chunk<'_> {
+    pub(super) fn len(&self) -> usize {
+        let count = self.positions.len();
+        let start = (self.blocks.start * RESTART).min(count);
+        let end = (self.blocks.end * RESTART).min(count);
+        end - start
+    }
+
+    pub(super) fn iter(&self) -> impl Iterator<Item = u64> + '_ {
+        self.positions.read_blocks(self.blocks.clone())
+    }
+}
+
 /// A reader's private decode state over a borrowed immutable position stream.
 /// Absolute restart seeds bound replay; index/end delimit the requested blocks.
 struct Cursor<'a> {
@@ -246,6 +289,55 @@ impl Iterator for Cursor<'_> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn chunks_cover_lists_without_losing_duplicates_at_fragment_boundaries() {
+        for length in [0, 1, 2, 3, 127, 128, 129, 255, 256, 257, 1024] {
+            // Equal coordinates span both restart and fragment boundaries.
+            let values: Vec<_> = (0..length).map(|index| (index / 200) as u64).collect();
+            let positions = Positions::from_sorted(&values).unwrap();
+            for target in [0, 1, 127, 128, 129, 130, 255, 256, 257, usize::MAX] {
+                let chunks: Vec<_> = positions.chunks(target).collect();
+                assert_eq!(chunks.is_empty(), values.is_empty());
+                assert_eq!(chunks.iter().map(Chunk::len).sum::<usize>(), length);
+                for chunk in &chunks {
+                    assert!(chunk.len() > 0);
+                    assert_eq!(chunk.iter().count(), chunk.len());
+                }
+                assert!(
+                    chunks
+                        .iter()
+                        .flat_map(Chunk::iter)
+                        .eq(values.iter().copied())
+                );
+            }
+        }
+
+        let positions = Positions::from_sorted(&vec![7; 129]).unwrap();
+        assert_eq!(
+            positions
+                .chunks(128)
+                .map(|chunk| chunk.len())
+                .collect::<Vec<_>>(),
+            [128, 1]
+        );
+        // The requested target rounds up, so length > target can still be complete.
+        assert_eq!(
+            positions
+                .chunks(129)
+                .map(|chunk| chunk.len())
+                .collect::<Vec<_>>(),
+            [129]
+        );
+        let positions = Positions::from_sorted(&vec![7; 255]).unwrap();
+        assert_eq!(
+            positions
+                .chunks(129)
+                .map(|chunk| chunk.len())
+                .collect::<Vec<_>>(),
+            [255]
+        );
+    }
 
     #[test]
     fn concat_preserves_duplicates_and_reuses_a_single_nonempty_fragment() {
@@ -354,11 +446,18 @@ mod tests {
                         positions.lower_bound(target),
                         values.partition_point(|&p| p < target)
                     );
+                    assert!(
+                        positions.iter_from_value(target).eq(values
+                            .iter()
+                            .copied()
+                            .filter(|&position| position >= target))
+                    );
                 }
+                let chunks: Vec<_> = positions.chunks(129).collect();
                 assert!(
-                    positions
-                        .block_ranges(129)
-                        .flat_map(|r| positions.read_blocks(r))
+                    chunks
+                        .iter()
+                        .flat_map(Chunk::iter)
                         .eq(values.iter().copied())
                 );
                 assert!(

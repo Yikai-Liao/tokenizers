@@ -254,3 +254,24 @@ denied）通过，最终 u64/2 完成 release 构建与逐模型比较；保留�
 与测量快照完全一致。用户要求停止追加测量并直接整理推送。
 完整源码、已有逐次数据、协议、模型与哈希见
 [positions 构造记录](evidence/positions-value-20261011/README.md)。
+
+## positions 读取接口与临时格式规则
+
+Positions 用借用 Chunk 封装压缩块范围，片段仅提供 len／iter；三个 block
+方法全部收为私有。merge 仅保存片段，按实际片段长度与候选列表长度判断
+完整 producer，保留目标向上对齐后仍可能只有一个完整任务的行为。AA
+过滤后的 slice 始终走部分 producer。按语料坐标定位并迭代合并为
+iter_from_value，列表下标转换留在 Positions 内部。独立 prefix helper
+内联到字节流访问中，函数间补齐空行。
+
+新增覆盖 chunks 全量拼接、跨边界重复坐标、空／短列表、非 restart 倍数
+目标、完整／部分 publication 分类，以及 127／129／257 ABC 重复次数
+的完整模型与逐规则 oracle 比较。no-default 普通 BPE 17 项检查及
+all-target Clippy（warnings denied）通过；沿用此前排除的既有 tokenizer
+encoding 断言。本轮没有追加性能测量。
+
+临时 [format-changed.py](format-changed.py) 与 BPE 目录 AGENTS.md 纳入 Git。
+脚本只处理相对指定 base 有变更的 BPE Rust 文件，并关闭子模块递归；
+rustfmt 后用语法树补函数间空行，保留文档与属性相邻，跳过 raw string
+中的伪函数。独立临时 Git fixture 验证只读检查、重复执行稳定以及未改文件
+字节完全不变。提交上游 PR 前可以一并删除脚本与临时目录规则。

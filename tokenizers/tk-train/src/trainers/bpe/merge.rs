@@ -3,7 +3,7 @@ use super::{
     BpeTrainer, WORD_SEPARATOR_ID, add,
     corpus::{Corpus, Match},
     index::{Candidate, PairIndex},
-    positions::Positions,
+    positions::{Chunk, Positions},
     vocabulary::Vocabulary,
 };
 use ahash::{AHashMap, AHashSet};
@@ -456,16 +456,8 @@ impl<'a> FreshSnapshot<'a> {
                 }
                 FreshMatches::Ordinary(_) => {
                     let positions = &rule.candidate.positions;
-                    if positions.len() <= ordinary_chunk {
-                        tasks.push((
-                            rank,
-                            rule,
-                            Source::Blocks(positions, 0..positions.block_count()),
-                        ));
-                        continue;
-                    }
-                    for range in positions.block_ranges(ordinary_chunk) {
-                        tasks.push((rank, rule, Source::Blocks(positions, range)));
+                    for chunk in positions.chunks(ordinary_chunk) {
+                        tasks.push((rank, rule, Source::Chunk(chunk)));
                     }
                 }
             }
@@ -483,7 +475,12 @@ impl<'a> FreshSnapshot<'a> {
         #[cfg(test)]
         super::tests::observe_worker(super::tests::Phase::FreshPrepare);
         directories.reset(self.corpus.id_count());
-        let mut neighbors = Neighbors::new(rule, rank, directories, positions.complete());
+        let mut neighbors = Neighbors::new(
+            rule,
+            rank,
+            directories,
+            positions.complete(rule.candidate.positions.len()),
+        );
         let mut writes = Writes::fresh(rule, self.corpus);
         let matcher = self.corpus.fresh_matcher(rule.pair());
         let mut weights = None;
@@ -645,8 +642,11 @@ impl<'task> CohortPreparation<'task> {
         let writes = &mut self.writes;
         let mut previous = None;
         let mut p = corpus.word_start(word);
-        let index = rule.candidate.positions.lower_bound(p as u64);
-        let mut positions = rule.candidate.positions.iter_from(index).peekable();
+        let mut positions = rule
+            .candidate
+            .positions
+            .iter_from_value(p as u64)
+            .peekable();
         while p < corpus.word_end(word) {
             // Full-word scans are required only after alias reuse or a length
             // gate. Otherwise the selected cohort defines the scan domain.
@@ -775,19 +775,19 @@ impl Writes {
     }
 }
 
-/// Borrowed task input: filtered self-pair starts or a candidate's restart blocks.
-/// Source geometry stays private to preparation; both emit full-u64 positions.
+/// Borrowed task input: filtered self-pair starts or a candidate's read-only fragment.
 enum Source<'a> {
     Slice(&'a [u64]),
-    Blocks(&'a Positions, std::ops::Range<usize>),
+    Chunk(Chunk<'a>),
 }
 
 impl Source<'_> {
-    fn complete(&self) -> bool {
+    fn complete(&self, candidate_len: usize) -> bool {
         match self {
-            Self::Blocks(positions, range) => {
-                range.start == 0 && range.end == positions.block_count()
-            }
+            // Storage alignment can make a fragment exceed its target size and
+            // cover the whole candidate. Filtered AA starts remain partial even
+            // when one slice contains all starts.
+            Self::Chunk(chunk) => chunk.len() == candidate_len,
             Self::Slice(_) => false,
         }
     }
@@ -797,9 +797,7 @@ impl Source<'_> {
     fn prefetched<'a>(&'a self, corpus: &'a Corpus) -> impl Iterator<Item = usize> + 'a {
         let coordinates = match self {
             Self::Slice(values) => itertools::Either::Left(values.iter().copied()),
-            Self::Blocks(positions, range) => {
-                itertools::Either::Right(positions.read_blocks(range.clone()))
-            }
+            Self::Chunk(chunk) => itertools::Either::Right(chunk.iter()),
         };
         let mut positions = coordinates.map(move |coordinate| corpus.resident(coordinate));
         let mut ring: [Option<usize>; 16] = std::array::from_fn(|_| positions.next());
@@ -816,5 +814,74 @@ impl Source<'_> {
             head = (head + 1) % ring.len();
             Some(position)
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::super::{WordCountsView, corpus::CorpusPlan};
+    use super::*;
+
+    #[test]
+    fn aligned_fragments_keep_complete_and_partial_publication() {
+        let pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(2)
+            .build()
+            .unwrap();
+        for (repetitions, expected_lengths) in
+            [(127, vec![127]), (129, vec![128, 1]), (257, vec![256, 1])]
+        {
+            let trainer = BpeTrainer::builder()
+                .vocab_size(8)
+                .min_frequency(repetitions as u64)
+                .show_progress(false)
+                .build();
+            let words = [("abc".repeat(repetitions).into(), 1)]
+                .into_iter()
+                .collect();
+            let view = WordCountsView::from_map(&words);
+            pool.install(|| {
+                let progress = trainer.setup_progress();
+                let mut vocabulary = Vocabulary::initialize(&trainer, view, 2, &mut None).unwrap();
+                let plan =
+                    CorpusPlan::build(view, &mut vocabulary, &trainer, false, &progress).unwrap();
+                let mut index =
+                    PairIndex::build(&plan, trainer.min_frequency, 2, false, &progress).unwrap();
+                let mut corpus = plan.materialize();
+                let Selection::Ready(batch) =
+                    Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index).unwrap()
+                else {
+                    panic!("expected ordinary batch")
+                };
+                assert_eq!(batch.rules.len(), 1);
+                assert_eq!(batch.rules[0].candidate.positions.len(), repetitions);
+                let snapshot = FreshSnapshot::new(&batch, &corpus, usize::MAX);
+                let tasks = snapshot.tasks();
+                assert_eq!(tasks.len(), expected_lengths.len());
+                for ((rank, rule, source), expected_len) in tasks.into_iter().zip(&expected_lengths)
+                {
+                    let Source::Chunk(chunk) = &source else {
+                        panic!("expected ordinary positions fragment")
+                    };
+                    assert_eq!(chunk.len(), *expected_len);
+                    let complete = expected_lengths.len() == 1;
+                    assert_eq!(source.complete(repetitions), complete);
+                    let job = snapshot
+                        .prepare_job(&mut Directories::default(), rank, rule, source)
+                        .unwrap();
+                    assert!(!job.changes.is_empty());
+                    assert!(
+                        job.changes
+                            .iter()
+                            .all(
+                                |change| matches!(change.positions, Birth::Complete(_)) == complete
+                            )
+                    );
+                }
+            });
+        }
+
+        // An AA slice remains partial even if all filtered starts fit in one job.
+        assert!(!Source::Slice(&[0, 2, 4]).complete(3));
     }
 }
