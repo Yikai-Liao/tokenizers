@@ -1,4 +1,4 @@
-//! Owned restart/delta occurrence lists with inline pairs and reusable codec scratch.
+//! Owned restart/delta occurrence lists with reusable codec scratch.
 use std::{
     cell::{RefCell, RefMut},
     ops::Range,
@@ -167,21 +167,6 @@ impl Input<'_> {
         }
     }
 
-    fn bounds(&self) -> Option<(u64, u64)> {
-        match self {
-            Self::Builder(values) => Some((values.iter().next()?, values.iter().next_back()?)),
-            Self::Slice(values) => Some((*values.first()?, *values.last()?)),
-            Self::Fragments(values) => Some((
-                values.iter().find_map(|p| p.iter().next())?,
-                values
-                    .iter()
-                    .rev()
-                    .filter(|p| !p.is_empty())
-                    .find_map(|p| p.iter_from(p.len() - 1).next())?,
-            )),
-        }
-    }
-
     fn iter(&self) -> impl Iterator<Item = u64> + '_ {
         match self {
             Self::Builder(values) => {
@@ -197,49 +182,30 @@ impl Input<'_> {
     }
 }
 
-/// Immutable full-u64 lists with inline pairs and owned restart/delta bytes.
-/// The first word holds cardinality; the directory and stream retain their format.
+/// Immutable full-u64 lists stored as owned restart/delta bytes.
+/// Empty lists have no bytes; otherwise the first word holds cardinality.
 /// Ownership and automatic Send/Sync come from Box, without raw allocation or borrowed storage.
 #[derive(Default)]
-pub(super) enum Positions {
-    #[default]
-    Empty,
-    One(u64),
-    Two(u64, u64),
-    Compressed(Box<[u8]>),
-}
+pub(super) struct Positions(Box<[u8]>);
 fn prefix(count: usize) -> usize {
     let groups = count.div_ceil(RESTART);
     (1 + if groups > 1 { groups } else { 0 }) * std::mem::size_of::<usize>()
 }
 impl Positions {
     pub(super) fn len(&self) -> usize {
-        match self {
-            Self::Empty => 0,
-            Self::One(_) => 1,
-            Self::Two(_, _) => 2,
-            Self::Compressed(bytes) => {
-                usize::from_le_bytes(bytes[..std::mem::size_of::<usize>()].try_into().unwrap())
-            }
+        if self.0.is_empty() {
+            0
+        } else {
+            usize::from_le_bytes(self.0[..std::mem::size_of::<usize>()].try_into().unwrap())
         }
     }
     pub(super) fn is_empty(&self) -> bool {
-        self.len() == 0
+        self.0.is_empty()
     }
     pub(super) fn from_sorted(input: Input<'_>, lease: &mut Lease<'_>) -> Result<Self> {
         let count = input.len()?;
         if count == 0 {
-            return Ok(Self::Empty);
-        }
-        let (first, last) = input.bounds().expect("nonempty input has endpoints");
-        if last < first {
-            return Err("BPE positions are not sorted".into());
-        }
-        if count == 1 {
-            return Ok(Self::One(first));
-        }
-        if count == 2 {
-            return Ok(Self::Two(first, last));
+            return Ok(Self::default());
         }
         let scratch = &mut *lease.scratch;
         scratch.encode_stream(&input)?;
@@ -254,24 +220,18 @@ impl Positions {
             }
         }
         bytes.extend_from_slice(&scratch.bytes);
-        Ok(Self::Compressed(bytes.into_boxed_slice()))
+        Ok(Self(bytes.into_boxed_slice()))
     }
     fn bytes(&self) -> &[u8] {
-        match self {
-            Self::Compressed(bytes) => &bytes[prefix(self.len())..],
-            _ => &[],
-        }
+        &self.0[prefix(self.len())..]
     }
     fn offset(&self, block: usize) -> usize {
         if block == 0 {
             return 0;
         }
-        let Self::Compressed(bytes) = self else {
-            unreachable!()
-        };
         let start = (1 + block) * std::mem::size_of::<usize>();
         usize::from_le_bytes(
-            bytes[start..start + std::mem::size_of::<usize>()]
+            self.0[start..start + std::mem::size_of::<usize>()]
                 .try_into()
                 .unwrap(),
         )
@@ -298,25 +258,16 @@ impl Positions {
         let blocks = self.block_count();
         let start = (range.start.min(blocks) * RESTART).min(self.len());
         let end = (range.end.min(blocks) * RESTART).min(self.len());
-        if !matches!(self, Self::Compressed(_)) {
-            let values = match self {
-                Self::One(value) => [*value, 0],
-                Self::Two(first, last) => [*first, *last],
-                _ => [0, 0],
-            };
-            itertools::Either::Left(values.into_iter().take(end).skip(start))
+        let bytes = if start == end {
+            &[]
         } else {
-            let bytes = if start == end {
-                &[]
-            } else {
-                &self.bytes()[self.offset(range.start)..]
-            };
-            itertools::Either::Right(Cursor {
-                bytes,
-                position: 0,
-                index: start,
-                end,
-            })
+            &self.bytes()[self.offset(range.start)..]
+        };
+        Cursor {
+            bytes,
+            position: 0,
+            index: start,
+            end,
         }
     }
 
@@ -389,7 +340,7 @@ mod tests {
 
     #[test]
     fn storage_roundtrips_seeks_and_supports_concurrent_readers() {
-        // Freeze and seek lists across inline, chunk and full-u64 boundaries.
+        // Freeze and seek lists across empty, small, chunk and full-u64 boundaries.
         let codec = Codec::new(2);
         let boundary = [0, u32::MAX as u64, 1 << 32, 1 << 63, u64::MAX];
         let saved: Vec<_> = [0, 1, 2, 3, 127, 128, 129, 257, 1024]

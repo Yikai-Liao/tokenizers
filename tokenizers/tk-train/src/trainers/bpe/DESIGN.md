@@ -157,13 +157,13 @@ each action; owner order is the original producer order. Draining both vectors
 retains capacity. Errors drop active drains; the attempt is discarded after
 owner jobs join. Successful commits drain every route before the next round.
 
-Published lists use an explicit `Empty`, `One(u64)`, `Two(u64, u64)` or
-`Compressed(Box<[u8]>)` representation. Both inline values retain the full u64
-range. Each compressed list owns its bytes and releases them when its queue,
-fragment or birth owner retires. There is no pointer tag, manual allocation
+Published lists use a single `Box<[u8]>` representation. Empty lists have an empty
+slice; every nonempty list uses the full-u64 restart/delta format, including lists
+with only one or two positions. Each list owns its bytes and releases them when
+its queue, fragment or birth owner retires. There is no pointer tag, manual allocation
 layout, ownership-specific destructor or arena lifetime on a frozen list.
-The enum is 24 bytes on the measured 64-bit target; the former descriptor was
-16 bytes. This size tradeoff accompanies earlier release of retired byte storage.
+The wrapper is 16 bytes on the measured 64-bit target, down from the 24-byte enum.
+One- and two-position lists now allocate encoded storage instead of staying inline.
 
 `Codec` owns ThreadLocal RefCell `CodecScratch` values with reusable byte and
 offset vectors for position encoding.

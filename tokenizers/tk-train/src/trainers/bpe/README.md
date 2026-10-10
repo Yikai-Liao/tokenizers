@@ -31,7 +31,7 @@ The implementation is divided by the knowledge each module owns:
   `Prepared`, without handling write geometry or neighbor directories.
 - [positions.rs](positions.rs) owns sorted full-u64 streams and restart blocks.
   Temporary buffers narrow to u32 with automatic full-u64 promotion. Published
-  lists keep one or two values inline and own larger compressed byte slices.
+  lists own compressed byte slices, with an empty slice for an empty list.
   ThreadLocal encoder scratch is retained only for the attempt; frozen lists
   can outlive it. Duplicate positions and coordinates through `u64::MAX` are preserved.
 - [feed.rs](feed.rs) owns streaming batches and bounded local word caches;
