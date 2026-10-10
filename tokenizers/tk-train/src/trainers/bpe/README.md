@@ -77,7 +77,7 @@ harness imports the actual position module and keeps borrow/leak checks enabled.
 Miri samples seek starts and targets around restart boundaries; native tests
 exhaust every start. Native and Miri allocation tests use scoped threads and both allocation cursors.
 Public tests cover feed, model reload, progress and ambient-versus-training pool
-behavior. [The coverage map](tests/COVERAGE.md) records the combined boundaries.
+behavior. [The coverage map](COVERAGE.md) records the combined boundaries.
 
 Source counts and diffs are descriptive, with no hard line limits. The report
 includes the ordinary BPE implementation, public API, feed and word-count storage;

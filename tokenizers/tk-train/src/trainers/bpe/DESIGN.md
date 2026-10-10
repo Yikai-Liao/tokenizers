@@ -204,7 +204,7 @@ Full-model comparisons cover vocabulary IDs and complete ordered merges. Small
 fixtures also compare every `(pair, count, replacement ID)` with an independent
 sequential reference. Literal expectations cover numeric limits and alias
 cohorts; codec tests and Miri exercise immutable storage and scoped allocation.
-See [the test coverage map](tests/COVERAGE.md).
+See [the test coverage map](COVERAGE.md).
 
 Performance evidence belongs to the experiment report: paired independent
 processes record wall time, CPU time, RSS, swap, build/input hashes and model
