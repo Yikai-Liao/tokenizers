@@ -1,0 +1,24 @@
+   Compiling tk-train v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-global-simplification/tokenizers/tk-train)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.69s
+     Running unittests src/lib.rs (/tmp/bpe-global-tests/debug/deps/tk_train-62e96fee22b26cb3)
+
+running 1 test
+RESERVED_AFTER_ALIAS id=3 pair=(21, 22)
+RESERVED_AFTER_ALIAS id=3 pair=(21, 22)
+RESERVED_AFTER_ALIAS id=3 pair=(21, 22)
+
+thread 'trainers::bpe::engine::tests::overlap_floor_alias_and_alphabet_boundaries' (2581545) panicked at src/trainers/bpe/engine/tests/mod.rs:139:5:
+assertion `left == right` failed
+  left: {"测": 6, "baab": 1, "aa": 0, "aaaaaa": 2, "aaaaaaaaabcd": 3, "a": 4, "b": 5}
+ right: {"b": 1, "测": 2, "a": 0}
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test trainers::bpe::engine::tests::overlap_floor_alias_and_alphabet_boundaries ... FAILED
+
+failures:
+
+failures:
+    trainers::bpe::engine::tests::overlap_floor_alias_and_alphabet_boundaries
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 16 filtered out; finished in 2.14s
+
+error: test failed, to rerun pass `--lib`

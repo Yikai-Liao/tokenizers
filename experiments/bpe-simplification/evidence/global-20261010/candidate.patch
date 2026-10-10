@@ -1,0 +1,233 @@
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs b/tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs
+index 8fd39622..9a9ec953 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs
+@@ -16,6 +16,8 @@ pub(super) struct Corpus {
+     starts: Vec<usize>,
+     weight_regions: Vec<(usize, u64)>,
+     unit_region: Option<(usize, usize)>,
++    // Nonzero marks an activated ID. Until alias geometry diverges it also
++    // stores that ID's span; afterwards occurrence_spans owns all geometry.
+     spans: Vec<usize>,
+     occurrence_spans: Option<Vec<AtomicUsize>>,
+     whole_words: bool,
+@@ -102,7 +104,7 @@ impl<'input> CorpusPlan<'input> {
+             starts,
+             weight_regions,
+             unit_region,
+-            spans: vocabulary.initial_spans(),
++            spans: vocabulary.take_initial_spans(),
+             whole_words: trainer.max_token_length.is_some(),
+             words,
+             ids,
+@@ -317,16 +319,23 @@ impl Corpus {
+     pub(super) fn whole_words(&self) -> bool {
+         self.whole_words
+     }
+-    pub(super) fn prepare_identity(&mut self, pair: Pair, id: u32, active: bool) {
+-        self.whole_words |= active;
+-        let span = self.id_span(pair.0) + self.id_span(pair.1);
++    pub(super) fn is_active(&self, id: u32) -> bool {
++        self.spans.get(id as usize).is_some_and(|&span| span != 0)
++    }
++    pub(super) fn prepare_identity(&mut self, pair: Pair, id: u32) {
++        self.whole_words |= self.is_active(id);
++        // Once aliases need occurrence geometry, keep only activation here.
++        // Summing representative ID spans would grow with repeated alias reuse.
++        let span = if self.occurrence_spans.is_some() {
++            1
++        } else {
++            self.id_span(pair.0) + self.id_span(pair.1)
++        };
+         if id as usize == self.spans.len() {
+             self.spans.push(span);
+-        } else if self.occurrence_spans.is_none() {
++        } else {
+             let old = self.spans[id as usize];
+-            if old == 0 || old == span {
+-                self.spans[id as usize] = span;
+-            } else {
++            if self.occurrence_spans.is_none() && old != 0 && old != span {
+                 let values: Vec<_> = (0..self.len()).map(|_| AtomicUsize::new(0)).collect();
+                 for &start in &self.starts {
+                     let mut p = start;
+@@ -339,6 +348,7 @@ impl Corpus {
+                 }
+                 self.occurrence_spans = Some(values);
+             }
++            self.spans[id as usize] = span;
+         }
+     }
+     // Call only after all preparation readers join. Matches own disjoint endpoint
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/merge.rs b/tokenizers/tk-train/src/trainers/bpe/engine/merge.rs
+index 0827e705..4b4ef7a5 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/merge.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/merge.rs
+@@ -208,7 +208,7 @@ impl<'arena> Batch<'arena> {
+                 break;
+             }
+             let token = vocabulary.merge_token(pair);
+-            if !reuse && vocabulary.reuses_active_id(&token) {
++            if !reuse && token.existing_id.is_some_and(|id| corpus.is_active(id)) {
+                 return Ok(Selection::Restart);
+             }
+             let reserved = token.existing_id.is_some();
+@@ -218,11 +218,11 @@ impl<'arena> Batch<'arena> {
+                 break;
+             }
+             let candidate = index.take(priority);
+-            let identity = vocabulary.resolve_merge(token)?;
+-            corpus.prepare_identity(pair, identity.id, identity.reused_active_id);
++            let replacement = vocabulary.resolve_merge(token)?;
++            corpus.prepare_identity(pair, replacement);
+             batch.rules.push(Rule {
+                 pair,
+-                replacement: identity.id,
++                replacement,
+                 candidate,
+             });
+             if reserved || pair.0 == pair.1 {
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/tests/mod.rs b/tokenizers/tk-train/src/trainers/bpe/engine/tests/mod.rs
+index bee67c4e..24afd856 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/tests/mod.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/tests/mod.rs
+@@ -109,6 +109,8 @@ fn overlap_floor_alias_and_alphabet_boundaries() {
+             )
+         })
+         .collect();
++    // Reserved merges must still activate after alias geometry becomes per-occurrence.
++    trainer.special_tokens = vec![AddedToken::from("aaaaaaaaabcd", true)];
+     for (prefix, suffix, limit) in [
+         (None, Some("a"), None),
+         (Some("ab"), None, Some(9)),
+@@ -120,6 +122,7 @@ fn overlap_floor_alias_and_alphabet_boundaries() {
+         check(&trainer, &aliases);
+     }
+     trainer.continuing_subword_prefix = None;
++    trainer.special_tokens.clear();
+     trainer.max_token_length = None;
+     trainer.end_of_word_suffix = None;
+     trainer.limit_alphabet = Some(3);
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/vocabulary.rs b/tokenizers/tk-train/src/trainers/bpe/engine/vocabulary.rs
+index 969afcf7..9b7cdca3 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/vocabulary.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/vocabulary.rs
+@@ -15,7 +15,7 @@ pub(super) struct Vocabulary {
+     // Append-only insertion indices are token IDs. Store each string once while
+     // supporting both text lookup and direct lookup by ID with the same hasher.
+     tokens: IndexSet<CompactString, RandomState>,
+-    active: Vec<bool>,
++    initial_spans: Vec<usize>,
+     prefix: Option<String>,
+     suffix: Option<String>,
+     plain_ids_resolved: bool,
+@@ -24,10 +24,6 @@ pub(super) struct MergeToken {
+     pub(super) existing_id: Option<u32>,
+     text: CompactString,
+ }
+-pub(super) struct MergeIdentity {
+-    pub(super) id: u32,
+-    pub(super) reused_active_id: bool,
+-}
+ pub(super) struct InitialTokenIds {
+     characters: Vec<u32>,
+     decorated: Vec<[u32; 3]>,
+@@ -45,7 +41,7 @@ impl Vocabulary {
+     ) -> Result<Self> {
+         let mut vocabulary = Self {
+             tokens: IndexSet::with_capacity_and_hasher(trainer.vocab_size, RandomState::default()),
+-            active: Vec::new(),
++            initial_spans: Vec::new(),
+             prefix: trainer.continuing_subword_prefix.clone(),
+             suffix: trainer.end_of_word_suffix.clone(),
+             plain_ids_resolved: false,
+@@ -98,8 +94,8 @@ impl Vocabulary {
+                         .expect("alphabet bits come from valid characters");
+                     let mut utf8 = [0; 4];
+                     let id = vocabulary.intern(character.encode_utf8(&mut utf8))?;
+-                    vocabulary.active[id as usize] =
+-                        observed[codepoint / 64] & (1_u64 << (codepoint % 64)) != 0;
++                    vocabulary.initial_spans[id as usize] =
++                        usize::from(observed[codepoint / 64] & (1_u64 << (codepoint % 64)) != 0);
+                     bits &= bits - 1;
+                 }
+             }
+@@ -111,7 +107,9 @@ impl Vocabulary {
+         if let Some(id) = self.tokens.get_index_of(text) {
+             return Ok(id as u32);
+         }
+-        self.insert_new_token(CompactString::from(text))
++        let id = self.insert_new_token(CompactString::from(text))?;
++        self.initial_spans.push(0);
++        Ok(id)
+     }
+     // The caller has established that this text is absent. No vocabulary
+     // mutation can intervene before this insertion on the coordinator.
+@@ -122,7 +120,6 @@ impl Vocabulary {
+         }
+         let (index, inserted) = self.tokens.insert_full(token);
+         debug_assert!(inserted && index == id as usize);
+-        self.active.push(false);
+         Ok(id)
+     }
+     pub(super) fn initial_ids(
+@@ -153,7 +150,7 @@ impl Vocabulary {
+             work.complete(word_counts.len());
+             return Ok(ids);
+         }
+-        self.active.fill(false);
++        self.initial_spans.fill(0);
+         let mut decorated = String::new();
+         // Allocate decorated IDs in the input view's traversal before sorting weighted words.
+         for (index, word) in word_counts.keys().enumerate() {
+@@ -192,7 +189,7 @@ impl Vocabulary {
+                         id
+                     }
+                 };
+-                self.active[id as usize] = true;
++                self.initial_spans[id as usize] = 1;
+             }
+             if (index + 1) % 1024 == 0 {
+                 work.complete(1024);
+@@ -201,14 +198,8 @@ impl Vocabulary {
+         work.complete(word_counts.len() % 1024);
+         Ok(ids)
+     }
+-    pub(super) fn initial_spans(&self) -> Vec<usize> {
+-        self.active
+-            .iter()
+-            .map(|&active| usize::from(active))
+-            .collect()
+-    }
+-    pub(super) fn reuses_active_id(&self, token: &MergeToken) -> bool {
+-        token.existing_id.is_some_and(|id| self.active[id as usize])
++    pub(super) fn take_initial_spans(&mut self) -> Vec<usize> {
++        std::mem::take(&mut self.initial_spans)
+     }
+     pub(super) fn len(&self) -> usize {
+         self.tokens.len()
+@@ -229,19 +220,13 @@ impl Vocabulary {
+             text,
+         }
+     }
+-    pub(super) fn resolve_merge(&mut self, token: MergeToken) -> Result<MergeIdentity> {
+-        let id = match token.existing_id {
+-            Some(id) => id,
++    pub(super) fn resolve_merge(&mut self, token: MergeToken) -> Result<u32> {
++        match token.existing_id {
++            Some(id) => Ok(id),
+             // PERF: merge_token already checked this key. Consume its complete
+             // string instead of probing again and copying another owned string.
+-            None => self.insert_new_token(token.text)?,
+-        };
+-        let reused_active_id = self.active[id as usize];
+-        self.active[id as usize] = true;
+-        Ok(MergeIdentity {
+-            id,
+-            reused_active_id,
+-        })
++            None => self.insert_new_token(token.text),
++        }
+     }
+     pub(super) fn into_model_parts(self, merges: Vec<Pair>) -> (Vocab, Merges) {
+         let merges = merges

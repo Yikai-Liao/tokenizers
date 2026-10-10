@@ -1,0 +1,1410 @@
+[
+  {
+    "case": "en-256MiB",
+    "block": 0,
+    "arm": "baseline",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-baseline",
+      "/tmp/bpe-global-measurements/en-256MiB-b0-baseline/job.json"
+    ],
+    "returncode": 0,
+    "subprocess_wall": 2.2110951020149514,
+    "max_swap_kib": 0,
+    "attempt_id": "en-256MiB-b0-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-256MiB",
+    "metrics": {
+      "load_seconds": 0.407221483,
+      "process_hwm_kib_before_validation": 181828,
+      "train_cpu_seconds": 3.746971,
+      "train_seconds": 1.692171868
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-global-measurements/en-256MiB-b0-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+    "valid": true
+  },
+  {
+    "case": "en-256MiB",
+    "block": 0,
+    "arm": "candidate",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-measurements/candidate",
+      "/tmp/bpe-global-measurements/en-256MiB-b0-candidate/job.json"
+    ],
+    "returncode": 0,
+    "subprocess_wall": 2.009798586019315,
+    "max_swap_kib": 0,
+    "attempt_id": "en-256MiB-b0-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-256MiB",
+    "metrics": {
+      "load_seconds": 0.397378959,
+      "process_hwm_kib_before_validation": 187900,
+      "train_cpu_seconds": 3.7024009999999996,
+      "train_seconds": 1.531698321
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-global-measurements/en-256MiB-b0-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+    "valid": true
+  },
+  {
+    "case": "en-256MiB",
+    "block": 1,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-measurements/candidate",
+      "/tmp/bpe-global-measurements/en-256MiB-b1-candidate/job.json"
+    ],
+    "returncode": 0,
+    "subprocess_wall": 2.0107741069514304,
+    "max_swap_kib": 0,
+    "attempt_id": "en-256MiB-b1-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-256MiB",
+    "metrics": {
+      "load_seconds": 0.4082951,
+      "process_hwm_kib_before_validation": 185664,
+      "train_cpu_seconds": 3.5454920000000003,
+      "train_seconds": 1.548014812
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-global-measurements/en-256MiB-b1-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+    "valid": true
+  },
+  {
+    "case": "en-256MiB",
+    "block": 1,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-baseline",
+      "/tmp/bpe-global-measurements/en-256MiB-b1-baseline/job.json"
+    ],
+    "returncode": 0,
+    "subprocess_wall": 2.114574422943406,
+    "max_swap_kib": 0,
+    "attempt_id": "en-256MiB-b1-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-256MiB",
+    "metrics": {
+      "load_seconds": 0.416266963,
+      "process_hwm_kib_before_validation": 184956,
+      "train_cpu_seconds": 3.7774140000000003,
+      "train_seconds": 1.577965386
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-global-measurements/en-256MiB-b1-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+    "valid": true
+  },
+  {
+    "case": "en-256MiB",
+    "block": 2,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-baseline",
+      "/tmp/bpe-global-measurements/en-256MiB-b2-baseline/job.json"
+    ],
+    "returncode": 0,
+    "subprocess_wall": 2.1114331861026585,
+    "max_swap_kib": 0,
+    "attempt_id": "en-256MiB-b2-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-256MiB",
+    "metrics": {
+      "load_seconds": 0.381524664,
+      "process_hwm_kib_before_validation": 185996,
+      "train_cpu_seconds": 3.9335780000000002,
+      "train_seconds": 1.646387979
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-global-measurements/en-256MiB-b2-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+    "valid": true
+  },
+  {
+    "case": "en-256MiB",
+    "block": 2,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-measurements/candidate",
+      "/tmp/bpe-global-measurements/en-256MiB-b2-candidate/job.json"
+    ],
+    "returncode": 0,
+    "subprocess_wall": 1.9093927840003744,
+    "max_swap_kib": 0,
+    "attempt_id": "en-256MiB-b2-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-256MiB",
+    "metrics": {
+      "load_seconds": 0.38970771,
+      "process_hwm_kib_before_validation": 191220,
+      "train_cpu_seconds": 3.571455,
+      "train_seconds": 1.476036521
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-global-measurements/en-256MiB-b2-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+    "valid": true
+  },
+  {
+    "case": "en-256MiB",
+    "block": 3,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-measurements/candidate",
+      "/tmp/bpe-global-measurements/en-256MiB-b3-candidate/job.json"
+    ],
+    "returncode": 0,
+    "subprocess_wall": 1.9101632399251685,
+    "max_swap_kib": 0,
+    "attempt_id": "en-256MiB-b3-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-256MiB",
+    "metrics": {
+      "load_seconds": 0.3773687,
+      "process_hwm_kib_before_validation": 189188,
+      "train_cpu_seconds": 3.605966,
+      "train_seconds": 1.488568898
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-global-measurements/en-256MiB-b3-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+    "valid": true
+  },
+  {
+    "case": "en-256MiB",
+    "block": 3,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-baseline",
+      "/tmp/bpe-global-measurements/en-256MiB-b3-baseline/job.json"
+    ],
+    "returncode": 0,
+    "subprocess_wall": 2.211537356954068,
+    "max_swap_kib": 0,
+    "attempt_id": "en-256MiB-b3-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-256MiB",
+    "metrics": {
+      "load_seconds": 0.391927306,
+      "process_hwm_kib_before_validation": 186508,
+      "train_cpu_seconds": 3.8755070000000003,
+      "train_seconds": 1.6758648809999999
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-global-measurements/en-256MiB-b3-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+    "valid": true
+  },
+  {
+    "case": "en-whitespace-256MiB",
+    "block": 0,
+    "arm": "baseline",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-baseline",
+      "/tmp/bpe-global-measurements/en-whitespace-256MiB-b0-baseline/job.json"
+    ],
+    "returncode": 0,
+    "subprocess_wall": 1.7108190970029682,
+    "max_swap_kib": 0,
+    "attempt_id": "en-whitespace-256MiB-b0-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 0.310224375,
+      "process_hwm_kib_before_validation": 144328,
+      "train_cpu_seconds": 3.19356,
+      "train_seconds": 1.332390981
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 44917,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-global-measurements/en-whitespace-256MiB-b0-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6",
+    "valid": true
+  },
+  {
+    "case": "en-whitespace-256MiB",
+    "block": 0,
+    "arm": "candidate",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-measurements/candidate",
+      "/tmp/bpe-global-measurements/en-whitespace-256MiB-b0-candidate/job.json"
+    ],
+    "returncode": 0,
+    "subprocess_wall": 1.7111157700419426,
+    "max_swap_kib": 0,
+    "attempt_id": "en-whitespace-256MiB-b0-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 0.312373352,
+      "process_hwm_kib_before_validation": 144120,
+      "train_cpu_seconds": 3.213135,
+      "train_seconds": 1.312519585
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 44917,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-global-measurements/en-whitespace-256MiB-b0-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6",
+    "valid": true
+  },
+  {
+    "case": "en-whitespace-256MiB",
+    "block": 1,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-measurements/candidate",
+      "/tmp/bpe-global-measurements/en-whitespace-256MiB-b1-candidate/job.json"
+    ],
+    "returncode": 0,
+    "subprocess_wall": 1.8111214849632233,
+    "max_swap_kib": 0,
+    "attempt_id": "en-whitespace-256MiB-b1-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 0.354330804,
+      "process_hwm_kib_before_validation": 143196,
+      "train_cpu_seconds": 3.3661950000000003,
+      "train_seconds": 1.392071288
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 44917,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-global-measurements/en-whitespace-256MiB-b1-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6",
+    "valid": true
+  },
+  {
+    "case": "en-whitespace-256MiB",
+    "block": 1,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-baseline",
+      "/tmp/bpe-global-measurements/en-whitespace-256MiB-b1-baseline/job.json"
+    ],
+    "returncode": 0,
+    "subprocess_wall": 1.7088696219725534,
+    "max_swap_kib": 0,
+    "attempt_id": "en-whitespace-256MiB-b1-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 0.31145164,
+      "process_hwm_kib_before_validation": 144304,
+      "train_cpu_seconds": 3.200266,
+      "train_seconds": 1.31842799
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 44917,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-global-measurements/en-whitespace-256MiB-b1-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6",
+    "valid": true
+  },
+  {
+    "case": "en-whitespace-256MiB",
+    "block": 2,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-baseline",
+      "/tmp/bpe-global-measurements/en-whitespace-256MiB-b2-baseline/job.json"
+    ],
+    "returncode": 0,
+    "subprocess_wall": 2.0104265289846808,
+    "max_swap_kib": 0,
+    "attempt_id": "en-whitespace-256MiB-b2-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 0.319245611,
+      "process_hwm_kib_before_validation": 144468,
+      "train_cpu_seconds": 3.8229439999999997,
+      "train_seconds": 1.564034978
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 44917,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-global-measurements/en-whitespace-256MiB-b2-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6",
+    "valid": true
+  },
+  {
+    "case": "en-whitespace-256MiB",
+    "block": 2,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-measurements/candidate",
+      "/tmp/bpe-global-measurements/en-whitespace-256MiB-b2-candidate/job.json"
+    ],
+    "returncode": 0,
+    "subprocess_wall": 1.7093195340130478,
+    "max_swap_kib": 0,
+    "attempt_id": "en-whitespace-256MiB-b2-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 0.319026964,
+      "process_hwm_kib_before_validation": 141972,
+      "train_cpu_seconds": 3.131387,
+      "train_seconds": 1.302244488
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 44917,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-global-measurements/en-whitespace-256MiB-b2-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6",
+    "valid": true
+  },
+  {
+    "case": "en-whitespace-256MiB",
+    "block": 3,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-measurements/candidate",
+      "/tmp/bpe-global-measurements/en-whitespace-256MiB-b3-candidate/job.json"
+    ],
+    "returncode": 0,
+    "subprocess_wall": 1.7088342239148915,
+    "max_swap_kib": 0,
+    "attempt_id": "en-whitespace-256MiB-b3-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 0.298556418,
+      "process_hwm_kib_before_validation": 143808,
+      "train_cpu_seconds": 3.250625,
+      "train_seconds": 1.3409564440000001
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 44917,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-global-measurements/en-whitespace-256MiB-b3-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6",
+    "valid": true
+  },
+  {
+    "case": "en-whitespace-256MiB",
+    "block": 3,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-baseline",
+      "/tmp/bpe-global-measurements/en-whitespace-256MiB-b3-baseline/job.json"
+    ],
+    "returncode": 0,
+    "subprocess_wall": 1.809983014012687,
+    "max_swap_kib": 0,
+    "attempt_id": "en-whitespace-256MiB-b3-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 0.317279991,
+      "process_hwm_kib_before_validation": 141148,
+      "train_cpu_seconds": 3.2791620000000004,
+      "train_seconds": 1.433198362
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 44917,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-global-measurements/en-whitespace-256MiB-b3-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 0,
+    "arm": "baseline",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-baseline",
+      "/tmp/bpe-global-measurements/zh-256MiB-b0-baseline/job.json"
+    ],
+    "returncode": 0,
+    "subprocess_wall": 30.172387819970027,
+    "max_swap_kib": 0,
+    "attempt_id": "zh-256MiB-b0-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 8.619928474,
+      "process_hwm_kib_before_validation": 2527448,
+      "train_cpu_seconds": 64.08334099999999,
+      "train_seconds": 19.678896764
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-global-measurements/zh-256MiB-b0-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 0,
+    "arm": "candidate",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-measurements/candidate",
+      "/tmp/bpe-global-measurements/zh-256MiB-b0-candidate/job.json"
+    ],
+    "returncode": 0,
+    "subprocess_wall": 31.58918186603114,
+    "max_swap_kib": 0,
+    "attempt_id": "zh-256MiB-b0-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 9.098356625,
+      "process_hwm_kib_before_validation": 2612300,
+      "train_cpu_seconds": 66.232448,
+      "train_seconds": 20.60370072
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-global-measurements/zh-256MiB-b0-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 1,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-measurements/candidate",
+      "/tmp/bpe-global-measurements/zh-256MiB-b1-candidate/job.json"
+    ],
+    "returncode": 0,
+    "subprocess_wall": 32.56519918702543,
+    "max_swap_kib": 0,
+    "attempt_id": "zh-256MiB-b1-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 9.33937487,
+      "process_hwm_kib_before_validation": 2573964,
+      "train_cpu_seconds": 64.46528,
+      "train_seconds": 19.238008672
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-global-measurements/zh-256MiB-b1-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 1,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-baseline",
+      "/tmp/bpe-global-measurements/zh-256MiB-b1-baseline/job.json"
+    ],
+    "returncode": 0,
+    "subprocess_wall": 29.442269611987285,
+    "max_swap_kib": 0,
+    "attempt_id": "zh-256MiB-b1-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 8.94175968,
+      "process_hwm_kib_before_validation": 2550976,
+      "train_cpu_seconds": 62.05977700000001,
+      "train_seconds": 18.78859542
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-global-measurements/zh-256MiB-b1-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 2,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-baseline",
+      "/tmp/bpe-global-measurements/zh-256MiB-b2-baseline/job.json"
+    ],
+    "returncode": 0,
+    "subprocess_wall": 30.245272901956923,
+    "max_swap_kib": 0,
+    "attempt_id": "zh-256MiB-b2-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 8.928091474,
+      "process_hwm_kib_before_validation": 2572864,
+      "train_cpu_seconds": 64.234509,
+      "train_seconds": 19.312455716
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-global-measurements/zh-256MiB-b2-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 2,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-measurements/candidate",
+      "/tmp/bpe-global-measurements/zh-256MiB-b2-candidate/job.json"
+    ],
+    "returncode": 0,
+    "subprocess_wall": 30.252527596079744,
+    "max_swap_kib": 0,
+    "attempt_id": "zh-256MiB-b2-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 9.088808342,
+      "process_hwm_kib_before_validation": 2496516,
+      "train_cpu_seconds": 64.194504,
+      "train_seconds": 19.210111738
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-global-measurements/zh-256MiB-b2-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 3,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-measurements/candidate",
+      "/tmp/bpe-global-measurements/zh-256MiB-b3-candidate/job.json"
+    ],
+    "returncode": 0,
+    "subprocess_wall": 30.248594786040485,
+    "max_swap_kib": 0,
+    "attempt_id": "zh-256MiB-b3-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 9.194614875,
+      "process_hwm_kib_before_validation": 2523996,
+      "train_cpu_seconds": 63.733371,
+      "train_seconds": 19.092543225
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-global-measurements/zh-256MiB-b3-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-256MiB",
+    "block": 3,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-baseline",
+      "/tmp/bpe-global-measurements/zh-256MiB-b3-baseline/job.json"
+    ],
+    "returncode": 0,
+    "subprocess_wall": 32.77089533407707,
+    "max_swap_kib": 0,
+    "attempt_id": "zh-256MiB-b3-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-256MiB",
+    "metrics": {
+      "load_seconds": 9.332258412,
+      "process_hwm_kib_before_validation": 2563196,
+      "train_cpu_seconds": 62.58775399999999,
+      "train_seconds": 18.974350903
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-global-measurements/zh-256MiB-b3-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 0,
+    "arm": "baseline",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-baseline",
+      "/tmp/bpe-global-measurements/zh-whitespace-256MiB-b0-baseline/job.json"
+    ],
+    "returncode": 0,
+    "subprocess_wall": 24.130151021061465,
+    "max_swap_kib": 0,
+    "attempt_id": "zh-whitespace-256MiB-b0-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.206821103,
+      "process_hwm_kib_before_validation": 1887984,
+      "train_cpu_seconds": 44.99840999999999,
+      "train_seconds": 15.465252006
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-global-measurements/zh-whitespace-256MiB-b0-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 0,
+    "arm": "candidate",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-measurements/candidate",
+      "/tmp/bpe-global-measurements/zh-whitespace-256MiB-b0-candidate/job.json"
+    ],
+    "returncode": 0,
+    "subprocess_wall": 24.624337597982958,
+    "max_swap_kib": 0,
+    "attempt_id": "zh-whitespace-256MiB-b0-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.21399256,
+      "process_hwm_kib_before_validation": 1900572,
+      "train_cpu_seconds": 45.752621999999995,
+      "train_seconds": 15.753229454
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-global-measurements/zh-whitespace-256MiB-b0-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 1,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-measurements/candidate",
+      "/tmp/bpe-global-measurements/zh-whitespace-256MiB-b1-candidate/job.json"
+    ],
+    "returncode": 0,
+    "subprocess_wall": 23.22147141303867,
+    "max_swap_kib": 0,
+    "attempt_id": "zh-whitespace-256MiB-b1-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.232763368,
+      "process_hwm_kib_before_validation": 1921672,
+      "train_cpu_seconds": 45.978328,
+      "train_seconds": 15.840482922
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-global-measurements/zh-whitespace-256MiB-b1-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 1,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-baseline",
+      "/tmp/bpe-global-measurements/zh-whitespace-256MiB-b1-baseline/job.json"
+    ],
+    "returncode": 0,
+    "subprocess_wall": 24.644045696011744,
+    "max_swap_kib": 0,
+    "attempt_id": "zh-whitespace-256MiB-b1-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.278456636,
+      "process_hwm_kib_before_validation": 1914816,
+      "train_cpu_seconds": 45.441238999999996,
+      "train_seconds": 15.767992165
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-global-measurements/zh-whitespace-256MiB-b1-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 2,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-baseline",
+      "/tmp/bpe-global-measurements/zh-whitespace-256MiB-b2-baseline/job.json"
+    ],
+    "returncode": 0,
+    "subprocess_wall": 24.63206332095433,
+    "max_swap_kib": 0,
+    "attempt_id": "zh-whitespace-256MiB-b2-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.373340901,
+      "process_hwm_kib_before_validation": 1918716,
+      "train_cpu_seconds": 46.138921,
+      "train_seconds": 15.843695811
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-global-measurements/zh-whitespace-256MiB-b2-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 2,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-measurements/candidate",
+      "/tmp/bpe-global-measurements/zh-whitespace-256MiB-b2-candidate/job.json"
+    ],
+    "returncode": 0,
+    "subprocess_wall": 24.925591379986145,
+    "max_swap_kib": 0,
+    "attempt_id": "zh-whitespace-256MiB-b2-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.245327974,
+      "process_hwm_kib_before_validation": 1911212,
+      "train_cpu_seconds": 47.267334,
+      "train_seconds": 16.253670612
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-global-measurements/zh-whitespace-256MiB-b2-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 3,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-measurements/candidate",
+      "/tmp/bpe-global-measurements/zh-whitespace-256MiB-b3-candidate/job.json"
+    ],
+    "returncode": 0,
+    "subprocess_wall": 22.713673460064456,
+    "max_swap_kib": 0,
+    "attempt_id": "zh-whitespace-256MiB-b3-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.097467139,
+      "process_hwm_kib_before_validation": 1892824,
+      "train_cpu_seconds": 46.023119,
+      "train_seconds": 15.602252542
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-global-measurements/zh-whitespace-256MiB-b3-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 3,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-global-baseline",
+      "/tmp/bpe-global-measurements/zh-whitespace-256MiB-b3-baseline/job.json"
+    ],
+    "returncode": 0,
+    "subprocess_wall": 24.228855918045156,
+    "max_swap_kib": 0,
+    "attempt_id": "zh-whitespace-256MiB-b3-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.079861487,
+      "process_hwm_kib_before_validation": 1901768,
+      "train_cpu_seconds": 45.284847,
+      "train_seconds": 15.577146689
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-global-measurements/zh-whitespace-256MiB-b3-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  }
+]

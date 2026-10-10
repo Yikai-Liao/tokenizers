@@ -1,0 +1,11 @@
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs
+@@ -323,6 +323,8 @@
+         self.spans.get(id as usize).is_some_and(|&span| span != 0)
+     }
+     pub(super) fn prepare_identity(&mut self, pair: Pair, id: u32) {
++        #[cfg(test)]
++        if self.occurrence_spans.is_some() && !self.is_active(id) && (id as usize) < self.spans.len() { eprintln!("RESERVED_AFTER_ALIAS id={id} pair={pair:?}"); }
+         self.whole_words |= self.is_active(id);
+         // Once aliases need occurrence geometry, keep only activation here.
+         // Summing representative ID spans would grow with repeated alias reuse.

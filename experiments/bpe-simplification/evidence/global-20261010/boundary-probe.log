@@ -1,0 +1,12 @@
+   Compiling tk-train v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-global-simplification/tokenizers/tk-train)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.88s
+     Running unittests src/lib.rs (/tmp/bpe-global-tests/debug/deps/tk_train-62e96fee22b26cb3)
+
+running 1 test
+RESERVED_AFTER_ALIAS id=0 pair=(19, 20)
+RESERVED_AFTER_ALIAS id=0 pair=(19, 20)
+RESERVED_AFTER_ALIAS id=0 pair=(19, 20)
+test trainers::bpe::engine::tests::overlap_floor_alias_and_alphabet_boundaries ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 16 filtered out; finished in 2.32s
+

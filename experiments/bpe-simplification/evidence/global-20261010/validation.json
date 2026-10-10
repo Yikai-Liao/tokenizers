@@ -1,0 +1,68 @@
+{
+  "baseline_commit": "727fa3e67c9cf85a9505e9d70ec8eb9b6f37f72c",
+  "candidate_rust_patch_sha256": "02c44fde49f46cc48ab43574b15815c3e47938f2635a55222bff50a17db4fa07",
+  "engine_sources_sha256": {
+    "tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs": "f5b183553ab1de43e78fd0efa9f88dae8b534535295459591434b7ecce89c25b",
+    "tokenizers/tk-train/src/trainers/bpe/engine/index.rs": "77de6fca037fa910ee84a20528de62999db56a9c3a516c63b64084285fb89448",
+    "tokenizers/tk-train/src/trainers/bpe/engine/merge.rs": "2190c130f197051ff5ae2ecf599d3667a73a58c19dcc43c0282c5d74472b99cf",
+    "tokenizers/tk-train/src/trainers/bpe/engine/mod.rs": "8858282626fa23e3b8b4c7bf21248fe09946e6ee512d226c7d8e1ff5e18b1a5b",
+    "tokenizers/tk-train/src/trainers/bpe/engine/positions.rs": "8dcff088b911b1048e0c301efbfccb0ff9b1e4c0a949bcb7d5d0c341d3e75e9a",
+    "tokenizers/tk-train/src/trainers/bpe/engine/tests/mod.rs": "4df7965d4d1371d009e42471181f94e36583221450ab8ef4a3adcf942ceba169",
+    "tokenizers/tk-train/src/trainers/bpe/engine/vocabulary.rs": "f114e6cfb2ca22ab2d9392ac61236f90f25e70a89c1c8a19b796160090dc72f0"
+  },
+  "crate_lock_sha256": "211a910d9d88124d88a94ce7a332ac0d203c942de5fef5a44b88f22bf5c0919a",
+  "checks": [
+    {
+      "command": "CARGO_TARGET_DIR=/tmp/bpe-global-tests /root/.cargo/bin/cargo test --offline --manifest-path tokenizers/tk-train/Cargo.toml -j 2",
+      "log": "native-default.log",
+      "result": "17 tests + 1 doctest passed"
+    },
+    {
+      "command": "CARGO_TARGET_DIR=/tmp/bpe-global-tests /root/.cargo/bin/cargo test --offline --no-default-features --manifest-path tokenizers/tk-train/Cargo.toml -j 2",
+      "log": "native-nodefault.log",
+      "result": "17 tests + 1 doctest passed"
+    },
+    {
+      "command": "CARGO_TARGET_DIR=/tmp/bpe-global-tests /root/.cargo/bin/cargo clippy --offline --all-targets --manifest-path tokenizers/tk-train/Cargo.toml -j 2 -- -D warnings",
+      "log": "clippy.log",
+      "result": "passed"
+    },
+    {
+      "command": "/root/.cargo/bin/cargo fmt --manifest-path tokenizers/tk-train/Cargo.toml --check",
+      "result": "passed"
+    },
+    {
+      "command": "python3 experiments/bpe-simplification/count_lines.py",
+      "log": "lines.json",
+      "result": "2176 production / 799 tests; within 2200/800"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "probe": {
+    "patch": "boundary-probe.patch",
+    "command": "CARGO_TARGET_DIR=/tmp/bpe-global-tests /root/.cargo/bin/cargo test --offline --manifest-path tokenizers/tk-train/Cargo.toml -j 2 overlap_floor_alias_and_alphabet_boundaries -- --nocapture",
+    "log": "boundary-probe.log",
+    "predicate": "occurrence_spans.is_some() && !is_active(id) && id < spans.len()",
+    "observations": "reserved id=0, pair=(19,20), once at each of 1/4/8 workers",
+    "restored_production": true,
+    "first_failure": "Initial fixture retained special tokens for subsequent literal alphabet assertion. Cleared in final fixture; this is test setup, not an engine mismatch.",
+    "first_failure_log": "boundary-probe-first-failure.log"
+  },
+  "unrun": "Miri not rerun: positions.rs/unsafe storage unchanged; native tests retain codec coverage.",
+  "artifacts_sha256": {
+    "native-default.log": "ef0766b6c47da1e9bb3b53b97f32e71b4e6a57cda93cdd057e0b989d18eb5cb2",
+    "native-nodefault.log": "ccdd608f55233fb1484f38452d852b951e1f4628fa76c771612cb4dd88cac034",
+    "clippy.log": "9757b953941efb69d1a9738691e955d860cce4d4b2832b015c88a5a4307a6e79",
+    "lines.json": "3e3f4d59ecc3c158d3c5cb373e86348a4bd117e92323101e02d94b3a363b8e26",
+    "candidate.patch": "02c44fde49f46cc48ab43574b15815c3e47938f2635a55222bff50a17db4fa07",
+    "boundary-probe.patch": "e8116f7001b6c45dc851fcd30ab7ab5c44296f4246cc99d81f196e5c34809831",
+    "boundary-probe.log": "4c713de36efab30ea94b8985ef542b331967bb9e28e6e1c46a32ebee5bde4f85",
+    "boundary-probe-first-failure.log": "2bfd39cb928a410711f630f83efedd05dc4b6ee3acb108a9e2cfd7bfaa169bb2",
+    "build-baseline.log": "8a000152167cff3ba026c12243b9334d58728368ffd2c77ba0ef7308aa9017d9",
+    "build-candidate.log": "c003ffd9c1f1e77de85ac7fbf111f7f57aa155e0c5501d87b0fd93f8aa8b97c5",
+    "measure.py": "fbbeb7680f76bf0862a9e18c92c6cb4a8b2037bac02683a19927d0994c8e1265"
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "baseline_commit": "727fa3e67c9cf85a9505e9d70ec8eb9b6f37f72c",
+  "candidate_patch_sha256": "02c44fde49f46cc48ab43574b15815c3e47938f2635a55222bff50a17db4fa07",
+  "binaries": {
+    "baseline": "/tmp/bpe-global-baseline",
+    "candidate": "/tmp/bpe-global-measurements/candidate"
+  },
+  "binary_sha256": {
+    "baseline": "bd8c58351ff8928e2d088190dcd983dffdc8b712b353d504f33f148fb53a9706",
+    "candidate": "7fd09506bf8aec1d892851a629bf21c104a861ad4d1f9f392b95181e9de6b133"
+  },
+  "engine_sources_sha256": {
+    "tokenizers/tk-train/src/trainers/bpe/engine/corpus.rs": "f5b183553ab1de43e78fd0efa9f88dae8b534535295459591434b7ecce89c25b",
+    "tokenizers/tk-train/src/trainers/bpe/engine/index.rs": "77de6fca037fa910ee84a20528de62999db56a9c3a516c63b64084285fb89448",
+    "tokenizers/tk-train/src/trainers/bpe/engine/merge.rs": "2190c130f197051ff5ae2ecf599d3667a73a58c19dcc43c0282c5d74472b99cf",
+    "tokenizers/tk-train/src/trainers/bpe/engine/mod.rs": "8858282626fa23e3b8b4c7bf21248fe09946e6ee512d226c7d8e1ff5e18b1a5b",
+    "tokenizers/tk-train/src/trainers/bpe/engine/positions.rs": "8dcff088b911b1048e0c301efbfccb0ff9b1e4c0a949bcb7d5d0c341d3e75e9a",
+    "tokenizers/tk-train/src/trainers/bpe/engine/vocabulary.rs": "f114e6cfb2ca22ab2d9392ac61236f90f25e70a89c1c8a19b796160090dc72f0"
+  },
+  "lock_sha256": "b0a4e33189592c3c7f5502bb8f0cfc636ea2936698cbbc0b5c1b9a55bbde3aad",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "profile": "release opt3 / fat LTO / codegen-units=1 / no-default-features",
+  "cases": [
+    {
+      "case": "en-256MiB",
+      "language": "en",
+      "requested_mib": 256,
+      "pretokenizer": "bytelevel_regex",
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/en256/text.txt",
+      "bytes": 268434441,
+      "source_sha256": "ae02a7e36df46e6dff26481f054dd4a385d50c4a42a9f166de754ee44fbf6b8a",
+      "prepared_path": "/root/code/tokenizers-perfetto-results/inputs/en-bytelevel/words.json",
+      "prepared_sha256": "4523a34ff64cdba49b0985f32cc923f2c7b005fd67748a0fbec38c44bab437c5",
+      "prepared_bytes": 14071952
+    },
+    {
+      "case": "en-whitespace-256MiB",
+      "language": "en",
+      "requested_mib": 256,
+      "pretokenizer": "whitespace",
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/en256/text.txt",
+      "bytes": 268434441,
+      "source_sha256": "ae02a7e36df46e6dff26481f054dd4a385d50c4a42a9f166de754ee44fbf6b8a",
+      "prepared_path": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/en-whitespace-256MiB/words.json",
+      "prepared_sha256": "0e146cd7d9fd31c547c84c5bfea2424bb05ae02905cf2608f4d7aa980f6bdb2d",
+      "prepared_bytes": 10900666
+    },
+    {
+      "case": "zh-256MiB",
+      "language": "zh",
+      "requested_mib": 256,
+      "pretokenizer": "bytelevel_regex",
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+      "bytes": 268435162,
+      "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+      "prepared_path": "/root/code/tokenizers-perfetto-results/inputs/zh-bytelevel/words.json",
+      "prepared_sha256": "bb796d0b57b87d965b84de249bc5c8e283b700774638d16a40e4ae5171b13ee0",
+      "prepared_bytes": 437135595
+    },
+    {
+      "case": "zh-whitespace-256MiB",
+      "language": "zh",
+      "requested_mib": 256,
+      "pretokenizer": "whitespace",
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+      "bytes": 268435162,
+      "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+      "prepared_path": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "prepared_sha256": "ed057a8fdb27544ed29f16dde53faa0de8f47f1ee8ac00080974fac5bb435660",
+      "prepared_bytes": 250116097
+    }
+  ],
+  "scope": "public do_train; preloaded frozen counts; serialized complete model checked after timing",
+  "design": "one warmup pair and three measured pairs per case, alternating AB/BA; workers4/cpus0-3/vocab50000/min2",
+  "limitations": "Shared VM. Screening observations; no equivalence budget or statistical speedup claim. No pipeline/feed changes or measurement."
+}

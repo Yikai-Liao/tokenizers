@@ -1,0 +1,29 @@
+{
+  "production": {
+    "engine/corpus.rs": 401,
+    "engine/index.rs": 407,
+    "engine/merge.rs": 581,
+    "engine/mod.rs": 94,
+    "engine/positions.rs": 395,
+    "engine/vocabulary.rs": 298
+  },
+  "tests": {
+    "engine/corpus.rs [cfg(test)]": 2,
+    "engine/merge.rs [cfg(test)]": 10,
+    "engine/mod.rs [cfg(test)]": 17,
+    "engine/positions.rs [cfg(test)]": 109,
+    "engine/tests/mod.rs": 443,
+    "reference.rs [oracle and shared helpers]": 154,
+    "mod.rs [cfg(test) public API/helpers]": 6,
+    "feed.rs [cfg(test) public API/helpers]": 0,
+    "word_counts.rs [cfg(test) public API/helpers]": 42,
+    "trainers/mod.rs [cfg(test) BPE wrapper]": 12,
+    "experiments/bpe-simplification/miri-codec/src/lib.rs [Miri harness]": 4
+  },
+  "production_total": 2176,
+  "test_total": 799,
+  "counting_rule": "Nonblank noncomment lines after cargo fmt --check; all engine implementation; all default BPE cfg(test) including feed/word_counts and the shared trainer wrapper, independent reference and Miri harness. The oracle no longer uses the optional parity trainer Word. No implementation relocated outside engine.",
+  "production_limit": 2200,
+  "test_limit": 800,
+  "within_budget": true
+}

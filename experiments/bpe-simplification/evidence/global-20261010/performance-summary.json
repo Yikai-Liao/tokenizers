@@ -1,0 +1,149 @@
+{
+  "candidate_commit": "177302e2",
+  "all_32_complete_models_equal": true,
+  "all_child_swap_zero": true,
+  "warmups_excluded": true,
+  "results": [
+    {
+      "case": "en-256MiB",
+      "measured_pairs": 3,
+      "median_paired_ratios": {
+        "train_seconds": 0.8965301859750763,
+        "train_cpu_seconds": 0.9304501320730423,
+        "process_hwm_kib_before_validation": 1.0143693568104317
+      },
+      "pairs": [
+        {
+          "block": 1,
+          "ratios": {
+            "train_seconds": 0.9810194987382315,
+            "train_cpu_seconds": 0.9386029701801285,
+            "process_hwm_kib_before_validation": 1.003827937455395
+          }
+        },
+        {
+          "block": 2,
+          "ratios": {
+            "train_seconds": 0.8965301859750763,
+            "train_cpu_seconds": 0.9079405569179001,
+            "process_hwm_kib_before_validation": 1.0280866255188283
+          }
+        },
+        {
+          "block": 3,
+          "ratios": {
+            "train_seconds": 0.8882392100201784,
+            "train_cpu_seconds": 0.9304501320730423,
+            "process_hwm_kib_before_validation": 1.0143693568104317
+          }
+        }
+      ]
+    },
+    {
+      "case": "en-whitespace-256MiB",
+      "measured_pairs": 3,
+      "median_paired_ratios": {
+        "train_seconds": 0.935639112878082,
+        "train_cpu_seconds": 0.991297471732107,
+        "process_hwm_kib_before_validation": 0.9923217651624349
+      },
+      "pairs": [
+        {
+          "block": 1,
+          "ratios": {
+            "train_seconds": 1.0558568981837224,
+            "train_cpu_seconds": 1.051848502593222,
+            "process_hwm_kib_before_validation": 0.9923217651624349
+          }
+        },
+        {
+          "block": 2,
+          "ratios": {
+            "train_seconds": 0.8326185196096042,
+            "train_cpu_seconds": 0.8191035495157659,
+            "process_hwm_kib_before_validation": 0.98272281750976
+          }
+        },
+        {
+          "block": 3,
+          "ratios": {
+            "train_seconds": 0.935639112878082,
+            "train_cpu_seconds": 0.991297471732107,
+            "process_hwm_kib_before_validation": 1.0188454671692124
+          }
+        }
+      ]
+    },
+    {
+      "case": "zh-256MiB",
+      "measured_pairs": 3,
+      "median_paired_ratios": {
+        "train_seconds": 1.0062290574578396,
+        "train_cpu_seconds": 1.0183041717713661,
+        "process_hwm_kib_before_validation": 0.9847065928629727
+      },
+      "pairs": [
+        {
+          "block": 1,
+          "ratios": {
+            "train_seconds": 1.0239194703996666,
+            "train_cpu_seconds": 1.0387610641913843,
+            "process_hwm_kib_before_validation": 1.0090114528713716
+          }
+        },
+        {
+          "block": 2,
+          "ratios": {
+            "train_seconds": 0.9947006232917749,
+            "train_cpu_seconds": 0.9993772039263193,
+            "process_hwm_kib_before_validation": 0.9703256759782095
+          }
+        },
+        {
+          "block": 3,
+          "ratios": {
+            "train_seconds": 1.0062290574578396,
+            "train_cpu_seconds": 1.0183041717713661,
+            "process_hwm_kib_before_validation": 0.9847065928629727
+          }
+        }
+      ]
+    },
+    {
+      "case": "zh-whitespace-256MiB",
+      "measured_pairs": 3,
+      "median_paired_ratios": {
+        "train_seconds": 1.0045973359348126,
+        "train_cpu_seconds": 1.0163028485002943,
+        "process_hwm_kib_before_validation": 0.9960890512196698
+      },
+      "pairs": [
+        {
+          "block": 1,
+          "ratios": {
+            "train_seconds": 1.0045973359348126,
+            "train_cpu_seconds": 1.011819418040076,
+            "process_hwm_kib_before_validation": 1.0035805006851832
+          }
+        },
+        {
+          "block": 2,
+          "ratios": {
+            "train_seconds": 1.0258762100642806,
+            "train_cpu_seconds": 1.0244568571510373,
+            "process_hwm_kib_before_validation": 0.9960890512196698
+          }
+        },
+        {
+          "block": 3,
+          "ratios": {
+            "train_seconds": 1.0016117106361802,
+            "train_cpu_seconds": 1.0163028485002943,
+            "process_hwm_kib_before_validation": 0.9952970078369181
+          }
+        }
+      ]
+    }
+  ],
+  "limitation": "Three measured pairs, shared VM; no statistical equivalence/speedup claim."
+}
