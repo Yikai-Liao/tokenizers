@@ -1,0 +1,578 @@
+{
+  "core-zh-bytelevel_regex-256MiB-b0-before": {
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "core-zh-bytelevel_regex-256MiB-b0-before",
+      "build_id": "before",
+      "input_id": "zh-bytelevel_regex-256MiB",
+      "mode": "core",
+      "input": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/zh-256MiB/words.json",
+      "output": "/tmp/bpe-training-core-step1-measurements/core-zh-bytelevel_regex-256MiB-b0-before/model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": {
+      "attempt_id": "core-zh-bytelevel_regex-256MiB-b0-before",
+      "build_id": "before",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-bytelevel_regex-256MiB",
+      "metrics": {
+        "load_seconds": 9.718433619,
+        "process_hwm_kib_before_validation": 2480200,
+        "train_cpu_seconds": 67.804183,
+        "train_seconds": 22.540194078
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 49744,
+        "actual_vocab": 50000,
+        "model_path": "/tmp/bpe-training-core-step1-measurements/core-zh-bytelevel_regex-256MiB-b0-before/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    },
+    "stderr": ""
+  },
+  "core-zh-bytelevel_regex-256MiB-b0-step1": {
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "core-zh-bytelevel_regex-256MiB-b0-step1",
+      "build_id": "step1",
+      "input_id": "zh-bytelevel_regex-256MiB",
+      "mode": "core",
+      "input": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/zh-256MiB/words.json",
+      "output": "/tmp/bpe-training-core-step1-measurements/core-zh-bytelevel_regex-256MiB-b0-step1/model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": {
+      "attempt_id": "core-zh-bytelevel_regex-256MiB-b0-step1",
+      "build_id": "step1",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-bytelevel_regex-256MiB",
+      "metrics": {
+        "load_seconds": 9.909555013,
+        "process_hwm_kib_before_validation": 2478336,
+        "train_cpu_seconds": 67.34654499999999,
+        "train_seconds": 21.611584032
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 49744,
+        "actual_vocab": 50000,
+        "model_path": "/tmp/bpe-training-core-step1-measurements/core-zh-bytelevel_regex-256MiB-b0-step1/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    },
+    "stderr": ""
+  },
+  "core-zh-bytelevel_regex-256MiB-b1-step1": {
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "core-zh-bytelevel_regex-256MiB-b1-step1",
+      "build_id": "step1",
+      "input_id": "zh-bytelevel_regex-256MiB",
+      "mode": "core",
+      "input": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/zh-256MiB/words.json",
+      "output": "/tmp/bpe-training-core-step1-measurements/core-zh-bytelevel_regex-256MiB-b1-step1/model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": {
+      "attempt_id": "core-zh-bytelevel_regex-256MiB-b1-step1",
+      "build_id": "step1",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-bytelevel_regex-256MiB",
+      "metrics": {
+        "load_seconds": 9.657833552,
+        "process_hwm_kib_before_validation": 2465404,
+        "train_cpu_seconds": 67.600312,
+        "train_seconds": 22.058143993
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 49744,
+        "actual_vocab": 50000,
+        "model_path": "/tmp/bpe-training-core-step1-measurements/core-zh-bytelevel_regex-256MiB-b1-step1/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    },
+    "stderr": ""
+  },
+  "core-zh-bytelevel_regex-256MiB-b1-before": {
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "core-zh-bytelevel_regex-256MiB-b1-before",
+      "build_id": "before",
+      "input_id": "zh-bytelevel_regex-256MiB",
+      "mode": "core",
+      "input": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/zh-256MiB/words.json",
+      "output": "/tmp/bpe-training-core-step1-measurements/core-zh-bytelevel_regex-256MiB-b1-before/model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": {
+      "attempt_id": "core-zh-bytelevel_regex-256MiB-b1-before",
+      "build_id": "before",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-bytelevel_regex-256MiB",
+      "metrics": {
+        "load_seconds": 9.796817685,
+        "process_hwm_kib_before_validation": 2485168,
+        "train_cpu_seconds": 66.51728600000001,
+        "train_seconds": 21.221675732
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 49744,
+        "actual_vocab": 50000,
+        "model_path": "/tmp/bpe-training-core-step1-measurements/core-zh-bytelevel_regex-256MiB-b1-before/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    },
+    "stderr": ""
+  },
+  "core-zh-bytelevel_regex-256MiB-b2-before": {
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "core-zh-bytelevel_regex-256MiB-b2-before",
+      "build_id": "before",
+      "input_id": "zh-bytelevel_regex-256MiB",
+      "mode": "core",
+      "input": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/zh-256MiB/words.json",
+      "output": "/tmp/bpe-training-core-step1-measurements/core-zh-bytelevel_regex-256MiB-b2-before/model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": {
+      "attempt_id": "core-zh-bytelevel_regex-256MiB-b2-before",
+      "build_id": "before",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-bytelevel_regex-256MiB",
+      "metrics": {
+        "load_seconds": 9.856861728,
+        "process_hwm_kib_before_validation": 2451864,
+        "train_cpu_seconds": 64.005735,
+        "train_seconds": 20.383886963
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 49744,
+        "actual_vocab": 50000,
+        "model_path": "/tmp/bpe-training-core-step1-measurements/core-zh-bytelevel_regex-256MiB-b2-before/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    },
+    "stderr": ""
+  },
+  "core-zh-bytelevel_regex-256MiB-b2-step1": {
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "core-zh-bytelevel_regex-256MiB-b2-step1",
+      "build_id": "step1",
+      "input_id": "zh-bytelevel_regex-256MiB",
+      "mode": "core",
+      "input": "/root/code/tokenizers-simplification-results/cutoff-ablation/inputs/zh-256MiB/words.json",
+      "output": "/tmp/bpe-training-core-step1-measurements/core-zh-bytelevel_regex-256MiB-b2-step1/model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": {
+      "attempt_id": "core-zh-bytelevel_regex-256MiB-b2-step1",
+      "build_id": "step1",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-bytelevel_regex-256MiB",
+      "metrics": {
+        "load_seconds": 9.526946666,
+        "process_hwm_kib_before_validation": 2500172,
+        "train_cpu_seconds": 65.944461,
+        "train_seconds": 21.087921368
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 49744,
+        "actual_vocab": 50000,
+        "model_path": "/tmp/bpe-training-core-step1-measurements/core-zh-bytelevel_regex-256MiB-b2-step1/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    },
+    "stderr": ""
+  },
+  "core-zh-whitespace-256MiB-b0-before": {
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "core-zh-whitespace-256MiB-b0-before",
+      "build_id": "before",
+      "input_id": "zh-whitespace-256MiB",
+      "mode": "core",
+      "input": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "output": "/tmp/bpe-training-core-step1-measurements/core-zh-whitespace-256MiB-b0-before/model.json",
+      "workers": 4,
+      "pretokenizer": "whitespace",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": {
+      "attempt_id": "core-zh-whitespace-256MiB-b0-before",
+      "build_id": "before",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-whitespace-256MiB",
+      "metrics": {
+        "load_seconds": 7.149474662,
+        "process_hwm_kib_before_validation": 1857448,
+        "train_cpu_seconds": 59.524199,
+        "train_seconds": 21.852850457
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 32241,
+        "actual_vocab": 50000,
+        "model_path": "/tmp/bpe-training-core-step1-measurements/core-zh-whitespace-256MiB-b0-before/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    },
+    "stderr": ""
+  },
+  "core-zh-whitespace-256MiB-b0-step1": {
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "core-zh-whitespace-256MiB-b0-step1",
+      "build_id": "step1",
+      "input_id": "zh-whitespace-256MiB",
+      "mode": "core",
+      "input": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "output": "/tmp/bpe-training-core-step1-measurements/core-zh-whitespace-256MiB-b0-step1/model.json",
+      "workers": 4,
+      "pretokenizer": "whitespace",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": {
+      "attempt_id": "core-zh-whitespace-256MiB-b0-step1",
+      "build_id": "step1",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-whitespace-256MiB",
+      "metrics": {
+        "load_seconds": 7.169240397,
+        "process_hwm_kib_before_validation": 1833248,
+        "train_cpu_seconds": 59.184830000000005,
+        "train_seconds": 22.056902614
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 32241,
+        "actual_vocab": 50000,
+        "model_path": "/tmp/bpe-training-core-step1-measurements/core-zh-whitespace-256MiB-b0-step1/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    },
+    "stderr": ""
+  },
+  "core-zh-whitespace-256MiB-b1-step1": {
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "core-zh-whitespace-256MiB-b1-step1",
+      "build_id": "step1",
+      "input_id": "zh-whitespace-256MiB",
+      "mode": "core",
+      "input": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "output": "/tmp/bpe-training-core-step1-measurements/core-zh-whitespace-256MiB-b1-step1/model.json",
+      "workers": 4,
+      "pretokenizer": "whitespace",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": {
+      "attempt_id": "core-zh-whitespace-256MiB-b1-step1",
+      "build_id": "step1",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-whitespace-256MiB",
+      "metrics": {
+        "load_seconds": 7.447534553,
+        "process_hwm_kib_before_validation": 1832248,
+        "train_cpu_seconds": 60.671541999999995,
+        "train_seconds": 22.243131679
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 32241,
+        "actual_vocab": 50000,
+        "model_path": "/tmp/bpe-training-core-step1-measurements/core-zh-whitespace-256MiB-b1-step1/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    },
+    "stderr": ""
+  },
+  "core-zh-whitespace-256MiB-b1-before": {
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "core-zh-whitespace-256MiB-b1-before",
+      "build_id": "before",
+      "input_id": "zh-whitespace-256MiB",
+      "mode": "core",
+      "input": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "output": "/tmp/bpe-training-core-step1-measurements/core-zh-whitespace-256MiB-b1-before/model.json",
+      "workers": 4,
+      "pretokenizer": "whitespace",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": {
+      "attempt_id": "core-zh-whitespace-256MiB-b1-before",
+      "build_id": "before",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-whitespace-256MiB",
+      "metrics": {
+        "load_seconds": 7.585661909,
+        "process_hwm_kib_before_validation": 1847144,
+        "train_cpu_seconds": 60.890923,
+        "train_seconds": 22.615027432
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 32241,
+        "actual_vocab": 50000,
+        "model_path": "/tmp/bpe-training-core-step1-measurements/core-zh-whitespace-256MiB-b1-before/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    },
+    "stderr": ""
+  },
+  "core-zh-whitespace-256MiB-b2-before": {
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "core-zh-whitespace-256MiB-b2-before",
+      "build_id": "before",
+      "input_id": "zh-whitespace-256MiB",
+      "mode": "core",
+      "input": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "output": "/tmp/bpe-training-core-step1-measurements/core-zh-whitespace-256MiB-b2-before/model.json",
+      "workers": 4,
+      "pretokenizer": "whitespace",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": {
+      "attempt_id": "core-zh-whitespace-256MiB-b2-before",
+      "build_id": "before",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-whitespace-256MiB",
+      "metrics": {
+        "load_seconds": 7.52018944,
+        "process_hwm_kib_before_validation": 1832080,
+        "train_cpu_seconds": 59.952349,
+        "train_seconds": 22.253500237
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 32241,
+        "actual_vocab": 50000,
+        "model_path": "/tmp/bpe-training-core-step1-measurements/core-zh-whitespace-256MiB-b2-before/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    },
+    "stderr": ""
+  },
+  "core-zh-whitespace-256MiB-b2-step1": {
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "core-zh-whitespace-256MiB-b2-step1",
+      "build_id": "step1",
+      "input_id": "zh-whitespace-256MiB",
+      "mode": "core",
+      "input": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+      "output": "/tmp/bpe-training-core-step1-measurements/core-zh-whitespace-256MiB-b2-step1/model.json",
+      "workers": 4,
+      "pretokenizer": "whitespace",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": {
+      "attempt_id": "core-zh-whitespace-256MiB-b2-step1",
+      "build_id": "step1",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "zh-whitespace-256MiB",
+      "metrics": {
+        "load_seconds": 7.110023543,
+        "process_hwm_kib_before_validation": 1864532,
+        "train_cpu_seconds": 60.599851,
+        "train_seconds": 22.380824079
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 32241,
+        "actual_vocab": 50000,
+        "model_path": "/tmp/bpe-training-core-step1-measurements/core-zh-whitespace-256MiB-b2-step1/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    },
+    "stderr": ""
+  }
+}

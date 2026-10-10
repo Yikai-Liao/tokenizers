@@ -1,0 +1,41 @@
+{
+  "stage1_bpe": {
+    "passed": 20,
+    "failed": 0,
+    "command": "CARGO_TARGET_DIR=/tmp/bpe-global-tests /root/.cargo/bin/cargo test --offline --manifest-path tokenizers/tk-train/Cargo.toml --no-default-features --lib trainers::bpe:: -- --skip feed_training_tokenizer_json_and_encoding_roundtrip"
+  },
+  "stage2_bpe": {
+    "passed": 21,
+    "failed": 0,
+    "command": "CARGO_TARGET_DIR=/tmp/bpe-global-tests /root/.cargo/bin/cargo test --offline --manifest-path tokenizers/tk-train/Cargo.toml --no-default-features --lib trainers::bpe:: -- --skip feed_training_tokenizer_json_and_encoding_roundtrip"
+  },
+  "excluded_existing_assertion": "feed_training_tokenizer_json_and_encoding_roundtrip",
+  "clippy": {
+    "exit_code": 0,
+    "command": "CARGO_TARGET_DIR=/tmp/bpe-global-tests /root/.cargo/bin/cargo clippy --offline --manifest-path tokenizers/tk-train/Cargo.toml --no-default-features --all-targets -- -D warnings"
+  },
+  "format": {
+    "exit_code": 0,
+    "command": "uv run experiments/bpe-simplification/format-changed.py --check tokenizers/tk-train/src/trainers/bpe/mod.rs tokenizers/tk-train/src/trainers/bpe/tests.rs"
+  },
+  "batch_boundary": {
+    "already_implemented_commits": [
+      "ef418ae774f2815c085e46c43241e5b4b4750ce1",
+      "9ecbd0cd7cedb9f64a058c7a45ab5e655701e3fa"
+    ],
+    "unchanged_in_this_task": true,
+    "coverage": "Independent rules, pre-write preparation failure at 1/4/8 workers, and full-model/rule differential cases."
+  },
+  "performance": {
+    "runs": 24,
+    "formal_runs": 16,
+    "complete_models_equal_within_and_across_steps": true,
+    "observed_max_swap_kib": 0,
+    "concurrent_builds_or_tests": false,
+    "comparisons": [
+      "before vs stage1",
+      "stage1 vs stage2"
+    ],
+    "formal_pairs_per_case_per_comparison": 2
+  }
+}

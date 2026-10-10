@@ -1,0 +1,650 @@
+[
+  {
+    "case": "zh-bytelevel_regex-256MiB",
+    "block": 0,
+    "arm": "step1",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-training-core-step1-bin",
+      "/tmp/bpe-training-core-step2-measurements/core-zh-bytelevel_regex-256MiB-b0-step1/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-training-core-step1-bin",
+      "/tmp/bpe-training-core-step2-measurements/core-zh-bytelevel_regex-256MiB-b0-step1/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2416648,
+    "subprocess_wall": 35.17759154306259,
+    "attempt_id": "core-zh-bytelevel_regex-256MiB-b0-step1",
+    "build_id": "step1",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-bytelevel_regex-256MiB",
+    "metrics": {
+      "load_seconds": 9.904929538,
+      "process_hwm_kib_before_validation": 2416460,
+      "train_cpu_seconds": 65.942041,
+      "train_seconds": 21.363602801
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-training-core-step2-measurements/core-zh-bytelevel_regex-256MiB-b0-step1/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-bytelevel_regex-256MiB",
+    "block": 0,
+    "arm": "step2",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-training-core-step2-bin",
+      "/tmp/bpe-training-core-step2-measurements/core-zh-bytelevel_regex-256MiB-b0-step2/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-training-core-step2-bin",
+      "/tmp/bpe-training-core-step2-measurements/core-zh-bytelevel_regex-256MiB-b0-step2/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2454280,
+    "subprocess_wall": 34.39349738101009,
+    "attempt_id": "core-zh-bytelevel_regex-256MiB-b0-step2",
+    "build_id": "step2",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-bytelevel_regex-256MiB",
+    "metrics": {
+      "load_seconds": 9.98000314,
+      "process_hwm_kib_before_validation": 2454236,
+      "train_cpu_seconds": 64.293435,
+      "train_seconds": 20.571360523
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-training-core-step2-measurements/core-zh-bytelevel_regex-256MiB-b0-step2/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-bytelevel_regex-256MiB",
+    "block": 1,
+    "arm": "step2",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-training-core-step2-bin",
+      "/tmp/bpe-training-core-step2-measurements/core-zh-bytelevel_regex-256MiB-b1-step2/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-training-core-step2-bin",
+      "/tmp/bpe-training-core-step2-measurements/core-zh-bytelevel_regex-256MiB-b1-step2/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2443152,
+    "subprocess_wall": 34.242797348997556,
+    "attempt_id": "core-zh-bytelevel_regex-256MiB-b1-step2",
+    "build_id": "step2",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-bytelevel_regex-256MiB",
+    "metrics": {
+      "load_seconds": 10.342310378,
+      "process_hwm_kib_before_validation": 2443208,
+      "train_cpu_seconds": 63.294113,
+      "train_seconds": 20.146465986
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-training-core-step2-measurements/core-zh-bytelevel_regex-256MiB-b1-step2/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-bytelevel_regex-256MiB",
+    "block": 1,
+    "arm": "step1",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-training-core-step1-bin",
+      "/tmp/bpe-training-core-step2-measurements/core-zh-bytelevel_regex-256MiB-b1-step1/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-training-core-step1-bin",
+      "/tmp/bpe-training-core-step2-measurements/core-zh-bytelevel_regex-256MiB-b1-step1/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2474948,
+    "subprocess_wall": 33.69351817399729,
+    "attempt_id": "core-zh-bytelevel_regex-256MiB-b1-step1",
+    "build_id": "step1",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-bytelevel_regex-256MiB",
+    "metrics": {
+      "load_seconds": 9.770268304,
+      "process_hwm_kib_before_validation": 2475072,
+      "train_cpu_seconds": 62.30812100000001,
+      "train_seconds": 20.060230479
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-training-core-step2-measurements/core-zh-bytelevel_regex-256MiB-b1-step1/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-bytelevel_regex-256MiB",
+    "block": 2,
+    "arm": "step1",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-training-core-step1-bin",
+      "/tmp/bpe-training-core-step2-measurements/core-zh-bytelevel_regex-256MiB-b2-step1/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-training-core-step1-bin",
+      "/tmp/bpe-training-core-step2-measurements/core-zh-bytelevel_regex-256MiB-b2-step1/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2475032,
+    "subprocess_wall": 33.559969588997774,
+    "attempt_id": "core-zh-bytelevel_regex-256MiB-b2-step1",
+    "build_id": "step1",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-bytelevel_regex-256MiB",
+    "metrics": {
+      "load_seconds": 9.53249481,
+      "process_hwm_kib_before_validation": 2474988,
+      "train_cpu_seconds": 62.791256000000004,
+      "train_seconds": 20.029861284
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-training-core-step2-measurements/core-zh-bytelevel_regex-256MiB-b2-step1/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-bytelevel_regex-256MiB",
+    "block": 2,
+    "arm": "step2",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-training-core-step2-bin",
+      "/tmp/bpe-training-core-step2-measurements/core-zh-bytelevel_regex-256MiB-b2-step2/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-training-core-step2-bin",
+      "/tmp/bpe-training-core-step2-measurements/core-zh-bytelevel_regex-256MiB-b2-step2/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2475256,
+    "subprocess_wall": 35.3773212779779,
+    "attempt_id": "core-zh-bytelevel_regex-256MiB-b2-step2",
+    "build_id": "step2",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-bytelevel_regex-256MiB",
+    "metrics": {
+      "load_seconds": 9.603916459,
+      "process_hwm_kib_before_validation": 2475080,
+      "train_cpu_seconds": 66.14042599999999,
+      "train_seconds": 21.455345563
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-training-core-step2-measurements/core-zh-bytelevel_regex-256MiB-b2-step2/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 0,
+    "arm": "step1",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-training-core-step1-bin",
+      "/tmp/bpe-training-core-step2-measurements/core-zh-whitespace-256MiB-b0-step1/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-training-core-step1-bin",
+      "/tmp/bpe-training-core-step2-measurements/core-zh-whitespace-256MiB-b0-step1/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1835592,
+    "subprocess_wall": 30.7991891320562,
+    "attempt_id": "core-zh-whitespace-256MiB-b0-step1",
+    "build_id": "step1",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 7.237892884,
+      "process_hwm_kib_before_validation": 1835736,
+      "train_cpu_seconds": 57.79212700000001,
+      "train_seconds": 21.391610511
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-training-core-step2-measurements/core-zh-whitespace-256MiB-b0-step1/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 0,
+    "arm": "step2",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-training-core-step2-bin",
+      "/tmp/bpe-training-core-step2-measurements/core-zh-whitespace-256MiB-b0-step2/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-training-core-step2-bin",
+      "/tmp/bpe-training-core-step2-measurements/core-zh-whitespace-256MiB-b0-step2/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1865888,
+    "subprocess_wall": 30.224346326082014,
+    "attempt_id": "core-zh-whitespace-256MiB-b0-step2",
+    "build_id": "step2",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.86132998,
+      "process_hwm_kib_before_validation": 1865932,
+      "train_cpu_seconds": 57.376071,
+      "train_seconds": 21.131420468
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-training-core-step2-measurements/core-zh-whitespace-256MiB-b0-step2/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 1,
+    "arm": "step2",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-training-core-step2-bin",
+      "/tmp/bpe-training-core-step2-measurements/core-zh-whitespace-256MiB-b1-step2/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-training-core-step2-bin",
+      "/tmp/bpe-training-core-step2-measurements/core-zh-whitespace-256MiB-b1-step2/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1833976,
+    "subprocess_wall": 30.381307075032964,
+    "attempt_id": "core-zh-whitespace-256MiB-b1-step2",
+    "build_id": "step2",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.904597153,
+      "process_hwm_kib_before_validation": 1842780,
+      "train_cpu_seconds": 57.586946999999995,
+      "train_seconds": 21.332763424
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-training-core-step2-measurements/core-zh-whitespace-256MiB-b1-step2/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 1,
+    "arm": "step1",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-training-core-step1-bin",
+      "/tmp/bpe-training-core-step2-measurements/core-zh-whitespace-256MiB-b1-step1/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-training-core-step1-bin",
+      "/tmp/bpe-training-core-step2-measurements/core-zh-whitespace-256MiB-b1-step1/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1838324,
+    "subprocess_wall": 31.000956448027864,
+    "attempt_id": "core-zh-whitespace-256MiB-b1-step1",
+    "build_id": "step1",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.808644845,
+      "process_hwm_kib_before_validation": 1846624,
+      "train_cpu_seconds": 57.908871000000005,
+      "train_seconds": 22.059984734
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-training-core-step2-measurements/core-zh-whitespace-256MiB-b1-step1/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 2,
+    "arm": "step1",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-training-core-step1-bin",
+      "/tmp/bpe-training-core-step2-measurements/core-zh-whitespace-256MiB-b2-step1/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-training-core-step1-bin",
+      "/tmp/bpe-training-core-step2-measurements/core-zh-whitespace-256MiB-b2-step1/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1834808,
+    "subprocess_wall": 31.705214919988066,
+    "attempt_id": "core-zh-whitespace-256MiB-b2-step1",
+    "build_id": "step1",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.883539577,
+      "process_hwm_kib_before_validation": 1835072,
+      "train_cpu_seconds": 60.678315000000005,
+      "train_seconds": 22.290598978
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-training-core-step2-measurements/core-zh-whitespace-256MiB-b2-step1/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "block": 2,
+    "arm": "step2",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-training-core-step2-bin",
+      "/tmp/bpe-training-core-step2-measurements/core-zh-whitespace-256MiB-b2-step2/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-training-core-step2-bin",
+      "/tmp/bpe-training-core-step2-measurements/core-zh-whitespace-256MiB-b2-step2/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1849708,
+    "subprocess_wall": 31.047040641075,
+    "attempt_id": "core-zh-whitespace-256MiB-b2-step2",
+    "build_id": "step2",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.794158825,
+      "process_hwm_kib_before_validation": 1849652,
+      "train_cpu_seconds": 58.97737800000001,
+      "train_seconds": 21.915978217
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-training-core-step2-measurements/core-zh-whitespace-256MiB-b2-step2/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  }
+]

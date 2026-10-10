@@ -1,0 +1,130 @@
+{
+  "baseline_commit": "9ecbd0cd7cedb9f64a058c7a45ab5e655701e3fa",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "profile": {
+    "opt_level": 3,
+    "lto": "fat",
+    "codegen_units": 1
+  },
+  "builds": {
+    "before": {
+      "binary": "/tmp/bpe-training-core-before-bin",
+      "source_hashes": {
+        "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs": "88cb2c722e86c6de79fa3e2a70fb86a6a01828520830b40291b2f6b73a0e044e",
+        "tokenizers/tk-train/src/trainers/bpe/word.rs": "f9c3bd0a7a8fade42a5643ee6341b4ebf203f7a45aa0a65797e773d1ce21396a",
+        "tokenizers/tk-train/src/trainers/bpe/positions.rs": "83dce104f7feaaf9abe60f841d8d764c2ccf097b93b8093a66d33e16ea6498c9",
+        "tokenizers/tk-train/src/trainers/bpe/corpus.rs": "080d55611b17b7b250e197f183daaaf4469ba8e50f583f19148e1e0b69f979ae",
+        "tokenizers/tk-train/src/trainers/bpe/index.rs": "17afe2d71670aac73a88470b936e945ec471edd034b5f3168da0c8eee80f05a0",
+        "tokenizers/tk-train/src/trainers/bpe/tests.rs": "15038b00a2906af96026fe9deb422f5bf69da08efdea1006444fe241dc67c41e",
+        "tokenizers/tk-train/src/trainers/bpe/mod.rs": "7b5a92ad0908affef7dceea1e7dd8e5306f3cecbdb8c8f89a7a085bc718c2368",
+        "tokenizers/tk-train/src/trainers/bpe/feed.rs": "ddbc4fd103d73ea5cc8bf3778809127b0578474c9da9a29af5be5a76b56f0fec",
+        "tokenizers/tk-train/src/trainers/bpe/merge.rs": "b1bd92741e10e862c9ec24550b0b3740f7b6c90fa34c1a59db545cb2e64a3808",
+        "tokenizers/tk-train/src/trainers/bpe/word_counts.rs": "eb78ccea99544dc915f3c406ad77349ddc080ecfb7a5d36253bd8d80275ebf4d",
+        "tokenizers/tk-train/src/trainers/bpe/parity_trainer.rs": "a584152379dc59de167a14f751f37bab8da9c723eddc1c238df21965dd08f37c",
+        "tokenizers/tk-train/Cargo.toml": "ea8d81126e19c7d3d14b1903dc71f0e23bf493846be394233c2f65c9745fe151",
+        "experiments/bpe-simplification/runner/Cargo.toml": "71ee5a0e2114f857677333c828535d876ce0f80b157efc01ec15dfdb8be25fd9",
+        "experiments/bpe-simplification/runner/Cargo.lock": "3c695073bb1e4176d8e7ec1500f9e4fb8883d23e115ef7da244b68e46946f9d6",
+        "experiments/bpe-simplification/runner/src/feed_stats.rs": "cd317b213cff235d310e0fa5a66e826cad8a390c143a4d8551e0dd142a4a533d",
+        "experiments/bpe-simplification/runner/src/protocol.rs": "127168a11d40812c88718f60c5f3c3422814b43dbe74f8c73e4d738973bdda2f",
+        "experiments/bpe-simplification/runner/src/core.rs": "d0cddccdad6cb9f275ac4c4b29a65b2920e55ca53f20b435dd2bea80f99d0322",
+        "experiments/bpe-simplification/runner/src/model_output.rs": "58fedcea52879ce2028f296b2dcb8ae05866bc6cf6c156b0f1a4803a6c273168",
+        "experiments/bpe-simplification/runner/src/main.rs": "3bf0c679c660cf07760e1c3647c8308ef4ac7d138f45b8dfb5ca2f663b02c4c5",
+        "experiments/bpe-simplification/runner/src/pipeline.rs": "300fe769f662872aecb8496efa695ac43382f319e9e1149bcc6226319ab3ecb9",
+        "experiments/bpe-simplification/runner/src/adapters/tk_train_pr2348.rs": "f2b3030f7546b1d1bf23f06c75cf02e4acbc5e1e2bfbc74c3819c7a5324de1da",
+        "experiments/bpe-simplification/runner/src/adapters/mod.rs": "a5a2dd2147a680afb61c3ff34629d8ca7d1fc2d759e2931be01bf1567436001a",
+        "experiments/bpe-simplification/runner/src/adapters/tk_train_v1.rs": "f5ad7a988e842ed232673bb0c60d0d9392f837edde861a6f71740f2a1536663e"
+      },
+      "command": [
+        "/root/.cargo/bin/cargo",
+        "build",
+        "--locked",
+        "--offline",
+        "--release",
+        "--manifest-path",
+        "experiments/bpe-simplification/runner/Cargo.toml"
+      ],
+      "binary_sha256": "ace879122a834cfcee1896cb1fe419aa8cc02aeaf67cbc43e7562e3cc904e698"
+    },
+    "step1": {
+      "binary": "/tmp/bpe-training-core-step1-bin",
+      "source_hashes": {
+        "experiments/bpe-simplification/runner/Cargo.lock": "3c695073bb1e4176d8e7ec1500f9e4fb8883d23e115ef7da244b68e46946f9d6",
+        "experiments/bpe-simplification/runner/Cargo.toml": "71ee5a0e2114f857677333c828535d876ce0f80b157efc01ec15dfdb8be25fd9",
+        "experiments/bpe-simplification/runner/src/feed_stats.rs": "cd317b213cff235d310e0fa5a66e826cad8a390c143a4d8551e0dd142a4a533d",
+        "experiments/bpe-simplification/runner/src/protocol.rs": "127168a11d40812c88718f60c5f3c3422814b43dbe74f8c73e4d738973bdda2f",
+        "experiments/bpe-simplification/runner/src/core.rs": "d0cddccdad6cb9f275ac4c4b29a65b2920e55ca53f20b435dd2bea80f99d0322",
+        "experiments/bpe-simplification/runner/src/model_output.rs": "58fedcea52879ce2028f296b2dcb8ae05866bc6cf6c156b0f1a4803a6c273168",
+        "experiments/bpe-simplification/runner/src/main.rs": "3bf0c679c660cf07760e1c3647c8308ef4ac7d138f45b8dfb5ca2f663b02c4c5",
+        "experiments/bpe-simplification/runner/src/pipeline.rs": "300fe769f662872aecb8496efa695ac43382f319e9e1149bcc6226319ab3ecb9",
+        "experiments/bpe-simplification/runner/src/adapters/tk_train_pr2348.rs": "f2b3030f7546b1d1bf23f06c75cf02e4acbc5e1e2bfbc74c3819c7a5324de1da",
+        "experiments/bpe-simplification/runner/src/adapters/mod.rs": "a5a2dd2147a680afb61c3ff34629d8ca7d1fc2d759e2931be01bf1567436001a",
+        "experiments/bpe-simplification/runner/src/adapters/tk_train_v1.rs": "f5ad7a988e842ed232673bb0c60d0d9392f837edde861a6f71740f2a1536663e",
+        "tokenizers/tk-train/Cargo.toml": "ea8d81126e19c7d3d14b1903dc71f0e23bf493846be394233c2f65c9745fe151",
+        "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs": "88cb2c722e86c6de79fa3e2a70fb86a6a01828520830b40291b2f6b73a0e044e",
+        "tokenizers/tk-train/src/trainers/bpe/word.rs": "f9c3bd0a7a8fade42a5643ee6341b4ebf203f7a45aa0a65797e773d1ce21396a",
+        "tokenizers/tk-train/src/trainers/bpe/positions.rs": "83dce104f7feaaf9abe60f841d8d764c2ccf097b93b8093a66d33e16ea6498c9",
+        "tokenizers/tk-train/src/trainers/bpe/corpus.rs": "080d55611b17b7b250e197f183daaaf4469ba8e50f583f19148e1e0b69f979ae",
+        "tokenizers/tk-train/src/trainers/bpe/index.rs": "17afe2d71670aac73a88470b936e945ec471edd034b5f3168da0c8eee80f05a0",
+        "tokenizers/tk-train/src/trainers/bpe/tests.rs": "af8d29782cd208e30168147cc3e0e4fc4b791e76c1c45e83517dd9ecf772f1e4",
+        "tokenizers/tk-train/src/trainers/bpe/mod.rs": "bae2777113fbbb244daacf6bfec1d116eae5478813d0452dc9d01d239bb9bcc4",
+        "tokenizers/tk-train/src/trainers/bpe/feed.rs": "ddbc4fd103d73ea5cc8bf3778809127b0578474c9da9a29af5be5a76b56f0fec",
+        "tokenizers/tk-train/src/trainers/bpe/merge.rs": "b1bd92741e10e862c9ec24550b0b3740f7b6c90fa34c1a59db545cb2e64a3808",
+        "tokenizers/tk-train/src/trainers/bpe/word_counts.rs": "eb78ccea99544dc915f3c406ad77349ddc080ecfb7a5d36253bd8d80275ebf4d",
+        "tokenizers/tk-train/src/trainers/bpe/parity_trainer.rs": "a584152379dc59de167a14f751f37bab8da9c723eddc1c238df21965dd08f37c"
+      },
+      "command": [
+        "/root/.cargo/bin/cargo",
+        "build",
+        "--locked",
+        "--offline",
+        "--release",
+        "--manifest-path",
+        "experiments/bpe-simplification/runner/Cargo.toml"
+      ],
+      "binary_sha256": "1a8f3a5888161c43278af71142d6e341b5e31a0504664409e10528bf6f33d5f6"
+    },
+    "step2": {
+      "binary": "/tmp/bpe-training-core-step2-bin",
+      "source_hashes": {
+        "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs": "88cb2c722e86c6de79fa3e2a70fb86a6a01828520830b40291b2f6b73a0e044e",
+        "tokenizers/tk-train/src/trainers/bpe/word.rs": "f9c3bd0a7a8fade42a5643ee6341b4ebf203f7a45aa0a65797e773d1ce21396a",
+        "tokenizers/tk-train/src/trainers/bpe/positions.rs": "83dce104f7feaaf9abe60f841d8d764c2ccf097b93b8093a66d33e16ea6498c9",
+        "tokenizers/tk-train/src/trainers/bpe/corpus.rs": "080d55611b17b7b250e197f183daaaf4469ba8e50f583f19148e1e0b69f979ae",
+        "tokenizers/tk-train/src/trainers/bpe/index.rs": "17afe2d71670aac73a88470b936e945ec471edd034b5f3168da0c8eee80f05a0",
+        "tokenizers/tk-train/src/trainers/bpe/tests.rs": "d7403fbba9d604d02ce9398922f948b342d9561a5db28eaccd4804e4e5d1f1bd",
+        "tokenizers/tk-train/src/trainers/bpe/mod.rs": "e01a9d3f07c22d70d19cf5c059cdce922e3866b5c5fd27c797d58b76276d64dd",
+        "tokenizers/tk-train/src/trainers/bpe/feed.rs": "ddbc4fd103d73ea5cc8bf3778809127b0578474c9da9a29af5be5a76b56f0fec",
+        "tokenizers/tk-train/src/trainers/bpe/merge.rs": "b1bd92741e10e862c9ec24550b0b3740f7b6c90fa34c1a59db545cb2e64a3808",
+        "tokenizers/tk-train/src/trainers/bpe/word_counts.rs": "eb78ccea99544dc915f3c406ad77349ddc080ecfb7a5d36253bd8d80275ebf4d",
+        "tokenizers/tk-train/src/trainers/bpe/parity_trainer.rs": "a584152379dc59de167a14f751f37bab8da9c723eddc1c238df21965dd08f37c",
+        "tokenizers/tk-train/Cargo.toml": "ea8d81126e19c7d3d14b1903dc71f0e23bf493846be394233c2f65c9745fe151",
+        "experiments/bpe-simplification/runner/Cargo.toml": "71ee5a0e2114f857677333c828535d876ce0f80b157efc01ec15dfdb8be25fd9",
+        "experiments/bpe-simplification/runner/Cargo.lock": "3c695073bb1e4176d8e7ec1500f9e4fb8883d23e115ef7da244b68e46946f9d6",
+        "experiments/bpe-simplification/runner/src/feed_stats.rs": "cd317b213cff235d310e0fa5a66e826cad8a390c143a4d8551e0dd142a4a533d",
+        "experiments/bpe-simplification/runner/src/protocol.rs": "127168a11d40812c88718f60c5f3c3422814b43dbe74f8c73e4d738973bdda2f",
+        "experiments/bpe-simplification/runner/src/core.rs": "d0cddccdad6cb9f275ac4c4b29a65b2920e55ca53f20b435dd2bea80f99d0322",
+        "experiments/bpe-simplification/runner/src/model_output.rs": "58fedcea52879ce2028f296b2dcb8ae05866bc6cf6c156b0f1a4803a6c273168",
+        "experiments/bpe-simplification/runner/src/main.rs": "3bf0c679c660cf07760e1c3647c8308ef4ac7d138f45b8dfb5ca2f663b02c4c5",
+        "experiments/bpe-simplification/runner/src/pipeline.rs": "300fe769f662872aecb8496efa695ac43382f319e9e1149bcc6226319ab3ecb9",
+        "experiments/bpe-simplification/runner/src/adapters/tk_train_pr2348.rs": "f2b3030f7546b1d1bf23f06c75cf02e4acbc5e1e2bfbc74c3819c7a5324de1da",
+        "experiments/bpe-simplification/runner/src/adapters/mod.rs": "a5a2dd2147a680afb61c3ff34629d8ca7d1fc2d759e2931be01bf1567436001a",
+        "experiments/bpe-simplification/runner/src/adapters/tk_train_v1.rs": "f5ad7a988e842ed232673bb0c60d0d9392f837edde861a6f71740f2a1536663e"
+      },
+      "command": [
+        "/root/.cargo/bin/cargo",
+        "build",
+        "--locked",
+        "--offline",
+        "--release",
+        "--manifest-path",
+        "experiments/bpe-simplification/runner/Cargo.toml"
+      ],
+      "binary_sha256": "1c988f647fa174a65725b7dd66a7e64c78b89f0fe2fae03298da3ce167a7c4ca"
+    }
+  },
+  "stage1_commit": "36bc3b1851398d0a81177260c739f2489b1fa479",
+  "description": "Stage 1 moves the coordinator and attempt into BpeTrainer; stage 2 returns test traces, shares successful cleanup and bounds identity reuse to one retry. Batch::commit was already implemented at baseline.",
+  "retained_arm": "step2",
+  "retained_source_matches_measured_snapshot": true,
+  "stage2_commit": "aa35055f7c16ee856f8f7257c636b610dad6cc4d"
+}
