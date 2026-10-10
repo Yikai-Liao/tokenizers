@@ -27,6 +27,12 @@ the existing frequency selector, including its unspecified ties. Decorations
 are resolved in the input view's traversal before weighted words are reordered.
 Filtering and first/last decoration flags use original UTF-8 word coordinates.
 
+Vocabulary constructs initial ID spans (zero for inactive, one for active) and
+moves the table into CorpusPlan. After materialization Corpus alone records ID
+activation. Resolving a merge string returns its ID; the corpus determines
+whether that ID was already active and prepares its geometry. Vocabulary keeps
+no activation mirror that must be updated during merges.
+
 Each attempt starts from original weighted words. The selected alphabet is
 retained through a reuse restart. A reserved but inactive result keeps its ID
 and runs alone. Selecting an already active result during a fresh attempt causes
@@ -60,6 +66,11 @@ identities have a single span, so one ID-to-span table describes the corpus.
 When an active alias acquires unequal spans, the corpus initializes a separate
 occurrence-span plane from the current logical words. All subsequent geometry
 reads the occurrence endpoints; it does not infer length from token text.
+The ID table still grows with the vocabulary and marks every activated ID as
+nonzero, including previously inactive reserved IDs. Once the occurrence plane
+exists, new ID metadata only needs an activation marker; it no longer sums
+representative ID spans. Activation means that an ID has ever been used, even
+after its last occurrence is consumed.
 
 Lists store u64 coordinates. A physical allocation still has resident usize and
 isize bounds, enforced before construction. The position codec does not narrow

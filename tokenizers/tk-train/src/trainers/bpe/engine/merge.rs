@@ -208,7 +208,7 @@ impl<'arena> Batch<'arena> {
                 break;
             }
             let token = vocabulary.merge_token(pair);
-            if !reuse && vocabulary.reuses_active_id(&token) {
+            if !reuse && token.existing_id.is_some_and(|id| corpus.is_active(id)) {
                 return Ok(Selection::Restart);
             }
             let reserved = token.existing_id.is_some();
@@ -218,11 +218,11 @@ impl<'arena> Batch<'arena> {
                 break;
             }
             let candidate = index.take(priority);
-            let identity = vocabulary.resolve_merge(token)?;
-            corpus.prepare_identity(pair, identity.id, identity.reused_active_id);
+            let replacement = vocabulary.resolve_merge(token)?;
+            corpus.prepare_identity(pair, replacement);
             batch.rules.push(Rule {
                 pair,
-                replacement: identity.id,
+                replacement,
                 candidate,
             });
             if reserved || pair.0 == pair.1 {

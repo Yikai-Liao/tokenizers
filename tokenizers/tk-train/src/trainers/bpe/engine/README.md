@@ -15,9 +15,11 @@ original input and the retained alphabet; speculative merges are discarded.
 The implementation is divided by the knowledge each module owns:
 
 - [vocabulary.rs](vocabulary.rs) owns strings, alphabet interpretation, decorated
-  IDs, active identity detection, and canonical output.
+  IDs, initial activation metadata, and canonical output.
 - [corpus.rs](corpus.rs) owns fixed coordinates, token endpoints, weights, and
-  occurrence spans. Only this module converts full-u64 occurrence coordinates
+  ID activation and occurrence spans. Initial ID metadata moves here once;
+  merge selection and geometry use this same activation record.
+  Only this module converts full-u64 occurrence coordinates
   to checked resident indices.
 - [index.rs](index.rs) owns exact priority correction, count shards, signed reuse
   ledgers, cohort queues, and complete birth publication.

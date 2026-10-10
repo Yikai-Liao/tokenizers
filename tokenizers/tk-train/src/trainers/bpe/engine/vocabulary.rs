@@ -15,7 +15,7 @@ pub(super) struct Vocabulary {
     // Append-only insertion indices are token IDs. Store each string once while
     // supporting both text lookup and direct lookup by ID with the same hasher.
     tokens: IndexSet<CompactString, RandomState>,
-    active: Vec<bool>,
+    initial_spans: Vec<usize>,
     prefix: Option<String>,
     suffix: Option<String>,
     plain_ids_resolved: bool,
@@ -23,10 +23,6 @@ pub(super) struct Vocabulary {
 pub(super) struct MergeToken {
     pub(super) existing_id: Option<u32>,
     text: CompactString,
-}
-pub(super) struct MergeIdentity {
-    pub(super) id: u32,
-    pub(super) reused_active_id: bool,
 }
 pub(super) struct InitialTokenIds {
     characters: Vec<u32>,
@@ -45,7 +41,7 @@ impl Vocabulary {
     ) -> Result<Self> {
         let mut vocabulary = Self {
             tokens: IndexSet::with_capacity_and_hasher(trainer.vocab_size, RandomState::default()),
-            active: Vec::new(),
+            initial_spans: Vec::new(),
             prefix: trainer.continuing_subword_prefix.clone(),
             suffix: trainer.end_of_word_suffix.clone(),
             plain_ids_resolved: false,
@@ -98,8 +94,8 @@ impl Vocabulary {
                         .expect("alphabet bits come from valid characters");
                     let mut utf8 = [0; 4];
                     let id = vocabulary.intern(character.encode_utf8(&mut utf8))?;
-                    vocabulary.active[id as usize] =
-                        observed[codepoint / 64] & (1_u64 << (codepoint % 64)) != 0;
+                    vocabulary.initial_spans[id as usize] =
+                        usize::from(observed[codepoint / 64] & (1_u64 << (codepoint % 64)) != 0);
                     bits &= bits - 1;
                 }
             }
@@ -111,7 +107,9 @@ impl Vocabulary {
         if let Some(id) = self.tokens.get_index_of(text) {
             return Ok(id as u32);
         }
-        self.insert_new_token(CompactString::from(text))
+        let id = self.insert_new_token(CompactString::from(text))?;
+        self.initial_spans.push(0);
+        Ok(id)
     }
     // The caller has established that this text is absent. No vocabulary
     // mutation can intervene before this insertion on the coordinator.
@@ -122,7 +120,6 @@ impl Vocabulary {
         }
         let (index, inserted) = self.tokens.insert_full(token);
         debug_assert!(inserted && index == id as usize);
-        self.active.push(false);
         Ok(id)
     }
     pub(super) fn initial_ids(
@@ -153,7 +150,7 @@ impl Vocabulary {
             work.complete(word_counts.len());
             return Ok(ids);
         }
-        self.active.fill(false);
+        self.initial_spans.fill(0);
         let mut decorated = String::new();
         // Allocate decorated IDs in the input view's traversal before sorting weighted words.
         for (index, word) in word_counts.keys().enumerate() {
@@ -192,7 +189,7 @@ impl Vocabulary {
                         id
                     }
                 };
-                self.active[id as usize] = true;
+                self.initial_spans[id as usize] = 1;
             }
             if (index + 1) % 1024 == 0 {
                 work.complete(1024);
@@ -201,14 +198,8 @@ impl Vocabulary {
         work.complete(word_counts.len() % 1024);
         Ok(ids)
     }
-    pub(super) fn initial_spans(&self) -> Vec<usize> {
-        self.active
-            .iter()
-            .map(|&active| usize::from(active))
-            .collect()
-    }
-    pub(super) fn reuses_active_id(&self, token: &MergeToken) -> bool {
-        token.existing_id.is_some_and(|id| self.active[id as usize])
+    pub(super) fn take_initial_spans(&mut self) -> Vec<usize> {
+        std::mem::take(&mut self.initial_spans)
     }
     pub(super) fn len(&self) -> usize {
         self.tokens.len()
@@ -229,19 +220,13 @@ impl Vocabulary {
             text,
         }
     }
-    pub(super) fn resolve_merge(&mut self, token: MergeToken) -> Result<MergeIdentity> {
-        let id = match token.existing_id {
-            Some(id) => id,
+    pub(super) fn resolve_merge(&mut self, token: MergeToken) -> Result<u32> {
+        match token.existing_id {
+            Some(id) => Ok(id),
             // PERF: merge_token already checked this key. Consume its complete
             // string instead of probing again and copying another owned string.
-            None => self.insert_new_token(token.text)?,
-        };
-        let reused_active_id = self.active[id as usize];
-        self.active[id as usize] = true;
-        Ok(MergeIdentity {
-            id,
-            reused_active_id,
-        })
+            None => self.insert_new_token(token.text),
+        }
     }
     pub(super) fn into_model_parts(self, merges: Vec<Pair>) -> (Vocab, Merges) {
         let merges = merges

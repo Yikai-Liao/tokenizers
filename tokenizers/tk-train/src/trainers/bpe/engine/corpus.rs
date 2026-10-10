@@ -16,6 +16,8 @@ pub(super) struct Corpus {
     starts: Vec<usize>,
     weight_regions: Vec<(usize, u64)>,
     unit_region: Option<(usize, usize)>,
+    // Nonzero marks an activated ID. Until alias geometry diverges it also
+    // stores that ID's span; afterwards occurrence_spans owns all geometry.
     spans: Vec<usize>,
     occurrence_spans: Option<Vec<AtomicUsize>>,
     whole_words: bool,
@@ -102,7 +104,7 @@ impl<'input> CorpusPlan<'input> {
             starts,
             weight_regions,
             unit_region,
-            spans: vocabulary.initial_spans(),
+            spans: vocabulary.take_initial_spans(),
             whole_words: trainer.max_token_length.is_some(),
             words,
             ids,
@@ -317,16 +319,23 @@ impl Corpus {
     pub(super) fn whole_words(&self) -> bool {
         self.whole_words
     }
-    pub(super) fn prepare_identity(&mut self, pair: Pair, id: u32, active: bool) {
-        self.whole_words |= active;
-        let span = self.id_span(pair.0) + self.id_span(pair.1);
+    pub(super) fn is_active(&self, id: u32) -> bool {
+        self.spans.get(id as usize).is_some_and(|&span| span != 0)
+    }
+    pub(super) fn prepare_identity(&mut self, pair: Pair, id: u32) {
+        self.whole_words |= self.is_active(id);
+        // Once aliases need occurrence geometry, keep only activation here.
+        // Summing representative ID spans would grow with repeated alias reuse.
+        let span = if self.occurrence_spans.is_some() {
+            1
+        } else {
+            self.id_span(pair.0) + self.id_span(pair.1)
+        };
         if id as usize == self.spans.len() {
             self.spans.push(span);
-        } else if self.occurrence_spans.is_none() {
+        } else {
             let old = self.spans[id as usize];
-            if old == 0 || old == span {
-                self.spans[id as usize] = span;
-            } else {
+            if self.occurrence_spans.is_none() && old != 0 && old != span {
                 let values: Vec<_> = (0..self.len()).map(|_| AtomicUsize::new(0)).collect();
                 for &start in &self.starts {
                     let mut p = start;
@@ -339,6 +348,7 @@ impl Corpus {
                 }
                 self.occurrence_spans = Some(values);
             }
+            self.spans[id as usize] = span;
         }
     }
     // Call only after all preparation readers join. Matches own disjoint endpoint

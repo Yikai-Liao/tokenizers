@@ -109,6 +109,8 @@ fn overlap_floor_alias_and_alphabet_boundaries() {
             )
         })
         .collect();
+    // Reserved merges must still activate after alias geometry becomes per-occurrence.
+    trainer.special_tokens = vec![AddedToken::from("aaaaaaaaabcd", true)];
     for (prefix, suffix, limit) in [
         (None, Some("a"), None),
         (Some("ab"), None, Some(9)),
@@ -120,6 +122,7 @@ fn overlap_floor_alias_and_alphabet_boundaries() {
         check(&trainer, &aliases);
     }
     trainer.continuing_subword_prefix = None;
+    trainer.special_tokens.clear();
     trainer.max_token_length = None;
     trainer.end_of_word_suffix = None;
     trainer.limit_alphabet = Some(3);
