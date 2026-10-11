@@ -9,8 +9,11 @@ The private `train_attempt` owns the vocabulary, corpus and pair index for one a
 Tests exercise this same coordinator with explicit workers and inspect its successful
 result, whose trace field exists only under `cfg(test)`. No test callback enters
 the production call chain.
-A selected `Batch` owns the occurrence lists of its rules. `Batch::commit` returns
-ordered `MergeRecord` scalars only after the whole round succeeds. The trainer then
+`BpeTrainer::merge_next` in `merge.rs` contains selection and the complete joined
+round. Its private Batch owns the occurrence lists of selected rules; consuming
+preparation releases them before writes. The method returns Finished,
+RestartForReuse or Committed with ordered `MergeRecord` scalars only after the
+whole round succeeds. Selection scratch retires before preparation. The trainer then
 appends merges and its test-only trace and advances progress by the accepted rule
 count. Selection may already mutate identities and activation; errors discard the
 whole attempt rather than rolling back those changes. Merge first prepares
@@ -45,10 +48,12 @@ The independent reference shares only this selector. Decorations
 are resolved in the input view's traversal before weighted words are reordered.
 Filtering and first/last decoration flags use original UTF-8 word coordinates.
 
-Vocabulary constructs initial ID spans (zero for unactivated, one for activated) and
-moves the table into CorpusPlan. After materialization Corpus alone records ID
-activation. Resolving a merge string returns its ID; the corpus determines
-whether that ID has been activated and prepares its geometry. Vocabulary keeps
+Vocabulary initialization returns both the identity table and completed
+InitialTokenIds, whose spans mark unactivated IDs as zero and activated IDs as one.
+CorpusPlan owns these IDs without completing another initialization protocol.
+After symbol writes join, into_spans moves the span Vec and releases both lookup
+tables; Corpus alone then records ID activation. Resolving a merge string returns its ID; the corpus determines
+whether that ID has been activated and prepares its span metadata. Vocabulary keeps
 no activation mirror that must be updated during merges.
 
 Each attempt starts from original weighted words. The selected alphabet is

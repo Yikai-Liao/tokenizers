@@ -333,12 +333,12 @@ fn restart_discards_ids_selected_after_a_committed_round() {
                 let plan = CorpusPlan::build(view, ids, &trainer, false).unwrap();
                 let mut index = PairIndex::build(&plan, 1, workers, false, &progress).unwrap();
                 let mut corpus = plan.materialize();
-                let Selection::Ready(batch) =
-                    Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index).unwrap()
+                let MergeOutcome::Committed(records) = trainer
+                    .merge_next(&mut vocabulary, &mut corpus, &mut index)
+                    .unwrap()
                 else {
                     panic!("reserved XY must commit alone")
                 };
-                let records = batch.commit(&mut corpus, &mut index, usize::MAX).unwrap();
                 assert_eq!(records.len(), 1);
                 assert_eq!((records[0].count, records[0].replacement), (3, 0));
                 let committed_len = vocabulary.len();
@@ -346,8 +346,10 @@ fn restart_discards_ids_selected_after_a_committed_round() {
                 // decorated B identity. The entire attempt, including UV's ID,
                 // must be discarded rather than recording either tentative rule.
                 assert!(matches!(
-                    Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index).unwrap(),
-                    Selection::Restart
+                    trainer
+                        .merge_next(&mut vocabulary, &mut corpus, &mut index)
+                        .unwrap(),
+                    MergeOutcome::RestartForReuse
                 ));
                 assert_eq!(vocabulary.len(), committed_len + 1);
             });
@@ -357,7 +359,7 @@ fn restart_discards_ids_selected_after_a_committed_round() {
 }
 
 #[test]
-fn ready_batch_applies_independent_rules_together() {
+fn merge_next_commits_independent_rules_together() {
     let trainer = trainer();
     let words = counts(&[("ab", 10), ("cd", 9), ("ef", 8)]);
     let view = WordCountsView::from_map(&words);
@@ -367,12 +369,12 @@ fn ready_batch_applies_independent_rules_together() {
     let plan = CorpusPlan::build(view, ids, &trainer, false).unwrap();
     let mut index = PairIndex::build(&plan, 1, 4, false, &progress).unwrap();
     let mut corpus = plan.materialize();
-    let Selection::Ready(batch) =
-        Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index).unwrap()
+    let MergeOutcome::Committed(records) = trainer
+        .merge_next(&mut vocabulary, &mut corpus, &mut index)
+        .unwrap()
     else {
         panic!("expected ready batch")
     };
-    let records = batch.commit(&mut corpus, &mut index, usize::MAX).unwrap();
     assert_eq!(
         records
             .into_iter()
@@ -381,8 +383,10 @@ fn ready_batch_applies_independent_rules_together() {
         [((0, 1), 10, 6), ((2, 3), 9, 7), ((4, 5), 8, 8)]
     );
     assert!(matches!(
-        Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index).unwrap(),
-        Selection::Finished
+        trainer
+            .merge_next(&mut vocabulary, &mut corpus, &mut index)
+            .unwrap(),
+        MergeOutcome::Finished
     ));
 }
 

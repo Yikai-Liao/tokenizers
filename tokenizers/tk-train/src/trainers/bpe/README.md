@@ -14,8 +14,8 @@ inspect the successful result's test-only trace.
 
 Read `train_attempt` for the complete workflow: initialize identities and a
 borrowed corpus plan, build the compressed occurrence index, materialize endpoints
-when merges are needed, select a compatible batch, record its rules, complete it
-with `Batch::commit`, then publish the model parts. Merge joins snapshot
+when merges are needed, call `merge_next` for each complete compatible round,
+collect its committed records, then publish the model parts. Merge joins snapshot
 preparation before endpoint writes and joins those writes before index updates.
 A collision with a previously activated identity discards the fresh attempt and
 restarts from original input and the retained alphabet. Errors and restart requests
@@ -36,8 +36,9 @@ The implementation is divided by the knowledge each module owns:
 - [index.rs](index.rs) owns exact priority correction, count shards, signed reuse
   ledgers, one owning candidate queue, and complete birth publication.
 - [merge.rs](merge.rs) owns compatible selection, read-only preparation, local
-  event aggregation, and a complete joined round. The coordinator selects a
-  `Batch`, records its rules and commits it; Merge owns the execution order.
+  event aggregation, and a complete joined round. `BpeTrainer::merge_next` selects
+  and consumes its private Batch, returning finish, restart, or committed records
+  only after index publication; the coordinator collects records and progress.
 - [positions.rs](positions.rs) owns sorted full-u64 streams and restart blocks.
   Producers use `SmallVec<[u64; 2]>` and construct immutable lists directly.
   Empty, one-value and two-value lists stay inline; longer lists own compressed

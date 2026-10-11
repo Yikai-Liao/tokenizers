@@ -21,7 +21,7 @@ use ahash::{AHashMap, AHashSet};
 use compact_str::CompactString;
 use corpus::{Corpus, CorpusPlan};
 use index::PairIndex;
-use merge::{Batch, Selection};
+use merge::MergeOutcome;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use tk_encode::vocab::bucket_added_vocabulary::AddedToken;
@@ -408,19 +408,14 @@ impl BpeTrainer {
             // 3. Only attempts needing merges allocate resident endpoints.
             corpus = plan.materialize();
             while vocabulary.len() < self.vocab_size {
-                let batch = match Batch::select(self, &mut vocabulary, &mut corpus, &mut index)? {
-                    Selection::Finished => break,
-                    Selection::Restart => {
+                let records = match self.merge_next(&mut vocabulary, &mut corpus, &mut index)? {
+                    MergeOutcome::Finished => break,
+                    MergeOutcome::RestartForReuse => {
                         self.finalize_progress(progress, merges.len(), "Compute merges");
                         return Ok(AttemptOutcome::RestartForReuse);
                     }
-                    Selection::Ready(batch) => batch,
+                    MergeOutcome::Committed(records) => records,
                 };
-                let records = batch.commit(
-                    &mut corpus,
-                    &mut index,
-                    self.max_token_length.unwrap_or(usize::MAX),
-                )?;
                 let accepted = records.len();
                 for record in records {
                     merges.push(record.pair);

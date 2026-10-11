@@ -14,6 +14,124 @@ use std::collections::VecDeque;
 use std::ops::Range;
 use tk_encode::{Result, models::bpe::Pair};
 
+/// Complete-round outcome. Only successful index publication returns records.
+/// Restart discards the attempt, including any speculative selected identities.
+#[derive(Debug)]
+pub(super) enum MergeOutcome {
+    Finished,
+    RestartForReuse,
+    Committed(Vec<MergeRecord>),
+}
+
+/// Selected-rule scalars returned only after the whole batch commits successfully.
+/// No candidate positions survive preparation through these records.
+#[derive(Debug)]
+pub(super) struct MergeRecord {
+    pub(super) pair: Pair,
+    #[cfg(test)]
+    pub(super) count: u64,
+    #[cfg(test)]
+    pub(super) replacement: u32,
+}
+
+impl BpeTrainer {
+    /// Select and commit one complete round. All preparation joins before writes;
+    /// all writes join before index owner updates and ordered publication. Errors
+    /// discard the attempt rather than rolling back selection or endpoint writes.
+    pub(super) fn merge_next(
+        &self,
+        vocabulary: &mut Vocabulary,
+        corpus: &mut Corpus,
+        index: &mut PairIndex,
+    ) -> Result<MergeOutcome> {
+        let reuse = index.reuse();
+        let mut batch = Batch {
+            rules: Vec::new(),
+            reuse,
+            floor: self.min_frequency.max(1),
+        };
+        let cap = if reuse {
+            1
+        } else {
+            256.min(self.vocab_size - vocabulary.len())
+        };
+        let mut heads = AHashSet::new();
+        let mut tails = AHashSet::new();
+        // Take a priority prefix without skipping conflicts. Crossed endpoints
+        // would consume another rule's input, so only shared heads/tails may batch.
+        // Every newborn has an unselected old boundary as a frequency/tie witness;
+        // see DESIGN.md's compatible batch proof for why it cannot overtake this prefix.
+        while batch.rules.len() < cap {
+            let Some(priority) = index.best() else {
+                break;
+            };
+            let pair = priority.pair();
+            if !batch.rules.is_empty()
+                && (pair.0 == pair.1 || tails.contains(&pair.0) || heads.contains(&pair.1))
+            {
+                break;
+            }
+            let token = vocabulary.merge_token(pair);
+            if !reuse
+                && token
+                    .existing_id
+                    .is_some_and(|id| corpus.has_been_activated(id))
+            {
+                return Ok(MergeOutcome::RestartForReuse);
+            }
+            let reserved = token.existing_id.is_some();
+            // A reserved ID need not follow old IDs lexicographically. A singleton
+            // activation needs no argument about its position relative to later rules.
+            if reserved && !batch.rules.is_empty() {
+                break;
+            }
+            let candidate = index.take(priority);
+            let replacement = vocabulary.resolve_merge(token)?;
+            corpus.prepare_identity(pair, replacement);
+            batch.rules.push(Rule {
+                replacement,
+                candidate,
+            });
+            if reserved || pair.0 == pair.1 {
+                break;
+            }
+            heads.insert(pair.0);
+            tails.insert(pair.1);
+        }
+        if batch.rules.is_empty() {
+            return Ok(MergeOutcome::Finished);
+        }
+
+        // Selection scratch retires before preparation, as at the former boundary.
+        drop(heads);
+        drop(tails);
+
+        // Capture only bounded scalars before consuming preparation releases the
+        // selected candidates. Preserve selection order, including reuse cohorts.
+        let records = batch
+            .rules
+            .iter()
+            .map(|rule| MergeRecord {
+                pair: rule.pair(),
+                #[cfg(test)]
+                count: rule.candidate.priority.count,
+                #[cfg(test)]
+                replacement: rule.replacement,
+            })
+            .collect();
+        let jobs = batch.prepare(corpus, self.max_token_length.unwrap_or(usize::MAX))?;
+        let changes = jobs
+            .into_par_iter()
+            .map(|job| {
+                job.writes.apply(corpus);
+                job.changes
+            })
+            .collect();
+        index.commit(changes)?;
+        Ok(MergeOutcome::Committed(records))
+    }
+}
+
 /// One selected pair and resolved replacement ID, owning its candidate positions.
 /// Keeping the candidate binds preparation to the cohort selected by the queue.
 struct Rule {
@@ -29,30 +147,10 @@ impl Rule {
 
 /// Priority-prefix rules selected for one joined preparation/application round.
 /// Fresh rules have compatible endpoints; reuse mode selects a single cohort.
-pub(super) struct Batch {
+struct Batch {
     rules: Vec<Rule>,
     reuse: bool,
     floor: u64,
-}
-
-/// Selection outcome for the coordinator: finish, retry the attempt, or commit.
-/// Restart discards speculative rules and requests historical-cohort training.
-pub(super) enum Selection {
-    Finished,
-    // The whole attempt is discarded, including rules already selected in this batch.
-    Restart,
-    Ready(Batch),
-}
-
-/// Selected-rule scalars returned only after the whole batch commits successfully.
-/// No candidate positions survive preparation through these records.
-#[derive(Debug)]
-pub(super) struct MergeRecord {
-    pub(super) pair: Pair,
-    #[cfg(test)]
-    pub(super) count: u64,
-    #[cfg(test)]
-    pub(super) replacement: u32,
 }
 
 /// One neighbor-edge removal and replacement birth from preparation.
@@ -221,107 +319,6 @@ impl<'a> Neighbors<'a> {
 }
 
 impl Batch {
-    pub(super) fn select(
-        trainer: &BpeTrainer,
-        vocabulary: &mut Vocabulary,
-        corpus: &mut Corpus,
-        index: &mut PairIndex,
-    ) -> Result<Selection> {
-        let reuse = index.reuse();
-        let mut batch = Self {
-            rules: Vec::new(),
-            reuse,
-            floor: trainer.min_frequency.max(1),
-        };
-        let cap = if reuse {
-            1
-        } else {
-            256.min(trainer.vocab_size - vocabulary.len())
-        };
-        let mut heads = AHashSet::new();
-        let mut tails = AHashSet::new();
-        // Take a priority prefix without skipping conflicts. Crossed endpoints
-        // would consume another rule's input, so only shared heads/tails may batch.
-        // Every newborn has an unselected old boundary as a frequency/tie witness;
-        // see DESIGN.md's compatible batch proof for why it cannot overtake this prefix.
-        while batch.rules.len() < cap {
-            let Some(priority) = index.best() else {
-                break;
-            };
-            let pair = priority.pair();
-            if !batch.rules.is_empty()
-                && (pair.0 == pair.1 || tails.contains(&pair.0) || heads.contains(&pair.1))
-            {
-                break;
-            }
-            let token = vocabulary.merge_token(pair);
-            if !reuse
-                && token
-                    .existing_id
-                    .is_some_and(|id| corpus.has_been_activated(id))
-            {
-                return Ok(Selection::Restart);
-            }
-            let reserved = token.existing_id.is_some();
-            // A reserved ID need not follow old IDs lexicographically. A singleton
-            // activation needs no argument about its position relative to later rules.
-            if reserved && !batch.rules.is_empty() {
-                break;
-            }
-            let candidate = index.take(priority);
-            let replacement = vocabulary.resolve_merge(token)?;
-            corpus.prepare_identity(pair, replacement);
-            batch.rules.push(Rule {
-                replacement,
-                candidate,
-            });
-            if reserved || pair.0 == pair.1 {
-                break;
-            }
-            heads.insert(pair.0);
-            tails.insert(pair.1);
-        }
-        Ok(if batch.rules.is_empty() {
-            Selection::Finished
-        } else {
-            Selection::Ready(batch)
-        })
-    }
-
-    /// Complete one selected batch, joining preparation before writes and writes
-    /// before parallel index updates. Preparation errors leave endpoints unchanged;
-    /// later errors can follow writes or count updates. Discard the attempt on error.
-    pub(super) fn commit(
-        self,
-        corpus: &mut Corpus,
-        index: &mut PairIndex,
-        limit: usize,
-    ) -> Result<Vec<MergeRecord>> {
-        // Capture only bounded scalars before consuming preparation releases the
-        // selected candidates. Preserve selection order, including reuse cohorts.
-        let records = self
-            .rules
-            .iter()
-            .map(|rule| MergeRecord {
-                pair: rule.pair(),
-                #[cfg(test)]
-                count: rule.candidate.priority.count,
-                #[cfg(test)]
-                replacement: rule.replacement,
-            })
-            .collect();
-        let jobs = self.prepare(corpus, limit)?;
-        let changes = jobs
-            .into_par_iter()
-            .map(|job| {
-                job.writes.apply(corpus);
-                job.changes
-            })
-            .collect();
-        index.commit(changes)?;
-        Ok(records)
-    }
-
     fn prepare(self, corpus: &Corpus, limit: usize) -> Result<Vec<Job>> {
         if self.reuse {
             return self.prepare_cohort(corpus, limit);
@@ -704,7 +701,7 @@ impl<'task> CohortPreparation<'task> {
 
 /// Deferred endpoint writes, compact for fresh identities and explicit for reuse.
 /// Fresh identities have one span per ID, so writes need only sorted starts and
-/// one rule geometry. Alias reuse retains each occurrence's snapshot geometry.
+/// one rule span. Alias reuse retains each occurrence's snapshot span.
 enum Writes {
     Compact {
         positions: SmallVec<[u64; 2]>,
@@ -819,54 +816,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn preparation_failure_leaves_all_endpoints_unchanged() {
-        for workers in [1, 4, 8] {
-            let pool = rayon::ThreadPoolBuilder::new()
-                .num_threads(workers)
-                .build()
-                .unwrap();
-            pool.install(|| {
-                let trainer = BpeTrainer::builder()
-                    .vocab_size(16)
-                    .min_frequency(1)
-                    .show_progress(false)
-                    .build();
-                let words = [("ab".into(), u64::MAX), ("xcd".into(), u64::MAX)]
-                    .into_iter()
-                    .collect();
-                let view = WordCountsView::from_map(&words);
-                let progress = trainer.setup_progress();
-                let (mut vocabulary, ids) =
-                    Vocabulary::initialize(&trainer, view, workers, &mut None, &progress).unwrap();
-                let plan = CorpusPlan::build(view, ids, &trainer, false).unwrap();
-                let mut index = PairIndex::build(&plan, 1, workers, false, &progress).unwrap();
-                let mut corpus = plan.materialize();
-                let Selection::Ready(mut batch) =
-                    Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index).unwrap()
-                else {
-                    panic!("expected ready batch")
-                };
-                assert_eq!(
-                    batch.rules.iter().map(Rule::pair).collect::<Vec<_>>(),
-                    [(0, 1), (2, 3)]
-                );
-                // AB has valid deferred writes. Duplicate CD's start to overflow
-                // its left-neighbor count during preparation.
-                let start = batch.rules[1].candidate.positions.iter().next().unwrap();
-                batch.rules[1].candidate.positions =
-                    Positions::from_sorted(&[start, start]).unwrap();
-                let before: Vec<_> = (0..corpus.len()).map(|p| corpus.token(p)).collect();
-                let error = batch
-                    .commit(&mut corpus, &mut index, usize::MAX)
-                    .unwrap_err();
-                assert!(error.to_string().contains("exceeds u64"), "{error}");
-                let after: Vec<_> = (0..corpus.len()).map(|p| corpus.token(p)).collect();
-                assert_eq!(after, before, "workers={workers}");
-            });
-        }
-    }
-
-    #[test]
     fn aligned_fragments_keep_complete_and_partial_publication() {
         let pool = rayon::ThreadPoolBuilder::new()
             .num_threads(2)
@@ -892,10 +841,19 @@ mod tests {
                 let mut index =
                     PairIndex::build(&plan, trainer.min_frequency, 2, false, &progress).unwrap();
                 let mut corpus = plan.materialize();
-                let Selection::Ready(batch) =
-                    Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index).unwrap()
-                else {
-                    panic!("expected ordinary batch")
+                let priority = index.best().unwrap();
+                let pair = priority.pair();
+                let candidate = index.take(priority);
+                let token = vocabulary.merge_token(pair);
+                let replacement = vocabulary.resolve_merge(token).unwrap();
+                corpus.prepare_identity(pair, replacement);
+                let batch = Batch {
+                    rules: vec![Rule {
+                        replacement,
+                        candidate,
+                    }],
+                    reuse: false,
+                    floor: trainer.min_frequency.max(1),
                 };
                 assert_eq!(batch.rules.len(), 1);
                 assert_eq!(batch.rules[0].candidate.positions.len(), repetitions);

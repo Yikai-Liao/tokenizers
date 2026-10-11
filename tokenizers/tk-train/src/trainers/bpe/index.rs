@@ -446,10 +446,7 @@ impl Shard {
 mod tests {
     use super::*;
     use crate::trainers::bpe::{
-        BpeTrainer, Trace,
-        merge::{Batch, Selection},
-        vocabulary::Vocabulary,
-        word_counts::WordCountsView,
+        BpeTrainer, Trace, merge::MergeOutcome, vocabulary::Vocabulary, word_counts::WordCountsView,
     };
     use tk_encode::{
         models::bpe::{Merges, Vocab},
@@ -615,6 +612,50 @@ mod tests {
         }
     }
 
+    #[test]
+    fn preparation_failure_leaves_all_endpoints_unchanged() {
+        for workers in [1, 4, 8] {
+            let pool = rayon::ThreadPoolBuilder::new()
+                .num_threads(workers)
+                .build()
+                .unwrap();
+            pool.install(|| {
+                let trainer = BpeTrainer::builder()
+                    .vocab_size(16)
+                    .min_frequency(1)
+                    .show_progress(false)
+                    .build();
+                let words = [("ab".into(), u64::MAX), ("xcd".into(), u64::MAX)]
+                    .into_iter()
+                    .collect();
+                let view = WordCountsView::from_map(&words);
+                let progress = trainer.setup_progress();
+                let (mut vocabulary, ids) =
+                    Vocabulary::initialize(&trainer, view, workers, &mut None, &progress).unwrap();
+                let plan = CorpusPlan::build(view, ids, &trainer, false).unwrap();
+                let mut index = PairIndex::build(&plan, 1, workers, false, &progress).unwrap();
+                let mut corpus = plan.materialize();
+                let mut candidates = std::mem::take(&mut index.queue).into_vec();
+                let candidate = candidates
+                    .iter_mut()
+                    .find(|c| c.priority.pair() == (2, 3))
+                    .unwrap();
+                // AB has valid deferred writes. Duplicate CD's start to overflow
+                // its left-neighbor count during preparation of the same round.
+                let start = candidate.positions.iter().next().unwrap();
+                candidate.positions = Positions::from_sorted(&[start, start]).unwrap();
+                index.queue = candidates.into_iter().collect();
+                let before: Vec<_> = (0..corpus.len()).map(|p| corpus.token(p)).collect();
+                let error = trainer
+                    .merge_next(&mut vocabulary, &mut corpus, &mut index)
+                    .unwrap_err();
+                assert!(error.to_string().contains("exceeds u64"), "{error}");
+                let after: Vec<_> = (0..corpus.len()).map(|p| corpus.token(p)).collect();
+                assert_eq!(after, before, "workers={workers}");
+            });
+        }
+    }
+
     type Outcome = (Trace, (Vocab, Merges));
 
     #[test]
@@ -639,11 +680,6 @@ mod tests {
                     let plan = CorpusPlan::build(view, ids, &trainer, true).unwrap();
                     let mut index = PairIndex::build(&plan, 1, workers, true, &progress).unwrap();
                     let mut corpus = plan.materialize();
-                    let Selection::Ready(batch) =
-                        Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index).unwrap()
-                    else {
-                        panic!("expected AB cohort")
-                    };
                     // AB writes ID 3 before its right birth (3, C) reaches its
                     // owner. Force that owner's signed addition to overflow.
                     let born = (3, 2);
@@ -652,14 +688,18 @@ mod tests {
                         .insert(born, i64::MAX as u64);
                     let before: Vec<_> = (0..corpus.len()).map(|p| corpus.token(p)).collect();
                     let queued = index.queue.len();
-                    let error = batch
-                        .commit(&mut corpus, &mut index, usize::MAX)
+                    let error = trainer
+                        .merge_next(&mut vocabulary, &mut corpus, &mut index)
                         .unwrap_err();
                     assert!(error.to_string().contains("exceeds i64"), "{error}");
                     let after: Vec<_> = (0..corpus.len()).map(|p| corpus.token(p)).collect();
                     assert_ne!(after, before, "commit errors do not roll back writes");
                     assert!(after.contains(&3));
-                    assert_eq!(index.queue.len(), queued, "failed owners publish no births");
+                    assert_eq!(
+                        index.queue.len(),
+                        queued - 1,
+                        "failed owners publish no births"
+                    );
                 });
         }
     }
@@ -713,13 +753,15 @@ mod tests {
         let mut trace = Vec::new();
         let mut merges = Vec::new();
         while vocabulary.len() < trainer.vocab_size {
-            let batch =
-                match Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index).unwrap() {
-                    Selection::Ready(batch) => batch,
-                    Selection::Finished => break,
-                    Selection::Restart => panic!("reuse cannot request another attempt"),
-                };
-            for record in batch.commit(&mut corpus, &mut index, usize::MAX).unwrap() {
+            let records = match trainer
+                .merge_next(&mut vocabulary, &mut corpus, &mut index)
+                .unwrap()
+            {
+                MergeOutcome::Committed(records) => records,
+                MergeOutcome::Finished => break,
+                MergeOutcome::RestartForReuse => panic!("reuse cannot request another attempt"),
+            };
+            for record in records {
                 merges.push(record.pair);
                 trace.push((record.pair, record.count, record.replacement));
             }
