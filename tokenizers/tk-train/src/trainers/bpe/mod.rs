@@ -133,7 +133,7 @@ impl BpeTrainerBuilder {
         self
     }
 
-    /// Set the initial alphabet. See [`BpeTrainer::initial_alphabet`] for truncation.
+    /// Set the initial alphabet
     #[must_use]
     pub fn initial_alphabet(mut self, alphabet: HashSet<char>) -> Self {
         let mut initial_alphabet = AHashSet::with_capacity(alphabet.len());
@@ -155,10 +155,7 @@ impl BpeTrainerBuilder {
         self.config.end_of_word_suffix = Some(suffix);
         self
     }
-
-    /// Set the exclusive span limit for newly created adjacent pairs.
-    ///
-    /// See [`BpeTrainer::max_token_length`] for units and the initial-pair exception.
+    /// Set max_token_length
     #[must_use]
     pub fn max_token_length(mut self, max_token_length: Option<usize>) -> Self {
         self.config.max_token_length = max_token_length;
@@ -200,7 +197,7 @@ impl BpeTrainerBuilder {
 /// // `PipelineBPE` has no empty state to train *into* -- it only exists once there is a
 /// // vocabulary and a merge list -- so take the parts and build it.
 /// let (vocab, merges, special_tokens) = trainer.train_vocab().unwrap();
-/// let model = PipelineBPE::from_config(BpeConfig { vocab, merges, ..BpeConfig::default() }).unwrap();
+/// let model = PipelineBPE::from_config(BpeConfig { vocab: vocab, merges: merges, ..BpeConfig::default() }).unwrap();
 /// ```
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Eq)]
@@ -213,8 +210,9 @@ pub struct BpeTrainer {
     pub show_progress: bool,
     /// Progress output format (Indicatif, JsonLines, or Silent)
     ///
-    /// Progress display is not serialized; deserialization uses its default.
-    /// It does not change training results.
+    /// `ProgressFormat` is a `tk-encode` type and carries no serde of its own; `tk-convert` used to
+    /// own its on-disk shape, and that layer is gone. It only decides how progress is *displayed*,
+    /// so it is skipped rather than given a shape here, and falls back to its `Default`.
     #[serde(skip)]
     pub progress_format: ProgressFormat,
     /// A list of special tokens that the model should know of
@@ -222,21 +220,14 @@ pub struct BpeTrainer {
     pub special_tokens: Vec<AddedToken>,
     /// Whether to limit the number of initial tokens that can be kept before computing merges
     pub limit_alphabet: Option<usize>,
-    /// Characters prioritized during alphabet selection, including characters
-    /// absent from the training input. If `limit_alphabet` is smaller than this
-    /// set, some of these characters can still be removed.
+    /// The initial alphabet we want absolutely to include. This allows to cover
+    /// some characters that are not necessarily in the training set
     pub initial_alphabet: AHashSet<char>,
     /// An optional prefix to use on any subword that exist only behind another one
     pub continuing_subword_prefix: Option<String>,
     /// An optional suffix to characterize and end-of-word subword
     pub end_of_word_suffix: Option<String>,
-    /// An exclusive span limit for newly created adjacent pairs, measured in
-    /// retained input characters. Affix text and UTF-8 byte widths do not count.
-    /// `None` disables this limit.
-    ///
-    /// Initial pairs bypass the limit, and selected pairs have no additional
-    /// length check. For example, `Some(3)` rejects a newborn pair spanning three
-    /// characters, while `Some(1)` still permits an initial two-character merge.
+    /// An optional parameter to limit the max length of any single token
     pub max_token_length: Option<usize>,
 
     words: WordCounts,
@@ -472,7 +463,6 @@ impl BpeTrainer {
             p.set_length(len as u64);
             p.reset();
         }
-
         // Emit initial JSON progress for this stage
         self.emit_json_progress(message, 0, len);
     }
@@ -518,15 +508,10 @@ type Trace = Vec<(Pair, u64, u32)>;
 impl Trainer for BpeTrainer {
     type Model = PipelineBPE;
 
-    /// Train the collected words and replace the model using the trainer's affixes.
-    /// Return special tokens for registration by the caller.
+    /// Train a BPE model
     fn train(&self, model: &mut PipelineBPE) -> Result<Vec<AddedToken>> {
         let (vocab, merges, special_tokens) = self.train_vocab()?;
-        *model = PipelineBPE::from_config(BpeConfig {
-            vocab,
-            merges,
-            ..self.model_options()
-        })?;
+        *model = PipelineBPE::from_config(BpeConfig { vocab: vocab, merges: merges, ..self.model_options() })?;
         Ok(special_tokens)
     }
 
@@ -535,8 +520,6 @@ impl Trainer for BpeTrainer {
         self.show_progress
     }
 
-    /// Apply `process` to each input and collect the resulting weighted words.
-    /// Successful collection replaces the words used by `train` and `train_vocab`.
     fn feed<I, S, F>(&mut self, iterator: I, process: F) -> Result<()>
     where
         I: Iterator<Item = S> + Send,
