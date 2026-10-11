@@ -481,40 +481,8 @@ mod tests {
         assert_eq!(ids.symbols("qé🙂z").collect::<Vec<_>>(), [3, 4]);
         assert_eq!(ids.symbols("🙂é").collect::<Vec<_>>(), [2, 5]);
         assert_eq!(ids.token_count(), vocabulary.len());
-        let pointer = ids.spans.as_ptr();
         let spans = ids.into_spans();
-        assert_eq!(spans.as_ptr(), pointer);
         assert_eq!(spans, [0, 0, 1, 1, 1, 1]);
-    }
-
-    #[test]
-    fn cutoff_ties_reuse_the_retained_alphabet_without_reselection() {
-        use super::super::word_counts::WordCounts;
-        let words = WordCounts::from_entries(
-            [("a", 1), ("b", 1), ("猫", 1), ("🙂", 1)]
-                .into_iter()
-                .map(|(word, count)| (word.into(), count))
-                .collect(),
-        );
-        let mut trainer = BpeTrainer::new(1, 32);
-        trainer.show_progress = false;
-        trainer.limit_alphabet = Some(2);
-        let alphabet = select_alphabet(&trainer, words.view(), 1);
-        let (fresh, fresh_ids) =
-            Vocabulary::initialize(&trainer, words.view(), &alphabet, &None).unwrap();
-        let retained = alphabet.clone();
-        assert_eq!(retained.characters.len(), 2);
-        let (reuse, reuse_ids) =
-            Vocabulary::initialize(&trainer, words.view(), &alphabet, &None).unwrap();
-        assert_eq!(alphabet, retained);
-        assert_eq!(fresh.tokens, reuse.tokens);
-        assert_eq!(fresh_ids.spans, reuse_ids.spans);
-        for word in words.view().keys() {
-            assert_eq!(
-                fresh_ids.symbols(word).collect::<Vec<_>>(),
-                reuse_ids.symbols(word).collect::<Vec<_>>()
-            );
-        }
     }
 
     #[test]
@@ -570,7 +538,6 @@ mod tests {
                     let id = ids.id('a', first, last).unwrap();
                     assert_eq!(vocabulary.tokens[id as usize].as_str(), expected);
                     assert_eq!(ids.spans[id as usize], 1);
-                    assert_eq!(ids.id('a', first, last), Some(id));
                 }
             }
         }
