@@ -22,13 +22,6 @@ pub(super) struct Vocabulary {
     prefix: Option<String>,
 }
 
-/// Canonical merge text plus any existing ID, before identity resolution.
-/// Selection checks an existing ID's activation before committing this token.
-pub(super) struct MergeToken {
-    pub(super) existing_id: Option<u32>,
-    text: CompactString,
-}
-
 /// Immutable character/decorated-ID tables shared by counting and materialization.
 /// Both stages scan the same filtered alphabet and affix interpretation, preserving
 /// identical token sequences without interning strings during parallel scans.
@@ -242,7 +235,7 @@ impl Vocabulary {
         self.tokens.len()
     }
 
-    pub(super) fn merge_token(&self, pair: Pair) -> MergeToken {
+    pub(super) fn resolve_merge(&mut self, pair: Pair) -> Result<(u32, bool)> {
         let left = self.tokens[pair.0 as usize].as_str();
         let right = self.tokens[pair.1 as usize].as_str();
         let right = self
@@ -253,18 +246,9 @@ impl Vocabulary {
         let mut text = CompactString::with_capacity(left.len() + right.len());
         text.push_str(left);
         text.push_str(right);
-        MergeToken {
-            existing_id: self.tokens.get_index_of(text.as_str()).map(|id| id as u32),
-            text,
-        }
-    }
-
-    pub(super) fn resolve_merge(&mut self, token: MergeToken) -> Result<u32> {
-        match token.existing_id {
-            Some(id) => Ok(id),
-            // PERF: merge_token already checked this key. Consume its complete
-            // string instead of probing again and copying another owned string.
-            None => self.insert_new_token(token.text),
+        match self.tokens.get_index_of(text.as_str()) {
+            Some(id) => Ok((id as u32, true)),
+            None => self.insert_new_token(text).map(|id| (id, false)),
         }
     }
 

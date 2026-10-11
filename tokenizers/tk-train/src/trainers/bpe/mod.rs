@@ -351,11 +351,7 @@ impl BpeTrainer {
                 complete @ AttemptOutcome::Complete(_) => complete,
             };
             match outcome {
-                AttemptOutcome::Complete(result) => Ok(TrainingResult {
-                    parts: (result.vocab, result.merges, self.special_tokens.clone()),
-                    #[cfg(test)]
-                    trace: result.trace,
-                }),
+                AttemptOutcome::Complete(result) => Ok(result),
                 AttemptOutcome::RestartForReuse => Err(
                     "BPE internal invariant violated: identity-reuse attempt requested another restart"
                         .into(),
@@ -428,9 +424,8 @@ impl BpeTrainer {
         let (vocab, merges) = vocabulary.into_model_parts(merges);
         // Only success carries a trace out of the attempt. Errors and restart
         // requests discard every speculative rule along with its local storage.
-        Ok(AttemptOutcome::Complete(AttemptResult {
-            vocab,
-            merges,
+        Ok(AttemptOutcome::Complete(TrainingResult {
+            parts: (vocab, merges, self.special_tokens.clone()),
             #[cfg(test)]
             trace,
         }))
@@ -513,15 +508,8 @@ struct TrainingResult {
     trace: Trace,
 }
 
-struct AttemptResult {
-    vocab: Vocab,
-    merges: Merges,
-    #[cfg(test)]
-    trace: Trace,
-}
-
 enum AttemptOutcome {
-    Complete(AttemptResult),
+    Complete(TrainingResult),
     RestartForReuse,
 }
 

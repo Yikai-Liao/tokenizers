@@ -301,10 +301,7 @@ fn reuse_restart_keeps_the_alphabet_and_returns_only_the_successful_trace() {
                     panic!("reuse attempt must complete")
                 };
                 assert_eq!(alphabet, retained);
-                assert_eq!(
-                    (result.vocab, result.merges, trainer.special_tokens.clone()),
-                    expected.parts
-                );
+                assert_eq!(result.parts, expected.parts);
                 assert_eq!(result.trace, expected.trace);
                 let result = trainer.do_train_impl(view, Some(workers)).unwrap();
                 assert_eq!(result.parts, expected.parts);
@@ -354,7 +351,7 @@ fn reuse_restart_preserves_a_tie_at_an_actual_alphabet_cutoff() {
                     panic!("reuse must complete")
                 };
                 assert_eq!(retained.as_ref().unwrap(), &selected);
-                let actual = (result.vocab, result.merges, result.trace);
+                let actual = (result.parts, result.trace);
                 if let Some(expected) = &expected {
                     assert_eq!(&actual, expected);
                 } else {

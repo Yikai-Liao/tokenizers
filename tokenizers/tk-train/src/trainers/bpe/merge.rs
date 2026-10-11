@@ -71,22 +71,16 @@ impl BpeTrainer {
             {
                 break;
             }
-            let token = vocabulary.merge_token(pair);
-            if !reuse
-                && token
-                    .existing_id
-                    .is_some_and(|id| corpus.has_been_activated(id))
-            {
+            let (replacement, reserved) = vocabulary.resolve_merge(pair)?;
+            if !reuse && reserved && corpus.has_been_activated(replacement) {
                 return Ok(MergeOutcome::RestartForReuse);
             }
-            let reserved = token.existing_id.is_some();
             // A reserved ID need not follow old IDs lexicographically. A singleton
             // activation needs no argument about its position relative to later rules.
             if reserved && !batch.rules.is_empty() {
                 break;
             }
             let candidate = index.take(priority);
-            let replacement = vocabulary.resolve_merge(token)?;
             corpus.prepare_identity(pair, replacement);
             batch.rules.push(Rule {
                 replacement,
@@ -844,8 +838,7 @@ mod tests {
                 let priority = index.best().unwrap();
                 let pair = priority.pair();
                 let candidate = index.take(priority);
-                let token = vocabulary.merge_token(pair);
-                let replacement = vocabulary.resolve_merge(token).unwrap();
+                let (replacement, _) = vocabulary.resolve_merge(pair).unwrap();
                 corpus.prepare_identity(pair, replacement);
                 let batch = Batch {
                     rules: vec![Rule {
