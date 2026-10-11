@@ -1,0 +1,33 @@
+[
+  {
+    "mode": "default",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--lib",
+      "trainers::bpe"
+    ],
+    "exit": 101,
+    "seconds": 25.64487116690725
+  },
+  {
+    "mode": "nodefault",
+    "command": [
+      "cargo",
+      "test",
+      "--no-default-features",
+      "--offline",
+      "--locked",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--lib",
+      "trainers::bpe"
+    ],
+    "exit": 101,
+    "seconds": 25.231106979073957
+  }
+]

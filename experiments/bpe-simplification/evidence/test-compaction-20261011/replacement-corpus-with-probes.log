@@ -1,0 +1,11 @@
+   Compiling tk-train v0.1.0-dev.2 (/tmp/bpe-test-compaction-20261011/tokenizers/tk-train)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 8.08s
+     Running unittests src/lib.rs (/tmp/bpe-selected-rules-checks-20261011/debug/deps/tk_train-2773e94a0ca37d9c)
+
+running 3 tests
+test trainers::bpe::corpus::tests::deferred_alias_writes_keep_each_occurrences_geometry ... ok
+test trainers::bpe::corpus::tests::deferred_fixed_span_writes_are_order_independent ... ok
+test trainers::bpe::corpus::tests::initial_ranges_match_linear_search_at_slot_and_separator_boundaries ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 49 filtered out; finished in 0.11s
+

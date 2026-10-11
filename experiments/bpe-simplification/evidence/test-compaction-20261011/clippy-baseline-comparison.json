@@ -1,0 +1,80 @@
+[
+  {
+    "scope": "baseline",
+    "mode": "default",
+    "command": [
+      "cargo",
+      "clippy",
+      "--offline",
+      "--locked",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit": 101,
+    "seconds": 6.206828536931425
+  },
+  {
+    "scope": "baseline",
+    "mode": "nodefault",
+    "command": [
+      "cargo",
+      "clippy",
+      "--offline",
+      "--locked",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--all-targets",
+      "--no-default-features",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit": 101,
+    "seconds": 4.40646975999698
+  },
+  {
+    "scope": "final-with-existing-lint-exception",
+    "mode": "default",
+    "command": [
+      "cargo",
+      "clippy",
+      "--offline",
+      "--locked",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings",
+      "-A",
+      "clippy::redundant_field_names"
+    ],
+    "exit": 0,
+    "seconds": 2.321712556993589
+  },
+  {
+    "scope": "final-with-existing-lint-exception",
+    "mode": "nodefault",
+    "command": [
+      "cargo",
+      "clippy",
+      "--offline",
+      "--locked",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--all-targets",
+      "--no-default-features",
+      "--",
+      "-D",
+      "warnings",
+      "-A",
+      "clippy::redundant_field_names"
+    ],
+    "exit": 0,
+    "seconds": 2.3418418678920716
+  }
+]

@@ -1,0 +1,21 @@
+   Compiling tk-train v0.1.0-dev.2 (/tmp/bpe-test-compaction-20261011/tokenizers/tk-train)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 7.35s
+     Running unittests src/lib.rs (/tmp/bpe-selected-rules-checks-20261011/debug/deps/tk_train-2773e94a0ca37d9c)
+
+running 1 test
+
+thread 'trainers::bpe::corpus::tests::deferred_alias_writes_keep_each_occurrences_geometry' (4068605) panicked at src/trainers/bpe/corpus.rs:721:17:
+assertion `left == right` failed
+  left: ([4294967295, 0, 0, 0, 0, 1, 0, 1, 4294967295], Some([0, 3, 2, 3, 3, 3, 3, 3, 0]))
+ right: ([4294967295, 0, 0, 0, 0, 4294967295, 1, 0, 4294967295], Some([0, 3, 2, 3, 4, 0, 0, 4, 0]))
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test trainers::bpe::corpus::tests::deferred_alias_writes_keep_each_occurrences_geometry ... FAILED
+
+failures:
+
+failures:
+    trainers::bpe::corpus::tests::deferred_alias_writes_keep_each_occurrences_geometry
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 51 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`

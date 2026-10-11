@@ -1,0 +1,38 @@
+{
+  "base": "b106736b271757a607c5514e3a5c97c3c1150ffd",
+  "code_commit": "e67e4bc1e8da81b0a42acbc949c4e4052399d6f4",
+  "unchanged_files": [
+    "tokenizers/tk-train/src/trainers/bpe/index.rs",
+    "tokenizers/tk-train/src/trainers/bpe/positions.rs",
+    "tokenizers/tk-train/src/trainers/bpe/mod.rs",
+    "tokenizers/tk-train/src/trainers/bpe/parity_trainer.rs",
+    "tokenizers/tk-train/src/trainers/bpe/word.rs"
+  ],
+  "tests": {
+    "baseline_default": [
+      43,
+      1
+    ],
+    "baseline_nodefault": [
+      43,
+      1
+    ],
+    "final_default": [
+      44,
+      1
+    ],
+    "final_nodefault": [
+      44,
+      1
+    ],
+    "known_failure": "trainers::bpe::tests::feed_training_tokenizer_json_and_encoding_roundtrip",
+    "known_failure_input": "\u6d4b",
+    "no_skips_or_ignores": true
+  },
+  "clippy": "Baseline and final both fail -D warnings only on the two unchanged mod.rs:514 redundant_field_names errors; both configurations pass with that lint alone exempted on the command line.",
+  "format_check": "Changed files only, passed against b106736b",
+  "production_syntax_equal": true,
+  "lock_sha256": "7ffd9e72dd8d77a9909b2dcce454bc99f602e57178abbdaf9acc9dd60ce2cc9b",
+  "mutations": "All three focused tests detect the temporary error via literal array/start expectations; every mutated source restored exactly before removal of old probes.",
+  "coverage_tradeoff": "No longer freeze, clone and replay every round of every training test. Finite endpoint/preparation fixtures are not equivalent coverage; complete independent model and trace reference remains."
+}

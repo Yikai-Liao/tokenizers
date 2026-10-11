@@ -1,0 +1,38 @@
+[
+  {
+    "name": "shared-occurrence-length",
+    "file": "corpus.rs",
+    "test": "trainers::bpe::corpus::tests::deferred_alias_writes_keep_each_occurrences_geometry",
+    "exit": 101,
+    "detected_by_test": true,
+    "source_restored": true,
+    "mutation": {
+      "old": "            Some(spans) => {\n                for &start in starts {\n                    // Read this occurrence's old geometry before changing its endpoints.\n                    let left = spans[start].load(Ordering::Relaxed);\n                    let right = start + left;\n                    let total = left + spans[right].load(Ordering::Relaxed);",
+      "new": "            Some(spans) => {\n                let left = spans[first].load(Ordering::Relaxed);\n                let total = left + spans[first + left].load(Ordering::Relaxed);\n                for &start in starts {\n                    let right = start + left;"
+    }
+  },
+  {
+    "name": "cross-rule-replacement",
+    "file": "merge.rs",
+    "test": "trainers::bpe::merge::tests::shared_selected_endpoints_emit_adjacent_boundaries_once",
+    "exit": 101,
+    "detected_by_test": true,
+    "source_restored": true,
+    "mutation": {
+      "old": "        Ok(Job {\n            starts,\n            replacement: rule.replacement,",
+      "new": "        Ok(Job {\n            starts,\n            replacement: self.batch.rules[0].replacement,"
+    }
+  },
+  {
+    "name": "overlapping-aa-starts",
+    "file": "merge.rs",
+    "test": "trainers::bpe::merge::tests::self_pair_preparation_keeps_adjacent_tasks_disjoint",
+    "exit": 101,
+    "detected_by_test": true,
+    "source_restored": true,
+    "mutation": {
+      "old": "                if p >= after\n                    && let Some(matched) = matcher(p, corpus.token(p))",
+      "new": "                if let Some(matched) = matcher(p, corpus.token(p))"
+    }
+  }
+]

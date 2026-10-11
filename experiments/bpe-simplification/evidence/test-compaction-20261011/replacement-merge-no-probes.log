@@ -1,0 +1,15 @@
+   Compiling tk-train v0.1.0-dev.2 (/tmp/bpe-test-compaction-20261011/tokenizers/tk-train)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 7.39s
+     Running unittests src/lib.rs (/tmp/bpe-selected-rules-checks-20261011/debug/deps/tk_train-2773e94a0ca37d9c)
+
+running 7 tests
+test trainers::bpe::merge::tests::neighbor_directories_recover_from_stale_indices_after_error ... ok
+test trainers::bpe::merge::tests::self_pair_preparation_keeps_adjacent_tasks_disjoint ... ok
+test trainers::bpe::merge::tests::aligned_fragments_keep_complete_and_partial_publication ... ok
+test trainers::bpe::merge::tests::length_gate_deletions_commit_after_reachable_writes ... ok
+test trainers::bpe::merge::tests::shared_selected_endpoints_emit_adjacent_boundaries_once ... ok
+test trainers::bpe::merge::tests::reuse_preparation_writes_each_occurrences_actual_span ... ok
+test trainers::bpe::merge::tests::deferred_writes_cover_empty_inline_and_spilled_neighboring_jobs ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 45 filtered out; finished in 0.26s
+

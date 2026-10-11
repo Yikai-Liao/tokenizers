@@ -1,0 +1,26 @@
+    Checking bitcannon v0.1.0-dev.2 (/tmp/bpe-start-only-writes-publication-20261011/tokenizers/bitcannon)
+    Checking tk-encode v0.1.0-dev.2 (/tmp/bpe-start-only-writes-publication-20261011/tokenizers/tk-encode)
+    Checking tk-convert v0.1.0-dev.2 (/tmp/bpe-start-only-writes-publication-20261011/tokenizers/tk-convert)
+    Checking tk-serialize v0.1.0-dev.2 (/tmp/bpe-start-only-writes-publication-20261011/tokenizers/tk-serialize)
+    Checking tk-train v0.1.0-dev.2 (/tmp/bpe-start-only-writes-publication-20261011/tokenizers/tk-train)
+error: redundant field names in struct initialization
+   --> src/trainers/bpe/mod.rs:514:55
+    |
+514 |         *model = PipelineBPE::from_config(BpeConfig { vocab: vocab, merges: merges, ..self.model_options() })?;
+    |                                                       ^^^^^^^^^^^^ help: replace it with: `vocab`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#redundant_field_names
+    = note: `-D clippy::redundant-field-names` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::redundant_field_names)]`
+
+error: redundant field names in struct initialization
+   --> src/trainers/bpe/mod.rs:514:69
+    |
+514 |         *model = PipelineBPE::from_config(BpeConfig { vocab: vocab, merges: merges, ..self.model_options() })?;
+    |                                                                     ^^^^^^^^^^^^^^ help: replace it with: `merges`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#redundant_field_names
+
+error: could not compile `tk-train` (lib) due to 2 previous errors
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `tk-train` (lib test) due to 2 previous errors
