@@ -1,0 +1,39 @@
+{
+  "code_commit": "0506b39c466f2c751755bdf499edb8fe9fd0083a",
+  "source_base": "e67e4bc1e8da81b0a42acbc949c4e4052399d6f4",
+  "original_base": "b106736b271757a607c5514e3a5c97c3c1150ffd",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)",
+  "cargo_lock_sha256": "7ffd9e72dd8d77a9909b2dcce454bc99f602e57178abbdaf9acc9dd60ce2cc9b",
+  "preserved": {
+    "mod reference {": {
+      "byte_equal": true,
+      "sha256": "571c153b02b6f4629cfa3385f15debfed97248cb5369f42a57ddb9604d924fbd"
+    },
+    "fn feed_training_tokenizer_json_and_encoding_roundtrip(": {
+      "byte_equal": true,
+      "sha256": "099aecdc22b55624d1ed5edc91a9e66f5230ddf78cb0d5f85a4d6ab42bb50eeb"
+    },
+    "positions.rs": {
+      "byte_equal": true,
+      "sha256": "53589c5588b78d1401e5e55b7b3572fe90f6dad1938658081f7310ac44428792"
+    },
+    "parity_trainer.rs": {
+      "byte_equal": true,
+      "sha256": "a584152379dc59de167a14f751f37bab8da9c723eddc1c238df21965dd08f37c"
+    },
+    "word.rs": {
+      "byte_equal": true,
+      "sha256": "f9c3bd0a7a8fade42a5643ee6341b4ebf203f7a45aa0a65797e773d1ce21396a"
+    }
+  },
+  "files": {
+    "corpus.rs": "061e2402f203e0780624f3f107096929c2928e6dc650458cdd6f66fd1ce4f4f2",
+    "index.rs": "087ec4c9075cc41915b7f1bc5dd65165988e870004c96c983df3d80a1ff98e63",
+    "merge.rs": "7680629e7414ec1796483348d7581696bda895087a632e9e39f1bb4c8708d051",
+    "tests.rs": "08afbd76cf84a4a0589be11ee79475c3cfd22441d5af622acf601f61d20d9203",
+    "vocabulary.rs": "159422d23ecc167422143837f27636027cc3b345e2fd4f8f186825bbdd48c6bf",
+    "word_counts.rs": "4f877cd0554b24a3845fd42c2d424a22d81359bd580bd98a0183f39c7a499053"
+  },
+  "formatter_check_pass": true,
+  "git_diff_check_pass": true
+}

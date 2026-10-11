@@ -1,0 +1,21 @@
+   Compiling tk-train v0.1.0-dev.2 (/tmp/bpe-tests-1500-20261011/tokenizers/tk-train)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 6.41s
+     Running unittests src/lib.rs (/tmp/bpe-selected-rules-checks-20261011/debug/deps/tk_train-aaeb016a4cfa12dd)
+
+running 1 test
+
+thread 'trainers::bpe::index::tests::historical_cohorts' (4103475) panicked at src/trainers/bpe/index.rs:575:9:
+assertion `left == right` failed
+  left: [20]
+ right: [21]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test trainers::bpe::index::tests::historical_cohorts ... FAILED
+
+failures:
+
+failures:
+    trainers::bpe::index::tests::historical_cohorts
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 39 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`

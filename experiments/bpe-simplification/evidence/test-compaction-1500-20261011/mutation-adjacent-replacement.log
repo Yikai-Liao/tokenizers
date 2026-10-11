@@ -1,0 +1,21 @@
+   Compiling tk-train v0.1.0-dev.2 (/tmp/bpe-tests-1500-20261011/tokenizers/tk-train)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 6.25s
+     Running unittests src/lib.rs (/tmp/bpe-selected-rules-checks-20261011/debug/deps/tk_train-aaeb016a4cfa12dd)
+
+running 1 test
+
+thread 'trainers::bpe::merge::tests::shared_boundary_once' (4103654) panicked at src/trainers/bpe/merge.rs:730:9:
+assertion `left == right` failed
+  left: [((4, 4), 2), ((5, 5), 2), ((6, 6), 2)]
+ right: [((4, 5), 2), ((5, 6), 2), ((6, 7), 2)]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test trainers::bpe::merge::tests::shared_boundary_once ... FAILED
+
+failures:
+
+failures:
+    trainers::bpe::merge::tests::shared_boundary_once
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 39 filtered out; finished in 0.02s
+
+error: test failed, to rerun pass `--lib`

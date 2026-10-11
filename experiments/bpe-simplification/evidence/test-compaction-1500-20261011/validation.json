@@ -1,0 +1,128 @@
+{
+  "source_base": "e67e4bc1e8da81b0a42acbc949c4e4052399d6f4",
+  "cargo_target": "/tmp/bpe-selected-rules-checks-20261011",
+  "incremental": false,
+  "checks": [
+    {
+      "check": "test",
+      "config": "default",
+      "command": [
+        "/root/.cargo/bin/cargo",
+        "test",
+        "--manifest-path",
+        "tokenizers/tk-train/Cargo.toml",
+        "--offline",
+        "--locked",
+        "--lib",
+        "trainers::bpe"
+      ],
+      "exit_code": 101,
+      "expected_result": true,
+      "log": "final-test-default.log"
+    },
+    {
+      "check": "clippy",
+      "config": "default",
+      "command": [
+        "/root/.cargo/bin/cargo",
+        "clippy",
+        "--manifest-path",
+        "tokenizers/tk-train/Cargo.toml",
+        "--offline",
+        "--locked",
+        "--lib",
+        "--tests",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 101,
+      "expected_result": true,
+      "log": "final-clippy-default.log"
+    },
+    {
+      "check": "clippy-existing-lint-exception",
+      "config": "default",
+      "command": [
+        "/root/.cargo/bin/cargo",
+        "clippy",
+        "--manifest-path",
+        "tokenizers/tk-train/Cargo.toml",
+        "--offline",
+        "--locked",
+        "--lib",
+        "--tests",
+        "--",
+        "-D",
+        "warnings",
+        "-A",
+        "clippy::redundant_field_names"
+      ],
+      "exit_code": 0,
+      "expected_result": true,
+      "log": "final-clippy-existing-lint-exception-default.log"
+    },
+    {
+      "check": "test",
+      "config": "nodefault",
+      "command": [
+        "/root/.cargo/bin/cargo",
+        "test",
+        "--manifest-path",
+        "tokenizers/tk-train/Cargo.toml",
+        "--offline",
+        "--locked",
+        "--no-default-features",
+        "--lib",
+        "trainers::bpe"
+      ],
+      "exit_code": 101,
+      "expected_result": true,
+      "log": "final-test-nodefault.log"
+    },
+    {
+      "check": "clippy",
+      "config": "nodefault",
+      "command": [
+        "/root/.cargo/bin/cargo",
+        "clippy",
+        "--manifest-path",
+        "tokenizers/tk-train/Cargo.toml",
+        "--offline",
+        "--locked",
+        "--no-default-features",
+        "--lib",
+        "--tests",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 101,
+      "expected_result": true,
+      "log": "final-clippy-nodefault.log"
+    },
+    {
+      "check": "clippy-existing-lint-exception",
+      "config": "nodefault",
+      "command": [
+        "/root/.cargo/bin/cargo",
+        "clippy",
+        "--manifest-path",
+        "tokenizers/tk-train/Cargo.toml",
+        "--offline",
+        "--locked",
+        "--no-default-features",
+        "--lib",
+        "--tests",
+        "--",
+        "-D",
+        "warnings",
+        "-A",
+        "clippy::redundant_field_names"
+      ],
+      "exit_code": 0,
+      "expected_result": true,
+      "log": "final-clippy-existing-lint-exception-nodefault.log"
+    }
+  ]
+}

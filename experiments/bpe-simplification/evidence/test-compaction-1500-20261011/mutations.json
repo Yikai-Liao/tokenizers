@@ -1,0 +1,71 @@
+[
+  {
+    "name": "history-peek-mut",
+    "file": "index.rs",
+    "description": "Repair the heap head in place instead of pop/update/push; equal historical cohorts change order.",
+    "test": "trainers::bpe::index::tests::historical_cohorts",
+    "command": [
+      "/root/.cargo/bin/cargo",
+      "test",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--offline",
+      "--locked",
+      "--no-default-features",
+      "--lib",
+      "trainers::bpe::index::tests::historical_cohorts",
+      "--",
+      "--exact",
+      "--nocapture"
+    ],
+    "exit_code": 101,
+    "detected": true,
+    "source_restored_sha256": "087ec4c9075cc41915b7f1bc5dd65165988e870004c96c983df3d80a1ff98e63"
+  },
+  {
+    "name": "adjacent-replacement",
+    "file": "merge.rs",
+    "description": "Use the current rule replacement for a selected right neighbor instead of its distinct replacement.",
+    "test": "trainers::bpe::merge::tests::shared_boundary_once",
+    "command": [
+      "/root/.cargo/bin/cargo",
+      "test",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--offline",
+      "--locked",
+      "--no-default-features",
+      "--lib",
+      "trainers::bpe::merge::tests::shared_boundary_once",
+      "--",
+      "--exact",
+      "--nocapture"
+    ],
+    "exit_code": 101,
+    "detected": true,
+    "source_restored_sha256": "7680629e7414ec1796483348d7581696bda895087a632e9e39f1bb4c8708d051"
+  },
+  {
+    "name": "occurrence-span",
+    "file": "corpus.rs",
+    "description": "Read the canonical ID span rather than each occurrence span after alias geometry diverges.",
+    "test": "trainers::bpe::corpus::tests::adjacent_writes",
+    "command": [
+      "/root/.cargo/bin/cargo",
+      "test",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--offline",
+      "--locked",
+      "--no-default-features",
+      "--lib",
+      "trainers::bpe::corpus::tests::adjacent_writes",
+      "--",
+      "--exact",
+      "--nocapture"
+    ],
+    "exit_code": 101,
+    "detected": true,
+    "source_restored_sha256": "061e2402f203e0780624f3f107096929c2928e6dc650458cdd6f66fd1ce4f4f2"
+  }
+]
