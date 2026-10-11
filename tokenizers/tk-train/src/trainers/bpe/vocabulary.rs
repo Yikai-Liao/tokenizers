@@ -287,32 +287,23 @@ impl Vocabulary {
 
 impl InitialTokenIds {
     /// Interpret filtering and decorations against original UTF-8 coordinates.
-    /// The plain path chooses its loop once and avoids per-symbol affix checks.
+    /// The plain path chooses its iterator once and avoids per-symbol affix checks.
     #[inline]
-    pub(super) fn scan_symbols<B>(
-        &self,
-        word: &str,
-        mut emit: impl FnMut(u32) -> std::ops::ControlFlow<B>,
-    ) -> std::ops::ControlFlow<B> {
-        use std::ops::ControlFlow;
+    pub(super) fn symbols<'a>(&'a self, word: &'a str) -> impl Iterator<Item = u32> + 'a {
         if self.plain() {
-            for character in word.chars() {
-                if let Some(id) = self.plain_id(character) {
-                    emit(id)?;
-                }
-            }
+            itertools::Either::Left(
+                word.chars()
+                    .filter_map(|character| self.plain_id(character)),
+            )
         } else {
-            for (byte, character) in word.char_indices() {
-                if let Some(id) = self.id(
+            itertools::Either::Right(word.char_indices().filter_map(move |(byte, character)| {
+                self.id(
                     character,
                     byte == 0,
                     byte + character.len_utf8() == word.len(),
-                ) {
-                    emit(id)?;
-                }
-            }
+                )
+            }))
         }
-        ControlFlow::Continue(())
     }
 
     pub(super) fn symbol_count(&self, text: &str) -> usize {
@@ -391,7 +382,7 @@ pub(super) fn select_alphabet(trainer: &BpeTrainer, wc: WordCountsView<'_>) -> V
 fn observed_characters(word_counts: WordCountsView<'_>, workers: usize) -> FixedBitSet {
     let words: Vec<_> = word_counts.keys().collect();
     let chunk = words.len().div_ceil(workers).max(1);
-    let bitmaps: Vec<_> = words
+    words
         .par_chunks(chunk)
         .map(|chunk| {
             let mut present = FixedBitSet::with_capacity(0x110000);
@@ -402,10 +393,65 @@ fn observed_characters(word_counts: WordCountsView<'_>, workers: usize) -> Fixed
             }
             present
         })
-        .collect();
-    let mut present = FixedBitSet::with_capacity(0x110000);
-    for bitmap in bitmaps {
-        present.union_with(&bitmap);
+        .reduce_with(|mut left, right| {
+            left.union_with(&right);
+            left
+        })
+        .unwrap_or_else(|| FixedBitSet::with_capacity(0x110000))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ahash::AHashSet;
+
+    #[test]
+    fn observed_reduction_preserves_presence_activation_and_model_ids() {
+        for input in [
+            vec![],
+            vec![("aaaa", 1)],
+            vec![("ASCII", 2), ("中文中文", 3), ("é🙂𐀀é", 7)],
+        ] {
+            let words = input
+                .into_iter()
+                .map(|(word, count)| (CompactString::from(word), count))
+                .collect();
+            let view = WordCountsView::from_map(&words);
+            let expected: AHashSet<_> = view.keys().flat_map(|word| word.chars()).collect();
+            let mut trainer = BpeTrainer::new(1, 64);
+            trainer.show_progress = false;
+            trainer.initial_alphabet = ['z', '🚀'].into();
+            let model = trainer.do_train_impl(view, Some(1)).unwrap().parts;
+            for workers in [1, 4, 8] {
+                rayon::ThreadPoolBuilder::new()
+                    .num_threads(workers)
+                    .build()
+                    .unwrap()
+                    .install(|| {
+                        let observed = observed_characters(view, workers);
+                        assert_eq!(observed.len(), 0x110000);
+                        assert_eq!(
+                            observed
+                                .ones()
+                                .map(|bit| char::from_u32(bit as u32).unwrap())
+                                .collect::<AHashSet<_>>(),
+                            expected
+                        );
+                        let vocabulary =
+                            Vocabulary::initialize(&trainer, view, workers, &mut None).unwrap();
+                        for (id, token) in vocabulary.tokens.iter().enumerate() {
+                            let character = token.chars().next().unwrap();
+                            assert_eq!(
+                                vocabulary.initial_spans[id],
+                                usize::from(expected.contains(&character))
+                            );
+                        }
+                    });
+                assert_eq!(
+                    trainer.do_train_impl(view, Some(workers)).unwrap().parts,
+                    model
+                );
+            }
+        }
     }
-    present
 }

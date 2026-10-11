@@ -1,0 +1,34 @@
+[
+  {
+    "case": "bytelevel_regex",
+    "path": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/hotcold-inputs/zh256-bytelevel-words/words.json",
+    "prepared_path": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/hotcold-inputs/zh256-bytelevel-words/words.json",
+    "prepared_sha256": "bb796d0b57b87d965b84de249bc5c8e283b700774638d16a40e4ae5171b13ee0",
+    "pretokenizer": "bytelevel_regex"
+  },
+  {
+    "case": "whitespace",
+    "path": "/tmp/bpe-interface-results/whitespace-words.json",
+    "prepared_path": "/tmp/bpe-interface-results/whitespace-words.json",
+    "prepared_sha256": "ed057a8fdb27544ed29f16dde53faa0de8f47f1ee8ac00080974fac5bb435660",
+    "pretokenizer": "whitespace"
+  },
+  {
+    "case": "en-bytelevel_regex",
+    "path": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/hotcold-inputs/en256-bytelevel-words/words.json",
+    "prepared_path": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/hotcold-inputs/en256-bytelevel-words/words.json",
+    "prepared_sha256": "4523a34ff64cdba49b0985f32cc923f2c7b005fd67748a0fbec38c44bab437c5",
+    "pretokenizer": "bytelevel_regex",
+    "language": "en",
+    "source": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/en256/text.txt"
+  },
+  {
+    "case": "en-whitespace",
+    "path": "/tmp/bpe-std-logic-results/en-whitespace-words.json",
+    "prepared_path": "/tmp/bpe-std-logic-results/en-whitespace-words.json",
+    "prepared_sha256": "0e146cd7d9fd31c547c84c5bfea2424bb05ae02905cf2608f4d7aa980f6bdb2d",
+    "pretokenizer": "whitespace",
+    "language": "en",
+    "source": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/en256/text.txt"
+  }
+]

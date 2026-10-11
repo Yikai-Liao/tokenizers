@@ -1,0 +1,4 @@
+    Checking tk-encode v0.1.0-dev.2 (/home/lyk/code/tokenizers/tokenizers/tk-encode)
+    Checking tk-serialize v0.1.0-dev.2 (/home/lyk/code/tokenizers/tokenizers/tk-serialize)
+    Checking tk-train v0.1.0-dev.2 (/home/lyk/code/tokenizers/tokenizers/tk-train)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.68s

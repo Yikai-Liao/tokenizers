@@ -261,8 +261,12 @@ impl Iterator for Cursor<'_> {
             return None;
         }
         if self.index.is_multiple_of(RESTART) {
-            self.position = u64::from_le_bytes(self.bytes[..8].try_into().unwrap());
-            self.bytes = &self.bytes[8..];
+            let (seed, rest) = self
+                .bytes
+                .split_first_chunk::<8>()
+                .expect("internal positions restart seed is complete");
+            self.position = u64::from_le_bytes(*seed);
+            self.bytes = rest;
         } else {
             let mut delta = 0u64;
             let mut shift = 0;
@@ -285,6 +289,29 @@ impl Iterator for Cursor<'_> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn truncated_restart_panics_but_completed_cursor_reads_no_bytes() {
+        let bytes = [0; 7];
+        for length in 0..=bytes.len() {
+            let mut cursor = Cursor {
+                bytes: &bytes[..length],
+                position: 99,
+                index: 0,
+                end: 1,
+            };
+            assert!(std::panic::catch_unwind(move || cursor.next()).is_err());
+        }
+        let mut cursor = Cursor {
+            bytes: &[],
+            position: 99,
+            index: RESTART,
+            end: RESTART,
+        };
+        assert_eq!(cursor.next(), None);
+        assert_eq!(cursor.next(), None);
+        assert_eq!((cursor.index, cursor.position), (RESTART, 99));
+    }
 
     #[test]
     fn lower_bound_preserves_the_first_duplicate_across_restarts() {

@@ -65,10 +65,23 @@ without waiting for every producer. Owned compressed fragments retain complete
 pair counts; global frequency admission precedes final list publication. There is
 no extra wave barrier.
 
+The plan finds each segment's resident boundary with `partition_point`, admitting
+the final tail separately because the word starts omit the final boundary.
+Vocabulary exposes one filtered `symbols()` iterator to initial edge counting and
+endpoint materialization. Decorations still use original UTF-8 byte boundaries;
+edge coordinates enumerate retained symbols. Unlimited alphabet observation uses
+Rayon bitmap reduction, retaining the full Unicode bit domain for empty input.
+
 Preparation indexes unique rule heads directly by token ID and checks tail
 presence before left-neighbor lookup. Shared heads fall back to exact pair keys.
 Only monotone snapshot write/birth appenders skip repeated ordering checks;
 general appends and final encoding retain validation.
+
+Preparation keeps at most 16 decoded positions ahead in a `VecDeque`. Initial
+filling takes at most 16 elements; every refill follows one pop, so the queue never
+exceeds that length. Cohort scans use `find` to consume the next eligible occurrence.
+Partial birth groups use `BTreeMap` order directly when publishing, preserving
+bucket/pair ordering without an intermediate collection and sort.
 
 Compatible batches retain the original priority prefix and permit shared heads
 or shared tails. Crossed endpoints end the batch without skipping a candidate.

@@ -1,3 +1,8 @@
+# BPE work scope
+
+- Work on the ordinary BPE trainer. Parity Trainer is outside the scope unless
+  the user explicitly requests work on it.
+
 # Temporary formatting rule for this BPE change
 
 - Keep a blank line between adjacent functions, including methods and tests.

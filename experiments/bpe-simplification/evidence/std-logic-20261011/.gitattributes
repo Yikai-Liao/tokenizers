@@ -1,0 +1,3 @@
+# Preserve raw diff context markers and compiler/test log spacing.
+*.patch -whitespace
+*.log -whitespace

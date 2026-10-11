@@ -1,0 +1,107 @@
+diff --git a/tokenizers/tk-train/src/trainers/bpe/corpus.rs b/tokenizers/tk-train/src/trainers/bpe/corpus.rs
+index 3c48e10a..307b0a64 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/corpus.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/corpus.rs
+@@ -133,14 +133,18 @@ impl<'input> CorpusPlan<'input> {
+     pub(super) fn initial_ranges(&self, slots: usize) -> Vec<std::ops::Range<usize>> {
+         let mut ranges = Vec::new();
+         let mut begin = 0;
+-        while begin < self.word_count() {
+-            let mut end = begin + 1;
+-            while end < self.word_count()
+-                && self.starts.get(end + 1).copied().unwrap_or(self.length) - self.starts[begin]
+-                    <= slots
+-            {
+-                end += 1;
+-            }
++        let n = self.word_count();
++        while begin < n {
++            let start = self.starts[begin];
++            // starts omits the final separator boundary. Admit the tail directly
++            // when it fits; otherwise search resident boundaries without addition.
++            let end = if self.length - start <= slots {
++                n
++            } else {
++                let fitted =
++                    self.starts[begin + 1..].partition_point(|&next| next - start <= slots);
++                begin + fitted.max(1)
++            };
+             ranges.push(begin..end);
+             begin = end;
+         }
+@@ -452,3 +456,75 @@ impl Slots {
+         }
+     }
+ }
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++    use ahash::AHashMap;
++
++    // Preserve the previous whole-word linear search as an independent oracle.
++    fn linear_ranges(starts: &[usize], length: usize, slots: usize) -> Vec<std::ops::Range<usize>> {
++        let mut ranges = Vec::new();
++        let mut begin = 0;
++        while begin < starts.len() {
++            let mut end = begin + 1;
++            while end < starts.len()
++                && starts.get(end + 1).copied().unwrap_or(length) - starts[begin] <= slots
++            {
++                end += 1;
++            }
++            ranges.push(begin..end);
++            begin = end;
++        }
++        ranges
++    }
++
++    #[test]
++    fn initial_ranges_match_linear_search_at_slot_and_separator_boundaries() {
++        let words = AHashMap::new();
++        let view = WordCountsView::from_map(&words);
++        let trainer = BpeTrainer::new(1, 0);
++        let mut vocabulary = Vocabulary::initialize(&trainer, view, 1, &mut None).unwrap();
++        let mut plan = CorpusPlan::build(view, &mut vocabulary, &trainer, false, &None).unwrap();
++        let text = CompactString::default();
++        let weight = 1;
++        let mut layouts = vec![(vec![usize::MAX - 8, usize::MAX - 3], usize::MAX)];
++        for n in [0, 1, 2, 3, 7, 128, 257] {
++            for seed in 0..16 {
++                let mut state = seed as u64;
++                let mut starts = Vec::new();
++                let mut length = 1;
++                for _ in 0..n {
++                    starts.push(length);
++                    state = state.wrapping_mul(6364136223846793005).wrapping_add(1);
++                    length += 1 + (state >> 32) as usize % 65;
++                }
++                layouts.push((starts, length));
++            }
++        }
++        for (starts, length) in layouts {
++            plan.words = vec![(&text, &weight); starts.len()];
++            plan.starts = starts;
++            plan.length = length;
++            let mut budgets = vec![0, 1, 2, 3, 4, 5, 7, 8, 16, 17, 63, 64, 65, 1024, usize::MAX];
++            if let Some(&start) = plan.starts.first() {
++                budgets.extend(plan.starts.iter().map(|&next| next - start));
++                budgets.push(length - start);
++            }
++            for slots in budgets {
++                let ranges = plan.initial_ranges(slots);
++                assert_eq!(ranges, linear_ranges(&plan.starts, length, slots));
++                let mut end = 0;
++                for range in ranges {
++                    assert_eq!(range.start, end);
++                    assert!(!range.is_empty());
++                    let span = plan.starts.get(range.end).copied().unwrap_or(length)
++                        - plan.starts[range.start];
++                    assert!(span <= slots || range.len() == 1);
++                    end = range.end;
++                }
++                assert_eq!(end, plan.word_count());
++            }
++        }
++    }
++}

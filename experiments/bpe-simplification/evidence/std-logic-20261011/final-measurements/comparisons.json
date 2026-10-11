@@ -1,0 +1,190 @@
+[
+  {
+    "case": "bytelevel_regex",
+    "arms": {
+      "final": {
+        "train_seconds": 10.0291342075,
+        "train_cpu_seconds": 32.24938300000001,
+        "process_hwm_kib_before_validation": 2472832.0
+      },
+      "baseline": {
+        "train_seconds": 9.7362449295,
+        "train_cpu_seconds": 31.480648000000002,
+        "process_hwm_kib_before_validation": 2472686.0
+      }
+    },
+    "comparisons": {
+      "final/baseline": {
+        "formal_pairs": 4,
+        "paired_median_delta_percent": {
+          "train_seconds": 2.2941930131055055,
+          "train_cpu_seconds": 2.4684387305488498,
+          "process_hwm_kib_before_validation": -0.10883358727895032
+        },
+        "paired_delta_percent": [
+          {
+            "train_seconds": 1.7523924627082188,
+            "train_cpu_seconds": 1.096281355291051,
+            "process_hwm_kib_before_validation": -0.7954806352203914
+          },
+          {
+            "train_seconds": 1.3599684042102211,
+            "train_cpu_seconds": 2.1700027175404424,
+            "process_hwm_kib_before_validation": 0.1657362883163982
+          },
+          {
+            "train_seconds": 4.196690637835099,
+            "train_cpu_seconds": 3.2350032903505355,
+            "process_hwm_kib_before_validation": -0.38340346287429883
+          },
+          {
+            "train_seconds": 2.835993563502792,
+            "train_cpu_seconds": 2.766874743557257,
+            "process_hwm_kib_before_validation": 0.6258588463617487
+          }
+        ]
+      }
+    }
+  },
+  {
+    "case": "whitespace",
+    "arms": {
+      "final": {
+        "train_seconds": 8.5474021095,
+        "train_cpu_seconds": 24.6315715,
+        "process_hwm_kib_before_validation": 1848322.0
+      },
+      "baseline": {
+        "train_seconds": 8.440077627,
+        "train_cpu_seconds": 24.2766945,
+        "process_hwm_kib_before_validation": 1839996.0
+      }
+    },
+    "comparisons": {
+      "final/baseline": {
+        "formal_pairs": 4,
+        "paired_median_delta_percent": {
+          "train_seconds": 1.2389423138794098,
+          "train_cpu_seconds": 1.669799842480968,
+          "process_hwm_kib_before_validation": 0.03479928957684231
+        },
+        "paired_delta_percent": [
+          {
+            "train_seconds": 3.07216381082982,
+            "train_cpu_seconds": 2.407249698258096,
+            "process_hwm_kib_before_validation": 0.07133800075251884
+          },
+          {
+            "train_seconds": 1.1353637564788244,
+            "train_cpu_seconds": 1.3212362510252262,
+            "process_hwm_kib_before_validation": 0.8639895669184439
+          },
+          {
+            "train_seconds": 0.6781105266727483,
+            "train_cpu_seconds": 1.1126760141849212,
+            "process_hwm_kib_before_validation": -0.0017394215988342232
+          },
+          {
+            "train_seconds": 1.3425208712799952,
+            "train_cpu_seconds": 2.0183634339367096,
+            "process_hwm_kib_before_validation": -0.01938159781892379
+          }
+        ]
+      }
+    }
+  },
+  {
+    "case": "en-bytelevel_regex",
+    "arms": {
+      "final": {
+        "train_seconds": 0.8543334505,
+        "train_cpu_seconds": 1.997153,
+        "process_hwm_kib_before_validation": 189438.0
+      },
+      "baseline": {
+        "train_seconds": 0.8451548799999999,
+        "train_cpu_seconds": 2.000229,
+        "process_hwm_kib_before_validation": 177216.0
+      }
+    },
+    "comparisons": {
+      "final/baseline": {
+        "formal_pairs": 4,
+        "paired_median_delta_percent": {
+          "train_seconds": -0.12408538266945324,
+          "train_cpu_seconds": -0.6726377045692511,
+          "process_hwm_kib_before_validation": 6.916030845630894
+        },
+        "paired_delta_percent": [
+          {
+            "train_seconds": -0.35897461432977673,
+            "train_cpu_seconds": -0.8353458133751102,
+            "process_hwm_kib_before_validation": 6.797385620915031
+          },
+          {
+            "train_seconds": -0.7297881171047904,
+            "train_cpu_seconds": -0.9585369146983602,
+            "process_hwm_kib_before_validation": 7.034676070346757
+          },
+          {
+            "train_seconds": 0.11080384899087026,
+            "train_cpu_seconds": -0.509929595763392,
+            "process_hwm_kib_before_validation": 6.71577903938001
+          },
+          {
+            "train_seconds": 2.532125130406171,
+            "train_cpu_seconds": 1.5847962247273806,
+            "process_hwm_kib_before_validation": 7.064197363362945
+          }
+        ]
+      }
+    }
+  },
+  {
+    "case": "en-whitespace",
+    "arms": {
+      "final": {
+        "train_seconds": 0.7728055395,
+        "train_cpu_seconds": 1.793955,
+        "process_hwm_kib_before_validation": 164368.0
+      },
+      "baseline": {
+        "train_seconds": 0.76774724,
+        "train_cpu_seconds": 1.8097335,
+        "process_hwm_kib_before_validation": 163316.0
+      }
+    },
+    "comparisons": {
+      "final/baseline": {
+        "formal_pairs": 4,
+        "paired_median_delta_percent": {
+          "train_seconds": 0.5220390303323441,
+          "train_cpu_seconds": -1.1626067015138741,
+          "process_hwm_kib_before_validation": 0.34888999023414136
+        },
+        "paired_delta_percent": [
+          {
+            "train_seconds": -0.19192279904802767,
+            "train_cpu_seconds": -1.7175636655535675,
+            "process_hwm_kib_before_validation": 2.115370555406626
+          },
+          {
+            "train_seconds": 1.236000859712716,
+            "train_cpu_seconds": -0.8513861922595622,
+            "process_hwm_kib_before_validation": -3.064615384615388
+          },
+          {
+            "train_seconds": -0.5800066730729636,
+            "train_cpu_seconds": -1.473827210768186,
+            "process_hwm_kib_before_validation": 4.260403162256288
+          },
+          {
+            "train_seconds": 2.012850984872383,
+            "train_cpu_seconds": 1.2600892487014903,
+            "process_hwm_kib_before_validation": -1.4175905749383433
+          }
+        ]
+      }
+    }
+  }
+]

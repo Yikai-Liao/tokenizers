@@ -1,0 +1,187 @@
+{
+  "baseline_commit": "a2f1c0f7fda871ad321579a8df690a5f6464043f",
+  "rustc": "rustc 1.99.0 (b940084d7 2026-09-28) (Arch Linux rust 1:1.99.0-1)\nbinary: rustc\ncommit-hash: b940084d7eb6a299eb4bfeb8e34901bc051e7ac4\ncommit-date: 2026-09-28\nhost: x86_64-unknown-linux-gnu\nrelease: 1.99.0\nLLVM version: 23.1.1\n",
+  "build_command": "CARGO_TARGET_DIR=/tmp/bpe-interface-release cargo build --offline --release --locked --manifest-path experiments/bpe-simplification/runner/Cargo.toml",
+  "builds": {
+    "baseline": {
+      "binary": "/tmp/bpe-std-logic-results/baseline",
+      "binary_sha256": "4c805d21b241419329811e384b858a37fe75c4bf748486e25a846e1e67c31e05",
+      "source_sha256": {
+        "tokenizers/tk-train/src/trainers/bpe/corpus.rs": "080d55611b17b7b250e197f183daaaf4469ba8e50f583f19148e1e0b69f979ae",
+        "tokenizers/tk-train/src/trainers/bpe/feed.rs": "ddbc4fd103d73ea5cc8bf3778809127b0578474c9da9a29af5be5a76b56f0fec",
+        "tokenizers/tk-train/src/trainers/bpe/index.rs": "736b76cc14473b7576e3838eb06bba53690fa7c8167219d0ac2791d8cce8a974",
+        "tokenizers/tk-train/src/trainers/bpe/merge.rs": "ca9e65017541c89517993838b065d5894d380e056d801faddafded234d2c2020",
+        "tokenizers/tk-train/src/trainers/bpe/mod.rs": "1d31f823572e155cdd4d8225d54ae10f34330bd77b3f09dc242458e96ed9f5fa",
+        "tokenizers/tk-train/src/trainers/bpe/parity_trainer.rs": "a584152379dc59de167a14f751f37bab8da9c723eddc1c238df21965dd08f37c",
+        "tokenizers/tk-train/src/trainers/bpe/positions.rs": "44c436b6d6bee8632d84e805d57dd246726873ee97881305c66775f3812065e5",
+        "tokenizers/tk-train/src/trainers/bpe/tests.rs": "fd29c70ee23c48dea125fbe7bc2fed79e84c66cfb492f784d090f7f7188dd52c",
+        "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs": "88cb2c722e86c6de79fa3e2a70fb86a6a01828520830b40291b2f6b73a0e044e",
+        "tokenizers/tk-train/src/trainers/bpe/word.rs": "f9c3bd0a7a8fade42a5643ee6341b4ebf203f7a45aa0a65797e773d1ce21396a",
+        "tokenizers/tk-train/src/trainers/bpe/word_counts.rs": "eb78ccea99544dc915f3c406ad77349ddc080ecfb7a5d36253bd8d80275ebf4d",
+        "tokenizers/tk-train/src/trainers/bpe/AGENTS.md": "6fec35a8dd2689c884b903fdaf13006b6fa155415422fd3b864e237595a3a745",
+        "tokenizers/tk-train/src/trainers/bpe/README.md": "aabe2dc36d6402ae3e65378558eab4587602f965dd9c9c4d52f91b643fdb4f16",
+        "tokenizers/tk-train/Cargo.toml": "ea8d81126e19c7d3d14b1903dc71f0e23bf493846be394233c2f65c9745fe151",
+        "tokenizers/tk-train/Cargo.lock": "3cb3be8799ebca44f8f13114132041b6335cf8dd11777ce50f50cadd6635a21a",
+        "experiments/bpe-simplification/runner/Cargo.lock": "3c695073bb1e4176d8e7ec1500f9e4fb8883d23e115ef7da244b68e46946f9d6"
+      }
+    },
+    "core": {
+      "binary": "/tmp/bpe-std-logic-results/core",
+      "binary_sha256": "483ad7af19c1c86bd75d4d3842631da2ad74aa0ef6ae075f2dc0abcd1677d169",
+      "source_sha256": {
+        "tokenizers/tk-train/src/trainers/bpe/corpus.rs": "1eaa0b515c3e4db866f284176557a6d5400ea1a2c90d9fa5297f90ff37d05f2d",
+        "tokenizers/tk-train/src/trainers/bpe/feed.rs": "ddbc4fd103d73ea5cc8bf3778809127b0578474c9da9a29af5be5a76b56f0fec",
+        "tokenizers/tk-train/src/trainers/bpe/index.rs": "736b76cc14473b7576e3838eb06bba53690fa7c8167219d0ac2791d8cce8a974",
+        "tokenizers/tk-train/src/trainers/bpe/merge.rs": "5aa47523bd8fbaf63ed905e0e96677c0d214f66187f5af25f8dd1579ca3a7971",
+        "tokenizers/tk-train/src/trainers/bpe/mod.rs": "1d31f823572e155cdd4d8225d54ae10f34330bd77b3f09dc242458e96ed9f5fa",
+        "tokenizers/tk-train/src/trainers/bpe/parity_trainer.rs": "a584152379dc59de167a14f751f37bab8da9c723eddc1c238df21965dd08f37c",
+        "tokenizers/tk-train/src/trainers/bpe/positions.rs": "44c436b6d6bee8632d84e805d57dd246726873ee97881305c66775f3812065e5",
+        "tokenizers/tk-train/src/trainers/bpe/tests.rs": "f7b37792ddfd38c529f54d5579d25f8d74711d5882fb0b477e30423e8da16c8e",
+        "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs": "cc1081bbf795cff2ce110a2be43a8b03ba61dc0fdb66100a39216cafdc950d43",
+        "tokenizers/tk-train/src/trainers/bpe/word.rs": "f9c3bd0a7a8fade42a5643ee6341b4ebf203f7a45aa0a65797e773d1ce21396a",
+        "tokenizers/tk-train/src/trainers/bpe/word_counts.rs": "eb78ccea99544dc915f3c406ad77349ddc080ecfb7a5d36253bd8d80275ebf4d",
+        "tokenizers/tk-train/src/trainers/bpe/AGENTS.md": "fafcb2e2276ab3f9f81e491f6029bbfcbeb5a7b6ba274018e308b8a24b758c6d",
+        "tokenizers/tk-train/src/trainers/bpe/README.md": "aabe2dc36d6402ae3e65378558eab4587602f965dd9c9c4d52f91b643fdb4f16"
+      }
+    },
+    "deque": {
+      "binary": "/tmp/bpe-std-logic-results/deque",
+      "binary_sha256": "64cddd7bfdf93fd2fc52dc7a65100cd0d7e2ee52295d0177a19a0361e442b0e4",
+      "source_sha256": {
+        "tokenizers/tk-train/src/trainers/bpe/corpus.rs": "1eaa0b515c3e4db866f284176557a6d5400ea1a2c90d9fa5297f90ff37d05f2d",
+        "tokenizers/tk-train/src/trainers/bpe/feed.rs": "ddbc4fd103d73ea5cc8bf3778809127b0578474c9da9a29af5be5a76b56f0fec",
+        "tokenizers/tk-train/src/trainers/bpe/index.rs": "736b76cc14473b7576e3838eb06bba53690fa7c8167219d0ac2791d8cce8a974",
+        "tokenizers/tk-train/src/trainers/bpe/merge.rs": "c7b8b86e238675bdd455e490ee9409e87fcc65f5f8a85b2119f196311e465f4f",
+        "tokenizers/tk-train/src/trainers/bpe/mod.rs": "1d31f823572e155cdd4d8225d54ae10f34330bd77b3f09dc242458e96ed9f5fa",
+        "tokenizers/tk-train/src/trainers/bpe/parity_trainer.rs": "a584152379dc59de167a14f751f37bab8da9c723eddc1c238df21965dd08f37c",
+        "tokenizers/tk-train/src/trainers/bpe/positions.rs": "44c436b6d6bee8632d84e805d57dd246726873ee97881305c66775f3812065e5",
+        "tokenizers/tk-train/src/trainers/bpe/tests.rs": "f7b37792ddfd38c529f54d5579d25f8d74711d5882fb0b477e30423e8da16c8e",
+        "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs": "cc1081bbf795cff2ce110a2be43a8b03ba61dc0fdb66100a39216cafdc950d43",
+        "tokenizers/tk-train/src/trainers/bpe/word.rs": "f9c3bd0a7a8fade42a5643ee6341b4ebf203f7a45aa0a65797e773d1ce21396a",
+        "tokenizers/tk-train/src/trainers/bpe/word_counts.rs": "eb78ccea99544dc915f3c406ad77349ddc080ecfb7a5d36253bd8d80275ebf4d",
+        "tokenizers/tk-train/src/trainers/bpe/AGENTS.md": "fafcb2e2276ab3f9f81e491f6029bbfcbeb5a7b6ba274018e308b8a24b758c6d",
+        "tokenizers/tk-train/src/trainers/bpe/README.md": "aabe2dc36d6402ae3e65378558eab4587602f965dd9c9c4d52f91b643fdb4f16"
+      }
+    },
+    "tree": {
+      "binary": "/tmp/bpe-std-logic-results/tree",
+      "binary_sha256": "ef991f5c10bddcc168bef20ca2a76fc71992ec722976a2e0aacd9683939d880f",
+      "source_sha256": {
+        "tokenizers/tk-train/src/trainers/bpe/corpus.rs": "1eaa0b515c3e4db866f284176557a6d5400ea1a2c90d9fa5297f90ff37d05f2d",
+        "tokenizers/tk-train/src/trainers/bpe/feed.rs": "ddbc4fd103d73ea5cc8bf3778809127b0578474c9da9a29af5be5a76b56f0fec",
+        "tokenizers/tk-train/src/trainers/bpe/index.rs": "ccc8c2e411ab8a7ac822ea5801fc361838f3e71a45f7a5135ef22ac4115820ec",
+        "tokenizers/tk-train/src/trainers/bpe/merge.rs": "5aa47523bd8fbaf63ed905e0e96677c0d214f66187f5af25f8dd1579ca3a7971",
+        "tokenizers/tk-train/src/trainers/bpe/mod.rs": "1d31f823572e155cdd4d8225d54ae10f34330bd77b3f09dc242458e96ed9f5fa",
+        "tokenizers/tk-train/src/trainers/bpe/parity_trainer.rs": "a584152379dc59de167a14f751f37bab8da9c723eddc1c238df21965dd08f37c",
+        "tokenizers/tk-train/src/trainers/bpe/positions.rs": "44c436b6d6bee8632d84e805d57dd246726873ee97881305c66775f3812065e5",
+        "tokenizers/tk-train/src/trainers/bpe/tests.rs": "f7b37792ddfd38c529f54d5579d25f8d74711d5882fb0b477e30423e8da16c8e",
+        "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs": "cc1081bbf795cff2ce110a2be43a8b03ba61dc0fdb66100a39216cafdc950d43",
+        "tokenizers/tk-train/src/trainers/bpe/word.rs": "f9c3bd0a7a8fade42a5643ee6341b4ebf203f7a45aa0a65797e773d1ce21396a",
+        "tokenizers/tk-train/src/trainers/bpe/word_counts.rs": "eb78ccea99544dc915f3c406ad77349ddc080ecfb7a5d36253bd8d80275ebf4d",
+        "tokenizers/tk-train/src/trainers/bpe/AGENTS.md": "fafcb2e2276ab3f9f81e491f6029bbfcbeb5a7b6ba274018e308b8a24b758c6d",
+        "tokenizers/tk-train/src/trainers/bpe/README.md": "aabe2dc36d6402ae3e65378558eab4587602f965dd9c9c4d52f91b643fdb4f16"
+      }
+    },
+    "bitmap": {
+      "binary": "/tmp/bpe-std-logic-results/bitmap",
+      "binary_sha256": "5b7651536c78b6ab0e51c54342d0d65c9bc246013584b91050c60b20d70e68f9",
+      "source_sha256": {
+        "tokenizers/tk-train/src/trainers/bpe/word_counts.rs": "eb78ccea99544dc915f3c406ad77349ddc080ecfb7a5d36253bd8d80275ebf4d",
+        "tokenizers/tk-train/src/trainers/bpe/word.rs": "f9c3bd0a7a8fade42a5643ee6341b4ebf203f7a45aa0a65797e773d1ce21396a",
+        "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs": "98031f901f6321b444ddb09854d9b39bc828fccd5c9dae5bf6f0f4653ad76431",
+        "tokenizers/tk-train/src/trainers/bpe/tests.rs": "fd29c70ee23c48dea125fbe7bc2fed79e84c66cfb492f784d090f7f7188dd52c",
+        "tokenizers/tk-train/src/trainers/bpe/positions.rs": "44c436b6d6bee8632d84e805d57dd246726873ee97881305c66775f3812065e5",
+        "tokenizers/tk-train/src/trainers/bpe/parity_trainer.rs": "a584152379dc59de167a14f751f37bab8da9c723eddc1c238df21965dd08f37c",
+        "tokenizers/tk-train/src/trainers/bpe/mod.rs": "1d31f823572e155cdd4d8225d54ae10f34330bd77b3f09dc242458e96ed9f5fa",
+        "tokenizers/tk-train/src/trainers/bpe/merge.rs": "ca9e65017541c89517993838b065d5894d380e056d801faddafded234d2c2020",
+        "tokenizers/tk-train/src/trainers/bpe/index.rs": "736b76cc14473b7576e3838eb06bba53690fa7c8167219d0ac2791d8cce8a974",
+        "tokenizers/tk-train/src/trainers/bpe/feed.rs": "ddbc4fd103d73ea5cc8bf3778809127b0578474c9da9a29af5be5a76b56f0fec",
+        "tokenizers/tk-train/src/trainers/bpe/corpus.rs": "080d55611b17b7b250e197f183daaaf4469ba8e50f583f19148e1e0b69f979ae",
+        "tokenizers/tk-train/src/trainers/bpe/AGENTS.md": "6fec35a8dd2689c884b903fdaf13006b6fa155415422fd3b864e237595a3a745",
+        "tokenizers/tk-train/src/trainers/bpe/README.md": "aabe2dc36d6402ae3e65378558eab4587602f965dd9c9c4d52f91b643fdb4f16"
+      }
+    },
+    "seed": {
+      "binary": "/tmp/bpe-std-logic-results/seed",
+      "binary_sha256": "addf84c5e538572a96b2fb8917126d3dc71418bc714dcae1d8d2a3f95beabdd1",
+      "source_sha256": {
+        "tokenizers/tk-train/src/trainers/bpe/word_counts.rs": "eb78ccea99544dc915f3c406ad77349ddc080ecfb7a5d36253bd8d80275ebf4d",
+        "tokenizers/tk-train/src/trainers/bpe/word.rs": "f9c3bd0a7a8fade42a5643ee6341b4ebf203f7a45aa0a65797e773d1ce21396a",
+        "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs": "88cb2c722e86c6de79fa3e2a70fb86a6a01828520830b40291b2f6b73a0e044e",
+        "tokenizers/tk-train/src/trainers/bpe/tests.rs": "fd29c70ee23c48dea125fbe7bc2fed79e84c66cfb492f784d090f7f7188dd52c",
+        "tokenizers/tk-train/src/trainers/bpe/positions.rs": "53404e13ea8a46ea309c38e96463f360437fabf55a901eaa83ed5e8e0914b673",
+        "tokenizers/tk-train/src/trainers/bpe/parity_trainer.rs": "a584152379dc59de167a14f751f37bab8da9c723eddc1c238df21965dd08f37c",
+        "tokenizers/tk-train/src/trainers/bpe/mod.rs": "1d31f823572e155cdd4d8225d54ae10f34330bd77b3f09dc242458e96ed9f5fa",
+        "tokenizers/tk-train/src/trainers/bpe/merge.rs": "ca9e65017541c89517993838b065d5894d380e056d801faddafded234d2c2020",
+        "tokenizers/tk-train/src/trainers/bpe/index.rs": "736b76cc14473b7576e3838eb06bba53690fa7c8167219d0ac2791d8cce8a974",
+        "tokenizers/tk-train/src/trainers/bpe/feed.rs": "ddbc4fd103d73ea5cc8bf3778809127b0578474c9da9a29af5be5a76b56f0fec",
+        "tokenizers/tk-train/src/trainers/bpe/corpus.rs": "080d55611b17b7b250e197f183daaaf4469ba8e50f583f19148e1e0b69f979ae",
+        "tokenizers/tk-train/src/trainers/bpe/AGENTS.md": "6fec35a8dd2689c884b903fdaf13006b6fa155415422fd3b864e237595a3a745",
+        "tokenizers/tk-train/src/trainers/bpe/README.md": "aabe2dc36d6402ae3e65378558eab4587602f965dd9c9c4d52f91b643fdb4f16"
+      }
+    },
+    "ranges": {
+      "binary": "/tmp/bpe-std-logic-results/ranges",
+      "binary_sha256": "44dbc4674e18897742f69a98992c3518a4d6fef8a3ac75f4e4e89c84dc5b5774",
+      "source_sha256": {
+        "tokenizers/tk-train/src/trainers/bpe/word_counts.rs": "eb78ccea99544dc915f3c406ad77349ddc080ecfb7a5d36253bd8d80275ebf4d",
+        "tokenizers/tk-train/src/trainers/bpe/word.rs": "f9c3bd0a7a8fade42a5643ee6341b4ebf203f7a45aa0a65797e773d1ce21396a",
+        "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs": "88cb2c722e86c6de79fa3e2a70fb86a6a01828520830b40291b2f6b73a0e044e",
+        "tokenizers/tk-train/src/trainers/bpe/tests.rs": "fd29c70ee23c48dea125fbe7bc2fed79e84c66cfb492f784d090f7f7188dd52c",
+        "tokenizers/tk-train/src/trainers/bpe/positions.rs": "44c436b6d6bee8632d84e805d57dd246726873ee97881305c66775f3812065e5",
+        "tokenizers/tk-train/src/trainers/bpe/parity_trainer.rs": "a584152379dc59de167a14f751f37bab8da9c723eddc1c238df21965dd08f37c",
+        "tokenizers/tk-train/src/trainers/bpe/mod.rs": "1d31f823572e155cdd4d8225d54ae10f34330bd77b3f09dc242458e96ed9f5fa",
+        "tokenizers/tk-train/src/trainers/bpe/merge.rs": "ca9e65017541c89517993838b065d5894d380e056d801faddafded234d2c2020",
+        "tokenizers/tk-train/src/trainers/bpe/index.rs": "736b76cc14473b7576e3838eb06bba53690fa7c8167219d0ac2791d8cce8a974",
+        "tokenizers/tk-train/src/trainers/bpe/feed.rs": "ddbc4fd103d73ea5cc8bf3778809127b0578474c9da9a29af5be5a76b56f0fec",
+        "tokenizers/tk-train/src/trainers/bpe/corpus.rs": "44bad718455a123a6b1c76f671f62fc8c40fde1da59a9b6d013388a9efff0b0d",
+        "tokenizers/tk-train/src/trainers/bpe/AGENTS.md": "6fec35a8dd2689c884b903fdaf13006b6fa155415422fd3b864e237595a3a745",
+        "tokenizers/tk-train/src/trainers/bpe/README.md": "aabe2dc36d6402ae3e65378558eab4587602f965dd9c9c4d52f91b643fdb4f16"
+      }
+    },
+    "arraydeque": {
+      "binary": "/tmp/bpe-std-logic-results/arraydeque",
+      "binary_sha256": "374756334eb0cd02794ce5b9ca2fc0a8f90e715f761ba6426613fd6d3d0f49b7",
+      "source_sha256": {
+        "tokenizers/tk-train/src/trainers/bpe/word_counts.rs": "eb78ccea99544dc915f3c406ad77349ddc080ecfb7a5d36253bd8d80275ebf4d",
+        "tokenizers/tk-train/src/trainers/bpe/word.rs": "f9c3bd0a7a8fade42a5643ee6341b4ebf203f7a45aa0a65797e773d1ce21396a",
+        "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs": "cc1081bbf795cff2ce110a2be43a8b03ba61dc0fdb66100a39216cafdc950d43",
+        "tokenizers/tk-train/src/trainers/bpe/tests.rs": "f7b37792ddfd38c529f54d5579d25f8d74711d5882fb0b477e30423e8da16c8e",
+        "tokenizers/tk-train/src/trainers/bpe/positions.rs": "44c436b6d6bee8632d84e805d57dd246726873ee97881305c66775f3812065e5",
+        "tokenizers/tk-train/src/trainers/bpe/parity_trainer.rs": "a584152379dc59de167a14f751f37bab8da9c723eddc1c238df21965dd08f37c",
+        "tokenizers/tk-train/src/trainers/bpe/mod.rs": "1d31f823572e155cdd4d8225d54ae10f34330bd77b3f09dc242458e96ed9f5fa",
+        "tokenizers/tk-train/src/trainers/bpe/merge.rs": "45e229decdb7e53d93cb1cb6abcedef579f4613b27d77f92739ca9c4f70c7c24",
+        "tokenizers/tk-train/src/trainers/bpe/index.rs": "736b76cc14473b7576e3838eb06bba53690fa7c8167219d0ac2791d8cce8a974",
+        "tokenizers/tk-train/src/trainers/bpe/feed.rs": "ddbc4fd103d73ea5cc8bf3778809127b0578474c9da9a29af5be5a76b56f0fec",
+        "tokenizers/tk-train/src/trainers/bpe/corpus.rs": "1eaa0b515c3e4db866f284176557a6d5400ea1a2c90d9fa5297f90ff37d05f2d",
+        "tokenizers/tk-train/src/trainers/bpe/AGENTS.md": "6fec35a8dd2689c884b903fdaf13006b6fa155415422fd3b864e237595a3a745",
+        "tokenizers/tk-train/src/trainers/bpe/README.md": "aabe2dc36d6402ae3e65378558eab4587602f965dd9c9c4d52f91b643fdb4f16",
+        "tokenizers/tk-train/Cargo.toml": "a35f833b60d71b2fdb51a3783690787c4e8ace427137c0d191f1d926f3edcf82",
+        "tokenizers/tk-train/Cargo.lock": "ffc6cf479e478776cdd4314b74e8dbed79f41af228d50602ab2475b213033483",
+        "experiments/bpe-simplification/runner/Cargo.lock": "a1769bf56171c94af75f5c9bd1c636e79c04da2a961763846bc2df0edac53bdf"
+      }
+    },
+    "final": {
+      "binary": "/tmp/bpe-std-logic-results/final",
+      "binary_sha256": "cf29197a8464cf34619da26c51648f31946f47afc0498f4106ed312a50e5217b",
+      "source_sha256": {
+        "tokenizers/tk-train/src/trainers/bpe/feed.rs": "ddbc4fd103d73ea5cc8bf3778809127b0578474c9da9a29af5be5a76b56f0fec",
+        "tokenizers/tk-train/src/trainers/bpe/index.rs": "ccc8c2e411ab8a7ac822ea5801fc361838f3e71a45f7a5135ef22ac4115820ec",
+        "tokenizers/tk-train/src/trainers/bpe/merge.rs": "c7b8b86e238675bdd455e490ee9409e87fcc65f5f8a85b2119f196311e465f4f",
+        "tokenizers/tk-train/src/trainers/bpe/mod.rs": "1d31f823572e155cdd4d8225d54ae10f34330bd77b3f09dc242458e96ed9f5fa",
+        "tokenizers/tk-train/src/trainers/bpe/parity_trainer.rs": "a584152379dc59de167a14f751f37bab8da9c723eddc1c238df21965dd08f37c",
+        "tokenizers/tk-train/src/trainers/bpe/tests.rs": "fd2bd94bafb5dea8aba89888abc381dba2ea2f52918ab72550258349c223ce1e",
+        "tokenizers/tk-train/src/trainers/bpe/word.rs": "f9c3bd0a7a8fade42a5643ee6341b4ebf203f7a45aa0a65797e773d1ce21396a",
+        "tokenizers/tk-train/src/trainers/bpe/word_counts.rs": "eb78ccea99544dc915f3c406ad77349ddc080ecfb7a5d36253bd8d80275ebf4d",
+        "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs": "0f0e46a8d76d4e7c80aaaf537c8c295730969a2a8b5c3940dbafa88292ef9cca",
+        "tokenizers/tk-train/src/trainers/bpe/positions.rs": "53404e13ea8a46ea309c38e96463f360437fabf55a901eaa83ed5e8e0914b673",
+        "tokenizers/tk-train/src/trainers/bpe/corpus.rs": "0629309a4bf4c2b8eca4d475effcf457eb555af737bd86df8edbec3edd42d8a4",
+        "tokenizers/tk-train/src/trainers/bpe/AGENTS.md": "fafcb2e2276ab3f9f81e491f6029bbfcbeb5a7b6ba274018e308b8a24b758c6d",
+        "tokenizers/tk-train/src/trainers/bpe/README.md": "c9a6635c38a688e043ab087fc300835724ce7fe508008af36c1657282a45fb61",
+        "tokenizers/tk-train/Cargo.toml": "ea8d81126e19c7d3d14b1903dc71f0e23bf493846be394233c2f65c9745fe151",
+        "tokenizers/tk-train/Cargo.lock": "3cb3be8799ebca44f8f13114132041b6335cf8dd11777ce50f50cadd6635a21a",
+        "experiments/bpe-simplification/runner/Cargo.lock": "3c695073bb1e4176d8e7ec1500f9e4fb8883d23e115ef7da244b68e46946f9d6"
+      }
+    }
+  }
+}

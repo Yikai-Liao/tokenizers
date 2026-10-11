@@ -6,6 +6,7 @@ use dary_heap::OctonaryHeap;
 use rayon::prelude::*;
 use smallvec::SmallVec;
 use std::cmp::{Ordering, Reverse};
+use std::collections::BTreeMap;
 use tk_encode::{Result, models::bpe::Pair, utils::progress::ProgressBar};
 
 /// Queue key: highest count first, then smallest pair.
@@ -404,7 +405,7 @@ struct OwnerCommit<'index> {
     shard: &'index mut AHashMap<Pair, u64>,
     reuse: bool,
     floor: u64,
-    groups: AHashMap<(usize, Pair), Group>,
+    groups: BTreeMap<(usize, Pair), Group>,
     candidates: Vec<Candidate>,
 }
 
@@ -414,7 +415,7 @@ impl<'index> OwnerCommit<'index> {
             shard,
             reuse,
             floor,
-            groups: AHashMap::new(),
+            groups: BTreeMap::new(),
             candidates: Vec::new(),
         }
     }
@@ -494,9 +495,7 @@ impl<'index> OwnerCommit<'index> {
     fn publish_groups(mut self) -> Result<Vec<Candidate>> {
         // Partial birth groups follow bucket/pair order within this owner. Complete
         // producers have already published directly into its candidate list.
-        let mut groups: Vec<_> = self.groups.into_iter().collect();
-        groups.sort_unstable_by_key(|((bucket, pair), _)| (*bucket, *pair));
-        for ((_, pair), state) in groups {
+        for ((_, pair), state) in self.groups {
             let count = if self.reuse {
                 self.shard[&pair]
             } else {

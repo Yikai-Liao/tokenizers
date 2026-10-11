@@ -1,0 +1,2594 @@
+[
+  {
+    "case": "bytelevel_regex",
+    "block": 0,
+    "arm": "baseline",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/baseline",
+      "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b0-baseline/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/baseline",
+      "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b0-baseline/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2423096,
+    "subprocess_wall": 14.958700185990892,
+    "attempt_id": "core-bytelevel_regex-b0-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "bytelevel_regex",
+    "metrics": {
+      "load_seconds": 3.934829371,
+      "process_hwm_kib_before_validation": 2424924,
+      "train_cpu_seconds": 31.694165000000005,
+      "train_seconds": 9.921869929
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b0-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "bytelevel_regex",
+    "block": 0,
+    "arm": "core",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/core",
+      "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b0-core/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/core",
+      "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b0-core/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2453004,
+    "subprocess_wall": 15.011473941005534,
+    "attempt_id": "core-bytelevel_regex-b0-core",
+    "build_id": "core",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "bytelevel_regex",
+    "metrics": {
+      "load_seconds": 3.9115842709999997,
+      "process_hwm_kib_before_validation": 2454928,
+      "train_cpu_seconds": 32.331843,
+      "train_seconds": 9.99369497
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b0-core/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "bytelevel_regex",
+    "block": 0,
+    "arm": "deque",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/deque",
+      "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b0-deque/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/deque",
+      "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b0-deque/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2438788,
+    "subprocess_wall": 14.911454196990235,
+    "attempt_id": "core-bytelevel_regex-b0-deque",
+    "build_id": "deque",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "bytelevel_regex",
+    "metrics": {
+      "load_seconds": 3.895230614,
+      "process_hwm_kib_before_validation": 2438692,
+      "train_cpu_seconds": 32.154473,
+      "train_seconds": 9.923707626
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b0-deque/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "bytelevel_regex",
+    "block": 0,
+    "arm": "tree",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/tree",
+      "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b0-tree/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/tree",
+      "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b0-tree/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2452024,
+    "subprocess_wall": 14.984115169994766,
+    "attempt_id": "core-bytelevel_regex-b0-tree",
+    "build_id": "tree",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "bytelevel_regex",
+    "metrics": {
+      "load_seconds": 3.963278816,
+      "process_hwm_kib_before_validation": 2454000,
+      "train_cpu_seconds": 31.991931,
+      "train_seconds": 9.900629315
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b0-tree/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "bytelevel_regex",
+    "block": 1,
+    "arm": "core",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/core",
+      "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b1-core/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/core",
+      "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b1-core/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2496140,
+    "subprocess_wall": 14.812190046010073,
+    "attempt_id": "core-bytelevel_regex-b1-core",
+    "build_id": "core",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "bytelevel_regex",
+    "metrics": {
+      "load_seconds": 3.896804276,
+      "process_hwm_kib_before_validation": 2498136,
+      "train_cpu_seconds": 31.954136000000002,
+      "train_seconds": 9.781188128
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b1-core/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "bytelevel_regex",
+    "block": 1,
+    "arm": "deque",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/deque",
+      "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b1-deque/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/deque",
+      "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b1-deque/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2495492,
+    "subprocess_wall": 14.868026107986225,
+    "attempt_id": "core-bytelevel_regex-b1-deque",
+    "build_id": "deque",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "bytelevel_regex",
+    "metrics": {
+      "load_seconds": 3.90472224,
+      "process_hwm_kib_before_validation": 2497416,
+      "train_cpu_seconds": 31.776203999999996,
+      "train_seconds": 9.8511823
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b1-deque/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "bytelevel_regex",
+    "block": 1,
+    "arm": "tree",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/tree",
+      "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b1-tree/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/tree",
+      "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b1-tree/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2431132,
+    "subprocess_wall": 15.036160043993732,
+    "attempt_id": "core-bytelevel_regex-b1-tree",
+    "build_id": "tree",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "bytelevel_regex",
+    "metrics": {
+      "load_seconds": 3.949259966,
+      "process_hwm_kib_before_validation": 2433068,
+      "train_cpu_seconds": 32.470549999999996,
+      "train_seconds": 9.979174237
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b1-tree/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "bytelevel_regex",
+    "block": 1,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/baseline",
+      "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b1-baseline/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/baseline",
+      "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b1-baseline/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2489612,
+    "subprocess_wall": 14.783461779996287,
+    "attempt_id": "core-bytelevel_regex-b1-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "bytelevel_regex",
+    "metrics": {
+      "load_seconds": 3.918080652,
+      "process_hwm_kib_before_validation": 2489572,
+      "train_cpu_seconds": 31.535919,
+      "train_seconds": 9.700776925
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b1-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "bytelevel_regex",
+    "block": 2,
+    "arm": "deque",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/deque",
+      "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b2-deque/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/deque",
+      "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b2-deque/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2493724,
+    "subprocess_wall": 14.936760058975779,
+    "attempt_id": "core-bytelevel_regex-b2-deque",
+    "build_id": "deque",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "bytelevel_regex",
+    "metrics": {
+      "load_seconds": 3.926986245,
+      "process_hwm_kib_before_validation": 2495644,
+      "train_cpu_seconds": 32.190138000000005,
+      "train_seconds": 9.879473168
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b2-deque/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "bytelevel_regex",
+    "block": 2,
+    "arm": "tree",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/tree",
+      "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b2-tree/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/tree",
+      "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b2-tree/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2499936,
+    "subprocess_wall": 15.186795016983524,
+    "attempt_id": "core-bytelevel_regex-b2-tree",
+    "build_id": "tree",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "bytelevel_regex",
+    "metrics": {
+      "load_seconds": 3.931822938,
+      "process_hwm_kib_before_validation": 2499824,
+      "train_cpu_seconds": 32.711374,
+      "train_seconds": 10.14843318
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b2-tree/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "bytelevel_regex",
+    "block": 2,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/baseline",
+      "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b2-baseline/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/baseline",
+      "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b2-baseline/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2459148,
+    "subprocess_wall": 14.683443653018912,
+    "attempt_id": "core-bytelevel_regex-b2-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "bytelevel_regex",
+    "metrics": {
+      "load_seconds": 3.914431977,
+      "process_hwm_kib_before_validation": 2461088,
+      "train_cpu_seconds": 31.426879000000003,
+      "train_seconds": 9.649641993
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b2-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "bytelevel_regex",
+    "block": 2,
+    "arm": "core",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/core",
+      "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b2-core/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/core",
+      "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b2-core/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2445464,
+    "subprocess_wall": 15.035842896992108,
+    "attempt_id": "core-bytelevel_regex-b2-core",
+    "build_id": "core",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "bytelevel_regex",
+    "metrics": {
+      "load_seconds": 3.8958559900000003,
+      "process_hwm_kib_before_validation": 2447144,
+      "train_cpu_seconds": 32.659342,
+      "train_seconds": 10.009549089
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-bytelevel_regex-b2-core/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "valid": true
+  },
+  {
+    "case": "whitespace",
+    "block": 0,
+    "arm": "baseline",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/baseline",
+      "/tmp/bpe-std-logic-results/measurements/core-whitespace-b0-baseline/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/baseline",
+      "/tmp/bpe-std-logic-results/measurements/core-whitespace-b0-baseline/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1858484,
+    "subprocess_wall": 11.885478863987373,
+    "attempt_id": "core-whitespace-b0-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "whitespace",
+    "metrics": {
+      "load_seconds": 2.714386085,
+      "process_hwm_kib_before_validation": 1858360,
+      "train_cpu_seconds": 24.444048,
+      "train_seconds": 8.49718784
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-whitespace-b0-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "whitespace",
+    "block": 0,
+    "arm": "core",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/core",
+      "/tmp/bpe-std-logic-results/measurements/core-whitespace-b0-core/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/core",
+      "/tmp/bpe-std-logic-results/measurements/core-whitespace-b0-core/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1839800,
+    "subprocess_wall": 11.935429502977058,
+    "attempt_id": "core-whitespace-b0-core",
+    "build_id": "core",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "whitespace",
+    "metrics": {
+      "load_seconds": 2.7072075939999998,
+      "process_hwm_kib_before_validation": 1842220,
+      "train_cpu_seconds": 24.694211,
+      "train_seconds": 8.558002582
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-whitespace-b0-core/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "whitespace",
+    "block": 0,
+    "arm": "deque",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/deque",
+      "/tmp/bpe-std-logic-results/measurements/core-whitespace-b0-deque/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/deque",
+      "/tmp/bpe-std-logic-results/measurements/core-whitespace-b0-deque/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1833036,
+    "subprocess_wall": 11.934381525003118,
+    "attempt_id": "core-whitespace-b0-deque",
+    "build_id": "deque",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "whitespace",
+    "metrics": {
+      "load_seconds": 2.702547174,
+      "process_hwm_kib_before_validation": 1834592,
+      "train_cpu_seconds": 24.89779,
+      "train_seconds": 8.583548852
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-whitespace-b0-deque/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "whitespace",
+    "block": 0,
+    "arm": "tree",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/tree",
+      "/tmp/bpe-std-logic-results/measurements/core-whitespace-b0-tree/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/tree",
+      "/tmp/bpe-std-logic-results/measurements/core-whitespace-b0-tree/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1854084,
+    "subprocess_wall": 11.93383797898423,
+    "attempt_id": "core-whitespace-b0-tree",
+    "build_id": "tree",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "whitespace",
+    "metrics": {
+      "load_seconds": 2.709527632,
+      "process_hwm_kib_before_validation": 1854408,
+      "train_cpu_seconds": 24.855448,
+      "train_seconds": 8.569115773
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-whitespace-b0-tree/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "whitespace",
+    "block": 1,
+    "arm": "core",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/core",
+      "/tmp/bpe-std-logic-results/measurements/core-whitespace-b1-core/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/core",
+      "/tmp/bpe-std-logic-results/measurements/core-whitespace-b1-core/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1857720,
+    "subprocess_wall": 11.909556979022454,
+    "attempt_id": "core-whitespace-b1-core",
+    "build_id": "core",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "whitespace",
+    "metrics": {
+      "load_seconds": 2.688946253,
+      "process_hwm_kib_before_validation": 1857540,
+      "train_cpu_seconds": 24.641631,
+      "train_seconds": 8.549818154
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-whitespace-b1-core/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "whitespace",
+    "block": 1,
+    "arm": "deque",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/deque",
+      "/tmp/bpe-std-logic-results/measurements/core-whitespace-b1-deque/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/deque",
+      "/tmp/bpe-std-logic-results/measurements/core-whitespace-b1-deque/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1838416,
+    "subprocess_wall": 11.808320975018432,
+    "attempt_id": "core-whitespace-b1-deque",
+    "build_id": "deque",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "whitespace",
+    "metrics": {
+      "load_seconds": 2.693077081,
+      "process_hwm_kib_before_validation": 1841428,
+      "train_cpu_seconds": 24.480927,
+      "train_seconds": 8.451219988
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-whitespace-b1-deque/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "whitespace",
+    "block": 1,
+    "arm": "tree",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/tree",
+      "/tmp/bpe-std-logic-results/measurements/core-whitespace-b1-tree/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/tree",
+      "/tmp/bpe-std-logic-results/measurements/core-whitespace-b1-tree/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1839524,
+    "subprocess_wall": 12.009420885005966,
+    "attempt_id": "core-whitespace-b1-tree",
+    "build_id": "tree",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "whitespace",
+    "metrics": {
+      "load_seconds": 2.708735074,
+      "process_hwm_kib_before_validation": 1840708,
+      "train_cpu_seconds": 24.875037000000003,
+      "train_seconds": 8.6292045
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-whitespace-b1-tree/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "whitespace",
+    "block": 1,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/baseline",
+      "/tmp/bpe-std-logic-results/measurements/core-whitespace-b1-baseline/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/baseline",
+      "/tmp/bpe-std-logic-results/measurements/core-whitespace-b1-baseline/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1857144,
+    "subprocess_wall": 11.83165732899215,
+    "attempt_id": "core-whitespace-b1-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "whitespace",
+    "metrics": {
+      "load_seconds": 2.708085295,
+      "process_hwm_kib_before_validation": 1856996,
+      "train_cpu_seconds": 24.527126,
+      "train_seconds": 8.471984436
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-whitespace-b1-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "whitespace",
+    "block": 2,
+    "arm": "deque",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/deque",
+      "/tmp/bpe-std-logic-results/measurements/core-whitespace-b2-deque/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/deque",
+      "/tmp/bpe-std-logic-results/measurements/core-whitespace-b2-deque/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1840948,
+    "subprocess_wall": 12.05962906399509,
+    "attempt_id": "core-whitespace-b2-deque",
+    "build_id": "deque",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "whitespace",
+    "metrics": {
+      "load_seconds": 2.711620732,
+      "process_hwm_kib_before_validation": 1841372,
+      "train_cpu_seconds": 24.803328,
+      "train_seconds": 8.684562944
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-whitespace-b2-deque/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "whitespace",
+    "block": 2,
+    "arm": "tree",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/tree",
+      "/tmp/bpe-std-logic-results/measurements/core-whitespace-b2-tree/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/tree",
+      "/tmp/bpe-std-logic-results/measurements/core-whitespace-b2-tree/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1836312,
+    "subprocess_wall": 11.958670154010179,
+    "attempt_id": "core-whitespace-b2-tree",
+    "build_id": "tree",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "whitespace",
+    "metrics": {
+      "load_seconds": 2.70958176,
+      "process_hwm_kib_before_validation": 1840904,
+      "train_cpu_seconds": 24.721632,
+      "train_seconds": 8.56931004
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-whitespace-b2-tree/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "whitespace",
+    "block": 2,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/baseline",
+      "/tmp/bpe-std-logic-results/measurements/core-whitespace-b2-baseline/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/baseline",
+      "/tmp/bpe-std-logic-results/measurements/core-whitespace-b2-baseline/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1838224,
+    "subprocess_wall": 11.807336729980307,
+    "attempt_id": "core-whitespace-b2-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "whitespace",
+    "metrics": {
+      "load_seconds": 2.703271493,
+      "process_hwm_kib_before_validation": 1840180,
+      "train_cpu_seconds": 24.16086,
+      "train_seconds": 8.428500409
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-whitespace-b2-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "whitespace",
+    "block": 2,
+    "arm": "core",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/core",
+      "/tmp/bpe-std-logic-results/measurements/core-whitespace-b2-core/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/core",
+      "/tmp/bpe-std-logic-results/measurements/core-whitespace-b2-core/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1843224,
+    "subprocess_wall": 12.0091284539958,
+    "attempt_id": "core-whitespace-b2-core",
+    "build_id": "core",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "whitespace",
+    "metrics": {
+      "load_seconds": 2.734108644,
+      "process_hwm_kib_before_validation": 1843272,
+      "train_cpu_seconds": 24.749572,
+      "train_seconds": 8.628787891
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-whitespace-b2-core/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "valid": true
+  },
+  {
+    "case": "aa-neighbors",
+    "block": 0,
+    "arm": "baseline",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/baseline",
+      "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b0-baseline/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/baseline",
+      "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b0-baseline/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 81084,
+    "subprocess_wall": 0.4289969860110432,
+    "attempt_id": "core-aa-neighbors-b0-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "aa-neighbors",
+    "metrics": {
+      "load_seconds": 0.020443602,
+      "process_hwm_kib_before_validation": 83424,
+      "train_cpu_seconds": 1.126863,
+      "train_seconds": 0.396119493
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 151,
+      "actual_vocab": 2200,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b0-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "cbd29ec36b0ca803ff201fd71552210bd3bbee9c083ca456404ef110a93b9b28",
+    "valid": true
+  },
+  {
+    "case": "aa-neighbors",
+    "block": 0,
+    "arm": "core",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/core",
+      "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b0-core/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/core",
+      "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b0-core/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 82076,
+    "subprocess_wall": 0.42900513199856505,
+    "attempt_id": "core-aa-neighbors-b0-core",
+    "build_id": "core",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "aa-neighbors",
+    "metrics": {
+      "load_seconds": 0.020387706,
+      "process_hwm_kib_before_validation": 84060,
+      "train_cpu_seconds": 1.096953,
+      "train_seconds": 0.389381406
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 151,
+      "actual_vocab": 2200,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b0-core/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "cbd29ec36b0ca803ff201fd71552210bd3bbee9c083ca456404ef110a93b9b28",
+    "valid": true
+  },
+  {
+    "case": "aa-neighbors",
+    "block": 0,
+    "arm": "deque",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/deque",
+      "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b0-deque/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/deque",
+      "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b0-deque/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 82792,
+    "subprocess_wall": 0.42889902999741025,
+    "attempt_id": "core-aa-neighbors-b0-deque",
+    "build_id": "deque",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "aa-neighbors",
+    "metrics": {
+      "load_seconds": 0.020383604,
+      "process_hwm_kib_before_validation": 85320,
+      "train_cpu_seconds": 1.1066859999999998,
+      "train_seconds": 0.385380022
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 151,
+      "actual_vocab": 2200,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b0-deque/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "cbd29ec36b0ca803ff201fd71552210bd3bbee9c083ca456404ef110a93b9b28",
+    "valid": true
+  },
+  {
+    "case": "aa-neighbors",
+    "block": 0,
+    "arm": "tree",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/tree",
+      "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b0-tree/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/tree",
+      "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b0-tree/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 81304,
+    "subprocess_wall": 0.4290269810007885,
+    "attempt_id": "core-aa-neighbors-b0-tree",
+    "build_id": "tree",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "aa-neighbors",
+    "metrics": {
+      "load_seconds": 0.020401053,
+      "process_hwm_kib_before_validation": 82812,
+      "train_cpu_seconds": 1.089783,
+      "train_seconds": 0.386929705
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 151,
+      "actual_vocab": 2200,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b0-tree/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "cbd29ec36b0ca803ff201fd71552210bd3bbee9c083ca456404ef110a93b9b28",
+    "valid": true
+  },
+  {
+    "case": "aa-neighbors",
+    "block": 1,
+    "arm": "core",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/core",
+      "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b1-core/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/core",
+      "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b1-core/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 80932,
+    "subprocess_wall": 0.429116459999932,
+    "attempt_id": "core-aa-neighbors-b1-core",
+    "build_id": "core",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "aa-neighbors",
+    "metrics": {
+      "load_seconds": 0.020417123,
+      "process_hwm_kib_before_validation": 81984,
+      "train_cpu_seconds": 1.094059,
+      "train_seconds": 0.390581949
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 151,
+      "actual_vocab": 2200,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b1-core/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "cbd29ec36b0ca803ff201fd71552210bd3bbee9c083ca456404ef110a93b9b28",
+    "valid": true
+  },
+  {
+    "case": "aa-neighbors",
+    "block": 1,
+    "arm": "deque",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/deque",
+      "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b1-deque/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/deque",
+      "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b1-deque/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 80644,
+    "subprocess_wall": 0.4290644919965416,
+    "attempt_id": "core-aa-neighbors-b1-deque",
+    "build_id": "deque",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "aa-neighbors",
+    "metrics": {
+      "load_seconds": 0.020525267,
+      "process_hwm_kib_before_validation": 82128,
+      "train_cpu_seconds": 1.102351,
+      "train_seconds": 0.389460975
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 151,
+      "actual_vocab": 2200,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b1-deque/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "cbd29ec36b0ca803ff201fd71552210bd3bbee9c083ca456404ef110a93b9b28",
+    "valid": true
+  },
+  {
+    "case": "aa-neighbors",
+    "block": 1,
+    "arm": "tree",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/tree",
+      "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b1-tree/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/tree",
+      "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b1-tree/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 78648,
+    "subprocess_wall": 0.4288813569874037,
+    "attempt_id": "core-aa-neighbors-b1-tree",
+    "build_id": "tree",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "aa-neighbors",
+    "metrics": {
+      "load_seconds": 0.020375937,
+      "process_hwm_kib_before_validation": 78268,
+      "train_cpu_seconds": 1.115451,
+      "train_seconds": 0.3987724
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 151,
+      "actual_vocab": 2200,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b1-tree/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "cbd29ec36b0ca803ff201fd71552210bd3bbee9c083ca456404ef110a93b9b28",
+    "valid": true
+  },
+  {
+    "case": "aa-neighbors",
+    "block": 1,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/baseline",
+      "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b1-baseline/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/baseline",
+      "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b1-baseline/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 84312,
+    "subprocess_wall": 0.4540850539924577,
+    "attempt_id": "core-aa-neighbors-b1-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "aa-neighbors",
+    "metrics": {
+      "load_seconds": 0.020639149,
+      "process_hwm_kib_before_validation": 84480,
+      "train_cpu_seconds": 1.118586,
+      "train_seconds": 0.405898604
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 151,
+      "actual_vocab": 2200,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b1-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "cbd29ec36b0ca803ff201fd71552210bd3bbee9c083ca456404ef110a93b9b28",
+    "valid": true
+  },
+  {
+    "case": "aa-neighbors",
+    "block": 2,
+    "arm": "deque",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/deque",
+      "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b2-deque/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/deque",
+      "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b2-deque/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 88708,
+    "subprocess_wall": 0.4290842500049621,
+    "attempt_id": "core-aa-neighbors-b2-deque",
+    "build_id": "deque",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "aa-neighbors",
+    "metrics": {
+      "load_seconds": 0.020463725,
+      "process_hwm_kib_before_validation": 88504,
+      "train_cpu_seconds": 1.093634,
+      "train_seconds": 0.388174846
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 151,
+      "actual_vocab": 2200,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b2-deque/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "cbd29ec36b0ca803ff201fd71552210bd3bbee9c083ca456404ef110a93b9b28",
+    "valid": true
+  },
+  {
+    "case": "aa-neighbors",
+    "block": 2,
+    "arm": "tree",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/tree",
+      "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b2-tree/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/tree",
+      "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b2-tree/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 81328,
+    "subprocess_wall": 0.4539786220120732,
+    "attempt_id": "core-aa-neighbors-b2-tree",
+    "build_id": "tree",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "aa-neighbors",
+    "metrics": {
+      "load_seconds": 0.020356817,
+      "process_hwm_kib_before_validation": 80960,
+      "train_cpu_seconds": 1.196241,
+      "train_seconds": 0.423896159
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 151,
+      "actual_vocab": 2200,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b2-tree/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "cbd29ec36b0ca803ff201fd71552210bd3bbee9c083ca456404ef110a93b9b28",
+    "valid": true
+  },
+  {
+    "case": "aa-neighbors",
+    "block": 2,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/baseline",
+      "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b2-baseline/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/baseline",
+      "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b2-baseline/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 83064,
+    "subprocess_wall": 0.4287722559820395,
+    "attempt_id": "core-aa-neighbors-b2-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "aa-neighbors",
+    "metrics": {
+      "load_seconds": 0.020379789,
+      "process_hwm_kib_before_validation": 84280,
+      "train_cpu_seconds": 1.078691,
+      "train_seconds": 0.392590179
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 151,
+      "actual_vocab": 2200,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b2-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "cbd29ec36b0ca803ff201fd71552210bd3bbee9c083ca456404ef110a93b9b28",
+    "valid": true
+  },
+  {
+    "case": "aa-neighbors",
+    "block": 2,
+    "arm": "core",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/core",
+      "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b2-core/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/core",
+      "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b2-core/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 81948,
+    "subprocess_wall": 0.42906681800377555,
+    "attempt_id": "core-aa-neighbors-b2-core",
+    "build_id": "core",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "aa-neighbors",
+    "metrics": {
+      "load_seconds": 0.02074639,
+      "process_hwm_kib_before_validation": 84296,
+      "train_cpu_seconds": 1.1148749999999998,
+      "train_seconds": 0.397197947
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 151,
+      "actual_vocab": 2200,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-aa-neighbors-b2-core/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "cbd29ec36b0ca803ff201fd71552210bd3bbee9c083ca456404ef110a93b9b28",
+    "valid": true
+  },
+  {
+    "case": "reuse-affix",
+    "block": 0,
+    "arm": "baseline",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/baseline",
+      "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b0-baseline/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/baseline",
+      "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b0-baseline/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 229032,
+    "subprocess_wall": 0.6314127999939956,
+    "attempt_id": "core-reuse-affix-b0-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "reuse-affix",
+    "metrics": {
+      "load_seconds": 0.029524673,
+      "process_hwm_kib_before_validation": 231080,
+      "train_cpu_seconds": 0.9958270000000001,
+      "train_seconds": 0.567518933
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 167,
+      "actual_vocab": 180,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b0-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "a1bf82da5f64d1ac8b6b2a163ecc2a1f645f8b81fad17c32f3ebd267fec106a6",
+    "valid": true
+  },
+  {
+    "case": "reuse-affix",
+    "block": 0,
+    "arm": "core",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/core",
+      "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b0-core/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/core",
+      "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b0-core/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 193572,
+    "subprocess_wall": 0.6309256860113237,
+    "attempt_id": "core-reuse-affix-b0-core",
+    "build_id": "core",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "reuse-affix",
+    "metrics": {
+      "load_seconds": 0.029513036,
+      "process_hwm_kib_before_validation": 229448,
+      "train_cpu_seconds": 1.020197,
+      "train_seconds": 0.577633109
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 167,
+      "actual_vocab": 180,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b0-core/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "a1bf82da5f64d1ac8b6b2a163ecc2a1f645f8b81fad17c32f3ebd267fec106a6",
+    "valid": true
+  },
+  {
+    "case": "reuse-affix",
+    "block": 0,
+    "arm": "deque",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/deque",
+      "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b0-deque/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/deque",
+      "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b0-deque/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 229496,
+    "subprocess_wall": 0.6312164569972083,
+    "attempt_id": "core-reuse-affix-b0-deque",
+    "build_id": "deque",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "reuse-affix",
+    "metrics": {
+      "load_seconds": 0.029774575,
+      "process_hwm_kib_before_validation": 229496,
+      "train_cpu_seconds": 1.029381,
+      "train_seconds": 0.588082187
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 167,
+      "actual_vocab": 180,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b0-deque/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "a1bf82da5f64d1ac8b6b2a163ecc2a1f645f8b81fad17c32f3ebd267fec106a6",
+    "valid": true
+  },
+  {
+    "case": "reuse-affix",
+    "block": 0,
+    "arm": "tree",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/tree",
+      "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b0-tree/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/tree",
+      "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b0-tree/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 193560,
+    "subprocess_wall": 0.6314916299888864,
+    "attempt_id": "core-reuse-affix-b0-tree",
+    "build_id": "tree",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "reuse-affix",
+    "metrics": {
+      "load_seconds": 0.029695305,
+      "process_hwm_kib_before_validation": 229352,
+      "train_cpu_seconds": 1.027517,
+      "train_seconds": 0.580574369
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 167,
+      "actual_vocab": 180,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b0-tree/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "a1bf82da5f64d1ac8b6b2a163ecc2a1f645f8b81fad17c32f3ebd267fec106a6",
+    "valid": true
+  },
+  {
+    "case": "reuse-affix",
+    "block": 1,
+    "arm": "core",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/core",
+      "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b1-core/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/core",
+      "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b1-core/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 195720,
+    "subprocess_wall": 0.6311052220116835,
+    "attempt_id": "core-reuse-affix-b1-core",
+    "build_id": "core",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "reuse-affix",
+    "metrics": {
+      "load_seconds": 0.029632309,
+      "process_hwm_kib_before_validation": 231452,
+      "train_cpu_seconds": 1.0277489999999998,
+      "train_seconds": 0.580361665
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 167,
+      "actual_vocab": 180,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b1-core/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "a1bf82da5f64d1ac8b6b2a163ecc2a1f645f8b81fad17c32f3ebd267fec106a6",
+    "valid": true
+  },
+  {
+    "case": "reuse-affix",
+    "block": 1,
+    "arm": "deque",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/deque",
+      "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b1-deque/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/deque",
+      "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b1-deque/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 193616,
+    "subprocess_wall": 0.6312926100217737,
+    "attempt_id": "core-reuse-affix-b1-deque",
+    "build_id": "deque",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "reuse-affix",
+    "metrics": {
+      "load_seconds": 0.029590384,
+      "process_hwm_kib_before_validation": 229476,
+      "train_cpu_seconds": 1.026748,
+      "train_seconds": 0.579207262
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 167,
+      "actual_vocab": 180,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b1-deque/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "a1bf82da5f64d1ac8b6b2a163ecc2a1f645f8b81fad17c32f3ebd267fec106a6",
+    "valid": true
+  },
+  {
+    "case": "reuse-affix",
+    "block": 1,
+    "arm": "tree",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/tree",
+      "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b1-tree/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/tree",
+      "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b1-tree/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 193620,
+    "subprocess_wall": 0.631213555985596,
+    "attempt_id": "core-reuse-affix-b1-tree",
+    "build_id": "tree",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "reuse-affix",
+    "metrics": {
+      "load_seconds": 0.029464923,
+      "process_hwm_kib_before_validation": 229488,
+      "train_cpu_seconds": 1.031924,
+      "train_seconds": 0.584934406
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 167,
+      "actual_vocab": 180,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b1-tree/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "a1bf82da5f64d1ac8b6b2a163ecc2a1f645f8b81fad17c32f3ebd267fec106a6",
+    "valid": true
+  },
+  {
+    "case": "reuse-affix",
+    "block": 1,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/baseline",
+      "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b1-baseline/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/baseline",
+      "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b1-baseline/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 200764,
+    "subprocess_wall": 0.6310042960103601,
+    "attempt_id": "core-reuse-affix-b1-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "reuse-affix",
+    "metrics": {
+      "load_seconds": 0.029638915,
+      "process_hwm_kib_before_validation": 229484,
+      "train_cpu_seconds": 0.991467,
+      "train_seconds": 0.570689179
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 167,
+      "actual_vocab": 180,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b1-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "a1bf82da5f64d1ac8b6b2a163ecc2a1f645f8b81fad17c32f3ebd267fec106a6",
+    "valid": true
+  },
+  {
+    "case": "reuse-affix",
+    "block": 2,
+    "arm": "deque",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/deque",
+      "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b2-deque/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/deque",
+      "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b2-deque/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 184108,
+    "subprocess_wall": 0.6309647389862221,
+    "attempt_id": "core-reuse-affix-b2-deque",
+    "build_id": "deque",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "reuse-affix",
+    "metrics": {
+      "load_seconds": 0.029513283,
+      "process_hwm_kib_before_validation": 231348,
+      "train_cpu_seconds": 1.023288,
+      "train_seconds": 0.575205932
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 167,
+      "actual_vocab": 180,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b2-deque/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "a1bf82da5f64d1ac8b6b2a163ecc2a1f645f8b81fad17c32f3ebd267fec106a6",
+    "valid": true
+  },
+  {
+    "case": "reuse-affix",
+    "block": 2,
+    "arm": "tree",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/tree",
+      "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b2-tree/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/tree",
+      "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b2-tree/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 194232,
+    "subprocess_wall": 0.631058758997824,
+    "attempt_id": "core-reuse-affix-b2-tree",
+    "build_id": "tree",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "reuse-affix",
+    "metrics": {
+      "load_seconds": 0.029626441,
+      "process_hwm_kib_before_validation": 231112,
+      "train_cpu_seconds": 1.029769,
+      "train_seconds": 0.582667343
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 167,
+      "actual_vocab": 180,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b2-tree/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "a1bf82da5f64d1ac8b6b2a163ecc2a1f645f8b81fad17c32f3ebd267fec106a6",
+    "valid": true
+  },
+  {
+    "case": "reuse-affix",
+    "block": 2,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/baseline",
+      "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b2-baseline/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/baseline",
+      "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b2-baseline/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 198512,
+    "subprocess_wall": 0.6311478799907491,
+    "attempt_id": "core-reuse-affix-b2-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "reuse-affix",
+    "metrics": {
+      "load_seconds": 0.029633106,
+      "process_hwm_kib_before_validation": 229448,
+      "train_cpu_seconds": 0.9941600000000002,
+      "train_seconds": 0.567934683
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 167,
+      "actual_vocab": 180,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b2-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "a1bf82da5f64d1ac8b6b2a163ecc2a1f645f8b81fad17c32f3ebd267fec106a6",
+    "valid": true
+  },
+  {
+    "case": "reuse-affix",
+    "block": 2,
+    "arm": "core",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/core",
+      "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b2-core/job.json"
+    ],
+    "runner_command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-std-logic-results/core",
+      "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b2-core/job.json"
+    ],
+    "perf_enabled": false,
+    "concurrent_builds_or_benchmarks": [],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 193604,
+    "subprocess_wall": 0.6312506519898307,
+    "attempt_id": "core-reuse-affix-b2-core",
+    "build_id": "core",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "reuse-affix",
+    "metrics": {
+      "load_seconds": 0.029665977,
+      "process_hwm_kib_before_validation": 229460,
+      "train_cpu_seconds": 1.022573,
+      "train_seconds": 0.583777994
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 167,
+      "actual_vocab": 180,
+      "model_path": "/tmp/bpe-std-logic-results/measurements/core-reuse-affix-b2-core/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4,
+    "model_equal": true,
+    "model_sha256": "a1bf82da5f64d1ac8b6b2a163ecc2a1f645f8b81fad17c32f3ebd267fec106a6",
+    "valid": true
+  }
+]

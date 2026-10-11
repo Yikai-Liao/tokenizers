@@ -1,0 +1,44 @@
+[
+  {
+    "case": "aa-neighbors",
+    "path": "/tmp/bpe-std-logic-results/aa-neighbors-words.json",
+    "prepared_path": "/tmp/bpe-std-logic-results/aa-neighbors-words.json",
+    "prepared_sha256": "1fc83aba653c0775a8ca6323f1456d1914179518516f20f35d398b8447085f9f",
+    "pretokenizer": "none",
+    "trainer": {
+      "vocab_size": 2200,
+      "min_frequency": 2,
+      "prefix": null,
+      "suffix": null,
+      "max_token_length": null
+    }
+  },
+  {
+    "case": "reuse-affix",
+    "path": "/tmp/bpe-std-logic-results/reuse-affix-words.json",
+    "prepared_path": "/tmp/bpe-std-logic-results/reuse-affix-words.json",
+    "prepared_sha256": "dd39299f6699ae1a1052d6db0bda6502ec2f009dd7916a90b48ba2127349c0ac",
+    "pretokenizer": "none",
+    "trainer": {
+      "vocab_size": 180,
+      "min_frequency": 1,
+      "prefix": null,
+      "suffix": "a",
+      "max_token_length": null
+    }
+  },
+  {
+    "case": "reuse-find",
+    "path": "/tmp/bpe-std-logic-results/reuse-find-words.json",
+    "prepared_path": "/tmp/bpe-std-logic-results/reuse-find-words.json",
+    "prepared_sha256": "fc48952a851a251b9590b5ab0925edda20b605ec043411ee16d15cc9d933e005",
+    "pretokenizer": "none",
+    "trainer": {
+      "vocab_size": 180,
+      "min_frequency": 1,
+      "prefix": null,
+      "suffix": "a",
+      "max_token_length": null
+    }
+  }
+]

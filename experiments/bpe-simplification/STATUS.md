@@ -8,6 +8,40 @@ and [the flattening report](FLATTEN.md) for validation and scoped diffs against
 HF main and the starting revision. Counts are descriptive; hard line limits
 have been retired. Earlier counts and limits below describe historical snapshots.
 
+## Standard and existing-library logic replacements, 2026-10-11
+
+The ordinary trainer now shares a filtered symbols iterator for edge counting and
+materialization, uses `find` for cohort scans, `VecDeque` for the 16-position
+lookahead, and `BTreeMap` to publish partial groups in bucket/pair order. Rayon
+bitmap reduction, fixed-chunk restart seed slicing and `partition_point` segment
+boundaries replace their local collection/search protocols. Production source
+falls from 2543 to 2516 nonblank, noncomment lines; boundary tests are added.
+Parity Trainer is excluded at the user's request.
+
+A seven-arm screen compares Chinese and English 256 MiB corpora with ByteLevel
+and Whitespace counts. A separately measured final combination has paired wall
+changes +2.29%, +1.24%, −0.12% and +0.52%, respectively; paired CPU changes are
++2.47%, +1.67%, −0.67% and −1.16%. The user prioritizes real-corpus performance
+and accepts small time increases for reduced maintenance cost. English ByteLevel
+HWM is about 12 MiB higher (+6.92% paired); other paired real-input HWM changes
+remain within 0.4%. No stable speedup or memory saving is claimed.
+
+An isolated ArrayDeque 0.5.1 follow-up shows no consistent real-corpus advantage
+over VecDeque. The user prefers VecDeque when performance is similar, so the
+standard-library queue is retained with no new dependency. Initial fill takes at
+most 16 entries and each refill follows a pop, preserving the length bound.
+The segment search has a worse small-budget/oversized-word synthetic case;
+real training and clearer use of ordered boundaries support retaining it.
+
+All 214 measured processes, including the initial and directed screens, produce
+the complete reference model with zero sampled swap. Default and no-default
+library checks each pass 35 tests after excluding the previously reproduced
+encoder roundtrip failure; the unfiltered default result remains 35 passes and
+that one failure. All-target Clippy with warnings denied, changed-file formatting
+and whitespace checks pass. Independent patches, frozen source/dependency hashes,
+raw jobs, microbenchmarks and results are in
+[the standard-logic report](evidence/std-logic-20261011/README.md).
+
 ## Serde delegation and state simplification, 2026-10-10
 
 The final implementation retains WordCounts Map.serialize and Entries.collect_map

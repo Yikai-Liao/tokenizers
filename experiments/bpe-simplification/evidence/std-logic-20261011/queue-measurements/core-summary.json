@@ -1,0 +1,86 @@
+[
+  {
+    "case": "bytelevel_regex",
+    "deque": {
+      "train_seconds": 9.734383477000002,
+      "train_cpu_seconds": 31.585175,
+      "process_hwm_kib_before_validation": 2477882.0
+    },
+    "arraydeque": {
+      "train_seconds": 9.8856924395,
+      "train_cpu_seconds": 32.137915,
+      "process_hwm_kib_before_validation": 2483220.0
+    },
+    "reference": "deque",
+    "paired_median_delta_percent": {
+      "arraydeque": {
+        "train_seconds": 1.556538081269454,
+        "train_cpu_seconds": 1.7528492485414993,
+        "process_hwm_kib_before_validation": 0.21589599677210858
+      }
+    }
+  },
+  {
+    "case": "whitespace",
+    "deque": {
+      "train_seconds": 8.526632338999999,
+      "train_cpu_seconds": 24.575528499999997,
+      "process_hwm_kib_before_validation": 1840674.0
+    },
+    "arraydeque": {
+      "train_seconds": 8.490804491,
+      "train_cpu_seconds": 24.434632,
+      "process_hwm_kib_before_validation": 1840006.0
+    },
+    "reference": "deque",
+    "paired_median_delta_percent": {
+      "arraydeque": {
+        "train_seconds": -0.4184998640535509,
+        "train_cpu_seconds": -0.5688557500724944,
+        "process_hwm_kib_before_validation": -0.036271411872118575
+      }
+    }
+  },
+  {
+    "case": "en-bytelevel_regex",
+    "deque": {
+      "train_seconds": 0.852391303,
+      "train_cpu_seconds": 2.0026539999999997,
+      "process_hwm_kib_before_validation": 177290.0
+    },
+    "arraydeque": {
+      "train_seconds": 0.8489275195,
+      "train_cpu_seconds": 1.9852784999999997,
+      "process_hwm_kib_before_validation": 177368.0
+    },
+    "reference": "deque",
+    "paired_median_delta_percent": {
+      "arraydeque": {
+        "train_seconds": -0.40234523647347253,
+        "train_cpu_seconds": -0.8701066392242218,
+        "process_hwm_kib_before_validation": 0.04448091838378243
+      }
+    }
+  },
+  {
+    "case": "en-whitespace",
+    "deque": {
+      "train_seconds": 0.775004993,
+      "train_cpu_seconds": 1.824224,
+      "process_hwm_kib_before_validation": 160318.0
+    },
+    "arraydeque": {
+      "train_seconds": 0.770747224,
+      "train_cpu_seconds": 1.7814135000000002,
+      "process_hwm_kib_before_validation": 165934.0
+    },
+    "reference": "deque",
+    "paired_median_delta_percent": {
+      "arraydeque": {
+        "train_seconds": -0.5421329111880202,
+        "train_cpu_seconds": -2.346628086576452,
+        "process_hwm_kib_before_validation": 3.532374670752192
+      }
+    }
+  }
+]
