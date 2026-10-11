@@ -195,9 +195,11 @@ impl Vocabulary {
         (add_prefix, add_suffix): (bool, bool),
         decorated: &mut String,
     ) -> Result<u32> {
-        let Some(slot) = decoration_slot(add_prefix, add_suffix) else {
+        let flags = usize::from(add_prefix) | (usize::from(add_suffix) << 1);
+        if flags == 0 {
             return Ok(plain_id);
-        };
+        }
+        let slot = flags - 1;
         let cached = ids.decorated[plain_id as usize][slot];
         if cached != WORD_SEPARATOR_ID {
             return Ok(cached);
@@ -315,20 +317,12 @@ impl InitialTokenIds {
         }
         let add_prefix = self.prefix && !first;
         let add_suffix = self.suffix && last;
-        Some(match decoration_slot(add_prefix, add_suffix) {
-            None => plain,
-            Some(slot) => self.decorated[plain as usize][slot],
+        let flags = usize::from(add_prefix) | (usize::from(add_suffix) << 1);
+        Some(if flags == 0 {
+            plain
+        } else {
+            self.decorated[plain as usize][flags - 1]
         })
-    }
-}
-
-// The three cached combinations retain their existing slots and token IDs.
-fn decoration_slot(add_prefix: bool, add_suffix: bool) -> Option<usize> {
-    match (add_prefix, add_suffix) {
-        (false, false) => None,
-        (true, false) => Some(0),
-        (false, true) => Some(1),
-        (true, true) => Some(2),
     }
 }
 
