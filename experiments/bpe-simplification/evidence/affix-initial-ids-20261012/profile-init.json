@@ -1,0 +1,119 @@
+[
+  {
+    "arm": "baseline",
+    "command": [
+      "perf",
+      "stat",
+      "--all-user",
+      "-e",
+      "cycles,instructions,branches,branch-misses",
+      "-D",
+      "-1",
+      "--control",
+      "fifo:/root/code/tokenizers-workspaces/bpe-affix-initial-final-results-20261012/profile-init/baseline/control.fifo,/root/code/tokenizers-workspaces/bpe-affix-initial-final-results-20261012/profile-init/baseline/ack.fifo",
+      "-x",
+      "\t",
+      "-o",
+      "/root/code/tokenizers-workspaces/bpe-affix-initial-final-results-20261012/profile-init/baseline/counters.tsv",
+      "--",
+      "taskset",
+      "-c",
+      "0-3",
+      "/root/code/tokenizers-workspaces/bpe-affix-initial-final-results-20261012/baseline-bin",
+      "/root/code/tokenizers-workspaces/bpe-affix-initial-final-results-20261012/profile-init/baseline/job.json"
+    ],
+    "control_times": [
+      {
+        "action": "enable",
+        "sent": 1136673.850971133,
+        "acknowledged": 1136673.885094534,
+        "response": "ack\n\u0000"
+      },
+      {
+        "action": "disable",
+        "sent": 1136675.584162808,
+        "acknowledged": 1136675.584690068,
+        "response": "ack\n\u0000"
+      }
+    ],
+    "raw_counters": "# started on Mon Oct 12 03:52:56 2026\n\n4948347701\t\tcycles\t1726615925\t100.00\t\t\n5663605531\t\tinstructions\t1693163341\t100.00\t1.14\tinsn per cycle\n1059419437\t\tbranches\t1693181163\t100.00\t\t\n14659512\t\tbranch-misses\t1693237813\t100.00\t1.38\tof all branches\n"
+  },
+  {
+    "arm": "candidate",
+    "command": [
+      "perf",
+      "stat",
+      "--all-user",
+      "-e",
+      "cycles,instructions,branches,branch-misses",
+      "-D",
+      "-1",
+      "--control",
+      "fifo:/root/code/tokenizers-workspaces/bpe-affix-initial-final-results-20261012/profile-init/candidate/control.fifo,/root/code/tokenizers-workspaces/bpe-affix-initial-final-results-20261012/profile-init/candidate/ack.fifo",
+      "-x",
+      "\t",
+      "-o",
+      "/root/code/tokenizers-workspaces/bpe-affix-initial-final-results-20261012/profile-init/candidate/counters.tsv",
+      "--",
+      "taskset",
+      "-c",
+      "0-3",
+      "/root/code/tokenizers-workspaces/bpe-affix-initial-final-results-20261012/candidate-bin",
+      "/root/code/tokenizers-workspaces/bpe-affix-initial-final-results-20261012/profile-init/candidate/job.json"
+    ],
+    "control_times": [
+      {
+        "action": "enable",
+        "sent": 1136708.098488922,
+        "acknowledged": 1136708.125377537,
+        "response": "ack\n\u0000"
+      },
+      {
+        "action": "disable",
+        "sent": 1136709.873138088,
+        "acknowledged": 1136709.873503584,
+        "response": "ack\n\u0000"
+      }
+    ],
+    "raw_counters": "# started on Mon Oct 12 03:53:31 2026\n\n5124962041\t\tcycles\t1772250940\t100.00\t\t\n5467468259\t\tinstructions\t1746026860\t100.00\t1.07\tinsn per cycle\n1187279427\t\tbranches\t1745988519\t100.00\t\t\n14609572\t\tbranch-misses\t1745959928\t100.00\t1.23\tof all branches\n"
+  },
+  {
+    "arm": "flags",
+    "command": [
+      "perf",
+      "stat",
+      "--all-user",
+      "-e",
+      "cycles,instructions,branches,branch-misses",
+      "-D",
+      "-1",
+      "--control",
+      "fifo:/root/code/tokenizers-workspaces/bpe-affix-initial-final-results-20261012/profile-init/flags/control.fifo,/root/code/tokenizers-workspaces/bpe-affix-initial-final-results-20261012/profile-init/flags/ack.fifo",
+      "-x",
+      "\t",
+      "-o",
+      "/root/code/tokenizers-workspaces/bpe-affix-initial-final-results-20261012/profile-init/flags/counters.tsv",
+      "--",
+      "taskset",
+      "-c",
+      "0-3",
+      "/root/code/tokenizers-workspaces/bpe-affix-initial-final-results-20261012/flags-bin",
+      "/root/code/tokenizers-workspaces/bpe-affix-initial-final-results-20261012/profile-init/flags/job.json"
+    ],
+    "control_times": [
+      {
+        "action": "enable",
+        "sent": 1136742.318711795,
+        "acknowledged": 1136742.345155007,
+        "response": "ack\n\u0000"
+      },
+      {
+        "action": "disable",
+        "sent": 1136744.203000299,
+        "acknowledged": 1136744.203455589,
+        "response": "ack\n\u0000"
+      }
+    ],
+    "raw_counters": "# started on Mon Oct 12 03:54:04 2026\n\n5388145960\t\tcycles\t1881642903\t100.00\t\t\n5554271239\t\tinstructions\t1855873636\t100.00\t1.03\tinsn per cycle\n1052989480\t\tbranches\t1855868373\t100.00\t\t\n14804261\t\tbranch-misses\t1855862292\t100.00\t1.41\tof all branches\n"
+  }
+]

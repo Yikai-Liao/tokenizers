@@ -1,0 +1,20 @@
+{
+  "base_sha": "a2b20f329d1b4a0d39b5721f4a7a678a80d0d9b2",
+  "production_candidate_commit": "62263dbd97f7d6eb6e4d34541cf6441c032b41c1",
+  "old_flags_diagnostic_commit": "83630bd02852d28425a50707878bc5ee5c2bc713",
+  "workers": 4,
+  "cpu_affinity": "0-3",
+  "normal_binary_sha256": {
+    "baseline": "ed238f14ae017c0cd66bac940f5b6a96f4079f48ee7828cfe6686280296a8a7e",
+    "candidate": "ffd22b7fc7186b2883bef50eb3f7986d9f6b7ae45712828eafd9a43c815a33c6",
+    "flags": "4370f1c5308db3b64fca3836bd9a5906e023a2cb57951cc021eca5a366cf449d",
+    "candidate-cold": "e58fb0f587f2123ebee4669090099435c9a320a86fbadfa46af2149ad77b178e",
+    "candidate-suffix-first": "0ac229d9ea73679000479e6e5280308035327394bafe9285bdbe444903fbbc34"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "kernel": "Linux us-agent 6.12.101+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.101-1 (2026-08-05) x86_64 GNU/Linux\n",
+  "input_sha256": {
+    "zh": "ed057a8fdb27544ed29f16dde53faa0de8f47f1ee8ac00080974fac5bb435660",
+    "en": "0e146cd7d9fd31c547c84c5bfea2424bb05ae02905cf2608f4d7aa980f6bdb2d"
+  }
+}

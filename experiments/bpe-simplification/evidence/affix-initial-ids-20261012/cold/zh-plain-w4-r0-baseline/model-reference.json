@@ -1,0 +1,6 @@
+{
+  "run": "cold/zh-plain-w4-r0-baseline",
+  "sha256": "03857d37596935e431416a9f4b539f55a2859c7e6ab7a3724aefa21d7267ace4",
+  "blob": "models/03857d37596935e431416a9f4b539f55a2859c7e6ab7a3724aefa21d7267ace4.json.gz",
+  "kind": "model"
+}

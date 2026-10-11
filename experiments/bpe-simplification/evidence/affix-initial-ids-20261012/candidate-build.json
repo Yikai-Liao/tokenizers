@@ -1,0 +1,14 @@
+{
+  "arm": "candidate",
+  "command": [
+    "cargo",
+    "build",
+    "--release",
+    "--locked",
+    "--offline",
+    "--target-dir",
+    "/root/code/tokenizers-build/bpe-affix-core-build-20261011"
+  ],
+  "source_commit": "a2b20f329d1b4a0d39b5721f4a7a678a80d0d9b2",
+  "binary_sha256": "ffd22b7fc7186b2883bef50eb3f7986d9f6b7ae45712828eafd9a43c815a33c6"
+}

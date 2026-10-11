@@ -1,0 +1,1 @@
+Discarded the suffix-first condition ordering: initialization remains slower than flags in both affix languages. Restore the original private Affix constructor; no extra experimental branch in production.
