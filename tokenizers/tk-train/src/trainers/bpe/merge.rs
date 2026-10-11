@@ -3,13 +3,14 @@ use super::{
     BpeTrainer, WORD_SEPARATOR_ID, add,
     corpus::{Corpus, Match},
     index::{Candidate, PairIndex},
-    positions::{Chunk, Positions},
+    positions::Positions,
     vocabulary::Vocabulary,
 };
 use ahash::{AHashMap, AHashSet};
 use itertools::Itertools;
 use rayon::prelude::*;
 use smallvec::SmallVec;
+use std::ops::Range;
 use tk_encode::{Result, models::bpe::Pair};
 
 /// One selected pair and resolved replacement ID, owning its candidate positions.
@@ -484,8 +485,8 @@ impl<'a> FreshSnapshot<'a> {
                 }
                 FreshMatches::Ordinary(_) => {
                     let positions = &rule.candidate.positions;
-                    for chunk in positions.chunks(ordinary_chunk) {
-                        tasks.push((rank, Source::Chunk(chunk)));
+                    for range in positions.partition_ranges(ordinary_chunk) {
+                        tasks.push((rank, Source::Range(range)));
                     }
                 }
             }
@@ -512,7 +513,7 @@ impl<'a> FreshSnapshot<'a> {
         let mut writes = Writes::fresh(rule, self.corpus);
         let matcher = self.corpus.fresh_matcher(rule.pair());
         let mut weights = None;
-        for p in positions.prefetched(self.corpus) {
+        for p in positions.prefetched(&rule.candidate.positions, self.corpus) {
             let Some(matched) = matcher(p, self.corpus.token(p)) else {
                 continue;
             };
@@ -773,29 +774,34 @@ impl Writes {
     }
 }
 
-/// Borrowed task input: filtered self-pair starts or a candidate's read-only fragment.
+/// Task input: filtered self-pair starts or element indices in the task's rule.
+/// The accompanying rule rank binds each range to its immutable candidate list.
 enum Source<'a> {
     Slice(&'a [u64]),
-    Chunk(Chunk<'a>),
+    Range(Range<usize>),
 }
 
 impl Source<'_> {
     fn complete(&self, candidate_len: usize) -> bool {
         match self {
-            // Storage alignment can make a fragment exceed its target size and
+            // Storage alignment can make a range exceed its target size and
             // cover the whole candidate. Filtered AA starts remain partial even
             // when one slice contains all starts.
-            Self::Chunk(chunk) => chunk.len() == candidate_len,
+            Self::Range(range) => *range == (0..candidate_len),
             Self::Slice(_) => false,
         }
     }
 
     // Decode one bounded ring ahead. Prefetch is a nonblocking
     // hint; matching still reads the same joined preparation snapshot in order.
-    fn prefetched<'a>(&'a self, corpus: &'a Corpus) -> impl Iterator<Item = usize> + 'a {
+    fn prefetched<'a>(
+        &'a self,
+        candidate: &'a Positions,
+        corpus: &'a Corpus,
+    ) -> impl Iterator<Item = usize> + 'a {
         let coordinates = match self {
             Self::Slice(values) => itertools::Either::Left(values.iter().copied()),
-            Self::Chunk(chunk) => itertools::Either::Right(chunk.iter()),
+            Self::Range(range) => itertools::Either::Right(candidate.iter_range(range.clone())),
         };
         let mut positions = coordinates.map(move |coordinate| corpus.resident(coordinate));
         let mut ring: [Option<usize>; 16] = std::array::from_fn(|_| positions.next());
@@ -906,10 +912,10 @@ mod tests {
                 let tasks = snapshot.tasks();
                 assert_eq!(tasks.len(), expected_lengths.len());
                 for ((rank, source), expected_len) in tasks.into_iter().zip(&expected_lengths) {
-                    let Source::Chunk(chunk) = &source else {
+                    let Source::Range(range) = &source else {
                         panic!("expected ordinary positions fragment")
                     };
-                    assert_eq!(chunk.len(), *expected_len);
+                    assert_eq!(range.len(), *expected_len);
                     let complete = expected_lengths.len() == 1;
                     assert_eq!(source.complete(repetitions), complete);
                     let job = snapshot

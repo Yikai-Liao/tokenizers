@@ -1,0 +1,61 @@
+{
+  "baseline_commit": "c8e7348e890d45dd06aadc8464e085df8bcb1202",
+  "no_default_features": {
+    "command": "cargo test --offline --locked --manifest-path tokenizers/tk-train/Cargo.toml --no-default-features --lib -- --skip feed_training_tokenizer_json_and_encoding_roundtrip",
+    "passed": 30,
+    "failed": 0,
+    "excluded": 1
+  },
+  "default_features": {
+    "command": "cargo test --offline --locked --manifest-path tokenizers/tk-train/Cargo.toml --lib -- --skip feed_training_tokenizer_json_and_encoding_roundtrip",
+    "passed": 30,
+    "failed": 0,
+    "excluded": 1
+  },
+  "native_codec_harness": {
+    "command": "cargo test --locked --manifest-path experiments/bpe-simplification/miri-codec/Cargo.toml",
+    "passed": 5,
+    "failed": 0,
+    "offline_retry_reason": "thread_local was not cached; the locked online retry passed"
+  },
+  "miri": {
+    "run": false,
+    "reason": "rustup and cargo-miri are unavailable in the current PATH; the same harness was tested natively."
+  },
+  "clippy": {
+    "command": "cargo clippy --offline --locked --manifest-path tokenizers/tk-train/Cargo.toml --no-default-features --all-targets -- -D warnings",
+    "exit_code": 0
+  },
+  "format": {
+    "command": "uv run experiments/bpe-simplification/format-changed.py --check tokenizers/tk-train/src/trainers/bpe/positions.rs tokenizers/tk-train/src/trainers/bpe/merge.rs",
+    "exit_code": 0
+  },
+  "whitespace": {
+    "command": "git diff --check",
+    "exit_code": 0
+  },
+  "unfiltered_library_run": {
+    "passed": 30,
+    "failed": 1,
+    "existing_failure": "feed_training_tokenizer_json_and_encoding_roundtrip: input 测, actual PipelineToken(3), expected ID 4",
+    "baseline_evidence": "../trainer-interface-20261011/README.md and validation.json reproduce this existing assertion on the baseline"
+  },
+  "range_coverage": [
+    "Partitions cover exactly 0..len with no empty ranges, gaps or duplicated elements across restart boundaries, including target usize::MAX.",
+    "Any valid start is tested natively with empty, one-element, bounded cross-restart and suffix reads; results equal independent slice reads through u64::MAX.",
+    "Invalid ranges panic for empty, inline and compressed lists before byte access.",
+    "Shared readers iterate independent ranges while other lists are constructed.",
+    "Aligned ordinary ranges preserve Complete/Partial publication; filtered AA slices remain Partial.",
+    "Full model and every rule match the sequential oracle at 1/4/8 workers."
+  ],
+  "performance": {
+    "runs": 20,
+    "formal_runs": 16,
+    "warmup_runs": 4,
+    "full_models_equal": true,
+    "zero_swap": true,
+    "workers": 4,
+    "cpus": "0-3",
+    "concurrent_builds_or_benchmarks": false
+  }
+}

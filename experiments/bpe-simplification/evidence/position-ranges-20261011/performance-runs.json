@@ -1,0 +1,822 @@
+[
+  {
+    "case": "bytelevel_regex",
+    "block": 0,
+    "arm": "baseline",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-position-ranges-results/baseline",
+      "/tmp/bpe-position-ranges-results/measurements/bytelevel_regex-0-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "max_swap_kib": 0,
+    "attempt_id": "bytelevel_regex-0-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "bytelevel_regex",
+    "metrics": {
+      "load_seconds": 3.913446016,
+      "process_hwm_kib_before_validation": 2482556,
+      "train_cpu_seconds": 31.142674999999997,
+      "train_seconds": 9.735809535
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-position-ranges-results/measurements/bytelevel_regex-0-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "bytelevel_regex",
+    "block": 0,
+    "arm": "candidate",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-position-ranges-results/candidate",
+      "/tmp/bpe-position-ranges-results/measurements/bytelevel_regex-0-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "max_swap_kib": 0,
+    "attempt_id": "bytelevel_regex-0-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "bytelevel_regex",
+    "metrics": {
+      "load_seconds": 3.918219671,
+      "process_hwm_kib_before_validation": 2470316,
+      "train_cpu_seconds": 31.328305999999998,
+      "train_seconds": 9.711774498
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-position-ranges-results/measurements/bytelevel_regex-0-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "bytelevel_regex",
+    "block": 1,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-position-ranges-results/candidate",
+      "/tmp/bpe-position-ranges-results/measurements/bytelevel_regex-1-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "max_swap_kib": 0,
+    "attempt_id": "bytelevel_regex-1-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "bytelevel_regex",
+    "metrics": {
+      "load_seconds": 3.932571765,
+      "process_hwm_kib_before_validation": 2478836,
+      "train_cpu_seconds": 31.452388,
+      "train_seconds": 9.73194721
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-position-ranges-results/measurements/bytelevel_regex-1-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "bytelevel_regex",
+    "block": 1,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-position-ranges-results/baseline",
+      "/tmp/bpe-position-ranges-results/measurements/bytelevel_regex-1-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "max_swap_kib": 0,
+    "attempt_id": "bytelevel_regex-1-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "bytelevel_regex",
+    "metrics": {
+      "load_seconds": 3.908130447,
+      "process_hwm_kib_before_validation": 2490632,
+      "train_cpu_seconds": 31.765061999999997,
+      "train_seconds": 9.901607779999999
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-position-ranges-results/measurements/bytelevel_regex-1-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "bytelevel_regex",
+    "block": 2,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-position-ranges-results/baseline",
+      "/tmp/bpe-position-ranges-results/measurements/bytelevel_regex-2-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "max_swap_kib": 0,
+    "attempt_id": "bytelevel_regex-2-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "bytelevel_regex",
+    "metrics": {
+      "load_seconds": 3.905361947,
+      "process_hwm_kib_before_validation": 2491208,
+      "train_cpu_seconds": 31.075609999999998,
+      "train_seconds": 9.635404366
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-position-ranges-results/measurements/bytelevel_regex-2-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "bytelevel_regex",
+    "block": 2,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-position-ranges-results/candidate",
+      "/tmp/bpe-position-ranges-results/measurements/bytelevel_regex-2-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "max_swap_kib": 0,
+    "attempt_id": "bytelevel_regex-2-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "bytelevel_regex",
+    "metrics": {
+      "load_seconds": 3.947160285,
+      "process_hwm_kib_before_validation": 2491344,
+      "train_cpu_seconds": 31.669267,
+      "train_seconds": 9.824765443
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-position-ranges-results/measurements/bytelevel_regex-2-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "bytelevel_regex",
+    "block": 3,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-position-ranges-results/candidate",
+      "/tmp/bpe-position-ranges-results/measurements/bytelevel_regex-3-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "max_swap_kib": 0,
+    "attempt_id": "bytelevel_regex-3-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "bytelevel_regex",
+    "metrics": {
+      "load_seconds": 3.925326941,
+      "process_hwm_kib_before_validation": 2489616,
+      "train_cpu_seconds": 31.298000000000002,
+      "train_seconds": 9.764024353
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-position-ranges-results/measurements/bytelevel_regex-3-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "bytelevel_regex",
+    "block": 3,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-position-ranges-results/baseline",
+      "/tmp/bpe-position-ranges-results/measurements/bytelevel_regex-3-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "max_swap_kib": 0,
+    "attempt_id": "bytelevel_regex-3-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "bytelevel_regex",
+    "metrics": {
+      "load_seconds": 3.908713287,
+      "process_hwm_kib_before_validation": 2497716,
+      "train_cpu_seconds": 31.419889,
+      "train_seconds": 9.698946623
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-position-ranges-results/measurements/bytelevel_regex-3-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "bytelevel_regex",
+    "block": 4,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-position-ranges-results/baseline",
+      "/tmp/bpe-position-ranges-results/measurements/bytelevel_regex-4-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "max_swap_kib": 0,
+    "attempt_id": "bytelevel_regex-4-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "bytelevel_regex",
+    "metrics": {
+      "load_seconds": 3.899090448,
+      "process_hwm_kib_before_validation": 2430056,
+      "train_cpu_seconds": 31.531097000000003,
+      "train_seconds": 9.751830788
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-position-ranges-results/measurements/bytelevel_regex-4-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "bytelevel_regex",
+    "block": 4,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-position-ranges-results/candidate",
+      "/tmp/bpe-position-ranges-results/measurements/bytelevel_regex-4-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "max_swap_kib": 0,
+    "attempt_id": "bytelevel_regex-4-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "bytelevel_regex",
+    "metrics": {
+      "load_seconds": 3.937781058,
+      "process_hwm_kib_before_validation": 2444440,
+      "train_cpu_seconds": 31.006779,
+      "train_seconds": 9.494881083
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-position-ranges-results/measurements/bytelevel_regex-4-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "whitespace",
+    "block": 0,
+    "arm": "baseline",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-position-ranges-results/baseline",
+      "/tmp/bpe-position-ranges-results/measurements/whitespace-0-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "whitespace-0-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "whitespace",
+    "metrics": {
+      "load_seconds": 2.711136221,
+      "process_hwm_kib_before_validation": 1837188,
+      "train_cpu_seconds": 24.115754,
+      "train_seconds": 8.438878762
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-position-ranges-results/measurements/whitespace-0-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "whitespace",
+    "block": 0,
+    "arm": "candidate",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-position-ranges-results/candidate",
+      "/tmp/bpe-position-ranges-results/measurements/whitespace-0-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "whitespace-0-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "whitespace",
+    "metrics": {
+      "load_seconds": 2.7157567460000003,
+      "process_hwm_kib_before_validation": 1838076,
+      "train_cpu_seconds": 24.423931,
+      "train_seconds": 8.482477817
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-position-ranges-results/measurements/whitespace-0-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "whitespace",
+    "block": 1,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-position-ranges-results/candidate",
+      "/tmp/bpe-position-ranges-results/measurements/whitespace-1-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "whitespace-1-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "whitespace",
+    "metrics": {
+      "load_seconds": 2.779965488,
+      "process_hwm_kib_before_validation": 1856016,
+      "train_cpu_seconds": 24.096456,
+      "train_seconds": 8.410133493
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-position-ranges-results/measurements/whitespace-1-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "whitespace",
+    "block": 1,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-position-ranges-results/baseline",
+      "/tmp/bpe-position-ranges-results/measurements/whitespace-1-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "whitespace-1-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "whitespace",
+    "metrics": {
+      "load_seconds": 2.722856818,
+      "process_hwm_kib_before_validation": 1842544,
+      "train_cpu_seconds": 24.114043000000002,
+      "train_seconds": 8.501942871
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-position-ranges-results/measurements/whitespace-1-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "whitespace",
+    "block": 2,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-position-ranges-results/baseline",
+      "/tmp/bpe-position-ranges-results/measurements/whitespace-2-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "whitespace-2-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "whitespace",
+    "metrics": {
+      "load_seconds": 2.726254311,
+      "process_hwm_kib_before_validation": 1840448,
+      "train_cpu_seconds": 24.291736,
+      "train_seconds": 8.478940192
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-position-ranges-results/measurements/whitespace-2-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "whitespace",
+    "block": 2,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-position-ranges-results/candidate",
+      "/tmp/bpe-position-ranges-results/measurements/whitespace-2-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "whitespace-2-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "whitespace",
+    "metrics": {
+      "load_seconds": 2.712023847,
+      "process_hwm_kib_before_validation": 1839828,
+      "train_cpu_seconds": 24.141578000000003,
+      "train_seconds": 8.366880657
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-position-ranges-results/measurements/whitespace-2-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "whitespace",
+    "block": 3,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-position-ranges-results/candidate",
+      "/tmp/bpe-position-ranges-results/measurements/whitespace-3-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "whitespace-3-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "whitespace",
+    "metrics": {
+      "load_seconds": 2.713489827,
+      "process_hwm_kib_before_validation": 1840588,
+      "train_cpu_seconds": 24.380305999999997,
+      "train_seconds": 8.457572094
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-position-ranges-results/measurements/whitespace-3-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "whitespace",
+    "block": 3,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-position-ranges-results/baseline",
+      "/tmp/bpe-position-ranges-results/measurements/whitespace-3-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "whitespace-3-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "whitespace",
+    "metrics": {
+      "load_seconds": 2.69147217,
+      "process_hwm_kib_before_validation": 1856868,
+      "train_cpu_seconds": 24.121237999999998,
+      "train_seconds": 8.391098718
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-position-ranges-results/measurements/whitespace-3-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "whitespace",
+    "block": 4,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-position-ranges-results/baseline",
+      "/tmp/bpe-position-ranges-results/measurements/whitespace-4-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "whitespace-4-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "whitespace",
+    "metrics": {
+      "load_seconds": 2.711649759,
+      "process_hwm_kib_before_validation": 1841484,
+      "train_cpu_seconds": 24.356442,
+      "train_seconds": 8.498552388
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-position-ranges-results/measurements/whitespace-4-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "whitespace",
+    "block": 4,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-position-ranges-results/candidate",
+      "/tmp/bpe-position-ranges-results/measurements/whitespace-4-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "whitespace-4-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "whitespace",
+    "metrics": {
+      "load_seconds": 2.696729511,
+      "process_hwm_kib_before_validation": 1858024,
+      "train_cpu_seconds": 24.212612,
+      "train_seconds": 8.425370077
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-position-ranges-results/measurements/whitespace-4-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  }
+]
