@@ -1,0 +1,18 @@
+{
+  "remote_base": "7495cb8b4520e427b9833d56f5b026b59af86584",
+  "remote_base_changes_since_measured_0dd": "mod.rs documentation and formatting only; preserved without formatting it again",
+  "candidate_production_commit": "90f6aeb1",
+  "integration_before_metadata_commit": "f98298ff",
+  "merge_sha256": "5512f1a245c66e783e2b95ddc8ffcfc6098ef8637595505dff7d4c85d0c1437d",
+  "measurement_candidate_merge_sha256": "5512f1a245c66e783e2b95ddc8ffcfc6098ef8637595505dff7d4c85d0c1437d",
+  "test_command": "PATH=/root/.cargo/bin:$PATH CARGO_TARGET_DIR=/tmp/bpe-selected-rules-checks-20261011 CARGO_INCREMENTAL=0 cargo test --locked --manifest-path tokenizers/tk-train/Cargo.toml --no-default-features trainers::bpe --lib",
+  "test_exit_code": 101,
+  "passed": 43,
+  "known_failed": 1,
+  "filtered_out": 7,
+  "known_failure": "feed_training_tokenizer_json_and_encoding_roundtrip",
+  "test_seconds": 12.74,
+  "format_changed_merge_check": 0,
+  "other_positions_changes": "not imported; no task splitting, Source, Birth, AA, reuse or neighbor-order changes",
+  "performance": "The published code is the exact tested/measured merge source. The remote mod.rs change only alters documentation/formatting, so the performance comparison remains against measured 0dd, not a new timed 7495 build."
+}

@@ -1,0 +1,5 @@
+The user accepted the observed HashMap tradeoff after the Chinese affix reverse-order repeat. The first whole-train pair was +3.43%; the repeat was +0.085%. Train CPU is +2.87% and +2.03%, respectively. These data are compatible with a small hash-query cost and variable wall time; they do not prove that all of the first difference was CPU noise.
+
+The candidate was integrated after remote commit `7495cb8b`, which changed only mod.rs documentation/formatting. Those changes were preserved. The measured/tested merge.rs bytes are identical after integration. Fresh combined no-default BPE validation passes 43 tests and retains the one known encoding-roundtrip failure; the complete fresh raw log is now captured. Changed-file formatting and whitespace checks pass. No external Positions changes were imported. No fresh benchmark is claimed for the combined branch.
+
+The independent experiment and original validation metadata remain available on `experiment/selected-rules-hashmap-20261011` at `0e85ebcb`. The hash manifest describes the original durable experiment artifacts; this integration note and raw log are later additions.
