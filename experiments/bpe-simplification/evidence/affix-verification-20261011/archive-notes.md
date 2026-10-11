@@ -1,0 +1,2 @@
+Full source snapshots, raw unified measurement/production patches, binaries, complete model exports, and prepared inputs are retained in the durable directory named by README.md. Git contains the compact report, hashes, commands, raw logs, and small control inputs. CSV line endings are normalized to LF; stdout/stderr logs retain their original bytes.
+Original perf TSV counters retain empty trailing columns in the durable archive; their exact content is also embedded in profile-init.json.

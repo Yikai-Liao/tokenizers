@@ -1,0 +1,57 @@
+[
+  {
+    "language": "zh",
+    "input": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+    "bytes": 268435162,
+    "observed_nonspace_characters": 17759,
+    "limit_alphabet": 2047,
+    "last_retained": [
+      "杭",
+      4434
+    ],
+    "first_removed": [
+      "缩",
+      4428
+    ],
+    "sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+    "prepared_path": "/root/code/tokenizers-bpe-benchmarks/.bench/main-yttm-inspired/inputs/zh256-words/words.json",
+    "prepared_sha256": "ed057a8fdb27544ed29f16dde53faa0de8f47f1ee8ac00080974fac5bb435660",
+    "prepared_manifest": {
+      "bytes": 250116097,
+      "input_id": "765760e66e361d373803d1a1685454bb2e1626ffac4511580f38a07647c20360",
+      "kind": "prepared_words",
+      "path": "words.json",
+      "pretokenizer": "whitespace",
+      "raw": {
+        "sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98"
+      },
+      "recipe": {
+        "format_version": 1,
+        "preparer_build_id": "6fd26f97a26168ac8815b8508519d8e1dd0bd0db4f5bc738a2404b2f4c297aa4",
+        "pretokenizer": "whitespace",
+        "raw_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+        "tool_sha256": "63fc4ab5fa4d05f7db209ab95ec00df03ddee60b85d9fb2a1434e1e9a0b2b16c"
+      },
+      "schema_version": 1,
+      "sha256": "ed057a8fdb27544ed29f16dde53faa0de8f47f1ee8ac00080974fac5bb435660"
+    }
+  },
+  {
+    "language": "en",
+    "input": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/en256/text.txt",
+    "bytes": 268434441,
+    "observed_nonspace_characters": 5083,
+    "limit_alphabet": 128,
+    "last_retained": [
+      "†",
+      1761
+    ],
+    "first_removed": [
+      "е",
+      1753
+    ],
+    "sha256": "ae02a7e36df46e6dff26481f054dd4a385d50c4a42a9f166de754ee44fbf6b8a",
+    "prepared_path": "/root/code/tokenizers-workspaces/bpe-affix-verification-results-20261011/en-prepared-words.json",
+    "prepared_sha256": "0e146cd7d9fd31c547c84c5bfea2424bb05ae02905cf2608f4d7aa980f6bdb2d"
+  }
+]

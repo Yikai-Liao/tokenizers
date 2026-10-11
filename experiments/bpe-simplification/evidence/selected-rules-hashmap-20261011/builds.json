@@ -1,0 +1,19 @@
+{
+  "baseline": {
+    "commit": "0dd1ca48c493d17c5963c042680a4cd2fda99739",
+    "binary_sha256": "c8a68a9de44ff8871a13ef59dff0dd3d5d4c0d8bb0865d0998d33611bf074e46",
+    "source_archive": "/root/code/tokenizers-workspaces/bpe-affix-verification-results-20261011/source/candidate"
+  },
+  "candidate": {
+    "commit": "b4599744b2c66c2f53bf2d641c3c6b0d93409b71",
+    "binary_sha256": "0cc28b807de700312bb6919df525718546e9902cd2694fd056be5ed566cf4c18",
+    "command": "cargo build --offline --locked --release --manifest-path experiments/bpe-simplification/runner/Cargo.toml",
+    "exit_code": 0
+  },
+  "profile": {
+    "opt_level": 3,
+    "lto": "fat",
+    "codegen_units": 1,
+    "features": "no tk-train defaults"
+  }
+}

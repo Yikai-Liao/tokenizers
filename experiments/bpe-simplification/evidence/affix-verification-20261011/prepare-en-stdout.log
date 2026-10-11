@@ -1,0 +1,1 @@
+{"attempt_id":"prepare-en-whitespace","build_id":"current-0dd1ca48","effective_affinity":[0,1,2,3],"input_id":"en256","mode":"prepare","preprocessing_cpu_seconds":13.605769,"preprocessing_seconds":14.176554795,"protocol_version":1,"unique_words":724596,"workers_requested":4}

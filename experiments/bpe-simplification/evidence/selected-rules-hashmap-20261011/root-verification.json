@@ -1,0 +1,9 @@
+{
+  "diagnostic_bpe_rust_changes": [
+    "merge.rs"
+  ],
+  "tested_and_measured_merge_sha256": "5512f1a245c66e783e2b95ddc8ffcfc6098ef8637595505dff7d4c85d0c1437d",
+  "full_models_equal_all_five_case_pairs": true,
+  "aa_control_attempts": 1,
+  "reuse_control_attempts": 2
+}

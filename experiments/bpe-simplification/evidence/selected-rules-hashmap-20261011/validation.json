@@ -1,0 +1,81 @@
+{
+  "baseline_commit": "0dd1ca48c493d17c5963c042680a4cd2fda99739",
+  "candidate_commit": "b4599744b2c66c2f53bf2d641c3c6b0d93409b71",
+  "branch": "experiment/selected-rules-hashmap-20261011",
+  "worktree": "/tmp/bpe-selected-rules-hashmap-20261011",
+  "changed_files": ["tokenizers/tk-train/src/trainers/bpe/merge.rs"],
+  "diff": {
+    "production_insertions": 12,
+    "production_deletions": 66,
+    "test_insertions": 95,
+    "total_insertions": 107,
+    "total_deletions": 66
+  },
+  "sha256": {
+    "tokenizers/tk-train/Cargo.lock": "7ffd9e72dd8d77a9909b2dcce454bc99f602e57178abbdaf9acc9dd60ce2cc9b",
+    "tokenizers/tk-train/src/trainers/bpe/merge.rs": "5512f1a245c66e783e2b95ddc8ffcfc6098ef8637595505dff7d4c85d0c1437d"
+  },
+  "dependencies": "Copied the existing untracked tk-train/Cargo.lock from the publication worktree, then used --locked for both reported test configurations and Clippy. The lock is not committed.",
+  "environment": {
+    "cwd": "/tmp/bpe-selected-rules-hashmap-20261011",
+    "PATH_prefix": "/root/.cargo/bin",
+    "CARGO_TARGET_DIR": "/tmp/bpe-selected-rules-checks-20261011",
+    "test_profile": "debug, unoptimized + debuginfo",
+    "test_incremental": "Cargo default, artifacts under target/debug/incremental",
+    "clippy_incremental": "CARGO_INCREMENTAL=0 on the successful rerun",
+    "incremental_cleanup": "Removed only this task's debug/incremental after /tmp tmpfs became full; retained its debug/deps artifacts. No other task's target was modified.",
+    "rust_toolchain": "stable-x86_64-unknown-linux-gnu; Rust 1.98.1"
+  },
+  "checks": [
+    {
+      "command": "PATH=/root/.cargo/bin:$PATH CARGO_TARGET_DIR=/tmp/bpe-selected-rules-checks-20261011 cargo test --locked --manifest-path tokenizers/tk-train/Cargo.toml --no-default-features trainers::bpe --lib",
+      "passed": 43,
+      "failed": 1,
+      "filtered_out": 7,
+      "exit_code": 101,
+      "test_seconds": 12.93,
+      "stdout_storage": "Only returned to the terminal at the time; no complete raw test log file was captured."
+    },
+    {
+      "command": "PATH=/root/.cargo/bin:$PATH CARGO_TARGET_DIR=/tmp/bpe-selected-rules-checks-20261011 cargo test --locked --manifest-path tokenizers/tk-train/Cargo.toml trainers::bpe --lib",
+      "passed": 43,
+      "failed": 1,
+      "filtered_out": 7,
+      "exit_code": 101,
+      "test_seconds": 11.95,
+      "stdout_storage": "Only returned to the terminal at the time; no complete raw test log file was captured."
+    },
+    {
+      "command": "PATH=/root/.cargo/bin:$PATH CARGO_TARGET_DIR=/tmp/bpe-selected-rules-checks-20261011 CARGO_INCREMENTAL=0 cargo clippy --locked --manifest-path tokenizers/tk-train/Cargo.toml --all-targets --no-default-features -- -D warnings",
+      "exit_code": 0,
+      "seconds": 4.93,
+      "raw_log": "/tmp/bpe-selected-rules-clippy-20261011.log",
+      "previous_attempt": "An earlier Clippy attempt failed while writing rmeta files because /tmp tmpfs was full, before lint completion. The successful rerun above is the reported result."
+    },
+    {
+      "command": "uv run experiments/bpe-simplification/format-changed.py --check --base HEAD^ tokenizers/tk-train/src/trainers/bpe/merge.rs",
+      "exit_code": 0
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "note": "Ran on the uncommitted candidate before committing."
+    }
+  ],
+  "existing_test_failure": {
+    "name": "trainers::bpe::tests::feed_training_tokenizer_json_and_encoding_roundtrip",
+    "location": "tokenizers/tk-train/src/trainers/bpe/tests.rs:513",
+    "description": "Same existing Chinese token roundtrip failure as reported for the baseline. For 测, the tokenizer returned [PipelineToken(3)] while the expected ID was [6] in the fixed no-default run and [4] in the fixed default run.",
+    "scope": "No encoding or roundtrip changes were made. This agent did not rerun the baseline; baseline failure classification uses the already reported baseline validation."
+  },
+  "new_regression": "shared_selected_endpoints_emit_adjacent_boundaries_once passed in both configurations; checks the exact five removals and five births for four compatible shared-head/shared-tail rules plus unselected neighbors, then checks left-before-right event ordering and deferred write permutations.",
+  "other_relevant_passes": [
+    "generated_models_and_every_rule_match_the_sequential_oracle",
+    "overlap_floor_alias_and_alphabet_boundaries",
+    "aligned_complete_and_split_producers_match_the_sequential_model",
+    "reuse_restart_keeps_the_alphabet_and_returns_only_the_successful_trace",
+    "reuse_restart_preserves_a_tie_at_an_actual_alphabet_cutoff"
+  ],
+  "performance": "Not run by this agent. Root will measure baseline and candidate serially in separate diagnostic worktrees.",
+  "publication": "Independent local experiment commit only. No push or merge. Candidate source and commit are frozen; CPU work is paused."
+}

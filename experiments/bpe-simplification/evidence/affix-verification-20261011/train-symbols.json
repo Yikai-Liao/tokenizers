@@ -1,0 +1,14 @@
+[
+  {
+    "arm": "baseline",
+    "address": 834176,
+    "size": 4870,
+    "symbol": "<tk_train::trainers::bpe::BpeTrainer>::do_train_impl"
+  },
+  {
+    "arm": "flags-only",
+    "address": 834048,
+    "size": 4870,
+    "symbol": "<tk_train::trainers::bpe::BpeTrainer>::do_train_impl"
+  }
+]

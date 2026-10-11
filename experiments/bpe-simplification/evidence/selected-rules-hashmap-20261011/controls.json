@@ -1,0 +1,134 @@
+[
+  {
+    "case": "aa",
+    "arm": "baseline",
+    "attempts": 1,
+    "model_sha256": "a9c9ae4ba0ccfde4281a3aa9e22351de67f6ab1e3d64bf9a9ce086df33c5115b",
+    "output": {
+      "attempt_id": "aa-baseline",
+      "build_id": "baseline",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "aa",
+      "metrics": {
+        "load_seconds": 3.0708e-05,
+        "process_hwm_kib_before_validation": 6888,
+        "train_cpu_seconds": 0.008502,
+        "train_seconds": 0.007180783
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 10,
+        "actual_vocab": 12,
+        "model_path": "/root/code/tokenizers-workspaces/bpe-selected-rules-results-20261011/controls/aa-baseline/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    }
+  },
+  {
+    "case": "aa",
+    "arm": "candidate",
+    "attempts": 1,
+    "model_sha256": "a9c9ae4ba0ccfde4281a3aa9e22351de67f6ab1e3d64bf9a9ce086df33c5115b",
+    "output": {
+      "attempt_id": "aa-candidate",
+      "build_id": "candidate",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "aa",
+      "metrics": {
+        "load_seconds": 4.2182e-05,
+        "process_hwm_kib_before_validation": 6956,
+        "train_cpu_seconds": 0.006821999999999999,
+        "train_seconds": 0.005301959
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 10,
+        "actual_vocab": 12,
+        "model_path": "/root/code/tokenizers-workspaces/bpe-selected-rules-results-20261011/controls/aa-candidate/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    }
+  },
+  {
+    "case": "reuse",
+    "arm": "baseline",
+    "attempts": 2,
+    "model_sha256": "7c5c11bd73df7b0cc4a810c4f4fc1fe79be62ecbcdf639037c7136303d4c0053",
+    "output": {
+      "attempt_id": "reuse-baseline",
+      "build_id": "baseline",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "reuse",
+      "metrics": {
+        "load_seconds": 3.0743e-05,
+        "process_hwm_kib_before_validation": 7336,
+        "train_cpu_seconds": 0.013122000000000002,
+        "train_seconds": 0.011537988
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 5,
+        "actual_vocab": 9,
+        "model_path": "/root/code/tokenizers-workspaces/bpe-selected-rules-results-20261011/controls/reuse-baseline/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    }
+  },
+  {
+    "case": "reuse",
+    "arm": "candidate",
+    "attempts": 2,
+    "model_sha256": "7c5c11bd73df7b0cc4a810c4f4fc1fe79be62ecbcdf639037c7136303d4c0053",
+    "output": {
+      "attempt_id": "reuse-candidate",
+      "build_id": "candidate",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "input_id": "reuse",
+      "metrics": {
+        "load_seconds": 3.6956e-05,
+        "process_hwm_kib_before_validation": 7280,
+        "train_cpu_seconds": 0.011056,
+        "train_seconds": 0.009526997
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 5,
+        "actual_vocab": 9,
+        "model_path": "/root/code/tokenizers-workspaces/bpe-selected-rules-results-20261011/controls/reuse-candidate/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 4
+    }
+  }
+]

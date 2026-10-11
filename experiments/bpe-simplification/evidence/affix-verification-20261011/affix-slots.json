@@ -1,0 +1,22 @@
+[
+  {
+    "language": "zh",
+    "single_character_decorations": {
+      "prefix": 2047,
+      "suffix": 2011,
+      "both": 2047
+    },
+    "prefix": "##",
+    "suffix": "</w>"
+  },
+  {
+    "language": "en",
+    "single_character_decorations": {
+      "prefix": 128,
+      "suffix": 124,
+      "both": 127
+    },
+    "prefix": "##",
+    "suffix": "</w>"
+  }
+]

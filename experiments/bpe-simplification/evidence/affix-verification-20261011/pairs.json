@@ -1,0 +1,142 @@
+[
+  {
+    "case": "zh-plain",
+    "arm": "candidate",
+    "full_model_equal": true,
+    "model_sha256": "03857d37596935e431416a9f4b539f55a2859c7e6ab7a3724aefa21d7267ace4",
+    "delta_percent": {
+      "alphabet_selection_seconds": 31.937894801762745,
+      "vocabulary_initialization_seconds": -99.7935686358226,
+      "alphabet_plus_initialization_seconds": -30.892554395319895,
+      "train_seconds": -5.609814602914565,
+      "train_cpu_seconds": -2.7621018072424786,
+      "process_hwm_kib_before_validation": 0.053948146576443534
+    }
+  },
+  {
+    "case": "en-plain",
+    "arm": "candidate",
+    "full_model_equal": true,
+    "model_sha256": "f5985a11260436de069f450996b31261a6b73d4c2d1bd92df8216929237fe872",
+    "delta_percent": {
+      "alphabet_selection_seconds": 33.57358112401585,
+      "vocabulary_initialization_seconds": -90.12069667908641,
+      "alphabet_plus_initialization_seconds": -27.963576571993276,
+      "train_seconds": -4.186626120773262,
+      "train_cpu_seconds": 0.5017153424460963,
+      "process_hwm_kib_before_validation": -4.545819183356958
+    }
+  },
+  {
+    "case": "zh-affix",
+    "arm": "candidate",
+    "full_model_equal": true,
+    "model_sha256": "588ed3aea9eba5d9cd77779540fc148d34312c7dadeebcdd6326c87cee757ab1",
+    "delta_percent": {
+      "alphabet_selection_seconds": 10.805218805423088,
+      "vocabulary_initialization_seconds": 6.48742920415879,
+      "alphabet_plus_initialization_seconds": 8.623377852333913,
+      "train_seconds": -0.5887298438854716,
+      "train_cpu_seconds": -0.20798061486382302,
+      "process_hwm_kib_before_validation": 0.07946151069317953
+    }
+  },
+  {
+    "case": "zh-affix",
+    "arm": "flags-only",
+    "full_model_equal": true,
+    "model_sha256": "588ed3aea9eba5d9cd77779540fc148d34312c7dadeebcdd6326c87cee757ab1",
+    "delta_percent": {
+      "alphabet_selection_seconds": 4.059590811238012,
+      "vocabulary_initialization_seconds": 5.95982886439046,
+      "alphabet_plus_initialization_seconds": 5.020817556529544,
+      "train_seconds": 8.083360627748725,
+      "train_cpu_seconds": 9.441486086117191,
+      "process_hwm_kib_before_validation": -0.04028104281676992
+    }
+  },
+  {
+    "case": "en-affix",
+    "arm": "candidate",
+    "full_model_equal": true,
+    "model_sha256": "a6c9aac13904dc7e43051ae1eda1a38794b1778b01e52608de6fd286c0cfe2cc",
+    "delta_percent": {
+      "alphabet_selection_seconds": -11.070993437877641,
+      "vocabulary_initialization_seconds": 0.2535017428013875,
+      "alphabet_plus_initialization_seconds": -5.531274554607169,
+      "train_seconds": -0.9788709159934017,
+      "train_cpu_seconds": -0.8042562367485018,
+      "process_hwm_kib_before_validation": -0.7779141104294451
+    }
+  },
+  {
+    "case": "en-affix",
+    "arm": "flags-only",
+    "full_model_equal": true,
+    "model_sha256": "a6c9aac13904dc7e43051ae1eda1a38794b1778b01e52608de6fd286c0cfe2cc",
+    "delta_percent": {
+      "alphabet_selection_seconds": -23.678776528932854,
+      "vocabulary_initialization_seconds": 12.609835707190609,
+      "alphabet_plus_initialization_seconds": -6.098720406630964,
+      "train_seconds": 12.781140535704516,
+      "train_cpu_seconds": 13.620909895936517,
+      "process_hwm_kib_before_validation": -1.6809815950920237
+    }
+  },
+  {
+    "case": "en-affix-repeat",
+    "arm": "flags-only",
+    "full_model_equal": true,
+    "model_sha256": "a6c9aac13904dc7e43051ae1eda1a38794b1778b01e52608de6fd286c0cfe2cc",
+    "delta_percent": {
+      "alphabet_selection_seconds": -4.295894703250413,
+      "vocabulary_initialization_seconds": 12.4774838435324,
+      "alphabet_plus_initialization_seconds": 4.190159394467474,
+      "train_seconds": -4.797182910104514,
+      "train_cpu_seconds": -3.3020720340464216,
+      "process_hwm_kib_before_validation": -1.4307525610717131
+    }
+  },
+  {
+    "case": "en-affix-repeat",
+    "arm": "candidate",
+    "full_model_equal": true,
+    "model_sha256": "a6c9aac13904dc7e43051ae1eda1a38794b1778b01e52608de6fd286c0cfe2cc",
+    "delta_percent": {
+      "alphabet_selection_seconds": 9.51200052358172,
+      "vocabulary_initialization_seconds": 9.457442702898389,
+      "alphabet_plus_initialization_seconds": 9.543571530987016,
+      "train_seconds": -1.3401136773787514,
+      "train_cpu_seconds": -0.48400233923694413,
+      "process_hwm_kib_before_validation": 1.1352442868400425
+    }
+  },
+  {
+    "case": "zh-affix-repeat",
+    "arm": "flags-only",
+    "full_model_equal": true,
+    "model_sha256": "588ed3aea9eba5d9cd77779540fc148d34312c7dadeebcdd6326c87cee757ab1",
+    "delta_percent": {
+      "alphabet_selection_seconds": 4.227182229294546,
+      "vocabulary_initialization_seconds": 12.68127875422067,
+      "alphabet_plus_initialization_seconds": 8.35271008359233,
+      "train_seconds": -1.424329834420257,
+      "train_cpu_seconds": -2.66082844361083,
+      "process_hwm_kib_before_validation": 0.2471222394570427
+    }
+  },
+  {
+    "case": "zh-affix-repeat",
+    "arm": "candidate",
+    "full_model_equal": true,
+    "model_sha256": "588ed3aea9eba5d9cd77779540fc148d34312c7dadeebcdd6326c87cee757ab1",
+    "delta_percent": {
+      "alphabet_selection_seconds": 12.774930707156361,
+      "vocabulary_initialization_seconds": 13.788147534018314,
+      "alphabet_plus_initialization_seconds": 13.27197216735707,
+      "train_seconds": -3.0419404363500657,
+      "train_cpu_seconds": -4.434533963394804,
+      "process_hwm_kib_before_validation": 0.07987343811022285
+    }
+  }
+]
