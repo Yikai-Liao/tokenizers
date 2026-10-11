@@ -28,10 +28,38 @@ pub(super) struct Vocabulary {
 pub(super) struct InitialTokenIds {
     spans: Vec<usize>,
     characters: Box<[u32]>,
-    decorated: Box<[[u32; 3]]>,
+    decorated: Box<[DecoratedIds]>,
     prefix: bool,
     suffix: bool,
     complete_alphabet: bool,
+}
+
+// Only decorated states have columns; Plain returns the caller's ordinary ID.
+#[derive(Clone, Copy, PartialEq, Eq)]
+#[repr(usize)]
+enum Affix {
+    Prefix = 0,
+    Suffix = 1,
+    Both = 2,
+    Plain = 3,
+}
+
+#[derive(Clone, Copy)]
+struct DecoratedIds([u32; 3]);
+
+impl DecoratedIds {
+    fn get(&self, affix: Affix, plain: u32) -> u32 {
+        match affix {
+            Affix::Plain => plain,
+            _ => self.0[affix as usize],
+        }
+    }
+
+    fn remember(&mut self, affix: Affix, id: u32) {
+        if affix != Affix::Plain {
+            self.0[affix as usize] = id;
+        }
+    }
 }
 
 /// Selected once per training call; retries borrow the same cutoff decisions.
@@ -79,7 +107,8 @@ impl Vocabulary {
         // Resolve decorations before CorpusPlan sorts input by weight. Keep the
         // plain-alphabet shortcut and the original progress boundary.
         trainer.update_progress(progress, word_counts.len(), "Tokenize words");
-        let ids = vocabulary.initial_ids(
+        let ids = InitialTokenIds::build(
+            &mut vocabulary,
             word_counts,
             spans,
             alphabet.complete,
@@ -106,118 +135,6 @@ impl Vocabulary {
             return Err("BPE token ID collides with the word separator".into());
         }
         Ok((id, !inserted))
-    }
-
-    fn initial_ids(
-        &mut self,
-        word_counts: WordCountsView<'_>,
-        spans: Vec<usize>,
-        complete_alphabet: bool,
-        suffix: Option<&str>,
-        progress: &Option<ProgressBar>,
-    ) -> Result<InitialTokenIds> {
-        // 1. Map existing character IDs before any decorated identities are inserted.
-        let mut ids = InitialTokenIds {
-            spans,
-            characters: vec![WORD_SEPARATOR_ID; 0x110000].into_boxed_slice(),
-            decorated: Box::default(),
-            prefix: self.prefix.as_deref().is_some_and(|p| !p.is_empty()),
-            suffix: suffix.is_some_and(|s| !s.is_empty()),
-            complete_alphabet,
-        };
-        for (id, token) in self.tokens.iter().enumerate() {
-            let mut chars = token.chars();
-            if let Some(character) = chars.next()
-                && chars.next().is_none()
-            {
-                ids.characters[character as usize] = id as u32;
-            }
-        }
-        if ids.prefix || ids.suffix {
-            let mut decorated = Vec::new();
-            decorated.resize(self.tokens.len(), [WORD_SEPARATOR_ID; 3]);
-            ids.decorated = decorated.into_boxed_slice();
-        }
-        if ids.plain() {
-            if let Some(p) = progress {
-                p.inc(word_counts.len() as u64);
-            }
-            return Ok(ids);
-        }
-
-        // 2. Activate retained symbols in input traversal order. Sorting words first
-        // would change the IDs allocated for previously unseen decorated strings.
-        ids.spans.fill(0);
-        let mut decorated = String::new();
-        for (index, word) in word_counts.keys().enumerate() {
-            self.activate_word(word, &mut ids, suffix, &mut decorated)?;
-            if (index + 1) % 1024 == 0
-                && let Some(p) = progress
-            {
-                p.inc(1024);
-            }
-        }
-        if let Some(p) = progress {
-            p.inc((word_counts.len() % 1024) as u64);
-        }
-        Ok(ids)
-    }
-
-    fn activate_word(
-        &mut self,
-        word: &str,
-        ids: &mut InitialTokenIds,
-        suffix: Option<&str>,
-        decorated: &mut String,
-    ) -> Result<()> {
-        for (byte, character) in word.char_indices() {
-            let plain_id = ids.characters[character as usize];
-            if plain_id == WORD_SEPARATOR_ID {
-                continue;
-            }
-            let add_prefix = ids.prefix && byte != 0;
-            let add_suffix = ids.suffix && byte + character.len_utf8() == word.len();
-            let id =
-                self.decorated_id(ids, suffix, plain_id, (add_prefix, add_suffix), decorated)?;
-            ids.spans[id as usize] = 1;
-        }
-
-        Ok(())
-    }
-
-    // Cache each affix combination by plain character ID. The reusable string
-    // buffer avoids allocating again when a decorated identity already exists.
-    fn decorated_id(
-        &mut self,
-        ids: &mut InitialTokenIds,
-        suffix: Option<&str>,
-        plain_id: u32,
-        (add_prefix, add_suffix): (bool, bool),
-        decorated: &mut String,
-    ) -> Result<u32> {
-        let Some(slot) = decoration_slot(add_prefix, add_suffix) else {
-            return Ok(plain_id);
-        };
-        let cached = ids.decorated[plain_id as usize][slot];
-        if cached != WORD_SEPARATOR_ID {
-            return Ok(cached);
-        }
-
-        decorated.clear();
-        if add_prefix {
-            decorated.push_str(
-                self.prefix
-                    .as_deref()
-                    .expect("prefix decoration requires a prefix"),
-            );
-        }
-        decorated.push_str(self.tokens[plain_id as usize].as_str());
-        if add_suffix {
-            decorated.push_str(suffix.expect("suffix decoration requires a suffix"));
-        }
-        let id = self.intern(decorated, &mut ids.spans)?;
-        ids.decorated[plain_id as usize][slot] = id;
-        Ok(id)
     }
 
     pub(super) fn len(&self) -> usize {
@@ -260,6 +177,130 @@ impl Vocabulary {
 }
 
 impl InitialTokenIds {
+    fn build(
+        vocabulary: &mut Vocabulary,
+        word_counts: WordCountsView<'_>,
+        spans: Vec<usize>,
+        complete_alphabet: bool,
+        suffix: Option<&str>,
+        progress: &Option<ProgressBar>,
+    ) -> Result<Self> {
+        // 1. Map existing character IDs before any decorated identities are inserted.
+        let mut ids = Self {
+            spans,
+            characters: vec![WORD_SEPARATOR_ID; 0x110000].into_boxed_slice(),
+            decorated: Box::default(),
+            prefix: vocabulary.prefix.as_deref().is_some_and(|p| !p.is_empty()),
+            suffix: suffix.is_some_and(|s| !s.is_empty()),
+            complete_alphabet,
+        };
+        for (id, token) in vocabulary.tokens.iter().enumerate() {
+            let mut chars = token.chars();
+            if let Some(character) = chars.next()
+                && chars.next().is_none()
+            {
+                ids.characters[character as usize] = id as u32;
+            }
+        }
+        if ids.prefix || ids.suffix {
+            let mut decorated = Vec::new();
+            decorated.resize(
+                vocabulary.tokens.len(),
+                DecoratedIds([WORD_SEPARATOR_ID; 3]),
+            );
+            ids.decorated = decorated.into_boxed_slice();
+        }
+        if ids.plain() {
+            if let Some(p) = progress {
+                p.inc(word_counts.len() as u64);
+            }
+            return Ok(ids);
+        }
+
+        // 2. Activate retained symbols in input traversal order. Sorting words first
+        // would change the IDs allocated for previously unseen decorated strings.
+        ids.spans.fill(0);
+        let mut decorated = String::new();
+        for (index, word) in word_counts.keys().enumerate() {
+            ids.activate_word(word, vocabulary, suffix, &mut decorated)?;
+            if (index + 1) % 1024 == 0
+                && let Some(p) = progress
+            {
+                p.inc(1024);
+            }
+        }
+        if let Some(p) = progress {
+            p.inc((word_counts.len() % 1024) as u64);
+        }
+        Ok(ids)
+    }
+
+    fn activate_word(
+        &mut self,
+        word: &str,
+        vocabulary: &mut Vocabulary,
+        suffix: Option<&str>,
+        decorated: &mut String,
+    ) -> Result<()> {
+        for (byte, character) in word.char_indices() {
+            let plain_id = self.characters[character as usize];
+            if plain_id == WORD_SEPARATOR_ID {
+                continue;
+            }
+            let affix = self.affix(byte == 0, byte + character.len_utf8() == word.len());
+            let id = self.decorated_id(vocabulary, suffix, plain_id, affix, decorated)?;
+            self.spans[id as usize] = 1;
+        }
+
+        Ok(())
+    }
+
+    // Cache each affix combination by plain character ID. The reusable string
+    // buffer avoids allocating again when a decorated identity already exists.
+    fn decorated_id(
+        &mut self,
+        vocabulary: &mut Vocabulary,
+        suffix: Option<&str>,
+        plain_id: u32,
+        affix: Affix,
+        decorated: &mut String,
+    ) -> Result<u32> {
+        // Plain never indexes the table, which is empty without affixes.
+        if affix == Affix::Plain {
+            return Ok(plain_id);
+        }
+        let cached = self.decorated[plain_id as usize].get(affix, plain_id);
+        if cached != WORD_SEPARATOR_ID {
+            return Ok(cached);
+        }
+
+        decorated.clear();
+        if matches!(affix, Affix::Prefix | Affix::Both) {
+            decorated.push_str(
+                vocabulary
+                    .prefix
+                    .as_deref()
+                    .expect("prefix decoration requires a prefix"),
+            );
+        }
+        decorated.push_str(vocabulary.tokens[plain_id as usize].as_str());
+        if matches!(affix, Affix::Suffix | Affix::Both) {
+            decorated.push_str(suffix.expect("suffix decoration requires a suffix"));
+        }
+        let id = vocabulary.intern(decorated, &mut self.spans)?;
+        self.decorated[plain_id as usize].remember(affix, id);
+        Ok(id)
+    }
+
+    fn affix(&self, first: bool, last: bool) -> Affix {
+        match (self.prefix && !first, self.suffix && last) {
+            (false, false) => Affix::Plain,
+            (true, false) => Affix::Prefix,
+            (false, true) => Affix::Suffix,
+            (true, true) => Affix::Both,
+        }
+    }
+
     pub(super) fn token_count(&self) -> usize {
         self.spans.len()
     }
@@ -313,22 +354,12 @@ impl InitialTokenIds {
         if plain == WORD_SEPARATOR_ID {
             return None;
         }
-        let add_prefix = self.prefix && !first;
-        let add_suffix = self.suffix && last;
-        Some(match decoration_slot(add_prefix, add_suffix) {
-            None => plain,
-            Some(slot) => self.decorated[plain as usize][slot],
+        let affix = self.affix(first, last);
+        Some(if affix == Affix::Plain {
+            plain
+        } else {
+            self.decorated[plain as usize].get(affix, plain)
         })
-    }
-}
-
-// The three cached combinations retain their existing slots and token IDs.
-fn decoration_slot(add_prefix: bool, add_suffix: bool) -> Option<usize> {
-    match (add_prefix, add_suffix) {
-        (false, false) => None,
-        (true, false) => Some(0),
-        (false, true) => Some(1),
-        (true, true) => Some(2),
     }
 }
 
@@ -446,6 +477,20 @@ mod tests {
     use tk_encode::vocab::bucket_added_vocabulary::AddedToken;
 
     #[test]
+    fn decoration_row() {
+        assert_eq!(std::mem::size_of::<DecoratedIds>(), 12);
+        let mut row = DecoratedIds([WORD_SEPARATOR_ID; 3]);
+        for (affix, id) in [(Affix::Prefix, 0), (Affix::Suffix, 1), (Affix::Both, 2)] {
+            assert_eq!(row.get(affix, 9), WORD_SEPARATOR_ID);
+            row.remember(affix, id);
+        }
+        assert_eq!(row.0, [0, 1, 2]);
+        row.remember(Affix::Plain, 8);
+        assert_eq!(row.0, [0, 1, 2]);
+        assert_eq!(row.get(Affix::Plain, 9), 9);
+    }
+
+    #[test]
     fn affix_ids() {
         let inputs = ["a", "axa", "zaaz", "aa", ""];
         let words = WordCounts::from_entries(inputs.map(|s| (s.into(), 1)).to_vec());
@@ -471,7 +516,7 @@ mod tests {
             trainer.continuing_subword_prefix = Some(prefix.into());
             trainer.end_of_word_suffix = Some(suffix.into());
             let alphabet = select_alphabet(&trainer, words.view(), 1);
-            let (vocabulary, ids) =
+            let (mut vocabulary, mut ids) =
                 Vocabulary::initialize(&trainer, words.view(), &alphabet, &None).unwrap();
             let tokens: Vec<_> = vocabulary.tokens.iter().map(|s| s.as_str()).collect();
             assert_eq!(&tokens[..3], ["##a", "a</w>", "a"]);
@@ -482,6 +527,15 @@ mod tests {
             let actual = inputs.map(|s| ids.symbols(s).collect::<Vec<_>>());
             assert_eq!(actual, expected);
             assert_eq!(ids.spans, spans);
+            let count = vocabulary.len();
+            ids.activate_word("aa", &mut vocabulary, Some(suffix), &mut String::new())
+                .unwrap();
+            assert_eq!(vocabulary.len(), count);
+            assert_eq!(ids.symbols("aa").collect::<Vec<_>>(), expected[3]);
+            if prefix.is_empty() && suffix.is_empty() {
+                assert!(ids.decorated.is_empty());
+                assert_eq!(ids.id('a', true, true), Some(2));
+            }
         }
     }
 
