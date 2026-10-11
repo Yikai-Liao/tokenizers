@@ -1,0 +1,55 @@
+diff --git a/tokenizers/tk-train/src/trainers/bpe/DESIGN.md b/tokenizers/tk-train/src/trainers/bpe/DESIGN.md
+index c9935d40..1b8f3d72 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/DESIGN.md
++++ b/tokenizers/tk-train/src/trainers/bpe/DESIGN.md
+@@ -68,6 +68,10 @@ of any ambient pool used by feed.
+ ## Construction and task-local aggregation
+ 
+ A borrowed CorpusPlan resolves original symbols and weighted word intervals.
++Parallel measurement fills one per-word usize vector. The serial checked prefix
++pass reads each symbol count before replacing its slot with the word start; the
++same vector becomes the plan's directory. Separators, weighted edge mass and
++resident allocation checks retain their original order, including zero merges.
+ Initial counting gathers sorted temporary positions, reduces counts and freezes
+ retained lists before allocating token slots. Zero-merge calls still perform all
+ plan and initial-index checks, then discard both without materialization.
+diff --git a/tokenizers/tk-train/src/trainers/bpe/README.md b/tokenizers/tk-train/src/trainers/bpe/README.md
+index a87841d7..409e8645 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/README.md
++++ b/tokenizers/tk-train/src/trainers/bpe/README.md
+@@ -31,6 +31,9 @@ The implementation is divided by the knowledge each module owns:
+ - [corpus.rs](corpus.rs) owns fixed coordinates, token endpoints, weights, and
+   ID activation and occurrence spans. Initial ID metadata moves here once;
+   merge selection and geometry use this same activation record.
++  It measures per-word symbol counts in parallel, then replaces those same
++  slots with checked word starts in one serial prefix pass. No second
++  per-word usize array is allocated during layout construction.
+   Only this module converts full-u64 occurrence coordinates
+   to checked resident indices.
+ - [index.rs](index.rs) owns exact priority correction, count shards, signed reuse
+diff --git a/tokenizers/tk-train/src/trainers/bpe/corpus.rs b/tokenizers/tk-train/src/trainers/bpe/corpus.rs
+index 04f66a83..6abdc63f 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/corpus.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/corpus.rs
+@@ -67,16 +67,17 @@ impl<'input> CorpusPlan<'input> {
+         let ids = vocabulary.initial_ids(words, progress)?;
+         let mut words: Vec<_> = words.iter().collect();
+         words.par_sort_unstable_by(|a, b| b.1.cmp(a.1));
+-        let measured: Vec<_> = words
++        let mut starts: Vec<_> = words
+             .par_iter()
+             .map(|(word, _)| ids.symbol_count(word))
+             .collect();
+-        let mut starts = Vec::with_capacity(words.len());
+         let mut weight_regions = Vec::new();
+         let mut length = 1usize;
+         let mut mass = 0u128;
+-        for (&(_, &weight), &symbols) in words.iter().zip(&measured) {
+-            starts.push(length);
++        // Reuse the measured symbol counts as the checked word-start directory.
++        for (&(_, &weight), start) in words.iter().zip(&mut starts) {
++            let symbols = *start;
++            *start = length;
+             if weight_regions
+                 .last()
+                 .is_none_or(|&(_, previous)| previous != weight)

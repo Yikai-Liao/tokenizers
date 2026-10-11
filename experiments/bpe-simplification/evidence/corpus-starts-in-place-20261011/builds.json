@@ -1,0 +1,31 @@
+{
+  "baseline_commit": "2f4803a936619aa575ba4f6cb49fc660057ef5e4",
+  "profile": {
+    "opt_level": 3,
+    "lto": "fat",
+    "codegen_units": 1
+  },
+  "production_sources": {
+    "tokenizers/tk-train/src/trainers/bpe/corpus.rs": "530bc0fbf0ba644d1944f237985715404b9b7017f2413f9c105bee30deadabe2",
+    "tokenizers/tk-train/src/trainers/bpe/feed.rs": "7c6be5e032a25faf0e0bcad4ee502a38792312233aadbd4a324ac7dca4b62ea7",
+    "tokenizers/tk-train/src/trainers/bpe/index.rs": "7bb2809125cc651b723ee45801ee23144427d904de123f1ec356fb08300bb1d9",
+    "tokenizers/tk-train/src/trainers/bpe/positions.rs": "53589c5588b78d1401e5e55b7b3572fe90f6dad1938658081f7310ac44428792",
+    "experiments/bpe-simplification/runner/Cargo.toml": "71ee5a0e2114f857677333c828535d876ce0f80b157efc01ec15dfdb8be25fd9",
+    "experiments/bpe-simplification/runner/Cargo.lock": "2379cbc14ec17b10699614e2bc84ef53b972eb6357694e480109ab08fabe452a"
+  },
+  "baseline_corpus_sha256": "d78dd3ce5170b40b6079dfcd9616267081958b81fd6729a9d2aa5c7b6bbff2b0",
+  "candidate_corpus_sha256": "530bc0fbf0ba644d1944f237985715404b9b7017f2413f9c105bee30deadabe2",
+  "binaries": {
+    "baseline": {
+      "path": "/tmp/bpe-corpus-b1-baseline-bin-20261011",
+      "sha256": "c42c95fd77feeebdb5b8df2475acddd15fa8d5ade505b03d4ba5d14200c8d98c"
+    },
+    "candidate": {
+      "path": "/tmp/bpe-corpus-b1-candidate-bin-20261011",
+      "sha256": "e5df08d206b481954b80d6583f5aa1cc80c5fca5a1f9b9b2c34fbce77eea351d"
+    }
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "target_dir": "/tmp/bpe-index-build-20261011",
+  "scope": "Only CorpusPlan::build reuses the measured vector. Both arms include identical latest Feed/Shard/Range/search/dependencies."
+}

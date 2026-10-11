@@ -73,6 +73,10 @@ of any ambient pool used by feed.
 ## Construction and task-local aggregation
 
 A borrowed CorpusPlan resolves original symbols and weighted word intervals.
+Parallel measurement fills one per-word usize vector. The serial checked prefix
+pass reads each symbol count before replacing its slot with the word start; the
+same vector becomes the plan's directory. Separators, weighted edge mass and
+resident allocation checks retain their original order, including zero merges.
 Initial counting gathers sorted temporary positions, reduces counts and freezes
 retained lists before allocating token slots. Zero-merge calls still perform all
 plan and initial-index checks, then discard both without materialization.

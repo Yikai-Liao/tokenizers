@@ -62,16 +62,17 @@ impl<'input> CorpusPlan<'input> {
     ) -> Result<Self> {
         let mut words: Vec<_> = words.iter().collect();
         words.par_sort_unstable_by(|a, b| b.1.cmp(a.1));
-        let measured: Vec<_> = words
+        let mut starts: Vec<_> = words
             .par_iter()
             .map(|(word, _)| ids.symbol_count(word))
             .collect();
-        let mut starts = Vec::with_capacity(words.len());
         let mut weight_regions = Vec::new();
         let mut length = 1usize;
         let mut mass = 0u128;
-        for (&(_, &weight), &symbols) in words.iter().zip(&measured) {
-            starts.push(length);
+        // Reuse the measured symbol counts as the checked word-start directory.
+        for (&(_, &weight), start) in words.iter().zip(&mut starts) {
+            let symbols = *start;
+            *start = length;
             if weight_regions
                 .last()
                 .is_none_or(|&(_, previous)| previous != weight)

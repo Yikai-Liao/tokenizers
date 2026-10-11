@@ -1,0 +1,30 @@
+{
+  "baseline": {
+    "command": [
+      "cargo",
+      "build",
+      "--offline",
+      "--locked",
+      "--release",
+      "--manifest-path",
+      "/tmp/bpe-corpus-b1-baseline-20261011/experiments/bpe-simplification/runner/Cargo.toml"
+    ],
+    "binary": "/tmp/bpe-corpus-b1-probe-baseline-bin-20261011",
+    "binary_sha256": "87484f61f5e63f00250c978500ef7cb6fd4f59385f84d8b89ff1ce7a5b3bdaf8",
+    "source_sha256": "ee60f6e0d3e4daa00dcdbda653aef28efd774bc34cca15cc2ba1226f33c794f4"
+  },
+  "candidate": {
+    "command": [
+      "cargo",
+      "build",
+      "--offline",
+      "--locked",
+      "--release",
+      "--manifest-path",
+      "/tmp/bpe-corpus-b1-baseline-20261011/experiments/bpe-simplification/runner/Cargo.toml"
+    ],
+    "binary": "/tmp/bpe-corpus-b1-probe-candidate-bin-20261011",
+    "binary_sha256": "5c6b006767a80226e6d12aabb443408eb38d0b59462a154557cf00e840fa34f9",
+    "source_sha256": "c99921ec8fc4b76596da0f8cac073396408bf1364df8b8a8e775b888cf51e35e"
+  }
+}

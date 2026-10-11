@@ -1,0 +1,30 @@
+{
+  "zh-whitespace-256MiB": {
+    "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256-words/words.json",
+    "pretokenizer": "whitespace",
+    "vocab_size": 50000,
+    "min_frequency": 2,
+    "suffix": null
+  },
+  "zh-bytelevel_regex-256MiB": {
+    "path": "/tmp/bpe-corpus-b1-inputs-20261011/zh-bytelevel_regex/words.json",
+    "pretokenizer": "bytelevel_regex",
+    "vocab_size": 50000,
+    "min_frequency": 2,
+    "suffix": null
+  },
+  "en-whitespace-256MiB": {
+    "path": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/en256-words/words.json",
+    "pretokenizer": "whitespace",
+    "vocab_size": 50000,
+    "min_frequency": 2,
+    "suffix": null
+  },
+  "en-bytelevel_regex-256MiB": {
+    "path": "/tmp/bpe-corpus-b1-inputs-20261011/en-bytelevel_regex/words.json",
+    "pretokenizer": "bytelevel_regex",
+    "vocab_size": 50000,
+    "min_frequency": 2,
+    "suffix": null
+  }
+}

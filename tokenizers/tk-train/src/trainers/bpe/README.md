@@ -31,6 +31,9 @@ The implementation is divided by the knowledge each module owns:
 - [corpus.rs](corpus.rs) owns fixed coordinates, token endpoints, weights, and
   ID activation and occurrence spans. Initial ID metadata moves here once;
   merge selection and geometry use this same activation record.
+  It measures per-word symbol counts in parallel, then replaces those same
+  slots with checked word starts in one serial prefix pass. No second
+  per-word usize array is allocated during layout construction.
   Only this module converts full-u64 occurrence coordinates
   to checked resident indices.
 - [index.rs](index.rs) owns exact priority correction, count shards, signed reuse

@@ -1,0 +1,26 @@
+[
+  {
+    "case": "zh-whitespace-256MiB",
+    "initial_baseline_model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "integrated_baseline_model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "full_model_equal": true
+  },
+  {
+    "case": "zh-bytelevel_regex-256MiB",
+    "initial_baseline_model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "integrated_baseline_model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "full_model_equal": true
+  },
+  {
+    "case": "en-whitespace-256MiB",
+    "initial_baseline_model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6",
+    "integrated_baseline_model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6",
+    "full_model_equal": true
+  },
+  {
+    "case": "en-bytelevel_regex-256MiB",
+    "initial_baseline_model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+    "integrated_baseline_model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+    "full_model_equal": true
+  }
+]
