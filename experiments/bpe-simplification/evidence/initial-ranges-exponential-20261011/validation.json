@@ -1,0 +1,35 @@
+{
+  "default_features": {
+    "passed": 38,
+    "filtered_existing_failure": 1,
+    "command": "CARGO_TARGET_DIR=/tmp/bpe-index-tests-20261011 cargo test --offline --locked --manifest-path tokenizers/tk-train/Cargo.toml --lib -- --skip feed_training_tokenizer_json_and_encoding_roundtrip"
+  },
+  "no_default_features": {
+    "passed": 38,
+    "filtered_existing_failure": 1,
+    "command": "CARGO_TARGET_DIR=/tmp/bpe-index-tests-20261011 cargo test --offline --locked --manifest-path tokenizers/tk-train/Cargo.toml --no-default-features --lib -- --skip feed_training_tokenizer_json_and_encoding_roundtrip"
+  },
+  "clippy": {
+    "exit_code": 0,
+    "command": "CARGO_TARGET_DIR=/tmp/bpe-index-tests-20261011 cargo clippy --offline --locked --manifest-path tokenizers/tk-train/Cargo.toml --no-default-features --all-targets -- -D warnings"
+  },
+  "format": {
+    "exit_code": 0,
+    "command": "uv run experiments/bpe-simplification/format-changed.py --check tokenizers/tk-train/src/trainers/bpe/corpus.rs"
+  },
+  "whitespace": {
+    "exit_code": 0,
+    "command": "git diff --check"
+  },
+  "existing_failure": "feed_training_tokenizer_json_and_encoding_roundtrip: previously reproduced on the baseline",
+  "micro_correctness": "Frozen binary, linear and exponential functions agree on empty, one-word, zero-budget, oversized, restart/power-of-two-sized word counts, exact-budget boundaries and usize::MAX coordinates; direct 3/4/2/6 expectations agree.",
+  "production_correctness": "Existing independent procedural linear oracle and range invariants retained, with direct expected ranges added for widths 3/4/2/6 at budgets 7/9/15/2.",
+  "performance": {
+    "micro_formal_pairs_per_case": 12,
+    "training_formal_pairs_per_corpus": 4,
+    "training_total_models_compared": 20,
+    "all_models_equal": true,
+    "zero_swap": true,
+    "scope": "Binary baseline ac32723d retains Range interface and Shard; candidate changes only initial_ranges, its assertions, documentation and the single dependency. Shared interface files unchanged. Frozen code and binaries verified unchanged after measurements."
+  }
+}

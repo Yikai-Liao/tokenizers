@@ -1,0 +1,4 @@
+     Locking 1 package to latest Rust 1.98.1 compatible version
+   Compiling slice-group-by v0.3.1
+   Compiling bpe-initial-ranges-micro v0.0.0 (/root/code/tokenizers-workspaces/bpe-heap-experiment/experiments/bpe-simplification/evidence/initial-ranges-exponential-20261011/explicit-one-word/micro)
+    Finished `release` profile [optimized] target(s) in 6.63s

@@ -1,0 +1,172 @@
+[
+  {
+    "case": "empty",
+    "words": "0",
+    "width": "16",
+    "slots": "16777216",
+    "ranges": "0",
+    "formal_pairs": 12,
+    "medians_ns": {
+      "binary": 3.63245,
+      "linear": 3.6023,
+      "exponential": 8.2786
+    },
+    "paired_median_delta_percent": {
+      "binary": 129.16371472079717,
+      "linear": 131.5369870800015
+    }
+  },
+  {
+    "case": "single-word",
+    "words": "1",
+    "width": "16",
+    "slots": "16777216",
+    "ranges": "1",
+    "formal_pairs": 12,
+    "medians_ns": {
+      "binary": 56.30035,
+      "linear": 56.5346,
+      "exponential": 59.647149999999996
+    },
+    "paired_median_delta_percent": {
+      "binary": 6.886654520446123,
+      "linear": 5.986093640571577
+    }
+  },
+  {
+    "case": "all-fit-100k",
+    "words": "100000",
+    "width": "16",
+    "slots": "16777216",
+    "ranges": "1",
+    "formal_pairs": 12,
+    "medians_ns": {
+      "binary": 56.515299999999996,
+      "linear": 83367.8732,
+      "exponential": 59.7709
+    },
+    "paired_median_delta_percent": {
+      "binary": 5.5274563779942,
+      "linear": -99.93010359460763
+    }
+  },
+  {
+    "case": "large-segments-2m",
+    "words": "2000000",
+    "width": "16",
+    "slots": "16777216",
+    "ranges": "3",
+    "formal_pairs": 12,
+    "medians_ns": {
+      "binary": 163.29739999999998,
+      "linear": 3182795.3077,
+      "exponential": 247.3013
+    },
+    "paired_median_delta_percent": {
+      "binary": 52.60386537452777,
+      "linear": -99.99204060518363
+    }
+  },
+  {
+    "case": "one-word-per-segment-100k",
+    "words": "100000",
+    "width": "16",
+    "slots": "32",
+    "ranges": "100000",
+    "formal_pairs": 12,
+    "medians_ns": {
+      "binary": 6435153.04165,
+      "linear": 322745.01235,
+      "exponential": 998383.6518999999
+    },
+    "paired_median_delta_percent": {
+      "binary": -84.58091565103366,
+      "linear": 210.78309942153697
+    }
+  },
+  {
+    "case": "few-words-per-segment-100k",
+    "words": "100000",
+    "width": "16",
+    "slots": "64",
+    "ranges": "33334",
+    "formal_pairs": 12,
+    "medians_ns": {
+      "binary": 2245740.9444,
+      "linear": 148417.58335,
+      "exponential": 331867.15365
+    },
+    "paired_median_delta_percent": {
+      "binary": -85.12283189298753,
+      "linear": 123.81583646369971
+    }
+  },
+  {
+    "case": "medium-budget-100k",
+    "words": "100000",
+    "width": "16",
+    "slots": "4096",
+    "ranges": "417",
+    "formal_pairs": 12,
+    "medians_ns": {
+      "binary": 41647.352549999996,
+      "linear": 94497.7027,
+      "exponential": 21689.2126
+    },
+    "paired_median_delta_percent": {
+      "binary": -47.89435769630448,
+      "linear": -76.84013026914442
+    }
+  },
+  {
+    "case": "test-budget-100k",
+    "words": "100000",
+    "width": "16",
+    "slots": "16",
+    "ranges": "100000",
+    "formal_pairs": 12,
+    "medians_ns": {
+      "binary": 6417535.5417,
+      "linear": 323582.3172,
+      "exponential": 1003604.7375
+    },
+    "paired_median_delta_percent": {
+      "binary": -84.27167062335892,
+      "linear": 213.52201541076602
+    }
+  },
+  {
+    "case": "oversized-100k",
+    "words": "100000",
+    "width": "16777217",
+    "slots": "16777216",
+    "ranges": "100000",
+    "formal_pairs": 12,
+    "medians_ns": {
+      "binary": 6392242.95835,
+      "linear": 321937.71595,
+      "exponential": 994180.2738
+    },
+    "paired_median_delta_percent": {
+      "binary": -84.507206401193,
+      "linear": 205.48309757698007
+    }
+  },
+  {
+    "case": "zero-budget-100k",
+    "words": "100000",
+    "width": "16",
+    "slots": "0",
+    "ranges": "100000",
+    "formal_pairs": 12,
+    "medians_ns": {
+      "binary": 6374308.5833,
+      "linear": 321260.57,
+      "exponential": 1007380.04375
+    },
+    "paired_median_delta_percent": {
+      "binary": -84.3392577814459,
+      "linear": 215.29155829602905
+    }
+  }
+]

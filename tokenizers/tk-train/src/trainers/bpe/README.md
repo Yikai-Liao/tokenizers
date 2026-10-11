@@ -64,8 +64,9 @@ without waiting for every producer. Owned compressed fragments retain complete
 pair counts; global frequency admission precedes final list publication. There is
 no extra wave barrier.
 
-The plan finds each segment's resident boundary with `partition_point`, admitting
-the final tail separately because the word starts omit the final boundary.
+Each range admits one word first, including an oversized word. A fitting final
+tail is admitted directly; otherwise `slice-group-by`'s `exponential_search_by`
+counts additional words whose end boundaries fit, including an exact-budget end.
 Vocabulary exposes one filtered `symbols()` iterator to initial edge counting and
 endpoint materialization. Decorations still use original UTF-8 byte boundaries;
 edge coordinates enumerate retained symbols. Unlimited alphabet observation uses

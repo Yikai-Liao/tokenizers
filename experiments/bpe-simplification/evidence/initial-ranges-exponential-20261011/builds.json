@@ -1,0 +1,48 @@
+{
+  "baseline_commit": "ac32723d3dd555d7810d794db86a7a2ae65d7181",
+  "dependency": {
+    "name": "slice-group-by",
+    "version": "0.3.1",
+    "default_features": false,
+    "crate_sha256": "826167069c09b99d56f31e9ae5c99049e932a98c9dc2dac47645b08dbbf76ba7",
+    "runtime_dependencies": [],
+    "search_source": "https://docs.rs/crate/slice-group-by/0.3.1/source/src/lib.rs"
+  },
+  "profile": {
+    "opt_level": 3,
+    "lto": "fat",
+    "codegen_units": 1
+  },
+  "binaries": {
+    "binary": {
+      "path": "/tmp/bpe-exponential-binary-bin-20261011",
+      "sha256": "feac0996bac21ac50cdadad1637a24a6408ba1504aa55d2ea563707bab4bc907"
+    },
+    "candidate": {
+      "path": "/tmp/bpe-exponential-candidate-bin-20261011",
+      "sha256": "3a7432bb8c91778c415eafaf7dd9dd5ae2a30ab19511b8ec1024ae6861ef167b"
+    }
+  },
+  "source_sha256": {
+    "linear-corpus.rs": "ab900ef156da26353739f1e5240d50132cb7304d2bce6d25763b76ca0467867d",
+    "exponential-ranges.rs": "3c7b71f552d0b7d1296332622524362c74bb896e5c05ad7c966656f8ed3e8557",
+    "linear-ranges.rs": "8dd0ba86ec94200b32647d8b0e3628304679e812cd25c2860115d36195a0f700",
+    "binary-corpus.rs": "0629309a4bf4c2b8eca4d475effcf457eb555af737bd86df8edbec3edd42d8a4",
+    "binary-ranges.rs": "90811f34047a343347ac135899118ab0af1df2775e18660b897d2adf0ed0a38a",
+    "exponential-corpus.rs": "c4c9897d777b4bb294008c1e6b05d147f68ce988f44d0b783adc36f3c1832779"
+  },
+  "manifest_sha256": {
+    "experiments/bpe-simplification/runner/Cargo.lock": "2379cbc14ec17b10699614e2bc84ef53b972eb6357694e480109ab08fabe452a",
+    "tokenizers/tk-train/Cargo.lock": "7ffd9e72dd8d77a9909b2dcce454bc99f602e57178abbdaf9acc9dd60ce2cc9b",
+    "tokenizers/tk-train/Cargo.toml": "7a6235f8cdfdecfdbbf3cffc9de7b7478e6e2b7a1a7033aae6f0bfb85a9d04bc",
+    "experiments/bpe-simplification/evidence/initial-ranges-exponential-20261011/micro/Cargo.lock": "e8e1bf00f0516113df14c06b4007acaa6518697b3f345391b2926b9f91f6186d"
+  },
+  "build_command": "CARGO_TARGET_DIR=/tmp/bpe-index-build-20261011 cargo build --offline --release --locked --manifest-path experiments/bpe-simplification/runner/Cargo.toml",
+  "micro": {
+    "formal_pairs": 12,
+    "warmup_pair": 0,
+    "cpu": "0",
+    "profile": "opt-level=3, fat LTO, codegen-units=1",
+    "timing": "Same shared input layout, black_box inputs and output, allocation/drop included, independent per-arm iteration calibration to approximately 80ms. Six rotating arm orders, each represented twice among formal pairs."
+  }
+}

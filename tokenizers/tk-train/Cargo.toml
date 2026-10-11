@@ -51,6 +51,7 @@ esaxx-rs = { version = "0.1.10", default-features = false, features = [] }
 indicatif = { version = "0.18", optional = true }
 rayon = "1.10"
 smallvec = { version = "1.16", features = ["union"] }
+slice-group-by = { version = "0.3.1", default-features = false }
 
 [features]
 default = ["progressbar", "esaxx_fast"]

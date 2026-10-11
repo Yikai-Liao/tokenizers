@@ -1,0 +1,422 @@
+[
+  {
+    "case": "zh-whitespace-256MiB",
+    "workers": 4,
+    "arm": "baseline",
+    "block": 0,
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-exponential-binary-bin-20261011",
+      "/tmp/bpe-exponential-explicit-zh-results-20261011/zh-whitespace-256MiB-4-0-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "zh-whitespace-256MiB-4-0-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 7.115667463,
+      "process_hwm_kib_before_validation": 1829868,
+      "train_cpu_seconds": 58.240413,
+      "train_seconds": 21.559996793
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-exponential-explicit-zh-results-20261011/zh-whitespace-256MiB-4-0-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "workers": 4,
+    "arm": "candidate",
+    "block": 0,
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-exponential-explicit-bin-20261011",
+      "/tmp/bpe-exponential-explicit-zh-results-20261011/zh-whitespace-256MiB-4-0-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "zh-whitespace-256MiB-4-0-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.773987105,
+      "process_hwm_kib_before_validation": 1845732,
+      "train_cpu_seconds": 58.448854,
+      "train_seconds": 22.055979849
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-exponential-explicit-zh-results-20261011/zh-whitespace-256MiB-4-0-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "workers": 4,
+    "arm": "candidate",
+    "block": 1,
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-exponential-explicit-bin-20261011",
+      "/tmp/bpe-exponential-explicit-zh-results-20261011/zh-whitespace-256MiB-4-1-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "zh-whitespace-256MiB-4-1-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.460252683,
+      "process_hwm_kib_before_validation": 1832460,
+      "train_cpu_seconds": 58.97165199999999,
+      "train_seconds": 21.7109689
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-exponential-explicit-zh-results-20261011/zh-whitespace-256MiB-4-1-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "workers": 4,
+    "arm": "baseline",
+    "block": 1,
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-exponential-binary-bin-20261011",
+      "/tmp/bpe-exponential-explicit-zh-results-20261011/zh-whitespace-256MiB-4-1-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "zh-whitespace-256MiB-4-1-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.557666995,
+      "process_hwm_kib_before_validation": 1827372,
+      "train_cpu_seconds": 59.417379,
+      "train_seconds": 22.267324326
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-exponential-explicit-zh-results-20261011/zh-whitespace-256MiB-4-1-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "workers": 4,
+    "arm": "baseline",
+    "block": 2,
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-exponential-binary-bin-20261011",
+      "/tmp/bpe-exponential-explicit-zh-results-20261011/zh-whitespace-256MiB-4-2-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "zh-whitespace-256MiB-4-2-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.791900164,
+      "process_hwm_kib_before_validation": 1849256,
+      "train_cpu_seconds": 59.261808,
+      "train_seconds": 21.271048544
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-exponential-explicit-zh-results-20261011/zh-whitespace-256MiB-4-2-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "workers": 4,
+    "arm": "candidate",
+    "block": 2,
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-exponential-explicit-bin-20261011",
+      "/tmp/bpe-exponential-explicit-zh-results-20261011/zh-whitespace-256MiB-4-2-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "zh-whitespace-256MiB-4-2-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.448509838,
+      "process_hwm_kib_before_validation": 1870456,
+      "train_cpu_seconds": 58.699577000000005,
+      "train_seconds": 21.242820429
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-exponential-explicit-zh-results-20261011/zh-whitespace-256MiB-4-2-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "workers": 4,
+    "arm": "candidate",
+    "block": 3,
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-exponential-explicit-bin-20261011",
+      "/tmp/bpe-exponential-explicit-zh-results-20261011/zh-whitespace-256MiB-4-3-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "zh-whitespace-256MiB-4-3-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.658841079,
+      "process_hwm_kib_before_validation": 1866000,
+      "train_cpu_seconds": 59.285161,
+      "train_seconds": 21.497963366
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-exponential-explicit-zh-results-20261011/zh-whitespace-256MiB-4-3-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "workers": 4,
+    "arm": "baseline",
+    "block": 3,
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-exponential-binary-bin-20261011",
+      "/tmp/bpe-exponential-explicit-zh-results-20261011/zh-whitespace-256MiB-4-3-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "zh-whitespace-256MiB-4-3-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.524773539,
+      "process_hwm_kib_before_validation": 1845496,
+      "train_cpu_seconds": 61.573297,
+      "train_seconds": 22.920182614
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-exponential-explicit-zh-results-20261011/zh-whitespace-256MiB-4-3-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "workers": 4,
+    "arm": "baseline",
+    "block": 4,
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-exponential-binary-bin-20261011",
+      "/tmp/bpe-exponential-explicit-zh-results-20261011/zh-whitespace-256MiB-4-4-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "zh-whitespace-256MiB-4-4-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.788423871,
+      "process_hwm_kib_before_validation": 1828004,
+      "train_cpu_seconds": 60.018186,
+      "train_seconds": 22.19115016
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-exponential-explicit-zh-results-20261011/zh-whitespace-256MiB-4-4-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "workers": 4,
+    "arm": "candidate",
+    "block": 4,
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-exponential-explicit-bin-20261011",
+      "/tmp/bpe-exponential-explicit-zh-results-20261011/zh-whitespace-256MiB-4-4-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "zh-whitespace-256MiB-4-4-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.702744259,
+      "process_hwm_kib_before_validation": 1829268,
+      "train_cpu_seconds": 55.453652,
+      "train_seconds": 20.137755063
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-exponential-explicit-zh-results-20261011/zh-whitespace-256MiB-4-4-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  }
+]
