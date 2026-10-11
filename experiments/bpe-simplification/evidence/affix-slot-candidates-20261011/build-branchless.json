@@ -1,0 +1,14 @@
+{
+  "command": [
+    "cargo",
+    "build",
+    "--offline",
+    "--locked",
+    "--release",
+    "--manifest-path",
+    "experiments/bpe-simplification/runner/Cargo.toml"
+  ],
+  "exit_code": 0,
+  "seconds": 33.44600503100082,
+  "binary_sha256": "a301122750e700cf2856f34b4b7468deb3e1cbeb3354f2a2c69c769d5bcaa442"
+}

@@ -1,0 +1,34 @@
+{
+  "baseline_commit": "0dd1ca48c493d17c5963c042680a4cd2fda99739",
+  "candidate_a": "guards then conditional suffix-slot selection",
+  "candidate_b": "weighted boolean slot value followed by checked_sub(1)",
+  "checks": [
+    {
+      "log": "test-default.log",
+      "passed": 42,
+      "known_failed": 1,
+      "filtered_out": 7,
+      "seconds": 12.4
+    },
+    {
+      "log": "test-nodefault.log",
+      "passed": 42,
+      "known_failed": 1,
+      "filtered_out": 7,
+      "seconds": 12.29
+    },
+    {
+      "log": "test-branchless.log",
+      "passed": 42,
+      "known_failed": 1,
+      "filtered_out": 7,
+      "seconds": 12.76
+    }
+  ],
+  "clippy_both_variants": 0,
+  "production_b_sha256": "1502d1f062de834895feafc652960251decb10e5d5c01241b655c36dd909f866",
+  "source_b_matches_frozen_production_copy": true,
+  "models": "All four case pairs compare the complete vocabulary by ID and ordered merges byte-for-byte. All pairs equal.",
+  "decision": "Neither candidate adopted; production retains the current four-case bool match. No fresh experiment started after user requested the summary.",
+  "counter_limitation": "External perf control window from selection log to init log; ack latency significant for the short English stage. Treat counts as diagnostic evidence, not exact per-function instruction attribution."
+}

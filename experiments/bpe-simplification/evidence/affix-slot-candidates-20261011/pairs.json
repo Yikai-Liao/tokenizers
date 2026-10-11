@@ -1,0 +1,58 @@
+[
+  {
+    "case": "zh-affix",
+    "arm": "candidate",
+    "full_model_equal": true,
+    "model_sha256": "588ed3aea9eba5d9cd77779540fc148d34312c7dadeebcdd6326c87cee757ab1",
+    "delta_percent": {
+      "alphabet_selection_seconds": 2.9037632062560492,
+      "vocabulary_initialization_seconds": 8.74713102449849,
+      "alphabet_plus_initialization_seconds": 5.744688448677304,
+      "train_seconds": 1.0447018818789955,
+      "train_cpu_seconds": -1.362969278925119,
+      "process_hwm_kib_before_validation": 0.2944805861355704
+    }
+  },
+  {
+    "case": "en-affix",
+    "arm": "candidate",
+    "full_model_equal": true,
+    "model_sha256": "a6c9aac13904dc7e43051ae1eda1a38794b1778b01e52608de6fd286c0cfe2cc",
+    "delta_percent": {
+      "alphabet_selection_seconds": -14.915768651898176,
+      "vocabulary_initialization_seconds": -19.143787020784842,
+      "alphabet_plus_initialization_seconds": -17.133198544033846,
+      "train_seconds": -4.150006617598079,
+      "train_cpu_seconds": 2.079011026520061,
+      "process_hwm_kib_before_validation": 1.4444389101957444
+    }
+  },
+  {
+    "case": "zh-affix-branchless",
+    "arm": "branchless",
+    "full_model_equal": true,
+    "model_sha256": "588ed3aea9eba5d9cd77779540fc148d34312c7dadeebcdd6326c87cee757ab1",
+    "delta_percent": {
+      "alphabet_selection_seconds": 2.976278539738786,
+      "vocabulary_initialization_seconds": 1.5806833523012376,
+      "alphabet_plus_initialization_seconds": 2.293518202375755,
+      "train_seconds": 2.5596904039786317,
+      "train_cpu_seconds": 2.792780556668495,
+      "process_hwm_kib_before_validation": -0.13821973857101044
+    }
+  },
+  {
+    "case": "en-affix-branchless",
+    "arm": "branchless",
+    "full_model_equal": true,
+    "model_sha256": "a6c9aac13904dc7e43051ae1eda1a38794b1778b01e52608de6fd286c0cfe2cc",
+    "delta_percent": {
+      "alphabet_selection_seconds": 36.77606498365209,
+      "vocabulary_initialization_seconds": 19.89588301760319,
+      "alphabet_plus_initialization_seconds": 27.993163230762907,
+      "train_seconds": 6.504678370979966,
+      "train_cpu_seconds": 8.637324412831093,
+      "process_hwm_kib_before_validation": -4.048280024140016
+    }
+  }
+]

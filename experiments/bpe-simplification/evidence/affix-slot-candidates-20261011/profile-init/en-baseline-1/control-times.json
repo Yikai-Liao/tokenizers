@@ -1,0 +1,14 @@
+[
+  {
+    "action": "enable",
+    "sent": 1120341.472094992,
+    "acknowledged": 1120341.496506054,
+    "response": "ack\n\u0000"
+  },
+  {
+    "action": "disable",
+    "sent": 1120341.5509324,
+    "acknowledged": 1120341.551436776,
+    "response": "ack\n\u0000"
+  }
+]

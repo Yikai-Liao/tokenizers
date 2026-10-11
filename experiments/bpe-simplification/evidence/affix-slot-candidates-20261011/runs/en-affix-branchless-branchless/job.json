@@ -1,0 +1,19 @@
+{
+  "protocol_version": 1,
+  "attempt_id": "en-affix-branchless-branchless",
+  "build_id": "branchless",
+  "input_id": "en256",
+  "mode": "core",
+  "input": "/root/code/tokenizers-workspaces/bpe-affix-verification-results-20261011/en-prepared-words.json",
+  "output": "/root/code/tokenizers-workspaces/bpe-affix-slot-results-20261011/runs/en-affix-branchless-branchless/model.json",
+  "workers": 4,
+  "pretokenizer": "whitespace",
+  "trainer": {
+    "vocab_size": 50000,
+    "min_frequency": 2,
+    "prefix": "##",
+    "suffix": "</w>",
+    "max_token_length": null,
+    "limit_alphabet": 128
+  }
+}

@@ -1,0 +1,48 @@
+[
+  {
+    "name": "test-default",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "trainers::bpe",
+      "--lib"
+    ],
+    "exit_code": 101,
+    "seconds": 25.780053088907152
+  },
+  {
+    "name": "test-nodefault",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--no-default-features",
+      "trainers::bpe",
+      "--lib"
+    ],
+    "exit_code": 101,
+    "seconds": 24.78268092800863
+  },
+  {
+    "name": "clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--all-targets",
+      "--no-default-features",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "seconds": 4.931833963142708
+  }
+]
