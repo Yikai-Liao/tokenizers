@@ -1,0 +1,11 @@
+{
+  "integration_parent": "8afc869f3ea4d3c402ec5a937e951605f581c785",
+  "experiment_baseline": "8f078a8ca11a62bb6f81fe99a73f028f9cc4a5d2",
+  "production_files": [
+    "tokenizers/tk-train/src/trainers/bpe/word_counts.rs",
+    "tokenizers/tk-train/src/trainers/bpe/tests.rs"
+  ],
+  "production_source_matches_frozen_candidate": true,
+  "benchmark_repeated": false,
+  "reason": "User requested push, then native tests only; upstream integration preserves the exact accepted WordCounts patch."
+}

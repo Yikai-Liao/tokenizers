@@ -1,0 +1,23 @@
+{
+  "frozen_source_hashes_match": {
+    "baseline": true,
+    "candidate": true
+  },
+  "binary_hashes_match": true,
+  "production_patch_unchanged": true,
+  "original_production_unchanged": true,
+  "warmups": 16,
+  "original_formal": 32,
+  "followup_formal": 4,
+  "all_full_counts_equal": true,
+  "all_original_vocab_and_ordered_merges_equal": true,
+  "all_native_models_equal": true,
+  "all_children_zero_swap": true,
+  "all_pipeline_major_faults_zero": true,
+  "corpus_coordinate_panic_reproduced_in_baseline": false,
+  "corpus_coordinate_panic_reproduced_in_candidate": false,
+  "known_encoder_failure_reproduced_in_both": true,
+  "candidate_committed": false,
+  "candidate_merged": false,
+  "candidate_pushed": false
+}

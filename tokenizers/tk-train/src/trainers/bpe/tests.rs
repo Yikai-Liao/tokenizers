@@ -1097,7 +1097,7 @@ fn feed_unification_boundaries_errors_and_stored_state() {
             .build()
             .unwrap()
             .install(|| {
-                check_feed_unification_success(parallel && workers > 1, workers);
+                check_feed_unification_success(workers);
                 check_feed_unification_errors();
             });
         if parallel && workers > 1 {
@@ -1119,7 +1119,7 @@ fn feed_unification_boundaries_errors_and_stored_state() {
     }
 }
 
-fn check_feed_unification_success(parallel: bool, workers: usize) {
+fn check_feed_unification_success(workers: usize) {
     use super::word_counts::WordCounts;
     let mut lengths = vec![0, 1, workers - 1, workers, workers + 1];
     lengths.extend([31, 32, 33, 64].map(|n| workers + n));
@@ -1145,7 +1145,6 @@ fn check_feed_unification_success(parallel: bool, workers: usize) {
         .unwrap();
         assert_eq!(reads.load(Ordering::Relaxed), length + 1);
         assert!(seen.iter().all(|n| n.load(Ordering::Relaxed) == 1));
-        assert_eq!(matches!(&counted, WordCounts::Entries(_)), parallel);
         let mut expected = AHashMap::<CompactString, u64>::new();
         for id in (0..length).filter(|id| id % 3 != 0) {
             expected.insert(format!("词🙂{id}").into(), 1);
@@ -1158,7 +1157,6 @@ fn check_feed_unification_success(parallel: bool, workers: usize) {
         let mut words: Vec<_> = (0..unique).map(|id| format!("key{id}")).collect();
         words.extend(["key0".into(), format!("key{}", unique - 1), "key0".into()]);
         let counted = super::feed::count(std::iter::once("input"), &|_| Ok(words.clone())).unwrap();
-        assert_eq!(matches!(&counted, WordCounts::Entries(_)), parallel);
         let mut expected = AHashMap::<CompactString, u64>::new();
         for word in &words {
             *expected.entry(word.as_str().into()).or_default() += 1;
@@ -1178,6 +1176,11 @@ fn check_feed_unification_success(parallel: bool, workers: usize) {
         trainer.train_vocab().unwrap(),
         trainer.do_train(&expected).unwrap()
     );
+    assert_eq!(
+        trainer.train_vocab().unwrap(),
+        trainer.do_train(&expected).unwrap()
+    );
+    assert_eq!(trainer.words, WordCounts::from_map(expected));
 }
 
 fn check_feed_unification_errors() {

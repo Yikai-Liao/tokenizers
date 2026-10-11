@@ -1,0 +1,80 @@
+[
+  {
+    "arm": "baseline",
+    "feature": "default",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--lib",
+      "--",
+      "--skip",
+      "feed_training_tokenizer_json_and_encoding_roundtrip"
+    ],
+    "exit_code": 0,
+    "seconds": 5.930884599685669,
+    "log": "baseline-all-default.log"
+  },
+  {
+    "arm": "baseline",
+    "feature": "no-default",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--lib",
+      "--no-default-features",
+      "--",
+      "--skip",
+      "feed_training_tokenizer_json_and_encoding_roundtrip"
+    ],
+    "exit_code": 0,
+    "seconds": 5.957996129989624,
+    "log": "baseline-all-no-default.log"
+  },
+  {
+    "arm": "candidate",
+    "feature": "default",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--lib",
+      "--",
+      "--skip",
+      "feed_training_tokenizer_json_and_encoding_roundtrip"
+    ],
+    "exit_code": 0,
+    "seconds": 5.830994606018066,
+    "log": "candidate-all-default.log"
+  },
+  {
+    "arm": "candidate",
+    "feature": "no-default",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--lib",
+      "--no-default-features",
+      "--",
+      "--skip",
+      "feed_training_tokenizer_json_and_encoding_roundtrip"
+    ],
+    "exit_code": 0,
+    "seconds": 5.664143800735474,
+    "log": "candidate-all-no-default.log"
+  }
+]

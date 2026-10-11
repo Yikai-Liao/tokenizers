@@ -1,0 +1,153 @@
+diff --git a/tokenizers/tk-train/src/trainers/bpe/tests.rs b/tokenizers/tk-train/src/trainers/bpe/tests.rs
+index b5312984..e7d1c413 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/tests.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/tests.rs
+@@ -1097,7 +1097,7 @@ fn feed_unification_boundaries_errors_and_stored_state() {
+             .build()
+             .unwrap()
+             .install(|| {
+-                check_feed_unification_success(parallel && workers > 1, workers);
++                check_feed_unification_success(workers);
+                 check_feed_unification_errors();
+             });
+         if parallel && workers > 1 {
+@@ -1119,7 +1119,7 @@ fn feed_unification_boundaries_errors_and_stored_state() {
+     }
+ }
+ 
+-fn check_feed_unification_success(parallel: bool, workers: usize) {
++fn check_feed_unification_success(workers: usize) {
+     use super::word_counts::WordCounts;
+     let mut lengths = vec![0, 1, workers - 1, workers, workers + 1];
+     lengths.extend([31, 32, 33, 64].map(|n| workers + n));
+@@ -1145,7 +1145,6 @@ fn check_feed_unification_success(parallel: bool, workers: usize) {
+         .unwrap();
+         assert_eq!(reads.load(Ordering::Relaxed), length + 1);
+         assert!(seen.iter().all(|n| n.load(Ordering::Relaxed) == 1));
+-        assert_eq!(matches!(&counted, WordCounts::Entries(_)), parallel);
+         let mut expected = AHashMap::<CompactString, u64>::new();
+         for id in (0..length).filter(|id| id % 3 != 0) {
+             expected.insert(format!("词🙂{id}").into(), 1);
+@@ -1158,7 +1157,6 @@ fn check_feed_unification_success(parallel: bool, workers: usize) {
+         let mut words: Vec<_> = (0..unique).map(|id| format!("key{id}")).collect();
+         words.extend(["key0".into(), format!("key{}", unique - 1), "key0".into()]);
+         let counted = super::feed::count(std::iter::once("input"), &|_| Ok(words.clone())).unwrap();
+-        assert_eq!(matches!(&counted, WordCounts::Entries(_)), parallel);
+         let mut expected = AHashMap::<CompactString, u64>::new();
+         for word in &words {
+             *expected.entry(word.as_str().into()).or_default() += 1;
+@@ -1178,6 +1176,11 @@ fn check_feed_unification_success(parallel: bool, workers: usize) {
+         trainer.train_vocab().unwrap(),
+         trainer.do_train(&expected).unwrap()
+     );
++    assert_eq!(
++        trainer.train_vocab().unwrap(),
++        trainer.do_train(&expected).unwrap()
++    );
++    assert_eq!(trainer.words, WordCounts::from_map(expected));
+ }
+ 
+ fn check_feed_unification_errors() {
+diff --git a/tokenizers/tk-train/src/trainers/bpe/word_counts.rs b/tokenizers/tk-train/src/trainers/bpe/word_counts.rs
+index a91b6dad..e226b5f2 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/word_counts.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/word_counts.rs
+@@ -8,39 +8,29 @@ type CountMap = AHashMap<CompactString, u64>;
+ type Entry = (CompactString, u64);
+ 
+ /// Frozen trainer-owned word counts, serialized as the same public flat map.
+-/// Sequential feed retains its map; parallel feed owns unique entries. Keeping
+-/// both avoids a conversion solely to make their storage types identical.
+-#[derive(Clone)]
+-pub(super) enum WordCounts {
+-    Map(CountMap),
+-    Entries(Vec<Entry>),
+-}
+-
+-impl Default for WordCounts {
+-    fn default() -> Self {
+-        Self::Entries(Vec::new())
+-    }
+-}
++/// Feed moves its unique entries here, preserving their iteration order.
++#[derive(Clone, Default)]
++pub(super) struct WordCounts(Vec<Entry>);
+ 
+ impl WordCounts {
+     // Requires globally unique keys. Entry order is unspecified.
+     pub(super) fn from_entries(entries: Vec<Entry>) -> Self {
+-        Self::Entries(entries)
++        Self(entries)
+     }
+ 
+     pub(super) fn from_map(map: CountMap) -> Self {
+-        Self::Map(map)
++        Self(map.into_iter().collect())
+     }
+ 
+     pub(super) fn view(&self) -> WordCountsView<'_> {
+-        match self {
+-            Self::Map(map) => WordCountsView::from_map(map),
+-            Self::Entries(entries) => WordCountsView { map: None, entries },
++        WordCountsView {
++            map: None,
++            entries: &self.0,
+         }
+     }
+ 
+     pub(super) fn len(&self) -> usize {
+-        self.view().len()
++        self.0.len()
+     }
+ }
+ 
+@@ -55,15 +45,8 @@ impl PartialEq for WordCounts {
+         if self.len() != other.len() {
+             return false;
+         }
+-        match (self, other) {
+-            (Self::Map(left), Self::Map(right)) => return left == right,
+-            (Self::Entries(left), Self::Entries(right)) if left == right => return true,
+-            (Self::Map(map), Self::Entries(entries)) | (Self::Entries(entries), Self::Map(map)) => {
+-                return entries
+-                    .iter()
+-                    .all(|(word, count)| map.get(word) == Some(count));
+-            }
+-            _ => {}
++        if self.0 == other.0 {
++            return true;
+         }
+ 
+         // Public content equality remains linear, with a temporary borrowed index.
+@@ -82,12 +65,7 @@ impl Eq for WordCounts {}
+ 
+ impl Serialize for WordCounts {
+     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+-        match self {
+-            Self::Map(map) => map.serialize(serializer),
+-            Self::Entries(entries) => {
+-                serializer.collect_map(entries.iter().map(|(word, count)| (word, count)))
+-            }
+-        }
++        serializer.collect_map(self.0.iter().map(|(word, count)| (word, count)))
+     }
+ }
+ 
+@@ -172,4 +150,17 @@ mod tests {
+         assert_eq!(WordCounts::default(), empty_map);
+         assert_eq!(empty_map, WordCounts::default());
+     }
++
++    #[test]
++    fn duplicate_map_keys_keep_the_last_count_and_map_debug() {
++        let counts: WordCounts = serde_json::from_str(r#"{"word":1,"word":9}"#).unwrap();
++        assert_eq!(counts, WordCounts::from_entries(vec![("word".into(), 9)]));
++        assert_eq!(counts.len(), 1);
++        assert_eq!(
++            serde_json::to_value(&counts).unwrap(),
++            serde_json::json!({"word":9})
++        );
++        assert_eq!(format!("{counts:?}"), r#"{"word": 9}"#);
++        assert!(serde_json::from_str::<WordCounts>(r#"{"word":-1}"#).is_err());
++    }
+ }

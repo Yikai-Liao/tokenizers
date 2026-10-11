@@ -1,0 +1,14 @@
+[
+  {
+    "arm": "baseline",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--manifest-path",
+      "experiments/bpe-simplification/runner/Cargo.toml"
+    ],
+    "exit_code": 101,
+    "seconds": 13.724974870681763
+  }
+]

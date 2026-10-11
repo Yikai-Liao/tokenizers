@@ -1,0 +1,360 @@
+diff --git a/experiments/bpe-simplification/runner/Cargo.lock b/experiments/bpe-simplification/runner/Cargo.lock
+index da94af05..18063194 100644
+--- a/experiments/bpe-simplification/runner/Cargo.lock
++++ b/experiments/bpe-simplification/runner/Cargo.lock
+@@ -61,6 +61,12 @@ version = "0.13.1"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "9e1b586273c5702936fe7b7d6896644d8be71e6314cfe09d3167c95f712589e8"
+ 
++[[package]]
++name = "base64"
++version = "0.22.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
++
+ [[package]]
+ name = "bitcannon"
+ version = "0.1.0-dev.2"
+@@ -103,6 +109,7 @@ dependencies = [
+  "serde",
+  "serde_json",
+  "tk-encode",
++ "tk-serialize",
+  "tk-train",
+ ]
+ 
+@@ -491,6 +498,12 @@ version = "0.5.3"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "e17592d60ebacc7d5e169f4663c5f84f9161cc90328abcfe8456f41e4dfcb284"
+ 
++[[package]]
++name = "hifijson"
++version = "0.5.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "242402749acf71e6f32f5857598b7002c4058a4e3c3b22b4c7d51cab9aea754e"
++
+ [[package]]
+ name = "indexmap"
+ version = "2.14.2"
+@@ -1007,7 +1020,7 @@ version = "0.1.4"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "5851699c4033c63636f7ea4cf7b7c1f1bf06d0cc03cfb42e711de5a5c46cf326"
+ dependencies = [
+- "base64",
++ "base64 0.13.1",
+  "nom",
+  "serde",
+  "unicode-segmentation",
+@@ -1151,6 +1164,16 @@ dependencies = [
+  "yada",
+ ]
+ 
++[[package]]
++name = "tk-serialize"
++version = "0.1.0-dev.2"
++dependencies = [
++ "base64 0.22.1",
++ "bitcannon",
++ "hifijson",
++ "tk-encode",
++]
++
+ [[package]]
+ name = "tk-train"
+ version = "0.1.0-dev.2"
+diff --git a/experiments/bpe-simplification/runner/Cargo.toml b/experiments/bpe-simplification/runner/Cargo.toml
+index 1f7a13ff..e7fa24de 100644
+--- a/experiments/bpe-simplification/runner/Cargo.toml
++++ b/experiments/bpe-simplification/runner/Cargo.toml
+@@ -6,6 +6,7 @@ edition = "2024"
+ default = []
+ pr2348 = []
+ [dependencies]
++tk-serialize = { path = "../../../tokenizers/tk-serialize", default-features = false, features = ["serialize", "bpe", "unigram", "wordpiece", "wordlevel", "normalizers"] }
+ tk-train = { path = "../../../tokenizers/tk-train", default-features = false }
+ tk-encode = { path = "../../../tokenizers/tk-encode", default-features = false }
+ ahash = "0.8.12"
+diff --git a/experiments/bpe-simplification/runner/src/feed_stats.rs b/experiments/bpe-simplification/runner/src/feed_stats.rs
+index 0b6f4df9..3c591b67 100644
+--- a/experiments/bpe-simplification/runner/src/feed_stats.rs
++++ b/experiments/bpe-simplification/runner/src/feed_stats.rs
+@@ -3,7 +3,7 @@
+ use crate::protocol::Error;
+ use serde::Serialize;
+ use serde_json::ser::{CharEscape, Formatter, Serializer};
+-use std::io::{self, Write};
++use std::io::{self, BufWriter, Write};
+ 
+ #[derive(Default)]
+ struct WordBytes {
+@@ -14,6 +14,8 @@ struct WordBytes {
+     words_depth: Option<usize>,
+     words: u64,
+     bytes: u64,
++    word: String,
++    output: Option<BufWriter<std::fs::File>>,
+ }
+ 
+ impl Formatter for &mut WordBytes {
+@@ -45,6 +47,7 @@ impl Formatter for &mut WordBytes {
+         }
+         if self.words_depth == Some(self.depth) {
+             self.words += 1;
++            self.word.clear();
+         }
+         Ok(())
+     }
+@@ -64,28 +67,77 @@ impl Formatter for &mut WordBytes {
+     ) -> io::Result<()> {
+         if self.key && self.words_depth == Some(self.depth) {
+             self.bytes += fragment.len() as u64;
++            if self.output.is_some() {
++                self.word.push_str(fragment);
++            }
+         } else if self.key && self.depth == 1 {
+             self.field.push_str(fragment);
+         }
+         Ok(())
+     }
+ 
++    fn write_u64<W: ?Sized + Write>(&mut self, _writer: &mut W, count: u64) -> io::Result<()> {
++        if self.words_depth == Some(self.depth) && !self.key {
++            if let Some(output) = &mut self.output {
++                serde_json::to_writer(&mut *output, &self.word)?;
++                writeln!(output, "\t{count}")?;
++            }
++        }
++        Ok(())
++    }
++
+     fn write_char_escape<W: ?Sized + Write>(
+         &mut self,
+         _writer: &mut W,
+-        _escape: CharEscape,
++        escape: CharEscape,
+     ) -> io::Result<()> {
+         if self.key && self.words_depth == Some(self.depth) {
+             // JSON's escapes here represent one original ASCII byte, including
+             // controls, quote and backslash; UTF-8 fragments are counted above.
+             self.bytes += 1;
++            if self.output.is_some() {
++                self.word.push(match escape {
++                    CharEscape::Quote => '"',
++                    CharEscape::ReverseSolidus => '\\',
++                    CharEscape::Solidus => '/',
++                    CharEscape::Backspace => '\u{8}',
++                    CharEscape::FormFeed => '\u{c}',
++                    CharEscape::LineFeed => '\n',
++                    CharEscape::CarriageReturn => '\r',
++                    CharEscape::Tab => '\t',
++                    CharEscape::AsciiControl(byte) => char::from(byte),
++                });
++            }
+         }
+         Ok(())
+     }
+ }
+ 
++#[cfg(test)]
+ pub fn measure(trainer: &impl Serialize, expected_words: usize) -> Result<u64, Error> {
+-    let mut stats = WordBytes::default();
++    measure_with(trainer, expected_words, WordBytes::default())
++}
++
++pub fn export(
++    trainer: &impl Serialize,
++    expected_words: usize,
++    path: &std::path::Path,
++) -> Result<u64, Error> {
++    measure_with(
++        trainer,
++        expected_words,
++        WordBytes {
++            output: Some(BufWriter::new(std::fs::File::create(path)?)),
++            ..Default::default()
++        },
++    )
++}
++
++fn measure_with(
++    trainer: &impl Serialize,
++    expected_words: usize,
++    mut stats: WordBytes,
++) -> Result<u64, Error> {
+     {
+         let mut serializer = Serializer::with_formatter(io::sink(), &mut stats);
+         trainer.serialize(&mut serializer)?;
+@@ -93,6 +145,9 @@ pub fn measure(trainer: &impl Serialize, expected_words: usize) -> Result<u64, E
+     if stats.words != expected_words as u64 {
+         return Err("serialized Feed word count does not match public get_word_count".into());
+     }
++    if let Some(output) = &mut stats.output {
++        output.flush()?;
++    }
+     Ok(stats.bytes)
+ }
+ 
+@@ -117,5 +172,17 @@ mod tests {
+         };
+         assert_eq!(measure(&trainer, 2).unwrap(), 10);
+         assert!(measure(&trainer, 3).is_err());
++        let path = std::env::temp_dir().join(format!("bpe-feed-export-{}.tsv", std::process::id()));
++        assert_eq!(export(&trainer, 2, &path).unwrap(), 10);
++        let actual: BTreeMap<String, u64> = std::fs::read_to_string(&path)
++            .unwrap()
++            .lines()
++            .map(|line| {
++                let (word, count) = line.rsplit_once('\t').unwrap();
++                (serde_json::from_str(word).unwrap(), count.parse().unwrap())
++            })
++            .collect();
++        assert_eq!(actual, trainer.words);
++        std::fs::remove_file(path).unwrap();
+     }
+ }
+diff --git a/experiments/bpe-simplification/runner/src/main.rs b/experiments/bpe-simplification/runner/src/main.rs
+index 2fc858e4..8691fa6a 100644
+--- a/experiments/bpe-simplification/runner/src/main.rs
++++ b/experiments/bpe-simplification/runner/src/main.rs
+@@ -2,6 +2,7 @@ mod adapters;
+ mod core;
+ mod feed_stats;
+ mod model_output;
++mod native_output;
+ mod pipeline;
+ mod protocol;
+ use protocol::{Error, Job};
+diff --git a/experiments/bpe-simplification/runner/src/native_output.rs b/experiments/bpe-simplification/runner/src/native_output.rs
+new file mode 100644
+index 00000000..6e34634f
+--- /dev/null
++++ b/experiments/bpe-simplification/runner/src/native_output.rs
+@@ -0,0 +1,34 @@
++//! Native complete model export, after all timing and pre-validation snapshots.
++use crate::protocol::{Error, Job};
++use tk_encode::{
++    models::bpe::{BpeConfig, Merges, PipelineBPE, Vocab},
++    pipeline::{PipelineModel, PipelinePreTokenizer, PipelineTokenizer},
++};
++pub fn write(
++    path: &std::path::Path,
++    job: &Job,
++    vocab: &Vocab,
++    merges: &Merges,
++) -> Result<(), Error> {
++    let model = PipelineBPE::from_config(BpeConfig {
++        vocab: vocab.clone(),
++        merges: merges.clone(),
++        byte_level: job.pretokenizer == "bytelevel_regex",
++        continuing_subword_prefix: job.trainer.prefix.clone(),
++        end_of_word_suffix: job.trainer.suffix.clone(),
++        ..Default::default()
++    })?;
++    let tokenizer = PipelineTokenizer::from_parts(
++        Default::default(),
++        vec![],
++        PipelinePreTokenizer::None,
++        PipelineModel::BPE(model),
++        Default::default(),
++        None,
++        Default::default(),
++        None,
++        None,
++    );
++    std::fs::write(path, tk_serialize::to_json(&tokenizer)?)?;
++    Ok(())
++}
+diff --git a/experiments/bpe-simplification/runner/src/pipeline.rs b/experiments/bpe-simplification/runner/src/pipeline.rs
+index cb8d3b32..c55345a6 100644
+--- a/experiments/bpe-simplification/runner/src/pipeline.rs
++++ b/experiments/bpe-simplification/runner/src/pipeline.rs
+@@ -14,14 +14,27 @@ pub fn run(job: &Job) -> Result<Value, Error> {
+     let mut trainer = trainer(job);
+     let processor = Processor::new(&job.pretokenizer)?;
+     let input = BufReader::new(File::open(&job.input)?);
++    let mut input_lines = 0usize;
++    let mut line_utf8_bytes = 0usize;
+     let begin = Instant::now();
+     let cpu = cpu_seconds()?;
++    let faults_before = crate::protocol::faults()?;
+     // Lazy line reading, public preprocessing and aggregation all belong to feed.
+     trainer.feed(
+-        input.lines().map(|line| line.expect("input read failed")),
++        input.lines().map(|line| {
++            let line = line.expect("input read failed");
++            input_lines += 1;
++            line_utf8_bytes += line.len();
++            line
++        }),
+         |line| processor.process(line),
+     )?;
+     let feed_seconds = begin.elapsed().as_secs_f64();
++    let feed_cpu_seconds = cpu_seconds()? - cpu;
++    let feed_hwm_kib = hwm()?;
++    let feed_rss_kib = crate::protocol::rss()?;
++    let feed_faults = crate::protocol::faults()?;
++    let feed_workers = tk_encode::parallelism::current_num_threads();
+     let feed_unique_words = trainer.get_word_count();
+     let train_begin = Instant::now();
+     let train_cpu = cpu_seconds()?;
+@@ -31,14 +44,30 @@ pub fn run(job: &Job) -> Result<Value, Error> {
+     let pipeline_seconds = begin.elapsed().as_secs_f64();
+     let pipeline_cpu_seconds = cpu_seconds()? - cpu;
+     let process_hwm_kib_before_validation = hwm()?;
+-    let feed_unique_utf8_bytes = crate::feed_stats::measure(&trainer, feed_unique_words)?;
++    let train_rss_kib = crate::protocol::rss()?;
++    let pipeline_faults = crate::protocol::faults()?;
++    // Export after the timed interval and all pre-validation memory snapshots.
++    // JSON-encoded keys keep records one-line; external sort yields a canonical
++    // count hash without allocating a second dictionary or copying all keys.
++    let counts_path = std::path::Path::new(&job.output).with_extension("counts.tsv");
++    let feed_unique_utf8_bytes =
++        crate::feed_stats::export(&trainer, feed_unique_words, &counts_path)?;
+     model_output::write(&job.output, &vocab, &merges)?;
++    let native_path = std::path::Path::new(&job.output).with_extension("native.json");
++    crate::native_output::write(&native_path, job, &vocab, &merges)?;
+     Ok(
+-        json!({"metrics":{"feed_seconds":feed_seconds,"train_seconds":train_seconds,
++        json!({"metrics":{"feed_seconds":feed_seconds,"feed_cpu_seconds":feed_cpu_seconds,"feed_workers":feed_workers,
++        "feed_hwm_kib":feed_hwm_kib,"feed_rss_kib":feed_rss_kib,"train_rss_kib":train_rss_kib,
++        "feed_minor_faults":feed_faults.0-faults_before.0,"feed_major_faults":feed_faults.1-faults_before.1,
++        "pipeline_minor_faults":pipeline_faults.0-faults_before.0,"pipeline_major_faults":pipeline_faults.1-faults_before.1,
++        "train_seconds":train_seconds,
+         "pipeline_seconds":pipeline_seconds,"pipeline_cpu_seconds":pipeline_cpu_seconds,
+         "train_cpu_seconds":train_cpu_seconds,"process_hwm_kib_before_validation":process_hwm_kib_before_validation,
++        "input_lines":input_lines,"line_utf8_bytes":line_utf8_bytes,
++        "owned_entry_bytes":std::mem::size_of::<(compact_str::CompactString,u64)>(),
++        "borrowed_entry_bytes":std::mem::size_of::<(&compact_str::CompactString,&u64)>(),
+         "feed_unique_words":feed_unique_words,"feed_unique_utf8_bytes":feed_unique_utf8_bytes},
+-        "output":{"model_path":job.output,"actual_vocab":vocab.len(),"actual_merges":merges.len(),"special_tokens":special.len()},
++        "output":{"native_model_path":native_path,"counts_path":counts_path,"model_path":job.output,"actual_vocab":vocab.len(),"actual_merges":merges.len(),"special_tokens":special.len()},
+         "timing_boundary":"public-feed-and-train-before-serialization"}),
+     )
+ }
+diff --git a/experiments/bpe-simplification/runner/src/protocol.rs b/experiments/bpe-simplification/runner/src/protocol.rs
+index a1ff0365..4057cd1b 100644
+--- a/experiments/bpe-simplification/runner/src/protocol.rs
++++ b/experiments/bpe-simplification/runner/src/protocol.rs
+@@ -67,3 +67,22 @@ pub fn affinity() -> Result<Vec<usize>, Error> {
+     }
+     Ok(result)
+ }
++
++pub fn rss() -> Result<u64, Error> {
++    Ok(std::fs::read_to_string("/proc/self/status")?
++        .lines()
++        .find(|line| line.starts_with("VmRSS:"))
++        .and_then(|line| line.split_whitespace().nth(1))
++        .ok_or("missing RSS")?
++        .parse()?)
++}
++
++pub fn faults() -> Result<(i64, i64), Error> {
++    let mut usage = std::mem::MaybeUninit::<libc::rusage>::uninit();
++    // SAFETY: successful getrusage initializes this writable rusage structure.
++    if unsafe { libc::getrusage(libc::RUSAGE_SELF, usage.as_mut_ptr()) } != 0 {
++        return Err(std::io::Error::last_os_error().into());
++    }
++    let usage = unsafe { usage.assume_init() };
++    Ok((usage.ru_minflt, usage.ru_majflt))
++}

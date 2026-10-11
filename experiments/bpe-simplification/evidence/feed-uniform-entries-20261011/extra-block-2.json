@@ -1,0 +1,5 @@
+{
+  "only": "en-bytelevel_regex-w1,zh-bytelevel_regex-w4",
+  "extra_block": 2,
+  "reason": "Two original English ByteLevel serial full-pipeline HWM pairs disagree (+10.5%/-14.3%); Chinese ByteLevel four-worker full wall pairs disagree (+6.5%/-1.1%) with distinct allocation/fault regimes in both arms. User prioritizes maintainability and whole-pipeline HWM and accepts VPS noise. Add only one pair to each affected scenario, no blanket extra rounds."
+}

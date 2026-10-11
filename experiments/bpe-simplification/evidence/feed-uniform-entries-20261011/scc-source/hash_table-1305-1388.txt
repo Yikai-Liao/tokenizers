@@ -1,0 +1,84 @@
+                }
+                rehashing_guard.forget();
+            }
+        }
+    }
+
+    /// Tries to enlarge [`HashTable`].
+    fn try_enlarge(&self, current_array: &BucketArray<K, V, L, TYPE>, index: usize, guard: &Guard) {
+        if !current_array.has_linked_array() {
+            let sample_size = current_array.small_sample_size();
+            let sample_capacity = sample_size * BUCKET_LEN;
+            let mut num_entries = 0;
+            let start_index = index & (sample_size - 1);
+            for i in start_index..start_index + sample_size {
+                num_entries += current_array.bucket(i).len();
+                if BucketArray::<K, V, L, TYPE>::need_enlarge(sample_capacity, num_entries) {
+                    self.try_resize(current_array, guard);
+                    break;
+                }
+            }
+        }
+    }
+
+    /// Tries to shrink the [`HashTable`] to fit.
+    fn try_shrink(&self, current_array: &BucketArray<K, V, L, TYPE>, index: usize, guard: &Guard) {
+        if !current_array.has_linked_array() && current_array.num_slots() > self.minimum_capacity()
+        {
+            let sample_size = current_array.small_sample_size();
+            let sample_capacity = sample_size * BUCKET_LEN;
+            let mut num_entries = 0;
+            let start_index = index & (sample_size - 1);
+            for i in start_index..start_index + sample_size {
+                num_entries += current_array.bucket(i).len();
+                if !BucketArray::<K, V, L, TYPE>::need_shrink(sample_capacity, num_entries) {
+                    return;
+                }
+            }
+            self.try_resize(current_array, guard);
+        }
+    }
+
+    /// Tries to resize the array.
+    ///
+    /// The table is resized after three times of sampling and all three samples indicate that the
+    /// array should be resized. First sampling is done with a very small sample size in
+    /// `try_enlarge` and `try_shrink`. Second sampling is done with a large sample size in the
+    /// first half of this method, before acquiring the resize lock. The last sampling is done after
+    /// acquiring the resize lock with a very large sample size.
+    #[allow(deprecated)] // `try_update` is not available in `Rust 1.85`.
+    fn try_resize(&self, sampled_array: &BucketArray<K, V, L, TYPE>, guard: &Guard) {
+        let current_array_ptr = self.array_var().load(Acquire, guard);
+        let Some(current_array) = deref_unchecked(current_array_ptr) else {
+            // The hash table is empty.
+            return;
+        };
+        if !ptr::eq(current_array, sampled_array)
+            || current_array.has_linked_array()
+            || current_array.rehashing_metadata().load(Relaxed) != 0
+        {
+            // The pointer changed, there is a bucket array linked to it, or being resized.
+            return;
+        }
+
+        let minimum_capacity = self.minimum_capacity();
+        let maximum_capacity = self.maximum_capacity();
+        let estimation = Self::sample(
+            current_array,
+            current_array.len() - current_array.large_sample_size(),
+            current_array.large_sample_size(),
+        );
+        let capacity = current_array.num_slots();
+
+        let try_resize = BucketArray::<K, V, L, TYPE>::need_enlarge(capacity, estimation)
+            || BucketArray::<K, V, L, TYPE>::need_shrink(capacity, estimation);
+        let try_drop_table = estimation == 0 && minimum_capacity == 0;
+        if !try_resize && !try_drop_table {
+            // Nothing to do.
+            return;
+        }
+
+        if current_array
+            .rehashing_metadata()
+            .fetch_update(AcqRel, Acquire, |rehashing| {
+                (rehashing == 0).then_some(REHASHING_CONCURRENCY)

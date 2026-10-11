@@ -8,39 +8,29 @@ type CountMap = AHashMap<CompactString, u64>;
 type Entry = (CompactString, u64);
 
 /// Frozen trainer-owned word counts, serialized as the same public flat map.
-/// Sequential feed retains its map; parallel feed owns unique entries. Keeping
-/// both avoids a conversion solely to make their storage types identical.
-#[derive(Clone)]
-pub(super) enum WordCounts {
-    Map(CountMap),
-    Entries(Vec<Entry>),
-}
-
-impl Default for WordCounts {
-    fn default() -> Self {
-        Self::Entries(Vec::new())
-    }
-}
+/// Feed moves its unique entries here, preserving their iteration order.
+#[derive(Clone, Default)]
+pub(super) struct WordCounts(Vec<Entry>);
 
 impl WordCounts {
     // Requires globally unique keys. Entry order is unspecified.
     pub(super) fn from_entries(entries: Vec<Entry>) -> Self {
-        Self::Entries(entries)
+        Self(entries)
     }
 
     pub(super) fn from_map(map: CountMap) -> Self {
-        Self::Map(map)
+        Self(map.into_iter().collect())
     }
 
     pub(super) fn view(&self) -> WordCountsView<'_> {
-        match self {
-            Self::Map(map) => WordCountsView::from_map(map),
-            Self::Entries(entries) => WordCountsView { map: None, entries },
+        WordCountsView {
+            map: None,
+            entries: &self.0,
         }
     }
 
     pub(super) fn len(&self) -> usize {
-        self.view().len()
+        self.0.len()
     }
 }
 
@@ -55,15 +45,8 @@ impl PartialEq for WordCounts {
         if self.len() != other.len() {
             return false;
         }
-        match (self, other) {
-            (Self::Map(left), Self::Map(right)) => return left == right,
-            (Self::Entries(left), Self::Entries(right)) if left == right => return true,
-            (Self::Map(map), Self::Entries(entries)) | (Self::Entries(entries), Self::Map(map)) => {
-                return entries
-                    .iter()
-                    .all(|(word, count)| map.get(word) == Some(count));
-            }
-            _ => {}
+        if self.0 == other.0 {
+            return true;
         }
 
         // Public content equality remains linear, with a temporary borrowed index.
@@ -82,12 +65,7 @@ impl Eq for WordCounts {}
 
 impl Serialize for WordCounts {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            Self::Map(map) => map.serialize(serializer),
-            Self::Entries(entries) => {
-                serializer.collect_map(entries.iter().map(|(word, count)| (word, count)))
-            }
-        }
+        serializer.collect_map(self.0.iter().map(|(word, count)| (word, count)))
     }
 }
 
@@ -171,5 +149,18 @@ mod tests {
         let empty_map = WordCounts::from_map(CountMap::default());
         assert_eq!(WordCounts::default(), empty_map);
         assert_eq!(empty_map, WordCounts::default());
+    }
+
+    #[test]
+    fn duplicate_map_keys_keep_the_last_count_and_map_debug() {
+        let counts: WordCounts = serde_json::from_str(r#"{"word":1,"word":9}"#).unwrap();
+        assert_eq!(counts, WordCounts::from_entries(vec![("word".into(), 9)]));
+        assert_eq!(counts.len(), 1);
+        assert_eq!(
+            serde_json::to_value(&counts).unwrap(),
+            serde_json::json!({"word":9})
+        );
+        assert_eq!(format!("{counts:?}"), r#"{"word": 9}"#);
+        assert!(serde_json::from_str::<WordCounts>(r#"{"word":-1}"#).is_err());
     }
 }

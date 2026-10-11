@@ -1,0 +1,29 @@
+{
+  "scc_version": "3.8.8",
+  "source_files": {
+    "/root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/scc-3.8.8/src/hash_table.rs": "5d1c9ed7c05b01825441e7852bd76963c64cb9193d5f1b757887a6fbe2823d7f",
+    "/root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/scc-3.8.8/src/hash_table/bucket_array.rs": "d901af44b6c0021b6d1872cb56a4b6c5fb64fa553a7daca0d751e6c1caf7b811"
+  },
+  "capacity_example": 8388608,
+  "resize_threshold_words": 6815744,
+  "actual_unique_words": {
+    "zh-whitespace": 6827958,
+    "zh-bytelevel_regex": 6859987
+  },
+  "excess_percent_of_threshold": {
+    "zh-whitespace": 0.17920274000902126,
+    "zh-bytelevel_regex": 0.6491294273963444
+  },
+  "source_facts": [
+    "Resize decision uses three bucket-count samples; full sample covers up to 128 buckets.",
+    "need_enlarge tests estimated entries > capacity*13/16.",
+    "optimal_capacity can double capacity when sample indicates enlargement.",
+    "Incremental rehash links the old array, with deferred reclamation."
+  ],
+  "observations": [
+    "Both frozen arms switch between lower and higher Feed minor-fault/HWM regimes for the same complete count set.",
+    "Parallel Feed source, default hash policy and extraction Vec are identical across arms.",
+    "First four-worker Chinese ByteLevel slowdown splits into Feed +0.7708s and Train +1.0753s; later full pairs are faster."
+  ],
+  "inference": "Near-threshold sampled expansion/reclamation and process-random layout are plausible existing sources of allocation and time variability. Actual table capacity/resize events were not instrumented; neither a specific resize nor VPS-only causality is claimed."
+}

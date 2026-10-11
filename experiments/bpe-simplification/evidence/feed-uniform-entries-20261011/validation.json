@@ -1,0 +1,112 @@
+[
+  {
+    "arm": "baseline",
+    "name": "default",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--lib",
+      "trainers::bpe"
+    ],
+    "exit_code": 101,
+    "seconds": 18.767488718032837,
+    "log": "baseline-default.log"
+  },
+  {
+    "arm": "baseline",
+    "name": "no-default",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--lib",
+      "trainers::bpe",
+      "--no-default-features",
+      "--",
+      "--skip",
+      "feed_training_tokenizer_json_and_encoding_roundtrip"
+    ],
+    "exit_code": 0,
+    "seconds": 18.03659224510193,
+    "log": "baseline-no-default.log"
+  },
+  {
+    "arm": "candidate",
+    "name": "default",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--lib",
+      "trainers::bpe"
+    ],
+    "exit_code": 101,
+    "seconds": 18.298850774765015,
+    "log": "candidate-default.log"
+  },
+  {
+    "arm": "candidate",
+    "name": "no-default",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--lib",
+      "trainers::bpe",
+      "--no-default-features",
+      "--",
+      "--skip",
+      "feed_training_tokenizer_json_and_encoding_roundtrip"
+    ],
+    "exit_code": 0,
+    "seconds": 17.642258405685425,
+    "log": "candidate-no-default.log"
+  },
+  {
+    "arm": "candidate",
+    "name": "clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--offline",
+      "--locked",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "seconds": 5.677836656570435,
+    "log": "candidate-clippy.log"
+  },
+  {
+    "arm": "candidate",
+    "name": "format",
+    "command": [
+      "uv",
+      "run",
+      "experiments/bpe-simplification/format-changed.py",
+      "--check",
+      "tokenizers/tk-train/src/trainers/bpe/word_counts.rs",
+      "tokenizers/tk-train/src/trainers/bpe/tests.rs"
+    ],
+    "exit_code": 0,
+    "seconds": 0.4129774570465088,
+    "log": "candidate-format.log"
+  }
+]

@@ -1,0 +1,81 @@
+{
+  "parent": "8afc869f3ea4d3c402ec5a937e951605f581c785",
+  "environment": {
+    "CARGO_TARGET_DIR": "/tmp/bpe-feed-uniform-integration-tests-20261011",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_PROFILE_TEST_DEBUG": "0",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CARGO_BUILD_JOBS": "2"
+  },
+  "checks": [
+    {
+      "name": "default",
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--locked",
+        "--manifest-path",
+        "tokenizers/tk-train/Cargo.toml",
+        "--lib",
+        "--",
+        "--skip",
+        "feed_training_tokenizer_json_and_encoding_roundtrip"
+      ],
+      "exit_code": 0,
+      "seconds": 62.89349216595292,
+      "log": "integration-default.log"
+    },
+    {
+      "name": "no-default",
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--locked",
+        "--manifest-path",
+        "tokenizers/tk-train/Cargo.toml",
+        "--lib",
+        "--no-default-features",
+        "--",
+        "--skip",
+        "feed_training_tokenizer_json_and_encoding_roundtrip"
+      ],
+      "exit_code": 0,
+      "seconds": 16.264326269039884,
+      "log": "integration-no-default.log"
+    },
+    {
+      "name": "clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--offline",
+        "--locked",
+        "--manifest-path",
+        "tokenizers/tk-train/Cargo.toml",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "seconds": 30.746810437878594,
+      "log": "integration-clippy.log"
+    },
+    {
+      "name": "format",
+      "command": [
+        "uv",
+        "run",
+        "experiments/bpe-simplification/format-changed.py",
+        "--check",
+        "tokenizers/tk-train/src/trainers/bpe/word_counts.rs",
+        "tokenizers/tk-train/src/trainers/bpe/tests.rs"
+      ],
+      "exit_code": 0,
+      "seconds": 0.29632862005382776,
+      "log": "integration-format.log"
+    }
+  ]
+}

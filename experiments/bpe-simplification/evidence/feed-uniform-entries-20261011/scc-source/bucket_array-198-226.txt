@@ -1,0 +1,29 @@
+
+    /// Returns the recommended sampling size for preliminary estimation.
+    #[inline]
+    pub(crate) const fn small_sample_size(&self) -> usize {
+        // `Log2(Log2(len))` Expected error of size estimation is `~5%`.
+        //
+        // `2 -> 1`, `4-> 2`, `8 -> 4`, `1024 -> 8`, `1048576 -> 8`, and `2^58 -> 8`.
+        (1 + self.sample_size.trailing_zeros()).next_power_of_two() as usize
+    }
+
+    /// Returns the recommended sampling size for more accurate estimation.
+    #[inline]
+    pub(crate) const fn large_sample_size(&self) -> usize {
+        // `Log2(len)`: if `len` is sufficiently large, expected error of size estimation is `~3%`.
+        //
+        // `2 -> 1`, `4 -> 2`, `8 -> 4`, `1024 -> 16`, `1048576 -> 32`, and `2^58 -> 64`.
+        self.sample_size as usize
+    }
+
+    /// Returns the recommended sampling size for full estimation.
+    #[inline]
+    pub(crate) const fn full_sample_size(&self) -> usize {
+        // `Max(len, 128)`: expected error of size estimation is `~1%`.
+        if self.array_len < 128 {
+            self.array_len
+        } else {
+            128
+        }
+    }

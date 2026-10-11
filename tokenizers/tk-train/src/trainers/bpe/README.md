@@ -52,16 +52,18 @@ The implementation is divided by the knowledge each module owns:
   restart alignment stays inside Positions.
 - [feed.rs](feed.rs) owns streaming batches and word aggregation. Named
   `flush` and `accumulate` closures share callback/error handling. Serial input
-  retains its map; parallel folds flush at 2048 distinct local keys and publish
-  successful tails before ordinary error reduction. The shared table stays
+  moves its completed map into owned entries; parallel folds flush at 2048
+  distinct local keys and publish successful tails before ordinary error
+  reduction. The shared table stays
   private to one call, and failed feed leaves the previous trainer state intact.
   After folds finish, consumption moves entries without a capacity reservation;
   SCC checks shrinking after its consumption traversal, and a reservation can
   itself trigger another enlargement.
   Startup singletons expose short expensive streams to parallel callbacks; later
   batches contain at most 32 inputs and retain the first exhaustion state.
-- [word_counts.rs](word_counts.rs) owns borrowed and collected count views,
-  content equality and the flat serialization contract.
+- [word_counts.rs](word_counts.rs) stores trainer-owned counts as entries and
+  borrows caller-owned maps for public `do_train`. Content equality, map-style
+  Debug and the flat serialization contract are independent of entry order.
 
 One owning priority queue holds fresh lists and reuse cohorts. Its historical
 resource measurements and equal-priority reuse ordering limitation are recorded

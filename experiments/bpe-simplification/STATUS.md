@@ -8,6 +8,30 @@ and [the flattening report](FLATTEN.md) for validation and scoped diffs against
 HF main and the starting revision. Counts are descriptive; hard line limits
 have been retired. Earlier counts and limits below describe historical snapshots.
 
+## Uniform trainer-owned counts, 2026-10-11
+
+Trainer-owned WordCounts now stores one Vec of unique entries for both Feed
+paths. Serial completion moves its map into the Vec; parallel completion passes
+its existing entries directly. Owned enum dispatch in view, equality and serde
+is removed. Public do_train still borrows maps, and content equality, map-style
+Debug and flat-map serialization remain compatible. Large unordered equality
+comparisons now also need a temporary borrowed-key index for serial trainers.
+
+The accepted patch removes 22 non-test lines and adds 16 test lines. The user
+selected it for this local maintenance reduction. On frozen 8f078a8c, all 36
+formal processes and 16 warmups agree on complete counts, vocabulary IDs,
+ordered merges and native models. Whole-pipeline peak memory is not uniformly
+lower; the initial Chinese ByteLevel four-worker +6.55% wall sample is followed
+by -1.12% and -2.69%, without establishing a lasting speed change.
+
+For push, the patch is integrated on 8afc869f with the intervening directory,
+insertion and Box changes. The two Rust files match the frozen candidate
+exactly. The user requested native tests only at integration; performance
+observations remain tied to the original baseline. Default/no-default full-library
+suites each pass 44 tests with the known encoder assertion filtered; all-target
+Clippy with denied warnings and changed-file formatting pass. Source snapshots, full
+results and integration checks are in [the counts report](evidence/feed-uniform-entries-20261011/README.md).
+
 ## Neighbor directories and vocabulary insertion, 2026-10-11
 
 MergeToken and AttemptResult were removed in 303597a2. The next change,

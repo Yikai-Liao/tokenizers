@@ -1,0 +1,43 @@
+    /// Returns `true` if the bucket array needs to be enlarged.
+    pub(crate) const fn need_enlarge(capacity: usize, num_entries: usize) -> bool {
+        // When the load factor is greater than `13/16`; `~10%` of buckets are expected to have
+        // overflow buckets.
+        num_entries > (capacity / 16) * 13
+    }
+
+    /// Returns `true` if the bucket array needs to be shrunk.
+    pub(crate) const fn need_shrink(capacity: usize, num_entries: usize) -> bool {
+        // When the load factor is less than `1/8`.
+        num_entries < capacity / 8
+    }
+
+    /// Returns the optimal capacity.
+    #[inline]
+    pub(crate) const fn optimal_capacity(
+        capacity: usize,
+        num_entries: usize,
+        minimum_capacity: usize,
+        maximum_capacity: usize,
+    ) -> usize {
+        if capacity < minimum_capacity || Self::need_enlarge(capacity, num_entries) {
+            if capacity == maximum_capacity {
+                capacity
+            } else {
+                let mut new_capacity = minimum_capacity.next_power_of_two();
+                new_capacity = if capacity < new_capacity {
+                    new_capacity
+                } else {
+                    capacity
+                };
+                new_capacity = if maximum_capacity < new_capacity {
+                    maximum_capacity
+                } else {
+                    new_capacity
+                };
+                while new_capacity / 2 < num_entries {
+                    if new_capacity >= maximum_capacity {
+                        break;
+                    }
+                    new_capacity *= 2;
+                }
+                new_capacity
