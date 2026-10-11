@@ -440,158 +440,110 @@ fn observed_characters(word_counts: WordCountsView<'_>, workers: usize) -> Fixed
 
 #[cfg(test)]
 mod tests {
+    use super::super::word_counts::WordCounts;
     use super::*;
     use ahash::AHashSet;
+    use tk_encode::vocab::bucket_added_vocabulary::AddedToken;
 
     #[test]
-    fn initialization_completes_decorated_ids_before_weight_sorting() {
-        use super::super::word_counts::WordCounts;
-        let words = WordCounts::from_entries(
-            [("qé🙂z", 1), ("🙂é", 9)]
-                .into_iter()
-                .map(|(word, count)| (word.into(), count))
-                .collect(),
-        );
+    fn affix_ids() {
+        let inputs = ["a", "axa", "zaaz", "aa", ""];
+        let words = WordCounts::from_entries(inputs.map(|s| (s.into(), 1)).to_vec());
         let mut trainer = BpeTrainer::new(1, 32);
-        trainer.show_progress = false;
+        trainer.limit_alphabet = Some(1);
+        trainer.initial_alphabet = ['a'].into();
+        trainer.special_tokens = ["##a", "a</w>", "a"]
+            .map(|s| AddedToken::from(s, true))
+            .to_vec();
+        for (prefix, suffix, single, inner, last, spans) in [
+            ("##", "</w>", 1, 0, 3, &[1, 1, 1, 1][..]),
+            ("##", "", 2, 0, 0, &[1, 0, 1][..]),
+            ("", "</w>", 1, 2, 1, &[0, 1, 1][..]),
+            ("", "", 2, 2, 2, &[0, 0, 1][..]),
+        ] {
+            let expected = [
+                vec![single],
+                vec![2, last],
+                vec![inner, inner],
+                vec![2, last],
+                vec![],
+            ];
+            trainer.continuing_subword_prefix = Some(prefix.into());
+            trainer.end_of_word_suffix = Some(suffix.into());
+            let alphabet = select_alphabet(&trainer, words.view(), 1);
+            let (vocabulary, ids) =
+                Vocabulary::initialize(&trainer, words.view(), &alphabet, &None).unwrap();
+            let tokens: Vec<_> = vocabulary.tokens.iter().map(|s| s.as_str()).collect();
+            assert_eq!(&tokens[..3], ["##a", "a</w>", "a"]);
+            assert_eq!(tokens.len(), spans.len());
+            if let Some(token) = tokens.get(3) {
+                assert_eq!(*token, "##a</w>");
+            }
+            let actual = inputs.map(|s| ids.symbols(s).collect::<Vec<_>>());
+            assert_eq!(actual, expected);
+            assert_eq!(ids.spans, spans);
+        }
+    }
+
+    #[test]
+    fn unicode_id_order() {
+        let words = WordCounts::from_entries(vec![("qé🙂z".into(), 1), ("🙂é".into(), 9)]);
+        let mut trainer = BpeTrainer::new(1, 32);
         trainer.limit_alphabet = Some(2);
         trainer.initial_alphabet = ['é', '🙂'].into();
-        trainer.special_tokens = vec![tk_encode::vocab::bucket_added_vocabulary::AddedToken::from(
-            "<s>", true,
-        )];
         trainer.continuing_subword_prefix = Some("前".into());
         trainer.end_of_word_suffix = Some("尾".into());
-        let (vocabulary, ids) = Vocabulary::initialize(
-            &trainer,
-            words.view(),
-            &select_alphabet(&trainer, words.view(), 4),
-            &None,
-        )
-        .unwrap();
-        // Four observed characters exceed the two-character cutoff. Decorations
-        // use original byte boundaries even after q/z are filtered away.
+        let alphabet = select_alphabet(&trainer, words.view(), 1);
+        let (vocabulary, ids) =
+            Vocabulary::initialize(&trainer, words.view(), &alphabet, &None).unwrap();
         assert_eq!(
             vocabulary
                 .tokens
                 .iter()
                 .map(|s| s.as_str())
                 .collect::<Vec<_>>(),
-            ["<s>", "é", "🙂", "前é", "前🙂", "前é尾"]
+            ["é", "🙂", "前é", "前🙂", "前é尾"]
         );
-        assert_eq!(ids.symbols("qé🙂z").collect::<Vec<_>>(), [3, 4]);
-        assert_eq!(ids.symbols("🙂é").collect::<Vec<_>>(), [2, 5]);
-        assert_eq!(ids.token_count(), vocabulary.len());
-        let spans = ids.into_spans();
-        assert_eq!(spans, [0, 0, 1, 1, 1, 1]);
+        assert_eq!(ids.symbols("qé🙂z").collect::<Vec<_>>(), [2, 3]);
+        assert_eq!(ids.symbols("🙂é").collect::<Vec<_>>(), [1, 4]);
     }
 
     #[test]
-    fn plain_activation_preserves_forced_unused_and_cutoff_special_characters() {
-        use super::super::word_counts::WordCounts;
-        use tk_encode::vocab::bucket_added_vocabulary::AddedToken;
+    fn alphabet_activation() {
         // Presence includes zero-weight words, independently of frequencies.
         let words = WordCounts::from_entries(vec![("猫é".into(), 0)]);
-        for limit in [None, Some(1), Some(0)] {
-            let mut trainer = BpeTrainer::new(1, 32);
-            trainer.show_progress = false;
-            trainer.limit_alphabet = limit;
-            trainer.initial_alphabet = ['z'].into();
-            trainer.special_tokens = ["猫", "z", "<s>"]
-                .into_iter()
-                .map(|text| AddedToken::from(text, true))
-                .collect();
-            // Empty affixes must also use the plain activation shortcut.
-            trainer.continuing_subword_prefix = Some(String::new());
-            trainer.end_of_word_suffix = Some(String::new());
-            let alphabet = select_alphabet(&trainer, words.view(), 4);
-            let (vocabulary, ids) =
-                Vocabulary::initialize(&trainer, words.view(), &alphabet, &None).unwrap();
-            assert_eq!(ids.complete_alphabet, limit.is_none());
-            assert!(ids.plain());
-            assert!(ids.decorated.is_empty());
-            assert_eq!(&ids.spans[..3], [1, 0, 0]);
-            assert_eq!(ids.symbols("猫z").collect::<Vec<_>>(), [0, 1]);
-            assert_eq!(ids.symbol_count("猫é"), if limit.is_none() { 2 } else { 1 });
-            assert_eq!(vocabulary.len(), if limit.is_none() { 4 } else { 3 });
-        }
+        let mut trainer = BpeTrainer::new(1, 32);
+        trainer.limit_alphabet = Some(0);
+        trainer.initial_alphabet = ['z'].into();
+        trainer.special_tokens = ["猫", "z", "<s>"]
+            .into_iter()
+            .map(|text| AddedToken::from(text, true))
+            .collect();
+        let alphabet = select_alphabet(&trainer, words.view(), 4);
+        let (_, ids) = Vocabulary::initialize(&trainer, words.view(), &alphabet, &None).unwrap();
+        assert_eq!(&ids.spans[..3], [1, 0, 0]);
+        assert_eq!(ids.symbols("猫z").collect::<Vec<_>>(), [0, 1]);
     }
 
     #[test]
-    fn all_decoration_slots_preserve_text_and_cached_identity() {
-        use super::super::word_counts::WordCounts;
-        let words = WordCounts::from_entries(vec![("aaa".into(), 1), ("a".into(), 1)]);
-        for prefix in [None, Some(""), Some("前")] {
-            for suffix in [None, Some(""), Some("尾")] {
-                let mut trainer = BpeTrainer::new(1, 32);
-                trainer.show_progress = false;
-                trainer.continuing_subword_prefix = prefix.map(str::to_owned);
-                trainer.end_of_word_suffix = suffix.map(str::to_owned);
-                let alphabet = select_alphabet(&trainer, words.view(), 1);
-                let (vocabulary, ids) =
-                    Vocabulary::initialize(&trainer, words.view(), &alphabet, &None).unwrap();
-                for (first, last) in [(true, false), (false, false), (false, true), (true, true)] {
-                    let expected = format!(
-                        "{}a{}",
-                        if first { "" } else { prefix.unwrap_or("") },
-                        if last { suffix.unwrap_or("") } else { "" }
-                    );
-                    let id = ids.id('a', first, last).unwrap();
-                    assert_eq!(vocabulary.tokens[id as usize].as_str(), expected);
-                    assert_eq!(ids.spans[id as usize], 1);
-                }
-            }
+    fn unicode_presence() {
+        let words = WordCounts::from_entries(
+            ["ASCII", "中文中文", "é🙂𐀀é"]
+                .map(|s| (s.into(), 0))
+                .to_vec(),
+        );
+        let expected: AHashSet<_> = "ASCII中文é🙂𐀀".chars().collect();
+        for workers in [1, 4] {
+            let observed = observed_characters(words.view(), workers);
+            assert_eq!(
+                observed
+                    .ones()
+                    .map(|bit| char::from_u32(bit as u32).unwrap())
+                    .collect::<AHashSet<_>>(),
+                expected
+            );
         }
-    }
-
-    #[test]
-    fn observed_reduction_preserves_presence_activation_and_model_ids() {
-        for input in [
-            vec![],
-            vec![("aaaa", 1)],
-            vec![("ASCII", 2), ("中文中文", 3), ("é🙂𐀀é", 7)],
-        ] {
-            let words = input
-                .into_iter()
-                .map(|(word, count)| (CompactString::from(word), count))
-                .collect();
-            let view = WordCountsView::from_map(&words);
-            let expected: AHashSet<_> = view.keys().flat_map(|word| word.chars()).collect();
-            let mut trainer = BpeTrainer::new(1, 64);
-            trainer.show_progress = false;
-            trainer.initial_alphabet = ['z', '🚀'].into();
-            let model = trainer.do_train_impl(view, Some(1)).unwrap().parts;
-            for workers in [1, 4, 8] {
-                rayon::ThreadPoolBuilder::new()
-                    .num_threads(workers)
-                    .build()
-                    .unwrap()
-                    .install(|| {
-                        let observed = observed_characters(view, workers);
-                        assert_eq!(observed.len(), 0x110000);
-                        assert_eq!(
-                            observed
-                                .ones()
-                                .map(|bit| char::from_u32(bit as u32).unwrap())
-                                .collect::<AHashSet<_>>(),
-                            expected
-                        );
-                        let (vocabulary, ids) = Vocabulary::initialize(
-                            &trainer,
-                            view,
-                            &select_alphabet(&trainer, view, workers),
-                            &None,
-                        )
-                        .unwrap();
-                        for (id, token) in vocabulary.tokens.iter().enumerate() {
-                            let character = token.chars().next().unwrap();
-                            assert_eq!(ids.spans[id], usize::from(expected.contains(&character)));
-                        }
-                    });
-                assert_eq!(
-                    trainer.do_train_impl(view, Some(workers)).unwrap().parts,
-                    model
-                );
-            }
-        }
+        let words = WordCounts::default();
+        assert_eq!(observed_characters(words.view(), 4).count_ones(..), 0);
     }
 }

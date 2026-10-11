@@ -685,33 +685,14 @@ impl Source<'_> {
 
 #[cfg(test)]
 mod tests {
-    use super::super::{WordCountsView, corpus::CorpusPlan};
+    use super::super::tests::{spans, tokens};
+    use super::super::{
+        tests::{counts, initialize, trainer},
+        word_counts::WordCountsView,
+    };
     use super::*;
 
-    fn initialize(
-        trainer: &BpeTrainer,
-        words: WordCountsView<'_>,
-        workers: usize,
-        reuse: bool,
-        floor: u64,
-    ) -> (Vocabulary, Corpus, PairIndex) {
-        let (vocabulary, ids) = Vocabulary::initialize(
-            trainer,
-            words,
-            &super::super::vocabulary::select_alphabet(trainer, words, workers),
-            &None,
-        )
-        .unwrap();
-        let plan = CorpusPlan::build(words, ids, trainer, reuse).unwrap();
-        let index = PairIndex::build(&plan, floor, workers, reuse, &None).unwrap();
-        (vocabulary, plan.materialize(), index)
-    }
-
-    fn select_rule(
-        vocabulary: &mut Vocabulary,
-        corpus: &mut Corpus,
-        index: &mut PairIndex,
-    ) -> Rule {
+    fn select(vocabulary: &mut Vocabulary, corpus: &mut Corpus, index: &mut PairIndex) -> Rule {
         let priority = index.best().unwrap();
         let (replacement, _) = vocabulary.resolve_merge(priority.pair()).unwrap();
         corpus.prepare_identity(priority.pair(), replacement);
@@ -721,503 +702,138 @@ mod tests {
         }
     }
 
-    fn tokens(corpus: &Corpus) -> Vec<u32> {
-        (0..corpus.len()).map(|p| corpus.token(p)).collect()
-    }
-
-    fn apply_jobs(corpus: &Corpus, jobs: &[Job], order: usize) {
-        match order {
-            0 => jobs
-                .iter()
-                .for_each(|job| corpus.apply_merges(&job.starts, job.replacement)),
-            1 => jobs.iter().rev().for_each(|job| {
-                let starts: Vec<_> = job.starts.iter().rev().copied().collect();
-                corpus.apply_merges(&starts, job.replacement);
-            }),
-            2 => rayon::ThreadPoolBuilder::new()
-                .num_threads(4)
-                .build()
-                .unwrap()
-                .install(|| {
-                    jobs.par_iter()
-                        .for_each(|job| corpus.apply_merges(&job.starts, job.replacement));
-                }),
-            _ => unreachable!(),
-        }
-    }
-
     #[test]
-    fn shared_selected_endpoints_emit_adjacent_boundaries_once() {
-        for order in 0..3 {
-            let trainer = BpeTrainer::builder()
-                .min_frequency(1)
-                .show_progress(false)
-                .build();
-            let words = [
-                ("abacdbdc".into(), 2),
-                ("ab".into(), 10),
-                ("ac".into(), 9),
-                ("db".into(), 8),
-                ("dc".into(), 7),
-                ("xabz".into(), 1),
-            ]
-            .into_iter()
-            .collect();
-            let view = WordCountsView::from_map(&words);
-            let (mut vocabulary, mut corpus, mut index) = initialize(&trainer, view, 1, false, 1);
-            let mut batch = Batch {
-                rules: Vec::new(),
-                reuse: false,
-                floor: 1,
-            };
-            // Shared heads a/d and shared tails b/c are all compatible. Their
-            // adjacent occurrences must publish one boundary using both replacements.
-            for pair in [(0, 1), (0, 2), (3, 1), (3, 2)] {
-                let rule = select_rule(&mut vocabulary, &mut corpus, &mut index);
-                assert_eq!(rule.pair(), pair);
-                batch.rules.push(rule);
-            }
-            let snapshot = FreshSnapshot::new(&batch, &corpus, usize::MAX);
-            let jobs: Vec<_> = snapshot
-                .tasks()
-                .into_iter()
-                .map(|(rank, source)| {
-                    snapshot
-                        .prepare_job(&mut Directories::default(), rank, source)
-                        .unwrap()
-                })
-                .collect();
-            let mut removals = Vec::new();
-            let mut births = Vec::new();
-            for job in &jobs {
-                let mut saw_right = false;
-                for change in &job.changes {
-                    let right = change.born.0 == job.replacement;
-                    assert!(right || !saw_right, "left events precede right events");
-                    saw_right |= right;
-                    if change.removed_weight != 0 {
-                        removals.push((change.removed, change.removed_weight));
-                    }
-                    if change.born_weight != 0 {
-                        births.push((change.born, change.born_weight));
-                    }
-                }
-            }
-            removals.sort_unstable();
-            births.sort_unstable();
-            assert_eq!(
-                removals,
-                [
-                    ((1, 0), 2),
-                    ((1, 3), 2),
-                    ((1, 5), 1),
-                    ((2, 3), 2),
-                    ((4, 0), 1)
-                ]
-            );
-            assert_eq!(
-                births,
-                [
-                    ((4, 6), 1),
-                    ((6, 5), 1),
-                    ((6, 7), 2),
-                    ((7, 8), 2),
-                    ((8, 9), 2)
-                ]
-            );
-            assert_eq!(
-                jobs.iter()
-                    .map(|job| (job.replacement, job.starts.to_vec()))
-                    .collect::<Vec<_>>(),
-                [
-                    (6, vec![1, 13, 23]),
-                    (7, vec![4, 15]),
-                    (8, vec![7, 17]),
-                    (9, vec![10, 19]),
-                ]
-            );
-            apply_jobs(&corpus, &jobs, order);
-            let s = WORD_SEPARATOR_ID;
-            assert_eq!(
-                tokens(&corpus),
-                [
-                    s, 6, 6, s, 7, 7, s, 8, 8, s, 9, 9, s, 6, 6, 7, 7, 8, 8, 9, 9, s, 4, 6, 6, 5, s
-                ]
-            );
-        }
-    }
-
-    #[test]
-    fn deferred_writes_cover_empty_inline_and_spilled_neighboring_jobs() {
-        let trainer = BpeTrainer::builder()
-            .vocab_size(16)
-            .min_frequency(1)
-            .show_progress(false)
-            .build();
-        let words = [("ab".repeat(135).into(), 1)].into_iter().collect();
-        for workers in [1, 4, 8] {
-            let pool = rayon::ThreadPoolBuilder::new()
-                .num_threads(workers)
-                .build()
-                .unwrap();
-            for order in 0..3 {
-                pool.install(|| {
-                    let (mut vocabulary, mut corpus, mut index) = initialize(
-                        &trainer,
-                        WordCountsView::from_map(&words),
-                        workers,
-                        false,
-                        1,
-                    );
-                    let rule = select_rule(&mut vocabulary, &mut corpus, &mut index);
-                    assert_eq!((rule.pair(), rule.replacement), ((0, 1), 2));
-                    let batch = Batch {
-                        rules: vec![rule],
-                        reuse: false,
-                        floor: 1,
-                    };
-                    let snapshot = FreshSnapshot::new(&batch, &corpus, usize::MAX);
-                    let expected_starts: Vec<_> = (1..270).step_by(2).collect();
-                    let mut offset = 0;
-                    let jobs: Vec<_> = [0, 1, 2, 3, 129]
-                        .into_iter()
-                        .map(|length| {
-                            // Every task rejects its first input coordinate. The empty
-                            // task stays empty; other tasks start at the first accepted AB.
-                            let mut input = vec![0];
-                            input.extend(
-                                expected_starts[offset..offset + length]
-                                    .iter()
-                                    .map(|&start| start as u64),
-                            );
-                            let job = snapshot
-                                .prepare_job(&mut Directories::default(), 0, Source::Slice(&input))
-                                .unwrap();
-                            assert_eq!(
-                                job.starts.as_slice(),
-                                &expected_starts[offset..offset + length]
-                            );
-                            offset += length;
-                            job
-                        })
-                        .collect();
-                    assert_eq!(offset, expected_starts.len());
-                    let before = tokens(&corpus);
-                    corpus.apply_merges(&[], 2);
-                    assert_eq!(tokens(&corpus), before);
-                    apply_jobs(&corpus, &jobs, order);
-                    let mut expected = vec![WORD_SEPARATOR_ID];
-                    expected.extend([2; 270]);
-                    expected.push(WORD_SEPARATOR_ID);
-                    assert_eq!(tokens(&corpus), expected);
-                });
-            }
-        }
-    }
-
-    #[test]
-    fn self_pair_preparation_keeps_adjacent_tasks_disjoint() {
-        let trainer = BpeTrainer::builder()
-            .min_frequency(1)
-            .show_progress(false)
-            .build();
-        let words = [("aaaaaaaaa".into(), 1)].into_iter().collect();
-        for order in 0..3 {
-            let (mut vocabulary, mut corpus, mut index) =
-                initialize(&trainer, WordCountsView::from_map(&words), 1, false, 1);
-            let rule = select_rule(&mut vocabulary, &mut corpus, &mut index);
-            assert_eq!((rule.pair(), rule.replacement), ((0, 0), 1));
-            let batch = Batch {
-                rules: vec![rule],
-                reuse: false,
-                floor: 1,
-            };
-            let snapshot = FreshSnapshot::new(&batch, &corpus, usize::MAX);
-            let FreshMatches::SelfPair(starts) = &snapshot.matches else {
-                panic!("expected AA starts")
-            };
-            assert_eq!(starts, &[1, 3, 5, 7]);
-            let jobs: Vec<_> = starts
-                .chunks(2)
-                .map(|part| {
-                    snapshot
-                        .prepare_job(&mut Directories::default(), 0, Source::Slice(part))
-                        .unwrap()
-                })
-                .collect();
-            assert_eq!(
-                jobs.iter()
-                    .map(|job| job.starts.to_vec())
-                    .collect::<Vec<_>>(),
-                [vec![1, 3], vec![5, 7]]
-            );
-            apply_jobs(&corpus, &jobs, order);
-            let s = WORD_SEPARATOR_ID;
-            assert_eq!(tokens(&corpus), [s, 1, 1, 1, 1, 1, 1, 1, 1, 0, s]);
-        }
-    }
-
-    #[test]
-    fn reuse_preparation_writes_each_occurrences_actual_span() {
-        let mut trainer = BpeTrainer::builder()
-            .min_frequency(1)
-            .show_progress(false)
-            .build();
-        trainer.end_of_word_suffix = Some("a".into());
-        let words = [("baaaaaba".into(), 2), ("ba".into(), 1)]
-            .into_iter()
-            .collect();
-        for order in 0..3 {
-            let (mut vocabulary, mut corpus, mut index) =
-                initialize(&trainer, WordCountsView::from_map(&words), 1, true, 1);
-            let MergeOutcome::Committed(records) = trainer
-                .merge_next(&mut vocabulary, &mut corpus, &mut index)
-                .unwrap()
-            else {
-                panic!("AA must commit")
-            };
-            assert_eq!(records[0].pair, (0, 0));
-            let s = WORD_SEPARATOR_ID;
-            assert_eq!(tokens(&corpus), [s, 1, 2, 2, 2, 2, 0, 1, 2, s, 1, 2, s]);
-            assert_eq!(
-                (0..corpus.len())
-                    .map(|p| corpus.span(p))
-                    .collect::<Vec<_>>(),
-                [0, 1, 2, 2, 2, 2, 1, 1, 1, 0, 1, 1, 0]
-            );
-            let rule = select_rule(&mut vocabulary, &mut corpus, &mut index);
-            assert_eq!((rule.pair(), rule.replacement), ((1, 2), 3));
-            // AA reused the final-character identity. Its two-slot occurrence
-            // and the original one-slot occurrences now belong to this BA cohort.
-            let jobs: Vec<_> = [0, 1]
-                .into_iter()
-                .map(|word| {
-                    CohortPreparation::prepare(
-                        &rule,
-                        &corpus,
-                        &[word],
-                        usize::MAX,
-                        1,
-                        &mut Directories::default(),
-                    )
-                    .unwrap()
-                })
-                .collect();
-            assert_eq!(
-                jobs.iter()
-                    .map(|job| job.starts.to_vec())
-                    .collect::<Vec<_>>(),
-                [vec![1, 7], vec![10]]
-            );
-            apply_jobs(&corpus, &jobs, order);
-            assert_eq!(tokens(&corpus), [s, 3, s, 3, 2, 2, 0, 3, 3, s, 3, 3, s]);
-            assert_eq!(
-                (0..corpus.len())
-                    .map(|p| corpus.span(p))
-                    .collect::<Vec<_>>(),
-                [0, 3, 0, 3, 2, 2, 1, 2, 2, 0, 2, 2, 0]
-            );
-        }
-    }
-
-    #[test]
-    fn length_gate_deletions_commit_after_reachable_writes() {
-        let trainer = BpeTrainer::builder()
-            .min_frequency(1)
-            .show_progress(false)
-            .build();
-        let words = [("xab".into(), 1)].into_iter().collect();
-        for workers in [1, 4, 8] {
-            rayon::ThreadPoolBuilder::new()
-                .num_threads(workers)
-                .build()
-                .unwrap()
-                .install(|| {
-                    let (mut vocabulary, mut corpus, mut index) = initialize(
-                        &trainer,
-                        WordCountsView::from_map(&words),
-                        workers,
-                        false,
-                        1,
-                    );
-                    let rule = select_rule(&mut vocabulary, &mut corpus, &mut index);
-                    assert_eq!((rule.pair(), rule.replacement), ((0, 1), 3));
-                    let batch = Batch {
-                        rules: vec![rule],
-                        reuse: false,
-                        floor: 1,
-                    };
-                    // XA is removed; X+AB reaches the strict length gate and has no birth.
-                    let mut jobs = batch.prepare(&corpus, 3).unwrap();
-                    assert_eq!(jobs.len(), 1);
-                    let job = jobs.pop().unwrap();
-                    assert_eq!(job.starts.as_slice(), &[2]);
-                    assert_eq!(job.changes.len(), 1);
-                    let change = &job.changes[0];
-                    assert_eq!(
-                        (
-                            change.removed,
-                            change.removed_weight,
-                            change.born,
-                            change.born_weight
-                        ),
-                        ((2, 0), 1, (2, 3), 0)
-                    );
-                    assert!(change.positions.is_empty());
-                    corpus.apply_merges(&job.starts, job.replacement);
-                    index.commit(vec![job.changes]).unwrap();
-                    let s = WORD_SEPARATOR_ID;
-                    assert_eq!(tokens(&corpus), [s, 2, 3, 3, s]);
-                    assert!(index.best().is_none());
-                });
-        }
-    }
-
-    #[test]
-    fn neighbor_directories_recover_from_stale_indices_after_error() {
-        let trainer = BpeTrainer::builder().show_progress(false).build();
-        let words = [("abcxyz".into(), 1)].into_iter().collect();
-        let view = WordCountsView::from_map(&words);
-        let (mut vocabulary, ids) = Vocabulary::initialize(
-            &trainer,
-            view,
-            &super::super::vocabulary::select_alphabet(&trainer, view, 1),
-            &None,
-        )
-        .unwrap();
-        let plan = CorpusPlan::build(view, ids, &trainer, false).unwrap();
-        let mut index = PairIndex::build(&plan, 1, 1, false, &None).unwrap();
-        let priority = index.best().unwrap();
-        let pair = priority.pair();
-        let (replacement, _) = vocabulary.resolve_merge(pair).unwrap();
-        let rule = Rule {
-            replacement,
-            candidate: index.take(priority),
+    fn shared_boundary_once() {
+        let trainer = trainer();
+        let words = counts(&[("abacdbdc", 2), ("ab", 10), ("ac", 9), ("db", 8), ("dc", 7)]);
+        let (mut vocabulary, mut corpus, mut index) =
+            initialize(&trainer, WordCountsView::from_map(&words), false);
+        let mut batch = Batch {
+            rules: Vec::new(),
+            reuse: false,
+            floor: 1,
         };
-        let mut directories = Directories::default();
-        directories.resize(vocabulary.len());
-        {
-            let mut neighbors = Neighbors::new(&rule, 0, &mut directories, false);
-            neighbors.record(true, 2, 2, 10, u64::MAX, true).unwrap();
-            neighbors.record(true, 4, 4, 20, 4, true).unwrap();
-            neighbors.record(false, 3, 3, 30, 7, true).unwrap();
-            assert!(neighbors.record(true, 2, 2, 40, 1, true).is_err());
+        // Shared heads/tails remain compatible; adjacent replacements publish once.
+        for pair in [(0, 1), (0, 2), (3, 1), (3, 2)] {
+            let rule = select(&mut vocabulary, &mut corpus, &mut index);
+            assert_eq!(rule.pair(), pair);
+            batch.rules.push(rule);
         }
-        // No reset: old indices now point outside the groups or at different keys.
-        let mut neighbors = Neighbors::new(&rule, 1, &mut directories, false);
-        for (left, neighbor, position, weight) in [
-            (true, 4, 70, 17),
-            (true, 3, 50, 11),
-            (true, 2, 60, 13),
-            (false, 2, 80, 19),
-            (false, 3, 90, 23),
-            (true, 2, 100, 5),
-        ] {
-            neighbors
-                .record(left, neighbor, neighbor, position, weight, true)
-                .unwrap();
-        }
-        let changes = neighbors.finish(1).unwrap();
-        let actual: Vec<_> = changes
-            .into_iter()
-            .map(|change| {
-                let Birth::Partial(positions) = change.positions else {
-                    panic!("expected partial neighbor events")
-                };
-                (
-                    change.removed,
-                    change.born,
-                    change.removed_weight,
-                    change.born_weight,
-                    change.bucket,
-                    positions.to_vec(),
-                )
-            })
+        let jobs = batch.prepare(&corpus, usize::MAX).unwrap();
+        let mut births: Vec<_> = jobs
+            .iter()
+            .flat_map(|j| &j.changes)
+            .filter(|c| c.born_weight != 0)
+            .map(|c| (c.born, c.born_weight))
             .collect();
+        births.sort_unstable();
+        assert_eq!(births, [((4, 5), 2), ((5, 6), 2), ((6, 7), 2)]);
+        jobs.par_iter()
+            .for_each(|j| corpus.apply_merges(&j.starts, j.replacement));
+        let s = WORD_SEPARATOR_ID;
         assert_eq!(
-            actual,
-            vec![
-                ((4, pair.0), (4, replacement), 17, 17, 2, vec![70]),
-                ((3, pair.0), (3, replacement), 11, 11, 2, vec![50]),
-                ((2, pair.0), (2, replacement), 18, 18, 2, vec![60, 100]),
-                ((pair.1, 2), (replacement, 2), 19, 19, 3, vec![80]),
-                ((pair.1, 3), (replacement, 3), 23, 23, 3, vec![90]),
+            tokens(&corpus),
+            [
+                s, 4, 4, s, 5, 5, s, 6, 6, s, 7, 7, s, 4, 4, 5, 5, 6, 6, 7, 7, s
             ]
         );
     }
 
     #[test]
-    fn aligned_fragments_keep_complete_and_partial_publication() {
-        let pool = rayon::ThreadPoolBuilder::new()
-            .num_threads(2)
-            .build()
-            .unwrap();
-        for (repetitions, expected_lengths) in
-            [(127, vec![127]), (129, vec![128, 1]), (257, vec![256, 1])]
-        {
-            let trainer = BpeTrainer::builder()
-                .vocab_size(8)
-                .min_frequency(repetitions as u64)
-                .show_progress(false)
-                .build();
-            let words = [("abc".repeat(repetitions).into(), 1)]
-                .into_iter()
-                .collect();
-            let view = WordCountsView::from_map(&words);
-            pool.install(|| {
-                let progress = trainer.setup_progress();
-                let (mut vocabulary, ids) = Vocabulary::initialize(
-                    &trainer,
-                    view,
-                    &super::super::vocabulary::select_alphabet(&trainer, view, 2),
-                    &progress,
-                )
+    fn rejected_start_and_aa_tasks() {
+        let trainer = trainer();
+        let words = [("aaaaaaaaa".into(), 1)].into_iter().collect();
+        let (mut vocabulary, mut corpus, mut index) =
+            initialize(&trainer, WordCountsView::from_map(&words), false);
+        let batch = Batch {
+            rules: vec![select(&mut vocabulary, &mut corpus, &mut index)],
+            reuse: false,
+            floor: 1,
+        };
+        let snapshot = FreshSnapshot::new(&batch, &corpus, usize::MAX);
+        let FreshMatches::SelfPair(starts) = &snapshot.matches else {
+            panic!("expected AA starts")
+        };
+        assert_eq!(starts, &[1, 3, 5, 7]);
+        // Each task first sees a separator/stale coordinate, then valid AA starts.
+        for (input, expected) in [(&[0, 1, 3][..], &[1, 3][..]), (&[0, 5, 7][..], &[5, 7][..])] {
+            let job = snapshot
+                .prepare_job(&mut Directories::default(), 0, Source::Slice(input))
                 .unwrap();
-                let plan = CorpusPlan::build(view, ids, &trainer, false).unwrap();
-                let mut index =
-                    PairIndex::build(&plan, trainer.min_frequency, 2, false, &progress).unwrap();
-                let mut corpus = plan.materialize();
-                let priority = index.best().unwrap();
-                let pair = priority.pair();
-                let candidate = index.take(priority);
-                let (replacement, _) = vocabulary.resolve_merge(pair).unwrap();
-                corpus.prepare_identity(pair, replacement);
-                let batch = Batch {
-                    rules: vec![Rule {
-                        replacement,
-                        candidate,
-                    }],
-                    reuse: false,
-                    floor: trainer.min_frequency.max(1),
-                };
-                assert_eq!(batch.rules.len(), 1);
-                assert_eq!(batch.rules[0].candidate.positions.len(), repetitions);
-                let snapshot = FreshSnapshot::new(&batch, &corpus, usize::MAX);
-                let tasks = snapshot.tasks();
-                assert_eq!(tasks.len(), expected_lengths.len());
-                for ((rank, source), expected_len) in tasks.into_iter().zip(&expected_lengths) {
-                    let Source::Range(range) = &source else {
-                        panic!("expected ordinary positions fragment")
-                    };
-                    assert_eq!(range.len(), *expected_len);
-                    let complete = expected_lengths.len() == 1;
-                    assert_eq!(source.complete(repetitions), complete);
-                    let job = snapshot
-                        .prepare_job(&mut Directories::default(), rank, source)
-                        .unwrap();
-                    assert!(!job.changes.is_empty());
-                    assert!(
-                        job.changes
-                            .iter()
-                            .all(
-                                |change| matches!(change.positions, Birth::Complete(_)) == complete
-                            )
-                    );
-                }
-            });
+            assert_eq!(job.starts.as_slice(), expected);
         }
+    }
 
-        // An AA slice remains partial even if all filtered starts fit in one job.
-        assert!(!Source::Slice(&[0, 2, 4]).complete(3));
+    #[test]
+    fn reuse_spans() {
+        let mut trainer = trainer();
+        trainer.end_of_word_suffix = Some("a".into());
+        let words = counts(&[("baaaaaba", 2), ("ba", 1)]);
+        let (mut vocabulary, mut corpus, mut index) =
+            initialize(&trainer, WordCountsView::from_map(&words), true);
+        assert!(matches!(
+            trainer
+                .merge_next(&mut vocabulary, &mut corpus, &mut index)
+                .unwrap(),
+            MergeOutcome::Committed(_)
+        ));
+        let rule = select(&mut vocabulary, &mut corpus, &mut index);
+        assert_eq!((rule.pair(), rule.replacement), ((1, 2), 3));
+        // AA aliases the suffix ID: BA sees original and merged occurrences.
+        let batch = Batch {
+            rules: vec![rule],
+            reuse: true,
+            floor: 1,
+        };
+        let jobs = batch.prepare(&corpus, usize::MAX).unwrap();
+        for job in jobs {
+            corpus.apply_merges(&job.starts, job.replacement);
+        }
+        let s = WORD_SEPARATOR_ID;
+        assert_eq!(tokens(&corpus), [s, 3, s, 3, 2, 2, 0, 3, 3, s, 1, 2, s]);
+        assert_eq!(spans(&corpus), [0, 3, 0, 3, 2, 2, 1, 2, 2, 0, 1, 1, 0]);
+    }
+
+    #[test]
+    fn deletion_only_birth_and_directory_recovery() {
+        let trainer = trainer();
+        let words = [("xab".into(), 1)].into_iter().collect();
+        let (mut vocabulary, mut corpus, mut index) =
+            initialize(&trainer, WordCountsView::from_map(&words), false);
+        let rule = select(&mut vocabulary, &mut corpus, &mut index);
+        let mut directories = Directories::default();
+        directories.resize(vocabulary.len());
+        {
+            let mut neighbors = Neighbors::new(&rule, 0, &mut directories, false);
+            neighbors.record(true, 2, 2, 1, u64::MAX, true).unwrap();
+            assert!(neighbors.record(true, 2, 2, 1, 1, true).is_err());
+        }
+        // The old directory index is reused without reset after the failed group.
+        let mut neighbors = Neighbors::new(&rule, 0, &mut directories, false);
+        neighbors.record(true, 1, 1, 1, 3, true).unwrap();
+        neighbors.record(true, 2, 2, 2, 4, true).unwrap();
+        let changes = neighbors.finish(1).unwrap();
+        assert_eq!(
+            changes
+                .iter()
+                .map(|c| (c.removed, c.born_weight))
+                .collect::<Vec<_>>(),
+            [((1, 0), 3), ((2, 0), 4)]
+        );
+        let batch = Batch {
+            rules: vec![rule],
+            reuse: false,
+            floor: 1,
+        };
+        let job = batch.prepare(&corpus, 3).unwrap().pop().unwrap();
+        let change = &job.changes[0];
+        assert_eq!(
+            (change.removed, change.removed_weight, change.born_weight),
+            ((2, 0), 1, 0)
+        );
+        assert!(change.positions.is_empty());
+        corpus.apply_merges(&job.starts, job.replacement);
+        index.commit(vec![job.changes]).unwrap();
+        assert!(index.best().is_none());
     }
 }

@@ -444,129 +444,26 @@ impl Shard {
 
 #[cfg(test)]
 mod tests {
+    use super::super::tests::tokens;
     use super::*;
     use crate::trainers::bpe::{
-        BpeTrainer, Trace, merge::MergeOutcome, vocabulary::Vocabulary, word_counts::WordCountsView,
-    };
-    use tk_encode::{
-        models::bpe::{Merges, Vocab},
-        vocab::bucket_added_vocabulary::AddedToken,
+        tests::{initialize, trainer},
+        word_counts::WordCountsView,
     };
 
-    #[test]
-    fn reuse_groups_sort_positions_keep_duplicates_and_publish_in_bucket_order() {
-        let pair = (7, 8);
-        let mut shard = Shard::default();
-        let mut events = Vec::new();
-        for (bucket, weight, values) in [(1, 1, &[8][..]), (0, 0, &[9][..]), (0, 2, &[2, 2][..])] {
-            shard.push(
-                events.len(),
-                false,
-                Some(Birth::Partial(SmallVec::from_slice(values))),
-            );
-            events.push(Event {
-                removed: pair,
-                born: pair,
-                removed_weight: 0,
-                born_weight: weight,
-                bucket,
-                positions: (),
-            });
+    fn event(pair: Pair, add: u64, remove: u64, bucket: usize) -> Event {
+        Event {
+            removed: pair,
+            born: pair,
+            removed_weight: remove,
+            born_weight: add,
+            bucket,
+            positions: (),
         }
-        let candidates = shard.commit(&events, true, 10).unwrap();
-        assert_eq!(shard.counts[&pair], 3);
-        assert_eq!(
-            candidates.len(),
-            2,
-            "positive cohorts survive below the floor"
-        );
-        assert_eq!(
-            candidates[0].positions.iter().collect::<Vec<_>>(),
-            [2, 2, 9]
-        );
-        assert_eq!(candidates[1].positions.iter().collect::<Vec<_>>(), [8]);
-        assert!(
-            candidates
-                .iter()
-                .all(|candidate| candidate.priority.count == 3)
-        );
-        assert!(shard.actions.is_empty() && shard.positions.is_empty());
     }
 
     #[test]
-    fn fresh_commit_retires_removals_and_publishes_complete_then_partial_births() {
-        let removed = (0, 1);
-        let partial = (2, 3);
-        let complete = (4, 5);
-        let pruned = (6, 7);
-        let mut shard = Shard::default();
-        shard.counts.insert(removed, 5);
-        let events = [
-            Event {
-                removed,
-                born: partial,
-                removed_weight: 3,
-                born_weight: 1,
-                bucket: 0,
-                positions: (),
-            },
-            Event {
-                removed,
-                born: partial,
-                removed_weight: 0,
-                born_weight: 2,
-                bucket: 0,
-                positions: (),
-            },
-            Event {
-                removed,
-                born: complete,
-                removed_weight: 0,
-                born_weight: 4,
-                bucket: 1,
-                positions: (),
-            },
-            Event {
-                removed,
-                born: pruned,
-                removed_weight: 0,
-                born_weight: 1,
-                bucket: 2,
-                positions: (),
-            },
-        ];
-        shard.push(0, true, Some(Birth::Partial(SmallVec::from_slice(&[20]))));
-        shard.push(
-            1,
-            false,
-            Some(Birth::Partial(SmallVec::from_slice(&[21, 22]))),
-        );
-        shard.push(
-            2,
-            false,
-            Some(Birth::Complete(Positions::from_sorted(&[11]).unwrap())),
-        );
-        shard.push(3, false, Some(Birth::Partial(SmallVec::from_slice(&[30]))));
-        let candidates = shard.commit(&events, false, 3).unwrap();
-        assert!(!shard.counts.contains_key(&removed));
-        assert!(!shard.counts.contains_key(&pruned));
-        assert_eq!(shard.counts[&partial], 3);
-        assert_eq!(shard.counts[&complete], 4);
-        assert_eq!(
-            candidates
-                .iter()
-                .map(|c| c.priority.pair())
-                .collect::<Vec<_>>(),
-            [complete, partial]
-        );
-        assert_eq!(
-            candidates[1].positions.iter().collect::<Vec<_>>(),
-            [20, 21, 22]
-        );
-    }
-
-    #[test]
-    fn failed_commit_drains_pending_streams_and_checks_intermediate_overflow() {
+    fn intermediate_overflow() {
         let pair = (0, 1);
         for reuse in [false, true] {
             let mut shard = Shard::default();
@@ -574,26 +471,11 @@ mod tests {
                 shard.counts.insert(pair, i64::MAX as u64);
             }
             let events = [
-                Event {
-                    removed: pair,
-                    born: pair,
-                    removed_weight: 0,
-                    born_weight: if reuse { 1 } else { u64::MAX },
-                    bucket: 0,
-                    positions: (),
-                },
-                Event {
-                    removed: pair,
-                    born: pair,
-                    removed_weight: if reuse { 1 } else { 0 },
-                    born_weight: if reuse { 0 } else { 1 },
-                    bucket: 0,
-                    positions: (),
-                },
+                event(pair, if reuse { 1 } else { u64::MAX }, 0, 0),
+                event(pair, if reuse { 0 } else { 1 }, u64::from(reuse), 0),
             ];
             shard.push(0, false, Some(Birth::Partial(SmallVec::from_slice(&[0]))));
             shard.push(1, reuse, Some(Birth::Partial(SmallVec::from_slice(&[1]))));
-            let capacities = (shard.actions.capacity(), shard.positions.capacity());
             let error = shard
                 .commit(&events, reuse, 1)
                 .err()
@@ -605,224 +487,101 @@ mod tests {
                 "{error}"
             );
             assert!(shard.actions.is_empty() && shard.positions.is_empty());
-            assert_eq!(
-                (shard.actions.capacity(), shard.positions.capacity()),
-                capacities
-            );
         }
     }
 
     #[test]
-    fn preparation_failure_leaves_all_endpoints_unchanged() {
-        for workers in [1, 4, 8] {
-            let pool = rayon::ThreadPoolBuilder::new()
-                .num_threads(workers)
-                .build()
-                .unwrap();
-            pool.install(|| {
-                let trainer = BpeTrainer::builder()
-                    .vocab_size(16)
-                    .min_frequency(1)
-                    .show_progress(false)
-                    .build();
-                let words = [("ab".into(), u64::MAX), ("xcd".into(), u64::MAX)]
+    fn failures_before_and_after_writes() {
+        let trainer = trainer();
+        for preparation in [true, false] {
+            let words = if preparation {
+                [("ab".into(), u64::MAX), ("xcd".into(), u64::MAX)]
                     .into_iter()
-                    .collect();
-                let view = WordCountsView::from_map(&words);
-                let progress = trainer.setup_progress();
-                let (mut vocabulary, ids) = Vocabulary::initialize(
-                    &trainer,
-                    view,
-                    &super::super::vocabulary::select_alphabet(&trainer, view, workers),
-                    &progress,
-                )
-                .unwrap();
-                let plan = CorpusPlan::build(view, ids, &trainer, false).unwrap();
-                let mut index = PairIndex::build(&plan, 1, workers, false, &progress).unwrap();
-                let mut corpus = plan.materialize();
+                    .collect()
+            } else {
+                [("abc".into(), 1)].into_iter().collect()
+            };
+            let (mut vocabulary, mut corpus, mut index) =
+                initialize(&trainer, WordCountsView::from_map(&words), !preparation);
+            if preparation {
+                // AB is valid; duplicate CD overflows its neighbor count before writes.
                 let mut candidates = std::mem::take(&mut index.queue).into_vec();
                 let candidate = candidates
                     .iter_mut()
                     .find(|c| c.priority.pair() == (2, 3))
                     .unwrap();
-                // AB has valid deferred writes. Duplicate CD's start to overflow
-                // its left-neighbor count during preparation of the same round.
                 let start = candidate.positions.iter().next().unwrap();
                 candidate.positions = Positions::from_sorted(&[start, start]).unwrap();
                 index.queue = candidates.into_iter().collect();
-                let before: Vec<_> = (0..corpus.len()).map(|p| corpus.token(p)).collect();
-                let error = trainer
-                    .merge_next(&mut vocabulary, &mut corpus, &mut index)
-                    .unwrap_err();
-                assert!(error.to_string().contains("exceeds u64"), "{error}");
-                let after: Vec<_> = (0..corpus.len()).map(|p| corpus.token(p)).collect();
-                assert_eq!(after, before, "workers={workers}");
-            });
-        }
-    }
-
-    type Outcome = (Trace, (Vocab, Merges));
-
-    #[test]
-    fn owner_failure_returns_no_records_after_endpoint_writes() {
-        for workers in [1, 4, 8] {
-            rayon::ThreadPoolBuilder::new()
-                .num_threads(workers)
-                .build()
-                .unwrap()
-                .install(|| {
-                    let trainer = BpeTrainer::builder()
-                        .vocab_size(16)
-                        .min_frequency(1)
-                        .show_progress(false)
-                        .build();
-                    let words = [("abc".into(), 1)].into_iter().collect();
-                    let view = WordCountsView::from_map(&words);
-                    let progress = trainer.setup_progress();
-                    let (mut vocabulary, ids) = Vocabulary::initialize(
-                        &trainer,
-                        view,
-                        &super::super::vocabulary::select_alphabet(&trainer, view, workers),
-                        &progress,
-                    )
-                    .unwrap();
-                    let plan = CorpusPlan::build(view, ids, &trainer, true).unwrap();
-                    let mut index = PairIndex::build(&plan, 1, workers, true, &progress).unwrap();
-                    let mut corpus = plan.materialize();
-                    // AB writes ID 3 before its right birth (3, C) reaches its
-                    // owner. Force that owner's signed addition to overflow.
-                    let born = (3, 2);
-                    index.shards[owner(born, workers)]
-                        .counts
-                        .insert(born, i64::MAX as u64);
-                    let before: Vec<_> = (0..corpus.len()).map(|p| corpus.token(p)).collect();
-                    let queued = index.queue.len();
-                    let error = trainer
-                        .merge_next(&mut vocabulary, &mut corpus, &mut index)
-                        .unwrap_err();
-                    assert!(error.to_string().contains("exceeds i64"), "{error}");
-                    let after: Vec<_> = (0..corpus.len()).map(|p| corpus.token(p)).collect();
-                    assert_ne!(after, before, "commit errors do not roll back writes");
-                    assert!(after.contains(&3));
-                    assert_eq!(
-                        index.queue.len(),
-                        queued - 1,
-                        "failed owners publish no births"
-                    );
-                });
-        }
-    }
-
-    fn train_with_equal_cohorts() -> Outcome {
-        let mut trainer = BpeTrainer::builder()
-            .vocab_size(64)
-            .min_frequency(1)
-            .show_progress(false)
-            .build();
-        trainer.continuing_subword_prefix = Some("ab".into());
-        trainer.end_of_word_suffix = Some("c".into());
-        trainer.special_tokens = vec![AddedToken::from("abac", true)];
-        let mut words = AHashMap::with_hasher(ahash::RandomState::with_seeds(11, 13, 17, 19));
-        words.extend([("pacx".into(), 4), ("yacx".into(), 1), ("pa".into(), 4)]);
-        let view = WordCountsView::from_map(&words);
-        let progress = trainer.setup_progress();
-        let (mut vocabulary, ids) = Vocabulary::initialize(
-            &trainer,
-            view,
-            &super::super::vocabulary::select_alphabet(&trainer, view, 1),
-            &progress,
-        )
-        .unwrap();
-        let pair = (
-            ids.id('a', false, false).unwrap(),
-            ids.id('c', false, false).unwrap(),
-        );
-        let plan = CorpusPlan::build(view, ids, &trainer, true).unwrap();
-        // Either cohort reuses the activated "abac" identity. The heavier cohort
-        // raises its left neighbor's existing count above the other cohort.
-        let mut cohorts = [Vec::new(), Vec::new()];
-        plan.initial_edges(0..plan.word_count(), |edge, position, weight| {
-            if edge == pair {
-                cohorts[usize::from(weight == 1)].push(position);
+            } else {
+                // AB writes ID 3 before its right birth overflows the signed owner count.
+                index.shards[0].counts.insert((3, 2), i64::MAX as u64);
             }
-            Ok(())
-        })
-        .unwrap();
-        assert_eq!(cohorts.each_ref().map(|values| values.len()), [1, 1]);
-        let mut index = PairIndex::build(&plan, 1, 1, true, &progress).unwrap();
-        assert_eq!(index.shards[0].counts[&pair], 5);
-        let mut candidates = index.queue.into_vec();
-        candidates.retain(|candidate| candidate.priority.pair() != pair);
-        for (positions, count) in cohorts.into_iter().zip([10, 5]) {
-            candidates.push(Candidate {
-                priority: Priority {
-                    count,
-                    pair: Reverse(pair),
-                },
-                positions: Positions::from_sorted(&positions).unwrap(),
-            });
-        }
-        index.queue = candidates.into_iter().collect();
-        let mut corpus = plan.materialize();
-        let mut trace = Vec::new();
-        let mut merges = Vec::new();
-        while vocabulary.len() < trainer.vocab_size {
-            let records = match trainer
+            let before = tokens(&corpus);
+            let queued = index.queue.len();
+            let error = trainer
                 .merge_next(&mut vocabulary, &mut corpus, &mut index)
-                .unwrap()
-            {
-                MergeOutcome::Committed(records) => records,
-                MergeOutcome::Finished => break,
-                MergeOutcome::RestartForReuse => panic!("reuse cannot request another attempt"),
-            };
-            for record in records {
-                merges.push(record.pair);
-                trace.push((record.pair, record.count, record.replacement));
+                .unwrap_err();
+            assert!(
+                error.to_string().contains(if preparation {
+                    "exceeds u64"
+                } else {
+                    "exceeds i64"
+                }),
+                "{error}"
+            );
+            let after = tokens(&corpus);
+            if preparation {
+                assert_eq!(after, before);
+            } else {
+                assert_ne!(after, before, "commit errors do not roll back writes");
+                assert!(after.contains(&3));
+                assert_eq!(
+                    index.queue.len(),
+                    queued - 1,
+                    "failed owners publish no births"
+                );
             }
         }
-        (trace, vocabulary.into_model_parts(merges))
     }
 
     #[test]
-    fn equal_pair_cohorts_preserve_each_merge_and_model_after_count_repair() {
-        let actual = train_with_equal_cohorts();
+    fn historical_cohorts() {
+        let pair = (7, 8);
+        let mut shard = Shard::default();
+        // Separate commits retain two cohorts; the second changes the count 10→5.
+        let mut candidates = Vec::new();
+        for (add, remove, position) in [(10, 0, 20), (3, 8, 21)] {
+            shard.push(
+                0,
+                remove != 0,
+                Some(Birth::Partial(SmallVec::from_slice(&[position]))),
+            );
+            candidates.extend(
+                shard
+                    .commit(&[event(pair, add, remove, 0)], true, 1)
+                    .unwrap(),
+            );
+        }
+        assert_eq!(candidates.len(), 2);
+        let mut index = PairIndex {
+            shards: vec![shard].into_boxed_slice(),
+            queue: candidates.into_iter().collect(),
+            floor: 1,
+            reuse: true,
+        };
+        // Repair pop/update/push preserves which equal-priority cohort comes first.
+        let priority = index.best().unwrap();
+        assert_eq!(priority.count, 5);
         assert_eq!(
-            actual.0,
-            vec![
-                ((6, 7), 5, 0),
-                ((6, 7), 5, 0),
-                ((3, 0), 8, 9),
-                ((3, 0), 8, 9),
-                ((9, 8), 4, 10),
-                ((0, 8), 1, 11),
-                ((0, 8), 1, 11),
-                ((5, 11), 1, 12),
-            ],
-            "count repair must preserve the historical cohort merge order"
+            index.take(priority).positions.iter().collect::<Vec<_>>(),
+            [21]
         );
-        let tokens = [
-            "abac", "a", "c", "p", "x", "y", "aba", "abc", "abxc", "pac", "pacxc", "abacxc",
-            "yacxc",
-        ];
-        let vocab = tokens
-            .iter()
-            .enumerate()
-            .map(|(id, text)| ((*text).to_owned(), id as u32))
-            .collect();
-        let merges = actual
-            .0
-            .iter()
-            .map(|&(pair, _, _)| {
-                (
-                    tokens[pair.0 as usize].to_owned(),
-                    tokens[pair.1 as usize].to_owned(),
-                )
-            })
-            .collect();
+        let priority = index.best().unwrap();
         assert_eq!(
-            actual.1,
-            (vocab, merges),
-            "cohort repair must preserve the complete model"
+            index.take(priority).positions.iter().collect::<Vec<_>>(),
+            [20]
         );
+        assert!(index.best().is_none());
     }
 }

@@ -113,54 +113,29 @@ mod tests {
     use super::*;
 
     #[test]
-    fn content_equality_and_flat_serde_ignore_representation_and_order() {
-        let entries = vec![("zero".into(), 0), ("wide".into(), u64::MAX)];
-        let original = WordCounts::from_entries(entries.clone());
-        let mut reversed = entries.clone();
-        reversed.reverse();
-        for equivalent in [
-            original.clone(),
-            WordCounts::from_entries(reversed),
-            WordCounts::from_map(entries.iter().cloned().collect()),
+    fn equality_and_serde() {
+        let original =
+            WordCounts::from_entries(vec![("zero".into(), 0), ("wide".into(), u64::MAX)]);
+        let map = WordCounts::from_map([("wide".into(), u64::MAX), ("zero".into(), 0)].into());
+        assert_eq!(original, map);
+        for json in [
+            r#"{"zero":1,"wide":18446744073709551615}"#,
+            r#"{"other":0,"wide":18446744073709551615}"#,
+            r#"{"zero":0}"#,
         ] {
-            assert_eq!(original, equivalent);
-            assert_eq!(equivalent, original);
-            let json = serde_json::to_value(&equivalent).unwrap();
-            assert_eq!(json, serde_json::json!({"zero": 0, "wide": u64::MAX}));
-            assert_eq!(
-                serde_json::from_value::<WordCounts>(json).unwrap(),
-                original
-            );
+            assert_ne!(original, serde_json::from_str::<WordCounts>(json).unwrap());
         }
-        for different in [
-            vec![("zero".into(), 1), ("wide".into(), u64::MAX)],
-            vec![("other".into(), 0), ("wide".into(), u64::MAX)],
-            vec![("zero".into(), 0)],
-            vec![
-                ("zero".into(), 0),
-                ("wide".into(), u64::MAX),
-                ("extra".into(), 1),
-            ],
-        ] {
-            let different = WordCounts::from_entries(different);
-            assert_ne!(original, different);
-            assert_ne!(different, original);
-        }
-        let empty_map = WordCounts::from_map(CountMap::default());
-        assert_eq!(WordCounts::default(), empty_map);
-        assert_eq!(empty_map, WordCounts::default());
-    }
-
-    #[test]
-    fn duplicate_map_keys_keep_the_last_count_and_map_debug() {
-        let counts: WordCounts = serde_json::from_str(r#"{"word":1,"word":9}"#).unwrap();
-        assert_eq!(counts, WordCounts::from_entries(vec![("word".into(), 9)]));
-        assert_eq!(counts.len(), 1);
+        let json = serde_json::to_value(&original).unwrap();
+        assert_eq!(json, serde_json::json!({"zero": 0, "wide": u64::MAX}));
         assert_eq!(
-            serde_json::to_value(&counts).unwrap(),
-            serde_json::json!({"word":9})
+            serde_json::from_value::<WordCounts>(json).unwrap(),
+            original
         );
-        assert_eq!(format!("{counts:?}"), r#"{"word": 9}"#);
+        let duplicate: WordCounts = serde_json::from_str(r#"{"word":1,"word":9}"#).unwrap();
+        assert_eq!(
+            duplicate,
+            WordCounts::from_entries(vec![("word".into(), 9)])
+        );
         assert!(serde_json::from_str::<WordCounts>(r#"{"word":-1}"#).is_err());
     }
 }

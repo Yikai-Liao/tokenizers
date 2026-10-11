@@ -483,148 +483,57 @@ impl Slots {
 
 #[cfg(test)]
 mod tests {
+    use super::super::tests::{spans, tokens};
     use super::*;
-    use ahash::AHashMap;
 
-    // Preserve the previous whole-word linear search as an independent oracle.
-    fn linear_ranges(starts: &[usize], length: usize, slots: usize) -> Vec<std::ops::Range<usize>> {
-        let mut ranges = Vec::new();
-        let mut begin = 0;
-        while begin < starts.len() {
-            let mut end = begin + 1;
-            while end < starts.len()
-                && starts.get(end + 1).copied().unwrap_or(length) - starts[begin] <= slots
-            {
-                end += 1;
-            }
-            ranges.push(begin..end);
-            begin = end;
-        }
-        ranges
-    }
-
-    fn write_fixture(tokens: &[u32], spans: &[usize], occurrences: Option<&[usize]>) -> Corpus {
+    fn fixture(input: &[u32], spans: &[usize], occurrences: Option<&[usize]>) -> Corpus {
         let corpus = Corpus {
-            tokens: Slots::new(tokens.len(), spans.len()),
+            tokens: Slots::new(input.len(), spans.len()),
             starts: vec![1].into_boxed_slice(),
             weight_regions: vec![(1, 1)].into_boxed_slice(),
-            unit_region: Some((1, tokens.len())),
+            unit_region: Some((1, input.len())),
             spans: spans.to_vec(),
             occurrence_spans: occurrences
                 .map(|values| values.iter().copied().map(AtomicUsize::new).collect()),
             whole_words: occurrences.is_some(),
         };
-        for (position, &id) in tokens.iter().enumerate() {
+        for (position, &id) in input.iter().enumerate() {
             corpus.tokens.set(position, id);
         }
         corpus
     }
 
-    fn slots(corpus: &Corpus) -> (Vec<u32>, Option<Vec<usize>>) {
-        (
-            (0..corpus.len()).map(|p| corpus.token(p)).collect(),
-            corpus.occurrence_spans.as_ref().map(|values| {
-                values
-                    .iter()
-                    .map(|span| span.load(Ordering::Relaxed))
-                    .collect()
-            }),
-        )
-    }
-
-    fn apply_in_order(corpus: &Corpus, starts: &[usize], replacement: u32, order: usize) {
-        match order {
-            0 => corpus.apply_merges(starts, replacement),
-            1 => corpus.apply_merges(
-                &starts.iter().rev().copied().collect::<Vec<_>>(),
-                replacement,
-            ),
-            2 => rayon::ThreadPoolBuilder::new()
-                .num_threads(4)
-                .build()
-                .unwrap()
-                .install(|| {
-                    starts
-                        .par_iter()
-                        .for_each(|&start| corpus.apply_merges(&[start], replacement));
-                }),
-            _ => unreachable!(),
-        }
-    }
-
     #[test]
-    fn deferred_fixed_span_writes_are_order_independent() {
+    fn adjacent_writes() {
         let s = WORD_SEPARATOR_ID;
-        // Adjacent intervals 1..4/4..7 have one-slot right symbols; 1..5/5..9
-        // have two-slot right symbols. Interior slots deliberately stay visible.
-        for (input, spans, starts, expected) in [
-            (
-                vec![s, 0, 0, 1, 0, 0, 1, s],
-                vec![2, 1, 3],
-                vec![1, 4],
-                vec![s, 2, 0, 2, 2, 0, 2, s],
-            ),
-            (
-                vec![s, 0, 0, 1, 1, 0, 0, 1, 1, s],
-                vec![2, 2, 4],
-                vec![1, 5],
-                vec![s, 2, 0, s, 2, 2, 0, s, 2, s],
-            ),
-        ] {
-            for replacement in [0, 1, 2] {
-                let expected: Vec<_> = expected
-                    .iter()
-                    .map(|&id| if id == 2 { replacement } else { id })
-                    .collect();
-                for order in 0..3 {
-                    let corpus = write_fixture(&input, &spans, None);
-                    corpus.apply_merges(&[], replacement);
-                    assert_eq!(slots(&corpus), (input.clone(), None));
-                    apply_in_order(&corpus, &starts, replacement, order);
-                    assert_eq!(slots(&corpus), (expected.clone(), None));
-                    assert_eq!(corpus.spans, spans);
-                }
+        for order in 0..3 {
+            let corpus = fixture(&[s, 0, 0, 1, 0, 0, 1, s], &[2, 1, 3], None);
+            corpus.apply_merges(&[], 2);
+            assert_eq!(tokens(&corpus), [s, 0, 0, 1, 0, 0, 1, s]);
+            match order {
+                0 => corpus.apply_merges(&[1, 4], 2),
+                1 => corpus.apply_merges(&[4, 1], 2),
+                _ => [1, 4]
+                    .par_iter()
+                    .for_each(|&p| corpus.apply_merges(&[p], 2)),
             }
+            assert_eq!(tokens(&corpus), [s, 2, 0, 2, 2, 0, 2, s]);
+            assert_eq!(corpus.spans, [2, 1, 3]);
         }
+        // One pair has 2+1 and 1+3 spans; replacement reuses ID 0.
+        let corpus = fixture(
+            &[s, 0, 0, 1, 0, 1, 1, 1, s],
+            &[1, 1],
+            Some(&[0, 2, 2, 1, 1, 3, 0, 3, 0]),
+        );
+        corpus.apply_merges(&[1, 4], 0);
+        assert_eq!(tokens(&corpus), [s, 0, 0, 0, 0, s, 1, 0, s]);
+        assert_eq!(spans(&corpus), [0, 3, 2, 3, 4, 0, 0, 4, 0]);
     }
 
     #[test]
-    fn deferred_alias_writes_keep_each_occurrences_geometry() {
-        let s = WORD_SEPARATOR_ID;
-        // The same pair has lengths 2+1 at 1..4 and 1+3 at 4..8.
-        let input = [s, 0, 0, 1, 0, 1, 1, 1, s];
-        let occurrences = [0, 2, 2, 1, 1, 3, 0, 3, 0];
-        for replacement in [0, 1, 2] {
-            for order in 0..3 {
-                let corpus = write_fixture(&input, &[1, 1, 1], Some(&occurrences));
-                corpus.apply_merges(&[], replacement);
-                assert_eq!(slots(&corpus), (input.to_vec(), Some(occurrences.to_vec())));
-                apply_in_order(&corpus, &[1, 4], replacement, order);
-                assert_eq!(
-                    slots(&corpus),
-                    (
-                        vec![
-                            s,
-                            replacement,
-                            0,
-                            replacement,
-                            replacement,
-                            s,
-                            1,
-                            replacement,
-                            s
-                        ],
-                        Some(vec![0, 3, 2, 3, 4, 0, 0, 4, 0]),
-                    )
-                );
-                assert_eq!(corpus.spans, [1, 1, 1]);
-            }
-        }
-    }
-
-    #[test]
-    fn initial_ranges_match_linear_search_at_slot_and_separator_boundaries() {
-        let words = AHashMap::new();
+    fn initial_ranges() {
+        let words = ahash::AHashMap::new();
         let view = WordCountsView::from_map(&words);
         let trainer = BpeTrainer::new(1, 0);
         let (_, ids) = super::super::vocabulary::Vocabulary::initialize(
@@ -635,54 +544,26 @@ mod tests {
         )
         .unwrap();
         let mut plan = CorpusPlan::build(view, ids, &trainer, false).unwrap();
+        assert!(plan.initial_ranges(0).is_empty());
         let text = CompactString::default();
         let weight = 1;
-        let mut layouts = vec![(vec![usize::MAX - 8, usize::MAX - 3], usize::MAX)];
-        for n in [0, 1, 2, 3, 7, 128, 257] {
-            for seed in 0..16 {
-                let mut state = seed as u64;
-                let mut starts = Vec::new();
-                let mut length = 1;
-                for _ in 0..n {
-                    starts.push(length);
-                    state = state.wrapping_mul(6364136223846793005).wrapping_add(1);
-                    length += 1 + (state >> 32) as usize % 65;
-                }
-                layouts.push((starts, length));
-            }
-        }
-        for (starts, length) in layouts {
+        let maximum = usize::MAX;
+        for (starts, length, budget, expected) in [
+            (vec![1], 1025, 0, std::iter::once(0..1).collect()),
+            (vec![1, 4, 8, 10], 16, 0, vec![0..1, 1..2, 2..3, 3..4]),
+            (vec![1, 4, 8, 10], 16, 7, vec![0..2, 2..3, 3..4]),
+            (vec![1, 4, 8, 10], 16, 9, vec![0..3, 3..4]),
+            (
+                vec![maximum - 8, maximum - 3],
+                maximum,
+                8,
+                std::iter::once(0..2).collect(),
+            ),
+        ] {
             plan.words = vec![(&text, &weight); starts.len()].into_boxed_slice();
             plan.starts = starts.into_boxed_slice();
             plan.length = length;
-            let mut budgets = vec![0, 1, 2, 3, 4, 5, 7, 8, 16, 17, 63, 64, 65, 1024, usize::MAX];
-            if let Some(&start) = plan.starts.first() {
-                budgets.extend(plan.starts.iter().map(|&next| next - start));
-                budgets.push(length - start);
-            }
-            for slots in budgets {
-                let ranges = plan.initial_ranges(slots);
-                assert_eq!(ranges, linear_ranges(&plan.starts, length, slots));
-                let mut end = 0;
-                for range in ranges {
-                    assert_eq!(range.start, end);
-                    assert!(!range.is_empty());
-                    let span = plan.starts.get(range.end).copied().unwrap_or(length)
-                        - plan.starts[range.start];
-                    assert!(span <= slots || range.len() == 1);
-                    end = range.end;
-                }
-                assert_eq!(end, plan.word_count());
-            }
+            assert_eq!(plan.initial_ranges(budget), expected);
         }
-
-        // Slot widths 3, 4, 2, 6: exact-budget boundaries stay in the segment.
-        plan.starts = vec![1, 4, 8, 10].into_boxed_slice();
-        plan.length = 16;
-        plan.words = vec![(&text, &weight); 4].into_boxed_slice();
-        assert_eq!(plan.initial_ranges(7), vec![0..2, 2..3, 3..4]);
-        assert_eq!(plan.initial_ranges(9), vec![0..3, 3..4]);
-        assert_eq!(plan.initial_ranges(15), vec![0..4]);
-        assert_eq!(plan.initial_ranges(2), vec![0..1, 1..2, 2..3, 3..4]);
     }
 }

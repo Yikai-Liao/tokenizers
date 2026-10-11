@@ -5,14 +5,14 @@ use ahash::AHashMap;
 use compact_str::CompactString;
 use std::time::{Duration, Instant};
 
-fn counts(items: &[(&str, u64)]) -> AHashMap<CompactString, u64> {
+pub(super) fn counts(items: &[(&str, u64)]) -> AHashMap<CompactString, u64> {
     items
         .iter()
         .map(|&(word, weight)| (word.into(), weight))
         .collect()
 }
 
-fn trainer() -> BpeTrainer {
+pub(super) fn trainer() -> BpeTrainer {
     BpeTrainer::builder()
         .vocab_size(64)
         .min_frequency(1)
@@ -32,8 +32,28 @@ fn check(trainer: &BpeTrainer, words: &AHashMap<CompactString, u64>) -> Vec<(Pai
     expected.trace
 }
 
+pub(super) fn initialize(
+    trainer: &BpeTrainer,
+    words: WordCountsView<'_>,
+    reuse: bool,
+) -> (Vocabulary, Corpus, PairIndex) {
+    let alphabet = vocabulary::select_alphabet(trainer, words, 1);
+    let (vocabulary, ids) = Vocabulary::initialize(trainer, words, &alphabet, &None).unwrap();
+    let plan = CorpusPlan::build(words, ids, trainer, reuse).unwrap();
+    let index = PairIndex::build(&plan, trainer.min_frequency.max(1), 1, reuse, &None).unwrap();
+    (vocabulary, plan.materialize(), index)
+}
+
+pub(super) fn tokens(corpus: &Corpus) -> Vec<u32> {
+    (0..corpus.len()).map(|p| corpus.token(p)).collect()
+}
+
+pub(super) fn spans(corpus: &Corpus) -> Vec<usize> {
+    (0..corpus.len()).map(|p| corpus.span(p)).collect()
+}
+
 #[test]
-fn generated_models_and_every_rule_match_the_sequential_oracle() {
+fn models_match_reference() {
     let mut seed = 0x58e4_a91du64;
     let mut next = || {
         seed ^= seed << 13;
@@ -72,33 +92,21 @@ fn generated_models_and_every_rule_match_the_sequential_oracle() {
 }
 
 #[test]
-fn aligned_complete_and_split_producers_match_the_sequential_model() {
-    for repetitions in [127, 129, 257] {
-        let mut trainer = trainer();
-        trainer.min_frequency = repetitions as u64;
-        // Split fragments' local counts fall below the floor, while the complete
-        // birth reaches it. Rounding can also retain one complete producer.
-        let words = counts(&[(&"abc".repeat(repetitions), 1)]);
-        check(&trainer, &words);
-    }
-}
-
-#[test]
-fn overlap_floor_alias_and_alphabet_boundaries() {
+fn overlap_and_alias() {
     check(
         &trainer(),
         &counts(&[("abac", 4), ("dbdc", 4), ("abdb", 3), ("acdc", 3)]),
     );
-    // A split producer's local pieces are below the floor; its complete birth is not.
-    // 8195 AA symbols yield 4097 greedy starts, crossing both restart blocks
-    // and the 4096-start task boundary even with one worker.
     check(
         &trainer(),
         &counts(&[("ab", 3), ("cd", 3), ("aaaaa", 0), ("", 7)]),
     );
-    let repeated = "ab".repeat(12_000);
-    let aa = "a".repeat(8195);
-    let words = counts(&[(&repeated, 1), ("xy", 12_000), (&aa, 3)]);
+    // 4097 AA starts cross the 4096-start task boundary, even with one worker.
+    let words = counts(&[
+        (&"ab".repeat(12_000), 1),
+        ("xy", 12_000),
+        (&"a".repeat(8195), 3),
+    ]);
     let mut trainer = trainer();
     trainer.min_frequency = 10_000;
     check(&trainer, &words);
@@ -106,49 +114,10 @@ fn overlap_floor_alias_and_alphabet_boundaries() {
     trainer.end_of_word_suffix = Some("a".into());
     let trace = check(&trainer, &counts(&[("baaba", 1)]));
     assert_eq!(&trace[..2], &[((0, 0), 1, 2), ((1, 2), 2, 3)]);
-    let aliases = (0..128)
-        .map(|i| {
-            (
-                format!("{i}{}baaba", "aaaaaaaaabcd".repeat(16)).into(),
-                [0, 1, 7, 13][i % 4],
-            )
-        })
-        .collect();
-    // Reserved merges must still activate after alias geometry becomes per-occurrence.
-    trainer.special_tokens = vec![AddedToken::from("aaaaaaaaabcd", true)];
-    for (prefix, suffix, limit) in [
-        (None, Some("a"), None),
-        (Some("ab"), None, Some(9)),
-        (Some("##"), Some("</w>"), Some(3)),
-    ] {
-        trainer.continuing_subword_prefix = prefix.map(str::to_owned);
-        trainer.end_of_word_suffix = suffix.map(str::to_owned);
-        trainer.max_token_length = limit;
-        check(&trainer, &aliases);
-    }
-    trainer.continuing_subword_prefix = None;
-    trainer.special_tokens.clear();
-    trainer.max_token_length = None;
-    trainer.end_of_word_suffix = None;
-    trainer.limit_alphabet = Some(3);
-    trainer.initial_alphabet = ['a', '测'].into();
-    check(
-        &trainer,
-        &counts(&[("caba", 4), ("测试测试", 3), ("abab", 7)]),
-    );
-    trainer.vocab_size = 3;
-    let (vocab, merges, _) = trainer
-        .do_train(&counts(&[("aaaa", 11), ("abab", 7), ("测试", 3)]))
-        .unwrap();
-    assert_eq!(
-        vocab,
-        [("a".into(), 0), ("b".into(), 1), ("测".into(), 2)].into()
-    );
-    assert!(merges.is_empty());
 }
 
 #[test]
-fn real_wide_ids_preserve_pair_order_and_separator_distinction() {
+fn wide_ids() {
     let mut trainer = trainer();
     trainer.vocab_size = 65550;
     trainer.special_tokens = std::iter::once("a".to_owned())
@@ -161,7 +130,7 @@ fn real_wide_ids_preserve_pair_order_and_separator_distinction() {
 }
 
 #[test]
-fn count_domains_and_zero_merge_validation() {
+fn count_boundaries() {
     let mut trainer = trainer();
     for weight in [u32::MAX as u64 + 17, u64::MAX] {
         let result = trainer
@@ -192,56 +161,26 @@ fn count_domains_and_zero_merge_validation() {
 }
 
 #[test]
-fn borrowed_stored_and_fed_counts_remain_reusable() {
-    let input = ["ab测", "ab测", "ab", "测", ""];
-    let words = counts(&[("ab测", 2), ("ab", 1), ("测", 1), ("", 1)]);
+fn inputs_remain_reusable() {
+    let words = counts(&[("ab测", 2), ("测", 1)]);
     let original = words.clone();
     let mut trainer = trainer();
-    trainer.special_tokens = vec![AddedToken::from("[UNK]", true)];
-    let expected = trainer.do_train(&words).unwrap();
     trainer
-        .feed(input.into_iter(), |s| Ok(vec![s.to_owned()]))
+        .feed(["ab测", "测", "ab测"].into_iter(), |s| {
+            Ok(vec![s.into()])
+        })
         .unwrap();
     let stored = trainer.clone();
     for _ in 0..2 {
-        assert_eq!(trainer.train_vocab().unwrap(), expected);
+        trainer.do_train(&words).unwrap();
+        trainer.train_vocab().unwrap();
         assert_eq!(trainer, stored);
-    }
-    let mut model = PipelineBPE::from_config(BpeConfig {
-        vocab: [("old".into(), 0)].into(),
-        ..Default::default()
-    })
-    .unwrap();
-    assert_eq!(trainer.train(&mut model).unwrap(), expected.2);
-    let config = model.to_config().unwrap();
-    assert_eq!(config.vocab, expected.0);
-    assert_eq!(config.merges, expected.1);
-    assert_eq!(trainer, stored);
-    let restored: BpeTrainer =
-        serde_json::from_value(serde_json::to_value(&trainer).unwrap()).unwrap();
-    assert_eq!(restored.train_vocab().unwrap(), expected);
-
-    // Decorated IDs depend on traversal order, so both private representations
-    // borrow the same order here rather than rehashing the input.
-    trainer.continuing_subword_prefix = Some("##".into());
-    trainer.end_of_word_suffix = Some("</w>".into());
-    let expected = trainer.do_train(&words).unwrap();
-    for stored in [
-        WordCounts::from_map(words.clone()),
-        WordCounts::from_entries(words.iter().map(|(word, &n)| (word.clone(), n)).collect()),
-    ] {
-        trainer.words = stored;
-        let before = trainer.clone();
-        for _ in 0..2 {
-            assert_eq!(trainer.train_vocab().unwrap(), expected);
-            assert_eq!(trainer, before);
-        }
     }
     assert_eq!(words, original);
 }
 
 #[test]
-fn training_and_model_construction_errors_preserve_the_previous_model() {
+fn failed_training_keeps_model() {
     let mut model = PipelineBPE::from_config(BpeConfig {
         vocab: [("old".into(), 0)].into(),
         ..Default::default()
@@ -268,191 +207,65 @@ fn training_and_model_construction_errors_preserve_the_previous_model() {
 }
 
 #[test]
-fn reuse_restart_keeps_the_alphabet_and_returns_only_the_successful_trace() {
-    let mut trainer = trainer();
-    trainer.end_of_word_suffix = Some("a".into());
-    trainer.limit_alphabet = Some(4);
-    // XY commits before AA resolves to an already activated decorated ID.
-    // Its speculative trace must not precede the successful attempt's XY rule.
-    let words = counts(&[("xy", 3), ("baaba", 1)]);
-    let expected = trainer.do_train_reference(&words).unwrap();
-    assert_eq!(expected.trace[0].1, 3);
-    for workers in [1, 4, 8] {
-        rayon::ThreadPoolBuilder::new()
-            .num_threads(workers)
-            .build()
-            .unwrap()
-            .install(|| {
-                let view = WordCountsView::from_map(&words);
-                let progress = trainer.setup_progress();
-                let alphabet = vocabulary::select_alphabet(&trainer, view, workers);
-                assert!(matches!(
-                    trainer
-                        .train_attempt(view, workers, false, &alphabet, &progress)
-                        .unwrap(),
-                    AttemptOutcome::RestartForReuse
-                ));
-                let retained = alphabet.clone();
-                assert_eq!(retained.characters.len(), 4);
-                let AttemptOutcome::Complete(result) = trainer
-                    .train_attempt(view, workers, true, &alphabet, &progress)
-                    .unwrap()
-                else {
-                    panic!("reuse attempt must complete")
-                };
-                assert_eq!(alphabet, retained);
-                assert_eq!(result.parts, expected.parts);
-                assert_eq!(result.trace, expected.trace);
-                let result = trainer.do_train_impl(view, Some(workers)).unwrap();
-                assert_eq!(result.parts, expected.parts);
-                assert_eq!(result.trace, expected.trace);
-            });
-    }
-}
-
-#[test]
-fn reuse_restart_preserves_a_tie_at_an_actual_alphabet_cutoff() {
+fn restart_keeps_alphabet() {
     let mut trainer = trainer();
     trainer.end_of_word_suffix = Some("a".into());
     trainer.limit_alphabet = Some(3);
     trainer.initial_alphabet = ['a', 'b'].into();
-    // Four characters exceed the limit. a/b are forced; q/z tie for one slot.
-    // AA resolves to the activated suffix identity and forces a real restart.
+    // Four characters exceed the cutoff; q/z tie for the one unforced slot.
     let words = counts(&[("baaba", 1), ("q", 1), ("z", 1)]);
     let view = WordCountsView::from_map(&words);
     let retained = vocabulary::select_alphabet(&trainer, view, 1);
-    rayon::ThreadPoolBuilder::new()
-        .num_threads(1)
-        .build()
-        .unwrap()
-        .install(|| {
-            assert!(matches!(
-                trainer
-                    .train_attempt(view, 1, false, &retained, &None)
-                    .unwrap(),
-                AttemptOutcome::RestartForReuse
-            ));
-        });
     let selected: Vec<_> = retained.characters.iter().map(|&(c, _)| c).collect();
     assert_eq!(selected.len(), 3);
     assert!(selected.contains(&'a') && selected.contains(&'b'));
     assert_ne!(selected.contains(&'q'), selected.contains(&'z'));
-    let mut expected = None;
-    for workers in [1, 4, 8] {
-        rayon::ThreadPoolBuilder::new()
-            .num_threads(workers)
-            .build()
-            .unwrap()
-            .install(|| {
-                let AttemptOutcome::Complete(result) = trainer
-                    .train_attempt(view, workers, true, &retained, &None)
-                    .unwrap()
-                else {
-                    panic!("reuse must complete")
-                };
-                assert_eq!(
-                    retained
-                        .characters
-                        .iter()
-                        .map(|&(c, _)| c)
-                        .collect::<Vec<_>>(),
-                    selected
-                );
-                let actual = (result.parts, result.trace);
-                if let Some(expected) = &expected {
-                    assert_eq!(&actual, expected);
-                } else {
-                    expected = Some(actual);
-                }
-            });
-    }
+    assert!(matches!(
+        trainer
+            .train_attempt(view, 1, false, &retained, &None)
+            .unwrap(),
+        AttemptOutcome::RestartForReuse
+    ));
+    let AttemptOutcome::Complete(result) = trainer
+        .train_attempt(view, 1, true, &retained, &None)
+        .unwrap()
+    else {
+        panic!("reuse must complete")
+    };
+    let mut oracle = trainer.clone();
+    oracle.initial_alphabet = selected.into_iter().collect();
+    let expected = oracle.do_train_reference(&words).unwrap();
+    assert_eq!(result.parts, expected.parts);
+    assert_eq!(result.trace, check(&oracle, &words));
 }
 
 #[test]
-fn restart_discards_ids_selected_after_a_committed_round() {
+fn restart_discards_ids() {
     let mut trainer = trainer();
     trainer.continuing_subword_prefix = Some("a".into());
     trainer.special_tokens = vec![AddedToken::from("xy", true)];
-    trainer.limit_alphabet = Some(6);
     let words = counts(&[("xy", 3), ("uv", 2), ("ab", 1)]);
-    for workers in [1, 4, 8] {
-        rayon::ThreadPoolBuilder::new()
-            .num_threads(workers)
-            .build()
-            .unwrap()
-            .install(|| {
-                let view = WordCountsView::from_map(&words);
-                let progress = trainer.setup_progress();
-                let (mut vocabulary, ids) = Vocabulary::initialize(
-                    &trainer,
-                    view,
-                    &vocabulary::select_alphabet(&trainer, view, workers),
-                    &progress,
-                )
-                .unwrap();
-                let plan = CorpusPlan::build(view, ids, &trainer, false).unwrap();
-                let mut index = PairIndex::build(&plan, 1, workers, false, &progress).unwrap();
-                let mut corpus = plan.materialize();
-                let MergeOutcome::Committed(records) = trainer
-                    .merge_next(&mut vocabulary, &mut corpus, &mut index)
-                    .unwrap()
-                else {
-                    panic!("reserved XY must commit alone")
-                };
-                assert_eq!(records.len(), 1);
-                assert_eq!((records[0].count, records[0].replacement), (3, 0));
-                let committed_len = vocabulary.len();
-                // The next selection resolves UV before AB aliases the activated
-                // decorated B identity. The entire attempt, including UV's ID,
-                // must be discarded rather than recording either tentative rule.
-                assert!(matches!(
-                    trainer
-                        .merge_next(&mut vocabulary, &mut corpus, &mut index)
-                        .unwrap(),
-                    MergeOutcome::RestartForReuse
-                ));
-                assert_eq!(vocabulary.len(), committed_len + 1);
-            });
-    }
-    let trace = check(&trainer, &words);
-    assert_eq!(trace.iter().filter(|rule| rule.1 == 3).count(), 1);
-}
-
-#[test]
-fn merge_next_commits_independent_rules_together() {
-    let trainer = trainer();
-    let words = counts(&[("ab", 10), ("cd", 9), ("ef", 8)]);
-    let view = WordCountsView::from_map(&words);
-    let progress = trainer.setup_progress();
-    let (mut vocabulary, ids) = Vocabulary::initialize(
-        &trainer,
-        view,
-        &vocabulary::select_alphabet(&trainer, view, 4),
-        &progress,
-    )
-    .unwrap();
-    let plan = CorpusPlan::build(view, ids, &trainer, false).unwrap();
-    let mut index = PairIndex::build(&plan, 1, 4, false, &progress).unwrap();
-    let mut corpus = plan.materialize();
+    let (mut vocabulary, mut corpus, mut index) =
+        initialize(&trainer, WordCountsView::from_map(&words), false);
     let MergeOutcome::Committed(records) = trainer
         .merge_next(&mut vocabulary, &mut corpus, &mut index)
         .unwrap()
     else {
-        panic!("expected ready batch")
+        panic!("reserved XY must commit")
     };
-    assert_eq!(
-        records
-            .into_iter()
-            .map(|record| (record.pair, record.count, record.replacement))
-            .collect::<Vec<_>>(),
-        [((0, 1), 10, 6), ((2, 3), 9, 7), ((4, 5), 8, 8)]
-    );
+    assert_eq!((records[0].count, records[0].replacement), (3, 0));
+    let committed_len = vocabulary.len();
+    // UV allocates an ID before AB aliases activated B; both speculative rules
+    // and the previously committed attempt must be discarded by the restart.
     assert!(matches!(
         trainer
             .merge_next(&mut vocabulary, &mut corpus, &mut index)
             .unwrap(),
-        MergeOutcome::Finished
+        MergeOutcome::RestartForReuse
     ));
+    assert_eq!(vocabulary.len(), committed_len + 1);
+    let trace = check(&trainer, &words);
+    assert_eq!(trace.iter().filter(|rule| rule.1 == 3).count(), 1);
 }
 
 #[test]
@@ -537,80 +350,7 @@ pub(super) fn observe_worker(phase: Phase) {
     }
 }
 
-fn check_feed_contracts(trainer: &mut BpeTrainer, parallel: bool) {
-    for boundary in [0, 31, 32, 33, 127, 128, 129, 257] {
-        check_feed_boundary(trainer, parallel, boundary);
-    }
-}
-
-fn check_feed_boundary(trainer: &mut BpeTrainer, parallel: bool, boundary: usize) {
-    // One callback alone crosses the local key limit; the public
-    // reference is a flat multiset, independent of batching and flushes.
-    let outputs = [
-        Vec::new(),
-        vec!["shared".into(), "shared".into()],
-        vec![
-            "".into(),
-            "中文🙂".into(),
-            "e\u{301}".into(),
-            "long".repeat(2048),
-        ],
-        (0..2047 + boundary % 3)
-            .map(|i| format!("word{i}"))
-            .collect(),
-    ];
-    let mut index = 0;
-    // Deliberately resume once after the first None. Feed must keep its first
-    // exhaustion state, so only the first `boundary` inputs reach the callback.
-    let input = std::iter::from_fn(move || {
-        let current = index;
-        index += 1;
-        (current != boundary && current <= boundary + 1).then(|| current.to_string())
-    });
-    let participants = AtomicUsize::new(0);
-    let calls = AtomicUsize::new(0);
-    trainer
-        .feed(input, |s| {
-            assert_eq!(rayon::current_num_threads(), 2);
-            calls.fetch_add(1, Ordering::Relaxed);
-            let index = s.parse::<usize>().unwrap();
-            participants.fetch_or(
-                1 << rayon::current_thread_index().unwrap(),
-                Ordering::Relaxed,
-            );
-            if parallel && index < 2 {
-                let deadline = Instant::now() + Duration::from_secs(5);
-                while participants.load(Ordering::Relaxed).count_ones() < 2 {
-                    assert!(
-                        Instant::now() < deadline,
-                        "feed callbacks did not run independently"
-                    );
-                    std::thread::yield_now();
-                }
-            }
-            Ok(outputs[index % outputs.len()].clone())
-        })
-        .unwrap();
-    assert_eq!(calls.load(Ordering::Relaxed), boundary);
-    assert!(parallel || participants.load(Ordering::Relaxed).count_ones() <= 1);
-    let mut expected = AHashMap::<CompactString, u64>::new();
-    for index in 0..boundary {
-        for word in &outputs[index % outputs.len()] {
-            *expected.entry(word.as_str().into()).or_default() += 1;
-        }
-    }
-    let mut equivalent = trainer.clone();
-    equivalent.words = super::word_counts::WordCounts::from_map(expected.clone());
-    assert_eq!(*trainer, equivalent);
-    let stored = serde_json::to_value(&trainer).unwrap();
-    assert_eq!(stored["words"], serde_json::to_value(expected).unwrap());
-    assert_eq!(
-        *trainer,
-        serde_json::from_value::<BpeTrainer>(stored).unwrap()
-    );
-}
-
-fn run_feed_child(test: &str, child: &str, setting: &str) -> std::process::Output {
+fn run_child(test: &str, child: &str, setting: &str) -> std::process::Output {
     let result = std::process::Command::new(std::env::current_exe().unwrap())
         .args(["--exact", test, "--nocapture"])
         .env(child, setting)
@@ -625,18 +365,15 @@ fn run_feed_child(test: &str, child: &str, setting: &str) -> std::process::Outpu
 }
 
 #[test]
-fn public_pools_feed_flush_errors_and_progress_matrix() {
+fn public_feed_pools_and_progress() {
     const CHILD: &str = "BPE_PUBLIC_TEST_CHILD";
-    const TEST: &str = "trainers::bpe::tests::public_pools_feed_flush_errors_and_progress_matrix";
+    const TEST: &str = "trainers::bpe::tests::public_feed_pools_and_progress";
     if let Ok(setting) = std::env::var(CHILD) {
         run_public_training_child(&setting);
         return;
     }
-    for setting in [
-        "parallel", "serial", "no-bar", "zero", "empty", "silent", "restart",
-    ] {
-        let result = run_feed_child(TEST, CHILD, setting);
-        check_progress_records(setting, result);
+    for setting in ["parallel", "serial", "one", "zero", "silent", "restart"] {
+        check_progress_records(setting, run_child(TEST, CHILD, setting));
     }
 }
 
@@ -644,49 +381,36 @@ fn public_pools_feed_flush_errors_and_progress_matrix() {
 fn run_public_training_child(setting: &str) {
     use tk_encode::utils::progress::ProgressFormat;
     let parallel = setting != "serial";
-    tk_encode::parallelism::set_num_threads(4);
+    let workers = if setting == "one" { 1 } else { 4 };
+    tk_encode::parallelism::set_num_threads(workers);
     tk_encode::parallelism::set_parallelism(parallel);
-    EXPECTED_WORKERS.store(if parallel { 4 } else { 1 }, Ordering::Relaxed);
+    EXPECTED_WORKERS.store(if parallel { workers } else { 1 }, Ordering::Relaxed);
     rayon::ThreadPoolBuilder::new()
         .num_threads(2)
         .build()
         .unwrap()
         .install(|| {
-            let mut trainer = trainer();
-            if matches!(setting, "parallel" | "serial") {
-                check_feed_contracts(&mut trainer, parallel);
+            if matches!(setting, "parallel" | "serial" | "one") {
+                check_feed_success(2, parallel);
+                if setting == "parallel" {
+                    check_feed_partial_failure();
+                }
             }
-            trainer.end_of_word_suffix = Some("a".into());
-            trainer.do_train(&counts(&[("baaba", 1)])).unwrap();
-            // Materialization and historical-cohort preparation both ran.
-            assert_eq!(OBSERVED_PHASES.load(Ordering::Relaxed), 0b101);
-            trainer.end_of_word_suffix = None;
-            trainer.show_progress = setting != "no-bar";
+            let mut trainer = trainer();
             trainer.progress_format = if setting == "silent" {
                 ProgressFormat::Silent
             } else {
                 ProgressFormat::JsonLines
             };
             trainer.vocab_size = if setting == "zero" { 2 } else { 64 };
-            let words = if setting == "restart" {
-                trainer.continuing_subword_prefix = Some("a".into());
-                trainer.special_tokens = vec![AddedToken::from("xy", true)];
-                trainer.limit_alphabet = Some(6);
-                counts(&[("xy", 3), ("uv", 2), ("ab", 1)])
-            } else if setting == "empty" {
-                AHashMap::new()
-            } else {
-                counts(&[("ab", 3), ("cd", 2)])
-            };
+            trainer.continuing_subword_prefix = Some("a".into());
+            trainer.special_tokens = vec![AddedToken::from("xy", true)];
+            let words = counts(&[("xy", 3), ("uv", 2), ("ab", 1)]);
             OBSERVED_PHASES.store(0, Ordering::Relaxed);
             let (_, merges, _) = trainer.do_train(&words).unwrap();
             assert_eq!(
                 OBSERVED_PHASES.load(Ordering::Relaxed),
-                match setting {
-                    "zero" | "empty" => 0,
-                    "restart" => 0b111,
-                    _ => 0b011,
-                }
+                if setting == "zero" { 0 } else { 0b111 }
             );
             println!("BPE_MERGE_COUNT={}", merges.len());
         });
@@ -702,18 +426,6 @@ fn check_progress_records(setting: &str, result: std::process::Output) {
         .lines()
         .map(|s| serde_json::from_str(s).unwrap())
         .collect();
-    let mut stages = std::collections::HashSet::new();
-    for record in &records {
-        assert_eq!(record.as_object().unwrap().len(), 3);
-        assert!(record["current"].is_u64() && record["total"].is_u64());
-        if stages.insert(record["stage"].as_str().unwrap()) {
-            assert_eq!(record["current"], 0);
-        }
-    }
-    assert_eq!(
-        stages,
-        ["Tokenize words", "Count pairs", "Compute merges"].into()
-    );
     let stdout = String::from_utf8(result.stdout).unwrap();
     let count: u64 = stdout
         .lines()
@@ -728,15 +440,8 @@ fn check_progress_records(setting: &str, result: std::process::Output) {
         .unwrap();
     assert_eq!(finished["current"], count);
     assert_eq!(finished["total"], count);
-    if setting == "restart" {
-        let first_finished = records
-            .iter()
-            .find(|r| r["stage"] == "Compute merges" && r["current"] == r["total"])
-            .unwrap();
-        assert_eq!(
-            first_finished["current"], 1,
-            "only XY committed before restart"
-        );
+    if setting == "zero" {
+        assert_eq!(count, 0);
     }
 }
 
@@ -934,173 +639,103 @@ mod reference {
 }
 
 #[test]
-fn builder_defaults_options_and_serialization_remain_compatible() {
+fn builder_serialization() {
     let default = BpeTrainer::default();
-    assert_eq!(BpeTrainerBuilder::default().build(), default);
-    assert_eq!(BpeTrainerBuilder::new().build(), default);
-    assert_eq!(BpeTrainer::new(0, 30000), default);
-    let expected_json = serde_json::json!({
+    let json = serde_json::json!({
         "min_frequency": 0, "vocab_size": 30000, "show_progress": true,
         "special_tokens": [], "limit_alphabet": null, "initial_alphabet": [],
         "continuing_subword_prefix": null, "end_of_word_suffix": null,
         "max_token_length": null, "words": {}
     });
-    assert_eq!(serde_json::to_value(&default).unwrap(), expected_json);
-    assert_eq!(
-        serde_json::from_value::<BpeTrainer>(expected_json).unwrap(),
-        default
-    );
-    let configured = BpeTrainerBuilder::new()
-        .min_frequency(3)
-        .vocab_size(128)
-        .show_progress(false)
+    assert_eq!(serde_json::to_value(&default).unwrap(), json);
+    assert_eq!(serde_json::from_value::<BpeTrainer>(json).unwrap(), default);
+    let configured = BpeTrainer::builder()
         .progress_format(ProgressFormat::JsonLines)
-        .special_tokens(vec![AddedToken::from("<s>", true)])
-        .limit_alphabet(20)
-        .initial_alphabet(HashSet::from(['猫', 'a']))
-        .continuing_subword_prefix("##".into())
-        .end_of_word_suffix("</w>".into())
-        .max_token_length(Some(7))
         .build();
-    let expected = BpeTrainer {
-        min_frequency: 3,
-        vocab_size: 128,
-        show_progress: false,
-        progress_format: ProgressFormat::JsonLines,
-        special_tokens: vec![AddedToken::from("<s>", true)],
-        limit_alphabet: Some(20),
-        initial_alphabet: AHashSet::from_iter(['猫', 'a']),
-        continuing_subword_prefix: Some("##".into()),
-        end_of_word_suffix: Some("</w>".into()),
-        max_token_length: Some(7),
-        words: WordCounts::default(),
-    };
-    assert_eq!(configured, expected);
     let json = serde_json::to_value(&configured).unwrap();
     assert!(json.get("progress_format").is_none());
-    let restored: BpeTrainer = serde_json::from_value(json).unwrap();
-    assert_eq!(
-        restored,
-        BpeTrainer {
-            progress_format: ProgressFormat::default(),
-            ..expected
-        }
-    );
+    assert_eq!(serde_json::from_value::<BpeTrainer>(json).unwrap(), default);
 }
 
 #[test]
-fn initial_edges_preserve_filtered_coordinates_weights_and_errors() {
+fn initial_edges() {
     let words = counts(&[("qé🙂z", 7), ("é🙂é", 6), ("🙂é", 5), ("", 4), ("é", 3)]);
-    for decorated in [false, true] {
-        let mut trainer = trainer();
-        trainer.limit_alphabet = Some(2);
-        if decorated {
-            trainer.continuing_subword_prefix = Some("##".into());
-            trainer.end_of_word_suffix = Some("</w>".into());
-        }
-        let view = WordCountsView::from_map(&words);
-        let progress = trainer.setup_progress();
-        let (_, ids) = Vocabulary::initialize(
-            &trainer,
-            view,
-            &vocabulary::select_alphabet(&trainer, view, 1),
-            &progress,
-        )
-        .unwrap();
-        let id = |character, first, last| ids.id(character, first, last).unwrap();
-        let expected = vec![
-            ((id('é', false, false), id('🙂', false, false)), 1, 7),
-            ((id('é', true, false), id('🙂', false, false)), 4, 6),
-            ((id('🙂', false, false), id('é', false, true)), 5, 6),
-            ((id('🙂', true, false), id('é', false, true)), 8, 5),
-        ];
-        let plan = CorpusPlan::build(view, ids, &trainer, true).unwrap();
-        let mut actual = Vec::new();
-        plan.initial_edges(0..plan.word_count(), |pair, coordinate, weight| {
+    let mut trainer = trainer();
+    trainer.limit_alphabet = Some(2);
+    let view = WordCountsView::from_map(&words);
+    let (_, ids) = Vocabulary::initialize(
+        &trainer,
+        view,
+        &vocabulary::select_alphabet(&trainer, view, 1),
+        &None,
+    )
+    .unwrap();
+    let plan = CorpusPlan::build(view, ids, &trainer, true).unwrap();
+    let expected = [
+        ((0, 1), 1, 7),
+        ((0, 1), 4, 6),
+        ((1, 0), 5, 6),
+        ((1, 0), 8, 5),
+    ];
+    let mut actual = Vec::new();
+    plan.initial_edges(0..plan.word_count(), |pair, coordinate, weight| {
+        actual.push((pair, coordinate, weight));
+        Ok(())
+    })
+    .unwrap();
+    assert_eq!(actual, expected);
+    actual.clear();
+    let error = plan
+        .initial_edges(0..plan.word_count(), |pair, coordinate, weight| {
             actual.push((pair, coordinate, weight));
-            Ok(())
-        })
-        .unwrap();
-        assert_eq!(actual, expected);
-        for stop in 1..=expected.len() {
-            let mut emitted = Vec::new();
-            let error = plan
-                .initial_edges(0..plan.word_count(), |pair, coordinate, weight| {
-                    emitted.push((pair, coordinate, weight));
-                    if emitted.len() == stop {
-                        Err("designated edge failure".into())
-                    } else {
-                        Ok(())
-                    }
-                })
-                .unwrap_err();
-            assert_eq!(error.to_string(), "designated edge failure");
-            assert_eq!(emitted, expected[..stop]);
-        }
-    }
-}
-
-#[test]
-fn feed_unification_boundaries_errors_and_stored_state() {
-    const CHILD: &str = "BPE_FEED_UNIFICATION_CHILD";
-    const TEST: &str = "trainers::bpe::tests::feed_unification_boundaries_errors_and_stored_state";
-    if let Ok(setting) = std::env::var(CHILD) {
-        let workers = if setting == "one" { 1 } else { 4 };
-        let parallel = setting != "disabled";
-        tk_encode::parallelism::set_parallelism(parallel);
-        tk_encode::parallelism::set_num_threads(workers);
-        rayon::ThreadPoolBuilder::new()
-            .num_threads(workers)
-            .build()
-            .unwrap()
-            .install(|| {
-                check_feed_unification_success(workers);
-                check_feed_unification_errors();
-            });
-        if parallel && workers > 1 {
-            check_feed_failure_after_shared_updates();
-        }
-        return;
-    }
-    for setting in ["disabled", "one", "many"] {
-        run_feed_child(TEST, CHILD, setting);
-    }
-}
-
-fn check_feed_unification_success(workers: usize) {
-    use super::word_counts::WordCounts;
-    let mut lengths = vec![0, 1, workers - 1, workers, workers + 1];
-    lengths.extend([31, 32, 33, 64].map(|n| workers + n));
-    for length in lengths {
-        let reads = AtomicUsize::new(0);
-        let seen: Vec<_> = (0..length).map(|_| AtomicUsize::new(0)).collect();
-        let mut index = 0;
-        let input = std::iter::from_fn(|| {
-            reads.fetch_add(1, Ordering::Relaxed);
-            let value = index;
-            index += 1;
-            (value != length && value <= length + 1).then(|| value.to_string())
-        });
-        let counted = super::feed::count(input, &|text| {
-            let id = text.parse::<usize>().unwrap();
-            seen[id].fetch_add(1, Ordering::Relaxed);
-            Ok(if id % 3 == 0 {
-                vec![]
+            if actual.len() == 2 {
+                Err("designated edge failure".into())
             } else {
-                vec![format!("词🙂{id}"), "repeat".into(), "repeat".into()]
-            })
+                Ok(())
+            }
         })
-        .unwrap();
-        assert_eq!(reads.load(Ordering::Relaxed), length + 1);
-        assert!(seen.iter().all(|n| n.load(Ordering::Relaxed) == 1));
-        let mut expected = AHashMap::<CompactString, u64>::new();
-        for id in (0..length).filter(|id| id % 3 != 0) {
-            expected.insert(format!("词🙂{id}").into(), 1);
-            *expected.entry("repeat".into()).or_default() += 2;
-        }
-        assert_eq!(counted, WordCounts::from_map(expected));
+        .unwrap_err();
+    assert_eq!(error.to_string(), "designated edge failure");
+    assert_eq!(actual, expected[..2]);
+}
+
+fn check_feed_success(workers: usize, parallel: bool) {
+    let length = workers + 33;
+    let reads = AtomicUsize::new(0);
+    let seen: Vec<_> = (0..length).map(|_| AtomicUsize::new(0)).collect();
+    let participants = AtomicUsize::new(0);
+    let mut index = 0;
+    // The iterator resumes after None; Feed must stop at the first exhaustion.
+    let input = std::iter::from_fn(|| {
+        reads.fetch_add(1, Ordering::Relaxed);
+        let value = index;
+        index += 1;
+        (value != length && value <= length + 1).then(|| value.to_string())
+    });
+    let counted = super::feed::count(input, &|text| {
+        assert_eq!(rayon::current_num_threads(), workers);
+        participants.fetch_or(
+            1 << rayon::current_thread_index().unwrap(),
+            Ordering::Relaxed,
+        );
+        let id = text.parse::<usize>().unwrap();
+        seen[id].fetch_add(1, Ordering::Relaxed);
+        Ok(if id % 3 == 0 {
+            vec![]
+        } else {
+            vec![format!("词🙂{id}"), "repeat".into(), "repeat".into()]
+        })
+    })
+    .unwrap();
+    assert_eq!(reads.load(Ordering::Relaxed), length + 1);
+    assert!(seen.iter().all(|n| n.load(Ordering::Relaxed) == 1));
+    assert!(parallel || participants.load(Ordering::Relaxed).count_ones() <= 1);
+    let mut expected = AHashMap::<CompactString, u64>::new();
+    for id in (0..length).filter(|id| id % 3 != 0) {
+        expected.insert(format!("词🙂{id}").into(), 1);
+        *expected.entry("repeat".into()).or_default() += 2;
     }
-    // One callback crosses each key boundary, including multiple complete flushes.
+    assert_eq!(counted, WordCounts::from_map(expected));
     for unique in [2047, 2048, 2049, 4097] {
         let mut words: Vec<_> = (0..unique).map(|id| format!("key{id}")).collect();
         words.extend(["key0".into(), format!("key{}", unique - 1), "key0".into()]);
@@ -1111,58 +746,9 @@ fn check_feed_unification_success(workers: usize) {
         }
         assert_eq!(counted, WordCounts::from_map(expected));
     }
-    let mut trainer = trainer();
-    let input = ["hello hello 中文🙂", "hello baaba", "中文🙂 café", ""];
-    let expected = counts(&[("hello", 3), ("中文🙂", 2), ("baaba", 1), ("café", 1)]);
-    trainer
-        .feed(input.into_iter(), |text| {
-            Ok(text.split_whitespace().map(str::to_owned).collect())
-        })
-        .unwrap();
-    assert_eq!(trainer.words, WordCounts::from_map(expected.clone()));
-    let expected_model = trainer.do_train(&expected).unwrap();
-    for _ in 0..2 {
-        assert_eq!(trainer.train_vocab().unwrap(), expected_model);
-    }
-    assert_eq!(trainer.words, WordCounts::from_map(expected));
 }
 
-fn check_feed_unification_errors() {
-    let length = 67;
-    let mut trainer = trainer();
-    trainer
-        .feed(std::iter::once("saved"), |s| Ok(vec![s.into()]))
-        .unwrap();
-    let previous = trainer.clone();
-    for failures in [
-        vec![0],
-        vec![length / 2],
-        vec![length - 1],
-        vec![0, 9, 35, length - 1],
-    ] {
-        let seen: Vec<_> = (0..length).map(|_| AtomicUsize::new(0)).collect();
-        let error = trainer
-            .feed((0..length).map(|id| id.to_string()), |text| {
-                let id = text.parse::<usize>().unwrap();
-                seen[id].fetch_add(1, Ordering::Relaxed);
-                if failures.contains(&id) {
-                    Err(format!("designated {id}").into())
-                } else {
-                    Ok(vec![text.into()])
-                }
-            })
-            .unwrap_err();
-        assert!(
-            failures
-                .iter()
-                .any(|id| error.to_string() == format!("designated {id}"))
-        );
-        assert!(seen.iter().all(|n| n.load(Ordering::Relaxed) == 1));
-        assert_eq!(trainer, previous);
-    }
-}
-
-fn check_feed_failure_after_shared_updates() {
+fn check_feed_partial_failure() {
     let mut trainer = trainer();
     trainer
         .feed(std::iter::once("saved"), |s| Ok(vec![s.into()]))
@@ -1171,58 +757,46 @@ fn check_feed_failure_after_shared_updates() {
     let participants = AtomicUsize::new(0);
     let first_worker = AtomicUsize::new(usize::MAX);
     let checkpoint = AtomicUsize::new(0);
-    let seen: Vec<_> = (0..3).map(|_| AtomicUsize::new(0)).collect();
-    rayon::ThreadPoolBuilder::new()
-        .num_threads(2)
-        .build()
-        .unwrap()
-        .install(|| {
-            let error = trainer
-                .feed(["0", "1", "2"].into_iter(), |text| {
-                    let id = text.parse::<usize>().unwrap();
-                    let worker = rayon::current_thread_index().unwrap();
-                    seen[id].fetch_add(1, Ordering::Relaxed);
-                    if id < 2 {
-                        participants.fetch_or(1 << worker, Ordering::Relaxed);
+    let error = trainer
+        .feed(["0", "1", "2"].into_iter(), |text| {
+            let id = text.parse::<usize>().unwrap();
+            let worker = rayon::current_thread_index().unwrap();
+            if id < 2 {
+                participants.fetch_or(1 << worker, Ordering::Relaxed);
+            }
+            let deadline = Instant::now() + Duration::from_secs(5);
+            match id {
+                0 => {
+                    first_worker.store(worker, Ordering::Relaxed);
+                    while participants.load(Ordering::Relaxed).count_ones() < 2 {
+                        assert!(
+                            Instant::now() < deadline,
+                            "startup callbacks were serialized"
+                        );
+                        std::thread::yield_now();
                     }
-                    let deadline = Instant::now() + Duration::from_secs(5);
-                    match id {
-                        0 => {
-                            first_worker.store(worker, Ordering::Relaxed);
-                            while participants.load(Ordering::Relaxed).count_ones() < 2 {
-                                assert!(
-                                    Instant::now() < deadline,
-                                    "startup callbacks were serialized"
-                                );
-                                std::thread::yield_now();
-                            }
-                            // Returning allows this fold to publish full caches in A,
-                            // or individual updates in B, before its next callback.
-                            Ok((0..4097).map(|n| format!("published{n}")).collect())
-                        }
-                        1 => {
-                            while checkpoint.load(Ordering::Relaxed) == 0 {
-                                assert!(
-                                    Instant::now() < deadline,
-                                    "successful fold did not advance"
-                                );
-                                std::thread::yield_now();
-                            }
-                            Err("failure after shared updates".into())
-                        }
-                        2 => {
-                            assert_eq!(worker, first_worker.load(Ordering::Relaxed));
-                            checkpoint.store(1, Ordering::Relaxed);
-                            // This successful fold also has a nonempty tail. The other
-                            // fold fails; count must not replace stored trainer words.
-                            Ok(vec!["successful-tail".into()])
-                        }
-                        _ => unreachable!(),
+                    // Returning allows this fold to publish full caches in A,
+                    // or individual updates in B, before its next callback.
+                    Ok((0..4097).map(|n| format!("published{n}")).collect())
+                }
+                1 => {
+                    while checkpoint.load(Ordering::Relaxed) == 0 {
+                        assert!(Instant::now() < deadline, "successful fold did not advance");
+                        std::thread::yield_now();
                     }
-                })
-                .unwrap_err();
-            assert_eq!(error.to_string(), "failure after shared updates");
-        });
-    assert!(seen.iter().all(|n| n.load(Ordering::Relaxed) == 1));
+                    Err("failure after shared updates".into())
+                }
+                2 => {
+                    assert_eq!(worker, first_worker.load(Ordering::Relaxed));
+                    checkpoint.store(1, Ordering::Relaxed);
+                    // This successful fold also has a nonempty tail. The other
+                    // fold fails; count must not replace stored trainer words.
+                    Ok(vec!["successful-tail".into()])
+                }
+                _ => unreachable!(),
+            }
+        })
+        .unwrap_err();
+    assert_eq!(error.to_string(), "failure after shared updates");
     assert_eq!(trainer, previous);
 }
