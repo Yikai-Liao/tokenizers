@@ -314,6 +314,57 @@ fn reuse_restart_keeps_the_alphabet_and_returns_only_the_successful_trace() {
 }
 
 #[test]
+fn reuse_restart_preserves_a_tie_at_an_actual_alphabet_cutoff() {
+    let mut trainer = trainer();
+    trainer.end_of_word_suffix = Some("a".into());
+    trainer.limit_alphabet = Some(3);
+    trainer.initial_alphabet = ['a', 'b'].into();
+    // Four characters exceed the limit. a/b are forced; q/z tie for one slot.
+    // AA resolves to the activated suffix identity and forces a real restart.
+    let words = counts(&[("baaba", 1), ("q", 1), ("z", 1)]);
+    let view = WordCountsView::from_map(&words);
+    let mut retained = None;
+    rayon::ThreadPoolBuilder::new()
+        .num_threads(1)
+        .build()
+        .unwrap()
+        .install(|| {
+            assert!(matches!(
+                trainer
+                    .train_attempt(view, 1, false, &mut retained, &None)
+                    .unwrap(),
+                AttemptOutcome::RestartForReuse
+            ));
+        });
+    let selected = retained.clone().unwrap();
+    assert_eq!(selected.len(), 3);
+    assert!(selected.contains(&'a') && selected.contains(&'b'));
+    assert_ne!(selected.contains(&'q'), selected.contains(&'z'));
+    let mut expected = None;
+    for workers in [1, 4, 8] {
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(workers)
+            .build()
+            .unwrap()
+            .install(|| {
+                let AttemptOutcome::Complete(result) = trainer
+                    .train_attempt(view, workers, true, &mut retained, &None)
+                    .unwrap()
+                else {
+                    panic!("reuse must complete")
+                };
+                assert_eq!(retained.as_ref().unwrap(), &selected);
+                let actual = (result.vocab, result.merges, result.trace);
+                if let Some(expected) = &expected {
+                    assert_eq!(&actual, expected);
+                } else {
+                    expected = Some(actual);
+                }
+            });
+    }
+}
+
+#[test]
 fn restart_discards_ids_selected_after_a_committed_round() {
     let mut trainer = trainer();
     trainer.continuing_subword_prefix = Some("a".into());
