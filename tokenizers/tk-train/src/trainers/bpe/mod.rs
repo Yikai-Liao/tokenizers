@@ -25,7 +25,7 @@ use merge::MergeOutcome;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use tk_encode::vocab::bucket_added_vocabulary::AddedToken;
-use vocabulary::Vocabulary;
+use vocabulary::{Alphabet, Vocabulary};
 use word_counts::{WordCounts, WordCountsView};
 
 // The optional parity trainer uses linked words; ordinary training owns a
@@ -339,14 +339,14 @@ impl BpeTrainer {
             .build()?;
         pool.install(|| {
             let progress = self.setup_progress();
-            let mut alphabet = None;
-            let outcome = self.train_attempt(words, workers, false, &mut alphabet, &progress)?;
+            let alphabet = vocabulary::select_alphabet(self, words, workers);
+            let outcome = self.train_attempt(words, workers, false, &alphabet, &progress)?;
             let outcome = match outcome {
                 // A previously activated ID requires historical cohorts. Discard
-                // the fresh attempt, retaining its limited alphabet so frequency
-                // ties cannot select different characters on the reuse attempt.
+                // the fresh attempt; both attempts borrow the same alphabet so
+                // frequency ties cannot select different characters on retry.
                 AttemptOutcome::RestartForReuse => {
-                    self.train_attempt(words, workers, true, &mut alphabet, &progress)?
+                    self.train_attempt(words, workers, true, &alphabet, &progress)?
                 }
                 complete @ AttemptOutcome::Complete(_) => complete,
             };
@@ -365,12 +365,11 @@ impl BpeTrainer {
         words: WordCountsView<'_>,
         workers: usize,
         reuse: bool,
-        alphabet: &mut Option<Vec<char>>,
+        alphabet: &Alphabet,
         progress: &Option<ProgressBar>,
     ) -> Result<AttemptOutcome> {
         // 1. Resolve the vocabulary and tokenize borrowed input into a corpus plan.
-        let (mut vocabulary, ids) =
-            Vocabulary::initialize(self, words, workers, alphabet, progress)?;
+        let (mut vocabulary, ids) = Vocabulary::initialize(self, words, alphabet, progress)?;
         let plan = CorpusPlan::build(words, ids, self, reuse)?;
         self.finalize_progress(progress, plan.word_count(), "Tokenize words");
 

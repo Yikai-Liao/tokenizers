@@ -1,0 +1,8 @@
+{
+  "tokenizers/tk-train/src/trainers/bpe/corpus.rs": "437a63c181107540fcc1c9452d1096ebe6b2bfb82a5ae44f890a21c0738e1ade",
+  "tokenizers/tk-train/src/trainers/bpe/index.rs": "16132ccbe74b102d4e24ba41be92d0fe77be67134d30209cad359d50ff109d0f",
+  "tokenizers/tk-train/src/trainers/bpe/merge.rs": "2865a117dfefbad13865b969a451a485b2026235e499f8cc0310a5976859e14d",
+  "tokenizers/tk-train/src/trainers/bpe/mod.rs": "1babe249ae1ff6f44d826aeeb48478920a8844e19d00d2d9a698c01c4f9aa92f",
+  "tokenizers/tk-train/src/trainers/bpe/tests.rs": "053b47ce2972d0645775d34c40229d5243f411b874d98e41de0a0d8853e4d7bc",
+  "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs": "0dc153f07dfc895f6731f02fcd7c6fad0e19f35d89adfadc020c3670b6b1ddfc"
+}

@@ -1,0 +1,61 @@
+diff --git a/experiments/bpe-simplification/runner/src/adapters/tk_train_v1.rs b/experiments/bpe-simplification/runner/src/adapters/tk_train_v1.rs
+index fbca6383..d36618cf 100644
+--- a/experiments/bpe-simplification/runner/src/adapters/tk_train_v1.rs
++++ b/experiments/bpe-simplification/runner/src/adapters/tk_train_v1.rs
+@@ -25,6 +25,9 @@ pub fn trainer(job: &Job) -> BpeTrainer {
+         .vocab_size(cfg.vocab_size)
+         .min_frequency(cfg.min_frequency)
+         .max_token_length(cfg.max_token_length);
++    if let Some(limit) = cfg.limit_alphabet {
++        builder = builder.limit_alphabet(limit);
++    }
+     if let Some(value) = &cfg.prefix {
+         builder = builder.continuing_subword_prefix(value.clone());
+     }
+diff --git a/experiments/bpe-simplification/runner/src/protocol.rs b/experiments/bpe-simplification/runner/src/protocol.rs
+index a1ff0365..8613eb19 100644
+--- a/experiments/bpe-simplification/runner/src/protocol.rs
++++ b/experiments/bpe-simplification/runner/src/protocol.rs
+@@ -18,6 +18,8 @@ pub struct Job {
+ #[derive(Deserialize)]
+ #[serde(deny_unknown_fields)]
+ pub struct TrainerConfig {
++    #[serde(default)]
++    pub limit_alphabet: Option<usize>,
+     pub vocab_size: usize,
+     pub min_frequency: u64,
+     pub prefix: Option<String>,
+--- a/tokenizers/tk-train/src/trainers/bpe/mod.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/mod.rs
+@@ -339,14 +339,16 @@
+             .build()?;
+         pool.install(|| {
+             let progress = self.setup_progress();
++            let selection_started = std::time::Instant::now();
+             let alphabet = vocabulary::select_alphabet(self, words, workers);
+-            let outcome = self.train_attempt(words, workers, false, &alphabet, &progress)?;
++            let selection_seconds = selection_started.elapsed().as_secs_f64();
++            let outcome = self.train_attempt(words, workers, false, &alphabet, &progress, selection_seconds)?;
+             let outcome = match outcome {
+                 // A previously activated ID requires historical cohorts. Discard
+                 // the fresh attempt; both attempts borrow the same alphabet so
+                 // frequency ties cannot select different characters on retry.
+                 AttemptOutcome::RestartForReuse => {
+-                    self.train_attempt(words, workers, true, &alphabet, &progress)?
++                    self.train_attempt(words, workers, true, &alphabet, &progress, selection_seconds)?
+                 }
+                 complete @ AttemptOutcome::Complete(_) => complete,
+             };
+@@ -367,9 +369,12 @@
+         reuse: bool,
+         alphabet: &Alphabet,
+         progress: &Option<ProgressBar>,
++        selection_seconds: f64,
+     ) -> Result<AttemptOutcome> {
+         // 1. Resolve the vocabulary and tokenize borrowed input into a corpus plan.
++        let initialization_started = std::time::Instant::now();
+         let (mut vocabulary, ids) = Vocabulary::initialize(self, words, alphabet, progress)?;
++        eprintln!("BPE_INITIALIZATION_SECONDS {:.9}", initialization_started.elapsed().as_secs_f64() + if reuse { 0.0 } else { selection_seconds });
+         let plan = CorpusPlan::build(words, ids, self, reuse)?;
+         self.finalize_progress(progress, plan.word_count(), "Tokenize words");
+ 

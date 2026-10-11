@@ -1,0 +1,32 @@
+[
+  {
+    "arm": "baseline",
+    "command": [
+      "cargo",
+      "build",
+      "--offline",
+      "--locked",
+      "--release",
+      "--manifest-path",
+      "experiments/bpe-simplification/runner/Cargo.toml"
+    ],
+    "exit_code": 0,
+    "seconds": 92.58826642204076,
+    "binary_sha256": "d952ddf2e198158cd940c03278bb3a82f74aa23e1164abc881979eed67cde826"
+  },
+  {
+    "arm": "candidate",
+    "command": [
+      "cargo",
+      "build",
+      "--offline",
+      "--locked",
+      "--release",
+      "--manifest-path",
+      "experiments/bpe-simplification/runner/Cargo.toml"
+    ],
+    "exit_code": 0,
+    "seconds": 44.06299072899856,
+    "binary_sha256": "6c3c3550b784c9a8d85af4969aaa05aeba91faf49d0183977f7798014400200d"
+  }
+]

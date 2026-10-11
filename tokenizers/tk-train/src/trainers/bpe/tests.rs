@@ -285,17 +285,17 @@ fn reuse_restart_keeps_the_alphabet_and_returns_only_the_successful_trace() {
             .install(|| {
                 let view = WordCountsView::from_map(&words);
                 let progress = trainer.setup_progress();
-                let mut alphabet = None;
+                let alphabet = vocabulary::select_alphabet(&trainer, view, workers);
                 assert!(matches!(
                     trainer
-                        .train_attempt(view, workers, false, &mut alphabet, &progress)
+                        .train_attempt(view, workers, false, &alphabet, &progress)
                         .unwrap(),
                     AttemptOutcome::RestartForReuse
                 ));
                 let retained = alphabet.clone();
-                assert!(retained.is_some());
+                assert_eq!(retained.characters.len(), 4);
                 let AttemptOutcome::Complete(result) = trainer
-                    .train_attempt(view, workers, true, &mut alphabet, &progress)
+                    .train_attempt(view, workers, true, &alphabet, &progress)
                     .unwrap()
                 else {
                     panic!("reuse attempt must complete")
@@ -320,7 +320,7 @@ fn reuse_restart_preserves_a_tie_at_an_actual_alphabet_cutoff() {
     // AA resolves to the activated suffix identity and forces a real restart.
     let words = counts(&[("baaba", 1), ("q", 1), ("z", 1)]);
     let view = WordCountsView::from_map(&words);
-    let mut retained = None;
+    let retained = vocabulary::select_alphabet(&trainer, view, 1);
     rayon::ThreadPoolBuilder::new()
         .num_threads(1)
         .build()
@@ -328,12 +328,12 @@ fn reuse_restart_preserves_a_tie_at_an_actual_alphabet_cutoff() {
         .install(|| {
             assert!(matches!(
                 trainer
-                    .train_attempt(view, 1, false, &mut retained, &None)
+                    .train_attempt(view, 1, false, &retained, &None)
                     .unwrap(),
                 AttemptOutcome::RestartForReuse
             ));
         });
-    let selected = retained.clone().unwrap();
+    let selected: Vec<_> = retained.characters.iter().map(|&(c, _)| c).collect();
     assert_eq!(selected.len(), 3);
     assert!(selected.contains(&'a') && selected.contains(&'b'));
     assert_ne!(selected.contains(&'q'), selected.contains(&'z'));
@@ -345,12 +345,19 @@ fn reuse_restart_preserves_a_tie_at_an_actual_alphabet_cutoff() {
             .unwrap()
             .install(|| {
                 let AttemptOutcome::Complete(result) = trainer
-                    .train_attempt(view, workers, true, &mut retained, &None)
+                    .train_attempt(view, workers, true, &retained, &None)
                     .unwrap()
                 else {
                     panic!("reuse must complete")
                 };
-                assert_eq!(retained.as_ref().unwrap(), &selected);
+                assert_eq!(
+                    retained
+                        .characters
+                        .iter()
+                        .map(|&(c, _)| c)
+                        .collect::<Vec<_>>(),
+                    selected
+                );
                 let actual = (result.parts, result.trace);
                 if let Some(expected) = &expected {
                     assert_eq!(&actual, expected);
@@ -376,8 +383,13 @@ fn restart_discards_ids_selected_after_a_committed_round() {
             .install(|| {
                 let view = WordCountsView::from_map(&words);
                 let progress = trainer.setup_progress();
-                let (mut vocabulary, ids) =
-                    Vocabulary::initialize(&trainer, view, workers, &mut None, &progress).unwrap();
+                let (mut vocabulary, ids) = Vocabulary::initialize(
+                    &trainer,
+                    view,
+                    &vocabulary::select_alphabet(&trainer, view, workers),
+                    &progress,
+                )
+                .unwrap();
                 let plan = CorpusPlan::build(view, ids, &trainer, false).unwrap();
                 let mut index = PairIndex::build(&plan, 1, workers, false, &progress).unwrap();
                 let mut corpus = plan.materialize();
@@ -412,8 +424,13 @@ fn merge_next_commits_independent_rules_together() {
     let words = counts(&[("ab", 10), ("cd", 9), ("ef", 8)]);
     let view = WordCountsView::from_map(&words);
     let progress = trainer.setup_progress();
-    let (mut vocabulary, ids) =
-        Vocabulary::initialize(&trainer, view, 4, &mut None, &progress).unwrap();
+    let (mut vocabulary, ids) = Vocabulary::initialize(
+        &trainer,
+        view,
+        &vocabulary::select_alphabet(&trainer, view, 4),
+        &progress,
+    )
+    .unwrap();
     let plan = CorpusPlan::build(view, ids, &trainer, false).unwrap();
     let mut index = PairIndex::build(&plan, 1, 4, false, &progress).unwrap();
     let mut corpus = plan.materialize();
@@ -811,7 +828,9 @@ mod reference {
             for token in &self.special_tokens {
                 tokens.insert(token.content.clone());
             }
-            for character in vocabulary::select_alphabet(self, WordCountsView::from_map(counts)) {
+            for (character, _) in
+                vocabulary::select_alphabet(self, WordCountsView::from_map(counts), 1).characters
+            {
                 tokens.insert(character.to_string());
             }
 
@@ -993,7 +1012,13 @@ fn symbols_preserve_short_circuiting_and_utf8_affix_boundaries() {
         }
         let view = WordCountsView::from_map(&words);
         let progress = trainer.setup_progress();
-        let (_, ids) = Vocabulary::initialize(&trainer, view, 1, &mut None, &progress).unwrap();
+        let (_, ids) = Vocabulary::initialize(
+            &trainer,
+            view,
+            &vocabulary::select_alphabet(&trainer, view, 1),
+            &progress,
+        )
+        .unwrap();
         for (text, expected) in [
             (
                 "é🙂",
@@ -1049,7 +1074,13 @@ fn initial_edges_preserve_filtered_coordinates_weights_and_errors() {
         }
         let view = WordCountsView::from_map(&words);
         let progress = trainer.setup_progress();
-        let (_, ids) = Vocabulary::initialize(&trainer, view, 1, &mut None, &progress).unwrap();
+        let (_, ids) = Vocabulary::initialize(
+            &trainer,
+            view,
+            &vocabulary::select_alphabet(&trainer, view, 1),
+            &progress,
+        )
+        .unwrap();
         let id = |character, first, last| ids.id(character, first, last).unwrap();
         let expected = vec![
             ((id('é', false, false), id('🙂', false, false)), 1, 7),

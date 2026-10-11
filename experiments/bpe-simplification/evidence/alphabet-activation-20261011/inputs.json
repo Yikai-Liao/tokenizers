@@ -1,0 +1,34 @@
+[
+  {
+    "language": "zh",
+    "input": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+    "bytes": 268435162,
+    "observed_nonspace_characters": 17759,
+    "limit_alphabet": 2047,
+    "last_retained": [
+      "杭",
+      4434
+    ],
+    "first_removed": [
+      "缩",
+      4428
+    ],
+    "sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98"
+  },
+  {
+    "language": "en",
+    "input": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/en256/text.txt",
+    "bytes": 268434441,
+    "observed_nonspace_characters": 5083,
+    "limit_alphabet": 128,
+    "last_retained": [
+      "†",
+      1761
+    ],
+    "first_removed": [
+      "е",
+      1753
+    ],
+    "sha256": "ae02a7e36df46e6dff26481f054dd4a385d50c4a42a9f166de754ee44fbf6b8a"
+  }
+]

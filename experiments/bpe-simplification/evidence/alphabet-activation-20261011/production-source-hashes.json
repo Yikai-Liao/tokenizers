@@ -1,0 +1,13 @@
+{
+  "tokenizers/tk-train/src/trainers/bpe/merge.rs": "ba068e0de2cba29860072aa09dc63d5b0f6bcf7fd6995d97e48303d828c7cf49",
+  "tokenizers/tk-train/src/trainers/bpe/corpus.rs": "9178d76cb3695dffc03f43ea5a78fd3c9523e2868f9098502b1e4be499687795",
+  "tokenizers/tk-train/src/trainers/bpe/word_counts.rs": "e7790341afdad0d6d3f314ce28110ea1901991d0a3d56951d98138726fd6d026",
+  "tokenizers/tk-train/src/trainers/bpe/word.rs": "f9c3bd0a7a8fade42a5643ee6341b4ebf203f7a45aa0a65797e773d1ce21396a",
+  "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs": "a9e4172b99338a925d6768131118394dc314f6e50304447c3d2c758b243898fa",
+  "tokenizers/tk-train/src/trainers/bpe/tests.rs": "f979811006cc3054c16d1fbee378049c1bf87a62f26c73a5ca7d1adf81355143",
+  "tokenizers/tk-train/src/trainers/bpe/positions.rs": "53589c5588b78d1401e5e55b7b3572fe90f6dad1938658081f7310ac44428792",
+  "tokenizers/tk-train/src/trainers/bpe/parity_trainer.rs": "a584152379dc59de167a14f751f37bab8da9c723eddc1c238df21965dd08f37c",
+  "tokenizers/tk-train/src/trainers/bpe/mod.rs": "fab38c3f28b88549215b460730154e91aa79a2e8014c9ac3d6667b417a67b171",
+  "tokenizers/tk-train/src/trainers/bpe/index.rs": "cbb054e75922987d59968b0f14d1afa4a737231160af6e1c7e2c51606e2574b7",
+  "tokenizers/tk-train/src/trainers/bpe/feed.rs": "7c6be5e032a25faf0e0bcad4ee502a38792312233aadbd4a324ac7dca4b62ea7"
+}

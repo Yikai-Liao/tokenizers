@@ -699,9 +699,13 @@ mod tests {
         let words = AHashMap::new();
         let view = WordCountsView::from_map(&words);
         let trainer = BpeTrainer::new(1, 0);
-        let (_, ids) =
-            super::super::vocabulary::Vocabulary::initialize(&trainer, view, 1, &mut None, &None)
-                .unwrap();
+        let (_, ids) = super::super::vocabulary::Vocabulary::initialize(
+            &trainer,
+            view,
+            &super::super::vocabulary::select_alphabet(&trainer, view, 1),
+            &None,
+        )
+        .unwrap();
         let mut plan = CorpusPlan::build(view, ids, &trainer, false).unwrap();
         let text = CompactString::default();
         let weight = 1;

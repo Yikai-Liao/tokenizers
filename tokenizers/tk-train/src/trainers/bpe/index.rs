@@ -630,8 +630,13 @@ mod tests {
                     .collect();
                 let view = WordCountsView::from_map(&words);
                 let progress = trainer.setup_progress();
-                let (mut vocabulary, ids) =
-                    Vocabulary::initialize(&trainer, view, workers, &mut None, &progress).unwrap();
+                let (mut vocabulary, ids) = Vocabulary::initialize(
+                    &trainer,
+                    view,
+                    &super::super::vocabulary::select_alphabet(&trainer, view, workers),
+                    &progress,
+                )
+                .unwrap();
                 let plan = CorpusPlan::build(view, ids, &trainer, false).unwrap();
                 let mut index = PairIndex::build(&plan, 1, workers, false, &progress).unwrap();
                 let mut corpus = plan.materialize();
@@ -674,9 +679,13 @@ mod tests {
                     let words = [("abc".into(), 1)].into_iter().collect();
                     let view = WordCountsView::from_map(&words);
                     let progress = trainer.setup_progress();
-                    let (mut vocabulary, ids) =
-                        Vocabulary::initialize(&trainer, view, workers, &mut None, &progress)
-                            .unwrap();
+                    let (mut vocabulary, ids) = Vocabulary::initialize(
+                        &trainer,
+                        view,
+                        &super::super::vocabulary::select_alphabet(&trainer, view, workers),
+                        &progress,
+                    )
+                    .unwrap();
                     let plan = CorpusPlan::build(view, ids, &trainer, true).unwrap();
                     let mut index = PairIndex::build(&plan, 1, workers, true, &progress).unwrap();
                     let mut corpus = plan.materialize();
@@ -717,8 +726,13 @@ mod tests {
         words.extend([("pacx".into(), 4), ("yacx".into(), 1), ("pa".into(), 4)]);
         let view = WordCountsView::from_map(&words);
         let progress = trainer.setup_progress();
-        let (mut vocabulary, ids) =
-            Vocabulary::initialize(&trainer, view, 1, &mut None, &progress).unwrap();
+        let (mut vocabulary, ids) = Vocabulary::initialize(
+            &trainer,
+            view,
+            &super::super::vocabulary::select_alphabet(&trainer, view, 1),
+            &progress,
+        )
+        .unwrap();
         let pair = (
             ids.id('a', false, false).unwrap(),
             ids.id('c', false, false).unwrap(),

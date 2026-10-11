@@ -1,0 +1,76 @@
+{
+  "base_commit": "38b283c0b82a475c6a888eadd01fd32d2a97dfc5",
+  "source_sha256": {
+    "tokenizers/tk-train/src/trainers/bpe/corpus.rs": "9178d76cb3695dffc03f43ea5a78fd3c9523e2868f9098502b1e4be499687795",
+    "tokenizers/tk-train/src/trainers/bpe/index.rs": "cbb054e75922987d59968b0f14d1afa4a737231160af6e1c7e2c51606e2574b7",
+    "tokenizers/tk-train/src/trainers/bpe/merge.rs": "ba068e0de2cba29860072aa09dc63d5b0f6bcf7fd6995d97e48303d828c7cf49",
+    "tokenizers/tk-train/src/trainers/bpe/mod.rs": "fab38c3f28b88549215b460730154e91aa79a2e8014c9ac3d6667b417a67b171",
+    "tokenizers/tk-train/src/trainers/bpe/tests.rs": "f979811006cc3054c16d1fbee378049c1bf87a62f26c73a5ca7d1adf81355143",
+    "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs": "a9e4172b99338a925d6768131118394dc314f6e50304447c3d2c758b243898fa"
+  },
+  "checks": [
+    {
+      "name": "tests-default",
+      "exit_code": 101,
+      "passed": 42,
+      "failed": 1,
+      "known_baseline_failure": "feed_training_tokenizer_json_and_encoding_roundtrip"
+    },
+    {
+      "name": "tests-no-default",
+      "exit_code": 101,
+      "passed": 42,
+      "failed": 1,
+      "known_baseline_failure": "feed_training_tokenizer_json_and_encoding_roundtrip"
+    },
+    {
+      "name": "clippy",
+      "exit_code": 0
+    },
+    {
+      "name": "format",
+      "exit_code": 0
+    }
+  ],
+  "selection_bitmap_bytes": 139264,
+  "retained_character_entry_bytes": 8,
+  "raw_logs_sha256": {
+    "tests-default.log": "39181fae4fade621a0c5a825985cbdd9be56896e70774b0f9f4fa3c7d32bec09",
+    "tests-no-default.log": "1c3c7eca3dd5ddf206534fa7633754ed940b92367303b8b51c8804c9479e05f1",
+    "clippy.log": "c6714fc001d73a44f07f5ef92b15723ec77c10fcb64834a4a2e09095626e586a",
+    "format.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "benchmarks": {
+    "workers": 4,
+    "corpus_bytes": [
+      268435162,
+      268434441
+    ],
+    "languages": [
+      "zh",
+      "en"
+    ],
+    "affixes": false,
+    "actual_alphabet_cutoff": true,
+    "samples": 6,
+    "full_vocabulary_and_ordered_merges_equal": true,
+    "bitmap_lifetime": "selection function only; Alphabet stores no FixedBitSet",
+    "english_peak_memory_increase_accepted_by_user": true
+  },
+  "environment": {
+    "PATH_prefix": "/root/.cargo/bin",
+    "CARGO_TARGET_DIR": "/tmp/bpe-start-only-writes-finishing-checks-20261011",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_PROFILE_TEST_DEBUG": "0",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CARGO_BUILD_JOBS": "2"
+  },
+  "commands": {
+    "tests_default": "cargo test --offline --locked --manifest-path tokenizers/tk-train/Cargo.toml --lib trainers::bpe",
+    "tests_no_default": "cargo test --offline --locked --manifest-path tokenizers/tk-train/Cargo.toml --lib --no-default-features trainers::bpe",
+    "clippy": "cargo clippy --offline --locked --manifest-path tokenizers/tk-train/Cargo.toml --all-targets -- -D warnings",
+    "format": "uv run experiments/bpe-simplification/format-changed.py --check tokenizers/tk-train/src/trainers/bpe/corpus.rs tokenizers/tk-train/src/trainers/bpe/index.rs tokenizers/tk-train/src/trainers/bpe/merge.rs tokenizers/tk-train/src/trainers/bpe/mod.rs tokenizers/tk-train/src/trainers/bpe/tests.rs tokenizers/tk-train/src/trainers/bpe/vocabulary.rs"
+  },
+  "measured_candidate_matches_tested_production": true,
+  "instrumentation_exception": "Only mod.rs adds initialization timing; all other changed Rust sources are byte-identical to production."
+}

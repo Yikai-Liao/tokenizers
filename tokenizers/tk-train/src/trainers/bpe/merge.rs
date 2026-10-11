@@ -849,8 +849,13 @@ mod tests {
                         .build();
                     let words = [("ab".repeat(135).into(), 1)].into_iter().collect();
                     let view = WordCountsView::from_map(&words);
-                    let (mut vocabulary, ids) =
-                        Vocabulary::initialize(&trainer, view, workers, &mut None, &None).unwrap();
+                    let (mut vocabulary, ids) = Vocabulary::initialize(
+                        &trainer,
+                        view,
+                        &super::super::vocabulary::select_alphabet(&trainer, view, workers),
+                        &None,
+                    )
+                    .unwrap();
                     let plan = CorpusPlan::build(view, ids, &trainer, false).unwrap();
                     let mut index = PairIndex::build(&plan, 1, workers, false, &None).unwrap();
                     let mut corpus = plan.materialize();
@@ -913,8 +918,13 @@ mod tests {
                     let trainer = BpeTrainer::builder().show_progress(false).build();
                     let words = [("ab".into(), 1)].into_iter().collect();
                     let view = WordCountsView::from_map(&words);
-                    let (_, ids) =
-                        Vocabulary::initialize(&trainer, view, workers, &mut None, &None).unwrap();
+                    let (_, ids) = Vocabulary::initialize(
+                        &trainer,
+                        view,
+                        &super::super::vocabulary::select_alphabet(&trainer, view, workers),
+                        &None,
+                    )
+                    .unwrap();
                     let plan = CorpusPlan::build(view, ids, &trainer, false).unwrap();
                     let mut index = PairIndex::build(&plan, 1, workers, false, &None).unwrap();
                     let corpus = plan.materialize();
@@ -950,8 +960,13 @@ mod tests {
         let trainer = BpeTrainer::builder().show_progress(false).build();
         let words = [("abcxyz".into(), 1)].into_iter().collect();
         let view = WordCountsView::from_map(&words);
-        let (mut vocabulary, ids) =
-            Vocabulary::initialize(&trainer, view, 1, &mut None, &None).unwrap();
+        let (mut vocabulary, ids) = Vocabulary::initialize(
+            &trainer,
+            view,
+            &super::super::vocabulary::select_alphabet(&trainer, view, 1),
+            &None,
+        )
+        .unwrap();
         let plan = CorpusPlan::build(view, ids, &trainer, false).unwrap();
         let mut index = PairIndex::build(&plan, 1, 1, false, &None).unwrap();
         let priority = index.best().unwrap();
@@ -1033,8 +1048,13 @@ mod tests {
             let view = WordCountsView::from_map(&words);
             pool.install(|| {
                 let progress = trainer.setup_progress();
-                let (mut vocabulary, ids) =
-                    Vocabulary::initialize(&trainer, view, 2, &mut None, &progress).unwrap();
+                let (mut vocabulary, ids) = Vocabulary::initialize(
+                    &trainer,
+                    view,
+                    &super::super::vocabulary::select_alphabet(&trainer, view, 2),
+                    &progress,
+                )
+                .unwrap();
                 let plan = CorpusPlan::build(view, ids, &trainer, false).unwrap();
                 let mut index =
                     PairIndex::build(&plan, trainer.min_frequency, 2, false, &progress).unwrap();
