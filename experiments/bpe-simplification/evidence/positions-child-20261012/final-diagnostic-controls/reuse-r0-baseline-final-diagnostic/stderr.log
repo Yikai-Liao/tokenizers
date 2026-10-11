@@ -1,0 +1,24 @@
+BPE_SELECTION_SECONDS 0.000310940
+BPE_VOCABULARY_SECONDS 0.003778779
+BPE_PLAN_SECONDS 0.000020134
+BPE_INDEX_SECONDS 0.000073807
+BPE_INDEX_MEMORY VmHWM:	    7388 kB / VmRSS:	    7388 kB / VmSwap:	       0 kB
+BPE_LAYOUT positions=24 initial_state=32 owner_state=32 candidate=40
+BPE_STORAGE initial {"containers":5,"roots":0,"leaves":5,"histogram":[0,5,0,0,0,0,0,0,0,0],"inline":[0,5,0,0,0,0,0,0,0,0],"payload_bytes":40,"retained_heap_bytes":0,"payload_by_bin":[0,40,0,0,0,0,0,0,0,0],"capacity_by_bin":[0,0,0,0,0,0,0,0,0,0],"root_array_bytes":0,"leaf_headers_in_roots":0}
+BPE_MATERIALIZE_SECONDS 0.000289144
+BPE_MATERIALIZE_MEMORY VmHWM:	    7112 kB / VmRSS:	    3032 kB / VmSwap:	       0 kB
+BPE_MERGE_RESTART_SECONDS 0.000028707
+BPE_VOCABULARY_SECONDS 0.003140877
+BPE_PLAN_SECONDS 0.000012423
+BPE_INDEX_SECONDS 0.000049763
+BPE_INDEX_MEMORY VmHWM:	    7388 kB / VmRSS:	    7388 kB / VmSwap:	       0 kB
+BPE_LAYOUT positions=24 initial_state=32 owner_state=32 candidate=40
+BPE_STORAGE initial {"containers":5,"roots":0,"leaves":5,"histogram":[0,5,0,0,0,0,0,0,0,0],"inline":[0,5,0,0,0,0,0,0,0,0],"payload_bytes":40,"retained_heap_bytes":0,"payload_by_bin":[0,40,0,0,0,0,0,0,0,0],"capacity_by_bin":[0,0,0,0,0,0,0,0,0,0],"root_array_bytes":0,"leaf_headers_in_roots":0}
+BPE_MATERIALIZE_SECONDS 0.000001775
+BPE_MATERIALIZE_MEMORY VmHWM:	    7388 kB / VmRSS:	    7388 kB / VmSwap:	       0 kB
+BPE_STORAGE remaining {"containers":3,"roots":0,"leaves":3,"histogram":[0,3,0,0,0,0,0,0,0,0],"inline":[0,3,0,0,0,0,0,0,0,0],"payload_bytes":24,"retained_heap_bytes":0,"payload_by_bin":[0,24,0,0,0,0,0,0,0,0],"capacity_by_bin":[0,0,0,0,0,0,0,0,0,0],"root_array_bytes":0,"leaf_headers_in_roots":0}
+BPE_MERGE_SECONDS 0.000075916
+BPE_DROP_SECONDS 0.000001612
+BPE_DROP_MEMORY VmHWM:	    7388 kB / VmRSS:	    7388 kB / VmSwap:	       0 kB
+BPE_DIAGNOSTICS [{"retired":{"containers":0,"roots":0,"leaves":13,"histogram":[0,13,0,0,0,0,0,0,0,0],"inline":[0,13,0,0,0,0,0,0,0,0],"payload_bytes":104,"retained_heap_bytes":0,"payload_by_bin":[0,104,0,0,0,0,0,0,0,0],"capacity_by_bin":[0,0,0,0,0,0,0,0,0,0],"root_array_bytes":0,"leaf_headers_in_roots":0},"directory_growths":0,"directory_moved_bytes":0,"directory_move_nanos":0,"concat_calls":4,"concat_nanos":279,"reuse_calls":0,"reuse_nanos":0,"root_arrays":0,"root_children":0,"tasks":0,"task_items":0},{"retired":{"containers":0,"roots":0,"leaves":0,"histogram":[0,0,0,0,0,0,0,0,0,0],"inline":[0,0,0,0,0,0,0,0,0,0],"payload_bytes":0,"retained_heap_bytes":0,"payload_by_bin":[0,0,0,0,0,0,0,0,0,0],"capacity_by_bin":[0,0,0,0,0,0,0,0,0,0],"root_array_bytes":0,"leaf_headers_in_roots":0},"directory_growths":0,"directory_moved_bytes":0,"directory_move_nanos":0,"concat_calls":6,"concat_nanos":496,"reuse_calls":0,"reuse_nanos":0,"root_arrays":0,"root_children":0,"tasks":0,"task_items":0},{"retired":{"containers":0,"roots":0,"leaves":0,"histogram":[0,0,0,0,0,0,0,0,0,0],"inline":[0,0,0,0,0,0,0,0,0,0],"payload_bytes":0,"retained_heap_bytes":0,"payload_by_bin":[0,0,0,0,0,0,0,0,0,0],"capacity_by_bin":[0,0,0,0,0,0,0,0,0,0],"root_array_bytes":0,"leaf_headers_in_roots":0},"directory_growths":0,"directory_moved_bytes":0,"directory_move_nanos":0,"concat_calls":0,"concat_nanos":0,"reuse_calls":0,"reuse_nanos":0,"root_arrays":0,"root_children":0,"tasks":0,"task_items":0},{"retired":{"containers":0,"roots":0,"leaves":0,"histogram":[0,0,0,0,0,0,0,0,0,0],"inline":[0,0,0,0,0,0,0,0,0,0],"payload_bytes":0,"retained_heap_bytes":0,"payload_by_bin":[0,0,0,0,0,0,0,0,0,0],"capacity_by_bin":[0,0,0,0,0,0,0,0,0,0],"root_array_bytes":0,"leaf_headers_in_roots":0},"directory_growths":0,"directory_moved_bytes":0,"directory_move_nanos":0,"concat_calls":0,"concat_nanos":0,"reuse_calls":0,"reuse_nanos":0,"root_arrays":0,"root_children":0,"tasks":0,"task_items":0}]
+BPE_ALLOCATIONS {"allocations":289,"freed_bytes":9118081,"frees":224,"reallocations":55,"requested_bytes":9150465}

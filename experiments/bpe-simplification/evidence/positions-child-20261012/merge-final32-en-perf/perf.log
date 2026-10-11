@@ -1,0 +1,2 @@
+[ perf record: Woken up 70 times to write data ]
+[ perf record: Captured and wrote 17.291 MB /root/code/tokenizers-workspaces/bpe-positions-child-results-20261012/merge-final32-en-perf/merge.data (2145 samples) ]

@@ -1,0 +1,35 @@
+{
+  "positions": {
+    "production_before": 227,
+    "production_after": 333,
+    "production_added": 249,
+    "production_removed": 143,
+    "test_before": 238,
+    "test_after": 126
+  },
+  "index": {
+    "production_before": 356,
+    "production_after": 360,
+    "production_added": 64,
+    "production_removed": 60,
+    "test_before": 135,
+    "test_after": 158
+  },
+  "merge": {
+    "production_before": 560,
+    "production_after": 506,
+    "production_added": 25,
+    "production_removed": 79,
+    "test_before": 157,
+    "test_after": 153
+  },
+  "mod": {
+    "production_before": 348,
+    "production_after": 352,
+    "production_added": 7,
+    "production_removed": 3,
+    "test_before": 12,
+    "test_after": 12
+  },
+  "production_delta": 60
+}

@@ -1,0 +1,3 @@
+   Compiling tk-train v0.1.0-dev.2 (/tmp/bpe-selected-rules-measurement-20261011/tokenizers/tk-train)
+   Compiling bpe-bench-runner v0.1.0 (/tmp/bpe-selected-rules-measurement-20261011/experiments/bpe-simplification/runner)
+    Finished `release` profile [optimized] target(s) in 33.19s

@@ -1,0 +1,19 @@
+{
+  "protocol_version": 1,
+  "input_id": "zh256",
+  "mode": "core",
+  "input": "/root/code/tokenizers-bpe-benchmarks/.bench/main-yttm-inspired/inputs/zh256-words/words.json",
+  "workers": 4,
+  "pretokenizer": "whitespace",
+  "trainer": {
+    "vocab_size": 50000,
+    "min_frequency": 2,
+    "prefix": null,
+    "suffix": null,
+    "max_token_length": null,
+    "limit_alphabet": null
+  },
+  "attempt_id": "zh-whitespace-w4-r1-cleanup-parallel",
+  "build_id": "cleanup-parallel",
+  "output": "/root/code/tokenizers-workspaces/bpe-positions-child-results-20261012/cleanup/zh-whitespace-w4-r1-cleanup-parallel/model.json"
+}

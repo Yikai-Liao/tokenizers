@@ -1,0 +1,19 @@
+{
+  "protocol_version": 1,
+  "input_id": "zh256",
+  "mode": "core",
+  "input": "/root/code/tokenizers-workspaces/bpe-positions-child-results-20261012/inputs/zh-bytelevel.json",
+  "workers": 4,
+  "pretokenizer": "bytelevel_regex",
+  "trainer": {
+    "vocab_size": 50000,
+    "min_frequency": 2,
+    "prefix": null,
+    "suffix": null,
+    "max_token_length": null,
+    "limit_alphabet": null
+  },
+  "attempt_id": "zh-bytelevel_regex-w4-r0-child-inline-fast-final-diagnostic",
+  "build_id": "child-inline-fast-final-diagnostic",
+  "output": "/root/code/tokenizers-workspaces/bpe-positions-child-results-20261012/final-storage-multi/zh-bytelevel_regex-w4-r0-child-inline-fast-final-diagnostic/model.json"
+}

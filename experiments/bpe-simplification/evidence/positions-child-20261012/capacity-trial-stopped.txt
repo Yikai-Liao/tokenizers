@@ -1,0 +1,1 @@
+Stopped before measurement at user request: keep 1.5x growth; capacity slack is acceptable. Production restored to child-inline-fast.

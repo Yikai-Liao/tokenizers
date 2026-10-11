@@ -1,0 +1,2 @@
+[ perf record: Woken up 335 times to write data ]
+[ perf record: Captured and wrote 84.069 MB /root/code/tokenizers-workspaces/bpe-positions-child-results-20261012/merge-current-perf/merge.data (10439 samples) ]

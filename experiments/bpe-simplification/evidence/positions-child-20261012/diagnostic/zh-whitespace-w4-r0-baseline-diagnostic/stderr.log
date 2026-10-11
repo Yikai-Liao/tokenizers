@@ -1,0 +1,19 @@
+BPE_SELECTION_SECONDS 0.329095363
+BPE_VOCABULARY_SECONDS 0.007618938
+BPE_PLAN_SECONDS 0.634672539
+BPE_ENTRY_SIZE 32
+BPE_ENTRY_SIZE 32
+BPE_ENTRY_SIZE 32
+BPE_ENTRY_SIZE 32
+BPE_ENTRY_SIZE 32
+BPE_INDEX_SECONDS 14.899779692
+BPE_INDEX_MEMORY VmHWM:	 1835564 kB / VmRSS:	 1529824 kB / VmSwap:	       0 kB
+BPE_STORAGE initial {"containers":1721017,"roots":0,"leaves":1721017,"histogram":[0,45812,428325,229876,953036,31270,25021,6115,1558,4],"inline":[0,45812,428325,0,0,0,0,0,0,0],"payload_bytes":194642922,"retained_heap_bytes":194642922,"root_array_bytes":0,"leaf_headers_in_roots":0}
+BPE_MATERIALIZE_SECONDS 0.716551149
+BPE_MATERIALIZE_MEMORY VmHWM:	 1835564 kB / VmRSS:	 1522336 kB / VmSwap:	       0 kB
+BPE_STORAGE remaining {"containers":6453766,"roots":0,"leaves":6453766,"histogram":[0,248458,2314080,1026551,2803984,41797,16898,1862,136,0],"inline":[0,248458,2314080,0,0,0,0,0,0,0],"payload_bytes":253084395,"retained_heap_bytes":253084395,"root_array_bytes":0,"leaf_headers_in_roots":0}
+BPE_MERGE_SECONDS 9.034359418
+BPE_DROP_SECONDS 1.893640171
+BPE_DROP_MEMORY VmHWM:	 1835564 kB / VmRSS:	 1205760 kB / VmSwap:	       0 kB
+BPE_DIAGNOSTICS [{"retired":{"containers":0,"roots":0,"leaves":1668226,"histogram":[0,856438,239572,127729,428435,8629,6006,1280,137,0],"inline":[0,856438,239572,0,0,0,0,0,0,0],"payload_bytes":47605608,"retained_heap_bytes":47605608,"root_array_bytes":0,"leaf_headers_in_roots":0},"directory_growths":0,"directory_moved_bytes":0,"directory_move_nanos":0,"concat_calls":430515,"concat_nanos":1476870340,"reuse_calls":0,"reuse_nanos":0,"root_arrays":0,"root_children":0,"tasks":0,"task_items":0},{"retired":{"containers":0,"roots":0,"leaves":16309612,"histogram":[8149164,1105054,2554652,1154877,3234834,58465,41699,8972,1891,4],"inline":[8149164,1105054,2554652,0,0,0,0,0,0,0],"payload_bytes":399030855,"retained_heap_bytes":399030855,"root_array_bytes":0,"leaf_headers_in_roots":0},"directory_growths":0,"directory_moved_bytes":0,"directory_move_nanos":0,"concat_calls":430328,"concat_nanos":1953492955,"reuse_calls":0,"reuse_nanos":0,"root_arrays":0,"root_children":0,"tasks":0,"task_items":0},{"retired":{"containers":0,"roots":0,"leaves":1667194,"histogram":[0,854580,239202,128326,429233,8543,5839,1342,129,0],"inline":[0,854580,239202,0,0,0,0,0,0,0],"payload_bytes":48018609,"retained_heap_bytes":48018609,"root_array_bytes":0,"leaf_headers_in_roots":0},"directory_growths":0,"directory_moved_bytes":0,"directory_move_nanos":0,"concat_calls":430193,"concat_nanos":1474743296,"reuse_calls":0,"reuse_nanos":0,"root_arrays":0,"root_children":0,"tasks":0,"task_items":0},{"retired":{"containers":0,"roots":0,"leaves":1666402,"histogram":[0,856771,239500,127937,426256,8257,6159,1368,154,0],"inline":[0,856771,239500,0,0,0,0,0,0,0],"payload_bytes":48435700,"retained_heap_bytes":48435700,"root_array_bytes":0,"leaf_headers_in_roots":0},"directory_growths":0,"directory_moved_bytes":0,"directory_move_nanos":0,"concat_calls":429981,"concat_nanos":2060275165,"reuse_calls":0,"reuse_nanos":0,"root_arrays":0,"root_children":0,"tasks":0,"task_items":0}]
+BPE_ALLOCATIONS {"allocations":14575646,"freed_bytes":21897164662,"frees":14461115,"reallocations":21408198,"requested_bytes":21901846112}

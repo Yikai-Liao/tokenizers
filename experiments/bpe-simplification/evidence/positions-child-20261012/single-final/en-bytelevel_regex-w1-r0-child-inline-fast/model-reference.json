@@ -1,0 +1,6 @@
+{
+  "run": "single-final/en-bytelevel_regex-w1-r0-child-inline-fast",
+  "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+  "bytes": 1659997,
+  "model_blob": "models/6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5.json.gz"
+}

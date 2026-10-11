@@ -1,0 +1,7 @@
+{
+  "reason": "User requested multithreaded measurements first; all three w4 rows completed; upcoming w1 jobs canceled",
+  "completed_rows": 3,
+  "canceled_child_pids": [
+    4184601
+  ]
+}

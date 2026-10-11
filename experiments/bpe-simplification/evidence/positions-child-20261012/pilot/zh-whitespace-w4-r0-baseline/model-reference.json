@@ -1,0 +1,6 @@
+{
+  "run": "pilot/zh-whitespace-w4-r0-baseline",
+  "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+  "bytes": 1292145,
+  "model_blob": "models/6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1.json.gz"
+}
