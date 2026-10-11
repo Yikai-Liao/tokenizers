@@ -19,6 +19,7 @@ Literal alphabet expectations independently check that shared selector.
 | Full token IDs beyond 16 bits and separator distinction | 65536 reserved IDs followed by ordinary training and literal ID expectation |
 | Joined compatible rules | Explicit three-rule `merge_next` returns ordered committed records, then Finished |
 | Preparation failure before writes | An independent valid job precedes a neighbor-count overflow; `merge_next` fails with every endpoint unchanged at 1, 4 and 8 workers |
+| Reusable neighbor directories without reset | A task stops on weighted overflow; the next task reuses both directories with old indices outside its groups, indices naming different neighbors, and valid current-group hits; exact event order, weights, buckets and position lists are checked |
 | Shard-local commit and historical birth grouping | Unordered and zero-weight reuse fragments retain duplicates and publish in bucket order below the floor; fresh removals retire counts before complete/partial publication; fresh grouped and intermediate signed overflow drain pending streams while retaining capacity |
 | Full-u64 counts, per-key overflow, signed reuse limits and validation before zero merges | Literal success/error cases repeated with vocabulary targets 0, 2 and 64 |
 | Borrowed map, stored map/frozen entries, feed and repeat training | Complete model equality through the public entries, repeated successful calls with unchanged counts, and training after flat-map serde; decorated representations preserve the same borrowed traversal order |

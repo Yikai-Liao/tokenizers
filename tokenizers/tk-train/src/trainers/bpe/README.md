@@ -22,7 +22,7 @@ restarts from original input and the retained alphabet. Errors and restart reque
 return no trace or speculative model parts. Zero-merge calls retain numeric and
 initial-index checks without allocating corpus slots; all successful paths release
 large attempt structures before building output. Special tokens are cloned once
-by the core after success.
+by the successful attempt when assembling its final result.
 
 The implementation is divided by the knowledge each module owns:
 

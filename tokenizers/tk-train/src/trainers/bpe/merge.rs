@@ -200,18 +200,14 @@ struct Neighbors<'a> {
 }
 
 /// Reusable direct-ID lookups from left/right neighbors to task-local group indices.
-/// Only touched slots are reset between tasks; u32::MAX marks an absent group.
+/// Cached indices are validated against the current task's group keys.
 #[derive(Default)]
 struct Directories {
     indices: [Vec<u32>; 2],
-    touched: Vec<(usize, usize)>,
 }
 
 impl Directories {
-    fn reset(&mut self, domain: usize) {
-        for (side, id) in self.touched.drain(..) {
-            self.indices[side][id] = u32::MAX;
-        }
+    fn resize(&mut self, domain: usize) {
         for values in &mut self.indices {
             values.resize(domain, u32::MAX);
         }
@@ -232,7 +228,10 @@ impl<'a> Neighbors<'a> {
     fn group(&mut self, neighbor: u32, left: bool) -> &mut Change<SmallVec<[u64; 2]>> {
         let side = usize::from(!left);
         let slot = &mut self.directories.indices[side][neighbor as usize];
-        if *slot == u32::MAX {
+        if self.changes[side]
+            .get(*slot as usize)
+            .is_none_or(|change| (if left { change.born.0 } else { change.born.1 }) != neighbor)
+        {
             let id = self.rule.replacement;
             let pair = self.rule.pair();
             let index = self.changes[side].len();
@@ -250,7 +249,6 @@ impl<'a> Neighbors<'a> {
                 // Other right births follow left births in the reference update order.
                 bucket: 2 * self.rank + usize::from(!left && neighbor != id),
             });
-            self.directories.touched.push((side, neighbor as usize));
             *slot =
                 u32::try_from(index).expect("each neighbor directory is bounded by real token IDs");
         }
@@ -495,7 +493,7 @@ impl<'a> FreshSnapshot<'a> {
         #[cfg(test)]
         super::tests::observe_worker(super::tests::Phase::FreshPrepare);
         let rule = &self.batch.rules[rank];
-        directories.reset(self.corpus.id_count());
+        directories.resize(self.corpus.id_count());
         let mut neighbors = Neighbors::new(
             rule,
             rank,
@@ -616,7 +614,7 @@ impl<'task> CohortPreparation<'task> {
     ) -> Result<Job> {
         #[cfg(test)]
         super::tests::observe_worker(super::tests::Phase::ReusePrepare);
-        directories.reset(corpus.id_count());
+        directories.resize(corpus.id_count());
         let mut task = Self {
             writes: Writes::Occurrences {
                 positions: Vec::new(),
@@ -808,6 +806,74 @@ impl Source<'_> {
 mod tests {
     use super::super::{WordCountsView, corpus::CorpusPlan};
     use super::*;
+
+    #[test]
+    fn neighbor_directories_recover_from_stale_indices_after_error() {
+        let trainer = BpeTrainer::builder().show_progress(false).build();
+        let words = [("abcxyz".into(), 1)].into_iter().collect();
+        let view = WordCountsView::from_map(&words);
+        let (mut vocabulary, ids) =
+            Vocabulary::initialize(&trainer, view, 1, &mut None, &None).unwrap();
+        let plan = CorpusPlan::build(view, ids, &trainer, false).unwrap();
+        let mut index = PairIndex::build(&plan, 1, 1, false, &None).unwrap();
+        let priority = index.best().unwrap();
+        let pair = priority.pair();
+        let (replacement, _) = vocabulary.resolve_merge(pair).unwrap();
+        let rule = Rule {
+            replacement,
+            candidate: index.take(priority),
+        };
+        let mut directories = Directories::default();
+        directories.resize(vocabulary.len());
+        {
+            let mut neighbors = Neighbors::new(&rule, 0, &mut directories, false);
+            neighbors.record(true, 2, 2, 10, u64::MAX, true).unwrap();
+            neighbors.record(true, 4, 4, 20, 4, true).unwrap();
+            neighbors.record(false, 3, 3, 30, 7, true).unwrap();
+            assert!(neighbors.record(true, 2, 2, 40, 1, true).is_err());
+        }
+        // No reset: old indices now point outside the groups or at different keys.
+        let mut neighbors = Neighbors::new(&rule, 1, &mut directories, false);
+        for (left, neighbor, position, weight) in [
+            (true, 4, 70, 17),
+            (true, 3, 50, 11),
+            (true, 2, 60, 13),
+            (false, 2, 80, 19),
+            (false, 3, 90, 23),
+            (true, 2, 100, 5),
+        ] {
+            neighbors
+                .record(left, neighbor, neighbor, position, weight, true)
+                .unwrap();
+        }
+        let changes = neighbors.finish(1).unwrap();
+        let actual: Vec<_> = changes
+            .into_iter()
+            .map(|change| {
+                let Birth::Partial(positions) = change.positions else {
+                    panic!("expected partial neighbor events")
+                };
+                (
+                    change.removed,
+                    change.born,
+                    change.removed_weight,
+                    change.born_weight,
+                    change.bucket,
+                    positions.to_vec(),
+                )
+            })
+            .collect();
+        assert_eq!(
+            actual,
+            vec![
+                ((4, pair.0), (4, replacement), 17, 17, 2, vec![70]),
+                ((3, pair.0), (3, replacement), 11, 11, 2, vec![50]),
+                ((2, pair.0), (2, replacement), 18, 18, 2, vec![60, 100]),
+                ((pair.1, 2), (replacement, 2), 19, 19, 3, vec![80]),
+                ((pair.1, 3), (replacement, 3), 23, 23, 3, vec![90]),
+            ]
+        );
+    }
 
     #[test]
     fn aligned_fragments_keep_complete_and_partial_publication() {

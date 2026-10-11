@@ -52,18 +52,24 @@ Vocabulary initialization returns both the identity table and completed
 InitialTokenIds, whose spans mark unactivated IDs as zero and activated IDs as one.
 CorpusPlan owns these IDs without completing another initialization protocol.
 After symbol writes join, into_spans moves the span Vec and releases both lookup
-tables; Corpus alone then records ID activation. Resolving a merge string returns its ID; the corpus determines
+tables; Corpus alone then records ID activation. Resolving a merge string returns
+its ID and whether it already existed; the corpus determines
 whether that ID has been activated and prepares its span metadata. Vocabulary keeps
 no activation mirror that must be updated during merges.
+
+Merge resolution uses IndexSet::insert_full for lookup and insertion together.
+Initialization retains its borrowed string lookup before constructing an owned
+string. The returned insertion index is checked for u32 and separator bounds;
+failure discards the attempt, including any token inserted before that check.
 
 Each attempt starts from original weighted words. The selected alphabet is
 retained through a reuse restart. A reserved but unactivated result keeps its ID
 and runs alone. Selecting a previously activated result during a fresh attempt causes
 an immediate restart; vocabulary, index, corpus, traces and merges from that attempt
 are abandoned. The core permits one fresh-to-reuse switch. A restart request from
-the reuse attempt is an internal invariant error. The successful attempt returns
-vocabulary and merges with its test-only trace; the core then clones special tokens
-once to assemble the public result.
+the reuse attempt is an internal invariant error. The successful attempt clones
+special tokens once and returns the final TrainingResult with its test-only trace;
+the outer coordinator returns that same result.
 
 The input view is borrowed and unchanged. Feed aggregation, serialization and
 public thread/parallelism settings are handled by the trainer entry. Training creates
@@ -99,7 +105,9 @@ across task boundaries. Explicit Empty/Unique/Shared head states retain exact
 pair fallback for shared heads.
 
 Preparation uses Rayon `map_init` to reuse private directories within each
-parallel task. Each side maps neighbor IDs to u32 change-entry indices; touched slots are reset before reuse.
+parallel task. Each side maps neighbor IDs to u32 change-entry indices. A cached
+index is valid only when the current task has a group at that index with the same
+neighbor ID. Stale indices need no reset, including after failed preparation.
 These indices do not represent positions. The directories have no shared scratch lock or
 assumption relating Rayon worker indices to an external directory array.
 

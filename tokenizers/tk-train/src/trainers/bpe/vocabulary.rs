@@ -105,21 +105,19 @@ impl Vocabulary {
         if let Some(id) = self.tokens.get_index_of(text) {
             return Ok(id as u32);
         }
-        let id = self.insert_new_token(CompactString::from(text))?;
+        let (id, _) = self.insert_token(CompactString::from(text))?;
         spans.push(0);
         Ok(id)
     }
 
-    // The caller has established that this text is absent. No vocabulary
-    // mutation can intervene before this insertion on the coordinator.
-    fn insert_new_token(&mut self, token: CompactString) -> Result<u32> {
-        let id = u32::try_from(self.tokens.len()).map_err(|_| "BPE vocabulary exceeds u32")?;
+    // ID errors discard the whole attempt, including any insertion made here.
+    fn insert_token(&mut self, token: CompactString) -> Result<(u32, bool)> {
+        let (index, inserted) = self.tokens.insert_full(token);
+        let id = u32::try_from(index).map_err(|_| "BPE vocabulary exceeds u32")?;
         if id == WORD_SEPARATOR_ID {
             return Err("BPE token ID collides with the word separator".into());
         }
-        let (index, inserted) = self.tokens.insert_full(token);
-        debug_assert!(inserted && index == id as usize);
-        Ok(id)
+        Ok((id, !inserted))
     }
 
     fn initial_ids(
@@ -246,10 +244,7 @@ impl Vocabulary {
         let mut text = CompactString::with_capacity(left.len() + right.len());
         text.push_str(left);
         text.push_str(right);
-        match self.tokens.get_index_of(text.as_str()) {
-            Some(id) => Ok((id as u32, true)),
-            None => self.insert_new_token(text).map(|id| (id, false)),
-        }
+        self.insert_token(text)
     }
 
     pub(super) fn into_model_parts(self, merges: Vec<Pair>) -> (Vocab, Merges) {
