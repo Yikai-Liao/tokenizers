@@ -244,19 +244,7 @@ pub struct BpeTrainer {
 
 impl Default for BpeTrainer {
     fn default() -> Self {
-        Self {
-            min_frequency: 0,
-            vocab_size: 30000,
-            show_progress: true,
-            progress_format: ProgressFormat::default(),
-            special_tokens: Vec::new(),
-            limit_alphabet: None,
-            initial_alphabet: AHashSet::new(),
-            continuing_subword_prefix: None,
-            end_of_word_suffix: None,
-            max_token_length: None,
-            words: WordCounts::default(),
-        }
+        Self::builder().build()
     }
 }
 
