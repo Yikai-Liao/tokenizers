@@ -3,7 +3,7 @@ use super::{
     BpeTrainer, WORD_SEPARATOR_ID, add,
     corpus::{Corpus, Match},
     index::{Candidate, PairIndex},
-    positions::Positions,
+    positions::{Positions, ReadTask},
     vocabulary::Vocabulary,
 };
 use ahash::{AHashMap, AHashSet};
@@ -11,7 +11,6 @@ use itertools::Itertools;
 use rayon::prelude::*;
 use smallvec::SmallVec;
 use std::collections::VecDeque;
-use std::ops::Range;
 use tk_encode::{Result, models::bpe::Pair};
 
 /// Complete-round outcome. Only successful index publication returns records.
@@ -48,7 +47,6 @@ impl BpeTrainer {
         let mut batch = Batch {
             rules: Vec::new(),
             reuse,
-            floor: self.min_frequency.max(1),
         };
         let cap = if reuse {
             1
@@ -144,7 +142,6 @@ impl Rule {
 struct Batch {
     rules: Vec<Rule>,
     reuse: bool,
-    floor: u64,
 }
 
 /// One neighbor-edge removal and replacement birth from preparation.
@@ -160,44 +157,20 @@ pub(super) struct Change<P> {
     pub(super) bucket: usize,
 }
 
-/// A birth stream's publication contract: partial aggregation or complete output.
-/// Complete fresh producers have already applied the frequency floor and encoded
-/// their full list; partial streams need owner aggregation before publication.
-pub(super) enum Birth {
-    // Local fresh counts await owner aggregation before floor admission.
-    // Reuse fragments instead follow the owner's per-action signed ledger.
-    Partial(SmallVec<[u64; 2]>),
-    // A fresh ordinary producer covers the full candidate and has applied the floor.
-    // Retained lists are ready for direct publication without another encoding pass.
-    Complete(Positions),
-}
-
-impl Birth {
-    pub(super) fn is_empty(&self) -> bool {
-        match self {
-            Self::Partial(values) => values.is_empty(),
-            Self::Complete(values) => values.is_empty(),
-        }
-    }
-}
-
 /// One preparation task's disjoint writes and owned neighbor-event payloads.
 /// The task returns both together so no corpus mutation precedes preparation join.
 struct Job {
     starts: SmallVec<[usize; 2]>,
     replacement: u32,
-    changes: Vec<Change<Birth>>,
+    changes: Vec<Change<Positions>>,
 }
 
 /// Task-local left/right neighbor aggregation for one selected rule.
-/// Borrows reusable lookup directories; owns its groups and decides whether
-/// they cover a complete producer or must be routed as partial fragments.
+/// Borrows reusable lookup directories and directly appends compressed positions.
 struct Neighbors<'a> {
     rule: &'a Rule,
-    rank: usize,
     directories: &'a mut Directories,
-    changes: [Vec<Change<SmallVec<[u64; 2]>>>; 2],
-    complete: bool,
+    changes: [Vec<Change<Positions>>; 2],
 }
 
 /// Reusable direct-ID lookups from left/right neighbors to task-local group indices.
@@ -216,17 +189,15 @@ impl Directories {
 }
 
 impl<'a> Neighbors<'a> {
-    fn new(rule: &'a Rule, rank: usize, directories: &'a mut Directories, complete: bool) -> Self {
+    fn new(rule: &'a Rule, directories: &'a mut Directories) -> Self {
         Self {
             rule,
-            rank,
             directories,
             changes: std::array::from_fn(|_| Vec::new()),
-            complete,
         }
     }
 
-    fn group(&mut self, neighbor: u32, left: bool) -> &mut Change<SmallVec<[u64; 2]>> {
+    fn group(&mut self, neighbor: u32, left: bool) -> &mut Change<Positions> {
         let side = usize::from(!left);
         let slot = &mut self.directories.indices[side][neighbor as usize];
         if self.changes[side]
@@ -245,10 +216,10 @@ impl<'a> Neighbors<'a> {
                 born: if left { (neighbor, id) } else { (id, neighbor) },
                 removed_weight: 0,
                 born_weight: 0,
-                positions: SmallVec::new(),
+                positions: Positions::default(),
                 // Both sides can create (id, id); keep them in one birth cohort.
                 // Other right births follow left births in the reference update order.
-                bucket: 2 * self.rank + usize::from(!left && neighbor != id),
+                bucket: usize::from(!left && neighbor != id),
             });
             *slot =
                 u32::try_from(index).expect("each neighbor directory is bounded by real token IDs");
@@ -274,40 +245,18 @@ impl<'a> Neighbors<'a> {
                 self.group(born, left)
             };
             add(&mut group.born_weight, weight)?;
-            group.positions.push(position as u64);
+            group.positions.push(position as u64)?;
         }
         Ok(())
     }
 
-    fn finish(self, floor: u64) -> Result<Vec<Change<Birth>>> {
-        // Complete ordinary producers prune and encode before owner routing.
-        // Partial jobs retain raw positions until their counts have been reduced.
-        let mut result = Vec::new();
-        // Left changes precede right changes. Reuse count actions and the resulting
-        // historical cohorts observe this order even when both sides name one key.
-        for mut change in self.changes.into_iter().flatten() {
-            if self.complete && change.born_weight < floor {
-                change.positions = SmallVec::new();
-                change.born_weight = 0;
-            }
-            if change.removed_weight == 0 && change.positions.is_empty() {
-                continue;
-            }
-            let positions = if self.complete {
-                Birth::Complete(Positions::from_sorted(&change.positions)?)
-            } else {
-                Birth::Partial(change.positions)
-            };
-            result.push(Change {
-                removed: change.removed,
-                born: change.born,
-                removed_weight: change.removed_weight,
-                born_weight: change.born_weight,
-                bucket: change.bucket,
-                positions,
-            });
-        }
-        Ok(result)
+    fn finish(self) -> Vec<Change<Positions>> {
+        // Preserve left-before-right count actions and historical cohort order.
+        self.changes
+            .into_iter()
+            .flatten()
+            .filter(|change| change.removed_weight != 0 || !change.positions.is_empty())
+            .collect()
     }
 }
 
@@ -347,7 +296,7 @@ impl Batch {
         let jobs = words
             .par_chunks(chunk)
             .map_init(Directories::default, |directories, words| -> Result<_> {
-                CohortPreparation::prepare(rule, corpus, words, limit, self.floor, directories)
+                CohortPreparation::prepare(rule, corpus, words, limit, directories)
             })
             .collect::<Result<Vec<_>>>()?;
         Ok(jobs)
@@ -429,8 +378,8 @@ impl<'a> FreshSnapshot<'a> {
                 }
                 FreshMatches::Ordinary(_) => {
                     let positions = &rule.candidate.positions;
-                    for range in positions.partition_ranges(ordinary_chunk) {
-                        tasks.push((rank, Source::Range(range)));
+                    for task in positions.tasks(ordinary_chunk) {
+                        tasks.push((rank, Source::Task(task)));
                     }
                 }
             }
@@ -448,16 +397,11 @@ impl<'a> FreshSnapshot<'a> {
         super::tests::observe_worker(super::tests::Phase::FreshPrepare);
         let rule = &self.batch.rules[rank];
         directories.resize(self.corpus.id_count());
-        let mut neighbors = Neighbors::new(
-            rule,
-            rank,
-            directories,
-            positions.complete(rule.candidate.positions.len()),
-        );
+        let mut neighbors = Neighbors::new(rule, directories);
         let mut starts = SmallVec::new();
         let matcher = self.corpus.fresh_matcher(rule.pair());
         let mut weights = None;
-        for p in positions.prefetched(&rule.candidate.positions, self.corpus) {
+        for p in positions.prefetched(self.corpus) {
             let Some(matched) = matcher(p, self.corpus.token(p)) else {
                 continue;
             };
@@ -472,7 +416,7 @@ impl<'a> FreshSnapshot<'a> {
         Ok(Job {
             starts,
             replacement: rule.replacement,
-            changes: neighbors.finish(self.batch.floor)?,
+            changes: neighbors.finish(),
         })
     }
 
@@ -557,7 +501,6 @@ impl<'task> CohortPreparation<'task> {
         corpus: &'task Corpus,
         words: &[usize],
         limit: usize,
-        floor: u64,
         directories: &'task mut Directories,
     ) -> Result<Job> {
         #[cfg(test)]
@@ -565,7 +508,7 @@ impl<'task> CohortPreparation<'task> {
         directories.resize(corpus.id_count());
         let mut task = Self {
             starts: SmallVec::new(),
-            neighbors: Neighbors::new(rule, 0, directories, false),
+            neighbors: Neighbors::new(rule, directories),
             corpus,
             limit,
         };
@@ -575,7 +518,7 @@ impl<'task> CohortPreparation<'task> {
         Ok(Job {
             starts: task.starts,
             replacement: rule.replacement,
-            changes: task.neighbors.finish(floor)?,
+            changes: task.neighbors.finish(),
         })
     }
 
@@ -637,34 +580,19 @@ impl<'task> CohortPreparation<'task> {
     }
 }
 
-/// Task input: filtered self-pair starts or element indices in the task's rule.
-/// The accompanying rule rank binds each range to its immutable candidate list.
+/// Filtered self-pair starts or borrowed, directly positioned reading work.
 enum Source<'a> {
     Slice(&'a [u64]),
-    Range(Range<usize>),
+    Task(ReadTask<'a>),
 }
 
 impl Source<'_> {
-    fn complete(&self, candidate_len: usize) -> bool {
-        match self {
-            // Storage alignment can make a range exceed its target size and
-            // cover the whole candidate. Filtered AA starts remain partial even
-            // when one slice contains all starts.
-            Self::Range(range) => *range == (0..candidate_len),
-            Self::Slice(_) => false,
-        }
-    }
-
     // Decode one bounded queue ahead. Prefetch is a nonblocking
     // hint; matching still reads the same joined preparation snapshot in order.
-    fn prefetched<'a>(
-        &'a self,
-        candidate: &'a Positions,
-        corpus: &'a Corpus,
-    ) -> impl Iterator<Item = usize> + 'a {
+    fn prefetched<'a>(&'a self, corpus: &'a Corpus) -> impl Iterator<Item = usize> + 'a {
         let coordinates = match self {
             Self::Slice(values) => itertools::Either::Left(values.iter().copied()),
-            Self::Range(range) => itertools::Either::Right(candidate.iter_range(range.clone())),
+            Self::Task(task) => itertools::Either::Right(task.iter()),
         };
         let mut positions = coordinates.map(move |coordinate| corpus.resident(coordinate));
         let mut ahead = VecDeque::with_capacity(16);
@@ -711,7 +639,6 @@ mod tests {
         let mut batch = Batch {
             rules: Vec::new(),
             reuse: false,
-            floor: 1,
         };
         // Shared heads/tails remain compatible; adjacent replacements publish once.
         for pair in [(0, 1), (0, 2), (3, 1), (3, 2)] {
@@ -748,7 +675,6 @@ mod tests {
         let batch = Batch {
             rules: vec![select(&mut vocabulary, &mut corpus, &mut index)],
             reuse: false,
-            floor: 1,
         };
         let snapshot = FreshSnapshot::new(&batch, &corpus, usize::MAX);
         let FreshMatches::SelfPair(starts) = &snapshot.matches else {
@@ -783,7 +709,6 @@ mod tests {
         let batch = Batch {
             rules: vec![rule],
             reuse: true,
-            floor: 1,
         };
         let jobs = batch.prepare(&corpus, usize::MAX).unwrap();
         for job in jobs {
@@ -804,15 +729,15 @@ mod tests {
         let mut directories = Directories::default();
         directories.resize(vocabulary.len());
         {
-            let mut neighbors = Neighbors::new(&rule, 0, &mut directories, false);
+            let mut neighbors = Neighbors::new(&rule, &mut directories);
             neighbors.record(true, 2, 2, 1, u64::MAX, true).unwrap();
             assert!(neighbors.record(true, 2, 2, 1, 1, true).is_err());
         }
         // The old directory index is reused without reset after the failed group.
-        let mut neighbors = Neighbors::new(&rule, 0, &mut directories, false);
+        let mut neighbors = Neighbors::new(&rule, &mut directories);
         neighbors.record(true, 1, 1, 1, 3, true).unwrap();
         neighbors.record(true, 2, 2, 2, 4, true).unwrap();
-        let changes = neighbors.finish(1).unwrap();
+        let changes = neighbors.finish();
         assert_eq!(
             changes
                 .iter()
@@ -823,7 +748,6 @@ mod tests {
         let batch = Batch {
             rules: vec![rule],
             reuse: false,
-            floor: 1,
         };
         let job = batch.prepare(&corpus, 3).unwrap().pop().unwrap();
         let change = &job.changes[0];

@@ -155,6 +155,7 @@ impl BpeTrainerBuilder {
         self.config.end_of_word_suffix = Some(suffix);
         self
     }
+
     /// Set max_token_length
     #[must_use]
     pub fn max_token_length(mut self, max_token_length: Option<usize>) -> Self {
@@ -401,10 +402,10 @@ impl BpeTrainer {
                 }
                 self.emit_json_progress("Compute merges", merges.len(), self.vocab_size);
             }
-            drop(index);
+            index.retire();
             drop(corpus);
         } else {
-            drop(index);
+            index.retire();
             drop(plan);
         }
 
@@ -511,7 +512,11 @@ impl Trainer for BpeTrainer {
     /// Train a BPE model
     fn train(&self, model: &mut PipelineBPE) -> Result<Vec<AddedToken>> {
         let (vocab, merges, special_tokens) = self.train_vocab()?;
-        *model = PipelineBPE::from_config(BpeConfig { vocab: vocab, merges: merges, ..self.model_options() })?;
+        *model = PipelineBPE::from_config(BpeConfig {
+            vocab: vocab,
+            merges: merges,
+            ..self.model_options()
+        })?;
         Ok(special_tokens)
     }
 

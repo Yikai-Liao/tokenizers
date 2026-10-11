@@ -1,12 +1,11 @@
 //! Count owners publish complete lists; the queue repairs stale snapshots lazily.
-use super::merge::{Birth, Change};
+use super::merge::Change;
 use super::{WORD_SEPARATOR_ID, add, corpus::CorpusPlan, positions::Positions};
 use ahash::AHashMap;
 use dary_heap::OctonaryHeap;
 use rayon::prelude::*;
 use smallvec::SmallVec;
 use std::cmp::{Ordering, Reverse};
-use std::collections::BTreeMap;
 use tk_encode::{Result, models::bpe::Pair, utils::progress::ProgressBar};
 
 /// Queue key: highest count first, then smallest pair.
@@ -70,7 +69,7 @@ struct Shard {
     counts: AHashMap<Pair, u64>,
     actions: Vec<(usize, bool, bool)>,
     // One stream per birth action, in the same order.
-    positions: Vec<Birth>,
+    positions: Vec<Positions>,
 }
 
 /// Authoritative pair-count shards plus an owning queue of occurrence candidates.
@@ -144,6 +143,18 @@ impl PairIndex {
         self.reuse
     }
 
+    /// Consume remaining candidates at the successful training boundary.
+    /// Ordinary retirement and errors keep their normal, synchronous drops.
+    pub(super) fn retire(self) {
+        let Self { shards, queue, .. } = self;
+        drop(shards);
+        queue
+            .into_vec()
+            .into_par_iter()
+            .with_min_len(4096)
+            .for_each(drop);
+    }
+
     pub(super) fn best(&mut self) -> Option<Priority> {
         loop {
             let top = self.queue.peek()?.priority;
@@ -180,7 +191,7 @@ impl PairIndex {
         candidate
     }
 
-    pub(super) fn commit(&mut self, changes: Vec<Vec<Change<Birth>>>) -> Result<()> {
+    pub(super) fn commit(&mut self, changes: Vec<Vec<Change<Positions>>>) -> Result<()> {
         // 1. Route each removal and birth to its count owner.
         let events = self.route_changes(changes);
 
@@ -201,7 +212,7 @@ impl PairIndex {
         Ok(())
     }
 
-    fn route_changes(&mut self, changes: Vec<Vec<Change<Birth>>>) -> Vec<Event> {
+    fn route_changes(&mut self, changes: Vec<Vec<Change<Positions>>>) -> Vec<Event> {
         let shard_count = self.shards.len();
         // Joined commits drain each shard's pending work; any error aborts this attempt.
         let mut events = Vec::with_capacity(changes.iter().map(Vec::len).sum());
@@ -246,9 +257,9 @@ type InitialPiece = Vec<(Pair, State<Positions>)>;
 enum InitialPairCounts {
     Dense {
         domain: usize,
-        states: Vec<State<SmallVec<[u64; 2]>>>,
+        states: Vec<State<Positions>>,
     },
-    Sparse(AHashMap<Pair, State<SmallVec<[u64; 2]>>>),
+    Sparse(AHashMap<Pair, State<Positions>>),
 }
 
 impl InitialPairCounts {
@@ -271,11 +282,11 @@ impl InitialPairCounts {
         };
         add(&mut state.count, weight)?;
         // Initial edges arrive in corpus order; construction checks the full list.
-        state.positions.push(position);
+        state.positions.push(position)?;
         Ok(())
     }
 
-    fn into_states(self) -> Vec<(Pair, State<SmallVec<[u64; 2]>>)> {
+    fn into_states(self) -> Vec<(Pair, State<Positions>)> {
         match self {
             Self::Dense { domain, states } => states
                 .into_iter()
@@ -301,25 +312,11 @@ fn count_range(
     if let Some(p) = progress {
         p.inc(range.len() as u64);
     }
-    let states = counts.into_states();
-
-    states
-        .into_iter()
-        .map(|(pair, state)| {
-            let positions = Positions::from_sorted(&state.positions)?;
-            Ok((
-                pair,
-                State {
-                    count: state.count,
-                    positions,
-                },
-            ))
-        })
-        .collect::<Result<Vec<_>>>()
+    Ok(counts.into_states())
 }
 
 fn build_owner(pieces: InitialPiece, floor: u64, reuse: bool) -> Result<(Shard, Vec<Candidate>)> {
-    let mut states = AHashMap::<Pair, State<Vec<Positions>>>::new();
+    let mut states = AHashMap::<Pair, State<SmallVec<[Positions; 1]>>>::new();
     for (pair, state) in pieces {
         let total = states.entry(pair).or_default();
         add(&mut total.count, state.count)?;
@@ -346,13 +343,13 @@ fn build_owner(pieces: InitialPiece, floor: u64, reuse: bool) -> Result<(Shard, 
 }
 
 impl Shard {
-    fn push(&mut self, index: usize, remove: bool, birth: Option<Birth>) {
+    fn push(&mut self, index: usize, remove: bool, birth: Option<Positions>) {
         self.actions.push((index, remove, birth.is_some()));
         self.positions.extend(birth);
     }
 
     fn commit(&mut self, events: &[Event], reuse: bool, floor: u64) -> Result<Vec<Candidate>> {
-        let mut groups = BTreeMap::<(usize, Pair), State<SmallVec<[u64; 2]>>>::new();
+        let mut fragments = Vec::with_capacity(self.positions.len());
         let mut candidates = Vec::new();
         // Both drains own their remaining items: errors drop unpublished births
         // and empty the pending vectors while retaining their capacity.
@@ -381,52 +378,44 @@ impl Shard {
                 let count = self.counts.entry(change.born).or_default();
                 adjust_signed(count, change.born_weight, false)?;
             }
-            let values = match positions.next().expect("each birth owns one stream") {
-                Birth::Complete(positions) => {
-                    // Fresh IDs and compatible rules give each complete birth one producer.
-                    debug_assert!(!reuse && change.born_weight >= floor);
-                    debug_assert!(!self.counts.contains_key(&change.born));
-                    self.counts.insert(change.born, change.born_weight);
-                    candidates.push(Candidate {
-                        priority: Priority {
-                            count: change.born_weight,
-                            pair: Reverse(change.born),
-                        },
-                        positions,
-                    });
-                    continue;
-                }
-                Birth::Partial(values) => values,
-            };
-            let group = groups.entry((change.bucket, change.born)).or_default();
-            add(&mut group.count, change.born_weight)?;
-            // Fresh jobs follow rule rank and spatial ranges. Each born key has
-            // one producer, so fragments concatenate sorted. Reuse sorts below.
-            // Fresh fragments transfer their first allocation. Reuse copies into
-            // owner-local aggregation storage before sorting interleaved fragments.
-            if !reuse && group.positions.is_empty() {
-                group.positions = values;
-            } else {
-                group.positions.extend_from_slice(&values);
-            }
+            let fragment = positions.next().expect("each birth owns one stream");
+            fragments.push(((change.bucket, change.born), change.born_weight, fragment));
         }
 
-        // Complete producers precede partial groups, which follow bucket/pair order.
-        for ((_, pair), mut state) in groups {
-            let count = if reuse {
-                self.counts[&pair]
-            } else {
-                state.count
-            };
+        // Stable key order keeps each cohort's spatial fragment order while
+        // publishing in bucket/pair order. Reuse streams may interleave.
+        fragments.sort_by_key(|(key, _, _)| *key);
+        let mut fragments = fragments.into_iter();
+        while let Some((key, _, _)) = fragments.as_slice().first() {
+            let key = *key;
+            let mut group_len = 0;
+            let mut weight = 0;
+            for (_, part_weight, _) in fragments
+                .as_slice()
+                .iter()
+                .take_while(|(other, _, _)| *other == key)
+            {
+                add(&mut weight, *part_weight)?;
+                group_len += 1;
+            }
+            let pair = key.1;
+            let count = if reuse { self.counts[&pair] } else { weight };
+            let streams = fragments
+                .by_ref()
+                .take(group_len)
+                .map(|(_, _, positions)| positions);
             // A positive reuse ledger publishes a historical cohort even below
             // the floor; selection applies the floor after correcting its head.
             if (reuse && (count as i64) <= 0) || (!reuse && count < floor) {
+                streams.for_each(drop);
                 continue;
             }
-            if reuse {
-                // Historical cohorts retain duplicate positions.
-                state.positions.sort_unstable();
+            let positions = if reuse {
+                merge_positions(streams)?
             } else {
+                Positions::concat(streams)?
+            };
+            if !reuse {
                 debug_assert!(!self.counts.contains_key(&pair));
                 self.counts.insert(pair, count);
             }
@@ -435,11 +424,26 @@ impl Shard {
                     count,
                     pair: Reverse(pair),
                 },
-                positions: Positions::from_sorted(&state.positions)?,
+                positions,
             });
         }
         Ok(candidates)
     }
+}
+
+/// Interleaved reuse cohorts retain duplicates, but publish one ordered leaf.
+/// Only the iterator frontier is buffered; coordinates append directly.
+fn merge_positions(fragments: impl IntoIterator<Item = Positions>) -> Result<Positions> {
+    let fragments: SmallVec<[Positions; 1]> = fragments.into_iter().collect();
+    if fragments.len() == 1 {
+        return Ok(fragments.into_iter().next().expect("one fragment"));
+    }
+    use itertools::Itertools;
+    let mut positions = Positions::default();
+    for position in fragments.iter().map(Positions::iter).kmerge() {
+        positions.push(position)?;
+    }
+    Ok(positions)
 }
 
 #[cfg(test)]
@@ -463,6 +467,30 @@ mod tests {
     }
 
     #[test]
+    fn unified_aggregation() {
+        let pair = (0, 1);
+        for reuse in [false, true] {
+            let mut shard = Shard::default();
+            let events = [event(pair, 1, 0, 0), event(pair, 1, 0, 0)];
+            let streams: [&[u64]; 2] = if reuse {
+                [&[1, 4, 4], &[0, 4, 5]]
+            } else {
+                [&[0, 1, 4], &[4, 4, 5]]
+            };
+            for (index, stream) in streams.into_iter().enumerate() {
+                shard.push(index, false, Some(Positions::from_sorted(stream).unwrap()));
+            }
+            let candidates = shard.commit(&events, reuse, 2).unwrap();
+            assert_eq!(candidates.len(), 1);
+            assert_eq!(candidates[0].priority.count, 2);
+            assert_eq!(
+                candidates[0].positions.iter().collect::<Vec<_>>(),
+                [0, 1, 4, 4, 4, 5]
+            );
+        }
+    }
+
+    #[test]
     fn intermediate_overflow() {
         let pair = (0, 1);
         for reuse in [false, true] {
@@ -474,8 +502,8 @@ mod tests {
                 event(pair, if reuse { 1 } else { u64::MAX }, 0, 0),
                 event(pair, if reuse { 0 } else { 1 }, u64::from(reuse), 0),
             ];
-            shard.push(0, false, Some(Birth::Partial(SmallVec::from_slice(&[0]))));
-            shard.push(1, reuse, Some(Birth::Partial(SmallVec::from_slice(&[1]))));
+            shard.push(0, false, Some(Positions::from_sorted(&[0]).unwrap()));
+            shard.push(1, reuse, Some(Positions::from_sorted(&[1]).unwrap()));
             let error = shard
                 .commit(&events, reuse, 1)
                 .err()
@@ -555,7 +583,7 @@ mod tests {
             shard.push(
                 0,
                 remove != 0,
-                Some(Birth::Partial(SmallVec::from_slice(&[position]))),
+                Some(Positions::from_sorted(&[position]).unwrap()),
             );
             candidates.extend(
                 shard
