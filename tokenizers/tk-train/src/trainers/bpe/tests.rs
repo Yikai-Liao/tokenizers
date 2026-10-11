@@ -610,6 +610,20 @@ fn check_feed_boundary(trainer: &mut BpeTrainer, parallel: bool, boundary: usize
     );
 }
 
+fn run_feed_child(test: &str, child: &str, setting: &str) -> std::process::Output {
+    let result = std::process::Command::new(std::env::current_exe().unwrap())
+        .args(["--exact", test, "--nocapture"])
+        .env(child, setting)
+        .output()
+        .unwrap();
+    assert!(
+        result.status.success(),
+        "{setting}: {}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    result
+}
+
 #[test]
 fn public_pools_feed_flush_errors_and_progress_matrix() {
     const CHILD: &str = "BPE_PUBLIC_TEST_CHILD";
@@ -621,16 +635,7 @@ fn public_pools_feed_flush_errors_and_progress_matrix() {
     for setting in [
         "parallel", "serial", "no-bar", "zero", "empty", "silent", "restart",
     ] {
-        let result = std::process::Command::new(std::env::current_exe().unwrap())
-            .args(["--exact", TEST, "--nocapture"])
-            .env(CHILD, setting)
-            .output()
-            .unwrap();
-        assert!(
-            result.status.success(),
-            "{}",
-            String::from_utf8_lossy(&result.stderr)
-        );
+        let result = run_feed_child(TEST, CHILD, setting);
         check_progress_records(setting, result);
     }
 }
@@ -1058,16 +1063,7 @@ fn feed_unification_boundaries_errors_and_stored_state() {
         return;
     }
     for setting in ["disabled", "one", "many"] {
-        let result = std::process::Command::new(std::env::current_exe().unwrap())
-            .args(["--exact", TEST, "--nocapture"])
-            .env(CHILD, setting)
-            .output()
-            .unwrap();
-        assert!(
-            result.status.success(),
-            "{setting}: {}",
-            String::from_utf8_lossy(&result.stderr)
-        );
+        run_feed_child(TEST, CHILD, setting);
     }
 }
 
@@ -1124,14 +1120,10 @@ fn check_feed_unification_success(workers: usize) {
         })
         .unwrap();
     assert_eq!(trainer.words, WordCounts::from_map(expected.clone()));
-    assert_eq!(
-        trainer.train_vocab().unwrap(),
-        trainer.do_train(&expected).unwrap()
-    );
-    assert_eq!(
-        trainer.train_vocab().unwrap(),
-        trainer.do_train(&expected).unwrap()
-    );
+    let expected_model = trainer.do_train(&expected).unwrap();
+    for _ in 0..2 {
+        assert_eq!(trainer.train_vocab().unwrap(), expected_model);
+    }
     assert_eq!(trainer.words, WordCounts::from_map(expected));
 }
 
