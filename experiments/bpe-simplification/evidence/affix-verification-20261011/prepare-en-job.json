@@ -1,0 +1,19 @@
+{
+  "protocol_version": 1,
+  "attempt_id": "prepare-en-whitespace",
+  "build_id": "current-0dd1ca48",
+  "input_id": "en256",
+  "mode": "prepare",
+  "input": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/en256/text.txt",
+  "output": "/root/code/tokenizers-workspaces/bpe-affix-verification-results-20261011/en-prepared-words.json",
+  "workers": 4,
+  "pretokenizer": "whitespace",
+  "trainer": {
+    "vocab_size": 0,
+    "min_frequency": 0,
+    "prefix": null,
+    "suffix": null,
+    "max_token_length": null,
+    "limit_alphabet": 128
+  }
+}

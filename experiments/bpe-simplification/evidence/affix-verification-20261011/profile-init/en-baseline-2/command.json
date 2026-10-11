@@ -1,0 +1,21 @@
+[
+  "perf",
+  "stat",
+  "--all-user",
+  "-e",
+  "cycles,instructions,branches,branch-misses",
+  "-D",
+  "-1",
+  "--control",
+  "fifo:/root/code/tokenizers-workspaces/bpe-affix-verification-results-20261011/profile-init/en-baseline-2/control.fifo,/root/code/tokenizers-workspaces/bpe-affix-verification-results-20261011/profile-init/en-baseline-2/ack.fifo",
+  "-x",
+  "\t",
+  "-o",
+  "/root/code/tokenizers-workspaces/bpe-affix-verification-results-20261011/profile-init/en-baseline-2/counters.tsv",
+  "--",
+  "taskset",
+  "-c",
+  "0-3",
+  "/root/code/tokenizers-workspaces/bpe-affix-verification-results-20261011/baseline-bin",
+  "/root/code/tokenizers-workspaces/bpe-affix-verification-results-20261011/profile-init/en-baseline-2/job.json"
+]

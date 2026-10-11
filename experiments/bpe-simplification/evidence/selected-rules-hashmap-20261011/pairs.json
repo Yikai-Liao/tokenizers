@@ -1,0 +1,72 @@
+[
+  {
+    "case": "zh-plain",
+    "arm": "candidate",
+    "full_model_equal": true,
+    "model_sha256": "03857d37596935e431416a9f4b539f55a2859c7e6ab7a3724aefa21d7267ace4",
+    "delta_percent": {
+      "alphabet_selection_seconds": 1.7513164602657172,
+      "vocabulary_initialization_seconds": 6.438800461472605,
+      "alphabet_plus_initialization_seconds": 1.7608509970121755,
+      "train_seconds": -0.3031336570990417,
+      "train_cpu_seconds": 0.500560709586062,
+      "process_hwm_kib_before_validation": -3.706151195357388
+    }
+  },
+  {
+    "case": "en-plain",
+    "arm": "candidate",
+    "full_model_equal": true,
+    "model_sha256": "f5985a11260436de069f450996b31261a6b73d4c2d1bd92df8216929237fe872",
+    "delta_percent": {
+      "alphabet_selection_seconds": -15.44361104684333,
+      "vocabulary_initialization_seconds": -16.62849890722642,
+      "alphabet_plus_initialization_seconds": -15.571124239195711,
+      "train_seconds": -3.8439581526305555,
+      "train_cpu_seconds": -3.006465520154422,
+      "process_hwm_kib_before_validation": -0.11832985856764511
+    }
+  },
+  {
+    "case": "zh-affix",
+    "arm": "candidate",
+    "full_model_equal": true,
+    "model_sha256": "588ed3aea9eba5d9cd77779540fc148d34312c7dadeebcdd6326c87cee757ab1",
+    "delta_percent": {
+      "alphabet_selection_seconds": 0.29269946614698394,
+      "vocabulary_initialization_seconds": -5.849747253249216,
+      "alphabet_plus_initialization_seconds": -2.7044300342876637,
+      "train_seconds": 3.4342063899026165,
+      "train_cpu_seconds": 2.8724035269453996,
+      "process_hwm_kib_before_validation": 0.18903341501987914
+    }
+  },
+  {
+    "case": "en-affix",
+    "arm": "candidate",
+    "full_model_equal": true,
+    "model_sha256": "a6c9aac13904dc7e43051ae1eda1a38794b1778b01e52608de6fd286c0cfe2cc",
+    "delta_percent": {
+      "alphabet_selection_seconds": -25.08246281226555,
+      "vocabulary_initialization_seconds": -10.88837696243533,
+      "alphabet_plus_initialization_seconds": -18.899519096611648,
+      "train_seconds": -0.5452011865539452,
+      "train_cpu_seconds": 0.6866173912111639,
+      "process_hwm_kib_before_validation": 1.7598574292715607
+    }
+  },
+  {
+    "case": "zh-affix-repeat",
+    "arm": "candidate",
+    "full_model_equal": true,
+    "model_sha256": "588ed3aea9eba5d9cd77779540fc148d34312c7dadeebcdd6326c87cee757ab1",
+    "delta_percent": {
+      "alphabet_selection_seconds": 0.8745782785325229,
+      "vocabulary_initialization_seconds": -8.787907799020333,
+      "alphabet_plus_initialization_seconds": -3.8839883204889403,
+      "train_seconds": 0.08491487528625719,
+      "train_cpu_seconds": 2.026535495493631,
+      "process_hwm_kib_before_validation": 2.2318463155949875
+    }
+  }
+]

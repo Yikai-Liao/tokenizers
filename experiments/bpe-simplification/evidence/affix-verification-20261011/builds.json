@@ -1,0 +1,47 @@
+[
+  {
+    "arm": "baseline",
+    "command": [
+      "cargo",
+      "build",
+      "--offline",
+      "--locked",
+      "--release",
+      "--manifest-path",
+      "experiments/bpe-simplification/runner/Cargo.toml"
+    ],
+    "exit_code": 0,
+    "seconds": 33.579574750037864,
+    "binary_sha256": "2d0dfdd739f8d349b3ecd8d7577b2b2101d62583bdd25d379e3b17a7b742ca54"
+  },
+  {
+    "arm": "candidate",
+    "command": [
+      "cargo",
+      "build",
+      "--offline",
+      "--locked",
+      "--release",
+      "--manifest-path",
+      "experiments/bpe-simplification/runner/Cargo.toml"
+    ],
+    "exit_code": 0,
+    "seconds": 34.04224603716284,
+    "binary_sha256": "c8a68a9de44ff8871a13ef59dff0dd3d5d4c0d8bb0865d0998d33611bf074e46"
+  },
+  {
+    "arm": "flags-only",
+    "command": [
+      "cargo",
+      "build",
+      "--offline",
+      "--locked",
+      "--release",
+      "--manifest-path",
+      "experiments/bpe-simplification/runner/Cargo.toml"
+    ],
+    "exit_code": 0,
+    "seconds": 44.04090455407277,
+    "binary_sha256": "347d07e10321ba4f2c5f9943f880de65abf385ed397281c3e379da4a1499cf0b"
+  }
+]
