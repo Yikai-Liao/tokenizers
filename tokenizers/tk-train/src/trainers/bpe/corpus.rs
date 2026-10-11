@@ -134,14 +134,20 @@ impl<'input> CorpusPlan<'input> {
         let n = self.word_count();
         while begin < n {
             let start = self.starts[begin];
-            // starts omits the final separator boundary. Admit the tail directly
-            // when it fits; otherwise search resident boundaries without addition.
-            let end = if self.length - start <= slots {
+            let one_word_end = begin + 1;
+            let end = if one_word_end == n || self.length - start <= slots {
                 n
             } else {
-                let fitted =
-                    self.starts[begin + 1..].partition_point(|&next| next - start <= slots);
-                begin + fitted.max(1)
+                // The first word is admitted even when oversized. Each later
+                // boundary closes one additional word; an exact-budget end fits.
+                let additional_words = match slice_group_by::exponential_search_by(
+                    &self.starts[one_word_end + 1..],
+                    |&next| (next - start).cmp(&slots),
+                ) {
+                    Ok(exact) => exact + 1,
+                    Err(insertion) => insertion,
+                };
+                one_word_end + additional_words
             };
             ranges.push(begin..end);
             begin = end;
@@ -513,5 +519,14 @@ mod tests {
                 assert_eq!(end, plan.word_count());
             }
         }
+
+        // Slot widths 3, 4, 2, 6: exact-budget boundaries stay in the segment.
+        plan.starts = vec![1, 4, 8, 10];
+        plan.length = 16;
+        plan.words = vec![(&text, &weight); 4];
+        assert_eq!(plan.initial_ranges(7), vec![0..2, 2..3, 3..4]);
+        assert_eq!(plan.initial_ranges(9), vec![0..3, 3..4]);
+        assert_eq!(plan.initial_ranges(15), vec![0..4]);
+        assert_eq!(plan.initial_ranges(2), vec![0..1, 1..2, 2..3, 3..4]);
     }
 }

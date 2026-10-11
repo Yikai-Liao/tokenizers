@@ -10,7 +10,8 @@ use ahash::{AHashMap, AHashSet};
 use itertools::Itertools;
 use rayon::prelude::*;
 use smallvec::SmallVec;
-use std::{collections::VecDeque, ops::Range};
+use std::collections::VecDeque;
+use std::ops::Range;
 use tk_encode::{Result, models::bpe::Pair};
 
 /// One selected pair and resolved replacement ID, owning its candidate positions.

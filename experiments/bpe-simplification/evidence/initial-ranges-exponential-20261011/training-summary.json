@@ -1,0 +1,82 @@
+[
+  {
+    "case": "zh-whitespace-256MiB",
+    "workers": 4,
+    "formal_pairs": 4,
+    "baseline": {
+      "train_seconds": 23.647760781,
+      "train_cpu_seconds": 64.1737855,
+      "process_hwm_kib_before_validation": 1831826.0
+    },
+    "candidate": {
+      "train_seconds": 23.241453898499998,
+      "train_cpu_seconds": 63.8567885,
+      "process_hwm_kib_before_validation": 1831802.0
+    },
+    "paired_median_delta_percent": {
+      "train_seconds": 0.17071344326993199,
+      "train_cpu_seconds": 1.1314704526128372,
+      "process_hwm_kib_before_validation": -0.03513081766000625
+    },
+    "paired_changes_percent": {
+      "train_seconds": [
+        -3.077840350963257,
+        -0.6522956814151604,
+        1.604590370520853,
+        0.9937225679550243
+      ],
+      "train_cpu_seconds": [
+        -2.082178388526934,
+        1.1140784258150571,
+        1.1488624794106173,
+        2.460306534131962
+      ],
+      "process_hwm_kib_before_validation": [
+        -0.2157313948015216,
+        0.08807126123291376,
+        0.16855269564231,
+        -0.15833289655292626
+      ]
+    }
+  },
+  {
+    "case": "en-whitespace-256MiB",
+    "workers": 4,
+    "formal_pairs": 4,
+    "baseline": {
+      "train_seconds": 1.551411487,
+      "train_cpu_seconds": 3.6720544999999998,
+      "process_hwm_kib_before_validation": 157184.0
+    },
+    "candidate": {
+      "train_seconds": 1.5369874315,
+      "train_cpu_seconds": 3.629352,
+      "process_hwm_kib_before_validation": 165146.0
+    },
+    "paired_median_delta_percent": {
+      "train_seconds": -0.41735880902584177,
+      "train_cpu_seconds": 0.7044789112803318,
+      "process_hwm_kib_before_validation": 2.7849439514639363
+    },
+    "paired_changes_percent": {
+      "train_seconds": [
+        1.6994158514768376,
+        -6.18916572923025,
+        -2.534133469528521,
+        2.5984612289103204
+      ],
+      "train_cpu_seconds": [
+        1.6297331713321261,
+        -5.780063990947215,
+        1.4177513529180619,
+        -0.008793530357398271
+      ],
+      "process_hwm_kib_before_validation": [
+        -1.398184979634609,
+        5.114332380563491,
+        0.553140034474775,
+        5.0167478684530975
+      ]
+    }
+  }
+]

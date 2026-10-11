@@ -1,0 +1,14 @@
+{
+  "binary": "/tmp/bpe-index-baseline-bin-20261011",
+  "binary_sha256": "fe3206340f5aa6e31fe9e090233c0588ed78cea96f71a3cb0b3cda72f1067772",
+  "workers": 1,
+  "vocab_target": 2048,
+  "same_vocab": true,
+  "merge_counts": [
+    2164,
+    2164
+  ],
+  "first_merge_difference": 1023,
+  "different_merge_positions": 586,
+  "source": "c8e7348e890d45dd06aadc8464e085df8bcb1202"
+}

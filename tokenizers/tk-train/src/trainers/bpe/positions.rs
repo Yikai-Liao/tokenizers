@@ -206,7 +206,8 @@ impl Positions {
         // The binary search finds the first restart seed at or above target.
         // Its predecessor can contain the first match near its tail, including
         // duplicates spanning the boundary, so scan that block before advancing.
-        let start = begin.saturating_sub(1) * RESTART;
+        let block = begin.saturating_sub(1);
+        let start = (block * RESTART).min(len);
         start
             + self
                 .iter_range(start..(start + RESTART).min(len))
@@ -221,7 +222,7 @@ impl Positions {
 }
 
 /// Private borrowed view of encoder-owned bytes; it adds no storage or allocation.
-/// Both range reads and value seeks use the same directory and offset decoder.
+/// Both block reads and value seeks use the same directory and offset decoder.
 struct Compressed<'a> {
     directory: &'a [[u8; USIZE_BYTES]],
     data: &'a [u8],

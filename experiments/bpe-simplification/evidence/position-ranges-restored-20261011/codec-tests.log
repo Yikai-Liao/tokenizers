@@ -1,0 +1,115 @@
+   Compiling crossbeam-utils v0.8.23
+   Compiling crossbeam-epoch v0.9.21
+   Compiling crossbeam-deque v0.8.8
+   Compiling rayon-core v1.13.0
+   Compiling either v1.19.0
+   Compiling cfg-if v1.0.5
+   Compiling thread_local v1.1.10
+   Compiling smallvec v1.16.2
+   Compiling itertools v0.14.0
+   Compiling rayon v1.12.0
+   Compiling lean-bpe-codec-check v0.0.0 (/root/code/tokenizers-workspaces/bpe-heap-experiment/experiments/bpe-simplification/miri-codec)
+warning: constant `RESTART` is never used
+  --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:10:7
+   |
+10 | const RESTART: usize = 128;
+   |       ^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: constant `USIZE_BYTES` is never used
+  --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:11:7
+   |
+11 | const USIZE_BYTES: usize = std::mem::size_of::<usize>();
+   |       ^^^^^^^^^^^
+
+warning: enum `Positions` is never used
+  --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:16:17
+   |
+16 | pub(super) enum Positions {
+   |                 ^^^^^^^^^
+
+warning: multiple associated items are never used
+   --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:25:19
+    |
+ 24 | impl Positions {
+    | -------------- associated items in this implementation
+ 25 |     pub(super) fn len(&self) -> usize {
+    |                   ^^^
+...
+ 36 |     pub(super) fn is_empty(&self) -> bool {
+    |                   ^^^^^^^^
+...
+ 41 |     pub(super) fn from_sorted(values: &[u64]) -> Result<Self> {
+    |                   ^^^^^^^^^^^
+...
+ 47 |     pub(super) fn concat(mut fragments: Vec<Self>) -> Result<Self> {
+    |                   ^^^^^^
+...
+ 65 |     fn encode(count: usize, mut values: impl Iterator<Item = u64>) -> Result<Self> {
+    |        ^^^^^^
+...
+127 |     fn compressed(&self) -> Compressed<'_> {
+    |        ^^^^^^^^^^
+...
+140 |     fn block_count(&self) -> usize {
+    |        ^^^^^^^^^^^
+...
+147 |     pub(super) fn partition_ranges(
+    |                   ^^^^^^^^^^^^^^^^
+...
+158 |     pub(super) fn iter(&self) -> impl Iterator<Item = u64> + '_ {
+    |                   ^^^^
+...
+165 |     pub(super) fn iter_range(&self, range: Range<usize>) -> impl Iterator<Item = u64> + '_ {
+    |                   ^^^^^^^^^^
+...
+196 |     fn lower_bound(&self, target: u64) -> usize {
+    |        ^^^^^^^^^^^
+...
+219 |     pub(super) fn iter_from_value(&self, target: u64) -> impl Iterator<Item = u64> + '_ {
+    |                   ^^^^^^^^^^^^^^^
+
+warning: struct `Compressed` is never constructed
+   --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:226:8
+    |
+226 | struct Compressed<'a> {
+    |        ^^^^^^^^^^
+
+warning: methods `block_bytes` and `bytes_at` are never used
+   --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:232:8
+    |
+231 | impl<'a> Compressed<'a> {
+    | ----------------------- methods in this implementation
+232 |     fn block_bytes(&self, block: usize) -> &'a [u8] {
+    |        ^^^^^^^^^^^
+...
+240 |     fn bytes_at(&self, entry: &[u8; USIZE_BYTES]) -> &'a [u8] {
+    |        ^^^^^^^^
+
+warning: struct `Cursor` is never constructed
+   --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:250:8
+    |
+250 | struct Cursor<'a> {
+    |        ^^^^^^
+
+warning: `lean-bpe-codec-check` (lib) generated 7 warnings
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 5.52s
+     Running unittests src/lib.rs (/tmp/bpe-ranges-codec-20261011/debug/deps/lean_bpe_codec_check-1f35c907f83a9223)
+
+running 7 tests
+test positions::tests::concat_preserves_duplicates_and_reuses_a_single_nonempty_fragment ... ok
+test positions::tests::direct_encoding_retains_restart_directory_and_gap_format ... ok
+test positions::tests::lower_bound_preserves_the_first_duplicate_across_restarts ... ok
+test positions::tests::storage_rejects_inverted_ranges_and_unsorted_input ... ok
+test positions::tests::truncated_restart_panics_but_completed_cursor_reads_no_bytes ... ok
+test positions::tests::partition_ranges_cover_lists_without_losing_duplicates_at_boundaries ... ok
+test positions::tests::storage_roundtrips_seeks_and_supports_concurrent_readers ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s
+
+   Doc-tests lean_bpe_codec_check
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

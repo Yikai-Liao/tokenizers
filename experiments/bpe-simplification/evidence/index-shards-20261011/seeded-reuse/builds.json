@@ -1,0 +1,28 @@
+{
+  "baseline": {
+    "command": [
+      "cargo",
+      "build",
+      "--offline",
+      "--release",
+      "--locked",
+      "--manifest-path",
+      "/root/code/tokenizers-workspaces/bpe-index-baseline-20261011/experiments/bpe-simplification/runner/Cargo.toml"
+    ],
+    "source_sha256": "af5de15980b3f9393512c66e64947e6a8f8da211bab72ea9351f2e301da9b814",
+    "binary_sha256": "7463e3989f513f3082f495188c9e18d3c36b5a5e0f60047950d83e9681380f73"
+  },
+  "candidate": {
+    "command": [
+      "cargo",
+      "build",
+      "--offline",
+      "--release",
+      "--locked",
+      "--manifest-path",
+      "/root/code/tokenizers-workspaces/bpe-index-baseline-20261011/experiments/bpe-simplification/runner/Cargo.toml"
+    ],
+    "source_sha256": "2cf16ec1ae536fa18c3f6143c3ee129afa08a27c8f911469df11e235d5c1b251",
+    "binary_sha256": "2d736a49046df16e7eda705c1443066d77ac842c0659e546cdd31d47a13c5c89"
+  }
+}

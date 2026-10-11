@@ -1,0 +1,32 @@
+{
+  "baseline_commit": "ac32723d3dd555d7810d794db86a7a2ae65d7181",
+  "trial_builds": "../builds.json",
+  "release_profile": {
+    "opt_level": 3,
+    "lto": "fat",
+    "codegen_units": 1
+  },
+  "sha256": {
+    "tokenizers/tk-train/src/trainers/bpe/corpus.rs": "d78dd3ce5170b40b6079dfcd9616267081958b81fd6729a9d2aa5c7b6bbff2b0",
+    "tokenizers/tk-train/Cargo.toml": "7a6235f8cdfdecfdbbf3cffc9de7b7478e6e2b7a1a7033aae6f0bfb85a9d04bc",
+    "experiments/bpe-simplification/runner/Cargo.lock": "2379cbc14ec17b10699614e2bc84ef53b972eb6357694e480109ab08fabe452a",
+    "experiments/bpe-simplification/evidence/initial-ranges-exponential-20261011/explicit-one-word/source/binary-corpus.rs": "0629309a4bf4c2b8eca4d475effcf457eb555af737bd86df8edbec3edd42d8a4",
+    "experiments/bpe-simplification/evidence/initial-ranges-exponential-20261011/explicit-one-word/source/linear-corpus.rs": "ab900ef156da26353739f1e5240d50132cb7304d2bce6d25763b76ca0467867d",
+    "experiments/bpe-simplification/evidence/initial-ranges-exponential-20261011/explicit-one-word/source/exponential-corpus.rs": "d78dd3ce5170b40b6079dfcd9616267081958b81fd6729a9d2aa5c7b6bbff2b0",
+    "experiments/bpe-simplification/evidence/initial-ranges-exponential-20261011/explicit-one-word/source/binary-ranges.rs": "90811f34047a343347ac135899118ab0af1df2775e18660b897d2adf0ed0a38a",
+    "experiments/bpe-simplification/evidence/initial-ranges-exponential-20261011/explicit-one-word/source/linear-ranges.rs": "8dd0ba86ec94200b32647d8b0e3628304679e812cd25c2860115d36195a0f700",
+    "experiments/bpe-simplification/evidence/initial-ranges-exponential-20261011/explicit-one-word/source/exponential-ranges.rs": "6b464bd2cb388f082ca58318b068fbffa93583c31d44f30f337d093c7023c7d3",
+    "experiments/bpe-simplification/evidence/initial-ranges-exponential-20261011/explicit-one-word/microbench.rs": "0b8513d2e86a9835f6bbc0a539c7676879655fbc0637cf8432dad29ad9c8d8c0",
+    "/tmp/bpe-exponential-binary-bin-20261011": "feac0996bac21ac50cdadad1637a24a6408ba1504aa55d2ea563707bab4bc907",
+    "/tmp/bpe-exponential-explicit-bin-20261011": "9530c5d950f75013da43b01112a0a90a49e9aee10ed3c5f00bfcfdb1803b694d",
+    "/tmp/bpe-exponential-explicit-micro-target-20261011/release/bpe-initial-ranges-micro": "1b94e4f8fb8bba80935821bf1ab320327136ddacdf39fb4898956dd182701145"
+  },
+  "runner_build": "CARGO_TARGET_DIR=/tmp/bpe-index-build-20261011 cargo build --offline --locked --release --manifest-path experiments/bpe-simplification/runner/Cargo.toml",
+  "micro_build": "python3 build_micro.py",
+  "micro_run": "taskset -c 0 /tmp/bpe-exponential-explicit-micro-target-20261011/release/bpe-initial-ranges-micro",
+  "shared_source_unchanged": {
+    "positions.rs": true,
+    "index.rs": true,
+    "merge.rs": true
+  }
+}

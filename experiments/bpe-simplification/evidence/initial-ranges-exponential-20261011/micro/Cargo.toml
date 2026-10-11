@@ -1,0 +1,16 @@
+[package]
+name = "bpe-initial-ranges-micro"
+version = "0.0.0"
+edition = "2024"
+
+[[bin]]
+name = "bpe-initial-ranges-micro"
+path = "../microbench.rs"
+
+[dependencies]
+slice-group-by = { version = "0.3.1", default-features = false }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

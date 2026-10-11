@@ -51,80 +51,33 @@ impl PartialOrd for Candidate {
     }
 }
 
-/// Initial pair count and positions, mutable while counting and frozen for routing.
-/// Mutable SmallVec storage becomes Positions without duplicating the weighted count.
+/// Weighted count and occurrence storage, mutable during aggregation and frozen
+/// for initial routing or candidate publication.
 #[derive(Default)]
 struct State<P> {
     count: u64,
     positions: P,
 }
 
-/// Owner-local partial births for one (producer bucket, pair), awaiting publication.
-/// Fresh fragments concatenate in order; reuse positions accumulate unordered
-/// and are sorted, retaining duplicates, before their historical cohort is frozen.
-struct Group {
-    count: u64,
-    positions: GroupPositions,
-}
-
-enum GroupPositions {
-    Ordered(SmallVec<[u64; 2]>),
-    Unordered(Vec<u64>),
-}
-
-impl Group {
-    fn new(reuse: bool) -> Self {
-        Self {
-            count: 0,
-            positions: if reuse {
-                GroupPositions::Unordered(Vec::new())
-            } else {
-                GroupPositions::Ordered(SmallVec::new())
-            },
-        }
-    }
-}
-
 // Metadata stays borrowed during commit; each position stream has one owner.
 type Event = Change<()>;
 
-/// Reusable actions destined for one pair-count owner, in producer order.
+/// One pair-count owner and its reusable pending work, in producer order.
 /// Actions index shared event metadata; the separate birth array owns one stream
 /// per birth action and avoids reserving a payload for removal-only actions.
 #[derive(Default)]
-struct Route {
+struct Shard {
+    counts: AHashMap<Pair, u64>,
     actions: Vec<(usize, bool, bool)>,
     // One stream per birth action, in the same order.
     positions: Vec<Birth>,
-}
-
-impl Route {
-    fn push(&mut self, index: usize, remove: bool, birth: Option<Birth>) {
-        self.actions.push((index, remove, birth.is_some()));
-        self.positions.extend(birth);
-    }
-
-    fn drain(&mut self) -> impl Iterator<Item = (usize, bool, Option<Birth>)> + '_ {
-        // The two arrays save a large optional payload on removal-only actions.
-        // Both drains own their remaining items, so an error drops unpublished births
-        // and restores empty reusable routes before the failed attempt is discarded.
-        let mut positions = self.positions.drain(..);
-        self.actions.drain(..).map(move |(index, remove, birth)| {
-            (
-                index,
-                remove,
-                birth.then(|| positions.next().expect("each birth owns one stream")),
-            )
-        })
-    }
 }
 
 /// Authoritative pair-count shards plus an owning queue of occurrence candidates.
 /// Each pair has one count owner; queued priorities are repaired lazily at the head.
 /// Fresh counts retire below the floor; reuse retains the per-action signed ledger.
 pub(super) struct PairIndex {
-    shards: Vec<AHashMap<Pair, u64>>,
-    routes: Vec<Route>,
+    shards: Vec<Shard>,
     queue: OctonaryHeap<Candidate>,
     floor: u64,
     reuse: bool,
@@ -181,7 +134,6 @@ impl PairIndex {
         let (shards, candidates): (Vec<_>, Vec<_>) = owners.into_iter().unzip();
         Ok(Self {
             shards,
-            routes: Vec::new(),
             queue: candidates.into_iter().flatten().collect(),
             floor: minimum.max(1),
             reuse,
@@ -195,7 +147,9 @@ impl PairIndex {
     pub(super) fn best(&mut self) -> Option<Priority> {
         loop {
             let top = self.queue.peek()?.priority;
-            let Some(&count) = self.shards[owner(top.pair(), self.shards.len())].get(&top.pair())
+            let Some(&count) = self.shards[owner(top.pair(), self.shards.len())]
+                .counts
+                .get(&top.pair())
             else {
                 // Fresh counts retire below the floor. Their stale payloads are
                 // reclaimed when they reach the head of this owning queue.
@@ -219,6 +173,7 @@ impl PairIndex {
         if !self.reuse {
             let shard_count = self.shards.len();
             self.shards[owner(priority.pair(), shard_count)]
+                .counts
                 .remove(&priority.pair())
                 .expect("certified pair exists");
         }
@@ -235,11 +190,8 @@ impl PairIndex {
         let births = self
             .shards
             .par_iter_mut()
-            .zip(self.routes.par_iter_mut())
-            .filter(|(_, route)| !route.actions.is_empty())
-            .map(|(shard, route)| -> Result<_> {
-                OwnerCommit::new(shard, reuse, floor).commit(route, &events)
-            })
+            .filter(|shard| !shard.actions.is_empty())
+            .map(|shard| shard.commit(&events, reuse, floor))
             .collect::<Result<Vec<_>>>()?;
 
         // 3. Publish only after all owners join, in the same owner traversal order.
@@ -251,8 +203,7 @@ impl PairIndex {
 
     fn route_changes(&mut self, changes: Vec<Vec<Change<Birth>>>) -> Vec<Event> {
         let shard_count = self.shards.len();
-        self.routes.resize_with(shard_count, Route::default);
-        // Joined commits drain every route; any error aborts this attempt.
+        // Joined commits drain each shard's pending work; any error aborts this attempt.
         let mut events = Vec::with_capacity(changes.iter().map(Vec::len).sum());
         for change in changes.into_iter().flatten() {
             let removed = (change.removed_weight != 0).then(|| owner(change.removed, shard_count));
@@ -269,14 +220,14 @@ impl PairIndex {
             });
             match (removed, born) {
                 (Some(removed), Some(born)) if removed == born => {
-                    self.routes[removed].push(index, true, Some(change.positions));
+                    self.shards[removed].push(index, true, Some(change.positions));
                 }
                 (removed, born) => {
                     if let Some(removed) = removed {
-                        self.routes[removed].push(index, true, None);
+                        self.shards[removed].push(index, true, None);
                     }
                     if let Some(born) = born {
-                        self.routes[born].push(index, false, Some(change.positions));
+                        self.shards[born].push(index, false, Some(change.positions));
                     }
                 }
             }
@@ -367,23 +318,19 @@ fn count_range(
         .collect::<Result<Vec<_>>>()
 }
 
-fn build_owner(
-    pieces: InitialPiece,
-    floor: u64,
-    reuse: bool,
-) -> Result<(AHashMap<Pair, u64>, Vec<Candidate>)> {
+fn build_owner(pieces: InitialPiece, floor: u64, reuse: bool) -> Result<(Shard, Vec<Candidate>)> {
     let mut states = AHashMap::<Pair, State<Vec<Positions>>>::new();
     for (pair, state) in pieces {
         let total = states.entry(pair).or_default();
         add(&mut total.count, state.count)?;
         total.positions.push(state.positions);
     }
-    let mut shard = AHashMap::new();
+    let mut shard = Shard::default();
     let mut candidates = Vec::new();
     for (pair, state) in states {
         if reuse || state.count >= floor {
             let positions = Positions::concat(state.positions)?;
-            shard.insert(pair, state.count);
+            shard.counts.insert(pair, state.count);
             if state.count != 0 {
                 candidates.push(Candidate {
                     priority: Priority {
@@ -398,136 +345,100 @@ fn build_owner(
     Ok((shard, candidates))
 }
 
-/// One owner's sequential count update and birth publication within a joined commit.
-/// Borrows its count shard and owns pending groups and candidates.
-/// Failed work drops unpublished lists; the attempt is discarded.
-struct OwnerCommit<'index> {
-    shard: &'index mut AHashMap<Pair, u64>,
-    reuse: bool,
-    floor: u64,
-    groups: BTreeMap<(usize, Pair), Group>,
-    candidates: Vec<Candidate>,
-}
-
-impl<'index> OwnerCommit<'index> {
-    fn new(shard: &'index mut AHashMap<Pair, u64>, reuse: bool, floor: u64) -> Self {
-        Self {
-            shard,
-            reuse,
-            floor,
-            groups: BTreeMap::new(),
-            candidates: Vec::new(),
-        }
+impl Shard {
+    fn push(&mut self, index: usize, remove: bool, birth: Option<Birth>) {
+        self.actions.push((index, remove, birth.is_some()));
+        self.positions.extend(birth);
     }
 
-    // A boundary removal precedes its replacement birth. The signed reuse ledger
-    // checks each action in that order, including intermediate overflow.
-    fn commit(mut self, route: &mut Route, events: &[Event]) -> Result<Vec<Candidate>> {
-        for (index, remove, birth) in route.drain() {
+    fn commit(&mut self, events: &[Event], reuse: bool, floor: u64) -> Result<Vec<Candidate>> {
+        let mut groups = BTreeMap::<(usize, Pair), State<SmallVec<[u64; 2]>>>::new();
+        let mut candidates = Vec::new();
+        // Both drains own their remaining items: errors drop unpublished births
+        // and empty the pending vectors while retaining their capacity.
+        let mut positions = self.positions.drain(..);
+        for (index, remove, birth) in self.actions.drain(..) {
             let change = &events[index];
+            // A boundary removal precedes its replacement birth. The signed reuse
+            // ledger checks each action in order, including intermediate overflow.
             if remove {
-                self.remove_weight(change.removed, change.removed_weight)?;
-            }
-            if let Some(positions) = birth {
-                self.record_birth(change, positions)?;
-            }
-        }
-        self.publish_groups()
-    }
-
-    fn remove_weight(&mut self, pair: Pair, weight: u64) -> Result<()> {
-        if self.reuse {
-            let count = self.shard.entry(pair).or_default();
-            adjust_signed(count, weight, true)?;
-        } else if let Some(state) = self.shard.get_mut(&pair) {
-            *state = state
-                .checked_sub(weight)
-                .ok_or("BPE fresh removal exceeds the current count")?;
-            if *state < self.floor {
-                self.shard.remove(&pair);
-            }
-        }
-        Ok(())
-    }
-
-    fn record_birth(&mut self, change: &Event, positions: Birth) -> Result<()> {
-        if self.reuse {
-            let count = self.shard.entry(change.born).or_default();
-            adjust_signed(count, change.born_weight, false)?;
-        }
-        let positions = match positions {
-            Birth::Complete(positions) => {
-                // Fresh IDs and compatible rules give each complete birth one producer.
-                debug_assert!(!self.reuse && change.born_weight >= self.floor);
-                debug_assert!(!self.shard.contains_key(&change.born));
-                self.shard.insert(change.born, change.born_weight);
-                self.candidates.push(Candidate {
-                    priority: Priority {
-                        count: change.born_weight,
-                        pair: Reverse(change.born),
-                    },
-                    positions,
-                });
-                return Ok(());
-            }
-            Birth::Partial(positions) => positions,
-        };
-        let group = self
-            .groups
-            .entry((change.bucket, change.born))
-            .or_insert_with(|| Group::new(self.reuse));
-        add(&mut group.count, change.born_weight)?;
-        match &mut group.positions {
-            GroupPositions::Unordered(values) => values.extend(positions.iter().copied()),
-            GroupPositions::Ordered(values) => {
-                // Fresh jobs follow rule rank and spatial ranges. Each
-                // born key has one producer, so lists concatenate sorted.
-                if values.is_empty() {
-                    *values = positions;
-                } else {
-                    values.extend(positions);
+                if reuse {
+                    let count = self.counts.entry(change.removed).or_default();
+                    adjust_signed(count, change.removed_weight, true)?;
+                } else if let Some(count) = self.counts.get_mut(&change.removed) {
+                    *count = count
+                        .checked_sub(change.removed_weight)
+                        .ok_or("BPE fresh removal exceeds the current count")?;
+                    if *count < floor {
+                        self.counts.remove(&change.removed);
+                    }
                 }
             }
+            if !birth {
+                continue;
+            }
+            if reuse {
+                let count = self.counts.entry(change.born).or_default();
+                adjust_signed(count, change.born_weight, false)?;
+            }
+            let values = match positions.next().expect("each birth owns one stream") {
+                Birth::Complete(positions) => {
+                    // Fresh IDs and compatible rules give each complete birth one producer.
+                    debug_assert!(!reuse && change.born_weight >= floor);
+                    debug_assert!(!self.counts.contains_key(&change.born));
+                    self.counts.insert(change.born, change.born_weight);
+                    candidates.push(Candidate {
+                        priority: Priority {
+                            count: change.born_weight,
+                            pair: Reverse(change.born),
+                        },
+                        positions,
+                    });
+                    continue;
+                }
+                Birth::Partial(values) => values,
+            };
+            let group = groups.entry((change.bucket, change.born)).or_default();
+            add(&mut group.count, change.born_weight)?;
+            // Fresh jobs follow rule rank and spatial ranges. Each born key has
+            // one producer, so fragments concatenate sorted. Reuse sorts below.
+            // Fresh fragments transfer their first allocation. Reuse copies into
+            // owner-local aggregation storage before sorting interleaved fragments.
+            if !reuse && group.positions.is_empty() {
+                group.positions = values;
+            } else {
+                group.positions.extend_from_slice(&values);
+            }
         }
-        Ok(())
-    }
 
-    fn publish_groups(mut self) -> Result<Vec<Candidate>> {
-        // Partial birth groups follow bucket/pair order within this owner. Complete
-        // producers have already published directly into its candidate list.
-        for ((_, pair), state) in self.groups {
-            let count = if self.reuse {
-                self.shard[&pair]
+        // Complete producers precede partial groups, which follow bucket/pair order.
+        for ((_, pair), mut state) in groups {
+            let count = if reuse {
+                self.counts[&pair]
             } else {
                 state.count
             };
-            // A positive reuse ledger publishes a historical birth cohort even
-            // below the floor; selection applies the floor after correcting its head.
-            if (self.reuse && (count as i64) <= 0) || (!self.reuse && count < self.floor) {
+            // A positive reuse ledger publishes a historical cohort even below
+            // the floor; selection applies the floor after correcting its head.
+            if (reuse && (count as i64) <= 0) || (!reuse && count < floor) {
                 continue;
             }
-            let priority = Priority {
-                count,
-                pair: Reverse(pair),
-            };
-            let positions = match state.positions {
-                GroupPositions::Unordered(mut values) => {
-                    values.sort_unstable();
-                    Positions::from_sorted(&values)?
-                }
-                GroupPositions::Ordered(values) => {
-                    debug_assert!(!self.shard.contains_key(&pair));
-                    self.shard.insert(pair, count);
-                    Positions::from_sorted(&values)?
-                }
-            };
-            self.candidates.push(Candidate {
-                priority,
-                positions,
+            if reuse {
+                // Historical cohorts retain duplicate positions.
+                state.positions.sort_unstable();
+            } else {
+                debug_assert!(!self.counts.contains_key(&pair));
+                self.counts.insert(pair, count);
+            }
+            candidates.push(Candidate {
+                priority: Priority {
+                    count,
+                    pair: Reverse(pair),
+                },
+                positions: Positions::from_sorted(&state.positions)?,
             });
         }
-
-        Ok(self.candidates)
+        Ok(candidates)
     }
 }
 
@@ -544,6 +455,165 @@ mod tests {
         models::bpe::{Merges, Vocab},
         vocab::bucket_added_vocabulary::AddedToken,
     };
+
+    #[test]
+    fn reuse_groups_sort_positions_keep_duplicates_and_publish_in_bucket_order() {
+        let pair = (7, 8);
+        let mut shard = Shard::default();
+        let mut events = Vec::new();
+        for (bucket, weight, values) in [(1, 1, &[8][..]), (0, 0, &[9][..]), (0, 2, &[2, 2][..])] {
+            shard.push(
+                events.len(),
+                false,
+                Some(Birth::Partial(SmallVec::from_slice(values))),
+            );
+            events.push(Event {
+                removed: pair,
+                born: pair,
+                removed_weight: 0,
+                born_weight: weight,
+                bucket,
+                positions: (),
+            });
+        }
+        let candidates = shard.commit(&events, true, 10).unwrap();
+        assert_eq!(shard.counts[&pair], 3);
+        assert_eq!(
+            candidates.len(),
+            2,
+            "positive cohorts survive below the floor"
+        );
+        assert_eq!(
+            candidates[0].positions.iter().collect::<Vec<_>>(),
+            [2, 2, 9]
+        );
+        assert_eq!(candidates[1].positions.iter().collect::<Vec<_>>(), [8]);
+        assert!(
+            candidates
+                .iter()
+                .all(|candidate| candidate.priority.count == 3)
+        );
+        assert!(shard.actions.is_empty() && shard.positions.is_empty());
+    }
+
+    #[test]
+    fn fresh_commit_retires_removals_and_publishes_complete_then_partial_births() {
+        let removed = (0, 1);
+        let partial = (2, 3);
+        let complete = (4, 5);
+        let pruned = (6, 7);
+        let mut shard = Shard::default();
+        shard.counts.insert(removed, 5);
+        let events = [
+            Event {
+                removed,
+                born: partial,
+                removed_weight: 3,
+                born_weight: 1,
+                bucket: 0,
+                positions: (),
+            },
+            Event {
+                removed,
+                born: partial,
+                removed_weight: 0,
+                born_weight: 2,
+                bucket: 0,
+                positions: (),
+            },
+            Event {
+                removed,
+                born: complete,
+                removed_weight: 0,
+                born_weight: 4,
+                bucket: 1,
+                positions: (),
+            },
+            Event {
+                removed,
+                born: pruned,
+                removed_weight: 0,
+                born_weight: 1,
+                bucket: 2,
+                positions: (),
+            },
+        ];
+        shard.push(0, true, Some(Birth::Partial(SmallVec::from_slice(&[20]))));
+        shard.push(
+            1,
+            false,
+            Some(Birth::Partial(SmallVec::from_slice(&[21, 22]))),
+        );
+        shard.push(
+            2,
+            false,
+            Some(Birth::Complete(Positions::from_sorted(&[11]).unwrap())),
+        );
+        shard.push(3, false, Some(Birth::Partial(SmallVec::from_slice(&[30]))));
+        let candidates = shard.commit(&events, false, 3).unwrap();
+        assert!(!shard.counts.contains_key(&removed));
+        assert!(!shard.counts.contains_key(&pruned));
+        assert_eq!(shard.counts[&partial], 3);
+        assert_eq!(shard.counts[&complete], 4);
+        assert_eq!(
+            candidates
+                .iter()
+                .map(|c| c.priority.pair())
+                .collect::<Vec<_>>(),
+            [complete, partial]
+        );
+        assert_eq!(
+            candidates[1].positions.iter().collect::<Vec<_>>(),
+            [20, 21, 22]
+        );
+    }
+
+    #[test]
+    fn failed_commit_drains_pending_streams_and_checks_intermediate_overflow() {
+        let pair = (0, 1);
+        for reuse in [false, true] {
+            let mut shard = Shard::default();
+            if reuse {
+                shard.counts.insert(pair, i64::MAX as u64);
+            }
+            let events = [
+                Event {
+                    removed: pair,
+                    born: pair,
+                    removed_weight: 0,
+                    born_weight: if reuse { 1 } else { u64::MAX },
+                    bucket: 0,
+                    positions: (),
+                },
+                Event {
+                    removed: pair,
+                    born: pair,
+                    removed_weight: if reuse { 1 } else { 0 },
+                    born_weight: if reuse { 0 } else { 1 },
+                    bucket: 0,
+                    positions: (),
+                },
+            ];
+            shard.push(0, false, Some(Birth::Partial(SmallVec::from_slice(&[0]))));
+            shard.push(1, reuse, Some(Birth::Partial(SmallVec::from_slice(&[1]))));
+            let capacities = (shard.actions.capacity(), shard.positions.capacity());
+            let error = shard
+                .commit(&events, reuse, 1)
+                .err()
+                .expect("overflow must fail");
+            assert!(
+                error
+                    .to_string()
+                    .contains(if reuse { "exceeds i64" } else { "exceeds u64" }),
+                "{error}"
+            );
+            assert!(shard.actions.is_empty() && shard.positions.is_empty());
+            assert_eq!(
+                (shard.actions.capacity(), shard.positions.capacity()),
+                capacities
+            );
+        }
+    }
 
     type Outcome = (Trace, (Vocab, Merges));
 
@@ -577,7 +647,9 @@ mod tests {
                     // AB writes ID 3 before its right birth (3, C) reaches its
                     // owner. Force that owner's signed addition to overflow.
                     let born = (3, 2);
-                    index.shards[owner(born, workers)].insert(born, i64::MAX as u64);
+                    index.shards[owner(born, workers)]
+                        .counts
+                        .insert(born, i64::MAX as u64);
                     let before: Vec<_> = (0..corpus.len()).map(|p| corpus.token(p)).collect();
                     let queued = index.queue.len();
                     let error = batch
@@ -624,7 +696,7 @@ mod tests {
         .unwrap();
         assert_eq!(cohorts.each_ref().map(|values| values.len()), [1, 1]);
         let mut index = PairIndex::build(&plan, 1, 1, true, &progress).unwrap();
-        assert_eq!(index.shards[0][&pair], 5);
+        assert_eq!(index.shards[0].counts[&pair], 5);
         let mut candidates = index.queue.into_vec();
         candidates.retain(|candidate| candidate.priority.pair() != pair);
         for (positions, count) in cohorts.into_iter().zip([10, 5]) {

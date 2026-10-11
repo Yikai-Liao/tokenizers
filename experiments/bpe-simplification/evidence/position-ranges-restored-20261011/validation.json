@@ -1,0 +1,62 @@
+{
+  "baseline_commit": "31355de59120102e5a999f7abf5e77b61a5e69d7",
+  "restored_interface_commit": "bc9442153f27c615ec66f6cb5b5cb437999ea421",
+  "default_tests": {
+    "passed": 38,
+    "filtered": 1,
+    "command": "CARGO_TARGET_DIR=/tmp/bpe-index-tests-20261011 cargo test --offline --locked --manifest-path tokenizers/tk-train/Cargo.toml --lib -- --skip feed_training_tokenizer_json_and_encoding_roundtrip"
+  },
+  "no_default_tests": {
+    "passed": 38,
+    "filtered": 1,
+    "command": "CARGO_TARGET_DIR=/tmp/bpe-index-tests-20261011 cargo test --offline --locked --manifest-path tokenizers/tk-train/Cargo.toml --no-default-features --lib -- --skip feed_training_tokenizer_json_and_encoding_roundtrip"
+  },
+  "native_codec_tests": {
+    "passed": 7,
+    "command": "CARGO_TARGET_DIR=/tmp/bpe-ranges-codec-20261011 cargo test --offline --locked --manifest-path experiments/bpe-simplification/miri-codec/Cargo.toml"
+  },
+  "clippy": {
+    "exit_code": 0,
+    "command": "CARGO_TARGET_DIR=/tmp/bpe-index-tests-20261011 cargo clippy --offline --locked --manifest-path tokenizers/tk-train/Cargo.toml --no-default-features --all-targets -- -D warnings"
+  },
+  "format": {
+    "exit_code": 0,
+    "command": "uv run experiments/bpe-simplification/format-changed.py --check tokenizers/tk-train/src/trainers/bpe/positions.rs tokenizers/tk-train/src/trainers/bpe/merge.rs"
+  },
+  "whitespace": {
+    "exit_code": 0,
+    "command": "git diff --check"
+  },
+  "existing_failure": "feed_training_tokenizer_json_and_encoding_roundtrip: already reproduced on the previous baseline",
+  "preservation_checks": {
+    "shared_compressed_constructor_unchanged": true,
+    "compressed_view_and_offset_reader_unchanged": true,
+    "partition_point_restart_search_unchanged": true,
+    "cursor_seed_and_delta_reader_unchanged": true,
+    "later_decoder_tests_unchanged": true,
+    "shard_index_unchanged": true,
+    "chunk_interface_removed": true,
+    "vecdeque_prefetch_body_unchanged": true,
+    "cohort_find_retained": true
+  },
+  "source_sha256": {
+    "candidate-positions.rs": "53589c5588b78d1401e5e55b7b3572fe90f6dad1938658081f7310ac44428792",
+    "baseline-positions.rs": "e6eaa982ef23823085105e084be98812f8e3e9da0ec48c8e0220cdbabe8ad26b",
+    "candidate-merge.rs": "329c7937e8329df4e4af821eebfda0737f484c4e6c2c6d13c0f3962d29e901c2",
+    "baseline-merge.rs": "891489788bf20d6d4b88c9523a2d23952e342e381acf4973fd1b61f0c62eb4fd"
+  },
+  "linear_scan_experiment": "Paused by user; existing corpus change retained locally. No additional linear-scan measurements performed.",
+  "performance": "No new performance measurements for this restoration.",
+  "push_validation": {
+    "scope": "Staged Range-only source snapshot, with baseline binary initial_ranges. Default/no-default library checks and Clippy were rerun on this snapshot.",
+    "source_snapshot_tree": "1a5b6b351b952d0a313a86aa4bd9459418d7b516",
+    "default_tests_passed": 38,
+    "no_default_tests_passed": 38,
+    "filtered_known_baseline_failure": 1,
+    "clippy_exit_code": 0,
+    "baseline_corpus_sha256": "0629309a4bf4c2b8eca4d475effcf457eb555af737bd86df8edbec3edd42d8a4",
+    "train_lock_sha256": "edf6c7e6808c5eb7611aad7c49cb6fad27cbd98f4e92ce869c556806ea7ff3e3",
+    "lock_note": "Copied the existing ignored local tk-train Cargo.lock to preserve the dependencies used by earlier checks.",
+    "command_note": "Same test/Clippy commands recorded above, with the manifest rooted in an archive of the staged tree."
+  }
+}

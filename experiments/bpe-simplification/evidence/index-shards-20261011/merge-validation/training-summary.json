@@ -1,0 +1,53 @@
+{
+  "case": "zh-whitespace-256MiB",
+  "workers": 4,
+  "formal_pairs": 8,
+  "models_compared": 20,
+  "baseline": {
+    "train_seconds": 19.8122404235,
+    "train_cpu_seconds": 54.9735255,
+    "process_hwm_kib_before_validation": 1836950.0
+  },
+  "candidate": {
+    "train_seconds": 20.3721476085,
+    "train_cpu_seconds": 55.136438999999996,
+    "process_hwm_kib_before_validation": 1835124.0
+  },
+  "paired_median_delta_percent": {
+    "train_seconds": 2.184445750467401,
+    "train_cpu_seconds": 1.3031527430463985,
+    "process_hwm_kib_before_validation": -0.11494301667157036
+  },
+  "individual_paired_delta_percent": {
+    "train_seconds": [
+      8.930462052167542,
+      1.2457245254400062,
+      4.30368667144303,
+      -1.8809698910022488,
+      2.5412108288794144,
+      3.0980913518306785,
+      1.452006056224353,
+      1.8276806720553873
+    ],
+    "train_cpu_seconds": [
+      4.4382485563486895,
+      -0.826789667307215,
+      1.3861005994318498,
+      -1.508144244315901,
+      2.699011745074853,
+      -1.4262450251999015,
+      1.2202048866609472,
+      3.197260040242611
+    ],
+    "process_hwm_kib_before_validation": [
+      -0.5863329157111186,
+      -0.5599671116688687,
+      -1.9056788672715097,
+      0.22668810640158465,
+      0.8127278638020874,
+      0.2542182079692923,
+      -0.1516486624674962,
+      -0.07823737087564453
+    ]
+  }
+}

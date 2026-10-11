@@ -43,10 +43,9 @@ The implementation is divided by the knowledge each module owns:
   Empty, one-value and two-value lists stay inline; longer lists own compressed
   byte slices. Construction accepts a sorted slice or consumes ordered fragments
   without an encoder service. Duplicates and coordinates through `u64::MAX` are preserved.
-  Readers use `iter()`, `iter_from_value(coordinate)`, or `iter_range(range)`.
-  `partition_ranges(target_items)` chooses independent ranges of element indices;
-  each task keeps its range paired with the originating rule. Compression offsets
-  and restart alignment stay private, and range iteration allocates no fragment storage.
+  Readers use iteration, `iter_from_value(coordinate)`, and `iter_range(range)`.
+  `partition_ranges(target_items)` returns standard ranges of list elements;
+  restart alignment stays inside Positions.
 - [feed.rs](feed.rs) owns streaming batches and word aggregation. Named
   `flush` and `accumulate` closures share callback/error handling. Serial input
   retains its map; parallel folds flush at 2048 distinct local keys and publish
@@ -73,8 +72,9 @@ without waiting for every producer. Owned compressed fragments retain complete
 pair counts; global frequency admission precedes final list publication. There is
 no extra wave barrier.
 
-The plan finds each segment's resident boundary with `partition_point`, admitting
-the final tail separately because the word starts omit the final boundary.
+Each range admits one word first, including an oversized word. A fitting final
+tail is admitted directly; otherwise `slice-group-by`'s `exponential_search_by`
+counts additional words whose end boundaries fit, including an exact-budget end.
 Vocabulary exposes one filtered `symbols()` iterator to initial edge counting and
 endpoint materialization. Decorations still use original UTF-8 byte boundaries;
 edge coordinates enumerate retained symbols. Unlimited alphabet observation uses

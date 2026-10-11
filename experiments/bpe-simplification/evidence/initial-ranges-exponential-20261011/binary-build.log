@@ -1,0 +1,6 @@
+   Compiling bitcannon v0.1.0-dev.2 (/tmp/bpe-range-push-20261011-sntvkgwq/tokenizers/bitcannon)
+   Compiling tk-convert v0.1.0-dev.2 (/tmp/bpe-range-push-20261011-sntvkgwq/tokenizers/tk-convert)
+   Compiling tk-encode v0.1.0-dev.2 (/tmp/bpe-range-push-20261011-sntvkgwq/tokenizers/tk-encode)
+   Compiling tk-train v0.1.0-dev.2 (/tmp/bpe-range-push-20261011-sntvkgwq/tokenizers/tk-train)
+   Compiling bpe-bench-runner v0.1.0 (/tmp/bpe-range-push-20261011-sntvkgwq/experiments/bpe-simplification/runner)
+    Finished `release` profile [optimized] target(s) in 41.08s

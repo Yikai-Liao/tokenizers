@@ -155,13 +155,16 @@ counting, queue lookup and commit use the same mapping within a build, without
 per-call randomness. This replaces a local multiplier/rotation heuristic; hash
 outputs and owner indices are internal and are not stored in the model format.
 
-`OwnerCommit` encapsulates one owner's sequential commit work. It borrows the count
-shard, fixes the reuse/frequency policy, and owns partial birth groups, pending
-candidates. Its commit method drains
-the route in order, removes old weight before recording each birth, and consumes
-the work state when publishing groups. The coordinator receives only completed
-candidates after owner jobs join. Errors release unpublished storage and discard
-the attempt; the object does not roll back already-applied count changes.
+Each private `Shard` owns its count table, pending actions and birth streams.
+`PairIndex` routes work directly into those shards and commits nonempty shards in
+parallel. `Shard::commit` drains actions in producer order, removes old weight
+before recording each birth, then publishes partial groups in bucket/pair order
+from a local `BTreeMap`.
+Groups use the same count-and-storage `State` as initial counting, with SmallVec
+positions; reuse sorts them before encoding while fresh fragments append in order.
+Groups and candidates remain local to the algorithm. The coordinator receives
+completed candidates only after shard jobs join. Errors release unpublished
+storage and discard the attempt; applied count changes are not rolled back.
 
 Owners hold counts; one global Candidate priority queue owns fresh lists and
 reuse cohorts. Taking a fresh candidate removes its count key and queue record.
@@ -181,14 +184,15 @@ task order. Each key has one producer, so this preserves spatial order without
 another sort. Reuse births can interleave; their full-u64 coordinates are sorted before
 encoding. There is no adaptive birth feedback or linked-node promotion.
 
-Commit retains one immutable metadata array and owner routes with reusable
-capacity. Each route action is a resident usize record reference and two flags.
+Commit retains one immutable metadata array and shard-local pending vectors with
+reusable capacity. Each action is a resident usize record reference and two flags.
 Only nonzero removals and nonempty births route; zero-weight births with
 positions still route. Each position stream moves to exactly one owner payload
 vector, in the order of that owner's birth actions. Removal precedes birth for
 each action; owner order is the original producer order. Draining both vectors
 retains capacity. Errors drop active drains; the attempt is discarded after
-owner jobs join. Successful commits drain every route before the next round.
+owner jobs join. Successful commits drain every shard's pending vectors before
+the next round.
 
 Published lists use an Enum with Empty, One and Two inline cases and an owned
 `Box<[u8]>` for longer restart/delta streams. The Enum is 24 bytes on the measured

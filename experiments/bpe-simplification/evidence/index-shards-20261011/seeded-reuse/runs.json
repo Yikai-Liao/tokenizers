@@ -1,0 +1,86 @@
+[
+  {
+    "arm": "baseline",
+    "workers": 1,
+    "block": 0,
+    "model_equal": true,
+    "sha256": "b87bb0e56a2d197ce0114e2f3a4e0a5409401ce29c3c9adc08dfdf7092616fb0"
+  },
+  {
+    "arm": "candidate",
+    "workers": 1,
+    "block": 0,
+    "model_equal": true,
+    "sha256": "b87bb0e56a2d197ce0114e2f3a4e0a5409401ce29c3c9adc08dfdf7092616fb0"
+  },
+  {
+    "arm": "baseline",
+    "workers": 1,
+    "block": 1,
+    "model_equal": true,
+    "sha256": "b87bb0e56a2d197ce0114e2f3a4e0a5409401ce29c3c9adc08dfdf7092616fb0"
+  },
+  {
+    "arm": "candidate",
+    "workers": 1,
+    "block": 1,
+    "model_equal": true,
+    "sha256": "b87bb0e56a2d197ce0114e2f3a4e0a5409401ce29c3c9adc08dfdf7092616fb0"
+  },
+  {
+    "arm": "baseline",
+    "workers": 1,
+    "block": 2,
+    "model_equal": true,
+    "sha256": "b87bb0e56a2d197ce0114e2f3a4e0a5409401ce29c3c9adc08dfdf7092616fb0"
+  },
+  {
+    "arm": "candidate",
+    "workers": 1,
+    "block": 2,
+    "model_equal": true,
+    "sha256": "b87bb0e56a2d197ce0114e2f3a4e0a5409401ce29c3c9adc08dfdf7092616fb0"
+  },
+  {
+    "arm": "baseline",
+    "workers": 4,
+    "block": 0,
+    "model_equal": true,
+    "sha256": "e45d5f2193c173cb43e43e7380bb0a4fc8f0b3bc26b86486e2648abc1c7f6470"
+  },
+  {
+    "arm": "candidate",
+    "workers": 4,
+    "block": 0,
+    "model_equal": true,
+    "sha256": "e45d5f2193c173cb43e43e7380bb0a4fc8f0b3bc26b86486e2648abc1c7f6470"
+  },
+  {
+    "arm": "baseline",
+    "workers": 4,
+    "block": 1,
+    "model_equal": true,
+    "sha256": "e45d5f2193c173cb43e43e7380bb0a4fc8f0b3bc26b86486e2648abc1c7f6470"
+  },
+  {
+    "arm": "candidate",
+    "workers": 4,
+    "block": 1,
+    "model_equal": true,
+    "sha256": "e45d5f2193c173cb43e43e7380bb0a4fc8f0b3bc26b86486e2648abc1c7f6470"
+  },
+  {
+    "arm": "baseline",
+    "workers": 4,
+    "block": 2,
+    "model_equal": true,
+    "sha256": "e45d5f2193c173cb43e43e7380bb0a4fc8f0b3bc26b86486e2648abc1c7f6470"
+  },
+  {
+    "arm": "candidate",
+    "workers": 4,
+    "block": 2,
+    "model_equal": true,
+    "sha256": "e45d5f2193c173cb43e43e7380bb0a4fc8f0b3bc26b86486e2648abc1c7f6470"
+  }
+]

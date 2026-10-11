@@ -1,0 +1,22 @@
+{
+  "remote_parent": "52ca2951",
+  "local_parent": "fb0864a0",
+  "default_features": {
+    "passed": 38,
+    "excluded": 1,
+    "command": "CARGO_TARGET_DIR=/tmp/bpe-index-tests-20261011 cargo test --offline --manifest-path tokenizers/tk-train/Cargo.toml --lib -- --skip feed_training_tokenizer_json_and_encoding_roundtrip"
+  },
+  "no_default_features": {
+    "passed": 38,
+    "excluded": 1,
+    "command": "CARGO_TARGET_DIR=/tmp/bpe-index-tests-20261011 cargo test --offline --manifest-path tokenizers/tk-train/Cargo.toml --no-default-features --lib -- --skip feed_training_tokenizer_json_and_encoding_roundtrip"
+  },
+  "clippy": {
+    "exit_code": 0,
+    "command": "CARGO_TARGET_DIR=/tmp/bpe-index-tests-20261011 cargo clippy --offline --manifest-path tokenizers/tk-train/Cargo.toml --no-default-features --all-targets -- -D warnings"
+  },
+  "format": {
+    "exit_code": 0
+  },
+  "existing_failure": "feed_training_tokenizer_json_and_encoding_roundtrip: baseline assertion already reproduced"
+}

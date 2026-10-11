@@ -1,0 +1,18 @@
+{
+  "protocol_version": 1,
+  "attempt_id": "generated-reuse-1-0-baseline",
+  "build_id": "baseline",
+  "input_id": "generated-reuse",
+  "mode": "core",
+  "input": "/root/code/tokenizers-workspaces/bpe-heap-experiment/experiments/bpe-simplification/evidence/trainer-interface-20261011/reuse-words.json",
+  "output": "/tmp/bpe-index-final-training-results-20261011/generated-reuse-1-0-baseline/model.json",
+  "workers": 1,
+  "pretokenizer": "none",
+  "trainer": {
+    "vocab_size": 2048,
+    "min_frequency": 1,
+    "prefix": null,
+    "suffix": "a",
+    "max_token_length": null
+  }
+}
