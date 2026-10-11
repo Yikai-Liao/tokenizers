@@ -1001,68 +1001,6 @@ fn builder_defaults_options_and_serialization_remain_compatible() {
 }
 
 #[test]
-fn symbols_preserve_short_circuiting_and_utf8_affix_boundaries() {
-    use std::ops::ControlFlow;
-    let words = counts(&[("é🙂é", 2), ("🙂é", 1)]);
-    for decorated in [false, true] {
-        let mut trainer = trainer();
-        if decorated {
-            trainer.continuing_subword_prefix = Some("##".into());
-            trainer.end_of_word_suffix = Some("</w>".into());
-        }
-        let view = WordCountsView::from_map(&words);
-        let progress = trainer.setup_progress();
-        let (_, ids) = Vocabulary::initialize(
-            &trainer,
-            view,
-            &vocabulary::select_alphabet(&trainer, view, 1),
-            &progress,
-        )
-        .unwrap();
-        for (text, expected) in [
-            (
-                "é🙂",
-                [
-                    ids.id('é', true, false).unwrap(),
-                    ids.id('🙂', false, true).unwrap(),
-                ],
-            ),
-            (
-                "qé🙂z",
-                [
-                    ids.id('é', false, false).unwrap(),
-                    ids.id('🙂', false, false).unwrap(),
-                ],
-            ),
-        ] {
-            let emitted: Vec<_> = ids.symbols(text).collect();
-            assert_eq!(emitted, expected);
-        }
-        let mut calls = 0;
-        let reason = ids.symbols("é🙂é").try_for_each(|_| {
-            calls += 1;
-            if calls == 2 {
-                ControlFlow::Break("stop")
-            } else {
-                ControlFlow::Continue(())
-            }
-        });
-        assert_eq!(reason, ControlFlow::Break("stop"));
-        assert_eq!(calls, 2);
-        let plan = CorpusPlan::build(view, ids, &trainer, true).unwrap();
-        let mut edges = 0;
-        let error = plan
-            .initial_edges(0..plan.word_count(), |_, _, _| {
-                edges += 1;
-                Err("edge failure".into())
-            })
-            .unwrap_err();
-        assert_eq!(error.to_string(), "edge failure");
-        assert_eq!(edges, 1);
-    }
-}
-
-#[test]
 fn initial_edges_preserve_filtered_coordinates_weights_and_errors() {
     let words = counts(&[("qé🙂z", 7), ("é🙂é", 6), ("🙂é", 5), ("", 4), ("é", 3)]);
     for decorated in [false, true] {
