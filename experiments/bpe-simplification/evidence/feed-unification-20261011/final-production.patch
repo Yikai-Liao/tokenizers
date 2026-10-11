@@ -1,0 +1,477 @@
+diff --git a/experiments/bpe-simplification/STATUS.md b/experiments/bpe-simplification/STATUS.md
+index b3808511..6700b1a7 100644
+--- a/experiments/bpe-simplification/STATUS.md
++++ b/experiments/bpe-simplification/STATUS.md
+@@ -8,6 +8,42 @@ and [the flattening report](FLATTEN.md) for validation and scoped diffs against
+ HF main and the starting revision. Counts are descriptive; hard line limits
+ have been retired. Earlier counts and limits below describe historical snapshots.
+ 
++## Feed aggregation unification, 2026-10-11
++
++Frozen baseline `52ca2951` has the same feed source as plan reference `a2f1c0f7`.
++Retain A: named `flush` and `accumulate` closures replace `LocalCounts`, generic
++accumulation, the batch helper and two intermediate result collections. Serial
++input keeps its map; parallel input retains local aggregation into SCC. Feed
++falls from 146 to 93 physical lines, or 113 to 81 nonblank, noncomment lines.
++
++The three-arm initial matrix and targeted extra checks complete 66 serially run
++processes on the existing Chinese/English 256 MiB corpora, ByteLevel/Whitespace,
++and one/four workers. Every canonical full-count hash and complete model matches;
++child swap and major faults remain zero. The final paired pipeline wall changes
++for A are:
++
++| Input | One worker | Four workers |
++| --- | ---: | ---: |
++| Chinese ByteLevel | −1.29% | +0.32% |
++| Chinese Whitespace | −0.87% | −0.42% |
++| English ByteLevel | +2.95% | +1.64% |
++| English Whitespace | +2.97% | +1.78% |
++
++Chinese ByteLevel/four-worker feed wall rises 8.76% in five pairs; process HWM
++through feed has about 330 MiB higher readings in three pairs (paired median
+++35.35%), while full-pipeline HWM changes +0.50%. English ByteLevel pipeline HWM
++changes direction between initial and later pairs. These are cumulative process
++peaks, and no stable universal time/memory improvement is claimed. B is rejected:
++its English four-worker pipeline wall regresses 16.68% and 20.66%; directed repeats
++show the per-occurrence shared-update cost.
++
++Default and no-default library suites each pass 36 tests with the known encoder
++roundtrip assertion filtered. Unfiltered default has 36 passes and that one
++failure, also reproduced on the frozen baseline. Clippy with denied warnings,
++changed-file formatting and whitespace checks pass. Boundary tests, raw paired
++metrics, full-count/model hashes, microbenchmarks, source/dependency snapshots and
++reproduction scripts are in [the feed report](evidence/feed-unification-20261011/README.md).
++
+ ## Standard and existing-library logic replacements, 2026-10-11
+ 
+ The ordinary trainer now shares a filtered symbols iterator for edge counting and
+diff --git a/tokenizers/tk-train/src/trainers/bpe/COVERAGE.md b/tokenizers/tk-train/src/trainers/bpe/COVERAGE.md
+index 8c8a8b00..fa035870 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/COVERAGE.md
++++ b/tokenizers/tk-train/src/trainers/bpe/COVERAGE.md
+@@ -23,6 +23,7 @@ Literal alphabet expectations independently check that shared selector.
+ | Failed training and failed model construction | Pair-count overflow and a successfully trained oversized affix rejected by the reader both leave the previous model vocabulary intact |
+ | Public feed, trainer serialization, special-token return, model options and tokenizer JSON reload | Feed-to-training integration and complete serialized model equality and three literal input-to-ID expectations before/after tokenizer JSON reload |
+ | Feed flushing, first `None`, duplicate callback words and transactional process errors | Isolated public test at 0/31/32/33/127/128/129/257 items, resumed nonfused input, empty/Unicode/long callback words, bulk 2047/2048/2049 unique words, exact flat counts, full callback count after error and unchanged prior state |
++| Feed unification boundaries and failure interleaving | Disabled parallelism, enabled/one worker and four workers; startup W and W+31/32/33/64 lengths; per-ID callback/read counts; first exhaustion; 2047/2048/2049/4097 keys with repeated words across flushes; first/middle/last/multiple ordinary errors; exact counts and public model equality; controlled two-worker shared writes plus a successful tail and failing partition leave prior trainer state intact |
+ | Requested training pool versus ambient pool and serial settings | Child processes install an ambient two-thread pool; materialization and both preparation paths check requested pool size and record that each executed; feed callbacks verify ambient worker size and concurrent/serial execution |
+ | JSON progress schema, starts and completion | Child-process matrix covers normal/no-bar/zero-merge/empty/Silent; strict JSON parsing, exact three-field schema, initial zero and final actual merge count; the zero-merge case executes no materialization or preparation tasks |
+ | Numeric position width, duplicate values, restart blocks, seek, concatenation and owned byte storage | One matrix of empty and small lists and lengths around block boundaries, values through `u64::MAX`, explicit ten-byte deltas, all native seek starts and independent lower-bound expectations for present and gap values |
+diff --git a/tokenizers/tk-train/src/trainers/bpe/README.md b/tokenizers/tk-train/src/trainers/bpe/README.md
+index 374899ec..6b01e82c 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/README.md
++++ b/tokenizers/tk-train/src/trainers/bpe/README.md
+@@ -47,8 +47,13 @@ The implementation is divided by the knowledge each module owns:
+   `partition_ranges(target_items)` chooses independent ranges of element indices;
+   each task keeps its range paired with the originating rule. Compression offsets
+   and restart alignment stay private, and range iteration allocates no fragment storage.
+-- [feed.rs](feed.rs) owns streaming batches and bounded local word caches;
+-  `LocalCounts` controls cache flushing and successful completion.
++- [feed.rs](feed.rs) owns streaming batches and word aggregation. Named
++  `flush` and `accumulate` closures share callback/error handling. Serial input
++  retains its map; parallel folds flush at 2048 distinct local keys and publish
++  successful tails before ordinary error reduction. The shared table stays
++  private to one call, and failed feed leaves the previous trainer state intact.
++  Startup singletons expose short expensive streams to parallel callbacks; later
++  batches contain at most 32 inputs and retain the first exhaustion state.
+ - [word_counts.rs](word_counts.rs) owns borrowed and collected count views,
+   content equality and the flat serialization contract.
+ 
+diff --git a/tokenizers/tk-train/src/trainers/bpe/feed.rs b/tokenizers/tk-train/src/trainers/bpe/feed.rs
+index 57d6be52..3c0580f3 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/feed.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/feed.rs
+@@ -8,87 +8,10 @@ use tk_encode::{Result, parallelism::*};
+ type CountMap = AHashMap<CompactString, u64>;
+ type SharedCounts = scc::HashMap<CompactString, u64, RandomState>;
+ 
+-// Cap distinct local keys; strings and callback output are not byte-bounded.
++// Bound distinct local keys in parallel, not bytes or the serial map.
+ const LOCAL_KEY_LIMIT: usize = 2048;
+-// Amortize the bridge's serialized source `next()` lock across several inputs.
+ const FEED_BATCH_SIZE: usize = 32;
+ 
+-fn batches<I, S>(iterator: I, mut startup_singles: usize) -> impl Iterator<Item = Vec<S>> + Send
+-where
+-    I: Iterator<Item = S> + Send,
+-    S: Send,
+-{
+-    // Keep one exhaustion state across batches, including a partial final batch.
+-    let mut iterator = iterator.fuse();
+-    std::iter::from_fn(move || {
+-        if startup_singles > 0 {
+-            let item = iterator.next()?;
+-            startup_singles -= 1;
+-            return Some(vec![item]);
+-        }
+-        let batch: Vec<_> = iterator.by_ref().take(FEED_BATCH_SIZE).collect();
+-        (!batch.is_empty()).then_some(batch)
+-    })
+-}
+-
+-/// One fold's bounded distinct-word cache and its shared weighted-count destination.
+-/// Full caches flush during collection; finish flushes remaining entries only
+-/// after every fold succeeds. Dropping failed work never publishes its remainder.
+-struct LocalCounts<'shared> {
+-    counts: CountMap,
+-    shared: &'shared SharedCounts,
+-}
+-
+-impl<'shared> LocalCounts<'shared> {
+-    fn new(shared: &'shared SharedCounts, hash: RandomState) -> Self {
+-        Self {
+-            counts: CountMap::with_hasher(hash),
+-            shared,
+-        }
+-    }
+-
+-    fn add(&mut self, word: CompactString) {
+-        match self.counts.entry(word) {
+-            Entry::Occupied(mut entry) => *entry.get_mut() += 1,
+-            Entry::Vacant(entry) => {
+-                entry.insert(1);
+-                // Only a new key can fill the cache; repeated words need no size check.
+-                if self.counts.len() == LOCAL_KEY_LIMIT {
+-                    self.flush();
+-                }
+-            }
+-        }
+-    }
+-
+-    fn flush(&mut self) {
+-        for (word, count) in self.counts.drain() {
+-            self.shared
+-                .entry_sync(word)
+-                .and_modify(|total| *total += count)
+-                .or_insert(count);
+-        }
+-    }
+-
+-    fn finish(mut self) {
+-        self.flush();
+-    }
+-}
+-
+-fn accumulate<S, F, C, A>(counts: Result<C>, sequence: S, process: &F, mut add: A) -> Result<C>
+-where
+-    S: AsRef<str>,
+-    F: Fn(&str) -> Result<Vec<String>>,
+-    A: FnMut(&mut C, CompactString),
+-{
+-    // Run the callback even after a normal error; retain this fold's first error.
+-    let words = process(sequence.as_ref());
+-    let mut counts = counts?;
+-    for word in words? {
+-        add(&mut counts, CompactString::from(word));
+-    }
+-    Ok(counts)
+-}
+-
+ pub(super) fn count<I, S, F>(iterator: I, process: &F) -> Result<WordCounts>
+ where
+     I: Iterator<Item = S> + Send,
+@@ -96,45 +19,69 @@ where
+     F: Fn(&str) -> Result<Vec<String>> + Sync,
+ {
+     let hash = RandomState::default();
+-    let new_counts = || Ok(CountMap::with_hasher(hash.clone()));
+-    let parallel_workers = if get_parallelism() {
++    let workers = if get_parallelism() {
+         current_num_threads()
+     } else {
+         1
+     };
+-    if parallel_workers == 1 {
+-        // A single worker needs neither shared updates nor a final copy. Keep
+-        // its map, using the same callback/error handling as the parallel path.
++    let parallel = workers > 1;
++    let shared = parallel.then(|| SharedCounts::with_hasher(hash.clone()));
++    let flush = |counts: &mut CountMap| {
++        if let Some(shared) = &shared {
++            for (word, count) in counts.drain() {
++                shared
++                    .entry_sync(word)
++                    .and_modify(|total| *total += count)
++                    .or_insert(count);
++            }
++        }
++    };
++    let accumulate = |counts: Result<CountMap>, sequence: S| -> Result<CountMap> {
++        // Call every input after ordinary errors; retain this fold's first error.
++        let words = process(sequence.as_ref());
++        let mut counts = counts?;
++        for word in words? {
++            match counts.entry(CompactString::from(word)) {
++                Entry::Occupied(mut entry) => *entry.get_mut() += 1,
++                Entry::Vacant(entry) => {
++                    entry.insert(1);
++                    // Repeated words need no size check.
++                    if counts.len() == LOCAL_KEY_LIMIT {
++                        flush(&mut counts);
++                    }
++                }
++            }
++        }
++        Ok(counts)
++    };
++    if !parallel {
+         return iterator
+-            .fold(new_counts(), |counts, sequence| {
+-                accumulate(counts, sequence, process, |counts, word| {
+-                    *counts.entry(word).or_default() += 1;
+-                })
+-            })
++            .fold(Ok(CountMap::with_hasher(hash.clone())), accumulate)
+             .map(WordCounts::from_map);
+     }
+-    let shared = SharedCounts::with_hasher(hash.clone());
+-    // Keep preprocessing behind the upstream bridge: mapping it on the input
+-    // iterator would execute callbacks under the bridge's serial next() lock.
+-    // Local caches absorb repeats; flushes update weighted counts directly,
+-    // avoiding a separate partition-and-reduce pass over all local entries.
+-    // Seed the ambient pool with independent inputs before amortizing the
+-    // bridge lock. A short stream of expensive documents would otherwise form
+-    // one batch whose callbacks all run serially on the same worker. Source
+-    // exhaustion naturally caps these singletons at the available input count.
+-    let results: Vec<Result<LocalCounts<'_>>> = batches(iterator, parallel_workers)
++
++    // Seed with single inputs, then amortize the bridge lock across batches.
++    let mut iterator = iterator.fuse();
++    let mut singles = workers;
++    let batches = std::iter::from_fn(move || {
++        let size = if singles > 0 { 1 } else { FEED_BATCH_SIZE };
++        singles = singles.saturating_sub(1);
++        let batch: Vec<_> = iterator.by_ref().take(size).collect();
++        (!batch.is_empty()).then_some(batch)
++    });
++    batches
+         .maybe_par_bridge()
+         .flat_map_iter(std::iter::IntoIterator::into_iter)
+-        .fold(
+-            || Ok(LocalCounts::new(&shared, hash.clone())),
+-            |counts, sequence| accumulate(counts, sequence, process, LocalCounts::add),
+-        )
+-        .collect();
+-    let locals: Vec<_> = results.into_iter().collect::<Result<Vec<_>>>()?;
+-    locals.into_maybe_par_iter().for_each(LocalCounts::finish);
+-    // Training only traverses counts, so consume keys into an unordered vector
+-    // instead of paying to allocate and rehash another dictionary. Training
+-    // sorts borrowed entries; feed retains no frequency ordering or index.
++        .fold(|| Ok(CountMap::with_hasher(hash.clone())), accumulate)
++        .map(|counts| -> Result<()> {
++            let mut counts = counts?;
++            flush(&mut counts);
++            Ok(())
++        })
++        // Ordinary reduction completes all callbacks despite ordinary errors.
++        .reduce(|| Ok(()), |left, right| left.and(right))?;
++
++    let shared = shared.unwrap();
+     let mut words = Vec::with_capacity(shared.len());
+     // Keep table capacity stable while consumption removes its entries.
+     let _reservation = shared.reserve(shared.capacity());
+diff --git a/tokenizers/tk-train/src/trainers/bpe/tests.rs b/tokenizers/tk-train/src/trainers/bpe/tests.rs
+index 899fb1a2..a3d3f126 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/tests.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/tests.rs
+@@ -1032,3 +1032,200 @@ fn initial_edges_preserve_filtered_coordinates_weights_and_errors() {
+         }
+     }
+ }
++
++#[test]
++fn feed_unification_boundaries_errors_and_stored_state() {
++    const CHILD: &str = "BPE_FEED_UNIFICATION_CHILD";
++    const TEST: &str = "trainers::bpe::tests::feed_unification_boundaries_errors_and_stored_state";
++    if let Ok(setting) = std::env::var(CHILD) {
++        let workers = if setting == "one" { 1 } else { 4 };
++        let parallel = setting != "disabled";
++        tk_encode::parallelism::set_parallelism(parallel);
++        tk_encode::parallelism::set_num_threads(workers);
++        rayon::ThreadPoolBuilder::new()
++            .num_threads(workers)
++            .build()
++            .unwrap()
++            .install(|| {
++                check_feed_unification_success(parallel && workers > 1, workers);
++                check_feed_unification_errors();
++            });
++        if parallel && workers > 1 {
++            check_feed_failure_after_shared_updates();
++        }
++        return;
++    }
++    for setting in ["disabled", "one", "many"] {
++        let result = std::process::Command::new(std::env::current_exe().unwrap())
++            .args(["--exact", TEST, "--nocapture"])
++            .env(CHILD, setting)
++            .output()
++            .unwrap();
++        assert!(
++            result.status.success(),
++            "{setting}: {}",
++            String::from_utf8_lossy(&result.stderr)
++        );
++    }
++}
++
++fn check_feed_unification_success(parallel: bool, workers: usize) {
++    use super::word_counts::WordCounts;
++    let mut lengths = vec![0, 1, workers - 1, workers, workers + 1];
++    lengths.extend([31, 32, 33, 64].map(|n| workers + n));
++    for length in lengths {
++        let reads = AtomicUsize::new(0);
++        let seen: Vec<_> = (0..length).map(|_| AtomicUsize::new(0)).collect();
++        let mut index = 0;
++        let input = std::iter::from_fn(|| {
++            reads.fetch_add(1, Ordering::Relaxed);
++            let value = index;
++            index += 1;
++            (value != length && value <= length + 1).then(|| value.to_string())
++        });
++        let counted = super::feed::count(input, &|text| {
++            let id = text.parse::<usize>().unwrap();
++            seen[id].fetch_add(1, Ordering::Relaxed);
++            Ok(if id % 3 == 0 {
++                vec![]
++            } else {
++                vec![format!("词🙂{id}"), "repeat".into(), "repeat".into()]
++            })
++        })
++        .unwrap();
++        assert_eq!(reads.load(Ordering::Relaxed), length + 1);
++        assert!(seen.iter().all(|n| n.load(Ordering::Relaxed) == 1));
++        assert_eq!(matches!(&counted, WordCounts::Entries(_)), parallel);
++        let mut expected = AHashMap::<CompactString, u64>::new();
++        for id in (0..length).filter(|id| id % 3 != 0) {
++            expected.insert(format!("词🙂{id}").into(), 1);
++            *expected.entry("repeat".into()).or_default() += 2;
++        }
++        assert_eq!(counted, WordCounts::from_map(expected));
++    }
++    // One callback crosses each key boundary, including multiple complete flushes.
++    for unique in [2047, 2048, 2049, 4097] {
++        let mut words: Vec<_> = (0..unique).map(|id| format!("key{id}")).collect();
++        words.extend(["key0".into(), format!("key{}", unique - 1), "key0".into()]);
++        let counted = super::feed::count(std::iter::once("input"), &|_| Ok(words.clone())).unwrap();
++        assert_eq!(matches!(&counted, WordCounts::Entries(_)), parallel);
++        let mut expected = AHashMap::<CompactString, u64>::new();
++        for word in &words {
++            *expected.entry(word.as_str().into()).or_default() += 1;
++        }
++        assert_eq!(counted, WordCounts::from_map(expected));
++    }
++    let mut trainer = trainer();
++    let input = ["hello hello 中文🙂", "hello baaba", "中文🙂 café", ""];
++    let expected = counts(&[("hello", 3), ("中文🙂", 2), ("baaba", 1), ("café", 1)]);
++    trainer
++        .feed(input.into_iter(), |text| {
++            Ok(text.split_whitespace().map(str::to_owned).collect())
++        })
++        .unwrap();
++    assert_eq!(trainer.words, WordCounts::from_map(expected.clone()));
++    assert_eq!(
++        trainer.train_vocab().unwrap(),
++        trainer.do_train(&expected).unwrap()
++    );
++}
++
++fn check_feed_unification_errors() {
++    let length = 67;
++    let mut trainer = trainer();
++    trainer
++        .feed(std::iter::once("saved"), |s| Ok(vec![s.into()]))
++        .unwrap();
++    let previous = trainer.clone();
++    for failures in [
++        vec![0],
++        vec![length / 2],
++        vec![length - 1],
++        vec![0, 9, 35, length - 1],
++    ] {
++        let seen: Vec<_> = (0..length).map(|_| AtomicUsize::new(0)).collect();
++        let error = trainer
++            .feed((0..length).map(|id| id.to_string()), |text| {
++                let id = text.parse::<usize>().unwrap();
++                seen[id].fetch_add(1, Ordering::Relaxed);
++                if failures.contains(&id) {
++                    Err(format!("designated {id}").into())
++                } else {
++                    Ok(vec![text.into()])
++                }
++            })
++            .unwrap_err();
++        assert!(
++            failures
++                .iter()
++                .any(|id| error.to_string() == format!("designated {id}"))
++        );
++        assert!(seen.iter().all(|n| n.load(Ordering::Relaxed) == 1));
++        assert_eq!(trainer, previous);
++    }
++}
++
++fn check_feed_failure_after_shared_updates() {
++    let mut trainer = trainer();
++    trainer
++        .feed(std::iter::once("saved"), |s| Ok(vec![s.into()]))
++        .unwrap();
++    let previous = trainer.clone();
++    let participants = AtomicUsize::new(0);
++    let first_worker = AtomicUsize::new(usize::MAX);
++    let checkpoint = AtomicUsize::new(0);
++    let seen: Vec<_> = (0..3).map(|_| AtomicUsize::new(0)).collect();
++    rayon::ThreadPoolBuilder::new()
++        .num_threads(2)
++        .build()
++        .unwrap()
++        .install(|| {
++            let error = trainer
++                .feed(["0", "1", "2"].into_iter(), |text| {
++                    let id = text.parse::<usize>().unwrap();
++                    let worker = rayon::current_thread_index().unwrap();
++                    seen[id].fetch_add(1, Ordering::Relaxed);
++                    if id < 2 {
++                        participants.fetch_or(1 << worker, Ordering::Relaxed);
++                    }
++                    let deadline = Instant::now() + Duration::from_secs(5);
++                    match id {
++                        0 => {
++                            first_worker.store(worker, Ordering::Relaxed);
++                            while participants.load(Ordering::Relaxed).count_ones() < 2 {
++                                assert!(
++                                    Instant::now() < deadline,
++                                    "startup callbacks were serialized"
++                                );
++                                std::thread::yield_now();
++                            }
++                            // Returning allows this fold to publish full caches in A,
++                            // or individual updates in B, before its next callback.
++                            Ok((0..4097).map(|n| format!("published{n}")).collect())
++                        }
++                        1 => {
++                            while checkpoint.load(Ordering::Relaxed) == 0 {
++                                assert!(
++                                    Instant::now() < deadline,
++                                    "successful fold did not advance"
++                                );
++                                std::thread::yield_now();
++                            }
++                            Err("failure after shared updates".into())
++                        }
++                        2 => {
++                            assert_eq!(worker, first_worker.load(Ordering::Relaxed));
++                            checkpoint.store(1, Ordering::Relaxed);
++                            // This successful fold also has a nonempty tail. The other
++                            // fold fails; count must not replace stored trainer words.
++                            Ok(vec!["successful-tail".into()])
++                        }
++                        _ => unreachable!(),
++                    }
++                })
++                .unwrap_err();
++            assert_eq!(error.to_string(), "failure after shared updates");
++        });
++    assert!(seen.iter().all(|n| n.load(Ordering::Relaxed) == 1));
++    assert_eq!(trainer, previous);
++}

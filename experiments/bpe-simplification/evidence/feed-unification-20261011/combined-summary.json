@@ -1,0 +1,139 @@
+[
+  {
+    "scenario": "bytelevel_regex-w1",
+    "pairs": 2,
+    "median_paired_delta_percent": {
+      "feed_seconds": -2.716558272151265,
+      "pipeline_seconds": -1.2862150354183866,
+      "feed_cpu_seconds": -2.7212859382070964,
+      "pipeline_cpu_seconds": -1.276247053683116,
+      "feed_hwm_kib": -0.010546057936444697,
+      "process_hwm_kib_before_validation": -0.19544853968435083
+    },
+    "individual_feed_wall_delta_percent": [
+      -2.790274744263699,
+      -2.642841800038831
+    ]
+  },
+  {
+    "scenario": "bytelevel_regex-w4",
+    "pairs": 5,
+    "median_paired_delta_percent": {
+      "feed_seconds": 8.760231041014821,
+      "pipeline_seconds": 0.3197795258078173,
+      "feed_cpu_seconds": 10.661087859752726,
+      "pipeline_cpu_seconds": 1.7664592125207212,
+      "feed_hwm_kib": 35.3528094043281,
+      "process_hwm_kib_before_validation": 0.503211162557804
+    },
+    "individual_feed_wall_delta_percent": [
+      -0.42279182930770043,
+      8.760231041014821,
+      -0.7554497711752206,
+      11.740755079732423,
+      11.329797152885156
+    ]
+  },
+  {
+    "scenario": "whitespace-w1",
+    "pairs": 2,
+    "median_paired_delta_percent": {
+      "feed_seconds": -4.486127984198978,
+      "pipeline_seconds": -0.8717786119421089,
+      "feed_cpu_seconds": -4.491828346769161,
+      "pipeline_cpu_seconds": -0.906551811808709,
+      "feed_hwm_kib": -0.013472781544654477,
+      "process_hwm_kib_before_validation": -0.04396769470992323
+    },
+    "individual_feed_wall_delta_percent": [
+      -4.359505665385854,
+      -4.612750303012103
+    ]
+  },
+  {
+    "scenario": "whitespace-w4",
+    "pairs": 2,
+    "median_paired_delta_percent": {
+      "feed_seconds": -0.26232461538340246,
+      "pipeline_seconds": -0.42273552423945926,
+      "feed_cpu_seconds": 0.5235145578357692,
+      "pipeline_cpu_seconds": -0.353483532284915,
+      "feed_hwm_kib": 0.003932887794666495,
+      "process_hwm_kib_before_validation": -0.4519343085870098
+    },
+    "individual_feed_wall_delta_percent": [
+      -1.430964343603236,
+      0.9063151128364311
+    ]
+  },
+  {
+    "scenario": "en-bytelevel_regex-w1",
+    "pairs": 5,
+    "median_paired_delta_percent": {
+      "feed_seconds": 3.6288070322846533,
+      "pipeline_seconds": 2.9545473034391145,
+      "feed_cpu_seconds": 3.71727031534852,
+      "pipeline_cpu_seconds": 3.0294235873952413,
+      "feed_hwm_kib": -0.01465094132298006,
+      "process_hwm_kib_before_validation": -5.260020505972962
+    },
+    "individual_feed_wall_delta_percent": [
+      2.9785637545851396,
+      3.9015404050393387,
+      3.6288070322846533,
+      4.663958671067481,
+      3.2815383916002583
+    ]
+  },
+  {
+    "scenario": "en-bytelevel_regex-w4",
+    "pairs": 2,
+    "median_paired_delta_percent": {
+      "feed_seconds": 1.4762364252757232,
+      "pipeline_seconds": 1.6442978361736027,
+      "feed_cpu_seconds": 1.6251345550570395,
+      "pipeline_cpu_seconds": 1.4347531670823144,
+      "feed_hwm_kib": 0.32763338423215105,
+      "process_hwm_kib_before_validation": 3.6564942913832943
+    },
+    "individual_feed_wall_delta_percent": [
+      0.9464505651178179,
+      2.0060222854336285
+    ]
+  },
+  {
+    "scenario": "en-whitespace-w1",
+    "pairs": 5,
+    "median_paired_delta_percent": {
+      "feed_seconds": 3.4629961455181713,
+      "pipeline_seconds": 2.968374488965342,
+      "feed_cpu_seconds": 3.457391016129252,
+      "pipeline_cpu_seconds": 2.943950963648212,
+      "feed_hwm_kib": -0.007336757153342255,
+      "process_hwm_kib_before_validation": 2.347978129943651
+    },
+    "individual_feed_wall_delta_percent": [
+      2.536960830631241,
+      1.1524724675963105,
+      4.99662065998685,
+      3.4629961455181713,
+      4.468634152250361
+    ]
+  },
+  {
+    "scenario": "en-whitespace-w4",
+    "pairs": 2,
+    "median_paired_delta_percent": {
+      "feed_seconds": 2.4272380592806675,
+      "pipeline_seconds": 1.781181506373608,
+      "feed_cpu_seconds": 2.3770509746917745,
+      "pipeline_cpu_seconds": 2.266684117434381,
+      "feed_hwm_kib": 0.16879445046877883,
+      "process_hwm_kib_before_validation": -4.1683475094064
+    },
+    "individual_feed_wall_delta_percent": [
+      2.7317228349739375,
+      2.1227532835873975
+    ]
+  }
+]

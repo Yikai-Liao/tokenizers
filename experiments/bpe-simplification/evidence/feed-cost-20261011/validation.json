@@ -1,0 +1,111 @@
+{
+  "checks": [
+    {
+      "name": "default-filtered",
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--locked",
+        "--manifest-path",
+        "tokenizers/tk-train/Cargo.toml",
+        "--lib",
+        "--",
+        "--skip",
+        "feed_training_tokenizer_json_and_encoding_roundtrip"
+      ],
+      "returncode": 0,
+      "log": "drain-default-filtered.log"
+    },
+    {
+      "name": "no-default-filtered",
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--locked",
+        "--manifest-path",
+        "tokenizers/tk-train/Cargo.toml",
+        "--no-default-features",
+        "--lib",
+        "--",
+        "--skip",
+        "feed_training_tokenizer_json_and_encoding_roundtrip"
+      ],
+      "returncode": 0,
+      "log": "drain-no-default-filtered.log"
+    },
+    {
+      "name": "clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--offline",
+        "--locked",
+        "--manifest-path",
+        "tokenizers/tk-train/Cargo.toml",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "drain-clippy.log"
+    },
+    {
+      "name": "format",
+      "command": [
+        "uv",
+        "run",
+        "experiments/bpe-simplification/format-changed.py",
+        "--check",
+        "tokenizers/tk-train/src/trainers/bpe/feed.rs",
+        "tokenizers/tk-train/src/trainers/bpe/tests.rs"
+      ],
+      "returncode": 0,
+      "log": "drain-format.log"
+    }
+  ],
+  "production_attempts": 24,
+  "production_valid": 24,
+  "production_failed": 0,
+  "controlled_valid": 9,
+  "probes": 27,
+  "initial_training_failure": {
+    "run": "bytelevel_regex-w4-b0-unified",
+    "case": "bytelevel_regex",
+    "scenario": "bytelevel_regex-w4",
+    "workers": 4,
+    "block": 0,
+    "arm": "unified",
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-feed-unification-results/local",
+      "/tmp/bpe-feed-cost-results/production/measurements/bytelevel_regex-w4-b0-unified/job.json"
+    ],
+    "environment": {
+      "RAYON_NUM_THREADS": "4",
+      "LC_ALL": "C"
+    },
+    "returncode": 101,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2166352,
+    "subprocess_wall": 8.155007265973836,
+    "concurrent_builds_or_benchmarks": [],
+    "valid": false
+  },
+  "manual_retry": {
+    "returncode": 0,
+    "counts_sha256": "ddf2092261be0fa4276bf0121766d095bfc48281616242b99d637ee6ec05e94f",
+    "count_records": 6859987,
+    "counts_equal": true,
+    "model_equal": true,
+    "swap_monitoring": "manual retry had no swap poller; excluded from formal performance summary"
+  },
+  "source_hashes": {
+    "tokenizers/tk-train/src/trainers/bpe/feed.rs": "7c6be5e032a25faf0e0bcad4ee502a38792312233aadbd4a324ac7dca4b62ea7",
+    "tokenizers/tk-train/src/trainers/bpe/tests.rs": "3415b3b5580ac9945582babe86fc0cb40738eb7f8cf28f233e70a50d8fc5b9d1"
+  }
+}

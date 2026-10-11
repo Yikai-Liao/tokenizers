@@ -1,0 +1,347 @@
+=== scc 3.8.8 src/hash_table.rs:107-137 ===
+107:         MAXIMUM_CAPACITY_LIMIT
+108:     }
+109:
+110:     /// Reserves the specified capacity.
+111:     ///
+112:     /// Returns the actually allocated capacity. Return `0` if the sum of the current minimum
+113:     /// capacity and the additional capacity exceeds [`Self::maximum_capacity`].
+114:     fn reserve_capacity(&self, additional_capacity: usize) -> usize {
+115:         let mut current_minimum_capacity = self.minimum_capacity_var().load(Relaxed);
+116:         loop {
+117:             if additional_capacity > self.maximum_capacity() - current_minimum_capacity {
+118:                 return 0;
+119:             }
+120:             match self.minimum_capacity_var().compare_exchange_weak(
+121:                 current_minimum_capacity,
+122:                 additional_capacity + current_minimum_capacity,
+123:                 Relaxed,
+124:                 Relaxed,
+125:             ) {
+126:                 Ok(_) => {
+127:                     let guard = Guard::new();
+128:                     if let Some(current_array) = self.array(&guard) {
+129:                         if !current_array.has_linked_array() {
+130:                             self.try_resize(current_array, &guard);
+131:                         }
+132:                     }
+133:                     return additional_capacity;
+134:                 }
+135:                 Err(actual) => current_minimum_capacity = actual,
+136:             }
+137:         }
+
+=== scc 3.8.8 src/hash_table.rs:724-789 ===
+724:     fn for_each_writer_sync<F>(&self, mut start_index: usize, expected_array_len: usize, mut f: F)
+725:     where
+726:         F: FnMut(LockedBucket<K, V, L, TYPE>, &mut bool, &Guard) -> bool,
+727:     {
+728:         let guard = Guard::new();
+729:         let mut prev_len = expected_array_len;
+730:         let mut removed = false;
+731:         while let Some(current_array) = self.array(&guard) {
+732:             // In case the method is repeating the routine, iterate over entries from the middle of
+733:             // the array.
+734:             let current_array_len = current_array.len();
+735:             start_index = if prev_len == 0 || prev_len == current_array_len {
+736:                 start_index
+737:             } else {
+738:                 from_index_to_range(prev_len, current_array_len, start_index).0
+739:             };
+740:             prev_len = current_array_len;
+741:
+742:             while start_index < current_array_len {
+743:                 let bucket_index = start_index;
+744:                 if let Some(old_array) = current_array.linked_array(&guard) {
+745:                     self.incremental_rehash_sync::<false>(current_array, &guard);
+746:                     self.dedup_bucket_sync::<false>(current_array, old_array, bucket_index);
+747:                 }
+748:
+749:                 let bucket = current_array.bucket(bucket_index);
+750:                 if let Some(writer) = Writer::lock_sync(bucket) {
+751:                     if start_index % BUCKET_LEN * 2 == BUCKET_LEN - 1 {
+752:                         // Reset the guard for the global epoch to advance.
+753:                         drop(snapshot(&guard));
+754:                         forget(Guard::new());
+755:                     }
+756:                     let locked_bucket = LockedBucket {
+757:                         writer,
+758:                         data_block: current_array.data_block(bucket_index),
+759:                         bucket_index,
+760:                         array: into_non_null(current_array),
+761:                     };
+762:                     if !f(locked_bucket, &mut removed, &guard) {
+763:                         // Stop iterating over buckets.
+764:                         start_index = current_array_len;
+765:                         break;
+766:                     }
+767:                 } else {
+768:                     // `current_array` is no longer the current one.
+769:                     break;
+770:                 }
+771:                 start_index += 1;
+772:             }
+773:
+774:             if start_index == current_array_len {
+775:                 break;
+776:             }
+777:         }
+778:
+779:         if removed {
+780:             if TYPE == INDEX {
+781:                 guard.accelerate();
+782:             }
+783:             if let Some(current_array) = self.array(&guard) {
+784:                 self.try_shrink(current_array, 0, &guard);
+785:             }
+786:         }
+787:     }
+788:
+789:     /// Tries to reserve a [`Bucket`] and returns a [`LockedBucket`].
+
+=== scc 3.8.8 src/hash_table.rs:1310-1328 ===
+1310:
+1311:     /// Tries to enlarge [`HashTable`].
+1312:     fn try_enlarge(&self, current_array: &BucketArray<K, V, L, TYPE>, index: usize, guard: &Guard) {
+1313:         if !current_array.has_linked_array() {
+1314:             let sample_size = current_array.small_sample_size();
+1315:             let sample_capacity = sample_size * BUCKET_LEN;
+1316:             let mut num_entries = 0;
+1317:             let start_index = index & (sample_size - 1);
+1318:             for i in start_index..start_index + sample_size {
+1319:                 num_entries += current_array.bucket(i).len();
+1320:                 if BucketArray::<K, V, L, TYPE>::need_enlarge(sample_capacity, num_entries) {
+1321:                     self.try_resize(current_array, guard);
+1322:                     break;
+1323:                 }
+1324:             }
+1325:         }
+1326:     }
+1327:
+1328:     /// Tries to shrink the [`HashTable`] to fit.
+
+=== scc 3.8.8 src/hash_table.rs:1348-1390 ===
+1348:     /// The table is resized after three times of sampling and all three samples indicate that the
+1349:     /// array should be resized. First sampling is done with a very small sample size in
+1350:     /// `try_enlarge` and `try_shrink`. Second sampling is done with a large sample size in the
+1351:     /// first half of this method, before acquiring the resize lock. The last sampling is done after
+1352:     /// acquiring the resize lock with a very large sample size.
+1353:     #[allow(deprecated)] // `try_update` is not available in `Rust 1.85`.
+1354:     fn try_resize(&self, sampled_array: &BucketArray<K, V, L, TYPE>, guard: &Guard) {
+1355:         let current_array_ptr = self.array_var().load(Acquire, guard);
+1356:         let Some(current_array) = deref_unchecked(current_array_ptr) else {
+1357:             // The hash table is empty.
+1358:             return;
+1359:         };
+1360:         if !ptr::eq(current_array, sampled_array)
+1361:             || current_array.has_linked_array()
+1362:             || current_array.rehashing_metadata().load(Relaxed) != 0
+1363:         {
+1364:             // The pointer changed, there is a bucket array linked to it, or being resized.
+1365:             return;
+1366:         }
+1367:
+1368:         let minimum_capacity = self.minimum_capacity();
+1369:         let maximum_capacity = self.maximum_capacity();
+1370:         let estimation = Self::sample(
+1371:             current_array,
+1372:             current_array.len() - current_array.large_sample_size(),
+1373:             current_array.large_sample_size(),
+1374:         );
+1375:         let capacity = current_array.num_slots();
+1376:
+1377:         let try_resize = BucketArray::<K, V, L, TYPE>::need_enlarge(capacity, estimation)
+1378:             || BucketArray::<K, V, L, TYPE>::need_shrink(capacity, estimation);
+1379:         let try_drop_table = estimation == 0 && minimum_capacity == 0;
+1380:         if !try_resize && !try_drop_table {
+1381:             // Nothing to do.
+1382:             return;
+1383:         }
+1384:
+1385:         if current_array
+1386:             .rehashing_metadata()
+1387:             .fetch_update(AcqRel, Acquire, |rehashing| {
+1388:                 (rehashing == 0).then_some(REHASHING_CONCURRENCY)
+1389:             })
+1390:             .is_err()
+
+=== scc 3.8.8 src/hash_table.rs:1434-1459 ===
+1434:         } else if try_resize {
+1435:             // Recheck the sampling result before allocating a new bucket array.
+1436:             //
+1437:             // By sampling buckets at the end of the bucket array, the effect of mutable iterators
+1438:             // on sampling is minimized.
+1439:             let sample_size = current_array.full_sample_size();
+1440:             let start_index = (current_array.len() - sample_size) / 2;
+1441:             let estimation = Self::sample(current_array, start_index, sample_size);
+1442:             let new_capacity = BucketArray::<K, V, L, TYPE>::optimal_capacity(
+1443:                 capacity,
+1444:                 estimation,
+1445:                 minimum_capacity,
+1446:                 maximum_capacity,
+1447:             );
+1448:             if new_capacity != capacity {
+1449:                 let array = BucketArray::<K, V, L, TYPE>::alloc(
+1450:                     new_capacity,
+1451:                     AtomicRaw::new(current_array_ptr),
+1452:                 );
+1453:
+1454:                 // Recheck the optimal capacity if the hash table is shrunk.
+1455:                 if new_capacity < capacity
+1456:                     && new_capacity
+1457:                         < BucketArray::<K, V, L, TYPE>::optimal_capacity(
+1458:                             capacity,
+1459:                             Self::sample(current_array, 0, current_array.large_sample_size()),
+
+=== scc 3.8.8 src/hash_table/bucket_array.rs:125-129 ===
+125:     pub(crate) const fn need_enlarge(capacity: usize, num_entries: usize) -> bool {
+126:         // When the load factor is greater than `13/16`; `~10%` of buckets are expected to have
+127:         // overflow buckets.
+128:         num_entries > (capacity / 16) * 13
+129:     }
+
+=== scc 3.8.8 src/hash_map.rs:239-289 ===
+239:     H: BuildHasher,
+240: {
+241:     /// Temporarily increases the minimum capacity of the [`HashMap`] to prevent shrinking.
+242:     ///
+243:     /// A [`Reserve`] is returned if the [`HashMap`] can increase the minimum capacity. The
+244:     /// increased capacity is not exclusively owned by the returned [`Reserve`], allowing others to
+245:     /// benefit from it. The memory for the additional space may not be immediately allocated if
+246:     /// the [`HashMap`] is empty or currently being resized; however, once the memory is eventually reserved,
+247:     /// the capacity will not shrink below the additional capacity until the returned
+248:     /// [`Reserve`] is dropped.
+249:     ///
+250:     /// # Errors
+251:     ///
+252:     /// Returns `None` if a too large number is given.
+253:     ///
+254:     /// # Examples
+255:     ///
+256:     /// ```
+257:     /// use scc::HashMap;
+258:     ///
+259:     /// let hashmap: HashMap<usize, usize> = HashMap::with_capacity(800);
+260:     /// assert_eq!(hashmap.capacity(), 1024);
+261:     ///
+262:     /// let reserved = hashmap.reserve(10000);
+263:     /// assert!(reserved.is_some());
+264:     /// assert_eq!(hashmap.capacity(), 16384);
+265:     ///
+266:     /// assert!(hashmap.reserve(usize::MAX).is_none());
+267:     /// assert_eq!(hashmap.capacity(), 16384);
+268:     ///
+269:     /// for i in 0..16 {
+270:     ///     assert!(hashmap.insert_sync(i, i).is_ok());
+271:     /// }
+272:     /// drop(reserved);
+273:     ///
+274:     /// assert_eq!(hashmap.capacity(), 1024);
+275:     /// ```
+276:     #[inline]
+277:     pub fn reserve(&self, additional_capacity: usize) -> Option<Reserve<'_, K, V, H>> {
+278:         let additional = self.reserve_capacity(additional_capacity);
+279:         if additional == 0 {
+280:             None
+281:         } else {
+282:             Some(Reserve {
+283:                 hashmap: self,
+284:                 additional,
+285:             })
+286:         }
+287:     }
+288:
+289:     /// Gets the entry associated with the given key in the map for in-place manipulation.
+
+=== scc 3.8.8 src/hash_map.rs:1229-1286 ===
+1229:     }
+1230:
+1231:     /// Iterates over entries synchronously for modification.
+1232:     ///
+1233:     /// Stops iterating when the closure returns `false`, and this method also returns `false`.
+1234:     ///
+1235:     /// # Examples
+1236:     ///
+1237:     /// ```
+1238:     /// use scc::HashMap;
+1239:     ///
+1240:     /// let hashmap: HashMap<u64, u32> = HashMap::default();
+1241:     ///
+1242:     /// assert!(hashmap.insert_sync(1, 0).is_ok());
+1243:     /// assert!(hashmap.insert_sync(2, 1).is_ok());
+1244:     /// assert!(hashmap.insert_sync(3, 2).is_ok());
+1245:     ///
+1246:     /// let result = hashmap.iter_mut_sync(|e| {
+1247:     ///     if *e.key() == 1 {
+1248:     ///         e.consume();
+1249:     ///         return false;
+1250:     ///     }
+1251:     ///     true
+1252:     /// });
+1253:     ///
+1254:     /// assert!(!result);
+1255:     /// assert!(!hashmap.contains_sync(&1));
+1256:     /// assert_eq!(hashmap.len(), 2);
+1257:     /// ```
+1258:     #[inline]
+1259:     pub fn iter_mut_sync<F: FnMut(ConsumableEntry<'_, K, V>) -> bool>(&self, mut f: F) -> bool {
+1260:         let mut result = true;
+1261:         self.for_each_writer_sync(0, 0, |mut locked_bucket, removed, _| {
+1262:             let mut entry_ptr = EntryPtr::null();
+1263:             while entry_ptr.find_next(&locked_bucket.writer) {
+1264:                 let consumable_entry = ConsumableEntry {
+1265:                     locked_bucket: &mut locked_bucket,
+1266:                     entry_ptr: &mut entry_ptr,
+1267:                     remove_probe: removed,
+1268:                 };
+1269:                 if !f(consumable_entry) {
+1270:                     result = false;
+1271:                     return false;
+1272:                 }
+1273:             }
+1274:             true
+1275:         });
+1276:         result
+1277:     }
+1278:
+1279:     /// Retains the entries specified by the predicate.
+1280:     ///
+1281:     /// This method allows the predicate closure to modify the value field.
+1282:     ///
+1283:     /// Entries that have existed since the invocation of the method are guaranteed to be visited
+1284:     /// if they are not removed, however the same entry can be visited more than once if the
+1285:     /// [`HashMap`] gets resized by another thread.
+1286:     ///
+
+=== scc 3.8.8 src/hash_map.rs:2270-2300 ===
+2270:     /// use scc::HashMap;
+2271:     ///
+2272:     /// let hashmap: HashMap<u64, u32> = HashMap::default();
+2273:     ///
+2274:     /// assert!(hashmap.insert_sync(1, 0).is_ok());
+2275:     /// assert!(hashmap.insert_sync(2, 1).is_ok());
+2276:     /// assert!(hashmap.insert_sync(3, 2).is_ok());
+2277:     ///
+2278:     /// let mut consumed = None;
+2279:     ///
+2280:     /// hashmap.iter_mut_sync(|mut e| {
+2281:     ///     if *e.key() == 1 {
+2282:     ///         *e = 2;
+2283:     ///         consumed.replace(e.consume().1);
+2284:     ///     }
+2285:     ///     true
+2286:     /// });
+2287:     ///
+2288:     /// assert!(!hashmap.contains_sync(&1));
+2289:     /// assert_eq!(consumed, Some(2));
+2290:     /// ```
+2291:     #[inline]
+2292:     #[must_use]
+2293:     pub fn consume(self) -> (K, V) {
+2294:         *self.remove_probe |= true;
+2295:         self.locked_bucket
+2296:             .writer
+2297:             .remove(self.locked_bucket.data_block, self.entry_ptr)
+2298:     }
+2299:
+2300:     /// Returns a reference to the key.

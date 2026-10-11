@@ -1,0 +1,434 @@
+[
+  {
+    "run": "bytelevel_regex-w4-b0-baseline",
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "bytelevel_regex-w4-b0-baseline",
+      "build_id": "baseline",
+      "input_id": "bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/zh256/text.txt",
+      "output": "/tmp/bpe-feed-unification-results/extra/bytelevel_regex-w4-b0-baseline/model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": "{\"attempt_id\":\"bytelevel_regex-w4-b0-baseline\",\"build_id\":\"baseline\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":7.976667,\"feed_hwm_kib\":951736,\"feed_major_faults\":0,\"feed_minor_faults\":125046,\"feed_rss_kib\":689600,\"feed_seconds\":2.101317997,\"feed_unique_utf8_bytes\":389044270,\"feed_unique_words\":6859987,\"feed_workers\":4,\"pipeline_cpu_seconds\":40.205964,\"pipeline_major_faults\":0,\"pipeline_minor_faults\":373517,\"pipeline_seconds\":12.038845857,\"process_hwm_kib_before_validation\":2428404,\"train_cpu_seconds\":32.229217,\"train_rss_kib\":1577048,\"train_seconds\":9.937419338},\"mode\":\"pipeline\",\"output\":{\"actual_merges\":49744,\"actual_vocab\":50000,\"counts_path\":\"/tmp/bpe-feed-unification-results/extra/bytelevel_regex-w4-b0-baseline/model.counts.tsv\",\"model_path\":\"/tmp/bpe-feed-unification-results/extra/bytelevel_regex-w4-b0-baseline/model.json\",\"special_tokens\":0},\"protocol_version\":1,\"timing_boundary\":\"public-feed-and-train-before-serialization\",\"workers_requested\":4}\n",
+    "stderr": "",
+    "returncode": 0
+  },
+  {
+    "run": "bytelevel_regex-w4-b0-local",
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "bytelevel_regex-w4-b0-local",
+      "build_id": "local",
+      "input_id": "bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/zh256/text.txt",
+      "output": "/tmp/bpe-feed-unification-results/extra/bytelevel_regex-w4-b0-local/model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": "{\"attempt_id\":\"bytelevel_regex-w4-b0-local\",\"build_id\":\"local\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":7.8963909999999995,\"feed_hwm_kib\":951932,\"feed_major_faults\":0,\"feed_minor_faults\":119929,\"feed_rss_kib\":689568,\"feed_seconds\":2.085443595,\"feed_unique_utf8_bytes\":389044270,\"feed_unique_words\":6859987,\"feed_workers\":4,\"pipeline_cpu_seconds\":39.870037,\"pipeline_major_faults\":0,\"pipeline_minor_faults\":368477,\"pipeline_seconds\":11.862418196,\"process_hwm_kib_before_validation\":2440624,\"train_cpu_seconds\":31.973577,\"train_rss_kib\":1631964,\"train_seconds\":9.776867291},\"mode\":\"pipeline\",\"output\":{\"actual_merges\":49744,\"actual_vocab\":50000,\"counts_path\":\"/tmp/bpe-feed-unification-results/extra/bytelevel_regex-w4-b0-local/model.counts.tsv\",\"model_path\":\"/tmp/bpe-feed-unification-results/extra/bytelevel_regex-w4-b0-local/model.json\",\"special_tokens\":0},\"protocol_version\":1,\"timing_boundary\":\"public-feed-and-train-before-serialization\",\"workers_requested\":4}\n",
+    "stderr": "",
+    "returncode": 0
+  },
+  {
+    "run": "bytelevel_regex-w4-b1-local",
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "bytelevel_regex-w4-b1-local",
+      "build_id": "local",
+      "input_id": "bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/zh256/text.txt",
+      "output": "/tmp/bpe-feed-unification-results/extra/bytelevel_regex-w4-b1-local/model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": "{\"attempt_id\":\"bytelevel_regex-w4-b1-local\",\"build_id\":\"local\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":8.779917,\"feed_hwm_kib\":1290384,\"feed_major_faults\":0,\"feed_minor_faults\":128408,\"feed_rss_kib\":685292,\"feed_seconds\":2.321951338,\"feed_unique_utf8_bytes\":389044270,\"feed_unique_words\":6859987,\"feed_workers\":4,\"pipeline_cpu_seconds\":40.539474,\"pipeline_major_faults\":0,\"pipeline_minor_faults\":372783,\"pipeline_seconds\":12.074214458,\"process_hwm_kib_before_validation\":2451008,\"train_cpu_seconds\":31.759503,\"train_rss_kib\":1642376,\"train_seconds\":9.752159979},\"mode\":\"pipeline\",\"output\":{\"actual_merges\":49744,\"actual_vocab\":50000,\"counts_path\":\"/tmp/bpe-feed-unification-results/extra/bytelevel_regex-w4-b1-local/model.counts.tsv\",\"model_path\":\"/tmp/bpe-feed-unification-results/extra/bytelevel_regex-w4-b1-local/model.json\",\"special_tokens\":0},\"protocol_version\":1,\"timing_boundary\":\"public-feed-and-train-before-serialization\",\"workers_requested\":4}\n",
+    "stderr": "",
+    "returncode": 0
+  },
+  {
+    "run": "bytelevel_regex-w4-b1-baseline",
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "bytelevel_regex-w4-b1-baseline",
+      "build_id": "baseline",
+      "input_id": "bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/zh256/text.txt",
+      "output": "/tmp/bpe-feed-unification-results/extra/bytelevel_regex-w4-b1-baseline/model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": "{\"attempt_id\":\"bytelevel_regex-w4-b1-baseline\",\"build_id\":\"baseline\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":7.889252,\"feed_hwm_kib\":951504,\"feed_major_faults\":0,\"feed_minor_faults\":120390,\"feed_rss_kib\":689404,\"feed_seconds\":2.077980712,\"feed_unique_utf8_bytes\":389044270,\"feed_unique_words\":6859987,\"feed_workers\":4,\"pipeline_cpu_seconds\":39.835791,\"pipeline_major_faults\":0,\"pipeline_minor_faults\":378110,\"pipeline_seconds\":12.036477284,\"process_hwm_kib_before_validation\":2371088,\"train_cpu_seconds\":31.94646,\"train_rss_kib\":1562408,\"train_seconds\":9.958215788},\"mode\":\"pipeline\",\"output\":{\"actual_merges\":49744,\"actual_vocab\":50000,\"counts_path\":\"/tmp/bpe-feed-unification-results/extra/bytelevel_regex-w4-b1-baseline/model.counts.tsv\",\"model_path\":\"/tmp/bpe-feed-unification-results/extra/bytelevel_regex-w4-b1-baseline/model.json\",\"special_tokens\":0},\"protocol_version\":1,\"timing_boundary\":\"public-feed-and-train-before-serialization\",\"workers_requested\":4}\n",
+    "stderr": "",
+    "returncode": 0
+  },
+  {
+    "run": "bytelevel_regex-w4-b2-baseline",
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "bytelevel_regex-w4-b2-baseline",
+      "build_id": "baseline",
+      "input_id": "bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/zh256/text.txt",
+      "output": "/tmp/bpe-feed-unification-results/extra/bytelevel_regex-w4-b2-baseline/model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": "{\"attempt_id\":\"bytelevel_regex-w4-b2-baseline\",\"build_id\":\"baseline\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":7.8521,\"feed_hwm_kib\":951808,\"feed_major_faults\":0,\"feed_minor_faults\":120449,\"feed_rss_kib\":689492,\"feed_seconds\":2.077804411,\"feed_unique_utf8_bytes\":389044270,\"feed_unique_words\":6859987,\"feed_workers\":4,\"pipeline_cpu_seconds\":40.095351,\"pipeline_major_faults\":0,\"pipeline_minor_faults\":371897,\"pipeline_seconds\":12.044218761,\"process_hwm_kib_before_validation\":2415948,\"train_cpu_seconds\":32.243178,\"train_rss_kib\":1608680,\"train_seconds\":9.966094052999999},\"mode\":\"pipeline\",\"output\":{\"actual_merges\":49744,\"actual_vocab\":50000,\"counts_path\":\"/tmp/bpe-feed-unification-results/extra/bytelevel_regex-w4-b2-baseline/model.counts.tsv\",\"model_path\":\"/tmp/bpe-feed-unification-results/extra/bytelevel_regex-w4-b2-baseline/model.json\",\"special_tokens\":0},\"protocol_version\":1,\"timing_boundary\":\"public-feed-and-train-before-serialization\",\"workers_requested\":4}\n",
+    "stderr": "",
+    "returncode": 0
+  },
+  {
+    "run": "bytelevel_regex-w4-b2-local",
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "bytelevel_regex-w4-b2-local",
+      "build_id": "local",
+      "input_id": "bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/zh256/text.txt",
+      "output": "/tmp/bpe-feed-unification-results/extra/bytelevel_regex-w4-b2-local/model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": "{\"attempt_id\":\"bytelevel_regex-w4-b2-local\",\"build_id\":\"local\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":8.784302,\"feed_hwm_kib\":1294024,\"feed_major_faults\":0,\"feed_minor_faults\":129352,\"feed_rss_kib\":689036,\"feed_seconds\":2.313215436,\"feed_unique_utf8_bytes\":389044270,\"feed_unique_words\":6859987,\"feed_workers\":4,\"pipeline_cpu_seconds\":40.926733,\"pipeline_major_faults\":0,\"pipeline_minor_faults\":371151,\"pipeline_seconds\":12.313358705,\"process_hwm_kib_before_validation\":2450564,\"train_cpu_seconds\":32.142375,\"train_rss_kib\":1641884,\"train_seconds\":10.000027924},\"mode\":\"pipeline\",\"output\":{\"actual_merges\":49744,\"actual_vocab\":50000,\"counts_path\":\"/tmp/bpe-feed-unification-results/extra/bytelevel_regex-w4-b2-local/model.counts.tsv\",\"model_path\":\"/tmp/bpe-feed-unification-results/extra/bytelevel_regex-w4-b2-local/model.json\",\"special_tokens\":0},\"protocol_version\":1,\"timing_boundary\":\"public-feed-and-train-before-serialization\",\"workers_requested\":4}\n",
+    "stderr": "",
+    "returncode": 0
+  },
+  {
+    "run": "en-bytelevel_regex-w1-b0-baseline",
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "en-bytelevel_regex-w1-b0-baseline",
+      "build_id": "baseline",
+      "input_id": "en-bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/en256/text.txt",
+      "output": "/tmp/bpe-feed-unification-results/extra/en-bytelevel_regex-w1-b0-baseline/model.json",
+      "workers": 1,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": "{\"attempt_id\":\"en-bytelevel_regex-w1-b0-baseline\",\"build_id\":\"baseline\",\"effective_affinity\":[0],\"input_id\":\"en-bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":6.329536999999999,\"feed_hwm_kib\":54608,\"feed_major_faults\":0,\"feed_minor_faults\":2822,\"feed_rss_kib\":37984,\"feed_seconds\":6.351024812,\"feed_unique_utf8_bytes\":8056279,\"feed_unique_words\":836105,\"feed_workers\":1,\"pipeline_cpu_seconds\":7.480631,\"pipeline_major_faults\":0,\"pipeline_minor_faults\":23584,\"pipeline_seconds\":7.505594097,\"process_hwm_kib_before_validation\":174040,\"train_cpu_seconds\":1.151046,\"train_rss_kib\":103456,\"train_seconds\":1.154430359},\"mode\":\"pipeline\",\"output\":{\"actual_merges\":49744,\"actual_vocab\":50000,\"counts_path\":\"/tmp/bpe-feed-unification-results/extra/en-bytelevel_regex-w1-b0-baseline/model.counts.tsv\",\"model_path\":\"/tmp/bpe-feed-unification-results/extra/en-bytelevel_regex-w1-b0-baseline/model.json\",\"special_tokens\":0},\"protocol_version\":1,\"timing_boundary\":\"public-feed-and-train-before-serialization\",\"workers_requested\":1}\n",
+    "stderr": "",
+    "returncode": 0
+  },
+  {
+    "run": "en-bytelevel_regex-w1-b0-local",
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "en-bytelevel_regex-w1-b0-local",
+      "build_id": "local",
+      "input_id": "en-bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/en256/text.txt",
+      "output": "/tmp/bpe-feed-unification-results/extra/en-bytelevel_regex-w1-b0-local/model.json",
+      "workers": 1,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": "{\"attempt_id\":\"en-bytelevel_regex-w1-b0-local\",\"build_id\":\"local\",\"effective_affinity\":[0],\"input_id\":\"en-bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":6.5648230000000005,\"feed_hwm_kib\":54600,\"feed_major_faults\":0,\"feed_minor_faults\":2823,\"feed_rss_kib\":37920,\"feed_seconds\":6.581491247,\"feed_unique_utf8_bytes\":8056279,\"feed_unique_words\":836105,\"feed_workers\":1,\"pipeline_cpu_seconds\":7.707251,\"pipeline_major_faults\":0,\"pipeline_minor_faults\":22968,\"pipeline_seconds\":7.727350425,\"process_hwm_kib_before_validation\":163352,\"train_cpu_seconds\":1.1423799999999993,\"train_rss_kib\":146108,\"train_seconds\":1.145718667},\"mode\":\"pipeline\",\"output\":{\"actual_merges\":49744,\"actual_vocab\":50000,\"counts_path\":\"/tmp/bpe-feed-unification-results/extra/en-bytelevel_regex-w1-b0-local/model.counts.tsv\",\"model_path\":\"/tmp/bpe-feed-unification-results/extra/en-bytelevel_regex-w1-b0-local/model.json\",\"special_tokens\":0},\"protocol_version\":1,\"timing_boundary\":\"public-feed-and-train-before-serialization\",\"workers_requested\":1}\n",
+    "stderr": "",
+    "returncode": 0
+  },
+  {
+    "run": "en-bytelevel_regex-w1-b1-local",
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "en-bytelevel_regex-w1-b1-local",
+      "build_id": "local",
+      "input_id": "en-bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/en256/text.txt",
+      "output": "/tmp/bpe-feed-unification-results/extra/en-bytelevel_regex-w1-b1-local/model.json",
+      "workers": 1,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": "{\"attempt_id\":\"en-bytelevel_regex-w1-b1-local\",\"build_id\":\"local\",\"effective_affinity\":[0],\"input_id\":\"en-bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":6.625812,\"feed_hwm_kib\":54580,\"feed_major_faults\":0,\"feed_minor_faults\":3334,\"feed_rss_kib\":37964,\"feed_seconds\":6.646777435,\"feed_unique_utf8_bytes\":8056279,\"feed_unique_words\":836105,\"feed_workers\":1,\"pipeline_cpu_seconds\":7.781485,\"pipeline_major_faults\":0,\"pipeline_minor_faults\":22888,\"pipeline_seconds\":7.805946692,\"process_hwm_kib_before_validation\":158932,\"train_cpu_seconds\":1.1556239999999995,\"train_rss_kib\":135780,\"train_seconds\":1.159030102},\"mode\":\"pipeline\",\"output\":{\"actual_merges\":49744,\"actual_vocab\":50000,\"counts_path\":\"/tmp/bpe-feed-unification-results/extra/en-bytelevel_regex-w1-b1-local/model.counts.tsv\",\"model_path\":\"/tmp/bpe-feed-unification-results/extra/en-bytelevel_regex-w1-b1-local/model.json\",\"special_tokens\":0},\"protocol_version\":1,\"timing_boundary\":\"public-feed-and-train-before-serialization\",\"workers_requested\":1}\n",
+    "stderr": "",
+    "returncode": 0
+  },
+  {
+    "run": "en-bytelevel_regex-w1-b1-baseline",
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "en-bytelevel_regex-w1-b1-baseline",
+      "build_id": "baseline",
+      "input_id": "en-bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/en256/text.txt",
+      "output": "/tmp/bpe-feed-unification-results/extra/en-bytelevel_regex-w1-b1-baseline/model.json",
+      "workers": 1,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": "{\"attempt_id\":\"en-bytelevel_regex-w1-b1-baseline\",\"build_id\":\"baseline\",\"effective_affinity\":[0],\"input_id\":\"en-bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":6.329878,\"feed_hwm_kib\":54604,\"feed_major_faults\":0,\"feed_minor_faults\":3333,\"feed_rss_kib\":37980,\"feed_seconds\":6.350588607,\"feed_unique_utf8_bytes\":8056279,\"feed_unique_words\":836105,\"feed_workers\":1,\"pipeline_cpu_seconds\":7.477188,\"pipeline_major_faults\":0,\"pipeline_minor_faults\":23046,\"pipeline_seconds\":7.5012779179999995,\"process_hwm_kib_before_validation\":167756,\"train_cpu_seconds\":1.1472600000000002,\"train_rss_kib\":144600,\"train_seconds\":1.15054825},\"mode\":\"pipeline\",\"output\":{\"actual_merges\":49744,\"actual_vocab\":50000,\"counts_path\":\"/tmp/bpe-feed-unification-results/extra/en-bytelevel_regex-w1-b1-baseline/model.counts.tsv\",\"model_path\":\"/tmp/bpe-feed-unification-results/extra/en-bytelevel_regex-w1-b1-baseline/model.json\",\"special_tokens\":0},\"protocol_version\":1,\"timing_boundary\":\"public-feed-and-train-before-serialization\",\"workers_requested\":1}\n",
+    "stderr": "",
+    "returncode": 0
+  },
+  {
+    "run": "en-bytelevel_regex-w1-b2-baseline",
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "en-bytelevel_regex-w1-b2-baseline",
+      "build_id": "baseline",
+      "input_id": "en-bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/en256/text.txt",
+      "output": "/tmp/bpe-feed-unification-results/extra/en-bytelevel_regex-w1-b2-baseline/model.json",
+      "workers": 1,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": "{\"attempt_id\":\"en-bytelevel_regex-w1-b2-baseline\",\"build_id\":\"baseline\",\"effective_affinity\":[0],\"input_id\":\"en-bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":6.3492239999999995,\"feed_hwm_kib\":54560,\"feed_major_faults\":0,\"feed_minor_faults\":2823,\"feed_rss_kib\":37876,\"feed_seconds\":6.366015206,\"feed_unique_utf8_bytes\":8056279,\"feed_unique_words\":836105,\"feed_workers\":1,\"pipeline_cpu_seconds\":7.49487,\"pipeline_major_faults\":0,\"pipeline_minor_faults\":23936,\"pipeline_seconds\":7.515075349,\"process_hwm_kib_before_validation\":187648,\"train_cpu_seconds\":1.1455989999999998,\"train_rss_kib\":147052,\"train_seconds\":1.148922754},\"mode\":\"pipeline\",\"output\":{\"actual_merges\":49744,\"actual_vocab\":50000,\"counts_path\":\"/tmp/bpe-feed-unification-results/extra/en-bytelevel_regex-w1-b2-baseline/model.counts.tsv\",\"model_path\":\"/tmp/bpe-feed-unification-results/extra/en-bytelevel_regex-w1-b2-baseline/model.json\",\"special_tokens\":0},\"protocol_version\":1,\"timing_boundary\":\"public-feed-and-train-before-serialization\",\"workers_requested\":1}\n",
+    "stderr": "",
+    "returncode": 0
+  },
+  {
+    "run": "en-bytelevel_regex-w1-b2-local",
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "en-bytelevel_regex-w1-b2-local",
+      "build_id": "local",
+      "input_id": "en-bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/en256/text.txt",
+      "output": "/tmp/bpe-feed-unification-results/extra/en-bytelevel_regex-w1-b2-local/model.json",
+      "workers": 1,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": "{\"attempt_id\":\"en-bytelevel_regex-w1-b2-local\",\"build_id\":\"local\",\"effective_affinity\":[0],\"input_id\":\"en-bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":6.556929,\"feed_hwm_kib\":54620,\"feed_major_faults\":0,\"feed_minor_faults\":3333,\"feed_rss_kib\":37932,\"feed_seconds\":6.574918439,\"feed_unique_utf8_bytes\":8056279,\"feed_unique_words\":836105,\"feed_workers\":1,\"pipeline_cpu_seconds\":7.704566,\"pipeline_major_faults\":0,\"pipeline_minor_faults\":23055,\"pipeline_seconds\":7.725922636,\"process_hwm_kib_before_validation\":167832,\"train_cpu_seconds\":1.1475880000000007,\"train_rss_kib\":144588,\"train_seconds\":1.150862621},\"mode\":\"pipeline\",\"output\":{\"actual_merges\":49744,\"actual_vocab\":50000,\"counts_path\":\"/tmp/bpe-feed-unification-results/extra/en-bytelevel_regex-w1-b2-local/model.counts.tsv\",\"model_path\":\"/tmp/bpe-feed-unification-results/extra/en-bytelevel_regex-w1-b2-local/model.json\",\"special_tokens\":0},\"protocol_version\":1,\"timing_boundary\":\"public-feed-and-train-before-serialization\",\"workers_requested\":1}\n",
+    "stderr": "",
+    "returncode": 0
+  },
+  {
+    "run": "en-whitespace-w1-b0-baseline",
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "en-whitespace-w1-b0-baseline",
+      "build_id": "baseline",
+      "input_id": "en-whitespace",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/en256/text.txt",
+      "output": "/tmp/bpe-feed-unification-results/extra/en-whitespace-w1-b0-baseline/model.json",
+      "workers": 1,
+      "pretokenizer": "whitespace",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": "{\"attempt_id\":\"en-whitespace-w1-b0-baseline\",\"build_id\":\"baseline\",\"effective_affinity\":[0],\"input_id\":\"en-whitespace\",\"metrics\":{\"feed_cpu_seconds\":5.672813,\"feed_hwm_kib\":54520,\"feed_major_faults\":0,\"feed_minor_faults\":3279,\"feed_rss_kib\":37756,\"feed_seconds\":5.691694214,\"feed_unique_utf8_bytes\":5678955,\"feed_unique_words\":724596,\"feed_workers\":1,\"pipeline_cpu_seconds\":6.657363,\"pipeline_major_faults\":0,\"pipeline_minor_faults\":19677,\"pipeline_seconds\":6.679189242,\"process_hwm_kib_before_validation\":144124,\"train_cpu_seconds\":0.9845030000000001,\"train_rss_kib\":101056,\"train_seconds\":0.98736251},\"mode\":\"pipeline\",\"output\":{\"actual_merges\":44917,\"actual_vocab\":50000,\"counts_path\":\"/tmp/bpe-feed-unification-results/extra/en-whitespace-w1-b0-baseline/model.counts.tsv\",\"model_path\":\"/tmp/bpe-feed-unification-results/extra/en-whitespace-w1-b0-baseline/model.json\",\"special_tokens\":0},\"protocol_version\":1,\"timing_boundary\":\"public-feed-and-train-before-serialization\",\"workers_requested\":1}\n",
+    "stderr": "",
+    "returncode": 0
+  },
+  {
+    "run": "en-whitespace-w1-b0-local",
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "en-whitespace-w1-b0-local",
+      "build_id": "local",
+      "input_id": "en-whitespace",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/en256/text.txt",
+      "output": "/tmp/bpe-feed-unification-results/extra/en-whitespace-w1-b0-local/model.json",
+      "workers": 1,
+      "pretokenizer": "whitespace",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": "{\"attempt_id\":\"en-whitespace-w1-b0-local\",\"build_id\":\"local\",\"effective_affinity\":[0],\"input_id\":\"en-whitespace\",\"metrics\":{\"feed_cpu_seconds\":5.960462,\"feed_hwm_kib\":54516,\"feed_major_faults\":0,\"feed_minor_faults\":3279,\"feed_rss_kib\":37696,\"feed_seconds\":5.976086583,\"feed_unique_utf8_bytes\":5678955,\"feed_unique_words\":724596,\"feed_workers\":1,\"pipeline_cpu_seconds\":6.946312,\"pipeline_major_faults\":0,\"pipeline_minor_faults\":19560,\"pipeline_seconds\":6.964935423,\"process_hwm_kib_before_validation\":147508,\"train_cpu_seconds\":0.9858019999999996,\"train_rss_kib\":102088,\"train_seconds\":0.988714265},\"mode\":\"pipeline\",\"output\":{\"actual_merges\":44917,\"actual_vocab\":50000,\"counts_path\":\"/tmp/bpe-feed-unification-results/extra/en-whitespace-w1-b0-local/model.counts.tsv\",\"model_path\":\"/tmp/bpe-feed-unification-results/extra/en-whitespace-w1-b0-local/model.json\",\"special_tokens\":0},\"protocol_version\":1,\"timing_boundary\":\"public-feed-and-train-before-serialization\",\"workers_requested\":1}\n",
+    "stderr": "",
+    "returncode": 0
+  },
+  {
+    "run": "en-whitespace-w1-b1-local",
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "en-whitespace-w1-b1-local",
+      "build_id": "local",
+      "input_id": "en-whitespace",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/en256/text.txt",
+      "output": "/tmp/bpe-feed-unification-results/extra/en-whitespace-w1-b1-local/model.json",
+      "workers": 1,
+      "pretokenizer": "whitespace",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": "{\"attempt_id\":\"en-whitespace-w1-b1-local\",\"build_id\":\"local\",\"effective_affinity\":[0],\"input_id\":\"en-whitespace\",\"metrics\":{\"feed_cpu_seconds\":5.918069,\"feed_hwm_kib\":54360,\"feed_major_faults\":0,\"feed_minor_faults\":3279,\"feed_rss_kib\":37600,\"feed_seconds\":5.933804618,\"feed_unique_utf8_bytes\":5678955,\"feed_unique_words\":724596,\"feed_workers\":1,\"pipeline_cpu_seconds\":6.910018,\"pipeline_major_faults\":0,\"pipeline_minor_faults\":19818,\"pipeline_seconds\":6.930065827,\"process_hwm_kib_before_validation\":152756,\"train_cpu_seconds\":0.9919020000000005,\"train_rss_kib\":101852,\"train_seconds\":0.996130768},\"mode\":\"pipeline\",\"output\":{\"actual_merges\":44917,\"actual_vocab\":50000,\"counts_path\":\"/tmp/bpe-feed-unification-results/extra/en-whitespace-w1-b1-local/model.counts.tsv\",\"model_path\":\"/tmp/bpe-feed-unification-results/extra/en-whitespace-w1-b1-local/model.json\",\"special_tokens\":0},\"protocol_version\":1,\"timing_boundary\":\"public-feed-and-train-before-serialization\",\"workers_requested\":1}\n",
+    "stderr": "",
+    "returncode": 0
+  },
+  {
+    "run": "en-whitespace-w1-b1-baseline",
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "en-whitespace-w1-b1-baseline",
+      "build_id": "baseline",
+      "input_id": "en-whitespace",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/en256/text.txt",
+      "output": "/tmp/bpe-feed-unification-results/extra/en-whitespace-w1-b1-baseline/model.json",
+      "workers": 1,
+      "pretokenizer": "whitespace",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": "{\"attempt_id\":\"en-whitespace-w1-b1-baseline\",\"build_id\":\"baseline\",\"effective_affinity\":[0],\"input_id\":\"en-whitespace\",\"metrics\":{\"feed_cpu_seconds\":5.720295999999999,\"feed_hwm_kib\":54432,\"feed_major_faults\":0,\"feed_minor_faults\":2768,\"feed_rss_kib\":37680,\"feed_seconds\":5.735195035,\"feed_unique_utf8_bytes\":5678955,\"feed_unique_words\":724596,\"feed_workers\":1,\"pipeline_cpu_seconds\":6.712408,\"pipeline_major_faults\":0,\"pipeline_minor_faults\":18972,\"pipeline_seconds\":6.7302857419999995,\"process_hwm_kib_before_validation\":149496,\"train_cpu_seconds\":0.9920619999999998,\"train_rss_kib\":102868,\"train_seconds\":0.994948543},\"mode\":\"pipeline\",\"output\":{\"actual_merges\":44917,\"actual_vocab\":50000,\"counts_path\":\"/tmp/bpe-feed-unification-results/extra/en-whitespace-w1-b1-baseline/model.counts.tsv\",\"model_path\":\"/tmp/bpe-feed-unification-results/extra/en-whitespace-w1-b1-baseline/model.json\",\"special_tokens\":0},\"protocol_version\":1,\"timing_boundary\":\"public-feed-and-train-before-serialization\",\"workers_requested\":1}\n",
+    "stderr": "",
+    "returncode": 0
+  },
+  {
+    "run": "en-whitespace-w1-b2-baseline",
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "en-whitespace-w1-b2-baseline",
+      "build_id": "baseline",
+      "input_id": "en-whitespace",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/en256/text.txt",
+      "output": "/tmp/bpe-feed-unification-results/extra/en-whitespace-w1-b2-baseline/model.json",
+      "workers": 1,
+      "pretokenizer": "whitespace",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": "{\"attempt_id\":\"en-whitespace-w1-b2-baseline\",\"build_id\":\"baseline\",\"effective_affinity\":[0],\"input_id\":\"en-whitespace\",\"metrics\":{\"feed_cpu_seconds\":5.705188000000001,\"feed_hwm_kib\":54436,\"feed_major_faults\":0,\"feed_minor_faults\":3279,\"feed_rss_kib\":37672,\"feed_seconds\":5.723947235,\"feed_unique_utf8_bytes\":5678955,\"feed_unique_words\":724596,\"feed_workers\":1,\"pipeline_cpu_seconds\":6.704532,\"pipeline_major_faults\":0,\"pipeline_minor_faults\":20292,\"pipeline_seconds\":6.726307962,\"process_hwm_kib_before_validation\":142548,\"train_cpu_seconds\":0.9992960000000002,\"train_rss_kib\":103276,\"train_seconds\":1.002224235},\"mode\":\"pipeline\",\"output\":{\"actual_merges\":44917,\"actual_vocab\":50000,\"counts_path\":\"/tmp/bpe-feed-unification-results/extra/en-whitespace-w1-b2-baseline/model.counts.tsv\",\"model_path\":\"/tmp/bpe-feed-unification-results/extra/en-whitespace-w1-b2-baseline/model.json\",\"special_tokens\":0},\"protocol_version\":1,\"timing_boundary\":\"public-feed-and-train-before-serialization\",\"workers_requested\":1}\n",
+    "stderr": "",
+    "returncode": 0
+  },
+  {
+    "run": "en-whitespace-w1-b2-local",
+    "job": {
+      "protocol_version": 1,
+      "attempt_id": "en-whitespace-w1-b2-local",
+      "build_id": "local",
+      "input_id": "en-whitespace",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/en256/text.txt",
+      "output": "/tmp/bpe-feed-unification-results/extra/en-whitespace-w1-b2-local/model.json",
+      "workers": 1,
+      "pretokenizer": "whitespace",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout": "{\"attempt_id\":\"en-whitespace-w1-b2-local\",\"build_id\":\"local\",\"effective_affinity\":[0],\"input_id\":\"en-whitespace\",\"metrics\":{\"feed_cpu_seconds\":5.96378,\"feed_hwm_kib\":54572,\"feed_major_faults\":0,\"feed_minor_faults\":2769,\"feed_rss_kib\":37744,\"feed_seconds\":5.979729496,\"feed_unique_utf8_bytes\":5678955,\"feed_unique_words\":724596,\"feed_workers\":1,\"pipeline_cpu_seconds\":6.958906,\"pipeline_major_faults\":0,\"pipeline_minor_faults\":19773,\"pipeline_seconds\":6.97792225,\"process_hwm_kib_before_validation\":146348,\"train_cpu_seconds\":0.9950799999999997,\"train_rss_kib\":126120,\"train_seconds\":0.998057839},\"mode\":\"pipeline\",\"output\":{\"actual_merges\":44917,\"actual_vocab\":50000,\"counts_path\":\"/tmp/bpe-feed-unification-results/extra/en-whitespace-w1-b2-local/model.counts.tsv\",\"model_path\":\"/tmp/bpe-feed-unification-results/extra/en-whitespace-w1-b2-local/model.json\",\"special_tokens\":0},\"protocol_version\":1,\"timing_boundary\":\"public-feed-and-train-before-serialization\",\"workers_requested\":1}\n",
+    "stderr": "",
+    "returncode": 0
+  }
+]

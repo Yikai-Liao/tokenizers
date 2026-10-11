@@ -1,0 +1,434 @@
+[
+  {
+    "run": "bytelevel_regex-b0-drain",
+    "case": "bytelevel_regex",
+    "block": 0,
+    "arm": "drain",
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-feed-cost-results/probe-drain",
+      "/tmp/bpe-feed-cost-results/probes-drain/bytelevel_regex-b0-drain/job.json"
+    ],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 937268,
+    "metrics": {
+      "feed_cpu_seconds": 7.989262999999999,
+      "feed_hwm_kib": 951744,
+      "feed_rss_kib": 689456,
+      "feed_seconds": 2.108440908,
+      "feed_unique_words": 6859987,
+      "feed_workers": 4
+    },
+    "table_phases": [
+      {
+        "capacity": 8388608,
+        "elapsed": 2.023049335,
+        "hwm_kib": 737484,
+        "phase": "after-aggregation",
+        "rss_kib": 737224
+      },
+      {
+        "capacity": 8388608,
+        "elapsed": 2.024014139,
+        "hwm_kib": 737484,
+        "phase": "before-consume",
+        "rss_kib": 737232
+      },
+      {
+        "capacity": 0,
+        "elapsed": 2.103410168,
+        "hwm_kib": 951604,
+        "phase": "after-consume",
+        "rss_kib": 951604
+      }
+    ],
+    "diagnostic": "feed-only capacity probe; no training/count export/model validation"
+  },
+  {
+    "run": "bytelevel_regex-b1-drain",
+    "case": "bytelevel_regex",
+    "block": 1,
+    "arm": "drain",
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-feed-cost-results/probe-drain",
+      "/tmp/bpe-feed-cost-results/probes-drain/bytelevel_regex-b1-drain/job.json"
+    ],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 949480,
+    "metrics": {
+      "feed_cpu_seconds": 7.800896,
+      "feed_hwm_kib": 951732,
+      "feed_rss_kib": 689380,
+      "feed_seconds": 2.079202002,
+      "feed_unique_words": 6859987,
+      "feed_workers": 4
+    },
+    "table_phases": [
+      {
+        "capacity": 8388608,
+        "elapsed": 1.994152649,
+        "hwm_kib": 737484,
+        "phase": "after-aggregation",
+        "rss_kib": 737148
+      },
+      {
+        "capacity": 8388608,
+        "elapsed": 1.995060794,
+        "hwm_kib": 737484,
+        "phase": "before-consume",
+        "rss_kib": 737156
+      },
+      {
+        "capacity": 0,
+        "elapsed": 2.074053813,
+        "hwm_kib": 951528,
+        "phase": "after-consume",
+        "rss_kib": 951528
+      }
+    ],
+    "diagnostic": "feed-only capacity probe; no training/count export/model validation"
+  },
+  {
+    "run": "bytelevel_regex-b2-drain",
+    "case": "bytelevel_regex",
+    "block": 2,
+    "arm": "drain",
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-feed-cost-results/probe-drain",
+      "/tmp/bpe-feed-cost-results/probes-drain/bytelevel_regex-b2-drain/job.json"
+    ],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 908848,
+    "metrics": {
+      "feed_cpu_seconds": 7.89729,
+      "feed_hwm_kib": 951860,
+      "feed_rss_kib": 689704,
+      "feed_seconds": 2.093406421,
+      "feed_unique_words": 6859987,
+      "feed_workers": 4
+    },
+    "table_phases": [
+      {
+        "capacity": 8388608,
+        "elapsed": 2.00844547,
+        "hwm_kib": 737572,
+        "phase": "after-aggregation",
+        "rss_kib": 737408
+      },
+      {
+        "capacity": 8388608,
+        "elapsed": 2.009334681,
+        "hwm_kib": 737572,
+        "phase": "before-consume",
+        "rss_kib": 737480
+      },
+      {
+        "capacity": 0,
+        "elapsed": 2.088436795,
+        "hwm_kib": 951852,
+        "phase": "after-consume",
+        "rss_kib": 951852
+      }
+    ],
+    "diagnostic": "feed-only capacity probe; no training/count export/model validation"
+  },
+  {
+    "run": "bytelevel_regex-b3-drain",
+    "case": "bytelevel_regex",
+    "block": 3,
+    "arm": "drain",
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-feed-cost-results/probe-drain",
+      "/tmp/bpe-feed-cost-results/probes-drain/bytelevel_regex-b3-drain/job.json"
+    ],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 950508,
+    "metrics": {
+      "feed_cpu_seconds": 7.876837,
+      "feed_hwm_kib": 951464,
+      "feed_rss_kib": 689360,
+      "feed_seconds": 2.078948761,
+      "feed_unique_words": 6859987,
+      "feed_workers": 4
+    },
+    "table_phases": [
+      {
+        "capacity": 8388608,
+        "elapsed": 1.993557135,
+        "hwm_kib": 737448,
+        "phase": "after-aggregation",
+        "rss_kib": 737128
+      },
+      {
+        "capacity": 8388608,
+        "elapsed": 1.994432022,
+        "hwm_kib": 737448,
+        "phase": "before-consume",
+        "rss_kib": 737136
+      },
+      {
+        "capacity": 0,
+        "elapsed": 2.073971839,
+        "hwm_kib": 951508,
+        "phase": "after-consume",
+        "rss_kib": 951508
+      }
+    ],
+    "diagnostic": "feed-only capacity probe; no training/count export/model validation"
+  },
+  {
+    "run": "bytelevel_regex-b4-drain",
+    "case": "bytelevel_regex",
+    "block": 4,
+    "arm": "drain",
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-feed-cost-results/probe-drain",
+      "/tmp/bpe-feed-cost-results/probes-drain/bytelevel_regex-b4-drain/job.json"
+    ],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 908700,
+    "metrics": {
+      "feed_cpu_seconds": 7.867032,
+      "feed_hwm_kib": 951776,
+      "feed_rss_kib": 689560,
+      "feed_seconds": 2.093595407,
+      "feed_unique_words": 6859987,
+      "feed_workers": 4
+    },
+    "table_phases": [
+      {
+        "capacity": 8388608,
+        "elapsed": 2.008424136,
+        "hwm_kib": 737492,
+        "phase": "after-aggregation",
+        "rss_kib": 737328
+      },
+      {
+        "capacity": 8388608,
+        "elapsed": 2.009383751,
+        "hwm_kib": 737492,
+        "phase": "before-consume",
+        "rss_kib": 737336
+      },
+      {
+        "capacity": 0,
+        "elapsed": 2.088400631,
+        "hwm_kib": 951708,
+        "phase": "after-consume",
+        "rss_kib": 951708
+      }
+    ],
+    "diagnostic": "feed-only capacity probe; no training/count export/model validation"
+  },
+  {
+    "run": "bytelevel_regex-b5-drain",
+    "case": "bytelevel_regex",
+    "block": 5,
+    "arm": "drain",
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-feed-cost-results/probe-drain",
+      "/tmp/bpe-feed-cost-results/probes-drain/bytelevel_regex-b5-drain/job.json"
+    ],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 925096,
+    "metrics": {
+      "feed_cpu_seconds": 7.862717,
+      "feed_hwm_kib": 951944,
+      "feed_rss_kib": 689576,
+      "feed_seconds": 2.062691766,
+      "feed_unique_words": 6859987,
+      "feed_workers": 4
+    },
+    "table_phases": [
+      {
+        "capacity": 8388608,
+        "elapsed": 1.9785745719999999,
+        "hwm_kib": 737476,
+        "phase": "after-aggregation",
+        "rss_kib": 737340
+      },
+      {
+        "capacity": 8388608,
+        "elapsed": 1.9794582429999998,
+        "hwm_kib": 737476,
+        "phase": "before-consume",
+        "rss_kib": 737348
+      },
+      {
+        "capacity": 0,
+        "elapsed": 2.057603669,
+        "hwm_kib": 951720,
+        "phase": "after-consume",
+        "rss_kib": 951720
+      }
+    ],
+    "diagnostic": "feed-only capacity probe; no training/count export/model validation"
+  },
+  {
+    "run": "zh128-bytelevel_regex-b0-drain",
+    "case": "zh128-bytelevel_regex",
+    "block": 0,
+    "arm": "drain",
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-feed-cost-results/probe-drain",
+      "/tmp/bpe-feed-cost-results/probes-drain/zh128-bytelevel_regex-b0-drain/job.json"
+    ],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 650632,
+    "metrics": {
+      "feed_cpu_seconds": 4.174831,
+      "feed_hwm_kib": 650568,
+      "feed_rss_kib": 350580,
+      "feed_seconds": 1.097262244,
+      "feed_unique_words": 3522251,
+      "feed_workers": 4
+    },
+    "table_phases": [
+      {
+        "capacity": 8388608,
+        "elapsed": 1.048137996,
+        "hwm_kib": 650568,
+        "phase": "after-aggregation",
+        "rss_kib": 519064
+      },
+      {
+        "capacity": 8388608,
+        "elapsed": 1.049018986,
+        "hwm_kib": 650568,
+        "phase": "before-consume",
+        "rss_kib": 519072
+      },
+      {
+        "capacity": 0,
+        "elapsed": 1.095592203,
+        "hwm_kib": 650568,
+        "phase": "after-consume",
+        "rss_kib": 629140
+      }
+    ],
+    "diagnostic": "feed-only capacity probe; no training/count export/model validation"
+  },
+  {
+    "run": "zh384-bytelevel_regex-b0-drain",
+    "case": "zh384-bytelevel_regex",
+    "block": 0,
+    "arm": "drain",
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-feed-cost-results/probe-drain",
+      "/tmp/bpe-feed-cost-results/probes-drain/zh384-bytelevel_regex-b0-drain/job.json"
+    ],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1536144,
+    "metrics": {
+      "feed_cpu_seconds": 12.540842,
+      "feed_hwm_kib": 1535932,
+      "feed_rss_kib": 979080,
+      "feed_seconds": 3.2937889670000002,
+      "feed_unique_words": 10024214,
+      "feed_workers": 4
+    },
+    "table_phases": [
+      {
+        "capacity": 16777216,
+        "elapsed": 3.167774253,
+        "hwm_kib": 1290044,
+        "phase": "after-aggregation",
+        "rss_kib": 1222880
+      },
+      {
+        "capacity": 16777216,
+        "elapsed": 3.169687337,
+        "hwm_kib": 1290044,
+        "phase": "before-consume",
+        "rss_kib": 1222888
+      },
+      {
+        "capacity": 0,
+        "elapsed": 3.288802654,
+        "hwm_kib": 1536144,
+        "phase": "after-consume",
+        "rss_kib": 1536144
+      }
+    ],
+    "diagnostic": "feed-only capacity probe; no training/count export/model validation"
+  },
+  {
+    "run": "zh512-bytelevel_regex-b0-drain",
+    "case": "zh512-bytelevel_regex",
+    "block": 0,
+    "arm": "drain",
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-feed-cost-results/probe-drain",
+      "/tmp/bpe-feed-cost-results/probes-drain/zh512-bytelevel_regex-b0-drain/job.json"
+    ],
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 1841804,
+    "metrics": {
+      "feed_cpu_seconds": 16.558168,
+      "feed_hwm_kib": 1841936,
+      "feed_rss_kib": 1284740,
+      "feed_seconds": 4.333227928,
+      "feed_unique_words": 13035637,
+      "feed_workers": 4
+    },
+    "table_phases": [
+      {
+        "capacity": 16777216,
+        "elapsed": 4.173608026,
+        "hwm_kib": 1434552,
+        "phase": "after-aggregation",
+        "rss_kib": 1434436
+      },
+      {
+        "capacity": 16777216,
+        "elapsed": 4.175498348,
+        "hwm_kib": 1434552,
+        "phase": "before-consume",
+        "rss_kib": 1434444
+      },
+      {
+        "capacity": 0,
+        "elapsed": 4.323718713,
+        "hwm_kib": 1841804,
+        "phase": "after-consume",
+        "rss_kib": 1841804
+      }
+    ],
+    "diagnostic": "feed-only capacity probe; no training/count export/model validation"
+  }
+]

@@ -1,0 +1,134 @@
+{
+  "checks": [
+    {
+      "name": "default-unfiltered",
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--locked",
+        "--manifest-path",
+        "tokenizers/tk-train/Cargo.toml",
+        "--lib"
+      ],
+      "returncode": 101,
+      "result": "36 passed, one known encoder roundtrip assertion failed: \u6d4b ID3 expected6",
+      "log": "final-default-unfiltered.log"
+    },
+    {
+      "name": "format",
+      "command": [
+        "uv",
+        "run",
+        "experiments/bpe-simplification/format-changed.py",
+        "--check",
+        "tokenizers/tk-train/src/trainers/bpe/feed.rs",
+        "tokenizers/tk-train/src/trainers/bpe/tests.rs"
+      ],
+      "returncode": 0,
+      "log": "final-format.log"
+    },
+    {
+      "name": "default-filtered",
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--locked",
+        "--manifest-path",
+        "tokenizers/tk-train/Cargo.toml",
+        "--lib",
+        "--",
+        "--skip",
+        "feed_training_tokenizer_json_and_encoding_roundtrip"
+      ],
+      "returncode": 0,
+      "log": "final-default-filtered.log"
+    },
+    {
+      "name": "no-default-filtered",
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--locked",
+        "--manifest-path",
+        "tokenizers/tk-train/Cargo.toml",
+        "--no-default-features",
+        "--lib",
+        "--",
+        "--skip",
+        "feed_training_tokenizer_json_and_encoding_roundtrip"
+      ],
+      "returncode": 0,
+      "log": "final-no-default-filtered.log"
+    },
+    {
+      "name": "clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--offline",
+        "--locked",
+        "--manifest-path",
+        "tokenizers/tk-train/Cargo.toml",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0,
+      "log": "final-clippy.log"
+    },
+    {
+      "name": "baseline-known-failure-reproduction",
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--locked",
+        "--manifest-path",
+        "tokenizers/tk-train/Cargo.toml",
+        "--lib",
+        "feed_training_tokenizer_json_and_encoding_roundtrip",
+        "--",
+        "--nocapture"
+      ],
+      "workdir": "/tmp/bpe-feed-baseline",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/bpe-feed-runner-tests"
+      },
+      "returncode": 101,
+      "result": "Same pre-change roundtrip assertion: \u6d4b ID3 expected6; one selected test failed",
+      "log": "final-baseline-known-failure.log"
+    },
+    {
+      "name": "git-diff-check",
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "returncode": 0,
+      "log": "final-diff-check.log"
+    }
+  ],
+  "final_source_matches_measured_local_arm": {
+    "tokenizers/tk-train/src/trainers/bpe/feed.rs": "b2a456e81e6b9c5f1498bf2db64d3458c30281c6523ed0e0934b6324966ae138",
+    "tokenizers/tk-train/src/trainers/bpe/tests.rs": "3415b3b5580ac9945582babe86fc0cb40738eb7f8cf28f233e70a50d8fc5b9d1"
+  },
+  "correctness": {
+    "real_processes": 66,
+    "valid_canonical_count_hashes_and_complete_models": 66,
+    "cross_matrix_models_and_counts_equal": true,
+    "child_swap_kib_max": 0,
+    "all_major_faults_zero": true,
+    "micro_samples": 168,
+    "common_native_arm_tests": {
+      "baseline": 36,
+      "local": 36,
+      "direct": 36
+    },
+    "known_test_skip": "feed_training_tokenizer_json_and_encoding_roundtrip"
+  }
+}

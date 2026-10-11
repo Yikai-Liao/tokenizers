@@ -1,0 +1,9 @@
+   Compiling bpe-bench-runner v0.1.0 (/tmp/bpe-feed-baseline/experiments/bpe-simplification/runner)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.78s
+     Running unittests src/main.rs (/tmp/bpe-feed-runner-tests/debug/deps/bpe_bench_runner-f15c6bf7466c62de)
+
+running 1 test
+test feed_stats::tests::counts_distinct_word_bytes_without_frequencies_or_json_escapes ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

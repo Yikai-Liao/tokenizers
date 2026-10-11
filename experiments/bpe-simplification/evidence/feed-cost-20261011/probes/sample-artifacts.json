@@ -1,0 +1,434 @@
+[
+  {
+    "run": "bytelevel_regex-b0-baseline",
+    "returncode": 0,
+    "job.json": {
+      "protocol_version": 1,
+      "attempt_id": "bytelevel_regex-b0-baseline",
+      "build_id": "probe-baseline",
+      "input_id": "bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/zh256/text.txt",
+      "output": "/tmp/bpe-feed-cost-results/probes/bytelevel_regex-b0-baseline/unused-model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout.log": "{\"attempt_id\":\"bytelevel_regex-b0-baseline\",\"build_id\":\"probe-baseline\",\"diagnostic\":\"feed-only capacity probe; no training/count export/model validation\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":7.814413,\"feed_hwm_kib\":951828,\"feed_rss_kib\":689592,\"feed_seconds\":2.107851602,\"feed_unique_words\":6859987,\"feed_workers\":4},\"mode\":\"pipeline\",\"protocol_version\":1,\"workers_requested\":4}\n",
+    "stderr.log": "BPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.022074222,\"hwm_kib\":737548,\"phase\":\"after-aggregation\",\"rss_kib\":737288}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.022985287,\"hwm_kib\":737548,\"phase\":\"before-consume\",\"rss_kib\":737364}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.09773069,\"hwm_kib\":951736,\"phase\":\"after-consume\",\"rss_kib\":951736}\n"
+  },
+  {
+    "run": "bytelevel_regex-b0-unified",
+    "returncode": 0,
+    "job.json": {
+      "protocol_version": 1,
+      "attempt_id": "bytelevel_regex-b0-unified",
+      "build_id": "probe-unified",
+      "input_id": "bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/zh256/text.txt",
+      "output": "/tmp/bpe-feed-cost-results/probes/bytelevel_regex-b0-unified/unused-model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout.log": "{\"attempt_id\":\"bytelevel_regex-b0-unified\",\"build_id\":\"probe-unified\",\"diagnostic\":\"feed-only capacity probe; no training/count export/model validation\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":8.769176,\"feed_hwm_kib\":1286916,\"feed_rss_kib\":682476,\"feed_seconds\":2.301988107,\"feed_unique_words\":6859987,\"feed_workers\":4},\"mode\":\"pipeline\",\"protocol_version\":1,\"workers_requested\":4}\n",
+    "stderr.log": "BPE_FEED_TABLE {\"capacity\":16777216,\"elapsed\":2.203465148,\"hwm_kib\":1286916,\"phase\":\"after-aggregation\",\"rss_kib\":1025160}\nBPE_FEED_TABLE {\"capacity\":16777216,\"elapsed\":2.205373006,\"hwm_kib\":1286916,\"phase\":\"before-consume\",\"rss_kib\":1025168}\nBPE_FEED_TABLE {\"capacity\":16777216,\"elapsed\":2.286959349,\"hwm_kib\":1286916,\"phase\":\"after-consume\",\"rss_kib\":1239540}\n"
+  },
+  {
+    "run": "bytelevel_regex-b1-unified",
+    "returncode": 0,
+    "job.json": {
+      "protocol_version": 1,
+      "attempt_id": "bytelevel_regex-b1-unified",
+      "build_id": "probe-unified",
+      "input_id": "bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/zh256/text.txt",
+      "output": "/tmp/bpe-feed-cost-results/probes/bytelevel_regex-b1-unified/unused-model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout.log": "{\"attempt_id\":\"bytelevel_regex-b1-unified\",\"build_id\":\"probe-unified\",\"diagnostic\":\"feed-only capacity probe; no training/count export/model validation\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":7.977495,\"feed_hwm_kib\":951808,\"feed_rss_kib\":689520,\"feed_seconds\":2.127825309,\"feed_unique_words\":6859987,\"feed_workers\":4},\"mode\":\"pipeline\",\"protocol_version\":1,\"workers_requested\":4}\n",
+    "stderr.log": "BPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.043404483,\"hwm_kib\":737312,\"phase\":\"after-aggregation\",\"rss_kib\":737284}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.044364197,\"hwm_kib\":737312,\"phase\":\"before-consume\",\"rss_kib\":737292}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.117431412,\"hwm_kib\":951664,\"phase\":\"after-consume\",\"rss_kib\":951664}\n"
+  },
+  {
+    "run": "bytelevel_regex-b1-baseline",
+    "returncode": 0,
+    "job.json": {
+      "protocol_version": 1,
+      "attempt_id": "bytelevel_regex-b1-baseline",
+      "build_id": "probe-baseline",
+      "input_id": "bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/zh256/text.txt",
+      "output": "/tmp/bpe-feed-cost-results/probes/bytelevel_regex-b1-baseline/unused-model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout.log": "{\"attempt_id\":\"bytelevel_regex-b1-baseline\",\"build_id\":\"probe-baseline\",\"diagnostic\":\"feed-only capacity probe; no training/count export/model validation\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":8.605459,\"feed_hwm_kib\":1508812,\"feed_rss_kib\":689752,\"feed_seconds\":2.8721264079999997,\"feed_unique_words\":6859987,\"feed_workers\":4},\"mode\":\"pipeline\",\"protocol_version\":1,\"workers_requested\":4}\n",
+    "stderr.log": "BPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.006710495,\"hwm_kib\":737536,\"phase\":\"after-aggregation\",\"rss_kib\":737352}\nBPE_FEED_TABLE {\"capacity\":16777216,\"elapsed\":2.00761969,\"hwm_kib\":737536,\"phase\":\"before-consume\",\"rss_kib\":737432}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.866075827,\"hwm_kib\":1508964,\"phase\":\"after-consume\",\"rss_kib\":1508964}\n"
+  },
+  {
+    "run": "bytelevel_regex-b2-baseline",
+    "returncode": 0,
+    "job.json": {
+      "protocol_version": 1,
+      "attempt_id": "bytelevel_regex-b2-baseline",
+      "build_id": "probe-baseline",
+      "input_id": "bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/zh256/text.txt",
+      "output": "/tmp/bpe-feed-cost-results/probes/bytelevel_regex-b2-baseline/unused-model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout.log": "{\"attempt_id\":\"bytelevel_regex-b2-baseline\",\"build_id\":\"probe-baseline\",\"diagnostic\":\"feed-only capacity probe; no training/count export/model validation\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":7.788821,\"feed_hwm_kib\":951900,\"feed_rss_kib\":689644,\"feed_seconds\":2.06413525,\"feed_unique_words\":6859987,\"feed_workers\":4},\"mode\":\"pipeline\",\"protocol_version\":1,\"workers_requested\":4}\n",
+    "stderr.log": "BPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":1.979451161,\"hwm_kib\":737664,\"phase\":\"after-aggregation\",\"rss_kib\":737344}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":1.980334183,\"hwm_kib\":737664,\"phase\":\"before-consume\",\"rss_kib\":737420}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.054386156,\"hwm_kib\":951792,\"phase\":\"after-consume\",\"rss_kib\":951792}\n"
+  },
+  {
+    "run": "bytelevel_regex-b2-unified",
+    "returncode": 0,
+    "job.json": {
+      "protocol_version": 1,
+      "attempt_id": "bytelevel_regex-b2-unified",
+      "build_id": "probe-unified",
+      "input_id": "bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/zh256/text.txt",
+      "output": "/tmp/bpe-feed-cost-results/probes/bytelevel_regex-b2-unified/unused-model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout.log": "{\"attempt_id\":\"bytelevel_regex-b2-unified\",\"build_id\":\"probe-unified\",\"diagnostic\":\"feed-only capacity probe; no training/count export/model validation\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":7.871396,\"feed_hwm_kib\":951900,\"feed_rss_kib\":689484,\"feed_seconds\":2.097404611,\"feed_unique_words\":6859987,\"feed_workers\":4},\"mode\":\"pipeline\",\"protocol_version\":1,\"workers_requested\":4}\n",
+    "stderr.log": "BPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.012857531,\"hwm_kib\":737536,\"phase\":\"after-aggregation\",\"rss_kib\":737252}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.013744007,\"hwm_kib\":737536,\"phase\":\"before-consume\",\"rss_kib\":737256}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.087132217,\"hwm_kib\":951628,\"phase\":\"after-consume\",\"rss_kib\":951628}\n"
+  },
+  {
+    "run": "bytelevel_regex-b3-unified",
+    "returncode": 0,
+    "job.json": {
+      "protocol_version": 1,
+      "attempt_id": "bytelevel_regex-b3-unified",
+      "build_id": "probe-unified",
+      "input_id": "bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/zh256/text.txt",
+      "output": "/tmp/bpe-feed-cost-results/probes/bytelevel_regex-b3-unified/unused-model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout.log": "{\"attempt_id\":\"bytelevel_regex-b3-unified\",\"build_id\":\"probe-unified\",\"diagnostic\":\"feed-only capacity probe; no training/count export/model validation\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":8.702062999999999,\"feed_hwm_kib\":1288820,\"feed_rss_kib\":683692,\"feed_seconds\":2.315384011,\"feed_unique_words\":6859987,\"feed_workers\":4},\"mode\":\"pipeline\",\"protocol_version\":1,\"workers_requested\":4}\n",
+    "stderr.log": "BPE_FEED_TABLE {\"capacity\":16777216,\"elapsed\":2.216583301,\"hwm_kib\":1288820,\"phase\":\"after-aggregation\",\"rss_kib\":1026312}\nBPE_FEED_TABLE {\"capacity\":16777216,\"elapsed\":2.21851238,\"hwm_kib\":1288820,\"phase\":\"before-consume\",\"rss_kib\":1026384}\nBPE_FEED_TABLE {\"capacity\":16777216,\"elapsed\":2.300046481,\"hwm_kib\":1288820,\"phase\":\"after-consume\",\"rss_kib\":1240756}\n"
+  },
+  {
+    "run": "bytelevel_regex-b3-baseline",
+    "returncode": 0,
+    "job.json": {
+      "protocol_version": 1,
+      "attempt_id": "bytelevel_regex-b3-baseline",
+      "build_id": "probe-baseline",
+      "input_id": "bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/zh256/text.txt",
+      "output": "/tmp/bpe-feed-cost-results/probes/bytelevel_regex-b3-baseline/unused-model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout.log": "{\"attempt_id\":\"bytelevel_regex-b3-baseline\",\"build_id\":\"probe-baseline\",\"diagnostic\":\"feed-only capacity probe; no training/count export/model validation\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":8.743131,\"feed_hwm_kib\":1293672,\"feed_rss_kib\":688576,\"feed_seconds\":2.319730546,\"feed_unique_words\":6859987,\"feed_workers\":4},\"mode\":\"pipeline\",\"protocol_version\":1,\"workers_requested\":4}\n",
+    "stderr.log": "BPE_FEED_TABLE {\"capacity\":16777216,\"elapsed\":2.219593211,\"hwm_kib\":1293672,\"phase\":\"after-aggregation\",\"rss_kib\":1031260}\nBPE_FEED_TABLE {\"capacity\":16777216,\"elapsed\":2.221468912,\"hwm_kib\":1293672,\"phase\":\"before-consume\",\"rss_kib\":1031268}\nBPE_FEED_TABLE {\"capacity\":16777216,\"elapsed\":2.305595421,\"hwm_kib\":1293672,\"phase\":\"after-consume\",\"rss_kib\":1245640}\n"
+  },
+  {
+    "run": "bytelevel_regex-b4-baseline",
+    "returncode": 0,
+    "job.json": {
+      "protocol_version": 1,
+      "attempt_id": "bytelevel_regex-b4-baseline",
+      "build_id": "probe-baseline",
+      "input_id": "bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/zh256/text.txt",
+      "output": "/tmp/bpe-feed-cost-results/probes/bytelevel_regex-b4-baseline/unused-model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout.log": "{\"attempt_id\":\"bytelevel_regex-b4-baseline\",\"build_id\":\"probe-baseline\",\"diagnostic\":\"feed-only capacity probe; no training/count export/model validation\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":8.788265,\"feed_hwm_kib\":1291640,\"feed_rss_kib\":686820,\"feed_seconds\":2.320217324,\"feed_unique_words\":6859987,\"feed_workers\":4},\"mode\":\"pipeline\",\"protocol_version\":1,\"workers_requested\":4}\n",
+    "stderr.log": "BPE_FEED_TABLE {\"capacity\":16777216,\"elapsed\":2.22066858,\"hwm_kib\":1291640,\"phase\":\"after-aggregation\",\"rss_kib\":1029500}\nBPE_FEED_TABLE {\"capacity\":16777216,\"elapsed\":2.222583811,\"hwm_kib\":1291640,\"phase\":\"before-consume\",\"rss_kib\":1029512}\nBPE_FEED_TABLE {\"capacity\":16777216,\"elapsed\":2.305884098,\"hwm_kib\":1291640,\"phase\":\"after-consume\",\"rss_kib\":1243884}\n"
+  },
+  {
+    "run": "bytelevel_regex-b4-unified",
+    "returncode": 0,
+    "job.json": {
+      "protocol_version": 1,
+      "attempt_id": "bytelevel_regex-b4-unified",
+      "build_id": "probe-unified",
+      "input_id": "bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/zh256/text.txt",
+      "output": "/tmp/bpe-feed-cost-results/probes/bytelevel_regex-b4-unified/unused-model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout.log": "{\"attempt_id\":\"bytelevel_regex-b4-unified\",\"build_id\":\"probe-unified\",\"diagnostic\":\"feed-only capacity probe; no training/count export/model validation\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":8.656107,\"feed_hwm_kib\":1508848,\"feed_rss_kib\":689580,\"feed_seconds\":2.888072858,\"feed_unique_words\":6859987,\"feed_workers\":4},\"mode\":\"pipeline\",\"protocol_version\":1,\"workers_requested\":4}\n",
+    "stderr.log": "BPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.023709644,\"hwm_kib\":737492,\"phase\":\"after-aggregation\",\"rss_kib\":737240}\nBPE_FEED_TABLE {\"capacity\":16777216,\"elapsed\":2.02459263,\"hwm_kib\":737492,\"phase\":\"before-consume\",\"rss_kib\":737256}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.881884839,\"hwm_kib\":1508788,\"phase\":\"after-consume\",\"rss_kib\":1508788}\n"
+  },
+  {
+    "run": "bytelevel_regex-b5-unified",
+    "returncode": 0,
+    "job.json": {
+      "protocol_version": 1,
+      "attempt_id": "bytelevel_regex-b5-unified",
+      "build_id": "probe-unified",
+      "input_id": "bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/zh256/text.txt",
+      "output": "/tmp/bpe-feed-cost-results/probes/bytelevel_regex-b5-unified/unused-model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout.log": "{\"attempt_id\":\"bytelevel_regex-b5-unified\",\"build_id\":\"probe-unified\",\"diagnostic\":\"feed-only capacity probe; no training/count export/model validation\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":7.889589,\"feed_hwm_kib\":951820,\"feed_rss_kib\":689452,\"feed_seconds\":2.084342568,\"feed_unique_words\":6859987,\"feed_workers\":4},\"mode\":\"pipeline\",\"protocol_version\":1,\"workers_requested\":4}\n",
+    "stderr.log": "BPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":1.9997046250000001,\"hwm_kib\":737476,\"phase\":\"after-aggregation\",\"rss_kib\":737220}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.000605672,\"hwm_kib\":737476,\"phase\":\"before-consume\",\"rss_kib\":737228}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.074099383,\"hwm_kib\":951600,\"phase\":\"after-consume\",\"rss_kib\":951600}\n"
+  },
+  {
+    "run": "bytelevel_regex-b5-baseline",
+    "returncode": 0,
+    "job.json": {
+      "protocol_version": 1,
+      "attempt_id": "bytelevel_regex-b5-baseline",
+      "build_id": "probe-baseline",
+      "input_id": "bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/zh256/text.txt",
+      "output": "/tmp/bpe-feed-cost-results/probes/bytelevel_regex-b5-baseline/unused-model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout.log": "{\"attempt_id\":\"bytelevel_regex-b5-baseline\",\"build_id\":\"probe-baseline\",\"diagnostic\":\"feed-only capacity probe; no training/count export/model validation\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":7.812292,\"feed_hwm_kib\":951672,\"feed_rss_kib\":689564,\"feed_seconds\":2.085128314,\"feed_unique_words\":6859987,\"feed_workers\":4},\"mode\":\"pipeline\",\"protocol_version\":1,\"workers_requested\":4}\n",
+    "stderr.log": "BPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":1.981892914,\"hwm_kib\":737640,\"phase\":\"after-aggregation\",\"rss_kib\":737332}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":1.982791574,\"hwm_kib\":737640,\"phase\":\"before-consume\",\"rss_kib\":737340}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.075309674,\"hwm_kib\":951712,\"phase\":\"after-consume\",\"rss_kib\":951712}\n"
+  },
+  {
+    "run": "zh128-bytelevel_regex-b0-baseline",
+    "returncode": 0,
+    "job.json": {
+      "protocol_version": 1,
+      "attempt_id": "zh128-bytelevel_regex-b0-baseline",
+      "build_id": "probe-baseline",
+      "input_id": "zh128-bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/tmp/bpe-feed-cost-results/corpora/128/text.txt",
+      "output": "/tmp/bpe-feed-cost-results/probes/zh128-bytelevel_regex-b0-baseline/unused-model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout.log": "{\"attempt_id\":\"zh128-bytelevel_regex-b0-baseline\",\"build_id\":\"probe-baseline\",\"diagnostic\":\"feed-only capacity probe; no training/count export/model validation\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"zh128-bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":4.137021,\"feed_hwm_kib\":644192,\"feed_rss_kib\":364408,\"feed_seconds\":1.104606121,\"feed_unique_words\":3522251,\"feed_workers\":4},\"mode\":\"pipeline\",\"protocol_version\":1,\"workers_requested\":4}\n",
+    "stderr.log": "BPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":1.054815955,\"hwm_kib\":644192,\"phase\":\"after-aggregation\",\"rss_kib\":516480}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":1.055720573,\"hwm_kib\":644192,\"phase\":\"before-consume\",\"rss_kib\":516488}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":1.098202149,\"hwm_kib\":644192,\"phase\":\"after-consume\",\"rss_kib\":626556}\n"
+  },
+  {
+    "run": "zh128-bytelevel_regex-b0-unified",
+    "returncode": 0,
+    "job.json": {
+      "protocol_version": 1,
+      "attempt_id": "zh128-bytelevel_regex-b0-unified",
+      "build_id": "probe-unified",
+      "input_id": "zh128-bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/tmp/bpe-feed-cost-results/corpora/128/text.txt",
+      "output": "/tmp/bpe-feed-cost-results/probes/zh128-bytelevel_regex-b0-unified/unused-model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout.log": "{\"attempt_id\":\"zh128-bytelevel_regex-b0-unified\",\"build_id\":\"probe-unified\",\"diagnostic\":\"feed-only capacity probe; no training/count export/model validation\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"zh128-bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":4.179556,\"feed_hwm_kib\":647984,\"feed_rss_kib\":365308,\"feed_seconds\":1.11467186,\"feed_unique_words\":3522251,\"feed_workers\":4},\"mode\":\"pipeline\",\"protocol_version\":1,\"workers_requested\":4}\n",
+    "stderr.log": "BPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":1.065020097,\"hwm_kib\":647984,\"phase\":\"after-aggregation\",\"rss_kib\":517376}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":1.065968439,\"hwm_kib\":647984,\"phase\":\"before-consume\",\"rss_kib\":517384}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":1.107635566,\"hwm_kib\":647984,\"phase\":\"after-consume\",\"rss_kib\":627452}\n"
+  },
+  {
+    "run": "zh384-bytelevel_regex-b0-baseline",
+    "returncode": 0,
+    "job.json": {
+      "protocol_version": 1,
+      "attempt_id": "zh384-bytelevel_regex-b0-baseline",
+      "build_id": "probe-baseline",
+      "input_id": "zh384-bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/tmp/bpe-feed-cost-results/corpora/384/text.txt",
+      "output": "/tmp/bpe-feed-cost-results/probes/zh384-bytelevel_regex-b0-baseline/unused-model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout.log": "{\"attempt_id\":\"zh384-bytelevel_regex-b0-baseline\",\"build_id\":\"probe-baseline\",\"diagnostic\":\"feed-only capacity probe; no training/count export/model validation\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"zh384-bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":12.520114999999999,\"feed_hwm_kib\":1536096,\"feed_rss_kib\":978920,\"feed_seconds\":3.291983711,\"feed_unique_words\":10024214,\"feed_workers\":4},\"mode\":\"pipeline\",\"protocol_version\":1,\"workers_requested\":4}\n",
+    "stderr.log": "BPE_FEED_TABLE {\"capacity\":16777216,\"elapsed\":3.166292431,\"hwm_kib\":1293492,\"phase\":\"after-aggregation\",\"rss_kib\":1222720}\nBPE_FEED_TABLE {\"capacity\":16777216,\"elapsed\":3.168185378,\"hwm_kib\":1293492,\"phase\":\"before-consume\",\"rss_kib\":1222728}\nBPE_FEED_TABLE {\"capacity\":16777216,\"elapsed\":3.277456534,\"hwm_kib\":1535984,\"phase\":\"after-consume\",\"rss_kib\":1535984}\n"
+  },
+  {
+    "run": "zh384-bytelevel_regex-b0-unified",
+    "returncode": 0,
+    "job.json": {
+      "protocol_version": 1,
+      "attempt_id": "zh384-bytelevel_regex-b0-unified",
+      "build_id": "probe-unified",
+      "input_id": "zh384-bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/tmp/bpe-feed-cost-results/corpora/384/text.txt",
+      "output": "/tmp/bpe-feed-cost-results/probes/zh384-bytelevel_regex-b0-unified/unused-model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout.log": "{\"attempt_id\":\"zh384-bytelevel_regex-b0-unified\",\"build_id\":\"probe-unified\",\"diagnostic\":\"feed-only capacity probe; no training/count export/model validation\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"zh384-bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":12.623053,\"feed_hwm_kib\":1535772,\"feed_rss_kib\":978764,\"feed_seconds\":3.333736187,\"feed_unique_words\":10024214,\"feed_workers\":4},\"mode\":\"pipeline\",\"protocol_version\":1,\"workers_requested\":4}\n",
+    "stderr.log": "BPE_FEED_TABLE {\"capacity\":16777216,\"elapsed\":3.210964099,\"hwm_kib\":1290452,\"phase\":\"after-aggregation\",\"rss_kib\":1222564}\nBPE_FEED_TABLE {\"capacity\":16777216,\"elapsed\":3.212828028,\"hwm_kib\":1290452,\"phase\":\"before-consume\",\"rss_kib\":1222572}\nBPE_FEED_TABLE {\"capacity\":16777216,\"elapsed\":3.318309995,\"hwm_kib\":1535828,\"phase\":\"after-consume\",\"rss_kib\":1535828}\n"
+  },
+  {
+    "run": "zh512-bytelevel_regex-b0-baseline",
+    "returncode": 0,
+    "job.json": {
+      "protocol_version": 1,
+      "attempt_id": "zh512-bytelevel_regex-b0-baseline",
+      "build_id": "probe-baseline",
+      "input_id": "zh512-bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/tmp/bpe-feed-cost-results/corpora/512/text.txt",
+      "output": "/tmp/bpe-feed-cost-results/probes/zh512-bytelevel_regex-b0-baseline/unused-model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout.log": "{\"attempt_id\":\"zh512-bytelevel_regex-b0-baseline\",\"build_id\":\"probe-baseline\",\"diagnostic\":\"feed-only capacity probe; no training/count export/model validation\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"zh512-bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":16.472401,\"feed_hwm_kib\":1841828,\"feed_rss_kib\":1284724,\"feed_seconds\":4.305237213,\"feed_unique_words\":13035637,\"feed_workers\":4},\"mode\":\"pipeline\",\"protocol_version\":1,\"workers_requested\":4}\n",
+    "stderr.log": "BPE_FEED_TABLE {\"capacity\":16777216,\"elapsed\":4.147249178,\"hwm_kib\":1434688,\"phase\":\"after-aggregation\",\"rss_kib\":1434420}\nBPE_FEED_TABLE {\"capacity\":16777216,\"elapsed\":4.149109768,\"hwm_kib\":1434688,\"phase\":\"before-consume\",\"rss_kib\":1434428}\nBPE_FEED_TABLE {\"capacity\":16777216,\"elapsed\":4.285922476,\"hwm_kib\":1841788,\"phase\":\"after-consume\",\"rss_kib\":1841788}\n"
+  },
+  {
+    "run": "zh512-bytelevel_regex-b0-unified",
+    "returncode": 0,
+    "job.json": {
+      "protocol_version": 1,
+      "attempt_id": "zh512-bytelevel_regex-b0-unified",
+      "build_id": "probe-unified",
+      "input_id": "zh512-bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/tmp/bpe-feed-cost-results/corpora/512/text.txt",
+      "output": "/tmp/bpe-feed-cost-results/probes/zh512-bytelevel_regex-b0-unified/unused-model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout.log": "{\"attempt_id\":\"zh512-bytelevel_regex-b0-unified\",\"build_id\":\"probe-unified\",\"diagnostic\":\"feed-only capacity probe; no training/count export/model validation\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"zh512-bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":16.503187,\"feed_hwm_kib\":1841904,\"feed_rss_kib\":1284764,\"feed_seconds\":4.325803153,\"feed_unique_words\":13035637,\"feed_workers\":4},\"mode\":\"pipeline\",\"protocol_version\":1,\"workers_requested\":4}\n",
+    "stderr.log": "BPE_FEED_TABLE {\"capacity\":16777216,\"elapsed\":4.166093419,\"hwm_kib\":1434568,\"phase\":\"after-aggregation\",\"rss_kib\":1434460}\nBPE_FEED_TABLE {\"capacity\":16777216,\"elapsed\":4.167955746,\"hwm_kib\":1434568,\"phase\":\"before-consume\",\"rss_kib\":1434468}\nBPE_FEED_TABLE {\"capacity\":16777216,\"elapsed\":4.304957824,\"hwm_kib\":1841828,\"phase\":\"after-consume\",\"rss_kib\":1841828}\n"
+  }
+]

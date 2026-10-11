@@ -1,0 +1,218 @@
+[
+  {
+    "run": "bytelevel_regex-w4-b0-baseline",
+    "returncode": 0,
+    "job.json": {
+      "protocol_version": 1,
+      "attempt_id": "bytelevel_regex-w4-b0-baseline",
+      "build_id": "baseline",
+      "input_id": "bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/zh256/text.txt",
+      "output": "/tmp/bpe-feed-cost-results/measurements/bytelevel_regex-w4-b0-baseline/model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout.log": "{\"attempt_id\":\"bytelevel_regex-w4-b0-baseline\",\"build_id\":\"baseline\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":7.881298,\"feed_hwm_kib\":951644,\"feed_major_faults\":0,\"feed_minor_faults\":119892,\"feed_rss_kib\":689436,\"feed_seconds\":2.073545755,\"feed_unique_utf8_bytes\":389044270,\"feed_unique_words\":6859987,\"feed_workers\":4,\"pipeline_cpu_seconds\":40.04078,\"pipeline_major_faults\":0,\"pipeline_minor_faults\":371267,\"pipeline_seconds\":11.982518939,\"process_hwm_kib_before_validation\":2467656,\"train_cpu_seconds\":32.15943299999999,\"train_rss_kib\":1616792,\"train_seconds\":9.908775056},\"mode\":\"pipeline\",\"output\":{\"actual_merges\":49744,\"actual_vocab\":50000,\"counts_path\":\"/tmp/bpe-feed-cost-results/measurements/bytelevel_regex-w4-b0-baseline/model.counts.tsv\",\"model_path\":\"/tmp/bpe-feed-cost-results/measurements/bytelevel_regex-w4-b0-baseline/model.json\",\"special_tokens\":0},\"protocol_version\":1,\"timing_boundary\":\"public-feed-and-train-before-serialization\",\"workers_requested\":4}\n",
+    "stderr.log": "BPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":1.991310229,\"hwm_kib\":737348,\"phase\":\"after-aggregation\",\"rss_kib\":737204}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":1.99219619,\"hwm_kib\":737348,\"phase\":\"before-consume\",\"rss_kib\":737212}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.063715394,\"hwm_kib\":951584,\"phase\":\"after-consume\",\"rss_kib\":951584}\n"
+  },
+  {
+    "run": "bytelevel_regex-w4-b0-unified",
+    "returncode": 0,
+    "job.json": {
+      "protocol_version": 1,
+      "attempt_id": "bytelevel_regex-w4-b0-unified",
+      "build_id": "unified",
+      "input_id": "bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/zh256/text.txt",
+      "output": "/tmp/bpe-feed-cost-results/measurements/bytelevel_regex-w4-b0-unified/model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout.log": "{\"attempt_id\":\"bytelevel_regex-w4-b0-unified\",\"build_id\":\"unified\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":7.913786,\"feed_hwm_kib\":951608,\"feed_major_faults\":0,\"feed_minor_faults\":120399,\"feed_rss_kib\":689496,\"feed_seconds\":2.092786553,\"feed_unique_utf8_bytes\":389044270,\"feed_unique_words\":6859987,\"feed_workers\":4,\"pipeline_cpu_seconds\":39.497387,\"pipeline_major_faults\":0,\"pipeline_minor_faults\":369031,\"pipeline_seconds\":11.808399958,\"process_hwm_kib_before_validation\":2408652,\"train_cpu_seconds\":31.583545,\"train_rss_kib\":1556056,\"train_seconds\":9.715463166},\"mode\":\"pipeline\",\"output\":{\"actual_merges\":49744,\"actual_vocab\":50000,\"counts_path\":\"/tmp/bpe-feed-cost-results/measurements/bytelevel_regex-w4-b0-unified/model.counts.tsv\",\"model_path\":\"/tmp/bpe-feed-cost-results/measurements/bytelevel_regex-w4-b0-unified/model.json\",\"special_tokens\":0},\"protocol_version\":1,\"timing_boundary\":\"public-feed-and-train-before-serialization\",\"workers_requested\":4}\n",
+    "stderr.log": "BPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.008826956,\"hwm_kib\":737452,\"phase\":\"after-aggregation\",\"rss_kib\":737264}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.009735998,\"hwm_kib\":737452,\"phase\":\"before-consume\",\"rss_kib\":737272}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.082682078,\"hwm_kib\":951644,\"phase\":\"after-consume\",\"rss_kib\":951644}\n"
+  },
+  {
+    "run": "bytelevel_regex-w4-b0-collected",
+    "returncode": 0,
+    "job.json": {
+      "protocol_version": 1,
+      "attempt_id": "bytelevel_regex-w4-b0-collected",
+      "build_id": "collected",
+      "input_id": "bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/zh256/text.txt",
+      "output": "/tmp/bpe-feed-cost-results/measurements/bytelevel_regex-w4-b0-collected/model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout.log": "{\"attempt_id\":\"bytelevel_regex-w4-b0-collected\",\"build_id\":\"collected\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":8.066798,\"feed_hwm_kib\":951520,\"feed_major_faults\":0,\"feed_minor_faults\":120410,\"feed_rss_kib\":689508,\"feed_seconds\":2.18430423,\"feed_unique_utf8_bytes\":389044270,\"feed_unique_words\":6859987,\"feed_workers\":4,\"pipeline_cpu_seconds\":40.261104,\"pipeline_major_faults\":0,\"pipeline_minor_faults\":372018,\"pipeline_seconds\":12.141349327,\"process_hwm_kib_before_validation\":2455256,\"train_cpu_seconds\":32.194252,\"train_rss_kib\":1600612,\"train_seconds\":9.956957998},\"mode\":\"pipeline\",\"output\":{\"actual_merges\":49744,\"actual_vocab\":50000,\"counts_path\":\"/tmp/bpe-feed-cost-results/measurements/bytelevel_regex-w4-b0-collected/model.counts.tsv\",\"model_path\":\"/tmp/bpe-feed-cost-results/measurements/bytelevel_regex-w4-b0-collected/model.json\",\"special_tokens\":0},\"protocol_version\":1,\"timing_boundary\":\"public-feed-and-train-before-serialization\",\"workers_requested\":4}\n",
+    "stderr.log": "BPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.090549855,\"hwm_kib\":737648,\"phase\":\"after-aggregation\",\"rss_kib\":737276}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.091453403,\"hwm_kib\":737648,\"phase\":\"before-consume\",\"rss_kib\":737280}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.173827502,\"hwm_kib\":951652,\"phase\":\"after-consume\",\"rss_kib\":951652}\n"
+  },
+  {
+    "run": "bytelevel_regex-w4-b1-unified",
+    "returncode": 0,
+    "job.json": {
+      "protocol_version": 1,
+      "attempt_id": "bytelevel_regex-w4-b1-unified",
+      "build_id": "unified",
+      "input_id": "bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/zh256/text.txt",
+      "output": "/tmp/bpe-feed-cost-results/measurements/bytelevel_regex-w4-b1-unified/model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout.log": "{\"attempt_id\":\"bytelevel_regex-w4-b1-unified\",\"build_id\":\"unified\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":7.909134,\"feed_hwm_kib\":951764,\"feed_major_faults\":0,\"feed_minor_faults\":119904,\"feed_rss_kib\":689488,\"feed_seconds\":2.070395585,\"feed_unique_utf8_bytes\":389044270,\"feed_unique_words\":6859987,\"feed_workers\":4,\"pipeline_cpu_seconds\":39.725210999999994,\"pipeline_major_faults\":0,\"pipeline_minor_faults\":380293,\"pipeline_seconds\":12.052796115,\"process_hwm_kib_before_validation\":2404364,\"train_cpu_seconds\":31.816031,\"train_rss_kib\":1595708,\"train_seconds\":9.98229641},\"mode\":\"pipeline\",\"output\":{\"actual_merges\":49744,\"actual_vocab\":50000,\"counts_path\":\"/tmp/bpe-feed-cost-results/measurements/bytelevel_regex-w4-b1-unified/model.counts.tsv\",\"model_path\":\"/tmp/bpe-feed-cost-results/measurements/bytelevel_regex-w4-b1-unified/model.json\",\"special_tokens\":0},\"protocol_version\":1,\"timing_boundary\":\"public-feed-and-train-before-serialization\",\"workers_requested\":4}\n",
+    "stderr.log": "BPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":1.987634761,\"hwm_kib\":737512,\"phase\":\"after-aggregation\",\"rss_kib\":737256}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":1.988510283,\"hwm_kib\":737512,\"phase\":\"before-consume\",\"rss_kib\":737264}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.060201797,\"hwm_kib\":951636,\"phase\":\"after-consume\",\"rss_kib\":951636}\n"
+  },
+  {
+    "run": "bytelevel_regex-w4-b1-collected",
+    "returncode": 0,
+    "job.json": {
+      "protocol_version": 1,
+      "attempt_id": "bytelevel_regex-w4-b1-collected",
+      "build_id": "collected",
+      "input_id": "bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/zh256/text.txt",
+      "output": "/tmp/bpe-feed-cost-results/measurements/bytelevel_regex-w4-b1-collected/model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout.log": "{\"attempt_id\":\"bytelevel_regex-w4-b1-collected\",\"build_id\":\"collected\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":8.078381,\"feed_hwm_kib\":951596,\"feed_major_faults\":0,\"feed_minor_faults\":125041,\"feed_rss_kib\":689588,\"feed_seconds\":2.221019971,\"feed_unique_utf8_bytes\":389044270,\"feed_unique_words\":6859987,\"feed_workers\":4,\"pipeline_cpu_seconds\":40.14191,\"pipeline_major_faults\":0,\"pipeline_minor_faults\":374975,\"pipeline_seconds\":12.137446691,\"process_hwm_kib_before_validation\":2437048,\"train_cpu_seconds\":32.06348199999999,\"train_rss_kib\":1628424,\"train_seconds\":9.91625256},\"mode\":\"pipeline\",\"output\":{\"actual_merges\":49744,\"actual_vocab\":50000,\"counts_path\":\"/tmp/bpe-feed-cost-results/measurements/bytelevel_regex-w4-b1-collected/model.counts.tsv\",\"model_path\":\"/tmp/bpe-feed-cost-results/measurements/bytelevel_regex-w4-b1-collected/model.json\",\"special_tokens\":0},\"protocol_version\":1,\"timing_boundary\":\"public-feed-and-train-before-serialization\",\"workers_requested\":4}\n",
+    "stderr.log": "BPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.109872095,\"hwm_kib\":737728,\"phase\":\"after-aggregation\",\"rss_kib\":737356}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.1108235300000002,\"hwm_kib\":737728,\"phase\":\"before-consume\",\"rss_kib\":737360}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.210289325,\"hwm_kib\":951732,\"phase\":\"after-consume\",\"rss_kib\":951732}\n"
+  },
+  {
+    "run": "bytelevel_regex-w4-b1-baseline",
+    "returncode": 0,
+    "job.json": {
+      "protocol_version": 1,
+      "attempt_id": "bytelevel_regex-w4-b1-baseline",
+      "build_id": "baseline",
+      "input_id": "bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/zh256/text.txt",
+      "output": "/tmp/bpe-feed-cost-results/measurements/bytelevel_regex-w4-b1-baseline/model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout.log": "{\"attempt_id\":\"bytelevel_regex-w4-b1-baseline\",\"build_id\":\"baseline\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":7.87913,\"feed_hwm_kib\":951812,\"feed_major_faults\":0,\"feed_minor_faults\":120443,\"feed_rss_kib\":689556,\"feed_seconds\":2.097759799,\"feed_unique_utf8_bytes\":389044270,\"feed_unique_words\":6859987,\"feed_workers\":4,\"pipeline_cpu_seconds\":39.915603000000004,\"pipeline_major_faults\":0,\"pipeline_minor_faults\":371809,\"pipeline_seconds\":11.991233779,\"process_hwm_kib_before_validation\":2397132,\"train_cpu_seconds\":32.036424,\"train_rss_kib\":1588528,\"train_seconds\":9.893223971},\"mode\":\"pipeline\",\"output\":{\"actual_merges\":49744,\"actual_vocab\":50000,\"counts_path\":\"/tmp/bpe-feed-cost-results/measurements/bytelevel_regex-w4-b1-baseline/model.counts.tsv\",\"model_path\":\"/tmp/bpe-feed-cost-results/measurements/bytelevel_regex-w4-b1-baseline/model.json\",\"special_tokens\":0},\"protocol_version\":1,\"timing_boundary\":\"public-feed-and-train-before-serialization\",\"workers_requested\":4}\n",
+    "stderr.log": "BPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.016572326,\"hwm_kib\":737552,\"phase\":\"after-aggregation\",\"rss_kib\":737316}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.017452432,\"hwm_kib\":737552,\"phase\":\"before-consume\",\"rss_kib\":737332}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.087772686,\"hwm_kib\":951704,\"phase\":\"after-consume\",\"rss_kib\":951704}\n"
+  },
+  {
+    "run": "bytelevel_regex-w4-b2-collected",
+    "returncode": 0,
+    "job.json": {
+      "protocol_version": 1,
+      "attempt_id": "bytelevel_regex-w4-b2-collected",
+      "build_id": "collected",
+      "input_id": "bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/zh256/text.txt",
+      "output": "/tmp/bpe-feed-cost-results/measurements/bytelevel_regex-w4-b2-collected/model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout.log": "{\"attempt_id\":\"bytelevel_regex-w4-b2-collected\",\"build_id\":\"collected\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":7.980444,\"feed_hwm_kib\":951532,\"feed_major_faults\":0,\"feed_minor_faults\":120420,\"feed_rss_kib\":689556,\"feed_seconds\":2.161119453,\"feed_unique_utf8_bytes\":389044270,\"feed_unique_words\":6859987,\"feed_workers\":4,\"pipeline_cpu_seconds\":40.571699,\"pipeline_major_faults\":0,\"pipeline_minor_faults\":362334,\"pipeline_seconds\":12.311604669,\"process_hwm_kib_before_validation\":2443332,\"train_cpu_seconds\":32.591202,\"train_rss_kib\":1634728,\"train_seconds\":10.150368452},\"mode\":\"pipeline\",\"output\":{\"actual_merges\":49744,\"actual_vocab\":50000,\"counts_path\":\"/tmp/bpe-feed-cost-results/measurements/bytelevel_regex-w4-b2-collected/model.counts.tsv\",\"model_path\":\"/tmp/bpe-feed-cost-results/measurements/bytelevel_regex-w4-b2-collected/model.json\",\"special_tokens\":0},\"protocol_version\":1,\"timing_boundary\":\"public-feed-and-train-before-serialization\",\"workers_requested\":4}\n",
+    "stderr.log": "BPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.050319217,\"hwm_kib\":737516,\"phase\":\"after-aggregation\",\"rss_kib\":737316}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.051199545,\"hwm_kib\":737516,\"phase\":\"before-consume\",\"rss_kib\":737324}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.150390193,\"hwm_kib\":951696,\"phase\":\"after-consume\",\"rss_kib\":951696}\n"
+  },
+  {
+    "run": "bytelevel_regex-w4-b2-baseline",
+    "returncode": 0,
+    "job.json": {
+      "protocol_version": 1,
+      "attempt_id": "bytelevel_regex-w4-b2-baseline",
+      "build_id": "baseline",
+      "input_id": "bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/zh256/text.txt",
+      "output": "/tmp/bpe-feed-cost-results/measurements/bytelevel_regex-w4-b2-baseline/model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout.log": "{\"attempt_id\":\"bytelevel_regex-w4-b2-baseline\",\"build_id\":\"baseline\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":7.817599,\"feed_hwm_kib\":951880,\"feed_major_faults\":0,\"feed_minor_faults\":120414,\"feed_rss_kib\":689568,\"feed_seconds\":2.061860041,\"feed_unique_utf8_bytes\":389044270,\"feed_unique_words\":6859987,\"feed_workers\":4,\"pipeline_cpu_seconds\":40.186954,\"pipeline_major_faults\":0,\"pipeline_minor_faults\":379553,\"pipeline_seconds\":11.974410155,\"process_hwm_kib_before_validation\":2463652,\"train_cpu_seconds\":32.369299,\"train_rss_kib\":1655276,\"train_seconds\":9.912452728},\"mode\":\"pipeline\",\"output\":{\"actual_merges\":49744,\"actual_vocab\":50000,\"counts_path\":\"/tmp/bpe-feed-cost-results/measurements/bytelevel_regex-w4-b2-baseline/model.counts.tsv\",\"model_path\":\"/tmp/bpe-feed-cost-results/measurements/bytelevel_regex-w4-b2-baseline/model.json\",\"special_tokens\":0},\"protocol_version\":1,\"timing_boundary\":\"public-feed-and-train-before-serialization\",\"workers_requested\":4}\n",
+    "stderr.log": "BPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":1.980801396,\"hwm_kib\":737504,\"phase\":\"after-aggregation\",\"rss_kib\":737328}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":1.981674909,\"hwm_kib\":737504,\"phase\":\"before-consume\",\"rss_kib\":737344}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.0520836080000002,\"hwm_kib\":951716,\"phase\":\"after-consume\",\"rss_kib\":951716}\n"
+  },
+  {
+    "run": "bytelevel_regex-w4-b2-unified",
+    "returncode": 0,
+    "job.json": {
+      "protocol_version": 1,
+      "attempt_id": "bytelevel_regex-w4-b2-unified",
+      "build_id": "unified",
+      "input_id": "bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/zh256/text.txt",
+      "output": "/tmp/bpe-feed-cost-results/measurements/bytelevel_regex-w4-b2-unified/model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout.log": "{\"attempt_id\":\"bytelevel_regex-w4-b2-unified\",\"build_id\":\"unified\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":7.866021,\"feed_hwm_kib\":951916,\"feed_major_faults\":0,\"feed_minor_faults\":120423,\"feed_rss_kib\":689600,\"feed_seconds\":2.066814179,\"feed_unique_utf8_bytes\":389044270,\"feed_unique_words\":6859987,\"feed_workers\":4,\"pipeline_cpu_seconds\":39.764679,\"pipeline_major_faults\":0,\"pipeline_minor_faults\":370856,\"pipeline_seconds\":11.842648835,\"process_hwm_kib_before_validation\":2453188,\"train_cpu_seconds\":31.898602,\"train_rss_kib\":1644400,\"train_seconds\":9.775578034},\"mode\":\"pipeline\",\"output\":{\"actual_merges\":49744,\"actual_vocab\":50000,\"counts_path\":\"/tmp/bpe-feed-cost-results/measurements/bytelevel_regex-w4-b2-unified/model.counts.tsv\",\"model_path\":\"/tmp/bpe-feed-cost-results/measurements/bytelevel_regex-w4-b2-unified/model.json\",\"special_tokens\":0},\"protocol_version\":1,\"timing_boundary\":\"public-feed-and-train-before-serialization\",\"workers_requested\":4}\n",
+    "stderr.log": "BPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":1.9832895430000002,\"hwm_kib\":737652,\"phase\":\"after-aggregation\",\"rss_kib\":737364}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":1.984191512,\"hwm_kib\":737652,\"phase\":\"before-consume\",\"rss_kib\":737372}\nBPE_FEED_TABLE {\"capacity\":8388608,\"elapsed\":2.056576348,\"hwm_kib\":951744,\"phase\":\"after-consume\",\"rss_kib\":951744}\n"
+  }
+]

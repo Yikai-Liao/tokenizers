@@ -1,0 +1,67 @@
+[
+  {
+    "name": "default-filtered",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--lib",
+      "--",
+      "--skip",
+      "feed_training_tokenizer_json_and_encoding_roundtrip"
+    ],
+    "returncode": 0,
+    "log": "drain-default-filtered.log"
+  },
+  {
+    "name": "no-default-filtered",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--no-default-features",
+      "--lib",
+      "--",
+      "--skip",
+      "feed_training_tokenizer_json_and_encoding_roundtrip"
+    ],
+    "returncode": 0,
+    "log": "drain-no-default-filtered.log"
+  },
+  {
+    "name": "clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--offline",
+      "--locked",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "returncode": 0,
+    "log": "drain-clippy.log"
+  },
+  {
+    "name": "format",
+    "command": [
+      "uv",
+      "run",
+      "experiments/bpe-simplification/format-changed.py",
+      "--check",
+      "tokenizers/tk-train/src/trainers/bpe/feed.rs",
+      "tokenizers/tk-train/src/trainers/bpe/tests.rs"
+    ],
+    "returncode": 0,
+    "log": "drain-format.log"
+  }
+]

@@ -1,0 +1,51 @@
+   Compiling zerocopy v0.8.62
+   Compiling portable-atomic v1.15.0
+   Compiling syn v3.0.7
+   Compiling shlex v2.0.1
+   Compiling find-msvc-tools v0.1.14
+   Compiling unicode-width v0.2.2
+   Compiling smallvec v1.16.3
+   Compiling unit-prefix v0.5.2
+   Compiling base64 v0.22.1
+   Compiling hifijson v0.5.0
+   Compiling assert_approx_eq v1.1.0
+   Compiling cc v1.7.0
+   Compiling unicode-normalization-alignments v0.1.12
+   Compiling console v0.16.6
+   Compiling indicatif v0.18.6
+   Compiling esaxx-rs v0.1.10
+   Compiling serde_derive v1.0.229
+   Compiling thiserror-impl v2.0.21
+   Compiling thiserror v2.0.21
+   Compiling tk-convert v0.1.0-dev.2 (/tmp/bpe-feed-baseline/tokenizers/tk-convert)
+   Compiling serde v1.0.229
+   Compiling ppv-lite86 v0.2.21
+   Compiling rand_chacha v0.10.0
+   Compiling ahash v0.8.12
+   Compiling spm_precompiled v0.1.4
+   Compiling dary_heap v0.3.9
+   Compiling compact_str v0.9.1
+   Compiling ptr_hash v2.1.2
+   Compiling tk-encode v0.1.0-dev.2 (/tmp/bpe-feed-baseline/tokenizers/tk-encode)
+   Compiling tk-serialize v0.1.0-dev.2 (/tmp/bpe-feed-baseline/tokenizers/tk-serialize)
+   Compiling tk-train v0.1.0-dev.2 (/tmp/bpe-feed-baseline/tokenizers/tk-train)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 14.05s
+     Running unittests src/lib.rs (/tmp/bpe-feed-runner-tests/debug/deps/tk_train-4ddac3d206256099)
+
+running 1 test
+
+thread 'trainers::bpe::tests::feed_training_tokenizer_json_and_encoding_roundtrip' (443957) panicked at src/trainers/bpe/tests.rs:444:13:
+assertion `left == right` failed: 测
+  left: [PipelineToken(3)]
+ right: [6]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test trainers::bpe::tests::feed_training_tokenizer_json_and_encoding_roundtrip ... FAILED
+
+failures:
+
+failures:
+    trainers::bpe::tests::feed_training_tokenizer_json_and_encoding_roundtrip
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 36 filtered out; finished in 0.06s
+
+error: test failed, to rerun pass `--lib`

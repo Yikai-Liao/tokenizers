@@ -1,0 +1,47 @@
+{
+  "availability": {
+    "actual_bytes": 134217639,
+    "requested_bytes": 134217728,
+    "status": "target_reached"
+  },
+  "bytes": 134217639,
+  "input_id": "1400fc56b1073abe0c9e863e2c4b3a21254fea585612b1565864976c2d29eca6",
+  "kind": "text",
+  "line_protocol": "UTF-8 lines; remove LF and optional CR; preserve other whitespace",
+  "lines": 311670,
+  "path": "text.txt",
+  "recipe": {
+    "dataset": {
+      "configuration": "20231101.zh",
+      "dataset": "wikimedia/wikipedia",
+      "license": "CC BY-SA 3.0 / GFDL; see upstream dataset card",
+      "metadata_source": "https://huggingface.co/api/datasets/wikimedia/wikipedia/tree/b04c8d1ceb2f5cd4588862100d08de323dccfbaa/20231101.zh",
+      "revision": "b04c8d1ceb2f5cd4588862100d08de323dccfbaa",
+      "schema_version": 1,
+      "shards": [
+        {
+          "bytes": 587109027,
+          "sha256": "853ddf4a138c792ad7386d6de831788f96326c03e1e3349f7a315498392e8b56",
+          "url": "https://huggingface.co/datasets/wikimedia/wikipedia/resolve/b04c8d1ceb2f5cd4588862100d08de323dccfbaa/20231101.zh/train-00000-of-00006.parquet"
+        }
+      ]
+    },
+    "normalization": "Unicode whitespace collapse; strip; LF",
+    "paragraph_bytes": [
+      32,
+      8192
+    ],
+    "selection": "ordered nested prefix",
+    "size_mib": 128,
+    "tool_sha256": "63fc4ab5fa4d05f7db209ab95ec00df03ddee60b85d9fb2a1434e1e9a0b2b16c"
+  },
+  "schema_version": 1,
+  "sha256": "7dd7de3f8ec76913c510fb0840818b6749b12fbdf503c997932df2e444a7af0b",
+  "used_shards": [
+    {
+      "bytes": 587109027,
+      "sha256": "853ddf4a138c792ad7386d6de831788f96326c03e1e3349f7a315498392e8b56",
+      "url": "https://huggingface.co/datasets/wikimedia/wikipedia/resolve/b04c8d1ceb2f5cd4588862100d08de323dccfbaa/20231101.zh/train-00000-of-00006.parquet"
+    }
+  ]
+}

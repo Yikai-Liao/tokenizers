@@ -1,0 +1,30 @@
+{
+  "job.json": {
+    "protocol_version": 1,
+    "attempt_id": "failed-training-retry",
+    "build_id": "unified",
+    "input_id": "bytelevel_regex",
+    "mode": "pipeline",
+    "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/zh256/text.txt",
+    "output": "/tmp/bpe-feed-cost-results/failed-training-retry/model.json",
+    "workers": 4,
+    "pretokenizer": "bytelevel_regex",
+    "trainer": {
+      "vocab_size": 50000,
+      "min_frequency": 2,
+      "prefix": null,
+      "suffix": null,
+      "max_token_length": null
+    }
+  },
+  "stdout.log": "{\"attempt_id\":\"failed-training-retry\",\"build_id\":\"unified\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":8.754403,\"feed_hwm_kib\":1283564,\"feed_major_faults\":0,\"feed_minor_faults\":126955,\"feed_rss_kib\":681608,\"feed_seconds\":2.3226148699999998,\"feed_unique_utf8_bytes\":389044270,\"feed_unique_words\":6859987,\"feed_workers\":4,\"pipeline_cpu_seconds\":40.538916,\"pipeline_major_faults\":0,\"pipeline_minor_faults\":369825,\"pipeline_seconds\":12.15114217,\"process_hwm_kib_before_validation\":2449384,\"train_cpu_seconds\":31.784445000000005,\"train_rss_kib\":1640820,\"train_seconds\":9.828204006},\"mode\":\"pipeline\",\"output\":{\"actual_merges\":49744,\"actual_vocab\":50000,\"counts_path\":\"/tmp/bpe-feed-cost-results/failed-training-retry/model.counts.tsv\",\"model_path\":\"/tmp/bpe-feed-cost-results/failed-training-retry/model.json\",\"special_tokens\":0},\"protocol_version\":1,\"timing_boundary\":\"public-feed-and-train-before-serialization\",\"workers_requested\":4}\n",
+  "stderr.log": "",
+  "validation.json": {
+    "returncode": 0,
+    "counts_sha256": "ddf2092261be0fa4276bf0121766d095bfc48281616242b99d637ee6ec05e94f",
+    "count_records": 6859987,
+    "counts_equal": true,
+    "model_equal": true,
+    "swap_monitoring": "manual retry had no swap poller; excluded from formal performance summary"
+  }
+}

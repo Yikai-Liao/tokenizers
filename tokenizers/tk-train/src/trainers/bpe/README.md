@@ -47,8 +47,16 @@ The implementation is divided by the knowledge each module owns:
   `partition_ranges(target_items)` chooses independent ranges of element indices;
   each task keeps its range paired with the originating rule. Compression offsets
   and restart alignment stay private, and range iteration allocates no fragment storage.
-- [feed.rs](feed.rs) owns streaming batches and bounded local word caches;
-  `LocalCounts` controls cache flushing and successful completion.
+- [feed.rs](feed.rs) owns streaming batches and word aggregation. Named
+  `flush` and `accumulate` closures share callback/error handling. Serial input
+  retains its map; parallel folds flush at 2048 distinct local keys and publish
+  successful tails before ordinary error reduction. The shared table stays
+  private to one call, and failed feed leaves the previous trainer state intact.
+  After folds finish, consumption moves entries without a capacity reservation;
+  SCC checks shrinking after its consumption traversal, and a reservation can
+  itself trigger another enlargement.
+  Startup singletons expose short expensive streams to parallel callbacks; later
+  batches contain at most 32 inputs and retain the first exhaustion state.
 - [word_counts.rs](word_counts.rs) owns borrowed and collected count views,
   content equality and the flat serialization contract.
 

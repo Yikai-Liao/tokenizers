@@ -8,6 +8,77 @@ and [the flattening report](FLATTEN.md) for validation and scoped diffs against
 HF main and the starting revision. Counts are descriptive; hard line limits
 have been retired. Earlier counts and limits below describe historical snapshots.
 
+## Feed collection overhead and scaling, 2026-10-11
+
+The integrated A keeps the named local-aggregation closures and removes the SCC
+capacity reservation before consuming entries. In pinned SCC 3.8.8 the finished
+table has no other writers; its consuming traversal checks shrinking afterward.
+The reservation itself could trigger another enlargement. Matched-seed full
+pipelines show A feed wall +0.24% versus baseline; restoring a result collection
+adds +5.34% and is rejected. Normal-hasher phase probes confirm that both baseline
+and A can grow to larger tables, including growth triggered by the reservation.
+This removes that extra check/allocation opportunity; aggregation growth remains.
+Feed is now 92 physical lines, or 80 nonblank, noncomment lines, versus 146/113
+in the pre-feed baseline.
+
+Four-worker ByteLevel pipelines compare baseline, initial A and the revised A
+on four ordered nested Chinese Wikipedia prefixes, two rotating paired blocks
+per size. Revised complete-training wall changes against the same baseline are:
+
+| Source MiB | Pipeline wall |
+| --- | ---: |
+| 128 | +0.10% |
+| 256 | +0.11% |
+| 384 | -0.56% |
+| 512 | -0.40% |
+
+All 24 scaling samples match complete counts and models with zero sampled swap
+and major faults; nine controlled-hasher pipelines also match. Feed HWM still
+varies near the SCC growth boundary, so no universal peak reduction is claimed.
+One earlier initial-A training attempt hit a resident-coordinate assertion; the
+same frozen binary/input succeeds on repetition. This isolated failure is retained
+and remains unattributed, separate from the known encoder-roundtrip test failure.
+Default/no-default library suites pass 36 tests with that known test filtered;
+all-target Clippy, changed-file formatting and source equality checks pass.
+Phase evidence, raw attempts, revised source and reproduction are in
+[the capacity/scaling follow-up](evidence/feed-cost-20261011/README.md).
+
+## Initial feed aggregation unification, 2026-10-11
+
+Frozen baseline `52ca2951` has the same feed source as plan reference `a2f1c0f7`.
+Retain A: named `flush` and `accumulate` closures replace `LocalCounts`, generic
+accumulation, the batch helper and two intermediate result collections. Serial
+input keeps its map; parallel input retains local aggregation into SCC. Feed
+falls from 146 to 93 physical lines, or 113 to 81 nonblank, noncomment lines.
+
+The three-arm initial matrix and targeted extra checks complete 66 serially run
+processes on the existing Chinese/English 256 MiB corpora, ByteLevel/Whitespace,
+and one/four workers. Every canonical full-count hash and complete model matches;
+child swap and major faults remain zero. The final paired pipeline wall changes
+for A are:
+
+| Input | One worker | Four workers |
+| --- | ---: | ---: |
+| Chinese ByteLevel | −1.29% | +0.32% |
+| Chinese Whitespace | −0.87% | −0.42% |
+| English ByteLevel | +2.95% | +1.64% |
+| English Whitespace | +2.97% | +1.78% |
+
+Chinese ByteLevel/four-worker feed wall rises 8.76% in five pairs; process HWM
+through feed has about 330 MiB higher readings in three pairs (paired median
++35.35%), while full-pipeline HWM changes +0.50%. English ByteLevel pipeline HWM
+changes direction between initial and later pairs. These are cumulative process
+peaks, and no stable universal time/memory improvement is claimed. B is rejected:
+its English four-worker pipeline wall regresses 16.68% and 20.66%; directed repeats
+show the per-occurrence shared-update cost.
+
+Default and no-default library suites each pass 36 tests with the known encoder
+roundtrip assertion filtered. Unfiltered default has 36 passes and that one
+failure, also reproduced on the frozen baseline. Clippy with denied warnings,
+changed-file formatting and whitespace checks pass. Boundary tests, raw paired
+metrics, full-count/model hashes, microbenchmarks, source/dependency snapshots and
+reproduction scripts are in [the feed report](evidence/feed-unification-20261011/README.md).
+
 ## Standard and existing-library logic replacements, 2026-10-11
 
 The ordinary trainer now shares a filtered symbols iterator for edge counting and

@@ -1,0 +1,76 @@
+[
+  {
+    "scenario": "bytelevel_regex-w4",
+    "case": "bytelevel_regex",
+    "workers": 4,
+    "baseline": {
+      "feed_seconds": 2.073545755,
+      "feed_cpu_seconds": 7.87913,
+      "feed_hwm_kib": 951812,
+      "feed_rss_kib": 689556,
+      "pipeline_seconds": 11.982518939,
+      "pipeline_cpu_seconds": 40.04078,
+      "process_hwm_kib_before_validation": 2463652,
+      "train_seconds": 9.908775056,
+      "train_cpu_seconds": 32.15943299999999,
+      "feed_major_faults": 0,
+      "pipeline_major_faults": 0,
+      "feed_mib_per_second": 123.45988459741076,
+      "pipeline_mib_per_second": 21.36443271427163
+    },
+    "unified": {
+      "feed_seconds": 2.070395585,
+      "feed_cpu_seconds": 7.909134,
+      "feed_hwm_kib": 951764,
+      "feed_rss_kib": 689496,
+      "pipeline_seconds": 11.842648835,
+      "pipeline_cpu_seconds": 39.725210999999994,
+      "process_hwm_kib_before_validation": 2408652,
+      "train_seconds": 9.775578034,
+      "train_cpu_seconds": 31.816031,
+      "feed_major_faults": 0,
+      "pipeline_major_faults": 0,
+      "feed_mib_per_second": 123.64773257558457,
+      "pipeline_mib_per_second": 21.616761856786997
+    },
+    "collected": {
+      "feed_seconds": 2.18430423,
+      "feed_cpu_seconds": 8.066798,
+      "feed_hwm_kib": 951532,
+      "feed_rss_kib": 689556,
+      "pipeline_seconds": 12.141349327,
+      "pipeline_cpu_seconds": 40.261104,
+      "process_hwm_kib_before_validation": 2443332,
+      "train_seconds": 9.956957998,
+      "train_cpu_seconds": 32.194252,
+      "feed_major_faults": 0,
+      "pipeline_major_faults": 0,
+      "feed_mib_per_second": 117.19966298822348,
+      "pipeline_mib_per_second": 21.08494803377886
+    },
+    "paired_delta_percent": {
+      "unified": {
+        "feed_seconds": 0.24027518364424516,
+        "feed_cpu_seconds": 0.41221636334523026,
+        "feed_hwm_kib": -0.0037829272290901272,
+        "feed_rss_kib": 0.0046405865701482085,
+        "pipeline_seconds": -1.1003574981518494,
+        "pipeline_cpu_seconds": -1.050776329054448,
+        "process_hwm_kib_before_validation": -0.424735311643043,
+        "train_seconds": -1.380835780566858,
+        "train_cpu_seconds": -1.4541464120060077
+      },
+      "collected": {
+        "feed_seconds": 5.3415013742968975,
+        "feed_cpu_seconds": 2.353673214742047,
+        "feed_hwm_kib": -0.022693557131026054,
+        "feed_rss_kib": 0.00464066732797086,
+        "pipeline_seconds": 1.3255175210535208,
+        "pipeline_cpu_seconds": 0.5669637509922998,
+        "process_hwm_kib_before_validation": -0.502501158994606,
+        "train_seconds": 0.4862653731434241,
+        "train_cpu_seconds": 0.10826994368964282
+      }
+    }
+  }
+]

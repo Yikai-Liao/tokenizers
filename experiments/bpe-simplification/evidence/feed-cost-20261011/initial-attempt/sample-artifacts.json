@@ -1,0 +1,50 @@
+[
+  {
+    "run": "bytelevel_regex-w4-b0-baseline",
+    "returncode": 0,
+    "job.json": {
+      "protocol_version": 1,
+      "attempt_id": "bytelevel_regex-w4-b0-baseline",
+      "build_id": "baseline",
+      "input_id": "bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/zh256/text.txt",
+      "output": "/tmp/bpe-feed-cost-results/production/measurements/bytelevel_regex-w4-b0-baseline/model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout.log": "{\"attempt_id\":\"bytelevel_regex-w4-b0-baseline\",\"build_id\":\"baseline\",\"effective_affinity\":[0,1,2,3],\"input_id\":\"bytelevel_regex\",\"metrics\":{\"feed_cpu_seconds\":7.910915,\"feed_hwm_kib\":951656,\"feed_major_faults\":0,\"feed_minor_faults\":125001,\"feed_rss_kib\":689488,\"feed_seconds\":2.084052405,\"feed_unique_utf8_bytes\":389044270,\"feed_unique_words\":6859987,\"feed_workers\":4,\"pipeline_cpu_seconds\":39.898056,\"pipeline_major_faults\":0,\"pipeline_minor_faults\":375419,\"pipeline_seconds\":11.98227785,\"process_hwm_kib_before_validation\":2414760,\"train_cpu_seconds\":31.987061,\"train_rss_kib\":1556464,\"train_seconds\":9.897915707},\"mode\":\"pipeline\",\"output\":{\"actual_merges\":49744,\"actual_vocab\":50000,\"counts_path\":\"/tmp/bpe-feed-cost-results/production/measurements/bytelevel_regex-w4-b0-baseline/model.counts.tsv\",\"model_path\":\"/tmp/bpe-feed-cost-results/production/measurements/bytelevel_regex-w4-b0-baseline/model.json\",\"special_tokens\":0},\"protocol_version\":1,\"timing_boundary\":\"public-feed-and-train-before-serialization\",\"workers_requested\":4}\n",
+    "stderr.log": ""
+  },
+  {
+    "run": "bytelevel_regex-w4-b0-unified",
+    "returncode": 101,
+    "job.json": {
+      "protocol_version": 1,
+      "attempt_id": "bytelevel_regex-w4-b0-unified",
+      "build_id": "unified",
+      "input_id": "bytelevel_regex",
+      "mode": "pipeline",
+      "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/zh256/text.txt",
+      "output": "/tmp/bpe-feed-cost-results/production/measurements/bytelevel_regex-w4-b0-unified/model.json",
+      "workers": 4,
+      "pretokenizer": "bytelevel_regex",
+      "trainer": {
+        "vocab_size": 50000,
+        "min_frequency": 2,
+        "prefix": null,
+        "suffix": null,
+        "max_token_length": null
+      }
+    },
+    "stdout.log": "",
+    "stderr.log": "\nthread '<unnamed>' (454056) panicked at /tmp/bpe-feed-local/tokenizers/tk-train/src/trainers/bpe/corpus.rs:208:9:\ncoordinate belongs to the resident corpus\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n"
+  }
+]

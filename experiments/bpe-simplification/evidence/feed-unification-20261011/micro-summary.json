@@ -1,0 +1,170 @@
+[
+  {
+    "case": "cheap-repeat",
+    "workers": 1,
+    "excluded_first_rep": true,
+    "baseline": {
+      "wall_seconds": 0.0292194705,
+      "cpu_seconds": 0.02909400000000001
+    },
+    "local": {
+      "wall_seconds": 0.030807196000000002,
+      "cpu_seconds": 0.030717999999999968
+    },
+    "direct": {
+      "wall_seconds": 0.029325949,
+      "cpu_seconds": 0.02921200000000003
+    },
+    "paired_wall_delta_percent": {
+      "local": 5.680278939994354,
+      "direct": 0.5305671654603827
+    }
+  },
+  {
+    "case": "cheap-repeat",
+    "workers": 4,
+    "excluded_first_rep": true,
+    "baseline": {
+      "wall_seconds": 0.0089498905,
+      "cpu_seconds": 0.035460500000000006
+    },
+    "local": {
+      "wall_seconds": 0.0090054435,
+      "cpu_seconds": 0.03569449999999974
+    },
+    "direct": {
+      "wall_seconds": 0.040601988,
+      "cpu_seconds": 0.15539150000000002
+    },
+    "paired_wall_delta_percent": {
+      "local": 0.5456731311281104,
+      "direct": 353.6711977480618
+    }
+  },
+  {
+    "case": "cheap-distinct-zh",
+    "workers": 1,
+    "excluded_first_rep": true,
+    "baseline": {
+      "wall_seconds": 0.0243159425,
+      "cpu_seconds": 0.024191500000000143
+    },
+    "local": {
+      "wall_seconds": 0.022362553,
+      "cpu_seconds": 0.02223149999999996
+    },
+    "direct": {
+      "wall_seconds": 0.02453205,
+      "cpu_seconds": 0.02437149999999999
+    },
+    "paired_wall_delta_percent": {
+      "local": -7.969319471900044,
+      "direct": 0.6356494646793442
+    }
+  },
+  {
+    "case": "cheap-distinct-zh",
+    "workers": 4,
+    "excluded_first_rep": true,
+    "baseline": {
+      "wall_seconds": 0.014134463,
+      "cpu_seconds": 0.04997299999999982
+    },
+    "local": {
+      "wall_seconds": 0.013923598499999999,
+      "cpu_seconds": 0.04910900000000007
+    },
+    "direct": {
+      "wall_seconds": 0.0116864785,
+      "cpu_seconds": 0.04114499999999999
+    },
+    "paired_wall_delta_percent": {
+      "local": -1.817864509695527,
+      "direct": -19.15121838494673
+    }
+  },
+  {
+    "case": "expensive-short",
+    "workers": 1,
+    "excluded_first_rep": true,
+    "baseline": {
+      "wall_seconds": 0.082183143,
+      "cpu_seconds": 0.08201850000000022
+    },
+    "local": {
+      "wall_seconds": 0.08217891699999999,
+      "cpu_seconds": 0.08202249999999989
+    },
+    "direct": {
+      "wall_seconds": 0.0821811515,
+      "cpu_seconds": 0.08201549999999935
+    },
+    "paired_wall_delta_percent": {
+      "local": -0.02099269619138533,
+      "direct": -0.0003589815474769331
+    }
+  },
+  {
+    "case": "expensive-short",
+    "workers": 4,
+    "excluded_first_rep": true,
+    "baseline": {
+      "wall_seconds": 0.020837015,
+      "cpu_seconds": 0.08290050000000049
+    },
+    "local": {
+      "wall_seconds": 0.020846028,
+      "cpu_seconds": 0.08279400000000026
+    },
+    "direct": {
+      "wall_seconds": 0.020804612,
+      "cpu_seconds": 0.08269099999999963
+    },
+    "paired_wall_delta_percent": {
+      "local": 0.0454633194247378,
+      "direct": -0.18927295174179237
+    }
+  },
+  {
+    "case": "cheap-short",
+    "workers": 1,
+    "excluded_first_rep": true,
+    "baseline": {
+      "wall_seconds": 3.988e-06,
+      "cpu_seconds": 6.500000000020378e-06
+    },
+    "local": {
+      "wall_seconds": 4.125e-06,
+      "cpu_seconds": 6.499999999576289e-06
+    },
+    "direct": {
+      "wall_seconds": 4.1315e-06,
+      "cpu_seconds": 5.999999999950489e-06
+    },
+    "paired_wall_delta_percent": {
+      "local": 3.4363396432157134,
+      "direct": -5.170816905638098
+    }
+  },
+  {
+    "case": "cheap-short",
+    "workers": 4,
+    "excluded_first_rep": true,
+    "baseline": {
+      "wall_seconds": 1.05365e-05,
+      "cpu_seconds": 3.500000000000725e-05
+    },
+    "local": {
+      "wall_seconds": 7.5015e-06,
+      "cpu_seconds": 2.5000000000385825e-05
+    },
+    "direct": {
+      "wall_seconds": 7.373e-06,
+      "cpu_seconds": 2.4499999999871847e-05
+    },
+    "paired_wall_delta_percent": {
+      "local": -26.30365754571364,
+      "direct": -23.712864962490585
+    }
+  }
+]

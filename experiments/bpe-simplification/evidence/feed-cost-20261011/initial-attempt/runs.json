@@ -1,0 +1,97 @@
+[
+  {
+    "run": "bytelevel_regex-w4-b0-baseline",
+    "case": "bytelevel_regex",
+    "scenario": "bytelevel_regex-w4",
+    "workers": 4,
+    "block": 0,
+    "arm": "baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-feed-unification-results/baseline",
+      "/tmp/bpe-feed-cost-results/production/measurements/bytelevel_regex-w4-b0-baseline/job.json"
+    ],
+    "environment": {
+      "RAYON_NUM_THREADS": "4",
+      "LC_ALL": "C"
+    },
+    "returncode": 0,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2414876,
+    "subprocess_wall": 14.675868832040578,
+    "concurrent_builds_or_benchmarks": [],
+    "attempt_id": "bytelevel_regex-w4-b0-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "bytelevel_regex",
+    "metrics": {
+      "feed_cpu_seconds": 7.910915,
+      "feed_hwm_kib": 951656,
+      "feed_major_faults": 0,
+      "feed_minor_faults": 125001,
+      "feed_rss_kib": 689488,
+      "feed_seconds": 2.084052405,
+      "feed_unique_utf8_bytes": 389044270,
+      "feed_unique_words": 6859987,
+      "feed_workers": 4,
+      "pipeline_cpu_seconds": 39.898056,
+      "pipeline_major_faults": 0,
+      "pipeline_minor_faults": 375419,
+      "pipeline_seconds": 11.98227785,
+      "process_hwm_kib_before_validation": 2414760,
+      "train_cpu_seconds": 31.987061,
+      "train_rss_kib": 1556464,
+      "train_seconds": 9.897915707
+    },
+    "mode": "pipeline",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "counts_path": "/tmp/bpe-feed-cost-results/production/measurements/bytelevel_regex-w4-b0-baseline/model.counts.tsv",
+      "model_path": "/tmp/bpe-feed-cost-results/production/measurements/bytelevel_regex-w4-b0-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-feed-and-train-before-serialization",
+    "workers_requested": 4,
+    "table_phases": [],
+    "counts_sha256": "ddf2092261be0fa4276bf0121766d095bfc48281616242b99d637ee6ec05e94f",
+    "count_records": 6859987,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "counts_equal": true,
+    "model_equal": true,
+    "valid": true
+  },
+  {
+    "run": "bytelevel_regex-w4-b0-unified",
+    "case": "bytelevel_regex",
+    "scenario": "bytelevel_regex-w4",
+    "workers": 4,
+    "block": 0,
+    "arm": "unified",
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-feed-unification-results/local",
+      "/tmp/bpe-feed-cost-results/production/measurements/bytelevel_regex-w4-b0-unified/job.json"
+    ],
+    "environment": {
+      "RAYON_NUM_THREADS": "4",
+      "LC_ALL": "C"
+    },
+    "returncode": 101,
+    "max_swap_kib": 0,
+    "sampled_max_rss_kib": 2166352,
+    "subprocess_wall": 8.155007265973836,
+    "concurrent_builds_or_benchmarks": [],
+    "valid": false
+  }
+]

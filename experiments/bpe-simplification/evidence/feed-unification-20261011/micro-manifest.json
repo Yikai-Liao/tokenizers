@@ -1,0 +1,14 @@
+{
+  "scope": "Actual unchanged WordCounts and three feed modules, only standalone main provides directed input/callbacks. Encoding, pool construction and equality checks excluded from timer. CPU snapshots inside wall interval add microsecond overhead to tiny inputs. Single process, first rep excluded, six formal reversed-order reps. CPUs0-3, pools1/4, ordinary RandomState per count.",
+  "binary_sha256": "87d491b96ca36171200b5644bbb995a7b0debba4bec361fb11b0c7f0302c5424",
+  "source_sha256": {
+    "src/main.rs": "35d902aad41d86d202f7796268f7f55d4b15639c2229040102435f611cf728d7",
+    "src/word_counts.rs": "eb78ccea99544dc915f3c406ad77349ddc080ecfb7a5d36253bd8d80275ebf4d",
+    "src/direct.rs": "5c5c80b6ba8db6be80337b40f51d7dd3b7a39fd5483cd8976e96c9d0892328a7",
+    "src/local.rs": "b2a456e81e6b9c5f1498bf2db64d3458c30281c6523ed0e0934b6324966ae138",
+    "src/baseline.rs": "ddbc4fd103d73ea5cc8bf3778809127b0578474c9da9a29af5be5a76b56f0fec",
+    "Cargo.toml": "1394ed69c4b03f80bf3be7dc60bdbd1a846c9a42968ef473d54f985fef4b14c5",
+    "Cargo.lock": "3be40617f0619431fd7447232b959febd52fba3d37d73901b065164d75609c2e"
+  },
+  "correctness": "Complete WordCounts content equality for every run, within each case/worker; public native tests cover per-key expected counts and models."
+}

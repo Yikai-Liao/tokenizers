@@ -1,0 +1,19 @@
+{
+  "baseline": {
+    "physical_lines": 146,
+    "nonblank_noncomment": 113
+  },
+  "local": {
+    "physical_lines": 93,
+    "nonblank_noncomment": 81
+  },
+  "direct": {
+    "physical_lines": 75,
+    "nonblank_noncomment": 67
+  },
+  "common_tests": {
+    "baseline_nonblank_noncomment": 957,
+    "with_added_test_nonblank_noncomment": 1145,
+    "delta": 188
+  }
+}

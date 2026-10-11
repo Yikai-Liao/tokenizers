@@ -1,0 +1,183 @@
+{
+  "builds": {
+    "baseline_commit": "52ca295163936be3cf81cb91a3a8d654c78ac6d4",
+    "builds": {
+      "baseline": {
+        "binary": "/tmp/bpe-feed-unification-results/baseline",
+        "binary_sha256": "22659cefad6462d88533ea8f178fe739f7ae62aeb225533fd91711b2c06b2623",
+        "source_hashes": {
+          "tokenizers/tk-train/src/trainers/bpe/feed.rs": "ddbc4fd103d73ea5cc8bf3778809127b0578474c9da9a29af5be5a76b56f0fec",
+          "tokenizers/tk-train/src/trainers/bpe/tests.rs": "3415b3b5580ac9945582babe86fc0cb40738eb7f8cf28f233e70a50d8fc5b9d1",
+          "experiments/bpe-simplification/runner/src/pipeline.rs": "f82e7bd3f9b8212710dd2de060649ba16c09f4928bd0985b0ec6d7465ed51caf",
+          "experiments/bpe-simplification/runner/src/feed_stats.rs": "c7590d91c7a456be41d7f011cea13d96a5a84283422618aea90ddf8f7ca81a6f",
+          "experiments/bpe-simplification/runner/src/protocol.rs": "092932e1ed307484e68f843716705d6fc998cc947f16b94dade4facda65265dd",
+          "experiments/bpe-simplification/runner/Cargo.toml": "71ee5a0e2114f857677333c828535d876ce0f80b157efc01ec15dfdb8be25fd9",
+          "experiments/bpe-simplification/runner/Cargo.lock": "3c695073bb1e4176d8e7ec1500f9e4fb8883d23e115ef7da244b68e46946f9d6"
+        },
+        "source_commit": "52ca295163936be3cf81cb91a3a8d654c78ac6d4",
+        "worktree": "/tmp/bpe-feed-baseline",
+        "profile": "release opt-level=3 lto=fat codegen-units=1; same runner dependencies"
+      },
+      "unified": {
+        "binary": "/tmp/bpe-feed-unification-results/local",
+        "binary_sha256": "8dad4f09c1276288217eb335a1637de1cc3fd328a70c0229397b3b86b41c1c3f",
+        "source_hashes": {
+          "tokenizers/tk-train/src/trainers/bpe/feed.rs": "b2a456e81e6b9c5f1498bf2db64d3458c30281c6523ed0e0934b6324966ae138",
+          "tokenizers/tk-train/src/trainers/bpe/tests.rs": "3415b3b5580ac9945582babe86fc0cb40738eb7f8cf28f233e70a50d8fc5b9d1",
+          "experiments/bpe-simplification/runner/src/pipeline.rs": "f82e7bd3f9b8212710dd2de060649ba16c09f4928bd0985b0ec6d7465ed51caf",
+          "experiments/bpe-simplification/runner/src/feed_stats.rs": "c7590d91c7a456be41d7f011cea13d96a5a84283422618aea90ddf8f7ca81a6f",
+          "experiments/bpe-simplification/runner/src/protocol.rs": "092932e1ed307484e68f843716705d6fc998cc947f16b94dade4facda65265dd",
+          "experiments/bpe-simplification/runner/Cargo.toml": "71ee5a0e2114f857677333c828535d876ce0f80b157efc01ec15dfdb8be25fd9",
+          "experiments/bpe-simplification/runner/Cargo.lock": "3c695073bb1e4176d8e7ec1500f9e4fb8883d23e115ef7da244b68e46946f9d6"
+        },
+        "source_commit": "52ca295163936be3cf81cb91a3a8d654c78ac6d4",
+        "worktree": "/tmp/bpe-feed-local",
+        "profile": "release opt-level=3 lto=fat codegen-units=1; same runner dependencies"
+      },
+      "collected": {
+        "binary": "/tmp/bpe-feed-cost-results/final",
+        "binary_sha256": "0626b1c10f41f219ba783cd06be2ce863be84aa37f995b287be09590453eedc4",
+        "source_hashes": {
+          "tokenizers/tk-train/src/trainers/bpe/feed.rs": "76ff939776b90d43c9833909dc2eac78f7a54be27d1d5c86b8df92907fe175b5",
+          "tokenizers/tk-train/src/trainers/bpe/tests.rs": "3415b3b5580ac9945582babe86fc0cb40738eb7f8cf28f233e70a50d8fc5b9d1",
+          "experiments/bpe-simplification/runner/src/pipeline.rs": "f82e7bd3f9b8212710dd2de060649ba16c09f4928bd0985b0ec6d7465ed51caf",
+          "experiments/bpe-simplification/runner/src/feed_stats.rs": "c7590d91c7a456be41d7f011cea13d96a5a84283422618aea90ddf8f7ca81a6f",
+          "experiments/bpe-simplification/runner/src/protocol.rs": "092932e1ed307484e68f843716705d6fc998cc947f16b94dade4facda65265dd",
+          "experiments/bpe-simplification/runner/Cargo.toml": "71ee5a0e2114f857677333c828535d876ce0f80b157efc01ec15dfdb8be25fd9",
+          "experiments/bpe-simplification/runner/Cargo.lock": "3c695073bb1e4176d8e7ec1500f9e4fb8883d23e115ef7da244b68e46946f9d6"
+        },
+        "source_commit": "52ca295163936be3cf81cb91a3a8d654c78ac6d4",
+        "worktree": "/tmp/bpe-feed-cost-final",
+        "profile": "release opt-level=3 lto=fat codegen-units=1; same runner dependencies"
+      },
+      "drain": {
+        "binary": "/tmp/bpe-feed-cost-results/drain",
+        "binary_sha256": "e3dfd2c5643c93038522e6cfecb6c7740c554a0b176bb0e69ab7dce73d653bfc",
+        "source_hashes": {
+          "tokenizers/tk-train/src/trainers/bpe/feed.rs": "7c6be5e032a25faf0e0bcad4ee502a38792312233aadbd4a324ac7dca4b62ea7",
+          "tokenizers/tk-train/src/trainers/bpe/tests.rs": "3415b3b5580ac9945582babe86fc0cb40738eb7f8cf28f233e70a50d8fc5b9d1",
+          "experiments/bpe-simplification/runner/src/pipeline.rs": "f82e7bd3f9b8212710dd2de060649ba16c09f4928bd0985b0ec6d7465ed51caf",
+          "experiments/bpe-simplification/runner/src/feed_stats.rs": "c7590d91c7a456be41d7f011cea13d96a5a84283422618aea90ddf8f7ca81a6f",
+          "experiments/bpe-simplification/runner/src/protocol.rs": "092932e1ed307484e68f843716705d6fc998cc947f16b94dade4facda65265dd",
+          "experiments/bpe-simplification/runner/Cargo.toml": "71ee5a0e2114f857677333c828535d876ce0f80b157efc01ec15dfdb8be25fd9",
+          "experiments/bpe-simplification/runner/Cargo.lock": "3c695073bb1e4176d8e7ec1500f9e4fb8883d23e115ef7da244b68e46946f9d6"
+        },
+        "source_commit": "52ca295163936be3cf81cb91a3a8d654c78ac6d4",
+        "worktree": "/tmp/bpe-feed-cost-drain",
+        "profile": "release opt-level=3 lto=fat codegen-units=1; same runner dependencies"
+      }
+    }
+  },
+  "inputs": [
+    {
+      "case": "bytelevel_regex",
+      "path": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/hotcold-inputs/zh256-bytelevel-words/words.json",
+      "prepared_path": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/hotcold-inputs/zh256-bytelevel-words/words.json",
+      "prepared_sha256": "bb796d0b57b87d965b84de249bc5c8e283b700774638d16a40e4ae5171b13ee0",
+      "pretokenizer": "bytelevel_regex",
+      "language": "zh",
+      "source": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/zh256/text.txt",
+      "source_bytes": 268435162,
+      "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+      "prepared_bytes": 437135595,
+      "dataset": "wikimedia/wikipedia",
+      "dataset_configuration": "20231101.zh",
+      "dataset_revision": "b04c8d1ceb2f5cd4588862100d08de323dccfbaa"
+    },
+    {
+      "case": "whitespace",
+      "path": "/tmp/bpe-interface-results/whitespace-words.json",
+      "prepared_path": "/tmp/bpe-interface-results/whitespace-words.json",
+      "prepared_sha256": "ed057a8fdb27544ed29f16dde53faa0de8f47f1ee8ac00080974fac5bb435660",
+      "pretokenizer": "whitespace",
+      "language": "zh",
+      "source": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/zh256/text.txt",
+      "source_bytes": 268435162,
+      "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+      "prepared_bytes": 250116097,
+      "dataset": "wikimedia/wikipedia",
+      "dataset_configuration": "20231101.zh",
+      "dataset_revision": "b04c8d1ceb2f5cd4588862100d08de323dccfbaa"
+    },
+    {
+      "case": "en-bytelevel_regex",
+      "path": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/hotcold-inputs/en256-bytelevel-words/words.json",
+      "prepared_path": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/hotcold-inputs/en256-bytelevel-words/words.json",
+      "prepared_sha256": "4523a34ff64cdba49b0985f32cc923f2c7b005fd67748a0fbec38c44bab437c5",
+      "pretokenizer": "bytelevel_regex",
+      "language": "en",
+      "source": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/en256/text.txt",
+      "source_bytes": 268434441,
+      "source_sha256": "ae02a7e36df46e6dff26481f054dd4a385d50c4a42a9f166de754ee44fbf6b8a",
+      "prepared_bytes": 14071952,
+      "dataset": "wikimedia/wikipedia",
+      "dataset_configuration": "20231101.en",
+      "dataset_revision": "b04c8d1ceb2f5cd4588862100d08de323dccfbaa"
+    },
+    {
+      "case": "en-whitespace",
+      "path": "/tmp/bpe-std-logic-results/en-whitespace-words.json",
+      "prepared_path": "/tmp/bpe-std-logic-results/en-whitespace-words.json",
+      "prepared_sha256": "0e146cd7d9fd31c547c84c5bfea2424bb05ae02905cf2608f4d7aa980f6bdb2d",
+      "pretokenizer": "whitespace",
+      "language": "en",
+      "source": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/en256/text.txt",
+      "source_bytes": 268434441,
+      "source_sha256": "ae02a7e36df46e6dff26481f054dd4a385d50c4a42a9f166de754ee44fbf6b8a",
+      "prepared_bytes": 10900666,
+      "dataset": "wikimedia/wikipedia",
+      "dataset_configuration": "20231101.en",
+      "dataset_revision": "b04c8d1ceb2f5cd4588862100d08de323dccfbaa"
+    },
+    {
+      "case": "zh128-bytelevel_regex",
+      "pretokenizer": "bytelevel_regex",
+      "language": "zh",
+      "source": "/tmp/bpe-feed-cost-results/corpora/128/text.txt",
+      "source_bytes": 134217639,
+      "source_sha256": "7dd7de3f8ec76913c510fb0840818b6749b12fbdf503c997932df2e444a7af0b",
+      "dataset": "wikimedia/wikipedia",
+      "dataset_configuration": "20231101.zh",
+      "dataset_revision": "b04c8d1ceb2f5cd4588862100d08de323dccfbaa"
+    },
+    {
+      "case": "zh384-bytelevel_regex",
+      "pretokenizer": "bytelevel_regex",
+      "language": "zh",
+      "source": "/tmp/bpe-feed-cost-results/corpora/384/text.txt",
+      "source_bytes": 402653152,
+      "source_sha256": "cee7cc37a8a25450d0bf02955c98fb544fb2ed536a27ad55acfae1a8a9a614a5",
+      "dataset": "wikimedia/wikipedia",
+      "dataset_configuration": "20231101.zh",
+      "dataset_revision": "b04c8d1ceb2f5cd4588862100d08de323dccfbaa"
+    },
+    {
+      "case": "zh512-bytelevel_regex",
+      "pretokenizer": "bytelevel_regex",
+      "language": "zh",
+      "source": "/tmp/bpe-feed-cost-results/corpora/512/text.txt",
+      "source_bytes": 536870289,
+      "source_sha256": "a0d40d4102cba1e933f25e5ccd17552d2eaebaec4ef770bc39d8e46e740b4d4f",
+      "dataset": "wikimedia/wikipedia",
+      "dataset_configuration": "20231101.zh",
+      "dataset_revision": "b04c8d1ceb2f5cd4588862100d08de323dccfbaa"
+    }
+  ],
+  "workers": [
+    1,
+    4
+  ],
+  "arms": [
+    "baseline",
+    "unified",
+    "drain"
+  ],
+  "blocks": 2,
+  "warmup_blocks": 0,
+  "cpu": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           39 bits physical, 48 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  16\nOn-line CPU(s) list:                     0-15\nVendor ID:                               GenuineIntel\nModel name:                              Intel(R) Core(TM) i7-10875H CPU @ 2.30GHz\nCPU family:                              6\nModel:                                   165\nThread(s) per core:                      2\nCore(s) per socket:                      8\nSocket(s):                               1\nStepping:                                2\nMicrocode version:                       0x100\nCPU(s) scaling MHz:                      59%\nCPU max MHz:                             5100.0000\nCPU min MHz:                             800.0000\nBogoMIPS:                                4599.93\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb ssbd ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid mpx rdseed adx smap clflushopt intel_pt xsaveopt xsavec xgetbv1 xsaves dtherm ida arat pln pts hwp hwp_notify hwp_act_window hwp_epp vnmi pku ospke md_clear flush_l1d arch_capabilities\nVirtualization:                          VT-x\nL1d cache:                               256 KiB (8 instances)\nL1i cache:                               256 KiB (8 instances)\nL2 cache:                                2 MiB (8 instances)\nL3 cache:                                16 MiB (1 instance)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0-15\nVulnerability Gather data sampling:      Mitigation; Microcode\nVulnerability Indirect target selection: Mitigation; Aligned branch/return thunks\nVulnerability Itlb multihit:             KVM: Mitigation: Split huge pages\nVulnerability L1tf:                      Not affected\nVulnerability Mds:                       Not affected\nVulnerability Meltdown:                  Not affected\nVulnerability Mmio stale data:           Mitigation; Clear CPU buffers; SMT vulnerable\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Mitigation; Enhanced IBRS\nVulnerability Spec rstack overflow:      Not affected\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; Enhanced / Automatic IBRS; IBPB conditional; PBRSB-eIBRS SW sequence; BHI SW loop, KVM SW loop\nVulnerability Srbds:                     Mitigation; Microcode\nVulnerability Tsa:                       Not affected\nVulnerability Tsx async abort:           Not affected\nVulnerability Vmscape:                   Mitigation; IBPB before exit to userspace\n",
+  "rustc": "rustc 1.99.0 (b940084d7 2026-09-28) (Arch Linux rust 1:1.99.0-1)\nbinary: rustc\ncommit-hash: b940084d7eb6a299eb4bfeb8e34901bc051e7ac4\ncommit-date: 2026-09-28\nhost: x86_64-unknown-linux-gnu\nrelease: 1.99.0\nLLVM version: 23.1.1\n",
+  "timing": "public streaming feed and train_vocab, excludes count export/model serialization; feed_hwm is process high water through feed, pipeline_hwm is process high water before validation",
+  "cache": "source SHA256 and UTF-8 validation read corpora before matrix and warm ordinary OS cache; no eviction; each runner streams input without preload; rotate arms per paired block; no concurrent cargo/rustc/runner",
+  "correctness": "every sample: canonical JSON-key TSV records sorted LC_ALL=C, SHA256 compare across arms/workers; complete parsed vocab/merges compare; exports outside timer",
+  "limitation": "production RandomState::default, no feed phase tracing or seed override; swap polled every 25ms"
+}

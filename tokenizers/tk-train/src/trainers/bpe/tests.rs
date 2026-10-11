@@ -1032,3 +1032,200 @@ fn initial_edges_preserve_filtered_coordinates_weights_and_errors() {
         }
     }
 }
+
+#[test]
+fn feed_unification_boundaries_errors_and_stored_state() {
+    const CHILD: &str = "BPE_FEED_UNIFICATION_CHILD";
+    const TEST: &str = "trainers::bpe::tests::feed_unification_boundaries_errors_and_stored_state";
+    if let Ok(setting) = std::env::var(CHILD) {
+        let workers = if setting == "one" { 1 } else { 4 };
+        let parallel = setting != "disabled";
+        tk_encode::parallelism::set_parallelism(parallel);
+        tk_encode::parallelism::set_num_threads(workers);
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(workers)
+            .build()
+            .unwrap()
+            .install(|| {
+                check_feed_unification_success(parallel && workers > 1, workers);
+                check_feed_unification_errors();
+            });
+        if parallel && workers > 1 {
+            check_feed_failure_after_shared_updates();
+        }
+        return;
+    }
+    for setting in ["disabled", "one", "many"] {
+        let result = std::process::Command::new(std::env::current_exe().unwrap())
+            .args(["--exact", TEST, "--nocapture"])
+            .env(CHILD, setting)
+            .output()
+            .unwrap();
+        assert!(
+            result.status.success(),
+            "{setting}: {}",
+            String::from_utf8_lossy(&result.stderr)
+        );
+    }
+}
+
+fn check_feed_unification_success(parallel: bool, workers: usize) {
+    use super::word_counts::WordCounts;
+    let mut lengths = vec![0, 1, workers - 1, workers, workers + 1];
+    lengths.extend([31, 32, 33, 64].map(|n| workers + n));
+    for length in lengths {
+        let reads = AtomicUsize::new(0);
+        let seen: Vec<_> = (0..length).map(|_| AtomicUsize::new(0)).collect();
+        let mut index = 0;
+        let input = std::iter::from_fn(|| {
+            reads.fetch_add(1, Ordering::Relaxed);
+            let value = index;
+            index += 1;
+            (value != length && value <= length + 1).then(|| value.to_string())
+        });
+        let counted = super::feed::count(input, &|text| {
+            let id = text.parse::<usize>().unwrap();
+            seen[id].fetch_add(1, Ordering::Relaxed);
+            Ok(if id % 3 == 0 {
+                vec![]
+            } else {
+                vec![format!("词🙂{id}"), "repeat".into(), "repeat".into()]
+            })
+        })
+        .unwrap();
+        assert_eq!(reads.load(Ordering::Relaxed), length + 1);
+        assert!(seen.iter().all(|n| n.load(Ordering::Relaxed) == 1));
+        assert_eq!(matches!(&counted, WordCounts::Entries(_)), parallel);
+        let mut expected = AHashMap::<CompactString, u64>::new();
+        for id in (0..length).filter(|id| id % 3 != 0) {
+            expected.insert(format!("词🙂{id}").into(), 1);
+            *expected.entry("repeat".into()).or_default() += 2;
+        }
+        assert_eq!(counted, WordCounts::from_map(expected));
+    }
+    // One callback crosses each key boundary, including multiple complete flushes.
+    for unique in [2047, 2048, 2049, 4097] {
+        let mut words: Vec<_> = (0..unique).map(|id| format!("key{id}")).collect();
+        words.extend(["key0".into(), format!("key{}", unique - 1), "key0".into()]);
+        let counted = super::feed::count(std::iter::once("input"), &|_| Ok(words.clone())).unwrap();
+        assert_eq!(matches!(&counted, WordCounts::Entries(_)), parallel);
+        let mut expected = AHashMap::<CompactString, u64>::new();
+        for word in &words {
+            *expected.entry(word.as_str().into()).or_default() += 1;
+        }
+        assert_eq!(counted, WordCounts::from_map(expected));
+    }
+    let mut trainer = trainer();
+    let input = ["hello hello 中文🙂", "hello baaba", "中文🙂 café", ""];
+    let expected = counts(&[("hello", 3), ("中文🙂", 2), ("baaba", 1), ("café", 1)]);
+    trainer
+        .feed(input.into_iter(), |text| {
+            Ok(text.split_whitespace().map(str::to_owned).collect())
+        })
+        .unwrap();
+    assert_eq!(trainer.words, WordCounts::from_map(expected.clone()));
+    assert_eq!(
+        trainer.train_vocab().unwrap(),
+        trainer.do_train(&expected).unwrap()
+    );
+}
+
+fn check_feed_unification_errors() {
+    let length = 67;
+    let mut trainer = trainer();
+    trainer
+        .feed(std::iter::once("saved"), |s| Ok(vec![s.into()]))
+        .unwrap();
+    let previous = trainer.clone();
+    for failures in [
+        vec![0],
+        vec![length / 2],
+        vec![length - 1],
+        vec![0, 9, 35, length - 1],
+    ] {
+        let seen: Vec<_> = (0..length).map(|_| AtomicUsize::new(0)).collect();
+        let error = trainer
+            .feed((0..length).map(|id| id.to_string()), |text| {
+                let id = text.parse::<usize>().unwrap();
+                seen[id].fetch_add(1, Ordering::Relaxed);
+                if failures.contains(&id) {
+                    Err(format!("designated {id}").into())
+                } else {
+                    Ok(vec![text.into()])
+                }
+            })
+            .unwrap_err();
+        assert!(
+            failures
+                .iter()
+                .any(|id| error.to_string() == format!("designated {id}"))
+        );
+        assert!(seen.iter().all(|n| n.load(Ordering::Relaxed) == 1));
+        assert_eq!(trainer, previous);
+    }
+}
+
+fn check_feed_failure_after_shared_updates() {
+    let mut trainer = trainer();
+    trainer
+        .feed(std::iter::once("saved"), |s| Ok(vec![s.into()]))
+        .unwrap();
+    let previous = trainer.clone();
+    let participants = AtomicUsize::new(0);
+    let first_worker = AtomicUsize::new(usize::MAX);
+    let checkpoint = AtomicUsize::new(0);
+    let seen: Vec<_> = (0..3).map(|_| AtomicUsize::new(0)).collect();
+    rayon::ThreadPoolBuilder::new()
+        .num_threads(2)
+        .build()
+        .unwrap()
+        .install(|| {
+            let error = trainer
+                .feed(["0", "1", "2"].into_iter(), |text| {
+                    let id = text.parse::<usize>().unwrap();
+                    let worker = rayon::current_thread_index().unwrap();
+                    seen[id].fetch_add(1, Ordering::Relaxed);
+                    if id < 2 {
+                        participants.fetch_or(1 << worker, Ordering::Relaxed);
+                    }
+                    let deadline = Instant::now() + Duration::from_secs(5);
+                    match id {
+                        0 => {
+                            first_worker.store(worker, Ordering::Relaxed);
+                            while participants.load(Ordering::Relaxed).count_ones() < 2 {
+                                assert!(
+                                    Instant::now() < deadline,
+                                    "startup callbacks were serialized"
+                                );
+                                std::thread::yield_now();
+                            }
+                            // Returning allows this fold to publish full caches in A,
+                            // or individual updates in B, before its next callback.
+                            Ok((0..4097).map(|n| format!("published{n}")).collect())
+                        }
+                        1 => {
+                            while checkpoint.load(Ordering::Relaxed) == 0 {
+                                assert!(
+                                    Instant::now() < deadline,
+                                    "successful fold did not advance"
+                                );
+                                std::thread::yield_now();
+                            }
+                            Err("failure after shared updates".into())
+                        }
+                        2 => {
+                            assert_eq!(worker, first_worker.load(Ordering::Relaxed));
+                            checkpoint.store(1, Ordering::Relaxed);
+                            // This successful fold also has a nonempty tail. The other
+                            // fold fails; count must not replace stored trainer words.
+                            Ok(vec!["successful-tail".into()])
+                        }
+                        _ => unreachable!(),
+                    }
+                })
+                .unwrap_err();
+            assert_eq!(error.to_string(), "failure after shared updates");
+        });
+    assert!(seen.iter().all(|n| n.load(Ordering::Relaxed) == 1));
+    assert_eq!(trainer, previous);
+}
