@@ -136,8 +136,11 @@ impl Positions {
     pub(super) fn iter_from_value(&self, target: u64) -> impl Iterator<Item = u64> + '_ {
         let leaves = self.leaves();
         let index = leaves.partition_point(|leaf| leaf.len() == 0 || leaf.last() < target);
-        let start = leaves.get(index).map_or(0, |leaf| leaf.lower_bound(target));
-        read(&leaves[index..], start)
+        let start = leaves
+            .get(index)
+            .map_or(0, |leaf| leaf.restart_before(target));
+        // Search and skip share one cursor, including equal values across restarts.
+        read(&leaves[index..], start).skip_while(move |&position| position < target)
     }
 
     #[cfg(test)]
@@ -262,13 +265,13 @@ impl Leaf {
         Ok(())
     }
 
+    // Reading tasks and searches supply an aligned restart position.
     fn cursor(&self, start: usize) -> Cursor<'_> {
         if start == self.len() {
             return Cursor {
                 bytes: &[],
                 position: 0,
                 index: start,
-                end: start,
             };
         }
         let head = self.head();
@@ -283,19 +286,15 @@ impl Leaf {
                     .expect("restart offset"),
             )
         };
-        let mut cursor = Cursor {
+        debug_assert!(start.is_multiple_of(RESTART));
+        Cursor {
             bytes: &self.bytes[head + offset..],
             position: 0,
-            index: block * RESTART,
-            end: self.len(),
-        };
-        for _ in cursor.index..start {
-            cursor.next();
+            index: start,
         }
-        cursor
     }
 
-    fn lower_bound(&self, target: u64) -> usize {
+    fn restart_before(&self, target: u64) -> usize {
         let groups = self.len().div_ceil(RESTART);
         let block = if groups <= 1 {
             0
@@ -311,13 +310,7 @@ impl Leaf {
                 })
                 .saturating_sub(1)
         };
-        let start = block * RESTART;
-        start
-            + self
-                .cursor(start)
-                .take(RESTART)
-                .take_while(|&p| p < target)
-                .count()
+        block * RESTART
     }
 }
 
@@ -350,13 +343,12 @@ struct Cursor<'a> {
     bytes: &'a [u8],
     position: u64,
     index: usize,
-    end: usize,
 }
 
 impl Iterator for Cursor<'_> {
     type Item = u64;
     fn next(&mut self) -> Option<u64> {
-        if self.index == self.end {
+        if self.bytes.is_empty() {
             return None;
         }
         if self.index.is_multiple_of(RESTART) {
@@ -502,7 +494,6 @@ mod tests {
             bytes: &[0; 7],
             position: 0,
             index: 0,
-            end: 1,
         };
         assert!(std::panic::catch_unwind(move || cursor.next()).is_err());
     }
