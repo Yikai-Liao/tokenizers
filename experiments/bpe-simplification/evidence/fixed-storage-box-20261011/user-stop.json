@@ -1,0 +1,18 @@
+{
+  "reason": "User accepts ownership-only change and requests commit; full performance matrix intentionally stopped. Interruption is not an experimental failure.",
+  "utc": "2026-10-11T12:01:52.137619+00:00",
+  "parent_pid": 533657,
+  "children": [
+    {
+      "pid": 536212,
+      "argv": "/home/lyk/.cache/bpe-box-20261011/boxed /home/lyk/.cache/bpe-box-20261011/measurements/en-bytelevel_regex-w1-warmup0-boxed/job.json "
+    }
+  ],
+  "completed_runs": 29,
+  "completed_valid": 29,
+  "completed_formal": 20,
+  "completed_warmups": 9,
+  "partial_folders": [
+    "measurements/en-bytelevel_regex-w1-warmup0-boxed"
+  ]
+}

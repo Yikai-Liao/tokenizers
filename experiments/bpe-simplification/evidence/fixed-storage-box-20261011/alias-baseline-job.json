@@ -1,0 +1,18 @@
+{
+  "protocol_version": 1,
+  "attempt_id": "alias-baseline",
+  "build_id": "diagnostic-baseline",
+  "input_id": "alias",
+  "mode": "core",
+  "input": "/home/lyk/.cache/bpe-box-20261011/alias-words.json",
+  "output": "/home/lyk/.cache/bpe-box-20261011/alias-baseline-model.json",
+  "workers": 1,
+  "pretokenizer": "none",
+  "trainer": {
+    "vocab_size": 64,
+    "min_frequency": 1,
+    "prefix": null,
+    "suffix": "a",
+    "max_token_length": null
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "pretokenizer": "none",
+  "ordered_words": [
+    [
+      "baaba",
+      1
+    ],
+    [
+      "cbaaba",
+      7
+    ],
+    [
+      "dbaaba",
+      0
+    ]
+  ],
+  "hash_seeds": [
+    11,
+    13,
+    17,
+    19
+  ]
+}

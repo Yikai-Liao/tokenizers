@@ -1,0 +1,80 @@
+[
+  {
+    "arm": "baseline",
+    "fixture": "alias-allocator",
+    "command": [
+      "valgrind",
+      "--tool=memcheck",
+      "--trace-malloc=yes",
+      "--leak-check=no",
+      "--error-exitcode=99",
+      "--log-file=/home/lyk/.cache/bpe-box-20261011/baseline-allocator.log",
+      "/home/lyk/.cache/bpe-box-20261011/diagnostic-baseline-runner",
+      "/home/lyk/.cache/bpe-box-20261011/alias-baseline-job.json"
+    ],
+    "exit_code": 0
+  },
+  {
+    "arm": "baseline",
+    "fixture": "bytelevel_regex",
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/home/lyk/.cache/bpe-box-20261011/diagnostic-baseline-runner",
+      "/home/lyk/.cache/bpe-box-20261011/diagnostic-runs/bytelevel_regex-diag-baseline/job.json"
+    ],
+    "exit_code": 0
+  },
+  {
+    "arm": "baseline",
+    "fixture": "en-whitespace",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/lyk/.cache/bpe-box-20261011/diagnostic-baseline-runner",
+      "/home/lyk/.cache/bpe-box-20261011/diagnostic-runs/en-whitespace-diag-baseline/job.json"
+    ],
+    "exit_code": 0
+  },
+  {
+    "arm": "boxed",
+    "fixture": "alias-allocator",
+    "command": [
+      "valgrind",
+      "--tool=memcheck",
+      "--trace-malloc=yes",
+      "--leak-check=no",
+      "--error-exitcode=99",
+      "--log-file=/home/lyk/.cache/bpe-box-20261011/boxed-allocator.log",
+      "/home/lyk/.cache/bpe-box-20261011/diagnostic-boxed-runner",
+      "/home/lyk/.cache/bpe-box-20261011/alias-boxed-job.json"
+    ],
+    "exit_code": 0
+  },
+  {
+    "arm": "boxed",
+    "fixture": "bytelevel_regex",
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/home/lyk/.cache/bpe-box-20261011/diagnostic-boxed-runner",
+      "/home/lyk/.cache/bpe-box-20261011/diagnostic-runs/bytelevel_regex-diag-boxed/job.json"
+    ],
+    "exit_code": 0
+  },
+  {
+    "arm": "boxed",
+    "fixture": "en-whitespace",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/lyk/.cache/bpe-box-20261011/diagnostic-boxed-runner",
+      "/home/lyk/.cache/bpe-box-20261011/diagnostic-runs/en-whitespace-diag-boxed/job.json"
+    ],
+    "exit_code": 0
+  }
+]

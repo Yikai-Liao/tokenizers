@@ -1,0 +1,6 @@
+{
+  "prior_evidence": "Prior reports treat around one percent on this shared laptop as noise, do not claim stable gains, and permit small increases for simpler ownership.",
+  "screen_before_results": "Retain only if correctness is unchanged and no repeated material regression. Material screen: pipeline wall or CPU at least +3% in all paired runs, or HWM at least +3% and +32 MiB in all pairs; investigate lifecycle groups if repeated.",
+  "third_pair": "After two pairs add one reversed-order alternating pair if time directions conflict with a magnitude above 1%, absolute median wall/CPU exceeds 1%, or HWM exceeds 3% and 32 MiB. Differences entirely below 1% cannot support resource benefits and need no extra pair to choose semantic clarity.",
+  "claims": "A third pair is descriptive, not statistical significance. Never claim speed or RSS benefits from descriptor sizes or requested payload alone."
+}

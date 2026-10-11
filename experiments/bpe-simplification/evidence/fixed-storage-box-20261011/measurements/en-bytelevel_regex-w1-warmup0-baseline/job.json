@@ -1,0 +1,18 @@
+{
+  "protocol_version": 1,
+  "attempt_id": "en-bytelevel_regex-w1-warmup0-baseline",
+  "build_id": "baseline",
+  "input_id": "en-bytelevel_regex",
+  "mode": "pipeline",
+  "input": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/en256/text.txt",
+  "output": "/home/lyk/.cache/bpe-box-20261011/measurements/en-bytelevel_regex-w1-warmup0-baseline/model.json",
+  "workers": 1,
+  "pretokenizer": "bytelevel_regex",
+  "trainer": {
+    "vocab_size": 50000,
+    "min_frequency": 2,
+    "prefix": null,
+    "suffix": null,
+    "max_token_length": null
+  }
+}

@@ -1,0 +1,62 @@
+[
+  {
+    "case": "bytelevel_regex",
+    "path": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/hotcold-inputs/zh256-bytelevel-words/words.json",
+    "prepared_path": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/hotcold-inputs/zh256-bytelevel-words/words.json",
+    "prepared_sha256": "bb796d0b57b87d965b84de249bc5c8e283b700774638d16a40e4ae5171b13ee0",
+    "pretokenizer": "bytelevel_regex",
+    "language": "zh",
+    "source": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/zh256/text.txt",
+    "source_bytes": 268435162,
+    "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+    "prepared_bytes": 437135595,
+    "dataset": "wikimedia/wikipedia",
+    "dataset_configuration": "20231101.zh",
+    "dataset_revision": "b04c8d1ceb2f5cd4588862100d08de323dccfbaa"
+  },
+  {
+    "case": "whitespace",
+    "path": "/tmp/bpe-interface-results/whitespace-words.json",
+    "prepared_path": "/tmp/bpe-interface-results/whitespace-words.json",
+    "prepared_sha256": "ed057a8fdb27544ed29f16dde53faa0de8f47f1ee8ac00080974fac5bb435660",
+    "pretokenizer": "whitespace",
+    "language": "zh",
+    "source": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/zh256/text.txt",
+    "source_bytes": 268435162,
+    "source_sha256": "61537f422d250f93ed669193faec992a516ce049b41ad33fb02b52064780ed98",
+    "prepared_bytes": 250116097,
+    "dataset": "wikimedia/wikipedia",
+    "dataset_configuration": "20231101.zh",
+    "dataset_revision": "b04c8d1ceb2f5cd4588862100d08de323dccfbaa"
+  },
+  {
+    "case": "en-bytelevel_regex",
+    "path": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/hotcold-inputs/en256-bytelevel-words/words.json",
+    "prepared_path": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/hotcold-inputs/en256-bytelevel-words/words.json",
+    "prepared_sha256": "4523a34ff64cdba49b0985f32cc923f2c7b005fd67748a0fbec38c44bab437c5",
+    "pretokenizer": "bytelevel_regex",
+    "language": "en",
+    "source": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/en256/text.txt",
+    "source_bytes": 268434441,
+    "source_sha256": "ae02a7e36df46e6dff26481f054dd4a385d50c4a42a9f166de754ee44fbf6b8a",
+    "prepared_bytes": 14071952,
+    "dataset": "wikimedia/wikipedia",
+    "dataset_configuration": "20231101.en",
+    "dataset_revision": "b04c8d1ceb2f5cd4588862100d08de323dccfbaa"
+  },
+  {
+    "case": "en-whitespace",
+    "path": "/tmp/bpe-std-logic-results/en-whitespace-words.json",
+    "prepared_path": "/tmp/bpe-std-logic-results/en-whitespace-words.json",
+    "prepared_sha256": "0e146cd7d9fd31c547c84c5bfea2424bb05ae02905cf2608f4d7aa980f6bdb2d",
+    "pretokenizer": "whitespace",
+    "language": "en",
+    "source": "/home/lyk/code/tokenizers-bpe-benchmarks-laptop/.bench/corpora/en256/text.txt",
+    "source_bytes": 268434441,
+    "source_sha256": "ae02a7e36df46e6dff26481f054dd4a385d50c4a42a9f166de754ee44fbf6b8a",
+    "prepared_bytes": 10900666,
+    "dataset": "wikimedia/wikipedia",
+    "dataset_configuration": "20231101.en",
+    "dataset_revision": "b04c8d1ceb2f5cd4588862100d08de323dccfbaa"
+  }
+]

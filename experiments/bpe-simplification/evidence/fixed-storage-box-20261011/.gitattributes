@@ -1,0 +1,3 @@
+*.diff -whitespace
+source/** -whitespace
+diagnostic-source/** -whitespace

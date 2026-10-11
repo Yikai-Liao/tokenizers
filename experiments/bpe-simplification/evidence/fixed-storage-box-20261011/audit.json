@@ -1,0 +1,31 @@
+{
+  "baseline": {
+    "source_matches_frozen_manifest": true,
+    "atomic_ordering_counts": {
+      "corpus": 10,
+      "index": 0,
+      "merge": 0
+    },
+    "new_unsafe": false
+  },
+  "boxed": {
+    "source_matches_frozen_manifest": true,
+    "atomic_ordering_counts": {
+      "corpus": 10,
+      "index": 0,
+      "merge": 0
+    },
+    "new_unsafe": false
+  },
+  "unchanged_contracts": [
+    "B1 prefix computation in place",
+    "WordCounts representation/construction/sort/release",
+    "Feed and codec",
+    "owner routing and shard inner buffers",
+    "Positions format",
+    "activation spans Vec transfer and later push",
+    "directory scratch reuse",
+    "atomic load/store orderings",
+    "joined preparation/application/publication and error/unwind protocol"
+  ]
+}

@@ -1,0 +1,1493 @@
+{
+  "note": "Diagnostic times/RSS/HWM are excluded from formal comparisons. Spare bytes are requested payload, not measured RSS savings; pointer stability does not exclude in-place realloc. HWM is cumulative.",
+  "real": {
+    "bytelevel_regex-baseline": {
+      "candidates": {
+        "characters": {
+          "conversions": 1,
+          "len_range": [
+            1114112,
+            1114112
+          ],
+          "capacities": [
+            1114112
+          ],
+          "element_bytes": 4,
+          "potential_spare_bytes_sum": 0,
+          "conversion_pointer_moves": 0,
+          "conversion_seconds_sum": 1.43e-07
+        },
+        "heads": {
+          "conversions": 1480,
+          "len_range": [
+            259,
+            50000
+          ],
+          "capacities": "see raw log",
+          "element_bytes": 12,
+          "potential_spare_bytes_sum": 0,
+          "conversion_pointer_moves": 0,
+          "conversion_seconds_sum": 8.3347e-05
+        },
+        "shards": {
+          "conversions": 1,
+          "len_range": [
+            4,
+            4
+          ],
+          "capacities": [
+            4
+          ],
+          "element_bytes": 112,
+          "potential_spare_bytes_sum": 0,
+          "conversion_pointer_moves": 0,
+          "conversion_seconds_sum": 3e-08
+        },
+        "slots_narrow": {
+          "conversions": 1,
+          "len_range": [
+            202787422,
+            202787422
+          ],
+          "capacities": [
+            202787422
+          ],
+          "element_bytes": 2,
+          "potential_spare_bytes_sum": 0,
+          "conversion_pointer_moves": 0,
+          "conversion_seconds_sum": 4.7e-08
+        },
+        "starts": {
+          "conversions": 1,
+          "len_range": [
+            6859987,
+            6859987
+          ],
+          "capacities": [
+            6859987
+          ],
+          "element_bytes": 8,
+          "potential_spare_bytes_sum": 0,
+          "conversion_pointer_moves": 0,
+          "conversion_seconds_sum": 5.2e-08
+        },
+        "tails": {
+          "conversions": 1480,
+          "len_range": [
+            259,
+            50000
+          ],
+          "capacities": "see raw log",
+          "element_bytes": 1,
+          "potential_spare_bytes_sum": 0,
+          "conversion_pointer_moves": 0,
+          "conversion_seconds_sum": 3.671e-05
+        },
+        "weight_regions": {
+          "conversions": 1,
+          "len_range": [
+            1522,
+            1522
+          ],
+          "capacities": [
+            2048
+          ],
+          "element_bytes": 16,
+          "potential_spare_bytes_sum": 8416,
+          "conversion_pointer_moves": 0,
+          "conversion_seconds_sum": 2.8e-08
+        },
+        "words": {
+          "conversions": 1,
+          "len_range": [
+            6859987,
+            6859987
+          ],
+          "capacities": [
+            6859987
+          ],
+          "element_bytes": 16,
+          "potential_spare_bytes_sum": 0,
+          "conversion_pointer_moves": 0,
+          "conversion_seconds_sum": 5.3e-08
+        }
+      },
+      "phases": [
+        {
+          "event": "phase",
+          "hwm_kib": 951772,
+          "name": "before-build",
+          "rss_kib": 695356
+        },
+        {
+          "event": "phase",
+          "hwm_kib": 951772,
+          "name": "after-build-freeze",
+          "rss_kib": 856240
+        },
+        {
+          "event": "phase",
+          "hwm_kib": 2124276,
+          "name": "after-materialize-and-temporary-drop",
+          "rss_kib": 1963656
+        },
+        {
+          "event": "phase",
+          "hwm_kib": 2392200,
+          "name": "training-complete-before-drop",
+          "rss_kib": 2392200
+        },
+        {
+          "event": "phase",
+          "hwm_kib": 2392048,
+          "name": "after-index-corpus-drop",
+          "rss_kib": 1583316
+        },
+        {
+          "event": "phase",
+          "hwm_kib": 2392048,
+          "name": "after-output-model",
+          "rss_kib": 1583316
+        }
+      ],
+      "weight_region_growths": [
+        {
+          "capacity": 4,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 1,
+          "name": "weight_regions",
+          "old_capacity": 0
+        },
+        {
+          "capacity": 8,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 5,
+          "name": "weight_regions",
+          "old_capacity": 4
+        },
+        {
+          "capacity": 16,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 9,
+          "name": "weight_regions",
+          "old_capacity": 8
+        },
+        {
+          "capacity": 32,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 17,
+          "name": "weight_regions",
+          "old_capacity": 16
+        },
+        {
+          "capacity": 64,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 33,
+          "name": "weight_regions",
+          "old_capacity": 32
+        },
+        {
+          "capacity": 128,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 65,
+          "name": "weight_regions",
+          "old_capacity": 64
+        },
+        {
+          "capacity": 256,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 129,
+          "name": "weight_regions",
+          "old_capacity": 128
+        },
+        {
+          "capacity": 512,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 257,
+          "name": "weight_regions",
+          "old_capacity": 256
+        },
+        {
+          "capacity": 1024,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 513,
+          "name": "weight_regions",
+          "old_capacity": 512
+        },
+        {
+          "capacity": 2048,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 1025,
+          "name": "weight_regions",
+          "old_capacity": 1024
+        }
+      ]
+    },
+    "en-whitespace-baseline": {
+      "candidates": {
+        "characters": {
+          "conversions": 1,
+          "len_range": [
+            1114112,
+            1114112
+          ],
+          "capacities": [
+            1114112
+          ],
+          "element_bytes": 4,
+          "potential_spare_bytes_sum": 0,
+          "conversion_pointer_moves": 0,
+          "conversion_seconds_sum": 6.5e-08
+        },
+        "heads": {
+          "conversions": 1399,
+          "len_range": [
+            5084,
+            50000
+          ],
+          "capacities": "see raw log",
+          "element_bytes": 12,
+          "potential_spare_bytes_sum": 0,
+          "conversion_pointer_moves": 0,
+          "conversion_seconds_sum": 5.8639e-05
+        },
+        "shards": {
+          "conversions": 1,
+          "len_range": [
+            1,
+            1
+          ],
+          "capacities": [
+            4
+          ],
+          "element_bytes": 112,
+          "potential_spare_bytes_sum": 336,
+          "conversion_pointer_moves": 0,
+          "conversion_seconds_sum": 1.28e-07
+        },
+        "slots_narrow": {
+          "conversions": 1,
+          "len_range": [
+            6241463,
+            6241463
+          ],
+          "capacities": [
+            6241463
+          ],
+          "element_bytes": 2,
+          "potential_spare_bytes_sum": 0,
+          "conversion_pointer_moves": 0,
+          "conversion_seconds_sum": 2.6e-08
+        },
+        "starts": {
+          "conversions": 1,
+          "len_range": [
+            724596,
+            724596
+          ],
+          "capacities": [
+            724596
+          ],
+          "element_bytes": 8,
+          "potential_spare_bytes_sum": 0,
+          "conversion_pointer_moves": 0,
+          "conversion_seconds_sum": 2.5e-08
+        },
+        "tails": {
+          "conversions": 1399,
+          "len_range": [
+            5084,
+            50000
+          ],
+          "capacities": "see raw log",
+          "element_bytes": 1,
+          "potential_spare_bytes_sum": 0,
+          "conversion_pointer_moves": 0,
+          "conversion_seconds_sum": 3.2568e-05
+        },
+        "weight_regions": {
+          "conversions": 1,
+          "len_range": [
+            4069,
+            4069
+          ],
+          "capacities": [
+            4096
+          ],
+          "element_bytes": 16,
+          "potential_spare_bytes_sum": 432,
+          "conversion_pointer_moves": 0,
+          "conversion_seconds_sum": 2.5e-08
+        },
+        "words": {
+          "conversions": 1,
+          "len_range": [
+            724596,
+            724596
+          ],
+          "capacities": [
+            724596
+          ],
+          "element_bytes": 16,
+          "potential_spare_bytes_sum": 0,
+          "conversion_pointer_moves": 0,
+          "conversion_seconds_sum": 6.4e-08
+        }
+      },
+      "phases": [
+        {
+          "event": "phase",
+          "hwm_kib": 54484,
+          "name": "before-build",
+          "rss_kib": 44272
+        },
+        {
+          "event": "phase",
+          "hwm_kib": 60136,
+          "name": "after-build-freeze",
+          "rss_kib": 60136
+        },
+        {
+          "event": "phase",
+          "hwm_kib": 120496,
+          "name": "after-materialize-and-temporary-drop",
+          "rss_kib": 120496
+        },
+        {
+          "event": "phase",
+          "hwm_kib": 146888,
+          "name": "training-complete-before-drop",
+          "rss_kib": 146888
+        },
+        {
+          "event": "phase",
+          "hwm_kib": 146716,
+          "name": "after-index-corpus-drop",
+          "rss_kib": 101216
+        },
+        {
+          "event": "phase",
+          "hwm_kib": 146716,
+          "name": "after-output-model",
+          "rss_kib": 101216
+        }
+      ],
+      "weight_region_growths": [
+        {
+          "capacity": 4,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 1,
+          "name": "weight_regions",
+          "old_capacity": 0
+        },
+        {
+          "capacity": 8,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 5,
+          "name": "weight_regions",
+          "old_capacity": 4
+        },
+        {
+          "capacity": 16,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 9,
+          "name": "weight_regions",
+          "old_capacity": 8
+        },
+        {
+          "capacity": 32,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 17,
+          "name": "weight_regions",
+          "old_capacity": 16
+        },
+        {
+          "capacity": 64,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 33,
+          "name": "weight_regions",
+          "old_capacity": 32
+        },
+        {
+          "capacity": 128,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 65,
+          "name": "weight_regions",
+          "old_capacity": 64
+        },
+        {
+          "capacity": 256,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 129,
+          "name": "weight_regions",
+          "old_capacity": 128
+        },
+        {
+          "capacity": 512,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 257,
+          "name": "weight_regions",
+          "old_capacity": 256
+        },
+        {
+          "capacity": 1024,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 513,
+          "name": "weight_regions",
+          "old_capacity": 512
+        },
+        {
+          "capacity": 2048,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 1025,
+          "name": "weight_regions",
+          "old_capacity": 1024
+        },
+        {
+          "capacity": 4096,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 2049,
+          "name": "weight_regions",
+          "old_capacity": 2048
+        }
+      ]
+    },
+    "bytelevel_regex-boxed": {
+      "candidates": {
+        "characters": {
+          "conversions": 1,
+          "len_range": [
+            1114112,
+            1114112
+          ],
+          "capacities": [
+            1114112
+          ],
+          "element_bytes": 4,
+          "potential_spare_bytes_sum": 0,
+          "conversion_pointer_moves": 0,
+          "conversion_seconds_sum": 6e-08
+        },
+        "heads": {
+          "conversions": 1480,
+          "len_range": [
+            259,
+            50000
+          ],
+          "capacities": "see raw log",
+          "element_bytes": 12,
+          "potential_spare_bytes_sum": 0,
+          "conversion_pointer_moves": 0,
+          "conversion_seconds_sum": 4.7385e-05
+        },
+        "shards": {
+          "conversions": 1,
+          "len_range": [
+            4,
+            4
+          ],
+          "capacities": [
+            4
+          ],
+          "element_bytes": 112,
+          "potential_spare_bytes_sum": 0,
+          "conversion_pointer_moves": 0,
+          "conversion_seconds_sum": 3.8e-08
+        },
+        "slots_narrow": {
+          "conversions": 1,
+          "len_range": [
+            202787422,
+            202787422
+          ],
+          "capacities": [
+            202787422
+          ],
+          "element_bytes": 2,
+          "potential_spare_bytes_sum": 0,
+          "conversion_pointer_moves": 0,
+          "conversion_seconds_sum": 5.1e-08
+        },
+        "starts": {
+          "conversions": 1,
+          "len_range": [
+            6859987,
+            6859987
+          ],
+          "capacities": [
+            6859987
+          ],
+          "element_bytes": 8,
+          "potential_spare_bytes_sum": 0,
+          "conversion_pointer_moves": 0,
+          "conversion_seconds_sum": 5e-08
+        },
+        "tails": {
+          "conversions": 1480,
+          "len_range": [
+            259,
+            50000
+          ],
+          "capacities": "see raw log",
+          "element_bytes": 1,
+          "potential_spare_bytes_sum": 0,
+          "conversion_pointer_moves": 0,
+          "conversion_seconds_sum": 3.8755e-05
+        },
+        "weight_regions": {
+          "conversions": 1,
+          "len_range": [
+            1522,
+            1522
+          ],
+          "capacities": [
+            2048
+          ],
+          "element_bytes": 16,
+          "potential_spare_bytes_sum": 8416,
+          "conversion_pointer_moves": 0,
+          "conversion_seconds_sum": 3.72e-07
+        },
+        "words": {
+          "conversions": 1,
+          "len_range": [
+            6859987,
+            6859987
+          ],
+          "capacities": [
+            6859987
+          ],
+          "element_bytes": 16,
+          "potential_spare_bytes_sum": 0,
+          "conversion_pointer_moves": 0,
+          "conversion_seconds_sum": 5.6e-08
+        }
+      },
+      "phases": [
+        {
+          "event": "phase",
+          "hwm_kib": 951752,
+          "name": "before-build",
+          "rss_kib": 695312
+        },
+        {
+          "event": "phase",
+          "hwm_kib": 951752,
+          "name": "after-build-freeze",
+          "rss_kib": 856168
+        },
+        {
+          "event": "phase",
+          "hwm_kib": 2117820,
+          "name": "after-materialize-and-temporary-drop",
+          "rss_kib": 1957296
+        },
+        {
+          "event": "phase",
+          "hwm_kib": 2439632,
+          "name": "training-complete-before-drop",
+          "rss_kib": 2439632
+        },
+        {
+          "event": "phase",
+          "hwm_kib": 2439548,
+          "name": "after-index-corpus-drop",
+          "rss_kib": 1630748
+        },
+        {
+          "event": "phase",
+          "hwm_kib": 2439548,
+          "name": "after-output-model",
+          "rss_kib": 1630748
+        }
+      ],
+      "weight_region_growths": [
+        {
+          "capacity": 4,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 1,
+          "name": "weight_regions",
+          "old_capacity": 0
+        },
+        {
+          "capacity": 8,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 5,
+          "name": "weight_regions",
+          "old_capacity": 4
+        },
+        {
+          "capacity": 16,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 9,
+          "name": "weight_regions",
+          "old_capacity": 8
+        },
+        {
+          "capacity": 32,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 17,
+          "name": "weight_regions",
+          "old_capacity": 16
+        },
+        {
+          "capacity": 64,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 33,
+          "name": "weight_regions",
+          "old_capacity": 32
+        },
+        {
+          "capacity": 128,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 65,
+          "name": "weight_regions",
+          "old_capacity": 64
+        },
+        {
+          "capacity": 256,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 129,
+          "name": "weight_regions",
+          "old_capacity": 128
+        },
+        {
+          "capacity": 512,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 257,
+          "name": "weight_regions",
+          "old_capacity": 256
+        },
+        {
+          "capacity": 1024,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 513,
+          "name": "weight_regions",
+          "old_capacity": 512
+        },
+        {
+          "capacity": 2048,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 1025,
+          "name": "weight_regions",
+          "old_capacity": 1024
+        }
+      ]
+    },
+    "en-whitespace-boxed": {
+      "candidates": {
+        "characters": {
+          "conversions": 1,
+          "len_range": [
+            1114112,
+            1114112
+          ],
+          "capacities": [
+            1114112
+          ],
+          "element_bytes": 4,
+          "potential_spare_bytes_sum": 0,
+          "conversion_pointer_moves": 0,
+          "conversion_seconds_sum": 2.7e-08
+        },
+        "heads": {
+          "conversions": 1399,
+          "len_range": [
+            5084,
+            50000
+          ],
+          "capacities": "see raw log",
+          "element_bytes": 12,
+          "potential_spare_bytes_sum": 0,
+          "conversion_pointer_moves": 0,
+          "conversion_seconds_sum": 6.2253e-05
+        },
+        "shards": {
+          "conversions": 1,
+          "len_range": [
+            1,
+            1
+          ],
+          "capacities": [
+            4
+          ],
+          "element_bytes": 112,
+          "potential_spare_bytes_sum": 336,
+          "conversion_pointer_moves": 0,
+          "conversion_seconds_sum": 2.03e-07
+        },
+        "slots_narrow": {
+          "conversions": 1,
+          "len_range": [
+            6241463,
+            6241463
+          ],
+          "capacities": [
+            6241463
+          ],
+          "element_bytes": 2,
+          "potential_spare_bytes_sum": 0,
+          "conversion_pointer_moves": 0,
+          "conversion_seconds_sum": 5.2e-08
+        },
+        "starts": {
+          "conversions": 1,
+          "len_range": [
+            724596,
+            724596
+          ],
+          "capacities": [
+            724596
+          ],
+          "element_bytes": 8,
+          "potential_spare_bytes_sum": 0,
+          "conversion_pointer_moves": 0,
+          "conversion_seconds_sum": 5.5e-08
+        },
+        "tails": {
+          "conversions": 1399,
+          "len_range": [
+            5084,
+            50000
+          ],
+          "capacities": "see raw log",
+          "element_bytes": 1,
+          "potential_spare_bytes_sum": 0,
+          "conversion_pointer_moves": 0,
+          "conversion_seconds_sum": 4.4616e-05
+        },
+        "weight_regions": {
+          "conversions": 1,
+          "len_range": [
+            4069,
+            4069
+          ],
+          "capacities": [
+            4096
+          ],
+          "element_bytes": 16,
+          "potential_spare_bytes_sum": 432,
+          "conversion_pointer_moves": 0,
+          "conversion_seconds_sum": 9.79e-07
+        },
+        "words": {
+          "conversions": 1,
+          "len_range": [
+            724596,
+            724596
+          ],
+          "capacities": [
+            724596
+          ],
+          "element_bytes": 16,
+          "potential_spare_bytes_sum": 0,
+          "conversion_pointer_moves": 0,
+          "conversion_seconds_sum": 5e-08
+        }
+      },
+      "phases": [
+        {
+          "event": "phase",
+          "hwm_kib": 54520,
+          "name": "before-build",
+          "rss_kib": 44256
+        },
+        {
+          "event": "phase",
+          "hwm_kib": 60184,
+          "name": "after-build-freeze",
+          "rss_kib": 60184
+        },
+        {
+          "event": "phase",
+          "hwm_kib": 120256,
+          "name": "after-materialize-and-temporary-drop",
+          "rss_kib": 120256
+        },
+        {
+          "event": "phase",
+          "hwm_kib": 149152,
+          "name": "training-complete-before-drop",
+          "rss_kib": 149152
+        },
+        {
+          "event": "phase",
+          "hwm_kib": 148980,
+          "name": "after-index-corpus-drop",
+          "rss_kib": 128052
+        },
+        {
+          "event": "phase",
+          "hwm_kib": 148980,
+          "name": "after-output-model",
+          "rss_kib": 128052
+        }
+      ],
+      "weight_region_growths": [
+        {
+          "capacity": 4,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 1,
+          "name": "weight_regions",
+          "old_capacity": 0
+        },
+        {
+          "capacity": 8,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 5,
+          "name": "weight_regions",
+          "old_capacity": 4
+        },
+        {
+          "capacity": 16,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 9,
+          "name": "weight_regions",
+          "old_capacity": 8
+        },
+        {
+          "capacity": 32,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 17,
+          "name": "weight_regions",
+          "old_capacity": 16
+        },
+        {
+          "capacity": 64,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 33,
+          "name": "weight_regions",
+          "old_capacity": 32
+        },
+        {
+          "capacity": 128,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 65,
+          "name": "weight_regions",
+          "old_capacity": 64
+        },
+        {
+          "capacity": 256,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 129,
+          "name": "weight_regions",
+          "old_capacity": 128
+        },
+        {
+          "capacity": 512,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 257,
+          "name": "weight_regions",
+          "old_capacity": 256
+        },
+        {
+          "capacity": 1024,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 513,
+          "name": "weight_regions",
+          "old_capacity": 512
+        },
+        {
+          "capacity": 2048,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 1025,
+          "name": "weight_regions",
+          "old_capacity": 1024
+        },
+        {
+          "capacity": 4096,
+          "element_bytes": 16,
+          "event": "capacity_growth",
+          "len": 2049,
+          "name": "weight_regions",
+          "old_capacity": 2048
+        }
+      ]
+    }
+  },
+  "allocator_fixture": {
+    "baseline": {
+      "candidate_events": [
+        {
+          "boxed": false,
+          "capacity": 1114112,
+          "container_bytes": 24,
+          "element_bytes": 4,
+          "event": "freeze",
+          "len": 1114112,
+          "name": "characters",
+          "new_pointer": 86347840,
+          "old_pointer": 86347840,
+          "pointer_changed": false,
+          "potential_spare_bytes": 0,
+          "seconds": 0.000101494,
+          "matching_allocator_reallocs": []
+        },
+        {
+          "boxed": false,
+          "capacity": 4,
+          "container_bytes": 24,
+          "element_bytes": 12,
+          "event": "freeze",
+          "len": 4,
+          "name": "decorated",
+          "new_pointer": 80371248,
+          "old_pointer": 80371248,
+          "pointer_changed": false,
+          "potential_spare_bytes": 0,
+          "seconds": 9.7587e-05,
+          "matching_allocator_reallocs": []
+        },
+        {
+          "boxed": false,
+          "capacity": 4,
+          "container_bytes": 24,
+          "element_bytes": 16,
+          "event": "freeze",
+          "len": 3,
+          "name": "words",
+          "new_pointer": 80380608,
+          "old_pointer": 80380608,
+          "pointer_changed": false,
+          "potential_spare_bytes": 16,
+          "seconds": 0.000100327,
+          "matching_allocator_reallocs": []
+        },
+        {
+          "boxed": false,
+          "capacity": 4,
+          "container_bytes": 24,
+          "element_bytes": 8,
+          "event": "freeze",
+          "len": 3,
+          "name": "starts",
+          "new_pointer": 80384080,
+          "old_pointer": 80384080,
+          "pointer_changed": false,
+          "potential_spare_bytes": 8,
+          "seconds": 9.8688e-05,
+          "matching_allocator_reallocs": []
+        },
+        {
+          "boxed": false,
+          "capacity": 4,
+          "container_bytes": 24,
+          "element_bytes": 16,
+          "event": "freeze",
+          "len": 3,
+          "name": "weight_regions",
+          "new_pointer": 80384176,
+          "old_pointer": 80384176,
+          "pointer_changed": false,
+          "potential_spare_bytes": 16,
+          "seconds": 0.000105466,
+          "matching_allocator_reallocs": []
+        },
+        {
+          "boxed": false,
+          "capacity": 4,
+          "container_bytes": 24,
+          "element_bytes": 112,
+          "event": "freeze",
+          "len": 1,
+          "name": "shards",
+          "new_pointer": 80406752,
+          "old_pointer": 80406752,
+          "pointer_changed": false,
+          "potential_spare_bytes": 336,
+          "seconds": 0.000106218,
+          "matching_allocator_reallocs": []
+        },
+        {
+          "boxed": false,
+          "capacity": 21,
+          "container_bytes": 24,
+          "element_bytes": 2,
+          "event": "freeze",
+          "len": 21,
+          "name": "slots_narrow",
+          "new_pointer": 80412768,
+          "old_pointer": 80412768,
+          "pointer_changed": false,
+          "potential_spare_bytes": 0,
+          "seconds": 0.000101559,
+          "matching_allocator_reallocs": []
+        },
+        {
+          "boxed": false,
+          "capacity": 1114112,
+          "container_bytes": 24,
+          "element_bytes": 4,
+          "event": "freeze",
+          "len": 1114112,
+          "name": "characters",
+          "new_pointer": 90808384,
+          "old_pointer": 90808384,
+          "pointer_changed": false,
+          "potential_spare_bytes": 0,
+          "seconds": 1.864e-06,
+          "matching_allocator_reallocs": []
+        },
+        {
+          "boxed": false,
+          "capacity": 4,
+          "container_bytes": 24,
+          "element_bytes": 12,
+          "event": "freeze",
+          "len": 4,
+          "name": "decorated",
+          "new_pointer": 80708736,
+          "old_pointer": 80708736,
+          "pointer_changed": false,
+          "potential_spare_bytes": 0,
+          "seconds": 1.298e-06,
+          "matching_allocator_reallocs": []
+        },
+        {
+          "boxed": false,
+          "capacity": 4,
+          "container_bytes": 24,
+          "element_bytes": 16,
+          "event": "freeze",
+          "len": 3,
+          "name": "words",
+          "new_pointer": 80718096,
+          "old_pointer": 80718096,
+          "pointer_changed": false,
+          "potential_spare_bytes": 16,
+          "seconds": 1.15e-06,
+          "matching_allocator_reallocs": []
+        },
+        {
+          "boxed": false,
+          "capacity": 4,
+          "container_bytes": 24,
+          "element_bytes": 8,
+          "event": "freeze",
+          "len": 3,
+          "name": "starts",
+          "new_pointer": 80721568,
+          "old_pointer": 80721568,
+          "pointer_changed": false,
+          "potential_spare_bytes": 8,
+          "seconds": 1.128e-06,
+          "matching_allocator_reallocs": []
+        },
+        {
+          "boxed": false,
+          "capacity": 4,
+          "container_bytes": 24,
+          "element_bytes": 16,
+          "event": "freeze",
+          "len": 3,
+          "name": "weight_regions",
+          "new_pointer": 80721664,
+          "old_pointer": 80721664,
+          "pointer_changed": false,
+          "potential_spare_bytes": 16,
+          "seconds": 1.162e-06,
+          "matching_allocator_reallocs": []
+        },
+        {
+          "boxed": false,
+          "capacity": 4,
+          "container_bytes": 24,
+          "element_bytes": 112,
+          "event": "freeze",
+          "len": 1,
+          "name": "shards",
+          "new_pointer": 80744240,
+          "old_pointer": 80744240,
+          "pointer_changed": false,
+          "potential_spare_bytes": 336,
+          "seconds": 1.49e-06,
+          "matching_allocator_reallocs": []
+        },
+        {
+          "boxed": false,
+          "capacity": 21,
+          "container_bytes": 24,
+          "element_bytes": 2,
+          "event": "freeze",
+          "len": 21,
+          "name": "slots_narrow",
+          "new_pointer": 80750256,
+          "old_pointer": 80750256,
+          "pointer_changed": false,
+          "potential_spare_bytes": 0,
+          "seconds": 1.259e-06,
+          "matching_allocator_reallocs": []
+        },
+        {
+          "boxed": false,
+          "capacity": 21,
+          "container_bytes": 24,
+          "element_bytes": 8,
+          "event": "freeze",
+          "len": 21,
+          "name": "occurrence_spans",
+          "new_pointer": 80759440,
+          "old_pointer": 80759440,
+          "pointer_changed": false,
+          "potential_spare_bytes": 0,
+          "seconds": 0.000101386,
+          "matching_allocator_reallocs": []
+        }
+      ],
+      "candidate_shrink_reallocs": 0,
+      "all_process_reallocs": 97,
+      "heap_summary": "total heap usage: 931 allocs, 905 frees, 9,650,102 bytes allocated",
+      "error_summary": "ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)",
+      "limitation": "Valgrind replaces malloc; its address moves and process allocation totals include diagnostic JSON/logging and cannot predict production allocator movement or performance."
+    },
+    "boxed": {
+      "candidate_events": [
+        {
+          "boxed": true,
+          "capacity": 1114112,
+          "container_bytes": 16,
+          "element_bytes": 4,
+          "event": "freeze",
+          "len": 1114112,
+          "name": "characters",
+          "new_pointer": 86347840,
+          "old_pointer": 86347840,
+          "pointer_changed": false,
+          "potential_spare_bytes": 0,
+          "seconds": 0.000170653,
+          "matching_allocator_reallocs": []
+        },
+        {
+          "boxed": true,
+          "capacity": 4,
+          "container_bytes": 16,
+          "element_bytes": 12,
+          "event": "freeze",
+          "len": 4,
+          "name": "decorated",
+          "new_pointer": 80371440,
+          "old_pointer": 80371440,
+          "pointer_changed": false,
+          "potential_spare_bytes": 0,
+          "seconds": 0.000181344,
+          "matching_allocator_reallocs": []
+        },
+        {
+          "boxed": true,
+          "capacity": 4,
+          "container_bytes": 16,
+          "element_bytes": 16,
+          "event": "freeze",
+          "len": 3,
+          "name": "words",
+          "new_pointer": 80380928,
+          "old_pointer": 80380800,
+          "pointer_changed": true,
+          "potential_spare_bytes": 16,
+          "seconds": 0.000339921,
+          "matching_allocator_reallocs": [
+            {
+              "old_pointer": 80380800,
+              "new_bytes": 48,
+              "new_pointer": 80380928
+            }
+          ]
+        },
+        {
+          "boxed": true,
+          "capacity": 4,
+          "container_bytes": 16,
+          "element_bytes": 8,
+          "event": "freeze",
+          "len": 3,
+          "name": "starts",
+          "new_pointer": 80385952,
+          "old_pointer": 80384384,
+          "pointer_changed": true,
+          "potential_spare_bytes": 8,
+          "seconds": 0.000316293,
+          "matching_allocator_reallocs": [
+            {
+              "old_pointer": 80384384,
+              "new_bytes": 24,
+              "new_pointer": 80385952
+            }
+          ]
+        },
+        {
+          "boxed": true,
+          "capacity": 4,
+          "container_bytes": 16,
+          "element_bytes": 16,
+          "event": "freeze",
+          "len": 3,
+          "name": "weight_regions",
+          "new_pointer": 80389392,
+          "old_pointer": 80384480,
+          "pointer_changed": true,
+          "potential_spare_bytes": 16,
+          "seconds": 0.000329317,
+          "matching_allocator_reallocs": [
+            {
+              "old_pointer": 80384480,
+              "new_bytes": 48,
+              "new_pointer": 80389392
+            }
+          ]
+        },
+        {
+          "boxed": true,
+          "capacity": 4,
+          "container_bytes": 16,
+          "element_bytes": 112,
+          "event": "freeze",
+          "len": 1,
+          "name": "shards",
+          "new_pointer": 80407936,
+          "old_pointer": 80407264,
+          "pointer_changed": true,
+          "potential_spare_bytes": 336,
+          "seconds": 0.000341325,
+          "matching_allocator_reallocs": [
+            {
+              "old_pointer": 80407264,
+              "new_bytes": 112,
+              "new_pointer": 80407936
+            }
+          ]
+        },
+        {
+          "boxed": true,
+          "capacity": 21,
+          "container_bytes": 16,
+          "element_bytes": 2,
+          "event": "freeze",
+          "len": 21,
+          "name": "slots_narrow",
+          "new_pointer": 80413456,
+          "old_pointer": 80413456,
+          "pointer_changed": false,
+          "potential_spare_bytes": 0,
+          "seconds": 0.000167451,
+          "matching_allocator_reallocs": []
+        },
+        {
+          "boxed": true,
+          "capacity": 1114112,
+          "container_bytes": 16,
+          "element_bytes": 4,
+          "event": "freeze",
+          "len": 1114112,
+          "name": "characters",
+          "new_pointer": 90808384,
+          "old_pointer": 90808384,
+          "pointer_changed": false,
+          "potential_spare_bytes": 0,
+          "seconds": 1.823e-06,
+          "matching_allocator_reallocs": []
+        },
+        {
+          "boxed": true,
+          "capacity": 4,
+          "container_bytes": 16,
+          "element_bytes": 12,
+          "event": "freeze",
+          "len": 4,
+          "name": "decorated",
+          "new_pointer": 80709424,
+          "old_pointer": 80709424,
+          "pointer_changed": false,
+          "potential_spare_bytes": 0,
+          "seconds": 1.461e-06,
+          "matching_allocator_reallocs": []
+        },
+        {
+          "boxed": true,
+          "capacity": 4,
+          "container_bytes": 16,
+          "element_bytes": 16,
+          "event": "freeze",
+          "len": 3,
+          "name": "words",
+          "new_pointer": 80718912,
+          "old_pointer": 80718784,
+          "pointer_changed": true,
+          "potential_spare_bytes": 16,
+          "seconds": 6.724e-06,
+          "matching_allocator_reallocs": [
+            {
+              "old_pointer": 80718784,
+              "new_bytes": 48,
+              "new_pointer": 80718912
+            }
+          ]
+        },
+        {
+          "boxed": true,
+          "capacity": 4,
+          "container_bytes": 16,
+          "element_bytes": 8,
+          "event": "freeze",
+          "len": 3,
+          "name": "starts",
+          "new_pointer": 80723936,
+          "old_pointer": 80722368,
+          "pointer_changed": true,
+          "potential_spare_bytes": 8,
+          "seconds": 1.3524e-05,
+          "matching_allocator_reallocs": [
+            {
+              "old_pointer": 80722368,
+              "new_bytes": 24,
+              "new_pointer": 80723936
+            }
+          ]
+        },
+        {
+          "boxed": true,
+          "capacity": 4,
+          "container_bytes": 16,
+          "element_bytes": 16,
+          "event": "freeze",
+          "len": 3,
+          "name": "weight_regions",
+          "new_pointer": 80727376,
+          "old_pointer": 80722464,
+          "pointer_changed": true,
+          "potential_spare_bytes": 16,
+          "seconds": 7.994e-06,
+          "matching_allocator_reallocs": [
+            {
+              "old_pointer": 80722464,
+              "new_bytes": 48,
+              "new_pointer": 80727376
+            }
+          ]
+        },
+        {
+          "boxed": true,
+          "capacity": 4,
+          "container_bytes": 16,
+          "element_bytes": 112,
+          "event": "freeze",
+          "len": 1,
+          "name": "shards",
+          "new_pointer": 80745920,
+          "old_pointer": 80745248,
+          "pointer_changed": true,
+          "potential_spare_bytes": 336,
+          "seconds": 6.929e-06,
+          "matching_allocator_reallocs": [
+            {
+              "old_pointer": 80745248,
+              "new_bytes": 112,
+              "new_pointer": 80745920
+            }
+          ]
+        },
+        {
+          "boxed": true,
+          "capacity": 21,
+          "container_bytes": 16,
+          "element_bytes": 2,
+          "event": "freeze",
+          "len": 21,
+          "name": "slots_narrow",
+          "new_pointer": 80751440,
+          "old_pointer": 80751440,
+          "pointer_changed": false,
+          "potential_spare_bytes": 0,
+          "seconds": 1.224e-06,
+          "matching_allocator_reallocs": []
+        },
+        {
+          "boxed": true,
+          "capacity": 21,
+          "container_bytes": 16,
+          "element_bytes": 8,
+          "event": "freeze",
+          "len": 21,
+          "name": "occurrence_spans",
+          "new_pointer": 80760624,
+          "old_pointer": 80760624,
+          "pointer_changed": false,
+          "potential_spare_bytes": 0,
+          "seconds": 0.000177611,
+          "matching_allocator_reallocs": []
+        }
+      ],
+      "candidate_shrink_reallocs": 8,
+      "all_process_reallocs": 105,
+      "heap_summary": "total heap usage: 939 allocs, 913 frees, 9,650,548 bytes allocated",
+      "error_summary": "ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)",
+      "limitation": "Valgrind replaces malloc; its address moves and process allocation totals include diagnostic JSON/logging and cannot predict production allocator movement or performance."
+    }
+  },
+  "sizes": {
+    "InitialTokenIds": {
+      "baseline": 80,
+      "boxed": 64
+    },
+    "PairIndex": {
+      "baseline": 64,
+      "boxed": 56
+    },
+    "Corpus": {
+      "baseline": 160,
+      "boxed": 128
+    },
+    "CorpusPlan": {
+      "baseline": 200,
+      "boxed": 160
+    },
+    "Slots": {
+      "baseline": 32,
+      "boxed": 24
+    },
+    "SelectedRules": {
+      "baseline": 112,
+      "boxed": 96
+    }
+  }
+}

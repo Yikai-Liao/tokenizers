@@ -1,0 +1,170 @@
+[
+  {
+    "arm": "baseline",
+    "check": "default",
+    "command": [
+      "cargo",
+      "test",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--lib",
+      "--offline",
+      "--locked"
+    ],
+    "cwd": "/home/lyk/.cache/bpe-box-20261011/worktree-baseline",
+    "environment": {
+      "CARGO_TARGET_DIR": "/tmp/bpe-feed-native"
+    },
+    "exit_code": 101,
+    "seconds": 11.737687110900879
+  },
+  {
+    "arm": "baseline",
+    "check": "no-default",
+    "command": [
+      "cargo",
+      "test",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--lib",
+      "--no-default-features",
+      "--offline",
+      "--locked"
+    ],
+    "cwd": "/home/lyk/.cache/bpe-box-20261011/worktree-baseline",
+    "environment": {
+      "CARGO_TARGET_DIR": "/tmp/bpe-feed-native"
+    },
+    "exit_code": 101,
+    "seconds": 11.228963375091553
+  },
+  {
+    "arm": "baseline",
+    "check": "clippy-default",
+    "command": [
+      "cargo",
+      "clippy",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--all-targets",
+      "--offline",
+      "--locked",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/lyk/.cache/bpe-box-20261011/worktree-baseline",
+    "environment": {
+      "CARGO_TARGET_DIR": "/tmp/bpe-feed-native"
+    },
+    "exit_code": 0,
+    "seconds": 3.1255905628204346
+  },
+  {
+    "arm": "baseline",
+    "check": "clippy-no-default",
+    "command": [
+      "cargo",
+      "clippy",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--all-targets",
+      "--no-default-features",
+      "--offline",
+      "--locked",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/lyk/.cache/bpe-box-20261011/worktree-baseline",
+    "environment": {
+      "CARGO_TARGET_DIR": "/tmp/bpe-feed-native"
+    },
+    "exit_code": 0,
+    "seconds": 2.776885747909546
+  },
+  {
+    "arm": "boxed",
+    "check": "default",
+    "command": [
+      "cargo",
+      "test",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--lib",
+      "--offline",
+      "--locked"
+    ],
+    "cwd": "/home/lyk/.cache/bpe-box-20261011/worktree-boxed",
+    "environment": {
+      "CARGO_TARGET_DIR": "/tmp/bpe-feed-native"
+    },
+    "exit_code": 101,
+    "seconds": 11.709190845489502
+  },
+  {
+    "arm": "boxed",
+    "check": "no-default",
+    "command": [
+      "cargo",
+      "test",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--lib",
+      "--no-default-features",
+      "--offline",
+      "--locked"
+    ],
+    "cwd": "/home/lyk/.cache/bpe-box-20261011/worktree-boxed",
+    "environment": {
+      "CARGO_TARGET_DIR": "/tmp/bpe-feed-native"
+    },
+    "exit_code": 101,
+    "seconds": 11.242678165435791
+  },
+  {
+    "arm": "boxed",
+    "check": "clippy-default",
+    "command": [
+      "cargo",
+      "clippy",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--all-targets",
+      "--offline",
+      "--locked",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/lyk/.cache/bpe-box-20261011/worktree-boxed",
+    "environment": {
+      "CARGO_TARGET_DIR": "/tmp/bpe-feed-native"
+    },
+    "exit_code": 0,
+    "seconds": 3.105257272720337
+  },
+  {
+    "arm": "boxed",
+    "check": "clippy-no-default",
+    "command": [
+      "cargo",
+      "clippy",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--all-targets",
+      "--no-default-features",
+      "--offline",
+      "--locked",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/lyk/.cache/bpe-box-20261011/worktree-boxed",
+    "environment": {
+      "CARGO_TARGET_DIR": "/tmp/bpe-feed-native"
+    },
+    "exit_code": 0,
+    "seconds": 2.7907986640930176
+  }
+]
