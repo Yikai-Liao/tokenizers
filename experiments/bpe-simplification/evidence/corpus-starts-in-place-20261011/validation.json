@@ -1,0 +1,75 @@
+{
+  "initial_baseline": "2f4803a936619aa575ba4f6cb49fc660057ef5e4",
+  "integrated_baseline": "b4d2baba09ae2bffe3d2849989f43f9dc2f44f2b",
+  "isolated": {
+    "default_passed": 39,
+    "no_default_passed": 39,
+    "known_filtered_failure": 1,
+    "baseline_unfiltered_passed": 39,
+    "baseline_unfiltered_failed": 1
+  },
+  "integrated": {
+    "default_passed": 42,
+    "no_default_passed": 42,
+    "known_filtered_failure": 1,
+    "baseline_unfiltered_passed": 42,
+    "baseline_unfiltered_failed": 1
+  },
+  "commands": {
+    "default": "CARGO_TARGET_DIR=/tmp/bpe-index-tests-20261011 CARGO_INCREMENTAL=0 cargo test --offline --locked --manifest-path tokenizers/tk-train/Cargo.toml --lib -- --skip feed_training_tokenizer_json_and_encoding_roundtrip",
+    "no_default": "CARGO_TARGET_DIR=/tmp/bpe-index-tests-20261011 CARGO_INCREMENTAL=0 cargo test --offline --locked --manifest-path tokenizers/tk-train/Cargo.toml --no-default-features --lib -- --skip feed_training_tokenizer_json_and_encoding_roundtrip",
+    "clippy": "CARGO_TARGET_DIR=/tmp/bpe-index-tests-20261011 CARGO_INCREMENTAL=0 cargo clippy --offline --locked --manifest-path tokenizers/tk-train/Cargo.toml --no-default-features --all-targets -- -D warnings",
+    "format": "uv run experiments/bpe-simplification/format-changed.py --check tokenizers/tk-train/src/trainers/bpe/corpus.rs",
+    "diff": "git diff --check"
+  },
+  "clippy_exit_code": 0,
+  "format_exit_code": 0,
+  "whitespace_exit_code": 0,
+  "known_failure": "feed_training_tokenizer_json_and_encoding_roundtrip encoder assertion; reproduced on both exact baselines",
+  "diagnostic_contamination": "Initial attempted baseline test read instrumented source during probe construction; strict JSON progress parsing failed. Excluded; restored-source rerun has only the known encoder failure.",
+  "production_models": {
+    "isolated": 24,
+    "integrated": 24,
+    "all_full_vocab_and_ordered_merges_equal": true,
+    "zero_sampled_child_swap": true,
+    "models_also_equal_between_old_and_latest_baselines": true
+  },
+  "layout_models": {
+    "count": 24,
+    "all_equal": true,
+    "zero_sampled_child_swap": true
+  },
+  "frozen_sources_and_binaries_match": true,
+  "feed_integration": "Existing callback/error/flush/count/model public tests pass; B1 does not change Feed. Large comparisons use fixed prepared inputs, not a separate public-Feed performance matrix.",
+  "prior_feed_resident_coordinate_panic": "Remains unattributed, not relabeled as the known encoder failure and not claimed fixed.",
+  "decision": "Retain B1 for 8W fewer temporary bytes; user accepts small timing regressions. No stable overall speedup is claimed. No extra experiments after the user accepted this tradeoff.",
+  "push_validation": {
+    "parent_commit": "303597a24e013c644209df71b6d82fd9a649c8a2",
+    "source_hashes": {
+      "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs": "76463eeb9fd72d1d46962e7d003d06d787ca955e01f3dcf3b8495ae87a5299db",
+      "tokenizers/tk-train/src/trainers/bpe/word.rs": "f9c3bd0a7a8fade42a5643ee6341b4ebf203f7a45aa0a65797e773d1ce21396a",
+      "tokenizers/tk-train/src/trainers/bpe/positions.rs": "53589c5588b78d1401e5e55b7b3572fe90f6dad1938658081f7310ac44428792",
+      "tokenizers/tk-train/src/trainers/bpe/corpus.rs": "08bdb820f3f1bf656c670eaa7b4b8c83c43d5383774b51e9585cacd23643115e",
+      "tokenizers/tk-train/src/trainers/bpe/index.rs": "55290b167ecb19eb1d742497ccf424967b7a4f1a6f4278fa000b526881839d4c",
+      "tokenizers/tk-train/src/trainers/bpe/tests.rs": "497b69d39d0fba81e6a53a014e0b5cd3a78f5001fba8b2c7bbe2eb3618084965",
+      "tokenizers/tk-train/src/trainers/bpe/mod.rs": "ac98f65811986e68def14ccb14560e8bf133db4c5822638fa0c2d193018f3c8e",
+      "tokenizers/tk-train/src/trainers/bpe/feed.rs": "7c6be5e032a25faf0e0bcad4ee502a38792312233aadbd4a324ac7dca4b62ea7",
+      "tokenizers/tk-train/src/trainers/bpe/merge.rs": "a3d8c7d4c91f6bb2b87c10cb2df5df05b6c780da754564efce235bcead45e148",
+      "tokenizers/tk-train/src/trainers/bpe/word_counts.rs": "eb78ccea99544dc915f3c406ad77349ddc080ecfb7a5d36253bd8d80275ebf4d",
+      "tokenizers/tk-train/src/trainers/bpe/parity_trainer.rs": "a584152379dc59de167a14f751f37bab8da9c723eddc1c238df21965dd08f37c"
+    },
+    "default_passed": 42,
+    "no_default_passed": 42,
+    "known_filtered_encoder_failure": 1,
+    "clippy_exit_code": 0,
+    "format_exit_code": 0,
+    "whitespace_exit_code": 0,
+    "b1_corpus_matches_measured_source": true,
+    "other_bpe_rust_sources_equal_upstream": true,
+    "performance_baselines": [
+      "2f4803a936619aa575ba4f6cb49fc660057ef5e4",
+      "b4d2baba09ae2bffe3d2849989f43f9dc2f44f2b"
+    ],
+    "latest_followup_scope": "Upstream resolved merge identities directly and moved successful output construction into the attempt. Corpus and B1 unchanged. Reran correctness/Clippy/format; did not rerun performance after this last upstream sync, following user approval to push."
+  }
+}

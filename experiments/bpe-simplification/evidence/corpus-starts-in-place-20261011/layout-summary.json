@@ -1,0 +1,78 @@
+[
+  {
+    "case": "zh-whitespace-256MiB",
+    "formal_pairs": 2,
+    "words": 6827958,
+    "baseline": {
+      "directory_bytes": 109247328.0,
+      "rss_kib": 694202.0,
+      "hwm_kib": 822940.0,
+      "rss_growth_during_prefix_kib": 53344.0
+    },
+    "candidate": {
+      "directory_bytes": 54623664.0,
+      "rss_kib": 640784.0,
+      "hwm_kib": 823728.0,
+      "rss_growth_during_prefix_kib": 0.0
+    },
+    "directory_bytes_saved": 54623664.0,
+    "paired_median_prefixed_rss_delta_kib": -53418.0
+  },
+  {
+    "case": "zh-bytelevel_regex-256MiB",
+    "formal_pairs": 2,
+    "words": 6859987,
+    "baseline": {
+      "directory_bytes": 109759792.0,
+      "rss_kib": 928744.0,
+      "hwm_kib": 1058804.0,
+      "rss_growth_during_prefix_kib": 53596.0
+    },
+    "candidate": {
+      "directory_bytes": 54879896.0,
+      "rss_kib": 875044.0,
+      "hwm_kib": 1058606.0,
+      "rss_growth_during_prefix_kib": 0.0
+    },
+    "directory_bytes_saved": 54879896.0,
+    "paired_median_prefixed_rss_delta_kib": -53700.0
+  },
+  {
+    "case": "en-whitespace-256MiB",
+    "formal_pairs": 2,
+    "words": 724596,
+    "baseline": {
+      "directory_bytes": 11593536.0,
+      "rss_kib": 64904.0,
+      "hwm_kib": 77224.0,
+      "rss_growth_during_prefix_kib": 5660.0
+    },
+    "candidate": {
+      "directory_bytes": 5796768.0,
+      "rss_kib": 59182.0,
+      "hwm_kib": 76846.0,
+      "rss_growth_during_prefix_kib": 0.0
+    },
+    "directory_bytes_saved": 5796768.0,
+    "paired_median_prefixed_rss_delta_kib": -5722.0
+  },
+  {
+    "case": "en-bytelevel_regex-256MiB",
+    "formal_pairs": 2,
+    "words": 836105,
+    "baseline": {
+      "directory_bytes": 13377680.0,
+      "rss_kib": 68166.0,
+      "hwm_kib": 80110.0,
+      "rss_growth_during_prefix_kib": 6532.0
+    },
+    "candidate": {
+      "directory_bytes": 6688840.0,
+      "rss_kib": 61568.0,
+      "hwm_kib": 80918.0,
+      "rss_growth_during_prefix_kib": 0.0
+    },
+    "directory_bytes_saved": 6688840.0,
+    "paired_median_prefixed_rss_delta_kib": -6598.0
+  }
+]

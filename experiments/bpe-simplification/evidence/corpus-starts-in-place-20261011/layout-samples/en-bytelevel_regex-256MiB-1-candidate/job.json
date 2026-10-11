@@ -1,0 +1,18 @@
+{
+  "protocol_version": 1,
+  "attempt_id": "en-bytelevel_regex-256MiB-1-candidate",
+  "build_id": "probe-candidate",
+  "input_id": "en-bytelevel_regex-256MiB",
+  "mode": "core",
+  "input": "/tmp/bpe-corpus-b1-inputs-20261011/en-bytelevel_regex/words.json",
+  "output": "/tmp/bpe-corpus-b1-probes-20261011/en-bytelevel_regex-256MiB-1-candidate/model.json",
+  "workers": 4,
+  "pretokenizer": "bytelevel_regex",
+  "trainer": {
+    "vocab_size": 0,
+    "min_frequency": 2,
+    "prefix": null,
+    "suffix": null,
+    "max_token_length": null
+  }
+}

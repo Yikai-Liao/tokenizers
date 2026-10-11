@@ -1,0 +1,1010 @@
+[
+  {
+    "case": "zh-whitespace-256MiB",
+    "workers": 4,
+    "arm": "baseline",
+    "block": 0,
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-corpus-b1-baseline-bin-20261011",
+      "/tmp/bpe-corpus-b1-training-results-20261011/zh-whitespace-256MiB-4-0-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "zh-whitespace-256MiB-4-0-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.65548876,
+      "process_hwm_kib_before_validation": 1866288,
+      "train_cpu_seconds": 57.700281,
+      "train_seconds": 21.338668976
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-corpus-b1-training-results-20261011/zh-whitespace-256MiB-4-0-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "workers": 4,
+    "arm": "candidate",
+    "block": 0,
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-corpus-b1-candidate-bin-20261011",
+      "/tmp/bpe-corpus-b1-training-results-20261011/zh-whitespace-256MiB-4-0-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "zh-whitespace-256MiB-4-0-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.522226129,
+      "process_hwm_kib_before_validation": 1832596,
+      "train_cpu_seconds": 57.359413,
+      "train_seconds": 21.494727822
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-corpus-b1-training-results-20261011/zh-whitespace-256MiB-4-0-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "workers": 4,
+    "arm": "candidate",
+    "block": 1,
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-corpus-b1-candidate-bin-20261011",
+      "/tmp/bpe-corpus-b1-training-results-20261011/zh-whitespace-256MiB-4-1-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "zh-whitespace-256MiB-4-1-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 7.105986072,
+      "process_hwm_kib_before_validation": 1847028,
+      "train_cpu_seconds": 59.945161,
+      "train_seconds": 21.997023723
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-corpus-b1-training-results-20261011/zh-whitespace-256MiB-4-1-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "workers": 4,
+    "arm": "baseline",
+    "block": 1,
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-corpus-b1-baseline-bin-20261011",
+      "/tmp/bpe-corpus-b1-training-results-20261011/zh-whitespace-256MiB-4-1-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "zh-whitespace-256MiB-4-1-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.847798064,
+      "process_hwm_kib_before_validation": 1847252,
+      "train_cpu_seconds": 58.413117,
+      "train_seconds": 21.597765555
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-corpus-b1-training-results-20261011/zh-whitespace-256MiB-4-1-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "workers": 4,
+    "arm": "baseline",
+    "block": 2,
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-corpus-b1-baseline-bin-20261011",
+      "/tmp/bpe-corpus-b1-training-results-20261011/zh-whitespace-256MiB-4-2-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "zh-whitespace-256MiB-4-2-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.5163476320000004,
+      "process_hwm_kib_before_validation": 1833372,
+      "train_cpu_seconds": 59.236774,
+      "train_seconds": 21.987449403
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-corpus-b1-training-results-20261011/zh-whitespace-256MiB-4-2-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "workers": 4,
+    "arm": "candidate",
+    "block": 2,
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-corpus-b1-candidate-bin-20261011",
+      "/tmp/bpe-corpus-b1-training-results-20261011/zh-whitespace-256MiB-4-2-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "zh-whitespace-256MiB-4-2-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.512136766,
+      "process_hwm_kib_before_validation": 1833704,
+      "train_cpu_seconds": 60.40103799999999,
+      "train_seconds": 22.688986198
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-corpus-b1-training-results-20261011/zh-whitespace-256MiB-4-2-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "zh-bytelevel_regex-256MiB",
+    "workers": 4,
+    "arm": "baseline",
+    "block": 0,
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-corpus-b1-baseline-bin-20261011",
+      "/tmp/bpe-corpus-b1-training-results-20261011/zh-bytelevel_regex-256MiB-4-0-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "max_swap_kib": 0,
+    "attempt_id": "zh-bytelevel_regex-256MiB-4-0-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-bytelevel_regex-256MiB",
+    "metrics": {
+      "load_seconds": 9.851926673,
+      "process_hwm_kib_before_validation": 2442948,
+      "train_cpu_seconds": 69.84638700000001,
+      "train_seconds": 22.138819329
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-corpus-b1-training-results-20261011/zh-bytelevel_regex-256MiB-4-0-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "zh-bytelevel_regex-256MiB",
+    "workers": 4,
+    "arm": "candidate",
+    "block": 0,
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-corpus-b1-candidate-bin-20261011",
+      "/tmp/bpe-corpus-b1-training-results-20261011/zh-bytelevel_regex-256MiB-4-0-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "max_swap_kib": 0,
+    "attempt_id": "zh-bytelevel_regex-256MiB-4-0-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-bytelevel_regex-256MiB",
+    "metrics": {
+      "load_seconds": 9.749713597,
+      "process_hwm_kib_before_validation": 2415616,
+      "train_cpu_seconds": 67.297186,
+      "train_seconds": 21.355271536
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-corpus-b1-training-results-20261011/zh-bytelevel_regex-256MiB-4-0-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "zh-bytelevel_regex-256MiB",
+    "workers": 4,
+    "arm": "candidate",
+    "block": 1,
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-corpus-b1-candidate-bin-20261011",
+      "/tmp/bpe-corpus-b1-training-results-20261011/zh-bytelevel_regex-256MiB-4-1-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "max_swap_kib": 0,
+    "attempt_id": "zh-bytelevel_regex-256MiB-4-1-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-bytelevel_regex-256MiB",
+    "metrics": {
+      "load_seconds": 9.349387461,
+      "process_hwm_kib_before_validation": 2514216,
+      "train_cpu_seconds": 70.898588,
+      "train_seconds": 22.81433082
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-corpus-b1-training-results-20261011/zh-bytelevel_regex-256MiB-4-1-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "zh-bytelevel_regex-256MiB",
+    "workers": 4,
+    "arm": "baseline",
+    "block": 1,
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-corpus-b1-baseline-bin-20261011",
+      "/tmp/bpe-corpus-b1-training-results-20261011/zh-bytelevel_regex-256MiB-4-1-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "max_swap_kib": 0,
+    "attempt_id": "zh-bytelevel_regex-256MiB-4-1-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-bytelevel_regex-256MiB",
+    "metrics": {
+      "load_seconds": 9.956511674,
+      "process_hwm_kib_before_validation": 2477964,
+      "train_cpu_seconds": 69.862331,
+      "train_seconds": 22.200655238
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-corpus-b1-training-results-20261011/zh-bytelevel_regex-256MiB-4-1-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "zh-bytelevel_regex-256MiB",
+    "workers": 4,
+    "arm": "baseline",
+    "block": 2,
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-corpus-b1-baseline-bin-20261011",
+      "/tmp/bpe-corpus-b1-training-results-20261011/zh-bytelevel_regex-256MiB-4-2-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "max_swap_kib": 0,
+    "attempt_id": "zh-bytelevel_regex-256MiB-4-2-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-bytelevel_regex-256MiB",
+    "metrics": {
+      "load_seconds": 10.142680634,
+      "process_hwm_kib_before_validation": 2443700,
+      "train_cpu_seconds": 67.73018900000001,
+      "train_seconds": 21.613059808
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-corpus-b1-training-results-20261011/zh-bytelevel_regex-256MiB-4-2-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "zh-bytelevel_regex-256MiB",
+    "workers": 4,
+    "arm": "candidate",
+    "block": 2,
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-corpus-b1-candidate-bin-20261011",
+      "/tmp/bpe-corpus-b1-training-results-20261011/zh-bytelevel_regex-256MiB-4-2-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "max_swap_kib": 0,
+    "attempt_id": "zh-bytelevel_regex-256MiB-4-2-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-bytelevel_regex-256MiB",
+    "metrics": {
+      "load_seconds": 9.688846984,
+      "process_hwm_kib_before_validation": 2486096,
+      "train_cpu_seconds": 67.60885499999999,
+      "train_seconds": 21.474908859
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-corpus-b1-training-results-20261011/zh-bytelevel_regex-256MiB-4-2-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "en-whitespace-256MiB",
+    "workers": 4,
+    "arm": "baseline",
+    "block": 0,
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-corpus-b1-baseline-bin-20261011",
+      "/tmp/bpe-corpus-b1-training-results-20261011/en-whitespace-256MiB-4-0-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6",
+    "max_swap_kib": 0,
+    "attempt_id": "en-whitespace-256MiB-4-0-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 0.416855566,
+      "process_hwm_kib_before_validation": 161128,
+      "train_cpu_seconds": 3.904912,
+      "train_seconds": 1.694725563
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 44917,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-corpus-b1-training-results-20261011/en-whitespace-256MiB-4-0-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "en-whitespace-256MiB",
+    "workers": 4,
+    "arm": "candidate",
+    "block": 0,
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-corpus-b1-candidate-bin-20261011",
+      "/tmp/bpe-corpus-b1-training-results-20261011/en-whitespace-256MiB-4-0-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6",
+    "max_swap_kib": 0,
+    "attempt_id": "en-whitespace-256MiB-4-0-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 0.323606672,
+      "process_hwm_kib_before_validation": 166956,
+      "train_cpu_seconds": 3.660849,
+      "train_seconds": 1.578949713
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 44917,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-corpus-b1-training-results-20261011/en-whitespace-256MiB-4-0-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "en-whitespace-256MiB",
+    "workers": 4,
+    "arm": "candidate",
+    "block": 1,
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-corpus-b1-candidate-bin-20261011",
+      "/tmp/bpe-corpus-b1-training-results-20261011/en-whitespace-256MiB-4-1-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6",
+    "max_swap_kib": 0,
+    "attempt_id": "en-whitespace-256MiB-4-1-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 0.321739897,
+      "process_hwm_kib_before_validation": 165856,
+      "train_cpu_seconds": 3.488499,
+      "train_seconds": 1.488081998
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 44917,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-corpus-b1-training-results-20261011/en-whitespace-256MiB-4-1-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "en-whitespace-256MiB",
+    "workers": 4,
+    "arm": "baseline",
+    "block": 1,
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-corpus-b1-baseline-bin-20261011",
+      "/tmp/bpe-corpus-b1-training-results-20261011/en-whitespace-256MiB-4-1-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6",
+    "max_swap_kib": 0,
+    "attempt_id": "en-whitespace-256MiB-4-1-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 0.324529445,
+      "process_hwm_kib_before_validation": 159532,
+      "train_cpu_seconds": 3.641454,
+      "train_seconds": 1.548761561
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 44917,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-corpus-b1-training-results-20261011/en-whitespace-256MiB-4-1-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "en-whitespace-256MiB",
+    "workers": 4,
+    "arm": "baseline",
+    "block": 2,
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-corpus-b1-baseline-bin-20261011",
+      "/tmp/bpe-corpus-b1-training-results-20261011/en-whitespace-256MiB-4-2-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6",
+    "max_swap_kib": 0,
+    "attempt_id": "en-whitespace-256MiB-4-2-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 0.343923914,
+      "process_hwm_kib_before_validation": 164388,
+      "train_cpu_seconds": 3.6034930000000003,
+      "train_seconds": 1.547379764
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 44917,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-corpus-b1-training-results-20261011/en-whitespace-256MiB-4-2-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "en-whitespace-256MiB",
+    "workers": 4,
+    "arm": "candidate",
+    "block": 2,
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-corpus-b1-candidate-bin-20261011",
+      "/tmp/bpe-corpus-b1-training-results-20261011/en-whitespace-256MiB-4-2-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6",
+    "max_swap_kib": 0,
+    "attempt_id": "en-whitespace-256MiB-4-2-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 0.328811643,
+      "process_hwm_kib_before_validation": 165880,
+      "train_cpu_seconds": 3.5993809999999997,
+      "train_seconds": 1.59266709
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 44917,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-corpus-b1-training-results-20261011/en-whitespace-256MiB-4-2-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "en-bytelevel_regex-256MiB",
+    "workers": 4,
+    "arm": "baseline",
+    "block": 0,
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-corpus-b1-baseline-bin-20261011",
+      "/tmp/bpe-corpus-b1-training-results-20261011/en-bytelevel_regex-256MiB-4-0-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+    "max_swap_kib": 0,
+    "attempt_id": "en-bytelevel_regex-256MiB-4-0-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-bytelevel_regex-256MiB",
+    "metrics": {
+      "load_seconds": 0.410176431,
+      "process_hwm_kib_before_validation": 181520,
+      "train_cpu_seconds": 3.9593049999999996,
+      "train_seconds": 1.727737064
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-corpus-b1-training-results-20261011/en-bytelevel_regex-256MiB-4-0-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "en-bytelevel_regex-256MiB",
+    "workers": 4,
+    "arm": "candidate",
+    "block": 0,
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-corpus-b1-candidate-bin-20261011",
+      "/tmp/bpe-corpus-b1-training-results-20261011/en-bytelevel_regex-256MiB-4-0-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+    "max_swap_kib": 0,
+    "attempt_id": "en-bytelevel_regex-256MiB-4-0-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-bytelevel_regex-256MiB",
+    "metrics": {
+      "load_seconds": 0.396352453,
+      "process_hwm_kib_before_validation": 167164,
+      "train_cpu_seconds": 4.020682,
+      "train_seconds": 1.757805896
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-corpus-b1-training-results-20261011/en-bytelevel_regex-256MiB-4-0-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "en-bytelevel_regex-256MiB",
+    "workers": 4,
+    "arm": "candidate",
+    "block": 1,
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-corpus-b1-candidate-bin-20261011",
+      "/tmp/bpe-corpus-b1-training-results-20261011/en-bytelevel_regex-256MiB-4-1-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+    "max_swap_kib": 0,
+    "attempt_id": "en-bytelevel_regex-256MiB-4-1-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-bytelevel_regex-256MiB",
+    "metrics": {
+      "load_seconds": 0.40035072,
+      "process_hwm_kib_before_validation": 168912,
+      "train_cpu_seconds": 4.374225,
+      "train_seconds": 1.853407966
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-corpus-b1-training-results-20261011/en-bytelevel_regex-256MiB-4-1-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "en-bytelevel_regex-256MiB",
+    "workers": 4,
+    "arm": "baseline",
+    "block": 1,
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-corpus-b1-baseline-bin-20261011",
+      "/tmp/bpe-corpus-b1-training-results-20261011/en-bytelevel_regex-256MiB-4-1-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+    "max_swap_kib": 0,
+    "attempt_id": "en-bytelevel_regex-256MiB-4-1-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-bytelevel_regex-256MiB",
+    "metrics": {
+      "load_seconds": 0.399854919,
+      "process_hwm_kib_before_validation": 182588,
+      "train_cpu_seconds": 3.9778099999999994,
+      "train_seconds": 1.7244014509999999
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-corpus-b1-training-results-20261011/en-bytelevel_regex-256MiB-4-1-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "en-bytelevel_regex-256MiB",
+    "workers": 4,
+    "arm": "baseline",
+    "block": 2,
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-corpus-b1-baseline-bin-20261011",
+      "/tmp/bpe-corpus-b1-training-results-20261011/en-bytelevel_regex-256MiB-4-2-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+    "max_swap_kib": 0,
+    "attempt_id": "en-bytelevel_regex-256MiB-4-2-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-bytelevel_regex-256MiB",
+    "metrics": {
+      "load_seconds": 0.413083044,
+      "process_hwm_kib_before_validation": 190288,
+      "train_cpu_seconds": 4.191832,
+      "train_seconds": 1.777060116
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-corpus-b1-training-results-20261011/en-bytelevel_regex-256MiB-4-2-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "en-bytelevel_regex-256MiB",
+    "workers": 4,
+    "arm": "candidate",
+    "block": 2,
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-corpus-b1-candidate-bin-20261011",
+      "/tmp/bpe-corpus-b1-training-results-20261011/en-bytelevel_regex-256MiB-4-2-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5",
+    "max_swap_kib": 0,
+    "attempt_id": "en-bytelevel_regex-256MiB-4-2-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "en-bytelevel_regex-256MiB",
+    "metrics": {
+      "load_seconds": 0.393100199,
+      "process_hwm_kib_before_validation": 167456,
+      "train_cpu_seconds": 4.055815,
+      "train_seconds": 1.699683442
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-corpus-b1-training-results-20261011/en-bytelevel_regex-256MiB-4-2-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  }
+]
