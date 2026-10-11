@@ -1,0 +1,110 @@
+[
+  {
+    "case": "en-affix",
+    "repeat": 0,
+    "arm": "cache",
+    "vocabulary_initialization_seconds_delta_percent": 5.006537884617868,
+    "train_seconds_delta_percent": 3.054373923712128,
+    "train_cpu_seconds_delta_percent": 2.619626649646878,
+    "process_hwm_kib_before_validation_delta_percent": 2.447786338973823
+  },
+  {
+    "case": "en-affix",
+    "repeat": 0,
+    "arm": "split",
+    "vocabulary_initialization_seconds_delta_percent": 44.17869089466993,
+    "train_seconds_delta_percent": -3.6142173783788256,
+    "train_cpu_seconds_delta_percent": -7.5996790052181185,
+    "process_hwm_kib_before_validation_delta_percent": 2.591482298144343
+  },
+  {
+    "case": "en-affix",
+    "repeat": 1,
+    "arm": "cache",
+    "vocabulary_initialization_seconds_delta_percent": 1.7137182436490983,
+    "train_seconds_delta_percent": 0.8498920119589748,
+    "train_cpu_seconds_delta_percent": -0.8669900597696123,
+    "process_hwm_kib_before_validation_delta_percent": -1.2337790011797134
+  },
+  {
+    "case": "en-affix",
+    "repeat": 1,
+    "arm": "split",
+    "vocabulary_initialization_seconds_delta_percent": 69.50646350925646,
+    "train_seconds_delta_percent": 2.1491744008653724,
+    "train_cpu_seconds_delta_percent": 2.285505903541374,
+    "process_hwm_kib_before_validation_delta_percent": -0.7004522217852971
+  },
+  {
+    "case": "en-plain",
+    "repeat": 0,
+    "arm": "cache",
+    "vocabulary_initialization_seconds_delta_percent": 22.64840659517344,
+    "train_seconds_delta_percent": 17.258026591088726,
+    "train_cpu_seconds_delta_percent": 3.94097519922747,
+    "process_hwm_kib_before_validation_delta_percent": -1.1576160432627325
+  },
+  {
+    "case": "en-plain",
+    "repeat": 0,
+    "arm": "split",
+    "vocabulary_initialization_seconds_delta_percent": -13.912684076513159,
+    "train_seconds_delta_percent": 4.262763474295261,
+    "train_cpu_seconds_delta_percent": 3.5263880490600474,
+    "process_hwm_kib_before_validation_delta_percent": 0.0
+  },
+  {
+    "case": "zh-affix",
+    "repeat": 0,
+    "arm": "cache",
+    "vocabulary_initialization_seconds_delta_percent": -3.866250412188521,
+    "train_seconds_delta_percent": -0.6206158809484608,
+    "train_cpu_seconds_delta_percent": 0.26127235140434024,
+    "process_hwm_kib_before_validation_delta_percent": -0.09893284438523553
+  },
+  {
+    "case": "zh-affix",
+    "repeat": 0,
+    "arm": "split",
+    "vocabulary_initialization_seconds_delta_percent": 13.369746945482186,
+    "train_seconds_delta_percent": 1.3222286211792555,
+    "train_cpu_seconds_delta_percent": -0.4147035102015195,
+    "process_hwm_kib_before_validation_delta_percent": 1.8436685178101042
+  },
+  {
+    "case": "zh-affix",
+    "repeat": 1,
+    "arm": "cache",
+    "vocabulary_initialization_seconds_delta_percent": -0.26519994444664796,
+    "train_seconds_delta_percent": 4.13684245701107,
+    "train_cpu_seconds_delta_percent": 4.558196865864739,
+    "process_hwm_kib_before_validation_delta_percent": 0.09017967583824227
+  },
+  {
+    "case": "zh-affix",
+    "repeat": 1,
+    "arm": "split",
+    "vocabulary_initialization_seconds_delta_percent": 12.487718658438606,
+    "train_seconds_delta_percent": 1.5288239628948652,
+    "train_cpu_seconds_delta_percent": 0.6546557983453161,
+    "process_hwm_kib_before_validation_delta_percent": 0.09392797532294939
+  },
+  {
+    "case": "zh-plain",
+    "repeat": 0,
+    "arm": "cache",
+    "vocabulary_initialization_seconds_delta_percent": -27.383118267309804,
+    "train_seconds_delta_percent": -5.4554719095182165,
+    "train_cpu_seconds_delta_percent": -3.6337362364114556,
+    "process_hwm_kib_before_validation_delta_percent": -2.0798301333056823
+  },
+  {
+    "case": "zh-plain",
+    "repeat": 0,
+    "arm": "split",
+    "vocabulary_initialization_seconds_delta_percent": -27.304668329028715,
+    "train_seconds_delta_percent": -4.323871357511832,
+    "train_cpu_seconds_delta_percent": -2.058938320463455,
+    "process_hwm_kib_before_validation_delta_percent": 1.1004368387123042
+  }
+]

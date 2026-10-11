@@ -1,0 +1,9 @@
+{
+  "reason": "User requested stopping affix experiments and assigned them elsewhere.",
+  "completed_screen_samples": 18,
+  "completed_controls": 6,
+  "completed_oldflag_samples": 5,
+  "cancelled_run": "flags/zh-affix-r1-oldflag",
+  "unstarted_oldflag_samples": 6,
+  "candidate_debug_validation": "Not run before cancellation; production candidates were not integrated."
+}

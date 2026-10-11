@@ -1,0 +1,19 @@
+{
+  "protocol_version": 1,
+  "attempt_id": "reuse-r0-baseline",
+  "build_id": "baseline",
+  "input_id": "reuse",
+  "mode": "core",
+  "input": "/root/code/tokenizers-workspaces/bpe-selected-rules-results-20261011/reuse-control-words.json",
+  "output": "/root/code/tokenizers-workspaces/bpe-affix-core-results-20261011/controls/reuse-r0-baseline/model.json",
+  "workers": 4,
+  "pretokenizer": "none",
+  "trainer": {
+    "vocab_size": 32,
+    "min_frequency": 1,
+    "prefix": null,
+    "suffix": "a",
+    "max_token_length": null,
+    "limit_alphabet": 65536
+  }
+}
