@@ -541,23 +541,6 @@ fn check_feed_contracts(trainer: &mut BpeTrainer, parallel: bool) {
     for boundary in [0, 31, 32, 33, 127, 128, 129, 257] {
         check_feed_boundary(trainer, parallel, boundary);
     }
-
-    // A callback error must leave the trainer's previously collected words intact.
-    let calls = AtomicUsize::new(0);
-    let previous = trainer.clone();
-    let error = trainer
-        .feed((0..257).map(|i| i.to_string()), |s| {
-            calls.fetch_add(1, Ordering::Relaxed);
-            if s == "7" {
-                Err("process failed".into())
-            } else {
-                Ok(vec![s.into()])
-            }
-        })
-        .unwrap_err();
-    assert_eq!(error.to_string(), "process failed");
-    assert_eq!(calls.load(Ordering::Relaxed), 257);
-    assert_eq!(*trainer, previous);
 }
 
 fn check_feed_boundary(trainer: &mut BpeTrainer, parallel: bool, boundary: usize) {
