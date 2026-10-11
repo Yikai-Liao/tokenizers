@@ -8,6 +8,43 @@ and [the flattening report](FLATTEN.md) for validation and scoped diffs against
 HF main and the starting revision. Counts are descriptive; hard line limits
 have been retired. Earlier counts and limits below describe historical snapshots.
 
+## Completed initialization and merge rounds, 2026-10-11
+
+A1 restores builder-owned Config and routes BpeTrainer::default through
+builder().build(), leaving one source of defaults. A2 returns Vocabulary and
+completed InitialTokenIds together; CorpusPlan owns IDs without mutating Vocabulary
+or completing initialization, then moves activation spans and releases lookups
+after materialization. A3 houses candidate selection, consuming preparation,
+joined writes and index publication in BpeTrainer::merge_next. The caller receives
+only finish, restart or committed records. Selection scratch and candidate position
+lists retire at their original phase boundaries; the same record Vec is moved out.
+B1 and fixed-table storage conversions are deferred.
+
+The diff is reviewed against fetched Hugging Face main `fb49a292`. Config,
+builder methods (apart from required WordCounts storage), trainer Default and
+progress operations align with upstream. This round leaves the production Index,
+Positions and Feed sources unchanged; Parity Trainer and word remain equal to
+upstream. Test-only Index changes exercise preparation and owner failures through
+the complete merge_next operation.
+
+Final default checks record 42 passes and the known encoder-roundtrip failure,
+which also fails on the actual pre-change baseline `2f4803a9` (39 passes).
+No-default records 42 passes with that test filtered; Clippy with warnings denied,
+changed-file formatting and whitespace checks pass. Complete vocabulary IDs,
+ordered merges and traces agree at 1/4/8 workers, including an actual restart with
+a tie at a four-character/three-slot alphabet cutoff.
+
+One paired sanity check per 256 MiB Chinese/English ByteLevel/Whitespace scenario
+uses four workers and identical Feed. All eight samples match their complete
+count/model references, with zero sampled swap and major faults. Training wall
+changes range from -0.66% to approximately zero; pipeline changes are -2.00%,
++1.59%, +0.21% and +0.06%. These single pairs do not establish a stable gain or
+memory reduction. Opposite Chinese feed/HWM shifts remain recorded as variability.
+The prior Feed resident-coordinate failure remains separately unattributed.
+Exact baseline/final sources, separate cumulative/incremental upstream diffs,
+commands, hashes, raw results and reproduction are in
+[the initialization/round report](evidence/initialization-rounds-20261011/README.md).
+
 ## Feed collection overhead and scaling, 2026-10-11
 
 The integrated A keeps the named local-aggregation closures and removes the SCC

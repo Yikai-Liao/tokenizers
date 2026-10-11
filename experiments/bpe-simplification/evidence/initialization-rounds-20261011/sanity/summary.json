@@ -1,0 +1,194 @@
+[
+  {
+    "scenario": "bytelevel_regex-w4",
+    "case": "bytelevel_regex",
+    "workers": 4,
+    "baseline": {
+      "feed_seconds": 2.33627093,
+      "feed_cpu_seconds": 8.798919999999999,
+      "feed_hwm_kib": 1287896,
+      "feed_rss_kib": 682932,
+      "pipeline_seconds": 12.192913125,
+      "pipeline_cpu_seconds": 40.675134,
+      "process_hwm_kib_before_validation": 2457796,
+      "train_seconds": 9.856528003,
+      "train_cpu_seconds": 31.876154999999997,
+      "feed_major_faults": 0,
+      "pipeline_major_faults": 0,
+      "feed_mib_per_second": 109.57621238721272,
+      "pipeline_mib_per_second": 20.995779843198953
+    },
+    "final": {
+      "feed_seconds": 2.100325298,
+      "feed_cpu_seconds": 7.927617000000001,
+      "feed_hwm_kib": 951768,
+      "feed_rss_kib": 689432,
+      "pipeline_seconds": 11.949088116,
+      "pipeline_cpu_seconds": 39.95156,
+      "process_hwm_kib_before_validation": 2463540,
+      "train_seconds": 9.848533165,
+      "train_cpu_seconds": 32.023882,
+      "feed_major_faults": 0,
+      "pipeline_major_faults": 0,
+      "feed_mib_per_second": 121.88574782369307,
+      "pipeline_mib_per_second": 21.42420552384777
+    },
+    "paired_delta_percent": {
+      "final": {
+        "feed_seconds": -10.099241015681349,
+        "feed_cpu_seconds": -9.902385747341702,
+        "feed_hwm_kib": -26.09900178275264,
+        "feed_rss_kib": 0.9517785079627306,
+        "pipeline_seconds": -1.9997272719024628,
+        "pipeline_cpu_seconds": -1.7789099354903137,
+        "process_hwm_kib_before_validation": 0.2337053197254857,
+        "train_seconds": -0.0811121116641389,
+        "train_cpu_seconds": 0.4634404620005306
+      }
+    }
+  },
+  {
+    "scenario": "whitespace-w4",
+    "case": "whitespace",
+    "workers": 4,
+    "baseline": {
+      "feed_seconds": 1.686549384,
+      "feed_cpu_seconds": 6.257099999999999,
+      "feed_hwm_kib": 712576,
+      "feed_rss_kib": 450276,
+      "pipeline_seconds": 10.199985567,
+      "pipeline_cpu_seconds": 30.750771,
+      "process_hwm_kib_before_validation": 1813420,
+      "train_seconds": 8.513331605,
+      "train_cpu_seconds": 24.4936,
+      "feed_major_faults": 0,
+      "pipeline_major_faults": 0,
+      "feed_mib_per_second": 151.7890445713453,
+      "pipeline_mib_per_second": 25.09804724116341
+    },
+    "final": {
+      "feed_seconds": 1.9045013389999998,
+      "feed_cpu_seconds": 6.953888,
+      "feed_hwm_kib": 1054356,
+      "feed_rss_kib": 448260,
+      "pipeline_seconds": 10.361949877,
+      "pipeline_cpu_seconds": 31.159719,
+      "process_hwm_kib_before_validation": 1811472,
+      "train_seconds": 8.45728612,
+      "train_cpu_seconds": 24.205773,
+      "feed_major_faults": 0,
+      "pipeline_major_faults": 0,
+      "feed_mib_per_second": 134.41824081581862,
+      "pipeline_mib_per_second": 24.705747726881324
+    },
+    "paired_delta_percent": {
+      "final": {
+        "feed_seconds": 12.922951267699112,
+        "feed_cpu_seconds": 11.135957552220699,
+        "feed_hwm_kib": 47.9640066463086,
+        "feed_rss_kib": -0.4477253950910143,
+        "pipeline_seconds": 1.5878876390178709,
+        "pipeline_cpu_seconds": 1.3298788508424586,
+        "process_hwm_kib_before_validation": -0.1074213364802401,
+        "train_seconds": -0.6583261125066908,
+        "train_cpu_seconds": -1.175111049416988
+      }
+    }
+  },
+  {
+    "scenario": "en-bytelevel_regex-w4",
+    "case": "en-bytelevel_regex",
+    "workers": 4,
+    "baseline": {
+      "feed_seconds": 2.011804038,
+      "feed_cpu_seconds": 7.984094000000001,
+      "feed_hwm_kib": 69524,
+      "feed_rss_kib": 36652,
+      "pipeline_seconds": 2.853164063,
+      "pipeline_cpu_seconds": 9.955487,
+      "process_hwm_kib_before_validation": 188248,
+      "train_seconds": 0.841252507,
+      "train_cpu_seconds": 1.9713289999999999,
+      "feed_major_faults": 0,
+      "pipeline_major_faults": 0,
+      "feed_mib_per_second": 127.24849298695405,
+      "pipeline_mib_per_second": 89.7246097202679
+    },
+    "final": {
+      "feed_seconds": 2.017798434,
+      "feed_cpu_seconds": 8.006776,
+      "feed_hwm_kib": 69104,
+      "feed_rss_kib": 36348,
+      "pipeline_seconds": 2.859147906,
+      "pipeline_cpu_seconds": 9.988409,
+      "process_hwm_kib_before_validation": 191512,
+      "train_seconds": 0.841239668,
+      "train_cpu_seconds": 1.9815749999999994,
+      "feed_major_faults": 0,
+      "pipeline_major_faults": 0,
+      "feed_mib_per_second": 126.87046818303203,
+      "pipeline_mib_per_second": 89.5368272076264
+    },
+    "paired_delta_percent": {
+      "final": {
+        "feed_seconds": 0.29796122717593576,
+        "feed_cpu_seconds": 0.28408984162762163,
+        "feed_hwm_kib": -0.6041079339508704,
+        "feed_rss_kib": -0.8294226781621727,
+        "pipeline_seconds": 0.20972656559077318,
+        "pipeline_cpu_seconds": 0.3306920093411936,
+        "process_hwm_kib_before_validation": 1.7338829629000019,
+        "train_seconds": -0.0015261767297047868,
+        "train_cpu_seconds": 0.5197508888673319
+      }
+    }
+  },
+  {
+    "scenario": "en-whitespace-w4",
+    "case": "en-whitespace",
+    "workers": 4,
+    "baseline": {
+      "feed_seconds": 1.798921532,
+      "feed_cpu_seconds": 7.11631,
+      "feed_hwm_kib": 65516,
+      "feed_rss_kib": 32644,
+      "pipeline_seconds": 2.540791639,
+      "pipeline_cpu_seconds": 8.866419,
+      "process_hwm_kib_before_validation": 162856,
+      "train_seconds": 0.741748261,
+      "train_cpu_seconds": 1.7500420000000005,
+      "feed_major_faults": 0,
+      "pipeline_major_faults": 0,
+      "feed_mib_per_second": 142.3069475053506,
+      "pipeline_mib_per_second": 100.75561808811858
+    },
+    "final": {
+      "feed_seconds": 1.803439241,
+      "feed_cpu_seconds": 7.154172,
+      "feed_hwm_kib": 65592,
+      "feed_rss_kib": 32576,
+      "pipeline_seconds": 2.542305319,
+      "pipeline_cpu_seconds": 8.898893,
+      "process_hwm_kib_before_validation": 151032,
+      "train_seconds": 0.738732283,
+      "train_cpu_seconds": 1.7446529999999996,
+      "feed_major_faults": 0,
+      "pipeline_major_faults": 0,
+      "feed_mib_per_second": 141.95046120800743,
+      "pipeline_mib_per_second": 100.69562853342276
+    },
+    "paired_delta_percent": {
+      "final": {
+        "feed_seconds": 0.2511343001702304,
+        "feed_cpu_seconds": 0.5320453999333896,
+        "feed_hwm_kib": 0.11600219793637123,
+        "feed_rss_kib": -0.20830780541600813,
+        "pipeline_seconds": 0.059575133071354536,
+        "pipeline_cpu_seconds": 0.36625835075017044,
+        "process_hwm_kib_before_validation": -7.260401827381246,
+        "train_seconds": -0.4066039866320592,
+        "train_cpu_seconds": -0.3079354666917111
+      }
+    }
+  }
+]

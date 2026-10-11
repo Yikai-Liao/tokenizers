@@ -1,0 +1,9 @@
+   Compiling tk-train v0.1.0-dev.2 (/home/lyk/code/tokenizers/tokenizers/tk-train)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.95s
+     Running unittests src/lib.rs (/tmp/bpe-feed-native/debug/deps/tk_train-c0a25a567c983d31)
+
+running 1 test
+test trainers::bpe::tests::reuse_restart_preserves_a_tie_at_an_actual_alphabet_cutoff ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 42 filtered out; finished in 0.03s
+

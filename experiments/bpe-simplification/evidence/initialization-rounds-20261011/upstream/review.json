@@ -1,0 +1,27 @@
+{
+  "upstream_commit": "fb49a29223724a96f26e061bec8ec7517aa14177",
+  "before_commit": "2f4803a936619aa575ba4f6cb49fc660057ef5e4",
+  "final_commit": "b4d2baba09ae2bffe3d2849989f43f9dc2f44f2b",
+  "checks": {
+    "config_matches_upstream": true,
+    "impl Default for BpeTrainerBuilder {": true,
+    "impl Default for BpeTrainer {": true,
+    "builder_matches_upstream_except_count_storage": true,
+    "upstream_progress_setup_progress": true,
+    "upstream_progress_emit_json_progress": true,
+    "upstream_progress_finalize_progress": true,
+    "upstream_progress_update_progress": true,
+    "production_unchanged_feed.rs": true,
+    "production_unchanged_positions.rs": true,
+    "production_unchanged_index.rs": true,
+    "upstream_unchanged_parity_trainer.rs": true,
+    "upstream_unchanged_word.rs": true
+  },
+  "progress_byte_equality": {
+    "upstream_progress_setup_progress": true,
+    "upstream_progress_emit_json_progress": true,
+    "upstream_progress_finalize_progress": true,
+    "upstream_progress_update_progress": false
+  },
+  "progress_note": "update_progress has one preexisting blank line; Rust operations match upstream"
+}

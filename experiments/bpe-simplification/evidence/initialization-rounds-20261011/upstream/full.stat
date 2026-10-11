@@ -1,0 +1,14 @@
+ tokenizers/tk-train/src/trainers/bpe/AGENTS.md     |   20 +
+ tokenizers/tk-train/src/trainers/bpe/COVERAGE.md   |   48 +
+ tokenizers/tk-train/src/trainers/bpe/DESIGN.md     |  292 +++++
+ tokenizers/tk-train/src/trainers/bpe/README.md     |  143 +++
+ tokenizers/tk-train/src/trainers/bpe/corpus.rs     |  528 ++++++++
+ tokenizers/tk-train/src/trainers/bpe/feed.rs       |   92 ++
+ tokenizers/tk-train/src/trainers/bpe/index.rs      |  814 +++++++++++++
+ tokenizers/tk-train/src/trainers/bpe/merge.rs      |  888 ++++++++++++++
+ tokenizers/tk-train/src/trainers/bpe/mod.rs        |  853 ++++---------
+ tokenizers/tk-train/src/trainers/bpe/positions.rs  |  544 +++++++++
+ tokenizers/tk-train/src/trainers/bpe/tests.rs      | 1284 ++++++++++++++++++++
+ tokenizers/tk-train/src/trainers/bpe/vocabulary.rs |  537 ++++++++
+ .../tk-train/src/trainers/bpe/word_counts.rs       |  175 +++
+ 13 files changed, 5616 insertions(+), 602 deletions(-)

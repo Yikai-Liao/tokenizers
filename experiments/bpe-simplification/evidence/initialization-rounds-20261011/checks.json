@@ -1,0 +1,72 @@
+{
+  "final-default-unfiltered": {
+    "command": [
+      "cargo",
+      "test",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--locked",
+      "--offline",
+      "--lib"
+    ],
+    "returncode": 101
+  },
+  "final-no-default": {
+    "command": [
+      "cargo",
+      "test",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "--",
+      "--skip",
+      "feed_training_tokenizer_json_and_encoding_roundtrip"
+    ],
+    "returncode": 0
+  },
+  "final-clippy": {
+    "command": [
+      "cargo",
+      "clippy",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--locked",
+      "--offline",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "returncode": 0
+  },
+  "final-format": {
+    "command": [
+      "uv",
+      "run",
+      "experiments/bpe-simplification/format-changed.py",
+      "--check",
+      "--base",
+      "2f4803a9",
+      "tokenizers/tk-train/src/trainers/bpe/mod.rs",
+      "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs",
+      "tokenizers/tk-train/src/trainers/bpe/corpus.rs",
+      "tokenizers/tk-train/src/trainers/bpe/merge.rs",
+      "tokenizers/tk-train/src/trainers/bpe/index.rs",
+      "tokenizers/tk-train/src/trainers/bpe/tests.rs"
+    ],
+    "returncode": 0
+  },
+  "final-whitespace": {
+    "command": [
+      "git",
+      "diff",
+      "--check",
+      "2f4803a9",
+      "HEAD"
+    ],
+    "returncode": 0
+  }
+}

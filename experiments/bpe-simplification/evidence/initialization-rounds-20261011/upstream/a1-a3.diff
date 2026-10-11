@@ -1,0 +1,1420 @@
+diff --git a/tokenizers/tk-train/src/trainers/bpe/COVERAGE.md b/tokenizers/tk-train/src/trainers/bpe/COVERAGE.md
+index e4089384..633ceb4f 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/COVERAGE.md
++++ b/tokenizers/tk-train/src/trainers/bpe/COVERAGE.md
+@@ -14,10 +14,11 @@ Literal alphabet expectations independently check that shared selector.
+ | AA overlap and position restart boundaries | An 8195-symbol AA run spans restart blocks and two preparation jobs even at one worker; full model/rule agreement and generated repeated words |
+ | Complete and partial birth pruning | Long AB producer split across workers, a competing complete XY producer, and complete-model/trace comparison; 127/129/257 repeated ABC groups check rounded whole fragments versus partial publication and full model/rule agreement |
+ | Strict newborn length admission, including limits 0, 1 and 2 | Generated length gates and independent sequential neighbor admission |
++| Completed initialization and retained cutoff | Ordered frozen input has four characters with limit two; literal multibyte prefix/suffix IDs precede weight sorting, original UTF-8 boundaries survive filtering, spans retain allocation identity on transfer, a true four-way cutoff tie reuses its two selected characters, and a separate four-character/three-slot cutoff forces an actual fresh-to-reuse restart and matches complete models/traces at 1/4/8 workers |
+ | Filtered symbols, forced alphabet and decorations | Generated filtered/decorated models, a filtered training fixture, and literal alphabet IDs |
+ | Full token IDs beyond 16 bits and separator distinction | 65536 reserved IDs followed by ordinary training and literal ID expectation |
+-| Joined compatible rules | Explicit three-rule `Batch::commit`, then finished selection |
+-| Preparation failure before writes | An independent valid job precedes a neighbor-count overflow; `Batch::commit` fails with every endpoint unchanged at 1, 4 and 8 workers |
++| Joined compatible rules | Explicit three-rule `merge_next` returns ordered committed records, then Finished |
++| Preparation failure before writes | An independent valid job precedes a neighbor-count overflow; `merge_next` fails with every endpoint unchanged at 1, 4 and 8 workers |
+ | Shard-local commit and historical birth grouping | Unordered and zero-weight reuse fragments retain duplicates and publish in bucket order below the floor; fresh removals retire counts before complete/partial publication; fresh grouped and intermediate signed overflow drain pending streams while retaining capacity |
+ | Full-u64 counts, per-key overflow, signed reuse limits and validation before zero merges | Literal success/error cases repeated with vocabulary targets 0, 2 and 64 |
+ | Borrowed map, stored map/frozen entries, feed and repeat training | Complete model equality through the public entries, repeated successful calls with unchanged counts, and training after flat-map serde; decorated representations preserve the same borrowed traversal order |
+diff --git a/tokenizers/tk-train/src/trainers/bpe/DESIGN.md b/tokenizers/tk-train/src/trainers/bpe/DESIGN.md
+index c9935d40..0c8cced8 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/DESIGN.md
++++ b/tokenizers/tk-train/src/trainers/bpe/DESIGN.md
+@@ -9,8 +9,11 @@ The private `train_attempt` owns the vocabulary, corpus and pair index for one a
+ Tests exercise this same coordinator with explicit workers and inspect its successful
+ result, whose trace field exists only under `cfg(test)`. No test callback enters
+ the production call chain.
+-A selected `Batch` owns the occurrence lists of its rules. `Batch::commit` returns
+-ordered `MergeRecord` scalars only after the whole round succeeds. The trainer then
++`BpeTrainer::merge_next` in `merge.rs` contains selection and the complete joined
++round. Its private Batch owns the occurrence lists of selected rules; consuming
++preparation releases them before writes. The method returns Finished,
++RestartForReuse or Committed with ordered `MergeRecord` scalars only after the
++whole round succeeds. Selection scratch retires before preparation. The trainer then
+ appends merges and its test-only trace and advances progress by the accepted rule
+ count. Selection may already mutate identities and activation; errors discard the
+ whole attempt rather than rolling back those changes. Merge first prepares
+@@ -45,10 +48,12 @@ The independent reference shares only this selector. Decorations
+ are resolved in the input view's traversal before weighted words are reordered.
+ Filtering and first/last decoration flags use original UTF-8 word coordinates.
+ 
+-Vocabulary constructs initial ID spans (zero for unactivated, one for activated) and
+-moves the table into CorpusPlan. After materialization Corpus alone records ID
+-activation. Resolving a merge string returns its ID; the corpus determines
+-whether that ID has been activated and prepares its geometry. Vocabulary keeps
++Vocabulary initialization returns both the identity table and completed
++InitialTokenIds, whose spans mark unactivated IDs as zero and activated IDs as one.
++CorpusPlan owns these IDs without completing another initialization protocol.
++After symbol writes join, into_spans moves the span Vec and releases both lookup
++tables; Corpus alone then records ID activation. Resolving a merge string returns its ID; the corpus determines
++whether that ID has been activated and prepares its span metadata. Vocabulary keeps
+ no activation mirror that must be updated during merges.
+ 
+ Each attempt starts from original weighted words. The selected alphabet is
+diff --git a/tokenizers/tk-train/src/trainers/bpe/README.md b/tokenizers/tk-train/src/trainers/bpe/README.md
+index a87841d7..49bbee0c 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/README.md
++++ b/tokenizers/tk-train/src/trainers/bpe/README.md
+@@ -14,8 +14,8 @@ inspect the successful result's test-only trace.
+ 
+ Read `train_attempt` for the complete workflow: initialize identities and a
+ borrowed corpus plan, build the compressed occurrence index, materialize endpoints
+-when merges are needed, select a compatible batch, record its rules, complete it
+-with `Batch::commit`, then publish the model parts. Merge joins snapshot
++when merges are needed, call `merge_next` for each complete compatible round,
++collect its committed records, then publish the model parts. Merge joins snapshot
+ preparation before endpoint writes and joins those writes before index updates.
+ A collision with a previously activated identity discards the fresh attempt and
+ restarts from original input and the retained alphabet. Errors and restart requests
+@@ -36,8 +36,9 @@ The implementation is divided by the knowledge each module owns:
+ - [index.rs](index.rs) owns exact priority correction, count shards, signed reuse
+   ledgers, one owning candidate queue, and complete birth publication.
+ - [merge.rs](merge.rs) owns compatible selection, read-only preparation, local
+-  event aggregation, and a complete joined round. The coordinator selects a
+-  `Batch`, records its rules and commits it; Merge owns the execution order.
++  event aggregation, and a complete joined round. `BpeTrainer::merge_next` selects
++  and consumes its private Batch, returning finish, restart, or committed records
++  only after index publication; the coordinator collects records and progress.
+ - [positions.rs](positions.rs) owns sorted full-u64 streams and restart blocks.
+   Producers use `SmallVec<[u64; 2]>` and construct immutable lists directly.
+   Empty, one-value and two-value lists stay inline; longer lists own compressed
+@@ -75,7 +76,12 @@ no extra wave barrier.
+ Each range admits one word first, including an oversized word. A fitting final
+ tail is admitted directly; otherwise `slice-group-by`'s `exponential_search_by`
+ counts additional words whose end boundaries fit, including an exact-budget end.
+-Vocabulary exposes one filtered `symbols()` iterator to initial edge counting and
++Vocabulary initialization returns the completed identity table and `InitialTokenIds`
++together. The plan owns initial IDs, including activation spans, and consumes them
++after endpoint materialization: spans move to Corpus while character/decorated
++lookups are released before merging. Initialization resolves decorations in input
++order before words are sorted by weight; reuse retains the selected limited alphabet.
++The initial IDs expose one filtered `symbols()` iterator to initial edge counting and
+ endpoint materialization. Decorations still use original UTF-8 byte boundaries;
+ edge coordinates enumerate retained symbols. Unlimited alphabet observation uses
+ Rayon bitmap reduction, retaining the full Unicode bit domain for empty input.
+diff --git a/tokenizers/tk-train/src/trainers/bpe/corpus.rs b/tokenizers/tk-train/src/trainers/bpe/corpus.rs
+index 04f66a83..4337e8b6 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/corpus.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/corpus.rs
+@@ -1,14 +1,12 @@
+ //! Endpoint tokens retain their original coordinates; span metadata skips holes.
+ use super::{
+-    BpeTrainer, WORD_SEPARATOR_ID,
+-    vocabulary::{InitialTokenIds, Vocabulary},
+-    word_counts::WordCountsView,
++    BpeTrainer, WORD_SEPARATOR_ID, vocabulary::InitialTokenIds, word_counts::WordCountsView,
+ };
+ use compact_str::CompactString;
+ use itertools::Itertools;
+ use rayon::prelude::*;
+ use std::sync::atomic::{AtomicU16, AtomicU32, AtomicUsize, Ordering};
+-use tk_encode::{Result, models::bpe::Pair, utils::progress::ProgressBar};
++use tk_encode::{Result, models::bpe::Pair};
+ 
+ /// Resident token endpoints at fixed original coordinates, with weights and spans.
+ /// Merges leave holes; span metadata skips them without moving other occurrences.
+@@ -47,7 +45,6 @@ pub(super) struct CorpusPlan<'input> {
+     starts: Vec<usize>,
+     weight_regions: Vec<(usize, u64)>,
+     unit_region: Option<(usize, usize)>,
+-    spans: Vec<usize>,
+     whole_words: bool,
+     words: Vec<(&'input CompactString, &'input u64)>,
+     ids: InitialTokenIds,
+@@ -59,12 +56,10 @@ pub(super) struct CorpusPlan<'input> {
+ impl<'input> CorpusPlan<'input> {
+     pub(super) fn build(
+         words: WordCountsView<'input>,
+-        vocabulary: &mut Vocabulary,
++        ids: InitialTokenIds,
+         trainer: &BpeTrainer,
+         reuse: bool,
+-        progress: &Option<ProgressBar>,
+     ) -> Result<Self> {
+-        let ids = vocabulary.initial_ids(words, progress)?;
+         let mut words: Vec<_> = words.iter().collect();
+         words.par_sort_unstable_by(|a, b| b.1.cmp(a.1));
+         let measured: Vec<_> = words
+@@ -107,12 +102,11 @@ impl<'input> CorpusPlan<'input> {
+                     weight_regions.get(i + 1).map_or(length, |r| r.0),
+                 )
+             });
+-        let slot_bound = vocabulary.len().max(trainer.vocab_size);
++        let slot_bound = ids.token_count().max(trainer.vocab_size);
+         Ok(Self {
+             starts,
+             weight_regions,
+             unit_region,
+-            spans: vocabulary.take_initial_spans(),
+             whole_words: trainer.max_token_length.is_some(),
+             words,
+             ids,
+@@ -156,7 +150,7 @@ impl<'input> CorpusPlan<'input> {
+     }
+ 
+     pub(super) fn small_pair_domain(&self) -> Option<usize> {
+-        (self.spans.len() <= 256).then_some(self.spans.len())
++        (self.ids.token_count() <= 256).then_some(self.ids.token_count())
+     }
+ 
+     pub(super) fn initial_edges(
+@@ -196,7 +190,7 @@ impl<'input> CorpusPlan<'input> {
+             starts: if self.reuse { self.starts } else { Vec::new() },
+             weight_regions: self.weight_regions,
+             unit_region: self.unit_region,
+-            spans: self.spans,
++            spans: self.ids.into_spans(),
+             occurrence_spans: None,
+             whole_words: self.whole_words,
+         }
+@@ -477,8 +471,10 @@ mod tests {
+         let words = AHashMap::new();
+         let view = WordCountsView::from_map(&words);
+         let trainer = BpeTrainer::new(1, 0);
+-        let mut vocabulary = Vocabulary::initialize(&trainer, view, 1, &mut None).unwrap();
+-        let mut plan = CorpusPlan::build(view, &mut vocabulary, &trainer, false, &None).unwrap();
++        let (_, ids) =
++            super::super::vocabulary::Vocabulary::initialize(&trainer, view, 1, &mut None, &None)
++                .unwrap();
++        let mut plan = CorpusPlan::build(view, ids, &trainer, false).unwrap();
+         let text = CompactString::default();
+         let weight = 1;
+         let mut layouts = vec![(vec![usize::MAX - 8, usize::MAX - 3], usize::MAX)];
+diff --git a/tokenizers/tk-train/src/trainers/bpe/index.rs b/tokenizers/tk-train/src/trainers/bpe/index.rs
+index 2bc2d904..3bd8f052 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/index.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/index.rs
+@@ -446,10 +446,7 @@ impl Shard {
+ mod tests {
+     use super::*;
+     use crate::trainers::bpe::{
+-        BpeTrainer, Trace,
+-        merge::{Batch, Selection},
+-        vocabulary::Vocabulary,
+-        word_counts::WordCountsView,
++        BpeTrainer, Trace, merge::MergeOutcome, vocabulary::Vocabulary, word_counts::WordCountsView,
+     };
+     use tk_encode::{
+         models::bpe::{Merges, Vocab},
+@@ -615,6 +612,50 @@ mod tests {
+         }
+     }
+ 
++    #[test]
++    fn preparation_failure_leaves_all_endpoints_unchanged() {
++        for workers in [1, 4, 8] {
++            let pool = rayon::ThreadPoolBuilder::new()
++                .num_threads(workers)
++                .build()
++                .unwrap();
++            pool.install(|| {
++                let trainer = BpeTrainer::builder()
++                    .vocab_size(16)
++                    .min_frequency(1)
++                    .show_progress(false)
++                    .build();
++                let words = [("ab".into(), u64::MAX), ("xcd".into(), u64::MAX)]
++                    .into_iter()
++                    .collect();
++                let view = WordCountsView::from_map(&words);
++                let progress = trainer.setup_progress();
++                let (mut vocabulary, ids) =
++                    Vocabulary::initialize(&trainer, view, workers, &mut None, &progress).unwrap();
++                let plan = CorpusPlan::build(view, ids, &trainer, false).unwrap();
++                let mut index = PairIndex::build(&plan, 1, workers, false, &progress).unwrap();
++                let mut corpus = plan.materialize();
++                let mut candidates = std::mem::take(&mut index.queue).into_vec();
++                let candidate = candidates
++                    .iter_mut()
++                    .find(|c| c.priority.pair() == (2, 3))
++                    .unwrap();
++                // AB has valid deferred writes. Duplicate CD's start to overflow
++                // its left-neighbor count during preparation of the same round.
++                let start = candidate.positions.iter().next().unwrap();
++                candidate.positions = Positions::from_sorted(&[start, start]).unwrap();
++                index.queue = candidates.into_iter().collect();
++                let before: Vec<_> = (0..corpus.len()).map(|p| corpus.token(p)).collect();
++                let error = trainer
++                    .merge_next(&mut vocabulary, &mut corpus, &mut index)
++                    .unwrap_err();
++                assert!(error.to_string().contains("exceeds u64"), "{error}");
++                let after: Vec<_> = (0..corpus.len()).map(|p| corpus.token(p)).collect();
++                assert_eq!(after, before, "workers={workers}");
++            });
++        }
++    }
++
+     type Outcome = (Trace, (Vocab, Merges));
+ 
+     #[test]
+@@ -633,17 +674,12 @@ mod tests {
+                     let words = [("abc".into(), 1)].into_iter().collect();
+                     let view = WordCountsView::from_map(&words);
+                     let progress = trainer.setup_progress();
+-                    let mut vocabulary =
+-                        Vocabulary::initialize(&trainer, view, workers, &mut None).unwrap();
+-                    let plan = CorpusPlan::build(view, &mut vocabulary, &trainer, true, &progress)
+-                        .unwrap();
++                    let (mut vocabulary, ids) =
++                        Vocabulary::initialize(&trainer, view, workers, &mut None, &progress)
++                            .unwrap();
++                    let plan = CorpusPlan::build(view, ids, &trainer, true).unwrap();
+                     let mut index = PairIndex::build(&plan, 1, workers, true, &progress).unwrap();
+                     let mut corpus = plan.materialize();
+-                    let Selection::Ready(batch) =
+-                        Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index).unwrap()
+-                    else {
+-                        panic!("expected AB cohort")
+-                    };
+                     // AB writes ID 3 before its right birth (3, C) reaches its
+                     // owner. Force that owner's signed addition to overflow.
+                     let born = (3, 2);
+@@ -652,14 +688,18 @@ mod tests {
+                         .insert(born, i64::MAX as u64);
+                     let before: Vec<_> = (0..corpus.len()).map(|p| corpus.token(p)).collect();
+                     let queued = index.queue.len();
+-                    let error = batch
+-                        .commit(&mut corpus, &mut index, usize::MAX)
++                    let error = trainer
++                        .merge_next(&mut vocabulary, &mut corpus, &mut index)
+                         .unwrap_err();
+                     assert!(error.to_string().contains("exceeds i64"), "{error}");
+                     let after: Vec<_> = (0..corpus.len()).map(|p| corpus.token(p)).collect();
+                     assert_ne!(after, before, "commit errors do not roll back writes");
+                     assert!(after.contains(&3));
+-                    assert_eq!(index.queue.len(), queued, "failed owners publish no births");
++                    assert_eq!(
++                        index.queue.len(),
++                        queued - 1,
++                        "failed owners publish no births"
++                    );
+                 });
+         }
+     }
+@@ -677,13 +717,13 @@ mod tests {
+         words.extend([("pacx".into(), 4), ("yacx".into(), 1), ("pa".into(), 4)]);
+         let view = WordCountsView::from_map(&words);
+         let progress = trainer.setup_progress();
+-        let mut vocabulary = Vocabulary::initialize(&trainer, view, 1, &mut None).unwrap();
+-        let ids = vocabulary.initial_ids(view, &progress).unwrap();
++        let (mut vocabulary, ids) =
++            Vocabulary::initialize(&trainer, view, 1, &mut None, &progress).unwrap();
+         let pair = (
+             ids.id('a', false, false).unwrap(),
+             ids.id('c', false, false).unwrap(),
+         );
+-        let plan = CorpusPlan::build(view, &mut vocabulary, &trainer, true, &progress).unwrap();
++        let plan = CorpusPlan::build(view, ids, &trainer, true).unwrap();
+         // Either cohort reuses the activated "abac" identity. The heavier cohort
+         // raises its left neighbor's existing count above the other cohort.
+         let mut cohorts = [Vec::new(), Vec::new()];
+@@ -713,13 +753,15 @@ mod tests {
+         let mut trace = Vec::new();
+         let mut merges = Vec::new();
+         while vocabulary.len() < trainer.vocab_size {
+-            let batch =
+-                match Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index).unwrap() {
+-                    Selection::Ready(batch) => batch,
+-                    Selection::Finished => break,
+-                    Selection::Restart => panic!("reuse cannot request another attempt"),
+-                };
+-            for record in batch.commit(&mut corpus, &mut index, usize::MAX).unwrap() {
++            let records = match trainer
++                .merge_next(&mut vocabulary, &mut corpus, &mut index)
++                .unwrap()
++            {
++                MergeOutcome::Committed(records) => records,
++                MergeOutcome::Finished => break,
++                MergeOutcome::RestartForReuse => panic!("reuse cannot request another attempt"),
++            };
++            for record in records {
+                 merges.push(record.pair);
+                 trace.push((record.pair, record.count, record.replacement));
+             }
+diff --git a/tokenizers/tk-train/src/trainers/bpe/merge.rs b/tokenizers/tk-train/src/trainers/bpe/merge.rs
+index fcf7c379..ed047b32 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/merge.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/merge.rs
+@@ -14,6 +14,124 @@ use std::collections::VecDeque;
+ use std::ops::Range;
+ use tk_encode::{Result, models::bpe::Pair};
+ 
++/// Complete-round outcome. Only successful index publication returns records.
++/// Restart discards the attempt, including any speculative selected identities.
++#[derive(Debug)]
++pub(super) enum MergeOutcome {
++    Finished,
++    RestartForReuse,
++    Committed(Vec<MergeRecord>),
++}
++
++/// Selected-rule scalars returned only after the whole batch commits successfully.
++/// No candidate positions survive preparation through these records.
++#[derive(Debug)]
++pub(super) struct MergeRecord {
++    pub(super) pair: Pair,
++    #[cfg(test)]
++    pub(super) count: u64,
++    #[cfg(test)]
++    pub(super) replacement: u32,
++}
++
++impl BpeTrainer {
++    /// Select and commit one complete round. All preparation joins before writes;
++    /// all writes join before index owner updates and ordered publication. Errors
++    /// discard the attempt rather than rolling back selection or endpoint writes.
++    pub(super) fn merge_next(
++        &self,
++        vocabulary: &mut Vocabulary,
++        corpus: &mut Corpus,
++        index: &mut PairIndex,
++    ) -> Result<MergeOutcome> {
++        let reuse = index.reuse();
++        let mut batch = Batch {
++            rules: Vec::new(),
++            reuse,
++            floor: self.min_frequency.max(1),
++        };
++        let cap = if reuse {
++            1
++        } else {
++            256.min(self.vocab_size - vocabulary.len())
++        };
++        let mut heads = AHashSet::new();
++        let mut tails = AHashSet::new();
++        // Take a priority prefix without skipping conflicts. Crossed endpoints
++        // would consume another rule's input, so only shared heads/tails may batch.
++        // Every newborn has an unselected old boundary as a frequency/tie witness;
++        // see DESIGN.md's compatible batch proof for why it cannot overtake this prefix.
++        while batch.rules.len() < cap {
++            let Some(priority) = index.best() else {
++                break;
++            };
++            let pair = priority.pair();
++            if !batch.rules.is_empty()
++                && (pair.0 == pair.1 || tails.contains(&pair.0) || heads.contains(&pair.1))
++            {
++                break;
++            }
++            let token = vocabulary.merge_token(pair);
++            if !reuse
++                && token
++                    .existing_id
++                    .is_some_and(|id| corpus.has_been_activated(id))
++            {
++                return Ok(MergeOutcome::RestartForReuse);
++            }
++            let reserved = token.existing_id.is_some();
++            // A reserved ID need not follow old IDs lexicographically. A singleton
++            // activation needs no argument about its position relative to later rules.
++            if reserved && !batch.rules.is_empty() {
++                break;
++            }
++            let candidate = index.take(priority);
++            let replacement = vocabulary.resolve_merge(token)?;
++            corpus.prepare_identity(pair, replacement);
++            batch.rules.push(Rule {
++                replacement,
++                candidate,
++            });
++            if reserved || pair.0 == pair.1 {
++                break;
++            }
++            heads.insert(pair.0);
++            tails.insert(pair.1);
++        }
++        if batch.rules.is_empty() {
++            return Ok(MergeOutcome::Finished);
++        }
++
++        // Selection scratch retires before preparation, as at the former boundary.
++        drop(heads);
++        drop(tails);
++
++        // Capture only bounded scalars before consuming preparation releases the
++        // selected candidates. Preserve selection order, including reuse cohorts.
++        let records = batch
++            .rules
++            .iter()
++            .map(|rule| MergeRecord {
++                pair: rule.pair(),
++                #[cfg(test)]
++                count: rule.candidate.priority.count,
++                #[cfg(test)]
++                replacement: rule.replacement,
++            })
++            .collect();
++        let jobs = batch.prepare(corpus, self.max_token_length.unwrap_or(usize::MAX))?;
++        let changes = jobs
++            .into_par_iter()
++            .map(|job| {
++                job.writes.apply(corpus);
++                job.changes
++            })
++            .collect();
++        index.commit(changes)?;
++        Ok(MergeOutcome::Committed(records))
++    }
++}
++
+ /// One selected pair and resolved replacement ID, owning its candidate positions.
+ /// Keeping the candidate binds preparation to the cohort selected by the queue.
+ struct Rule {
+@@ -29,32 +147,12 @@ impl Rule {
+ 
+ /// Priority-prefix rules selected for one joined preparation/application round.
+ /// Fresh rules have compatible endpoints; reuse mode selects a single cohort.
+-pub(super) struct Batch {
++struct Batch {
+     rules: Vec<Rule>,
+     reuse: bool,
+     floor: u64,
+ }
+ 
+-/// Selection outcome for the coordinator: finish, retry the attempt, or commit.
+-/// Restart discards speculative rules and requests historical-cohort training.
+-pub(super) enum Selection {
+-    Finished,
+-    // The whole attempt is discarded, including rules already selected in this batch.
+-    Restart,
+-    Ready(Batch),
+-}
+-
+-/// Selected-rule scalars returned only after the whole batch commits successfully.
+-/// No candidate positions survive preparation through these records.
+-#[derive(Debug)]
+-pub(super) struct MergeRecord {
+-    pub(super) pair: Pair,
+-    #[cfg(test)]
+-    pub(super) count: u64,
+-    #[cfg(test)]
+-    pub(super) replacement: u32,
+-}
+-
+ /// One neighbor-edge removal and replacement birth from preparation.
+ /// Weights remain separate so commit preserves intermediate signed adjustments;
+ /// P carries birth positions, or () for separately routed metadata. Bucket
+@@ -221,107 +319,6 @@ impl<'a> Neighbors<'a> {
+ }
+ 
+ impl Batch {
+-    pub(super) fn select(
+-        trainer: &BpeTrainer,
+-        vocabulary: &mut Vocabulary,
+-        corpus: &mut Corpus,
+-        index: &mut PairIndex,
+-    ) -> Result<Selection> {
+-        let reuse = index.reuse();
+-        let mut batch = Self {
+-            rules: Vec::new(),
+-            reuse,
+-            floor: trainer.min_frequency.max(1),
+-        };
+-        let cap = if reuse {
+-            1
+-        } else {
+-            256.min(trainer.vocab_size - vocabulary.len())
+-        };
+-        let mut heads = AHashSet::new();
+-        let mut tails = AHashSet::new();
+-        // Take a priority prefix without skipping conflicts. Crossed endpoints
+-        // would consume another rule's input, so only shared heads/tails may batch.
+-        // Every newborn has an unselected old boundary as a frequency/tie witness;
+-        // see DESIGN.md's compatible batch proof for why it cannot overtake this prefix.
+-        while batch.rules.len() < cap {
+-            let Some(priority) = index.best() else {
+-                break;
+-            };
+-            let pair = priority.pair();
+-            if !batch.rules.is_empty()
+-                && (pair.0 == pair.1 || tails.contains(&pair.0) || heads.contains(&pair.1))
+-            {
+-                break;
+-            }
+-            let token = vocabulary.merge_token(pair);
+-            if !reuse
+-                && token
+-                    .existing_id
+-                    .is_some_and(|id| corpus.has_been_activated(id))
+-            {
+-                return Ok(Selection::Restart);
+-            }
+-            let reserved = token.existing_id.is_some();
+-            // A reserved ID need not follow old IDs lexicographically. A singleton
+-            // activation needs no argument about its position relative to later rules.
+-            if reserved && !batch.rules.is_empty() {
+-                break;
+-            }
+-            let candidate = index.take(priority);
+-            let replacement = vocabulary.resolve_merge(token)?;
+-            corpus.prepare_identity(pair, replacement);
+-            batch.rules.push(Rule {
+-                replacement,
+-                candidate,
+-            });
+-            if reserved || pair.0 == pair.1 {
+-                break;
+-            }
+-            heads.insert(pair.0);
+-            tails.insert(pair.1);
+-        }
+-        Ok(if batch.rules.is_empty() {
+-            Selection::Finished
+-        } else {
+-            Selection::Ready(batch)
+-        })
+-    }
+-
+-    /// Complete one selected batch, joining preparation before writes and writes
+-    /// before parallel index updates. Preparation errors leave endpoints unchanged;
+-    /// later errors can follow writes or count updates. Discard the attempt on error.
+-    pub(super) fn commit(
+-        self,
+-        corpus: &mut Corpus,
+-        index: &mut PairIndex,
+-        limit: usize,
+-    ) -> Result<Vec<MergeRecord>> {
+-        // Capture only bounded scalars before consuming preparation releases the
+-        // selected candidates. Preserve selection order, including reuse cohorts.
+-        let records = self
+-            .rules
+-            .iter()
+-            .map(|rule| MergeRecord {
+-                pair: rule.pair(),
+-                #[cfg(test)]
+-                count: rule.candidate.priority.count,
+-                #[cfg(test)]
+-                replacement: rule.replacement,
+-            })
+-            .collect();
+-        let jobs = self.prepare(corpus, limit)?;
+-        let changes = jobs
+-            .into_par_iter()
+-            .map(|job| {
+-                job.writes.apply(corpus);
+-                job.changes
+-            })
+-            .collect();
+-        index.commit(changes)?;
+-        Ok(records)
+-    }
+-
+     fn prepare(self, corpus: &Corpus, limit: usize) -> Result<Vec<Job>> {
+         if self.reuse {
+             return self.prepare_cohort(corpus, limit);
+@@ -704,7 +701,7 @@ impl<'task> CohortPreparation<'task> {
+ 
+ /// Deferred endpoint writes, compact for fresh identities and explicit for reuse.
+ /// Fresh identities have one span per ID, so writes need only sorted starts and
+-/// one rule geometry. Alias reuse retains each occurrence's snapshot geometry.
++/// one rule span. Alias reuse retains each occurrence's snapshot span.
+ enum Writes {
+     Compact {
+         positions: SmallVec<[u64; 2]>,
+@@ -818,55 +815,6 @@ mod tests {
+     use super::super::{WordCountsView, corpus::CorpusPlan};
+     use super::*;
+ 
+-    #[test]
+-    fn preparation_failure_leaves_all_endpoints_unchanged() {
+-        for workers in [1, 4, 8] {
+-            let pool = rayon::ThreadPoolBuilder::new()
+-                .num_threads(workers)
+-                .build()
+-                .unwrap();
+-            pool.install(|| {
+-                let trainer = BpeTrainer::builder()
+-                    .vocab_size(16)
+-                    .min_frequency(1)
+-                    .show_progress(false)
+-                    .build();
+-                let words = [("ab".into(), u64::MAX), ("xcd".into(), u64::MAX)]
+-                    .into_iter()
+-                    .collect();
+-                let view = WordCountsView::from_map(&words);
+-                let progress = trainer.setup_progress();
+-                let mut vocabulary =
+-                    Vocabulary::initialize(&trainer, view, workers, &mut None).unwrap();
+-                let plan =
+-                    CorpusPlan::build(view, &mut vocabulary, &trainer, false, &progress).unwrap();
+-                let mut index = PairIndex::build(&plan, 1, workers, false, &progress).unwrap();
+-                let mut corpus = plan.materialize();
+-                let Selection::Ready(mut batch) =
+-                    Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index).unwrap()
+-                else {
+-                    panic!("expected ready batch")
+-                };
+-                assert_eq!(
+-                    batch.rules.iter().map(Rule::pair).collect::<Vec<_>>(),
+-                    [(0, 1), (2, 3)]
+-                );
+-                // AB has valid deferred writes. Duplicate CD's start to overflow
+-                // its left-neighbor count during preparation.
+-                let start = batch.rules[1].candidate.positions.iter().next().unwrap();
+-                batch.rules[1].candidate.positions =
+-                    Positions::from_sorted(&[start, start]).unwrap();
+-                let before: Vec<_> = (0..corpus.len()).map(|p| corpus.token(p)).collect();
+-                let error = batch
+-                    .commit(&mut corpus, &mut index, usize::MAX)
+-                    .unwrap_err();
+-                assert!(error.to_string().contains("exceeds u64"), "{error}");
+-                let after: Vec<_> = (0..corpus.len()).map(|p| corpus.token(p)).collect();
+-                assert_eq!(after, before, "workers={workers}");
+-            });
+-        }
+-    }
+-
+     #[test]
+     fn aligned_fragments_keep_complete_and_partial_publication() {
+         let pool = rayon::ThreadPoolBuilder::new()
+@@ -887,16 +835,25 @@ mod tests {
+             let view = WordCountsView::from_map(&words);
+             pool.install(|| {
+                 let progress = trainer.setup_progress();
+-                let mut vocabulary = Vocabulary::initialize(&trainer, view, 2, &mut None).unwrap();
+-                let plan =
+-                    CorpusPlan::build(view, &mut vocabulary, &trainer, false, &progress).unwrap();
++                let (mut vocabulary, ids) =
++                    Vocabulary::initialize(&trainer, view, 2, &mut None, &progress).unwrap();
++                let plan = CorpusPlan::build(view, ids, &trainer, false).unwrap();
+                 let mut index =
+                     PairIndex::build(&plan, trainer.min_frequency, 2, false, &progress).unwrap();
+                 let mut corpus = plan.materialize();
+-                let Selection::Ready(batch) =
+-                    Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index).unwrap()
+-                else {
+-                    panic!("expected ordinary batch")
++                let priority = index.best().unwrap();
++                let pair = priority.pair();
++                let candidate = index.take(priority);
++                let token = vocabulary.merge_token(pair);
++                let replacement = vocabulary.resolve_merge(token).unwrap();
++                corpus.prepare_identity(pair, replacement);
++                let batch = Batch {
++                    rules: vec![Rule {
++                        replacement,
++                        candidate,
++                    }],
++                    reuse: false,
++                    floor: trainer.min_frequency.max(1),
+                 };
+                 assert_eq!(batch.rules.len(), 1);
+                 assert_eq!(batch.rules[0].candidate.positions.len(), repetitions);
+diff --git a/tokenizers/tk-train/src/trainers/bpe/mod.rs b/tokenizers/tk-train/src/trainers/bpe/mod.rs
+index b2f715b6..2f1c42ae 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/mod.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/mod.rs
+@@ -21,7 +21,7 @@ use ahash::{AHashMap, AHashSet};
+ use compact_str::CompactString;
+ use corpus::{Corpus, CorpusPlan};
+ use index::PairIndex;
+-use merge::{Batch, Selection};
++use merge::MergeOutcome;
+ use serde::{Deserialize, Serialize};
+ use std::collections::HashSet;
+ use tk_encode::vocab::bucket_added_vocabulary::AddedToken;
+@@ -41,11 +41,43 @@ use tk_encode::models::bpe::{BpeConfig, Merges, PipelineBPE, Vocab};
+ use tk_encode::parallelism::*;
+ use tk_encode::utils::progress::{ProgressBar, ProgressFormat, ProgressStyle};
+ 
++/// Builder-owned training options, consumed when constructing a BpeTrainer.
++struct Config {
++    min_frequency: u64,
++    vocab_size: usize,
++    show_progress: bool,
++    progress_format: ProgressFormat,
++    special_tokens: Vec<AddedToken>,
++    limit_alphabet: Option<usize>,
++    initial_alphabet: AHashSet<char>,
++    continuing_subword_prefix: Option<String>,
++    end_of_word_suffix: Option<String>,
++    max_token_length: Option<usize>,
++}
++
+ /// A `BpeTrainerBuilder` can be used to create a `BpeTrainer` with a custom
+ /// configuration.
+-#[derive(Default)]
+ pub struct BpeTrainerBuilder {
+-    trainer: BpeTrainer,
++    config: Config,
++}
++
++impl Default for BpeTrainerBuilder {
++    fn default() -> Self {
++        Self {
++            config: Config {
++                min_frequency: 0,
++                vocab_size: 30000,
++                show_progress: true,
++                progress_format: ProgressFormat::default(),
++                special_tokens: vec![],
++                limit_alphabet: None,
++                initial_alphabet: AHashSet::new(),
++                continuing_subword_prefix: None,
++                end_of_word_suffix: None,
++                max_token_length: None,
++            },
++        }
++    }
+ }
+ 
+ impl BpeTrainerBuilder {
+@@ -57,21 +89,21 @@ impl BpeTrainerBuilder {
+     /// Set the expected minimum frequency
+     #[must_use]
+     pub fn min_frequency(mut self, frequency: u64) -> Self {
+-        self.trainer.min_frequency = frequency;
++        self.config.min_frequency = frequency;
+         self
+     }
+ 
+     /// Set the vocabulary size
+     #[must_use]
+     pub fn vocab_size(mut self, size: usize) -> Self {
+-        self.trainer.vocab_size = size;
++        self.config.vocab_size = size;
+         self
+     }
+ 
+     /// Set whether to show progress
+     #[must_use]
+     pub fn show_progress(mut self, show: bool) -> Self {
+-        self.trainer.show_progress = show;
++        self.config.show_progress = show;
+         self
+     }
+ 
+@@ -83,21 +115,21 @@ impl BpeTrainerBuilder {
+     /// - `Silent`: No progress output
+     #[must_use]
+     pub fn progress_format(mut self, format: ProgressFormat) -> Self {
+-        self.trainer.progress_format = format;
++        self.config.progress_format = format;
+         self
+     }
+ 
+     /// Set the special tokens
+     #[must_use]
+     pub fn special_tokens(mut self, tokens: Vec<AddedToken>) -> Self {
+-        self.trainer.special_tokens = tokens;
++        self.config.special_tokens = tokens;
+         self
+     }
+ 
+     /// Set whether to limit the alphabet
+     #[must_use]
+     pub fn limit_alphabet(mut self, limit: usize) -> Self {
+-        self.trainer.limit_alphabet = Some(limit);
++        self.config.limit_alphabet = Some(limit);
+         self
+     }
+ 
+@@ -106,21 +138,21 @@ impl BpeTrainerBuilder {
+     pub fn initial_alphabet(mut self, alphabet: HashSet<char>) -> Self {
+         let mut initial_alphabet = AHashSet::with_capacity(alphabet.len());
+         initial_alphabet.extend(alphabet);
+-        self.trainer.initial_alphabet = initial_alphabet;
++        self.config.initial_alphabet = initial_alphabet;
+         self
+     }
+ 
+     /// Set the continuing_subword_prefix
+     #[must_use]
+     pub fn continuing_subword_prefix(mut self, prefix: String) -> Self {
+-        self.trainer.continuing_subword_prefix = Some(prefix);
++        self.config.continuing_subword_prefix = Some(prefix);
+         self
+     }
+ 
+     /// Set the end_of_word_suffix
+     #[must_use]
+     pub fn end_of_word_suffix(mut self, suffix: String) -> Self {
+-        self.trainer.end_of_word_suffix = Some(suffix);
++        self.config.end_of_word_suffix = Some(suffix);
+         self
+     }
+ 
+@@ -129,13 +161,25 @@ impl BpeTrainerBuilder {
+     /// See [`BpeTrainer::max_token_length`] for units and the initial-pair exception.
+     #[must_use]
+     pub fn max_token_length(mut self, max_token_length: Option<usize>) -> Self {
+-        self.trainer.max_token_length = max_token_length;
++        self.config.max_token_length = max_token_length;
+         self
+     }
+ 
+     /// Constructs the final BpeTrainer
+     pub fn build(self) -> BpeTrainer {
+-        self.trainer
++        BpeTrainer {
++            min_frequency: self.config.min_frequency,
++            vocab_size: self.config.vocab_size,
++            show_progress: self.config.show_progress,
++            progress_format: self.config.progress_format,
++            special_tokens: self.config.special_tokens,
++            limit_alphabet: self.config.limit_alphabet,
++            initial_alphabet: self.config.initial_alphabet,
++            continuing_subword_prefix: self.config.continuing_subword_prefix,
++            end_of_word_suffix: self.config.end_of_word_suffix,
++            max_token_length: self.config.max_token_length,
++            words: WordCounts::default(),
++        }
+     }
+ }
+ 
+@@ -200,19 +244,7 @@ pub struct BpeTrainer {
+ 
+ impl Default for BpeTrainer {
+     fn default() -> Self {
+-        Self {
+-            min_frequency: 0,
+-            vocab_size: 30000,
+-            show_progress: true,
+-            progress_format: ProgressFormat::default(),
+-            special_tokens: Vec::new(),
+-            limit_alphabet: None,
+-            initial_alphabet: AHashSet::new(),
+-            continuing_subword_prefix: None,
+-            end_of_word_suffix: None,
+-            max_token_length: None,
+-            words: WordCounts::default(),
+-        }
++        Self::builder().build()
+     }
+ }
+ 
+@@ -341,9 +373,9 @@ impl BpeTrainer {
+         progress: &Option<ProgressBar>,
+     ) -> Result<AttemptOutcome> {
+         // 1. Resolve the vocabulary and tokenize borrowed input into a corpus plan.
+-        let mut vocabulary = Vocabulary::initialize(self, words, workers, alphabet)?;
+-        self.update_progress(progress, words.len(), "Tokenize words");
+-        let plan = CorpusPlan::build(words, &mut vocabulary, self, reuse, progress)?;
++        let (mut vocabulary, ids) =
++            Vocabulary::initialize(self, words, workers, alphabet, progress)?;
++        let plan = CorpusPlan::build(words, ids, self, reuse)?;
+         self.finalize_progress(progress, plan.word_count(), "Tokenize words");
+ 
+         // 2. Freeze initial pairs first: their temporary counting buffers retire
+@@ -364,19 +396,14 @@ impl BpeTrainer {
+             // 3. Only attempts needing merges allocate resident endpoints.
+             corpus = plan.materialize();
+             while vocabulary.len() < self.vocab_size {
+-                let batch = match Batch::select(self, &mut vocabulary, &mut corpus, &mut index)? {
+-                    Selection::Finished => break,
+-                    Selection::Restart => {
++                let records = match self.merge_next(&mut vocabulary, &mut corpus, &mut index)? {
++                    MergeOutcome::Finished => break,
++                    MergeOutcome::RestartForReuse => {
+                         self.finalize_progress(progress, merges.len(), "Compute merges");
+                         return Ok(AttemptOutcome::RestartForReuse);
+                     }
+-                    Selection::Ready(batch) => batch,
++                    MergeOutcome::Committed(records) => records,
+                 };
+-                let records = batch.commit(
+-                    &mut corpus,
+-                    &mut index,
+-                    self.max_token_length.unwrap_or(usize::MAX),
+-                )?;
+                 let accepted = records.len();
+                 for record in records {
+                     merges.push(record.pair);
+diff --git a/tokenizers/tk-train/src/trainers/bpe/tests.rs b/tokenizers/tk-train/src/trainers/bpe/tests.rs
+index a3d3f126..4945a566 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/tests.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/tests.rs
+@@ -313,6 +313,57 @@ fn reuse_restart_keeps_the_alphabet_and_returns_only_the_successful_trace() {
+     }
+ }
+ 
++#[test]
++fn reuse_restart_preserves_a_tie_at_an_actual_alphabet_cutoff() {
++    let mut trainer = trainer();
++    trainer.end_of_word_suffix = Some("a".into());
++    trainer.limit_alphabet = Some(3);
++    trainer.initial_alphabet = ['a', 'b'].into();
++    // Four characters exceed the limit. a/b are forced; q/z tie for one slot.
++    // AA resolves to the activated suffix identity and forces a real restart.
++    let words = counts(&[("baaba", 1), ("q", 1), ("z", 1)]);
++    let view = WordCountsView::from_map(&words);
++    let mut retained = None;
++    rayon::ThreadPoolBuilder::new()
++        .num_threads(1)
++        .build()
++        .unwrap()
++        .install(|| {
++            assert!(matches!(
++                trainer
++                    .train_attempt(view, 1, false, &mut retained, &None)
++                    .unwrap(),
++                AttemptOutcome::RestartForReuse
++            ));
++        });
++    let selected = retained.clone().unwrap();
++    assert_eq!(selected.len(), 3);
++    assert!(selected.contains(&'a') && selected.contains(&'b'));
++    assert_ne!(selected.contains(&'q'), selected.contains(&'z'));
++    let mut expected = None;
++    for workers in [1, 4, 8] {
++        rayon::ThreadPoolBuilder::new()
++            .num_threads(workers)
++            .build()
++            .unwrap()
++            .install(|| {
++                let AttemptOutcome::Complete(result) = trainer
++                    .train_attempt(view, workers, true, &mut retained, &None)
++                    .unwrap()
++                else {
++                    panic!("reuse must complete")
++                };
++                assert_eq!(retained.as_ref().unwrap(), &selected);
++                let actual = (result.vocab, result.merges, result.trace);
++                if let Some(expected) = &expected {
++                    assert_eq!(&actual, expected);
++                } else {
++                    expected = Some(actual);
++                }
++            });
++    }
++}
++
+ #[test]
+ fn restart_discards_ids_selected_after_a_committed_round() {
+     let mut trainer = trainer();
+@@ -328,18 +379,17 @@ fn restart_discards_ids_selected_after_a_committed_round() {
+             .install(|| {
+                 let view = WordCountsView::from_map(&words);
+                 let progress = trainer.setup_progress();
+-                let mut vocabulary =
+-                    Vocabulary::initialize(&trainer, view, workers, &mut None).unwrap();
+-                let plan =
+-                    CorpusPlan::build(view, &mut vocabulary, &trainer, false, &progress).unwrap();
++                let (mut vocabulary, ids) =
++                    Vocabulary::initialize(&trainer, view, workers, &mut None, &progress).unwrap();
++                let plan = CorpusPlan::build(view, ids, &trainer, false).unwrap();
+                 let mut index = PairIndex::build(&plan, 1, workers, false, &progress).unwrap();
+                 let mut corpus = plan.materialize();
+-                let Selection::Ready(batch) =
+-                    Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index).unwrap()
++                let MergeOutcome::Committed(records) = trainer
++                    .merge_next(&mut vocabulary, &mut corpus, &mut index)
++                    .unwrap()
+                 else {
+                     panic!("reserved XY must commit alone")
+                 };
+-                let records = batch.commit(&mut corpus, &mut index, usize::MAX).unwrap();
+                 assert_eq!(records.len(), 1);
+                 assert_eq!((records[0].count, records[0].replacement), (3, 0));
+                 let committed_len = vocabulary.len();
+@@ -347,8 +397,10 @@ fn restart_discards_ids_selected_after_a_committed_round() {
+                 // decorated B identity. The entire attempt, including UV's ID,
+                 // must be discarded rather than recording either tentative rule.
+                 assert!(matches!(
+-                    Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index).unwrap(),
+-                    Selection::Restart
++                    trainer
++                        .merge_next(&mut vocabulary, &mut corpus, &mut index)
++                        .unwrap(),
++                    MergeOutcome::RestartForReuse
+                 ));
+                 assert_eq!(vocabulary.len(), committed_len + 1);
+             });
+@@ -358,21 +410,22 @@ fn restart_discards_ids_selected_after_a_committed_round() {
+ }
+ 
+ #[test]
+-fn ready_batch_applies_independent_rules_together() {
++fn merge_next_commits_independent_rules_together() {
+     let trainer = trainer();
+     let words = counts(&[("ab", 10), ("cd", 9), ("ef", 8)]);
+     let view = WordCountsView::from_map(&words);
+     let progress = trainer.setup_progress();
+-    let mut vocabulary = Vocabulary::initialize(&trainer, view, 4, &mut None).unwrap();
+-    let plan = CorpusPlan::build(view, &mut vocabulary, &trainer, false, &progress).unwrap();
++    let (mut vocabulary, ids) =
++        Vocabulary::initialize(&trainer, view, 4, &mut None, &progress).unwrap();
++    let plan = CorpusPlan::build(view, ids, &trainer, false).unwrap();
+     let mut index = PairIndex::build(&plan, 1, 4, false, &progress).unwrap();
+     let mut corpus = plan.materialize();
+-    let Selection::Ready(batch) =
+-        Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index).unwrap()
++    let MergeOutcome::Committed(records) = trainer
++        .merge_next(&mut vocabulary, &mut corpus, &mut index)
++        .unwrap()
+     else {
+         panic!("expected ready batch")
+     };
+-    let records = batch.commit(&mut corpus, &mut index, usize::MAX).unwrap();
+     assert_eq!(
+         records
+             .into_iter()
+@@ -381,8 +434,10 @@ fn ready_batch_applies_independent_rules_together() {
+         [((0, 1), 10, 6), ((2, 3), 9, 7), ((4, 5), 8, 8)]
+     );
+     assert!(matches!(
+-        Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index).unwrap(),
+-        Selection::Finished
++        trainer
++            .merge_next(&mut vocabulary, &mut corpus, &mut index)
++            .unwrap(),
++        MergeOutcome::Finished
+     ));
+ }
+ 
+@@ -941,8 +996,7 @@ fn symbols_preserve_short_circuiting_and_utf8_affix_boundaries() {
+         }
+         let view = WordCountsView::from_map(&words);
+         let progress = trainer.setup_progress();
+-        let mut vocabulary = Vocabulary::initialize(&trainer, view, 1, &mut None).unwrap();
+-        let ids = vocabulary.initial_ids(view, &progress).unwrap();
++        let (_, ids) = Vocabulary::initialize(&trainer, view, 1, &mut None, &progress).unwrap();
+         for (text, expected) in [
+             (
+                 "é🙂",
+@@ -973,7 +1027,7 @@ fn symbols_preserve_short_circuiting_and_utf8_affix_boundaries() {
+         });
+         assert_eq!(reason, ControlFlow::Break("stop"));
+         assert_eq!(calls, 2);
+-        let plan = CorpusPlan::build(view, &mut vocabulary, &trainer, true, &progress).unwrap();
++        let plan = CorpusPlan::build(view, ids, &trainer, true).unwrap();
+         let mut edges = 0;
+         let error = plan
+             .initial_edges(0..plan.word_count(), |_, _, _| {
+@@ -998,8 +1052,7 @@ fn initial_edges_preserve_filtered_coordinates_weights_and_errors() {
+         }
+         let view = WordCountsView::from_map(&words);
+         let progress = trainer.setup_progress();
+-        let mut vocabulary = Vocabulary::initialize(&trainer, view, 1, &mut None).unwrap();
+-        let ids = vocabulary.initial_ids(view, &progress).unwrap();
++        let (_, ids) = Vocabulary::initialize(&trainer, view, 1, &mut None, &progress).unwrap();
+         let id = |character, first, last| ids.id(character, first, last).unwrap();
+         let expected = vec![
+             ((id('é', false, false), id('🙂', false, false)), 1, 7),
+@@ -1007,7 +1060,7 @@ fn initial_edges_preserve_filtered_coordinates_weights_and_errors() {
+             ((id('🙂', false, false), id('é', false, true)), 5, 6),
+             ((id('🙂', true, false), id('é', false, true)), 8, 5),
+         ];
+-        let plan = CorpusPlan::build(view, &mut vocabulary, &trainer, true, &progress).unwrap();
++        let plan = CorpusPlan::build(view, ids, &trainer, true).unwrap();
+         let mut actual = Vec::new();
+         plan.initial_edges(0..plan.word_count(), |pair, coordinate, weight| {
+             actual.push((pair, coordinate, weight));
+diff --git a/tokenizers/tk-train/src/trainers/bpe/vocabulary.rs b/tokenizers/tk-train/src/trainers/bpe/vocabulary.rs
+index e279804c..55dc0df3 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/vocabulary.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/vocabulary.rs
+@@ -19,10 +19,7 @@ pub(super) struct Vocabulary {
+     // Append-only insertion indices are token IDs. Store each string once while
+     // supporting both text lookup and direct lookup by ID with the same hasher.
+     tokens: IndexSet<CompactString, RandomState>,
+-    initial_spans: Vec<usize>,
+     prefix: Option<String>,
+-    suffix: Option<String>,
+-    plain_ids_resolved: bool,
+ }
+ 
+ /// Canonical merge text plus any existing ID, before identity resolution.
+@@ -36,6 +33,7 @@ pub(super) struct MergeToken {
+ /// Both stages scan the same filtered alphabet and affix interpretation, preserving
+ /// identical token sequences without interning strings during parallel scans.
+ pub(super) struct InitialTokenIds {
++    spans: Vec<usize>,
+     characters: Vec<u32>,
+     decorated: Vec<[u32; 3]>,
+     prefix: bool,
+@@ -49,17 +47,16 @@ impl Vocabulary {
+         word_counts: WordCountsView<'_>,
+         workers: usize,
+         retained_alphabet: &mut Option<Vec<char>>,
+-    ) -> Result<Self> {
++        progress: &Option<ProgressBar>,
++    ) -> Result<(Self, InitialTokenIds)> {
+         let mut vocabulary = Self {
+             tokens: IndexSet::with_capacity_and_hasher(trainer.vocab_size, RandomState::default()),
+-            initial_spans: Vec::new(),
+             prefix: trainer.continuing_subword_prefix.clone(),
+-            suffix: trainer.end_of_word_suffix.clone(),
+-            plain_ids_resolved: false,
+         };
++        let mut spans = Vec::new();
+         // 1. Reserve special IDs before inserting the codepoint-ordered alphabet.
+         for token in &trainer.special_tokens {
+-            vocabulary.intern(token.content.as_str())?;
++            vocabulary.intern(token.content.as_str(), &mut spans)?;
+         }
+ 
+         // 2. Preserve the limited selector, or collect all observed characters.
+@@ -69,12 +66,22 @@ impl Vocabulary {
+                 retained_alphabet.get_or_insert_with(|| select_alphabet(trainer, word_counts));
+             for &character in characters.iter() {
+                 let mut utf8 = [0; 4];
+-                vocabulary.intern(character.encode_utf8(&mut utf8))?;
++                vocabulary.intern(character.encode_utf8(&mut utf8), &mut spans)?;
+             }
+         } else {
+-            vocabulary.initialize_unlimited_alphabet(trainer, word_counts, workers)?;
++            vocabulary.initialize_unlimited_alphabet(trainer, word_counts, workers, &mut spans)?;
+         }
+-        Ok(vocabulary)
++        // Resolve decorations before CorpusPlan sorts input by weight. Keep the
++        // unlimited plain-alphabet shortcut and the original progress boundary.
++        trainer.update_progress(progress, word_counts.len(), "Tokenize words");
++        let ids = vocabulary.initial_ids(
++            word_counts,
++            spans,
++            trainer.limit_alphabet.is_none(),
++            trainer.end_of_word_suffix.as_deref(),
++            progress,
++        )?;
++        Ok((vocabulary, ids))
+     }
+ 
+     // With no limit, a parallel presence bitmap replaces weighted frequency
+@@ -84,6 +91,7 @@ impl Vocabulary {
+         trainer: &BpeTrainer,
+         word_counts: WordCountsView<'_>,
+         workers: usize,
++        spans: &mut Vec<usize>,
+     ) -> Result<()> {
+         let observed = observed_characters(word_counts, workers);
+         let mut present = observed.clone();
+@@ -94,19 +102,18 @@ impl Vocabulary {
+             let character =
+                 char::from_u32(codepoint as u32).expect("alphabet bits come from valid characters");
+             let mut utf8 = [0; 4];
+-            let id = self.intern(character.encode_utf8(&mut utf8))?;
+-            self.initial_spans[id as usize] = usize::from(observed.contains(codepoint));
++            let id = self.intern(character.encode_utf8(&mut utf8), spans)?;
++            spans[id as usize] = usize::from(observed.contains(codepoint));
+         }
+-        self.plain_ids_resolved = true;
+         Ok(())
+     }
+ 
+-    fn intern(&mut self, text: &str) -> Result<u32> {
++    fn intern(&mut self, text: &str, spans: &mut Vec<usize>) -> Result<u32> {
+         if let Some(id) = self.tokens.get_index_of(text) {
+             return Ok(id as u32);
+         }
+         let id = self.insert_new_token(CompactString::from(text))?;
+-        self.initial_spans.push(0);
++        spans.push(0);
+         Ok(id)
+     }
+ 
+@@ -122,18 +129,22 @@ impl Vocabulary {
+         Ok(id)
+     }
+ 
+-    pub(super) fn initial_ids(
++    fn initial_ids(
+         &mut self,
+         word_counts: WordCountsView<'_>,
++        spans: Vec<usize>,
++        plain_ids_resolved: bool,
++        suffix: Option<&str>,
+         progress: &Option<ProgressBar>,
+     ) -> Result<InitialTokenIds> {
+         // 1. Map existing character IDs before any decorated identities are inserted.
+         let mut ids = InitialTokenIds {
++            spans,
+             characters: vec![WORD_SEPARATOR_ID; 0x110000],
+             decorated: Vec::new(),
+             prefix: self.prefix.as_deref().is_some_and(|p| !p.is_empty()),
+-            suffix: self.suffix.as_deref().is_some_and(|s| !s.is_empty()),
+-            complete_alphabet: self.plain_ids_resolved,
++            suffix: suffix.is_some_and(|s| !s.is_empty()),
++            complete_alphabet: plain_ids_resolved,
+         };
+         for (id, token) in self.tokens.iter().enumerate() {
+             let mut chars = token.chars();
+@@ -147,7 +158,7 @@ impl Vocabulary {
+             ids.decorated
+                 .resize(self.tokens.len(), [WORD_SEPARATOR_ID; 3]);
+         }
+-        if !ids.prefix && !ids.suffix && self.plain_ids_resolved {
++        if !ids.prefix && !ids.suffix && plain_ids_resolved {
+             if let Some(p) = progress {
+                 p.inc(word_counts.len() as u64);
+             }
+@@ -156,10 +167,10 @@ impl Vocabulary {
+ 
+         // 2. Activate retained symbols in input traversal order. Sorting words first
+         // would change the IDs allocated for previously unseen decorated strings.
+-        self.initial_spans.fill(0);
++        ids.spans.fill(0);
+         let mut decorated = String::new();
+         for (index, word) in word_counts.keys().enumerate() {
+-            self.activate_word(word, &mut ids, &mut decorated)?;
++            self.activate_word(word, &mut ids, suffix, &mut decorated)?;
+             if (index + 1) % 1024 == 0
+                 && let Some(p) = progress
+             {
+@@ -176,6 +187,7 @@ impl Vocabulary {
+         &mut self,
+         word: &str,
+         ids: &mut InitialTokenIds,
++        suffix: Option<&str>,
+         decorated: &mut String,
+     ) -> Result<()> {
+         for (byte, character) in word.char_indices() {
+@@ -184,8 +196,8 @@ impl Vocabulary {
+                 continue;
+             }
+             let flags = ids.decoration_flags(byte == 0, byte + character.len_utf8() == word.len());
+-            let id = self.decorated_id(ids, plain_id, character, flags, decorated)?;
+-            self.initial_spans[id as usize] = 1;
++            let id = self.decorated_id(ids, suffix, plain_id, flags, decorated)?;
++            ids.spans[id as usize] = 1;
+         }
+ 
+         Ok(())
+@@ -196,8 +208,8 @@ impl Vocabulary {
+     fn decorated_id(
+         &mut self,
+         ids: &mut InitialTokenIds,
++        suffix: Option<&str>,
+         plain_id: u32,
+-        character: char,
+         flags: usize,
+         decorated: &mut String,
+     ) -> Result<u32> {
+@@ -217,23 +229,15 @@ impl Vocabulary {
+                     .expect("prefix flag requires a prefix"),
+             );
+         }
+-        decorated.push(character);
++        decorated.push_str(self.tokens[plain_id as usize].as_str());
+         if flags & 2 != 0 {
+-            decorated.push_str(
+-                self.suffix
+-                    .as_deref()
+-                    .expect("suffix flag requires a suffix"),
+-            );
++            decorated.push_str(suffix.expect("suffix flag requires a suffix"));
+         }
+-        let id = self.intern(decorated)?;
++        let id = self.intern(decorated, &mut ids.spans)?;
+         ids.decorated[plain_id as usize][flags - 1] = id;
+         Ok(id)
+     }
+ 
+-    pub(super) fn take_initial_spans(&mut self) -> Vec<usize> {
+-        std::mem::take(&mut self.initial_spans)
+-    }
+-
+     pub(super) fn len(&self) -> usize {
+         self.tokens.len()
+     }
+@@ -286,6 +290,15 @@ impl Vocabulary {
+ }
+ 
+ impl InitialTokenIds {
++    pub(super) fn token_count(&self) -> usize {
++        self.spans.len()
++    }
++
++    // Move activation spans and retire symbol lookup tables before merge rounds.
++    pub(super) fn into_spans(self) -> Vec<usize> {
++        self.spans
++    }
++
+     /// Interpret filtering and decorations against original UTF-8 coordinates.
+     /// The plain path chooses its iterator once and avoids per-symbol affix checks.
+     #[inline]
+@@ -405,6 +418,75 @@ mod tests {
+     use super::*;
+     use ahash::AHashSet;
+ 
++    #[test]
++    fn initialization_completes_decorated_ids_before_weight_sorting() {
++        use super::super::word_counts::WordCounts;
++        let words = WordCounts::from_entries(
++            [("qé🙂z", 1), ("🙂é", 9)]
++                .into_iter()
++                .map(|(word, count)| (word.into(), count))
++                .collect(),
++        );
++        let mut trainer = BpeTrainer::new(1, 32);
++        trainer.show_progress = false;
++        trainer.limit_alphabet = Some(2);
++        trainer.initial_alphabet = ['é', '🙂'].into();
++        trainer.special_tokens = vec![tk_encode::vocab::bucket_added_vocabulary::AddedToken::from(
++            "<s>", true,
++        )];
++        trainer.continuing_subword_prefix = Some("前".into());
++        trainer.end_of_word_suffix = Some("尾".into());
++        let (vocabulary, ids) =
++            Vocabulary::initialize(&trainer, words.view(), 4, &mut None, &None).unwrap();
++        // Four observed characters exceed the two-character cutoff. Decorations
++        // use original byte boundaries even after q/z are filtered away.
++        assert_eq!(
++            vocabulary
++                .tokens
++                .iter()
++                .map(|s| s.as_str())
++                .collect::<Vec<_>>(),
++            ["<s>", "é", "🙂", "前é", "前🙂", "前é尾"]
++        );
++        assert_eq!(ids.symbols("qé🙂z").collect::<Vec<_>>(), [3, 4]);
++        assert_eq!(ids.symbols("🙂é").collect::<Vec<_>>(), [2, 5]);
++        assert_eq!(ids.token_count(), vocabulary.len());
++        let pointer = ids.spans.as_ptr();
++        let spans = ids.into_spans();
++        assert_eq!(spans.as_ptr(), pointer);
++        assert_eq!(spans, [0, 0, 1, 1, 1, 1]);
++    }
++
++    #[test]
++    fn cutoff_ties_reuse_the_retained_alphabet_without_reselection() {
++        use super::super::word_counts::WordCounts;
++        let words = WordCounts::from_entries(
++            [("a", 1), ("b", 1), ("猫", 1), ("🙂", 1)]
++                .into_iter()
++                .map(|(word, count)| (word.into(), count))
++                .collect(),
++        );
++        let mut trainer = BpeTrainer::new(1, 32);
++        trainer.show_progress = false;
++        trainer.limit_alphabet = Some(2);
++        let mut alphabet = None;
++        let (fresh, fresh_ids) =
++            Vocabulary::initialize(&trainer, words.view(), 1, &mut alphabet, &None).unwrap();
++        let retained = alphabet.clone();
++        assert_eq!(retained.as_ref().unwrap().len(), 2);
++        let (reuse, reuse_ids) =
++            Vocabulary::initialize(&trainer, words.view(), 4, &mut alphabet, &None).unwrap();
++        assert_eq!(alphabet, retained);
++        assert_eq!(fresh.tokens, reuse.tokens);
++        assert_eq!(fresh_ids.spans, reuse_ids.spans);
++        for word in words.view().keys() {
++            assert_eq!(
++                fresh_ids.symbols(word).collect::<Vec<_>>(),
++                reuse_ids.symbols(word).collect::<Vec<_>>()
++            );
++        }
++    }
++
+     #[test]
+     fn observed_reduction_preserves_presence_activation_and_model_ids() {
+         for input in [
+@@ -437,14 +519,12 @@ mod tests {
+                                 .collect::<AHashSet<_>>(),
+                             expected
+                         );
+-                        let vocabulary =
+-                            Vocabulary::initialize(&trainer, view, workers, &mut None).unwrap();
++                        let (vocabulary, ids) =
++                            Vocabulary::initialize(&trainer, view, workers, &mut None, &None)
++                                .unwrap();
+                         for (id, token) in vocabulary.tokens.iter().enumerate() {
+                             let character = token.chars().next().unwrap();
+-                            assert_eq!(
+-                                vocabulary.initial_spans[id],
+-                                usize::from(expected.contains(&character))
+-                            );
++                            assert_eq!(ids.spans[id], usize::from(expected.contains(&character)));
+                         }
+                     });
+                 assert_eq!(
