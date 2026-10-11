@@ -380,8 +380,8 @@ enum FreshMatches {
 
 struct SelectedRules {
     selected: AHashMap<Pair, u32>,
-    heads: Vec<Head>,
-    tails: Vec<bool>,
+    heads: Box<[Head]>,
+    tails: Box<[bool]>,
 }
 
 impl SelectedRules {
@@ -392,8 +392,8 @@ impl SelectedRules {
             .iter()
             .map(|rule| (rule.pair(), rule.replacement))
             .collect();
-        let mut heads = vec![Head::Empty; id_count];
-        let mut tails = vec![false; id_count];
+        let mut heads = vec![Head::Empty; id_count].into_boxed_slice();
+        let mut tails = vec![false; id_count].into_boxed_slice();
         for rule in &batch.rules {
             let slot = &mut heads[rule.pair().0 as usize];
             *slot = match slot {

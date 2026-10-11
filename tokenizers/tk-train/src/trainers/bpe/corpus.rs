@@ -13,13 +13,13 @@ use tk_encode::{Result, models::bpe::Pair};
 /// Preparation reads a joined snapshot; application writes only disjoint matches.
 pub(super) struct Corpus {
     tokens: Slots,
-    starts: Vec<usize>,
-    weight_regions: Vec<(usize, u64)>,
+    starts: Box<[usize]>,
+    weight_regions: Box<[(usize, u64)]>,
     unit_region: Option<(usize, usize)>,
     // Nonzero marks an activated ID. Until alias geometry diverges it also
     // stores that ID's span; afterwards occurrence_spans owns all geometry.
     spans: Vec<usize>,
-    occurrence_spans: Option<Vec<AtomicUsize>>,
+    occurrence_spans: Option<Box<[AtomicUsize]>>,
     whole_words: bool,
 }
 
@@ -42,11 +42,11 @@ impl Match {
 /// Defers the resident token plane until temporary counting buffers retire;
 /// materialization consumes the plan and transfers its metadata to the Corpus.
 pub(super) struct CorpusPlan<'input> {
-    starts: Vec<usize>,
-    weight_regions: Vec<(usize, u64)>,
+    starts: Box<[usize]>,
+    weight_regions: Box<[(usize, u64)]>,
     unit_region: Option<(usize, usize)>,
     whole_words: bool,
-    words: Vec<(&'input CompactString, &'input u64)>,
+    words: Box<[(&'input CompactString, &'input u64)]>,
     ids: InitialTokenIds,
     length: usize,
     slot_bound: usize,
@@ -62,6 +62,7 @@ impl<'input> CorpusPlan<'input> {
     ) -> Result<Self> {
         let mut words: Vec<_> = words.iter().collect();
         words.par_sort_unstable_by(|a, b| b.1.cmp(a.1));
+        let words = words.into_boxed_slice();
         let mut starts: Vec<_> = words
             .par_iter()
             .map(|(word, _)| ids.symbol_count(word))
@@ -105,8 +106,8 @@ impl<'input> CorpusPlan<'input> {
             });
         let slot_bound = ids.token_count().max(trainer.vocab_size);
         Ok(Self {
-            starts,
-            weight_regions,
+            starts: starts.into_boxed_slice(),
+            weight_regions: weight_regions.into_boxed_slice(),
             unit_region,
             whole_words: trainer.max_token_length.is_some(),
             words,
@@ -188,7 +189,11 @@ impl<'input> CorpusPlan<'input> {
         // Only historical reuse cohorts need a word directory after counting.
         Corpus {
             tokens,
-            starts: if self.reuse { self.starts } else { Vec::new() },
+            starts: if self.reuse {
+                self.starts
+            } else {
+                Box::default()
+            },
             weight_regions: self.weight_regions,
             unit_region: self.unit_region,
             spans: self.ids.into_spans(),
@@ -365,7 +370,7 @@ impl Corpus {
                 p += n;
             }
         }
-        self.occurrence_spans = Some(values);
+        self.occurrence_spans = Some(values.into_boxed_slice());
     }
 
     // Call only after all preparation readers join. Matches own disjoint endpoint
@@ -390,19 +395,25 @@ impl Corpus {
 /// A reserved u16 sentinel leaves real IDs 0..65534 available. Wider vocabularies
 /// use u32 directly; both planes have the same safe endpoint access protocol.
 enum Slots {
-    Narrow(Vec<AtomicU16>),
-    Wide(Vec<AtomicU32>),
+    Narrow(Box<[AtomicU16]>),
+    Wide(Box<[AtomicU32]>),
 }
 
 impl Slots {
     fn new(length: usize, vocabulary_bound: usize) -> Self {
         if vocabulary_bound <= u16::MAX as usize {
-            Self::Narrow((0..length).map(|_| AtomicU16::new(u16::MAX)).collect())
+            Self::Narrow(
+                (0..length)
+                    .map(|_| AtomicU16::new(u16::MAX))
+                    .collect::<Vec<_>>()
+                    .into_boxed_slice(),
+            )
         } else {
             Self::Wide(
                 (0..length)
                     .map(|_| AtomicU32::new(WORD_SEPARATOR_ID))
-                    .collect(),
+                    .collect::<Vec<_>>()
+                    .into_boxed_slice(),
             )
         }
     }
@@ -493,8 +504,8 @@ mod tests {
             }
         }
         for (starts, length) in layouts {
-            plan.words = vec![(&text, &weight); starts.len()];
-            plan.starts = starts;
+            plan.words = vec![(&text, &weight); starts.len()].into_boxed_slice();
+            plan.starts = starts.into_boxed_slice();
             plan.length = length;
             let mut budgets = vec![0, 1, 2, 3, 4, 5, 7, 8, 16, 17, 63, 64, 65, 1024, usize::MAX];
             if let Some(&start) = plan.starts.first() {
@@ -518,9 +529,9 @@ mod tests {
         }
 
         // Slot widths 3, 4, 2, 6: exact-budget boundaries stay in the segment.
-        plan.starts = vec![1, 4, 8, 10];
+        plan.starts = vec![1, 4, 8, 10].into_boxed_slice();
         plan.length = 16;
-        plan.words = vec![(&text, &weight); 4];
+        plan.words = vec![(&text, &weight); 4].into_boxed_slice();
         assert_eq!(plan.initial_ranges(7), vec![0..2, 2..3, 3..4]);
         assert_eq!(plan.initial_ranges(9), vec![0..3, 3..4]);
         assert_eq!(plan.initial_ranges(15), vec![0..4]);

@@ -77,7 +77,7 @@ struct Shard {
 /// Each pair has one count owner; queued priorities are repaired lazily at the head.
 /// Fresh counts retire below the floor; reuse retains the per-action signed ledger.
 pub(super) struct PairIndex {
-    shards: Vec<Shard>,
+    shards: Box<[Shard]>,
     queue: OctonaryHeap<Candidate>,
     floor: u64,
     reuse: bool,
@@ -133,7 +133,7 @@ impl PairIndex {
             .collect::<Result<Vec<_>>>()?;
         let (shards, candidates): (Vec<_>, Vec<_>) = owners.into_iter().unzip();
         Ok(Self {
-            shards,
+            shards: shards.into_boxed_slice(),
             queue: candidates.into_iter().flatten().collect(),
             floor: minimum.max(1),
             reuse,

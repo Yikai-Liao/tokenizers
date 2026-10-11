@@ -27,8 +27,8 @@ pub(super) struct Vocabulary {
 /// identical token sequences without interning strings during parallel scans.
 pub(super) struct InitialTokenIds {
     spans: Vec<usize>,
-    characters: Vec<u32>,
-    decorated: Vec<[u32; 3]>,
+    characters: Box<[u32]>,
+    decorated: Box<[[u32; 3]]>,
     prefix: bool,
     suffix: bool,
     complete_alphabet: bool,
@@ -131,8 +131,8 @@ impl Vocabulary {
         // 1. Map existing character IDs before any decorated identities are inserted.
         let mut ids = InitialTokenIds {
             spans,
-            characters: vec![WORD_SEPARATOR_ID; 0x110000],
-            decorated: Vec::new(),
+            characters: vec![WORD_SEPARATOR_ID; 0x110000].into_boxed_slice(),
+            decorated: Box::default(),
             prefix: self.prefix.as_deref().is_some_and(|p| !p.is_empty()),
             suffix: suffix.is_some_and(|s| !s.is_empty()),
             complete_alphabet: plain_ids_resolved,
@@ -146,8 +146,9 @@ impl Vocabulary {
             }
         }
         if ids.prefix || ids.suffix {
-            ids.decorated
-                .resize(self.tokens.len(), [WORD_SEPARATOR_ID; 3]);
+            let mut decorated = Vec::new();
+            decorated.resize(self.tokens.len(), [WORD_SEPARATOR_ID; 3]);
+            ids.decorated = decorated.into_boxed_slice();
         }
         if !ids.prefix && !ids.suffix && plain_ids_resolved {
             if let Some(p) = progress {
