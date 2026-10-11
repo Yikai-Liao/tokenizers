@@ -360,15 +360,6 @@ impl Batch {
     }
 }
 
-/// Lookup state for a selected head: absent, one right endpoint, or several rules.
-/// Shared heads fall back to the selected-pair table without using a token sentinel.
-#[derive(Clone, Copy)]
-enum Head {
-    Empty,
-    Unique { right: u32, replacement: u32 },
-    Shared,
-}
-
 /// Shared read-only lookup for fresh preparation against one joined corpus snapshot.
 /// Resolves selected endpoints once; tasks own their directories, writes and
 /// neighbor events. Self-pairs also retain nonoverlapping left-to-right starts.
@@ -381,52 +372,8 @@ struct FreshSnapshot<'a> {
 }
 
 enum FreshMatches {
-    Ordinary(SelectedRules),
+    Ordinary(AHashMap<Pair, u32>),
     SelfPair(Vec<u64>),
-}
-
-struct SelectedRules {
-    selected: AHashMap<Pair, u32>,
-    heads: Box<[Head]>,
-    tails: Box<[bool]>,
-}
-
-impl SelectedRules {
-    fn new(batch: &Batch, id_count: usize) -> Self {
-        // Resolve shared endpoints once for all tasks in an ordinary batch.
-        let selected: AHashMap<_, _> = batch
-            .rules
-            .iter()
-            .map(|rule| (rule.pair(), rule.replacement))
-            .collect();
-        let mut heads = vec![Head::Empty; id_count].into_boxed_slice();
-        let mut tails = vec![false; id_count].into_boxed_slice();
-        for rule in &batch.rules {
-            let slot = &mut heads[rule.pair().0 as usize];
-            *slot = match slot {
-                Head::Empty => Head::Unique {
-                    right: rule.pair().1,
-                    replacement: rule.replacement,
-                },
-                _ => Head::Shared,
-            };
-            tails[rule.pair().1 as usize] = true;
-        }
-
-        Self {
-            selected,
-            heads,
-            tails,
-        }
-    }
-
-    fn replacement(&self, pair: Pair) -> Option<u32> {
-        match self.heads.get(pair.0 as usize) {
-            Some(&Head::Unique { right, replacement }) => (right == pair.1).then_some(replacement),
-            Some(Head::Shared) => self.selected.get(&pair).copied(),
-            _ => None,
-        }
-    }
 }
 
 impl<'a> FreshSnapshot<'a> {
@@ -450,7 +397,13 @@ impl<'a> FreshSnapshot<'a> {
             }
             FreshMatches::SelfPair(starts)
         } else {
-            FreshMatches::Ordinary(SelectedRules::new(batch, corpus.id_count()))
+            FreshMatches::Ordinary(
+                batch
+                    .rules
+                    .iter()
+                    .map(|rule| (rule.pair(), rule.replacement))
+                    .collect(),
+            )
         };
         Self {
             batch,
@@ -558,11 +511,7 @@ impl<'a> FreshSnapshot<'a> {
                         && starts.binary_search(&((p - matched.span()) as u64)).is_ok()
                 }
                 FreshMatches::Ordinary(selected) => {
-                    before != 0
-                        && selected.tails[prior as usize]
-                        && selected
-                            .replacement((self.corpus.token(before - 1), prior))
-                            .is_some()
+                    before != 0 && selected.contains_key(&(self.corpus.token(before - 1), prior))
                 }
             };
             if !merging {
@@ -585,15 +534,12 @@ impl<'a> FreshSnapshot<'a> {
                     .binary_search(&(matched.after as u64))
                     .is_ok()
                     .then_some(neighbors.rule.replacement),
-                FreshMatches::Ordinary(selected)
-                    if !matches!(selected.heads[next as usize], Head::Empty) =>
-                {
-                    selected.replacement((
+                FreshMatches::Ordinary(selected) => selected
+                    .get(&(
                         next,
                         self.corpus.token(matched.after + self.corpus.id_span(next)),
                     ))
-                }
-                FreshMatches::Ordinary(_) => None,
+                    .copied(),
             };
             let born = replacement.unwrap_or(next);
             neighbors.record(
@@ -832,6 +778,101 @@ mod tests {
         };
         assert_eq!(starts.len(), job.frozen.len());
         corpus.apply_merges(starts, job.replacement);
+    }
+
+    #[test]
+    fn shared_selected_endpoints_emit_adjacent_boundaries_once() {
+        let trainer = BpeTrainer::builder()
+            .min_frequency(1)
+            .show_progress(false)
+            .build();
+        let words = [
+            ("abacdbdc".into(), 1),
+            ("ab".into(), 10),
+            ("ac".into(), 10),
+            ("db".into(), 10),
+            ("dc".into(), 10),
+            ("xabz".into(), 1),
+        ]
+        .into_iter()
+        .collect();
+        let view = WordCountsView::from_map(&words);
+        let (mut vocabulary, ids) = Vocabulary::initialize(
+            &trainer,
+            view,
+            &super::super::vocabulary::select_alphabet(&trainer, view, 1),
+            &None,
+        )
+        .unwrap();
+        let plan = CorpusPlan::build(view, ids, &trainer, false).unwrap();
+        let mut index = PairIndex::build(&plan, 1, 1, false, &None).unwrap();
+        let mut corpus = plan.materialize();
+        let mut batch = Batch {
+            rules: Vec::new(),
+            reuse: false,
+            floor: 1,
+        };
+        // Shared heads a/d and shared tails b/c are all compatible. Their
+        // adjacent occurrences must publish one boundary using both replacements.
+        for pair in [(0, 1), (0, 2), (3, 1), (3, 2)] {
+            let priority = index.best().unwrap();
+            assert_eq!(priority.pair(), pair);
+            let (replacement, _) = vocabulary.resolve_merge(pair).unwrap();
+            corpus.prepare_identity(pair, replacement);
+            batch.rules.push(Rule {
+                replacement,
+                candidate: index.take(priority),
+            });
+        }
+        let snapshot = FreshSnapshot::new(&batch, &corpus, usize::MAX);
+        let jobs: Vec<_> = snapshot
+            .tasks()
+            .into_iter()
+            .map(|(rank, source)| {
+                snapshot
+                    .prepare_job(&mut Directories::default(), rank, source)
+                    .unwrap()
+            })
+            .collect();
+        let mut removals = Vec::new();
+        let mut births = Vec::new();
+        for job in &jobs {
+            let mut saw_right = false;
+            for change in &job.changes {
+                let right = change.born.0 == job.replacement;
+                assert!(right || !saw_right, "left events precede right events");
+                saw_right |= right;
+                if change.removed_weight != 0 {
+                    removals.push((change.removed, change.removed_weight));
+                }
+                if change.born_weight != 0 {
+                    births.push((change.born, change.born_weight));
+                }
+            }
+        }
+        removals.sort_unstable();
+        births.sort_unstable();
+        assert_eq!(
+            removals,
+            [
+                ((1, 0), 1),
+                ((1, 3), 1),
+                ((1, 5), 1),
+                ((2, 3), 1),
+                ((4, 0), 1)
+            ]
+        );
+        assert_eq!(
+            births,
+            [
+                ((4, 6), 1),
+                ((6, 5), 1),
+                ((6, 7), 1),
+                ((7, 8), 1),
+                ((8, 9), 1)
+            ]
+        );
+        assert_write_orders(&corpus, &jobs);
     }
 
     #[test]
