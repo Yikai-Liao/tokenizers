@@ -1,0 +1,48 @@
+{
+  "baseline_commit": "c8e7348e890d45dd06aadc8464e085df8bcb1202",
+  "flat_head": "bc9442153f27c615ec66f6cb5b5cb437999ea421",
+  "profile": {
+    "opt_level": 3,
+    "lto": "fat",
+    "codegen_units": 1
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "source_hashes": {
+    "baseline": {
+      "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs": "88cb2c722e86c6de79fa3e2a70fb86a6a01828520830b40291b2f6b73a0e044e",
+      "tokenizers/tk-train/src/trainers/bpe/word.rs": "f9c3bd0a7a8fade42a5643ee6341b4ebf203f7a45aa0a65797e773d1ce21396a",
+      "tokenizers/tk-train/src/trainers/bpe/positions.rs": "83dce104f7feaaf9abe60f841d8d764c2ccf097b93b8093a66d33e16ea6498c9",
+      "tokenizers/tk-train/src/trainers/bpe/corpus.rs": "080d55611b17b7b250e197f183daaaf4469ba8e50f583f19148e1e0b69f979ae",
+      "tokenizers/tk-train/src/trainers/bpe/index.rs": "736b76cc14473b7576e3838eb06bba53690fa7c8167219d0ac2791d8cce8a974",
+      "tokenizers/tk-train/src/trainers/bpe/tests.rs": "fd29c70ee23c48dea125fbe7bc2fed79e84c66cfb492f784d090f7f7188dd52c",
+      "tokenizers/tk-train/src/trainers/bpe/mod.rs": "1d31f823572e155cdd4d8225d54ae10f34330bd77b3f09dc242458e96ed9f5fa",
+      "tokenizers/tk-train/src/trainers/bpe/feed.rs": "ddbc4fd103d73ea5cc8bf3778809127b0578474c9da9a29af5be5a76b56f0fec",
+      "tokenizers/tk-train/src/trainers/bpe/merge.rs": "ccebaf71aff83a961e311b20c569f8fcad55d851416b284631de25482d2900b6",
+      "tokenizers/tk-train/src/trainers/bpe/word_counts.rs": "eb78ccea99544dc915f3c406ad77349ddc080ecfb7a5d36253bd8d80275ebf4d",
+      "tokenizers/tk-train/src/trainers/bpe/parity_trainer.rs": "a584152379dc59de167a14f751f37bab8da9c723eddc1c238df21965dd08f37c"
+    },
+    "candidate": {
+      "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs": "88cb2c722e86c6de79fa3e2a70fb86a6a01828520830b40291b2f6b73a0e044e",
+      "tokenizers/tk-train/src/trainers/bpe/word.rs": "f9c3bd0a7a8fade42a5643ee6341b4ebf203f7a45aa0a65797e773d1ce21396a",
+      "tokenizers/tk-train/src/trainers/bpe/positions.rs": "83dce104f7feaaf9abe60f841d8d764c2ccf097b93b8093a66d33e16ea6498c9",
+      "tokenizers/tk-train/src/trainers/bpe/corpus.rs": "080d55611b17b7b250e197f183daaaf4469ba8e50f583f19148e1e0b69f979ae",
+      "tokenizers/tk-train/src/trainers/bpe/index.rs": "07b72217ba9eac7d4c7c88283312be1a8769af7d78972198a4d1d3904a3b12b8",
+      "tokenizers/tk-train/src/trainers/bpe/tests.rs": "fd29c70ee23c48dea125fbe7bc2fed79e84c66cfb492f784d090f7f7188dd52c",
+      "tokenizers/tk-train/src/trainers/bpe/mod.rs": "1d31f823572e155cdd4d8225d54ae10f34330bd77b3f09dc242458e96ed9f5fa",
+      "tokenizers/tk-train/src/trainers/bpe/feed.rs": "ddbc4fd103d73ea5cc8bf3778809127b0578474c9da9a29af5be5a76b56f0fec",
+      "tokenizers/tk-train/src/trainers/bpe/merge.rs": "ccebaf71aff83a961e311b20c569f8fcad55d851416b284631de25482d2900b6",
+      "tokenizers/tk-train/src/trainers/bpe/word_counts.rs": "eb78ccea99544dc915f3c406ad77349ddc080ecfb7a5d36253bd8d80275ebf4d",
+      "tokenizers/tk-train/src/trainers/bpe/parity_trainer.rs": "a584152379dc59de167a14f751f37bab8da9c723eddc1c238df21965dd08f37c"
+    }
+  },
+  "binaries": {
+    "baseline": {
+      "path": "/tmp/bpe-index-baseline-bin-20261011",
+      "sha256": "fe3206340f5aa6e31fe9e090233c0588ed78cea96f71a3cb0b3cda72f1067772"
+    },
+    "candidate": {
+      "path": "/tmp/bpe-index-candidate-bin-20261011",
+      "sha256": "aab2e028d59015bed68c6e2f1f5d8e6a7b8db96271f7749a04ae6be3e649d569"
+    }
+  }
+}

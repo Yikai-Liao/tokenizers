@@ -1,0 +1,53 @@
+{
+  "case": "zh-whitespace-256MiB",
+  "workers": 4,
+  "formal_pairs": 8,
+  "models_compared": 20,
+  "baseline": {
+    "train_seconds": 17.997070737999998,
+    "train_cpu_seconds": 48.8475075,
+    "process_hwm_kib_before_validation": 1836954.0
+  },
+  "candidate": {
+    "train_seconds": 17.9913973145,
+    "train_cpu_seconds": 48.4735845,
+    "process_hwm_kib_before_validation": 1833996.0
+  },
+  "paired_median_delta_percent": {
+    "train_seconds": 0.489087973780189,
+    "train_cpu_seconds": 0.6020466366045141,
+    "process_hwm_kib_before_validation": -0.01261909566835917
+  },
+  "individual_paired_delta_percent": {
+    "train_seconds": [
+      0.5779164503086021,
+      6.51709085974328,
+      2.1842303337765934,
+      -5.216202769641809,
+      -7.86905390110284,
+      -2.5948528385481673,
+      1.6164584721266806,
+      0.4002594972517759
+    ],
+    "train_cpu_seconds": [
+      2.7565054221303065,
+      6.009165407909811,
+      1.8011284567118313,
+      -4.823828845639843,
+      -8.525211629574237,
+      -2.2648309060230187,
+      0.9062921672201796,
+      0.29780110598884857
+    ],
+    "process_hwm_kib_before_validation": [
+      0.015892644100556907,
+      0.6152740419693048,
+      1.939443731877799,
+      -0.4257069543017966,
+      0.14127095900744457,
+      -1.0457287334246002,
+      -0.474730340988172,
+      -0.04113083543727525
+    ]
+  }
+}

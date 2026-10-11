@@ -1,0 +1,28 @@
+{
+  "binaries": {
+    "baseline": {
+      "path": "/tmp/bpe-index-commit-probe-20261011/baseline",
+      "sha256": "56650bebe903df13abe6e600ee1b8d9d2d8fbb9c43c4d4f3e6bd403eac09977c"
+    },
+    "shards_only": {
+      "path": "/tmp/bpe-index-commit-probe-20261011/shards_only",
+      "sha256": "ef7c96d93641985e940704e3e529a25e8ceeab9707d4aaca8f7d358d41cdca03"
+    },
+    "candidate": {
+      "path": "/tmp/bpe-index-commit-probe-20261011/candidate",
+      "sha256": "219d4468f6eab4e41b1ff3b4d4625c5fba353a350c24cb9d52ead3f9ca68618f"
+    }
+  },
+  "rounds": 5,
+  "repetitions": 20,
+  "workers": [
+    1,
+    4
+  ],
+  "cpus": "0-3",
+  "scope": "PairIndex::commit only: routing, parallel shard commits and heap publication. Input construction and result decoding excluded.",
+  "allocator": "System wrapper; diagnostic counting disabled for timed runs",
+  "warmup": "Three excluded commits per process",
+  "cpu": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           46 bits physical, 48 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  6\nOn-line CPU(s) list:                     0-5\nVendor ID:                               GenuineIntel\nModel name:                              Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz\nCPU family:                              6\nModel:                                   85\nThread(s) per core:                      1\nCore(s) per socket:                      1\nSocket(s):                               6\nStepping:                                4\nBogoMIPS:                                4589.21\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon rep_good nopl xtopology cpuid tsc_known_freq pni pclmulqdq ssse3 fma cx16 pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch cpuid_fault pti ssbd ibrs ibpb stibp fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm mpx avx512f avx512dq rdseed adx smap clflushopt clwb avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves arat umip pku ospke md_clear flush_l1d arch_capabilities\nHypervisor vendor:                       KVM\nVirtualization type:                     full\nL1d cache:                               192 KiB (6 instances)\nL1i cache:                               192 KiB (6 instances)\nL2 cache:                                6 MiB (6 instances)\nL3 cache:                                148.5 MiB (6 instances)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0-5\nVulnerability Gather data sampling:      Not affected\nVulnerability Indirect target selection: Mitigation; Aligned branch/return thunks\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Mitigation; PTE Inversion\nVulnerability Mds:                       Mitigation; Clear CPU buffers; SMT Host state unknown\nVulnerability Meltdown:                  Mitigation; PTI\nVulnerability Mmio stale data:           Mitigation; Clear CPU buffers; SMT Host state unknown\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Mitigation; IBRS\nVulnerability Spec rstack overflow:      Not affected\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; IBRS; IBPB conditional; STIBP disabled; RSB filling; PBRSB-eIBRS Not affected; BHI SW loop, KVM SW loop\nVulnerability Srbds:                     Not affected\nVulnerability Tsa:                       Not affected\nVulnerability Tsx async abort:           Mitigation; Clear CPU buffers; SMT Host state unknown\nVulnerability Vmscape:                   Not affected\n",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n"
+}

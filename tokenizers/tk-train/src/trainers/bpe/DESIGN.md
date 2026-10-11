@@ -155,13 +155,15 @@ counting, queue lookup and commit use the same mapping within a build, without
 per-call randomness. This replaces a local multiplier/rotation heuristic; hash
 outputs and owner indices are internal and are not stored in the model format.
 
-`OwnerCommit` encapsulates one owner's sequential commit work. It borrows the count
-shard, fixes the reuse/frequency policy, and owns partial birth groups, pending
-candidates. Its commit method drains
-the route in order, removes old weight before recording each birth, and consumes
-the work state when publishing groups. The coordinator receives only completed
-candidates after owner jobs join. Errors release unpublished storage and discard
-the attempt; the object does not roll back already-applied count changes.
+Each private `Shard` owns its count table, pending actions and birth streams.
+`PairIndex` routes work directly into those shards and commits nonempty shards in
+parallel. `Shard::commit` drains actions in producer order, removes old weight
+before recording each birth, then publishes partial groups in bucket/pair order.
+Groups use the same count-and-storage `State` as initial counting, with SmallVec
+positions; reuse sorts them before encoding while fresh fragments append in order.
+Groups and candidates remain local to the algorithm. The coordinator receives
+completed candidates only after shard jobs join. Errors release unpublished
+storage and discard the attempt; applied count changes are not rolled back.
 
 Owners hold counts; one global Candidate priority queue owns fresh lists and
 reuse cohorts. Taking a fresh candidate removes its count key and queue record.
@@ -181,14 +183,15 @@ task order. Each key has one producer, so this preserves spatial order without
 another sort. Reuse births can interleave; their full-u64 coordinates are sorted before
 encoding. There is no adaptive birth feedback or linked-node promotion.
 
-Commit retains one immutable metadata array and owner routes with reusable
-capacity. Each route action is a resident usize record reference and two flags.
+Commit retains one immutable metadata array and shard-local pending vectors with
+reusable capacity. Each action is a resident usize record reference and two flags.
 Only nonzero removals and nonempty births route; zero-weight births with
 positions still route. Each position stream moves to exactly one owner payload
 vector, in the order of that owner's birth actions. Removal precedes birth for
 each action; owner order is the original producer order. Draining both vectors
 retains capacity. Errors drop active drains; the attempt is discarded after
-owner jobs join. Successful commits drain every route before the next round.
+owner jobs join. Successful commits drain every shard's pending vectors before
+the next round.
 
 Published lists use an Enum with Empty, One and Two inline cases and an owned
 `Box<[u8]>` for longer restart/delta streams. The Enum is 24 bytes on the measured
@@ -239,19 +242,14 @@ fragment to its owner; subsequent fragments append in producer order. Reuse
 groups retain an unordered Vec and sort before construction. The immutable
 constructor validates the resulting nondecreasing sequence.
 
-Positions is the only custom container exposed by the position module. Readers
-use `iter()`, `iter_from_value(coordinate)` and `iter_range(range)`.
-`partition_ranges(target_items)` rounds its target up to restart boundaries and
-returns standard half-open `Range<usize>` values indexing list elements, not
-corpus coordinates or compression blocks. Merge tasks retain the rule rank and
-range; preparation reads that rule's immutable candidate. The caller must keep
-each range paired with its originating list. No fragment storage is allocated.
-Range reads accept any bounds within the list, replay at most one restart prefix
-for an unaligned start, and stop at the exact end. Inverted or out-of-bounds ranges
-panic, as with slice indexing. An ordinary producer is complete exactly when its
-range is `0..candidate_len`, including cases where alignment produces one range
-larger than the target. Filtered AA starts remain partial even when a single slice
-contains them all.
+The read interface exposes full iteration, `iter_from_value(coordinate)` and
+borrowed `chunks(target_items)`. Chunks round their target up to restart boundaries
+inside Positions and expose only `len()` and `iter()`. They neither allocate
+per-fragment storage nor decode ahead of iteration. Merge preparation stores the
+borrowed chunk instead of a range of compression blocks. An ordinary producer
+is complete when its actual chunk length equals the candidate length, including
+cases where alignment produces one chunk larger than the target. Filtered AA
+starts remain partial even when a single slice contains them all.
 
 Each block contains at most 128 positions. Its first position is a full-u64
 restart; later positions store unsigned base-128 deltas. Checked monotonic input

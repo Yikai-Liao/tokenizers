@@ -1,0 +1,7 @@
+{
+  "series": [
+    "training-series-1/training-manifest.json",
+    "training-series-2/training-manifest.json"
+  ],
+  "scope": "Two independent series with one excluded warmup pair and four formal pairs each"
+}

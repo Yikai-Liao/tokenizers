@@ -1,0 +1,11 @@
+--- tokenizers/tk-train/src/trainers/bpe/index.rs
++++ tokenizers/tk-train/src/trainers/bpe/index.rs
+@@ -318,7 +318,7 @@
+ }
+ 
+ fn build_owner(pieces: InitialPiece, floor: u64, reuse: bool) -> Result<(Shard, Vec<Candidate>)> {
+-    let mut states = AHashMap::<Pair, State<Vec<Positions>>>::new();
++    let mut states = AHashMap::<Pair, State<Vec<Positions>>>::with_hasher(ahash::RandomState::with_seeds(11, 13, 17, 19));
+     for (pair, state) in pieces {
+         let total = states.entry(pair).or_default();
+         add(&mut total.count, state.count)?;

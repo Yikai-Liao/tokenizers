@@ -1,0 +1,69 @@
+[
+  {
+    "arm": "baseline",
+    "layout": {
+      "action": 16,
+      "birth": 32,
+      "group": 40,
+      "group_positions": 32,
+      "pair_index": 88,
+      "route": 48
+    },
+    "allocations_and_requested_bytes": [
+      [
+        8234,
+        4554644
+      ],
+      [
+        8234,
+        4554644
+      ],
+      [
+        8234,
+        4554644
+      ],
+      [
+        8234,
+        4554644
+      ],
+      [
+        8234,
+        4554644
+      ]
+    ],
+    "checksum": 5752584902324609829
+  },
+  {
+    "arm": "candidate",
+    "layout": {
+      "action": 16,
+      "birth": 32,
+      "group": 32,
+      "pair_index": 64,
+      "shard": 112
+    },
+    "allocations_and_requested_bytes": [
+      [
+        42,
+        3964852
+      ],
+      [
+        42,
+        3964852
+      ],
+      [
+        42,
+        3964852
+      ],
+      [
+        42,
+        3964852
+      ],
+      [
+        42,
+        3964852
+      ]
+    ],
+    "checksum": 5752584902324609829
+  }
+]

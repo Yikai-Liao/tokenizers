@@ -1,0 +1,254 @@
+[
+  {
+    "workers": 1,
+    "case": "removals",
+    "median_ns": {
+      "baseline": 676101.0,
+      "shards_only": 629949.0,
+      "candidate": 796545.0
+    },
+    "paired_delta_percent": {
+      "shard_ownership": -14.309548425457141,
+      "uniform_smallvec": 37.48847854679522,
+      "total": 17.814498129717315
+    }
+  },
+  {
+    "workers": 1,
+    "case": "complete",
+    "median_ns": {
+      "baseline": 799489.5,
+      "shards_only": 856386.5,
+      "candidate": 812100.0
+    },
+    "paired_delta_percent": {
+      "shard_ownership": 1.974446448878009,
+      "uniform_smallvec": -1.593905270423679,
+      "total": -2.828282103101809
+    }
+  },
+  {
+    "workers": 1,
+    "case": "mixed",
+    "median_ns": {
+      "baseline": 2168434.0,
+      "shards_only": 2198340.0,
+      "candidate": 2079095.5
+    },
+    "paired_delta_percent": {
+      "shard_ownership": -1.8172877367087725,
+      "uniform_smallvec": -4.065886077676795,
+      "total": -3.768185585373429
+    }
+  },
+  {
+    "workers": 1,
+    "case": "fresh-small",
+    "median_ns": {
+      "baseline": 4329217.0,
+      "shards_only": 4437547.0,
+      "candidate": 2447193.0
+    },
+    "paired_delta_percent": {
+      "shard_ownership": 0.10527700250821947,
+      "uniform_smallvec": -44.85369326403278,
+      "total": -43.47261872066011
+    }
+  },
+  {
+    "workers": 1,
+    "case": "fresh-spill",
+    "median_ns": {
+      "baseline": 8115791.0,
+      "shards_only": 8239026.5,
+      "candidate": 7853543.0
+    },
+    "paired_delta_percent": {
+      "shard_ownership": 0.6735695879797721,
+      "uniform_smallvec": -6.373564718297498,
+      "total": 0.9653445269025562
+    }
+  },
+  {
+    "workers": 1,
+    "case": "fresh-large",
+    "median_ns": {
+      "baseline": 1802539.5,
+      "shards_only": 1694887.0,
+      "candidate": 1666780.0
+    },
+    "paired_delta_percent": {
+      "shard_ownership": -6.42120171385494,
+      "uniform_smallvec": -1.322957198443575,
+      "total": -9.392242896883218
+    }
+  },
+  {
+    "workers": 1,
+    "case": "reuse-small",
+    "median_ns": {
+      "baseline": 6537809.0,
+      "shards_only": 5646460.5,
+      "candidate": 4154736.5
+    },
+    "paired_delta_percent": {
+      "shard_ownership": -14.981862093186338,
+      "uniform_smallvec": -28.602245601470155,
+      "total": -35.10946579442843
+    }
+  },
+  {
+    "workers": 1,
+    "case": "reuse-spill",
+    "median_ns": {
+      "baseline": 10524899.5,
+      "shards_only": 9573289.0,
+      "candidate": 8973620.5
+    },
+    "paired_delta_percent": {
+      "shard_ownership": -10.14238711796297,
+      "uniform_smallvec": -4.23927550254708,
+      "total": -15.54314344874621
+    }
+  },
+  {
+    "workers": 1,
+    "case": "reuse-large",
+    "median_ns": {
+      "baseline": 4083356.5,
+      "shards_only": 3897538.5,
+      "candidate": 4087188.5
+    },
+    "paired_delta_percent": {
+      "shard_ownership": -4.531162047692872,
+      "uniform_smallvec": 4.865891639043474,
+      "total": 1.7761066271566817
+    }
+  },
+  {
+    "workers": 4,
+    "case": "removals",
+    "median_ns": {
+      "baseline": 701108.0,
+      "shards_only": 760552.0,
+      "candidate": 763271.5
+    },
+    "paired_delta_percent": {
+      "shard_ownership": 2.0053737986604814,
+      "uniform_smallvec": 0.3575692391841745,
+      "total": 8.866465651511612
+    }
+  },
+  {
+    "workers": 4,
+    "case": "complete",
+    "median_ns": {
+      "baseline": 1315614.0,
+      "shards_only": 1223833.0,
+      "candidate": 1120370.0
+    },
+    "paired_delta_percent": {
+      "shard_ownership": -7.827902358052363,
+      "uniform_smallvec": 1.3799056459641745,
+      "total": -12.361682788356088
+    }
+  },
+  {
+    "workers": 4,
+    "case": "mixed",
+    "median_ns": {
+      "baseline": 2023867.0,
+      "shards_only": 1788957.0,
+      "candidate": 1884431.0
+    },
+    "paired_delta_percent": {
+      "shard_ownership": -3.6456668521999247,
+      "uniform_smallvec": 3.429696056549414,
+      "total": 1.4471187343026548
+    }
+  },
+  {
+    "workers": 4,
+    "case": "fresh-small",
+    "median_ns": {
+      "baseline": 2854340.0,
+      "shards_only": 2777160.0,
+      "candidate": 2559779.5
+    },
+    "paired_delta_percent": {
+      "shard_ownership": -2.703952577478508,
+      "uniform_smallvec": -8.923828659493871,
+      "total": -10.3538635989184
+    }
+  },
+  {
+    "workers": 4,
+    "case": "fresh-spill",
+    "median_ns": {
+      "baseline": 15394272.0,
+      "shards_only": 14686646.5,
+      "candidate": 14488320.0
+    },
+    "paired_delta_percent": {
+      "shard_ownership": -3.1677192379163666,
+      "uniform_smallvec": -1.054225908127382,
+      "total": -4.188550229140908
+    }
+  },
+  {
+    "workers": 4,
+    "case": "fresh-large",
+    "median_ns": {
+      "baseline": 3442015.0,
+      "shards_only": 3176550.0,
+      "candidate": 3263076.0
+    },
+    "paired_delta_percent": {
+      "shard_ownership": -9.028486916957956,
+      "uniform_smallvec": 2.8915294128283087,
+      "total": -7.704074627931945
+    }
+  },
+  {
+    "workers": 4,
+    "case": "reuse-small",
+    "median_ns": {
+      "baseline": 3683665.0,
+      "shards_only": 3200128.0,
+      "candidate": 2896476.0
+    },
+    "paired_delta_percent": {
+      "shard_ownership": -12.812373899394602,
+      "uniform_smallvec": -8.244519215828639,
+      "total": -20.000574487083846
+    }
+  },
+  {
+    "workers": 4,
+    "case": "reuse-spill",
+    "median_ns": {
+      "baseline": 15569423.5,
+      "shards_only": 15262869.0,
+      "candidate": 15407977.0
+    },
+    "paired_delta_percent": {
+      "shard_ownership": -1.1995177599221973,
+      "uniform_smallvec": 3.6698310127669886,
+      "total": -0.13477418259691953
+    }
+  },
+  {
+    "workers": 4,
+    "case": "reuse-large",
+    "median_ns": {
+      "baseline": 2897376.0,
+      "shards_only": 2913006.0,
+      "candidate": 3928100.5
+    },
+    "paired_delta_percent": {
+      "shard_ownership": -0.3223569826681927,
+      "uniform_smallvec": 39.52988724405153,
+      "total": 36.02009065891105
+    }
+  }
+]

@@ -43,10 +43,8 @@ The implementation is divided by the knowledge each module owns:
   Empty, one-value and two-value lists stay inline; longer lists own compressed
   byte slices. Construction accepts a sorted slice or consumes ordered fragments
   without an encoder service. Duplicates and coordinates through `u64::MAX` are preserved.
-  Readers use `iter()`, `iter_from_value(coordinate)`, or `iter_range(range)`.
-  `partition_ranges(target_items)` chooses independent ranges of element indices;
-  each task keeps its range paired with the originating rule. Compression offsets
-  and restart alignment stay private, and range iteration allocates no fragment storage.
+  Readers use iteration, `iter_from_value(coordinate)`, or borrowed `chunks(target_items)`;
+  each chunk exposes only its length and iteration. Restart ranges stay private.
 - [feed.rs](feed.rs) owns streaming batches and bounded local word caches;
   `LocalCounts` controls cache flushing and successful completion.
 - [word_counts.rs](word_counts.rs) owns borrowed and collected count views,
