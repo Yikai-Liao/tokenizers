@@ -1,3 +1,7 @@
+The measurements below describe the pre-merge shard refactor in `fb0864a0`.
+For integration with remote `52ca2951` and its separate validation, see
+[merge-validation/README.md](merge-validation/README.md).
+
 The index now has one private `Shard` for each count owner. It owns the count
 map, compact action vector and birth-stream vector. `PairIndex` commits those
 shards in parallel, then pushes joined candidates into the existing owning heap.

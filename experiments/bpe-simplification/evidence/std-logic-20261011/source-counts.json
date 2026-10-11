@@ -1,0 +1,227 @@
+{
+  "baseline": {
+    "production_total": 2543,
+    "test_total": 1557,
+    "production": {
+      "corpus.rs": 390,
+      "feed.rs": 113,
+      "index.rs": 432,
+      "merge.rs": 673,
+      "mod.rs": 265,
+      "positions.rs": 222,
+      "vocabulary.rs": 344,
+      "word_counts.rs": 104
+    },
+    "tests": {
+      "corpus.rs": 2,
+      "feed.rs": 0,
+      "index.rs": 159,
+      "merge.rs": 133,
+      "mod.rs": 87,
+      "positions.rs": 216,
+      "tests.rs": 918,
+      "vocabulary.rs": 0,
+      "word_counts.rs": 42
+    }
+  },
+  "core": {
+    "production_total": 2513,
+    "test_total": 1550,
+    "production": {
+      "corpus.rs": 377,
+      "feed.rs": 113,
+      "index.rs": 432,
+      "merge.rs": 665,
+      "mod.rs": 265,
+      "positions.rs": 222,
+      "vocabulary.rs": 335,
+      "word_counts.rs": 104
+    },
+    "tests": {
+      "corpus.rs": 2,
+      "feed.rs": 0,
+      "index.rs": 159,
+      "merge.rs": 133,
+      "mod.rs": 87,
+      "positions.rs": 216,
+      "tests.rs": 911,
+      "vocabulary.rs": 0,
+      "word_counts.rs": 42
+    }
+  },
+  "deque": {
+    "production_total": 2512,
+    "test_total": 1550,
+    "production": {
+      "corpus.rs": 377,
+      "feed.rs": 113,
+      "index.rs": 432,
+      "merge.rs": 664,
+      "mod.rs": 265,
+      "positions.rs": 222,
+      "vocabulary.rs": 335,
+      "word_counts.rs": 104
+    },
+    "tests": {
+      "corpus.rs": 2,
+      "feed.rs": 0,
+      "index.rs": 159,
+      "merge.rs": 133,
+      "mod.rs": 87,
+      "positions.rs": 216,
+      "tests.rs": 911,
+      "vocabulary.rs": 0,
+      "word_counts.rs": 42
+    }
+  },
+  "tree": {
+    "production_total": 2512,
+    "test_total": 1550,
+    "production": {
+      "corpus.rs": 377,
+      "feed.rs": 113,
+      "index.rs": 431,
+      "merge.rs": 665,
+      "mod.rs": 265,
+      "positions.rs": 222,
+      "vocabulary.rs": 335,
+      "word_counts.rs": 104
+    },
+    "tests": {
+      "corpus.rs": 2,
+      "feed.rs": 0,
+      "index.rs": 159,
+      "merge.rs": 133,
+      "mod.rs": 87,
+      "positions.rs": 216,
+      "tests.rs": 911,
+      "vocabulary.rs": 0,
+      "word_counts.rs": 42
+    }
+  },
+  "bitmap": {
+    "production_total": 2542,
+    "test_total": 1611,
+    "production": {
+      "corpus.rs": 390,
+      "feed.rs": 113,
+      "index.rs": 432,
+      "merge.rs": 673,
+      "mod.rs": 265,
+      "positions.rs": 222,
+      "vocabulary.rs": 343,
+      "word_counts.rs": 104
+    },
+    "tests": {
+      "corpus.rs": 2,
+      "feed.rs": 0,
+      "index.rs": 159,
+      "merge.rs": 133,
+      "mod.rs": 87,
+      "positions.rs": 216,
+      "tests.rs": 918,
+      "vocabulary.rs": 54,
+      "word_counts.rs": 42
+    }
+  },
+  "seed": {
+    "production_total": 2547,
+    "test_total": 1579,
+    "production": {
+      "corpus.rs": 390,
+      "feed.rs": 113,
+      "index.rs": 432,
+      "merge.rs": 673,
+      "mod.rs": 265,
+      "positions.rs": 226,
+      "vocabulary.rs": 344,
+      "word_counts.rs": 104
+    },
+    "tests": {
+      "corpus.rs": 2,
+      "feed.rs": 0,
+      "index.rs": 159,
+      "merge.rs": 133,
+      "mod.rs": 87,
+      "positions.rs": 238,
+      "tests.rs": 918,
+      "vocabulary.rs": 0,
+      "word_counts.rs": 42
+    }
+  },
+  "ranges": {
+    "production_total": 2545,
+    "test_total": 1625,
+    "production": {
+      "corpus.rs": 392,
+      "feed.rs": 113,
+      "index.rs": 432,
+      "merge.rs": 673,
+      "mod.rs": 265,
+      "positions.rs": 222,
+      "vocabulary.rs": 344,
+      "word_counts.rs": 104
+    },
+    "tests": {
+      "corpus.rs": 70,
+      "feed.rs": 0,
+      "index.rs": 159,
+      "merge.rs": 133,
+      "mod.rs": 87,
+      "positions.rs": 216,
+      "tests.rs": 918,
+      "vocabulary.rs": 0,
+      "word_counts.rs": 42
+    }
+  },
+  "arraydeque": {
+    "production_total": 2513,
+    "test_total": 1550,
+    "production": {
+      "corpus.rs": 377,
+      "feed.rs": 113,
+      "index.rs": 432,
+      "merge.rs": 665,
+      "mod.rs": 265,
+      "positions.rs": 222,
+      "vocabulary.rs": 335,
+      "word_counts.rs": 104
+    },
+    "tests": {
+      "corpus.rs": 2,
+      "feed.rs": 0,
+      "index.rs": 159,
+      "merge.rs": 133,
+      "mod.rs": 87,
+      "positions.rs": 216,
+      "tests.rs": 911,
+      "vocabulary.rs": 0,
+      "word_counts.rs": 42
+    }
+  },
+  "final": {
+    "production_total": 2516,
+    "test_total": 1740,
+    "production": {
+      "corpus.rs": 379,
+      "feed.rs": 113,
+      "index.rs": 431,
+      "merge.rs": 664,
+      "mod.rs": 265,
+      "positions.rs": 226,
+      "vocabulary.rs": 334,
+      "word_counts.rs": 104
+    },
+    "tests": {
+      "corpus.rs": 70,
+      "feed.rs": 0,
+      "index.rs": 159,
+      "merge.rs": 133,
+      "mod.rs": 87,
+      "positions.rs": 238,
+      "tests.rs": 957,
+      "vocabulary.rs": 54,
+      "word_counts.rs": 42
+    }
+  }
+}

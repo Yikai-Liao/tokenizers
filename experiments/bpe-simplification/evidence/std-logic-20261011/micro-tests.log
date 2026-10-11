@@ -1,0 +1,33 @@
+     Locking 8 packages to highest Rust 1.99.0 compatible versions
+      Adding itertools v0.14.0 (available: v0.15.0)
+   Compiling crossbeam-utils v0.8.23
+   Compiling crossbeam-epoch v0.9.21
+   Compiling crossbeam-deque v0.8.8
+   Compiling rayon-core v1.13.0
+   Compiling either v1.19.0
+   Compiling fixedbitset v0.5.7
+   Compiling itertools v0.14.0
+   Compiling rayon v1.12.0
+   Compiling bpe-std-logic-micro v0.0.0 (/tmp/bpe-std-logic-results/micro)
+    Finished `release` profile [optimized] target(s) in 4.68s
+     Running unittests src/main.rs (/tmp/bpe-std-logic-results/micro/target/release/deps/bpe_std_logic_micro-c5629e75c4fa64d8)
+
+running 15 tests
+test positions_original::tests::concat_preserves_duplicates_and_reuses_a_single_nonempty_fragment ... ok
+test positions_original::tests::direct_encoding_retains_restart_directory_and_gap_format ... ok
+test positions_original::tests::lower_bound_preserves_the_first_duplicate_across_restarts ... ok
+test positions_standard::tests::concat_preserves_duplicates_and_reuses_a_single_nonempty_fragment ... ok
+test positions_standard::tests::direct_encoding_retains_restart_directory_and_gap_format ... ok
+test positions_original::tests::storage_rejects_inverted_ranges_and_unsorted_input ... ok
+test positions_original::tests::partition_ranges_cover_lists_without_losing_duplicates_at_boundaries ... ok
+test positions_standard::tests::lower_bound_preserves_the_first_duplicate_across_restarts ... ok
+test positions_standard::tests::storage_rejects_inverted_ranges_and_unsorted_input ... ok
+test positions_standard::tests::truncated_restart_panics_but_completed_cursor_reads_no_bytes ... ok
+test positions_standard::tests::partition_ranges_cover_lists_without_losing_duplicates_at_boundaries ... ok
+test tests::extracted_ranges_preserve_whole_word_boundaries ... ok
+test positions_original::tests::storage_roundtrips_seeks_and_supports_concurrent_readers ... ok
+test positions_standard::tests::storage_roundtrips_seeks_and_supports_concurrent_readers ... ok
+test tests::extracted_bitmaps_preserve_full_domain_and_empty_output ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

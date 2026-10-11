@@ -930,7 +930,7 @@ fn builder_defaults_options_and_serialization_remain_compatible() {
 }
 
 #[test]
-fn symbol_scan_returns_the_break_reason_and_preserves_utf8_affix_boundaries() {
+fn symbols_preserve_short_circuiting_and_utf8_affix_boundaries() {
     use std::ops::ControlFlow;
     let words = counts(&[("é🙂é", 2), ("🙂é", 1)]);
     for decorated in [false, true] {
@@ -959,18 +959,11 @@ fn symbol_scan_returns_the_break_reason_and_preserves_utf8_affix_boundaries() {
                 ],
             ),
         ] {
-            let mut emitted = Vec::new();
-            assert_eq!(
-                ids.scan_symbols(text, |id| {
-                    emitted.push(id);
-                    ControlFlow::<()>::Continue(())
-                }),
-                ControlFlow::Continue(())
-            );
+            let emitted: Vec<_> = ids.symbols(text).collect();
             assert_eq!(emitted, expected);
         }
         let mut calls = 0;
-        let reason = ids.scan_symbols("é🙂é", |_| {
+        let reason = ids.symbols("é🙂é").try_for_each(|_| {
             calls += 1;
             if calls == 2 {
                 ControlFlow::Break("stop")
@@ -990,5 +983,52 @@ fn symbol_scan_returns_the_break_reason_and_preserves_utf8_affix_boundaries() {
             .unwrap_err();
         assert_eq!(error.to_string(), "edge failure");
         assert_eq!(edges, 1);
+    }
+}
+
+#[test]
+fn initial_edges_preserve_filtered_coordinates_weights_and_errors() {
+    let words = counts(&[("qé🙂z", 7), ("é🙂é", 6), ("🙂é", 5), ("", 4), ("é", 3)]);
+    for decorated in [false, true] {
+        let mut trainer = trainer();
+        trainer.limit_alphabet = Some(2);
+        if decorated {
+            trainer.continuing_subword_prefix = Some("##".into());
+            trainer.end_of_word_suffix = Some("</w>".into());
+        }
+        let view = WordCountsView::from_map(&words);
+        let progress = trainer.setup_progress();
+        let mut vocabulary = Vocabulary::initialize(&trainer, view, 1, &mut None).unwrap();
+        let ids = vocabulary.initial_ids(view, &progress).unwrap();
+        let id = |character, first, last| ids.id(character, first, last).unwrap();
+        let expected = vec![
+            ((id('é', false, false), id('🙂', false, false)), 1, 7),
+            ((id('é', true, false), id('🙂', false, false)), 4, 6),
+            ((id('🙂', false, false), id('é', false, true)), 5, 6),
+            ((id('🙂', true, false), id('é', false, true)), 8, 5),
+        ];
+        let plan = CorpusPlan::build(view, &mut vocabulary, &trainer, true, &progress).unwrap();
+        let mut actual = Vec::new();
+        plan.initial_edges(0..plan.word_count(), |pair, coordinate, weight| {
+            actual.push((pair, coordinate, weight));
+            Ok(())
+        })
+        .unwrap();
+        assert_eq!(actual, expected);
+        for stop in 1..=expected.len() {
+            let mut emitted = Vec::new();
+            let error = plan
+                .initial_edges(0..plan.word_count(), |pair, coordinate, weight| {
+                    emitted.push((pair, coordinate, weight));
+                    if emitted.len() == stop {
+                        Err("designated edge failure".into())
+                    } else {
+                        Ok(())
+                    }
+                })
+                .unwrap_err();
+            assert_eq!(error.to_string(), "designated edge failure");
+            assert_eq!(emitted, expected[..stop]);
+        }
     }
 }

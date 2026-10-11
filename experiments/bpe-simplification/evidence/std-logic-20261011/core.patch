@@ -1,0 +1,182 @@
+diff --git a/tokenizers/tk-train/src/trainers/bpe/AGENTS.md b/tokenizers/tk-train/src/trainers/bpe/AGENTS.md
+index 25aca351..5ac9fa0c 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/AGENTS.md
++++ b/tokenizers/tk-train/src/trainers/bpe/AGENTS.md
+@@ -1,3 +1,8 @@
++# BPE work scope
++
++- Work on the ordinary BPE trainer. Parity Trainer is outside the scope unless
++  the user explicitly requests work on it.
++
+ # Temporary formatting rule for this BPE change
+ 
+ - Keep a blank line between adjacent functions, including methods and tests.
+diff --git a/tokenizers/tk-train/src/trainers/bpe/corpus.rs b/tokenizers/tk-train/src/trainers/bpe/corpus.rs
+index 3c48e10a..1254d028 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/corpus.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/corpus.rs
+@@ -5,11 +5,9 @@ use super::{
+     word_counts::WordCountsView,
+ };
+ use compact_str::CompactString;
++use itertools::Itertools;
+ use rayon::prelude::*;
+-use std::{
+-    ops::ControlFlow,
+-    sync::atomic::{AtomicU16, AtomicU32, AtomicUsize, Ordering},
+-};
++use std::sync::atomic::{AtomicU16, AtomicU32, AtomicUsize, Ordering};
+ use tk_encode::{Result, models::bpe::Pair, utils::progress::ProgressBar};
+ 
+ /// Resident token endpoints at fixed original coordinates, with weights and spans.
+@@ -158,21 +156,13 @@ impl<'input> CorpusPlan<'input> {
+     ) -> Result<()> {
+         for word in range {
+             let (text, &weight) = self.words[word];
+-            let mut position = self.starts[word];
+-            let mut previous = None;
+-            let flow = self.ids.scan_symbols(text, |id| {
+-                if let Some(left) = previous
+-                    && let Err(error) = emit((left, id), (position - 1) as u64, weight)
+-                {
+-                    return ControlFlow::Break(error);
+-                }
+-                previous = Some(id);
+-                position += 1;
+-                ControlFlow::Continue(())
+-            });
+-            if let ControlFlow::Break(error) = flow {
+-                return Err(error);
+-            }
++            self.ids
++                .symbols(text)
++                .tuple_windows()
++                .enumerate()
++                .try_for_each(|(offset, pair)| {
++                    emit(pair, (self.starts[word] + offset) as u64, weight)
++                })?;
+         }
+         Ok(())
+     }
+@@ -186,12 +176,9 @@ impl<'input> CorpusPlan<'input> {
+                 #[cfg(test)]
+                 super::tests::observe_worker(super::tests::Phase::Materialize);
+                 let start = self.starts[word];
+-                let mut position = start;
+-                let _ = self.ids.scan_symbols(text, |id| {
+-                    tokens.set(position, id);
+-                    position += 1;
+-                    ControlFlow::<()>::Continue(())
+-                });
++                for (offset, id) in self.ids.symbols(text).enumerate() {
++                    tokens.set(start + offset, id);
++                }
+             });
+         // Only historical reuse cohorts need a word directory after counting.
+         Corpus {
+diff --git a/tokenizers/tk-train/src/trainers/bpe/merge.rs b/tokenizers/tk-train/src/trainers/bpe/merge.rs
+index a4b148de..11a10bd9 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/merge.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/merge.rs
+@@ -653,19 +653,12 @@ impl<'task> CohortPreparation<'task> {
+         let writes = &mut self.writes;
+         let mut previous = None;
+         let mut p = corpus.word_start(word);
+-        let mut positions = rule
+-            .candidate
+-            .positions
+-            .iter_from_value(p as u64)
+-            .peekable();
++        let mut positions = rule.candidate.positions.iter_from_value(p as u64);
+         while p < corpus.word_end(word) {
+             // Full-word scans are required only after alias reuse or a length
+             // gate. Otherwise the selected cohort defines the scan domain.
+             if !corpus.whole_words() {
+-                while positions.peek().is_some_and(|&start| start < p as u64) {
+-                    positions.next();
+-                }
+-                let Some(coordinate) = positions.peek().copied() else {
++                let Some(coordinate) = positions.find(|&start| start >= p as u64) else {
+                     break;
+                 };
+                 let next = corpus.resident(coordinate);
+@@ -678,7 +671,6 @@ impl<'task> CohortPreparation<'task> {
+                         .then(|| (id, next - corpus.span(next - 1), corpus.span(next - 1)));
+                     p = next;
+                 }
+-                positions.next();
+             }
+             if let Some(matched) = corpus.matched(p, rule.pair()) {
+                 let weight = corpus.word_weight(word);
+diff --git a/tokenizers/tk-train/src/trainers/bpe/tests.rs b/tokenizers/tk-train/src/trainers/bpe/tests.rs
+index fbae4736..93710ab6 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/tests.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/tests.rs
+@@ -959,18 +959,11 @@ fn symbol_scan_returns_the_break_reason_and_preserves_utf8_affix_boundaries() {
+                 ],
+             ),
+         ] {
+-            let mut emitted = Vec::new();
+-            assert_eq!(
+-                ids.scan_symbols(text, |id| {
+-                    emitted.push(id);
+-                    ControlFlow::<()>::Continue(())
+-                }),
+-                ControlFlow::Continue(())
+-            );
++            let emitted: Vec<_> = ids.symbols(text).collect();
+             assert_eq!(emitted, expected);
+         }
+         let mut calls = 0;
+-        let reason = ids.scan_symbols("é🙂é", |_| {
++        let reason = ids.symbols("é🙂é").try_for_each(|_| {
+             calls += 1;
+             if calls == 2 {
+                 ControlFlow::Break("stop")
+diff --git a/tokenizers/tk-train/src/trainers/bpe/vocabulary.rs b/tokenizers/tk-train/src/trainers/bpe/vocabulary.rs
+index 79b3e201..af8f7313 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/vocabulary.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/vocabulary.rs
+@@ -287,32 +287,23 @@ impl Vocabulary {
+ 
+ impl InitialTokenIds {
+     /// Interpret filtering and decorations against original UTF-8 coordinates.
+-    /// The plain path chooses its loop once and avoids per-symbol affix checks.
++    /// The plain path chooses its iterator once and avoids per-symbol affix checks.
+     #[inline]
+-    pub(super) fn scan_symbols<B>(
+-        &self,
+-        word: &str,
+-        mut emit: impl FnMut(u32) -> std::ops::ControlFlow<B>,
+-    ) -> std::ops::ControlFlow<B> {
+-        use std::ops::ControlFlow;
++    pub(super) fn symbols<'a>(&'a self, word: &'a str) -> impl Iterator<Item = u32> + 'a {
+         if self.plain() {
+-            for character in word.chars() {
+-                if let Some(id) = self.plain_id(character) {
+-                    emit(id)?;
+-                }
+-            }
++            itertools::Either::Left(
++                word.chars()
++                    .filter_map(|character| self.plain_id(character)),
++            )
+         } else {
+-            for (byte, character) in word.char_indices() {
+-                if let Some(id) = self.id(
++            itertools::Either::Right(word.char_indices().filter_map(move |(byte, character)| {
++                self.id(
+                     character,
+                     byte == 0,
+                     byte + character.len_utf8() == word.len(),
+-                ) {
+-                    emit(id)?;
+-                }
+-            }
++                )
++            }))
+         }
+-        ControlFlow::Continue(())
+     }
+ 
+     pub(super) fn symbol_count(&self, text: &str) -> usize {

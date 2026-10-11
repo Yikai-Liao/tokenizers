@@ -158,7 +158,8 @@ outputs and owner indices are internal and are not stored in the model format.
 Each private `Shard` owns its count table, pending actions and birth streams.
 `PairIndex` routes work directly into those shards and commits nonempty shards in
 parallel. `Shard::commit` drains actions in producer order, removes old weight
-before recording each birth, then publishes partial groups in bucket/pair order.
+before recording each birth, then publishes partial groups in bucket/pair order
+from a local `BTreeMap`.
 Groups use the same count-and-storage `State` as initial counting, with SmallVec
 positions; reuse sorts them before encoding while fresh fragments append in order.
 Groups and candidates remain local to the algorithm. The coordinator receives

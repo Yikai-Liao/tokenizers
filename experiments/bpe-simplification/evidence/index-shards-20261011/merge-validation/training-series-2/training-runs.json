@@ -1,0 +1,422 @@
+[
+  {
+    "case": "zh-whitespace-256MiB",
+    "workers": 4,
+    "arm": "baseline",
+    "block": 0,
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-index-merge-remote-bin-20261011",
+      "/tmp/bpe-index-merge-confirm-results-20261011/zh-whitespace-256MiB-4-0-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "zh-whitespace-256MiB-4-0-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 5.918539297,
+      "process_hwm_kib_before_validation": 1849448,
+      "train_cpu_seconds": 51.921912999999996,
+      "train_seconds": 18.867702277
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-index-merge-confirm-results-20261011/zh-whitespace-256MiB-4-0-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "workers": 4,
+    "arm": "candidate",
+    "block": 0,
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-index-merge-final-bin-20261011",
+      "/tmp/bpe-index-merge-confirm-results-20261011/zh-whitespace-256MiB-4-0-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "zh-whitespace-256MiB-4-0-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 7.047897453,
+      "process_hwm_kib_before_validation": 1865564,
+      "train_cpu_seconds": 60.199527,
+      "train_seconds": 22.328487177
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-index-merge-confirm-results-20261011/zh-whitespace-256MiB-4-0-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "workers": 4,
+    "arm": "candidate",
+    "block": 1,
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-index-merge-final-bin-20261011",
+      "/tmp/bpe-index-merge-confirm-results-20261011/zh-whitespace-256MiB-4-1-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "zh-whitespace-256MiB-4-1-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.210378736,
+      "process_hwm_kib_before_validation": 1848232,
+      "train_cpu_seconds": 57.809513,
+      "train_seconds": 21.264822642
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-index-merge-confirm-results-20261011/zh-whitespace-256MiB-4-1-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "workers": 4,
+    "arm": "baseline",
+    "block": 1,
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-index-merge-remote-bin-20261011",
+      "/tmp/bpe-index-merge-confirm-results-20261011/zh-whitespace-256MiB-4-1-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "zh-whitespace-256MiB-4-1-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.548752336,
+      "process_hwm_kib_before_validation": 1833332,
+      "train_cpu_seconds": 56.290233,
+      "train_seconds": 20.737830644
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-index-merge-confirm-results-20261011/zh-whitespace-256MiB-4-1-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "workers": 4,
+    "arm": "baseline",
+    "block": 2,
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-index-merge-remote-bin-20261011",
+      "/tmp/bpe-index-merge-confirm-results-20261011/zh-whitespace-256MiB-4-2-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "zh-whitespace-256MiB-4-2-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.237867066,
+      "process_hwm_kib_before_validation": 1829924,
+      "train_cpu_seconds": 56.388698,
+      "train_seconds": 20.16704106
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-index-merge-confirm-results-20261011/zh-whitespace-256MiB-4-2-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "workers": 4,
+    "arm": "candidate",
+    "block": 2,
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-index-merge-final-bin-20261011",
+      "/tmp/bpe-index-merge-confirm-results-20261011/zh-whitespace-256MiB-4-2-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "zh-whitespace-256MiB-4-2-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.164049163,
+      "process_hwm_kib_before_validation": 1834576,
+      "train_cpu_seconds": 55.584457,
+      "train_seconds": 20.791834415
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-index-merge-confirm-results-20261011/zh-whitespace-256MiB-4-2-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "workers": 4,
+    "arm": "candidate",
+    "block": 3,
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-index-merge-final-bin-20261011",
+      "/tmp/bpe-index-merge-confirm-results-20261011/zh-whitespace-256MiB-4-3-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "zh-whitespace-256MiB-4-3-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.431883292,
+      "process_hwm_kib_before_validation": 1835672,
+      "train_cpu_seconds": 54.652885,
+      "train_seconds": 20.046991248
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-index-merge-confirm-results-20261011/zh-whitespace-256MiB-4-3-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "workers": 4,
+    "arm": "baseline",
+    "block": 3,
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-index-merge-remote-bin-20261011",
+      "/tmp/bpe-index-merge-confirm-results-20261011/zh-whitespace-256MiB-4-3-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "zh-whitespace-256MiB-4-3-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.099603205,
+      "process_hwm_kib_before_validation": 1838460,
+      "train_cpu_seconds": 53.994046999999995,
+      "train_seconds": 19.76007378
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-index-merge-confirm-results-20261011/zh-whitespace-256MiB-4-3-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "workers": 4,
+    "arm": "baseline",
+    "block": 4,
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-index-merge-remote-bin-20261011",
+      "/tmp/bpe-index-merge-confirm-results-20261011/zh-whitespace-256MiB-4-4-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "zh-whitespace-256MiB-4-4-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.170323592,
+      "process_hwm_kib_before_validation": 1835440,
+      "train_cpu_seconds": 52.994063000000004,
+      "train_seconds": 19.627874797
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-index-merge-confirm-results-20261011/zh-whitespace-256MiB-4-4-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "zh-whitespace-256MiB",
+    "workers": 4,
+    "arm": "candidate",
+    "block": 4,
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-index-merge-final-bin-20261011",
+      "/tmp/bpe-index-merge-confirm-results-20261011/zh-whitespace-256MiB-4-4-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "zh-whitespace-256MiB-4-4-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "zh-whitespace-256MiB",
+    "metrics": {
+      "load_seconds": 6.139608502,
+      "process_hwm_kib_before_validation": 1834004,
+      "train_cpu_seconds": 54.688421,
+      "train_seconds": 19.986609671
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-index-merge-confirm-results-20261011/zh-whitespace-256MiB-4-4-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  }
+]

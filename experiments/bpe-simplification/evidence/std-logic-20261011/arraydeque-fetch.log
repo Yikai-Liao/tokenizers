@@ -1,0 +1,5 @@
+    Updating `bfsu-sparse` index
+     Locking 1 package to highest Rust 1.99.0 compatible version
+      Adding arraydeque v0.5.1
+ Downloading crates ...
+  Downloaded arraydeque v0.5.1 (registry `bfsu-sparse`)

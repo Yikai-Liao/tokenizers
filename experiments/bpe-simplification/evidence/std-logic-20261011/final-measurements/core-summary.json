@@ -1,0 +1,86 @@
+[
+  {
+    "case": "bytelevel_regex",
+    "baseline": {
+      "train_seconds": 9.7362449295,
+      "train_cpu_seconds": 31.480648000000002,
+      "process_hwm_kib_before_validation": 2472686.0
+    },
+    "final": {
+      "train_seconds": 10.0291342075,
+      "train_cpu_seconds": 32.24938300000001,
+      "process_hwm_kib_before_validation": 2472832.0
+    },
+    "reference": "baseline",
+    "paired_median_delta_percent": {
+      "final": {
+        "train_seconds": 2.2941930131055055,
+        "train_cpu_seconds": 2.4684387305488498,
+        "process_hwm_kib_before_validation": -0.10883358727895032
+      }
+    }
+  },
+  {
+    "case": "whitespace",
+    "baseline": {
+      "train_seconds": 8.440077627,
+      "train_cpu_seconds": 24.2766945,
+      "process_hwm_kib_before_validation": 1839996.0
+    },
+    "final": {
+      "train_seconds": 8.5474021095,
+      "train_cpu_seconds": 24.6315715,
+      "process_hwm_kib_before_validation": 1848322.0
+    },
+    "reference": "baseline",
+    "paired_median_delta_percent": {
+      "final": {
+        "train_seconds": 1.2389423138794098,
+        "train_cpu_seconds": 1.669799842480968,
+        "process_hwm_kib_before_validation": 0.03479928957684231
+      }
+    }
+  },
+  {
+    "case": "en-bytelevel_regex",
+    "baseline": {
+      "train_seconds": 0.8451548799999999,
+      "train_cpu_seconds": 2.000229,
+      "process_hwm_kib_before_validation": 177216.0
+    },
+    "final": {
+      "train_seconds": 0.8543334505,
+      "train_cpu_seconds": 1.997153,
+      "process_hwm_kib_before_validation": 189438.0
+    },
+    "reference": "baseline",
+    "paired_median_delta_percent": {
+      "final": {
+        "train_seconds": -0.12408538266945324,
+        "train_cpu_seconds": -0.6726377045692511,
+        "process_hwm_kib_before_validation": 6.916030845630894
+      }
+    }
+  },
+  {
+    "case": "en-whitespace",
+    "baseline": {
+      "train_seconds": 0.76774724,
+      "train_cpu_seconds": 1.8097335,
+      "process_hwm_kib_before_validation": 163316.0
+    },
+    "final": {
+      "train_seconds": 0.7728055395,
+      "train_cpu_seconds": 1.793955,
+      "process_hwm_kib_before_validation": 164368.0
+    },
+    "reference": "baseline",
+    "paired_median_delta_percent": {
+      "final": {
+        "train_seconds": 0.5220390303323441,
+        "train_cpu_seconds": -1.1626067015138741,
+        "process_hwm_kib_before_validation": 0.34888999023414136
+      }
+    }
+  }
+]

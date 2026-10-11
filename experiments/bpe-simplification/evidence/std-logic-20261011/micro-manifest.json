@@ -1,0 +1,19 @@
+{
+  "binary_sha256": "58af89cdc74a26a9232f14941a10b5ddbdbf077c578890a135ac16e3fee6a067",
+  "sources": {
+    "src/main.rs": "c2623f5a473d9ab800d8af6ed91114da3a4c43bd8d79f4c28a4b10b96db77b33",
+    "src/positions_standard.rs": "53404e13ea8a46ea309c38e96463f360437fabf55a901eaa83ed5e8e0914b673",
+    "src/positions_original.rs": "44c436b6d6bee8632d84e805d57dd246726873ee97881305c66775f3812065e5",
+    "src/ranges_standard.rs": "5eaf63ab8729e54fd950ec9acefc0fca5d9afe13239a2c2abfaf5f447d5e42d0",
+    "src/bitmap_standard.rs": "4cbc505fc4498d7ac6d8eed34b66c5343cc956c5093e592335a49faef3fbd74a",
+    "src/ranges_original.rs": "cb2d4370c68c488d8260209bcbd8c332457db10673d77704ca8e1bd72f94218f",
+    "src/bitmap_original.rs": "7a9e485a6e9c5cea387ed483bc53042a27235915be86a744a89785f8cc2981ea"
+  },
+  "profile": "cargo release defaults opt3, both implementations in one binary",
+  "repetitions": 7,
+  "order": "AB on even reps; BA on odd reps",
+  "bitmap_cpus": "0-3",
+  "scalar_cpus": "0",
+  "scope": "bitmap collection/reduction; range partitioning on generated directories; sequential position decoding; excludes input construction and encoding",
+  "limitation": "Diagnostic measurements only; real English and Chinese training determine adoption."
+}

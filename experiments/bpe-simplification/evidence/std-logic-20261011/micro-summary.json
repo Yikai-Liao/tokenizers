@@ -1,0 +1,191 @@
+[
+  {
+    "case": "bitmap/empty",
+    "workers": 1,
+    "medians_ns": {
+      "original": 3775.8125,
+      "standard": 3782.2422
+    },
+    "paired_median_delta_percent": -0.38588589215555746
+  },
+  {
+    "case": "bitmap/small",
+    "workers": 1,
+    "medians_ns": {
+      "original": 15964.3594,
+      "standard": 3947.7969
+    },
+    "paired_median_delta_percent": -75.25803567651414
+  },
+  {
+    "case": "bitmap/large",
+    "workers": 1,
+    "medians_ns": {
+      "original": 12293053.3333,
+      "standard": 12253837.6667
+    },
+    "paired_median_delta_percent": -0.31032386656483224
+  },
+  {
+    "case": "bitmap/empty",
+    "workers": 4,
+    "medians_ns": {
+      "original": 3485.2734,
+      "standard": 3480.2109
+    },
+    "paired_median_delta_percent": -0.15272848932105232
+  },
+  {
+    "case": "bitmap/small",
+    "workers": 4,
+    "medians_ns": {
+      "original": 55389.1875,
+      "standard": 35299.75
+    },
+    "paired_median_delta_percent": -36.129015804306164
+  },
+  {
+    "case": "bitmap/large",
+    "workers": 4,
+    "medians_ns": {
+      "original": 4092801.3333,
+      "standard": 4066838.6667
+    },
+    "paired_median_delta_percent": -0.564297078803544
+  },
+  {
+    "case": "ranges/large-segments",
+    "workers": 1,
+    "medians_ns": {
+      "original": 1775675.375,
+      "standard": 172.3281
+    },
+    "paired_median_delta_percent": -99.99028747493227
+  },
+  {
+    "case": "ranges/small-segments",
+    "workers": 1,
+    "medians_ns": {
+      "original": 270219.9062,
+      "standard": 5965400.125
+    },
+    "paired_median_delta_percent": 2107.9242601382125
+  },
+  {
+    "case": "ranges/oversized-words",
+    "workers": 1,
+    "medians_ns": {
+      "original": 269855.4688,
+      "standard": 5965858.4375
+    },
+    "paired_median_delta_percent": 2110.410630299593
+  },
+  {
+    "case": "positions/2/distinct",
+    "workers": 1,
+    "medians_ns": {
+      "original": 1.1798,
+      "standard": 1.2593
+    },
+    "paired_median_delta_percent": 6.7310134620269135
+  },
+  {
+    "case": "positions/2/duplicates",
+    "workers": 1,
+    "medians_ns": {
+      "original": 1.176,
+      "standard": 1.2568
+    },
+    "paired_median_delta_percent": 6.89860496767607
+  },
+  {
+    "case": "positions/128/distinct",
+    "workers": 1,
+    "medians_ns": {
+      "original": 267.7222,
+      "standard": 266.9476
+    },
+    "paired_median_delta_percent": -0.1665436684762489
+  },
+  {
+    "case": "positions/128/duplicates",
+    "workers": 1,
+    "medians_ns": {
+      "original": 267.606,
+      "standard": 266.3562
+    },
+    "paired_median_delta_percent": -0.4475532943472915
+  },
+  {
+    "case": "positions/129/distinct",
+    "workers": 1,
+    "medians_ns": {
+      "original": 268.2804,
+      "standard": 268.9701
+    },
+    "paired_median_delta_percent": -0.0261788890753456
+  },
+  {
+    "case": "positions/129/duplicates",
+    "workers": 1,
+    "medians_ns": {
+      "original": 268.2712,
+      "standard": 268.4216
+    },
+    "paired_median_delta_percent": 0.05926375691194252
+  },
+  {
+    "case": "positions/4096/distinct",
+    "workers": 1,
+    "medians_ns": {
+      "original": 8437.3791,
+      "standard": 8418.5953
+    },
+    "paired_median_delta_percent": -0.2296744667921291
+  },
+  {
+    "case": "positions/4096/duplicates",
+    "workers": 1,
+    "medians_ns": {
+      "original": 8449.4764,
+      "standard": 8430.8535
+    },
+    "paired_median_delta_percent": -0.17010700822329694
+  },
+  {
+    "case": "positions/65536/distinct",
+    "workers": 1,
+    "medians_ns": {
+      "original": 135157.5082,
+      "standard": 134883.1475
+    },
+    "paired_median_delta_percent": -0.20299331028952317
+  },
+  {
+    "case": "positions/65536/duplicates",
+    "workers": 1,
+    "medians_ns": {
+      "original": 135041.9344,
+      "standard": 134719.5082
+    },
+    "paired_median_delta_percent": -0.23874794195384297
+  },
+  {
+    "case": "positions/1048576/distinct",
+    "workers": 1,
+    "medians_ns": {
+      "original": 2164461.5,
+      "standard": 2158326.75
+    },
+    "paired_median_delta_percent": -0.2888824772350973
+  },
+  {
+    "case": "positions/1048576/duplicates",
+    "workers": 1,
+    "medians_ns": {
+      "original": 2163846.5,
+      "standard": 2160794.75
+    },
+    "paired_median_delta_percent": -0.1551490226223584
+  }
+]

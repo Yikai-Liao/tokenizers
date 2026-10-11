@@ -6,6 +6,7 @@ use dary_heap::OctonaryHeap;
 use rayon::prelude::*;
 use smallvec::SmallVec;
 use std::cmp::{Ordering, Reverse};
+use std::collections::BTreeMap;
 use tk_encode::{Result, models::bpe::Pair, utils::progress::ProgressBar};
 
 /// Queue key: highest count first, then smallest pair.
@@ -351,7 +352,7 @@ impl Shard {
     }
 
     fn commit(&mut self, events: &[Event], reuse: bool, floor: u64) -> Result<Vec<Candidate>> {
-        let mut groups = AHashMap::<(usize, Pair), State<SmallVec<[u64; 2]>>>::new();
+        let mut groups = BTreeMap::<(usize, Pair), State<SmallVec<[u64; 2]>>>::new();
         let mut candidates = Vec::new();
         // Both drains own their remaining items: errors drop unpublished births
         // and empty the pending vectors while retaining their capacity.
@@ -411,8 +412,6 @@ impl Shard {
         }
 
         // Complete producers precede partial groups, which follow bucket/pair order.
-        let mut groups: Vec<_> = groups.into_iter().collect();
-        groups.sort_unstable_by_key(|((bucket, pair), _)| (*bucket, *pair));
         for ((_, pair), mut state) in groups {
             let count = if reuse {
                 self.counts[&pair]

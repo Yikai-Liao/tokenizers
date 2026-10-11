@@ -1,0 +1,22 @@
+[
+  {
+    "case": "zh-whitespace-256MiB",
+    "workers": 4,
+    "formal_pairs": 4,
+    "baseline": {
+      "train_seconds": 19.96355742,
+      "train_cpu_seconds": 55.14214,
+      "process_hwm_kib_before_validation": 1834386.0
+    },
+    "candidate": {
+      "train_seconds": 20.4194128315,
+      "train_cpu_seconds": 55.136438999999996,
+      "process_hwm_kib_before_validation": 1835124.0
+    },
+    "paired_median_delta_percent": {
+      "train_seconds": 2.184445750467401,
+      "train_cpu_seconds": 1.9596083158679,
+      "process_hwm_kib_before_validation": 0.08799041854682388
+    }
+  }
+]

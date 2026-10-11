@@ -1,0 +1,103 @@
+{
+  "baseline_commit": "a2f1c0f7fda871ad321579a8df690a5f6464043f",
+  "scope": "Ordinary BPE only; optional Parity Trainer excluded at user request.",
+  "final_checks": [
+    {
+      "command": "cargo test --offline --locked --manifest-path tokenizers/tk-train/Cargo.toml --no-default-features --lib -- --skip feed_training_tokenizer_json_and_encoding_roundtrip",
+      "exit_code": 0,
+      "passed": 35,
+      "filtered": 1,
+      "log": "integrated-ranges-tests.log"
+    },
+    {
+      "command": "cargo test --offline --locked --manifest-path tokenizers/tk-train/Cargo.toml --lib",
+      "exit_code": 101,
+      "passed": 35,
+      "failed": 1,
+      "log": "final-default-unfiltered.log"
+    },
+    {
+      "command": "cargo test --offline --locked --manifest-path tokenizers/tk-train/Cargo.toml --lib -- --skip feed_training_tokenizer_json_and_encoding_roundtrip",
+      "exit_code": 0,
+      "passed": 35,
+      "filtered": 1,
+      "log": "final-default-tests.log"
+    },
+    {
+      "command": "cargo clippy --offline --locked --manifest-path tokenizers/tk-train/Cargo.toml --all-targets -- -D warnings",
+      "exit_code": 0,
+      "log": "final-clippy.log"
+    },
+    {
+      "command": "uv run experiments/bpe-simplification/format-changed.py --check tokenizers/tk-train/src/trainers/bpe/corpus.rs tokenizers/tk-train/src/trainers/bpe/index.rs tokenizers/tk-train/src/trainers/bpe/merge.rs tokenizers/tk-train/src/trainers/bpe/positions.rs tokenizers/tk-train/src/trainers/bpe/tests.rs tokenizers/tk-train/src/trainers/bpe/vocabulary.rs",
+      "exit_code": 0,
+      "log": "final-format.log"
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "log": "final-diff-check.log"
+    }
+  ],
+  "independent_candidates": {
+    "core": 31,
+    "deque": 31,
+    "tree": 31,
+    "bitmap": 32,
+    "seed": 32,
+    "ranges": 32,
+    "arraydeque": 31
+  },
+  "sequential_integration": {
+    "deque_and_edge_regression": 32,
+    "bitmap": 33,
+    "seed": 34,
+    "ranges": 35
+  },
+  "known_failure": {
+    "name": "feed_training_tokenizer_json_and_encoding_roundtrip",
+    "actual_id": 3,
+    "expected_id": 6,
+    "input": "\u6d4b",
+    "baseline_evidence": "../trainer-interface-20261011/README.md",
+    "candidate_log": "final-default-unfiltered.log"
+  },
+  "dependencies": "No dependency or toolchain change in retained production code. ArrayDeque 0.5.1 is isolated in a comparison worktree.",
+  "performance_checks": {
+    "measurements": {
+      "processes": 48,
+      "formal": 32,
+      "all_models_equal": true,
+      "sampled_swap_kib": 0,
+      "no_concurrent_builds_or_benchmarks": true
+    },
+    "all-measurements": {
+      "processes": 84,
+      "formal": 56,
+      "all_models_equal": true,
+      "sampled_swap_kib": 0,
+      "no_concurrent_builds_or_benchmarks": true
+    },
+    "queue-measurements": {
+      "processes": 24,
+      "formal": 16,
+      "all_models_equal": true,
+      "sampled_swap_kib": 0,
+      "no_concurrent_builds_or_benchmarks": true
+    },
+    "final-measurements": {
+      "processes": 40,
+      "formal": 32,
+      "all_models_equal": true,
+      "sampled_swap_kib": 0,
+      "no_concurrent_builds_or_benchmarks": true
+    },
+    "directed-measurements": {
+      "processes": 18,
+      "formal": 12,
+      "all_models_equal": true,
+      "sampled_swap_kib": 0,
+      "no_concurrent_builds_or_benchmarks": true
+    }
+  }
+}

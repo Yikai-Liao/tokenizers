@@ -10,6 +10,7 @@ use ahash::{AHashMap, AHashSet};
 use itertools::Itertools;
 use rayon::prelude::*;
 use smallvec::SmallVec;
+use std::collections::VecDeque;
 use tk_encode::{Result, models::bpe::Pair};
 
 /// One selected pair and resolved replacement ID, owning its candidate positions.
@@ -652,19 +653,12 @@ impl<'task> CohortPreparation<'task> {
         let writes = &mut self.writes;
         let mut previous = None;
         let mut p = corpus.word_start(word);
-        let mut positions = rule
-            .candidate
-            .positions
-            .iter_from_value(p as u64)
-            .peekable();
+        let mut positions = rule.candidate.positions.iter_from_value(p as u64);
         while p < corpus.word_end(word) {
             // Full-word scans are required only after alias reuse or a length
             // gate. Otherwise the selected cohort defines the scan domain.
             if !corpus.whole_words() {
-                while positions.peek().is_some_and(|&start| start < p as u64) {
-                    positions.next();
-                }
-                let Some(coordinate) = positions.peek().copied() else {
+                let Some(coordinate) = positions.find(|&start| start >= p as u64) else {
                     break;
                 };
                 let next = corpus.resident(coordinate);
@@ -677,7 +671,6 @@ impl<'task> CohortPreparation<'task> {
                         .then(|| (id, next - corpus.span(next - 1), corpus.span(next - 1)));
                     p = next;
                 }
-                positions.next();
             }
             if let Some(matched) = corpus.matched(p, rule.pair()) {
                 let weight = corpus.word_weight(word);
@@ -790,7 +783,7 @@ impl Source<'_> {
         }
     }
 
-    // Decode one bounded ring ahead. Prefetch is a nonblocking
+    // Decode one bounded queue ahead. Prefetch is a nonblocking
     // hint; matching still reads the same joined preparation snapshot in order.
     fn prefetched<'a>(&'a self, corpus: &'a Corpus) -> impl Iterator<Item = usize> + 'a {
         let coordinates = match self {
@@ -798,18 +791,17 @@ impl Source<'_> {
             Self::Chunk(chunk) => itertools::Either::Right(chunk.iter()),
         };
         let mut positions = coordinates.map(move |coordinate| corpus.resident(coordinate));
-        let mut ring: [Option<usize>; 16] = std::array::from_fn(|_| positions.next());
-        for &p in ring.iter().flatten() {
+        let mut ahead = VecDeque::with_capacity(16);
+        ahead.extend(positions.by_ref().take(16));
+        for &p in &ahead {
             corpus.prefetch(p);
         }
-        let mut head = 0;
         std::iter::from_fn(move || {
-            let position = ring[head]?;
-            ring[head] = positions.next();
-            if let Some(next) = ring[head] {
+            let position = ahead.pop_front()?;
+            if let Some(next) = positions.next() {
                 corpus.prefetch(next);
+                ahead.push_back(next);
             }
-            head = (head + 1) % ring.len();
             Some(position)
         })
     }

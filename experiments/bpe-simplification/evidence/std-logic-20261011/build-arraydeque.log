@@ -1,0 +1,7 @@
+   Compiling bitcannon v0.1.0-dev.2 (/tmp/bpe-std-arraydeque/tokenizers/bitcannon)
+   Compiling arraydeque v0.5.1
+   Compiling tk-convert v0.1.0-dev.2 (/tmp/bpe-std-arraydeque/tokenizers/tk-convert)
+   Compiling tk-encode v0.1.0-dev.2 (/tmp/bpe-std-arraydeque/tokenizers/tk-encode)
+   Compiling tk-train v0.1.0-dev.2 (/tmp/bpe-std-arraydeque/tokenizers/tk-train)
+   Compiling bpe-bench-runner v0.1.0 (/tmp/bpe-std-arraydeque/experiments/bpe-simplification/runner)
+    Finished `release` profile [optimized] target(s) in 30.12s

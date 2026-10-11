@@ -1,0 +1,587 @@
+diff --git a/tokenizers/tk-train/src/trainers/bpe/AGENTS.md b/tokenizers/tk-train/src/trainers/bpe/AGENTS.md
+index 25aca351..5ac9fa0c 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/AGENTS.md
++++ b/tokenizers/tk-train/src/trainers/bpe/AGENTS.md
+@@ -1,3 +1,8 @@
++# BPE work scope
++
++- Work on the ordinary BPE trainer. Parity Trainer is outside the scope unless
++  the user explicitly requests work on it.
++
+ # Temporary formatting rule for this BPE change
+ 
+ - Keep a blank line between adjacent functions, including methods and tests.
+diff --git a/tokenizers/tk-train/src/trainers/bpe/README.md b/tokenizers/tk-train/src/trainers/bpe/README.md
+index 574527c9..374899ec 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/README.md
++++ b/tokenizers/tk-train/src/trainers/bpe/README.md
+@@ -65,11 +65,24 @@ without waiting for every producer. Owned compressed fragments retain complete
+ pair counts; global frequency admission precedes final list publication. There is
+ no extra wave barrier.
+ 
++The plan finds each segment's resident boundary with `partition_point`, admitting
++the final tail separately because the word starts omit the final boundary.
++Vocabulary exposes one filtered `symbols()` iterator to initial edge counting and
++endpoint materialization. Decorations still use original UTF-8 byte boundaries;
++edge coordinates enumerate retained symbols. Unlimited alphabet observation uses
++Rayon bitmap reduction, retaining the full Unicode bit domain for empty input.
++
+ Preparation indexes unique rule heads directly by token ID and checks tail
+ presence before left-neighbor lookup. Shared heads fall back to exact pair keys.
+ Only monotone snapshot write/birth appenders skip repeated ordering checks;
+ general appends and final encoding retain validation.
+ 
++Preparation keeps at most 16 decoded positions ahead in a `VecDeque`. Initial
++filling takes at most 16 elements; every refill follows one pop, so the queue never
++exceeds that length. Cohort scans use `find` to consume the next eligible occurrence.
++Partial birth groups use `BTreeMap` order directly when publishing, preserving
++bucket/pair ordering without an intermediate collection and sort.
++
+ Compatible batches retain the original priority prefix and permit shared heads
+ or shared tails. Crossed endpoints end the batch without skipping a candidate.
+ AA and reserved-ID rules run alone. Complete ordinary producers prune before encoding in preparation and publish
+diff --git a/tokenizers/tk-train/src/trainers/bpe/corpus.rs b/tokenizers/tk-train/src/trainers/bpe/corpus.rs
+index 3c48e10a..35f6d284 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/corpus.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/corpus.rs
+@@ -5,11 +5,9 @@ use super::{
+     word_counts::WordCountsView,
+ };
+ use compact_str::CompactString;
++use itertools::Itertools;
+ use rayon::prelude::*;
+-use std::{
+-    ops::ControlFlow,
+-    sync::atomic::{AtomicU16, AtomicU32, AtomicUsize, Ordering},
+-};
++use std::sync::atomic::{AtomicU16, AtomicU32, AtomicUsize, Ordering};
+ use tk_encode::{Result, models::bpe::Pair, utils::progress::ProgressBar};
+ 
+ /// Resident token endpoints at fixed original coordinates, with weights and spans.
+@@ -133,14 +131,18 @@ impl<'input> CorpusPlan<'input> {
+     pub(super) fn initial_ranges(&self, slots: usize) -> Vec<std::ops::Range<usize>> {
+         let mut ranges = Vec::new();
+         let mut begin = 0;
+-        while begin < self.word_count() {
+-            let mut end = begin + 1;
+-            while end < self.word_count()
+-                && self.starts.get(end + 1).copied().unwrap_or(self.length) - self.starts[begin]
+-                    <= slots
+-            {
+-                end += 1;
+-            }
++        let n = self.word_count();
++        while begin < n {
++            let start = self.starts[begin];
++            // starts omits the final separator boundary. Admit the tail directly
++            // when it fits; otherwise search resident boundaries without addition.
++            let end = if self.length - start <= slots {
++                n
++            } else {
++                let fitted =
++                    self.starts[begin + 1..].partition_point(|&next| next - start <= slots);
++                begin + fitted.max(1)
++            };
+             ranges.push(begin..end);
+             begin = end;
+         }
+@@ -158,21 +160,13 @@ impl<'input> CorpusPlan<'input> {
+     ) -> Result<()> {
+         for word in range {
+             let (text, &weight) = self.words[word];
+-            let mut position = self.starts[word];
+-            let mut previous = None;
+-            let flow = self.ids.scan_symbols(text, |id| {
+-                if let Some(left) = previous
+-                    && let Err(error) = emit((left, id), (position - 1) as u64, weight)
+-                {
+-                    return ControlFlow::Break(error);
+-                }
+-                previous = Some(id);
+-                position += 1;
+-                ControlFlow::Continue(())
+-            });
+-            if let ControlFlow::Break(error) = flow {
+-                return Err(error);
+-            }
++            self.ids
++                .symbols(text)
++                .tuple_windows()
++                .enumerate()
++                .try_for_each(|(offset, pair)| {
++                    emit(pair, (self.starts[word] + offset) as u64, weight)
++                })?;
+         }
+         Ok(())
+     }
+@@ -186,12 +180,9 @@ impl<'input> CorpusPlan<'input> {
+                 #[cfg(test)]
+                 super::tests::observe_worker(super::tests::Phase::Materialize);
+                 let start = self.starts[word];
+-                let mut position = start;
+-                let _ = self.ids.scan_symbols(text, |id| {
+-                    tokens.set(position, id);
+-                    position += 1;
+-                    ControlFlow::<()>::Continue(())
+-                });
++                for (offset, id) in self.ids.symbols(text).enumerate() {
++                    tokens.set(start + offset, id);
++                }
+             });
+         // Only historical reuse cohorts need a word directory after counting.
+         Corpus {
+@@ -452,3 +443,75 @@ impl Slots {
+         }
+     }
+ }
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++    use ahash::AHashMap;
++
++    // Preserve the previous whole-word linear search as an independent oracle.
++    fn linear_ranges(starts: &[usize], length: usize, slots: usize) -> Vec<std::ops::Range<usize>> {
++        let mut ranges = Vec::new();
++        let mut begin = 0;
++        while begin < starts.len() {
++            let mut end = begin + 1;
++            while end < starts.len()
++                && starts.get(end + 1).copied().unwrap_or(length) - starts[begin] <= slots
++            {
++                end += 1;
++            }
++            ranges.push(begin..end);
++            begin = end;
++        }
++        ranges
++    }
++
++    #[test]
++    fn initial_ranges_match_linear_search_at_slot_and_separator_boundaries() {
++        let words = AHashMap::new();
++        let view = WordCountsView::from_map(&words);
++        let trainer = BpeTrainer::new(1, 0);
++        let mut vocabulary = Vocabulary::initialize(&trainer, view, 1, &mut None).unwrap();
++        let mut plan = CorpusPlan::build(view, &mut vocabulary, &trainer, false, &None).unwrap();
++        let text = CompactString::default();
++        let weight = 1;
++        let mut layouts = vec![(vec![usize::MAX - 8, usize::MAX - 3], usize::MAX)];
++        for n in [0, 1, 2, 3, 7, 128, 257] {
++            for seed in 0..16 {
++                let mut state = seed as u64;
++                let mut starts = Vec::new();
++                let mut length = 1;
++                for _ in 0..n {
++                    starts.push(length);
++                    state = state.wrapping_mul(6364136223846793005).wrapping_add(1);
++                    length += 1 + (state >> 32) as usize % 65;
++                }
++                layouts.push((starts, length));
++            }
++        }
++        for (starts, length) in layouts {
++            plan.words = vec![(&text, &weight); starts.len()];
++            plan.starts = starts;
++            plan.length = length;
++            let mut budgets = vec![0, 1, 2, 3, 4, 5, 7, 8, 16, 17, 63, 64, 65, 1024, usize::MAX];
++            if let Some(&start) = plan.starts.first() {
++                budgets.extend(plan.starts.iter().map(|&next| next - start));
++                budgets.push(length - start);
++            }
++            for slots in budgets {
++                let ranges = plan.initial_ranges(slots);
++                assert_eq!(ranges, linear_ranges(&plan.starts, length, slots));
++                let mut end = 0;
++                for range in ranges {
++                    assert_eq!(range.start, end);
++                    assert!(!range.is_empty());
++                    let span = plan.starts.get(range.end).copied().unwrap_or(length)
++                        - plan.starts[range.start];
++                    assert!(span <= slots || range.len() == 1);
++                    end = range.end;
++                }
++                assert_eq!(end, plan.word_count());
++            }
++        }
++    }
++}
+diff --git a/tokenizers/tk-train/src/trainers/bpe/index.rs b/tokenizers/tk-train/src/trainers/bpe/index.rs
+index 8e4971ac..03632106 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/index.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/index.rs
+@@ -6,6 +6,7 @@ use dary_heap::OctonaryHeap;
+ use rayon::prelude::*;
+ use smallvec::SmallVec;
+ use std::cmp::{Ordering, Reverse};
++use std::collections::BTreeMap;
+ use tk_encode::{Result, models::bpe::Pair, utils::progress::ProgressBar};
+ 
+ /// Queue key: highest count first, then smallest pair.
+@@ -404,7 +405,7 @@ struct OwnerCommit<'index> {
+     shard: &'index mut AHashMap<Pair, u64>,
+     reuse: bool,
+     floor: u64,
+-    groups: AHashMap<(usize, Pair), Group>,
++    groups: BTreeMap<(usize, Pair), Group>,
+     candidates: Vec<Candidate>,
+ }
+ 
+@@ -414,7 +415,7 @@ impl<'index> OwnerCommit<'index> {
+             shard,
+             reuse,
+             floor,
+-            groups: AHashMap::new(),
++            groups: BTreeMap::new(),
+             candidates: Vec::new(),
+         }
+     }
+@@ -494,9 +495,7 @@ impl<'index> OwnerCommit<'index> {
+     fn publish_groups(mut self) -> Result<Vec<Candidate>> {
+         // Partial birth groups follow bucket/pair order within this owner. Complete
+         // producers have already published directly into its candidate list.
+-        let mut groups: Vec<_> = self.groups.into_iter().collect();
+-        groups.sort_unstable_by_key(|((bucket, pair), _)| (*bucket, *pair));
+-        for ((_, pair), state) in groups {
++        for ((_, pair), state) in self.groups {
+             let count = if self.reuse {
+                 self.shard[&pair]
+             } else {
+diff --git a/tokenizers/tk-train/src/trainers/bpe/merge.rs b/tokenizers/tk-train/src/trainers/bpe/merge.rs
+index a4b148de..4feee33c 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/merge.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/merge.rs
+@@ -10,7 +10,7 @@ use ahash::{AHashMap, AHashSet};
+ use itertools::Itertools;
+ use rayon::prelude::*;
+ use smallvec::SmallVec;
+-use std::ops::Range;
++use std::{collections::VecDeque, ops::Range};
+ use tk_encode::{Result, models::bpe::Pair};
+ 
+ /// One selected pair and resolved replacement ID, owning its candidate positions.
+@@ -653,19 +653,12 @@ impl<'task> CohortPreparation<'task> {
+         let writes = &mut self.writes;
+         let mut previous = None;
+         let mut p = corpus.word_start(word);
+-        let mut positions = rule
+-            .candidate
+-            .positions
+-            .iter_from_value(p as u64)
+-            .peekable();
++        let mut positions = rule.candidate.positions.iter_from_value(p as u64);
+         while p < corpus.word_end(word) {
+             // Full-word scans are required only after alias reuse or a length
+             // gate. Otherwise the selected cohort defines the scan domain.
+             if !corpus.whole_words() {
+-                while positions.peek().is_some_and(|&start| start < p as u64) {
+-                    positions.next();
+-                }
+-                let Some(coordinate) = positions.peek().copied() else {
++                let Some(coordinate) = positions.find(|&start| start >= p as u64) else {
+                     break;
+                 };
+                 let next = corpus.resident(coordinate);
+@@ -678,7 +671,6 @@ impl<'task> CohortPreparation<'task> {
+                         .then(|| (id, next - corpus.span(next - 1), corpus.span(next - 1)));
+                     p = next;
+                 }
+-                positions.next();
+             }
+             if let Some(matched) = corpus.matched(p, rule.pair()) {
+                 let weight = corpus.word_weight(word);
+@@ -792,7 +784,7 @@ impl Source<'_> {
+         }
+     }
+ 
+-    // Decode one bounded ring ahead. Prefetch is a nonblocking
++    // Decode one bounded queue ahead. Prefetch is a nonblocking
+     // hint; matching still reads the same joined preparation snapshot in order.
+     fn prefetched<'a>(
+         &'a self,
+@@ -804,18 +796,17 @@ impl Source<'_> {
+             Self::Range(range) => itertools::Either::Right(candidate.iter_range(range.clone())),
+         };
+         let mut positions = coordinates.map(move |coordinate| corpus.resident(coordinate));
+-        let mut ring: [Option<usize>; 16] = std::array::from_fn(|_| positions.next());
+-        for &p in ring.iter().flatten() {
++        let mut ahead = VecDeque::with_capacity(16);
++        ahead.extend(positions.by_ref().take(16));
++        for &p in &ahead {
+             corpus.prefetch(p);
+         }
+-        let mut head = 0;
+         std::iter::from_fn(move || {
+-            let position = ring[head]?;
+-            ring[head] = positions.next();
+-            if let Some(next) = ring[head] {
++            let position = ahead.pop_front()?;
++            if let Some(next) = positions.next() {
+                 corpus.prefetch(next);
++                ahead.push_back(next);
+             }
+-            head = (head + 1) % ring.len();
+             Some(position)
+         })
+     }
+diff --git a/tokenizers/tk-train/src/trainers/bpe/positions.rs b/tokenizers/tk-train/src/trainers/bpe/positions.rs
+index 86f6be32..0a714c95 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/positions.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/positions.rs
+@@ -261,8 +261,12 @@ impl Iterator for Cursor<'_> {
+             return None;
+         }
+         if self.index.is_multiple_of(RESTART) {
+-            self.position = u64::from_le_bytes(self.bytes[..8].try_into().unwrap());
+-            self.bytes = &self.bytes[8..];
++            let (seed, rest) = self
++                .bytes
++                .split_first_chunk::<8>()
++                .expect("internal positions restart seed is complete");
++            self.position = u64::from_le_bytes(*seed);
++            self.bytes = rest;
+         } else {
+             let mut delta = 0u64;
+             let mut shift = 0;
+@@ -286,6 +290,29 @@ impl Iterator for Cursor<'_> {
+ mod tests {
+     use super::*;
+ 
++    #[test]
++    fn truncated_restart_panics_but_completed_cursor_reads_no_bytes() {
++        let bytes = [0; 7];
++        for length in 0..=bytes.len() {
++            let mut cursor = Cursor {
++                bytes: &bytes[..length],
++                position: 99,
++                index: 0,
++                end: 1,
++            };
++            assert!(std::panic::catch_unwind(move || cursor.next()).is_err());
++        }
++        let mut cursor = Cursor {
++            bytes: &[],
++            position: 99,
++            index: RESTART,
++            end: RESTART,
++        };
++        assert_eq!(cursor.next(), None);
++        assert_eq!(cursor.next(), None);
++        assert_eq!((cursor.index, cursor.position), (RESTART, 99));
++    }
++
+     #[test]
+     fn lower_bound_preserves_the_first_duplicate_across_restarts() {
+         for first in [0, 1, 127, 128, 129, 255, 256] {
+diff --git a/tokenizers/tk-train/src/trainers/bpe/tests.rs b/tokenizers/tk-train/src/trainers/bpe/tests.rs
+index fbae4736..899fb1a2 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/tests.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/tests.rs
+@@ -930,7 +930,7 @@ fn builder_defaults_options_and_serialization_remain_compatible() {
+ }
+ 
+ #[test]
+-fn symbol_scan_returns_the_break_reason_and_preserves_utf8_affix_boundaries() {
++fn symbols_preserve_short_circuiting_and_utf8_affix_boundaries() {
+     use std::ops::ControlFlow;
+     let words = counts(&[("é🙂é", 2), ("🙂é", 1)]);
+     for decorated in [false, true] {
+@@ -959,18 +959,11 @@ fn symbol_scan_returns_the_break_reason_and_preserves_utf8_affix_boundaries() {
+                 ],
+             ),
+         ] {
+-            let mut emitted = Vec::new();
+-            assert_eq!(
+-                ids.scan_symbols(text, |id| {
+-                    emitted.push(id);
+-                    ControlFlow::<()>::Continue(())
+-                }),
+-                ControlFlow::Continue(())
+-            );
++            let emitted: Vec<_> = ids.symbols(text).collect();
+             assert_eq!(emitted, expected);
+         }
+         let mut calls = 0;
+-        let reason = ids.scan_symbols("é🙂é", |_| {
++        let reason = ids.symbols("é🙂é").try_for_each(|_| {
+             calls += 1;
+             if calls == 2 {
+                 ControlFlow::Break("stop")
+@@ -992,3 +985,50 @@ fn symbol_scan_returns_the_break_reason_and_preserves_utf8_affix_boundaries() {
+         assert_eq!(edges, 1);
+     }
+ }
++
++#[test]
++fn initial_edges_preserve_filtered_coordinates_weights_and_errors() {
++    let words = counts(&[("qé🙂z", 7), ("é🙂é", 6), ("🙂é", 5), ("", 4), ("é", 3)]);
++    for decorated in [false, true] {
++        let mut trainer = trainer();
++        trainer.limit_alphabet = Some(2);
++        if decorated {
++            trainer.continuing_subword_prefix = Some("##".into());
++            trainer.end_of_word_suffix = Some("</w>".into());
++        }
++        let view = WordCountsView::from_map(&words);
++        let progress = trainer.setup_progress();
++        let mut vocabulary = Vocabulary::initialize(&trainer, view, 1, &mut None).unwrap();
++        let ids = vocabulary.initial_ids(view, &progress).unwrap();
++        let id = |character, first, last| ids.id(character, first, last).unwrap();
++        let expected = vec![
++            ((id('é', false, false), id('🙂', false, false)), 1, 7),
++            ((id('é', true, false), id('🙂', false, false)), 4, 6),
++            ((id('🙂', false, false), id('é', false, true)), 5, 6),
++            ((id('🙂', true, false), id('é', false, true)), 8, 5),
++        ];
++        let plan = CorpusPlan::build(view, &mut vocabulary, &trainer, true, &progress).unwrap();
++        let mut actual = Vec::new();
++        plan.initial_edges(0..plan.word_count(), |pair, coordinate, weight| {
++            actual.push((pair, coordinate, weight));
++            Ok(())
++        })
++        .unwrap();
++        assert_eq!(actual, expected);
++        for stop in 1..=expected.len() {
++            let mut emitted = Vec::new();
++            let error = plan
++                .initial_edges(0..plan.word_count(), |pair, coordinate, weight| {
++                    emitted.push((pair, coordinate, weight));
++                    if emitted.len() == stop {
++                        Err("designated edge failure".into())
++                    } else {
++                        Ok(())
++                    }
++                })
++                .unwrap_err();
++            assert_eq!(error.to_string(), "designated edge failure");
++            assert_eq!(emitted, expected[..stop]);
++        }
++    }
++}
+diff --git a/tokenizers/tk-train/src/trainers/bpe/vocabulary.rs b/tokenizers/tk-train/src/trainers/bpe/vocabulary.rs
+index 79b3e201..e279804c 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/vocabulary.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/vocabulary.rs
+@@ -287,32 +287,23 @@ impl Vocabulary {
+ 
+ impl InitialTokenIds {
+     /// Interpret filtering and decorations against original UTF-8 coordinates.
+-    /// The plain path chooses its loop once and avoids per-symbol affix checks.
++    /// The plain path chooses its iterator once and avoids per-symbol affix checks.
+     #[inline]
+-    pub(super) fn scan_symbols<B>(
+-        &self,
+-        word: &str,
+-        mut emit: impl FnMut(u32) -> std::ops::ControlFlow<B>,
+-    ) -> std::ops::ControlFlow<B> {
+-        use std::ops::ControlFlow;
++    pub(super) fn symbols<'a>(&'a self, word: &'a str) -> impl Iterator<Item = u32> + 'a {
+         if self.plain() {
+-            for character in word.chars() {
+-                if let Some(id) = self.plain_id(character) {
+-                    emit(id)?;
+-                }
+-            }
++            itertools::Either::Left(
++                word.chars()
++                    .filter_map(|character| self.plain_id(character)),
++            )
+         } else {
+-            for (byte, character) in word.char_indices() {
+-                if let Some(id) = self.id(
++            itertools::Either::Right(word.char_indices().filter_map(move |(byte, character)| {
++                self.id(
+                     character,
+                     byte == 0,
+                     byte + character.len_utf8() == word.len(),
+-                ) {
+-                    emit(id)?;
+-                }
+-            }
++                )
++            }))
+         }
+-        ControlFlow::Continue(())
+     }
+ 
+     pub(super) fn symbol_count(&self, text: &str) -> usize {
+@@ -391,7 +382,7 @@ pub(super) fn select_alphabet(trainer: &BpeTrainer, wc: WordCountsView<'_>) -> V
+ fn observed_characters(word_counts: WordCountsView<'_>, workers: usize) -> FixedBitSet {
+     let words: Vec<_> = word_counts.keys().collect();
+     let chunk = words.len().div_ceil(workers).max(1);
+-    let bitmaps: Vec<_> = words
++    words
+         .par_chunks(chunk)
+         .map(|chunk| {
+             let mut present = FixedBitSet::with_capacity(0x110000);
+@@ -402,10 +393,65 @@ fn observed_characters(word_counts: WordCountsView<'_>, workers: usize) -> Fixed
+             }
+             present
+         })
+-        .collect();
+-    let mut present = FixedBitSet::with_capacity(0x110000);
+-    for bitmap in bitmaps {
+-        present.union_with(&bitmap);
++        .reduce_with(|mut left, right| {
++            left.union_with(&right);
++            left
++        })
++        .unwrap_or_else(|| FixedBitSet::with_capacity(0x110000))
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++    use ahash::AHashSet;
++
++    #[test]
++    fn observed_reduction_preserves_presence_activation_and_model_ids() {
++        for input in [
++            vec![],
++            vec![("aaaa", 1)],
++            vec![("ASCII", 2), ("中文中文", 3), ("é🙂𐀀é", 7)],
++        ] {
++            let words = input
++                .into_iter()
++                .map(|(word, count)| (CompactString::from(word), count))
++                .collect();
++            let view = WordCountsView::from_map(&words);
++            let expected: AHashSet<_> = view.keys().flat_map(|word| word.chars()).collect();
++            let mut trainer = BpeTrainer::new(1, 64);
++            trainer.show_progress = false;
++            trainer.initial_alphabet = ['z', '🚀'].into();
++            let model = trainer.do_train_impl(view, Some(1)).unwrap().parts;
++            for workers in [1, 4, 8] {
++                rayon::ThreadPoolBuilder::new()
++                    .num_threads(workers)
++                    .build()
++                    .unwrap()
++                    .install(|| {
++                        let observed = observed_characters(view, workers);
++                        assert_eq!(observed.len(), 0x110000);
++                        assert_eq!(
++                            observed
++                                .ones()
++                                .map(|bit| char::from_u32(bit as u32).unwrap())
++                                .collect::<AHashSet<_>>(),
++                            expected
++                        );
++                        let vocabulary =
++                            Vocabulary::initialize(&trainer, view, workers, &mut None).unwrap();
++                        for (id, token) in vocabulary.tokens.iter().enumerate() {
++                            let character = token.chars().next().unwrap();
++                            assert_eq!(
++                                vocabulary.initial_spans[id],
++                                usize::from(expected.contains(&character))
++                            );
++                        }
++                    });
++                assert_eq!(
++                    trainer.do_train_impl(view, Some(workers)).unwrap().parts,
++                    model
++                );
++            }
++        }
+     }
+-    present
+ }
