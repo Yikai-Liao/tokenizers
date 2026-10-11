@@ -1,0 +1,40 @@
+BPE Writes 简化：四线程中英文 256 MiB 比较
+
+核心变更降低了跨阶段协议与几何状态的维护成本；独立 review 建议保留候选，未发现阻塞问题。性能数据仅覆盖下面两个四线程场景，不作为完整矩阵或确定性速度结论。用户随后明确要求推送；实现与必要测试发布至 simplify/bpe-flat-20261010，main 和其他实验工作目录保持原状。
+
+实现与维护收益
+Fresh 和 reuse preparation 都直接记录已经接受的起点。生产 Job 只有 starts / replacement / changes；删除 Writes enum、Compact/Occurrences、fresh/record/apply 三个转运方法及逐 occurrence 几何载荷。Corpus::apply_merges 统一完成写入，生产 Match 只保留 start / after，旧 Corpus::apply 已删除。
+几何来源由 Corpus 自己的 occurrence_spans 选择。无 plane 时，在第一条 store 前从旧 token 缓存本 Job 的 left/total；有 plane 时，逐 occurrence 在改写端点之前读自己的两个跨度。准备结果无需携带模式或几何快照，调整几何来源时不再协调两文件的写入协议。
+仍需保持每个 Job 同一规则、整轮所有接受区间互不重叠，以及 prepare join → apply join → owner commit → publish。原子宽度、Relaxed store 顺序、activation history / historical cohorts、removal-only changes 和成功后返回 records 均保留。未改 Parity、Positions 或邻接事件协议，未加入可选 SelectedRules 共享。
+代价：Corpus 两个相邻短分支重复五行 token stores，未来修改必须一起更新；无 plane 每非空 Job 增加两次 token 读取，有 plane 每 occurrence 增加两次跨度原子读取。独立审查认为这一局部重复没有抵消协议删除收益。测试 oracle 复制完整 planes 与冻结坐标，仅在测试构建存在；它验证恢复几何，并非独立 matcher/trainer 正确性证明。
+纯生产补丁仅 corpus.rs / merge.rs：+58/-95，净 -37 行。行数不是维护收益的判据；机制与审查证据见 independent-review.md。
+
+正确性
+默认和 no-default 未过滤库测试：baseline / candidate 均 47 passed、1 个已知 encoding roundtrip 失败（“测”的 actual PipelineToken(3)，expected ID 随初始化哈希顺序为 4 或 6）。该失败单列，不能称完整测试全绿。没有新增写入 oracle / 模型 / trace / 错误语义失败。
+Clippy -D warnings、仅改动文件的格式检查通过。最终移除未使用 Match derive 后，3 个 deferred_ 定向测试通过；普通 release 二进制哈希未改变。共同 runner 的测试两组通过。
+测试冻结实际接受的 start/right/after、rule 与 job ownership；验证全轮区间不重叠、冻结端点属于规则、每条生产写入恢复几何一致，并按正序/逆序/并行应用比较所有 token 和 occurrence-span 槽位。覆盖 empty / inline / spill、removal-only commit，以及既有 self-pair、reserved、alias、1/4/8 workers 和错误路径。
+
+最终性能比较
+用户将原 32-process 矩阵缩为简单中英文测试，并要求并行。最终主比较为 Whitespace / 4 workers / vocab 50000 / min_frequency 2，无 affix，CPU affinity 0-3。每种语言 baseline/candidate 各一个独立进程；现有单线程结果及预热、试跑仅保留原始记录，不混入下面数据。
+全程 = lazy input + preprocessing + Feed + train_vocab。peak 是输出校验与序列化之前的进程 HWM，覆盖 Feed 与训练；Feed-end RSS、train-end RSS、post-serialization RSS、含校验的父进程采样 HWM 分列在 CSV 中。完整词计数、完整 vocabulary IDs / ordered merges / native JSON 均一致。
+
+场景	Feed 秒 base→candidate	Train 秒 base→candidate	全程秒 base→candidate (变化)	全程 HWM MiB base→candidate (变化)
+zh-whitespace-w4	4.033→3.944	25.552→24.602	29.585→28.546 (-3.51%)	1768.41→1780.30 (+0.672%)
+en-whitespace-w4	3.797→4.187	1.508→1.578	5.305→5.765 (+8.67%)	152.95→148.06 (-3.195%)
+
+性能解释与边界
+每场景只有一对，不能证明微小差异的稳定性或原因。初始单线程英文的两个顺序配对中，未修改源码的 Feed 都慢约 8.5%–9.8%，但 train 的差异从 +9.7% 变为 −2.2%；这提示环境、随机布局或二进制代码布局会影响差值，尚未用 profiler 证明具体原因。不能把时间差直接归因于新增跨度读取，也不能断言只是 VPS 波动。四线程实际差异如上；未追加其它大矩阵或 profiler。
+主样本训练进程 VmSwap=0、timed major faults=0、timed system swap-out=0。全机后台 swap-in 和微秒级 PSI 变化均保留，并非全机零 swap 活动。无 benchmark 的 25 秒观察也出现后台 swap-in。严格 whole-system performance_uncontaminated 标记和 benchmark_paging_clean 标记分别保留。一次四线程基线试跑出现 192 页系统 swap-out，独立归档；清理约 1.1 GB 本任务已完成的构建缓存后重测，未删除他人缓存、清空页缓存或关闭 swap。
+报告全程峰值，不能用 isolated Feed RSS 或写入缓冲申请字节代替。
+
+写入缓冲诊断（计数版，不用于性能计时）
+普通 release 和诊断二进制独立记录。alias 输入确实激活 occurrence plane：两组 874 jobs / 814130 accepted writes，4 个 job 内同一 ID 具有两种真实几何。64-bit Job 72→56 字节；reuse 元素 24→8 字节。
+全部历史 alias jobs 的最终 heap capacity 字节和：25,838,976→8,611,616；缓冲增长累计申请字节：51,595,392→17,198,624；增长调用 2610→2529（含 realloc）。这些是指定写入缓冲的容量/申请记录，含已退休容量，不是 live peak 或全程序 malloc 数。
+Fresh 无 plane 的 36 jobs / 32778 writes，起点负载与申请字节不变；tiny reuse-no-plane 验证了 no-plane 中的 reuse job 及随后 plane 路径。诊断完整模型与 baseline 一致。最新范围未测普通 release alias 耗时及其它预分词器/线程数。
+
+证据与复现
+production.patch：仅最终生产代码；candidate-correctness-and-production.patch：生产加测试 oracle；baseline/candidate-harness.patch：字节相同的共同 runner；source/ 与 source-hashes.json：冻结源码/锁文件；builds.json / diagnostic-builds.json：命令与二进制 SHA256。
+primary-runs.csv / primary-pairs.csv：四线程主比较原值与差值；primary-runs.json / primary-pairs.json：同内容完整结构；pipeline-runs.json / all-runs.csv / runs/：全部 warmup / 单线程 / 主样本与日志；four-worker-memory-headroom-pilot/、pilot-outer-swap-window/、strict-global-swap-gate-stop.log：未评分试跑及停止原因。
+执行：python3 measure_pipeline.py --only zh-whitespace-w4,en-whitespace-w4 --pairs 1。脚本以其所在目录为 evidence root，原工作树位于 /tmp/bpe-start-only-writes-{baseline,candidate}-20261011；隔离快照 commit=567f20969c2c98fb467c6061d5ef84a39faacac8。欲全新复现请在新的同提交工作树应用各 arm 的 complete.patch，复制 source/ 中两份 Cargo.lock，并使用相同 cargo build --offline --locked --release 参数。build.py / freeze_sources.py 保留具体构建与核验方法；不要在正式计时中并行编译或启用诊断。
+输入与参数见 measurement-manifest.json + scope-reduction.json，完整输入为原 owner/{zh,en}256/text.txt；原机绝对路径、大小与 SHA256 保留，可按 metadata 校验替换路径。历史 manifest 的原大矩阵计划已被 scope-reduction.json 覆盖。
+用户随后明确授权推送。完整原始模型、源码快照、日志和试跑归档保留在 /root/code/tokenizers-workspaces/bpe-start-only-writes-results-20261011；此提交仅收录轻量验证摘要与原始指标。

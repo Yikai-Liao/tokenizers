@@ -1,0 +1,36 @@
+{
+  "time": 1791725803.879828,
+  "sources": {
+    "measurement/baseline": {
+      "files": 23,
+      "mismatches": []
+    },
+    "diagnostic/baseline": {
+      "files": 23,
+      "mismatches": []
+    },
+    "measurement/candidate": {
+      "files": 23,
+      "mismatches": []
+    },
+    "diagnostic/candidate": {
+      "files": 23,
+      "mismatches": []
+    }
+  },
+  "binaries": {
+    "baseline-bin": "42cb4d910a5a9123c12852971e187cfdd8cf0b1eeefcb313459f037e36cd771a",
+    "candidate-bin": "91e7b8ab96e255aa6461da1230968083e68e64b847eb1300aeb929477926036b",
+    "diagnostic-baseline-bin": "84e1aefa22e5df33212dc9692573c2bd370b57a95bb9776a18786ef6ea42263c",
+    "diagnostic-candidate-bin": "b9a869f974874d5f984a496ba48dffaae49a5c4f2d05985e4fc48762b2081ce9"
+  },
+  "scope": {
+    "production": [
+      "tokenizers/tk-train/src/trainers/bpe/corpus.rs",
+      "tokenizers/tk-train/src/trainers/bpe/merge.rs"
+    ]
+  },
+  "main_head": "8faaff79d859bfd6b2417cfe8c93ea2851c3aaca",
+  "main_status": "",
+  "measurement_active": false
+}

@@ -1,0 +1,32 @@
+{
+  "seconds": 25.037994861602783,
+  "swap_in_delta": 9,
+  "swap_out_delta": 0,
+  "process_major_fault_changes": [
+    {
+      "pid": "2222217",
+      "comm": "codex",
+      "major_fault_delta": 3,
+      "vm_swap_kib": 171476
+    },
+    {
+      "pid": "1013",
+      "comm": "containerd",
+      "major_fault_delta": 1,
+      "vm_swap_kib": 4568
+    },
+    {
+      "pid": "2265615",
+      "comm": "MainThread",
+      "major_fault_delta": 1,
+      "vm_swap_kib": 15900
+    },
+    {
+      "pid": "2985206",
+      "comm": "MainThread",
+      "major_fault_delta": 1,
+      "vm_swap_kib": 14420
+    }
+  ],
+  "full_observation_archive": "/root/code/tokenizers-workspaces/bpe-start-only-writes-results-20261011/idle-swap-diagnosis.json"
+}

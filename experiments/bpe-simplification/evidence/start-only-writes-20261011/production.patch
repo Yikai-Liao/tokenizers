@@ -1,0 +1,266 @@
+diff --git a/tokenizers/tk-train/src/trainers/bpe/corpus.rs b/tokenizers/tk-train/src/trainers/bpe/corpus.rs
+index 49e99e15..e138c0ed 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/corpus.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/corpus.rs
+@@ -23,12 +23,11 @@ pub(super) struct Corpus {
+     whole_words: bool,
+ }
+ 
+-/// One accepted occurrence's left start, right start and exclusive merged end.
++/// One accepted occurrence's start and exclusive merged end.
+ /// Coordinates describe the preparation snapshot, before endpoint writes apply.
+ #[derive(Clone, Copy)]
+ pub(super) struct Match {
+     pub(super) start: usize,
+-    pub(super) right: usize,
+     pub(super) after: usize,
+ }
+ 
+@@ -304,7 +303,6 @@ impl Corpus {
+             }
+             Some(Match {
+                 start: position,
+-                right: position + left,
+                 after: position + total,
+             })
+         }
+@@ -323,7 +321,6 @@ impl Corpus {
+         let after = right + right_span;
+         (right_span != 0 && after < self.len()).then_some(Match {
+             start: position,
+-            right,
+             after,
+         })
+     }
+@@ -373,20 +370,51 @@ impl Corpus {
+         self.occurrence_spans = Some(values.into_boxed_slice());
+     }
+ 
+-    // Call only after all preparation readers join. Matches own disjoint endpoint
+-    // slots; atomics also keep every individual access safe on error or unwind.
+-    pub(super) fn apply(&self, matched: Match, replacement: u32) {
+-        self.tokens.set(matched.start, replacement);
+-        if matched.right + 1 != matched.after {
+-            self.tokens.set(matched.right, WORD_SEPARATOR_ID);
+-        }
+-        self.tokens.set(matched.after - 1, replacement);
+-        if let Some(spans) = &self.occurrence_spans {
+-            if matched.right + 1 != matched.after {
+-                spans[matched.right].store(0, Ordering::Relaxed);
++    /// Apply one rule's accepted starts after all preparation tasks join.
++    /// Match intervals must be disjoint across every Job in the round; reads
++    /// touch only this match's own endpoints. Atomics keep individual accesses
++    /// safe on error or unwind, but overlapping writes invalidate reconstruction.
++    pub(super) fn apply_merges(&self, starts: &[u64], replacement: u32) {
++        let Some(&first) = starts.first() else {
++            return;
++        };
++        match &self.occurrence_spans {
++            None => {
++                // One rule has shared geometry. Cache it before any token store.
++                let first = self.resident(first);
++                let left = self.id_span(self.token(first));
++                let total = left + self.id_span(self.token(first + left));
++                for &coordinate in starts {
++                    let start = self.resident(coordinate);
++                    let right = start + left;
++                    let after = start + total;
++                    self.tokens.set(start, replacement);
++                    if right + 1 != after {
++                        self.tokens.set(right, WORD_SEPARATOR_ID);
++                    }
++                    self.tokens.set(after - 1, replacement);
++                }
++            }
++            Some(spans) => {
++                for &coordinate in starts {
++                    let start = self.resident(coordinate);
++                    // Read this occurrence's old geometry before changing its endpoints.
++                    let left = spans[start].load(Ordering::Relaxed);
++                    let right = start + left;
++                    let total = left + spans[right].load(Ordering::Relaxed);
++                    let after = start + total;
++                    self.tokens.set(start, replacement);
++                    if right + 1 != after {
++                        self.tokens.set(right, WORD_SEPARATOR_ID);
++                    }
++                    self.tokens.set(after - 1, replacement);
++                    if right + 1 != after {
++                        spans[right].store(0, Ordering::Relaxed);
++                    }
++                    spans[start].store(total, Ordering::Relaxed);
++                    spans[after - 1].store(total, Ordering::Relaxed);
++                }
+             }
+-            spans[matched.start].store(matched.span(), Ordering::Relaxed);
+-            spans[matched.after - 1].store(matched.span(), Ordering::Relaxed);
+         }
+     }
+ }
+diff --git a/tokenizers/tk-train/src/trainers/bpe/merge.rs b/tokenizers/tk-train/src/trainers/bpe/merge.rs
+index 3d91a6f7..8373cc56 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/merge.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/merge.rs
+@@ -117,7 +117,7 @@ impl BpeTrainer {
+         let changes = jobs
+             .into_par_iter()
+             .map(|job| {
+-                job.writes.apply(corpus);
++                corpus.apply_merges(&job.starts, job.replacement);
+                 job.changes
+             })
+             .collect();
+@@ -184,7 +184,8 @@ impl Birth {
+ /// One preparation task's disjoint writes and owned neighbor-event payloads.
+ /// The task returns both together so no corpus mutation precedes preparation join.
+ struct Job {
+-    writes: Writes,
++    starts: SmallVec<[u64; 2]>,
++    replacement: u32,
+     changes: Vec<Change<Birth>>,
+ }
+ 
+@@ -500,7 +501,7 @@ impl<'a> FreshSnapshot<'a> {
+             directories,
+             positions.complete(rule.candidate.positions.len()),
+         );
+-        let mut writes = Writes::fresh(rule, self.corpus);
++        let mut starts = SmallVec::new();
+         let matcher = self.corpus.fresh_matcher(rule.pair());
+         let mut weights = None;
+         for p in positions.prefetched(&rule.candidate.positions, self.corpus) {
+@@ -513,10 +514,11 @@ impl<'a> FreshSnapshot<'a> {
+             };
+             weights = Some((weight, end));
+             self.record_neighbors(&mut neighbors, p, matched, weight)?;
+-            writes.record(matched);
++            starts.push(matched.start as u64);
+         }
+         Ok(Job {
+-            writes,
++            starts,
++            replacement: rule.replacement,
+             changes: neighbors.finish(self.batch.floor)?,
+         })
+     }
+@@ -597,7 +599,7 @@ impl<'a> FreshSnapshot<'a> {
+ /// Borrows the joined corpus and rule; all words in this task share its admission
+ /// policy and directories. Finishing transfers both outputs without applying them.
+ struct CohortPreparation<'task> {
+-    writes: Writes,
++    starts: SmallVec<[u64; 2]>,
+     neighbors: Neighbors<'task>,
+     corpus: &'task Corpus,
+     limit: usize,
+@@ -616,10 +618,7 @@ impl<'task> CohortPreparation<'task> {
+         super::tests::observe_worker(super::tests::Phase::ReusePrepare);
+         directories.resize(corpus.id_count());
+         let mut task = Self {
+-            writes: Writes::Occurrences {
+-                positions: Vec::new(),
+-                id: rule.replacement,
+-            },
++            starts: SmallVec::new(),
+             neighbors: Neighbors::new(rule, 0, directories, false),
+             corpus,
+             limit,
+@@ -628,7 +627,8 @@ impl<'task> CohortPreparation<'task> {
+             task.prepare_word(word)?;
+         }
+         Ok(Job {
+-            writes: task.writes,
++            starts: task.starts,
++            replacement: rule.replacement,
+             changes: task.neighbors.finish(floor)?,
+         })
+     }
+@@ -640,7 +640,7 @@ impl<'task> CohortPreparation<'task> {
+         let corpus = self.corpus;
+         let limit = self.limit;
+         let neighbors = &mut self.neighbors;
+-        let writes = &mut self.writes;
++        let starts = &mut self.starts;
+         let mut previous = None;
+         let mut p = corpus.word_start(word);
+         let mut positions = rule.candidate.positions.iter_from_value(p as u64);
+@@ -679,7 +679,7 @@ impl<'task> CohortPreparation<'task> {
+                     )?;
+                 }
+                 previous = Some((rule.replacement, p, matched.span()));
+-                writes.record(matched);
++                starts.push(matched.start as u64);
+                 p = matched.after;
+             } else {
+                 let span = corpus.span(p);
+@@ -691,71 +691,6 @@ impl<'task> CohortPreparation<'task> {
+     }
+ }
+ 
+-/// Deferred endpoint writes, compact for fresh identities and explicit for reuse.
+-/// Fresh identities have one span per ID, so writes need only sorted starts and
+-/// one rule span. Alias reuse retains each occurrence's snapshot span.
+-enum Writes {
+-    Compact {
+-        positions: SmallVec<[u64; 2]>,
+-        left: usize,
+-        total: usize,
+-        id: u32,
+-    },
+-    Occurrences {
+-        positions: Vec<Match>,
+-        id: u32,
+-    },
+-}
+-
+-impl Writes {
+-    fn fresh(rule: &Rule, corpus: &Corpus) -> Self {
+-        let left = corpus.id_span(rule.pair().0);
+-        Self::Compact {
+-            positions: SmallVec::new(),
+-            left,
+-            total: left + corpus.id_span(rule.pair().1),
+-            id: rule.replacement,
+-        }
+-    }
+-
+-    fn record(&mut self, matched: Match) {
+-        match self {
+-            Self::Compact { positions, .. } => positions.push(matched.start as u64),
+-            Self::Occurrences { positions, .. } => {
+-                positions.push(matched);
+-            }
+-        }
+-    }
+-
+-    fn apply(self, corpus: &Corpus) {
+-        match self {
+-            Self::Compact {
+-                positions,
+-                left,
+-                total,
+-                id,
+-            } => {
+-                for &coordinate in &positions {
+-                    let start = corpus.resident(coordinate);
+-                    corpus.apply(
+-                        Match {
+-                            start,
+-                            right: start + left,
+-                            after: start + total,
+-                        },
+-                        id,
+-                    );
+-                }
+-            }
+-            Self::Occurrences { positions, id } => {
+-                for matched in positions {
+-                    corpus.apply(matched, id);
+-                }
+-            }
+-        }
+-    }
+-}
+-
+ /// Task input: filtered self-pair starts or element indices in the task's rule.
+ /// The accompanying rule rank binds each range to its immutable candidate list.
+ enum Source<'a> {

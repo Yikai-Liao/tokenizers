@@ -1,0 +1,184 @@
+[
+  {
+    "scenario": "zh-whitespace-w4",
+    "baseline_run": "zh-whitespace-w4-b0-baseline",
+    "candidate_run": "zh-whitespace-w4-b0-candidate",
+    "metrics": {
+      "feed_seconds": {
+        "baseline": 4.033249846,
+        "candidate": 3.94418253,
+        "difference": -0.0890673160000004,
+        "percent": -2.2083262728772812
+      },
+      "feed_cpu_seconds": {
+        "baseline": 14.360475,
+        "candidate": 14.153592,
+        "difference": -0.20688299999999948,
+        "percent": -1.4406417615016154
+      },
+      "feed_rss_kib": {
+        "baseline": 447800,
+        "candidate": 447632,
+        "difference": -168,
+        "percent": -0.037516748548460654
+      },
+      "feed_hwm_kib": {
+        "baseline": 709888,
+        "candidate": 709736,
+        "difference": -152,
+        "percent": -0.02141182834475286
+      },
+      "train_seconds": {
+        "baseline": 25.551621461,
+        "candidate": 24.601857403,
+        "difference": -0.9497640579999995,
+        "percent": -3.717040264742666
+      },
+      "train_cpu_seconds": {
+        "baseline": 67.849156,
+        "candidate": 66.44077499999999,
+        "difference": -1.4083810000000057,
+        "percent": -2.0757531604372548
+      },
+      "train_rss_kib": {
+        "baseline": 1251580,
+        "candidate": 1161808,
+        "difference": -89772,
+        "percent": -7.172693715144063
+      },
+      "pipeline_seconds": {
+        "baseline": 29.584996444,
+        "candidate": 28.546171762,
+        "difference": -1.0388246820000013,
+        "percent": -3.511322652907334
+      },
+      "pipeline_cpu_seconds": {
+        "baseline": 82.209748,
+        "candidate": 80.594489,
+        "difference": -1.6152590000000089,
+        "percent": -1.9648022762458917
+      },
+      "process_hwm_kib_before_validation": {
+        "baseline": 1810856,
+        "candidate": 1823024,
+        "difference": 12168,
+        "percent": 0.6719474105064016
+      },
+      "post_serialization_rss_kib": {
+        "baseline": 947496,
+        "candidate": 1016200,
+        "difference": 68704,
+        "percent": 7.251112405751581
+      },
+      "pipeline_major_faults": {
+        "baseline": 0,
+        "candidate": 0,
+        "difference": 0,
+        "percent": null
+      },
+      "pipeline_system_swap_in_pages": {
+        "baseline": 5,
+        "candidate": 2,
+        "difference": -3,
+        "percent": -60.0
+      },
+      "pipeline_system_swap_out_pages": {
+        "baseline": 0,
+        "candidate": 0,
+        "difference": 0,
+        "percent": null
+      }
+    }
+  },
+  {
+    "scenario": "en-whitespace-w4",
+    "baseline_run": "en-whitespace-w4-b0-baseline",
+    "candidate_run": "en-whitespace-w4-b0-candidate",
+    "metrics": {
+      "feed_seconds": {
+        "baseline": 3.7966881519999998,
+        "candidate": 4.187225006,
+        "difference": 0.3905368540000005,
+        "percent": 10.286250499511663
+      },
+      "feed_cpu_seconds": {
+        "baseline": 14.923150000000001,
+        "candidate": 16.422118,
+        "difference": 1.4989679999999996,
+        "percent": 10.044581740450242
+      },
+      "feed_rss_kib": {
+        "baseline": 31780,
+        "candidate": 31580,
+        "difference": -200,
+        "percent": -0.6293266205160464
+      },
+      "feed_hwm_kib": {
+        "baseline": 64512,
+        "candidate": 64076,
+        "difference": -436,
+        "percent": -0.6758432539682557
+      },
+      "train_seconds": {
+        "baseline": 1.508474994,
+        "candidate": 1.577874521,
+        "difference": 0.06939952700000007,
+        "percent": 4.600641527107752
+      },
+      "train_cpu_seconds": {
+        "baseline": 3.561732000000001,
+        "candidate": 3.673801000000001,
+        "difference": 0.11206899999999997,
+        "percent": 3.1464748049544466
+      },
+      "train_rss_kib": {
+        "baseline": 116824,
+        "candidate": 116236,
+        "difference": -588,
+        "percent": -0.5033212353625971
+      },
+      "pipeline_seconds": {
+        "baseline": 5.305291399,
+        "candidate": 5.765219626,
+        "difference": 0.4599282270000007,
+        "percent": 8.669235908261186
+      },
+      "pipeline_cpu_seconds": {
+        "baseline": 18.485003000000003,
+        "candidate": 20.096032,
+        "difference": 1.6110289999999985,
+        "percent": 8.715329935299444
+      },
+      "process_hwm_kib_before_validation": {
+        "baseline": 156616,
+        "candidate": 151612,
+        "difference": -5004,
+        "percent": -3.1950758543188407
+      },
+      "post_serialization_rss_kib": {
+        "baseline": 132272,
+        "candidate": 129744,
+        "difference": -2528,
+        "percent": -1.9112132575299423
+      },
+      "pipeline_major_faults": {
+        "baseline": 0,
+        "candidate": 0,
+        "difference": 0,
+        "percent": null
+      },
+      "pipeline_system_swap_in_pages": {
+        "baseline": 1,
+        "candidate": 0,
+        "difference": -1,
+        "percent": -100.0
+      },
+      "pipeline_system_swap_out_pages": {
+        "baseline": 0,
+        "candidate": 0,
+        "difference": 0,
+        "percent": null
+      }
+    }
+  }
+]

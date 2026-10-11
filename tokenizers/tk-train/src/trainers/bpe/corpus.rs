@@ -21,14 +21,15 @@ pub(super) struct Corpus {
     spans: Vec<usize>,
     occurrence_spans: Option<Box<[AtomicUsize]>>,
     whole_words: bool,
+    #[cfg(test)]
+    write_oracle: Option<ahash::AHashMap<usize, FrozenMatch>>,
 }
 
-/// One accepted occurrence's left start, right start and exclusive merged end.
+/// One accepted occurrence's start and exclusive merged end.
 /// Coordinates describe the preparation snapshot, before endpoint writes apply.
 #[derive(Clone, Copy)]
 pub(super) struct Match {
     pub(super) start: usize,
-    pub(super) right: usize,
     pub(super) after: usize,
 }
 
@@ -36,6 +37,15 @@ impl Match {
     pub(super) fn span(self) -> usize {
         self.after - self.start
     }
+}
+
+// Test-only snapshot of the full geometry accepted before any endpoint writes.
+#[cfg(test)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) struct FrozenMatch {
+    pub(super) start: usize,
+    pub(super) right: usize,
+    pub(super) after: usize,
 }
 
 /// Borrowed input and measured coordinate layout for initial pair counting.
@@ -199,6 +209,8 @@ impl<'input> CorpusPlan<'input> {
             spans: self.ids.into_spans(),
             occurrence_spans: None,
             whole_words: self.whole_words,
+            #[cfg(test)]
+            write_oracle: None,
         }
     }
 }
@@ -206,6 +218,60 @@ impl<'input> CorpusPlan<'input> {
 impl Corpus {
     pub(super) fn len(&self) -> usize {
         self.tokens.len()
+    }
+
+    #[cfg(test)]
+    pub(super) fn copy_for_writes(&self, frozen: &[FrozenMatch]) -> Self {
+        let tokens = Slots::new(
+            self.len(),
+            if matches!(self.tokens, Slots::Narrow(_)) {
+                1
+            } else {
+                u32::MAX as usize
+            },
+        );
+        for position in 0..self.len() {
+            tokens.set(position, self.token(position));
+        }
+        let write_oracle: ahash::AHashMap<_, _> = frozen
+            .iter()
+            .map(|matched| (matched.start, *matched))
+            .collect();
+        assert_eq!(
+            write_oracle.len(),
+            frozen.len(),
+            "accepted starts must be unique"
+        );
+        Self {
+            tokens,
+            starts: self.starts.clone(),
+            weight_regions: self.weight_regions.clone(),
+            unit_region: self.unit_region,
+            spans: self.spans.clone(),
+            occurrence_spans: self.occurrence_spans.as_ref().map(|spans| {
+                spans
+                    .iter()
+                    .map(|span| AtomicUsize::new(span.load(Ordering::Relaxed)))
+                    .collect()
+            }),
+            whole_words: self.whole_words,
+            write_oracle: Some(write_oracle),
+        }
+    }
+
+    #[cfg(test)]
+    pub(super) fn write_slots(&self) -> (Vec<u32>, Option<Vec<usize>>) {
+        (
+            (0..self.len())
+                .map(|position| self.token(position))
+                .collect(),
+            self.occurrence_spans.as_ref().map(|spans| {
+                spans
+                    .iter()
+                    .map(|span| span.load(Ordering::Relaxed))
+                    .collect()
+            }),
+        )
     }
 
     pub(super) fn resident(&self, coordinate: u64) -> usize {
@@ -304,7 +370,6 @@ impl Corpus {
             }
             Some(Match {
                 start: position,
-                right: position + left,
                 after: position + total,
             })
         }
@@ -323,7 +388,6 @@ impl Corpus {
         let after = right + right_span;
         (right_span != 0 && after < self.len()).then_some(Match {
             start: position,
-            right,
             after,
         })
     }
@@ -373,9 +437,90 @@ impl Corpus {
         self.occurrence_spans = Some(values.into_boxed_slice());
     }
 
-    // Call only after all preparation readers join. Matches own disjoint endpoint
-    // slots; atomics also keep every individual access safe on error or unwind.
-    pub(super) fn apply(&self, matched: Match, replacement: u32) {
+    /// Apply one rule's accepted starts after all preparation tasks join.
+    /// Match intervals must be disjoint across every Job in the round; reads
+    /// touch only this match's own endpoints. Atomics keep individual accesses
+    /// safe on error or unwind, but overlapping writes invalidate reconstruction.
+    pub(super) fn apply_merges(&self, starts: &[u64], replacement: u32) {
+        let Some(&first) = starts.first() else {
+            return;
+        };
+        match &self.occurrence_spans {
+            None => {
+                // One rule has shared geometry. Cache it before any token store.
+                let first = self.resident(first);
+                let left = self.id_span(self.token(first));
+                let total = left + self.id_span(self.token(first + left));
+                for &coordinate in starts {
+                    let start = self.resident(coordinate);
+                    let right = start + left;
+                    let after = start + total;
+                    #[cfg(test)]
+                    self.assert_write_geometry(FrozenMatch {
+                        start,
+                        right,
+                        after,
+                    });
+                    self.tokens.set(start, replacement);
+                    if right + 1 != after {
+                        self.tokens.set(right, WORD_SEPARATOR_ID);
+                    }
+                    self.tokens.set(after - 1, replacement);
+                }
+            }
+            Some(spans) => {
+                for &coordinate in starts {
+                    let start = self.resident(coordinate);
+                    // Read this occurrence's old geometry before changing its endpoints.
+                    let left = spans[start].load(Ordering::Relaxed);
+                    let right = start + left;
+                    let total = left + spans[right].load(Ordering::Relaxed);
+                    let after = start + total;
+                    #[cfg(test)]
+                    self.assert_write_geometry(FrozenMatch {
+                        start,
+                        right,
+                        after,
+                    });
+                    self.tokens.set(start, replacement);
+                    if right + 1 != after {
+                        self.tokens.set(right, WORD_SEPARATOR_ID);
+                    }
+                    self.tokens.set(after - 1, replacement);
+                    if right + 1 != after {
+                        spans[right].store(0, Ordering::Relaxed);
+                    }
+                    spans[start].store(total, Ordering::Relaxed);
+                    spans[after - 1].store(total, Ordering::Relaxed);
+                }
+            }
+        }
+    }
+
+    #[cfg(test)]
+    pub(super) fn freeze_match(&self, matched: Match) -> FrozenMatch {
+        FrozenMatch {
+            start: matched.start,
+            right: matched.start + self.span(matched.start),
+            after: matched.after,
+        }
+    }
+
+    #[cfg(test)]
+    fn assert_write_geometry(&self, matched: FrozenMatch) {
+        if let Some(oracle) = &self.write_oracle {
+            assert_eq!(
+                Some(&matched),
+                oracle.get(&matched.start),
+                "geometry before endpoint writes"
+            );
+        }
+    }
+
+    // Independent old endpoint kernel, driven only by frozen preparation data.
+    #[cfg(test)]
+    pub(super) fn apply_frozen(&self, matched: FrozenMatch, replacement: u32) {
+        self.assert_write_geometry(matched);
         self.tokens.set(matched.start, replacement);
         if matched.right + 1 != matched.after {
             self.tokens.set(matched.right, WORD_SEPARATOR_ID);
@@ -385,8 +530,9 @@ impl Corpus {
             if matched.right + 1 != matched.after {
                 spans[matched.right].store(0, Ordering::Relaxed);
             }
-            spans[matched.start].store(matched.span(), Ordering::Relaxed);
-            spans[matched.after - 1].store(matched.span(), Ordering::Relaxed);
+            let total = matched.after - matched.start;
+            spans[matched.start].store(total, Ordering::Relaxed);
+            spans[matched.after - 1].store(total, Ordering::Relaxed);
         }
     }
 }
@@ -476,6 +622,82 @@ mod tests {
             begin = end;
         }
         ranges
+    }
+
+    #[test]
+    fn deferred_alias_writes_keep_each_occurrences_geometry() {
+        let lengths = [(2, 1), (1, 3), (4, 2), (1, 1), (3, 4)];
+        let length = 2 + lengths
+            .iter()
+            .map(|(left, right)| left + right)
+            .sum::<usize>();
+        let corpus = Corpus {
+            tokens: Slots::new(length, 3),
+            starts: vec![1].into_boxed_slice(),
+            weight_regions: vec![(1, 1)].into_boxed_slice(),
+            unit_region: Some((1, length)),
+            // In the occurrence plane, ID metadata records activation only.
+            spans: vec![1, 1],
+            occurrence_spans: Some((0..length).map(|_| AtomicUsize::new(0)).collect()),
+            whole_words: true,
+            write_oracle: None,
+        };
+        let spans = corpus.occurrence_spans.as_ref().unwrap();
+        let mut start = 1;
+        let mut frozen = Vec::new();
+        for (left, right_span) in lengths {
+            let right = start + left;
+            let after = right + right_span;
+            for (position, id, span) in [
+                (start, 0, left),
+                (right - 1, 0, left),
+                (right, 1, right_span),
+                (after - 1, 1, right_span),
+            ] {
+                corpus.tokens.set(position, id);
+                spans[position].store(span, Ordering::Relaxed);
+            }
+            frozen.push(corpus.freeze_match(corpus.matched(start, (0, 1)).unwrap()));
+            start = after;
+        }
+        for replacement in [0, 1, 2] {
+            let expected = corpus.copy_for_writes(&frozen);
+            for &matched in &frozen {
+                expected.apply_frozen(matched, replacement);
+            }
+            for count in [0, 1, 2, 3, 5] {
+                for reverse in [false, true] {
+                    let actual = corpus.copy_for_writes(&frozen);
+                    let mut accepted = frozen[..count].to_vec();
+                    if reverse {
+                        accepted.reverse();
+                    }
+                    let starts: Vec<_> = accepted
+                        .iter()
+                        .map(|matched| matched.start as u64)
+                        .collect();
+                    actual.apply_merges(&starts, replacement);
+                    let partial = corpus.copy_for_writes(&frozen);
+                    for &matched in &frozen[..count] {
+                        partial.apply_frozen(matched, replacement);
+                    }
+                    assert_eq!(actual.write_slots(), partial.write_slots());
+                }
+            }
+            for workers in [1, 4, 8] {
+                let actual = corpus.copy_for_writes(&frozen);
+                rayon::ThreadPoolBuilder::new()
+                    .num_threads(workers)
+                    .build()
+                    .unwrap()
+                    .install(|| {
+                        frozen.par_iter().for_each(|&matched| {
+                            actual.apply_merges(&[matched.start as u64], replacement);
+                        })
+                    });
+                assert_eq!(actual.write_slots(), expected.write_slots());
+            }
+        }
     }
 
     #[test]

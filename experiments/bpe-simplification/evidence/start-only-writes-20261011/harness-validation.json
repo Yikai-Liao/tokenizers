@@ -1,0 +1,28 @@
+[
+  {
+    "arm": "baseline",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "--manifest-path",
+      "experiments/bpe-simplification/runner/Cargo.toml"
+    ],
+    "exit_code": 0,
+    "seconds": 1.0783107171300799
+  },
+  {
+    "arm": "candidate",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "--manifest-path",
+      "experiments/bpe-simplification/runner/Cargo.toml"
+    ],
+    "exit_code": 0,
+    "seconds": 3.9447866370901465
+  }
+]

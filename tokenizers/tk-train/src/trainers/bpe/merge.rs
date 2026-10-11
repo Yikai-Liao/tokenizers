@@ -114,10 +114,12 @@ impl BpeTrainer {
             })
             .collect();
         let jobs = batch.prepare(corpus, self.max_token_length.unwrap_or(usize::MAX))?;
+        #[cfg(test)]
+        tests::assert_write_orders(corpus, &jobs);
         let changes = jobs
             .into_par_iter()
             .map(|job| {
-                job.writes.apply(corpus);
+                corpus.apply_merges(&job.starts, job.replacement);
                 job.changes
             })
             .collect();
@@ -184,8 +186,13 @@ impl Birth {
 /// One preparation task's disjoint writes and owned neighbor-event payloads.
 /// The task returns both together so no corpus mutation precedes preparation join.
 struct Job {
-    writes: Writes,
+    starts: SmallVec<[u64; 2]>,
+    replacement: u32,
     changes: Vec<Change<Birth>>,
+    #[cfg(test)]
+    frozen: Vec<super::corpus::FrozenMatch>,
+    #[cfg(test)]
+    rule: (Pair, u32),
 }
 
 /// Task-local left/right neighbor aggregation for one selected rule.
@@ -500,7 +507,9 @@ impl<'a> FreshSnapshot<'a> {
             directories,
             positions.complete(rule.candidate.positions.len()),
         );
-        let mut writes = Writes::fresh(rule, self.corpus);
+        let mut starts = SmallVec::new();
+        #[cfg(test)]
+        let mut frozen = Vec::new();
         let matcher = self.corpus.fresh_matcher(rule.pair());
         let mut weights = None;
         for p in positions.prefetched(&rule.candidate.positions, self.corpus) {
@@ -513,11 +522,18 @@ impl<'a> FreshSnapshot<'a> {
             };
             weights = Some((weight, end));
             self.record_neighbors(&mut neighbors, p, matched, weight)?;
-            writes.record(matched);
+            starts.push(matched.start as u64);
+            #[cfg(test)]
+            frozen.push(self.corpus.freeze_match(matched));
         }
         Ok(Job {
-            writes,
+            starts,
+            replacement: rule.replacement,
             changes: neighbors.finish(self.batch.floor)?,
+            #[cfg(test)]
+            frozen,
+            #[cfg(test)]
+            rule: (rule.pair(), rule.replacement),
         })
     }
 
@@ -597,7 +613,9 @@ impl<'a> FreshSnapshot<'a> {
 /// Borrows the joined corpus and rule; all words in this task share its admission
 /// policy and directories. Finishing transfers both outputs without applying them.
 struct CohortPreparation<'task> {
-    writes: Writes,
+    #[cfg(test)]
+    frozen: Vec<super::corpus::FrozenMatch>,
+    starts: SmallVec<[u64; 2]>,
     neighbors: Neighbors<'task>,
     corpus: &'task Corpus,
     limit: usize,
@@ -616,10 +634,9 @@ impl<'task> CohortPreparation<'task> {
         super::tests::observe_worker(super::tests::Phase::ReusePrepare);
         directories.resize(corpus.id_count());
         let mut task = Self {
-            writes: Writes::Occurrences {
-                positions: Vec::new(),
-                id: rule.replacement,
-            },
+            #[cfg(test)]
+            frozen: Vec::new(),
+            starts: SmallVec::new(),
             neighbors: Neighbors::new(rule, 0, directories, false),
             corpus,
             limit,
@@ -628,8 +645,13 @@ impl<'task> CohortPreparation<'task> {
             task.prepare_word(word)?;
         }
         Ok(Job {
-            writes: task.writes,
+            starts: task.starts,
+            replacement: rule.replacement,
             changes: task.neighbors.finish(floor)?,
+            #[cfg(test)]
+            frozen: task.frozen,
+            #[cfg(test)]
+            rule: (rule.pair(), rule.replacement),
         })
     }
 
@@ -640,7 +662,7 @@ impl<'task> CohortPreparation<'task> {
         let corpus = self.corpus;
         let limit = self.limit;
         let neighbors = &mut self.neighbors;
-        let writes = &mut self.writes;
+        let starts = &mut self.starts;
         let mut previous = None;
         let mut p = corpus.word_start(word);
         let mut positions = rule.candidate.positions.iter_from_value(p as u64);
@@ -679,7 +701,9 @@ impl<'task> CohortPreparation<'task> {
                     )?;
                 }
                 previous = Some((rule.replacement, p, matched.span()));
-                writes.record(matched);
+                starts.push(matched.start as u64);
+                #[cfg(test)]
+                self.frozen.push(corpus.freeze_match(matched));
                 p = matched.after;
             } else {
                 let span = corpus.span(p);
@@ -688,71 +712,6 @@ impl<'task> CohortPreparation<'task> {
             }
         }
         Ok(())
-    }
-}
-
-/// Deferred endpoint writes, compact for fresh identities and explicit for reuse.
-/// Fresh identities have one span per ID, so writes need only sorted starts and
-/// one rule span. Alias reuse retains each occurrence's snapshot span.
-enum Writes {
-    Compact {
-        positions: SmallVec<[u64; 2]>,
-        left: usize,
-        total: usize,
-        id: u32,
-    },
-    Occurrences {
-        positions: Vec<Match>,
-        id: u32,
-    },
-}
-
-impl Writes {
-    fn fresh(rule: &Rule, corpus: &Corpus) -> Self {
-        let left = corpus.id_span(rule.pair().0);
-        Self::Compact {
-            positions: SmallVec::new(),
-            left,
-            total: left + corpus.id_span(rule.pair().1),
-            id: rule.replacement,
-        }
-    }
-
-    fn record(&mut self, matched: Match) {
-        match self {
-            Self::Compact { positions, .. } => positions.push(matched.start as u64),
-            Self::Occurrences { positions, .. } => {
-                positions.push(matched);
-            }
-        }
-    }
-
-    fn apply(self, corpus: &Corpus) {
-        match self {
-            Self::Compact {
-                positions,
-                left,
-                total,
-                id,
-            } => {
-                for &coordinate in &positions {
-                    let start = corpus.resident(coordinate);
-                    corpus.apply(
-                        Match {
-                            start,
-                            right: start + left,
-                            after: start + total,
-                        },
-                        id,
-                    );
-                }
-            }
-            Self::Occurrences { positions, id } => {
-                for matched in positions {
-                    corpus.apply(matched, id);
-                }
-            }
-        }
     }
 }
 
@@ -806,6 +765,185 @@ impl Source<'_> {
 mod tests {
     use super::super::{WordCountsView, corpus::CorpusPlan};
     use super::*;
+
+    // Freeze the actual accepted preparation results, including rule and job
+    // ownership. Replay on independent initial planes before production applies.
+    pub(super) fn assert_write_orders(corpus: &Corpus, jobs: &[Job]) {
+        let frozen: Vec<_> = jobs
+            .iter()
+            .flat_map(|job| job.frozen.iter().copied())
+            .collect();
+        for job in jobs {
+            for matched in &job.frozen {
+                assert_eq!(
+                    (corpus.token(matched.start), corpus.token(matched.right)),
+                    job.rule.0,
+                    "accepted endpoints belong to the frozen rule"
+                );
+            }
+        }
+        let mut intervals = frozen.clone();
+        intervals.sort_unstable_by_key(|matched| matched.start);
+        assert!(
+            intervals
+                .windows(2)
+                .all(|adjacent| adjacent[0].after <= adjacent[1].start),
+            "accepted half-open intervals must be disjoint"
+        );
+        let expected = corpus.copy_for_writes(&frozen);
+        for job in jobs {
+            for &matched in &job.frozen {
+                expected.apply_frozen(matched, job.rule.1);
+            }
+        }
+        for reverse in [false, true] {
+            let actual = corpus.copy_for_writes(&frozen);
+            let ordered: Vec<_> = if reverse {
+                jobs.iter().rev().collect()
+            } else {
+                jobs.iter().collect()
+            };
+            for job in ordered {
+                apply_test_job(job, &actual, reverse);
+            }
+            assert_eq!(
+                actual.write_slots(),
+                expected.write_slots(),
+                "all token and occurrence-span slots, reverse={reverse}"
+            );
+        }
+        let actual = corpus.copy_for_writes(&frozen);
+        jobs.par_iter()
+            .for_each(|job| apply_test_job(job, &actual, false));
+        assert_eq!(
+            actual.write_slots(),
+            expected.write_slots(),
+            "all slots after parallel jobs"
+        );
+    }
+
+    fn apply_test_job(job: &Job, corpus: &Corpus, reverse: bool) {
+        let reversed;
+        let starts = if reverse {
+            reversed = job.starts.iter().rev().copied().collect::<Vec<_>>();
+            &reversed[..]
+        } else {
+            &job.starts[..]
+        };
+        assert_eq!(starts.len(), job.frozen.len());
+        corpus.apply_merges(starts, job.replacement);
+    }
+
+    #[test]
+    fn deferred_writes_cover_empty_inline_and_spilled_neighboring_jobs() {
+        for workers in [1, 4, 8] {
+            rayon::ThreadPoolBuilder::new()
+                .num_threads(workers)
+                .build()
+                .unwrap()
+                .install(|| {
+                    let trainer = BpeTrainer::builder()
+                        .vocab_size(16)
+                        .min_frequency(1)
+                        .show_progress(false)
+                        .build();
+                    let words = [("ab".repeat(135).into(), 1)].into_iter().collect();
+                    let view = WordCountsView::from_map(&words);
+                    let (mut vocabulary, ids) =
+                        Vocabulary::initialize(&trainer, view, workers, &mut None, &None).unwrap();
+                    let plan = CorpusPlan::build(view, ids, &trainer, false).unwrap();
+                    let mut index = PairIndex::build(&plan, 1, workers, false, &None).unwrap();
+                    let mut corpus = plan.materialize();
+                    let priority = index.best().unwrap();
+                    let pair = priority.pair();
+                    let (replacement, _) = vocabulary.resolve_merge(pair).unwrap();
+                    corpus.prepare_identity(pair, replacement);
+                    let batch = Batch {
+                        rules: vec![Rule {
+                            replacement,
+                            candidate: index.take(priority),
+                        }],
+                        reuse: false,
+                        floor: 1,
+                    };
+                    let starts: Vec<_> = batch.rules[0].candidate.positions.iter().collect();
+                    assert_eq!(starts.len(), 135);
+                    let snapshot = FreshSnapshot::new(&batch, &corpus, usize::MAX);
+                    // The first task coordinate is rejected; initialize shared
+                    // geometry from the first accepted start, not from the input.
+                    let mut input = vec![0];
+                    input.extend_from_slice(&starts);
+                    let job = snapshot
+                        .prepare_job(&mut Directories::default(), 0, Source::Slice(&input))
+                        .unwrap();
+                    assert_eq!(job.frozen[0].start as u64, starts[0]);
+                    assert_write_orders(&corpus, &[job]);
+                    let mut offset = 0;
+                    let jobs: Vec<_> = [0, 1, 2, 3, 129]
+                        .into_iter()
+                        .map(|length| {
+                            let job = snapshot
+                                .prepare_job(
+                                    &mut Directories::default(),
+                                    0,
+                                    Source::Slice(&starts[offset..offset + length]),
+                                )
+                                .unwrap();
+                            offset += length;
+                            assert_eq!(job.frozen.len(), length);
+                            assert_eq!(job.starts.spilled(), length > 2);
+                            job
+                        })
+                        .collect();
+                    assert_eq!(offset, starts.len());
+                    assert_write_orders(&corpus, &[]);
+                    assert_write_orders(&corpus, &jobs);
+                });
+        }
+    }
+
+    #[test]
+    fn empty_deferred_writes_still_commit_neighbor_deletions() {
+        for workers in [1, 4, 8] {
+            rayon::ThreadPoolBuilder::new()
+                .num_threads(workers)
+                .build()
+                .unwrap()
+                .install(|| {
+                    let trainer = BpeTrainer::builder().show_progress(false).build();
+                    let words = [("ab".into(), 1)].into_iter().collect();
+                    let view = WordCountsView::from_map(&words);
+                    let (_, ids) =
+                        Vocabulary::initialize(&trainer, view, workers, &mut None, &None).unwrap();
+                    let plan = CorpusPlan::build(view, ids, &trainer, false).unwrap();
+                    let mut index = PairIndex::build(&plan, 1, workers, false, &None).unwrap();
+                    let corpus = plan.materialize();
+                    let pair = index.best().unwrap().pair();
+                    let job = Job {
+                        starts: SmallVec::new(),
+                        replacement: 2,
+                        changes: vec![Change {
+                            removed: pair,
+                            born: pair,
+                            removed_weight: 1,
+                            born_weight: 0,
+                            positions: Birth::Partial(SmallVec::new()),
+                            bucket: 0,
+                        }],
+                        frozen: Vec::new(),
+                        rule: (pair, 2),
+                    };
+                    let before = corpus.write_slots();
+                    corpus.apply_merges(&job.starts, job.replacement);
+                    index.commit(vec![job.changes]).unwrap();
+                    assert_eq!(corpus.write_slots(), before);
+                    assert!(
+                        index.best().is_none(),
+                        "deletion must reach the owner even without writes"
+                    );
+                });
+        }
+    }
 
     #[test]
     fn neighbor_directories_recover_from_stale_indices_after_error() {

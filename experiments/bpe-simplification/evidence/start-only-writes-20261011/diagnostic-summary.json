@@ -1,0 +1,313 @@
+[
+  {
+    "arm": "baseline",
+    "exit_code": 0,
+    "seconds_instrumented": 0.37784805218689144,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-start-only-writes-evidence-20261011/diagnostic-baseline-bin",
+      "/tmp/bpe-start-only-writes-evidence-20261011/diagnostic-runs/alias-baseline/job.json"
+    ],
+    "job_bytes": [
+      72
+    ],
+    "descriptor_bytes": [
+      48
+    ],
+    "planes": {
+      "False": {
+        "jobs": 0,
+        "accepted_writes": 0,
+        "start_or_match_capacity": 0,
+        "final_heap_capacity_bytes_sum_across_jobs": 0,
+        "write_buffer_growth_calls": 0,
+        "write_buffer_initial_allocations": 0,
+        "write_buffer_reallocations": 0,
+        "write_buffer_requested_bytes_sum": 0,
+        "max_geometry_variants": 0,
+        "jobs_with_multiple_geometry_variants": 0,
+        "element_bytes": [],
+        "reuse_jobs": 0
+      },
+      "True": {
+        "jobs": 874,
+        "accepted_writes": 814130,
+        "start_or_match_capacity": 1076624,
+        "final_heap_capacity_bytes_sum_across_jobs": 25838976,
+        "write_buffer_growth_calls": 2610,
+        "write_buffer_initial_allocations": 860,
+        "write_buffer_reallocations": 1750,
+        "write_buffer_requested_bytes_sum": 51595392,
+        "max_geometry_variants": 2,
+        "jobs_with_multiple_geometry_variants": 4,
+        "element_bytes": [
+          24
+        ],
+        "reuse_jobs": 874
+      }
+    },
+    "case": "alias"
+  },
+  {
+    "case": "fresh",
+    "arm": "baseline",
+    "exit_code": 0,
+    "seconds_instrumented": 0.04156931512989104,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-start-only-writes-evidence-20261011/diagnostic-baseline-bin",
+      "/tmp/bpe-start-only-writes-evidence-20261011/diagnostic-runs/fresh-baseline/job.json"
+    ],
+    "job_bytes": [
+      72
+    ],
+    "descriptor_bytes": [
+      48
+    ],
+    "planes": {
+      "False": {
+        "jobs": 36,
+        "accepted_writes": 32778,
+        "start_or_match_capacity": 40972,
+        "final_heap_capacity_bytes_sum_across_jobs": 327616,
+        "write_buffer_growth_calls": 178,
+        "write_buffer_initial_allocations": 26,
+        "write_buffer_reallocations": 152,
+        "write_buffer_requested_bytes_sum": 654400,
+        "max_geometry_variants": 1,
+        "jobs_with_multiple_geometry_variants": 0,
+        "element_bytes": [
+          8
+        ],
+        "reuse_jobs": 0
+      },
+      "True": {
+        "jobs": 0,
+        "accepted_writes": 0,
+        "start_or_match_capacity": 0,
+        "final_heap_capacity_bytes_sum_across_jobs": 0,
+        "write_buffer_growth_calls": 0,
+        "write_buffer_initial_allocations": 0,
+        "write_buffer_reallocations": 0,
+        "write_buffer_requested_bytes_sum": 0,
+        "max_geometry_variants": 0,
+        "jobs_with_multiple_geometry_variants": 0,
+        "element_bytes": [],
+        "reuse_jobs": 0
+      }
+    }
+  },
+  {
+    "case": "reuse-no-plane",
+    "arm": "baseline",
+    "exit_code": 0,
+    "seconds_instrumented": 0.02578348689712584,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-start-only-writes-evidence-20261011/diagnostic-baseline-bin",
+      "/tmp/bpe-start-only-writes-evidence-20261011/diagnostic-runs/reuse-no-plane-baseline/job.json"
+    ],
+    "job_bytes": [
+      72
+    ],
+    "descriptor_bytes": [
+      48
+    ],
+    "planes": {
+      "False": {
+        "jobs": 2,
+        "accepted_writes": 2,
+        "start_or_match_capacity": 6,
+        "final_heap_capacity_bytes_sum_across_jobs": 96,
+        "write_buffer_growth_calls": 1,
+        "write_buffer_initial_allocations": 1,
+        "write_buffer_reallocations": 0,
+        "write_buffer_requested_bytes_sum": 96,
+        "max_geometry_variants": 1,
+        "jobs_with_multiple_geometry_variants": 0,
+        "element_bytes": [
+          8,
+          24
+        ],
+        "reuse_jobs": 1
+      },
+      "True": {
+        "jobs": 4,
+        "accepted_writes": 4,
+        "start_or_match_capacity": 12,
+        "final_heap_capacity_bytes_sum_across_jobs": 288,
+        "write_buffer_growth_calls": 3,
+        "write_buffer_initial_allocations": 3,
+        "write_buffer_reallocations": 0,
+        "write_buffer_requested_bytes_sum": 288,
+        "max_geometry_variants": 2,
+        "jobs_with_multiple_geometry_variants": 1,
+        "element_bytes": [
+          24
+        ],
+        "reuse_jobs": 4
+      }
+    }
+  },
+  {
+    "case": "alias",
+    "arm": "candidate",
+    "exit_code": 0,
+    "seconds_instrumented": 0.38903711503371596,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-start-only-writes-evidence-20261011/diagnostic-candidate-bin",
+      "/tmp/bpe-start-only-writes-evidence-20261011/diagnostic-runs/alias-candidate/job.json"
+    ],
+    "job_bytes": [
+      56
+    ],
+    "descriptor_bytes": [
+      24
+    ],
+    "planes": {
+      "False": {
+        "jobs": 0,
+        "accepted_writes": 0,
+        "start_or_match_capacity": 0,
+        "final_heap_capacity_bytes_sum_across_jobs": 0,
+        "write_buffer_growth_calls": 0,
+        "write_buffer_initial_allocations": 0,
+        "write_buffer_reallocations": 0,
+        "write_buffer_requested_bytes_sum": 0,
+        "max_geometry_variants": 0,
+        "jobs_with_multiple_geometry_variants": 0,
+        "element_bytes": [],
+        "reuse_jobs": 0
+      },
+      "True": {
+        "jobs": 874,
+        "accepted_writes": 814130,
+        "start_or_match_capacity": 1076662,
+        "final_heap_capacity_bytes_sum_across_jobs": 8611616,
+        "write_buffer_growth_calls": 2529,
+        "write_buffer_initial_allocations": 769,
+        "write_buffer_reallocations": 1760,
+        "write_buffer_requested_bytes_sum": 17198624,
+        "max_geometry_variants": 2,
+        "jobs_with_multiple_geometry_variants": 4,
+        "element_bytes": [
+          8
+        ],
+        "reuse_jobs": 874
+      }
+    }
+  },
+  {
+    "case": "fresh",
+    "arm": "candidate",
+    "exit_code": 0,
+    "seconds_instrumented": 0.04085842194035649,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-start-only-writes-evidence-20261011/diagnostic-candidate-bin",
+      "/tmp/bpe-start-only-writes-evidence-20261011/diagnostic-runs/fresh-candidate/job.json"
+    ],
+    "job_bytes": [
+      56
+    ],
+    "descriptor_bytes": [
+      24
+    ],
+    "planes": {
+      "False": {
+        "jobs": 36,
+        "accepted_writes": 32778,
+        "start_or_match_capacity": 40972,
+        "final_heap_capacity_bytes_sum_across_jobs": 327616,
+        "write_buffer_growth_calls": 178,
+        "write_buffer_initial_allocations": 26,
+        "write_buffer_reallocations": 152,
+        "write_buffer_requested_bytes_sum": 654400,
+        "max_geometry_variants": 1,
+        "jobs_with_multiple_geometry_variants": 0,
+        "element_bytes": [
+          8
+        ],
+        "reuse_jobs": 0
+      },
+      "True": {
+        "jobs": 0,
+        "accepted_writes": 0,
+        "start_or_match_capacity": 0,
+        "final_heap_capacity_bytes_sum_across_jobs": 0,
+        "write_buffer_growth_calls": 0,
+        "write_buffer_initial_allocations": 0,
+        "write_buffer_reallocations": 0,
+        "write_buffer_requested_bytes_sum": 0,
+        "max_geometry_variants": 0,
+        "jobs_with_multiple_geometry_variants": 0,
+        "element_bytes": [],
+        "reuse_jobs": 0
+      }
+    }
+  },
+  {
+    "case": "reuse-no-plane",
+    "arm": "candidate",
+    "exit_code": 0,
+    "seconds_instrumented": 0.018913071136921644,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-start-only-writes-evidence-20261011/diagnostic-candidate-bin",
+      "/tmp/bpe-start-only-writes-evidence-20261011/diagnostic-runs/reuse-no-plane-candidate/job.json"
+    ],
+    "job_bytes": [
+      56
+    ],
+    "descriptor_bytes": [
+      24
+    ],
+    "planes": {
+      "False": {
+        "jobs": 2,
+        "accepted_writes": 2,
+        "start_or_match_capacity": 4,
+        "final_heap_capacity_bytes_sum_across_jobs": 0,
+        "write_buffer_growth_calls": 0,
+        "write_buffer_initial_allocations": 0,
+        "write_buffer_reallocations": 0,
+        "write_buffer_requested_bytes_sum": 0,
+        "max_geometry_variants": 1,
+        "jobs_with_multiple_geometry_variants": 0,
+        "element_bytes": [
+          8
+        ],
+        "reuse_jobs": 1
+      },
+      "True": {
+        "jobs": 4,
+        "accepted_writes": 4,
+        "start_or_match_capacity": 8,
+        "final_heap_capacity_bytes_sum_across_jobs": 0,
+        "write_buffer_growth_calls": 0,
+        "write_buffer_initial_allocations": 0,
+        "write_buffer_reallocations": 0,
+        "write_buffer_requested_bytes_sum": 0,
+        "max_geometry_variants": 2,
+        "jobs_with_multiple_geometry_variants": 1,
+        "element_bytes": [
+          8
+        ],
+        "reuse_jobs": 4
+      }
+    }
+  }
+]

@@ -1,0 +1,132 @@
+[
+  {
+    "arm": "baseline",
+    "name": "all-default",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--lib"
+    ],
+    "exit_code": 101,
+    "seconds": 18.758735770126805,
+    "classification": "47 passed, only the known baseline encoding roundtrip assertion failed; all write-oracle tests passed"
+  },
+  {
+    "arm": "baseline",
+    "name": "all-no-default",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--lib",
+      "--no-default-features"
+    ],
+    "exit_code": 101,
+    "seconds": 17.683582758996636,
+    "classification": "47 passed, only the known baseline encoding roundtrip assertion failed; all write-oracle tests passed"
+  },
+  {
+    "arm": "baseline",
+    "name": "clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--offline",
+      "--locked",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "seconds": 2.6374785299412906
+  },
+  {
+    "arm": "baseline",
+    "name": "format",
+    "command": [
+      "uv",
+      "run",
+      "experiments/bpe-simplification/format-changed.py",
+      "--check",
+      "tokenizers/tk-train/src/trainers/bpe/merge.rs",
+      "tokenizers/tk-train/src/trainers/bpe/corpus.rs"
+    ],
+    "exit_code": 0,
+    "seconds": 0.30797489103861153
+  },
+  {
+    "arm": "candidate",
+    "name": "all-default",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--lib"
+    ],
+    "exit_code": 101,
+    "seconds": 18.302815600996837,
+    "classification": "47 passed, only the known baseline encoding roundtrip assertion failed; all write-oracle tests passed"
+  },
+  {
+    "arm": "candidate",
+    "name": "all-no-default",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--lib",
+      "--no-default-features"
+    ],
+    "exit_code": 101,
+    "seconds": 18.648626269074157,
+    "classification": "47 passed, only the known baseline encoding roundtrip assertion failed; all write-oracle tests passed"
+  },
+  {
+    "arm": "candidate",
+    "name": "clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--offline",
+      "--locked",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "seconds": 2.4079408328980207
+  },
+  {
+    "arm": "candidate",
+    "name": "format",
+    "command": [
+      "uv",
+      "run",
+      "experiments/bpe-simplification/format-changed.py",
+      "--check",
+      "tokenizers/tk-train/src/trainers/bpe/merge.rs",
+      "tokenizers/tk-train/src/trainers/bpe/corpus.rs"
+    ],
+    "exit_code": 0,
+    "seconds": 0.31069818581454456
+  }
+]

@@ -1,0 +1,34 @@
+[
+  {
+    "arm": "baseline",
+    "command": [
+      "cargo",
+      "build",
+      "--offline",
+      "--locked",
+      "--release",
+      "--manifest-path",
+      "experiments/bpe-simplification/runner/Cargo.toml"
+    ],
+    "exit_code": 0,
+    "seconds": 49.02763960091397,
+    "binary": "/tmp/bpe-start-only-writes-evidence-20261011/diagnostic-baseline-bin",
+    "sha256": "84e1aefa22e5df33212dc9692573c2bd370b57a95bb9776a18786ef6ea42263c"
+  },
+  {
+    "arm": "candidate",
+    "command": [
+      "cargo",
+      "build",
+      "--offline",
+      "--locked",
+      "--release",
+      "--manifest-path",
+      "experiments/bpe-simplification/runner/Cargo.toml"
+    ],
+    "exit_code": 0,
+    "seconds": 42.0773812350817,
+    "binary": "/tmp/bpe-start-only-writes-evidence-20261011/diagnostic-candidate-bin",
+    "sha256": "b9a869f974874d5f984a496ba48dffaae49a5c4f2d05985e4fc48762b2081ce9"
+  }
+]

@@ -1,0 +1,6 @@
+{
+  "equal": true,
+  "sha256": "3756adeae9d59f7d19aa57c863fe89dbbf2ad679598a300254fc40387c079239",
+  "timing": "native/count exports after timings and pre-validation HWM; timed swap counters outside pipeline wall/CPU clocks; outer swap context includes validation",
+  "diagnostic_runner": "earlier same common runner on both diagnostic arms; no timed-global-swap metrics (not used for performance)"
+}

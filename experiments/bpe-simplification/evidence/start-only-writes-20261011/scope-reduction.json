@@ -1,0 +1,16 @@
+{
+  "time": 1791725168.3752348,
+  "user_request": "你哪来的60多秒训练？你在这测单线程呢",
+  "primary_scenarios": [
+    "zh-whitespace-w4",
+    "en-whitespace-w4"
+  ],
+  "primary_block": 0,
+  "primary_processes": 4,
+  "workers": 4,
+  "pretokenizer": "whitespace",
+  "inputs": "same frozen 256 MiB zh/en corpora",
+  "reuse": "Existing symmetric final-binary warmups; only 4-worker full baseline/candidate runs.",
+  "historical": "All 1-worker primary/extra records retained but outside final primary comparison.",
+  "not_run": "No other full worker/pretokenizer combinations or normal-release alias timings; instrumented alias correctness/allocation diagnostics retained."
+}

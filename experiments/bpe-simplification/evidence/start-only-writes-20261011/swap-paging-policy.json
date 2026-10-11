@@ -1,0 +1,8 @@
+{
+  "criteria": "semantic equality; child VmSwap=0; timed child major_faults=0; timed system swap_out=0",
+  "background_swap_in": "Retained and reported; strict whole-system performance_uncontaminated flag stays false for these rows.",
+  "reason": "Strict gate stopped one semantically valid baseline on 4 timed swap-in pages. While benchmarks were stopped, idle observation saw 9 swap-in pages in 25.038s with codex/containerd/MainThread major faults, no swap-outs or memory pressure; benchmark had no child swap/faults and no system swap-outs, so the page-ins cannot be new benchmark paging.",
+  "user_context": "User 2026-10-11: 如果只是 VPS 波动就无所谓了. Retain raw telemetry; no claim of globally zero swap activity.",
+  "system_psi": "Raw global PSI deltas and strict-system flag retained. Microsecond stalls in other processes or output validation do not establish benchmark paging; they are not a pass/fail condition for the minimal comparison.",
+  "amended_at": 1791725503.3013356
+}
