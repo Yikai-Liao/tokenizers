@@ -9,13 +9,22 @@ The private `train_attempt` owns the vocabulary, corpus and pair index for one a
 Tests exercise this same coordinator with explicit workers and inspect its successful
 result, whose trace field exists only under `cfg(test)`. No test callback enters
 the production call chain.
-A selected `Batch` owns the occurrence lists of its rules. The coordinator records
-those rules and calls `Batch::commit` to complete the round. Merge first prepares
+A selected `Batch` owns the occurrence lists of its rules. `Batch::commit` returns
+ordered `MergeRecord` scalars only after the whole round succeeds. The trainer then
+appends merges and its test-only trace and advances progress by the accepted rule
+count. Selection may already mutate identities and activation; errors discard the
+whole attempt rather than rolling back those changes. Merge first prepares
 owned writes and neighbor changes in parallel and joins all readers. Only after
 successful preparation does it apply endpoint writes in parallel; those writers
 join before `PairIndex::commit` directly publishes complete ordinary births,
 reduces partial births and updates count owners in parallel. Preparation and
 application remain separate passes so every reader observes the same corpus.
+Records copy pairs and test-only count/replacement scalars before consuming
+preparation. They retain no Candidate or Positions, so selected occurrence lists
+retire before endpoint writes and publication. Counts describe the certified
+selection priority; repeated historical cohorts remain separate ordered records.
+Each nonempty commit attempt introduces one small record allocation (at most 256 pairs
+in fresh mode and one in reuse mode).
 
 Errors discard the attempt. Reader and owner jobs finish before their borrowed
 state can be dropped. Commit can fail after writes and partial count updates;
@@ -64,8 +73,10 @@ retained lists before allocating token slots. Zero-merge calls still perform all
 plan and initial-index checks, then discard both without materialization.
 Materialization consumes the plan and releases thin input references. On successful
 merge attempts the index and corpus are explicitly released before output strings
-and the final vocabulary map are built. Both paths share progress completion and
-model-part construction.
+and the final vocabulary map are built. The corpus binding is declared before the
+index but initialized only for merge attempts; reverse declaration-order cleanup
+also releases index before corpus on errors and restart. Both paths share progress
+completion and model-part construction.
 Fresh mode releases its per-word start directory; weights retain only adjacent
 equal-weight regions. Reuse keeps word starts for cohort scan domains.
 `InitialPairCounts` owns the dense-versus-sparse counting choice and its domain.

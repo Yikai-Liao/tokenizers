@@ -42,6 +42,17 @@ pub(super) enum Selection {
     Ready(Batch),
 }
 
+/// Selected-rule scalars returned only after the whole batch commits successfully.
+/// No candidate positions survive preparation through these records.
+#[derive(Debug)]
+pub(super) struct MergeRecord {
+    pub(super) pair: Pair,
+    #[cfg(test)]
+    pub(super) count: u64,
+    #[cfg(test)]
+    pub(super) replacement: u32,
+}
+
 /// One neighbor-edge removal and replacement birth from preparation.
 /// Weights remain separate so commit preserves intermediate signed adjustments;
 /// P carries birth positions, or () for separately routed metadata. Bucket
@@ -275,17 +286,6 @@ impl Batch {
         })
     }
 
-    pub(super) fn pairs(&self) -> impl Iterator<Item = Pair> + '_ {
-        self.rules.iter().map(|rule| rule.pair())
-    }
-
-    #[cfg(test)]
-    pub(super) fn trace(&self) -> impl Iterator<Item = (Pair, u64, u32)> + '_ {
-        self.rules
-            .iter()
-            .map(|rule| (rule.pair(), rule.candidate.priority.count, rule.replacement))
-    }
-
     /// Complete one selected batch, joining preparation before writes and writes
     /// before parallel index updates. Preparation errors leave endpoints unchanged;
     /// later errors can follow writes or count updates. Discard the attempt on error.
@@ -294,7 +294,20 @@ impl Batch {
         corpus: &mut Corpus,
         index: &mut PairIndex,
         limit: usize,
-    ) -> Result<()> {
+    ) -> Result<Vec<MergeRecord>> {
+        // Capture only bounded scalars before consuming preparation releases the
+        // selected candidates. Preserve selection order, including reuse cohorts.
+        let records = self
+            .rules
+            .iter()
+            .map(|rule| MergeRecord {
+                pair: rule.pair(),
+                #[cfg(test)]
+                count: rule.candidate.priority.count,
+                #[cfg(test)]
+                replacement: rule.replacement,
+            })
+            .collect();
         let jobs = self.prepare(corpus, limit)?;
         let changes = jobs
             .into_par_iter()
@@ -303,7 +316,8 @@ impl Batch {
                 job.changes
             })
             .collect();
-        index.commit(changes)
+        index.commit(changes)?;
+        Ok(records)
     }
 
     fn prepare(self, corpus: &Corpus, limit: usize) -> Result<Vec<Job>> {
@@ -835,7 +849,10 @@ mod tests {
                 else {
                     panic!("expected ready batch")
                 };
-                assert_eq!(batch.pairs().collect::<Vec<_>>(), [(0, 1), (2, 3)]);
+                assert_eq!(
+                    batch.rules.iter().map(Rule::pair).collect::<Vec<_>>(),
+                    [(0, 1), (2, 3)]
+                );
                 // AB has valid deferred writes. Duplicate CD's start to overflow
                 // its left-neighbor count during preparation.
                 let start = batch.rules[1].candidate.positions.iter().next().unwrap();

@@ -1,0 +1,85 @@
+diff --git a/tokenizers/tk-train/src/trainers/bpe/record_probe.rs b/tokenizers/tk-train/src/trainers/bpe/record_probe.rs
+new file mode 100644
+index 00000000..80c48fcd
+--- /dev/null
++++ b/tokenizers/tk-train/src/trainers/bpe/record_probe.rs
+@@ -0,0 +1,79 @@
++use std::{
++    alloc::{GlobalAlloc, Layout, System},
++    cell::Cell,
++    time::Instant,
++};
++thread_local! {
++    static ACTIVE: Cell<bool> = const { Cell::new(false) };
++    static COUNTS: Cell<(usize, usize, usize)> = const { Cell::new((0, 0, 0)) };
++    static START: Cell<Option<Instant>> = const { Cell::new(None) };
++}
++struct ProbeAllocator;
++#[global_allocator]
++static ALLOCATOR: ProbeAllocator = ProbeAllocator;
++fn count(size: usize, realloc: bool) {
++    let _ = ACTIVE.try_with(|active| {
++        if active.get() {
++            COUNTS.with(|counts| {
++                let (calls, bytes, grows) = counts.get();
++                counts.set((calls + 1, bytes + size, grows + usize::from(realloc)));
++            });
++        }
++    });
++}
++unsafe impl GlobalAlloc for ProbeAllocator {
++    unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
++        count(layout.size(), false);
++        unsafe { System.alloc(layout) }
++    }
++
++    unsafe fn alloc_zeroed(&self, layout: Layout) -> *mut u8 {
++        count(layout.size(), false);
++        unsafe { System.alloc_zeroed(layout) }
++    }
++
++    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
++        unsafe { System.dealloc(ptr, layout) }
++    }
++
++    unsafe fn realloc(&self, ptr: *mut u8, layout: Layout, size: usize) -> *mut u8 {
++        count(size, true);
++        unsafe { System.realloc(ptr, layout, size) }
++    }
++}
++fn setting() -> String {
++    std::env::var("BPE_INTERFACE_PROBE").unwrap_or_default()
++}
++
++pub(super) fn event(name: &str) {
++    let mode = setting();
++    if !mode.is_empty() && mode != "records" {
++        eprintln!("BPE_LIFETIME {name}");
++    }
++}
++
++pub(super) fn fail(stage: &str) -> tk_encode::Result<()> {
++    if setting() == stage {
++        return Err(format!("injected {stage} failure").into());
++    }
++    Ok(())
++}
++
++pub(super) fn begin_records() {
++    if setting() == "records" {
++        COUNTS.with(|counts| counts.set((0, 0, 0)));
++        START.with(|start| start.set(Some(Instant::now())));
++        ACTIVE.with(|active| active.set(true));
++    }
++}
++
++pub(super) fn finish_records(len: usize, capacity: usize, size: usize) {
++    ACTIVE.with(|active| active.set(false));
++    if let Some(start) = START.with(|start| start.take()) {
++        let nanos = start.elapsed().as_nanos();
++        let (allocations, bytes, reallocations) = COUNTS.with(Cell::get);
++        eprintln!(
++            "BPE_RECORDS {{\"len\":{len},\"capacity\":{capacity},\"element_bytes\":{size},\"allocations\":{allocations},\"bytes\":{bytes},\"reallocations\":{reallocations},\"nanos\":{nanos}}}"
++        );
++    }
++}

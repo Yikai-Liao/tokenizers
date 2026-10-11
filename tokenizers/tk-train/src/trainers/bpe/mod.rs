@@ -19,7 +19,7 @@ pub use parity_trainer::{ParityBpeTrainer, ParityBpeTrainerBuilder, ParityVarian
 use crate::Trainer;
 use ahash::{AHashMap, AHashSet};
 use compact_str::CompactString;
-use corpus::CorpusPlan;
+use corpus::{Corpus, CorpusPlan};
 use index::PairIndex;
 use merge::{Batch, Selection};
 use serde::{Deserialize, Serialize};
@@ -349,6 +349,9 @@ impl BpeTrainer {
         // 2. Freeze initial pairs first: their temporary counting buffers retire
         // before resident corpus slots are allocated. Even a zero-merge call must
         // run the plan's numeric checks and the index's checked pair counting.
+        // Declare before index so early returns also release index first. The
+        // zero-merge path never initializes or allocates this resident corpus.
+        let mut corpus: Corpus;
         self.update_progress(progress, plan.word_count(), "Count pairs");
         let mut index = PairIndex::build(&plan, self.min_frequency, workers, reuse, progress)?;
         self.finalize_progress(progress, plan.word_count(), "Count pairs");
@@ -359,7 +362,7 @@ impl BpeTrainer {
         self.update_progress(progress, self.vocab_size, "Compute merges");
         if vocabulary.len() < self.vocab_size {
             // 3. Only attempts needing merges allocate resident endpoints.
-            let mut corpus = plan.materialize();
+            corpus = plan.materialize();
             while vocabulary.len() < self.vocab_size {
                 let batch = match Batch::select(self, &mut vocabulary, &mut corpus, &mut index)? {
                     Selection::Finished => break,
@@ -369,17 +372,19 @@ impl BpeTrainer {
                     }
                     Selection::Ready(batch) => batch,
                 };
-                #[cfg(test)]
-                trace.extend(batch.trace());
-                let previous_len = merges.len();
-                merges.extend(batch.pairs());
-                batch.commit(
+                let records = batch.commit(
                     &mut corpus,
                     &mut index,
                     self.max_token_length.unwrap_or(usize::MAX),
                 )?;
+                let accepted = records.len();
+                for record in records {
+                    merges.push(record.pair);
+                    #[cfg(test)]
+                    trace.push((record.pair, record.count, record.replacement));
+                }
                 if let Some(p) = progress {
-                    p.inc((merges.len() - previous_len) as u64);
+                    p.inc(accepted as u64);
                 }
                 self.emit_json_progress("Compute merges", merges.len(), self.vocab_size);
             }

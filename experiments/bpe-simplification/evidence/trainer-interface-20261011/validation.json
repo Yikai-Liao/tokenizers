@@ -1,0 +1,40 @@
+{
+  "baseline": "c638658303c97d420973c79e584b6916de36e803",
+  "no_default_features": {
+    "command": "cargo test --offline --manifest-path tokenizers/tk-train/Cargo.toml --no-default-features --lib -- --skip feed_training_tokenizer_json_and_encoding_roundtrip",
+    "passed": 30,
+    "excluded": 1
+  },
+  "default_features": {
+    "command": "cargo test --offline --manifest-path tokenizers/tk-train/Cargo.toml --lib -- --skip feed_training_tokenizer_json_and_encoding_roundtrip",
+    "passed": 30,
+    "excluded": 1
+  },
+  "clippy": {
+    "command": "cargo clippy --offline --manifest-path tokenizers/tk-train/Cargo.toml --no-default-features --all-targets -- -D warnings",
+    "exit_code": 0
+  },
+  "format": {
+    "command": "uv run experiments/bpe-simplification/format-changed.py --check",
+    "exit_code": 0
+  },
+  "existing_failures": [
+    {
+      "test": "feed_training_tokenizer_json_and_encoding_roundtrip",
+      "baseline_reproduced": true,
+      "candidate_reproduced": true,
+      "failure": "Input \u6d4b: actual PipelineToken(3), expected ID 6"
+    },
+    {
+      "feature": "parity-aware-bpe",
+      "baseline_reproduced": true,
+      "candidate_reproduced": true,
+      "failure": "parity_trainer.rs imports unresolved super::BPE; word.rs has an unused import"
+    }
+  ],
+  "new_regressions": [
+    "Successful independent-rule records preserve selection order, certified counts and replacement IDs",
+    "Owner overflow returns Err after writes and publishes no births at 1/4/8 workers",
+    "Restart midway through selection after one committed round discards the speculative UV ID; full model and trace match the sequential oracle at 1/4/8 workers"
+  ]
+}

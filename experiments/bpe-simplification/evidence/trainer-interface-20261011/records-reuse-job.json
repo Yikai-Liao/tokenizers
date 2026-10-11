@@ -1,0 +1,18 @@
+{
+  "protocol_version": 1,
+  "attempt_id": "record-reuse",
+  "build_id": "records-probe",
+  "input_id": "reuse",
+  "mode": "core",
+  "input": "/tmp/bpe-interface-results/record-runs/reuse-words.json",
+  "output": "/tmp/bpe-interface-results/record-runs/reuse/model.json",
+  "workers": 4,
+  "pretokenizer": "none",
+  "trainer": {
+    "vocab_size": 2048,
+    "min_frequency": 1,
+    "prefix": null,
+    "suffix": "a",
+    "max_token_length": null
+  }
+}

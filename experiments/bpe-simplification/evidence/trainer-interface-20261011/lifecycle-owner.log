@@ -1,0 +1,12 @@
+
+running 1 test
+test trainers::bpe::tests::interface_lifecycle_probe ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 31 filtered out; finished in 0.01s
+
+BPE_LIFETIME prepare
+BPE_LIFETIME drop-candidate
+BPE_LIFETIME writes
+BPE_LIFETIME owners
+BPE_LIFETIME drop-index
+BPE_LIFETIME drop-corpus

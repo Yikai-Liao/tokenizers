@@ -1,0 +1,402 @@
+diff --git a/tokenizers/tk-train/src/trainers/bpe/corpus.rs b/tokenizers/tk-train/src/trainers/bpe/corpus.rs
+index 3c48e10a..9ceb6844 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/corpus.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/corpus.rs
+@@ -452,3 +452,9 @@ impl Slots {
+         }
+     }
+ }
++
++impl Drop for Corpus {
++    fn drop(&mut self) {
++        super::record_probe::event("drop-corpus");
++    }
++}
+diff --git a/tokenizers/tk-train/src/trainers/bpe/index.rs b/tokenizers/tk-train/src/trainers/bpe/index.rs
+index 990c9034..406d9175 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/index.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/index.rs
+@@ -225,6 +225,8 @@ impl PairIndex {
+     }
+ 
+     pub(super) fn commit(&mut self, changes: Vec<Vec<Change<Birth>>>) -> Result<()> {
++        super::record_probe::event("owners");
++        super::record_probe::fail("owner")?;
+         // 1. Route each removal and birth to its count owner.
+         let events = self.route_changes(changes);
+ 
+@@ -548,6 +550,51 @@ mod tests {
+ 
+     type Outcome = (Trace, (Vocab, Merges));
+ 
++    #[test]
++    fn owner_failure_returns_no_records_after_endpoint_writes() {
++        for workers in [1, 4, 8] {
++            rayon::ThreadPoolBuilder::new()
++                .num_threads(workers)
++                .build()
++                .unwrap()
++                .install(|| {
++                    let trainer = BpeTrainer::builder()
++                        .vocab_size(16)
++                        .min_frequency(1)
++                        .show_progress(false)
++                        .build();
++                    let words = [("abc".into(), 1)].into_iter().collect();
++                    let view = WordCountsView::from_map(&words);
++                    let progress = trainer.setup_progress();
++                    let mut vocabulary =
++                        Vocabulary::initialize(&trainer, view, workers, &mut None).unwrap();
++                    let plan = CorpusPlan::build(view, &mut vocabulary, &trainer, true, &progress)
++                        .unwrap();
++                    let mut index = PairIndex::build(&plan, 1, workers, true, &progress).unwrap();
++                    let mut corpus = plan.materialize();
++                    let Selection::Ready(batch) =
++                        Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index).unwrap()
++                    else {
++                        panic!("expected AB cohort")
++                    };
++                    // AB writes ID 3 before its right birth (3, C) reaches its
++                    // owner. Force that owner's signed addition to overflow.
++                    let born = (3, 2);
++                    index.shards[owner(born, workers)].insert(born, i64::MAX as u64);
++                    let before: Vec<_> = (0..corpus.len()).map(|p| corpus.token(p)).collect();
++                    let queued = index.queue.len();
++                    let error = batch
++                        .commit(&mut corpus, &mut index, usize::MAX)
++                        .unwrap_err();
++                    assert!(error.to_string().contains("exceeds i64"), "{error}");
++                    let after: Vec<_> = (0..corpus.len()).map(|p| corpus.token(p)).collect();
++                    assert_ne!(after, before, "commit errors do not roll back writes");
++                    assert!(after.contains(&3));
++                    assert_eq!(index.queue.len(), queued, "failed owners publish no births");
++                });
++        }
++    }
++
+     fn train_with_equal_cohorts() -> Outcome {
+         let mut trainer = BpeTrainer::builder()
+             .vocab_size(64)
+@@ -581,7 +628,7 @@ mod tests {
+         assert_eq!(cohorts.each_ref().map(|values| values.len()), [1, 1]);
+         let mut index = PairIndex::build(&plan, 1, 1, true, &progress).unwrap();
+         assert_eq!(index.shards[0][&pair], 5);
+-        let mut candidates = index.queue.into_vec();
++        let mut candidates = std::mem::take(&mut index.queue).into_vec();
+         candidates.retain(|candidate| candidate.priority.pair() != pair);
+         for (positions, count) in cohorts.into_iter().zip([10, 5]) {
+             candidates.push(Candidate {
+@@ -603,9 +650,10 @@ mod tests {
+                     Selection::Finished => break,
+                     Selection::Restart => panic!("reuse cannot request another attempt"),
+                 };
+-            trace.extend(batch.trace());
+-            merges.extend(batch.pairs());
+-            batch.commit(&mut corpus, &mut index, usize::MAX).unwrap();
++            for record in batch.commit(&mut corpus, &mut index, usize::MAX).unwrap() {
++                merges.push(record.pair);
++                trace.push((record.pair, record.count, record.replacement));
++            }
+         }
+         (trace, vocabulary.into_model_parts(merges))
+     }
+@@ -653,3 +701,15 @@ mod tests {
+         );
+     }
+ }
++
++impl Drop for PairIndex {
++    fn drop(&mut self) {
++        super::record_probe::event("drop-index");
++    }
++}
++
++impl Drop for Candidate {
++    fn drop(&mut self) {
++        super::record_probe::event("drop-candidate");
++    }
++}
+diff --git a/tokenizers/tk-train/src/trainers/bpe/merge.rs b/tokenizers/tk-train/src/trainers/bpe/merge.rs
+index 940ddf3a..3979ae54 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/merge.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/merge.rs
+@@ -42,6 +42,17 @@ pub(super) enum Selection {
+     Ready(Batch),
+ }
+ 
++/// Selected-rule scalars returned only after the whole batch commits successfully.
++/// No candidate positions survive preparation through these records.
++#[derive(Debug)]
++pub(super) struct MergeRecord {
++    pub(super) pair: Pair,
++    #[cfg(test)]
++    pub(super) count: u64,
++    #[cfg(test)]
++    pub(super) replacement: u32,
++}
++
+ /// One neighbor-edge removal and replacement birth from preparation.
+ /// Weights remain separate so commit preserves intermediate signed adjustments;
+ /// P carries birth positions, or () for separately routed metadata. Bucket
+@@ -214,6 +225,7 @@ impl Batch {
+         corpus: &mut Corpus,
+         index: &mut PairIndex,
+     ) -> Result<Selection> {
++        super::record_probe::fail("select")?;
+         let reuse = index.reuse();
+         let mut batch = Self {
+             rules: Vec::new(),
+@@ -275,17 +287,6 @@ impl Batch {
+         })
+     }
+ 
+-    pub(super) fn pairs(&self) -> impl Iterator<Item = Pair> + '_ {
+-        self.rules.iter().map(|rule| rule.pair())
+-    }
+-
+-    #[cfg(test)]
+-    pub(super) fn trace(&self) -> impl Iterator<Item = (Pair, u64, u32)> + '_ {
+-        self.rules
+-            .iter()
+-            .map(|rule| (rule.pair(), rule.candidate.priority.count, rule.replacement))
+-    }
+-
+     /// Complete one selected batch, joining preparation before writes and writes
+     /// before parallel index updates. Preparation errors leave endpoints unchanged;
+     /// later errors can follow writes or count updates. Discard the attempt on error.
+@@ -294,8 +295,28 @@ impl Batch {
+         corpus: &mut Corpus,
+         index: &mut PairIndex,
+         limit: usize,
+-    ) -> Result<()> {
++    ) -> Result<Vec<MergeRecord>> {
++        // Capture only bounded scalars before consuming preparation releases the
++        // selected candidates. Preserve selection order, including reuse cohorts.
++        super::record_probe::begin_records();
++        let records: Vec<MergeRecord> = self
++            .rules
++            .iter()
++            .map(|rule| MergeRecord {
++                pair: rule.pair(),
++                #[cfg(test)]
++                count: rule.candidate.priority.count,
++                #[cfg(test)]
++                replacement: rule.replacement,
++            })
++            .collect();
++        super::record_probe::finish_records(
++            records.len(),
++            records.capacity(),
++            std::mem::size_of::<MergeRecord>(),
++        );
+         let jobs = self.prepare(corpus, limit)?;
++        super::record_probe::event("writes");
+         let changes = jobs
+             .into_par_iter()
+             .map(|job| {
+@@ -303,10 +324,14 @@ impl Batch {
+                 job.changes
+             })
+             .collect();
+-        index.commit(changes)
++        index.commit(changes)?;
++        super::record_probe::event("records");
++        Ok(records)
+     }
+ 
+     fn prepare(self, corpus: &Corpus, limit: usize) -> Result<Vec<Job>> {
++        super::record_probe::event("prepare");
++        super::record_probe::fail("prepare")?;
+         if self.reuse {
+             return self.prepare_cohort(corpus, limit);
+         }
+@@ -835,7 +860,10 @@ mod tests {
+                 else {
+                     panic!("expected ready batch")
+                 };
+-                assert_eq!(batch.pairs().collect::<Vec<_>>(), [(0, 1), (2, 3)]);
++                assert_eq!(
++                    batch.rules.iter().map(Rule::pair).collect::<Vec<_>>(),
++                    [(0, 1), (2, 3)]
++                );
+                 // AB has valid deferred writes. Duplicate CD's start to overflow
+                 // its left-neighbor count during preparation.
+                 let start = batch.rules[1].candidate.positions.iter().next().unwrap();
+diff --git a/tokenizers/tk-train/src/trainers/bpe/mod.rs b/tokenizers/tk-train/src/trainers/bpe/mod.rs
+index 7478c0f7..93c33255 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/mod.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/mod.rs
+@@ -7,6 +7,7 @@ mod merge;
+ #[cfg(feature = "parity-aware-bpe")]
+ pub mod parity_trainer;
+ mod positions;
++mod record_probe;
+ #[cfg(test)]
+ mod tests;
+ mod vocabulary;
+@@ -19,7 +20,7 @@ pub use parity_trainer::{ParityBpeTrainer, ParityBpeTrainerBuilder, ParityVarian
+ use crate::Trainer;
+ use ahash::{AHashMap, AHashSet};
+ use compact_str::CompactString;
+-use corpus::CorpusPlan;
++use corpus::{Corpus, CorpusPlan};
+ use index::PairIndex;
+ use merge::{Batch, Selection};
+ use serde::{Deserialize, Serialize};
+@@ -349,6 +350,9 @@ impl BpeTrainer {
+         // 2. Freeze initial pairs first: their temporary counting buffers retire
+         // before resident corpus slots are allocated. Even a zero-merge call must
+         // run the plan's numeric checks and the index's checked pair counting.
++        // Declare before index so early returns also release index first. The
++        // zero-merge path never initializes or allocates this resident corpus.
++        let mut corpus: Corpus;
+         self.update_progress(progress, plan.word_count(), "Count pairs");
+         let mut index = PairIndex::build(&plan, self.min_frequency, workers, reuse, progress)?;
+         self.finalize_progress(progress, plan.word_count(), "Count pairs");
+@@ -359,7 +363,7 @@ impl BpeTrainer {
+         self.update_progress(progress, self.vocab_size, "Compute merges");
+         if vocabulary.len() < self.vocab_size {
+             // 3. Only attempts needing merges allocate resident endpoints.
+-            let mut corpus = plan.materialize();
++            corpus = plan.materialize();
+             while vocabulary.len() < self.vocab_size {
+                 let batch = match Batch::select(self, &mut vocabulary, &mut corpus, &mut index)? {
+                     Selection::Finished => break,
+@@ -369,17 +373,19 @@ impl BpeTrainer {
+                     }
+                     Selection::Ready(batch) => batch,
+                 };
+-                #[cfg(test)]
+-                trace.extend(batch.trace());
+-                let previous_len = merges.len();
+-                merges.extend(batch.pairs());
+-                batch.commit(
++                let records = batch.commit(
+                     &mut corpus,
+                     &mut index,
+                     self.max_token_length.unwrap_or(usize::MAX),
+                 )?;
++                let accepted = records.len();
++                for record in records {
++                    merges.push(record.pair);
++                    #[cfg(test)]
++                    trace.push((record.pair, record.count, record.replacement));
++                }
+                 if let Some(p) = progress {
+-                    p.inc((merges.len() - previous_len) as u64);
++                    p.inc(accepted as u64);
+                 }
+                 self.emit_json_progress("Compute merges", merges.len(), self.vocab_size);
+             }
+@@ -393,6 +399,7 @@ impl BpeTrainer {
+         // 4. Large attempt storage is gone before output strings and the final
+         // vocabulary map are built, keeping their allocations from overlapping.
+         self.finalize_progress(progress, merges.len(), "Compute merges");
++        record_probe::event("output");
+         let (vocab, merges) = vocabulary.into_model_parts(merges);
+         // Only success carries a trace out of the attempt. Errors and restart
+         // requests discard every speculative rule along with its local storage.
+diff --git a/tokenizers/tk-train/src/trainers/bpe/tests.rs b/tokenizers/tk-train/src/trainers/bpe/tests.rs
+index 580b37a4..ca27df39 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/tests.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/tests.rs
+@@ -313,6 +313,50 @@ fn reuse_restart_keeps_the_alphabet_and_returns_only_the_successful_trace() {
+     }
+ }
+ 
++#[test]
++fn restart_discards_ids_selected_after_a_committed_round() {
++    let mut trainer = trainer();
++    trainer.continuing_subword_prefix = Some("a".into());
++    trainer.special_tokens = vec![AddedToken::from("xy", true)];
++    trainer.limit_alphabet = Some(6);
++    let words = counts(&[("xy", 3), ("uv", 2), ("ab", 1)]);
++    for workers in [1, 4, 8] {
++        rayon::ThreadPoolBuilder::new()
++            .num_threads(workers)
++            .build()
++            .unwrap()
++            .install(|| {
++                let view = WordCountsView::from_map(&words);
++                let progress = trainer.setup_progress();
++                let mut vocabulary =
++                    Vocabulary::initialize(&trainer, view, workers, &mut None).unwrap();
++                let plan =
++                    CorpusPlan::build(view, &mut vocabulary, &trainer, false, &progress).unwrap();
++                let mut index = PairIndex::build(&plan, 1, workers, false, &progress).unwrap();
++                let mut corpus = plan.materialize();
++                let Selection::Ready(batch) =
++                    Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index).unwrap()
++                else {
++                    panic!("reserved XY must commit alone")
++                };
++                let records = batch.commit(&mut corpus, &mut index, usize::MAX).unwrap();
++                assert_eq!(records.len(), 1);
++                assert_eq!((records[0].count, records[0].replacement), (3, 0));
++                let committed_len = vocabulary.len();
++                // The next selection resolves UV before AB aliases the activated
++                // decorated B identity. The entire attempt, including UV's ID,
++                // must be discarded rather than recording either tentative rule.
++                assert!(matches!(
++                    Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index).unwrap(),
++                    Selection::Restart
++                ));
++                assert_eq!(vocabulary.len(), committed_len + 1);
++            });
++    }
++    let trace = check(&trainer, &words);
++    assert_eq!(trace.iter().filter(|rule| rule.1 == 3).count(), 1);
++}
++
+ #[test]
+ fn ready_batch_applies_independent_rules_together() {
+     let trainer = trainer();
+@@ -328,8 +372,14 @@ fn ready_batch_applies_independent_rules_together() {
+     else {
+         panic!("expected ready batch")
+     };
+-    assert_eq!(batch.pairs().collect::<Vec<_>>(), [(0, 1), (2, 3), (4, 5)]);
+-    batch.commit(&mut corpus, &mut index, usize::MAX).unwrap();
++    let records = batch.commit(&mut corpus, &mut index, usize::MAX).unwrap();
++    assert_eq!(
++        records
++            .into_iter()
++            .map(|record| (record.pair, record.count, record.replacement))
++            .collect::<Vec<_>>(),
++        [((0, 1), 10, 6), ((2, 3), 9, 7), ((4, 5), 8, 8)]
++    );
+     assert!(matches!(
+         Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index).unwrap(),
+         Selection::Finished
+@@ -924,3 +974,31 @@ fn symbol_scan_returns_the_break_reason_and_preserves_utf8_affix_boundaries() {
+         assert_eq!(edges, 1);
+     }
+ }
++
++#[test]
++fn interface_lifecycle_probe() {
++    let scenario = std::env::var("BPE_INTERFACE_PROBE").unwrap();
++    let mut trainer = trainer();
++    let words = if scenario == "restart" {
++        trainer.continuing_subword_prefix = Some("a".into());
++        trainer.special_tokens = vec![AddedToken::from("xy", true)];
++        counts(&[("xy", 3), ("uv", 2), ("ab", 1)])
++    } else {
++        trainer.vocab_size = match scenario.as_str() {
++            "zero" => 2,
++            "normal" => 3,
++            _ => 64,
++        };
++        let word = if matches!(scenario.as_str(), "normal" | "finished") {
++            "ab".repeat(4096)
++        } else {
++            "ab".into()
++        };
++        counts(&[(&word, 1)])
++    };
++    let result = trainer.do_train_impl(WordCountsView::from_map(&words), Some(4));
++    assert_eq!(
++        result.is_err(),
++        matches!(scenario.as_str(), "select" | "prepare" | "owner")
++    );
++}

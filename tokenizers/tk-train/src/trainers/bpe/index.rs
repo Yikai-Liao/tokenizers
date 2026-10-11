@@ -548,6 +548,51 @@ mod tests {
 
     type Outcome = (Trace, (Vocab, Merges));
 
+    #[test]
+    fn owner_failure_returns_no_records_after_endpoint_writes() {
+        for workers in [1, 4, 8] {
+            rayon::ThreadPoolBuilder::new()
+                .num_threads(workers)
+                .build()
+                .unwrap()
+                .install(|| {
+                    let trainer = BpeTrainer::builder()
+                        .vocab_size(16)
+                        .min_frequency(1)
+                        .show_progress(false)
+                        .build();
+                    let words = [("abc".into(), 1)].into_iter().collect();
+                    let view = WordCountsView::from_map(&words);
+                    let progress = trainer.setup_progress();
+                    let mut vocabulary =
+                        Vocabulary::initialize(&trainer, view, workers, &mut None).unwrap();
+                    let plan = CorpusPlan::build(view, &mut vocabulary, &trainer, true, &progress)
+                        .unwrap();
+                    let mut index = PairIndex::build(&plan, 1, workers, true, &progress).unwrap();
+                    let mut corpus = plan.materialize();
+                    let Selection::Ready(batch) =
+                        Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index).unwrap()
+                    else {
+                        panic!("expected AB cohort")
+                    };
+                    // AB writes ID 3 before its right birth (3, C) reaches its
+                    // owner. Force that owner's signed addition to overflow.
+                    let born = (3, 2);
+                    index.shards[owner(born, workers)].insert(born, i64::MAX as u64);
+                    let before: Vec<_> = (0..corpus.len()).map(|p| corpus.token(p)).collect();
+                    let queued = index.queue.len();
+                    let error = batch
+                        .commit(&mut corpus, &mut index, usize::MAX)
+                        .unwrap_err();
+                    assert!(error.to_string().contains("exceeds i64"), "{error}");
+                    let after: Vec<_> = (0..corpus.len()).map(|p| corpus.token(p)).collect();
+                    assert_ne!(after, before, "commit errors do not roll back writes");
+                    assert!(after.contains(&3));
+                    assert_eq!(index.queue.len(), queued, "failed owners publish no births");
+                });
+        }
+    }
+
     fn train_with_equal_cohorts() -> Outcome {
         let mut trainer = BpeTrainer::builder()
             .vocab_size(64)
@@ -603,9 +648,10 @@ mod tests {
                     Selection::Finished => break,
                     Selection::Restart => panic!("reuse cannot request another attempt"),
                 };
-            trace.extend(batch.trace());
-            merges.extend(batch.pairs());
-            batch.commit(&mut corpus, &mut index, usize::MAX).unwrap();
+            for record in batch.commit(&mut corpus, &mut index, usize::MAX).unwrap() {
+                merges.push(record.pair);
+                trace.push((record.pair, record.count, record.replacement));
+            }
         }
         (trace, vocabulary.into_model_parts(merges))
     }

@@ -1,0 +1,822 @@
+[
+  {
+    "case": "bytelevel_regex",
+    "block": 0,
+    "arm": "baseline",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-interface-results/baseline",
+      "/tmp/bpe-interface-results/measurements/bytelevel_regex-0-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "max_swap_kib": 0,
+    "attempt_id": "bytelevel_regex-0-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "bytelevel_regex",
+    "metrics": {
+      "load_seconds": 3.9102865700000002,
+      "process_hwm_kib_before_validation": 2486672,
+      "train_cpu_seconds": 31.160876000000002,
+      "train_seconds": 9.718182651
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-interface-results/measurements/bytelevel_regex-0-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "bytelevel_regex",
+    "block": 0,
+    "arm": "candidate",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-interface-results/candidate",
+      "/tmp/bpe-interface-results/measurements/bytelevel_regex-0-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "max_swap_kib": 0,
+    "attempt_id": "bytelevel_regex-0-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "bytelevel_regex",
+    "metrics": {
+      "load_seconds": 3.900479819,
+      "process_hwm_kib_before_validation": 2494396,
+      "train_cpu_seconds": 31.552326,
+      "train_seconds": 9.834783868
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-interface-results/measurements/bytelevel_regex-0-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "bytelevel_regex",
+    "block": 1,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-interface-results/candidate",
+      "/tmp/bpe-interface-results/measurements/bytelevel_regex-1-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "max_swap_kib": 0,
+    "attempt_id": "bytelevel_regex-1-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "bytelevel_regex",
+    "metrics": {
+      "load_seconds": 3.9169080640000002,
+      "process_hwm_kib_before_validation": 2493228,
+      "train_cpu_seconds": 31.103163,
+      "train_seconds": 9.617595431
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-interface-results/measurements/bytelevel_regex-1-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "bytelevel_regex",
+    "block": 1,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-interface-results/baseline",
+      "/tmp/bpe-interface-results/measurements/bytelevel_regex-1-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "max_swap_kib": 0,
+    "attempt_id": "bytelevel_regex-1-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "bytelevel_regex",
+    "metrics": {
+      "load_seconds": 3.904043427,
+      "process_hwm_kib_before_validation": 2496896,
+      "train_cpu_seconds": 31.215939999999996,
+      "train_seconds": 9.772331624
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-interface-results/measurements/bytelevel_regex-1-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "bytelevel_regex",
+    "block": 2,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-interface-results/baseline",
+      "/tmp/bpe-interface-results/measurements/bytelevel_regex-2-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "max_swap_kib": 0,
+    "attempt_id": "bytelevel_regex-2-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "bytelevel_regex",
+    "metrics": {
+      "load_seconds": 3.902342288,
+      "process_hwm_kib_before_validation": 2486020,
+      "train_cpu_seconds": 30.854542,
+      "train_seconds": 9.629743586
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-interface-results/measurements/bytelevel_regex-2-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "bytelevel_regex",
+    "block": 2,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-interface-results/candidate",
+      "/tmp/bpe-interface-results/measurements/bytelevel_regex-2-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "max_swap_kib": 0,
+    "attempt_id": "bytelevel_regex-2-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "bytelevel_regex",
+    "metrics": {
+      "load_seconds": 3.921846934,
+      "process_hwm_kib_before_validation": 2464752,
+      "train_cpu_seconds": 31.578847999999997,
+      "train_seconds": 9.812792534
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-interface-results/measurements/bytelevel_regex-2-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "bytelevel_regex",
+    "block": 3,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-interface-results/candidate",
+      "/tmp/bpe-interface-results/measurements/bytelevel_regex-3-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "max_swap_kib": 0,
+    "attempt_id": "bytelevel_regex-3-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "bytelevel_regex",
+    "metrics": {
+      "load_seconds": 3.907543907,
+      "process_hwm_kib_before_validation": 2464860,
+      "train_cpu_seconds": 31.517606999999998,
+      "train_seconds": 9.754762615
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-interface-results/measurements/bytelevel_regex-3-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "bytelevel_regex",
+    "block": 3,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-interface-results/baseline",
+      "/tmp/bpe-interface-results/measurements/bytelevel_regex-3-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "max_swap_kib": 0,
+    "attempt_id": "bytelevel_regex-3-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "bytelevel_regex",
+    "metrics": {
+      "load_seconds": 3.908543464,
+      "process_hwm_kib_before_validation": 2452160,
+      "train_cpu_seconds": 30.944291,
+      "train_seconds": 9.717467603
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-interface-results/measurements/bytelevel_regex-3-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "bytelevel_regex",
+    "block": 4,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-interface-results/baseline",
+      "/tmp/bpe-interface-results/measurements/bytelevel_regex-4-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "max_swap_kib": 0,
+    "attempt_id": "bytelevel_regex-4-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "bytelevel_regex",
+    "metrics": {
+      "load_seconds": 3.9031183289999998,
+      "process_hwm_kib_before_validation": 2508752,
+      "train_cpu_seconds": 30.983484999999995,
+      "train_seconds": 9.580727304
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-interface-results/measurements/bytelevel_regex-4-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "bytelevel_regex",
+    "block": 4,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-interface-results/candidate",
+      "/tmp/bpe-interface-results/measurements/bytelevel_regex-4-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "max_swap_kib": 0,
+    "attempt_id": "bytelevel_regex-4-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "bytelevel_regex",
+    "metrics": {
+      "load_seconds": 3.897013242,
+      "process_hwm_kib_before_validation": 2481432,
+      "train_cpu_seconds": 31.367178000000003,
+      "train_seconds": 9.776839883
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 49744,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-interface-results/measurements/bytelevel_regex-4-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "whitespace",
+    "block": 0,
+    "arm": "baseline",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-interface-results/baseline",
+      "/tmp/bpe-interface-results/measurements/whitespace-0-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "whitespace-0-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "whitespace",
+    "metrics": {
+      "load_seconds": 2.674431803,
+      "process_hwm_kib_before_validation": 1838372,
+      "train_cpu_seconds": 24.187351,
+      "train_seconds": 8.41620358
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-interface-results/measurements/whitespace-0-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "whitespace",
+    "block": 0,
+    "arm": "candidate",
+    "warmup": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-interface-results/candidate",
+      "/tmp/bpe-interface-results/measurements/whitespace-0-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "whitespace-0-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "whitespace",
+    "metrics": {
+      "load_seconds": 2.692148265,
+      "process_hwm_kib_before_validation": 1858936,
+      "train_cpu_seconds": 24.175661,
+      "train_seconds": 8.392887124
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-interface-results/measurements/whitespace-0-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "whitespace",
+    "block": 1,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-interface-results/candidate",
+      "/tmp/bpe-interface-results/measurements/whitespace-1-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "whitespace-1-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "whitespace",
+    "metrics": {
+      "load_seconds": 2.700717863,
+      "process_hwm_kib_before_validation": 1856996,
+      "train_cpu_seconds": 24.142331000000002,
+      "train_seconds": 8.387527924
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-interface-results/measurements/whitespace-1-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "whitespace",
+    "block": 1,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-interface-results/baseline",
+      "/tmp/bpe-interface-results/measurements/whitespace-1-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "whitespace-1-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "whitespace",
+    "metrics": {
+      "load_seconds": 2.673034541,
+      "process_hwm_kib_before_validation": 1856288,
+      "train_cpu_seconds": 24.099469999999997,
+      "train_seconds": 8.342795976
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-interface-results/measurements/whitespace-1-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "whitespace",
+    "block": 2,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-interface-results/baseline",
+      "/tmp/bpe-interface-results/measurements/whitespace-2-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "whitespace-2-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "whitespace",
+    "metrics": {
+      "load_seconds": 2.681371914,
+      "process_hwm_kib_before_validation": 1841812,
+      "train_cpu_seconds": 24.475965000000002,
+      "train_seconds": 8.505753368
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-interface-results/measurements/whitespace-2-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "whitespace",
+    "block": 2,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-interface-results/candidate",
+      "/tmp/bpe-interface-results/measurements/whitespace-2-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "whitespace-2-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "whitespace",
+    "metrics": {
+      "load_seconds": 2.693024103,
+      "process_hwm_kib_before_validation": 1856880,
+      "train_cpu_seconds": 24.110427,
+      "train_seconds": 8.349964768
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-interface-results/measurements/whitespace-2-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "whitespace",
+    "block": 3,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-interface-results/candidate",
+      "/tmp/bpe-interface-results/measurements/whitespace-3-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "whitespace-3-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "whitespace",
+    "metrics": {
+      "load_seconds": 2.6957302739999998,
+      "process_hwm_kib_before_validation": 1883344,
+      "train_cpu_seconds": 24.176573,
+      "train_seconds": 8.407973745
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-interface-results/measurements/whitespace-3-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "whitespace",
+    "block": 3,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-interface-results/baseline",
+      "/tmp/bpe-interface-results/measurements/whitespace-3-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "whitespace-3-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "whitespace",
+    "metrics": {
+      "load_seconds": 2.679449077,
+      "process_hwm_kib_before_validation": 1840040,
+      "train_cpu_seconds": 24.316607,
+      "train_seconds": 8.401990063
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-interface-results/measurements/whitespace-3-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "whitespace",
+    "block": 4,
+    "arm": "baseline",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-interface-results/baseline",
+      "/tmp/bpe-interface-results/measurements/whitespace-4-baseline/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "whitespace-4-baseline",
+    "build_id": "baseline",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "whitespace",
+    "metrics": {
+      "load_seconds": 2.672627778,
+      "process_hwm_kib_before_validation": 1857596,
+      "train_cpu_seconds": 24.140368,
+      "train_seconds": 8.423312652
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-interface-results/measurements/whitespace-4-baseline/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  },
+  {
+    "case": "whitespace",
+    "block": 4,
+    "arm": "candidate",
+    "warmup": false,
+    "command": [
+      "taskset",
+      "-c",
+      "0-3",
+      "/tmp/bpe-interface-results/candidate",
+      "/tmp/bpe-interface-results/measurements/whitespace-4-candidate/job.json"
+    ],
+    "model_equal": true,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "max_swap_kib": 0,
+    "attempt_id": "whitespace-4-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "input_id": "whitespace",
+    "metrics": {
+      "load_seconds": 2.696116687,
+      "process_hwm_kib_before_validation": 1860192,
+      "train_cpu_seconds": 23.882343000000002,
+      "train_seconds": 8.411983659
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 32241,
+      "actual_vocab": 50000,
+      "model_path": "/tmp/bpe-interface-results/measurements/whitespace-4-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 4
+  }
+]

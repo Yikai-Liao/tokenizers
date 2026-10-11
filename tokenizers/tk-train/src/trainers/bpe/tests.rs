@@ -314,6 +314,50 @@ fn reuse_restart_keeps_the_alphabet_and_returns_only_the_successful_trace() {
 }
 
 #[test]
+fn restart_discards_ids_selected_after_a_committed_round() {
+    let mut trainer = trainer();
+    trainer.continuing_subword_prefix = Some("a".into());
+    trainer.special_tokens = vec![AddedToken::from("xy", true)];
+    trainer.limit_alphabet = Some(6);
+    let words = counts(&[("xy", 3), ("uv", 2), ("ab", 1)]);
+    for workers in [1, 4, 8] {
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(workers)
+            .build()
+            .unwrap()
+            .install(|| {
+                let view = WordCountsView::from_map(&words);
+                let progress = trainer.setup_progress();
+                let mut vocabulary =
+                    Vocabulary::initialize(&trainer, view, workers, &mut None).unwrap();
+                let plan =
+                    CorpusPlan::build(view, &mut vocabulary, &trainer, false, &progress).unwrap();
+                let mut index = PairIndex::build(&plan, 1, workers, false, &progress).unwrap();
+                let mut corpus = plan.materialize();
+                let Selection::Ready(batch) =
+                    Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index).unwrap()
+                else {
+                    panic!("reserved XY must commit alone")
+                };
+                let records = batch.commit(&mut corpus, &mut index, usize::MAX).unwrap();
+                assert_eq!(records.len(), 1);
+                assert_eq!((records[0].count, records[0].replacement), (3, 0));
+                let committed_len = vocabulary.len();
+                // The next selection resolves UV before AB aliases the activated
+                // decorated B identity. The entire attempt, including UV's ID,
+                // must be discarded rather than recording either tentative rule.
+                assert!(matches!(
+                    Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index).unwrap(),
+                    Selection::Restart
+                ));
+                assert_eq!(vocabulary.len(), committed_len + 1);
+            });
+    }
+    let trace = check(&trainer, &words);
+    assert_eq!(trace.iter().filter(|rule| rule.1 == 3).count(), 1);
+}
+
+#[test]
 fn ready_batch_applies_independent_rules_together() {
     let trainer = trainer();
     let words = counts(&[("ab", 10), ("cd", 9), ("ef", 8)]);
@@ -328,8 +372,14 @@ fn ready_batch_applies_independent_rules_together() {
     else {
         panic!("expected ready batch")
     };
-    assert_eq!(batch.pairs().collect::<Vec<_>>(), [(0, 1), (2, 3), (4, 5)]);
-    batch.commit(&mut corpus, &mut index, usize::MAX).unwrap();
+    let records = batch.commit(&mut corpus, &mut index, usize::MAX).unwrap();
+    assert_eq!(
+        records
+            .into_iter()
+            .map(|record| (record.pair, record.count, record.replacement))
+            .collect::<Vec<_>>(),
+        [((0, 1), 10, 6), ((2, 3), 9, 7), ((4, 5), 8, 8)]
+    );
     assert!(matches!(
         Batch::select(&trainer, &mut vocabulary, &mut corpus, &mut index).unwrap(),
         Selection::Finished
@@ -516,7 +566,9 @@ fn public_pools_feed_flush_errors_and_progress_matrix() {
         run_public_training_child(&setting);
         return;
     }
-    for setting in ["parallel", "serial", "no-bar", "zero", "empty", "silent"] {
+    for setting in [
+        "parallel", "serial", "no-bar", "zero", "empty", "silent", "restart",
+    ] {
         let result = std::process::Command::new(std::env::current_exe().unwrap())
             .args(["--exact", TEST, "--nocapture"])
             .env(CHILD, setting)
@@ -559,7 +611,12 @@ fn run_public_training_child(setting: &str) {
                 ProgressFormat::JsonLines
             };
             trainer.vocab_size = if setting == "zero" { 2 } else { 64 };
-            let words = if setting == "empty" {
+            let words = if setting == "restart" {
+                trainer.continuing_subword_prefix = Some("a".into());
+                trainer.special_tokens = vec![AddedToken::from("xy", true)];
+                trainer.limit_alphabet = Some(6);
+                counts(&[("xy", 3), ("uv", 2), ("ab", 1)])
+            } else if setting == "empty" {
                 AHashMap::new()
             } else {
                 counts(&[("ab", 3), ("cd", 2)])
@@ -570,6 +627,7 @@ fn run_public_training_child(setting: &str) {
                 OBSERVED_PHASES.load(Ordering::Relaxed),
                 match setting {
                     "zero" | "empty" => 0,
+                    "restart" => 0b111,
                     _ => 0b011,
                 }
             );
@@ -613,6 +671,16 @@ fn check_progress_records(setting: &str, result: std::process::Output) {
         .unwrap();
     assert_eq!(finished["current"], count);
     assert_eq!(finished["total"], count);
+    if setting == "restart" {
+        let first_finished = records
+            .iter()
+            .find(|r| r["stage"] == "Compute merges" && r["current"] == r["total"])
+            .unwrap();
+        assert_eq!(
+            first_finished["current"], 1,
+            "only XY committed before restart"
+        );
+    }
 }
 
 mod reference {

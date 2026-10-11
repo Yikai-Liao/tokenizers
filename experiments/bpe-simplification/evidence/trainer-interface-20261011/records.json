@@ -1,0 +1,44 @@
+[
+  {
+    "case": "bytelevel_regex",
+    "batches": 1646,
+    "rules": 49744,
+    "allocations": 1646,
+    "reallocations": 0,
+    "total_payload_bytes": 397952,
+    "max_batch_rules": 169,
+    "total_capture_seconds": 0.000299881,
+    "median_capture_nanos": 130.0,
+    "singleton_batches": 172,
+    "singleton_median_capture_nanos": 73.5,
+    "model_equal": true
+  },
+  {
+    "case": "whitespace",
+    "batches": 1390,
+    "rules": 32241,
+    "allocations": 1390,
+    "reallocations": 0,
+    "total_payload_bytes": 257928,
+    "max_batch_rules": 111,
+    "total_capture_seconds": 0.000220093,
+    "median_capture_nanos": 120.0,
+    "singleton_batches": 146,
+    "singleton_median_capture_nanos": 83.0,
+    "model_equal": true
+  },
+  {
+    "case": "reuse",
+    "batches": 2164,
+    "rules": 2164,
+    "allocations": 2164,
+    "reallocations": 0,
+    "total_payload_bytes": 17312,
+    "max_batch_rules": 1,
+    "total_capture_seconds": 6.2192e-05,
+    "median_capture_nanos": 27.0,
+    "singleton_batches": 2164,
+    "singleton_median_capture_nanos": 27.0,
+    "model_equal": true
+  }
+]
