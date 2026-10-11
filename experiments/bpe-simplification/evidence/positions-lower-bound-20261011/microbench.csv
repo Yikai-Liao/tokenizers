@@ -1,0 +1,13 @@
+len,mode,original_ns,standard_ns,ratio
+2,distinct,21.28,6.21,0.292
+2,duplicates,23.86,9.80,0.411
+128,distinct,228.44,144.10,0.631
+128,duplicates,226.01,142.08,0.629
+129,distinct,238.56,159.34,0.668
+129,duplicates,34.27,19.65,0.573
+4096,distinct,266.30,185.99,0.698
+4096,duplicates,116.12,77.33,0.666
+65536,distinct,303.89,206.67,0.680
+65536,duplicates,303.53,206.64,0.681
+1048576,distinct,423.47,315.04,0.744
+1048576,duplicates,419.46,312.48,0.745

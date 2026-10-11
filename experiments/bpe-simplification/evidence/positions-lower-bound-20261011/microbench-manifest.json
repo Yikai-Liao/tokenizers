@@ -1,0 +1,16 @@
+{
+  "baseline_commit": "bc9442153f27c615ec66f6cb5b5cb437999ea421",
+  "source_sha256": {
+    "baseline": "cd788923dcadc0d2e9293d6b7e3b7dcc9a3bf4c1beca2a1b4bad6d60f13fe69d",
+    "candidate": "44c436b6d6bee8632d84e805d57dd246726873ee97881305c66775f3812065e5"
+  },
+  "rustc": "rustc 1.99.0 (b940084d7 2026-09-28) (Arch Linux rust 1:1.99.0-1)\nbinary: rustc\ncommit-hash: b940084d7eb6a299eb4bfeb8e34901bc051e7ac4\ncommit-date: 2026-09-28\nhost: x86_64-unknown-linux-gnu\nrelease: 1.99.0\nLLVM version: 23.1.1\n",
+  "cpu": "0",
+  "queries_per_sample": 150000,
+  "repetitions": 7,
+  "order": "AB on even repetitions, BA on odd repetitions",
+  "statistic": "median nanoseconds per query; candidate / baseline ratio",
+  "profile": "cargo release defaults, opt-level 3; both arms in one executable",
+  "scope": "synthetic lower_bound only; no full training or input encoding",
+  "binary_sha256": "084e1888df219c26a583d3f03be2e39b2ca3f8a1964e94d2f2d285740780324e"
+}

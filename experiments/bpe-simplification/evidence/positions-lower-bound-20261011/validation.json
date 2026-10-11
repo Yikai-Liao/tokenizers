@@ -1,0 +1,49 @@
+{
+  "baseline_commit": "bc9442153f27c615ec66f6cb5b5cb437999ea421",
+  "no_default_features": {
+    "command": "cargo test --offline --locked --manifest-path tokenizers/tk-train/Cargo.toml --no-default-features --lib -- --skip feed_training_tokenizer_json_and_encoding_roundtrip",
+    "passed": 31,
+    "failed": 0,
+    "excluded": 1
+  },
+  "default_features": {
+    "passed": 31,
+    "failed": 0,
+    "excluded": 1,
+    "log": "test-default.log"
+  },
+  "existing_failure": {
+    "test": "feed_training_tokenizer_json_and_encoding_roundtrip",
+    "baseline_evidence": "../trainer-interface-20261011/README.md"
+  },
+  "native_codec": {
+    "passed": 6,
+    "failed": 0,
+    "log": "codec.log"
+  },
+  "differential_queries": {
+    "queries": 2192020,
+    "baseline_and_candidate_equal_uncompressed_slice": true,
+    "log": "microbench-correctness.log"
+  },
+  "clippy": {
+    "exit_code": 0,
+    "log": "clippy.log"
+  },
+  "format": {
+    "exit_code": 0,
+    "command": "uv run experiments/bpe-simplification/format-changed.py --check tokenizers/tk-train/src/trainers/bpe/positions.rs"
+  },
+  "whitespace": {
+    "exit_code": 0,
+    "command": "git diff --check"
+  },
+  "performance": {
+    "runs": 20,
+    "formal_runs": 16,
+    "full_models_equal": true,
+    "zero_swap": true,
+    "workers": 4,
+    "cpus": "0-3"
+  }
+}

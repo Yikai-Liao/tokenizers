@@ -8,6 +8,7 @@ use std::ops::Range;
 use tk_encode::Result;
 
 const RESTART: usize = 128;
+const USIZE_BYTES: usize = std::mem::size_of::<usize>();
 
 /// Immutable full-u64 lists with inline pairs and owned restart/delta bytes.
 /// Ownership and automatic Send/Sync come from Box, without raw allocation or borrowed storage.
@@ -27,7 +28,7 @@ impl Positions {
             Self::One(_) => 1,
             Self::Two(_, _) => 2,
             Self::Compressed(bytes) => {
-                usize::from_le_bytes(bytes[..std::mem::size_of::<usize>()].try_into().unwrap())
+                usize::from_le_bytes(bytes[..USIZE_BYTES].try_into().unwrap())
             }
         }
     }
@@ -81,7 +82,7 @@ impl Positions {
 
         let groups = count.div_ceil(RESTART);
         let head = (1usize + if groups > 1 { groups } else { 0 })
-            .checked_mul(std::mem::size_of::<usize>())
+            .checked_mul(USIZE_BYTES)
             .ok_or("BPE position layout exceeds usize")?;
         // Reserve the directory and the minimum stream width (one byte per gap,
         // eight per seed). Larger gaps may grow Vec; boxing may also reallocate.
@@ -93,7 +94,7 @@ impl Positions {
             .ok_or("BPE position layout exceeds usize")?;
         let mut bytes = Vec::with_capacity(capacity);
         bytes.resize(head, 0);
-        bytes[..std::mem::size_of::<usize>()].copy_from_slice(&count.to_le_bytes());
+        bytes[..USIZE_BYTES].copy_from_slice(&count.to_le_bytes());
         let mut previous = 0;
         for (index, position) in values.enumerate() {
             // Restart seeds are written absolutely, but this subtraction still
@@ -103,10 +104,9 @@ impl Positions {
                 .ok_or("BPE positions are not sorted")?;
             if index.is_multiple_of(RESTART) {
                 if groups > 1 {
-                    let entry = (1 + index / RESTART) * std::mem::size_of::<usize>();
+                    let entry = (1 + index / RESTART) * USIZE_BYTES;
                     let offset = bytes.len() - head;
-                    bytes[entry..entry + std::mem::size_of::<usize>()]
-                        .copy_from_slice(&offset.to_le_bytes());
+                    bytes[entry..entry + USIZE_BYTES].copy_from_slice(&offset.to_le_bytes());
                 }
                 bytes.extend_from_slice(&position.to_le_bytes());
             } else {
@@ -122,30 +122,19 @@ impl Positions {
         Ok(Self::Compressed(bytes.into_boxed_slice()))
     }
 
-    /// Return the compressed data area after the count and optional directory.
-    /// Only Compressed has this storage; callers must establish that variant.
-    fn compressed_bytes(&self) -> &[u8] {
+    /// Borrow the directory and data area through one shared layout reader.
+    /// Single-block lists omit the directory. Only Compressed has this storage.
+    fn compressed(&self) -> Compressed<'_> {
         let Self::Compressed(bytes) = self else {
-            unreachable!("inline positions have no compressed data area")
+            unreachable!("inline positions have no compressed storage")
         };
         let groups = self.block_count();
-        let prefix = (1 + if groups > 1 { groups } else { 0 }) * std::mem::size_of::<usize>();
-        &bytes[prefix..]
-    }
-
-    fn offset(&self, block: usize) -> usize {
-        if block == 0 {
-            return 0;
+        let directory_bytes = if groups > 1 { groups * USIZE_BYTES } else { 0 };
+        let (directory, data) = bytes[USIZE_BYTES..].split_at(directory_bytes);
+        Compressed {
+            directory: directory.as_chunks::<USIZE_BYTES>().0,
+            data,
         }
-        let Self::Compressed(bytes) = self else {
-            unreachable!()
-        };
-        let start = (1 + block) * std::mem::size_of::<usize>();
-        usize::from_le_bytes(
-            bytes[start..start + std::mem::size_of::<usize>()]
-                .try_into()
-                .unwrap(),
-        )
     }
 
     fn block_count(&self) -> usize {
@@ -194,7 +183,7 @@ impl Positions {
             };
             if start != end {
                 let block = start / RESTART;
-                cursor.bytes = &self.compressed_bytes()[self.offset(block)..];
+                cursor.bytes = self.compressed().block_bytes(block);
                 cursor.index = block * RESTART;
                 for _ in cursor.index..start {
                     cursor.next();
@@ -205,25 +194,22 @@ impl Positions {
     }
 
     fn lower_bound(&self, target: u64) -> usize {
-        let mut begin = 0;
-        let mut end = self.block_count();
-        while begin < end {
-            let mid = (begin + end) / 2;
-            let start = mid * RESTART;
-            if self.iter_range(start..start + 1).next().unwrap() < target {
-                begin = mid + 1;
-            } else {
-                end = mid;
-            }
+        let len = self.len();
+        if len <= RESTART {
+            return self.iter().take_while(|&p| p < target).count();
         }
+        let compressed = self.compressed();
+        let begin = compressed.directory.partition_point(|entry| {
+            let bytes = compressed.bytes_at(entry);
+            u64::from_le_bytes(bytes[..8].try_into().unwrap()) < target
+        });
         // The binary search finds the first restart seed at or above target.
         // Its predecessor can contain the first match near its tail, including
         // duplicates spanning the boundary, so scan that block before advancing.
-        let block = begin.saturating_sub(1);
-        let start = (block * RESTART).min(self.len());
+        let start = begin.saturating_sub(1) * RESTART;
         start
             + self
-                .iter_range(start..(start + RESTART).min(self.len()))
+                .iter_range(start..(start + RESTART).min(len))
                 .take_while(|&p| p < target)
                 .count()
     }
@@ -231,6 +217,27 @@ impl Positions {
     /// Iterate all coordinates at or above the target, including repeated values.
     pub(super) fn iter_from_value(&self, target: u64) -> impl Iterator<Item = u64> + '_ {
         self.iter_range(self.lower_bound(target)..self.len())
+    }
+}
+
+/// Private borrowed view of encoder-owned bytes; it adds no storage or allocation.
+/// Both range reads and value seeks use the same directory and offset decoder.
+struct Compressed<'a> {
+    directory: &'a [[u8; USIZE_BYTES]],
+    data: &'a [u8],
+}
+
+impl<'a> Compressed<'a> {
+    fn block_bytes(&self, block: usize) -> &'a [u8] {
+        if block == 0 {
+            self.data
+        } else {
+            self.bytes_at(&self.directory[block])
+        }
+    }
+
+    fn bytes_at(&self, entry: &[u8; USIZE_BYTES]) -> &'a [u8] {
+        &self.data[usize::from_le_bytes(*entry)..]
     }
 }
 
@@ -278,6 +285,26 @@ impl Iterator for Cursor<'_> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn lower_bound_preserves_the_first_duplicate_across_restarts() {
+        for first in [0, 1, 127, 128, 129, 255, 256] {
+            for repeated in [1, 127, 128, 129, 257] {
+                let mut values = vec![2; first];
+                values.extend(std::iter::repeat_n(5, repeated));
+                values.extend([9; 129]);
+                let positions = Positions::from_sorted(&values).unwrap();
+                assert_eq!(positions.lower_bound(5), first);
+                assert_eq!(positions.lower_bound(6), first + repeated);
+                assert_eq!(positions.lower_bound(10), values.len());
+                assert!(
+                    positions
+                        .iter_from_value(5)
+                        .eq(values[first..].iter().copied())
+                );
+            }
+        }
+    }
 
     #[test]
     fn partition_ranges_cover_lists_without_losing_duplicates_at_boundaries() {
