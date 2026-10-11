@@ -1,6 +1,10 @@
 Merged the shard ownership refactor `fb0864a0` with remote `52ca2951`, which
 includes compressed-position read sharing and ordinary BPE library simplifications.
 
+The subsequent [Range interface restoration](../../position-ranges-restored-20261011/README.md)
+corrects this merge's retention of the Chunk rollback. This file records the
+original merge and its measurements.
+
 `Shard::commit` retains local groups and candidates and now uses the remote
 `BTreeMap` ordering directly, without collecting and sorting group keys. The
 borrowed `Chunk` interface restored by the local change remains; its block reader

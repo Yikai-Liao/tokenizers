@@ -43,8 +43,9 @@ The implementation is divided by the knowledge each module owns:
   Empty, one-value and two-value lists stay inline; longer lists own compressed
   byte slices. Construction accepts a sorted slice or consumes ordered fragments
   without an encoder service. Duplicates and coordinates through `u64::MAX` are preserved.
-  Readers use iteration, `iter_from_value(coordinate)`, or borrowed `chunks(target_items)`;
-  each chunk exposes only its length and iteration. Restart ranges stay private.
+  Readers use iteration, `iter_from_value(coordinate)`, and `iter_range(range)`.
+  `partition_ranges(target_items)` returns standard ranges of list elements;
+  restart alignment stays inside Positions.
 - [feed.rs](feed.rs) owns streaming batches and bounded local word caches;
   `LocalCounts` controls cache flushing and successful completion.
 - [word_counts.rs](word_counts.rs) owns borrowed and collected count views,

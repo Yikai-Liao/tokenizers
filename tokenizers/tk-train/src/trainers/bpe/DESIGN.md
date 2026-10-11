@@ -243,14 +243,19 @@ fragment to its owner; subsequent fragments append in producer order. Reuse
 groups retain an unordered Vec and sort before construction. The immutable
 constructor validates the resulting nondecreasing sequence.
 
-The read interface exposes full iteration, `iter_from_value(coordinate)` and
-borrowed `chunks(target_items)`. Chunks round their target up to restart boundaries
-inside Positions and expose only `len()` and `iter()`. They neither allocate
-per-fragment storage nor decode ahead of iteration. Merge preparation stores the
-borrowed chunk instead of a range of compression blocks. An ordinary producer
-is complete when its actual chunk length equals the candidate length, including
-cases where alignment produces one chunk larger than the target. Filtered AA
-starts remain partial even when a single slice contains them all.
+Positions is the only custom container exposed by the position module. Readers
+use `iter()`, `iter_from_value(coordinate)` and `iter_range(range)`.
+`partition_ranges(target_items)` rounds its target up to restart boundaries and
+returns standard half-open `Range<usize>` values indexing list elements, not
+corpus coordinates or compression blocks. Merge tasks retain the rule rank and
+range; preparation reads that rule's immutable candidate. The caller must keep
+each range paired with its originating list. No fragment storage is allocated.
+Range reads accept any bounds within the list, replay at most one restart prefix
+for an unaligned start, and stop at the exact end. Inverted or out-of-bounds ranges
+panic, as with slice indexing. An ordinary producer is complete exactly when its
+range is `0..candidate_len`, including cases where alignment produces one range
+larger than the target. Filtered AA starts remain partial even when a single slice
+contains them all.
 
 Each block contains at most 128 positions. Its first position is a full-u64
 restart; later positions store unsigned base-128 deltas. Checked monotonic input
