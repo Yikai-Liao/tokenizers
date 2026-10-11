@@ -441,18 +441,16 @@ impl Corpus {
     /// Match intervals must be disjoint across every Job in the round; reads
     /// touch only this match's own endpoints. Atomics keep individual accesses
     /// safe on error or unwind, but overlapping writes invalidate reconstruction.
-    pub(super) fn apply_merges(&self, starts: &[u64], replacement: u32) {
+    pub(super) fn apply_merges(&self, starts: &[usize], replacement: u32) {
         let Some(&first) = starts.first() else {
             return;
         };
         match &self.occurrence_spans {
             None => {
                 // One rule has shared geometry. Cache it before any token store.
-                let first = self.resident(first);
                 let left = self.id_span(self.token(first));
                 let total = left + self.id_span(self.token(first + left));
-                for &coordinate in starts {
-                    let start = self.resident(coordinate);
+                for &start in starts {
                     let right = start + left;
                     let after = start + total;
                     #[cfg(test)]
@@ -469,8 +467,7 @@ impl Corpus {
                 }
             }
             Some(spans) => {
-                for &coordinate in starts {
-                    let start = self.resident(coordinate);
+                for &start in starts {
                     // Read this occurrence's old geometry before changing its endpoints.
                     let left = spans[start].load(Ordering::Relaxed);
                     let right = start + left;
@@ -672,10 +669,7 @@ mod tests {
                     if reverse {
                         accepted.reverse();
                     }
-                    let starts: Vec<_> = accepted
-                        .iter()
-                        .map(|matched| matched.start as u64)
-                        .collect();
+                    let starts: Vec<_> = accepted.iter().map(|matched| matched.start).collect();
                     actual.apply_merges(&starts, replacement);
                     let partial = corpus.copy_for_writes(&frozen);
                     for &matched in &frozen[..count] {
@@ -692,7 +686,7 @@ mod tests {
                     .unwrap()
                     .install(|| {
                         frozen.par_iter().for_each(|&matched| {
-                            actual.apply_merges(&[matched.start as u64], replacement);
+                            actual.apply_merges(&[matched.start], replacement);
                         })
                     });
                 assert_eq!(actual.write_slots(), expected.write_slots());

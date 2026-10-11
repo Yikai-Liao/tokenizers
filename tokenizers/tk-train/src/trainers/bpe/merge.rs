@@ -186,7 +186,7 @@ impl Birth {
 /// One preparation task's disjoint writes and owned neighbor-event payloads.
 /// The task returns both together so no corpus mutation precedes preparation join.
 struct Job {
-    starts: SmallVec<[u64; 2]>,
+    starts: SmallVec<[usize; 2]>,
     replacement: u32,
     changes: Vec<Change<Birth>>,
     #[cfg(test)]
@@ -521,8 +521,8 @@ impl<'a> FreshSnapshot<'a> {
                 _ => self.corpus.weight_region(p),
             };
             weights = Some((weight, end));
-            self.record_neighbors(&mut neighbors, p, matched, weight)?;
-            starts.push(matched.start as u64);
+            self.record_neighbors(&mut neighbors, matched, weight)?;
+            starts.push(matched.start);
             #[cfg(test)]
             frozen.push(self.corpus.freeze_match(matched));
         }
@@ -543,10 +543,10 @@ impl<'a> FreshSnapshot<'a> {
     fn record_neighbors(
         &self,
         neighbors: &mut Neighbors<'_>,
-        p: usize,
         matched: Match,
         weight: u64,
     ) -> Result<()> {
+        let p = matched.start;
         // Left edge: register it only if the preceding match does not own it.
         let prior = self.corpus.token(p - 1);
         if prior != WORD_SEPARATOR_ID {
@@ -615,7 +615,7 @@ impl<'a> FreshSnapshot<'a> {
 struct CohortPreparation<'task> {
     #[cfg(test)]
     frozen: Vec<super::corpus::FrozenMatch>,
-    starts: SmallVec<[u64; 2]>,
+    starts: SmallVec<[usize; 2]>,
     neighbors: Neighbors<'task>,
     corpus: &'task Corpus,
     limit: usize,
@@ -701,7 +701,7 @@ impl<'task> CohortPreparation<'task> {
                     )?;
                 }
                 previous = Some((rule.replacement, p, matched.span()));
-                starts.push(matched.start as u64);
+                starts.push(matched.start);
                 #[cfg(test)]
                 self.frozen.push(corpus.freeze_match(matched));
                 p = matched.after;

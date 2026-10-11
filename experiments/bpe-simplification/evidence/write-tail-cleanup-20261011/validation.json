@@ -1,0 +1,94 @@
+{
+  "base_commit": "30f06c04fc77d66e8f1b5b9c996db3330270a8b5",
+  "source_sha256": {
+    "tokenizers/tk-train/src/trainers/bpe/corpus.rs": "437a63c181107540fcc1c9452d1096ebe6b2bfb82a5ae44f890a21c0738e1ade",
+    "tokenizers/tk-train/src/trainers/bpe/merge.rs": "2865a117dfefbad13865b969a451a485b2026235e499f8cc0310a5976859e14d",
+    "tokenizers/tk-train/Cargo.lock": "7ffd9e72dd8d77a9909b2dcce454bc99f602e57178abbdaf9acc9dd60ce2cc9b"
+  },
+  "environment": {
+    "CARGO_TARGET_DIR": "/tmp/bpe-start-only-writes-finishing-checks-20261011",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_PROFILE_TEST_DEBUG": "0",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CARGO_BUILD_JOBS": "2"
+  },
+  "checks": [
+    {
+      "name": "bpe-tests-default",
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--locked",
+        "--manifest-path",
+        "tokenizers/tk-train/Cargo.toml",
+        "--lib",
+        "trainers::bpe"
+      ],
+      "exit_code": 101,
+      "passed": 40,
+      "failed": 1,
+      "filtered_out": 7,
+      "known_baseline_failure": "trainers::bpe::tests::feed_training_tokenizer_json_and_encoding_roundtrip",
+      "log": "tests-default.log"
+    },
+    {
+      "name": "bpe-tests-no-default",
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--locked",
+        "--manifest-path",
+        "tokenizers/tk-train/Cargo.toml",
+        "--lib",
+        "--no-default-features",
+        "trainers::bpe"
+      ],
+      "exit_code": 101,
+      "passed": 40,
+      "failed": 1,
+      "filtered_out": 7,
+      "known_baseline_failure": "trainers::bpe::tests::feed_training_tokenizer_json_and_encoding_roundtrip",
+      "log": "tests-no-default.log"
+    },
+    {
+      "name": "clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--offline",
+        "--locked",
+        "--manifest-path",
+        "tokenizers/tk-train/Cargo.toml",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "log": "clippy.log"
+    },
+    {
+      "name": "format",
+      "command": [
+        "uv",
+        "run",
+        "experiments/bpe-simplification/format-changed.py",
+        "--check",
+        "tokenizers/tk-train/src/trainers/bpe/merge.rs",
+        "tokenizers/tk-train/src/trainers/bpe/corpus.rs"
+      ],
+      "exit_code": 0,
+      "log": "format.log"
+    }
+  ],
+  "independent_review": "review.md",
+  "performance_rerun": false,
+  "raw_logs_sha256": {
+    "format.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "clippy.log": "087acfd9b342a85497ef89e9e28aa91fffdb1f94dbf3b86e06a57da83f0ed633",
+    "tests-no-default.log": "8b39b44ad531c7b8a3baa09b5150643dfedd1d88ebb71cd2b5318b888b4aab4f",
+    "tests-default.log": "d74f07245c0c4893891f19cc4d8be519a625234b7b1a5b527f0cc683e73fa9db"
+  }
+}
