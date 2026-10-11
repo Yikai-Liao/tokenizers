@@ -1,0 +1,19 @@
+{
+  "protocol_version": 1,
+  "input_id": "en256",
+  "mode": "core",
+  "input": "/root/code/tokenizers-workspaces/bpe-affix-verification-results-20261011/en-prepared-words.json",
+  "workers": 4,
+  "pretokenizer": "whitespace",
+  "trainer": {
+    "vocab_size": 50000,
+    "min_frequency": 2,
+    "prefix": null,
+    "suffix": null,
+    "max_token_length": null,
+    "limit_alphabet": null
+  },
+  "attempt_id": "en-whitespace-w4-r1-child-inline-fast",
+  "build_id": "child-inline-fast",
+  "output": "/root/code/tokenizers-workspaces/bpe-positions-child-results-20261012/read-en-check/en-whitespace-w4-r1-child-inline-fast/model.json"
+}

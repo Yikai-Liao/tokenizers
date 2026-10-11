@@ -1,0 +1,70 @@
+{
+  "base": "d9170827",
+  "count_definition": "tests.rs entirely plus all #[cfg(test)] items, fields and statements in ordinary BPE modules (excluding parity_trainer.rs and its word.rs); Rust AST comments removed, then nonblank lines counted; all four Miri entry lines included",
+  "files": {
+    "corpus.rs": {
+      "before": 84,
+      "after": 84,
+      "delta": 0,
+      "production_syntax_equal": true
+    },
+    "feed.rs": {
+      "before": 0,
+      "after": 0,
+      "delta": 0,
+      "production_syntax_equal": true
+    },
+    "index.rs": {
+      "before": 158,
+      "after": 158,
+      "delta": 0,
+      "production_syntax_equal": true
+    },
+    "merge.rs": {
+      "before": 153,
+      "after": 153,
+      "delta": 0,
+      "production_syntax_equal": true
+    },
+    "mod.rs": {
+      "before": 12,
+      "after": 12,
+      "delta": 0,
+      "production_syntax_equal": true
+    },
+    "positions.rs": {
+      "before": 126,
+      "after": 125,
+      "delta": -1,
+      "production_syntax_equal": false
+    },
+    "tests.rs": {
+      "before": 736,
+      "after": 736,
+      "delta": 0,
+      "production_syntax_equal": true
+    },
+    "vocabulary.rs": {
+      "before": 104,
+      "after": 104,
+      "delta": 0,
+      "production_syntax_equal": true
+    },
+    "word_counts.rs": {
+      "before": 30,
+      "after": 30,
+      "delta": 0,
+      "production_syntax_equal": true
+    },
+    "miri-codec/src/lib.rs": {
+      "before": 4,
+      "after": 4,
+      "delta": 0,
+      "production_syntax_equal": true
+    }
+  },
+  "before": 1407,
+  "after": 1406,
+  "delta": -1,
+  "production_syntax_equal": false
+}

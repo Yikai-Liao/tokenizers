@@ -1,0 +1,19 @@
+{
+  "protocol_version": 1,
+  "input_id": "en256",
+  "mode": "core",
+  "input": "/root/code/tokenizers-workspaces/bpe-positions-child-results-20261012/inputs/en-bytelevel.json",
+  "workers": 4,
+  "pretokenizer": "bytelevel_regex",
+  "trainer": {
+    "vocab_size": 50000,
+    "min_frequency": 2,
+    "prefix": null,
+    "suffix": null,
+    "max_token_length": null,
+    "limit_alphabet": null
+  },
+  "attempt_id": "en-bytelevel_regex-w4-r0-child-read",
+  "build_id": "child-read",
+  "output": "/root/code/tokenizers-workspaces/bpe-positions-child-results-20261012/read-primary/en-bytelevel_regex-w4-r0-child-read/model.json"
+}

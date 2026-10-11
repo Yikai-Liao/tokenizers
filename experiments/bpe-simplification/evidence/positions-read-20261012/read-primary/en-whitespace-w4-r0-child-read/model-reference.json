@@ -1,0 +1,5 @@
+{
+  "run": "read-primary/en-whitespace-w4-r0-child-read",
+  "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6",
+  "model_blob": "models/bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6.json.gz"
+}

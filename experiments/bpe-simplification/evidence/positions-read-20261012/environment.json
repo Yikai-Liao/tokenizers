@@ -1,0 +1,21 @@
+{
+  "base_sha": "d91708278832b582115e52fdc2164eb3043b4d41",
+  "production_commit": "c1b6557a720d1c60537389cd2af9d1e24b665ba3",
+  "binary_sha256": {
+    "child-inline-fast": "cce3688cdbc3080f9c91bb3d7a59936fa3289e240087949a0414480f3c2c99f8",
+    "child-read": "99a0c1f43750d066705a80983f41bfb530b49f29151e7057257a12ff570d7a38"
+  },
+  "workers": 4,
+  "cpu_affinity": "0-3",
+  "build_command": [
+    "cargo",
+    "build",
+    "--release",
+    "--locked",
+    "--offline",
+    "--target-dir",
+    "/root/code/tokenizers-build/bpe-affix-core-build-20261011"
+  ],
+  "validation": "29 BPE tests pass default and no-default, excluding the same previously established JSON roundtrip failure; Clippy passes with only the pre-existing redundant_field_names lint allowed",
+  "source_note": "The frozen normal source has its stale cfg(test) Cursor.end literal removed after the build; cfg(test) code was excluded from the timed release binary. The final production adds one explanatory comment. No runtime source change."
+}

@@ -1,0 +1,11 @@
+{
+  "positions": {
+    "production_before": 333,
+    "production_after": 323,
+    "production_added": 10,
+    "production_removed": 20,
+    "test_before": 126,
+    "test_after": 125
+  },
+  "production_delta": -10
+}
