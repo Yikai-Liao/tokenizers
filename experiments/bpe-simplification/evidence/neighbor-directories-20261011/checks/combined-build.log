@@ -1,0 +1,15 @@
+   Compiling bitcannon v0.1.0-dev.2 (/tmp/bpe-neighbor-worktree-combined-20261011/tokenizers/bitcannon)
+   Compiling tk-encode v0.1.0-dev.2 (/tmp/bpe-neighbor-worktree-combined-20261011/tokenizers/tk-encode)
+   Compiling tk-convert v0.1.0-dev.2 (/tmp/bpe-neighbor-worktree-combined-20261011/tokenizers/tk-convert)
+   Compiling tk-train v0.1.0-dev.2 (/tmp/bpe-neighbor-worktree-combined-20261011/tokenizers/tk-train)
+   Compiling bpe-bench-runner v0.1.0 (/tmp/bpe-neighbor-worktree-combined-20261011/experiments/bpe-simplification/runner)
+warning: function `rss` is never used
+  --> src/protocol.rs:71:8
+   |
+71 | pub fn rss() -> Result<u64, Error> {
+   |        ^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `bpe-bench-runner` (bin "bpe-bench-runner") generated 1 warning
+    Finished `release` profile [optimized] target(s) in 28.96s

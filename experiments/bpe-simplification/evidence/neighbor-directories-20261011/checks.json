@@ -1,0 +1,70 @@
+{
+  "default": {
+    "command": [
+      "cargo",
+      "test",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--locked",
+      "--offline",
+      "--lib"
+    ],
+    "returncode": 101,
+    "log": "default-final.log",
+    "expected_known_failure": "feed_training_tokenizer_json_and_encoding_roundtrip"
+  },
+  "no-default": {
+    "command": [
+      "cargo",
+      "test",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--locked",
+      "--offline",
+      "--no-default-features",
+      "--lib",
+      "--",
+      "--skip",
+      "feed_training_tokenizer_json_and_encoding_roundtrip"
+    ],
+    "returncode": 0,
+    "log": "no-default.log"
+  },
+  "clippy": {
+    "command": [
+      "cargo",
+      "clippy",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "--locked",
+      "--offline",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "returncode": 0,
+    "log": "clippy.log"
+  },
+  "format": {
+    "command": [
+      "uv",
+      "run",
+      "experiments/bpe-simplification/format-changed.py",
+      "--check",
+      "tokenizers/tk-train/src/trainers/bpe/merge.rs",
+      "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs"
+    ],
+    "returncode": 0,
+    "log": "format.log"
+  },
+  "whitespace": {
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "returncode": 0,
+    "log": "whitespace.log"
+  }
+}

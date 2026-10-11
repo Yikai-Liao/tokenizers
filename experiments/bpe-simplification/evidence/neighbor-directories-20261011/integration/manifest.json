@@ -1,0 +1,90 @@
+{
+  "production_change_commit": "fc1021c7",
+  "remote_commit": "8f078a8c",
+  "merge_commit": "9c1f8720b9eabfd0b286bab6a368147d86d99b52",
+  "checks": {
+    "default": {
+      "command": [
+        "cargo",
+        "test",
+        "--manifest-path",
+        "tokenizers/tk-train/Cargo.toml",
+        "--locked",
+        "--offline",
+        "--lib"
+      ],
+      "returncode": 101
+    },
+    "no-default": {
+      "command": [
+        "cargo",
+        "test",
+        "--manifest-path",
+        "tokenizers/tk-train/Cargo.toml",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--",
+        "--skip",
+        "feed_training_tokenizer_json_and_encoding_roundtrip"
+      ],
+      "returncode": 0
+    },
+    "clippy": {
+      "command": [
+        "cargo",
+        "clippy",
+        "--manifest-path",
+        "tokenizers/tk-train/Cargo.toml",
+        "--locked",
+        "--offline",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "returncode": 0
+    },
+    "format": {
+      "command": [
+        "uv",
+        "run",
+        "experiments/bpe-simplification/format-changed.py",
+        "--check",
+        "--base",
+        "8f078a8c",
+        "tokenizers/tk-train/src/trainers/bpe/merge.rs",
+        "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs"
+      ],
+      "returncode": 0
+    },
+    "whitespace": {
+      "command": [
+        "git",
+        "diff",
+        "--check",
+        "8f078a8c",
+        "HEAD"
+      ],
+      "returncode": 0
+    }
+  },
+  "source_hashes": {
+    "tokenizers/tk-train/src/trainers/bpe/corpus.rs": "08bdb820f3f1bf656c670eaa7b4b8c83c43d5383774b51e9585cacd23643115e",
+    "tokenizers/tk-train/src/trainers/bpe/feed.rs": "7c6be5e032a25faf0e0bcad4ee502a38792312233aadbd4a324ac7dca4b62ea7",
+    "tokenizers/tk-train/src/trainers/bpe/index.rs": "55290b167ecb19eb1d742497ccf424967b7a4f1a6f4278fa000b526881839d4c",
+    "tokenizers/tk-train/src/trainers/bpe/merge.rs": "ff79acc68550f124510e82dc492abd76c90c60d9a0f7cd61828f15209e291abf",
+    "tokenizers/tk-train/src/trainers/bpe/mod.rs": "ac98f65811986e68def14ccb14560e8bf133db4c5822638fa0c2d193018f3c8e",
+    "tokenizers/tk-train/src/trainers/bpe/positions.rs": "53589c5588b78d1401e5e55b7b3572fe90f6dad1938658081f7310ac44428792",
+    "tokenizers/tk-train/src/trainers/bpe/tests.rs": "497b69d39d0fba81e6a53a014e0b5cd3a78f5001fba8b2c7bbe2eb3618084965",
+    "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs": "3c2d20f9af52885125eaa7741e78efb103806f4d7b7cc8cfd7a280f39df1d245",
+    "tokenizers/tk-train/src/trainers/bpe/word_counts.rs": "eb78ccea99544dc915f3c406ad77349ddc080ecfb7a5d36253bd8d80275ebf4d",
+    "tokenizers/tk-train/Cargo.toml": "7a6235f8cdfdecfdbbf3cffc9de7b7478e6e2b7a1a7033aae6f0bfb85a9d04bc",
+    "tokenizers/tk-train/Cargo.lock": "998ae475c0d68078bb47f58fa49b966a65ff2f1998672e34714779d02f6c58c8"
+  },
+  "differences_from_measured_combined": [
+    "tokenizers/tk-train/src/trainers/bpe/corpus.rs"
+  ],
+  "timing_note": "32-arm comparison precedes remote B1 integration; integrated version receives native checks, no new timing claim"
+}

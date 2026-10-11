@@ -1,0 +1,50 @@
+   Compiling tk-train v0.1.0-dev.2 (/home/lyk/code/tokenizers/tokenizers/tk-train)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.10s
+     Running unittests src/lib.rs (/tmp/bpe-feed-native/debug/deps/tk_train-e5099a6a461754a9)
+
+running 42 tests
+test trainers::bpe::index::tests::failed_commit_drains_pending_streams_and_checks_intermediate_overflow ... ok
+test trainers::bpe::index::tests::fresh_commit_retires_removals_and_publishes_complete_then_partial_births ... ok
+test trainers::bpe::index::tests::reuse_groups_sort_positions_keep_duplicates_and_publish_in_bucket_order ... ok
+test trainers::bpe::positions::tests::concat_preserves_duplicates_and_reuses_a_single_nonempty_fragment ... ok
+test trainers::bpe::positions::tests::direct_encoding_retains_restart_directory_and_gap_format ... ok
+test trainers::bpe::positions::tests::storage_rejects_inverted_ranges_and_unsorted_input ... ok
+test trainers::bpe::positions::tests::partition_ranges_cover_lists_without_losing_duplicates_at_boundaries ... ok
+test trainers::bpe::positions::tests::truncated_restart_panics_but_completed_cursor_reads_no_bytes ... ok
+test trainers::bpe::tests::builder_defaults_options_and_serialization_remain_compatible ... ok
+test trainers::bpe::positions::tests::lower_bound_preserves_the_first_duplicate_across_restarts ... ok
+test trainers::bpe::tests::initial_edges_preserve_filtered_coordinates_weights_and_errors ... ok
+test trainers::bpe::tests::merge_next_commits_independent_rules_together ... ok
+test trainers::bpe::merge::tests::aligned_fragments_keep_complete_and_partial_publication ... ok
+test trainers::bpe::index::tests::equal_pair_cohorts_preserve_each_merge_and_model_after_count_repair ... ok
+test trainers::bpe::index::tests::preparation_failure_leaves_all_endpoints_unchanged ... ok
+test trainers::bpe::tests::symbols_preserve_short_circuiting_and_utf8_affix_boundaries ... ok
+test trainers::bpe::index::tests::owner_failure_returns_no_records_after_endpoint_writes ... ok
+test trainers::bpe::vocabulary::tests::initialization_completes_decorated_ids_before_weight_sorting ... ok
+test trainers::bpe::vocabulary::tests::cutoff_ties_reuse_the_retained_alphabet_without_reselection ... ok
+test trainers::bpe::corpus::tests::initial_ranges_match_linear_search_at_slot_and_separator_boundaries ... ok
+test trainers::bpe::word_counts::tests::content_equality_and_flat_serde_ignore_representation_and_order ... ok
+test trainers::tests::trainer_wrapper_train_model_wrapper ... ok
+test trainers::unigram::tests::test_initial_alphabet ... ok
+test trainers::unigram::tests::test_to_log_prob ... ok
+test trainers::bpe::tests::reuse_restart_preserves_a_tie_at_an_actual_alphabet_cutoff ... ok
+test trainers::bpe::positions::tests::storage_roundtrips_seeks_and_supports_concurrent_readers ... ok
+test trainers::wordlevel::tests::test_train ... ok
+test trainers::bpe::tests::restart_discards_ids_selected_after_a_committed_round ... ok
+test trainers::bpe::tests::training_and_model_construction_errors_preserve_the_previous_model ... ok
+test trainers::bpe::tests::aligned_complete_and_split_producers_match_the_sequential_model ... ok
+test trainers::bpe::tests::reuse_restart_keeps_the_alphabet_and_returns_only_the_successful_trace ... ok
+test trainers::unigram::tests::test_unigram_chars ... ok
+test trainers::bpe::tests::count_domains_and_zero_merge_validation ... ok
+test trainers::unigram::tests::test_special_tokens ... ok
+test trainers::bpe::tests::borrowed_stored_and_fed_counts_remain_reusable ... ok
+test trainers::bpe::tests::feed_unification_boundaries_errors_and_stored_state ... ok
+test trainers::bpe::vocabulary::tests::observed_reduction_preserves_presence_activation_and_model_ids ... ok
+test trainers::unigram::tests::test_unk_token ... ok
+test trainers::bpe::tests::real_wide_ids_preserve_pair_order_and_separator_distinction ... ok
+test trainers::bpe::tests::overlap_floor_alias_and_alphabet_boundaries ... ok
+test trainers::bpe::tests::public_pools_feed_flush_errors_and_progress_matrix ... ok
+test trainers::bpe::tests::generated_models_and_every_rule_match_the_sequential_oracle ... ok
+
+test result: ok. 42 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 2.72s
+

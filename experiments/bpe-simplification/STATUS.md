@@ -8,6 +8,38 @@ and [the flattening report](FLATTEN.md) for validation and scoped diffs against
 HF main and the starting revision. Counts are descriptive; hard line limits
 have been retired. Earlier counts and limits below describe historical snapshots.
 
+## Neighbor directories and vocabulary insertion, 2026-10-11
+
+MergeToken and AttemptResult were removed in 303597a2. The next change,
+fc1021c7, keeps the two direct-ID directory arrays while deleting touched and the
+reset traversal. Cached indices are checked against the current group and its
+existing neighbor key, so an abandoned task requires no cleanup. Vocabulary
+uses IndexSet::insert_full for constructed merge text, preserving the borrowed
+initialization lookup. Returned IDs are checked after insertion; an error discards
+the whole attempt. These measured candidates exclude Corpus B1. The final
+integration preserves the separately completed remote B1 at 8f078a8c; its Corpus
+is the only Rust difference from the measured combined arm. Native checks are
+repeated after integration; no combined-with-B1 timing claim is added.
+
+Four separately frozen arms compare the actual 303597a2 baseline, directories
+only, insertion only and both together. Two reversed-order blocks on existing
+Chinese/English 256 MiB ByteLevel/Whitespace preparations use four pinned workers.
+All 32 complete models match, with zero sampled swap and training major faults.
+Directories-only train wall changes are +0.35%, +0.93%, +0.02% and +0.75%; combined
+changes are -0.06%, +0.70%, -0.70% and -1.26%. These small observations reveal no
+substantial regression and do not establish stable speed or process-memory gains.
+Loading/serialization are excluded from timing; cumulative HWM includes loading.
+This measures public do_train on real-corpus counts, not full feed pipelines.
+
+Native default checks record 43 passes and the known encoder-roundtrip failure
+(the actual baseline has 42 passes and that failure). No-default records 43 passes
+with it filtered; all-target Clippy with denied warnings and changed-file checks
+pass. A directed overflow fixture reuses both directories without reset and checks
+stale indices, different keys, current hits and complete ordered events. Existing
+full-model/per-rule comparisons at 1/4/8 workers cover fresh and reuse behavior.
+Sources, independent patches, hashes, raw attempts and reproduction are in
+[the directory/insertion report](evidence/neighbor-directories-20261011/README.md).
+
 ## Completed initialization and merge rounds, 2026-10-11
 
 A1 restores builder-owned Config and routes BpeTrainer::default through
