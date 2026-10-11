@@ -836,10 +836,9 @@ mod tests {
                     .collect();
                 let view = WordCountsView::from_map(&words);
                 let progress = trainer.setup_progress();
-                let mut vocabulary =
-                    Vocabulary::initialize(&trainer, view, workers, &mut None).unwrap();
-                let plan =
-                    CorpusPlan::build(view, &mut vocabulary, &trainer, false, &progress).unwrap();
+                let (mut vocabulary, ids) =
+                    Vocabulary::initialize(&trainer, view, workers, &mut None, &progress).unwrap();
+                let plan = CorpusPlan::build(view, ids, &trainer, false).unwrap();
                 let mut index = PairIndex::build(&plan, 1, workers, false, &progress).unwrap();
                 let mut corpus = plan.materialize();
                 let Selection::Ready(mut batch) =
@@ -887,9 +886,9 @@ mod tests {
             let view = WordCountsView::from_map(&words);
             pool.install(|| {
                 let progress = trainer.setup_progress();
-                let mut vocabulary = Vocabulary::initialize(&trainer, view, 2, &mut None).unwrap();
-                let plan =
-                    CorpusPlan::build(view, &mut vocabulary, &trainer, false, &progress).unwrap();
+                let (mut vocabulary, ids) =
+                    Vocabulary::initialize(&trainer, view, 2, &mut None, &progress).unwrap();
+                let plan = CorpusPlan::build(view, ids, &trainer, false).unwrap();
                 let mut index =
                     PairIndex::build(&plan, trainer.min_frequency, 2, false, &progress).unwrap();
                 let mut corpus = plan.materialize();

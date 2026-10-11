@@ -19,10 +19,7 @@ pub(super) struct Vocabulary {
     // Append-only insertion indices are token IDs. Store each string once while
     // supporting both text lookup and direct lookup by ID with the same hasher.
     tokens: IndexSet<CompactString, RandomState>,
-    initial_spans: Vec<usize>,
     prefix: Option<String>,
-    suffix: Option<String>,
-    plain_ids_resolved: bool,
 }
 
 /// Canonical merge text plus any existing ID, before identity resolution.
@@ -36,6 +33,7 @@ pub(super) struct MergeToken {
 /// Both stages scan the same filtered alphabet and affix interpretation, preserving
 /// identical token sequences without interning strings during parallel scans.
 pub(super) struct InitialTokenIds {
+    spans: Vec<usize>,
     characters: Vec<u32>,
     decorated: Vec<[u32; 3]>,
     prefix: bool,
@@ -49,17 +47,16 @@ impl Vocabulary {
         word_counts: WordCountsView<'_>,
         workers: usize,
         retained_alphabet: &mut Option<Vec<char>>,
-    ) -> Result<Self> {
+        progress: &Option<ProgressBar>,
+    ) -> Result<(Self, InitialTokenIds)> {
         let mut vocabulary = Self {
             tokens: IndexSet::with_capacity_and_hasher(trainer.vocab_size, RandomState::default()),
-            initial_spans: Vec::new(),
             prefix: trainer.continuing_subword_prefix.clone(),
-            suffix: trainer.end_of_word_suffix.clone(),
-            plain_ids_resolved: false,
         };
+        let mut spans = Vec::new();
         // 1. Reserve special IDs before inserting the codepoint-ordered alphabet.
         for token in &trainer.special_tokens {
-            vocabulary.intern(token.content.as_str())?;
+            vocabulary.intern(token.content.as_str(), &mut spans)?;
         }
 
         // 2. Preserve the limited selector, or collect all observed characters.
@@ -69,12 +66,22 @@ impl Vocabulary {
                 retained_alphabet.get_or_insert_with(|| select_alphabet(trainer, word_counts));
             for &character in characters.iter() {
                 let mut utf8 = [0; 4];
-                vocabulary.intern(character.encode_utf8(&mut utf8))?;
+                vocabulary.intern(character.encode_utf8(&mut utf8), &mut spans)?;
             }
         } else {
-            vocabulary.initialize_unlimited_alphabet(trainer, word_counts, workers)?;
+            vocabulary.initialize_unlimited_alphabet(trainer, word_counts, workers, &mut spans)?;
         }
-        Ok(vocabulary)
+        // Resolve decorations before CorpusPlan sorts input by weight. Keep the
+        // unlimited plain-alphabet shortcut and the original progress boundary.
+        trainer.update_progress(progress, word_counts.len(), "Tokenize words");
+        let ids = vocabulary.initial_ids(
+            word_counts,
+            spans,
+            trainer.limit_alphabet.is_none(),
+            trainer.end_of_word_suffix.as_deref(),
+            progress,
+        )?;
+        Ok((vocabulary, ids))
     }
 
     // With no limit, a parallel presence bitmap replaces weighted frequency
@@ -84,6 +91,7 @@ impl Vocabulary {
         trainer: &BpeTrainer,
         word_counts: WordCountsView<'_>,
         workers: usize,
+        spans: &mut Vec<usize>,
     ) -> Result<()> {
         let observed = observed_characters(word_counts, workers);
         let mut present = observed.clone();
@@ -94,19 +102,18 @@ impl Vocabulary {
             let character =
                 char::from_u32(codepoint as u32).expect("alphabet bits come from valid characters");
             let mut utf8 = [0; 4];
-            let id = self.intern(character.encode_utf8(&mut utf8))?;
-            self.initial_spans[id as usize] = usize::from(observed.contains(codepoint));
+            let id = self.intern(character.encode_utf8(&mut utf8), spans)?;
+            spans[id as usize] = usize::from(observed.contains(codepoint));
         }
-        self.plain_ids_resolved = true;
         Ok(())
     }
 
-    fn intern(&mut self, text: &str) -> Result<u32> {
+    fn intern(&mut self, text: &str, spans: &mut Vec<usize>) -> Result<u32> {
         if let Some(id) = self.tokens.get_index_of(text) {
             return Ok(id as u32);
         }
         let id = self.insert_new_token(CompactString::from(text))?;
-        self.initial_spans.push(0);
+        spans.push(0);
         Ok(id)
     }
 
@@ -122,18 +129,22 @@ impl Vocabulary {
         Ok(id)
     }
 
-    pub(super) fn initial_ids(
+    fn initial_ids(
         &mut self,
         word_counts: WordCountsView<'_>,
+        spans: Vec<usize>,
+        plain_ids_resolved: bool,
+        suffix: Option<&str>,
         progress: &Option<ProgressBar>,
     ) -> Result<InitialTokenIds> {
         // 1. Map existing character IDs before any decorated identities are inserted.
         let mut ids = InitialTokenIds {
+            spans,
             characters: vec![WORD_SEPARATOR_ID; 0x110000],
             decorated: Vec::new(),
             prefix: self.prefix.as_deref().is_some_and(|p| !p.is_empty()),
-            suffix: self.suffix.as_deref().is_some_and(|s| !s.is_empty()),
-            complete_alphabet: self.plain_ids_resolved,
+            suffix: suffix.is_some_and(|s| !s.is_empty()),
+            complete_alphabet: plain_ids_resolved,
         };
         for (id, token) in self.tokens.iter().enumerate() {
             let mut chars = token.chars();
@@ -147,7 +158,7 @@ impl Vocabulary {
             ids.decorated
                 .resize(self.tokens.len(), [WORD_SEPARATOR_ID; 3]);
         }
-        if !ids.prefix && !ids.suffix && self.plain_ids_resolved {
+        if !ids.prefix && !ids.suffix && plain_ids_resolved {
             if let Some(p) = progress {
                 p.inc(word_counts.len() as u64);
             }
@@ -156,10 +167,10 @@ impl Vocabulary {
 
         // 2. Activate retained symbols in input traversal order. Sorting words first
         // would change the IDs allocated for previously unseen decorated strings.
-        self.initial_spans.fill(0);
+        ids.spans.fill(0);
         let mut decorated = String::new();
         for (index, word) in word_counts.keys().enumerate() {
-            self.activate_word(word, &mut ids, &mut decorated)?;
+            self.activate_word(word, &mut ids, suffix, &mut decorated)?;
             if (index + 1) % 1024 == 0
                 && let Some(p) = progress
             {
@@ -176,6 +187,7 @@ impl Vocabulary {
         &mut self,
         word: &str,
         ids: &mut InitialTokenIds,
+        suffix: Option<&str>,
         decorated: &mut String,
     ) -> Result<()> {
         for (byte, character) in word.char_indices() {
@@ -184,8 +196,8 @@ impl Vocabulary {
                 continue;
             }
             let flags = ids.decoration_flags(byte == 0, byte + character.len_utf8() == word.len());
-            let id = self.decorated_id(ids, plain_id, character, flags, decorated)?;
-            self.initial_spans[id as usize] = 1;
+            let id = self.decorated_id(ids, suffix, plain_id, flags, decorated)?;
+            ids.spans[id as usize] = 1;
         }
 
         Ok(())
@@ -196,8 +208,8 @@ impl Vocabulary {
     fn decorated_id(
         &mut self,
         ids: &mut InitialTokenIds,
+        suffix: Option<&str>,
         plain_id: u32,
-        character: char,
         flags: usize,
         decorated: &mut String,
     ) -> Result<u32> {
@@ -217,21 +229,13 @@ impl Vocabulary {
                     .expect("prefix flag requires a prefix"),
             );
         }
-        decorated.push(character);
+        decorated.push_str(self.tokens[plain_id as usize].as_str());
         if flags & 2 != 0 {
-            decorated.push_str(
-                self.suffix
-                    .as_deref()
-                    .expect("suffix flag requires a suffix"),
-            );
+            decorated.push_str(suffix.expect("suffix flag requires a suffix"));
         }
-        let id = self.intern(decorated)?;
+        let id = self.intern(decorated, &mut ids.spans)?;
         ids.decorated[plain_id as usize][flags - 1] = id;
         Ok(id)
-    }
-
-    pub(super) fn take_initial_spans(&mut self) -> Vec<usize> {
-        std::mem::take(&mut self.initial_spans)
     }
 
     pub(super) fn len(&self) -> usize {
@@ -286,6 +290,15 @@ impl Vocabulary {
 }
 
 impl InitialTokenIds {
+    pub(super) fn token_count(&self) -> usize {
+        self.spans.len()
+    }
+
+    // Move activation spans and retire symbol lookup tables before merge rounds.
+    pub(super) fn into_spans(self) -> Vec<usize> {
+        self.spans
+    }
+
     /// Interpret filtering and decorations against original UTF-8 coordinates.
     /// The plain path chooses its iterator once and avoids per-symbol affix checks.
     #[inline]
@@ -406,6 +419,75 @@ mod tests {
     use ahash::AHashSet;
 
     #[test]
+    fn initialization_completes_decorated_ids_before_weight_sorting() {
+        use super::super::word_counts::WordCounts;
+        let words = WordCounts::from_entries(
+            [("qé🙂z", 1), ("🙂é", 9)]
+                .into_iter()
+                .map(|(word, count)| (word.into(), count))
+                .collect(),
+        );
+        let mut trainer = BpeTrainer::new(1, 32);
+        trainer.show_progress = false;
+        trainer.limit_alphabet = Some(2);
+        trainer.initial_alphabet = ['é', '🙂'].into();
+        trainer.special_tokens = vec![tk_encode::vocab::bucket_added_vocabulary::AddedToken::from(
+            "<s>", true,
+        )];
+        trainer.continuing_subword_prefix = Some("前".into());
+        trainer.end_of_word_suffix = Some("尾".into());
+        let (vocabulary, ids) =
+            Vocabulary::initialize(&trainer, words.view(), 4, &mut None, &None).unwrap();
+        // Four observed characters exceed the two-character cutoff. Decorations
+        // use original byte boundaries even after q/z are filtered away.
+        assert_eq!(
+            vocabulary
+                .tokens
+                .iter()
+                .map(|s| s.as_str())
+                .collect::<Vec<_>>(),
+            ["<s>", "é", "🙂", "前é", "前🙂", "前é尾"]
+        );
+        assert_eq!(ids.symbols("qé🙂z").collect::<Vec<_>>(), [3, 4]);
+        assert_eq!(ids.symbols("🙂é").collect::<Vec<_>>(), [2, 5]);
+        assert_eq!(ids.token_count(), vocabulary.len());
+        let pointer = ids.spans.as_ptr();
+        let spans = ids.into_spans();
+        assert_eq!(spans.as_ptr(), pointer);
+        assert_eq!(spans, [0, 0, 1, 1, 1, 1]);
+    }
+
+    #[test]
+    fn cutoff_ties_reuse_the_retained_alphabet_without_reselection() {
+        use super::super::word_counts::WordCounts;
+        let words = WordCounts::from_entries(
+            [("a", 1), ("b", 1), ("猫", 1), ("🙂", 1)]
+                .into_iter()
+                .map(|(word, count)| (word.into(), count))
+                .collect(),
+        );
+        let mut trainer = BpeTrainer::new(1, 32);
+        trainer.show_progress = false;
+        trainer.limit_alphabet = Some(2);
+        let mut alphabet = None;
+        let (fresh, fresh_ids) =
+            Vocabulary::initialize(&trainer, words.view(), 1, &mut alphabet, &None).unwrap();
+        let retained = alphabet.clone();
+        assert_eq!(retained.as_ref().unwrap().len(), 2);
+        let (reuse, reuse_ids) =
+            Vocabulary::initialize(&trainer, words.view(), 4, &mut alphabet, &None).unwrap();
+        assert_eq!(alphabet, retained);
+        assert_eq!(fresh.tokens, reuse.tokens);
+        assert_eq!(fresh_ids.spans, reuse_ids.spans);
+        for word in words.view().keys() {
+            assert_eq!(
+                fresh_ids.symbols(word).collect::<Vec<_>>(),
+                reuse_ids.symbols(word).collect::<Vec<_>>()
+            );
+        }
+    }
+
+    #[test]
     fn observed_reduction_preserves_presence_activation_and_model_ids() {
         for input in [
             vec![],
@@ -437,14 +519,12 @@ mod tests {
                                 .collect::<AHashSet<_>>(),
                             expected
                         );
-                        let vocabulary =
-                            Vocabulary::initialize(&trainer, view, workers, &mut None).unwrap();
+                        let (vocabulary, ids) =
+                            Vocabulary::initialize(&trainer, view, workers, &mut None, &None)
+                                .unwrap();
                         for (id, token) in vocabulary.tokens.iter().enumerate() {
                             let character = token.chars().next().unwrap();
-                            assert_eq!(
-                                vocabulary.initial_spans[id],
-                                usize::from(expected.contains(&character))
-                            );
+                            assert_eq!(ids.spans[id], usize::from(expected.contains(&character)));
                         }
                     });
                 assert_eq!(

@@ -75,7 +75,12 @@ no extra wave barrier.
 Each range admits one word first, including an oversized word. A fitting final
 tail is admitted directly; otherwise `slice-group-by`'s `exponential_search_by`
 counts additional words whose end boundaries fit, including an exact-budget end.
-Vocabulary exposes one filtered `symbols()` iterator to initial edge counting and
+Vocabulary initialization returns the completed identity table and `InitialTokenIds`
+together. The plan owns initial IDs, including activation spans, and consumes them
+after endpoint materialization: spans move to Corpus while character/decorated
+lookups are released before merging. Initialization resolves decorations in input
+order before words are sorted by weight; reuse retains the selected limited alphabet.
+The initial IDs expose one filtered `symbols()` iterator to initial edge counting and
 endpoint materialization. Decorations still use original UTF-8 byte boundaries;
 edge coordinates enumerate retained symbols. Unlimited alphabet observation uses
 Rayon bitmap reduction, retaining the full Unicode bit domain for empty input.

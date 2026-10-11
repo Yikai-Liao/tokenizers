@@ -1,14 +1,12 @@
 //! Endpoint tokens retain their original coordinates; span metadata skips holes.
 use super::{
-    BpeTrainer, WORD_SEPARATOR_ID,
-    vocabulary::{InitialTokenIds, Vocabulary},
-    word_counts::WordCountsView,
+    BpeTrainer, WORD_SEPARATOR_ID, vocabulary::InitialTokenIds, word_counts::WordCountsView,
 };
 use compact_str::CompactString;
 use itertools::Itertools;
 use rayon::prelude::*;
 use std::sync::atomic::{AtomicU16, AtomicU32, AtomicUsize, Ordering};
-use tk_encode::{Result, models::bpe::Pair, utils::progress::ProgressBar};
+use tk_encode::{Result, models::bpe::Pair};
 
 /// Resident token endpoints at fixed original coordinates, with weights and spans.
 /// Merges leave holes; span metadata skips them without moving other occurrences.
@@ -47,7 +45,6 @@ pub(super) struct CorpusPlan<'input> {
     starts: Vec<usize>,
     weight_regions: Vec<(usize, u64)>,
     unit_region: Option<(usize, usize)>,
-    spans: Vec<usize>,
     whole_words: bool,
     words: Vec<(&'input CompactString, &'input u64)>,
     ids: InitialTokenIds,
@@ -59,12 +56,10 @@ pub(super) struct CorpusPlan<'input> {
 impl<'input> CorpusPlan<'input> {
     pub(super) fn build(
         words: WordCountsView<'input>,
-        vocabulary: &mut Vocabulary,
+        ids: InitialTokenIds,
         trainer: &BpeTrainer,
         reuse: bool,
-        progress: &Option<ProgressBar>,
     ) -> Result<Self> {
-        let ids = vocabulary.initial_ids(words, progress)?;
         let mut words: Vec<_> = words.iter().collect();
         words.par_sort_unstable_by(|a, b| b.1.cmp(a.1));
         let measured: Vec<_> = words
@@ -107,12 +102,11 @@ impl<'input> CorpusPlan<'input> {
                     weight_regions.get(i + 1).map_or(length, |r| r.0),
                 )
             });
-        let slot_bound = vocabulary.len().max(trainer.vocab_size);
+        let slot_bound = ids.token_count().max(trainer.vocab_size);
         Ok(Self {
             starts,
             weight_regions,
             unit_region,
-            spans: vocabulary.take_initial_spans(),
             whole_words: trainer.max_token_length.is_some(),
             words,
             ids,
@@ -156,7 +150,7 @@ impl<'input> CorpusPlan<'input> {
     }
 
     pub(super) fn small_pair_domain(&self) -> Option<usize> {
-        (self.spans.len() <= 256).then_some(self.spans.len())
+        (self.ids.token_count() <= 256).then_some(self.ids.token_count())
     }
 
     pub(super) fn initial_edges(
@@ -196,7 +190,7 @@ impl<'input> CorpusPlan<'input> {
             starts: if self.reuse { self.starts } else { Vec::new() },
             weight_regions: self.weight_regions,
             unit_region: self.unit_region,
-            spans: self.spans,
+            spans: self.ids.into_spans(),
             occurrence_spans: None,
             whole_words: self.whole_words,
         }
@@ -477,8 +471,10 @@ mod tests {
         let words = AHashMap::new();
         let view = WordCountsView::from_map(&words);
         let trainer = BpeTrainer::new(1, 0);
-        let mut vocabulary = Vocabulary::initialize(&trainer, view, 1, &mut None).unwrap();
-        let mut plan = CorpusPlan::build(view, &mut vocabulary, &trainer, false, &None).unwrap();
+        let (_, ids) =
+            super::super::vocabulary::Vocabulary::initialize(&trainer, view, 1, &mut None, &None)
+                .unwrap();
+        let mut plan = CorpusPlan::build(view, ids, &trainer, false).unwrap();
         let text = CompactString::default();
         let weight = 1;
         let mut layouts = vec![(vec![usize::MAX - 8, usize::MAX - 3], usize::MAX)];

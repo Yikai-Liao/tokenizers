@@ -633,10 +633,10 @@ mod tests {
                     let words = [("abc".into(), 1)].into_iter().collect();
                     let view = WordCountsView::from_map(&words);
                     let progress = trainer.setup_progress();
-                    let mut vocabulary =
-                        Vocabulary::initialize(&trainer, view, workers, &mut None).unwrap();
-                    let plan = CorpusPlan::build(view, &mut vocabulary, &trainer, true, &progress)
-                        .unwrap();
+                    let (mut vocabulary, ids) =
+                        Vocabulary::initialize(&trainer, view, workers, &mut None, &progress)
+                            .unwrap();
+                    let plan = CorpusPlan::build(view, ids, &trainer, true).unwrap();
                     let mut index = PairIndex::build(&plan, 1, workers, true, &progress).unwrap();
                     let mut corpus = plan.materialize();
                     let Selection::Ready(batch) =
@@ -677,13 +677,13 @@ mod tests {
         words.extend([("pacx".into(), 4), ("yacx".into(), 1), ("pa".into(), 4)]);
         let view = WordCountsView::from_map(&words);
         let progress = trainer.setup_progress();
-        let mut vocabulary = Vocabulary::initialize(&trainer, view, 1, &mut None).unwrap();
-        let ids = vocabulary.initial_ids(view, &progress).unwrap();
+        let (mut vocabulary, ids) =
+            Vocabulary::initialize(&trainer, view, 1, &mut None, &progress).unwrap();
         let pair = (
             ids.id('a', false, false).unwrap(),
             ids.id('c', false, false).unwrap(),
         );
-        let plan = CorpusPlan::build(view, &mut vocabulary, &trainer, true, &progress).unwrap();
+        let plan = CorpusPlan::build(view, ids, &trainer, true).unwrap();
         // Either cohort reuses the activated "abac" identity. The heavier cohort
         // raises its left neighbor's existing count above the other cohort.
         let mut cohorts = [Vec::new(), Vec::new()];

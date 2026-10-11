@@ -328,10 +328,9 @@ fn restart_discards_ids_selected_after_a_committed_round() {
             .install(|| {
                 let view = WordCountsView::from_map(&words);
                 let progress = trainer.setup_progress();
-                let mut vocabulary =
-                    Vocabulary::initialize(&trainer, view, workers, &mut None).unwrap();
-                let plan =
-                    CorpusPlan::build(view, &mut vocabulary, &trainer, false, &progress).unwrap();
+                let (mut vocabulary, ids) =
+                    Vocabulary::initialize(&trainer, view, workers, &mut None, &progress).unwrap();
+                let plan = CorpusPlan::build(view, ids, &trainer, false).unwrap();
                 let mut index = PairIndex::build(&plan, 1, workers, false, &progress).unwrap();
                 let mut corpus = plan.materialize();
                 let Selection::Ready(batch) =
@@ -363,8 +362,9 @@ fn ready_batch_applies_independent_rules_together() {
     let words = counts(&[("ab", 10), ("cd", 9), ("ef", 8)]);
     let view = WordCountsView::from_map(&words);
     let progress = trainer.setup_progress();
-    let mut vocabulary = Vocabulary::initialize(&trainer, view, 4, &mut None).unwrap();
-    let plan = CorpusPlan::build(view, &mut vocabulary, &trainer, false, &progress).unwrap();
+    let (mut vocabulary, ids) =
+        Vocabulary::initialize(&trainer, view, 4, &mut None, &progress).unwrap();
+    let plan = CorpusPlan::build(view, ids, &trainer, false).unwrap();
     let mut index = PairIndex::build(&plan, 1, 4, false, &progress).unwrap();
     let mut corpus = plan.materialize();
     let Selection::Ready(batch) =
@@ -941,8 +941,7 @@ fn symbols_preserve_short_circuiting_and_utf8_affix_boundaries() {
         }
         let view = WordCountsView::from_map(&words);
         let progress = trainer.setup_progress();
-        let mut vocabulary = Vocabulary::initialize(&trainer, view, 1, &mut None).unwrap();
-        let ids = vocabulary.initial_ids(view, &progress).unwrap();
+        let (_, ids) = Vocabulary::initialize(&trainer, view, 1, &mut None, &progress).unwrap();
         for (text, expected) in [
             (
                 "é🙂",
@@ -973,7 +972,7 @@ fn symbols_preserve_short_circuiting_and_utf8_affix_boundaries() {
         });
         assert_eq!(reason, ControlFlow::Break("stop"));
         assert_eq!(calls, 2);
-        let plan = CorpusPlan::build(view, &mut vocabulary, &trainer, true, &progress).unwrap();
+        let plan = CorpusPlan::build(view, ids, &trainer, true).unwrap();
         let mut edges = 0;
         let error = plan
             .initial_edges(0..plan.word_count(), |_, _, _| {
@@ -998,8 +997,7 @@ fn initial_edges_preserve_filtered_coordinates_weights_and_errors() {
         }
         let view = WordCountsView::from_map(&words);
         let progress = trainer.setup_progress();
-        let mut vocabulary = Vocabulary::initialize(&trainer, view, 1, &mut None).unwrap();
-        let ids = vocabulary.initial_ids(view, &progress).unwrap();
+        let (_, ids) = Vocabulary::initialize(&trainer, view, 1, &mut None, &progress).unwrap();
         let id = |character, first, last| ids.id(character, first, last).unwrap();
         let expected = vec![
             ((id('é', false, false), id('🙂', false, false)), 1, 7),
@@ -1007,7 +1005,7 @@ fn initial_edges_preserve_filtered_coordinates_weights_and_errors() {
             ((id('🙂', false, false), id('é', false, true)), 5, 6),
             ((id('🙂', true, false), id('é', false, true)), 8, 5),
         ];
-        let plan = CorpusPlan::build(view, &mut vocabulary, &trainer, true, &progress).unwrap();
+        let plan = CorpusPlan::build(view, ids, &trainer, true).unwrap();
         let mut actual = Vec::new();
         plan.initial_edges(0..plan.word_count(), |pair, coordinate, weight| {
             actual.push((pair, coordinate, weight));

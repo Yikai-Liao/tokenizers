@@ -385,9 +385,9 @@ impl BpeTrainer {
         progress: &Option<ProgressBar>,
     ) -> Result<AttemptOutcome> {
         // 1. Resolve the vocabulary and tokenize borrowed input into a corpus plan.
-        let mut vocabulary = Vocabulary::initialize(self, words, workers, alphabet)?;
-        self.update_progress(progress, words.len(), "Tokenize words");
-        let plan = CorpusPlan::build(words, &mut vocabulary, self, reuse, progress)?;
+        let (mut vocabulary, ids) =
+            Vocabulary::initialize(self, words, workers, alphabet, progress)?;
+        let plan = CorpusPlan::build(words, ids, self, reuse)?;
         self.finalize_progress(progress, plan.word_count(), "Tokenize words");
 
         // 2. Freeze initial pairs first: their temporary counting buffers retire
