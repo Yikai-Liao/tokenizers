@@ -1,0 +1,20 @@
+{
+  "corpus.rs": {
+    "production_before": 411,
+    "production_after": 415,
+    "production_added": 7,
+    "production_removed": 3,
+    "production_delta": 4,
+    "test_before": 84,
+    "test_after": 84
+  },
+  "merge.rs": {
+    "production_before": 506,
+    "production_after": 516,
+    "production_added": 16,
+    "production_removed": 6,
+    "production_delta": 10,
+    "test_before": 153,
+    "test_after": 187
+  }
+}

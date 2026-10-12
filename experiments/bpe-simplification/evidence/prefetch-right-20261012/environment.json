@@ -1,0 +1,42 @@
+{
+  "base_sha": "5c7ef814f55da46cd7c820173cc72053fe092d74",
+  "inputs": {
+    "zh-whitespace": {
+      "path": "/root/code/tokenizers-bpe-benchmarks/.bench/main-yttm-inspired/inputs/zh256-words/words.json",
+      "bytes": 250116097,
+      "sha256": "ed057a8fdb27544ed29f16dde53faa0de8f47f1ee8ac00080974fac5bb435660"
+    },
+    "en-whitespace": {
+      "path": "/root/code/tokenizers-workspaces/bpe-affix-verification-results-20261011/en-prepared-words.json",
+      "bytes": 10900666,
+      "sha256": "0e146cd7d9fd31c547c84c5bfea2424bb05ae02905cf2608f4d7aa980f6bdb2d"
+    },
+    "zh-bytelevel_regex": {
+      "path": "/root/code/tokenizers-workspaces/bpe-positions-child-results-20261012/inputs/zh-bytelevel.json",
+      "bytes": 437135595,
+      "sha256": "bb796d0b57b87d965b84de249bc5c8e283b700774638d16a40e4ae5171b13ee0"
+    },
+    "en-bytelevel_regex": {
+      "path": "/root/code/tokenizers-workspaces/bpe-positions-child-results-20261012/inputs/en-bytelevel.json",
+      "bytes": 14071952,
+      "sha256": "4523a34ff64cdba49b0985f32cc923f2c7b005fd67748a0fbec38c44bab437c5"
+    },
+    "aa": {
+      "path": "/root/code/tokenizers-workspaces/bpe-selected-rules-results-20261011/aa-control-words.json",
+      "bytes": 641,
+      "sha256": "b980ec578f058df98a8f0e31ac739cbbaa3a0b357e03bd0e8bc3319e91c6ceef",
+      "archive_path": "control-inputs/aa-control-words.json"
+    },
+    "reuse": {
+      "path": "/root/code/tokenizers-workspaces/bpe-selected-rules-results-20261011/reuse-control-words.json",
+      "bytes": 122,
+      "sha256": "f5a48d1801e08f3f849edc9b4ceb5208dc95401502a33da1348516c9a65bde96",
+      "archive_path": "control-inputs/reuse-control-words.json"
+    }
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "affinity": "0-3",
+  "primary_workers": 4,
+  "control_workers": 1,
+  "uname": "Linux us-agent 6.12.101+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.101-1 (2026-08-05) x86_64 GNU/Linux\n"
+}

@@ -1,0 +1,7 @@
+{
+  "decision": "discard",
+  "base_sha": "5c7ef814f55da46cd7c820173cc72053fe092d74",
+  "production_changes_retained": false,
+  "test_budget_final": 1428,
+  "reason": "No repeatable target prepare benefit sufficient to offset English Whitespace CPU/prepare regression; retain original head-only window16."
+}
