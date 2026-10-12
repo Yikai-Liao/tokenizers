@@ -242,12 +242,16 @@ impl InitialTokenIds {
         suffix: Option<&str>,
         decorated: &mut String,
     ) -> Result<()> {
-        for (byte, character) in word.char_indices() {
+        let mut original = word.chars();
+        let mut first = true;
+        while let Some(character) = original.next() {
+            let is_first = first;
+            first = false;
             let plain_id = self.characters[character as usize];
             if plain_id == WORD_SEPARATOR_ID {
                 continue;
             }
-            let affix = self.affix(byte == 0, byte + character.len_utf8() == word.len());
+            let affix = self.affix(is_first, original.as_str().is_empty());
             let id = self.decorated_id(vocabulary, suffix, plain_id, affix, decorated)?;
             self.spans[id as usize] = 1;
         }
