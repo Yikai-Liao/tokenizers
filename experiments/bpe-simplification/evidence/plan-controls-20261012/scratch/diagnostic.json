@@ -1,0 +1,538 @@
+[
+  {
+    "case": "zh-whitespace-w4",
+    "arm": "baseline-diagnostic",
+    "repeat": 0,
+    "load_seconds": 7.44648684,
+    "process_hwm_kib_before_validation": 1809248,
+    "train_cpu_seconds": 62.66242,
+    "train_seconds": 21.8000578,
+    "actual_merges": 32241,
+    "actual_vocab": 50000,
+    "model_path": "/root/code/tokenizers-workspaces/bpe-attempt-scratch-results-20261012/diagnostic/zh-whitespace-w4-r0-baseline-diagnostic/model.json",
+    "special_tokens": 0,
+    "phases": {
+      "selection": 0.367633024,
+      "vocabulary": 0.006086367,
+      "plan": 0.632038897,
+      "index": 11.725821651,
+      "materialize": 0.62837944,
+      "merge": 6.700545685,
+      "merge_restart": 0,
+      "prepare": 2.985359302,
+      "drop": 1.71932069
+    },
+    "token_widths": [
+      16
+    ],
+    "fresh_batches": 1390,
+    "reuse_batches": 0,
+    "external_wall_seconds": 31.74921697587706,
+    "child_max_swap_kib": 0,
+    "child_sampled_rss_kib": 1809104,
+    "train_sampled_rss_kib": 1809104,
+    "load_sampled_rss_kib": 813324,
+    "directory_reports": [
+      {
+        "live_states_at_report": 0,
+        "live_vector_capacity_bytes_at_report": 0,
+        "max_domain": 50000,
+        "old_elements_at_capacity_growth": 0,
+        "peak_live_states": 4,
+        "peak_live_vector_capacity_bytes": 1600000,
+        "resize_calls": 32607,
+        "scratch_owner_header_bytes": 512,
+        "sentinel_elements": 1817809510,
+        "sentinel_logical_bytes": 7271238040,
+        "state_header_bytes": 48,
+        "states_created": 27144,
+        "threads_observed": 4,
+        "vector_capacity_growths": 0,
+        "vector_initial_allocations": 54288
+      }
+    ],
+    "allocation_reports": [
+      {
+        "allocations": 11573457,
+        "freed_bytes": 22160855544,
+        "frees": 11458924,
+        "reallocations": 13265970,
+        "requested_bytes": 22165535481
+      }
+    ],
+    "child_major_faults": 0,
+    "external_cpu_seconds": 73.877055,
+    "system_swapin_pages": 0,
+    "system_swapout_pages": 964,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1"
+  },
+  {
+    "case": "zh-whitespace-w4",
+    "arm": "scratch-diagnostic",
+    "repeat": 0,
+    "load_seconds": 7.167520863,
+    "process_hwm_kib_before_validation": 1806944,
+    "train_cpu_seconds": 63.62680400000001,
+    "train_seconds": 21.567615488,
+    "actual_merges": 32241,
+    "actual_vocab": 50000,
+    "model_path": "/root/code/tokenizers-workspaces/bpe-attempt-scratch-results-20261012/diagnostic/zh-whitespace-w4-r0-scratch-diagnostic/model.json",
+    "special_tokens": 0,
+    "phases": {
+      "selection": 0.338350128,
+      "vocabulary": 0.005473859,
+      "plan": 0.606800083,
+      "index": 11.326854681,
+      "materialize": 0.663845644,
+      "merge": 6.517667331,
+      "merge_restart": 0,
+      "prepare": 2.997060725,
+      "drop": 2.089009544
+    },
+    "token_widths": [
+      16
+    ],
+    "fresh_batches": 1390,
+    "reuse_batches": 0,
+    "external_wall_seconds": 31.219460188178346,
+    "child_max_swap_kib": 0,
+    "child_sampled_rss_kib": 1806796,
+    "train_sampled_rss_kib": 1806796,
+    "load_sampled_rss_kib": 817292,
+    "directory_reports": [
+      {
+        "live_states_at_report": 4,
+        "live_vector_capacity_bytes_at_report": 2273408,
+        "max_domain": 50000,
+        "old_elements_at_capacity_growth": 426136,
+        "peak_live_states": 4,
+        "peak_live_vector_capacity_bytes": 2273408,
+        "resize_calls": 32607,
+        "scratch_owner_header_bytes": 512,
+        "sentinel_elements": 400000,
+        "sentinel_logical_bytes": 1600000,
+        "state_header_bytes": 48,
+        "states_created": 4,
+        "threads_observed": 4,
+        "vector_capacity_growths": 16,
+        "vector_initial_allocations": 8
+      }
+    ],
+    "allocation_reports": [
+      {
+        "allocations": 11519459,
+        "freed_bytes": 14893614382,
+        "frees": 11404925,
+        "reallocations": 13265951,
+        "requested_bytes": 14898295839
+      }
+    ],
+    "child_major_faults": 0,
+    "external_cpu_seconds": 74.431924,
+    "system_swapin_pages": 0,
+    "system_swapout_pages": 0,
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1"
+  },
+  {
+    "case": "zh-bytelevel_regex-w4",
+    "arm": "baseline-diagnostic",
+    "repeat": 0,
+    "load_seconds": 11.093026944,
+    "process_hwm_kib_before_validation": 2579308,
+    "train_cpu_seconds": 77.49497099999999,
+    "train_seconds": 24.191173447,
+    "actual_merges": 49744,
+    "actual_vocab": 50000,
+    "model_path": "/root/code/tokenizers-workspaces/bpe-attempt-scratch-results-20261012/diagnostic/zh-bytelevel_regex-w4-r0-baseline-diagnostic/model.json",
+    "special_tokens": 0,
+    "phases": {
+      "selection": 0.688214061,
+      "vocabulary": 0.004426047,
+      "plan": 0.893578057,
+      "index": 3.146098632,
+      "materialize": 1.467552125,
+      "merge": 16.435381581,
+      "merge_restart": 0,
+      "prepare": 9.864696277,
+      "drop": 1.530337048
+    },
+    "token_widths": [
+      16
+    ],
+    "fresh_batches": 1646,
+    "reuse_batches": 0,
+    "external_wall_seconds": 39.905387910082936,
+    "child_max_swap_kib": 0,
+    "child_sampled_rss_kib": 2579268,
+    "train_sampled_rss_kib": 2579268,
+    "load_sampled_rss_kib": 1049724,
+    "directory_reports": [
+      {
+        "live_states_at_report": 0,
+        "live_vector_capacity_bytes_at_report": 0,
+        "max_domain": 50000,
+        "old_elements_at_capacity_growth": 0,
+        "peak_live_states": 4,
+        "peak_live_vector_capacity_bytes": 1600000,
+        "resize_calls": 50019,
+        "scratch_owner_header_bytes": 512,
+        "sentinel_elements": 1909138814,
+        "sentinel_logical_bytes": 7636555256,
+        "state_header_bytes": 48,
+        "states_created": 39233,
+        "threads_observed": 4,
+        "vector_capacity_growths": 0,
+        "vector_initial_allocations": 78466
+      }
+    ],
+    "allocation_reports": [
+      {
+        "allocations": 7570657,
+        "freed_bytes": 27986000118,
+        "frees": 7421117,
+        "reallocations": 11106094,
+        "requested_bytes": 27992118951
+      }
+    ],
+    "child_major_faults": 0,
+    "external_cpu_seconds": 92.81678200000002,
+    "system_swapin_pages": 14,
+    "system_swapout_pages": 0,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de"
+  },
+  {
+    "case": "zh-bytelevel_regex-w4",
+    "arm": "scratch-diagnostic",
+    "repeat": 0,
+    "load_seconds": 11.138620799,
+    "process_hwm_kib_before_validation": 2571800,
+    "train_cpu_seconds": 75.36728600000001,
+    "train_seconds": 23.257012235,
+    "actual_merges": 49744,
+    "actual_vocab": 50000,
+    "model_path": "/root/code/tokenizers-workspaces/bpe-attempt-scratch-results-20261012/diagnostic/zh-bytelevel_regex-w4-r0-scratch-diagnostic/model.json",
+    "special_tokens": 0,
+    "phases": {
+      "selection": 0.646391429,
+      "vocabulary": 0.003379462,
+      "plan": 0.827113722,
+      "index": 3.057654821,
+      "materialize": 1.695445689,
+      "merge": 15.500202004,
+      "merge_restart": 0,
+      "prepare": 9.47716815,
+      "drop": 1.498579896
+    },
+    "token_widths": [
+      16
+    ],
+    "fresh_batches": 1646,
+    "reuse_batches": 0,
+    "external_wall_seconds": 36.632851734990254,
+    "child_max_swap_kib": 0,
+    "child_sampled_rss_kib": 2571192,
+    "train_sampled_rss_kib": 2571192,
+    "load_sampled_rss_kib": 1053080,
+    "directory_reports": [
+      {
+        "live_states_at_report": 4,
+        "live_vector_capacity_bytes_at_report": 2121728,
+        "max_domain": 50000,
+        "old_elements_at_capacity_growth": 527488,
+        "peak_live_states": 4,
+        "peak_live_vector_capacity_bytes": 2121728,
+        "resize_calls": 50019,
+        "scratch_owner_header_bytes": 512,
+        "sentinel_elements": 400000,
+        "sentinel_logical_bytes": 1600000,
+        "state_header_bytes": 48,
+        "states_created": 4,
+        "threads_observed": 4,
+        "vector_capacity_growths": 64,
+        "vector_initial_allocations": 8
+      }
+    ],
+    "allocation_reports": [
+      {
+        "allocations": 7491202,
+        "freed_bytes": 20353594174,
+        "frees": 7341662,
+        "reallocations": 11106252,
+        "requested_bytes": 20359713007
+      }
+    ],
+    "child_major_faults": 8,
+    "external_cpu_seconds": 87.95784700000002,
+    "system_swapin_pages": 45,
+    "system_swapout_pages": 0,
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de"
+  },
+  {
+    "case": "en-whitespace-w4",
+    "arm": "baseline-diagnostic",
+    "repeat": 0,
+    "load_seconds": 0.393511203,
+    "process_hwm_kib_before_validation": 135056,
+    "train_cpu_seconds": 4.025955000000001,
+    "train_seconds": 1.689146829,
+    "actual_merges": 44917,
+    "actual_vocab": 50000,
+    "model_path": "/root/code/tokenizers-workspaces/bpe-attempt-scratch-results-20261012/diagnostic/en-whitespace-w4-r0-baseline-diagnostic/model.json",
+    "special_tokens": 0,
+    "phases": {
+      "selection": 0.019354096,
+      "vocabulary": 0.002705185,
+      "plan": 0.085374549,
+      "index": 0.416450105,
+      "materialize": 0.041172459,
+      "merge": 1.050579609,
+      "merge_restart": 0,
+      "prepare": 0.527708843,
+      "drop": 0.050767915
+    },
+    "token_widths": [
+      16
+    ],
+    "fresh_batches": 1491,
+    "reuse_batches": 0,
+    "external_wall_seconds": 2.187025844817981,
+    "child_max_swap_kib": 0,
+    "child_sampled_rss_kib": 135212,
+    "train_sampled_rss_kib": 135212,
+    "load_sampled_rss_kib": 59132,
+    "directory_reports": [
+      {
+        "live_states_at_report": 0,
+        "live_vector_capacity_bytes_at_report": 0,
+        "max_domain": 50000,
+        "old_elements_at_capacity_growth": 0,
+        "peak_live_states": 4,
+        "peak_live_vector_capacity_bytes": 1597184,
+        "resize_calls": 46104,
+        "scratch_owner_header_bytes": 512,
+        "sentinel_elements": 1747715958,
+        "sentinel_logical_bytes": 6990863832,
+        "state_header_bytes": 48,
+        "states_created": 34328,
+        "threads_observed": 4,
+        "vector_capacity_growths": 0,
+        "vector_initial_allocations": 68656
+      }
+    ],
+    "allocation_reports": [
+      {
+        "allocations": 862180,
+        "freed_bytes": 7953771472,
+        "frees": 722294,
+        "reallocations": 627365,
+        "requested_bytes": 7959260331
+      }
+    ],
+    "child_major_faults": 2,
+    "external_cpu_seconds": 4.488399000000015,
+    "system_swapin_pages": 0,
+    "system_swapout_pages": 0,
+    "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6"
+  },
+  {
+    "case": "en-whitespace-w4",
+    "arm": "scratch-diagnostic",
+    "repeat": 0,
+    "load_seconds": 0.381179945,
+    "process_hwm_kib_before_validation": 136280,
+    "train_cpu_seconds": 3.888662,
+    "train_seconds": 1.655548912,
+    "actual_merges": 44917,
+    "actual_vocab": 50000,
+    "model_path": "/root/code/tokenizers-workspaces/bpe-attempt-scratch-results-20261012/diagnostic/en-whitespace-w4-r0-scratch-diagnostic/model.json",
+    "special_tokens": 0,
+    "phases": {
+      "selection": 0.022726576,
+      "vocabulary": 0.002315895,
+      "plan": 0.08077696,
+      "index": 0.417208403,
+      "materialize": 0.059968917,
+      "merge": 0.970652715,
+      "merge_restart": 0,
+      "prepare": 0.441892083,
+      "drop": 0.07965852
+    },
+    "token_widths": [
+      16
+    ],
+    "fresh_batches": 1491,
+    "reuse_batches": 0,
+    "external_wall_seconds": 2.1303082229569554,
+    "child_max_swap_kib": 0,
+    "child_sampled_rss_kib": 136716,
+    "train_sampled_rss_kib": 136716,
+    "load_sampled_rss_kib": 59820,
+    "directory_reports": [
+      {
+        "live_states_at_report": 4,
+        "live_vector_capacity_bytes_at_report": 2603008,
+        "max_domain": 50000,
+        "old_elements_at_capacity_growth": 609738,
+        "peak_live_states": 4,
+        "peak_live_vector_capacity_bytes": 2603008,
+        "resize_calls": 46104,
+        "scratch_owner_header_bytes": 512,
+        "sentinel_elements": 400000,
+        "sentinel_logical_bytes": 1600000,
+        "state_header_bytes": 48,
+        "states_created": 4,
+        "threads_observed": 4,
+        "vector_capacity_growths": 32,
+        "vector_initial_allocations": 8
+      }
+    ],
+    "allocation_reports": [
+      {
+        "allocations": 796733,
+        "freed_bytes": 968194800,
+        "frees": 656847,
+        "reallocations": 627091,
+        "requested_bytes": 973683659
+      }
+    ],
+    "child_major_faults": 0,
+    "external_cpu_seconds": 4.337150999999949,
+    "system_swapin_pages": 0,
+    "system_swapout_pages": 0,
+    "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6"
+  },
+  {
+    "case": "en-bytelevel_regex-w4",
+    "arm": "baseline-diagnostic",
+    "repeat": 0,
+    "load_seconds": 0.464187667,
+    "process_hwm_kib_before_validation": 162408,
+    "train_cpu_seconds": 4.615235,
+    "train_seconds": 1.947826023,
+    "actual_merges": 49744,
+    "actual_vocab": 50000,
+    "model_path": "/root/code/tokenizers-workspaces/bpe-attempt-scratch-results-20261012/diagnostic/en-bytelevel_regex-w4-r0-baseline-diagnostic/model.json",
+    "special_tokens": 0,
+    "phases": {
+      "selection": 0.017693165,
+      "vocabulary": 0.00075638,
+      "plan": 0.085241646,
+      "index": 0.383714728,
+      "materialize": 0.076098654,
+      "merge": 1.301403705,
+      "merge_restart": 0,
+      "prepare": 0.657409713,
+      "drop": 0.057053005
+    },
+    "token_widths": [
+      16
+    ],
+    "fresh_batches": 1335,
+    "reuse_batches": 0,
+    "external_wall_seconds": 2.4873338569886982,
+    "child_max_swap_kib": 0,
+    "child_sampled_rss_kib": 162744,
+    "train_sampled_rss_kib": 162744,
+    "load_sampled_rss_kib": 62968,
+    "directory_reports": [
+      {
+        "live_states_at_report": 0,
+        "live_vector_capacity_bytes_at_report": 0,
+        "max_domain": 50000,
+        "old_elements_at_capacity_growth": 0,
+        "peak_live_states": 4,
+        "peak_live_vector_capacity_bytes": 1598240,
+        "resize_calls": 50990,
+        "scratch_owner_header_bytes": 512,
+        "sentinel_elements": 1615937258,
+        "sentinel_logical_bytes": 6463749032,
+        "state_header_bytes": 48,
+        "states_created": 35742,
+        "threads_observed": 4,
+        "vector_capacity_growths": 0,
+        "vector_initial_allocations": 71484
+      }
+    ],
+    "allocation_reports": [
+      {
+        "allocations": 930881,
+        "freed_bytes": 7533696315,
+        "frees": 781341,
+        "reallocations": 742408,
+        "requested_bytes": 7539522555
+      }
+    ],
+    "child_major_faults": 0,
+    "external_cpu_seconds": 5.1582820000000424,
+    "system_swapin_pages": 2,
+    "system_swapout_pages": 0,
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5"
+  },
+  {
+    "case": "en-bytelevel_regex-w4",
+    "arm": "scratch-diagnostic",
+    "repeat": 0,
+    "load_seconds": 0.450681489,
+    "process_hwm_kib_before_validation": 163448,
+    "train_cpu_seconds": 4.287523,
+    "train_seconds": 1.8070092789999999,
+    "actual_merges": 49744,
+    "actual_vocab": 50000,
+    "model_path": "/root/code/tokenizers-workspaces/bpe-attempt-scratch-results-20261012/diagnostic/en-bytelevel_regex-w4-r0-scratch-diagnostic/model.json",
+    "special_tokens": 0,
+    "phases": {
+      "selection": 0.018028398,
+      "vocabulary": 0.000788633,
+      "plan": 0.098517515,
+      "index": 0.400093121,
+      "materialize": 0.07196281,
+      "merge": 1.126831312,
+      "merge_restart": 0,
+      "prepare": 0.539849325,
+      "drop": 0.067783559
+    },
+    "token_widths": [
+      16
+    ],
+    "fresh_batches": 1335,
+    "reuse_batches": 0,
+    "external_wall_seconds": 2.3323990940116346,
+    "child_max_swap_kib": 0,
+    "child_sampled_rss_kib": 163584,
+    "train_sampled_rss_kib": 163584,
+    "load_sampled_rss_kib": 75516,
+    "directory_reports": [
+      {
+        "live_states_at_report": 4,
+        "live_vector_capacity_bytes_at_report": 2105344,
+        "max_domain": 50000,
+        "old_elements_at_capacity_growth": 523524,
+        "peak_live_states": 4,
+        "peak_live_vector_capacity_bytes": 2105344,
+        "resize_calls": 50990,
+        "scratch_owner_header_bytes": 512,
+        "sentinel_elements": 400000,
+        "sentinel_logical_bytes": 1600000,
+        "state_header_bytes": 48,
+        "states_created": 4,
+        "threads_observed": 4,
+        "vector_capacity_growths": 64,
+        "vector_initial_allocations": 8
+      }
+    ],
+    "allocation_reports": [
+      {
+        "allocations": 862882,
+        "freed_bytes": 1074345787,
+        "frees": 713342,
+        "reallocations": 742077,
+        "requested_bytes": 1080172027
+      }
+    ],
+    "child_major_faults": 0,
+    "external_cpu_seconds": 4.805308999999966,
+    "system_swapin_pages": 0,
+    "system_swapout_pages": 0,
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5"
+  }
+]

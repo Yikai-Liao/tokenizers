@@ -1,0 +1,8 @@
+[
+  {
+    "suite": "primary",
+    "case": "zh-whitespace-w4",
+    "arm": "baseline",
+    "reason": "Overlapped approximately 9 seconds of Python full-model gzip verification/archiving from the scratch experiment. Exclude this pair from performance conclusions; retain correctness output and rerun an uncontended pair."
+  }
+]

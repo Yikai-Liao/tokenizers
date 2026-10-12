@@ -1,0 +1,10 @@
+{
+  "models_checked": 126,
+  "unique_models_checked": 6,
+  "input_cases": 6,
+  "raw_normal_runs": 84,
+  "excluded_normal_runs": 2,
+  "summary_recomputed": true,
+  "all_candidate_patches_apply_to_base": true,
+  "production_changes_in_report_commit": false
+}

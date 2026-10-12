@@ -1,0 +1,556 @@
+#![allow(clippy::map_entry)]
+
+mod corpus;
+mod feed;
+mod index;
+mod merge;
+#[cfg(feature = "parity-aware-bpe")]
+pub mod parity_trainer;
+mod positions;
+#[cfg(test)]
+mod tests;
+mod vocabulary;
+#[cfg(feature = "parity-aware-bpe")]
+mod word;
+mod word_counts;
+#[cfg(feature = "parity-aware-bpe")]
+pub use parity_trainer::{ParityBpeTrainer, ParityBpeTrainerBuilder, ParityVariant};
+
+use crate::Trainer;
+use ahash::{AHashMap, AHashSet};
+use compact_str::CompactString;
+use corpus::{Corpus, CorpusPlan};
+use index::PairIndex;
+use merge::MergeOutcome;
+use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
+use tk_encode::vocab::bucket_added_vocabulary::AddedToken;
+use vocabulary::{Alphabet, Vocabulary};
+use word_counts::{WordCounts, WordCountsView};
+
+// The optional parity trainer uses linked words; ordinary training owns a
+// fixed-coordinate corpus. The test oracle uses independent sequential vectors.
+#[cfg(feature = "parity-aware-bpe")]
+use word::{WithFirstLastIterator, Word};
+
+use tk_encode::Result;
+
+#[cfg(any(test, feature = "parity-aware-bpe"))]
+use tk_encode::models::bpe::Pair;
+use tk_encode::models::bpe::{BpeConfig, Merges, PipelineBPE, Vocab};
+use tk_encode::parallelism::*;
+use tk_encode::utils::progress::{ProgressBar, ProgressFormat, ProgressStyle};
+
+/// Builder-owned training options, consumed when constructing a BpeTrainer.
+struct Config {
+    min_frequency: u64,
+    vocab_size: usize,
+    show_progress: bool,
+    progress_format: ProgressFormat,
+    special_tokens: Vec<AddedToken>,
+    limit_alphabet: Option<usize>,
+    initial_alphabet: AHashSet<char>,
+    continuing_subword_prefix: Option<String>,
+    end_of_word_suffix: Option<String>,
+    max_token_length: Option<usize>,
+}
+
+/// A `BpeTrainerBuilder` can be used to create a `BpeTrainer` with a custom
+/// configuration.
+pub struct BpeTrainerBuilder {
+    config: Config,
+}
+
+impl Default for BpeTrainerBuilder {
+    fn default() -> Self {
+        Self {
+            config: Config {
+                min_frequency: 0,
+                vocab_size: 30000,
+                show_progress: true,
+                progress_format: ProgressFormat::default(),
+                special_tokens: vec![],
+                limit_alphabet: None,
+                initial_alphabet: AHashSet::new(),
+                continuing_subword_prefix: None,
+                end_of_word_suffix: None,
+                max_token_length: None,
+            },
+        }
+    }
+}
+
+impl BpeTrainerBuilder {
+    /// Constructs a new `BpeTrainerBuilder`
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set the expected minimum frequency
+    #[must_use]
+    pub fn min_frequency(mut self, frequency: u64) -> Self {
+        self.config.min_frequency = frequency;
+        self
+    }
+
+    /// Set the vocabulary size
+    #[must_use]
+    pub fn vocab_size(mut self, size: usize) -> Self {
+        self.config.vocab_size = size;
+        self
+    }
+
+    /// Set whether to show progress
+    #[must_use]
+    pub fn show_progress(mut self, show: bool) -> Self {
+        self.config.show_progress = show;
+        self
+    }
+
+    /// Set the progress output format
+    ///
+    /// Controls how progress information is reported during training.
+    /// - `Indicatif` (default): Interactive terminal progress bars
+    /// - `JsonLines`: Machine-readable JSON lines to stderr
+    /// - `Silent`: No progress output
+    #[must_use]
+    pub fn progress_format(mut self, format: ProgressFormat) -> Self {
+        self.config.progress_format = format;
+        self
+    }
+
+    /// Set the special tokens
+    #[must_use]
+    pub fn special_tokens(mut self, tokens: Vec<AddedToken>) -> Self {
+        self.config.special_tokens = tokens;
+        self
+    }
+
+    /// Set whether to limit the alphabet
+    #[must_use]
+    pub fn limit_alphabet(mut self, limit: usize) -> Self {
+        self.config.limit_alphabet = Some(limit);
+        self
+    }
+
+    /// Set the initial alphabet
+    #[must_use]
+    pub fn initial_alphabet(mut self, alphabet: HashSet<char>) -> Self {
+        let mut initial_alphabet = AHashSet::with_capacity(alphabet.len());
+        initial_alphabet.extend(alphabet);
+        self.config.initial_alphabet = initial_alphabet;
+        self
+    }
+
+    /// Set the continuing_subword_prefix
+    #[must_use]
+    pub fn continuing_subword_prefix(mut self, prefix: String) -> Self {
+        self.config.continuing_subword_prefix = Some(prefix);
+        self
+    }
+
+    /// Set the end_of_word_suffix
+    #[must_use]
+    pub fn end_of_word_suffix(mut self, suffix: String) -> Self {
+        self.config.end_of_word_suffix = Some(suffix);
+        self
+    }
+    /// Set max_token_length
+    #[must_use]
+    pub fn max_token_length(mut self, max_token_length: Option<usize>) -> Self {
+        self.config.max_token_length = max_token_length;
+        self
+    }
+
+    /// Constructs the final BpeTrainer
+    pub fn build(self) -> BpeTrainer {
+        BpeTrainer {
+            min_frequency: self.config.min_frequency,
+            vocab_size: self.config.vocab_size,
+            show_progress: self.config.show_progress,
+            progress_format: self.config.progress_format,
+            special_tokens: self.config.special_tokens,
+            limit_alphabet: self.config.limit_alphabet,
+            initial_alphabet: self.config.initial_alphabet,
+            continuing_subword_prefix: self.config.continuing_subword_prefix,
+            end_of_word_suffix: self.config.end_of_word_suffix,
+            max_token_length: self.config.max_token_length,
+            words: WordCounts::default(),
+        }
+    }
+}
+
+/// In charge of training a `BPE` model
+///
+/// # Examples
+///
+/// ```
+/// use tk_train::BpeTrainer;
+/// use tk_train::Trainer;
+/// use tk_encode::models::bpe::{PipelineBPE, BpeConfig};
+///
+/// let sequences = vec![ "Hello", "World" ];
+///
+/// let mut trainer = BpeTrainer::default();
+/// trainer.feed(sequences.iter(), |s| Ok(vec![s.to_owned()]));
+///
+/// // `PipelineBPE` has no empty state to train *into* -- it only exists once there is a
+/// // vocabulary and a merge list -- so take the parts and build it.
+/// let (vocab, merges, special_tokens) = trainer.train_vocab().unwrap();
+/// let model = PipelineBPE::from_config(BpeConfig { vocab: vocab, merges: merges, ..BpeConfig::default() }).unwrap();
+/// ```
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Eq)]
+pub struct BpeTrainer {
+    /// The minimum frequency a pair must have to produce a merge operation
+    pub min_frequency: u64,
+    /// The target vocabulary size
+    pub vocab_size: usize,
+    /// Whether to show progress while training
+    pub show_progress: bool,
+    /// Progress output format (Indicatif, JsonLines, or Silent)
+    ///
+    /// `ProgressFormat` is a `tk-encode` type and carries no serde of its own; `tk-convert` used to
+    /// own its on-disk shape, and that layer is gone. It only decides how progress is *displayed*,
+    /// so it is skipped rather than given a shape here, and falls back to its `Default`.
+    #[serde(skip)]
+    pub progress_format: ProgressFormat,
+    /// A list of special tokens that the model should know of
+    #[serde(with = "crate::added_token_serde")]
+    pub special_tokens: Vec<AddedToken>,
+    /// Whether to limit the number of initial tokens that can be kept before computing merges
+    pub limit_alphabet: Option<usize>,
+    /// The initial alphabet we want absolutely to include. This allows to cover
+    /// some characters that are not necessarily in the training set
+    pub initial_alphabet: AHashSet<char>,
+    /// An optional prefix to use on any subword that exist only behind another one
+    pub continuing_subword_prefix: Option<String>,
+    /// An optional suffix to characterize and end-of-word subword
+    pub end_of_word_suffix: Option<String>,
+    /// An optional parameter to limit the max length of any single token
+    pub max_token_length: Option<usize>,
+
+    words: WordCounts,
+}
+
+impl Default for BpeTrainer {
+    fn default() -> Self {
+        Self::builder().build()
+    }
+}
+
+impl BpeTrainer {
+    pub fn new(min_frequency: u64, vocab_size: usize) -> Self {
+        Self {
+            min_frequency,
+            vocab_size,
+            ..Default::default()
+        }
+    }
+
+    pub fn builder() -> BpeTrainerBuilder {
+        BpeTrainerBuilder::new()
+    }
+
+    /// Returns the number of unique words in the corpus after feeding.
+    /// This can be used to estimate training time before starting.
+    pub fn get_word_count(&self) -> usize {
+        self.words.len()
+    }
+
+    /// Train the collected weighted words and return vocabulary entries, ordered
+    /// merges, and special tokens.
+    ///
+    /// Stored counts remain available for subsequent calls. Execution policy and
+    /// numeric limits are the same as for [`Self::do_train`]. The WordPiece trainer
+    /// uses these parts to reinterpret the vocabulary without building BPE merge tables.
+    ///
+    /// # Errors
+    ///
+    /// Returns the training errors described in [`Self::do_train`], including the
+    /// signed input limits for nonempty affixes even when no merge is needed.
+    pub fn train_vocab(&self) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
+        self.do_train_impl(self.words.view(), None)
+            .map(|result| result.parts)
+    }
+
+    /// Train weighted words and return vocabulary entries, ordered merges, and
+    /// special tokens for registration by the caller.
+    ///
+    /// These parts populate [`BpeConfig`] for [`PipelineBPE::from_config`]. The
+    /// WordPiece trainer consumes the vocabulary without building BPE merge tables.
+    /// The input map is borrowed and remains unchanged.
+    ///
+    /// Training uses a dedicated Rayon pool sized by
+    /// [`tk_encode::parallelism::num_threads`], or one worker when parallelism is
+    /// disabled. [`Trainer::feed`] uses the ambient pool, including one installed
+    /// by the caller.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error on overflow or underflow in checked `u64` pair, birth,
+    /// or removal arithmetic, or in checked `i64` identity-reuse ledger updates.
+    /// A merge reuses an identity when its result string resolves to an ID already
+    /// activated as an input symbol or an earlier merge result. This includes IDs
+    /// whose last occurrence has since disappeared. A new ID or an unactivated
+    /// reserved ID is a first activation.
+    ///
+    /// Nonempty affixes and identity reuse require the maximum word weight and
+    /// initial weighted edge mass (the sum of each word's weight times its retained
+    /// adjacent-pair count) to fit in `i64::MAX`. The affix check applies even when
+    /// the initial vocabulary already meets the target size. Without nonempty
+    /// affixes or identity reuse, there is no total-`u64` mass limit when every
+    /// individual pair count fits.
+    ///
+    /// Pool creation, progress setup, vocabulary or corpus size bounds, and fallible position
+    /// storage operations can also return errors. Feed counting and limited-alphabet
+    /// frequency accumulation use ordinary addition rather than these checked rules.
+    pub fn do_train(
+        &self,
+        word_counts: &AHashMap<CompactString, u64>,
+    ) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
+        self.do_train_impl(WordCountsView::from_map(word_counts), None)
+            .map(|result| result.parts)
+    }
+
+    fn do_train_impl(
+        &self,
+        words: WordCountsView<'_>,
+        workers: Option<usize>,
+    ) -> Result<TrainingResult> {
+        let workers = workers.unwrap_or_else(|| {
+            if get_parallelism() {
+                num_threads().max(1)
+            } else {
+                1
+            }
+        });
+        let pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(workers)
+            .build()?;
+        pool.install(|| {
+            let progress = self.setup_progress();
+            let phase = std::time::Instant::now();
+            let alphabet = vocabulary::select_alphabet(self, words, workers);
+            eprintln!("BPE_SELECTION_SECONDS {:.9}", phase.elapsed().as_secs_f64());
+            let outcome = self.train_attempt(words, workers, false, &alphabet, &progress)?;
+            let outcome = match outcome {
+                // A previously activated ID requires historical cohorts. Discard
+                // the fresh attempt; both attempts borrow the same alphabet so
+                // frequency ties cannot select different characters on retry.
+                AttemptOutcome::RestartForReuse => {
+                    self.train_attempt(words, workers, true, &alphabet, &progress)?
+                }
+                complete @ AttemptOutcome::Complete(_) => complete,
+            };
+            match outcome {
+                AttemptOutcome::Complete(result) => Ok(result),
+                AttemptOutcome::RestartForReuse => Err(
+                    "BPE internal invariant violated: identity-reuse attempt requested another restart"
+                        .into(),
+                ),
+            }
+        })
+    }
+
+    fn train_attempt(
+        &self,
+        words: WordCountsView<'_>,
+        workers: usize,
+        reuse: bool,
+        alphabet: &Alphabet,
+        progress: &Option<ProgressBar>,
+    ) -> Result<AttemptOutcome> {
+        // 1. Resolve the vocabulary and tokenize borrowed input into a corpus plan.
+        let phase = std::time::Instant::now();
+        let (mut vocabulary, ids) = Vocabulary::initialize(self, words, alphabet, progress)?;
+        eprintln!("BPE_VOCABULARY_SECONDS {:.9}", phase.elapsed().as_secs_f64());
+        let phase = std::time::Instant::now();
+        let plan = CorpusPlan::build(words, ids, self, reuse)?;
+        eprintln!("BPE_PLAN_SECONDS {:.9}", phase.elapsed().as_secs_f64());
+        self.finalize_progress(progress, plan.word_count(), "Tokenize words");
+
+        // 2. Freeze initial pairs first: their temporary counting buffers retire
+        // before resident corpus slots are allocated. Even a zero-merge call must
+        // run the plan's numeric checks and the index's checked pair counting.
+        // Declare before index so early returns also release index first. The
+        // zero-merge path never initializes or allocates this resident corpus.
+        let mut corpus: Corpus;
+        self.update_progress(progress, plan.word_count(), "Count pairs");
+        let phase = std::time::Instant::now();
+        let mut index = PairIndex::build(&plan, self.min_frequency, workers, reuse, progress)?;
+        eprintln!("BPE_INDEX_SECONDS {:.9}", phase.elapsed().as_secs_f64());
+        self.finalize_progress(progress, plan.word_count(), "Count pairs");
+
+        let mut merges = Vec::new();
+        #[cfg(test)]
+        let mut trace = Trace::new();
+        self.update_progress(progress, self.vocab_size, "Compute merges");
+        if vocabulary.len() < self.vocab_size {
+            // 3. Only attempts needing merges allocate resident endpoints.
+            let phase = std::time::Instant::now();
+            corpus = plan.materialize();
+            eprintln!("BPE_TOKEN_WIDTH {}", corpus.bench_token_width());
+            eprintln!("BPE_MATERIALIZE_SECONDS {:.9}", phase.elapsed().as_secs_f64());
+            let phase = std::time::Instant::now();
+            while vocabulary.len() < self.vocab_size {
+                let records = match self.merge_next(&mut vocabulary, &mut corpus, &mut index)? {
+                    MergeOutcome::Finished => break,
+                    MergeOutcome::RestartForReuse => {
+                        self.finalize_progress(progress, merges.len(), "Compute merges");
+                        eprintln!("BPE_MERGE_RESTART_SECONDS {:.9}", phase.elapsed().as_secs_f64());
+                        return Ok(AttemptOutcome::RestartForReuse);
+                    }
+                    MergeOutcome::Committed(records) => records,
+                };
+                let accepted = records.len();
+                for record in records {
+                    merges.push(record.pair);
+                    #[cfg(test)]
+                    trace.push((record.pair, record.count, record.replacement));
+                }
+                if let Some(p) = progress {
+                    p.inc(accepted as u64);
+                }
+                self.emit_json_progress("Compute merges", merges.len(), self.vocab_size);
+            }
+            eprintln!("BPE_MERGE_SECONDS {:.9}", phase.elapsed().as_secs_f64());
+            merge::bench_report_prepare();
+            merge::bench_report_apply_commit();
+            index::bench_report_publisher();
+            merge::bench_report_directories();
+            merge::bench_report_producer();
+            index::bench_report_actions();
+            let phase = std::time::Instant::now();
+            index.retire();
+            drop(corpus);
+            eprintln!("BPE_DROP_SECONDS {:.9}", phase.elapsed().as_secs_f64());
+        } else {
+            let phase = std::time::Instant::now();
+            index.retire();
+            drop(plan);
+            eprintln!("BPE_DROP_SECONDS {:.9}", phase.elapsed().as_secs_f64());
+        }
+
+        // 4. Large attempt storage is gone before output strings and the final
+        // vocabulary map are built, keeping their allocations from overlapping.
+        self.finalize_progress(progress, merges.len(), "Compute merges");
+        let (vocab, merges) = vocabulary.into_model_parts(merges);
+        // Only success carries a trace out of the attempt. Errors and restart
+        // requests discard every speculative rule along with its local storage.
+        Ok(AttemptOutcome::Complete(TrainingResult {
+            parts: (vocab, merges, self.special_tokens.clone()),
+            #[cfg(test)]
+            trace,
+        }))
+    }
+
+    /// Setup a progress bar if asked to show progress (only for Indicatif format)
+    fn setup_progress(&self) -> Option<ProgressBar> {
+        if self.show_progress && self.progress_format == ProgressFormat::Indicatif {
+            let p = ProgressBar::new(0);
+            p.set_style(
+                ProgressStyle::default_bar()
+                    .template("[{elapsed_precise}] {msg:<30!} {wide_bar} {pos:<9!}/{len:>9!}")
+                    .expect("Invalid progress template"),
+            );
+            Some(p)
+        } else {
+            None
+        }
+    }
+
+    /// Emit JSON progress line to stderr (for JsonLines format)
+    fn emit_json_progress(&self, stage: &str, current: usize, total: usize) {
+        if self.progress_format == ProgressFormat::JsonLines {
+            eprintln!(
+                r#"{{"stage":"{}","current":{},"total":{}}}"#,
+                stage, current, total
+            );
+        }
+    }
+
+    /// Set the progress bar in the finish state
+    fn finalize_progress(&self, p: &Option<ProgressBar>, final_len: usize, stage: &str) {
+        if let Some(p) = p {
+            p.set_length(final_len as u64);
+            p.finish();
+            println!();
+        }
+        self.emit_json_progress(stage, final_len, final_len);
+    }
+
+    /// Update the progress bar with the new provided length and message
+    fn update_progress(&self, p: &Option<ProgressBar>, len: usize, message: &'static str) {
+        if let Some(p) = p {
+            p.set_message(message);
+            p.set_length(len as u64);
+            p.reset();
+        }
+        // Emit initial JSON progress for this stage
+        self.emit_json_progress(message, 0, len);
+    }
+
+    /// The runtime options a trained model is built with.
+    ///
+    /// The two affixes are the only settings a BPE trainer decides: everything else in
+    /// [`BpeConfig`] describes how to *read* a model (unknown-token handling, dropout,
+    /// caching) and is the reader's business, not the trainer's, so it stays at its default.
+    fn model_options(&self) -> BpeConfig {
+        BpeConfig {
+            continuing_subword_prefix: self.continuing_subword_prefix.clone(),
+            end_of_word_suffix: self.end_of_word_suffix.clone(),
+            ..Default::default()
+        }
+    }
+}
+
+fn add(count: &mut u64, amount: u64) -> Result<()> {
+    *count = count
+        .checked_add(amount)
+        .ok_or("BPE weighted frequency exceeds u64")?;
+    Ok(())
+}
+
+const WORD_SEPARATOR_ID: u32 = u32::MAX;
+type ModelParts = (Vocab, Merges, Vec<AddedToken>);
+
+struct TrainingResult {
+    parts: ModelParts,
+    #[cfg(test)]
+    trace: Trace,
+}
+
+enum AttemptOutcome {
+    Complete(TrainingResult),
+    RestartForReuse,
+}
+
+#[cfg(test)]
+type Trace = Vec<(Pair, u64, u32)>;
+
+impl Trainer for BpeTrainer {
+    type Model = PipelineBPE;
+
+    /// Train a BPE model
+    fn train(&self, model: &mut PipelineBPE) -> Result<Vec<AddedToken>> {
+        let (vocab, merges, special_tokens) = self.train_vocab()?;
+        *model = PipelineBPE::from_config(BpeConfig { vocab: vocab, merges: merges, ..self.model_options() })?;
+        Ok(special_tokens)
+    }
+
+    /// Whether we should show progress
+    fn should_show_progress(&self) -> bool {
+        self.show_progress
+    }
+
+    fn feed<I, S, F>(&mut self, iterator: I, process: F) -> Result<()>
+    where
+        I: Iterator<Item = S> + Send,
+        S: AsRef<str> + Send,
+        F: Fn(&str) -> Result<Vec<String>> + Sync,
+    {
+        self.words = feed::count(iterator, &process)?;
+        Ok(())
+    }
+}

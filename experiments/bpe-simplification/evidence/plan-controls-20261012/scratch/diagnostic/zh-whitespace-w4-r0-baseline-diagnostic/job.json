@@ -1,0 +1,19 @@
+{
+  "protocol_version": 1,
+  "input_id": "zh256",
+  "mode": "core",
+  "input": "/root/code/tokenizers-bpe-benchmarks/.bench/main-yttm-inspired/inputs/zh256-words/words.json",
+  "workers": 4,
+  "pretokenizer": "whitespace",
+  "trainer": {
+    "vocab_size": 50000,
+    "min_frequency": 2,
+    "prefix": null,
+    "suffix": null,
+    "max_token_length": null,
+    "limit_alphabet": null
+  },
+  "attempt_id": "zh-whitespace-w4-r0-baseline-diagnostic",
+  "build_id": "baseline-diagnostic",
+  "output": "/root/code/tokenizers-workspaces/bpe-attempt-scratch-results-20261012/diagnostic/zh-whitespace-w4-r0-baseline-diagnostic/model.json"
+}

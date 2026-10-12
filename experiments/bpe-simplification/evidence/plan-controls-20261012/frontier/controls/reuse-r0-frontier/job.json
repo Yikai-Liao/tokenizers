@@ -1,0 +1,19 @@
+{
+  "protocol_version": 1,
+  "attempt_id": "reuse-r0-frontier",
+  "build_id": "frontier",
+  "input_id": "reuse",
+  "mode": "core",
+  "input": "/root/code/tokenizers-workspaces/bpe-selected-rules-results-20261011/reuse-control-words.json",
+  "output": "/root/code/tokenizers-workspaces/bpe-frontier-window-results-20261012/controls/reuse-r0-frontier/model.json",
+  "workers": 4,
+  "pretokenizer": "none",
+  "trainer": {
+    "vocab_size": 32,
+    "min_frequency": 1,
+    "prefix": null,
+    "suffix": "a",
+    "max_token_length": null,
+    "limit_alphabet": 65536
+  }
+}

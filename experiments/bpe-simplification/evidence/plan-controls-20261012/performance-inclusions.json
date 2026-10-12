@@ -1,0 +1,674 @@
+[
+  {
+    "stage": "scratch",
+    "suite": "primary",
+    "case": "zh-whitespace-w4",
+    "arm": "baseline",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "scratch",
+    "suite": "primary",
+    "case": "zh-whitespace-w4",
+    "arm": "scratch",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "scratch",
+    "suite": "primary",
+    "case": "zh-bytelevel_regex-w4",
+    "arm": "scratch",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "scratch",
+    "suite": "primary",
+    "case": "zh-bytelevel_regex-w4",
+    "arm": "baseline",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "scratch",
+    "suite": "primary",
+    "case": "en-whitespace-w4",
+    "arm": "baseline",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "scratch",
+    "suite": "primary",
+    "case": "en-whitespace-w4",
+    "arm": "scratch",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "scratch",
+    "suite": "primary",
+    "case": "en-bytelevel_regex-w4",
+    "arm": "scratch",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "scratch",
+    "suite": "primary",
+    "case": "en-bytelevel_regex-w4",
+    "arm": "baseline",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "scratch",
+    "suite": "reverse",
+    "case": "zh-whitespace-w4",
+    "arm": "scratch",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "scratch",
+    "suite": "reverse",
+    "case": "zh-whitespace-w4",
+    "arm": "baseline",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "scratch",
+    "suite": "reverse",
+    "case": "zh-bytelevel_regex-w4",
+    "arm": "baseline",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "scratch",
+    "suite": "reverse",
+    "case": "zh-bytelevel_regex-w4",
+    "arm": "scratch",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "scratch",
+    "suite": "reverse",
+    "case": "en-whitespace-w4",
+    "arm": "scratch",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "scratch",
+    "suite": "reverse",
+    "case": "en-whitespace-w4",
+    "arm": "baseline",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "scratch",
+    "suite": "reverse",
+    "case": "en-bytelevel_regex-w4",
+    "arm": "baseline",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "scratch",
+    "suite": "reverse",
+    "case": "en-bytelevel_regex-w4",
+    "arm": "scratch",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "scratch",
+    "suite": "single",
+    "case": "zh-whitespace-w1",
+    "arm": "baseline",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "scratch",
+    "suite": "single",
+    "case": "zh-whitespace-w1",
+    "arm": "scratch",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "scratch",
+    "suite": "single",
+    "case": "zh-bytelevel_regex-w1",
+    "arm": "scratch",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "scratch",
+    "suite": "single",
+    "case": "zh-bytelevel_regex-w1",
+    "arm": "baseline",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "scratch",
+    "suite": "single",
+    "case": "en-whitespace-w1",
+    "arm": "baseline",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "scratch",
+    "suite": "single",
+    "case": "en-whitespace-w1",
+    "arm": "scratch",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "scratch",
+    "suite": "single",
+    "case": "en-bytelevel_regex-w1",
+    "arm": "scratch",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "scratch",
+    "suite": "single",
+    "case": "en-bytelevel_regex-w1",
+    "arm": "baseline",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "scratch",
+    "suite": "single-cn-reverse",
+    "case": "zh-whitespace-w1",
+    "arm": "scratch",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "scratch",
+    "suite": "single-cn-reverse",
+    "case": "zh-whitespace-w1",
+    "arm": "baseline",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "scratch",
+    "suite": "single-cn-reverse",
+    "case": "zh-bytelevel_regex-w1",
+    "arm": "baseline",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "scratch",
+    "suite": "single-cn-reverse",
+    "case": "zh-bytelevel_regex-w1",
+    "arm": "scratch",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "scratch",
+    "suite": "controls",
+    "case": "aa",
+    "arm": "baseline",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "scratch",
+    "suite": "controls",
+    "case": "aa",
+    "arm": "scratch",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "scratch",
+    "suite": "controls",
+    "case": "reuse",
+    "arm": "baseline",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "scratch",
+    "suite": "controls",
+    "case": "reuse",
+    "arm": "scratch",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "publisher",
+    "suite": "primary",
+    "case": "zh-whitespace-w4",
+    "arm": "baseline",
+    "included_in_performance": false,
+    "reason": "Exclude the whole pair: baseline overlapped scratch gzip archiving; replacement pair retained."
+  },
+  {
+    "stage": "publisher",
+    "suite": "primary",
+    "case": "zh-whitespace-w4",
+    "arm": "producer",
+    "included_in_performance": false,
+    "reason": "Exclude the whole pair: baseline overlapped scratch gzip archiving; replacement pair retained."
+  },
+  {
+    "stage": "publisher",
+    "suite": "primary",
+    "case": "zh-bytelevel_regex-w4",
+    "arm": "producer",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "publisher",
+    "suite": "primary",
+    "case": "zh-bytelevel_regex-w4",
+    "arm": "baseline",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "publisher",
+    "suite": "primary",
+    "case": "en-whitespace-w4",
+    "arm": "baseline",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "publisher",
+    "suite": "primary",
+    "case": "en-whitespace-w4",
+    "arm": "producer",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "publisher",
+    "suite": "primary",
+    "case": "en-bytelevel_regex-w4",
+    "arm": "producer",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "publisher",
+    "suite": "primary",
+    "case": "en-bytelevel_regex-w4",
+    "arm": "baseline",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "publisher",
+    "suite": "reverse",
+    "case": "zh-whitespace-w4",
+    "arm": "producer",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "publisher",
+    "suite": "reverse",
+    "case": "zh-whitespace-w4",
+    "arm": "baseline",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "publisher",
+    "suite": "reverse",
+    "case": "zh-bytelevel_regex-w4",
+    "arm": "baseline",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "publisher",
+    "suite": "reverse",
+    "case": "zh-bytelevel_regex-w4",
+    "arm": "producer",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "publisher",
+    "suite": "reverse",
+    "case": "en-whitespace-w4",
+    "arm": "producer",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "publisher",
+    "suite": "reverse",
+    "case": "en-whitespace-w4",
+    "arm": "baseline",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "publisher",
+    "suite": "reverse",
+    "case": "en-bytelevel_regex-w4",
+    "arm": "baseline",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "publisher",
+    "suite": "reverse",
+    "case": "en-bytelevel_regex-w4",
+    "arm": "producer",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "publisher",
+    "suite": "primary-whitespace-repeat",
+    "case": "zh-whitespace-w4",
+    "arm": "baseline",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "publisher",
+    "suite": "primary-whitespace-repeat",
+    "case": "zh-whitespace-w4",
+    "arm": "producer",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "publisher",
+    "suite": "controls",
+    "case": "aa",
+    "arm": "baseline",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "publisher",
+    "suite": "controls",
+    "case": "aa",
+    "arm": "producer",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "publisher",
+    "suite": "controls",
+    "case": "reuse",
+    "arm": "baseline",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "publisher",
+    "suite": "controls",
+    "case": "reuse",
+    "arm": "producer",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "frontier",
+    "suite": "primary",
+    "case": "zh-whitespace-w4",
+    "arm": "eager",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "frontier",
+    "suite": "primary",
+    "case": "zh-whitespace-w4",
+    "arm": "single",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "frontier",
+    "suite": "primary",
+    "case": "zh-whitespace-w4",
+    "arm": "frontier",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "frontier",
+    "suite": "primary",
+    "case": "zh-bytelevel_regex-w4",
+    "arm": "frontier",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "frontier",
+    "suite": "primary",
+    "case": "zh-bytelevel_regex-w4",
+    "arm": "single",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "frontier",
+    "suite": "primary",
+    "case": "zh-bytelevel_regex-w4",
+    "arm": "eager",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "frontier",
+    "suite": "primary",
+    "case": "en-whitespace-w4",
+    "arm": "eager",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "frontier",
+    "suite": "primary",
+    "case": "en-whitespace-w4",
+    "arm": "single",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "frontier",
+    "suite": "primary",
+    "case": "en-whitespace-w4",
+    "arm": "frontier",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "frontier",
+    "suite": "primary",
+    "case": "en-bytelevel_regex-w4",
+    "arm": "frontier",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "frontier",
+    "suite": "primary",
+    "case": "en-bytelevel_regex-w4",
+    "arm": "single",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "frontier",
+    "suite": "primary",
+    "case": "en-bytelevel_regex-w4",
+    "arm": "eager",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "frontier",
+    "suite": "reverse",
+    "case": "zh-whitespace-w4",
+    "arm": "frontier",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "frontier",
+    "suite": "reverse",
+    "case": "zh-whitespace-w4",
+    "arm": "single",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "frontier",
+    "suite": "reverse",
+    "case": "zh-whitespace-w4",
+    "arm": "eager",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "frontier",
+    "suite": "reverse",
+    "case": "zh-bytelevel_regex-w4",
+    "arm": "eager",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "frontier",
+    "suite": "reverse",
+    "case": "zh-bytelevel_regex-w4",
+    "arm": "single",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "frontier",
+    "suite": "reverse",
+    "case": "zh-bytelevel_regex-w4",
+    "arm": "frontier",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "frontier",
+    "suite": "reverse",
+    "case": "en-whitespace-w4",
+    "arm": "frontier",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "frontier",
+    "suite": "reverse",
+    "case": "en-whitespace-w4",
+    "arm": "single",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "frontier",
+    "suite": "reverse",
+    "case": "en-whitespace-w4",
+    "arm": "eager",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "frontier",
+    "suite": "reverse",
+    "case": "en-bytelevel_regex-w4",
+    "arm": "eager",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "frontier",
+    "suite": "reverse",
+    "case": "en-bytelevel_regex-w4",
+    "arm": "single",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "frontier",
+    "suite": "reverse",
+    "case": "en-bytelevel_regex-w4",
+    "arm": "frontier",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "frontier",
+    "suite": "controls",
+    "case": "aa",
+    "arm": "eager",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "frontier",
+    "suite": "controls",
+    "case": "aa",
+    "arm": "single",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "frontier",
+    "suite": "controls",
+    "case": "aa",
+    "arm": "frontier",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "frontier",
+    "suite": "controls",
+    "case": "reuse",
+    "arm": "eager",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "frontier",
+    "suite": "controls",
+    "case": "reuse",
+    "arm": "single",
+    "included_in_performance": true,
+    "reason": null
+  },
+  {
+    "stage": "frontier",
+    "suite": "controls",
+    "case": "reuse",
+    "arm": "frontier",
+    "included_in_performance": true,
+    "reason": null
+  }
+]

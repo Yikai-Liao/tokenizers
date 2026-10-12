@@ -1,0 +1,14 @@
+{
+  "arm": "frontier-diagnostic",
+  "command": [
+    "cargo",
+    "build",
+    "--release",
+    "--locked",
+    "--offline",
+    "--target-dir",
+    "/root/code/tokenizers-build/bpe-affix-core-build-20261011"
+  ],
+  "binary_sha256": "0f259035c15d17c0ff67659e9a6dc2faeeb66f1b1ae2399455739a5af526b0be",
+  "diagnostic_only": true
+}

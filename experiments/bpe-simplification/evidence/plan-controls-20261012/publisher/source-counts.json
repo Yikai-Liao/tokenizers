@@ -1,0 +1,20 @@
+{
+  "tokenizers/tk-train/src/trainers/bpe/index.rs": {
+    "production_before": 360,
+    "production_after": 406,
+    "production_added": 46,
+    "production_removed": 0,
+    "production_delta": 46,
+    "test_before": 158,
+    "test_after": 197
+  },
+  "tokenizers/tk-train/src/trainers/bpe/merge.rs": {
+    "production_before": 506,
+    "production_after": 587,
+    "production_added": 84,
+    "production_removed": 3,
+    "production_delta": 81,
+    "test_before": 153,
+    "test_after": 153
+  }
+}

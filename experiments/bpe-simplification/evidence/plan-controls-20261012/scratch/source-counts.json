@@ -1,0 +1,38 @@
+{
+  "tokenizers/tk-train/src/trainers/bpe/index.rs": {
+    "production_before": 360,
+    "production_after": 360,
+    "production_added": 0,
+    "production_removed": 0,
+    "production_delta": 0,
+    "test_before": 158,
+    "test_after": 159
+  },
+  "tokenizers/tk-train/src/trainers/bpe/merge.rs": {
+    "production_before": 506,
+    "production_after": 520,
+    "production_added": 24,
+    "production_removed": 10,
+    "production_delta": 14,
+    "test_before": 153,
+    "test_after": 158
+  },
+  "tokenizers/tk-train/src/trainers/bpe/mod.rs": {
+    "production_before": 352,
+    "production_after": 359,
+    "production_added": 8,
+    "production_removed": 1,
+    "production_delta": 7,
+    "test_before": 12,
+    "test_after": 12
+  },
+  "tokenizers/tk-train/src/trainers/bpe/tests.rs": {
+    "production_before": 0,
+    "production_after": 0,
+    "production_added": 0,
+    "production_removed": 0,
+    "production_delta": 0,
+    "test_before": 736,
+    "test_after": 737
+  }
+}

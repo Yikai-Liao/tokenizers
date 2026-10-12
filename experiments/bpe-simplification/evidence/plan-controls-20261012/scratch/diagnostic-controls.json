@@ -1,0 +1,272 @@
+[
+  {
+    "case": "aa",
+    "arm": "baseline-diagnostic",
+    "repeat": 0,
+    "load_seconds": 7.3871e-05,
+    "process_hwm_kib_before_validation": 7040,
+    "train_cpu_seconds": 0.008105999999999999,
+    "train_seconds": 0.00579513,
+    "actual_merges": 10,
+    "actual_vocab": 12,
+    "model_path": "/root/code/tokenizers-workspaces/bpe-attempt-scratch-results-20261012/diagnostic-controls/aa-r0-baseline-diagnostic/model.json",
+    "special_tokens": 0,
+    "phases": {
+      "selection": 0.000182463,
+      "vocabulary": 0.003862444,
+      "plan": 4.0168e-05,
+      "index": 0.000136993,
+      "materialize": 0.000354976,
+      "merge": 0.000315889,
+      "merge_restart": 0,
+      "prepare": 0.000142602,
+      "drop": 3.744e-06
+    },
+    "token_widths": [
+      16
+    ],
+    "fresh_batches": 9,
+    "reuse_batches": 0,
+    "external_wall_seconds": 0.05439913412556052,
+    "child_max_swap_kib": 0,
+    "child_sampled_rss_kib": 204,
+    "train_sampled_rss_kib": 0,
+    "load_sampled_rss_kib": 204,
+    "directory_reports": [
+      {
+        "live_states_at_report": 0,
+        "live_vector_capacity_bytes_at_report": 0,
+        "max_domain": 12,
+        "old_elements_at_capacity_growth": 0,
+        "peak_live_states": 1,
+        "peak_live_vector_capacity_bytes": 96,
+        "resize_calls": 10,
+        "scratch_owner_header_bytes": 512,
+        "sentinel_elements": 152,
+        "sentinel_logical_bytes": 608,
+        "state_header_bytes": 48,
+        "states_created": 10,
+        "threads_observed": 2,
+        "vector_capacity_growths": 0,
+        "vector_initial_allocations": 20
+      }
+    ],
+    "allocation_reports": [
+      {
+        "allocations": 400,
+        "freed_bytes": 4666078,
+        "frees": 318,
+        "reallocations": 80,
+        "requested_bytes": 4700868
+      }
+    ],
+    "child_major_faults": 1,
+    "external_cpu_seconds": 0.013111,
+    "system_swapin_pages": 0,
+    "system_swapout_pages": 0,
+    "model_sha256": "a9c9ae4ba0ccfde4281a3aa9e22351de67f6ab1e3d64bf9a9ce086df33c5115b"
+  },
+  {
+    "case": "aa",
+    "arm": "scratch-diagnostic",
+    "repeat": 0,
+    "load_seconds": 7.3379e-05,
+    "process_hwm_kib_before_validation": 7144,
+    "train_cpu_seconds": 0.008698000000000001,
+    "train_seconds": 0.00570366,
+    "actual_merges": 10,
+    "actual_vocab": 12,
+    "model_path": "/root/code/tokenizers-workspaces/bpe-attempt-scratch-results-20261012/diagnostic-controls/aa-r0-scratch-diagnostic/model.json",
+    "special_tokens": 0,
+    "phases": {
+      "selection": 0.000246141,
+      "vocabulary": 0.003707742,
+      "plan": 4.8343e-05,
+      "index": 0.000129205,
+      "materialize": 0.000383969,
+      "merge": 0.00024659,
+      "merge_restart": 0,
+      "prepare": 0.000119305,
+      "drop": 4.73e-06
+    },
+    "token_widths": [
+      16
+    ],
+    "fresh_batches": 9,
+    "reuse_batches": 0,
+    "external_wall_seconds": 0.05290644709020853,
+    "child_max_swap_kib": 0,
+    "child_sampled_rss_kib": 88,
+    "train_sampled_rss_kib": 0,
+    "load_sampled_rss_kib": 88,
+    "directory_reports": [
+      {
+        "live_states_at_report": 2,
+        "live_vector_capacity_bytes_at_report": 224,
+        "max_domain": 12,
+        "old_elements_at_capacity_growth": 24,
+        "peak_live_states": 2,
+        "peak_live_vector_capacity_bytes": 224,
+        "resize_calls": 10,
+        "scratch_owner_header_bytes": 512,
+        "sentinel_elements": 48,
+        "sentinel_logical_bytes": 192,
+        "state_header_bytes": 48,
+        "states_created": 2,
+        "threads_observed": 2,
+        "vector_capacity_growths": 4,
+        "vector_initial_allocations": 4
+      }
+    ],
+    "allocation_reports": [
+      {
+        "allocations": 386,
+        "freed_bytes": 4664454,
+        "frees": 303,
+        "reallocations": 84,
+        "requested_bytes": 4700764
+      }
+    ],
+    "child_major_faults": 1,
+    "external_cpu_seconds": 0.015293,
+    "system_swapin_pages": 0,
+    "system_swapout_pages": 0,
+    "model_sha256": "a9c9ae4ba0ccfde4281a3aa9e22351de67f6ab1e3d64bf9a9ce086df33c5115b"
+  },
+  {
+    "case": "reuse",
+    "arm": "baseline-diagnostic",
+    "repeat": 0,
+    "load_seconds": 2.8876e-05,
+    "process_hwm_kib_before_validation": 7440,
+    "train_cpu_seconds": 0.013191999999999999,
+    "train_seconds": 0.011393656,
+    "actual_merges": 5,
+    "actual_vocab": 9,
+    "model_path": "/root/code/tokenizers-workspaces/bpe-attempt-scratch-results-20261012/diagnostic-controls/reuse-r0-baseline-diagnostic/model.json",
+    "special_tokens": 0,
+    "phases": {
+      "selection": 0.000183266,
+      "vocabulary": 0.009668409999999999,
+      "plan": 3.3663e-05,
+      "index": 9.5763e-05,
+      "materialize": 0.000348784,
+      "merge": 7.2902e-05,
+      "merge_restart": 2.7509e-05,
+      "prepare": 2.5671e-05,
+      "drop": 1.478e-06
+    },
+    "token_widths": [
+      16,
+      16
+    ],
+    "fresh_batches": 1,
+    "reuse_batches": 5,
+    "external_wall_seconds": 0.052281935000792146,
+    "child_max_swap_kib": 0,
+    "child_sampled_rss_kib": 176,
+    "train_sampled_rss_kib": 0,
+    "load_sampled_rss_kib": 176,
+    "directory_reports": [
+      {
+        "live_states_at_report": 0,
+        "live_vector_capacity_bytes_at_report": 0,
+        "max_domain": 9,
+        "old_elements_at_capacity_growth": 0,
+        "peak_live_states": 1,
+        "peak_live_vector_capacity_bytes": 72,
+        "resize_calls": 6,
+        "scratch_owner_header_bytes": 512,
+        "sentinel_elements": 92,
+        "sentinel_logical_bytes": 368,
+        "state_header_bytes": 48,
+        "states_created": 6,
+        "threads_observed": 1,
+        "vector_capacity_growths": 0,
+        "vector_initial_allocations": 12
+      }
+    ],
+    "allocation_reports": [
+      {
+        "allocations": 278,
+        "freed_bytes": 9085991,
+        "frees": 209,
+        "reallocations": 14,
+        "requested_bytes": 9120088
+      }
+    ],
+    "child_major_faults": 0,
+    "external_cpu_seconds": 0.019879999999999995,
+    "system_swapin_pages": 0,
+    "system_swapout_pages": 0,
+    "model_sha256": "7c5c11bd73df7b0cc4a810c4f4fc1fe79be62ecbcdf639037c7136303d4c0053"
+  },
+  {
+    "case": "reuse",
+    "arm": "scratch-diagnostic",
+    "repeat": 0,
+    "load_seconds": 8.0653e-05,
+    "process_hwm_kib_before_validation": 7480,
+    "train_cpu_seconds": 0.012354,
+    "train_seconds": 0.010199952,
+    "actual_merges": 5,
+    "actual_vocab": 9,
+    "model_path": "/root/code/tokenizers-workspaces/bpe-attempt-scratch-results-20261012/diagnostic-controls/reuse-r0-scratch-diagnostic/model.json",
+    "special_tokens": 0,
+    "phases": {
+      "selection": 0.000209063,
+      "vocabulary": 0.007896677000000001,
+      "plan": 3.4723e-05,
+      "index": 0.00016706,
+      "materialize": 0.00039956,
+      "merge": 7.4662e-05,
+      "merge_restart": 7.2843e-05,
+      "prepare": 3.6534e-05,
+      "drop": 1.613e-06
+    },
+    "token_widths": [
+      16,
+      16
+    ],
+    "fresh_batches": 1,
+    "reuse_batches": 5,
+    "external_wall_seconds": 0.05231307912617922,
+    "child_max_swap_kib": 0,
+    "child_sampled_rss_kib": 196,
+    "train_sampled_rss_kib": 0,
+    "load_sampled_rss_kib": 196,
+    "directory_reports": [
+      {
+        "live_states_at_report": 1,
+        "live_vector_capacity_bytes_at_report": 112,
+        "max_domain": 9,
+        "old_elements_at_capacity_growth": 14,
+        "peak_live_states": 1,
+        "peak_live_vector_capacity_bytes": 112,
+        "resize_calls": 6,
+        "scratch_owner_header_bytes": 512,
+        "sentinel_elements": 32,
+        "sentinel_logical_bytes": 128,
+        "state_header_bytes": 48,
+        "states_created": 2,
+        "threads_observed": 1,
+        "vector_capacity_growths": 2,
+        "vector_initial_allocations": 4
+      }
+    ],
+    "allocation_reports": [
+      {
+        "allocations": 272,
+        "freed_bytes": 9089399,
+        "frees": 209,
+        "reallocations": 16,
+        "requested_bytes": 9120072
+      }
+    ],
+    "child_major_faults": 0,
+    "external_cpu_seconds": 0.021600000000000008,
+    "system_swapin_pages": 0,
+    "system_swapout_pages": 0,
+    "model_sha256": "7c5c11bd73df7b0cc4a810c4f4fc1fe79be62ecbcdf639037c7136303d4c0053"
+  }
+]

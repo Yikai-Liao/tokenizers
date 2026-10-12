@@ -1,0 +1,13 @@
+{
+  "arm": "baseline-diagnostic",
+  "command": [
+    "cargo",
+    "build",
+    "--release",
+    "--locked",
+    "--offline",
+    "--target-dir",
+    "/root/code/tokenizers-build/bpe-affix-core-build-20261011"
+  ],
+  "binary_sha256": "405f375731aa1e811ee5778886359c77dcd1fd75bfc7bdb61902e5906a1d3a21"
+}

@@ -1,0 +1,19 @@
+{
+  "protocol_version": 1,
+  "attempt_id": "aa-r0-single",
+  "build_id": "single",
+  "input_id": "aa",
+  "mode": "core",
+  "input": "/root/code/tokenizers-workspaces/bpe-selected-rules-results-20261011/aa-control-words.json",
+  "output": "/root/code/tokenizers-workspaces/bpe-frontier-window-results-20261012/controls/aa-r0-single/model.json",
+  "workers": 4,
+  "pretokenizer": "none",
+  "trainer": {
+    "vocab_size": 32,
+    "min_frequency": 1,
+    "prefix": null,
+    "suffix": null,
+    "max_token_length": null,
+    "limit_alphabet": 65536
+  }
+}

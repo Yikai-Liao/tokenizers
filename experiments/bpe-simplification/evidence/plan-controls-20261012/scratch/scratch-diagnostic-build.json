@@ -1,0 +1,13 @@
+{
+  "arm": "scratch-diagnostic",
+  "command": [
+    "cargo",
+    "build",
+    "--release",
+    "--locked",
+    "--offline",
+    "--target-dir",
+    "/root/code/tokenizers-build/bpe-affix-core-build-20261011"
+  ],
+  "binary_sha256": "f7c6d49255bccb052169f41ae4bd9f5aa067bf2d741bf350d62ac00f04c7b9c0"
+}
