@@ -1,0 +1,23 @@
+{
+  "allowed_cpu_affinity": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "workers": 6,
+  "cpu_affinity_override": null,
+  "normal_binaries": "exact previous frozen hand and library binaries, no rebuild",
+  "interleaving": "two arms forward then reversed, two rounds",
+  "memory_guards": {
+    "child_rss_kib": 4500000,
+    "host_available_kib": 2000000
+  },
+  "reason": "Correct prior inappropriate restriction of six workers to two CPUs",
+  "binary_sha256": {
+    "hand": "1d082805c6bca91150ab6d00c0e65ee5cc134d0376cbc19a10a1421c6935ccf2",
+    "fmt-zero-push": "f56fbbe61e72623f58f0688ed64d8c73cee91f9c1c639b33c80984e26ef14a94"
+  }
+}

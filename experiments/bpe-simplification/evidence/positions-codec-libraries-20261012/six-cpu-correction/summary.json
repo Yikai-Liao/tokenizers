@@ -1,0 +1,682 @@
+{
+  "en-bytelevel_regex-w6": {
+    "hand": {
+      "metrics": {
+        "train_seconds": {
+          "mean": 1.5164615305,
+          "raw": [
+            1.5329529530000001,
+            1.499970108
+          ],
+          "min": 1.499970108,
+          "max": 1.5329529530000001
+        },
+        "train_cpu_seconds": {
+          "mean": 4.736489499999999,
+          "raw": [
+            4.744193999999999,
+            4.728785
+          ],
+          "min": 4.728785,
+          "max": 4.744193999999999
+        },
+        "process_hwm_kib_before_validation": {
+          "mean": 164546,
+          "raw": [
+            165312,
+            163780
+          ],
+          "min": 163780,
+          "max": 165312
+        },
+        "child_sampled_rss_kib": {
+          "mean": 163850,
+          "raw": [
+            163652,
+            164048
+          ],
+          "min": 163652,
+          "max": 164048
+        }
+      },
+      "phases": {
+        "BPE_INITIAL_COUNT_SECONDS": {
+          "mean": 0.3622984875,
+          "raw": [
+            0.380326885,
+            0.34427009
+          ]
+        },
+        "BPE_PREPARE_SECONDS": {
+          "mean": 0.46747211499999997,
+          "raw": [
+            0.459477762,
+            0.475466468
+          ]
+        },
+        "BPE_APPLY_SECONDS": {
+          "mean": 0.046331907000000006,
+          "raw": [
+            0.04769145,
+            0.044972364
+          ]
+        },
+        "BPE_COMMIT_SECONDS": {
+          "mean": 0.298099038,
+          "raw": [
+            0.298199295,
+            0.297998781
+          ]
+        },
+        "BPE_DROP_SECONDS": {
+          "mean": 0.0271468115,
+          "raw": [
+            0.028684139,
+            0.025609484
+          ]
+        }
+      },
+      "models_identical": true,
+      "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5"
+    },
+    "fmt-zero-push": {
+      "metrics": {
+        "train_seconds": {
+          "mean": 1.5270772140000002,
+          "raw": [
+            1.472547591,
+            1.581606837
+          ],
+          "min": 1.472547591,
+          "max": 1.581606837
+        },
+        "train_cpu_seconds": {
+          "mean": 4.795816500000001,
+          "raw": [
+            4.682313000000001,
+            4.90932
+          ],
+          "min": 4.682313000000001,
+          "max": 4.90932
+        },
+        "process_hwm_kib_before_validation": {
+          "mean": 164212,
+          "raw": [
+            164192,
+            164232
+          ],
+          "min": 164192,
+          "max": 164232
+        },
+        "child_sampled_rss_kib": {
+          "mean": 164656,
+          "raw": [
+            164664,
+            164648
+          ],
+          "min": 164648,
+          "max": 164664
+        }
+      },
+      "phases": {
+        "BPE_INITIAL_COUNT_SECONDS": {
+          "mean": 0.37033625049999996,
+          "raw": [
+            0.345676423,
+            0.394996078
+          ]
+        },
+        "BPE_PREPARE_SECONDS": {
+          "mean": 0.476109674,
+          "raw": [
+            0.461765542,
+            0.490453806
+          ]
+        },
+        "BPE_APPLY_SECONDS": {
+          "mean": 0.0501288485,
+          "raw": [
+            0.046955373,
+            0.053302324
+          ]
+        },
+        "BPE_COMMIT_SECONDS": {
+          "mean": 0.29950641899999997,
+          "raw": [
+            0.287406836,
+            0.311606002
+          ]
+        },
+        "BPE_DROP_SECONDS": {
+          "mean": 0.0254018285,
+          "raw": [
+            0.02626279,
+            0.024540867
+          ]
+        }
+      },
+      "models_identical": true,
+      "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5"
+    },
+    "delta_seconds": 0.010615683500000195,
+    "delta_percent": 0.7000298580934095,
+    "measurement_cpu_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ]
+  },
+  "en-whitespace-w6": {
+    "hand": {
+      "metrics": {
+        "train_seconds": {
+          "mean": 1.5066615385,
+          "raw": [
+            1.528829865,
+            1.484493212
+          ],
+          "min": 1.484493212,
+          "max": 1.528829865
+        },
+        "train_cpu_seconds": {
+          "mean": 4.6405545,
+          "raw": [
+            4.56584,
+            4.715269
+          ],
+          "min": 4.56584,
+          "max": 4.715269
+        },
+        "process_hwm_kib_before_validation": {
+          "mean": 146276,
+          "raw": [
+            144696,
+            147856
+          ],
+          "min": 144696,
+          "max": 147856
+        },
+        "child_sampled_rss_kib": {
+          "mean": 146614,
+          "raw": [
+            145044,
+            148184
+          ],
+          "min": 145044,
+          "max": 148184
+        }
+      },
+      "phases": {
+        "BPE_INITIAL_COUNT_SECONDS": {
+          "mean": 0.40147213950000005,
+          "raw": [
+            0.441626255,
+            0.361318024
+          ]
+        },
+        "BPE_PREPARE_SECONDS": {
+          "mean": 0.43987010299999996,
+          "raw": [
+            0.43385933,
+            0.445880876
+          ]
+        },
+        "BPE_APPLY_SECONDS": {
+          "mean": 0.0462157015,
+          "raw": [
+            0.043573529,
+            0.048857874
+          ]
+        },
+        "BPE_COMMIT_SECONDS": {
+          "mean": 0.3042028755,
+          "raw": [
+            0.288653882,
+            0.319751869
+          ]
+        },
+        "BPE_DROP_SECONDS": {
+          "mean": 0.0227361165,
+          "raw": [
+            0.023310781,
+            0.022161452
+          ]
+        }
+      },
+      "models_identical": true,
+      "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6"
+    },
+    "fmt-zero-push": {
+      "metrics": {
+        "train_seconds": {
+          "mean": 1.4995047449999999,
+          "raw": [
+            1.447463285,
+            1.551546205
+          ],
+          "min": 1.447463285,
+          "max": 1.551546205
+        },
+        "train_cpu_seconds": {
+          "mean": 4.577877,
+          "raw": [
+            4.513896,
+            4.641858
+          ],
+          "min": 4.513896,
+          "max": 4.641858
+        },
+        "process_hwm_kib_before_validation": {
+          "mean": 146374,
+          "raw": [
+            146696,
+            146052
+          ],
+          "min": 146052,
+          "max": 146696
+        },
+        "child_sampled_rss_kib": {
+          "mean": 146980,
+          "raw": [
+            147184,
+            146776
+          ],
+          "min": 146776,
+          "max": 147184
+        }
+      },
+      "phases": {
+        "BPE_INITIAL_COUNT_SECONDS": {
+          "mean": 0.42544975900000004,
+          "raw": [
+            0.405433507,
+            0.445466011
+          ]
+        },
+        "BPE_PREPARE_SECONDS": {
+          "mean": 0.42209085150000003,
+          "raw": [
+            0.420934262,
+            0.423247441
+          ]
+        },
+        "BPE_APPLY_SECONDS": {
+          "mean": 0.04471588,
+          "raw": [
+            0.043134941,
+            0.046296819
+          ]
+        },
+        "BPE_COMMIT_SECONDS": {
+          "mean": 0.2948969575,
+          "raw": [
+            0.286252139,
+            0.303541776
+          ]
+        },
+        "BPE_DROP_SECONDS": {
+          "mean": 0.023290864,
+          "raw": [
+            0.024108339,
+            0.022473389
+          ]
+        }
+      },
+      "models_identical": true,
+      "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6"
+    },
+    "delta_seconds": -0.0071567935000000915,
+    "delta_percent": -0.4750100349097175,
+    "measurement_cpu_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ]
+  },
+  "zh-bytelevel_regex-w6": {
+    "hand": {
+      "metrics": {
+        "train_seconds": {
+          "mean": 16.511023418,
+          "raw": [
+            16.25534288,
+            16.766703956
+          ],
+          "min": 16.25534288,
+          "max": 16.766703956
+        },
+        "train_cpu_seconds": {
+          "mean": 70.8131935,
+          "raw": [
+            71.983684,
+            69.642703
+          ],
+          "min": 69.642703,
+          "max": 71.983684
+        },
+        "process_hwm_kib_before_validation": {
+          "mean": 2589908,
+          "raw": [
+            2593180,
+            2586636
+          ],
+          "min": 2586636,
+          "max": 2593180
+        },
+        "child_sampled_rss_kib": {
+          "mean": 2590466,
+          "raw": [
+            2593784,
+            2587148
+          ],
+          "min": 2587148,
+          "max": 2593784
+        }
+      },
+      "phases": {
+        "BPE_INITIAL_COUNT_SECONDS": {
+          "mean": 2.1331581085,
+          "raw": [
+            2.117320738,
+            2.148995479
+          ]
+        },
+        "BPE_PREPARE_SECONDS": {
+          "mean": 6.5698579855000006,
+          "raw": [
+            6.331850274,
+            6.807865697
+          ]
+        },
+        "BPE_APPLY_SECONDS": {
+          "mean": 0.749492657,
+          "raw": [
+            0.728817066,
+            0.770168248
+          ]
+        },
+        "BPE_COMMIT_SECONDS": {
+          "mean": 3.502361251,
+          "raw": [
+            3.401813747,
+            3.602908755
+          ]
+        },
+        "BPE_DROP_SECONDS": {
+          "mean": 1.114157794,
+          "raw": [
+            1.12134883,
+            1.106966758
+          ]
+        }
+      },
+      "models_identical": true,
+      "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de"
+    },
+    "fmt-zero-push": {
+      "metrics": {
+        "train_seconds": {
+          "mean": 16.5391580555,
+          "raw": [
+            17.287753998,
+            15.790562113
+          ],
+          "min": 15.790562113,
+          "max": 17.287753998
+        },
+        "train_cpu_seconds": {
+          "mean": 70.50999149999998,
+          "raw": [
+            70.68772399999999,
+            70.332259
+          ],
+          "min": 70.332259,
+          "max": 70.68772399999999
+        },
+        "process_hwm_kib_before_validation": {
+          "mean": 2592036,
+          "raw": [
+            2597004,
+            2587068
+          ],
+          "min": 2587068,
+          "max": 2597004
+        },
+        "child_sampled_rss_kib": {
+          "mean": 2591054,
+          "raw": [
+            2596536,
+            2585572
+          ],
+          "min": 2585572,
+          "max": 2596536
+        }
+      },
+      "phases": {
+        "BPE_INITIAL_COUNT_SECONDS": {
+          "mean": 2.3006792095,
+          "raw": [
+            2.241766889,
+            2.35959153
+          ]
+        },
+        "BPE_PREPARE_SECONDS": {
+          "mean": 6.764576107,
+          "raw": [
+            7.377434823,
+            6.151717391
+          ]
+        },
+        "BPE_APPLY_SECONDS": {
+          "mean": 0.7369808015,
+          "raw": [
+            0.807676258,
+            0.666285345
+          ]
+        },
+        "BPE_COMMIT_SECONDS": {
+          "mean": 3.236407872,
+          "raw": [
+            3.371900813,
+            3.100914931
+          ]
+        },
+        "BPE_DROP_SECONDS": {
+          "mean": 1.075104719,
+          "raw": [
+            1.088603459,
+            1.061605979
+          ]
+        }
+      },
+      "models_identical": true,
+      "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de"
+    },
+    "delta_seconds": 0.028134637499999116,
+    "delta_percent": 0.17039911329377322,
+    "measurement_cpu_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ]
+  },
+  "zh-whitespace-w6": {
+    "hand": {
+      "metrics": {
+        "train_seconds": {
+          "mean": 14.671318005,
+          "raw": [
+            14.529728339,
+            14.812907671
+          ],
+          "min": 14.529728339,
+          "max": 14.812907671
+        },
+        "train_cpu_seconds": {
+          "mean": 54.889002500000004,
+          "raw": [
+            53.763708,
+            56.014297000000006
+          ],
+          "min": 53.763708,
+          "max": 56.014297000000006
+        },
+        "process_hwm_kib_before_validation": {
+          "mean": 1828652,
+          "raw": [
+            1844504,
+            1812800
+          ],
+          "min": 1812800,
+          "max": 1844504
+        },
+        "child_sampled_rss_kib": {
+          "mean": 1809054,
+          "raw": [
+            1837244,
+            1780864
+          ],
+          "min": 1780864,
+          "max": 1837244
+        }
+      },
+      "phases": {
+        "BPE_INITIAL_COUNT_SECONDS": {
+          "mean": 5.493182951,
+          "raw": [
+            5.332948332,
+            5.65341757
+          ]
+        },
+        "BPE_PREPARE_SECONDS": {
+          "mean": 2.0166276639999996,
+          "raw": [
+            2.015583793,
+            2.017671535
+          ]
+        },
+        "BPE_APPLY_SECONDS": {
+          "mean": 0.1700555375,
+          "raw": [
+            0.170626341,
+            0.169484734
+          ]
+        },
+        "BPE_COMMIT_SECONDS": {
+          "mean": 2.394233285,
+          "raw": [
+            2.403410299,
+            2.385056271
+          ]
+        },
+        "BPE_DROP_SECONDS": {
+          "mean": 1.5416518865,
+          "raw": [
+            1.518425283,
+            1.56487849
+          ]
+        }
+      },
+      "models_identical": true,
+      "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1"
+    },
+    "fmt-zero-push": {
+      "metrics": {
+        "train_seconds": {
+          "mean": 15.3594431505,
+          "raw": [
+            14.928296832000001,
+            15.790589469
+          ],
+          "min": 14.928296832000001,
+          "max": 15.790589469
+        },
+        "train_cpu_seconds": {
+          "mean": 57.653753,
+          "raw": [
+            55.902646000000004,
+            59.40486
+          ],
+          "min": 55.902646000000004,
+          "max": 59.40486
+        },
+        "process_hwm_kib_before_validation": {
+          "mean": 1844922,
+          "raw": [
+            1859640,
+            1830204
+          ],
+          "min": 1830204,
+          "max": 1859640
+        },
+        "child_sampled_rss_kib": {
+          "mean": 1807450,
+          "raw": [
+            1815392,
+            1799508
+          ],
+          "min": 1799508,
+          "max": 1815392
+        }
+      },
+      "phases": {
+        "BPE_INITIAL_COUNT_SECONDS": {
+          "mean": 6.061227308,
+          "raw": [
+            5.657602499,
+            6.464852117
+          ]
+        },
+        "BPE_PREPARE_SECONDS": {
+          "mean": 1.9890084275,
+          "raw": [
+            2.025932493,
+            1.952084362
+          ]
+        },
+        "BPE_APPLY_SECONDS": {
+          "mean": 0.1672640265,
+          "raw": [
+            0.171235914,
+            0.163292139
+          ]
+        },
+        "BPE_COMMIT_SECONDS": {
+          "mean": 2.255134257,
+          "raw": [
+            2.310799779,
+            2.199468735
+          ]
+        },
+        "BPE_DROP_SECONDS": {
+          "mean": 2.0481872265,
+          "raw": [
+            1.890234409,
+            2.206140044
+          ]
+        }
+      },
+      "models_identical": true,
+      "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1"
+    },
+    "delta_seconds": 0.6881251455000008,
+    "delta_percent": 4.6902748973574715,
+    "measurement_cpu_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ]
+  }
+}
