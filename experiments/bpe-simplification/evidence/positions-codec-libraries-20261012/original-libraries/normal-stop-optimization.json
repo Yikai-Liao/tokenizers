@@ -1,0 +1,6 @@
+{
+  "reason": "Two rounds in both English cases and Chinese ByteLevel completed. User requests optimization with <=5% budget, so stop optional additional Chinese Whitespace matrix and prioritize optimization and perf.",
+  "completed_runs": 25,
+  "interrupted_case": "zh-whitespace-w1-r0-gimli",
+  "timestamp_utc": "2026-10-12T11:38:30Z"
+}

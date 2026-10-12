@@ -1,0 +1,13 @@
+{
+  "affinity": [
+    0,
+    1
+  ],
+  "allocator_environment": {},
+  "workers": "1 for Chinese, 6 for English; both limited to two CPUs",
+  "interleaving": "4 arms forward then reversed, 2 rounds",
+  "compiler_builds_finished": true,
+  "native_checks_finished": true,
+  "micro_final_rerun": "after builds and tests",
+  "micro_binary_sha256": "19a58fd84c826bbf06e29fc59b0dd26e455c3a37e03667562847a21f868b55f4"
+}

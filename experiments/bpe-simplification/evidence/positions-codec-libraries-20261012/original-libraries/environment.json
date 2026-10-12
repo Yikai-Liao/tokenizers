@@ -1,0 +1,11 @@
+{
+  "affinity": [
+    0,
+    1
+  ],
+  "allocator_environment": {},
+  "workers": "1 for Chinese, 6 for English; both limited to two CPUs",
+  "interleaving": "4 arms forward then reversed, 2 rounds",
+  "compiler_builds_finished": true,
+  "native_checks_finished": true
+}

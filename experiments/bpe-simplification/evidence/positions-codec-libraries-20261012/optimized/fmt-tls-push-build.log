@@ -1,0 +1,6 @@
+     Locking 2 packages to latest Rust 1.98.1 compatible versions
+      Adding leb128 v0.2.7
+      Adding leb128fmt v0.1.0
+   Compiling tk-train v0.1.0-dev.2 (/tmp/bpe-positions-encapsulation-measurement-20261012/tokenizers/tk-train)
+   Compiling bpe-bench-runner v0.1.0 (/tmp/bpe-positions-encapsulation-measurement-20261012/experiments/bpe-simplification/runner)
+    Finished `release` profile [optimized] target(s) in 34.40s

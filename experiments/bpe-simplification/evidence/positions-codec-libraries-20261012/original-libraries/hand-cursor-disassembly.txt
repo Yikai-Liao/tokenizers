@@ -1,0 +1,76 @@
+
+/tmp/bpe-positions-codec-libraries-results-20261012/hand-bin:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+00000000000f25c0 <<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next>:
+   f25c0:	53                   	push   %rbx
+   f25c1:	48 8b 57 08          	mov    0x8(%rdi),%rdx
+   f25c5:	48 85 d2             	test   %rdx,%rdx
+   f25c8:	74 78                	je     f2642 <<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next+0x82>
+   f25ca:	4c 8b 07             	mov    (%rdi),%r8
+   f25cd:	48 8b 47 18          	mov    0x18(%rdi),%rax
+   f25d1:	a8 7f                	test   $0x7f,%al
+   f25d3:	74 74                	je     f2649 <<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next+0x89>
+   f25d5:	4c 8d 4a ff          	lea    -0x1(%rdx),%r9
+   f25d9:	4d 8d 50 01          	lea    0x1(%r8),%r10
+   f25dd:	31 f6                	xor    %esi,%esi
+   f25df:	31 c9                	xor    %ecx,%ecx
+   f25e1:	66 66 66 66 66 66 2e 	data16 data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   f25e8:	0f 1f 84 00 00 00 00 
+   f25ef:	00 
+   f25f0:	49 89 f3             	mov    %rsi,%r11
+   f25f3:	41 0f b6 72 ff       	movzbl -0x1(%r10),%esi
+   f25f8:	89 f3                	mov    %esi,%ebx
+   f25fa:	83 e6 7f             	and    $0x7f,%esi
+   f25fd:	48 d3 e6             	shl    %cl,%rsi
+   f2600:	4c 09 de             	or     %r11,%rsi
+   f2603:	84 db                	test   %bl,%bl
+   f2605:	79 2a                	jns    f2631 <<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next+0x71>
+   f2607:	83 c1 07             	add    $0x7,%ecx
+   f260a:	49 ff c2             	inc    %r10
+   f260d:	49 83 c1 ff          	add    $0xffffffffffffffff,%r9
+   f2611:	72 dd                	jb     f25f0 <<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next+0x30>
+   f2613:	49 01 d0             	add    %rdx,%r8
+   f2616:	4c 89 07             	mov    %r8,(%rdi)
+   f2619:	48 c7 47 08 00 00 00 	movq   $0x0,0x8(%rdi)
+   f2620:	00 
+   f2621:	48 8d 15 48 5b 01 00 	lea    0x15b48(%rip),%rdx        # 108170 <bitcannon::classify::atom_tables::ATOM_TABLES+0x4298>
+   f2628:	31 ff                	xor    %edi,%edi
+   f262a:	31 f6                	xor    %esi,%esi
+   f262c:	e8 8a db f7 ff       	call   701bb <core::panicking::panic_bounds_check>
+   f2631:	4c 89 17             	mov    %r10,(%rdi)
+   f2634:	4c 89 4f 08          	mov    %r9,0x8(%rdi)
+   f2638:	48 03 77 10          	add    0x10(%rdi),%rsi
+   f263c:	48 89 77 10          	mov    %rsi,0x10(%rdi)
+   f2640:	eb 23                	jmp    f2665 <<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next+0xa5>
+   f2642:	31 c0                	xor    %eax,%eax
+   f2644:	48 89 f2             	mov    %rsi,%rdx
+   f2647:	5b                   	pop    %rbx
+   f2648:	c3                   	ret
+   f2649:	48 83 fa 07          	cmp    $0x7,%rdx
+   f264d:	76 27                	jbe    f2676 <<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next+0xb6>
+   f264f:	49 8b 30             	mov    (%r8),%rsi
+   f2652:	48 89 77 10          	mov    %rsi,0x10(%rdi)
+   f2656:	48 83 c2 f8          	add    $0xfffffffffffffff8,%rdx
+   f265a:	49 83 c0 08          	add    $0x8,%r8
+   f265e:	4c 89 07             	mov    %r8,(%rdi)
+   f2661:	48 89 57 08          	mov    %rdx,0x8(%rdi)
+   f2665:	48 ff c0             	inc    %rax
+   f2668:	48 89 47 18          	mov    %rax,0x18(%rdi)
+   f266c:	b8 01 00 00 00       	mov    $0x1,%eax
+   f2671:	48 89 f2             	mov    %rsi,%rdx
+   f2674:	5b                   	pop    %rbx
+   f2675:	c3                   	ret
+   f2676:	48 8d 0d 73 59 01 00 	lea    0x15973(%rip),%rcx        # 107ff0 <bitcannon::classify::atom_tables::ATOM_TABLES+0x4118>
+   f267d:	be 08 00 00 00       	mov    $0x8,%esi
+   f2682:	31 ff                	xor    %edi,%edi
+   f2684:	e8 97 ea f7 ff       	call   71120 <core::slice::index::slice_index_fail>
+   f2689:	cc                   	int3
+   f268a:	cc                   	int3
+   f268b:	cc                   	int3
+   f268c:	cc                   	int3
+   f268d:	cc                   	int3
+   f268e:	cc                   	int3
+   f268f:	cc                   	int3

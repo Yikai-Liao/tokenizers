@@ -1,0 +1,16 @@
+[
+  "taskset",
+  "-c",
+  "0-1",
+  "perf",
+  "stat",
+  "-x",
+  ";",
+  "-o",
+  "/tmp/bpe-positions-codec-optimized-results-20261012/perf-final/zh-bytelevel_regex-w1-r0-hand/stat.csv",
+  "-e",
+  "instructions:u,branches:u,branch-misses:u,cache-misses:u,task-clock",
+  "--",
+  "/tmp/bpe-positions-codec-optimized-results-20261012/hand-bin",
+  "/tmp/bpe-positions-codec-optimized-results-20261012/perf-final/zh-bytelevel_regex-w1-r0-hand/job.json"
+]

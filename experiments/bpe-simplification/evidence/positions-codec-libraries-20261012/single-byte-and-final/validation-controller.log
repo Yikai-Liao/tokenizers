@@ -1,0 +1,41 @@
+start en-whitespace-w1-r0-hand
+{"case": "en-whitespace-w1", "arm": "hand", "repeat": 0, "train_seconds": 2.26206313, "train_cpu_seconds": 2.2573459999999996, "child_sampled_rss_kib": 127836}
+start en-whitespace-w1-r0-fmt-zero-push
+{"case": "en-whitespace-w1", "arm": "fmt-zero-push", "repeat": 0, "train_seconds": 2.28680233, "train_cpu_seconds": 2.2849190000000004, "child_sampled_rss_kib": 123500}
+start en-whitespace-w1-r1-fmt-zero-push
+{"case": "en-whitespace-w1", "arm": "fmt-zero-push", "repeat": 1, "train_seconds": 2.5159241249999997, "train_cpu_seconds": 2.514172, "child_sampled_rss_kib": 123552}
+start en-whitespace-w1-r1-hand
+{"case": "en-whitespace-w1", "arm": "hand", "repeat": 1, "train_seconds": 2.204100501, "train_cpu_seconds": 2.2014440000000004, "child_sampled_rss_kib": 126628}
+start en-bytelevel_regex-w1-r0-hand
+{"case": "en-bytelevel_regex-w1", "arm": "hand", "repeat": 0, "train_seconds": 2.66117611, "train_cpu_seconds": 2.658413, "child_sampled_rss_kib": 141232}
+start en-bytelevel_regex-w1-r0-fmt-zero-push
+{"case": "en-bytelevel_regex-w1", "arm": "fmt-zero-push", "repeat": 0, "train_seconds": 2.650980611, "train_cpu_seconds": 2.646987, "child_sampled_rss_kib": 142608}
+start en-bytelevel_regex-w1-r1-fmt-zero-push
+{"case": "en-bytelevel_regex-w1", "arm": "fmt-zero-push", "repeat": 1, "train_seconds": 2.749189676, "train_cpu_seconds": 2.74667, "child_sampled_rss_kib": 141588}
+start en-bytelevel_regex-w1-r1-hand
+{"case": "en-bytelevel_regex-w1", "arm": "hand", "repeat": 1, "train_seconds": 2.463741756, "train_cpu_seconds": 2.461938, "child_sampled_rss_kib": 141796}
+start zh-whitespace-w1-r0-hand
+{"case": "zh-whitespace-w1", "arm": "hand", "repeat": 0, "train_seconds": 53.699435523, "train_cpu_seconds": 53.579617, "child_sampled_rss_kib": 1784588}
+start zh-whitespace-w1-r0-fmt-zero-push
+{"case": "zh-whitespace-w1", "arm": "fmt-zero-push", "repeat": 0, "train_seconds": 56.416195994, "train_cpu_seconds": 56.351531, "child_sampled_rss_kib": 1785660}
+start zh-whitespace-w1-r1-fmt-zero-push
+{"case": "zh-whitespace-w1", "arm": "fmt-zero-push", "repeat": 1, "train_seconds": 53.886797377, "train_cpu_seconds": 53.785681999999994, "child_sampled_rss_kib": 1789292}
+start zh-whitespace-w1-r1-hand
+{"case": "zh-whitespace-w1", "arm": "hand", "repeat": 1, "train_seconds": 50.739046298, "train_cpu_seconds": 50.650127999999995, "child_sampled_rss_kib": 1785684}
+start zh-whitespace-w6-r0-hand
+{"case": "zh-whitespace-w6", "arm": "hand", "repeat": 0, "train_seconds": 30.643948015, "train_cpu_seconds": 56.117672, "child_sampled_rss_kib": 1813416}
+start zh-whitespace-w6-r0-fmt-zero-push
+{"case": "zh-whitespace-w6", "arm": "fmt-zero-push", "repeat": 0, "train_seconds": 34.657637498, "train_cpu_seconds": 63.248658, "child_sampled_rss_kib": 1750788}
+start zh-whitespace-w6-r1-fmt-zero-push
+{"case": "zh-whitespace-w6", "arm": "fmt-zero-push", "repeat": 1, "train_seconds": 30.783072205, "train_cpu_seconds": 56.652474, "child_sampled_rss_kib": 1843220}
+start zh-whitespace-w6-r1-hand
+{"case": "zh-whitespace-w6", "arm": "hand", "repeat": 1, "train_seconds": 29.678284591, "train_cpu_seconds": 55.096884, "child_sampled_rss_kib": 1851252}
+start zh-bytelevel_regex-w6-r0-hand
+{"case": "zh-bytelevel_regex-w6", "arm": "hand", "repeat": 0, "train_seconds": 38.825487946, "train_cpu_seconds": 72.400048, "child_sampled_rss_kib": 2615248}
+start zh-bytelevel_regex-w6-r0-fmt-zero-push
+{"case": "zh-bytelevel_regex-w6", "arm": "fmt-zero-push", "repeat": 0, "train_seconds": 37.84972022, "train_cpu_seconds": 71.046839, "child_sampled_rss_kib": 2613180}
+start zh-bytelevel_regex-w6-r1-fmt-zero-push
+{"case": "zh-bytelevel_regex-w6", "arm": "fmt-zero-push", "repeat": 1, "train_seconds": 38.511258121, "train_cpu_seconds": 72.095798, "child_sampled_rss_kib": 2595136}
+start zh-bytelevel_regex-w6-r1-hand
+{"case": "zh-bytelevel_regex-w6", "arm": "hand", "repeat": 1, "train_seconds": 37.749399787, "train_cpu_seconds": 70.127644, "child_sampled_rss_kib": 2623196}
+Remaining case validation complete

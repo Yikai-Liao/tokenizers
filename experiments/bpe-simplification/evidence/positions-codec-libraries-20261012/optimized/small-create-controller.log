@@ -1,0 +1,3 @@
+Preparing worktree (new branch 'experiment/bpe-positions-codec-fmt-small-20261012')
+[experiment/bpe-positions-codec-fmt-small-20261012 a81b2416] perf(bpe): specialize library encoding for single-byte gaps
+ 1 file changed, 4 insertions(+)

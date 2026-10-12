@@ -1,0 +1,1188 @@
+[
+  {
+    "arm": "hand",
+    "event": "cpu-clock @ 199Hz dwarf4096",
+    "self_percentages_not_source_line_attribution": true,
+    "approx_sample_cpu_seconds": 76.326623625,
+    "stat": {
+      "instructions:u": {
+        "count": 235205511239.0,
+        "running_percent": 100.0
+      },
+      "branches:u": {
+        "count": 44750271801.0,
+        "running_percent": 100.0
+      },
+      "branch-misses:u": {
+        "count": 574099310.0,
+        "running_percent": 100.0
+      },
+      "cache-misses:u": {
+        "count": 1029727737.0,
+        "running_percent": 100.0
+      },
+      "task-clock": {
+        "count": 77053.5,
+        "running_percent": 100.0
+      }
+    },
+    "buckets": {
+      "writer": {
+        "percent": 0,
+        "approx_cpu_seconds": 0,
+        "symbols": []
+      },
+      "append": {
+        "percent": 0,
+        "approx_cpu_seconds": 0,
+        "symbols": []
+      },
+      "resize": {
+        "percent": 0.32,
+        "approx_cpu_seconds": 0.2442451956,
+        "symbols": [
+          "<smallvec::SmallVec<[u8; 16]>>::resize"
+        ]
+      },
+      "decoder": {
+        "percent": 2.01,
+        "approx_cpu_seconds": 1.5341651348624998,
+        "symbols": [
+          "<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next"
+        ]
+      },
+      "neighbors": {
+        "percent": 7.74,
+        "approx_cpu_seconds": 5.907680668575,
+        "symbols": [
+          "<tk_train::trainers::bpe::merge::Neighbors>::record"
+        ]
+      },
+      "memmove": {
+        "percent": 0,
+        "approx_cpu_seconds": 0,
+        "symbols": []
+      },
+      "memcpy": {
+        "percent": 0,
+        "approx_cpu_seconds": 0,
+        "symbols": []
+      }
+    },
+    "hot": [
+      {
+        "percent": 19.09,
+        "approx_cpu_seconds": 14.570752450012499,
+        "symbol": "rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::vec::DrainProducer<(usize, either::Either<core::iter::adapters::copied::Copied<core::slice::iter::Iter<u64>>, core::iter::adapters::take::Take<core::iter::adapters::flatten::FlatMap<core::slice::iter::Iter<tk_train::trainers::bpe::positions::Leaf>, tk_train::trainers::bpe::positions::codec::Cursor, tk_train::trainers::bpe::positions::read::{closure#0}>>>)>, rayon::iter::map_with::MapInitConsumer<rayon::iter::map::MapConsumer<rayon::iter::while_some::WhileSomeConsumer<rayon::iter::extend::ListVecConsumer>, <core::result::Result<_, _> as rayon::iter::FromParallelIterator<core::result::Result<_, _>>>::from_par_iter::ok<tk_train::trainers::bpe::merge::Job, alloc::boxed::Box<dyn core::error::Error + core::marker::Send + core::marker::Sync>>::{closure#0}>, <tk_train::trainers::bpe::merge::Directories as core::default::Default>::default, <tk_train::trainers::bpe::merge::Batch>::prepare::{closure#0}>>",
+        "raw_symbol": "_RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtB8_3vec13DrainProducerTjINtCsgWaKo2zc2Bp_6either6EitherINtNtNtNtCsgxBkk5gSRhY_4core4iter8adapters6copied6CopiedINtNtNtB2k_5slice4iter4IteryEEINtNtB2g_4take4TakeINtNtB2g_7flatten7FlatMapIB36_NtNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe9positions4LeafENtNtB4o_5codec6CursorNCNvB4o_4read0EEEEEINtNtB6_8map_with15MapInitConsumerINtNtB6_3map11MapConsumerINtNtB6_10while_some17WhileSomeConsumerNtNtB6_6extend15ListVecConsumerENCINvNvXs2_NtB8_6resultINtNtB2k_6result6ResultppEINtB6_20FromParallelIteratorIB8s_ppEE13from_par_iter2okNtNtB4q_5merge3JobINtNtCs6i54tJFfzR_5alloc5boxed3BoxDNtNtB2k_5error5ErrorNtNtB2k_6marker4SendNtBaX_4SyncEL_EE0ENvYNtB9M_11DirectoriesNtNtB2k_7default7Default7defaultNCNvMs2_B9M_NtB9M_5Batch7prepare0EEB4u_"
+      },
+      {
+        "percent": 9.95,
+        "approx_cpu_seconds": 7.594499050687499,
+        "symbol": "rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::vec::DrainProducer<core::ops::range::Range<usize>>, rayon::iter::map::MapConsumer<rayon::iter::map::MapConsumer<rayon::iter::while_some::WhileSomeConsumer<rayon::iter::extend::ListVecConsumer>, <core::result::Result<_, _> as rayon::iter::FromParallelIterator<core::result::Result<_, _>>>::from_par_iter::ok<alloc::vec::Vec<((u32, u32), tk_train::trainers::bpe::index::State<tk_train::trainers::bpe::positions::Positions>)>, alloc::boxed::Box<dyn core::error::Error + core::marker::Send + core::marker::Sync>>::{closure#0}>, <tk_train::trainers::bpe::index::PairIndex>::build::{closure#0}>>",
+        "raw_symbol": "_RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtB8_3vec13DrainProducerINtNtNtCsgxBkk5gSRhY_4core3ops5range5RangejEEINtNtB6_3map11MapConsumerIB2o_INtNtB6_10while_some17WhileSomeConsumerNtNtB6_6extend15ListVecConsumerENCINvNvXs2_NtB8_6resultINtNtB1L_6result6ResultppEINtB6_20FromParallelIteratorIB4o_ppEE13from_par_iter2okINtNtCs6i54tJFfzR_5alloc3vec3VecTTmmEINtNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe5index5StateNtNtB6m_9positions9PositionsEEEINtNtB5L_5boxed3BoxDNtNtB1L_5error5ErrorNtNtB1L_6marker4SendNtB8n_4SyncEL_EE0ENCNvMs3_B6k_NtB6k_9PairIndex5build0EEB6q_"
+      },
+      {
+        "percent": 7.83,
+        "approx_cpu_seconds": 5.976374629837499,
+        "symbol": "<either::Either<core::iter::adapters::filter_map::FilterMap<core::str::iter::Chars, <tk_train::trainers::bpe::vocabulary::InitialTokenIds>::symbols::{closure#0}>, core::iter::adapters::filter_map::FilterMap<core::str::iter::CharIndices, <tk_train::trainers::bpe::vocabulary::InitialTokenIds>::symbols::{closure#1}>> as core::iter::traits::iterator::Iterator>::next",
+        "raw_symbol": "_RNvXs2_NtCsgWaKo2zc2Bp_6either8iteratorINtB7_6EitherINtNtNtNtCsgxBkk5gSRhY_4core4iter8adapters10filter_map9FilterMapNtNtNtBX_3str4iter5CharsNCNvMs0_NtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe10vocabularyNtB2m_15InitialTokenIds7symbols0EIBP_NtB1S_11CharIndicesNCB2g_s_0EENtNtNtBV_6traits8iterator8Iterator4nextB2s_"
+      },
+      {
+        "percent": 7.74,
+        "approx_cpu_seconds": 5.907680668575,
+        "symbol": "<tk_train::trainers::bpe::merge::Neighbors>::record",
+        "raw_symbol": "_RNvMs1_NtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record"
+      },
+      {
+        "percent": 5.15,
+        "approx_cpu_seconds": 3.9308211166875004,
+        "symbol": "rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::slice::IterMutProducer<tk_train::trainers::bpe::index::Shard>, rayon::iter::filter::FilterConsumer<rayon::iter::map::MapConsumer<rayon::iter::map::MapConsumer<rayon::iter::while_some::WhileSomeConsumer<rayon::iter::extend::ListVecConsumer>, <core::result::Result<_, _> as rayon::iter::FromParallelIterator<core::result::Result<_, _>>>::from_par_iter::ok<alloc::vec::Vec<tk_train::trainers::bpe::index::Candidate>, alloc::boxed::Box<dyn core::error::Error + core::marker::Send + core::marker::Sync>>::{closure#0}>, <tk_train::trainers::bpe::index::PairIndex>::commit::{closure#1}>, <tk_train::trainers::bpe::index::PairIndex>::commit::{closure#0}>>",
+        "raw_symbol": "_RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtB8_5slice15IterMutProducerNtNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe5index5ShardEINtNtB6_6filter14FilterConsumerINtNtB6_3map11MapConsumerIB39_INtNtB6_10while_some17WhileSomeConsumerNtNtB6_6extend15ListVecConsumerENCINvNvXs2_NtB8_6resultINtNtCsgxBkk5gSRhY_4core6result6ResultppEINtB6_20FromParallelIteratorIB59_ppEE13from_par_iter2okINtNtCs6i54tJFfzR_5alloc3vec3VecNtB1K_9CandidateEINtNtB6L_5boxed3BoxDNtNtB5d_5error5ErrorNtNtB5d_6marker4SendNtB89_4SyncEL_EE0ENCNvMs3_B1K_NtB1K_9PairIndex6commits_0ENCB8L_0EEB1Q_"
+      },
+      {
+        "percent": 3.96,
+        "approx_cpu_seconds": 3.02253429555,
+        "symbol": "rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::vec::DrainProducer<tk_train::trainers::bpe::merge::Job>, rayon::iter::map::MapConsumer<rayon::iter::collect::consumer::CollectConsumer<alloc::vec::Vec<tk_train::trainers::bpe::merge::Change<tk_train::trainers::bpe::positions::Positions>>>, <tk_train::trainers::bpe::BpeTrainer>::merge_next::{closure#1}>>",
+        "raw_symbol": "_RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtB8_3vec13DrainProducerNtNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe5merge3JobEINtNtB6_3map11MapConsumerINtNtNtB6_7collect8consumer15CollectConsumerINtNtCs6i54tJFfzR_5alloc3vec3VecINtB1G_6ChangeNtNtB1I_9positions9PositionsEEENCNvMB1G_NtB1I_10BpeTrainer10merge_nexts_0EEB1M_"
+      },
+      {
+        "percent": 3.32,
+        "approx_cpu_seconds": 2.53404390435,
+        "symbol": "rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::slice::chunks::ChunksProducer<&compact_str::CompactString>, rayon::iter::map::MapConsumer<rayon::iter::fold::FoldConsumer<rayon::iter::reduce::ReduceConsumer<rayon::iter::ParallelIterator::reduce_with::opt_reduce<fixedbitset::FixedBitSet, &tk_train::trainers::bpe::vocabulary::observed_characters::{closure#1}>::{closure#0}, <core::option::Option<fixedbitset::FixedBitSet> as core::default::Default>::default>, <core::option::Option<fixedbitset::FixedBitSet> as core::default::Default>::default, rayon::iter::ParallelIterator::reduce_with::opt_fold<fixedbitset::FixedBitSet, &tk_train::trainers::bpe::vocabulary::observed_characters::{closure#1}>::{closure#0}>, tk_train::trainers::bpe::vocabulary::observed_characters::{closure#0}>>",
+        "raw_symbol": "_RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtNtB8_5slice6chunks14ChunksProducerRNtCsjYadAtXBUws_11compact_str13CompactStringEINtNtB6_3map11MapConsumerINtNtB6_4fold12FoldConsumerINtNtB6_6reduce14ReduceConsumerNCINvNvNtB6_16ParallelIterator11reduce_with10opt_reduceNtCsjiVPyUsOBU2_11fixedbitset11FixedBitSetRNCNvNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe10vocabulary19observed_characterss_0E0NvYINtNtCsgxBkk5gSRhY_4core6option6OptionB4O_ENtNtB6Z_7default7Default7defaultEB6R_NCINvB40_8opt_foldB4O_B5u_E0ENCB5x_0EEB5F_"
+      },
+      {
+        "percent": 3.16,
+        "approx_cpu_seconds": 2.41192130655,
+        "symbol": "<serde_json::read::IoRead<std::io::buffered::bufreader::BufReader<std::fs::File>> as serde_json::read::Read>::parse_str",
+        "raw_symbol": "_RNvXs2_NtCsbY3TsJcw1Ex_10serde_json4readINtB5_6IoReadINtNtNtNtCs9k3SxhrAWiO_3std2io8buffered9bufreader9BufReaderNtNtBY_2fs4FileEENtB5_4Read9parse_strCsaeB24m0Oj7J_16bpe_bench_runner"
+      },
+      {
+        "percent": 2.69,
+        "approx_cpu_seconds": 2.0531861755125,
+        "symbol": "<tk_train::trainers::bpe::merge::Neighbors>::group",
+        "raw_symbol": "_RNvMs1_NtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe5mergeNtB5_9Neighbors5group"
+      },
+      {
+        "percent": 2.26,
+        "approx_cpu_seconds": 1.7249816939249998,
+        "symbol": "core::slice::sort::stable::quicksort::quicksort::<((usize, (u32, u32)), u64, tk_train::trainers::bpe::positions::Positions), <[((usize, (u32, u32)), u64, tk_train::trainers::bpe::positions::Positions)]>::sort_by_key<(usize, (u32, u32)), <tk_train::trainers::bpe::index::Shard>::commit::{closure#0}>::{closure#0}>",
+        "raw_symbol": "_RINvNtNtNtNtCsgxBkk5gSRhY_4core5slice4sort6stable9quicksort9quicksortTTjTmmEEyNtNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe9positions9PositionsENCINvMNtCs6i54tJFfzR_5alloc5sliceSB15_11sort_by_keyB16_NCNvMs5_NtB1i_5indexNtB3i_5Shard6commit0E0EB1m_"
+      },
+      {
+        "percent": 2.03,
+        "approx_cpu_seconds": 1.5494304595875,
+        "symbol": "cfree",
+        "raw_symbol": "cfree"
+      },
+      {
+        "percent": 2.01,
+        "approx_cpu_seconds": 1.5341651348624998,
+        "symbol": "<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next",
+        "raw_symbol": "_RNvXs_NtNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe9positions5codecNtB4_6CursorNtNtNtNtCsgxBkk5gSRhY_4core4iter6traits8iterator8Iterator4next"
+      },
+      {
+        "percent": 1.89,
+        "approx_cpu_seconds": 1.4425731865125,
+        "symbol": "rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::iter::enumerate::EnumerateProducer<rayon::slice::IterProducer<(&compact_str::CompactString, &u64)>>, rayon::iter::for_each::ForEachConsumer<<tk_train::trainers::bpe::corpus::CorpusPlan>::materialize::{closure#0}>>",
+        "raw_symbol": "_RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtB6_9enumerate17EnumerateProducerINtNtB8_5slice12IterProducerTRNtCsjYadAtXBUws_11compact_str13CompactStringRyEEEINtNtB6_8for_each15ForEachConsumerNCNvMs_NtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe6corpusNtB3K_10CorpusPlan11materialize0EEB3Q_"
+      },
+      {
+        "percent": 1.84,
+        "approx_cpu_seconds": 1.4044098747,
+        "symbol": "<ahash::random_state::RandomState as core::hash::BuildHasher>::hash_one::<&compact_str::CompactString>",
+        "raw_symbol": "_RINvYNtNtCshhlmns78w2N_5ahash12random_state11RandomStateNtNtCsgxBkk5gSRhY_4core4hash11BuildHasher8hash_oneRNtCsjYadAtXBUws_11compact_str13CompactStringECsaeB24m0Oj7J_16bpe_bench_runner"
+      },
+      {
+        "percent": 1.65,
+        "approx_cpu_seconds": 1.2593892898124999,
+        "symbol": "clear_page_erms",
+        "raw_symbol": "clear_page_erms"
+      },
+      {
+        "percent": 1.63,
+        "approx_cpu_seconds": 1.2441239650875,
+        "symbol": "core::str::count::do_count_chars",
+        "raw_symbol": "_RNvNtNtCsgxBkk5gSRhY_4core3str5count14do_count_chars"
+      },
+      {
+        "percent": 1.59,
+        "approx_cpu_seconds": 1.2135933156375,
+        "symbol": "bpe_bench_runner::core::run",
+        "raw_symbol": "_RNvNtCsaeB24m0Oj7J_16bpe_bench_runner4core3run"
+      },
+      {
+        "percent": 1.37,
+        "approx_cpu_seconds": 1.0456747436625,
+        "symbol": "<tk_train::trainers::bpe::BpeTrainer>::merge_next",
+        "raw_symbol": "_RNvMNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe5mergeNtB4_10BpeTrainer10merge_next"
+      },
+      {
+        "percent": 1.36,
+        "approx_cpu_seconds": 1.0380420813,
+        "symbol": "<tk_train::trainers::bpe::positions::Leaf>::reserve",
+        "raw_symbol": "_RNvMs0_NtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe9positionsNtB5_4Leaf7reserve"
+      },
+      {
+        "percent": 1.36,
+        "approx_cpu_seconds": 1.0380420813,
+        "symbol": "serde_json::read::next_or_eof::<serde_json::read::IoRead<std::io::buffered::bufreader::BufReader<std::fs::File>>>",
+        "raw_symbol": "_RINvNtCsbY3TsJcw1Ex_10serde_json4read11next_or_eofINtB2_6IoReadINtNtNtNtCs9k3SxhrAWiO_3std2io8buffered9bufreader9BufReaderNtNtB18_2fs4FileEEECsaeB24m0Oj7J_16bpe_bench_runner"
+      },
+      {
+        "percent": 1.04,
+        "approx_cpu_seconds": 0.7937968857,
+        "symbol": "<hashbrown::map::HashMap<(u32, u32), u64, ahash::random_state::RandomState>>::insert",
+        "raw_symbol": "_RNvMs1_NtCsfBDUjroi3FF_9hashbrown3mapINtB5_7HashMapTmmEyNtNtCshhlmns78w2N_5ahash12random_state11RandomStateE6insertCsgOOEGSQf085_8tk_train"
+      },
+      {
+        "percent": 0.96,
+        "approx_cpu_seconds": 0.7327355868,
+        "symbol": "<either::Either<core::iter::adapters::copied::Copied<core::slice::iter::Iter<u64>>, core::iter::adapters::take::Take<core::iter::adapters::flatten::FlatMap<core::slice::iter::Iter<tk_train::trainers::bpe::positions::Leaf>, tk_train::trainers::bpe::positions::codec::Cursor, tk_train::trainers::bpe::positions::read::{closure#0}>>> as core::iter::traits::iterator::Iterator>::next",
+        "raw_symbol": "_RNvXs2_NtCsgWaKo2zc2Bp_6either8iteratorINtB7_6EitherINtNtNtNtCsgxBkk5gSRhY_4core4iter8adapters6copied6CopiedINtNtNtBX_5slice4iter4IteryEEINtNtBT_4take4TakeINtNtBT_7flatten7FlatMapIB1J_NtNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe9positions4LeafENtNtB2Y_5codec6CursorNCNvB2Y_4read0EEENtNtNtBV_6traits8iterator8Iterator4nextB34_"
+      },
+      {
+        "percent": 0.94,
+        "approx_cpu_seconds": 0.717470262075,
+        "symbol": "realloc",
+        "raw_symbol": "realloc"
+      },
+      {
+        "percent": 0.82,
+        "approx_cpu_seconds": 0.6258783137249999,
+        "symbol": "0x0000000000172dc9",
+        "raw_symbol": "0x0000000000172dc9"
+      },
+      {
+        "percent": 0.8,
+        "approx_cpu_seconds": 0.6106129889999999,
+        "symbol": "core::str::converts::from_utf8",
+        "raw_symbol": "_RNvNtNtCsgxBkk5gSRhY_4core3str8converts9from_utf8"
+      },
+      {
+        "percent": 0.64,
+        "approx_cpu_seconds": 0.4884903912,
+        "symbol": "0x00000000000a05cc",
+        "raw_symbol": "0x00000000000a05cc"
+      },
+      {
+        "percent": 0.61,
+        "approx_cpu_seconds": 0.46559240411249997,
+        "symbol": "<tk_train::trainers::bpe::positions::Leaf>::push_restart",
+        "raw_symbol": "_RNvMs0_NtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe9positionsNtB5_4Leaf12push_restart"
+      },
+      {
+        "percent": 0.57,
+        "approx_cpu_seconds": 0.4350617546624999,
+        "symbol": "malloc",
+        "raw_symbol": "malloc"
+      },
+      {
+        "percent": 0.53,
+        "approx_cpu_seconds": 0.40453110521249996,
+        "symbol": "rep_movs_alternative",
+        "raw_symbol": "rep_movs_alternative"
+      },
+      {
+        "percent": 0.46,
+        "approx_cpu_seconds": 0.351102468675,
+        "symbol": "<dary_heap::Hole<tk_train::trainers::bpe::index::Candidate>>::max_sibling::<8>",
+        "raw_symbol": "_RINvMsb_Cs788dPaxphg4_9dary_heapINtB6_4HoleNtNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe5index9CandidateE11max_siblingKj8_EBN_"
+      },
+      {
+        "percent": 0.4,
+        "approx_cpu_seconds": 0.30530649449999997,
+        "symbol": "rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::slice::IterProducer<(&compact_str::CompactString, &u64)>, rayon::iter::map::MapConsumer<rayon::iter::collect::consumer::CollectConsumer<usize>, <tk_train::trainers::bpe::corpus::CorpusPlan>::build::{closure#1}>>",
+        "raw_symbol": "_RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtB8_5slice12IterProducerTRNtCsjYadAtXBUws_11compact_str13CompactStringRyEEINtNtB6_3map11MapConsumerINtNtNtB6_7collect8consumer15CollectConsumerjENCNvMs_NtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe6corpusNtB3J_10CorpusPlan5builds_0EEB3P_"
+      },
+      {
+        "percent": 0.4,
+        "approx_cpu_seconds": 0.30530649449999997,
+        "symbol": "do_user_addr_fault",
+        "raw_symbol": "do_user_addr_fault"
+      },
+      {
+        "percent": 0.32,
+        "approx_cpu_seconds": 0.2442451956,
+        "symbol": "<serde_json::de::SeqAccess<_> as serde_core::de::SeqAccess>::next_element_seed::has_next_element::<serde_json::read::IoRead<std::io::buffered::bufreader::BufReader<std::fs::File>>>",
+        "raw_symbol": "_RINvNvXs7_NtCsbY3TsJcw1Ex_10serde_json2deINtB8_9SeqAccesspENtNtCsiPp1x5ZMK5J_10serde_core2de9SeqAccess17next_element_seed16has_next_elementINtNtBa_4read6IoReadINtNtNtNtCs9k3SxhrAWiO_3std2io8buffered9bufreader9BufReaderNtNtB2G_2fs4FileEEECsaeB24m0Oj7J_16bpe_bench_runner"
+      },
+      {
+        "percent": 0.32,
+        "approx_cpu_seconds": 0.2442451956,
+        "symbol": "<smallvec::SmallVec<[u8; 16]>>::resize",
+        "raw_symbol": "_RNvMse_Cs7hyLsilViXN_8smallvecINtB5_8SmallVecAhj10_E6resizeCsgOOEGSQf085_8tk_train"
+      }
+    ]
+  },
+  {
+    "arm": "gimli",
+    "event": "cpu-clock @ 199Hz dwarf4096",
+    "self_percentages_not_source_line_attribution": true,
+    "approx_sample_cpu_seconds": 94.316571125,
+    "stat": {
+      "instructions:u": {
+        "count": 282592968628.0,
+        "running_percent": 100.0
+      },
+      "branches:u": {
+        "count": 55237469562.0,
+        "running_percent": 100.0
+      },
+      "branch-misses:u": {
+        "count": 1514173313.0,
+        "running_percent": 100.0
+      },
+      "cache-misses:u": {
+        "count": 1038033404.0,
+        "running_percent": 100.0
+      },
+      "task-clock": {
+        "count": 94989.25,
+        "running_percent": 100.0
+      }
+    },
+    "buckets": {
+      "writer": {
+        "percent": 12.77,
+        "approx_cpu_seconds": 12.0442261326625,
+        "symbols": [
+          "leb128::write::unsigned::<smallvec::SmallVec<[u8; 16]>>"
+        ]
+      },
+      "append": {
+        "percent": 0,
+        "approx_cpu_seconds": 0,
+        "symbols": []
+      },
+      "resize": {
+        "percent": 0,
+        "approx_cpu_seconds": 0,
+        "symbols": []
+      },
+      "decoder": {
+        "percent": 1.72,
+        "approx_cpu_seconds": 1.6222450233499999,
+        "symbols": [
+          "<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next"
+        ]
+      },
+      "neighbors": {
+        "percent": 4.93,
+        "approx_cpu_seconds": 4.649806956462499,
+        "symbols": [
+          "<tk_train::trainers::bpe::merge::Neighbors>::record"
+        ]
+      },
+      "memmove": {
+        "percent": 0,
+        "approx_cpu_seconds": 0,
+        "symbols": []
+      },
+      "memcpy": {
+        "percent": 0,
+        "approx_cpu_seconds": 0,
+        "symbols": []
+      }
+    },
+    "hot": [
+      {
+        "percent": 16.46,
+        "approx_cpu_seconds": 15.524507607175002,
+        "symbol": "rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::vec::DrainProducer<(usize, either::Either<core::iter::adapters::copied::Copied<core::slice::iter::Iter<u64>>, core::iter::adapters::take::Take<core::iter::adapters::flatten::FlatMap<core::slice::iter::Iter<tk_train::trainers::bpe::positions::Leaf>, tk_train::trainers::bpe::positions::codec::Cursor, tk_train::trainers::bpe::positions::read::{closure#0}>>>)>, rayon::iter::map_with::MapInitConsumer<rayon::iter::map::MapConsumer<rayon::iter::while_some::WhileSomeConsumer<rayon::iter::extend::ListVecConsumer>, <core::result::Result<_, _> as rayon::iter::FromParallelIterator<core::result::Result<_, _>>>::from_par_iter::ok<tk_train::trainers::bpe::merge::Job, alloc::boxed::Box<dyn core::error::Error + core::marker::Send + core::marker::Sync>>::{closure#0}>, <tk_train::trainers::bpe::merge::Directories as core::default::Default>::default, <tk_train::trainers::bpe::merge::Batch>::prepare::{closure#0}>>",
+        "raw_symbol": "_RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtB8_3vec13DrainProducerTjINtCsgWaKo2zc2Bp_6either6EitherINtNtNtNtCsgxBkk5gSRhY_4core4iter8adapters6copied6CopiedINtNtNtB2k_5slice4iter4IteryEEINtNtB2g_4take4TakeINtNtB2g_7flatten7FlatMapIB36_NtNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe9positions4LeafENtNtB4o_5codec6CursorNCNvB4o_4read0EEEEEINtNtB6_8map_with15MapInitConsumerINtNtB6_3map11MapConsumerINtNtB6_10while_some17WhileSomeConsumerNtNtB6_6extend15ListVecConsumerENCINvNvXs2_NtB8_6resultINtNtB2k_6result6ResultppEINtB6_20FromParallelIteratorIB8s_ppEE13from_par_iter2okNtNtB4q_5merge3JobINtNtCs6i54tJFfzR_5alloc5boxed3BoxDNtNtB2k_5error5ErrorNtNtB2k_6marker4SendNtBaX_4SyncEL_EE0ENvYNtB9M_11DirectoriesNtNtB2k_7default7Default7defaultNCNvMs2_B9M_NtB9M_5Batch7prepare0EEB4u_"
+      },
+      {
+        "percent": 12.77,
+        "approx_cpu_seconds": 12.0442261326625,
+        "symbol": "leb128::write::unsigned::<smallvec::SmallVec<[u8; 16]>>",
+        "raw_symbol": "_RINvNtCs7ecYkDN12z6_6leb1285write8unsignedINtCs7hyLsilViXN_8smallvec8SmallVecAhj10_EECsgOOEGSQf085_8tk_train"
+      },
+      {
+        "percent": 9.51,
+        "approx_cpu_seconds": 8.969505913987499,
+        "symbol": "rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::vec::DrainProducer<core::ops::range::Range<usize>>, rayon::iter::map::MapConsumer<rayon::iter::map::MapConsumer<rayon::iter::while_some::WhileSomeConsumer<rayon::iter::extend::ListVecConsumer>, <core::result::Result<_, _> as rayon::iter::FromParallelIterator<core::result::Result<_, _>>>::from_par_iter::ok<alloc::vec::Vec<((u32, u32), tk_train::trainers::bpe::index::State<tk_train::trainers::bpe::positions::Positions>)>, alloc::boxed::Box<dyn core::error::Error + core::marker::Send + core::marker::Sync>>::{closure#0}>, <tk_train::trainers::bpe::index::PairIndex>::build::{closure#0}>>",
+        "raw_symbol": "_RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtB8_3vec13DrainProducerINtNtNtCsgxBkk5gSRhY_4core3ops5range5RangejEEINtNtB6_3map11MapConsumerIB2o_INtNtB6_10while_some17WhileSomeConsumerNtNtB6_6extend15ListVecConsumerENCINvNvXs2_NtB8_6resultINtNtB1L_6result6ResultppEINtB6_20FromParallelIteratorIB4o_ppEE13from_par_iter2okINtNtCs6i54tJFfzR_5alloc3vec3VecTTmmEINtNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe5index5StateNtNtB6m_9positions9PositionsEEEINtNtB5L_5boxed3BoxDNtNtB1L_5error5ErrorNtNtB1L_6marker4SendNtB8n_4SyncEL_EE0ENCNvMs3_B6k_NtB6k_9PairIndex5build0EEB6q_"
+      },
+      {
+        "percent": 6.37,
+        "approx_cpu_seconds": 6.0079655806625,
+        "symbol": "<either::Either<core::iter::adapters::filter_map::FilterMap<core::str::iter::Chars, <tk_train::trainers::bpe::vocabulary::InitialTokenIds>::symbols::{closure#0}>, core::iter::adapters::filter_map::FilterMap<core::str::iter::CharIndices, <tk_train::trainers::bpe::vocabulary::InitialTokenIds>::symbols::{closure#1}>> as core::iter::traits::iterator::Iterator>::next",
+        "raw_symbol": "_RNvXs2_NtCsgWaKo2zc2Bp_6either8iteratorINtB7_6EitherINtNtNtNtCsgxBkk5gSRhY_4core4iter8adapters10filter_map9FilterMapNtNtNtBX_3str4iter5CharsNCNvMs0_NtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe10vocabularyNtB2m_15InitialTokenIds7symbols0EIBP_NtB1S_11CharIndicesNCB2g_s_0EENtNtNtBV_6traits8iterator8Iterator4nextB2s_"
+      },
+      {
+        "percent": 4.93,
+        "approx_cpu_seconds": 4.649806956462499,
+        "symbol": "<tk_train::trainers::bpe::merge::Neighbors>::record",
+        "raw_symbol": "_RNvMs1_NtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record"
+      },
+      {
+        "percent": 3.77,
+        "approx_cpu_seconds": 3.5557347314124996,
+        "symbol": "rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::slice::IterMutProducer<tk_train::trainers::bpe::index::Shard>, rayon::iter::filter::FilterConsumer<rayon::iter::map::MapConsumer<rayon::iter::map::MapConsumer<rayon::iter::while_some::WhileSomeConsumer<rayon::iter::extend::ListVecConsumer>, <core::result::Result<_, _> as rayon::iter::FromParallelIterator<core::result::Result<_, _>>>::from_par_iter::ok<alloc::vec::Vec<tk_train::trainers::bpe::index::Candidate>, alloc::boxed::Box<dyn core::error::Error + core::marker::Send + core::marker::Sync>>::{closure#0}>, <tk_train::trainers::bpe::index::PairIndex>::commit::{closure#1}>, <tk_train::trainers::bpe::index::PairIndex>::commit::{closure#0}>>",
+        "raw_symbol": "_RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtB8_5slice15IterMutProducerNtNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe5index5ShardEINtNtB6_6filter14FilterConsumerINtNtB6_3map11MapConsumerIB39_INtNtB6_10while_some17WhileSomeConsumerNtNtB6_6extend15ListVecConsumerENCINvNvXs2_NtB8_6resultINtNtCsgxBkk5gSRhY_4core6result6ResultppEINtB6_20FromParallelIteratorIB59_ppEE13from_par_iter2okINtNtCs6i54tJFfzR_5alloc3vec3VecNtB1K_9CandidateEINtNtB6L_5boxed3BoxDNtNtB5d_5error5ErrorNtNtB5d_6marker4SendNtB89_4SyncEL_EE0ENCNvMs3_B1K_NtB1K_9PairIndex6commits_0ENCB8L_0EEB1Q_"
+      },
+      {
+        "percent": 3.24,
+        "approx_cpu_seconds": 3.05585690445,
+        "symbol": "rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::vec::DrainProducer<tk_train::trainers::bpe::merge::Job>, rayon::iter::map::MapConsumer<rayon::iter::collect::consumer::CollectConsumer<alloc::vec::Vec<tk_train::trainers::bpe::merge::Change<tk_train::trainers::bpe::positions::Positions>>>, <tk_train::trainers::bpe::BpeTrainer>::merge_next::{closure#1}>>",
+        "raw_symbol": "_RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtB8_3vec13DrainProducerNtNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe5merge3JobEINtNtB6_3map11MapConsumerINtNtNtB6_7collect8consumer15CollectConsumerINtNtCs6i54tJFfzR_5alloc3vec3VecINtB1G_6ChangeNtNtB1I_9positions9PositionsEEENCNvMB1G_NtB1I_10BpeTrainer10merge_nexts_0EEB1M_"
+      },
+      {
+        "percent": 2.32,
+        "approx_cpu_seconds": 2.1881444501,
+        "symbol": "<serde_json::read::IoRead<std::io::buffered::bufreader::BufReader<std::fs::File>> as serde_json::read::Read>::parse_str",
+        "raw_symbol": "_RNvXs2_NtCsbY3TsJcw1Ex_10serde_json4readINtB5_6IoReadINtNtNtNtCs9k3SxhrAWiO_3std2io8buffered9bufreader9BufReaderNtNtBY_2fs4FileEENtB5_4Read9parse_strCsaeB24m0Oj7J_16bpe_bench_runner"
+      },
+      {
+        "percent": 2.25,
+        "approx_cpu_seconds": 2.1221228503125,
+        "symbol": "0x0000000000172a80",
+        "raw_symbol": "0x0000000000172a80"
+      },
+      {
+        "percent": 2.16,
+        "approx_cpu_seconds": 2.0372379363000004,
+        "symbol": "rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::slice::chunks::ChunksProducer<&compact_str::CompactString>, rayon::iter::map::MapConsumer<rayon::iter::fold::FoldConsumer<rayon::iter::reduce::ReduceConsumer<rayon::iter::ParallelIterator::reduce_with::opt_reduce<fixedbitset::FixedBitSet, &tk_train::trainers::bpe::vocabulary::observed_characters::{closure#1}>::{closure#0}, <core::option::Option<fixedbitset::FixedBitSet> as core::default::Default>::default>, <core::option::Option<fixedbitset::FixedBitSet> as core::default::Default>::default, rayon::iter::ParallelIterator::reduce_with::opt_fold<fixedbitset::FixedBitSet, &tk_train::trainers::bpe::vocabulary::observed_characters::{closure#1}>::{closure#0}>, tk_train::trainers::bpe::vocabulary::observed_characters::{closure#0}>>",
+        "raw_symbol": "_RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtNtB8_5slice6chunks14ChunksProducerRNtCsjYadAtXBUws_11compact_str13CompactStringEINtNtB6_3map11MapConsumerINtNtB6_4fold12FoldConsumerINtNtB6_6reduce14ReduceConsumerNCINvNvNtB6_16ParallelIterator11reduce_with10opt_reduceNtCsjiVPyUsOBU2_11fixedbitset11FixedBitSetRNCNvNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe10vocabulary19observed_characterss_0E0NvYINtNtCsgxBkk5gSRhY_4core6option6OptionB4O_ENtNtB6Z_7default7Default7defaultEB6R_NCINvB40_8opt_foldB4O_B5u_E0ENCB5x_0EEB5F_"
+      },
+      {
+        "percent": 2.02,
+        "approx_cpu_seconds": 1.905194736725,
+        "symbol": "cfree",
+        "raw_symbol": "cfree"
+      },
+      {
+        "percent": 1.96,
+        "approx_cpu_seconds": 1.8486047940499999,
+        "symbol": "<tk_train::trainers::bpe::merge::Neighbors>::group",
+        "raw_symbol": "_RNvMs1_NtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe5mergeNtB5_9Neighbors5group"
+      },
+      {
+        "percent": 1.86,
+        "approx_cpu_seconds": 1.754288222925,
+        "symbol": "<ahash::random_state::RandomState as core::hash::BuildHasher>::hash_one::<&compact_str::CompactString>",
+        "raw_symbol": "_RINvYNtNtCshhlmns78w2N_5ahash12random_state11RandomStateNtNtCsgxBkk5gSRhY_4core4hash11BuildHasher8hash_oneRNtCsjYadAtXBUws_11compact_str13CompactStringECsaeB24m0Oj7J_16bpe_bench_runner"
+      },
+      {
+        "percent": 1.72,
+        "approx_cpu_seconds": 1.6222450233499999,
+        "symbol": "0x0000000000172ac0",
+        "raw_symbol": "0x0000000000172ac0"
+      },
+      {
+        "percent": 1.72,
+        "approx_cpu_seconds": 1.6222450233499999,
+        "symbol": "<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next",
+        "raw_symbol": "_RNvXs_NtNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe9positions5codecNtB4_6CursorNtNtNtNtCsgxBkk5gSRhY_4core4iter6traits8iterator8Iterator4next"
+      },
+      {
+        "percent": 1.71,
+        "approx_cpu_seconds": 1.6128133662374997,
+        "symbol": "bpe_bench_runner::core::run",
+        "raw_symbol": "_RNvNtCsaeB24m0Oj7J_16bpe_bench_runner4core3run"
+      },
+      {
+        "percent": 1.64,
+        "approx_cpu_seconds": 1.54679176645,
+        "symbol": "core::slice::sort::stable::quicksort::quicksort::<((usize, (u32, u32)), u64, tk_train::trainers::bpe::positions::Positions), <[((usize, (u32, u32)), u64, tk_train::trainers::bpe::positions::Positions)]>::sort_by_key<(usize, (u32, u32)), <tk_train::trainers::bpe::index::Shard>::commit::{closure#0}>::{closure#0}>",
+        "raw_symbol": "_RINvNtNtNtNtCsgxBkk5gSRhY_4core5slice4sort6stable9quicksort9quicksortTTjTmmEEyNtNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe9positions9PositionsENCINvMNtCs6i54tJFfzR_5alloc5sliceSB15_11sort_by_keyB16_NCNvMs5_NtB1i_5indexNtB3i_5Shard6commit0E0EB1m_"
+      },
+      {
+        "percent": 1.58,
+        "approx_cpu_seconds": 1.4902018237749999,
+        "symbol": "rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::iter::enumerate::EnumerateProducer<rayon::slice::IterProducer<(&compact_str::CompactString, &u64)>>, rayon::iter::for_each::ForEachConsumer<<tk_train::trainers::bpe::corpus::CorpusPlan>::materialize::{closure#0}>>",
+        "raw_symbol": "_RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtB6_9enumerate17EnumerateProducerINtNtB8_5slice12IterProducerTRNtCsjYadAtXBUws_11compact_str13CompactStringRyEEEINtNtB6_8for_each15ForEachConsumerNCNvMs_NtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe6corpusNtB3K_10CorpusPlan11materialize0EEB3Q_"
+      },
+      {
+        "percent": 1.35,
+        "approx_cpu_seconds": 1.2732737101875,
+        "symbol": "clear_page_erms",
+        "raw_symbol": "clear_page_erms"
+      },
+      {
+        "percent": 1.16,
+        "approx_cpu_seconds": 1.09407222505,
+        "symbol": "serde_json::read::next_or_eof::<serde_json::read::IoRead<std::io::buffered::bufreader::BufReader<std::fs::File>>>",
+        "raw_symbol": "_RINvNtCsbY3TsJcw1Ex_10serde_json4read11next_or_eofINtB2_6IoReadINtNtNtNtCs9k3SxhrAWiO_3std2io8buffered9bufreader9BufReaderNtNtB18_2fs4FileEEECsaeB24m0Oj7J_16bpe_bench_runner"
+      },
+      {
+        "percent": 1.14,
+        "approx_cpu_seconds": 1.0752089108249998,
+        "symbol": "core::str::count::do_count_chars",
+        "raw_symbol": "_RNvNtNtCsgxBkk5gSRhY_4core3str5count14do_count_chars"
+      },
+      {
+        "percent": 1.03,
+        "approx_cpu_seconds": 0.9714606825875,
+        "symbol": "0x0000000000172ac5",
+        "raw_symbol": "0x0000000000172ac5"
+      },
+      {
+        "percent": 1.0,
+        "approx_cpu_seconds": 0.9431657112499999,
+        "symbol": "<tk_train::trainers::bpe::positions::Leaf>::reserve",
+        "raw_symbol": "_RNvMs0_NtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe9positionsNtB5_4Leaf7reserve"
+      },
+      {
+        "percent": 0.97,
+        "approx_cpu_seconds": 0.9148707399125,
+        "symbol": "<tk_train::trainers::bpe::BpeTrainer>::merge_next",
+        "raw_symbol": "_RNvMNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe5mergeNtB4_10BpeTrainer10merge_next"
+      },
+      {
+        "percent": 0.83,
+        "approx_cpu_seconds": 0.7828275403374999,
+        "symbol": "0x0000000000172dc9",
+        "raw_symbol": "0x0000000000172dc9"
+      },
+      {
+        "percent": 0.76,
+        "approx_cpu_seconds": 0.71680594055,
+        "symbol": "<hashbrown::map::HashMap<(u32, u32), u64, ahash::random_state::RandomState>>::insert",
+        "raw_symbol": "_RNvMs1_NtCsfBDUjroi3FF_9hashbrown3mapINtB5_7HashMapTmmEyNtNtCshhlmns78w2N_5ahash12random_state11RandomStateE6insertCsgOOEGSQf085_8tk_train"
+      },
+      {
+        "percent": 0.72,
+        "approx_cpu_seconds": 0.6790793121,
+        "symbol": "<either::Either<core::iter::adapters::copied::Copied<core::slice::iter::Iter<u64>>, core::iter::adapters::take::Take<core::iter::adapters::flatten::FlatMap<core::slice::iter::Iter<tk_train::trainers::bpe::positions::Leaf>, tk_train::trainers::bpe::positions::codec::Cursor, tk_train::trainers::bpe::positions::read::{closure#0}>>> as core::iter::traits::iterator::Iterator>::next",
+        "raw_symbol": "_RNvXs2_NtCsgWaKo2zc2Bp_6either8iteratorINtB7_6EitherINtNtNtNtCsgxBkk5gSRhY_4core4iter8adapters6copied6CopiedINtNtNtBX_5slice4iter4IteryEEINtNtBT_4take4TakeINtNtBT_7flatten7FlatMapIB1J_NtNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe9positions4LeafENtNtB2Y_5codec6CursorNCNvB2Y_4read0EEENtNtNtBV_6traits8iterator8Iterator4nextB34_"
+      },
+      {
+        "percent": 0.66,
+        "approx_cpu_seconds": 0.622489369425,
+        "symbol": "realloc",
+        "raw_symbol": "realloc"
+      },
+      {
+        "percent": 0.61,
+        "approx_cpu_seconds": 0.5753310838625,
+        "symbol": "core::str::converts::from_utf8",
+        "raw_symbol": "_RNvNtNtCsgxBkk5gSRhY_4core3str8converts9from_utf8"
+      },
+      {
+        "percent": 0.58,
+        "approx_cpu_seconds": 0.547036112525,
+        "symbol": "<tk_train::trainers::bpe::positions::Leaf>::push_restart",
+        "raw_symbol": "_RNvMs0_NtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe9positionsNtB5_4Leaf12push_restart"
+      },
+      {
+        "percent": 0.52,
+        "approx_cpu_seconds": 0.49044616985,
+        "symbol": "0x00000000000a05cc",
+        "raw_symbol": "0x00000000000a05cc"
+      },
+      {
+        "percent": 0.52,
+        "approx_cpu_seconds": 0.49044616985,
+        "symbol": "0x0000000000172a83",
+        "raw_symbol": "0x0000000000172a83"
+      },
+      {
+        "percent": 0.5,
+        "approx_cpu_seconds": 0.47158285562499996,
+        "symbol": "malloc",
+        "raw_symbol": "malloc"
+      },
+      {
+        "percent": 0.41,
+        "approx_cpu_seconds": 0.3866979416125,
+        "symbol": "<dary_heap::Hole<tk_train::trainers::bpe::index::Candidate>>::max_sibling::<8>",
+        "raw_symbol": "_RINvMsb_Cs788dPaxphg4_9dary_heapINtB6_4HoleNtNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe5index9CandidateE11max_siblingKj8_EBN_"
+      },
+      {
+        "percent": 0.36,
+        "approx_cpu_seconds": 0.33953965605,
+        "symbol": "rep_movs_alternative",
+        "raw_symbol": "rep_movs_alternative"
+      },
+      {
+        "percent": 0.35,
+        "approx_cpu_seconds": 0.3301079989375,
+        "symbol": "rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::slice::IterProducer<(&compact_str::CompactString, &u64)>, rayon::iter::map::MapConsumer<rayon::iter::collect::consumer::CollectConsumer<usize>, <tk_train::trainers::bpe::corpus::CorpusPlan>::build::{closure#1}>>",
+        "raw_symbol": "_RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtB8_5slice12IterProducerTRNtCsjYadAtXBUws_11compact_str13CompactStringRyEEINtNtB6_3map11MapConsumerINtNtNtB6_7collect8consumer15CollectConsumerjENCNvMs_NtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe6corpusNtB3J_10CorpusPlan5builds_0EEB3P_"
+      },
+      {
+        "percent": 0.3,
+        "approx_cpu_seconds": 0.28294971337499997,
+        "symbol": "do_user_addr_fault",
+        "raw_symbol": "do_user_addr_fault"
+      }
+    ]
+  },
+  {
+    "arm": "fmt-slice",
+    "event": "cpu-clock @ 199Hz dwarf4096",
+    "self_percentages_not_source_line_attribution": true,
+    "approx_sample_cpu_seconds": 78.427125875,
+    "stat": {
+      "instructions:u": {
+        "count": 262325617175.0,
+        "running_percent": 100.0
+      },
+      "branches:u": {
+        "count": 49799442228.0,
+        "running_percent": 100.0
+      },
+      "branch-misses:u": {
+        "count": 585472434.0,
+        "running_percent": 100.0
+      },
+      "cache-misses:u": {
+        "count": 1030926118.0,
+        "running_percent": 100.0
+      },
+      "task-clock": {
+        "count": 79061.43,
+        "running_percent": 100.0
+      }
+    },
+    "buckets": {
+      "writer": {
+        "percent": 0,
+        "approx_cpu_seconds": 0,
+        "symbols": []
+      },
+      "append": {
+        "percent": 0,
+        "approx_cpu_seconds": 0,
+        "symbols": []
+      },
+      "resize": {
+        "percent": 5.43,
+        "approx_cpu_seconds": 4.2585929350125,
+        "symbols": [
+          "<smallvec::SmallVec<[u8; 16]>>::resize"
+        ]
+      },
+      "decoder": {
+        "percent": 1.68,
+        "approx_cpu_seconds": 1.3175757146999998,
+        "symbols": [
+          "<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next"
+        ]
+      },
+      "neighbors": {
+        "percent": 6.7,
+        "approx_cpu_seconds": 5.254617433625,
+        "symbols": [
+          "<tk_train::trainers::bpe::merge::Neighbors>::record"
+        ]
+      },
+      "memmove": {
+        "percent": 0,
+        "approx_cpu_seconds": 0,
+        "symbols": []
+      },
+      "memcpy": {
+        "percent": 0,
+        "approx_cpu_seconds": 0,
+        "symbols": []
+      }
+    },
+    "hot": [
+      {
+        "percent": 19.31,
+        "approx_cpu_seconds": 15.1442780064625,
+        "symbol": "rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::vec::DrainProducer<(usize, either::Either<core::iter::adapters::copied::Copied<core::slice::iter::Iter<u64>>, core::iter::adapters::take::Take<core::iter::adapters::flatten::FlatMap<core::slice::iter::Iter<tk_train::trainers::bpe::positions::Leaf>, tk_train::trainers::bpe::positions::codec::Cursor, tk_train::trainers::bpe::positions::read::{closure#0}>>>)>, rayon::iter::map_with::MapInitConsumer<rayon::iter::map::MapConsumer<rayon::iter::while_some::WhileSomeConsumer<rayon::iter::extend::ListVecConsumer>, <core::result::Result<_, _> as rayon::iter::FromParallelIterator<core::result::Result<_, _>>>::from_par_iter::ok<tk_train::trainers::bpe::merge::Job, alloc::boxed::Box<dyn core::error::Error + core::marker::Send + core::marker::Sync>>::{closure#0}>, <tk_train::trainers::bpe::merge::Directories as core::default::Default>::default, <tk_train::trainers::bpe::merge::Batch>::prepare::{closure#0}>>",
+        "raw_symbol": "_RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtB8_3vec13DrainProducerTjINtCsgWaKo2zc2Bp_6either6EitherINtNtNtNtCsgxBkk5gSRhY_4core4iter8adapters6copied6CopiedINtNtNtB2k_5slice4iter4IteryEEINtNtB2g_4take4TakeINtNtB2g_7flatten7FlatMapIB36_NtNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe9positions4LeafENtNtB4o_5codec6CursorNCNvB4o_4read0EEEEEINtNtB6_8map_with15MapInitConsumerINtNtB6_3map11MapConsumerINtNtB6_10while_some17WhileSomeConsumerNtNtB6_6extend15ListVecConsumerENCINvNvXs2_NtB8_6resultINtNtB2k_6result6ResultppEINtB6_20FromParallelIteratorIB8s_ppEE13from_par_iter2okNtNtB4q_5merge3JobINtNtCs6i54tJFfzR_5alloc5boxed3BoxDNtNtB2k_5error5ErrorNtNtB2k_6marker4SendNtBaX_4SyncEL_EE0ENvYNtB9M_11DirectoriesNtNtB2k_7default7Default7defaultNCNvMs2_B9M_NtB9M_5Batch7prepare0EEB4u_"
+      },
+      {
+        "percent": 9.86,
+        "approx_cpu_seconds": 7.732914611275,
+        "symbol": "rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::vec::DrainProducer<core::ops::range::Range<usize>>, rayon::iter::map::MapConsumer<rayon::iter::map::MapConsumer<rayon::iter::while_some::WhileSomeConsumer<rayon::iter::extend::ListVecConsumer>, <core::result::Result<_, _> as rayon::iter::FromParallelIterator<core::result::Result<_, _>>>::from_par_iter::ok<alloc::vec::Vec<((u32, u32), tk_train::trainers::bpe::index::State<tk_train::trainers::bpe::positions::Positions>)>, alloc::boxed::Box<dyn core::error::Error + core::marker::Send + core::marker::Sync>>::{closure#0}>, <tk_train::trainers::bpe::index::PairIndex>::build::{closure#0}>>",
+        "raw_symbol": "_RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtB8_3vec13DrainProducerINtNtNtCsgxBkk5gSRhY_4core3ops5range5RangejEEINtNtB6_3map11MapConsumerIB2o_INtNtB6_10while_some17WhileSomeConsumerNtNtB6_6extend15ListVecConsumerENCINvNvXs2_NtB8_6resultINtNtB1L_6result6ResultppEINtB6_20FromParallelIteratorIB4o_ppEE13from_par_iter2okINtNtCs6i54tJFfzR_5alloc3vec3VecTTmmEINtNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe5index5StateNtNtB6m_9positions9PositionsEEEINtNtB5L_5boxed3BoxDNtNtB1L_5error5ErrorNtNtB1L_6marker4SendNtB8n_4SyncEL_EE0ENCNvMs3_B6k_NtB6k_9PairIndex5build0EEB6q_"
+      },
+      {
+        "percent": 6.98,
+        "approx_cpu_seconds": 5.474213386075,
+        "symbol": "<either::Either<core::iter::adapters::filter_map::FilterMap<core::str::iter::Chars, <tk_train::trainers::bpe::vocabulary::InitialTokenIds>::symbols::{closure#0}>, core::iter::adapters::filter_map::FilterMap<core::str::iter::CharIndices, <tk_train::trainers::bpe::vocabulary::InitialTokenIds>::symbols::{closure#1}>> as core::iter::traits::iterator::Iterator>::next",
+        "raw_symbol": "_RNvXs2_NtCsgWaKo2zc2Bp_6either8iteratorINtB7_6EitherINtNtNtNtCsgxBkk5gSRhY_4core4iter8adapters10filter_map9FilterMapNtNtNtBX_3str4iter5CharsNCNvMs0_NtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe10vocabularyNtB2m_15InitialTokenIds7symbols0EIBP_NtB1S_11CharIndicesNCB2g_s_0EENtNtNtBV_6traits8iterator8Iterator4nextB2s_"
+      },
+      {
+        "percent": 6.7,
+        "approx_cpu_seconds": 5.254617433625,
+        "symbol": "<tk_train::trainers::bpe::merge::Neighbors>::record",
+        "raw_symbol": "_RNvMs1_NtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record"
+      },
+      {
+        "percent": 5.43,
+        "approx_cpu_seconds": 4.2585929350125,
+        "symbol": "<smallvec::SmallVec<[u8; 16]>>::resize",
+        "raw_symbol": "_RNvMse_Cs7hyLsilViXN_8smallvecINtB5_8SmallVecAhj10_E6resizeCsgOOEGSQf085_8tk_train"
+      },
+      {
+        "percent": 4.7,
+        "approx_cpu_seconds": 3.6860749161250004,
+        "symbol": "rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::slice::IterMutProducer<tk_train::trainers::bpe::index::Shard>, rayon::iter::filter::FilterConsumer<rayon::iter::map::MapConsumer<rayon::iter::map::MapConsumer<rayon::iter::while_some::WhileSomeConsumer<rayon::iter::extend::ListVecConsumer>, <core::result::Result<_, _> as rayon::iter::FromParallelIterator<core::result::Result<_, _>>>::from_par_iter::ok<alloc::vec::Vec<tk_train::trainers::bpe::index::Candidate>, alloc::boxed::Box<dyn core::error::Error + core::marker::Send + core::marker::Sync>>::{closure#0}>, <tk_train::trainers::bpe::index::PairIndex>::commit::{closure#1}>, <tk_train::trainers::bpe::index::PairIndex>::commit::{closure#0}>>",
+        "raw_symbol": "_RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtB8_5slice15IterMutProducerNtNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe5index5ShardEINtNtB6_6filter14FilterConsumerINtNtB6_3map11MapConsumerIB39_INtNtB6_10while_some17WhileSomeConsumerNtNtB6_6extend15ListVecConsumerENCINvNvXs2_NtB8_6resultINtNtCsgxBkk5gSRhY_4core6result6ResultppEINtB6_20FromParallelIteratorIB59_ppEE13from_par_iter2okINtNtCs6i54tJFfzR_5alloc3vec3VecNtB1K_9CandidateEINtNtB6L_5boxed3BoxDNtNtB5d_5error5ErrorNtNtB5d_6marker4SendNtB89_4SyncEL_EE0ENCNvMs3_B1K_NtB1K_9PairIndex6commits_0ENCB8L_0EEB1Q_"
+      },
+      {
+        "percent": 3.69,
+        "approx_cpu_seconds": 2.8939609447875,
+        "symbol": "rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::vec::DrainProducer<tk_train::trainers::bpe::merge::Job>, rayon::iter::map::MapConsumer<rayon::iter::collect::consumer::CollectConsumer<alloc::vec::Vec<tk_train::trainers::bpe::merge::Change<tk_train::trainers::bpe::positions::Positions>>>, <tk_train::trainers::bpe::BpeTrainer>::merge_next::{closure#1}>>",
+        "raw_symbol": "_RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtB8_3vec13DrainProducerNtNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe5merge3JobEINtNtB6_3map11MapConsumerINtNtNtB6_7collect8consumer15CollectConsumerINtNtCs6i54tJFfzR_5alloc3vec3VecINtB1G_6ChangeNtNtB1I_9positions9PositionsEEENCNvMB1G_NtB1I_10BpeTrainer10merge_nexts_0EEB1M_"
+      },
+      {
+        "percent": 3.08,
+        "approx_cpu_seconds": 2.41555547695,
+        "symbol": "<serde_json::read::IoRead<std::io::buffered::bufreader::BufReader<std::fs::File>> as serde_json::read::Read>::parse_str",
+        "raw_symbol": "_RNvXs2_NtCsbY3TsJcw1Ex_10serde_json4readINtB5_6IoReadINtNtNtNtCs9k3SxhrAWiO_3std2io8buffered9bufreader9BufReaderNtNtBY_2fs4FileEENtB5_4Read9parse_strCsaeB24m0Oj7J_16bpe_bench_runner"
+      },
+      {
+        "percent": 2.59,
+        "approx_cpu_seconds": 2.0312625601625,
+        "symbol": "<tk_train::trainers::bpe::merge::Neighbors>::group",
+        "raw_symbol": "_RNvMs1_NtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe5mergeNtB5_9Neighbors5group"
+      },
+      {
+        "percent": 2.58,
+        "approx_cpu_seconds": 2.023419847575,
+        "symbol": "rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::slice::chunks::ChunksProducer<&compact_str::CompactString>, rayon::iter::map::MapConsumer<rayon::iter::fold::FoldConsumer<rayon::iter::reduce::ReduceConsumer<rayon::iter::ParallelIterator::reduce_with::opt_reduce<fixedbitset::FixedBitSet, &tk_train::trainers::bpe::vocabulary::observed_characters::{closure#1}>::{closure#0}, <core::option::Option<fixedbitset::FixedBitSet> as core::default::Default>::default>, <core::option::Option<fixedbitset::FixedBitSet> as core::default::Default>::default, rayon::iter::ParallelIterator::reduce_with::opt_fold<fixedbitset::FixedBitSet, &tk_train::trainers::bpe::vocabulary::observed_characters::{closure#1}>::{closure#0}>, tk_train::trainers::bpe::vocabulary::observed_characters::{closure#0}>>",
+        "raw_symbol": "_RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtNtB8_5slice6chunks14ChunksProducerRNtCsjYadAtXBUws_11compact_str13CompactStringEINtNtB6_3map11MapConsumerINtNtB6_4fold12FoldConsumerINtNtB6_6reduce14ReduceConsumerNCINvNvNtB6_16ParallelIterator11reduce_with10opt_reduceNtCsjiVPyUsOBU2_11fixedbitset11FixedBitSetRNCNvNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe10vocabulary19observed_characterss_0E0NvYINtNtCsgxBkk5gSRhY_4core6option6OptionB4O_ENtNtB6Z_7default7Default7defaultEB6R_NCINvB40_8opt_foldB4O_B5u_E0ENCB5x_0EEB5F_"
+      },
+      {
+        "percent": 2.18,
+        "approx_cpu_seconds": 1.7097113440750002,
+        "symbol": "cfree",
+        "raw_symbol": "cfree"
+      },
+      {
+        "percent": 2.02,
+        "approx_cpu_seconds": 1.584227942675,
+        "symbol": "core::slice::sort::stable::quicksort::quicksort::<((usize, (u32, u32)), u64, tk_train::trainers::bpe::positions::Positions), <[((usize, (u32, u32)), u64, tk_train::trainers::bpe::positions::Positions)]>::sort_by_key<(usize, (u32, u32)), <tk_train::trainers::bpe::index::Shard>::commit::{closure#0}>::{closure#0}>",
+        "raw_symbol": "_RINvNtNtNtNtCsgxBkk5gSRhY_4core5slice4sort6stable9quicksort9quicksortTTjTmmEEyNtNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe9positions9PositionsENCINvMNtCs6i54tJFfzR_5alloc5sliceSB15_11sort_by_keyB16_NCNvMs5_NtB1i_5indexNtB3i_5Shard6commit0E0EB1m_"
+      },
+      {
+        "percent": 1.85,
+        "approx_cpu_seconds": 1.4509018286875002,
+        "symbol": "rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::iter::enumerate::EnumerateProducer<rayon::slice::IterProducer<(&compact_str::CompactString, &u64)>>, rayon::iter::for_each::ForEachConsumer<<tk_train::trainers::bpe::corpus::CorpusPlan>::materialize::{closure#0}>>",
+        "raw_symbol": "_RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtB6_9enumerate17EnumerateProducerINtNtB8_5slice12IterProducerTRNtCsjYadAtXBUws_11compact_str13CompactStringRyEEEINtNtB6_8for_each15ForEachConsumerNCNvMs_NtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe6corpusNtB3K_10CorpusPlan11materialize0EEB3Q_"
+      },
+      {
+        "percent": 1.82,
+        "approx_cpu_seconds": 1.427373690925,
+        "symbol": "<ahash::random_state::RandomState as core::hash::BuildHasher>::hash_one::<&compact_str::CompactString>",
+        "raw_symbol": "_RINvYNtNtCshhlmns78w2N_5ahash12random_state11RandomStateNtNtCsgxBkk5gSRhY_4core4hash11BuildHasher8hash_oneRNtCsjYadAtXBUws_11compact_str13CompactStringECsaeB24m0Oj7J_16bpe_bench_runner"
+      },
+      {
+        "percent": 1.68,
+        "approx_cpu_seconds": 1.3175757146999998,
+        "symbol": "<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next",
+        "raw_symbol": "_RNvXs_NtNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe9positions5codecNtB4_6CursorNtNtNtNtCsgxBkk5gSRhY_4core4iter6traits8iterator8Iterator4next"
+      },
+      {
+        "percent": 1.67,
+        "approx_cpu_seconds": 1.3097330021125,
+        "symbol": "bpe_bench_runner::core::run",
+        "raw_symbol": "_RNvNtCsaeB24m0Oj7J_16bpe_bench_runner4core3run"
+      },
+      {
+        "percent": 1.56,
+        "approx_cpu_seconds": 1.22346316365,
+        "symbol": "core::str::count::do_count_chars",
+        "raw_symbol": "_RNvNtNtCsgxBkk5gSRhY_4core3str5count14do_count_chars"
+      },
+      {
+        "percent": 1.4,
+        "approx_cpu_seconds": 1.09797976225,
+        "symbol": "clear_page_erms",
+        "raw_symbol": "clear_page_erms"
+      },
+      {
+        "percent": 1.33,
+        "approx_cpu_seconds": 1.0430807741375,
+        "symbol": "serde_json::read::next_or_eof::<serde_json::read::IoRead<std::io::buffered::bufreader::BufReader<std::fs::File>>>",
+        "raw_symbol": "_RINvNtCsbY3TsJcw1Ex_10serde_json4read11next_or_eofINtB2_6IoReadINtNtNtNtCs9k3SxhrAWiO_3std2io8buffered9bufreader9BufReaderNtNtB18_2fs4FileEEECsaeB24m0Oj7J_16bpe_bench_runner"
+      },
+      {
+        "percent": 1.2,
+        "approx_cpu_seconds": 0.9411255104999999,
+        "symbol": "<tk_train::trainers::bpe::positions::Leaf>::reserve",
+        "raw_symbol": "_RNvMs0_NtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe9positionsNtB5_4Leaf7reserve"
+      },
+      {
+        "percent": 1.13,
+        "approx_cpu_seconds": 0.8862265223874999,
+        "symbol": "<tk_train::trainers::bpe::BpeTrainer>::merge_next",
+        "raw_symbol": "_RNvMNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe5mergeNtB4_10BpeTrainer10merge_next"
+      },
+      {
+        "percent": 0.97,
+        "approx_cpu_seconds": 0.7607431209875,
+        "symbol": "<either::Either<core::iter::adapters::copied::Copied<core::slice::iter::Iter<u64>>, core::iter::adapters::take::Take<core::iter::adapters::flatten::FlatMap<core::slice::iter::Iter<tk_train::trainers::bpe::positions::Leaf>, tk_train::trainers::bpe::positions::codec::Cursor, tk_train::trainers::bpe::positions::read::{closure#0}>>> as core::iter::traits::iterator::Iterator>::next",
+        "raw_symbol": "_RNvXs2_NtCsgWaKo2zc2Bp_6either8iteratorINtB7_6EitherINtNtNtNtCsgxBkk5gSRhY_4core4iter8adapters6copied6CopiedINtNtNtBX_5slice4iter4IteryEEINtNtBT_4take4TakeINtNtBT_7flatten7FlatMapIB1J_NtNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe9positions4LeafENtNtB2Y_5codec6CursorNCNvB2Y_4read0EEENtNtNtBV_6traits8iterator8Iterator4nextB34_"
+      },
+      {
+        "percent": 0.93,
+        "approx_cpu_seconds": 0.7293722706375,
+        "symbol": "0x0000000000172dc9",
+        "raw_symbol": "0x0000000000172dc9"
+      },
+      {
+        "percent": 0.88,
+        "approx_cpu_seconds": 0.6901587077000001,
+        "symbol": "<hashbrown::map::HashMap<(u32, u32), u64, ahash::random_state::RandomState>>::insert",
+        "raw_symbol": "_RNvMs1_NtCsfBDUjroi3FF_9hashbrown3mapINtB5_7HashMapTmmEyNtNtCshhlmns78w2N_5ahash12random_state11RandomStateE6insertCsgOOEGSQf085_8tk_train"
+      },
+      {
+        "percent": 0.78,
+        "approx_cpu_seconds": 0.611731581825,
+        "symbol": "core::str::converts::from_utf8",
+        "raw_symbol": "_RNvNtNtCsgxBkk5gSRhY_4core3str8converts9from_utf8"
+      },
+      {
+        "percent": 0.76,
+        "approx_cpu_seconds": 0.59604615665,
+        "symbol": "realloc",
+        "raw_symbol": "realloc"
+      },
+      {
+        "percent": 0.71,
+        "approx_cpu_seconds": 0.5568325937124999,
+        "symbol": "<tk_train::trainers::bpe::positions::Leaf>::push_restart",
+        "raw_symbol": "_RNvMs0_NtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe9positionsNtB5_4Leaf12push_restart"
+      },
+      {
+        "percent": 0.59,
+        "approx_cpu_seconds": 0.4627200426625,
+        "symbol": "0x00000000000a05cc",
+        "raw_symbol": "0x00000000000a05cc"
+      },
+      {
+        "percent": 0.45,
+        "approx_cpu_seconds": 0.3529220664375,
+        "symbol": "rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::slice::IterProducer<(&compact_str::CompactString, &u64)>, rayon::iter::map::MapConsumer<rayon::iter::collect::consumer::CollectConsumer<usize>, <tk_train::trainers::bpe::corpus::CorpusPlan>::build::{closure#1}>>",
+        "raw_symbol": "_RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtB8_5slice12IterProducerTRNtCsjYadAtXBUws_11compact_str13CompactStringRyEEINtNtB6_3map11MapConsumerINtNtNtB6_7collect8consumer15CollectConsumerjENCNvMs_NtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe6corpusNtB3J_10CorpusPlan5builds_0EEB3P_"
+      },
+      {
+        "percent": 0.45,
+        "approx_cpu_seconds": 0.3529220664375,
+        "symbol": "rep_movs_alternative",
+        "raw_symbol": "rep_movs_alternative"
+      },
+      {
+        "percent": 0.44,
+        "approx_cpu_seconds": 0.34507935385000005,
+        "symbol": "malloc",
+        "raw_symbol": "malloc"
+      },
+      {
+        "percent": 0.42,
+        "approx_cpu_seconds": 0.32939392867499995,
+        "symbol": "<dary_heap::Hole<tk_train::trainers::bpe::index::Candidate>>::max_sibling::<8>",
+        "raw_symbol": "_RINvMsb_Cs788dPaxphg4_9dary_heapINtB6_4HoleNtNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe5index9CandidateE11max_siblingKj8_EBN_"
+      },
+      {
+        "percent": 0.4,
+        "approx_cpu_seconds": 0.3137085035,
+        "symbol": "<core::marker::PhantomData<alloc::vec::Vec<(compact_str::CompactString, u64)>> as serde_core::de::DeserializeSeed>::deserialize::<&mut serde_json::de::Deserializer<serde_json::read::IoRead<std::io::buffered::bufreader::BufReader<std::fs::File>>>>",
+        "raw_symbol": "_RINvXs3_NtCsiPp1x5ZMK5J_10serde_core2deINtNtCsgxBkk5gSRhY_4core6marker11PhantomDataINtNtCs6i54tJFfzR_5alloc3vec3VecTNtCsjYadAtXBUws_11compact_str13CompactStringyEEENtB6_15DeserializeSeed11deserializeQINtNtCsbY3TsJcw1Ex_10serde_json2de12DeserializerINtNtB3h_4read6IoReadINtNtNtNtCs9k3SxhrAWiO_3std2io8buffered9bufreader9BufReaderNtNtB4s_2fs4FileEEEECsaeB24m0Oj7J_16bpe_bench_runner"
+      },
+      {
+        "percent": 0.39,
+        "approx_cpu_seconds": 0.3058657909125,
+        "symbol": "0x000000000009eddd",
+        "raw_symbol": "0x000000000009eddd"
+      },
+      {
+        "percent": 0.37,
+        "approx_cpu_seconds": 0.2901803657375,
+        "symbol": "<tk_train::trainers::bpe::merge::Neighbors>::finish",
+        "raw_symbol": "_RNvMs1_NtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6finish"
+      },
+      {
+        "percent": 0.36,
+        "approx_cpu_seconds": 0.28233765315,
+        "symbol": "do_user_addr_fault",
+        "raw_symbol": "do_user_addr_fault"
+      }
+    ]
+  },
+  {
+    "arm": "fmt-array",
+    "event": "cpu-clock @ 199Hz dwarf4096",
+    "self_percentages_not_source_line_attribution": true,
+    "approx_sample_cpu_seconds": 91.422099125,
+    "stat": {
+      "instructions:u": {
+        "count": 273294251198.0,
+        "running_percent": 100.0
+      },
+      "branches:u": {
+        "count": 51486086673.0,
+        "running_percent": 100.0
+      },
+      "branch-misses:u": {
+        "count": 1359068522.0,
+        "running_percent": 100.0
+      },
+      "cache-misses:u": {
+        "count": 1046542653.0,
+        "running_percent": 100.0
+      },
+      "task-clock": {
+        "count": 92082.71,
+        "running_percent": 100.0
+      }
+    },
+    "buckets": {
+      "writer": {
+        "percent": 0,
+        "approx_cpu_seconds": 0,
+        "symbols": []
+      },
+      "append": {
+        "percent": 8.33,
+        "approx_cpu_seconds": 7.615460857112501,
+        "symbols": [
+          "tk_train::trainers::bpe::positions::codec::append_gap"
+        ]
+      },
+      "resize": {
+        "percent": 0,
+        "approx_cpu_seconds": 0,
+        "symbols": []
+      },
+      "decoder": {
+        "percent": 1.39,
+        "approx_cpu_seconds": 1.2707671778375,
+        "symbols": [
+          "<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next"
+        ]
+      },
+      "neighbors": {
+        "percent": 5.25,
+        "approx_cpu_seconds": 4.7996602040625005,
+        "symbols": [
+          "<tk_train::trainers::bpe::merge::Neighbors>::record"
+        ]
+      },
+      "memmove": {
+        "percent": 0,
+        "approx_cpu_seconds": 0,
+        "symbols": []
+      },
+      "memcpy": {
+        "percent": 0,
+        "approx_cpu_seconds": 0,
+        "symbols": []
+      }
+    },
+    "hot": [
+      {
+        "percent": 17.11,
+        "approx_cpu_seconds": 15.6423211602875,
+        "symbol": "rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::vec::DrainProducer<(usize, either::Either<core::iter::adapters::copied::Copied<core::slice::iter::Iter<u64>>, core::iter::adapters::take::Take<core::iter::adapters::flatten::FlatMap<core::slice::iter::Iter<tk_train::trainers::bpe::positions::Leaf>, tk_train::trainers::bpe::positions::codec::Cursor, tk_train::trainers::bpe::positions::read::{closure#0}>>>)>, rayon::iter::map_with::MapInitConsumer<rayon::iter::map::MapConsumer<rayon::iter::while_some::WhileSomeConsumer<rayon::iter::extend::ListVecConsumer>, <core::result::Result<_, _> as rayon::iter::FromParallelIterator<core::result::Result<_, _>>>::from_par_iter::ok<tk_train::trainers::bpe::merge::Job, alloc::boxed::Box<dyn core::error::Error + core::marker::Send + core::marker::Sync>>::{closure#0}>, <tk_train::trainers::bpe::merge::Directories as core::default::Default>::default, <tk_train::trainers::bpe::merge::Batch>::prepare::{closure#0}>>",
+        "raw_symbol": "_RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtB8_3vec13DrainProducerTjINtCsgWaKo2zc2Bp_6either6EitherINtNtNtNtCsgxBkk5gSRhY_4core4iter8adapters6copied6CopiedINtNtNtB2k_5slice4iter4IteryEEINtNtB2g_4take4TakeINtNtB2g_7flatten7FlatMapIB36_NtNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe9positions4LeafENtNtB4o_5codec6CursorNCNvB4o_4read0EEEEEINtNtB6_8map_with15MapInitConsumerINtNtB6_3map11MapConsumerINtNtB6_10while_some17WhileSomeConsumerNtNtB6_6extend15ListVecConsumerENCINvNvXs2_NtB8_6resultINtNtB2k_6result6ResultppEINtB6_20FromParallelIteratorIB8s_ppEE13from_par_iter2okNtNtB4q_5merge3JobINtNtCs6i54tJFfzR_5alloc5boxed3BoxDNtNtB2k_5error5ErrorNtNtB2k_6marker4SendNtBaX_4SyncEL_EE0ENvYNtB9M_11DirectoriesNtNtB2k_7default7Default7defaultNCNvMs2_B9M_NtB9M_5Batch7prepare0EEB4u_"
+      },
+      {
+        "percent": 8.81,
+        "approx_cpu_seconds": 8.0542869329125,
+        "symbol": "rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::vec::DrainProducer<core::ops::range::Range<usize>>, rayon::iter::map::MapConsumer<rayon::iter::map::MapConsumer<rayon::iter::while_some::WhileSomeConsumer<rayon::iter::extend::ListVecConsumer>, <core::result::Result<_, _> as rayon::iter::FromParallelIterator<core::result::Result<_, _>>>::from_par_iter::ok<alloc::vec::Vec<((u32, u32), tk_train::trainers::bpe::index::State<tk_train::trainers::bpe::positions::Positions>)>, alloc::boxed::Box<dyn core::error::Error + core::marker::Send + core::marker::Sync>>::{closure#0}>, <tk_train::trainers::bpe::index::PairIndex>::build::{closure#0}>>",
+        "raw_symbol": "_RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtB8_3vec13DrainProducerINtNtNtCsgxBkk5gSRhY_4core3ops5range5RangejEEINtNtB6_3map11MapConsumerIB2o_INtNtB6_10while_some17WhileSomeConsumerNtNtB6_6extend15ListVecConsumerENCINvNvXs2_NtB8_6resultINtNtB1L_6result6ResultppEINtB6_20FromParallelIteratorIB4o_ppEE13from_par_iter2okINtNtCs6i54tJFfzR_5alloc3vec3VecTTmmEINtNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe5index5StateNtNtB6m_9positions9PositionsEEEINtNtB5L_5boxed3BoxDNtNtB1L_5error5ErrorNtNtB1L_6marker4SendNtB8n_4SyncEL_EE0ENCNvMs3_B6k_NtB6k_9PairIndex5build0EEB6q_"
+      },
+      {
+        "percent": 8.33,
+        "approx_cpu_seconds": 7.615460857112501,
+        "symbol": "tk_train::trainers::bpe::positions::codec::append_gap",
+        "raw_symbol": "_RNvNtNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe9positions5codec10append_gap"
+      },
+      {
+        "percent": 6.5,
+        "approx_cpu_seconds": 5.9424364431250005,
+        "symbol": "<either::Either<core::iter::adapters::filter_map::FilterMap<core::str::iter::Chars, <tk_train::trainers::bpe::vocabulary::InitialTokenIds>::symbols::{closure#0}>, core::iter::adapters::filter_map::FilterMap<core::str::iter::CharIndices, <tk_train::trainers::bpe::vocabulary::InitialTokenIds>::symbols::{closure#1}>> as core::iter::traits::iterator::Iterator>::next",
+        "raw_symbol": "_RNvXs2_NtCsgWaKo2zc2Bp_6either8iteratorINtB7_6EitherINtNtNtNtCsgxBkk5gSRhY_4core4iter8adapters10filter_map9FilterMapNtNtNtBX_3str4iter5CharsNCNvMs0_NtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe10vocabularyNtB2m_15InitialTokenIds7symbols0EIBP_NtB1S_11CharIndicesNCB2g_s_0EENtNtNtBV_6traits8iterator8Iterator4nextB2s_"
+      },
+      {
+        "percent": 5.25,
+        "approx_cpu_seconds": 4.7996602040625005,
+        "symbol": "<tk_train::trainers::bpe::merge::Neighbors>::record",
+        "raw_symbol": "_RNvMs1_NtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record"
+      },
+      {
+        "percent": 3.91,
+        "approx_cpu_seconds": 3.5746040757875006,
+        "symbol": "rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::slice::IterMutProducer<tk_train::trainers::bpe::index::Shard>, rayon::iter::filter::FilterConsumer<rayon::iter::map::MapConsumer<rayon::iter::map::MapConsumer<rayon::iter::while_some::WhileSomeConsumer<rayon::iter::extend::ListVecConsumer>, <core::result::Result<_, _> as rayon::iter::FromParallelIterator<core::result::Result<_, _>>>::from_par_iter::ok<alloc::vec::Vec<tk_train::trainers::bpe::index::Candidate>, alloc::boxed::Box<dyn core::error::Error + core::marker::Send + core::marker::Sync>>::{closure#0}>, <tk_train::trainers::bpe::index::PairIndex>::commit::{closure#1}>, <tk_train::trainers::bpe::index::PairIndex>::commit::{closure#0}>>",
+        "raw_symbol": "_RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtB8_5slice15IterMutProducerNtNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe5index5ShardEINtNtB6_6filter14FilterConsumerINtNtB6_3map11MapConsumerIB39_INtNtB6_10while_some17WhileSomeConsumerNtNtB6_6extend15ListVecConsumerENCINvNvXs2_NtB8_6resultINtNtCsgxBkk5gSRhY_4core6result6ResultppEINtB6_20FromParallelIteratorIB59_ppEE13from_par_iter2okINtNtCs6i54tJFfzR_5alloc3vec3VecNtB1K_9CandidateEINtNtB6L_5boxed3BoxDNtNtB5d_5error5ErrorNtNtB5d_6marker4SendNtB89_4SyncEL_EE0ENCNvMs3_B1K_NtB1K_9PairIndex6commits_0ENCB8L_0EEB1Q_"
+      },
+      {
+        "percent": 3.25,
+        "approx_cpu_seconds": 2.9712182215625003,
+        "symbol": "rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::vec::DrainProducer<tk_train::trainers::bpe::merge::Job>, rayon::iter::map::MapConsumer<rayon::iter::collect::consumer::CollectConsumer<alloc::vec::Vec<tk_train::trainers::bpe::merge::Change<tk_train::trainers::bpe::positions::Positions>>>, <tk_train::trainers::bpe::BpeTrainer>::merge_next::{closure#1}>>",
+        "raw_symbol": "_RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtB8_3vec13DrainProducerNtNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe5merge3JobEINtNtB6_3map11MapConsumerINtNtNtB6_7collect8consumer15CollectConsumerINtNtCs6i54tJFfzR_5alloc3vec3VecINtB1G_6ChangeNtNtB1I_9positions9PositionsEEENCNvMB1G_NtB1I_10BpeTrainer10merge_nexts_0EEB1M_"
+      },
+      {
+        "percent": 2.8,
+        "approx_cpu_seconds": 2.5598187754999997,
+        "symbol": "0x0000000000172a80",
+        "raw_symbol": "0x0000000000172a80"
+      },
+      {
+        "percent": 2.64,
+        "approx_cpu_seconds": 2.4135434169,
+        "symbol": "rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::slice::chunks::ChunksProducer<&compact_str::CompactString>, rayon::iter::map::MapConsumer<rayon::iter::fold::FoldConsumer<rayon::iter::reduce::ReduceConsumer<rayon::iter::ParallelIterator::reduce_with::opt_reduce<fixedbitset::FixedBitSet, &tk_train::trainers::bpe::vocabulary::observed_characters::{closure#1}>::{closure#0}, <core::option::Option<fixedbitset::FixedBitSet> as core::default::Default>::default>, <core::option::Option<fixedbitset::FixedBitSet> as core::default::Default>::default, rayon::iter::ParallelIterator::reduce_with::opt_fold<fixedbitset::FixedBitSet, &tk_train::trainers::bpe::vocabulary::observed_characters::{closure#1}>::{closure#0}>, tk_train::trainers::bpe::vocabulary::observed_characters::{closure#0}>>",
+        "raw_symbol": "_RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtNtB8_5slice6chunks14ChunksProducerRNtCsjYadAtXBUws_11compact_str13CompactStringEINtNtB6_3map11MapConsumerINtNtB6_4fold12FoldConsumerINtNtB6_6reduce14ReduceConsumerNCINvNvNtB6_16ParallelIterator11reduce_with10opt_reduceNtCsjiVPyUsOBU2_11fixedbitset11FixedBitSetRNCNvNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe10vocabulary19observed_characterss_0E0NvYINtNtCsgxBkk5gSRhY_4core6option6OptionB4O_ENtNtB6Z_7default7Default7defaultEB6R_NCINvB40_8opt_foldB4O_B5u_E0ENCB5x_0EEB5F_"
+      },
+      {
+        "percent": 2.57,
+        "approx_cpu_seconds": 2.3495479475125,
+        "symbol": "<serde_json::read::IoRead<std::io::buffered::bufreader::BufReader<std::fs::File>> as serde_json::read::Read>::parse_str",
+        "raw_symbol": "_RNvXs2_NtCsbY3TsJcw1Ex_10serde_json4readINtB5_6IoReadINtNtNtNtCs9k3SxhrAWiO_3std2io8buffered9bufreader9BufReaderNtNtBY_2fs4FileEENtB5_4Read9parse_strCsaeB24m0Oj7J_16bpe_bench_runner"
+      },
+      {
+        "percent": 2.14,
+        "approx_cpu_seconds": 1.9564329212750002,
+        "symbol": "<tk_train::trainers::bpe::merge::Neighbors>::group",
+        "raw_symbol": "_RNvMs1_NtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe5mergeNtB5_9Neighbors5group"
+      },
+      {
+        "percent": 1.72,
+        "approx_cpu_seconds": 1.57246010495,
+        "symbol": "core::slice::sort::stable::quicksort::quicksort::<((usize, (u32, u32)), u64, tk_train::trainers::bpe::positions::Positions), <[((usize, (u32, u32)), u64, tk_train::trainers::bpe::positions::Positions)]>::sort_by_key<(usize, (u32, u32)), <tk_train::trainers::bpe::index::Shard>::commit::{closure#0}>::{closure#0}>",
+        "raw_symbol": "_RINvNtNtNtNtCsgxBkk5gSRhY_4core5slice4sort6stable9quicksort9quicksortTTjTmmEEyNtNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe9positions9PositionsENCINvMNtCs6i54tJFfzR_5alloc5sliceSB15_11sort_by_keyB16_NCNvMs5_NtB1i_5indexNtB3i_5Shard6commit0E0EB1m_"
+      },
+      {
+        "percent": 1.69,
+        "approx_cpu_seconds": 1.5450334752125,
+        "symbol": "<ahash::random_state::RandomState as core::hash::BuildHasher>::hash_one::<&compact_str::CompactString>",
+        "raw_symbol": "_RINvYNtNtCshhlmns78w2N_5ahash12random_state11RandomStateNtNtCsgxBkk5gSRhY_4core4hash11BuildHasher8hash_oneRNtCsjYadAtXBUws_11compact_str13CompactStringECsaeB24m0Oj7J_16bpe_bench_runner"
+      },
+      {
+        "percent": 1.61,
+        "approx_cpu_seconds": 1.4718957959125,
+        "symbol": "cfree",
+        "raw_symbol": "cfree"
+      },
+      {
+        "percent": 1.48,
+        "approx_cpu_seconds": 1.35304706705,
+        "symbol": "rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::iter::enumerate::EnumerateProducer<rayon::slice::IterProducer<(&compact_str::CompactString, &u64)>>, rayon::iter::for_each::ForEachConsumer<<tk_train::trainers::bpe::corpus::CorpusPlan>::materialize::{closure#0}>>",
+        "raw_symbol": "_RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtB6_9enumerate17EnumerateProducerINtNtB8_5slice12IterProducerTRNtCsjYadAtXBUws_11compact_str13CompactStringRyEEEINtNtB6_8for_each15ForEachConsumerNCNvMs_NtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe6corpusNtB3K_10CorpusPlan11materialize0EEB3Q_"
+      },
+      {
+        "percent": 1.44,
+        "approx_cpu_seconds": 1.3164782274000002,
+        "symbol": "bpe_bench_runner::core::run",
+        "raw_symbol": "_RNvNtCsaeB24m0Oj7J_16bpe_bench_runner4core3run"
+      },
+      {
+        "percent": 1.44,
+        "approx_cpu_seconds": 1.3164782274000002,
+        "symbol": "0x0000000000172ae3",
+        "raw_symbol": "0x0000000000172ae3"
+      },
+      {
+        "percent": 1.39,
+        "approx_cpu_seconds": 1.2707671778375,
+        "symbol": "<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next",
+        "raw_symbol": "_RNvXs_NtNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe9positions5codecNtB4_6CursorNtNtNtNtCsgxBkk5gSRhY_4core4iter6traits8iterator8Iterator4next"
+      },
+      {
+        "percent": 1.3,
+        "approx_cpu_seconds": 1.1884872886250002,
+        "symbol": "clear_page_erms",
+        "raw_symbol": "clear_page_erms"
+      },
+      {
+        "percent": 1.22,
+        "approx_cpu_seconds": 1.115349609325,
+        "symbol": "core::str::count::do_count_chars",
+        "raw_symbol": "_RNvNtNtCsgxBkk5gSRhY_4core3str5count14do_count_chars"
+      },
+      {
+        "percent": 1.14,
+        "approx_cpu_seconds": 1.042211930025,
+        "symbol": "serde_json::read::next_or_eof::<serde_json::read::IoRead<std::io::buffered::bufreader::BufReader<std::fs::File>>>",
+        "raw_symbol": "_RINvNtCsbY3TsJcw1Ex_10serde_json4read11next_or_eofINtB2_6IoReadINtNtNtNtCs9k3SxhrAWiO_3std2io8buffered9bufreader9BufReaderNtNtB18_2fs4FileEEECsaeB24m0Oj7J_16bpe_bench_runner"
+      },
+      {
+        "percent": 1.12,
+        "approx_cpu_seconds": 1.0239275102,
+        "symbol": "<tk_train::trainers::bpe::BpeTrainer>::merge_next",
+        "raw_symbol": "_RNvMNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe5mergeNtB4_10BpeTrainer10merge_next"
+      },
+      {
+        "percent": 1.09,
+        "approx_cpu_seconds": 0.9965008804625001,
+        "symbol": "0x0000000000172ac5",
+        "raw_symbol": "0x0000000000172ac5"
+      },
+      {
+        "percent": 1.0,
+        "approx_cpu_seconds": 0.91422099125,
+        "symbol": "<tk_train::trainers::bpe::positions::Leaf>::reserve",
+        "raw_symbol": "_RNvMs0_NtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe9positionsNtB5_4Leaf7reserve"
+      },
+      {
+        "percent": 0.93,
+        "approx_cpu_seconds": 0.8502255218625001,
+        "symbol": "0x0000000000172ac0",
+        "raw_symbol": "0x0000000000172ac0"
+      },
+      {
+        "percent": 0.92,
+        "approx_cpu_seconds": 0.8410833119500001,
+        "symbol": "0x0000000000172a83",
+        "raw_symbol": "0x0000000000172a83"
+      },
+      {
+        "percent": 0.87,
+        "approx_cpu_seconds": 0.7953722623875001,
+        "symbol": "0x0000000000172dc9",
+        "raw_symbol": "0x0000000000172dc9"
+      },
+      {
+        "percent": 0.75,
+        "approx_cpu_seconds": 0.6856657434375001,
+        "symbol": "0x0000000000172ade",
+        "raw_symbol": "0x0000000000172ade"
+      },
+      {
+        "percent": 0.73,
+        "approx_cpu_seconds": 0.6673813236124999,
+        "symbol": "<hashbrown::map::HashMap<(u32, u32), u64, ahash::random_state::RandomState>>::insert",
+        "raw_symbol": "_RNvMs1_NtCsfBDUjroi3FF_9hashbrown3mapINtB5_7HashMapTmmEyNtNtCshhlmns78w2N_5ahash12random_state11RandomStateE6insertCsgOOEGSQf085_8tk_train"
+      },
+      {
+        "percent": 0.69,
+        "approx_cpu_seconds": 0.6308124839625,
+        "symbol": "<either::Either<core::iter::adapters::copied::Copied<core::slice::iter::Iter<u64>>, core::iter::adapters::take::Take<core::iter::adapters::flatten::FlatMap<core::slice::iter::Iter<tk_train::trainers::bpe::positions::Leaf>, tk_train::trainers::bpe::positions::codec::Cursor, tk_train::trainers::bpe::positions::read::{closure#0}>>> as core::iter::traits::iterator::Iterator>::next",
+        "raw_symbol": "_RNvXs2_NtCsgWaKo2zc2Bp_6either8iteratorINtB7_6EitherINtNtNtNtCsgxBkk5gSRhY_4core4iter8adapters6copied6CopiedINtNtNtBX_5slice4iter4IteryEEINtNtBT_4take4TakeINtNtBT_7flatten7FlatMapIB1J_NtNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe9positions4LeafENtNtB2Y_5codec6CursorNCNvB2Y_4read0EEENtNtNtBV_6traits8iterator8Iterator4nextB34_"
+      },
+      {
+        "percent": 0.68,
+        "approx_cpu_seconds": 0.6216702740500001,
+        "symbol": "realloc",
+        "raw_symbol": "realloc"
+      },
+      {
+        "percent": 0.56,
+        "approx_cpu_seconds": 0.5119637551,
+        "symbol": "0x00000000000a05cc",
+        "raw_symbol": "0x00000000000a05cc"
+      },
+      {
+        "percent": 0.56,
+        "approx_cpu_seconds": 0.5119637551,
+        "symbol": "0x0000000000172ad7",
+        "raw_symbol": "0x0000000000172ad7"
+      },
+      {
+        "percent": 0.55,
+        "approx_cpu_seconds": 0.5028215451875,
+        "symbol": "<tk_train::trainers::bpe::positions::Leaf>::push_restart",
+        "raw_symbol": "_RNvMs0_NtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe9positionsNtB5_4Leaf12push_restart"
+      },
+      {
+        "percent": 0.52,
+        "approx_cpu_seconds": 0.47539491545000007,
+        "symbol": "core::str::converts::from_utf8",
+        "raw_symbol": "_RNvNtNtCsgxBkk5gSRhY_4core3str8converts9from_utf8"
+      },
+      {
+        "percent": 0.52,
+        "approx_cpu_seconds": 0.47539491545000007,
+        "symbol": "malloc",
+        "raw_symbol": "malloc"
+      },
+      {
+        "percent": 0.49,
+        "approx_cpu_seconds": 0.4479682857125,
+        "symbol": "<dary_heap::Hole<tk_train::trainers::bpe::index::Candidate>>::max_sibling::<8>",
+        "raw_symbol": "_RINvMsb_Cs788dPaxphg4_9dary_heapINtB6_4HoleNtNtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe5index9CandidateE11max_siblingKj8_EBN_"
+      },
+      {
+        "percent": 0.4,
+        "approx_cpu_seconds": 0.3656883965,
+        "symbol": "rayon::iter::plumbing::bridge_producer_consumer::helper::<rayon::slice::IterProducer<(&compact_str::CompactString, &u64)>, rayon::iter::map::MapConsumer<rayon::iter::collect::consumer::CollectConsumer<usize>, <tk_train::trainers::bpe::corpus::CorpusPlan>::build::{closure#1}>>",
+        "raw_symbol": "_RINvNvNtNtCskOCPxHELzib_5rayon4iter8plumbing24bridge_producer_consumer6helperINtNtB8_5slice12IterProducerTRNtCsjYadAtXBUws_11compact_str13CompactStringRyEEINtNtB6_3map11MapConsumerINtNtNtB6_7collect8consumer15CollectConsumerjENCNvMs_NtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe6corpusNtB3J_10CorpusPlan5builds_0EEB3P_"
+      },
+      {
+        "percent": 0.37,
+        "approx_cpu_seconds": 0.3382617667625,
+        "symbol": "do_user_addr_fault",
+        "raw_symbol": "do_user_addr_fault"
+      },
+      {
+        "percent": 0.34,
+        "approx_cpu_seconds": 0.31083513702500004,
+        "symbol": "<tk_train::trainers::bpe::merge::Neighbors>::finish",
+        "raw_symbol": "_RNvMs1_NtNtNtCsgOOEGSQf085_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6finish"
+      },
+      {
+        "percent": 0.32,
+        "approx_cpu_seconds": 0.2925507172,
+        "symbol": "0x0000000000172ae5",
+        "raw_symbol": "0x0000000000172ae5"
+      },
+      {
+        "percent": 0.31,
+        "approx_cpu_seconds": 0.2834085072875,
+        "symbol": "0x000000000009eddd",
+        "raw_symbol": "0x000000000009eddd"
+      }
+    ]
+  }
+]

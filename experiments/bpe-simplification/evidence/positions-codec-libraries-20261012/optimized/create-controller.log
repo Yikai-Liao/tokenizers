@@ -1,0 +1,15 @@
+Preparing worktree (new branch 'experiment/bpe-positions-codec-fmt-push-20261012')
+[experiment/bpe-positions-codec-fmt-push-20261012 bc6346d7] perf(bpe): test fmt-push codec integration
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+Preparing worktree (new branch 'experiment/bpe-positions-codec-fmt-extend-20261012')
+[experiment/bpe-positions-codec-fmt-extend-20261012 ec420a02] perf(bpe): test fmt-extend codec integration
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+Preparing worktree (new branch 'experiment/bpe-positions-codec-fmt-zero-push-20261012')
+[experiment/bpe-positions-codec-fmt-zero-push-20261012 20596e98] perf(bpe): test fmt-zero-push codec integration
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+Preparing worktree (new branch 'experiment/bpe-positions-codec-fmt-zero-extend-20261012')
+[experiment/bpe-positions-codec-fmt-zero-extend-20261012 f1e477a9] perf(bpe): test fmt-zero-extend codec integration
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+Preparing worktree (new branch 'experiment/bpe-positions-codec-gimli-inline-20261012')
+[experiment/bpe-positions-codec-gimli-inline-20261012 51fb5887] perf(bpe): test gimli-inline codec integration
+ 1 file changed, 2 insertions(+), 1 deletion(-)

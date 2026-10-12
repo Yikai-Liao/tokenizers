@@ -1,0 +1,12 @@
+{
+  "commit": "ee0faabf17c618cbfd35208deae2d1021b5a8624",
+  "source_experiment_commit": "20596e9862c89264a3e1e0d4e6b65c148dbbe078",
+  "unchanged_single_inline_representation": true,
+  "production_files": {
+    "tokenizers/tk-train/Cargo.toml": "eaf9dbc1e54659894edb7ca7a82f2235a7e0782ff41f4c40fe1b681d37ffc59a",
+    "tokenizers/tk-train/src/trainers/bpe/positions.rs": "012e1e09e73d8972c2c794db56e314b255b3e9f0a4b6bb1de67e87b28fe97c38",
+    "tokenizers/tk-train/src/trainers/bpe/positions/codec.rs": "bd30d00fa9a27150b69912d81d0d14e491348ebc6e694b1936de1ccd7da38544",
+    "tokenizers/tk-train/src/trainers/bpe/merge.rs": "018d7a31f331239bc645a0584f7df393fc2613426cf182cc90779f4261005221"
+  },
+  "exactly_matches_native_tested_candidate": true
+}

@@ -1,0 +1,7 @@
+# started on Mon Oct 12 20:04:42 2026
+
+9898311453;;instructions:u;5703313149;100.00;;
+1874543526;;branches:u;5703313149;100.00;;
+45198944;;branch-misses:u;5703313149;100.00;2.41;of all branches
+47647582;;cache-misses:u;5703313149;100.00;;
+5703.31;msec;task-clock;5703313149;100.00;1.316;CPUs utilized

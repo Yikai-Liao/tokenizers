@@ -1,0 +1,11 @@
+hand {'neighbors': 1200, 'cursor': 208, 'resize': 528}
+neighbors f6d42:	e8 99 bf ff ff       	call   f2ce0 <<smallvec::SmallVec<[u8; 16]>>::reserve_one_unchecked>
+neighbors f6d60:	e8 7b bf ff ff       	call   f2ce0 <<smallvec::SmallVec<[u8; 16]>>::reserve_one_unchecked>
+neighbors f6f19:	e8 c2 bd ff ff       	call   f2ce0 <<smallvec::SmallVec<[u8; 16]>>::reserve_one_unchecked>
+neighbors f6f34:	e8 a7 bd ff ff       	call   f2ce0 <<smallvec::SmallVec<[u8; 16]>>::reserve_one_unchecked>
+gimli {'neighbors': 896, 'cursor': 384, 'writer': 336, 'resize': 528}
+neighbors f746b:	e8 d0 be ff ff       	call   f3340 <leb128::write::unsigned::<smallvec::SmallVec<[u8; 16]>>>
+writer f33f6:	e8 65 02 00 00       	call   f3660 <<smallvec::SmallVec<[u8; 16]>>::try_grow>
+fmt-slice {'neighbors': 1024, 'cursor': 304, 'resize': 528}
+neighbors f74fb:	e8 00 c0 ff ff       	call   f3500 <<smallvec::SmallVec<[u8; 16]>>::resize>
+fmt-array {'neighbors': 896, 'cursor': 304, 'append': 768, 'resize': 528}

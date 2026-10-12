@@ -1,0 +1,6 @@
+fmt-zero-push default passed
+fmt-zero-push no-default passed
+fmt-zero-push clippy passed
+fmt-tls-push default passed
+fmt-tls-push no-default passed
+fmt-tls-push clippy passed

@@ -1,0 +1,239 @@
+
+/tmp/bpe-positions-codec-libraries-results-20261012/gimli-bin:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+00000000000f72b0 <<tk_train::trainers::bpe::merge::Neighbors>::record>:
+   f72b0:	55                   	push   %rbp
+   f72b1:	41 57                	push   %r15
+   f72b3:	41 56                	push   %r14
+   f72b5:	41 55                	push   %r13
+   f72b7:	41 54                	push   %r12
+   f72b9:	53                   	push   %rbx
+   f72ba:	50                   	push   %rax
+   f72bb:	4d 89 ce             	mov    %r9,%r14
+   f72be:	4c 89 c3             	mov    %r8,%rbx
+   f72c1:	89 cd                	mov    %ecx,%ebp
+   f72c3:	41 89 d5             	mov    %edx,%r13d
+   f72c6:	41 89 f4             	mov    %esi,%r12d
+   f72c9:	49 89 ff             	mov    %rdi,%r15
+   f72cc:	89 d6                	mov    %edx,%esi
+   f72ce:	44 89 e2             	mov    %r12d,%edx
+   f72d1:	e8 da 07 00 00       	call   f7ab0 <<tk_train::trainers::bpe::merge::Neighbors>::group>
+   f72d6:	48 8b 48 30          	mov    0x30(%rax),%rcx
+   f72da:	4c 01 f1             	add    %r14,%rcx
+   f72dd:	0f 82 d3 01 00 00    	jb     f74b6 <<tk_train::trainers::bpe::merge::Neighbors>::record+0x206>
+   f72e3:	0f b6 54 24 40       	movzbl 0x40(%rsp),%edx
+   f72e8:	48 89 48 30          	mov    %rcx,0x30(%rax)
+   f72ec:	84 d2                	test   %dl,%dl
+   f72ee:	0f 84 aa 01 00 00    	je     f749e <<tk_train::trainers::bpe::merge::Neighbors>::record+0x1ee>
+   f72f4:	41 39 ed             	cmp    %ebp,%r13d
+   f72f7:	74 0e                	je     f7307 <<tk_train::trainers::bpe::merge::Neighbors>::record+0x57>
+   f72f9:	41 0f b6 d4          	movzbl %r12b,%edx
+   f72fd:	4c 89 ff             	mov    %r15,%rdi
+   f7300:	89 ee                	mov    %ebp,%esi
+   f7302:	e8 a9 07 00 00       	call   f7ab0 <<tk_train::trainers::bpe::merge::Neighbors>::group>
+   f7307:	4c 03 70 38          	add    0x38(%rax),%r14
+   f730b:	0f 82 de 01 00 00    	jb     f74ef <<tk_train::trainers::bpe::merge::Neighbors>::record+0x23f>
+   f7311:	4c 89 70 38          	mov    %r14,0x38(%rax)
+   f7315:	48 8b 10             	mov    (%rax),%rdx
+   f7318:	48 85 d2             	test   %rdx,%rdx
+   f731b:	74 26                	je     f7343 <<tk_train::trainers::bpe::merge::Neighbors>::record+0x93>
+   f731d:	48 89 d1             	mov    %rdx,%rcx
+   f7320:	48 ff c1             	inc    %rcx
+   f7323:	0f 84 15 02 00 00    	je     f753e <<tk_train::trainers::bpe::merge::Neighbors>::record+0x28e>
+   f7329:	89 d6                	mov    %edx,%esi
+   f732b:	83 e6 7f             	and    $0x7f,%esi
+   f732e:	83 fe 01             	cmp    $0x1,%esi
+   f7331:	75 68                	jne    f739b <<tk_train::trainers::bpe::merge::Neighbors>::record+0xeb>
+   f7333:	48 89 c7             	mov    %rax,%rdi
+   f7336:	48 89 de             	mov    %rbx,%rsi
+   f7339:	e8 b2 b9 ff ff       	call   f2cf0 <<tk_train::trainers::bpe::positions::Leaf>::push_restart>
+   f733e:	e9 5d 01 00 00       	jmp    f74a0 <<tk_train::trainers::bpe::merge::Neighbors>::record+0x1f0>
+   f7343:	bf 1f 00 00 00       	mov    $0x1f,%edi
+   f7348:	ff 15 a2 19 01 00    	call   *0x119a2(%rip)        # 108cf0 <malloc@GLIBC_2.2.5>
+   f734e:	48 85 c0             	test   %rax,%rax
+   f7351:	0f 84 78 02 00 00    	je     f75cf <<tk_train::trainers::bpe::merge::Neighbors>::record+0x31f>
+   f7357:	48 89 c3             	mov    %rax,%rbx
+   f735a:	0f 10 05 0b 7a f2 ff 	movups -0xd85f5(%rip),%xmm0        # 1ed6c <core::unicode::unicode_data::white_space::WHITESPACE_MAP+0x75a>
+   f7361:	0f 11 40 0f          	movups %xmm0,0xf(%rax)
+   f7365:	0f 10 05 f1 79 f2 ff 	movups -0xd860f(%rip),%xmm0        # 1ed5d <core::unicode::unicode_data::white_space::WHITESPACE_MAP+0x74b>
+   f736c:	0f 11 00             	movups %xmm0,(%rax)
+   f736f:	bf 18 00 00 00       	mov    $0x18,%edi
+   f7374:	ff 15 76 19 01 00    	call   *0x11976(%rip)        # 108cf0 <malloc@GLIBC_2.2.5>
+   f737a:	48 85 c0             	test   %rax,%rax
+   f737d:	0f 84 04 02 00 00    	je     f7587 <<tk_train::trainers::bpe::merge::Neighbors>::record+0x2d7>
+   f7383:	48 c7 00 1f 00 00 00 	movq   $0x1f,(%rax)
+   f738a:	48 89 58 08          	mov    %rbx,0x8(%rax)
+   f738e:	48 c7 40 10 1f 00 00 	movq   $0x1f,0x10(%rax)
+   f7395:	00 
+   f7396:	e9 05 01 00 00       	jmp    f74a0 <<tk_train::trainers::bpe::merge::Neighbors>::record+0x1f0>
+   f739b:	48 8b 70 18          	mov    0x18(%rax),%rsi
+   f739f:	48 89 f2             	mov    %rsi,%rdx
+   f73a2:	48 83 fe 11          	cmp    $0x11,%rsi
+   f73a6:	72 04                	jb     f73ac <<tk_train::trainers::bpe::merge::Neighbors>::record+0xfc>
+   f73a8:	48 8b 50 10          	mov    0x10(%rax),%rdx
+   f73ac:	48 83 fa 07          	cmp    $0x7,%rdx
+   f73b0:	0f 86 e2 01 00 00    	jbe    f7598 <<tk_train::trainers::bpe::merge::Neighbors>::record+0x2e8>
+   f73b6:	4c 8d 70 08          	lea    0x8(%rax),%r14
+   f73ba:	48 83 fe 11          	cmp    $0x11,%rsi
+   f73be:	48 8b 50 08          	mov    0x8(%rax),%rdx
+   f73c2:	49 0f 42 d6          	cmovb  %r14,%rdx
+   f73c6:	49 89 df             	mov    %rbx,%r15
+   f73c9:	4c 2b 3a             	sub    (%rdx),%r15
+   f73cc:	73 55                	jae    f7423 <<tk_train::trainers::bpe::merge::Neighbors>::record+0x173>
+   f73ce:	bf 1c 00 00 00       	mov    $0x1c,%edi
+   f73d3:	ff 15 17 19 01 00    	call   *0x11917(%rip)        # 108cf0 <malloc@GLIBC_2.2.5>
+   f73d9:	48 85 c0             	test   %rax,%rax
+   f73dc:	0f 84 fc 01 00 00    	je     f75de <<tk_train::trainers::bpe::merge::Neighbors>::record+0x32e>
+   f73e2:	48 89 c3             	mov    %rax,%rbx
+   f73e5:	0f 10 05 ee 73 f2 ff 	movups -0xd8c12(%rip),%xmm0        # 1e7da <core::unicode::unicode_data::white_space::WHITESPACE_MAP+0x1c8>
+   f73ec:	0f 11 40 0c          	movups %xmm0,0xc(%rax)
+   f73f0:	0f 10 05 d7 73 f2 ff 	movups -0xd8c29(%rip),%xmm0        # 1e7ce <core::unicode::unicode_data::white_space::WHITESPACE_MAP+0x1bc>
+   f73f7:	0f 11 00             	movups %xmm0,(%rax)
+   f73fa:	bf 18 00 00 00       	mov    $0x18,%edi
+   f73ff:	ff 15 eb 18 01 00    	call   *0x118eb(%rip)        # 108cf0 <malloc@GLIBC_2.2.5>
+   f7405:	48 85 c0             	test   %rax,%rax
+   f7408:	0f 84 9d 01 00 00    	je     f75ab <<tk_train::trainers::bpe::merge::Neighbors>::record+0x2fb>
+   f740e:	48 c7 00 1c 00 00 00 	movq   $0x1c,(%rax)
+   f7415:	48 89 58 08          	mov    %rbx,0x8(%rax)
+   f7419:	48 c7 40 10 1c 00 00 	movq   $0x1c,0x10(%rax)
+   f7420:	00 
+   f7421:	eb 7d                	jmp    f74a0 <<tk_train::trainers::bpe::merge::Neighbors>::record+0x1f0>
+   f7423:	49 89 cc             	mov    %rcx,%r12
+   f7426:	b9 7f 00 00 00       	mov    $0x7f,%ecx
+   f742b:	49 0f bd cf          	bsr    %r15,%rcx
+   f742f:	83 f1 3f             	xor    $0x3f,%ecx
+   f7432:	b2 40                	mov    $0x40,%dl
+   f7434:	28 ca                	sub    %cl,%dl
+   f7436:	0f b6 ca             	movzbl %dl,%ecx
+   f7439:	69 f1 93 00 00 00    	imul   $0x93,%ecx,%esi
+   f743f:	c1 ee 0a             	shr    $0xa,%esi
+   f7442:	6b c9 b7             	imul   $0xffffffb7,%ecx,%ecx
+   f7445:	31 d2                	xor    %edx,%edx
+   f7447:	80 f9 25             	cmp    $0x25,%cl
+   f744a:	0f 93 c2             	setae  %dl
+   f744d:	8d 0c 32             	lea    (%rdx,%rsi,1),%ecx
+   f7450:	83 f9 01             	cmp    $0x1,%ecx
+   f7453:	11 d6                	adc    %edx,%esi
+   f7455:	49 89 c5             	mov    %rax,%r13
+   f7458:	48 89 c7             	mov    %rax,%rdi
+   f745b:	e8 80 bd ff ff       	call   f31e0 <<tk_train::trainers::bpe::positions::Leaf>::reserve>
+   f7460:	48 85 c0             	test   %rax,%rax
+   f7463:	75 3b                	jne    f74a0 <<tk_train::trainers::bpe::merge::Neighbors>::record+0x1f0>
+   f7465:	4c 89 f7             	mov    %r14,%rdi
+   f7468:	4c 89 fe             	mov    %r15,%rsi
+   f746b:	e8 d0 be ff ff       	call   f3340 <leb128::write::unsigned::<smallvec::SmallVec<[u8; 16]>>>
+   f7470:	4c 89 e8             	mov    %r13,%rax
+   f7473:	49 8b 4d 18          	mov    0x18(%r13),%rcx
+   f7477:	48 89 ca             	mov    %rcx,%rdx
+   f747a:	48 83 f9 11          	cmp    $0x11,%rcx
+   f747e:	72 04                	jb     f7484 <<tk_train::trainers::bpe::merge::Neighbors>::record+0x1d4>
+   f7480:	48 8b 50 10          	mov    0x10(%rax),%rdx
+   f7484:	48 83 fa 07          	cmp    $0x7,%rdx
+   f7488:	0f 86 2e 01 00 00    	jbe    f75bc <<tk_train::trainers::bpe::merge::Neighbors>::record+0x30c>
+   f748e:	48 83 f9 11          	cmp    $0x11,%rcx
+   f7492:	72 04                	jb     f7498 <<tk_train::trainers::bpe::merge::Neighbors>::record+0x1e8>
+   f7494:	4c 8b 70 08          	mov    0x8(%rax),%r14
+   f7498:	49 89 1e             	mov    %rbx,(%r14)
+   f749b:	4c 89 20             	mov    %r12,(%rax)
+   f749e:	31 c0                	xor    %eax,%eax
+   f74a0:	48 8d 15 51 07 01 00 	lea    0x10751(%rip),%rdx        # 107bf8 <bitcannon::classify::atom_tables::ATOM_TABLES+0x3520>
+   f74a7:	48 83 c4 08          	add    $0x8,%rsp
+   f74ab:	5b                   	pop    %rbx
+   f74ac:	41 5c                	pop    %r12
+   f74ae:	41 5d                	pop    %r13
+   f74b0:	41 5e                	pop    %r14
+   f74b2:	41 5f                	pop    %r15
+   f74b4:	5d                   	pop    %rbp
+   f74b5:	c3                   	ret
+   f74b6:	bf 22 00 00 00       	mov    $0x22,%edi
+   f74bb:	ff 15 2f 18 01 00    	call   *0x1182f(%rip)        # 108cf0 <malloc@GLIBC_2.2.5>
+   f74c1:	48 85 c0             	test   %rax,%rax
+   f74c4:	0f 84 23 01 00 00    	je     f75ed <<tk_train::trainers::bpe::merge::Neighbors>::record+0x33d>
+   f74ca:	48 89 c3             	mov    %rax,%rbx
+   f74cd:	0f 10 05 d6 78 f2 ff 	movups -0xd872a(%rip),%xmm0        # 1edaa <core::unicode::unicode_data::white_space::WHITESPACE_MAP+0x798>
+   f74d4:	0f 11 40 10          	movups %xmm0,0x10(%rax)
+   f74d8:	0f 10 05 bb 78 f2 ff 	movups -0xd8745(%rip),%xmm0        # 1ed9a <core::unicode::unicode_data::white_space::WHITESPACE_MAP+0x788>
+   f74df:	0f 11 00             	movups %xmm0,(%rax)
+   f74e2:	66 c7 40 20 36 34    	movw   $0x3436,0x20(%rax)
+   f74e8:	e8 03 ae ff ff       	call   f22f0 <alloc::boxed::box_new_uninit>
+   f74ed:	eb 37                	jmp    f7526 <<tk_train::trainers::bpe::merge::Neighbors>::record+0x276>
+   f74ef:	bf 22 00 00 00       	mov    $0x22,%edi
+   f74f4:	ff 15 f6 17 01 00    	call   *0x117f6(%rip)        # 108cf0 <malloc@GLIBC_2.2.5>
+   f74fa:	48 85 c0             	test   %rax,%rax
+   f74fd:	0f 84 ea 00 00 00    	je     f75ed <<tk_train::trainers::bpe::merge::Neighbors>::record+0x33d>
+   f7503:	48 89 c3             	mov    %rax,%rbx
+   f7506:	0f 10 05 9d 78 f2 ff 	movups -0xd8763(%rip),%xmm0        # 1edaa <core::unicode::unicode_data::white_space::WHITESPACE_MAP+0x798>
+   f750d:	0f 11 40 10          	movups %xmm0,0x10(%rax)
+   f7511:	0f 10 05 82 78 f2 ff 	movups -0xd877e(%rip),%xmm0        # 1ed9a <core::unicode::unicode_data::white_space::WHITESPACE_MAP+0x788>
+   f7518:	0f 11 00             	movups %xmm0,(%rax)
+   f751b:	66 c7 40 20 36 34    	movw   $0x3436,0x20(%rax)
+   f7521:	e8 ca ad ff ff       	call   f22f0 <alloc::boxed::box_new_uninit>
+   f7526:	48 c7 00 22 00 00 00 	movq   $0x22,(%rax)
+   f752d:	48 89 58 08          	mov    %rbx,0x8(%rax)
+   f7531:	48 c7 40 10 22 00 00 	movq   $0x22,0x10(%rax)
+   f7538:	00 
+   f7539:	e9 62 ff ff ff       	jmp    f74a0 <<tk_train::trainers::bpe::merge::Neighbors>::record+0x1f0>
+   f753e:	bf 1e 00 00 00       	mov    $0x1e,%edi
+   f7543:	ff 15 a7 17 01 00    	call   *0x117a7(%rip)        # 108cf0 <malloc@GLIBC_2.2.5>
+   f7549:	48 85 c0             	test   %rax,%rax
+   f754c:	0f 84 aa 00 00 00    	je     f75fc <<tk_train::trainers::bpe::merge::Neighbors>::record+0x34c>
+   f7552:	48 89 c3             	mov    %rax,%rbx
+   f7555:	0f 10 05 a8 74 f2 ff 	movups -0xd8b58(%rip),%xmm0        # 1ea04 <core::unicode::unicode_data::white_space::WHITESPACE_MAP+0x3f2>
+   f755c:	0f 11 40 0e          	movups %xmm0,0xe(%rax)
+   f7560:	0f 10 05 8f 74 f2 ff 	movups -0xd8b71(%rip),%xmm0        # 1e9f6 <core::unicode::unicode_data::white_space::WHITESPACE_MAP+0x3e4>
+   f7567:	0f 11 00             	movups %xmm0,(%rax)
+   f756a:	e8 81 ad ff ff       	call   f22f0 <alloc::boxed::box_new_uninit>
+   f756f:	48 c7 00 1e 00 00 00 	movq   $0x1e,(%rax)
+   f7576:	48 89 58 08          	mov    %rbx,0x8(%rax)
+   f757a:	48 c7 40 10 1e 00 00 	movq   $0x1e,0x10(%rax)
+   f7581:	00 
+   f7582:	e9 19 ff ff ff       	jmp    f74a0 <<tk_train::trainers::bpe::merge::Neighbors>::record+0x1f0>
+   f7587:	bf 08 00 00 00       	mov    $0x8,%edi
+   f758c:	be 18 00 00 00       	mov    $0x18,%esi
+   f7591:	e8 2c 24 f7 ff       	call   699c2 <alloc::alloc::handle_alloc_error>
+   f7596:	eb 22                	jmp    f75ba <<tk_train::trainers::bpe::merge::Neighbors>::record+0x30a>
+   f7598:	48 8d 0d 71 12 01 00 	lea    0x11271(%rip),%rcx        # 108810 <bitcannon::classify::atom_tables::ATOM_TABLES+0x4138>
+   f759f:	be 08 00 00 00       	mov    $0x8,%esi
+   f75a4:	31 ff                	xor    %edi,%edi
+   f75a6:	e8 35 9d f7 ff       	call   712e0 <core::slice::index::slice_index_fail>
+   f75ab:	bf 08 00 00 00       	mov    $0x8,%edi
+   f75b0:	be 18 00 00 00       	mov    $0x18,%esi
+   f75b5:	e8 08 24 f7 ff       	call   699c2 <alloc::alloc::handle_alloc_error>
+   f75ba:	0f 0b                	ud2
+   f75bc:	48 8d 0d 55 0d 01 00 	lea    0x10d55(%rip),%rcx        # 108318 <bitcannon::classify::atom_tables::ATOM_TABLES+0x3c40>
+   f75c3:	be 08 00 00 00       	mov    $0x8,%esi
+   f75c8:	31 ff                	xor    %edi,%edi
+   f75ca:	e8 11 9d f7 ff       	call   712e0 <core::slice::index::slice_index_fail>
+   f75cf:	bf 01 00 00 00       	mov    $0x1,%edi
+   f75d4:	be 1f 00 00 00       	mov    $0x1f,%esi
+   f75d9:	e8 d4 22 f7 ff       	call   698b2 <alloc::raw_vec::handle_error>
+   f75de:	bf 01 00 00 00       	mov    $0x1,%edi
+   f75e3:	be 1c 00 00 00       	mov    $0x1c,%esi
+   f75e8:	e8 c5 22 f7 ff       	call   698b2 <alloc::raw_vec::handle_error>
+   f75ed:	bf 01 00 00 00       	mov    $0x1,%edi
+   f75f2:	be 22 00 00 00       	mov    $0x22,%esi
+   f75f7:	e8 b6 22 f7 ff       	call   698b2 <alloc::raw_vec::handle_error>
+   f75fc:	bf 01 00 00 00       	mov    $0x1,%edi
+   f7601:	be 1e 00 00 00       	mov    $0x1e,%esi
+   f7606:	e8 a7 22 f7 ff       	call   698b2 <alloc::raw_vec::handle_error>
+   f760b:	eb 06                	jmp    f7613 <<tk_train::trainers::bpe::merge::Neighbors>::record+0x363>
+   f760d:	eb 04                	jmp    f7613 <<tk_train::trainers::bpe::merge::Neighbors>::record+0x363>
+   f760f:	eb 02                	jmp    f7613 <<tk_train::trainers::bpe::merge::Neighbors>::record+0x363>
+   f7611:	eb 00                	jmp    f7613 <<tk_train::trainers::bpe::merge::Neighbors>::record+0x363>
+   f7613:	49 89 c6             	mov    %rax,%r14
+   f7616:	48 89 df             	mov    %rbx,%rdi
+   f7619:	ff 15 b9 16 01 00    	call   *0x116b9(%rip)        # 108cd8 <free@GLIBC_2.2.5>
+   f761f:	4c 89 f7             	mov    %r14,%rdi
+   f7622:	e8 39 b5 00 00       	call   102b60 <_Unwind_Resume@plt>
+   f7627:	cc                   	int3
+   f7628:	cc                   	int3
+   f7629:	cc                   	int3
+   f762a:	cc                   	int3
+   f762b:	cc                   	int3
+   f762c:	cc                   	int3
+   f762d:	cc                   	int3
+   f762e:	cc                   	int3
+   f762f:	cc                   	int3

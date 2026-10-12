@@ -1,0 +1,23 @@
+[
+  {
+    "name": "fmt-zero-push",
+    "worktree": "/tmp/bpe-positions-codec-fmt-zero-push-20261012",
+    "base": "55a44e7d",
+    "commit": "20596e9862c89264a3e1e0d4e6b65c148dbbe078",
+    "upstream_dependencies_unmodified": true
+  },
+  {
+    "name": "fmt-tls-push",
+    "worktree": "/tmp/bpe-positions-codec-fmt-tls-push-20261012",
+    "base": "55a44e7d",
+    "commit": "cbbb152cf8ac1d8c0237cd375a3debb307a7fd91",
+    "upstream_dependencies_unmodified": true
+  },
+  {
+    "name": "gimli-inline",
+    "worktree": "/tmp/bpe-positions-codec-gimli-inline-20261012",
+    "base": "248acd22",
+    "commit": "51fb5887a2b736d6c8711418f2ce61a1ef5e7838",
+    "upstream_dependencies_unmodified": true
+  }
+]

@@ -1,0 +1,9 @@
+    Checking bitcannon v0.1.0-dev.2 (/tmp/bpe-positions-codec-gimli-20261012/tokenizers/bitcannon)
+    Checking smallvec v1.16.3
+    Checking unicode-normalization-alignments v0.1.12
+    Checking tk-encode v0.1.0-dev.2 (/tmp/bpe-positions-codec-gimli-20261012/tokenizers/tk-encode)
+    Checking tk-convert v0.1.0-dev.2 (/tmp/bpe-positions-codec-gimli-20261012/tokenizers/tk-convert)
+    Checking leb128 v0.2.7
+    Checking tk-serialize v0.1.0-dev.2 (/tmp/bpe-positions-codec-gimli-20261012/tokenizers/tk-serialize)
+    Checking tk-train v0.1.0-dev.2 (/tmp/bpe-positions-codec-gimli-20261012/tokenizers/tk-train)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 6.32s

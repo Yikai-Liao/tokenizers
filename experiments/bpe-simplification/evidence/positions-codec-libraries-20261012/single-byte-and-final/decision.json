@@ -1,0 +1,21 @@
+{
+  "selected_arm": "fmt-zero-push",
+  "library": "leb128fmt",
+  "version": "0.1.0",
+  "single_byte_candidate": "fmt-small",
+  "single_byte_candidate_selected": false,
+  "reason": "Full training showed no meaningful improvement over the simpler library caller; user accepted current performance and prefers maintainability. Keep single-byte candidate and evidence as experiment.",
+  "native_checks": "selected candidate already passed both BPE feature configurations and clippy in optimized results",
+  "pending": null,
+  "single_byte_diagnostics": "Full-train comparison completed; no additional perf run after user accepted performance. perf-small.py is a prepared, unexecuted script.",
+  "single_byte_whole_train_vs_zero_percent": 0.15762594817660958,
+  "whitespace_single_worker_observation": {
+    "hand_mean": 52.2192409105,
+    "selected_mean": 55.1514966855,
+    "delta_percent": 5.61527750579573,
+    "preference_question_pending": false,
+    "user_acceptance": "User explicitly accepted approximately 5.6% and keeping simple library caller."
+  },
+  "validation_complete": true,
+  "chinese_cases_within_five_percent": false
+}

@@ -1,0 +1,9 @@
+gimli default passed
+gimli no-default passed
+gimli clippy passed
+fmt-slice default passed
+fmt-slice no-default passed
+fmt-slice clippy passed
+fmt-array default passed
+fmt-array no-default passed
+fmt-array clippy passed

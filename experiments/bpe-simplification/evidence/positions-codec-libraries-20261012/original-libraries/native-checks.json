@@ -1,0 +1,16 @@
+{
+  "candidates": [
+    "gimli",
+    "fmt-slice",
+    "fmt-array"
+  ],
+  "checks": [
+    "BPE lib tests default and no-default",
+    "clippy all-targets -D warnings with baseline redundant_field_names allow"
+  ],
+  "skipped_known_baseline_fixture": "feed_training_tokenizer_json_and_encoding_roundtrip",
+  "affinity": [
+    0,
+    1
+  ]
+}

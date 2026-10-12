@@ -1,0 +1,8 @@
+{
+  "hand": [],
+  "gimli": [
+    "00000000000f3340 t leb128::write::unsigned::<smallvec::SmallVec<[u8; 16]>>"
+  ],
+  "fmt-slice": [],
+  "fmt-array": []
+}

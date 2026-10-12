@@ -1,0 +1,106 @@
+
+/tmp/bpe-positions-codec-libraries-results-20261012/gimli-bin:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+00000000000f3340 <leb128::write::unsigned::<smallvec::SmallVec<[u8; 16]>>>:
+   f3340:	55                   	push   %rbp
+   f3341:	41 57                	push   %r15
+   f3343:	41 56                	push   %r14
+   f3345:	41 55                	push   %r13
+   f3347:	41 54                	push   %r12
+   f3349:	53                   	push   %rbx
+   f334a:	50                   	push   %rax
+   f334b:	49 89 f6             	mov    %rsi,%r14
+   f334e:	49 89 fc             	mov    %rdi,%r12
+   f3351:	48 89 f3             	mov    %rsi,%rbx
+   f3354:	eb 4d                	jmp    f33a3 <leb128::write::unsigned::<smallvec::SmallVec<[u8; 16]>>+0x63>
+   f3356:	66 2e 0f 1f 84 00 00 	cs nopw 0x0(%rax,%rax,1)
+   f335d:	00 00 00 
+   f3360:	41 80 e6 7f          	and    $0x7f,%r14b
+   f3364:	40 c0 e5 07          	shl    $0x7,%bpl
+   f3368:	44 08 f5             	or     %r14b,%bpl
+   f336b:	4a 8d 34 2b          	lea    (%rbx,%r13,1),%rsi
+   f336f:	4a 8d 3c 2b          	lea    (%rbx,%r13,1),%rdi
+   f3373:	48 ff c7             	inc    %rdi
+   f3376:	ff 15 6c 59 01 00    	call   *0x1596c(%rip)        # 108ce8 <memmove@GLIBC_2.2.5>
+   f337c:	42 88 2c 2b          	mov    %bpl,(%rbx,%r13,1)
+   f3380:	49 ff c7             	inc    %r15
+   f3383:	31 c0                	xor    %eax,%eax
+   f3385:	49 83 7c 24 10 11    	cmpq   $0x11,0x10(%r12)
+   f338b:	0f 92 c0             	setb   %al
+   f338e:	4d 89 7c c4 08       	mov    %r15,0x8(%r12,%rax,8)
+   f3393:	48 8b 1c 24          	mov    (%rsp),%rbx
+   f3397:	49 89 de             	mov    %rbx,%r14
+   f339a:	48 85 db             	test   %rbx,%rbx
+   f339d:	0f 84 92 00 00 00    	je     f3435 <leb128::write::unsigned::<smallvec::SmallVec<[u8; 16]>>+0xf5>
+   f33a3:	48 c1 eb 07          	shr    $0x7,%rbx
+   f33a7:	40 0f 95 c5          	setne  %bpl
+   f33ab:	4d 8b 7c 24 08       	mov    0x8(%r12),%r15
+   f33b0:	49 8b 44 24 10       	mov    0x10(%r12),%rax
+   f33b5:	48 83 f8 11          	cmp    $0x11,%rax
+   f33b9:	49 89 c5             	mov    %rax,%r13
+   f33bc:	4d 0f 43 ef          	cmovae %r15,%r13
+   f33c0:	b9 10 00 00 00       	mov    $0x10,%ecx
+   f33c5:	48 0f 43 c8          	cmovae %rax,%rcx
+   f33c9:	4c 39 e9             	cmp    %r13,%rcx
+   f33cc:	75 3d                	jne    f340b <leb128::write::unsigned::<smallvec::SmallVec<[u8; 16]>>+0xcb>
+   f33ce:	49 83 fd ff          	cmp    $0xffffffffffffffff,%r13
+   f33d2:	0f 84 94 00 00 00    	je     f346c <leb128::write::unsigned::<smallvec::SmallVec<[u8; 16]>>+0x12c>
+   f33d8:	49 0f bd cd          	bsr    %r13,%rcx
+   f33dc:	48 83 f1 3f          	xor    $0x3f,%rcx
+   f33e0:	0f 84 86 00 00 00    	je     f346c <leb128::write::unsigned::<smallvec::SmallVec<[u8; 16]>>+0x12c>
+   f33e6:	48 c7 c6 ff ff ff ff 	mov    $0xffffffffffffffff,%rsi
+   f33ed:	48 d3 ee             	shr    %cl,%rsi
+   f33f0:	48 ff c6             	inc    %rsi
+   f33f3:	4c 89 e7             	mov    %r12,%rdi
+   f33f6:	e8 65 02 00 00       	call   f3660 <<smallvec::SmallVec<[u8; 16]>>::try_grow>
+   f33fb:	48 83 f8 ff          	cmp    $0xffffffffffffffff,%rax
+   f33ff:	75 5b                	jne    f345c <leb128::write::unsigned::<smallvec::SmallVec<[u8; 16]>>+0x11c>
+   f3401:	4d 8b 7c 24 08       	mov    0x8(%r12),%r15
+   f3406:	49 8b 44 24 10       	mov    0x10(%r12),%rax
+   f340b:	48 83 f8 11          	cmp    $0x11,%rax
+   f340f:	4c 0f 42 f8          	cmovb  %rax,%r15
+   f3413:	4c 89 fa             	mov    %r15,%rdx
+   f3416:	4c 29 ea             	sub    %r13,%rdx
+   f3419:	72 29                	jb     f3444 <leb128::write::unsigned::<smallvec::SmallVec<[u8; 16]>>+0x104>
+   f341b:	48 89 1c 24          	mov    %rbx,(%rsp)
+   f341f:	4c 89 e3             	mov    %r12,%rbx
+   f3422:	48 83 f8 11          	cmp    $0x11,%rax
+   f3426:	0f 82 34 ff ff ff    	jb     f3360 <leb128::write::unsigned::<smallvec::SmallVec<[u8; 16]>>+0x20>
+   f342c:	49 8b 1c 24          	mov    (%r12),%rbx
+   f3430:	e9 2b ff ff ff       	jmp    f3360 <leb128::write::unsigned::<smallvec::SmallVec<[u8; 16]>>+0x20>
+   f3435:	48 83 c4 08          	add    $0x8,%rsp
+   f3439:	5b                   	pop    %rbx
+   f343a:	41 5c                	pop    %r12
+   f343c:	41 5d                	pop    %r13
+   f343e:	41 5e                	pop    %r14
+   f3440:	41 5f                	pop    %r15
+   f3442:	5d                   	pop    %rbp
+   f3443:	c3                   	ret
+   f3444:	48 8d 3d 31 b9 f2 ff 	lea    -0xd46cf(%rip),%rdi        # 1ed7c <core::unicode::unicode_data::white_space::WHITESPACE_MAP+0x76a>
+   f344b:	48 8d 15 46 53 01 00 	lea    0x15346(%rip),%rdx        # 108798 <bitcannon::classify::atom_tables::ATOM_TABLES+0x40c0>
+   f3452:	be 1e 00 00 00       	mov    $0x1e,%esi
+   f3457:	e8 54 df f7 ff       	call   713b0 <core::panicking::panic>
+   f345c:	48 85 c0             	test   %rax,%rax
+   f345f:	74 0b                	je     f346c <leb128::write::unsigned::<smallvec::SmallVec<[u8; 16]>>+0x12c>
+   f3461:	48 89 c7             	mov    %rax,%rdi
+   f3464:	48 89 d6             	mov    %rdx,%rsi
+   f3467:	e8 56 65 f7 ff       	call   699c2 <alloc::alloc::handle_alloc_error>
+   f346c:	48 8d 3d f2 b2 f2 ff 	lea    -0xd4d0e(%rip),%rdi        # 1e765 <core::unicode::unicode_data::white_space::WHITESPACE_MAP+0x153>
+   f3473:	48 8d 15 ce 46 01 00 	lea    0x146ce(%rip),%rdx        # 107b48 <bitcannon::classify::atom_tables::ATOM_TABLES+0x3470>
+   f347a:	be 11 00 00 00       	mov    $0x11,%esi
+   f347f:	e8 2c df f7 ff       	call   713b0 <core::panicking::panic>
+   f3484:	cc                   	int3
+   f3485:	cc                   	int3
+   f3486:	cc                   	int3
+   f3487:	cc                   	int3
+   f3488:	cc                   	int3
+   f3489:	cc                   	int3
+   f348a:	cc                   	int3
+   f348b:	cc                   	int3
+   f348c:	cc                   	int3
+   f348d:	cc                   	int3
+   f348e:	cc                   	int3
+   f348f:	cc                   	int3

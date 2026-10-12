@@ -1,0 +1,52 @@
+   Compiling leb128fmt v0.1.0
+   Compiling leb128 v0.2.7
+   Compiling smallvec v1.16.2
+   Compiling positions-codec-libraries-probe v0.0.0 (/tmp/bpe-positions-codec-libraries-results-20261012/probe)
+warning: unused variable: `name`
+  --> src/main.rs:49:19
+   |
+49 | fn check<M: List>(name:&str) {}
+   |                   ^^^^ help: if this is intentional, prefix it with an underscore: `_name`
+   |
+   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `positions-codec-libraries-probe` (bin "positions-codec-libraries-probe" test) generated 1 warning (run `cargo fix --bin "positions-codec-libraries-probe" -p positions-codec-libraries-probe --tests` to apply 1 suggestion)
+    Finished `release` profile [optimized] target(s) in 18.68s
+     Running unittests src/main.rs (/tmp/bpe-positions-codec-libraries-results-20261012/probe-target/release/deps/positions_codec_libraries_probe-11321b9dcc7dc2e9)
+
+running 20 tests
+test fmt_array::codec::tests::gap_width_matches_appended_bytes ... ok
+test fmt_array::tests::leaf_format_and_exhausted_cursor ... ok
+test fmt_array::tests::append_errors_preserve_leaf ... ok
+test fmt_slice::codec::tests::gap_width_matches_appended_bytes ... ok
+test fmt_array::tests::append_search_and_chunks ... ok
+test fmt_slice::tests::leaf_format_and_exhausted_cursor ... ok
+test gimli::codec::tests::gap_width_matches_appended_bytes ... ok
+test fmt_slice::tests::append_search_and_chunks ... ok
+test gimli::tests::append_errors_preserve_leaf ... ok
+test fmt_slice::tests::append_errors_preserve_leaf ... ok
+test gimli::tests::leaf_format_and_exhausted_cursor ... ok
+test hand::codec::tests::gap_width_matches_appended_bytes ... ok
+test hand::tests::append_errors_preserve_leaf ... ok
+test gimli::tests::append_search_and_chunks ... ok
+test hand::tests::append_search_and_chunks ... ok
+test hand::tests::leaf_format_and_exhausted_cursor ... ok
+test gimli::tests::concat_preserves_boundaries_and_chunks ... ok
+test fmt_slice::tests::concat_preserves_boundaries_and_chunks ... ok
+test hand::tests::concat_preserves_boundaries_and_chunks ... ok
+test fmt_array::tests::concat_preserves_boundaries_and_chunks ... ok
+
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+   Compiling positions-codec-libraries-probe v0.0.0 (/tmp/bpe-positions-codec-libraries-results-20261012/probe)
+warning: unused variable: `name`
+  --> src/main.rs:49:19
+   |
+49 | fn check<M: List>(name:&str) {}
+   |                   ^^^^ help: if this is intentional, prefix it with an underscore: `_name`
+   |
+   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `positions-codec-libraries-probe` (bin "positions-codec-libraries-probe") generated 1 warning (run `cargo fix --bin "positions-codec-libraries-probe" -p positions-codec-libraries-probe` to apply 1 suggestion)
+    Finished `release` profile [optimized] target(s) in 10.53s
+[{'name': 'gimli', 'worktree': '/tmp/bpe-positions-codec-gimli-20261012', 'base': '5d617efe', 'dependency': 'leb128 = "=0.2.7"', 'commit': '248acd221b295665f16274b45f2c6709bc6be8e0'}, {'name': 'fmt-slice', 'worktree': '/tmp/bpe-positions-codec-fmt-slice-20261012', 'base': '5d617efe', 'dependency': 'leb128fmt = { version = "=0.1.0", default-features = false }', 'commit': '55a44e7de458fe35a615308c8b11c9bcd5f4dd57'}, {'name': 'fmt-array', 'worktree': '/tmp/bpe-positions-codec-fmt-array-20261012', 'base': '5d617efe', 'dependency': 'leb128fmt = { version = "=0.1.0", default-features = false }', 'commit': '6f83f217168a87ded32830d03b5d75c86e627a5f'}]

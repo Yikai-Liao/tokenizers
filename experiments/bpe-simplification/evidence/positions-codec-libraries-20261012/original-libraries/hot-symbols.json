@@ -1,0 +1,26 @@
+{
+  "hand": [
+    "00000000000f6b00 t <tk_train::trainers::bpe::merge::Neighbors>::record",
+    "00000000000e7890 t <itertools::adaptors::coalesce::CoalesceBy<core::iter::adapters::map::Map<core::iter::adapters::flatten::FlatMap<core::slice::iter::Iter<tk_train::trainers::bpe::positions::Leaf>, tk_train::trainers::bpe::positions::codec::Cursor, tk_train::trainers::bpe::positions::read::{closure#0}>, <tk_train::trainers::bpe::merge::Batch>::prepare_cohort::{closure#0}>, itertools::adaptors::coalesce::DedupPred2CoalescePred<itertools::adaptors::coalesce::DedupEq>, itertools::adaptors::coalesce::NoCount> as core::iter::traits::iterator::Iterator>::next",
+    "00000000000f65a0 t <either::Either<core::iter::adapters::copied::Copied<core::slice::iter::Iter<u64>>, core::iter::adapters::take::Take<core::iter::adapters::flatten::FlatMap<core::slice::iter::Iter<tk_train::trainers::bpe::positions::Leaf>, tk_train::trainers::bpe::positions::codec::Cursor, tk_train::trainers::bpe::positions::read::{closure#0}>>> as core::iter::traits::iterator::Iterator>::next",
+    "00000000000f25c0 t <tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next"
+  ],
+  "gimli": [
+    "00000000000f72b0 t <tk_train::trainers::bpe::merge::Neighbors>::record",
+    "00000000000e7e40 t <itertools::adaptors::coalesce::CoalesceBy<core::iter::adapters::map::Map<core::iter::adapters::flatten::FlatMap<core::slice::iter::Iter<tk_train::trainers::bpe::positions::Leaf>, tk_train::trainers::bpe::positions::codec::Cursor, tk_train::trainers::bpe::positions::read::{closure#0}>, <tk_train::trainers::bpe::merge::Batch>::prepare_cohort::{closure#0}>, itertools::adaptors::coalesce::DedupPred2CoalescePred<itertools::adaptors::coalesce::DedupEq>, itertools::adaptors::coalesce::NoCount> as core::iter::traits::iterator::Iterator>::next",
+    "00000000000f6d50 t <either::Either<core::iter::adapters::copied::Copied<core::slice::iter::Iter<u64>>, core::iter::adapters::take::Take<core::iter::adapters::flatten::FlatMap<core::slice::iter::Iter<tk_train::trainers::bpe::positions::Leaf>, tk_train::trainers::bpe::positions::codec::Cursor, tk_train::trainers::bpe::positions::read::{closure#0}>>> as core::iter::traits::iterator::Iterator>::next",
+    "00000000000e7be0 t <tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next"
+  ],
+  "fmt-slice": [
+    "00000000000f7320 t <tk_train::trainers::bpe::merge::Neighbors>::record",
+    "00000000000e7d00 t <itertools::adaptors::coalesce::CoalesceBy<core::iter::adapters::map::Map<core::iter::adapters::flatten::FlatMap<core::slice::iter::Iter<tk_train::trainers::bpe::positions::Leaf>, tk_train::trainers::bpe::positions::codec::Cursor, tk_train::trainers::bpe::positions::read::{closure#0}>, <tk_train::trainers::bpe::merge::Batch>::prepare_cohort::{closure#0}>, itertools::adaptors::coalesce::DedupPred2CoalescePred<itertools::adaptors::coalesce::DedupEq>, itertools::adaptors::coalesce::NoCount> as core::iter::traits::iterator::Iterator>::next",
+    "00000000000f6dc0 t <either::Either<core::iter::adapters::copied::Copied<core::slice::iter::Iter<u64>>, core::iter::adapters::take::Take<core::iter::adapters::flatten::FlatMap<core::slice::iter::Iter<tk_train::trainers::bpe::positions::Leaf>, tk_train::trainers::bpe::positions::codec::Cursor, tk_train::trainers::bpe::positions::read::{closure#0}>>> as core::iter::traits::iterator::Iterator>::next",
+    "00000000000e7af0 t <tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next"
+  ],
+  "fmt-array": [
+    "00000000000f7420 t <tk_train::trainers::bpe::merge::Neighbors>::record",
+    "00000000000e7c30 t <itertools::adaptors::coalesce::CoalesceBy<core::iter::adapters::map::Map<core::iter::adapters::flatten::FlatMap<core::slice::iter::Iter<tk_train::trainers::bpe::positions::Leaf>, tk_train::trainers::bpe::positions::codec::Cursor, tk_train::trainers::bpe::positions::read::{closure#0}>, <tk_train::trainers::bpe::merge::Batch>::prepare_cohort::{closure#0}>, itertools::adaptors::coalesce::DedupPred2CoalescePred<itertools::adaptors::coalesce::DedupEq>, itertools::adaptors::coalesce::NoCount> as core::iter::traits::iterator::Iterator>::next",
+    "00000000000f6ec0 t <either::Either<core::iter::adapters::copied::Copied<core::slice::iter::Iter<u64>>, core::iter::adapters::take::Take<core::iter::adapters::flatten::FlatMap<core::slice::iter::Iter<tk_train::trainers::bpe::positions::Leaf>, tk_train::trainers::bpe::positions::codec::Cursor, tk_train::trainers::bpe::positions::read::{closure#0}>>> as core::iter::traits::iterator::Iterator>::next",
+    "00000000000e7a20 t <tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next"
+  ]
+}

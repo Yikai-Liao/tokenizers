@@ -1,0 +1,9 @@
+start zh-bytelevel_regex-w1-r0-hand
+done zh-bytelevel_regex-w1-r0-hand {'load_seconds': 9.396606238, 'process_hwm_kib_before_validation': 2577260, 'train_cpu_seconds': 65.116275, 'train_seconds': 65.304048016}
+start zh-bytelevel_regex-w1-r0-gimli
+done zh-bytelevel_regex-w1-r0-gimli {'load_seconds': 9.964381693, 'process_hwm_kib_before_validation': 2573796, 'train_cpu_seconds': 82.369495, 'train_seconds': 82.556257525}
+start zh-bytelevel_regex-w1-r0-fmt-slice
+done zh-bytelevel_regex-w1-r0-fmt-slice {'load_seconds': 9.591305628, 'process_hwm_kib_before_validation': 2575680, 'train_cpu_seconds': 67.015711, 'train_seconds': 67.163873528}
+start zh-bytelevel_regex-w1-r0-fmt-array
+done zh-bytelevel_regex-w1-r0-fmt-array {'load_seconds': 9.41132517, 'process_hwm_kib_before_validation': 2578496, 'train_cpu_seconds': 80.317255, 'train_seconds': 80.464962137}
+Perf comparisons finished; all models identical

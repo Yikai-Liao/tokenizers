@@ -1,0 +1,170 @@
+
+/tmp/bpe-positions-codec-optimized-results-20261012/fmt-tls-push-bin:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+00000000000f3300 <<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with::<<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with_borrow_mut<tk_train::trainers::bpe::positions::codec::append_gap::{closure#0}, ()>::{closure#0}, ()>>:
+   f3300:	55                   	push   %rbp
+   f3301:	41 57                	push   %r15
+   f3303:	41 56                	push   %r14
+   f3305:	41 55                	push   %r13
+   f3307:	41 54                	push   %r12
+   f3309:	53                   	push   %rbx
+   f330a:	50                   	push   %rax
+   f330b:	64 48 83 3c 25 d0 ff 	cmpq   $0x0,%fs:0xffffffffffffffd0
+   f3312:	ff ff 00 
+   f3315:	0f 85 d3 01 00 00    	jne    f34ee <<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with::<<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with_borrow_mut<tk_train::trainers::bpe::positions::codec::append_gap::{closure#0}, ()>::{closure#0}, ()>+0x1ee>
+   f331b:	64 48 c7 04 25 d0 ff 	movq   $0xffffffffffffffff,%fs:0xffffffffffffffd0
+   f3322:	ff ff ff ff ff ff 
+   f3328:	48 89 f8             	mov    %rdi,%rax
+   f332b:	48 c1 e8 07          	shr    $0x7,%rax
+   f332f:	0f 84 ab 00 00 00    	je     f33e0 <<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with::<<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with_borrow_mut<tk_train::trainers::bpe::positions::codec::append_gap::{closure#0}, ()>::{closure#0}, ()>+0xe0>
+   f3335:	89 f9                	mov    %edi,%ecx
+   f3337:	80 c9 80             	or     $0x80,%cl
+   f333a:	64 88 0c 25 d8 ff ff 	mov    %cl,%fs:0xffffffffffffffd8
+   f3341:	ff 
+   f3342:	48 89 f9             	mov    %rdi,%rcx
+   f3345:	48 c1 e9 0e          	shr    $0xe,%rcx
+   f3349:	0f 84 95 00 00 00    	je     f33e4 <<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with::<<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with_borrow_mut<tk_train::trainers::bpe::positions::codec::append_gap::{closure#0}, ()>::{closure#0}, ()>+0xe4>
+   f334f:	0c 80                	or     $0x80,%al
+   f3351:	64 88 04 25 d9 ff ff 	mov    %al,%fs:0xffffffffffffffd9
+   f3358:	ff 
+   f3359:	48 89 f8             	mov    %rdi,%rax
+   f335c:	48 c1 e8 15          	shr    $0x15,%rax
+   f3360:	0f 84 87 00 00 00    	je     f33ed <<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with::<<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with_borrow_mut<tk_train::trainers::bpe::positions::codec::append_gap::{closure#0}, ()>::{closure#0}, ()>+0xed>
+   f3366:	80 c9 80             	or     $0x80,%cl
+   f3369:	64 88 0c 25 da ff ff 	mov    %cl,%fs:0xffffffffffffffda
+   f3370:	ff 
+   f3371:	48 89 f9             	mov    %rdi,%rcx
+   f3374:	48 c1 e9 1c          	shr    $0x1c,%rcx
+   f3378:	74 7c                	je     f33f6 <<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with::<<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with_borrow_mut<tk_train::trainers::bpe::positions::codec::append_gap::{closure#0}, ()>::{closure#0}, ()>+0xf6>
+   f337a:	0c 80                	or     $0x80,%al
+   f337c:	64 88 04 25 db ff ff 	mov    %al,%fs:0xffffffffffffffdb
+   f3383:	ff 
+   f3384:	48 89 f8             	mov    %rdi,%rax
+   f3387:	48 c1 e8 23          	shr    $0x23,%rax
+   f338b:	74 72                	je     f33ff <<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with::<<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with_borrow_mut<tk_train::trainers::bpe::positions::codec::append_gap::{closure#0}, ()>::{closure#0}, ()>+0xff>
+   f338d:	80 c9 80             	or     $0x80,%cl
+   f3390:	64 88 0c 25 dc ff ff 	mov    %cl,%fs:0xffffffffffffffdc
+   f3397:	ff 
+   f3398:	48 89 f9             	mov    %rdi,%rcx
+   f339b:	48 c1 e9 2a          	shr    $0x2a,%rcx
+   f339f:	74 67                	je     f3408 <<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with::<<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with_borrow_mut<tk_train::trainers::bpe::positions::codec::append_gap::{closure#0}, ()>::{closure#0}, ()>+0x108>
+   f33a1:	0c 80                	or     $0x80,%al
+   f33a3:	64 88 04 25 dd ff ff 	mov    %al,%fs:0xffffffffffffffdd
+   f33aa:	ff 
+   f33ab:	48 89 f8             	mov    %rdi,%rax
+   f33ae:	48 c1 e8 31          	shr    $0x31,%rax
+   f33b2:	74 5d                	je     f3411 <<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with::<<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with_borrow_mut<tk_train::trainers::bpe::positions::codec::append_gap::{closure#0}, ()>::{closure#0}, ()>+0x111>
+   f33b4:	80 c9 80             	or     $0x80,%cl
+   f33b7:	64 88 0c 25 de ff ff 	mov    %cl,%fs:0xffffffffffffffde
+   f33be:	ff 
+   f33bf:	48 89 f9             	mov    %rdi,%rcx
+   f33c2:	48 c1 e9 38          	shr    $0x38,%rcx
+   f33c6:	74 52                	je     f341a <<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with::<<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with_borrow_mut<tk_train::trainers::bpe::positions::codec::append_gap::{closure#0}, ()>::{closure#0}, ()>+0x11a>
+   f33c8:	0c 80                	or     $0x80,%al
+   f33ca:	64 88 04 25 df ff ff 	mov    %al,%fs:0xffffffffffffffdf
+   f33d1:	ff 
+   f33d2:	bb 08 00 00 00       	mov    $0x8,%ebx
+   f33d7:	48 85 ff             	test   %rdi,%rdi
+   f33da:	78 47                	js     f3423 <<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with::<<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with_borrow_mut<tk_train::trainers::bpe::positions::codec::append_gap::{closure#0}, ()>::{closure#0}, ()>+0x123>
+   f33dc:	89 cf                	mov    %ecx,%edi
+   f33de:	eb 53                	jmp    f3433 <<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with::<<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with_borrow_mut<tk_train::trainers::bpe::positions::codec::append_gap::{closure#0}, ()>::{closure#0}, ()>+0x133>
+   f33e0:	31 db                	xor    %ebx,%ebx
+   f33e2:	eb 4f                	jmp    f3433 <<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with::<<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with_borrow_mut<tk_train::trainers::bpe::positions::codec::append_gap::{closure#0}, ()>::{closure#0}, ()>+0x133>
+   f33e4:	bb 01 00 00 00       	mov    $0x1,%ebx
+   f33e9:	89 c7                	mov    %eax,%edi
+   f33eb:	eb 46                	jmp    f3433 <<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with::<<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with_borrow_mut<tk_train::trainers::bpe::positions::codec::append_gap::{closure#0}, ()>::{closure#0}, ()>+0x133>
+   f33ed:	bb 02 00 00 00       	mov    $0x2,%ebx
+   f33f2:	89 cf                	mov    %ecx,%edi
+   f33f4:	eb 3d                	jmp    f3433 <<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with::<<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with_borrow_mut<tk_train::trainers::bpe::positions::codec::append_gap::{closure#0}, ()>::{closure#0}, ()>+0x133>
+   f33f6:	bb 03 00 00 00       	mov    $0x3,%ebx
+   f33fb:	89 c7                	mov    %eax,%edi
+   f33fd:	eb 34                	jmp    f3433 <<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with::<<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with_borrow_mut<tk_train::trainers::bpe::positions::codec::append_gap::{closure#0}, ()>::{closure#0}, ()>+0x133>
+   f33ff:	bb 04 00 00 00       	mov    $0x4,%ebx
+   f3404:	89 cf                	mov    %ecx,%edi
+   f3406:	eb 2b                	jmp    f3433 <<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with::<<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with_borrow_mut<tk_train::trainers::bpe::positions::codec::append_gap::{closure#0}, ()>::{closure#0}, ()>+0x133>
+   f3408:	bb 05 00 00 00       	mov    $0x5,%ebx
+   f340d:	89 c7                	mov    %eax,%edi
+   f340f:	eb 22                	jmp    f3433 <<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with::<<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with_borrow_mut<tk_train::trainers::bpe::positions::codec::append_gap::{closure#0}, ()>::{closure#0}, ()>+0x133>
+   f3411:	bb 06 00 00 00       	mov    $0x6,%ebx
+   f3416:	89 cf                	mov    %ecx,%edi
+   f3418:	eb 19                	jmp    f3433 <<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with::<<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with_borrow_mut<tk_train::trainers::bpe::positions::codec::append_gap::{closure#0}, ()>::{closure#0}, ()>+0x133>
+   f341a:	bb 07 00 00 00       	mov    $0x7,%ebx
+   f341f:	89 c7                	mov    %eax,%edi
+   f3421:	eb 10                	jmp    f3433 <<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with::<<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with_borrow_mut<tk_train::trainers::bpe::positions::codec::append_gap::{closure#0}, ()>::{closure#0}, ()>+0x133>
+   f3423:	64 88 0c 25 e0 ff ff 	mov    %cl,%fs:0xffffffffffffffe0
+   f342a:	ff 
+   f342b:	40 b7 01             	mov    $0x1,%dil
+   f342e:	bb 09 00 00 00       	mov    $0x9,%ebx
+   f3433:	64 40 88 bb d8 ff ff 	mov    %dil,%fs:-0x28(%rbx)
+   f343a:	ff 
+   f343b:	4c 8d 76 10          	lea    0x10(%rsi),%r14
+   f343f:	4c 8d 7e 08          	lea    0x8(%rsi),%r15
+   f3443:	49 c7 c4 ff ff ff ff 	mov    $0xffffffffffffffff,%r12
+   f344a:	eb 44                	jmp    f3490 <<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with::<<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with_borrow_mut<tk_train::trainers::bpe::positions::codec::append_gap::{closure#0}, ()>::{closure#0}, ()>+0x190>
+   f344c:	0f 1f 40 00          	nopl   0x0(%rax)
+   f3450:	48 89 f1             	mov    %rsi,%rcx
+   f3453:	4c 89 f2             	mov    %r14,%rdx
+   f3456:	48 83 f8 10          	cmp    $0x10,%rax
+   f345a:	74 11                	je     f346d <<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with::<<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with_borrow_mut<tk_train::trainers::bpe::positions::codec::append_gap::{closure#0}, ()>::{closure#0}, ()>+0x16d>
+   f345c:	40 88 2c 01          	mov    %bpl,(%rcx,%rax,1)
+   f3460:	48 ff 02             	incq   (%rdx)
+   f3463:	49 ff c4             	inc    %r12
+   f3466:	4c 39 e3             	cmp    %r12,%rbx
+   f3469:	75 25                	jne    f3490 <<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with::<<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with_borrow_mut<tk_train::trainers::bpe::positions::codec::append_gap::{closure#0}, ()>::{closure#0}, ()>+0x190>
+   f346b:	eb 69                	jmp    f34d6 <<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with::<<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with_borrow_mut<tk_train::trainers::bpe::positions::codec::append_gap::{closure#0}, ()>::{closure#0}, ()>+0x1d6>
+   f346d:	49 89 f5             	mov    %rsi,%r13
+   f3470:	48 89 f7             	mov    %rsi,%rdi
+   f3473:	e8 68 02 00 00       	call   f36e0 <<smallvec::SmallVec<[u8; 16]>>::reserve_one_unchecked>
+   f3478:	4c 89 ee             	mov    %r13,%rsi
+   f347b:	49 8b 4d 00          	mov    0x0(%r13),%rcx
+   f347f:	49 8b 45 08          	mov    0x8(%r13),%rax
+   f3483:	4c 89 fa             	mov    %r15,%rdx
+   f3486:	eb d4                	jmp    f345c <<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with::<<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with_borrow_mut<tk_train::trainers::bpe::positions::codec::append_gap::{closure#0}, ()>::{closure#0}, ()>+0x15c>
+   f3488:	0f 1f 84 00 00 00 00 	nopl   0x0(%rax,%rax,1)
+   f348f:	00 
+   f3490:	64 41 0f b6 ac 24 d9 	movzbl %fs:-0x27(%r12),%ebp
+   f3497:	ff ff ff 
+   f349a:	49 8b 06             	mov    (%r14),%rax
+   f349d:	48 83 f8 11          	cmp    $0x11,%rax
+   f34a1:	72 ad                	jb     f3450 <<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with::<<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with_borrow_mut<tk_train::trainers::bpe::positions::codec::append_gap::{closure#0}, ()>::{closure#0}, ()>+0x150>
+   f34a3:	49 8b 0f             	mov    (%r15),%rcx
+   f34a6:	48 39 c1             	cmp    %rax,%rcx
+   f34a9:	74 18                	je     f34c3 <<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with::<<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with_borrow_mut<tk_train::trainers::bpe::positions::codec::append_gap::{closure#0}, ()>::{closure#0}, ()>+0x1c3>
+   f34ab:	48 8b 06             	mov    (%rsi),%rax
+   f34ae:	40 88 2c 08          	mov    %bpl,(%rax,%rcx,1)
+   f34b2:	48 ff c1             	inc    %rcx
+   f34b5:	48 89 4e 08          	mov    %rcx,0x8(%rsi)
+   f34b9:	49 ff c4             	inc    %r12
+   f34bc:	4c 39 e3             	cmp    %r12,%rbx
+   f34bf:	75 cf                	jne    f3490 <<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with::<<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with_borrow_mut<tk_train::trainers::bpe::positions::codec::append_gap::{closure#0}, ()>::{closure#0}, ()>+0x190>
+   f34c1:	eb 13                	jmp    f34d6 <<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with::<<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with_borrow_mut<tk_train::trainers::bpe::positions::codec::append_gap::{closure#0}, ()>::{closure#0}, ()>+0x1d6>
+   f34c3:	49 89 f5             	mov    %rsi,%r13
+   f34c6:	48 89 f7             	mov    %rsi,%rdi
+   f34c9:	e8 12 02 00 00       	call   f36e0 <<smallvec::SmallVec<[u8; 16]>>::reserve_one_unchecked>
+   f34ce:	49 8b 0f             	mov    (%r15),%rcx
+   f34d1:	4c 89 ee             	mov    %r13,%rsi
+   f34d4:	eb d5                	jmp    f34ab <<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with::<<std::thread::local::LocalKey<core::cell::RefCell<[u8; 10]>>>::with_borrow_mut<tk_train::trainers::bpe::positions::codec::append_gap::{closure#0}, ()>::{closure#0}, ()>+0x1ab>
+   f34d6:	64 48 ff 04 25 d0 ff 	incq   %fs:0xffffffffffffffd0
+   f34dd:	ff ff 
+   f34df:	48 83 c4 08          	add    $0x8,%rsp
+   f34e3:	5b                   	pop    %rbx
+   f34e4:	41 5c                	pop    %r12
+   f34e6:	41 5d                	pop    %r13
+   f34e8:	41 5e                	pop    %r14
+   f34ea:	41 5f                	pop    %r15
+   f34ec:	5d                   	pop    %rbp
+   f34ed:	c3                   	ret
+   f34ee:	48 8d 3d ab 49 01 00 	lea    0x149ab(%rip),%rdi        # 107ea0 <bitcannon::classify::atom_tables::ATOM_TABLES+0x3748>
+   f34f5:	e8 c6 f2 f7 ff       	call   727c0 <core::cell::panic_already_borrowed>
+   f34fa:	64 48 ff 04 25 d0 ff 	incq   %fs:0xffffffffffffffd0
+   f3501:	ff ff 
+   f3503:	48 89 c7             	mov    %rax,%rdi
+   f3506:	e8 a5 f6 00 00       	call   102bb0 <_Unwind_Resume@plt>
+   f350b:	cc                   	int3
+   f350c:	cc                   	int3
+   f350d:	cc                   	int3
+   f350e:	cc                   	int3
+   f350f:	cc                   	int3

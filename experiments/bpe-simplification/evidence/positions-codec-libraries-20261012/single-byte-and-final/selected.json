@@ -1,0 +1,10 @@
+[
+  {
+    "name": "fmt-small",
+    "worktree": "/tmp/bpe-positions-codec-fmt-small-20261012",
+    "base": "20596e98",
+    "commit": "a81b24169ad59af45a372513b7987fb4c8c32532",
+    "upstream_dependencies_unmodified": true,
+    "encoding_note": "Both branches call published leb128fmt encoders; no handwritten LEB128 bit operations."
+  }
+]

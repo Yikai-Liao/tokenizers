@@ -1,0 +1,172 @@
+[
+  {
+    "case": "en-whitespace-w6",
+    "arm": "hand",
+    "repeat": 0,
+    "diagnostic_only": true,
+    "metrics": {
+      "load_seconds": 0.328532398,
+      "process_hwm_kib_before_validation": 136876,
+      "train_cpu_seconds": 4.409824,
+      "train_seconds": 2.495753129
+    },
+    "affinity": [
+      0,
+      1
+    ],
+    "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6"
+  },
+  {
+    "case": "en-whitespace-w6",
+    "arm": "fmt-zero-push",
+    "repeat": 0,
+    "diagnostic_only": true,
+    "metrics": {
+      "load_seconds": 0.337231384,
+      "process_hwm_kib_before_validation": 135656,
+      "train_cpu_seconds": 4.155747,
+      "train_seconds": 2.334690926
+    },
+    "affinity": [
+      0,
+      1
+    ],
+    "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6"
+  },
+  {
+    "case": "en-whitespace-w6",
+    "arm": "fmt-zero-push",
+    "repeat": 1,
+    "diagnostic_only": true,
+    "metrics": {
+      "load_seconds": 0.318449814,
+      "process_hwm_kib_before_validation": 136160,
+      "train_cpu_seconds": 4.294594,
+      "train_seconds": 2.411468075
+    },
+    "affinity": [
+      0,
+      1
+    ],
+    "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6"
+  },
+  {
+    "case": "en-whitespace-w6",
+    "arm": "hand",
+    "repeat": 1,
+    "diagnostic_only": true,
+    "metrics": {
+      "load_seconds": 0.341020792,
+      "process_hwm_kib_before_validation": 137364,
+      "train_cpu_seconds": 4.641482,
+      "train_seconds": 2.549396207
+    },
+    "affinity": [
+      0,
+      1
+    ],
+    "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6"
+  },
+  {
+    "case": "en-bytelevel_regex-w6",
+    "arm": "hand",
+    "repeat": 0,
+    "diagnostic_only": true,
+    "metrics": {
+      "load_seconds": 0.415296,
+      "process_hwm_kib_before_validation": 150564,
+      "train_cpu_seconds": 4.508137,
+      "train_seconds": 2.519820903
+    },
+    "affinity": [
+      0,
+      1
+    ],
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5"
+  },
+  {
+    "case": "en-bytelevel_regex-w6",
+    "arm": "fmt-zero-push",
+    "repeat": 0,
+    "diagnostic_only": true,
+    "metrics": {
+      "load_seconds": 0.391178021,
+      "process_hwm_kib_before_validation": 151540,
+      "train_cpu_seconds": 4.334884,
+      "train_seconds": 2.4145710510000002
+    },
+    "affinity": [
+      0,
+      1
+    ],
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5"
+  },
+  {
+    "case": "en-bytelevel_regex-w6",
+    "arm": "fmt-zero-push",
+    "repeat": 1,
+    "diagnostic_only": true,
+    "metrics": {
+      "load_seconds": 0.377076614,
+      "process_hwm_kib_before_validation": 146672,
+      "train_cpu_seconds": 4.746141,
+      "train_seconds": 2.840277735
+    },
+    "affinity": [
+      0,
+      1
+    ],
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5"
+  },
+  {
+    "case": "en-bytelevel_regex-w6",
+    "arm": "hand",
+    "repeat": 1,
+    "diagnostic_only": true,
+    "metrics": {
+      "load_seconds": 0.410659952,
+      "process_hwm_kib_before_validation": 147428,
+      "train_cpu_seconds": 4.744587,
+      "train_seconds": 2.645224683
+    },
+    "affinity": [
+      0,
+      1
+    ],
+    "model_sha256": "6bb46d35a63c7610f9948ac9b852b69644f93a319ef834891ee35522faafd5b5"
+  },
+  {
+    "case": "zh-bytelevel_regex-w1",
+    "arm": "hand",
+    "repeat": 0,
+    "diagnostic_only": true,
+    "metrics": {
+      "load_seconds": 9.693285636,
+      "process_hwm_kib_before_validation": 2578860,
+      "train_cpu_seconds": 68.10346200000001,
+      "train_seconds": 68.27833794
+    },
+    "affinity": [
+      0,
+      1
+    ],
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de"
+  },
+  {
+    "case": "zh-bytelevel_regex-w1",
+    "arm": "fmt-zero-push",
+    "repeat": 0,
+    "diagnostic_only": true,
+    "metrics": {
+      "load_seconds": 9.44495649,
+      "process_hwm_kib_before_validation": 2578284,
+      "train_cpu_seconds": 67.493911,
+      "train_seconds": 67.613749338
+    },
+    "affinity": [
+      0,
+      1
+    ],
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de"
+  }
+]

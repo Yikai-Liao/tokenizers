@@ -1,0 +1,9 @@
+{
+  "path": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+  "sha256": "fa430b8f298f817a266046af84a77533185ad6fc4406c7d3787b5a0a0c207826",
+  "resolved_ifunc_offsets": {
+    "memcpy": "0x172a80",
+    "memmove": "0x172a80"
+  },
+  "note": "Runtime resolution identifies both memmove and memcpy at the same IFUNC implementation. Offsets match unresolved libc sample locations; do not attribute individual copy calls by IP alone."
+}

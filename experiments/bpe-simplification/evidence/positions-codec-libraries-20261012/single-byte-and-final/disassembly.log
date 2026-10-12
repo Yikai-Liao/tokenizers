@@ -1,0 +1,12 @@
+hand {'neighbors': 1200, 'cursor': 208, 'resize': 528}
+neighbors f6d42:	e8 99 bf ff ff       	call   f2ce0 <<smallvec::SmallVec<[u8; 16]>>::reserve_one_unchecked>
+neighbors f6d60:	e8 7b bf ff ff       	call   f2ce0 <<smallvec::SmallVec<[u8; 16]>>::reserve_one_unchecked>
+neighbors f6f19:	e8 c2 bd ff ff       	call   f2ce0 <<smallvec::SmallVec<[u8; 16]>>::reserve_one_unchecked>
+neighbors f6f34:	e8 a7 bd ff ff       	call   f2ce0 <<smallvec::SmallVec<[u8; 16]>>::reserve_one_unchecked>
+fmt-zero-push {'neighbors': 1200, 'cursor': 304, 'resize': 528}
+neighbors f76a2:	e8 c9 bf ff ff       	call   f3670 <<smallvec::SmallVec<[u8; 16]>>::reserve_one_unchecked>
+neighbors f7704:	e8 67 bf ff ff       	call   f3670 <<smallvec::SmallVec<[u8; 16]>>::reserve_one_unchecked>
+fmt-small {'neighbors': 1232, 'cursor': 304, 'resize': 528}
+neighbors f7769:	e8 02 09 00 00       	call   f8070 <<smallvec::SmallVec<[u8; 16]>>::push>
+neighbors f77c2:	e8 99 bf ff ff       	call   f3760 <<smallvec::SmallVec<[u8; 16]>>::reserve_one_unchecked>
+neighbors f7824:	e8 37 bf ff ff       	call   f3760 <<smallvec::SmallVec<[u8; 16]>>::reserve_one_unchecked>

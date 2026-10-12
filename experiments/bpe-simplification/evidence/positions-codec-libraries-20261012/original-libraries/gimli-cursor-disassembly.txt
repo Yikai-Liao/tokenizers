@@ -1,0 +1,119 @@
+
+/tmp/bpe-positions-codec-libraries-results-20261012/gimli-bin:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+00000000000e7be0 <<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next>:
+   e7be0:	53                   	push   %rbx
+   e7be1:	48 83 ec 10          	sub    $0x10,%rsp
+   e7be5:	48 8b 57 08          	mov    0x8(%rdi),%rdx
+   e7be9:	48 85 d2             	test   %rdx,%rdx
+   e7bec:	0f 84 7f 00 00 00    	je     e7c71 <<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next+0x91>
+   e7bf2:	48 8b 47 18          	mov    0x18(%rdi),%rax
+   e7bf6:	a8 7f                	test   $0x7f,%al
+   e7bf8:	0f 84 7e 00 00 00    	je     e7c7c <<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next+0x9c>
+   e7bfe:	4c 8b 07             	mov    (%rdi),%r8
+   e7c01:	4d 8d 0c 10          	lea    (%r8,%rdx,1),%r9
+   e7c05:	48 ff ca             	dec    %rdx
+   e7c08:	49 ff c0             	inc    %r8
+   e7c0b:	31 f6                	xor    %esi,%esi
+   e7c0d:	31 c9                	xor    %ecx,%ecx
+   e7c0f:	90                   	nop
+   e7c10:	45 0f b6 58 ff       	movzbl -0x1(%r8),%r11d
+   e7c15:	45 0f b6 d3          	movzbl %r11b,%r10d
+   e7c19:	83 f9 3f             	cmp    $0x3f,%ecx
+   e7c1c:	75 0a                	jne    e7c28 <<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next+0x48>
+   e7c1e:	41 80 fb 02          	cmp    $0x2,%r11b
+   e7c22:	0f 83 9b 00 00 00    	jae    e7cc3 <<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next+0xe3>
+   e7c28:	45 89 d3             	mov    %r10d,%r11d
+   e7c2b:	41 83 e2 7f          	and    $0x7f,%r10d
+   e7c2f:	49 d3 e2             	shl    %cl,%r10
+   e7c32:	4c 09 d6             	or     %r10,%rsi
+   e7c35:	45 84 db             	test   %r11b,%r11b
+   e7c38:	79 26                	jns    e7c60 <<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next+0x80>
+   e7c3a:	83 c1 07             	add    $0x7,%ecx
+   e7c3d:	49 ff c0             	inc    %r8
+   e7c40:	48 83 c2 ff          	add    $0xffffffffffffffff,%rdx
+   e7c44:	72 ca                	jb     e7c10 <<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next+0x30>
+   e7c46:	4d 89 c8             	mov    %r9,%r8
+   e7c49:	4c 89 07             	mov    %r8,(%rdi)
+   e7c4c:	48 c7 47 08 00 00 00 	movq   $0x0,0x8(%rdi)
+   e7c53:	00 
+   e7c54:	48 8d 05 bd 0c 02 00 	lea    0x20cbd(%rip),%rax        # 108918 <bitcannon::classify::atom_tables::ATOM_TABLES+0x4240>
+   e7c5b:	e9 9f 00 00 00       	jmp    e7cff <<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next+0x11f>
+   e7c60:	4c 89 07             	mov    %r8,(%rdi)
+   e7c63:	48 89 57 08          	mov    %rdx,0x8(%rdi)
+   e7c67:	48 03 77 10          	add    0x10(%rdi),%rsi
+   e7c6b:	48 89 77 10          	mov    %rsi,0x10(%rdi)
+   e7c6f:	eb 2a                	jmp    e7c9b <<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next+0xbb>
+   e7c71:	31 c0                	xor    %eax,%eax
+   e7c73:	48 89 f2             	mov    %rsi,%rdx
+   e7c76:	48 83 c4 10          	add    $0x10,%rsp
+   e7c7a:	5b                   	pop    %rbx
+   e7c7b:	c3                   	ret
+   e7c7c:	48 83 fa 07          	cmp    $0x7,%rdx
+   e7c80:	76 2e                	jbe    e7cb0 <<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next+0xd0>
+   e7c82:	48 8b 0f             	mov    (%rdi),%rcx
+   e7c85:	48 8b 31             	mov    (%rcx),%rsi
+   e7c88:	48 89 77 10          	mov    %rsi,0x10(%rdi)
+   e7c8c:	48 83 c2 f8          	add    $0xfffffffffffffff8,%rdx
+   e7c90:	48 83 c1 08          	add    $0x8,%rcx
+   e7c94:	48 89 0f             	mov    %rcx,(%rdi)
+   e7c97:	48 89 57 08          	mov    %rdx,0x8(%rdi)
+   e7c9b:	48 ff c0             	inc    %rax
+   e7c9e:	48 89 47 18          	mov    %rax,0x18(%rdi)
+   e7ca2:	b8 01 00 00 00       	mov    $0x1,%eax
+   e7ca7:	48 89 f2             	mov    %rsi,%rdx
+   e7caa:	48 83 c4 10          	add    $0x10,%rsp
+   e7cae:	5b                   	pop    %rbx
+   e7caf:	c3                   	ret
+   e7cb0:	48 8d 0d 59 0b 02 00 	lea    0x20b59(%rip),%rcx        # 108810 <bitcannon::classify::atom_tables::ATOM_TABLES+0x4138>
+   e7cb7:	be 08 00 00 00       	mov    $0x8,%esi
+   e7cbc:	31 ff                	xor    %edi,%edi
+   e7cbe:	e8 1d 96 f8 ff       	call   712e0 <core::slice::index::slice_index_fail>
+   e7cc3:	4c 89 07             	mov    %r8,(%rdi)
+   e7cc6:	48 89 57 08          	mov    %rdx,0x8(%rdi)
+   e7cca:	45 84 d2             	test   %r10b,%r10b
+   e7ccd:	78 04                	js     e7cd3 <<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next+0xf3>
+   e7ccf:	31 c0                	xor    %eax,%eax
+   e7cd1:	eb 2c                	jmp    e7cff <<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next+0x11f>
+   e7cd3:	48 ff ca             	dec    %rdx
+   e7cd6:	31 c0                	xor    %eax,%eax
+   e7cd8:	0f 1f 84 00 00 00 00 	nopl   0x0(%rax,%rax,1)
+   e7cdf:	00 
+   e7ce0:	48 83 fa ff          	cmp    $0xffffffffffffffff,%rdx
+   e7ce4:	0f 84 5f ff ff ff    	je     e7c49 <<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next+0x69>
+   e7cea:	41 80 38 00          	cmpb   $0x0,(%r8)
+   e7cee:	4d 8d 40 01          	lea    0x1(%r8),%r8
+   e7cf2:	4c 89 07             	mov    %r8,(%rdi)
+   e7cf5:	48 89 57 08          	mov    %rdx,0x8(%rdi)
+   e7cf9:	48 8d 52 ff          	lea    -0x1(%rdx),%rdx
+   e7cfd:	78 e1                	js     e7ce0 <<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next+0x100>
+   e7cff:	48 89 44 24 08       	mov    %rax,0x8(%rsp)
+   e7d04:	48 8d 3d e1 72 f3 ff 	lea    -0xc8d1f(%rip),%rdi        # 1efec <core::unicode::unicode_data::white_space::WHITESPACE_MAP+0x9da>
+   e7d0b:	48 8d 0d 5e 03 02 00 	lea    0x2035e(%rip),%rcx        # 108070 <bitcannon::classify::atom_tables::ATOM_TABLES+0x3998>
+   e7d12:	4c 8d 05 8f 0c 02 00 	lea    0x20c8f(%rip),%r8        # 1089a8 <bitcannon::classify::atom_tables::ATOM_TABLES+0x42d0>
+   e7d19:	48 8d 54 24 08       	lea    0x8(%rsp),%rdx
+   e7d1e:	be 13 00 00 00       	mov    $0x13,%esi
+   e7d23:	e8 f8 ab f8 ff       	call   72920 <core::result::unwrap_failed>
+   e7d28:	0f 0b                	ud2
+   e7d2a:	48 89 c3             	mov    %rax,%rbx
+   e7d2d:	48 8b 44 24 08       	mov    0x8(%rsp),%rax
+   e7d32:	48 85 c0             	test   %rax,%rax
+   e7d35:	74 19                	je     e7d50 <<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next+0x170>
+   e7d37:	89 c1                	mov    %eax,%ecx
+   e7d39:	83 e1 03             	and    $0x3,%ecx
+   e7d3c:	8d 51 fe             	lea    -0x2(%rcx),%edx
+   e7d3f:	83 fa 02             	cmp    $0x2,%edx
+   e7d42:	72 0c                	jb     e7d50 <<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next+0x170>
+   e7d44:	48 85 c9             	test   %rcx,%rcx
+   e7d47:	74 07                	je     e7d50 <<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next+0x170>
+   e7d49:	48 8d 78 ff          	lea    -0x1(%rax),%rdi
+   e7d4d:	ff 50 17             	call   *0x17(%rax)
+   e7d50:	48 89 df             	mov    %rbx,%rdi
+   e7d53:	e8 08 ae 01 00       	call   102b60 <_Unwind_Resume@plt>
+   e7d58:	e8 86 ac f8 ff       	call   729e3 <core::panicking::panic_in_cleanup>
+   e7d5d:	cc                   	int3
+   e7d5e:	cc                   	int3
+   e7d5f:	cc                   	int3

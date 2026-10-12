@@ -1,0 +1,10 @@
+{
+  "affinity": [
+    0,
+    1
+  ],
+  "allocator_environment": {},
+  "normal_binaries": "same frozen hand/zero from optimized experiment; small adds only single-byte library branch",
+  "builds_and_native_tests_finished": true,
+  "micro_sha256": "ba0e60d5061db9750f2fac007292229d856a41087127613f5931b06bdfe18280"
+}

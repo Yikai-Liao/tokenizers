@@ -1,0 +1,51 @@
+start en-whitespace-w6-r0-hand
+{"case": "en-whitespace-w6", "arm": "hand", "repeat": 0, "train_seconds": 1.927342374, "train_cpu_seconds": 3.298134, "child_sampled_rss_kib": 134744}
+start en-whitespace-w6-r0-gimli
+{"case": "en-whitespace-w6", "arm": "gimli", "repeat": 0, "train_seconds": 2.212837615, "train_cpu_seconds": 3.648634, "child_sampled_rss_kib": 139864}
+start en-whitespace-w6-r0-fmt-slice
+{"case": "en-whitespace-w6", "arm": "fmt-slice", "repeat": 0, "train_seconds": 2.232232288, "train_cpu_seconds": 3.632049, "child_sampled_rss_kib": 138400}
+start en-whitespace-w6-r0-fmt-array
+{"case": "en-whitespace-w6", "arm": "fmt-array", "repeat": 0, "train_seconds": 2.241470548, "train_cpu_seconds": 3.6105149999999995, "child_sampled_rss_kib": 138396}
+start en-whitespace-w6-r1-fmt-array
+{"case": "en-whitespace-w6", "arm": "fmt-array", "repeat": 1, "train_seconds": 2.225083421, "train_cpu_seconds": 3.6946000000000003, "child_sampled_rss_kib": 137736}
+start en-whitespace-w6-r1-fmt-slice
+{"case": "en-whitespace-w6", "arm": "fmt-slice", "repeat": 1, "train_seconds": 1.988512433, "train_cpu_seconds": 3.3363199999999997, "child_sampled_rss_kib": 134016}
+start en-whitespace-w6-r1-gimli
+{"case": "en-whitespace-w6", "arm": "gimli", "repeat": 1, "train_seconds": 2.176902272, "train_cpu_seconds": 3.5962669999999997, "child_sampled_rss_kib": 139284}
+start en-whitespace-w6-r1-hand
+{"case": "en-whitespace-w6", "arm": "hand", "repeat": 1, "train_seconds": 1.952813726, "train_cpu_seconds": 3.340621, "child_sampled_rss_kib": 136440}
+start en-bytelevel_regex-w6-r0-hand
+{"case": "en-bytelevel_regex-w6", "arm": "hand", "repeat": 0, "train_seconds": 2.1927344890000002, "train_cpu_seconds": 3.7119850000000003, "child_sampled_rss_kib": 149664}
+start en-bytelevel_regex-w6-r0-gimli
+{"case": "en-bytelevel_regex-w6", "arm": "gimli", "repeat": 0, "train_seconds": 2.47363715, "train_cpu_seconds": 4.093639, "child_sampled_rss_kib": 154448}
+start en-bytelevel_regex-w6-r0-fmt-slice
+{"case": "en-bytelevel_regex-w6", "arm": "fmt-slice", "repeat": 0, "train_seconds": 2.2967928779999998, "train_cpu_seconds": 3.7885660000000003, "child_sampled_rss_kib": 150516}
+start en-bytelevel_regex-w6-r0-fmt-array
+{"case": "en-bytelevel_regex-w6", "arm": "fmt-array", "repeat": 0, "train_seconds": 2.514952972, "train_cpu_seconds": 4.133695, "child_sampled_rss_kib": 157060}
+start en-bytelevel_regex-w6-r1-fmt-array
+{"case": "en-bytelevel_regex-w6", "arm": "fmt-array", "repeat": 1, "train_seconds": 2.363162749, "train_cpu_seconds": 3.85426, "child_sampled_rss_kib": 153472}
+start en-bytelevel_regex-w6-r1-fmt-slice
+{"case": "en-bytelevel_regex-w6", "arm": "fmt-slice", "repeat": 1, "train_seconds": 2.023655614, "train_cpu_seconds": 3.426067, "child_sampled_rss_kib": 148692}
+start en-bytelevel_regex-w6-r1-gimli
+{"case": "en-bytelevel_regex-w6", "arm": "gimli", "repeat": 1, "train_seconds": 2.443875956, "train_cpu_seconds": 4.083444, "child_sampled_rss_kib": 150104}
+start en-bytelevel_regex-w6-r1-hand
+{"case": "en-bytelevel_regex-w6", "arm": "hand", "repeat": 1, "train_seconds": 2.11029611, "train_cpu_seconds": 3.622232, "child_sampled_rss_kib": 149332}
+start zh-bytelevel_regex-w1-r0-hand
+{"case": "zh-bytelevel_regex-w1", "arm": "hand", "repeat": 0, "train_seconds": 64.96125744, "train_cpu_seconds": 64.827479, "child_sampled_rss_kib": 2574024}
+start zh-bytelevel_regex-w1-r0-gimli
+{"case": "zh-bytelevel_regex-w1", "arm": "gimli", "repeat": 0, "train_seconds": 84.403400528, "train_cpu_seconds": 84.267394, "child_sampled_rss_kib": 2576532}
+start zh-bytelevel_regex-w1-r0-fmt-slice
+{"case": "zh-bytelevel_regex-w1", "arm": "fmt-slice", "repeat": 0, "train_seconds": 69.920112125, "train_cpu_seconds": 69.79836399999999, "child_sampled_rss_kib": 2576732}
+start zh-bytelevel_regex-w1-r0-fmt-array
+{"case": "zh-bytelevel_regex-w1", "arm": "fmt-array", "repeat": 0, "train_seconds": 82.724593394, "train_cpu_seconds": 82.57359199999999, "child_sampled_rss_kib": 2559148}
+start zh-bytelevel_regex-w1-r1-fmt-array
+{"case": "zh-bytelevel_regex-w1", "arm": "fmt-array", "repeat": 1, "train_seconds": 80.53485748, "train_cpu_seconds": 80.402254, "child_sampled_rss_kib": 2575900}
+start zh-bytelevel_regex-w1-r1-fmt-slice
+{"case": "zh-bytelevel_regex-w1", "arm": "fmt-slice", "repeat": 1, "train_seconds": 65.875648903, "train_cpu_seconds": 65.765889, "child_sampled_rss_kib": 2578864}
+start zh-bytelevel_regex-w1-r1-gimli
+{"case": "zh-bytelevel_regex-w1", "arm": "gimli", "repeat": 1, "train_seconds": 83.079513288, "train_cpu_seconds": 82.93071800000001, "child_sampled_rss_kib": 2577616}
+start zh-bytelevel_regex-w1-r1-hand
+{"case": "zh-bytelevel_regex-w1", "arm": "hand", "repeat": 1, "train_seconds": 63.9967725, "train_cpu_seconds": 63.894706, "child_sampled_rss_kib": 2579172}
+start zh-whitespace-w1-r0-hand
+{"case": "zh-whitespace-w1", "arm": "hand", "repeat": 0, "train_seconds": 49.782387356, "train_cpu_seconds": 49.675537000000006, "child_sampled_rss_kib": 1784992}
+start zh-whitespace-w1-r0-gimli

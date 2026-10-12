@@ -1,0 +1,23 @@
+en-bytelevel_regex-w6 {'hand': {'runs': 2, 'wall': 2.098, 'vs_hand': 0.0}, 'fmt-zero-push': {'runs': 2, 'wall': 2.075, 'vs_hand': -1.1}, 'fmt-tls-push': {'runs': 2, 'wall': 2.227, 'vs_hand': 6.16}, 'gimli-inline': {'runs': 2, 'wall': 2.487, 'vs_hand': 18.57}}
+en-whitespace-w6 {'hand': {'runs': 2, 'wall': 1.862, 'vs_hand': 0.0}, 'fmt-zero-push': {'runs': 2, 'wall': 1.99, 'vs_hand': 6.88}, 'fmt-tls-push': {'runs': 2, 'wall': 2.14, 'vs_hand': 14.96}, 'gimli-inline': {'runs': 2, 'wall': 2.136, 'vs_hand': 14.74}}
+zh-bytelevel_regex-w1 {'hand': {'runs': 2, 'wall': 65.534, 'vs_hand': 0.0}, 'fmt-zero-push': {'runs': 2, 'wall': 66.094, 'vs_hand': 0.86}, 'fmt-tls-push': {'runs': 2, 'wall': 69.158, 'vs_hand': 5.53}, 'gimli-inline': {'runs': 2, 'wall': 82.585, 'vs_hand': 26.02}}
+start diagnostic en-whitespace-w6-r0-hand
+done diagnostic en-whitespace-w6-r0-hand
+start diagnostic en-whitespace-w6-r0-fmt-zero-push
+done diagnostic en-whitespace-w6-r0-fmt-zero-push
+start diagnostic en-whitespace-w6-r1-fmt-zero-push
+done diagnostic en-whitespace-w6-r1-fmt-zero-push
+start diagnostic en-whitespace-w6-r1-hand
+done diagnostic en-whitespace-w6-r1-hand
+start diagnostic en-bytelevel_regex-w6-r0-hand
+done diagnostic en-bytelevel_regex-w6-r0-hand
+start diagnostic en-bytelevel_regex-w6-r0-fmt-zero-push
+done diagnostic en-bytelevel_regex-w6-r0-fmt-zero-push
+start diagnostic en-bytelevel_regex-w6-r1-fmt-zero-push
+done diagnostic en-bytelevel_regex-w6-r1-fmt-zero-push
+start diagnostic en-bytelevel_regex-w6-r1-hand
+done diagnostic en-bytelevel_regex-w6-r1-hand
+start diagnostic zh-bytelevel_regex-w1-r0-hand
+done diagnostic zh-bytelevel_regex-w1-r0-hand
+start diagnostic zh-bytelevel_regex-w1-r0-fmt-zero-push
+done diagnostic zh-bytelevel_regex-w1-r0-fmt-zero-push

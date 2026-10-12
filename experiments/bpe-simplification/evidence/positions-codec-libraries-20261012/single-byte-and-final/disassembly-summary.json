@@ -1,0 +1,177 @@
+{
+  "hand": {
+    "neighbors": {
+      "start": "0xf6b00",
+      "end": "0xf6fb0",
+      "bytes": 1200,
+      "calls": [
+        "f6b24:\te8 07 09 00 00       \tcall   f7430 <<tk_train::trainers::bpe::merge::Neighbors>::group>",
+        "f6b55:\te8 d6 08 00 00       \tcall   f7430 <<tk_train::trainers::bpe::merge::Neighbors>::group>",
+        "f6b8c:\te8 ff ba ff ff       \tcall   f2690 <<tk_train::trainers::bpe::positions::Leaf>::push_restart>",
+        "f6b9b:\tff 15 17 19 01 00    \tcall   *0x11917(%rip)        # 1084b8 <malloc@GLIBC_2.2.5>",
+        "f6bc7:\tff 15 eb 18 01 00    \tcall   *0x118eb(%rip)        # 1084b8 <malloc@GLIBC_2.2.5>",
+        "f6c26:\tff 15 8c 18 01 00    \tcall   *0x1188c(%rip)        # 1084b8 <malloc@GLIBC_2.2.5>",
+        "f6c52:\tff 15 60 18 01 00    \tcall   *0x11860(%rip)        # 1084b8 <malloc@GLIBC_2.2.5>",
+        "f6cb5:\te8 c6 be ff ff       \tcall   f2b80 <<tk_train::trainers::bpe::positions::Leaf>::reserve>",
+        "f6d42:\te8 99 bf ff ff       \tcall   f2ce0 <<smallvec::SmallVec<[u8; 16]>>::reserve_one_unchecked>",
+        "f6d60:\te8 7b bf ff ff       \tcall   f2ce0 <<smallvec::SmallVec<[u8; 16]>>::reserve_one_unchecked>",
+        "f6e02:\tff 15 b0 16 01 00    \tcall   *0x116b0(%rip)        # 1084b8 <malloc@GLIBC_2.2.5>",
+        "f6e2f:\te8 8c ad ff ff       \tcall   f1bc0 <alloc::boxed::box_new_uninit>",
+        "f6e3b:\tff 15 77 16 01 00    \tcall   *0x11677(%rip)        # 1084b8 <malloc@GLIBC_2.2.5>",
+        "f6e68:\te8 53 ad ff ff       \tcall   f1bc0 <alloc::boxed::box_new_uninit>",
+        "f6e8a:\tff 15 28 16 01 00    \tcall   *0x11628(%rip)        # 1084b8 <malloc@GLIBC_2.2.5>",
+        "f6eb1:\te8 0a ad ff ff       \tcall   f1bc0 <alloc::boxed::box_new_uninit>",
+        "f6ed8:\te8 25 29 f7 ff       \tcall   69802 <alloc::alloc::handle_alloc_error>",
+        "f6eed:\te8 2e a2 f7 ff       \tcall   71120 <core::slice::index::slice_index_fail>",
+        "f6efc:\te8 01 29 f7 ff       \tcall   69802 <alloc::alloc::handle_alloc_error>",
+        "f6f11:\te8 0a a2 f7 ff       \tcall   71120 <core::slice::index::slice_index_fail>",
+        "f6f19:\te8 c2 bd ff ff       \tcall   f2ce0 <<smallvec::SmallVec<[u8; 16]>>::reserve_one_unchecked>",
+        "f6f34:\te8 a7 bd ff ff       \tcall   f2ce0 <<smallvec::SmallVec<[u8; 16]>>::reserve_one_unchecked>",
+        "f6f5c:\te8 91 27 f7 ff       \tcall   696f2 <alloc::raw_vec::handle_error>",
+        "f6f6b:\te8 82 27 f7 ff       \tcall   696f2 <alloc::raw_vec::handle_error>",
+        "f6f7a:\te8 73 27 f7 ff       \tcall   696f2 <alloc::raw_vec::handle_error>",
+        "f6f89:\te8 64 27 f7 ff       \tcall   696f2 <alloc::raw_vec::handle_error>",
+        "f6f9c:\tff 15 fe 14 01 00    \tcall   *0x114fe(%rip)        # 1084a0 <free@GLIBC_2.2.5>",
+        "f6fa5:\te8 d6 b3 00 00       \tcall   102380 <_Unwind_Resume@plt>"
+      ]
+    },
+    "cursor": {
+      "start": "0xf25c0",
+      "end": "0xf2690",
+      "bytes": 208,
+      "calls": [
+        "f262c:\te8 8a db f7 ff       \tcall   701bb <core::panicking::panic_bounds_check>",
+        "f2684:\te8 97 ea f7 ff       \tcall   71120 <core::slice::index::slice_index_fail>"
+      ]
+    },
+    "resize": {
+      "start": "0xf33e0",
+      "end": "0xf35f0",
+      "bytes": 528,
+      "calls": [
+        "f3456:\te8 e5 fa ff ff       \tcall   f2f40 <<smallvec::SmallVec<[u8; 16]>>::try_grow>",
+        "f354d:\te8 8e f7 ff ff       \tcall   f2ce0 <<smallvec::SmallVec<[u8; 16]>>::reserve_one_unchecked>",
+        "f3599:\te8 42 f7 ff ff       \tcall   f2ce0 <<smallvec::SmallVec<[u8; 16]>>::reserve_one_unchecked>",
+        "f35d0:\te8 2d 62 f7 ff       \tcall   69802 <alloc::alloc::handle_alloc_error>",
+        "f35e8:\te8 03 dc f7 ff       \tcall   711f0 <core::panicking::panic>"
+      ]
+    }
+  },
+  "fmt-zero-push": {
+    "neighbors": {
+      "start": "0xf7490",
+      "end": "0xf7940",
+      "bytes": 1200,
+      "calls": [
+        "f74b4:\te8 07 09 00 00       \tcall   f7dc0 <<tk_train::trainers::bpe::merge::Neighbors>::group>",
+        "f74e5:\te8 d6 08 00 00       \tcall   f7dc0 <<tk_train::trainers::bpe::merge::Neighbors>::group>",
+        "f751c:\te8 ff ba ff ff       \tcall   f3020 <<tk_train::trainers::bpe::positions::Leaf>::push_restart>",
+        "f752b:\tff 15 d7 1a 01 00    \tcall   *0x11ad7(%rip)        # 109008 <malloc@GLIBC_2.2.5>",
+        "f7557:\tff 15 ab 1a 01 00    \tcall   *0x11aab(%rip)        # 109008 <malloc@GLIBC_2.2.5>",
+        "f75b6:\tff 15 4c 1a 01 00    \tcall   *0x11a4c(%rip)        # 109008 <malloc@GLIBC_2.2.5>",
+        "f75e2:\tff 15 20 1a 01 00    \tcall   *0x11a20(%rip)        # 109008 <malloc@GLIBC_2.2.5>",
+        "f764c:\te8 bf be ff ff       \tcall   f3510 <<tk_train::trainers::bpe::positions::Leaf>::reserve>",
+        "f76a2:\te8 c9 bf ff ff       \tcall   f3670 <<smallvec::SmallVec<[u8; 16]>>::reserve_one_unchecked>",
+        "f7704:\te8 67 bf ff ff       \tcall   f3670 <<smallvec::SmallVec<[u8; 16]>>::reserve_one_unchecked>",
+        "f777c:\te8 bf b0 f7 ff       \tcall   72840 <core::option::expect_failed>",
+        "f77cc:\tff 15 36 18 01 00    \tcall   *0x11836(%rip)        # 109008 <malloc@GLIBC_2.2.5>",
+        "f77f9:\te8 22 ae ff ff       \tcall   f2620 <alloc::boxed::box_new_uninit>",
+        "f7805:\tff 15 fd 17 01 00    \tcall   *0x117fd(%rip)        # 109008 <malloc@GLIBC_2.2.5>",
+        "f7832:\te8 e9 ad ff ff       \tcall   f2620 <alloc::boxed::box_new_uninit>",
+        "f7854:\tff 15 ae 17 01 00    \tcall   *0x117ae(%rip)        # 109008 <malloc@GLIBC_2.2.5>",
+        "f787b:\te8 a0 ad ff ff       \tcall   f2620 <alloc::boxed::box_new_uninit>",
+        "f78a2:\te8 7b 20 f7 ff       \tcall   69922 <alloc::alloc::handle_alloc_error>",
+        "f78b7:\te8 84 99 f7 ff       \tcall   71240 <core::slice::index::slice_index_fail>",
+        "f78c6:\te8 57 20 f7 ff       \tcall   69922 <alloc::alloc::handle_alloc_error>",
+        "f78db:\te8 60 99 f7 ff       \tcall   71240 <core::slice::index::slice_index_fail>",
+        "f78ea:\te8 23 1f f7 ff       \tcall   69812 <alloc::raw_vec::handle_error>",
+        "f78f9:\te8 14 1f f7 ff       \tcall   69812 <alloc::raw_vec::handle_error>",
+        "f7908:\te8 05 1f f7 ff       \tcall   69812 <alloc::raw_vec::handle_error>",
+        "f7917:\te8 f6 1e f7 ff       \tcall   69812 <alloc::raw_vec::handle_error>",
+        "f792a:\tff 15 c0 16 01 00    \tcall   *0x116c0(%rip)        # 108ff0 <free@GLIBC_2.2.5>",
+        "f7933:\te8 08 b5 00 00       \tcall   102e40 <_Unwind_Resume@plt>"
+      ]
+    },
+    "cursor": {
+      "start": "0xe7bd0",
+      "end": "0xe7d00",
+      "bytes": 304,
+      "calls": [
+        "e7cb5:\te8 86 95 f8 ff       \tcall   71240 <core::slice::index::slice_index_fail>",
+        "e7cc8:\te8 73 95 f8 ff       \tcall   71240 <core::slice::index::slice_index_fail>",
+        "e7cf2:\te8 89 ab f8 ff       \tcall   72880 <core::result::unwrap_failed>"
+      ]
+    },
+    "resize": {
+      "start": "0xf3d70",
+      "end": "0xf3f80",
+      "bytes": 528,
+      "calls": [
+        "f3de6:\te8 e5 fa ff ff       \tcall   f38d0 <<smallvec::SmallVec<[u8; 16]>>::try_grow>",
+        "f3edd:\te8 8e f7 ff ff       \tcall   f3670 <<smallvec::SmallVec<[u8; 16]>>::reserve_one_unchecked>",
+        "f3f29:\te8 42 f7 ff ff       \tcall   f3670 <<smallvec::SmallVec<[u8; 16]>>::reserve_one_unchecked>",
+        "f3f60:\te8 bd 59 f7 ff       \tcall   69922 <alloc::alloc::handle_alloc_error>",
+        "f3f78:\te8 93 d3 f7 ff       \tcall   71310 <core::panicking::panic>"
+      ]
+    }
+  },
+  "fmt-small": {
+    "neighbors": {
+      "start": "0xf7580",
+      "end": "0xf7a50",
+      "bytes": 1232,
+      "calls": [
+        "f75a4:\te8 27 09 00 00       \tcall   f7ed0 <<tk_train::trainers::bpe::merge::Neighbors>::group>",
+        "f75d5:\te8 f6 08 00 00       \tcall   f7ed0 <<tk_train::trainers::bpe::merge::Neighbors>::group>",
+        "f760c:\te8 ff ba ff ff       \tcall   f3110 <<tk_train::trainers::bpe::positions::Leaf>::push_restart>",
+        "f761b:\tff 15 67 1b 01 00    \tcall   *0x11b67(%rip)        # 109188 <malloc@GLIBC_2.2.5>",
+        "f7647:\tff 15 3b 1b 01 00    \tcall   *0x11b3b(%rip)        # 109188 <malloc@GLIBC_2.2.5>",
+        "f76a6:\tff 15 dc 1a 01 00    \tcall   *0x11adc(%rip)        # 109188 <malloc@GLIBC_2.2.5>",
+        "f76d2:\tff 15 b0 1a 01 00    \tcall   *0x11ab0(%rip)        # 109188 <malloc@GLIBC_2.2.5>",
+        "f773c:\te8 bf be ff ff       \tcall   f3600 <<tk_train::trainers::bpe::positions::Leaf>::reserve>",
+        "f7769:\te8 02 09 00 00       \tcall   f8070 <<smallvec::SmallVec<[u8; 16]>>::push>",
+        "f77c2:\te8 99 bf ff ff       \tcall   f3760 <<smallvec::SmallVec<[u8; 16]>>::reserve_one_unchecked>",
+        "f7824:\te8 37 bf ff ff       \tcall   f3760 <<smallvec::SmallVec<[u8; 16]>>::reserve_one_unchecked>",
+        "f788c:\te8 ef af f7 ff       \tcall   72880 <core::option::expect_failed>",
+        "f78e1:\tff 15 a1 18 01 00    \tcall   *0x118a1(%rip)        # 109188 <malloc@GLIBC_2.2.5>",
+        "f790e:\te8 fd ad ff ff       \tcall   f2710 <alloc::boxed::box_new_uninit>",
+        "f791a:\tff 15 68 18 01 00    \tcall   *0x11868(%rip)        # 109188 <malloc@GLIBC_2.2.5>",
+        "f7947:\te8 c4 ad ff ff       \tcall   f2710 <alloc::boxed::box_new_uninit>",
+        "f7969:\tff 15 19 18 01 00    \tcall   *0x11819(%rip)        # 109188 <malloc@GLIBC_2.2.5>",
+        "f7990:\te8 7b ad ff ff       \tcall   f2710 <alloc::boxed::box_new_uninit>",
+        "f79b7:\te8 a6 1f f7 ff       \tcall   69962 <alloc::alloc::handle_alloc_error>",
+        "f79cc:\te8 af 98 f7 ff       \tcall   71280 <core::slice::index::slice_index_fail>",
+        "f79db:\te8 82 1f f7 ff       \tcall   69962 <alloc::alloc::handle_alloc_error>",
+        "f79f0:\te8 8b 98 f7 ff       \tcall   71280 <core::slice::index::slice_index_fail>",
+        "f79ff:\te8 4e 1e f7 ff       \tcall   69852 <alloc::raw_vec::handle_error>",
+        "f7a0e:\te8 3f 1e f7 ff       \tcall   69852 <alloc::raw_vec::handle_error>",
+        "f7a1d:\te8 30 1e f7 ff       \tcall   69852 <alloc::raw_vec::handle_error>",
+        "f7a2c:\te8 21 1e f7 ff       \tcall   69852 <alloc::raw_vec::handle_error>",
+        "f7a3f:\tff 15 2b 17 01 00    \tcall   *0x1172b(%rip)        # 109170 <free@GLIBC_2.2.5>",
+        "f7a48:\te8 83 b5 00 00       \tcall   102fd0 <_Unwind_Resume@plt>"
+      ]
+    },
+    "cursor": {
+      "start": "0xe7cc0",
+      "end": "0xe7df0",
+      "bytes": 304,
+      "calls": [
+        "e7da5:\te8 d6 94 f8 ff       \tcall   71280 <core::slice::index::slice_index_fail>",
+        "e7db8:\te8 c3 94 f8 ff       \tcall   71280 <core::slice::index::slice_index_fail>",
+        "e7de2:\te8 d9 aa f8 ff       \tcall   728c0 <core::result::unwrap_failed>"
+      ]
+    },
+    "resize": {
+      "start": "0xf3e60",
+      "end": "0xf4070",
+      "bytes": 528,
+      "calls": [
+        "f3ed6:\te8 e5 fa ff ff       \tcall   f39c0 <<smallvec::SmallVec<[u8; 16]>>::try_grow>",
+        "f3fcd:\te8 8e f7 ff ff       \tcall   f3760 <<smallvec::SmallVec<[u8; 16]>>::reserve_one_unchecked>",
+        "f4019:\te8 42 f7 ff ff       \tcall   f3760 <<smallvec::SmallVec<[u8; 16]>>::reserve_one_unchecked>",
+        "f4050:\te8 0d 59 f7 ff       \tcall   69962 <alloc::alloc::handle_alloc_error>",
+        "f4068:\te8 e3 d2 f7 ff       \tcall   71350 <core::panicking::panic>"
+      ]
+    }
+  }
+}

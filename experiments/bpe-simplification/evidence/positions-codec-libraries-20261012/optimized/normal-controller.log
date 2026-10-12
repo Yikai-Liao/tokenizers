@@ -1,0 +1,49 @@
+start en-whitespace-w6-r0-hand
+{"case": "en-whitespace-w6", "arm": "hand", "repeat": 0, "train_seconds": 1.80286199, "train_cpu_seconds": 3.045117, "child_sampled_rss_kib": 138956}
+start en-whitespace-w6-r0-fmt-zero-push
+{"case": "en-whitespace-w6", "arm": "fmt-zero-push", "repeat": 0, "train_seconds": 2.134183229, "train_cpu_seconds": 3.630262, "child_sampled_rss_kib": 137084}
+start en-whitespace-w6-r0-fmt-tls-push
+{"case": "en-whitespace-w6", "arm": "fmt-tls-push", "repeat": 0, "train_seconds": 2.155476789, "train_cpu_seconds": 3.5175919999999996, "child_sampled_rss_kib": 149184}
+start en-whitespace-w6-r0-gimli-inline
+{"case": "en-whitespace-w6", "arm": "gimli-inline", "repeat": 0, "train_seconds": 2.062089042, "train_cpu_seconds": 3.371403, "child_sampled_rss_kib": 133268}
+start en-whitespace-w6-r1-gimli-inline
+{"case": "en-whitespace-w6", "arm": "gimli-inline", "repeat": 1, "train_seconds": 2.210088718, "train_cpu_seconds": 3.6367700000000003, "child_sampled_rss_kib": 138348}
+start en-whitespace-w6-r1-fmt-tls-push
+{"case": "en-whitespace-w6", "arm": "fmt-tls-push", "repeat": 1, "train_seconds": 2.12492481, "train_cpu_seconds": 3.541417, "child_sampled_rss_kib": 151916}
+start en-whitespace-w6-r1-fmt-zero-push
+{"case": "en-whitespace-w6", "arm": "fmt-zero-push", "repeat": 1, "train_seconds": 1.845454041, "train_cpu_seconds": 3.104022, "child_sampled_rss_kib": 140316}
+start en-whitespace-w6-r1-hand
+{"case": "en-whitespace-w6", "arm": "hand", "repeat": 1, "train_seconds": 1.920557853, "train_cpu_seconds": 3.229991, "child_sampled_rss_kib": 135800}
+start en-bytelevel_regex-w6-r0-hand
+{"case": "en-bytelevel_regex-w6", "arm": "hand", "repeat": 0, "train_seconds": 2.04666304, "train_cpu_seconds": 3.503975, "child_sampled_rss_kib": 152768}
+start en-bytelevel_regex-w6-r0-fmt-zero-push
+{"case": "en-bytelevel_regex-w6", "arm": "fmt-zero-push", "repeat": 0, "train_seconds": 2.072321352, "train_cpu_seconds": 3.461496, "child_sampled_rss_kib": 153832}
+start en-bytelevel_regex-w6-r0-fmt-tls-push
+{"case": "en-bytelevel_regex-w6", "arm": "fmt-tls-push", "repeat": 0, "train_seconds": 2.301063738, "train_cpu_seconds": 3.8926870000000005, "child_sampled_rss_kib": 150640}
+start en-bytelevel_regex-w6-r0-gimli-inline
+{"case": "en-bytelevel_regex-w6", "arm": "gimli-inline", "repeat": 0, "train_seconds": 2.465313594, "train_cpu_seconds": 4.066818, "child_sampled_rss_kib": 154888}
+start en-bytelevel_regex-w6-r1-gimli-inline
+{"case": "en-bytelevel_regex-w6", "arm": "gimli-inline", "repeat": 1, "train_seconds": 2.509322802, "train_cpu_seconds": 4.085221, "child_sampled_rss_kib": 154380}
+start en-bytelevel_regex-w6-r1-fmt-tls-push
+{"case": "en-bytelevel_regex-w6", "arm": "fmt-tls-push", "repeat": 1, "train_seconds": 2.152786448, "train_cpu_seconds": 3.61751, "child_sampled_rss_kib": 153044}
+start en-bytelevel_regex-w6-r1-fmt-zero-push
+{"case": "en-bytelevel_regex-w6", "arm": "fmt-zero-push", "repeat": 1, "train_seconds": 2.077113472, "train_cpu_seconds": 3.525948, "child_sampled_rss_kib": 150792}
+start en-bytelevel_regex-w6-r1-hand
+{"case": "en-bytelevel_regex-w6", "arm": "hand", "repeat": 1, "train_seconds": 2.148800036, "train_cpu_seconds": 3.616195, "child_sampled_rss_kib": 154220}
+start zh-bytelevel_regex-w1-r0-hand
+{"case": "zh-bytelevel_regex-w1", "arm": "hand", "repeat": 0, "train_seconds": 65.5582656, "train_cpu_seconds": 65.453231, "child_sampled_rss_kib": 2575976}
+start zh-bytelevel_regex-w1-r0-fmt-zero-push
+{"case": "zh-bytelevel_regex-w1", "arm": "fmt-zero-push", "repeat": 0, "train_seconds": 66.088902048, "train_cpu_seconds": 65.949077, "child_sampled_rss_kib": 2580476}
+start zh-bytelevel_regex-w1-r0-fmt-tls-push
+{"case": "zh-bytelevel_regex-w1", "arm": "fmt-tls-push", "repeat": 0, "train_seconds": 67.866745248, "train_cpu_seconds": 67.757285, "child_sampled_rss_kib": 2574612}
+start zh-bytelevel_regex-w1-r0-gimli-inline
+{"case": "zh-bytelevel_regex-w1", "arm": "gimli-inline", "repeat": 0, "train_seconds": 83.208136019, "train_cpu_seconds": 83.044911, "child_sampled_rss_kib": 2576648}
+start zh-bytelevel_regex-w1-r1-gimli-inline
+{"case": "zh-bytelevel_regex-w1", "arm": "gimli-inline", "repeat": 1, "train_seconds": 81.961852527, "train_cpu_seconds": 81.851325, "child_sampled_rss_kib": 2575640}
+start zh-bytelevel_regex-w1-r1-fmt-tls-push
+{"case": "zh-bytelevel_regex-w1", "arm": "fmt-tls-push", "repeat": 1, "train_seconds": 70.449010678, "train_cpu_seconds": 70.323781, "child_sampled_rss_kib": 2576408}
+start zh-bytelevel_regex-w1-r1-fmt-zero-push
+{"case": "zh-bytelevel_regex-w1", "arm": "fmt-zero-push", "repeat": 1, "train_seconds": 66.098748638, "train_cpu_seconds": 66.012153, "child_sampled_rss_kib": 2579876}
+start zh-bytelevel_regex-w1-r1-hand
+{"case": "zh-bytelevel_regex-w1", "arm": "hand", "repeat": 1, "train_seconds": 65.508750491, "train_cpu_seconds": 65.372517, "child_sampled_rss_kib": 2577676}
+Library comparisons complete

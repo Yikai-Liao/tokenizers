@@ -1,0 +1,7 @@
+    Checking bitcannon v0.1.0-dev.2 (/tmp/bpe-positions-codec-fmt-small-20261012/tokenizers/bitcannon)
+    Checking tk-encode v0.1.0-dev.2 (/tmp/bpe-positions-codec-fmt-small-20261012/tokenizers/tk-encode)
+    Checking tk-convert v0.1.0-dev.2 (/tmp/bpe-positions-codec-fmt-small-20261012/tokenizers/tk-convert)
+    Checking leb128fmt v0.1.0
+    Checking tk-serialize v0.1.0-dev.2 (/tmp/bpe-positions-codec-fmt-small-20261012/tokenizers/tk-serialize)
+    Checking tk-train v0.1.0-dev.2 (/tmp/bpe-positions-codec-fmt-small-20261012/tokenizers/tk-train)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 6.48s

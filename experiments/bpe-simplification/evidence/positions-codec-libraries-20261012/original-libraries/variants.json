@@ -1,0 +1,23 @@
+[
+  {
+    "name": "gimli",
+    "worktree": "/tmp/bpe-positions-codec-gimli-20261012",
+    "base": "5d617efe",
+    "dependency": "leb128 = \"=0.2.7\"",
+    "commit": "248acd221b295665f16274b45f2c6709bc6be8e0"
+  },
+  {
+    "name": "fmt-slice",
+    "worktree": "/tmp/bpe-positions-codec-fmt-slice-20261012",
+    "base": "5d617efe",
+    "dependency": "leb128fmt = { version = \"=0.1.0\", default-features = false }",
+    "commit": "55a44e7de458fe35a615308c8b11c9bcd5f4dd57"
+  },
+  {
+    "name": "fmt-array",
+    "worktree": "/tmp/bpe-positions-codec-fmt-array-20261012",
+    "base": "5d617efe",
+    "dependency": "leb128fmt = { version = \"=0.1.0\", default-features = false }",
+    "commit": "6f83f217168a87ded32830d03b5d75c86e627a5f"
+  }
+]

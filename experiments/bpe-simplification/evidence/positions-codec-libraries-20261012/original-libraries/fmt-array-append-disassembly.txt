@@ -1,0 +1,203 @@
+
+/tmp/bpe-positions-codec-libraries-results-20261012/fmt-array-bin:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+00000000000f3300 <tk_train::trainers::bpe::positions::codec::append_gap>:
+   f3300:	55                   	push   %rbp
+   f3301:	41 57                	push   %r15
+   f3303:	41 56                	push   %r14
+   f3305:	41 55                	push   %r13
+   f3307:	41 54                	push   %r12
+   f3309:	53                   	push   %rbx
+   f330a:	48 83 ec 18          	sub    $0x18,%rsp
+   f330e:	48 89 fb             	mov    %rdi,%rbx
+   f3311:	c6 44 24 0e 00       	movb   $0x0,0xe(%rsp)
+   f3316:	c6 44 24 0c 00       	movb   $0x0,0xc(%rsp)
+   f331b:	c6 44 24 0b 00       	movb   $0x0,0xb(%rsp)
+   f3320:	c6 44 24 0a 00       	movb   $0x0,0xa(%rsp)
+   f3325:	c6 44 24 09 00       	movb   $0x0,0x9(%rsp)
+   f332a:	c6 44 24 08 00       	movb   $0x0,0x8(%rsp)
+   f332f:	c6 44 24 07 00       	movb   $0x0,0x7(%rsp)
+   f3334:	c6 44 24 06 00       	movb   $0x0,0x6(%rsp)
+   f3339:	c6 44 24 05 00       	movb   $0x0,0x5(%rsp)
+   f333e:	c6 44 24 0d 00       	movb   $0x0,0xd(%rsp)
+   f3343:	48 89 f1             	mov    %rsi,%rcx
+   f3346:	48 c1 e9 07          	shr    $0x7,%rcx
+   f334a:	0f 84 af 00 00 00    	je     f33ff <tk_train::trainers::bpe::positions::codec::append_gap+0xff>
+   f3350:	89 f0                	mov    %esi,%eax
+   f3352:	0c 80                	or     $0x80,%al
+   f3354:	88 44 24 0e          	mov    %al,0xe(%rsp)
+   f3358:	48 89 f2             	mov    %rsi,%rdx
+   f335b:	48 c1 ea 0e          	shr    $0xe,%rdx
+   f335f:	0f 84 a7 00 00 00    	je     f340c <tk_train::trainers::bpe::positions::codec::append_gap+0x10c>
+   f3365:	80 c9 80             	or     $0x80,%cl
+   f3368:	88 4c 24 0c          	mov    %cl,0xc(%rsp)
+   f336c:	48 89 f1             	mov    %rsi,%rcx
+   f336f:	48 c1 e9 15          	shr    $0x15,%rcx
+   f3373:	0f 84 a2 00 00 00    	je     f341b <tk_train::trainers::bpe::positions::codec::append_gap+0x11b>
+   f3379:	80 ca 80             	or     $0x80,%dl
+   f337c:	88 54 24 0b          	mov    %dl,0xb(%rsp)
+   f3380:	48 89 f2             	mov    %rsi,%rdx
+   f3383:	48 c1 ea 1c          	shr    $0x1c,%rdx
+   f3387:	0f 84 9d 00 00 00    	je     f342a <tk_train::trainers::bpe::positions::codec::append_gap+0x12a>
+   f338d:	80 c9 80             	or     $0x80,%cl
+   f3390:	88 4c 24 0a          	mov    %cl,0xa(%rsp)
+   f3394:	48 89 f1             	mov    %rsi,%rcx
+   f3397:	48 c1 e9 23          	shr    $0x23,%rcx
+   f339b:	0f 84 98 00 00 00    	je     f3439 <tk_train::trainers::bpe::positions::codec::append_gap+0x139>
+   f33a1:	80 ca 80             	or     $0x80,%dl
+   f33a4:	88 54 24 09          	mov    %dl,0x9(%rsp)
+   f33a8:	48 89 f2             	mov    %rsi,%rdx
+   f33ab:	48 c1 ea 2a          	shr    $0x2a,%rdx
+   f33af:	0f 84 93 00 00 00    	je     f3448 <tk_train::trainers::bpe::positions::codec::append_gap+0x148>
+   f33b5:	80 c9 80             	or     $0x80,%cl
+   f33b8:	88 4c 24 08          	mov    %cl,0x8(%rsp)
+   f33bc:	48 89 f1             	mov    %rsi,%rcx
+   f33bf:	48 c1 e9 31          	shr    $0x31,%rcx
+   f33c3:	0f 84 8e 00 00 00    	je     f3457 <tk_train::trainers::bpe::positions::codec::append_gap+0x157>
+   f33c9:	80 ca 80             	or     $0x80,%dl
+   f33cc:	88 54 24 07          	mov    %dl,0x7(%rsp)
+   f33d0:	48 89 f2             	mov    %rsi,%rdx
+   f33d3:	48 c1 ea 38          	shr    $0x38,%rdx
+   f33d7:	0f 84 89 00 00 00    	je     f3466 <tk_train::trainers::bpe::positions::codec::append_gap+0x166>
+   f33dd:	80 c9 80             	or     $0x80,%cl
+   f33e0:	88 4c 24 06          	mov    %cl,0x6(%rsp)
+   f33e4:	48 85 f6             	test   %rsi,%rsi
+   f33e7:	0f 88 88 00 00 00    	js     f3475 <tk_train::trainers::bpe::positions::codec::append_gap+0x175>
+   f33ed:	41 be 09 00 00 00    	mov    $0x9,%r14d
+   f33f3:	48 8d 44 24 05       	lea    0x5(%rsp),%rax
+   f33f8:	89 d6                	mov    %edx,%esi
+   f33fa:	e9 88 00 00 00       	jmp    f3487 <tk_train::trainers::bpe::positions::codec::append_gap+0x187>
+   f33ff:	41 be 01 00 00 00    	mov    $0x1,%r14d
+   f3405:	48 8d 44 24 0e       	lea    0xe(%rsp),%rax
+   f340a:	eb 7b                	jmp    f3487 <tk_train::trainers::bpe::positions::codec::append_gap+0x187>
+   f340c:	41 be 02 00 00 00    	mov    $0x2,%r14d
+   f3412:	48 8d 44 24 0c       	lea    0xc(%rsp),%rax
+   f3417:	89 ce                	mov    %ecx,%esi
+   f3419:	eb 6c                	jmp    f3487 <tk_train::trainers::bpe::positions::codec::append_gap+0x187>
+   f341b:	41 be 03 00 00 00    	mov    $0x3,%r14d
+   f3421:	48 8d 44 24 0b       	lea    0xb(%rsp),%rax
+   f3426:	89 d6                	mov    %edx,%esi
+   f3428:	eb 5d                	jmp    f3487 <tk_train::trainers::bpe::positions::codec::append_gap+0x187>
+   f342a:	41 be 04 00 00 00    	mov    $0x4,%r14d
+   f3430:	48 8d 44 24 0a       	lea    0xa(%rsp),%rax
+   f3435:	89 ce                	mov    %ecx,%esi
+   f3437:	eb 4e                	jmp    f3487 <tk_train::trainers::bpe::positions::codec::append_gap+0x187>
+   f3439:	41 be 05 00 00 00    	mov    $0x5,%r14d
+   f343f:	48 8d 44 24 09       	lea    0x9(%rsp),%rax
+   f3444:	89 d6                	mov    %edx,%esi
+   f3446:	eb 3f                	jmp    f3487 <tk_train::trainers::bpe::positions::codec::append_gap+0x187>
+   f3448:	41 be 06 00 00 00    	mov    $0x6,%r14d
+   f344e:	48 8d 44 24 08       	lea    0x8(%rsp),%rax
+   f3453:	89 ce                	mov    %ecx,%esi
+   f3455:	eb 30                	jmp    f3487 <tk_train::trainers::bpe::positions::codec::append_gap+0x187>
+   f3457:	41 be 07 00 00 00    	mov    $0x7,%r14d
+   f345d:	48 8d 44 24 07       	lea    0x7(%rsp),%rax
+   f3462:	89 d6                	mov    %edx,%esi
+   f3464:	eb 21                	jmp    f3487 <tk_train::trainers::bpe::positions::codec::append_gap+0x187>
+   f3466:	41 be 08 00 00 00    	mov    $0x8,%r14d
+   f346c:	48 8d 44 24 06       	lea    0x6(%rsp),%rax
+   f3471:	89 ce                	mov    %ecx,%esi
+   f3473:	eb 12                	jmp    f3487 <tk_train::trainers::bpe::positions::codec::append_gap+0x187>
+   f3475:	88 54 24 05          	mov    %dl,0x5(%rsp)
+   f3479:	40 b6 01             	mov    $0x1,%sil
+   f347c:	41 be 0a 00 00 00    	mov    $0xa,%r14d
+   f3482:	48 8d 44 24 0d       	lea    0xd(%rsp),%rax
+   f3487:	40 88 30             	mov    %sil,(%rax)
+   f348a:	0f b6 44 24 0e       	movzbl 0xe(%rsp),%eax
+   f348f:	0f b6 4c 24 0c       	movzbl 0xc(%rsp),%ecx
+   f3494:	0f b6 54 24 0b       	movzbl 0xb(%rsp),%edx
+   f3499:	0f b6 74 24 0a       	movzbl 0xa(%rsp),%esi
+   f349e:	0f b6 7c 24 09       	movzbl 0x9(%rsp),%edi
+   f34a3:	44 0f b6 44 24 08    	movzbl 0x8(%rsp),%r8d
+   f34a9:	44 0f b6 4c 24 07    	movzbl 0x7(%rsp),%r9d
+   f34af:	44 0f b6 54 24 06    	movzbl 0x6(%rsp),%r10d
+   f34b5:	44 0f b6 5c 24 05    	movzbl 0x5(%rsp),%r11d
+   f34bb:	0f b6 6c 24 0d       	movzbl 0xd(%rsp),%ebp
+   f34c0:	88 44 24 0e          	mov    %al,0xe(%rsp)
+   f34c4:	88 4c 24 0f          	mov    %cl,0xf(%rsp)
+   f34c8:	88 54 24 10          	mov    %dl,0x10(%rsp)
+   f34cc:	40 88 74 24 11       	mov    %sil,0x11(%rsp)
+   f34d1:	40 88 7c 24 12       	mov    %dil,0x12(%rsp)
+   f34d6:	44 88 44 24 13       	mov    %r8b,0x13(%rsp)
+   f34db:	44 88 4c 24 14       	mov    %r9b,0x14(%rsp)
+   f34e0:	44 88 54 24 15       	mov    %r10b,0x15(%rsp)
+   f34e5:	44 88 5c 24 16       	mov    %r11b,0x16(%rsp)
+   f34ea:	40 88 6c 24 17       	mov    %bpl,0x17(%rsp)
+   f34ef:	4c 8b 6b 08          	mov    0x8(%rbx),%r13
+   f34f3:	48 8b 43 10          	mov    0x10(%rbx),%rax
+   f34f7:	48 83 f8 11          	cmp    $0x11,%rax
+   f34fb:	49 89 c4             	mov    %rax,%r12
+   f34fe:	4d 0f 43 e5          	cmovae %r13,%r12
+   f3502:	b9 10 00 00 00       	mov    $0x10,%ecx
+   f3507:	48 0f 43 c8          	cmovae %rax,%rcx
+   f350b:	4c 29 e1             	sub    %r12,%rcx
+   f350e:	4c 39 f1             	cmp    %r14,%rcx
+   f3511:	73 4d                	jae    f3560 <tk_train::trainers::bpe::positions::codec::append_gap+0x260>
+   f3513:	4c 89 e0             	mov    %r12,%rax
+   f3516:	4c 01 f0             	add    %r14,%rax
+   f3519:	0f 82 c7 00 00 00    	jb     f35e6 <tk_train::trainers::bpe::positions::codec::append_gap+0x2e6>
+   f351f:	48 8d 48 ff          	lea    -0x1(%rax),%rcx
+   f3523:	48 0f bd c9          	bsr    %rcx,%rcx
+   f3527:	f7 d1                	not    %ecx
+   f3529:	48 c7 c2 ff ff ff ff 	mov    $0xffffffffffffffff,%rdx
+   f3530:	48 d3 ea             	shr    %cl,%rdx
+   f3533:	31 f6                	xor    %esi,%esi
+   f3535:	48 83 f8 02          	cmp    $0x2,%rax
+   f3539:	48 0f 43 f2          	cmovae %rdx,%rsi
+   f353d:	48 83 fe ff          	cmp    $0xffffffffffffffff,%rsi
+   f3541:	0f 84 9f 00 00 00    	je     f35e6 <tk_train::trainers::bpe::positions::codec::append_gap+0x2e6>
+   f3547:	48 ff c6             	inc    %rsi
+   f354a:	48 89 df             	mov    %rbx,%rdi
+   f354d:	e8 7e 02 00 00       	call   f37d0 <<smallvec::SmallVec<[u8; 16]>>::try_grow>
+   f3552:	48 83 f8 ff          	cmp    $0xffffffffffffffff,%rax
+   f3556:	75 7e                	jne    f35d6 <tk_train::trainers::bpe::positions::codec::append_gap+0x2d6>
+   f3558:	4c 8b 6b 08          	mov    0x8(%rbx),%r13
+   f355c:	48 8b 43 10          	mov    0x10(%rbx),%rax
+   f3560:	48 83 f8 11          	cmp    $0x11,%rax
+   f3564:	4c 0f 42 e8          	cmovb  %rax,%r13
+   f3568:	4c 89 ea             	mov    %r13,%rdx
+   f356b:	4c 29 e2             	sub    %r12,%rdx
+   f356e:	72 4e                	jb     f35be <tk_train::trainers::bpe::positions::codec::append_gap+0x2be>
+   f3570:	49 89 df             	mov    %rbx,%r15
+   f3573:	48 83 f8 11          	cmp    $0x11,%rax
+   f3577:	72 03                	jb     f357c <tk_train::trainers::bpe::positions::codec::append_gap+0x27c>
+   f3579:	4c 8b 3b             	mov    (%rbx),%r15
+   f357c:	4d 01 e7             	add    %r12,%r15
+   f357f:	4b 8d 3c 37          	lea    (%r15,%r14,1),%rdi
+   f3583:	4c 89 fe             	mov    %r15,%rsi
+   f3586:	ff 15 5c 58 01 00    	call   *0x1585c(%rip)        # 108de8 <memmove@GLIBC_2.2.5>
+   f358c:	48 8d 74 24 0e       	lea    0xe(%rsp),%rsi
+   f3591:	4c 89 ff             	mov    %r15,%rdi
+   f3594:	4c 89 f2             	mov    %r14,%rdx
+   f3597:	ff 15 43 58 01 00    	call   *0x15843(%rip)        # 108de0 <memcpy@GLIBC_2.14>
+   f359d:	4d 01 f5             	add    %r14,%r13
+   f35a0:	31 c0                	xor    %eax,%eax
+   f35a2:	48 83 7b 10 11       	cmpq   $0x11,0x10(%rbx)
+   f35a7:	0f 92 c0             	setb   %al
+   f35aa:	4c 89 6c c3 08       	mov    %r13,0x8(%rbx,%rax,8)
+   f35af:	48 83 c4 18          	add    $0x18,%rsp
+   f35b3:	5b                   	pop    %rbx
+   f35b4:	41 5c                	pop    %r12
+   f35b6:	41 5d                	pop    %r13
+   f35b8:	41 5e                	pop    %r14
+   f35ba:	41 5f                	pop    %r15
+   f35bc:	5d                   	pop    %rbp
+   f35bd:	c3                   	ret
+   f35be:	48 8d 3d 52 b7 f2 ff 	lea    -0xd48ae(%rip),%rdi        # 1ed17 <core::unicode::unicode_data::white_space::WHITESPACE_MAP+0x76a>
+   f35c5:	48 8d 15 cc 52 01 00 	lea    0x152cc(%rip),%rdx        # 108898 <bitcannon::classify::atom_tables::ATOM_TABLES+0x40c0>
+   f35cc:	be 1e 00 00 00       	mov    $0x1e,%esi
+   f35d1:	e8 0a dd f7 ff       	call   712e0 <core::panicking::panic>
+   f35d6:	48 85 c0             	test   %rax,%rax
+   f35d9:	74 0b                	je     f35e6 <tk_train::trainers::bpe::positions::codec::append_gap+0x2e6>
+   f35db:	48 89 c7             	mov    %rax,%rdi
+   f35de:	48 89 d6             	mov    %rdx,%rsi
+   f35e1:	e8 0c 63 f7 ff       	call   698f2 <alloc::alloc::handle_alloc_error>
+   f35e6:	48 8d 3d 13 b1 f2 ff 	lea    -0xd4eed(%rip),%rdi        # 1e700 <core::unicode::unicode_data::white_space::WHITESPACE_MAP+0x153>
+   f35ed:	48 8d 15 6c 46 01 00 	lea    0x1466c(%rip),%rdx        # 107c60 <bitcannon::classify::atom_tables::ATOM_TABLES+0x3488>
+   f35f4:	be 11 00 00 00       	mov    $0x11,%esi
+   f35f9:	e8 e2 dc f7 ff       	call   712e0 <core::panicking::panic>
+   f35fe:	cc                   	int3
+   f35ff:	cc                   	int3

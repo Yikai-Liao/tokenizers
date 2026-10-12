@@ -1,0 +1,7 @@
+{
+  "binary_sha256": "1173c1b6bd1437d671c3b0cbfce7a514aaf3efb7c88458c94f43092a47159c07",
+  "affinity": [
+    0
+  ],
+  "note": "Final rerun after all builds and native checks completed. Static generic harness; diagnostic, not whole-training throughput."
+}

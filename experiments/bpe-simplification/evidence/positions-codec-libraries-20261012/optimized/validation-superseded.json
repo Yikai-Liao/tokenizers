@@ -1,0 +1,9 @@
+{
+  "reason": "User requested single-byte branch; remaining five-case validation will target selected final candidate after this experiment",
+  "normal_completed": 24,
+  "diagnostics_completed": 10,
+  "remaining_validation_started": 0,
+  "stopped_own_controller": 175975,
+  "stopped_own_waiting_gate": 178078,
+  "utc": "2026-10-12T12:11:44.710452+00:00"
+}

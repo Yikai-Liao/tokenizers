@@ -1,0 +1,14 @@
+   Compiling leb128fmt v0.1.0
+   Compiling smallvec v1.16.2
+   Compiling leb128 v0.2.7
+   Compiling positions-codec-optimized-probe v0.0.0 (/tmp/bpe-positions-codec-small-results-20261012/probe)
+warning: unused import: `time::Instant`
+ --> src/bin/allocation-proof.rs:7:28
+  |
+7 | use std::{hint::black_box, time::Instant};
+  |                            ^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `positions-codec-optimized-probe` (bin "allocation-proof") generated 1 warning (run `cargo fix --bin "allocation-proof" -p positions-codec-optimized-probe` to apply 1 suggestion)
+    Finished `release` profile [optimized] target(s) in 16.77s

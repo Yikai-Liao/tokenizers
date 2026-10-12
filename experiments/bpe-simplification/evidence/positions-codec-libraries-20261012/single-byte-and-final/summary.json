@@ -1,0 +1,845 @@
+{
+  "en-bytelevel_regex-w6": {
+    "hand": {
+      "runs": 2,
+      "metrics": {
+        "train_seconds": {
+          "mean": 2.098288519,
+          "min": 1.989135873,
+          "max": 2.207441165,
+          "raw": [
+            1.989135873,
+            2.207441165
+          ]
+        },
+        "train_cpu_seconds": {
+          "mean": 3.6065385,
+          "min": 3.384615,
+          "max": 3.828462,
+          "raw": [
+            3.384615,
+            3.828462
+          ]
+        },
+        "process_hwm_kib_before_validation": {
+          "mean": 151270,
+          "min": 150440,
+          "max": 152100,
+          "raw": [
+            152100,
+            150440
+          ]
+        },
+        "child_sampled_rss_kib": {
+          "mean": 151396,
+          "min": 150508,
+          "max": 152284,
+          "raw": [
+            152284,
+            150508
+          ]
+        },
+        "child_max_swap_kib": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "raw": [
+            0,
+            0
+          ]
+        }
+      },
+      "phases": {
+        "BPE_INITIAL_COUNT_SECONDS": {
+          "mean": 0.35870597299999996,
+          "raw": [
+            0.353370523,
+            0.364041423
+          ]
+        },
+        "BPE_PREPARE_SECONDS": {
+          "mean": 0.846333359,
+          "raw": [
+            0.788115943,
+            0.904550775
+          ]
+        },
+        "BPE_APPLY_SECONDS": {
+          "mean": 0.06714326749999999,
+          "raw": [
+            0.057808391,
+            0.076478144
+          ]
+        },
+        "BPE_COMMIT_SECONDS": {
+          "mean": 0.360604601,
+          "raw": [
+            0.329689818,
+            0.391519384
+          ]
+        },
+        "BPE_DROP_SECONDS": {
+          "mean": 0.0558046955,
+          "raw": [
+            0.060127247,
+            0.051482144
+          ]
+        }
+      },
+      "models_identical_to_reference": true,
+      "affinity": [
+        0,
+        1
+      ],
+      "wall_percent_vs_hand": 0.0
+    },
+    "fmt-zero-push": {
+      "runs": 2,
+      "metrics": {
+        "train_seconds": {
+          "mean": 2.1396765815,
+          "min": 2.100118267,
+          "max": 2.179234896,
+          "raw": [
+            2.100118267,
+            2.179234896
+          ]
+        },
+        "train_cpu_seconds": {
+          "mean": 3.625806,
+          "min": 3.569727,
+          "max": 3.681885,
+          "raw": [
+            3.569727,
+            3.681885
+          ]
+        },
+        "process_hwm_kib_before_validation": {
+          "mean": 150726,
+          "min": 149144,
+          "max": 152308,
+          "raw": [
+            149144,
+            152308
+          ]
+        },
+        "child_sampled_rss_kib": {
+          "mean": 150834,
+          "min": 149288,
+          "max": 152380,
+          "raw": [
+            149288,
+            152380
+          ]
+        },
+        "child_max_swap_kib": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "raw": [
+            0,
+            0
+          ]
+        }
+      },
+      "phases": {
+        "BPE_INITIAL_COUNT_SECONDS": {
+          "mean": 0.414822872,
+          "raw": [
+            0.393242079,
+            0.436403665
+          ]
+        },
+        "BPE_PREPARE_SECONDS": {
+          "mean": 0.839969382,
+          "raw": [
+            0.819893894,
+            0.86004487
+          ]
+        },
+        "BPE_APPLY_SECONDS": {
+          "mean": 0.07068924600000001,
+          "raw": [
+            0.070119862,
+            0.07125863
+          ]
+        },
+        "BPE_COMMIT_SECONDS": {
+          "mean": 0.3586026035,
+          "raw": [
+            0.359280566,
+            0.357924641
+          ]
+        },
+        "BPE_DROP_SECONDS": {
+          "mean": 0.0555225225,
+          "raw": [
+            0.052516309,
+            0.058528736
+          ]
+        }
+      },
+      "models_identical_to_reference": true,
+      "affinity": [
+        0,
+        1
+      ],
+      "wall_percent_vs_hand": 1.972467662346289
+    },
+    "fmt-small": {
+      "runs": 2,
+      "metrics": {
+        "train_seconds": {
+          "mean": 2.15714161,
+          "min": 2.150761389,
+          "max": 2.163521831,
+          "raw": [
+            2.150761389,
+            2.163521831
+          ]
+        },
+        "train_cpu_seconds": {
+          "mean": 3.6714334999999996,
+          "min": 3.6478559999999995,
+          "max": 3.6950109999999996,
+          "raw": [
+            3.6478559999999995,
+            3.6950109999999996
+          ]
+        },
+        "process_hwm_kib_before_validation": {
+          "mean": 152118,
+          "min": 151220,
+          "max": 153016,
+          "raw": [
+            153016,
+            151220
+          ]
+        },
+        "child_sampled_rss_kib": {
+          "mean": 152258,
+          "min": 151348,
+          "max": 153168,
+          "raw": [
+            153168,
+            151348
+          ]
+        },
+        "child_max_swap_kib": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "raw": [
+            0,
+            0
+          ]
+        }
+      },
+      "phases": {
+        "BPE_INITIAL_COUNT_SECONDS": {
+          "mean": 0.38784153200000004,
+          "raw": [
+            0.400348254,
+            0.37533481
+          ]
+        },
+        "BPE_PREPARE_SECONDS": {
+          "mean": 0.8974405635,
+          "raw": [
+            0.862643713,
+            0.932237414
+          ]
+        },
+        "BPE_APPLY_SECONDS": {
+          "mean": 0.06365984699999999,
+          "raw": [
+            0.063255109,
+            0.064064585
+          ]
+        },
+        "BPE_COMMIT_SECONDS": {
+          "mean": 0.3580408655,
+          "raw": [
+            0.357733919,
+            0.358347812
+          ]
+        },
+        "BPE_DROP_SECONDS": {
+          "mean": 0.051743371499999996,
+          "raw": [
+            0.052200397,
+            0.051286346
+          ]
+        }
+      },
+      "models_identical_to_reference": true,
+      "affinity": [
+        0,
+        1
+      ],
+      "wall_percent_vs_hand": 2.804814040923609
+    }
+  },
+  "en-whitespace-w6": {
+    "hand": {
+      "runs": 2,
+      "metrics": {
+        "train_seconds": {
+          "mean": 1.9491298910000001,
+          "min": 1.879519624,
+          "max": 2.018740158,
+          "raw": [
+            2.018740158,
+            1.879519624
+          ]
+        },
+        "train_cpu_seconds": {
+          "mean": 3.3298505,
+          "min": 3.2035039999999997,
+          "max": 3.456197,
+          "raw": [
+            3.456197,
+            3.2035039999999997
+          ]
+        },
+        "process_hwm_kib_before_validation": {
+          "mean": 136384,
+          "min": 135844,
+          "max": 136924,
+          "raw": [
+            136924,
+            135844
+          ]
+        },
+        "child_sampled_rss_kib": {
+          "mean": 136472,
+          "min": 135884,
+          "max": 137060,
+          "raw": [
+            137060,
+            135884
+          ]
+        },
+        "child_max_swap_kib": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "raw": [
+            0,
+            0
+          ]
+        }
+      },
+      "phases": {
+        "BPE_INITIAL_COUNT_SECONDS": {
+          "mean": 0.35814584650000003,
+          "raw": [
+            0.354786009,
+            0.361505684
+          ]
+        },
+        "BPE_PREPARE_SECONDS": {
+          "mean": 0.7641329785,
+          "raw": [
+            0.790708954,
+            0.737557003
+          ]
+        },
+        "BPE_APPLY_SECONDS": {
+          "mean": 0.056156255,
+          "raw": [
+            0.059484875,
+            0.052827635
+          ]
+        },
+        "BPE_COMMIT_SECONDS": {
+          "mean": 0.37358711899999997,
+          "raw": [
+            0.401089989,
+            0.346084249
+          ]
+        },
+        "BPE_DROP_SECONDS": {
+          "mean": 0.046936425500000004,
+          "raw": [
+            0.047036657,
+            0.046836194
+          ]
+        }
+      },
+      "models_identical_to_reference": true,
+      "affinity": [
+        0,
+        1
+      ],
+      "wall_percent_vs_hand": 0.0
+    },
+    "fmt-zero-push": {
+      "runs": 2,
+      "metrics": {
+        "train_seconds": {
+          "mean": 2.105924204,
+          "min": 2.075871416,
+          "max": 2.135976992,
+          "raw": [
+            2.075871416,
+            2.135976992
+          ]
+        },
+        "train_cpu_seconds": {
+          "mean": 3.5485995,
+          "min": 3.501336,
+          "max": 3.595863,
+          "raw": [
+            3.501336,
+            3.595863
+          ]
+        },
+        "process_hwm_kib_before_validation": {
+          "mean": 137206,
+          "min": 135732,
+          "max": 138680,
+          "raw": [
+            135732,
+            138680
+          ]
+        },
+        "child_sampled_rss_kib": {
+          "mean": 137362,
+          "min": 135848,
+          "max": 138876,
+          "raw": [
+            135848,
+            138876
+          ]
+        },
+        "child_max_swap_kib": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "raw": [
+            0,
+            0
+          ]
+        }
+      },
+      "phases": {
+        "BPE_INITIAL_COUNT_SECONDS": {
+          "mean": 0.448743236,
+          "raw": [
+            0.445211967,
+            0.452274505
+          ]
+        },
+        "BPE_PREPARE_SECONDS": {
+          "mean": 0.7815642825,
+          "raw": [
+            0.766772606,
+            0.796355959
+          ]
+        },
+        "BPE_APPLY_SECONDS": {
+          "mean": 0.061136002,
+          "raw": [
+            0.056753367,
+            0.065518637
+          ]
+        },
+        "BPE_COMMIT_SECONDS": {
+          "mean": 0.387334826,
+          "raw": [
+            0.384593837,
+            0.390075815
+          ]
+        },
+        "BPE_DROP_SECONDS": {
+          "mean": 0.0500104605,
+          "raw": [
+            0.047421053,
+            0.052599868
+          ]
+        }
+      },
+      "models_identical_to_reference": true,
+      "affinity": [
+        0,
+        1
+      ],
+      "wall_percent_vs_hand": 8.04432345550643
+    },
+    "fmt-small": {
+      "runs": 2,
+      "metrics": {
+        "train_seconds": {
+          "mean": 2.0917567515,
+          "min": 2.027171516,
+          "max": 2.156341987,
+          "raw": [
+            2.156341987,
+            2.027171516
+          ]
+        },
+        "train_cpu_seconds": {
+          "mean": 3.5324160000000004,
+          "min": 3.471242,
+          "max": 3.5935900000000003,
+          "raw": [
+            3.5935900000000003,
+            3.471242
+          ]
+        },
+        "process_hwm_kib_before_validation": {
+          "mean": 145840,
+          "min": 137440,
+          "max": 154240,
+          "raw": [
+            137440,
+            154240
+          ]
+        },
+        "child_sampled_rss_kib": {
+          "mean": 145898,
+          "min": 137552,
+          "max": 154244,
+          "raw": [
+            137552,
+            154244
+          ]
+        },
+        "child_max_swap_kib": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "raw": [
+            0,
+            0
+          ]
+        }
+      },
+      "phases": {
+        "BPE_INITIAL_COUNT_SECONDS": {
+          "mean": 0.422402806,
+          "raw": [
+            0.490700698,
+            0.354104914
+          ]
+        },
+        "BPE_PREPARE_SECONDS": {
+          "mean": 0.8118470154999999,
+          "raw": [
+            0.797693845,
+            0.826000186
+          ]
+        },
+        "BPE_APPLY_SECONDS": {
+          "mean": 0.059804158999999996,
+          "raw": [
+            0.057220916,
+            0.062387402
+          ]
+        },
+        "BPE_COMMIT_SECONDS": {
+          "mean": 0.386092533,
+          "raw": [
+            0.387291117,
+            0.384893949
+          ]
+        },
+        "BPE_DROP_SECONDS": {
+          "mean": 0.0482885625,
+          "raw": [
+            0.05186016,
+            0.044716965
+          ]
+        }
+      },
+      "models_identical_to_reference": true,
+      "affinity": [
+        0,
+        1
+      ],
+      "wall_percent_vs_hand": 7.317463097691523
+    }
+  },
+  "zh-bytelevel_regex-w1": {
+    "hand": {
+      "runs": 2,
+      "metrics": {
+        "train_seconds": {
+          "mean": 64.45258313900001,
+          "min": 64.143153627,
+          "max": 64.762012651,
+          "raw": [
+            64.762012651,
+            64.143153627
+          ]
+        },
+        "train_cpu_seconds": {
+          "mean": 64.322014,
+          "min": 64.02327799999999,
+          "max": 64.62074999999999,
+          "raw": [
+            64.62074999999999,
+            64.02327799999999
+          ]
+        },
+        "process_hwm_kib_before_validation": {
+          "mean": 2575196,
+          "min": 2574144,
+          "max": 2576248,
+          "raw": [
+            2576248,
+            2574144
+          ]
+        },
+        "child_sampled_rss_kib": {
+          "mean": 2575348,
+          "min": 2574296,
+          "max": 2576400,
+          "raw": [
+            2576400,
+            2574296
+          ]
+        },
+        "child_max_swap_kib": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "raw": [
+            0,
+            0
+          ]
+        }
+      },
+      "phases": {
+        "BPE_INITIAL_COUNT_SECONDS": {
+          "mean": 12.290566947999999,
+          "raw": [
+            11.875907144,
+            12.705226752
+          ]
+        },
+        "BPE_PREPARE_SECONDS": {
+          "mean": 30.338413942499997,
+          "raw": [
+            30.657392235,
+            30.01943565
+          ]
+        },
+        "BPE_APPLY_SECONDS": {
+          "mean": 3.1197811025,
+          "raw": [
+            3.150072061,
+            3.089490144
+          ]
+        },
+        "BPE_COMMIT_SECONDS": {
+          "mean": 8.1760262055,
+          "raw": [
+            8.570819146,
+            7.781233265
+          ]
+        },
+        "BPE_DROP_SECONDS": {
+          "mean": 1.179363913,
+          "raw": [
+            1.119853962,
+            1.238873864
+          ]
+        }
+      },
+      "models_identical_to_reference": true,
+      "affinity": [
+        0,
+        1
+      ],
+      "wall_percent_vs_hand": 0.0
+    },
+    "fmt-zero-push": {
+      "runs": 2,
+      "metrics": {
+        "train_seconds": {
+          "mean": 66.591054147,
+          "min": 65.214457763,
+          "max": 67.967650531,
+          "raw": [
+            65.214457763,
+            67.967650531
+          ]
+        },
+        "train_cpu_seconds": {
+          "mean": 66.49385000000001,
+          "min": 65.1234,
+          "max": 67.8643,
+          "raw": [
+            65.1234,
+            67.8643
+          ]
+        },
+        "process_hwm_kib_before_validation": {
+          "mean": 2573992,
+          "min": 2572800,
+          "max": 2575184,
+          "raw": [
+            2575184,
+            2572800
+          ]
+        },
+        "child_sampled_rss_kib": {
+          "mean": 2574196,
+          "min": 2572948,
+          "max": 2575444,
+          "raw": [
+            2575444,
+            2572948
+          ]
+        },
+        "child_max_swap_kib": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "raw": [
+            0,
+            0
+          ]
+        }
+      },
+      "phases": {
+        "BPE_INITIAL_COUNT_SECONDS": {
+          "mean": 13.1216221225,
+          "raw": [
+            12.566717478,
+            13.676526767
+          ]
+        },
+        "BPE_PREPARE_SECONDS": {
+          "mean": 31.3500096075,
+          "raw": [
+            30.90671353,
+            31.793305685
+          ]
+        },
+        "BPE_APPLY_SECONDS": {
+          "mean": 3.187268282,
+          "raw": [
+            3.105745853,
+            3.268790711
+          ]
+        },
+        "BPE_COMMIT_SECONDS": {
+          "mean": 8.2887872215,
+          "raw": [
+            7.988724451,
+            8.588849992
+          ]
+        },
+        "BPE_DROP_SECONDS": {
+          "mean": 1.295441738,
+          "raw": [
+            1.157302576,
+            1.4335809
+          ]
+        }
+      },
+      "models_identical_to_reference": true,
+      "affinity": [
+        0,
+        1
+      ],
+      "wall_percent_vs_hand": 3.317898063741076
+    },
+    "fmt-small": {
+      "runs": 2,
+      "metrics": {
+        "train_seconds": {
+          "mean": 66.6960189275,
+          "min": 65.429176063,
+          "max": 67.962861792,
+          "raw": [
+            65.429176063,
+            67.962861792
+          ]
+        },
+        "train_cpu_seconds": {
+          "mean": 66.58388199999999,
+          "min": 65.33134,
+          "max": 67.836424,
+          "raw": [
+            65.33134,
+            67.836424
+          ]
+        },
+        "process_hwm_kib_before_validation": {
+          "mean": 2577002,
+          "min": 2576808,
+          "max": 2577196,
+          "raw": [
+            2576808,
+            2577196
+          ]
+        },
+        "child_sampled_rss_kib": {
+          "mean": 2577120,
+          "min": 2576892,
+          "max": 2577348,
+          "raw": [
+            2576892,
+            2577348
+          ]
+        },
+        "child_max_swap_kib": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "raw": [
+            0,
+            0
+          ]
+        }
+      },
+      "phases": {
+        "BPE_INITIAL_COUNT_SECONDS": {
+          "mean": 13.0101891125,
+          "raw": [
+            12.996282217,
+            13.024096008
+          ]
+        },
+        "BPE_PREPARE_SECONDS": {
+          "mean": 31.3573793285,
+          "raw": [
+            30.989546745,
+            31.725211912
+          ]
+        },
+        "BPE_APPLY_SECONDS": {
+          "mean": 3.08367021,
+          "raw": [
+            3.058109203,
+            3.109231217
+          ]
+        },
+        "BPE_COMMIT_SECONDS": {
+          "mean": 8.401884279,
+          "raw": [
+            8.040378891,
+            8.763389667
+          ]
+        },
+        "BPE_DROP_SECONDS": {
+          "mean": 1.189285993,
+          "raw": [
+            1.131184122,
+            1.247387864
+          ]
+        }
+      },
+      "models_identical_to_reference": true,
+      "affinity": [
+        0,
+        1
+      ],
+      "wall_percent_vs_hand": 3.4807538802001936
+    }
+  }
+}

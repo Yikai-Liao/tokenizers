@@ -1,0 +1,162 @@
+
+/tmp/bpe-positions-codec-libraries-results-20261012/hand-bin:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+00000000000f33e0 <<smallvec::SmallVec<[u8; 16]>>::resize>:
+   f33e0:	41 57                	push   %r15
+   f33e2:	41 56                	push   %r14
+   f33e4:	41 54                	push   %r12
+   f33e6:	53                   	push   %rbx
+   f33e7:	50                   	push   %rax
+   f33e8:	48 8b 4f 10          	mov    0x10(%rdi),%rcx
+   f33ec:	48 89 ca             	mov    %rcx,%rdx
+   f33ef:	48 83 f9 11          	cmp    $0x11,%rcx
+   f33f3:	72 04                	jb     f33f9 <<smallvec::SmallVec<[u8; 16]>>::resize+0x19>
+   f33f5:	48 8b 57 08          	mov    0x8(%rdi),%rdx
+   f33f9:	4c 8d 77 10          	lea    0x10(%rdi),%r14
+   f33fd:	4c 8d 7f 08          	lea    0x8(%rdi),%r15
+   f3401:	49 89 f4             	mov    %rsi,%r12
+   f3404:	49 29 d4             	sub    %rdx,%r12
+   f3407:	0f 86 9a 01 00 00    	jbe    f35a7 <<smallvec::SmallVec<[u8; 16]>>::resize+0x1c7>
+   f340d:	48 83 f9 11          	cmp    $0x11,%rcx
+   f3411:	b8 10 00 00 00       	mov    $0x10,%eax
+   f3416:	48 0f 43 c1          	cmovae %rcx,%rax
+   f341a:	49 89 c0             	mov    %rax,%r8
+   f341d:	49 29 d0             	sub    %rdx,%r8
+   f3420:	4d 39 e0             	cmp    %r12,%r8
+   f3423:	73 53                	jae    f3478 <<smallvec::SmallVec<[u8; 16]>>::resize+0x98>
+   f3425:	48 8d 46 ff          	lea    -0x1(%rsi),%rax
+   f3429:	48 0f bd c8          	bsr    %rax,%rcx
+   f342d:	f7 d1                	not    %ecx
+   f342f:	48 c7 c2 ff ff ff ff 	mov    $0xffffffffffffffff,%rdx
+   f3436:	48 d3 ea             	shr    %cl,%rdx
+   f3439:	31 c0                	xor    %eax,%eax
+   f343b:	48 83 fe 02          	cmp    $0x2,%rsi
+   f343f:	48 0f 43 c2          	cmovae %rdx,%rax
+   f3443:	48 83 f8 ff          	cmp    $0xffffffffffffffff,%rax
+   f3447:	0f 84 88 01 00 00    	je     f35d5 <<smallvec::SmallVec<[u8; 16]>>::resize+0x1f5>
+   f344d:	48 ff c0             	inc    %rax
+   f3450:	48 89 fb             	mov    %rdi,%rbx
+   f3453:	48 89 c6             	mov    %rax,%rsi
+   f3456:	e8 e5 fa ff ff       	call   f2f40 <<smallvec::SmallVec<[u8; 16]>>::try_grow>
+   f345b:	48 83 f8 ff          	cmp    $0xffffffffffffffff,%rax
+   f345f:	0f 85 60 01 00 00    	jne    f35c5 <<smallvec::SmallVec<[u8; 16]>>::resize+0x1e5>
+   f3465:	49 8b 0e             	mov    (%r14),%rcx
+   f3468:	48 83 f9 11          	cmp    $0x11,%rcx
+   f346c:	b8 10 00 00 00       	mov    $0x10,%eax
+   f3471:	48 0f 43 c1          	cmovae %rcx,%rax
+   f3475:	48 89 df             	mov    %rbx,%rdi
+   f3478:	31 d2                	xor    %edx,%edx
+   f347a:	48 83 f9 11          	cmp    $0x11,%rcx
+   f347e:	0f 92 c2             	setb   %dl
+   f3481:	48 8b 37             	mov    (%rdi),%rsi
+   f3484:	48 0f 42 f7          	cmovb  %rdi,%rsi
+   f3488:	4c 89 f1             	mov    %r14,%rcx
+   f348b:	49 0f 43 cf          	cmovae %r15,%rcx
+   f348f:	48 8b 54 d7 08       	mov    0x8(%rdi,%rdx,8),%rdx
+   f3494:	48 39 c2             	cmp    %rax,%rdx
+   f3497:	0f 83 7e 00 00 00    	jae    f351b <<smallvec::SmallVec<[u8; 16]>>::resize+0x13b>
+   f349d:	49 89 d0             	mov    %rdx,%r8
+   f34a0:	49 f7 d0             	not    %r8
+   f34a3:	49 01 c0             	add    %rax,%r8
+   f34a6:	4d 39 e0             	cmp    %r12,%r8
+   f34a9:	4d 0f 43 c4          	cmovae %r12,%r8
+   f34ad:	49 ff c0             	inc    %r8
+   f34b0:	49 83 f8 20          	cmp    $0x20,%r8
+   f34b4:	76 4a                	jbe    f3500 <<smallvec::SmallVec<[u8; 16]>>::resize+0x120>
+   f34b6:	45 89 c1             	mov    %r8d,%r9d
+   f34b9:	41 83 e1 1f          	and    $0x1f,%r9d
+   f34bd:	41 ba 20 00 00 00    	mov    $0x20,%r10d
+   f34c3:	4d 0f 45 d1          	cmovne %r9,%r10
+   f34c7:	4d 29 d0             	sub    %r10,%r8
+   f34ca:	4d 29 c4             	sub    %r8,%r12
+   f34cd:	4c 8d 0c 32          	lea    (%rdx,%rsi,1),%r9
+   f34d1:	49 83 c1 10          	add    $0x10,%r9
+   f34d5:	4c 01 c2             	add    %r8,%rdx
+   f34d8:	45 31 d2             	xor    %r10d,%r10d
+   f34db:	0f 57 c0             	xorps  %xmm0,%xmm0
+   f34de:	66 90                	xchg   %ax,%ax
+   f34e0:	43 0f 11 44 11 f0    	movups %xmm0,-0x10(%r9,%r10,1)
+   f34e6:	43 0f 11 04 11       	movups %xmm0,(%r9,%r10,1)
+   f34eb:	49 83 c2 20          	add    $0x20,%r10
+   f34ef:	4d 39 d0             	cmp    %r10,%r8
+   f34f2:	75 ec                	jne    f34e0 <<smallvec::SmallVec<[u8; 16]>>::resize+0x100>
+   f34f4:	66 66 66 2e 0f 1f 84 	data16 data16 cs nopw 0x0(%rax,%rax,1)
+   f34fb:	00 00 00 00 00 
+   f3500:	4d 85 e4             	test   %r12,%r12
+   f3503:	0f 84 ad 00 00 00    	je     f35b6 <<smallvec::SmallVec<[u8; 16]>>::resize+0x1d6>
+   f3509:	49 ff cc             	dec    %r12
+   f350c:	c6 04 16 00          	movb   $0x0,(%rsi,%rdx,1)
+   f3510:	48 ff c2             	inc    %rdx
+   f3513:	48 39 d0             	cmp    %rdx,%rax
+   f3516:	75 e8                	jne    f3500 <<smallvec::SmallVec<[u8; 16]>>::resize+0x120>
+   f3518:	48 89 c2             	mov    %rax,%rdx
+   f351b:	48 89 11             	mov    %rdx,(%rcx)
+   f351e:	4d 85 e4             	test   %r12,%r12
+   f3521:	75 4d                	jne    f3570 <<smallvec::SmallVec<[u8; 16]>>::resize+0x190>
+   f3523:	e9 91 00 00 00       	jmp    f35b9 <<smallvec::SmallVec<[u8; 16]>>::resize+0x1d9>
+   f3528:	0f 1f 84 00 00 00 00 	nopl   0x0(%rax,%rax,1)
+   f352f:	00 
+   f3530:	48 89 f9             	mov    %rdi,%rcx
+   f3533:	4c 89 f2             	mov    %r14,%rdx
+   f3536:	48 83 f8 10          	cmp    $0x10,%rax
+   f353a:	74 0e                	je     f354a <<smallvec::SmallVec<[u8; 16]>>::resize+0x16a>
+   f353c:	c6 04 01 00          	movb   $0x0,(%rcx,%rax,1)
+   f3540:	48 ff 02             	incq   (%rdx)
+   f3543:	49 ff cc             	dec    %r12
+   f3546:	75 28                	jne    f3570 <<smallvec::SmallVec<[u8; 16]>>::resize+0x190>
+   f3548:	eb 6f                	jmp    f35b9 <<smallvec::SmallVec<[u8; 16]>>::resize+0x1d9>
+   f354a:	48 89 fb             	mov    %rdi,%rbx
+   f354d:	e8 8e f7 ff ff       	call   f2ce0 <<smallvec::SmallVec<[u8; 16]>>::reserve_one_unchecked>
+   f3552:	48 89 df             	mov    %rbx,%rdi
+   f3555:	48 8b 0b             	mov    (%rbx),%rcx
+   f3558:	48 8b 43 08          	mov    0x8(%rbx),%rax
+   f355c:	4c 89 fa             	mov    %r15,%rdx
+   f355f:	eb db                	jmp    f353c <<smallvec::SmallVec<[u8; 16]>>::resize+0x15c>
+   f3561:	66 66 66 66 66 66 2e 	data16 data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   f3568:	0f 1f 84 00 00 00 00 
+   f356f:	00 
+   f3570:	49 8b 06             	mov    (%r14),%rax
+   f3573:	48 83 f8 11          	cmp    $0x11,%rax
+   f3577:	72 b7                	jb     f3530 <<smallvec::SmallVec<[u8; 16]>>::resize+0x150>
+   f3579:	49 8b 0f             	mov    (%r15),%rcx
+   f357c:	48 39 c1             	cmp    %rax,%rcx
+   f357f:	74 15                	je     f3596 <<smallvec::SmallVec<[u8; 16]>>::resize+0x1b6>
+   f3581:	48 8b 07             	mov    (%rdi),%rax
+   f3584:	c6 04 08 00          	movb   $0x0,(%rax,%rcx,1)
+   f3588:	48 ff c1             	inc    %rcx
+   f358b:	48 89 4f 08          	mov    %rcx,0x8(%rdi)
+   f358f:	49 ff cc             	dec    %r12
+   f3592:	75 dc                	jne    f3570 <<smallvec::SmallVec<[u8; 16]>>::resize+0x190>
+   f3594:	eb 23                	jmp    f35b9 <<smallvec::SmallVec<[u8; 16]>>::resize+0x1d9>
+   f3596:	48 89 fb             	mov    %rdi,%rbx
+   f3599:	e8 42 f7 ff ff       	call   f2ce0 <<smallvec::SmallVec<[u8; 16]>>::reserve_one_unchecked>
+   f359e:	48 89 df             	mov    %rbx,%rdi
+   f35a1:	48 8b 4b 08          	mov    0x8(%rbx),%rcx
+   f35a5:	eb da                	jmp    f3581 <<smallvec::SmallVec<[u8; 16]>>::resize+0x1a1>
+   f35a7:	73 10                	jae    f35b9 <<smallvec::SmallVec<[u8; 16]>>::resize+0x1d9>
+   f35a9:	48 83 f9 11          	cmp    $0x11,%rcx
+   f35ad:	4d 0f 43 f7          	cmovae %r15,%r14
+   f35b1:	49 89 36             	mov    %rsi,(%r14)
+   f35b4:	eb 03                	jmp    f35b9 <<smallvec::SmallVec<[u8; 16]>>::resize+0x1d9>
+   f35b6:	48 89 11             	mov    %rdx,(%rcx)
+   f35b9:	48 83 c4 08          	add    $0x8,%rsp
+   f35bd:	5b                   	pop    %rbx
+   f35be:	41 5c                	pop    %r12
+   f35c0:	41 5e                	pop    %r14
+   f35c2:	41 5f                	pop    %r15
+   f35c4:	c3                   	ret
+   f35c5:	48 85 c0             	test   %rax,%rax
+   f35c8:	74 0b                	je     f35d5 <<smallvec::SmallVec<[u8; 16]>>::resize+0x1f5>
+   f35ca:	48 89 c7             	mov    %rax,%rdi
+   f35cd:	48 89 d6             	mov    %rdx,%rsi
+   f35d0:	e8 2d 62 f7 ff       	call   69802 <alloc::alloc::handle_alloc_error>
+   f35d5:	48 8d 3d e4 b0 f2 ff 	lea    -0xd4f1c(%rip),%rdi        # 1e6c0 <core::unicode::unicode_data::white_space::WHITESPACE_MAP+0x153>
+   f35dc:	48 8d 15 7d 3d 01 00 	lea    0x13d7d(%rip),%rdx        # 107360 <bitcannon::classify::atom_tables::ATOM_TABLES+0x3488>
+   f35e3:	be 11 00 00 00       	mov    $0x11,%esi
+   f35e8:	e8 03 dc f7 ff       	call   711f0 <core::panicking::panic>
+   f35ed:	cc                   	int3
+   f35ee:	cc                   	int3
+   f35ef:	cc                   	int3
