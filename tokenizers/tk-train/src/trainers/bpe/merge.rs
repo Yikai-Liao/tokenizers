@@ -586,18 +586,14 @@ fn prefetched<'a>(
     coordinates: impl Iterator<Item = u64> + 'a,
     corpus: &'a Corpus,
 ) -> impl Iterator<Item = usize> + 'a {
-    let mut positions = coordinates.map(move |coordinate| corpus.resident(coordinate));
+    let mut positions = coordinates
+        .map(move |coordinate| corpus.resident(coordinate))
+        .inspect(move |&p| corpus.prefetch(p));
     let mut ahead = VecDeque::with_capacity(16);
     ahead.extend(positions.by_ref().take(16));
-    for &p in &ahead {
-        corpus.prefetch(p);
-    }
     std::iter::from_fn(move || {
         let position = ahead.pop_front()?;
-        if let Some(next) = positions.next() {
-            corpus.prefetch(next);
-            ahead.push_back(next);
-        }
+        ahead.extend(positions.next());
         Some(position)
     })
 }

@@ -107,32 +107,30 @@ impl Positions {
         // Split large leaves at restart boundaries and group small leaves;
         // every chunk retains its already located starting leaf.
         let target = target_len.max(1);
-        let leaves = self.leaves();
-        let (mut leaf, mut start) = (0, 0);
+        let mut remaining = self.leaves();
+        let mut start = 0;
         std::iter::from_fn(move || {
-            while leaf < leaves.len() && start == leaves[leaf].len() {
-                leaf += 1;
-                start = 0;
-            }
-            let (first, begin) = (leaf, start);
+            let (first, begin) = (remaining, start);
             let mut count = 0;
-            while leaf < leaves.len() {
+            while let Some(leaf) = remaining.first() {
                 let take = target
                     .saturating_sub(count)
                     .max(1)
                     .div_ceil(RESTART)
                     .saturating_mul(RESTART)
-                    .min(leaves[leaf].len() - start);
+                    .min(leaf.len() - start);
                 start += take;
                 count += take;
+                if start == leaf.len() {
+                    remaining = &remaining[1..];
+                    start = 0;
+                }
                 if count >= target {
                     break;
                 }
-                leaf += 1;
-                start = 0;
             }
-            (count != 0)
-                .then(|| read(&leaves[first..(leaf + 1).min(leaves.len())], begin).take(count))
+            let end = first.len() - remaining.len() + usize::from(start != 0);
+            (count != 0).then(|| read(&first[..end], begin).take(count))
         })
     }
 
@@ -174,6 +172,16 @@ impl Leaf {
             .checked_next_power_of_two()
             .and_then(|capacity| capacity.checked_mul(OFFSET_BYTES))
             .ok_or_else(|| "BPE position layout exceeds usize".into())
+    }
+
+    // A single block has no physical directory. Expose only valid entries,
+    // including entry zero, rather than the reserved power-of-two capacity.
+    fn directory(&self) -> &[[u8; OFFSET_BYTES]] {
+        let groups = self.len().div_ceil(RESTART);
+        if groups <= 1 {
+            return &[];
+        }
+        self.bytes[8..8 + groups * OFFSET_BYTES].as_chunks().0
     }
 
     // Nonempty leaves store the tail cache before the reserved directory.
@@ -277,40 +285,28 @@ impl Leaf {
         if start == self.len() {
             return Cursor::new(&[], start);
         }
-        let block = start / RESTART;
-        let offset = if block == 0 {
+        let offset = if start == 0 {
             0
         } else {
-            let entry = 8 + block * OFFSET_BYTES;
-            usize::from_le_bytes(
-                self.bytes[entry..entry + OFFSET_BYTES]
-                    .try_into()
-                    .expect("restart offset"),
-            )
+            usize::from_le_bytes(self.directory()[start / RESTART])
         };
         debug_assert!(start.is_multiple_of(RESTART));
         Cursor::new(&self.data()[offset..], start)
     }
 
     fn restart_before(&self, target: u64) -> usize {
-        let groups = self.len().div_ceil(RESTART);
-        let block = if groups <= 1 {
-            0
-        } else {
-            // Search only valid entries, including entry zero, not spare capacity.
-            let directory = self.bytes[8..8 + groups * OFFSET_BYTES]
-                .as_chunks::<OFFSET_BYTES>()
-                .0;
-            let data = self.data();
-            // Strict comparison and fallback retain duplicates in the prior block.
-            directory
-                .partition_point(|entry| {
-                    let offset = usize::from_le_bytes(*entry);
-                    codec::read_absolute(&data[offset..]) < target
-                })
-                .saturating_sub(1)
-        };
-        block * RESTART
+        let directory = self.directory();
+        if directory.is_empty() {
+            return 0;
+        }
+        let data = self.data();
+        // Strict comparison and fallback retain duplicates in the prior block.
+        directory
+            .partition_point(|entry| {
+                codec::read_absolute(&data[usize::from_le_bytes(*entry)..]) < target
+            })
+            .saturating_sub(1)
+            * RESTART
     }
 }
 

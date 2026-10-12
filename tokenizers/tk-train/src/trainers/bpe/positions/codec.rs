@@ -45,12 +45,8 @@ impl Iterator for Cursor<'_> {
             return None;
         }
         if self.index.is_multiple_of(RESTART) {
-            let (seed, rest) = self
-                .bytes
-                .split_first_chunk::<8>()
-                .expect("internal restart seed");
-            self.position = u64::from_le_bytes(*seed);
-            self.bytes = rest;
+            self.position = read_absolute(self.bytes);
+            self.bytes = &self.bytes[8..];
         } else {
             let mut delta = 0u64;
             let mut shift = 0;
