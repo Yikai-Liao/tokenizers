@@ -69,8 +69,8 @@ retained through a reuse restart. A reserved but unactivated result keeps its ID
 and runs alone. Selecting a previously activated result during a fresh attempt causes
 an immediate restart; vocabulary, index, corpus, traces and merges from that attempt
 are abandoned. The core permits one fresh-to-reuse switch. A restart request from
-the reuse attempt is an internal invariant error. The successful attempt clones
-returns the Vocabulary with committed ID rules and its test-only trace.
+the reuse attempt is an internal invariant error. The successful attempt returns
+the Vocabulary with committed ID rules and its test-only trace.
 The public BPE exits translate rules into string pairs, publish vocabulary and
 clone special tokens once after success and after large attempt storage retires.
 The builder directly owns a BpeTrainer and returns it by move; trainer defaults
@@ -110,11 +110,12 @@ Progress advances by the bound word count only after a successful count task.
 The plan owns the attempt's fresh/reuse mode; PairIndex reads it from the plan,
 so index ledgers and materialized word directories cannot receive conflicting
 mode arguments. Index chooses its owner count from the current training pool,
-without another caller-supplied thread count. `Corpus::cohort` binds historical
-positions to their word owners in one plan; its standard parallel chunks preserve
-the original word partition. Reuse preparation consumes each reader, applies
-length admission, aggregates neighbors and returns deferred writes. Corpus owns
-the sequential scan and its evolving logical previous neighbor.
+without another caller-supplied thread count. Merge collects unique word owners
+from historical positions and retains the original parallel word partition.
+Its private CohortPreparation performs sequential candidate seeks and word scans,
+maintains the evolving logical left neighbor, applies length admission and
+returns deferred writes with neighbor events. There is no public Cohort wrapper
+or separate cohort result type. This geometry coupling remains explicit.
 
 Fresh task inputs carry a rule rank and a borrowed position fragment; the snapshot
 resolves the rule by rank. `record_neighbors` keeps both sides of one match together:
@@ -122,11 +123,12 @@ between adjacent selected matches, the left match owns the shared boundary and
 emits both final replacement IDs. The right match skips its left event, including
 across task boundaries. Ordinary selected rules use exact pair keys; self-pairs
 use membership in the separately selected nonoverlapping starts.
-The fresh reader returns physical neighbors and adjacent input pairs together
-with each match. Only ordinary input pairs read the additional pair endpoints;
-AA receives the preceding same-width start and checks accepted-start membership.
-Merge owns edge selection without assembling multiple Corpus queries or
-interpreting endpoint slots and separators.
+The fresh reader returns the existing Match and weight together. Merge reads
+snapshot neighbors and adjacent input pairs using Corpus primitives; only ordinary
+rules inspect the additional pair endpoints. AA checks the preceding same-width
+start against accepted-start membership. Moving this work into public result
+objects added interfaces without removing preparation assembly, so that change
+was withdrawn. Corpus and merge remain separate modules.
 
 Preparation uses Rayon `map_init` to reuse private directories within each
 parallel task. Each side maps neighbor IDs to u32 change-entry indices. A cached
@@ -153,22 +155,24 @@ representative ID spans. Activation means that an ID has ever been used, even
 after its last occurrence is consumed.
 
 `Corpus::fresh_matches` accepts nondecreasing coordinates and returns valid
-matches with their word weights and neighbor facts. It converts coordinates to resident indices,
+matches with their word weights. It converts coordinates to resident indices,
 keeps at most 16 prefetched positions ahead, caches fixed pair geometry and
 reuses weight regions. Stale starts do not query weights. Every refill follows
 one pop, preserving the bounded queue. Merge consumes this iterator inside each
 preparation task; all readers finish before endpoint writes. AA overlap selection
 uses `fresh_matcher` separately so rejected overlapping starts do not add reads.
 
-The private cohort reader borrows the plan's word owners and Positions stream.
-It seeks candidates until aliases or a length gate require whole-word scans,
-and advances over stale positions using occurrence spans. Its left neighbor may
+The private `CohortPreparation` in merge scans the selected word owners and
+Positions stream. It seeks candidates until aliases or a length gate require
+whole-word scans, and advances over stale positions using occurrence spans.
+Its left neighbor may
 be a replacement accepted earlier in the same word; its right neighbor always
 comes from the unchanged endpoint snapshot. A candidate jump reconstructs the
 left neighbor from physical endpoints; an adjacent accepted match retains the
-virtual replacement. Each result carries the match, weight and neighbor values,
-without allocating a decoded coordinate or result list. All results are consumed
-within preparation, before any endpoint writes.
+virtual replacement. Preparation reads geometry from Corpus, records neighbor
+count events and collects accepted starts into the write job. These steps still
+couple merge to endpoint geometry; no public neighbor result types mediate them.
+All preparation finishes before any endpoint writes.
 
 Lists store u64 coordinates. A physical allocation still has resident usize and
 isize bounds, enforced before construction. The position codec does not narrow

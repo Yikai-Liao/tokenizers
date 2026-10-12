@@ -40,11 +40,11 @@ The implementation is divided by the knowledge each module owns:
   Only this module converts full-u64 occurrence coordinates
   to checked resident indices. Its `fresh_matches` iterator filters stale starts
   and returns matches with weights, keeping prefetch and weight-region caching
-  inside each reader. Fresh neighbor facts accompany each match. Its `cohort`
-  plan binds historical positions to word owners and gives parallel reader chunks,
-  keeping candidate seeks, whole-word scanning and virtual left neighbors private.
-  Merge consumes complete results and keeps selection membership, length gates
-  and shared-edge ownership decisions.
+  inside each reader. It returns the existing Match and its weight.
+  Merge directly prepares neighbor events and historical word scans, including
+  candidate seeks, virtual left neighbors, length gates and shared-edge ownership.
+  This geometry coupling remains; no separate public neighbor, fresh/cohort
+  result or Cohort plan types are introduced.
 - [index.rs](index.rs) owns exact priority correction, count shards, signed reuse
   ledgers, one owning candidate queue, and complete birth publication.
   `InitialPairCounts` chooses dense or sparse storage from the plan's token count.

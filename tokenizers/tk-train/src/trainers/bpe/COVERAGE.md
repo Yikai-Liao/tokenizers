@@ -35,7 +35,7 @@ Literal alphabet expectations independently check that shared selector.
 | Direct encoding, append failures and immutable roots | Literal tail/seed/gap bytes, actual inline/spilled byte storage, empty leaf filtering, sole-leaf collapse, root rejection by concat and push, descending append rejection preserving the old sequence at restart boundaries, and exhausted/truncated decoder behavior |
 | Interleaved sorted stream merging | Empty input, a sole root retained as a root, mixed roots/leaves/empty streams, duplicate coordinates and duplicate `u64::MAX` values |
 | Fresh matches, stale coordinates and weight regions | Forty words cross more than one prefetch window; consumed starts, tails and separators are filtered while exact match intervals and repeated/unit/zero word weights remain correct |
-| Cohort scan domains and virtual neighbors | Compact literal results cover adjacent virtual left replacements, unchanged right IDs, duplicate/stale candidates, skipped physical neighbors and matches outside the candidate stream in whole-word mode; the snapshot remains unchanged |
+| Cohort word scans and virtual neighbors | Literal reuse_spans checks final endpoints and occurrence spans; full reference comparisons cover affixes, aliases and length gates across 1/4/8 workers |
 | Lazy initial-edge consumption and consumer errors | Filtered multibyte symbols yield literal pair/coordinate/weight triples; a consumer error leaves the exact consumed prefix and unconsumed suffix intact |
 
 The former fixture files and legacy trainer tests are consolidated into these
