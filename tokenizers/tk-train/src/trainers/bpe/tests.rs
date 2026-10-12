@@ -677,26 +677,21 @@ fn initial_edges() {
         ((1, 0), 5, 6),
         ((1, 0), 8, 5),
     ];
-    let mut actual = Vec::new();
-    plan.initial_edges(0..plan.word_count(), |pair, coordinate, weight| {
-        actual.push((pair, coordinate, weight));
-        Ok(())
-    })
-    .unwrap();
+    let mut actual: Vec<_> = plan.initial_edges(0..plan.word_count()).collect();
     assert_eq!(actual, expected);
     actual.clear();
-    let error = plan
-        .initial_edges(0..plan.word_count(), |pair, coordinate, weight| {
-            actual.push((pair, coordinate, weight));
-            if actual.len() == 2 {
-                Err("designated edge failure".into())
-            } else {
-                Ok(())
-            }
-        })
-        .unwrap_err();
-    assert_eq!(error.to_string(), "designated edge failure");
+    let mut edges = plan.initial_edges(0..plan.word_count());
+    let result: Result<()> = edges.by_ref().try_for_each(|edge| {
+        actual.push(edge);
+        if actual.len() == 2 {
+            Err("designated edge failure".into())
+        } else {
+            Ok(())
+        }
+    });
+    assert_eq!(result.unwrap_err().to_string(), "designated edge failure");
     assert_eq!(actual, expected[..2]);
+    assert_eq!(edges.collect::<Vec<_>>(), expected[2..]);
 }
 
 fn check_feed_success(workers: usize, parallel: bool) {

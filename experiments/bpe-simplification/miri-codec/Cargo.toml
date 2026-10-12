@@ -6,4 +6,5 @@ edition = "2024"
 thread_local = "1.1.10"
 rayon = "1.10"
 smallvec = { version = "1.16", features = ["union"] }
+leb128fmt = { version = "=0.1.0", default-features = false }
 itertools = "0.14"

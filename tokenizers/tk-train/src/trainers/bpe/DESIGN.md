@@ -19,8 +19,8 @@ count. Selection may already mutate identities and activation; errors discard th
 whole attempt rather than rolling back those changes. Merge first prepares
 owned writes and neighbor changes in parallel and joins all readers. Only after
 successful preparation does it apply endpoint writes in parallel; those writers
-join before `PairIndex::commit` directly publishes complete ordinary births,
-reduces partial births and updates count owners in parallel. Preparation and
+join before `PairIndex::commit` aggregates births and updates count owners in
+parallel, then publishes their owning candidates. Preparation and
 application remain separate passes so every reader observes the same corpus.
 Records copy pairs and test-only count/replacement scalars before consuming
 preparation. They retain no Candidate or Positions, so selected occurrence lists
@@ -35,7 +35,8 @@ rounds do not promise rollback. Tokens and occurrence spans use ordinary relaxed
 atomic accesses. Corpus cache hints use `branches` with addresses from checked
 accesses to live slots. Stable x86_64 emits L1 prefetch and stable AArch64 emits
 `prfm pldl1keep`; unsupported targets retain the library fallback. Position
-storage uses inline values or owned Box allocations and checked slices, with automatic Send/Sync.
+storage uses inline or heap-owned SmallVec bytes and immutable boxed leaf arrays,
+with checked slices and automatic Send/Sync.
 Atomics do not replace the disjoint-match and joined-phase semantic requirements.
 
 ## Token identity and initialization
@@ -94,7 +95,12 @@ also releases index before corpus on errors and restart. Both paths share progre
 completion and model-part construction.
 Fresh mode releases its per-word start directory; weights retain only adjacent
 equal-weight regions. Reuse keeps word starts for cohort scan domains.
-`InitialPairCounts` owns the dense-versus-sparse counting choice and its domain.
+CorpusPlan exposes its token count without choosing a counting representation.
+`InitialPairCounts` owns the dense-versus-sparse choice and its domain: at most
+256 IDs use dense pair keys; larger domains use a sparse table.
+`CorpusPlan::initial_edges` lazily returns pair/coordinate/weight triples in word
+order. Each count task consumes them directly and stops on its own count error;
+Corpus does not own a counting callback or forward counting errors.
 `CohortPreparation::prepare` initializes one task, scans its words and finishes
 neighbor events through a single entry point. Its private context keeps writes,
 neighbor aggregation and geometry together; `prepare_word` retains the sequential
@@ -105,8 +111,8 @@ Fresh task inputs carry a rule rank and a borrowed position fragment; the snapsh
 resolves the rule by rank. `record_neighbors` keeps both sides of one match together:
 between adjacent selected matches, the left match owns the shared boundary and
 emits both final replacement IDs. The right match skips its left event, including
-across task boundaries. Explicit Empty/Unique/Shared head states retain exact
-pair fallback for shared heads.
+across task boundaries. Ordinary selected rules use exact pair keys; self-pairs
+use membership in the separately selected nonoverlapping starts.
 
 Preparation uses Rayon `map_init` to reuse private directories within each
 parallel task. Each side maps neighbor IDs to u32 change-entry indices. A cached
@@ -129,6 +135,14 @@ nonzero, including previously unactivated reserved IDs. Once the occurrence plan
 exists, new ID metadata only needs an activation marker; it no longer sums
 representative ID spans. Activation means that an ID has ever been used, even
 after its last occurrence is consumed.
+
+`Corpus::fresh_matches` accepts nondecreasing coordinates and returns valid
+matches with their word weights. It converts coordinates to resident indices,
+keeps at most 16 prefetched positions ahead, caches fixed pair geometry and
+reuses weight regions. Stale starts do not query weights. Every refill follows
+one pop, preserving the bounded queue. Merge consumes this iterator inside each
+preparation task; all readers finish before endpoint writes. AA overlap selection
+uses `fresh_matcher` separately so rejected overlapping starts do not add reads.
 
 Lists store u64 coordinates. A physical allocation still has resident usize and
 isize bounds, enforced before construction. The position codec does not narrow
@@ -175,10 +189,9 @@ outputs and owner indices are internal and are not stored in the model format.
 Each private `Shard` owns its count table, pending actions and birth streams.
 `PairIndex` routes work directly into those shards and commits nonempty shards in
 parallel. `Shard::commit` drains actions in producer order, removes old weight
-before recording each birth, then publishes partial groups in bucket/pair order
-from a local `BTreeMap`.
-Groups use the same count-and-storage `State` as initial counting, with SmallVec
-positions; reuse sorts them before encoding while fresh fragments append in order.
+before recording each birth. Compressed fragments are stably sorted by bucket/pair,
+preserving producer order within each group. The owner checks aggregated birth
+weights before connecting fresh fragments or merging interleaved reuse streams.
 Groups and candidates remain local to the algorithm. The coordinator receives
 completed candidates only after shard jobs join. Errors release unpublished
 storage and discard the attempt; applied count changes are not rolled back.
@@ -188,18 +201,15 @@ reuse cohorts. Taking a fresh candidate removes its count key and queue record.
 Old-boundary removal events decrease existing counts and delete keys below the
 floor. Their lists survive until the stale queue records reach the head or the
 attempt ends. Selection repairs counts and discards missing fresh keys through
-the same queue loop used for reuse ledgers. Each new pair belongs to one producer rule;
-partial jobs aggregate before pruning and publication. An ordinary source that
-covers the whole candidate marks its birth count complete. It first drops births below the floor while preserving removal
-events, then encodes retained lists; the owner publishes the count and returns an
-owning Candidate. Joined owner results are pushed into the global queue serially.
-AA and reuse do not
-enter this shortcut. Small ordinary candidates remain whole by item count; large
-candidates use spatially ordered block ranges. Partial fresh lists remain raw until owner reduction; complete
-fresh lists are encoded during preparation. Both move to each owner in indexed
-task order. Each key has one producer, so this preserves spatial order without
-another sort. Reuse births can interleave; their full-u64 coordinates are sorted before
-encoding. There is no adaptive birth feedback or linked-node promotion.
+the same queue loop used for reuse ledgers. Each fresh newborn pair belongs to one
+producer rule. Preparation appends births directly to compressed leaves, and
+owner reduction aggregates their weights before admission. Joined owner results
+are pushed into the global queue serially. Large ordinary candidates split into
+spatially ordered iterator chunks; filtered AA starts split as ordinary slices.
+Fragments move to each owner in indexed task order, and stable grouping preserves
+their spatial order. Reuse births can interleave; Positions merges their sorted
+coordinate streams before publication. There is no adaptive birth feedback or
+linked-node promotion.
 
 Commit retains one immutable metadata array and shard-local pending vectors with
 reusable capacity. Each action is a resident usize record reference and two flags.
@@ -211,20 +221,21 @@ retains capacity. Errors drop active drains; the attempt is discarded after
 owner jobs join. Successful commits drain every shard's pending vectors before
 the next round.
 
-Published lists use an Enum with Empty, One and Two inline cases and an owned
-`Box<[u8]>` for longer restart/delta streams. The Enum is 24 bytes on the measured
-64-bit target. Each list releases its bytes when its queue, fragment or birth
-owner retires. Ownership and Send/Sync follow from its fields.
+Published lists are either appendable compressed leaves or immutable,
+nonrecursive roots owning boxed leaf arrays. A leaf uses `SmallVec<[u8; 16]>`,
+so actual encoded byte width determines inline storage. Positions is 32 bytes
+on the tested 64-bit target. Retiring a queue, fragment or birth owner releases
+its bytes; ownership and Send/Sync follow from the fields.
 
-`Positions::from_sorted` accepts a nondecreasing u64 slice; `Positions::concat`
-consumes ordered fragments, drops empty fragments, and returns a sole nonempty
-fragment unchanged. Multiple fragments are encoded in order, preserving
-duplicates and rejecting descending coordinates. Construction writes directly
-into an owned Vec, fills restart offsets in its reserved prefix, and converts
-it to Box. Larger gaps can grow Vec and boxing may copy or reallocate; one
-encoding pass does not promise one allocation. Readers borrow immutable bytes
-and carry private decoder state. No encoder service, lease or scratch lifetime
-is carried through the index or preparation objects.
+`Positions::push` checks nondecreasing full-u64 coordinates and reserves storage
+before mutation. `concat` consumes ordered leaves without re-encoding heap
+payloads, filters empty leaves and returns a sole nonempty leaf unchanged. Roots
+are rejected as inputs, including a sole root; multiple leaves form an immutable
+root. `merge_sorted` accepts interleaved sorted streams, including roots, retains
+duplicates and moves a sole stream unchanged. Multiple streams are read through
+a buffered iterator frontier and appended directly into one compressed leaf.
+Readers borrow immutable storage and carry private decoder state. No encoder
+service, lease or scratch lifetime crosses the module boundary.
 
 Reuse owners retain a signed i64 ledger and the queue owns independent occurrence
 cohorts. Selection repairs the head cohort against the shared ledger, preserving
@@ -253,32 +264,29 @@ span. Limits zero, one and two therefore retain their existing distinct behavior
 
 ## Position encoding
 
-Temporary lists use library `SmallVec<[u64; 2]>` directly. Every coordinate
-retains its full width, with two values inline before heap storage is needed.
-Fresh producers visit coordinates in order and can move the first partial
-fragment to its owner; subsequent fragments append in producer order. Reuse
-groups retain an unordered Vec and sort before construction. The immutable
-constructor validates the resulting nondecreasing sequence.
+Initial counting and preparation append directly to compressed Positions leaves.
+All coordinates retain their full width and every append checks order. Fresh
+fragments connect in producer order; reuse streams merge their sorted coordinates
+while preserving duplicates.
 
 Positions is the only custom container exposed by the position module. Readers
-use `iter()`, `iter_from_value(coordinate)` and `iter_range(range)`.
-`partition_ranges(target_items)` rounds its target up to restart boundaries and
-returns standard half-open `Range<usize>` values indexing list elements, not
-corpus coordinates or compression blocks. Merge tasks retain the rule rank and
-range; preparation reads that rule's immutable candidate. The caller must keep
-each range paired with its originating list. No fragment storage is allocated.
-Range reads accept any bounds within the list, replay at most one restart prefix
-for an unaligned start, and stop at the exact end. Inverted or out-of-bounds ranges
-panic, as with slice indexing. An ordinary producer is complete exactly when its
-range is `0..candidate_len`, including cases where alignment produces one range
-larger than the target. Filtered AA starts remain partial even when a single slice
-contains them all.
+use `iter()`, `iter_from_value(coordinate)` and `chunks(target_len)`. Chunks are
+opaque, independently consumable iterators implementing Send; merge carries the
+rule rank and the iterator directly. Positions groups short leaves and splits
+long leaves at restart boundaries, retaining the already located starting leaf.
+Chunk lengths may differ from the requested target; zero is treated as one.
+No decompressed position arrays or separate reading-task types are allocated.
+Coordinate seeking retains equal values across leaf and restart boundaries.
 
 Each block contains at most 128 positions. Its first position is a full-u64
 restart; later positions store unsigned base-128 deltas. Checked monotonic input
 makes reconstruction exact, including a gap of `u64::MAX`. Zero gaps retain
 repeated coordinates. Block directories contain resident byte offsets, never
-truncated corpus coordinates. A task reads independent complete blocks; AA and
+truncated corpus coordinates. Nonempty leaves cache their tail before a reserved,
+geometrically grown directory. Directory offsets are relative to the data area
+and survive relocation when capacity grows. The private codec handles absolute
+restart seeds and uses leb128fmt for gap encoding and decoding. A task reads
+independent complete blocks; AA and
 cohort selection can stream the full list without a corpus-sized bitmap.
 
 ## Validation
@@ -287,7 +295,9 @@ Full-model comparisons cover vocabulary IDs and complete ordered merges. Small
 fixtures also compare every `(pair, count, replacement ID)` with an independent
 sequential reference. Literal expectations cover numeric limits and alias
 cohorts; storage tests and Miri exercise immutable storage, concurrent readers,
-owned concatenation, and exact restart/delta bytes when the output Vec grows.
+owned concatenation, and exact restart/delta bytes when storage grows. Corpus
+tests check stale starts and repeated, unit and zero-weight regions across more
+than one prefetch window; stream tests include interleaved roots and duplicates.
 See [the test coverage map](COVERAGE.md).
 
 Performance evidence belongs to the experiment report: paired independent

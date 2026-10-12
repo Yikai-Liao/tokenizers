@@ -5,6 +5,7 @@ use super::{
 use compact_str::CompactString;
 use itertools::Itertools;
 use rayon::prelude::*;
+use std::collections::VecDeque;
 use std::sync::atomic::{AtomicU16, AtomicU32, AtomicUsize, Ordering};
 use tk_encode::{Result, models::bpe::Pair};
 
@@ -150,26 +151,23 @@ impl<'input> CorpusPlan<'input> {
         ranges
     }
 
-    pub(super) fn small_pair_domain(&self) -> Option<usize> {
-        (self.ids.token_count() <= 256).then_some(self.ids.token_count())
+    pub(super) fn token_count(&self) -> usize {
+        self.ids.token_count()
     }
 
     pub(super) fn initial_edges(
         &self,
         range: std::ops::Range<usize>,
-        mut emit: impl FnMut(Pair, u64, u64) -> Result<()>,
-    ) -> Result<()> {
-        for word in range {
+    ) -> impl Iterator<Item = (Pair, u64, u64)> + '_ {
+        range.flat_map(move |word| {
             let (text, &weight) = self.words[word];
+            let start = self.starts[word];
             self.ids
                 .symbols(text)
                 .tuple_windows()
                 .enumerate()
-                .try_for_each(|(offset, pair)| {
-                    emit(pair, (self.starts[word] + offset) as u64, weight)
-                })?;
-        }
-        Ok(())
+                .map(move |(offset, pair)| (pair, (start + offset) as u64, weight))
+        })
     }
 
     pub(super) fn materialize(self) -> Corpus {
@@ -222,7 +220,7 @@ impl Corpus {
         self.tokens.get(position)
     }
 
-    pub(super) fn prefetch(&self, position: usize) {
+    fn prefetch(&self, position: usize) {
         let address: Option<*const u8> = match &self.tokens {
             Slots::Narrow(values) => values.get(position).map(|v| std::ptr::from_ref(v).cast()),
             Slots::Wide(values) => values.get(position).map(|v| std::ptr::from_ref(v).cast()),
@@ -234,7 +232,7 @@ impl Corpus {
         }
     }
 
-    pub(super) fn weight_region(&self, position: usize) -> (u64, usize) {
+    fn weight_region(&self, position: usize) -> (u64, usize) {
         if self.weight_regions.len() == 1 {
             return (self.weight_regions[0].1, self.len());
         }
@@ -306,6 +304,38 @@ impl Corpus {
                 after: position + total,
             })
         }
+    }
+
+    /// Read valid fresh matches and their weights from nondecreasing coordinates.
+    /// Cache fixed geometry and weight regions within this reader; prefetch at
+    /// most 16 coordinates ahead. The preparation snapshot must remain unchanged
+    /// until every reader joins. AA overlap selection stays with the caller.
+    pub(super) fn fresh_matches<'a>(
+        &'a self,
+        coordinates: impl Iterator<Item = u64> + 'a,
+        pair: Pair,
+    ) -> impl Iterator<Item = (Match, u64)> + 'a {
+        let matcher = self.fresh_matcher(pair);
+        let mut positions = coordinates
+            .map(move |coordinate| self.resident(coordinate))
+            .inspect(move |&p| self.prefetch(p));
+        let mut ahead = VecDeque::with_capacity(16);
+        ahead.extend(positions.by_ref().take(16));
+        let mut weights = None;
+        std::iter::from_fn(move || {
+            let position = ahead.pop_front()?;
+            ahead.extend(positions.next());
+            Some(position)
+        })
+        .filter_map(move |p| {
+            let matched = matcher(p, self.token(p))?;
+            let (weight, end) = match weights {
+                Some((weight, end)) if p < end => (weight, end),
+                _ => self.weight_region(p),
+            };
+            weights = Some((weight, end));
+            Some((matched, weight))
+        })
     }
 
     pub(super) fn matched(&self, position: usize, pair: Pair) -> Option<Match> {
@@ -529,6 +559,46 @@ mod tests {
         corpus.apply_merges(&[1, 4], 0);
         assert_eq!(tokens(&corpus), [s, 0, 0, 0, 0, s, 1, 0, s]);
         assert_eq!(spans(&corpus), [0, 3, 2, 3, 4, 0, 0, 4, 0]);
+    }
+
+    #[test]
+    fn fresh_matches_skip_stale_starts_and_keep_word_weights() {
+        let s = WORD_SEPARATOR_ID;
+        let input: Vec<_> = std::iter::once(s)
+            .chain((0..40).flat_map(|_| [0, 1, s]))
+            .collect();
+        let mut corpus = fixture(&input, &[1, 1, 2], None);
+        corpus.weight_regions = vec![(1, 9), (31, 1), (91, 0)].into_boxed_slice();
+        corpus.unit_region = Some((31, 91));
+        corpus.apply_merges(&[1, 64], 2);
+
+        // Span more than one prefetch window and include old starts, tails and
+        // separators. Weights cross repeated, unit and zero-weight regions.
+        let matches: Vec<_> = corpus
+            .fresh_matches(0..input.len() as u64, (0, 1))
+            .map(|(matched, weight)| (matched.start, matched.after, weight))
+            .collect();
+        let expected: Vec<_> = (0..40)
+            .filter(|&word| word != 0 && word != 21)
+            .map(|word| {
+                let start = 1 + word * 3;
+                let weight = if word < 10 {
+                    9
+                } else if word < 30 {
+                    1
+                } else {
+                    0
+                };
+                (start, start + 2, weight)
+            })
+            .collect();
+        assert_eq!(matches, expected);
+        assert!(
+            corpus
+                .fresh_matches(std::iter::empty(), (0, 1))
+                .next()
+                .is_none()
+        );
     }
 
     #[test]

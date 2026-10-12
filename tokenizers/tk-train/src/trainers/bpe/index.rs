@@ -263,13 +263,14 @@ enum InitialPairCounts {
 }
 
 impl InitialPairCounts {
-    fn new(domain: Option<usize>) -> Self {
-        match domain {
-            Some(domain) => Self::Dense {
+    fn new(domain: usize) -> Self {
+        if domain <= 256 {
+            Self::Dense {
                 domain,
                 states: (0..domain * domain).map(|_| State::default()).collect(),
-            },
-            None => Self::Sparse(AHashMap::new()),
+            }
+        } else {
+            Self::Sparse(AHashMap::new())
         }
     }
 
@@ -304,11 +305,11 @@ fn count_range(
     range: std::ops::Range<usize>,
     progress: &Option<ProgressBar>,
 ) -> Result<InitialPiece> {
-    let mut counts = InitialPairCounts::new(corpus.small_pair_domain());
-    corpus.initial_edges(range.clone(), |pair, p, weight| {
+    let mut counts = InitialPairCounts::new(corpus.token_count());
+    for (pair, position, weight) in corpus.initial_edges(range.clone()) {
         debug_assert!(pair.0 != WORD_SEPARATOR_ID && pair.1 != WORD_SEPARATOR_ID);
-        counts.record(pair, p, weight)
-    })?;
+        counts.record(pair, position, weight)?;
+    }
     if let Some(p) = progress {
         p.inc(range.len() as u64);
     }
@@ -411,7 +412,7 @@ impl Shard {
                 continue;
             }
             let positions = if reuse {
-                merge_positions(streams)?
+                Positions::merge_sorted(streams)?
             } else {
                 Positions::concat(streams)?
             };
@@ -429,21 +430,6 @@ impl Shard {
         }
         Ok(candidates)
     }
-}
-
-/// Interleaved reuse cohorts retain duplicates, but publish one ordered leaf.
-/// Only the iterator frontier is buffered; coordinates append directly.
-fn merge_positions(fragments: impl IntoIterator<Item = Positions>) -> Result<Positions> {
-    let fragments: SmallVec<[Positions; 1]> = fragments.into_iter().collect();
-    if fragments.len() == 1 {
-        return Ok(fragments.into_iter().next().expect("one fragment"));
-    }
-    use itertools::Itertools;
-    let mut positions = Positions::default();
-    for position in fragments.iter().map(Positions::iter).kmerge() {
-        positions.push(position)?;
-    }
-    Ok(positions)
 }
 
 #[cfg(test)]

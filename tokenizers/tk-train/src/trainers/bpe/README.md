@@ -35,28 +35,33 @@ The implementation is divided by the knowledge each module owns:
   slots with checked word starts in one serial prefix pass. No second
   per-word usize array is allocated during layout construction.
   Only this module converts full-u64 occurrence coordinates
-  to checked resident indices.
+  to checked resident indices. Its `fresh_matches` iterator filters stale starts
+  and returns matches with weights, keeping prefetch and weight-region caching
+  inside each reader.
 - [index.rs](index.rs) owns exact priority correction, count shards, signed reuse
   ledgers, one owning candidate queue, and complete birth publication.
+  `InitialPairCounts` chooses dense or sparse storage from the plan's token count.
+  Initial edges are consumed as a standard iterator; count overflow stays with
+  the index rather than being forwarded through a corpus callback.
 - [merge.rs](merge.rs) owns compatible selection, read-only preparation, local
   event aggregation, and a complete joined round. `BpeTrainer::merge_next` selects
   and consumes its private Batch, returning finish, restart, or committed records
   only after index publication; the coordinator collects records and progress.
 - [positions.rs](positions.rs) owns sorted full-u64 streams and restart blocks.
-  Producers use `SmallVec<[u64; 2]>` and construct immutable lists directly.
-  Empty, one-value and two-value lists stay inline; longer lists own compressed
-  byte slices. Construction accepts a sorted slice or consumes ordered fragments
-  without an encoder service. Duplicates and coordinates through `u64::MAX` are preserved.
-  Readers use iteration, `iter_from_value(coordinate)`, and `iter_range(range)`.
-  `partition_ranges(target_items)` returns standard ranges of list elements;
-  restart alignment stays inside Positions.
+  Producers append directly to compressed leaves backed by `SmallVec<[u8; 16]>`;
+  byte width alone determines whether storage spills. `concat` consumes ordered
+  leaves without re-encoding their heap payloads; `merge_sorted` merges interleaved
+  streams while retaining duplicates. Coordinates through `u64::MAX` are preserved.
+  Readers use `iter()`, `iter_from_value(coordinate)` and `chunks(target_len)`.
+  Chunks are independently consumable iterators with private restart alignment
+  and already located starting leaves. The nested codec owns sequential decoding.
 - [feed.rs](feed.rs) owns streaming batches and word aggregation. Named
   `flush` and `accumulate` closures share callback/error handling. Serial input
   moves its completed map into owned entries; parallel folds flush at 2048
   distinct local keys and publish successful tails before ordinary error
   reduction. The shared table stays
   private to one call, and failed feed leaves the previous trainer state intact.
-  After folds finish, consumption moves entries without a capacity reservation;
+  After folds finish, consumption moves entries without enlarging the shared table;
   SCC checks shrinking after its consumption traversal, and a reservation can
   itself trigger another enlargement.
   Startup singletons expose short expensive streams to parallel callbacks; later
@@ -73,8 +78,7 @@ including short compressed lists that previously remained in an attempt arena.
 
 Initial collection splits the borrowed plan at whole-word boundaries, with a
 2²⁴-resident-slot block cap. An oversized single word is processed alone. Each
-producer compresses its temporary positions before returning, so raw lists retire
-without waiting for every producer. Owned compressed fragments retain complete
+producer appends positions directly to compressed leaves. Owned fragments retain complete
 pair counts; global frequency admission precedes final list publication. There is
 no extra wave barrier.
 
@@ -91,22 +95,22 @@ endpoint materialization. Decorations still use original UTF-8 byte boundaries;
 edge coordinates enumerate retained symbols. Unlimited alphabet observation uses
 Rayon bitmap reduction, retaining the full Unicode bit domain for empty input.
 
-Preparation indexes unique rule heads directly by token ID and checks tail
-presence before left-neighbor lookup. Shared heads fall back to exact pair keys.
-Only monotone snapshot write/birth appenders skip repeated ordering checks;
-general appends and final encoding retain validation.
+Fresh preparation looks up selected rules by exact pair keys. AA preparation
+first selects nonoverlapping starts from left to right and uses their membership
+when accounting for adjacent matches. Position appends retain ordering checks.
 
-Preparation keeps at most 16 decoded positions ahead in a `VecDeque`. Initial
+Corpus readers keep at most 16 decoded positions ahead in a `VecDeque`. Initial
 filling takes at most 16 elements; every refill follows one pop, so the queue never
-exceeds that length. Cohort scans use `find` to consume the next eligible occurrence.
-Partial birth groups use `BTreeMap` order directly when publishing, preserving
-bucket/pair ordering without an intermediate collection and sort.
+exceeds that length. The same reader validates fresh matches and caches weight
+regions. Cohort scans use `find` to consume the next eligible occurrence.
+Commit stably sorts compressed fragments by bucket/pair, preserving each group's
+producer order before connecting fresh fragments or merging reuse streams.
 
 Compatible batches retain the original priority prefix and permit shared heads
 or shared tails. Crossed endpoints end the batch without skipping a candidate.
-AA and reserved-ID rules run alone. Complete ordinary producers prune before encoding in preparation and publish
-directly. Partial, AA and reuse births aggregate before encoding and publication. Commit routes compact
-metadata references and moves each position stream only once. Reuse mode selects
+AA and reserved-ID rules run alone. Preparation records compressed birth streams;
+commit aggregates their weights before admission and publication. Commit routes
+compact metadata references and moves each position stream only once. Reuse mode selects
 one cohort at a time; its word scans follow the original alias/length-gate conditions.
 
 Run library checks from the repository root:
@@ -121,12 +125,11 @@ cargo +nightly miri test --manifest-path experiments/bpe-simplification/miri-cod
 The tests compare full vocabulary IDs, ordered merges and per-rule traces with
 an independent small-input reference. Fixed-seed combinations cover thread
 counts, affixes, aliases, zero weights, ties, overlap and strict birth gates.
-Literal expectations cover wide counts and public errors. Position storage tests cover the
-entire u64 domain, repeated values and restart boundaries. The standalone Miri
-harness imports the actual position module and keeps borrow/leak checks enabled.
-Miri samples seek starts and targets around restart boundaries; native tests
-exhaust every start. Native and Miri storage tests use scoped threads and verify that frozen lists
-remain readable after their construction inputs are dropped.
+Literal expectations cover wide counts and public errors. Position storage tests
+cover the full u64 domain, repeated values, restart boundaries, independent chunks
+and interleaved stream merging. Corpus tests cover stale starts and weight-region
+transitions across more than one prefetch window. Historical native and Miri
+storage evidence is retained in the experiment reports.
 Public tests cover feed, model reload, progress and ambient-versus-training pool
 behavior. [The coverage map](COVERAGE.md) records the combined boundaries.
 

@@ -87,6 +87,22 @@ impl Positions {
         }
     }
 
+    /// Merge interleaved sorted streams, retaining every duplicate. A sole stream
+    /// moves unchanged; otherwise only the reader frontier is buffered while
+    /// coordinates append directly to one ordered leaf.
+    pub(super) fn merge_sorted(fragments: impl IntoIterator<Item = Self>) -> Result<Self> {
+        let fragments: SmallVec<[Self; 1]> = fragments.into_iter().collect();
+        if fragments.len() == 1 {
+            return Ok(fragments.into_iter().next().expect("one fragment"));
+        }
+        use itertools::Itertools;
+        let mut positions = Self::default();
+        for position in fragments.iter().map(Self::iter).kmerge() {
+            positions.push(position)?;
+        }
+        Ok(positions)
+    }
+
     fn leaves(&self) -> &[Leaf] {
         match &self.0 {
             Repr::Leaf(leaf) => std::slice::from_ref(leaf),
@@ -426,6 +442,28 @@ mod tests {
         .unwrap();
         assert!(root.push(2).is_err());
         assert_eq!(root.iter().collect::<Vec<_>>(), [1, 1]);
+    }
+
+    #[test]
+    fn merge_sorted_preserves_interleaved_roots_and_duplicates() {
+        assert!(Positions::merge_sorted([]).unwrap().is_empty());
+        let root = Positions::concat([
+            Positions::from_sorted(&[0, 2]).unwrap(),
+            Positions::from_sorted(&[u64::MAX]).unwrap(),
+        ])
+        .unwrap();
+        let root = Positions::merge_sorted([root]).unwrap();
+        assert!(matches!(root.0, Repr::Root { .. }));
+        let positions = Positions::merge_sorted([
+            root,
+            Positions::default(),
+            Positions::from_sorted(&[0, 1, u64::MAX]).unwrap(),
+        ])
+        .unwrap();
+        assert_eq!(
+            positions.iter().collect::<Vec<_>>(),
+            [0, 0, 1, 2, u64::MAX, u64::MAX]
+        );
     }
 
     #[test]

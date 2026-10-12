@@ -10,7 +10,6 @@ use ahash::{AHashMap, AHashSet};
 use itertools::Itertools;
 use rayon::prelude::*;
 use smallvec::SmallVec;
-use std::collections::VecDeque;
 use tk_encode::{Result, models::bpe::Pair};
 
 /// Complete-round outcome. Only successful index publication returns records.
@@ -399,17 +398,7 @@ impl<'a> FreshSnapshot<'a> {
         directories.resize(self.corpus.id_count());
         let mut neighbors = Neighbors::new(rule, directories);
         let mut starts = SmallVec::new();
-        let matcher = self.corpus.fresh_matcher(rule.pair());
-        let mut weights = None;
-        for p in prefetched(positions, self.corpus) {
-            let Some(matched) = matcher(p, self.corpus.token(p)) else {
-                continue;
-            };
-            let (weight, end) = match weights {
-                Some((weight, end)) if p < end => (weight, end),
-                _ => self.corpus.weight_region(p),
-            };
-            weights = Some((weight, end));
+        for (matched, weight) in self.corpus.fresh_matches(positions, rule.pair()) {
             self.record_neighbors(&mut neighbors, matched, weight)?;
             starts.push(matched.start);
         }
@@ -578,24 +567,6 @@ impl<'task> CohortPreparation<'task> {
         }
         Ok(())
     }
-}
-
-// Decode one bounded queue ahead. Prefetch is a nonblocking hint; matching
-// still reads the joined preparation snapshot in order, inside the worker.
-fn prefetched<'a>(
-    coordinates: impl Iterator<Item = u64> + 'a,
-    corpus: &'a Corpus,
-) -> impl Iterator<Item = usize> + 'a {
-    let mut positions = coordinates
-        .map(move |coordinate| corpus.resident(coordinate))
-        .inspect(move |&p| corpus.prefetch(p));
-    let mut ahead = VecDeque::with_capacity(16);
-    ahead.extend(positions.by_ref().take(16));
-    std::iter::from_fn(move || {
-        let position = ahead.pop_front()?;
-        ahead.extend(positions.next());
-        Some(position)
-    })
 }
 
 #[cfg(test)]

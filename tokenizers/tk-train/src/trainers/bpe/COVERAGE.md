@@ -29,18 +29,21 @@ Literal alphabet expectations independently check that shared selector.
 | Feed unification boundaries and failure interleaving | Disabled parallelism, enabled/one worker and four workers; startup W and W+31/32/33/64 lengths; per-ID callback/read counts; first exhaustion; 2047/2048/2049/4097 keys with repeated words across flushes; first/middle/last/multiple ordinary errors; exact counts and public model equality; controlled two-worker shared writes plus a successful tail and failing partition leave prior trainer state intact |
 | Requested training pool versus ambient pool and serial settings | Child processes install an ambient two-thread pool; materialization and both preparation paths check requested pool size and record that each executed; feed callbacks verify ambient worker size and concurrent/serial execution |
 | JSON progress schema, starts and completion | Child-process matrix covers normal/no-bar/zero-merge/empty/Silent; strict JSON parsing, exact three-field schema, initial zero and final actual merge count; the zero-merge case executes no materialization or preparation tasks |
-| Numeric position width, duplicate values, restart blocks, seek, concatenation and owned byte storage | One matrix of empty and small lists and lengths around block boundaries, values through `u64::MAX`, explicit ten-byte deltas, all native seek starts and independent lower-bound expectations for present and gap values |
-| Published list lifetime and shared readers | Two scoped threads construct lists while reading earlier owned lists, then read the saved lists again after the threads join |
-| Element ranges and coordinate-based seeking | Standard ranges cover exactly 0..len at restart boundaries and targets 0/1/127/128/129/130/255/256/257/usize::MAX; arbitrary empty, short, unaligned and cross-restart reads equal independent slice reads, including duplicated coordinates; value-based seek equals independently filtered coordinates |
-| Direct encoding format and concat ownership | Literal restart directory and ten-byte gap bytes after output Vec growth; duplicate preservation, empty fragment removal and pointer identity of the sole nonempty fragment |
-| Invalid decoder ranges and unsorted construction | Explicit rejection before byte access; Miri imports this same implementation and tests |
+| Numeric position width, duplicate values, restart blocks and seeking | Empty/small lists and a 2049-value repeated sequence; values through `u64::MAX`, gap-width boundaries through ten bytes, and value seeking checked against independent slice lower bounds |
+| Independently consumable chunks and leaf/root boundaries | Nested chunks flatten to the exact original sequence at targets 0/1/127/128/129/511/usize::MAX; concatenated leaves of widths 1/2/3/127/128/129/700/1300 retain duplicated coordinates and seeking behavior |
+| Direct encoding, append failures and immutable roots | Literal tail/seed/gap bytes, actual inline/spilled byte storage, empty leaf filtering, sole-leaf collapse, root rejection by concat and push, descending append rejection preserving the old sequence at restart boundaries, and exhausted/truncated decoder behavior |
+| Interleaved sorted stream merging | Empty input, a sole root retained as a root, mixed roots/leaves/empty streams, duplicate coordinates and duplicate `u64::MAX` values |
+| Fresh matches, stale coordinates and weight regions | Forty words cross more than one prefetch window; consumed starts, tails and separators are filtered while exact match intervals and repeated/unit/zero word weights remain correct |
+| Lazy initial-edge consumption and consumer errors | Filtered multibyte symbols yield literal pair/coordinate/weight triples; a consumer error leaves the exact consumed prefix and unconsumed suffix intact |
 
 The former fixture files and legacy trainer tests are consolidated into these
 contracts. Their repeated helper infrastructure and overlapping private feed tests are
 replaced by public flat-count/callback contracts. This map describes
 asserted behavior; it does not claim exhaustive coverage of all combinations.
-The storage constructor accepts only a slice or owned-list fragments, so
-arbitrary safe iterators can no longer supply a false allocation cardinality.
+Position appends validate ordering; concat accepts owned leaves and sorted-stream
+merging consumes owned Positions. No caller-supplied cardinality controls storage
+initialization. The standalone Miri harness imports the same position module and
+its tests; historical storage experiments retain their separate native/Miri evidence.
 
 The formatted line count includes test hooks, the complete reference oracle,
 all default BPE public/helper test declarations and the Miri harness. Dedicated
