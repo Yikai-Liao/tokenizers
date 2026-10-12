@@ -1,0 +1,170 @@
+--- a/tokenizers/tk-train/src/trainers/bpe/corpus.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/corpus.rs
+@@ -567,3 +567,5 @@
+         }
+     }
+ }
++
++impl Corpus { pub(super) fn bench_token_width(&self) -> usize { match self.tokens { Slots::Narrow(_) => 16, Slots::Wide(_) => 32 } } }
+--- a/tokenizers/tk-train/src/trainers/bpe/index.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/index.rs
+@@ -111,12 +111,16 @@
+         progress: &Option<ProgressBar>,
+     ) -> Result<Self> {
+         // 1. Count and freeze each whole-word range independently.
++        let count_started = std::time::Instant::now();
+         let pieces = corpus
+             .initial_ranges(if cfg!(test) { 16 } else { 1 << 24 })
+             .into_par_iter()
+             .map(|range| count_range(corpus, range, progress))
+             .collect::<Result<Vec<_>>>()?;
+ 
++        eprintln!("BPE_INITIAL_COUNT_SECONDS {:.9}", count_started.elapsed().as_secs_f64());
++        let owner_started = std::time::Instant::now();
++
+         // 2. Route ordered fragments to the sole count owner of each pair.
+         let mut routed: Vec<Vec<_>> = (0..shard_count).map(|_| Vec::new()).collect();
+         for piece in pieces {
+@@ -130,6 +134,7 @@
+             .into_par_iter()
+             .map(|pieces| build_owner(pieces, minimum.max(1), reuse))
+             .collect::<Result<Vec<_>>>()?;
++        eprintln!("BPE_INITIAL_OWNER_SECONDS {:.9}", owner_started.elapsed().as_secs_f64());
+         let (shards, candidates): (Vec<_>, Vec<_>) = owners.into_iter().unzip();
+         Ok(Self {
+             shards: shards.into_boxed_slice(),
+--- a/tokenizers/tk-train/src/trainers/bpe/mod.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/mod.rs
+@@ -155,7 +155,6 @@
+         self.config.end_of_word_suffix = Some(suffix);
+         self
+     }
+-
+     /// Set max_token_length
+     #[must_use]
+     pub fn max_token_length(mut self, max_token_length: Option<usize>) -> Self {
+@@ -331,7 +330,9 @@
+             .build()?;
+         pool.install(|| {
+             let progress = self.setup_progress();
++            let phase = std::time::Instant::now();
+             let alphabet = vocabulary::select_alphabet(self, words, workers);
++            eprintln!("BPE_SELECTION_SECONDS {:.9}", phase.elapsed().as_secs_f64());
+             let outcome = self.train_attempt(words, workers, false, &alphabet, &progress)?;
+             let outcome = match outcome {
+                 // A previously activated ID requires historical cohorts. Discard
+@@ -361,8 +362,12 @@
+         progress: &Option<ProgressBar>,
+     ) -> Result<AttemptOutcome> {
+         // 1. Resolve the vocabulary and tokenize borrowed input into a corpus plan.
++        let phase = std::time::Instant::now();
+         let (mut vocabulary, ids) = Vocabulary::initialize(self, words, alphabet, progress)?;
++        eprintln!("BPE_VOCABULARY_SECONDS {:.9}", phase.elapsed().as_secs_f64());
++        let phase = std::time::Instant::now();
+         let plan = CorpusPlan::build(words, ids, self, reuse)?;
++        eprintln!("BPE_PLAN_SECONDS {:.9}", phase.elapsed().as_secs_f64());
+         self.finalize_progress(progress, plan.word_count(), "Tokenize words");
+ 
+         // 2. Freeze initial pairs first: their temporary counting buffers retire
+@@ -372,7 +377,9 @@
+         // zero-merge path never initializes or allocates this resident corpus.
+         let mut corpus: Corpus;
+         self.update_progress(progress, plan.word_count(), "Count pairs");
++        let phase = std::time::Instant::now();
+         let mut index = PairIndex::build(&plan, self.min_frequency, workers, reuse, progress)?;
++        eprintln!("BPE_INDEX_SECONDS {:.9}", phase.elapsed().as_secs_f64());
+         self.finalize_progress(progress, plan.word_count(), "Count pairs");
+ 
+         let mut merges = Vec::new();
+@@ -381,12 +388,17 @@
+         self.update_progress(progress, self.vocab_size, "Compute merges");
+         if vocabulary.len() < self.vocab_size {
+             // 3. Only attempts needing merges allocate resident endpoints.
++            let phase = std::time::Instant::now();
+             corpus = plan.materialize();
++            eprintln!("BPE_TOKEN_WIDTH {}", corpus.bench_token_width());
++            eprintln!("BPE_MATERIALIZE_SECONDS {:.9}", phase.elapsed().as_secs_f64());
++            let phase = std::time::Instant::now();
+             while vocabulary.len() < self.vocab_size {
+                 let records = match self.merge_next(&mut vocabulary, &mut corpus, &mut index)? {
+                     MergeOutcome::Finished => break,
+                     MergeOutcome::RestartForReuse => {
+                         self.finalize_progress(progress, merges.len(), "Compute merges");
++                        eprintln!("BPE_MERGE_RESTART_SECONDS {:.9}", phase.elapsed().as_secs_f64());
+                         return Ok(AttemptOutcome::RestartForReuse);
+                     }
+                     MergeOutcome::Committed(records) => records,
+@@ -402,11 +414,17 @@
+                 }
+                 self.emit_json_progress("Compute merges", merges.len(), self.vocab_size);
+             }
++            eprintln!("BPE_MERGE_SECONDS {:.9}", phase.elapsed().as_secs_f64());
++            merge::bench_report_prepare();
++            let phase = std::time::Instant::now();
+             index.retire();
+             drop(corpus);
++            eprintln!("BPE_DROP_SECONDS {:.9}", phase.elapsed().as_secs_f64());
+         } else {
++            let phase = std::time::Instant::now();
+             index.retire();
+             drop(plan);
++            eprintln!("BPE_DROP_SECONDS {:.9}", phase.elapsed().as_secs_f64());
+         }
+ 
+         // 4. Large attempt storage is gone before output strings and the final
+@@ -512,11 +530,7 @@
+     /// Train a BPE model
+     fn train(&self, model: &mut PipelineBPE) -> Result<Vec<AddedToken>> {
+         let (vocab, merges, special_tokens) = self.train_vocab()?;
+-        *model = PipelineBPE::from_config(BpeConfig {
+-            vocab: vocab,
+-            merges: merges,
+-            ..self.model_options()
+-        })?;
++        *model = PipelineBPE::from_config(BpeConfig { vocab: vocab, merges: merges, ..self.model_options() })?;
+         Ok(special_tokens)
+     }
+ 
+--- a/tokenizers/tk-train/src/trainers/bpe/merge.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/merge.rs
+@@ -111,7 +111,12 @@
+                 replacement: rule.replacement,
+             })
+             .collect();
++        let prepare_reuse = batch.reuse;
++        let prepare_started = std::time::Instant::now();
+         let jobs = batch.prepare(corpus, self.max_token_length.unwrap_or(usize::MAX))?;
++        BENCH_PREPARE_NS.fetch_add(prepare_started.elapsed().as_nanos() as u64, std::sync::atomic::Ordering::Relaxed);
++        if prepare_reuse { &BENCH_REUSE_BATCHES } else { &BENCH_FRESH_BATCHES }.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
++        let apply_started = std::time::Instant::now();
+         let changes = jobs
+             .into_par_iter()
+             .map(|job| {
+@@ -119,7 +124,10 @@
+                 job.changes
+             })
+             .collect();
++        BENCH_APPLY_NS.fetch_add(apply_started.elapsed().as_nanos() as u64, std::sync::atomic::Ordering::Relaxed);
++        let commit_started = std::time::Instant::now();
+         index.commit(changes)?;
++        BENCH_COMMIT_NS.fetch_add(commit_started.elapsed().as_nanos() as u64, std::sync::atomic::Ordering::Relaxed);
+         Ok(MergeOutcome::Committed(records))
+     }
+ }
+@@ -761,3 +769,16 @@
+         assert!(index.best().is_none());
+     }
+ }
++
++static BENCH_PREPARE_NS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
++static BENCH_FRESH_BATCHES: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
++static BENCH_REUSE_BATCHES: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
++static BENCH_APPLY_NS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
++static BENCH_COMMIT_NS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
++pub(super) fn bench_report_prepare() {
++    eprintln!("BPE_APPLY_SECONDS {:.9}", BENCH_APPLY_NS.swap(0, std::sync::atomic::Ordering::Relaxed) as f64 / 1e9);
++    eprintln!("BPE_COMMIT_SECONDS {:.9}", BENCH_COMMIT_NS.swap(0, std::sync::atomic::Ordering::Relaxed) as f64 / 1e9);
++    eprintln!("BPE_PREPARE_SECONDS {:.9}", BENCH_PREPARE_NS.swap(0, std::sync::atomic::Ordering::Relaxed) as f64 / 1e9);
++    eprintln!("BPE_FRESH_BATCHES {}", BENCH_FRESH_BATCHES.swap(0, std::sync::atomic::Ordering::Relaxed));
++    eprintln!("BPE_REUSE_BATCHES {}", BENCH_REUSE_BATCHES.swap(0, std::sync::atomic::Ordering::Relaxed));
++}

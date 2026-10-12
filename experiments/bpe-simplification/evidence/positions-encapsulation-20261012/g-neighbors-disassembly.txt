@@ -1,0 +1,271 @@
+
+/tmp/bpe-positions-encapsulation-final-results-20261012/g-bin:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+00000000000f76c0 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record>:
+   f76c0:	push   %rbp
+   f76c1:	push   %r15
+   f76c3:	push   %r14
+   f76c5:	push   %r13
+   f76c7:	push   %r12
+   f76c9:	push   %rbx
+   f76ca:	sub    $0x18,%rsp
+   f76ce:	mov    %r9,%r14
+   f76d1:	mov    %r8,%rbx
+   f76d4:	mov    %ecx,%ebp
+   f76d6:	mov    %edx,%r13d
+   f76d9:	mov    %esi,%r12d
+   f76dc:	mov    %rdi,%r15
+   f76df:	mov    %edx,%esi
+   f76e1:	mov    %r12d,%edx
+   f76e4:	call   f7f50 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors5group>
+   f76e9:	mov    0x30(%rax),%rcx
+   f76ed:	add    %r14,%rcx
+   f76f0:	jb     f796a <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x2aa>
+   f76f6:	movzbl 0x50(%rsp),%edx
+   f76fb:	mov    %rcx,0x30(%rax)
+   f76ff:	test   %dl,%dl
+   f7701:	je     f7952 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x292>
+   f7707:	cmp    %ebp,%r13d
+   f770a:	je     f771a <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x5a>
+   f770c:	movzbl %r12b,%edx
+   f7710:	mov    %r15,%rdi
+   f7713:	mov    %ebp,%esi
+   f7715:	call   f7f50 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors5group>
+   f771a:	add    0x38(%rax),%r14
+   f771e:	jb     f79a3 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x2e3>
+   f7724:	mov    %r14,0x38(%rax)
+   f7728:	mov    (%rax),%rdx
+   f772b:	test   %rdx,%rdx
+   f772e:	je     f7756 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x96>
+   f7730:	mov    %rdx,%rcx
+   f7733:	inc    %rcx
+   f7736:	je     f79f2 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x332>
+   f773c:	mov    %edx,%esi
+   f773e:	and    $0x7f,%esi
+   f7741:	cmp    $0x1,%esi
+   f7744:	jne    f77ae <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0xee>
+   f7746:	mov    %rax,%rdi
+   f7749:	mov    %rbx,%rsi
+   f774c:	call   f2f80 <_RNvMs0_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe9positionsNtB5_4Leaf12push_restart>
+   f7751:	jmp    f7954 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x294>
+   f7756:	mov    $0x1f,%edi
+   f775b:	call   *0x11787(%rip)        # 108ee8 <malloc@GLIBC_2.2.5>
+   f7761:	test   %rax,%rax
+   f7764:	je     f7a73 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x3b3>
+   f776a:	mov    %rax,%rbx
+   f776d:	movups -0xd8a6d(%rip),%xmm0        # 1ed07 <_RNvNtNtNtCsgxBkk5gSRhY_4core7unicode12unicode_data11white_space14WHITESPACE_MAP+0x75a>
+   f7774:	movups %xmm0,0xf(%rax)
+   f7778:	movups -0xd8a87(%rip),%xmm0        # 1ecf8 <_RNvNtNtNtCsgxBkk5gSRhY_4core7unicode12unicode_data11white_space14WHITESPACE_MAP+0x74b>
+   f777f:	movups %xmm0,(%rax)
+   f7782:	mov    $0x18,%edi
+   f7787:	call   *0x1175b(%rip)        # 108ee8 <malloc@GLIBC_2.2.5>
+   f778d:	test   %rax,%rax
+   f7790:	je     f7a3b <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x37b>
+   f7796:	movq   $0x1f,(%rax)
+   f779d:	mov    %rbx,0x8(%rax)
+   f77a1:	movq   $0x1f,0x10(%rax)
+   f77a9:	jmp    f7954 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x294>
+   f77ae:	mov    0x18(%rax),%rsi
+   f77b2:	mov    %rsi,%r8
+   f77b5:	cmp    $0x11,%rsi
+   f77b9:	jb     f77bf <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0xff>
+   f77bb:	mov    0x10(%rax),%r8
+   f77bf:	cmp    $0x7,%r8
+   f77c3:	jbe    f7a4c <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x38c>
+   f77c9:	lea    0x8(%rax),%r14
+   f77cd:	cmp    $0x11,%rsi
+   f77d1:	mov    0x8(%rax),%rsi
+   f77d5:	cmovb  %r14,%rsi
+   f77d9:	mov    %rbx,%r15
+   f77dc:	sub    (%rsi),%r15
+   f77df:	jae    f7839 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x179>
+   f77e1:	mov    $0x1c,%edi
+   f77e6:	call   *0x116fc(%rip)        # 108ee8 <malloc@GLIBC_2.2.5>
+   f77ec:	test   %rax,%rax
+   f77ef:	je     f7a82 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x3c2>
+   f77f5:	mov    %rax,%rbx
+   f77f8:	movups -0xd908a(%rip),%xmm0        # 1e775 <_RNvNtNtNtCsgxBkk5gSRhY_4core7unicode12unicode_data11white_space14WHITESPACE_MAP+0x1c8>
+   f77ff:	movups %xmm0,0xc(%rax)
+   f7803:	movups -0xd90a1(%rip),%xmm0        # 1e769 <_RNvNtNtNtCsgxBkk5gSRhY_4core7unicode12unicode_data11white_space14WHITESPACE_MAP+0x1bc>
+   f780a:	movups %xmm0,(%rax)
+   f780d:	mov    $0x18,%edi
+   f7812:	call   *0x116d0(%rip)        # 108ee8 <malloc@GLIBC_2.2.5>
+   f7818:	test   %rax,%rax
+   f781b:	je     f7a62 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x3a2>
+   f7821:	movq   $0x1c,(%rax)
+   f7828:	mov    %rbx,0x8(%rax)
+   f782c:	movq   $0x1c,0x10(%rax)
+   f7834:	jmp    f7954 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x294>
+   f7839:	cmp    $0x4,%rdx
+   f783d:	jae    f7852 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x192>
+   f783f:	mov    %rax,%rdi
+   f7842:	mov    %rbx,%rsi
+   f7845:	mov    %r15,%rdx
+   f7848:	call   f35d0 <_RNvMs0_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe9positionsNtB5_4Leaf10push_short>
+   f784d:	jmp    f7954 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x294>
+   f7852:	mov    %rcx,0x10(%rsp)
+   f7857:	mov    $0x7f,%ecx
+   f785c:	bsr    %r15,%rcx
+   f7860:	xor    $0x3f,%ecx
+   f7863:	mov    $0x40,%dl
+   f7865:	sub    %cl,%dl
+   f7867:	movzbl %dl,%ecx
+   f786a:	imul   $0x93,%ecx,%esi
+   f7870:	shr    $0xa,%esi
+   f7873:	imul   $0xffffffb7,%ecx,%ecx
+   f7876:	xor    %edx,%edx
+   f7878:	cmp    $0x25,%cl
+   f787b:	setae  %dl
+   f787e:	lea    (%rdx,%rsi,1),%ecx
+   f7881:	cmp    $0x1,%ecx
+   f7884:	adc    %edx,%esi
+   f7886:	mov    %rax,0x8(%rsp)
+   f788b:	mov    %rax,%rdi
+   f788e:	call   f3470 <_RNvMs0_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe9positionsNtB5_4Leaf7reserve>
+   f7893:	test   %rax,%rax
+   f7896:	jne    f7954 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x294>
+   f789c:	mov    0x8(%rsp),%rax
+   f78a1:	lea    0x18(%rax),%rbp
+   f78a5:	lea    0x10(%rax),%r12
+   f78a9:	nopl   0x0(%rax)
+   f78b0:	mov    %r15d,%eax
+   f78b3:	shr    $0x7,%r15
+   f78b7:	setne  %r13b
+   f78bb:	shl    $0x7,%r13b
+   f78bf:	or     %al,%r13b
+   f78c2:	mov    0x0(%rbp),%rax
+   f78c6:	cmp    $0x11,%rax
+   f78ca:	jb     f78f0 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x230>
+   f78cc:	mov    (%r12),%rcx
+   f78d0:	cmp    %rax,%rcx
+   f78d3:	je     f790a <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x24a>
+   f78d5:	mov    (%r14),%rax
+   f78d8:	mov    %r13b,(%rax,%rcx,1)
+   f78dc:	inc    %rcx
+   f78df:	mov    %rcx,(%r12)
+   f78e3:	test   %r15,%r15
+   f78e6:	jne    f78b0 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x1f0>
+   f78e8:	jmp    f793a <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x27a>
+   f78ea:	nopw   0x0(%rax,%rax,1)
+   f78f0:	mov    %r14,%rcx
+   f78f3:	mov    %rbp,%rdx
+   f78f6:	cmp    $0x10,%rax
+   f78fa:	je     f7918 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x258>
+   f78fc:	mov    %r13b,(%rcx,%rax,1)
+   f7900:	incq   (%rdx)
+   f7903:	test   %r15,%r15
+   f7906:	jne    f78b0 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x1f0>
+   f7908:	jmp    f793a <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x27a>
+   f790a:	mov    %r14,%rdi
+   f790d:	call   f38a0 <_RNvMsc_CsbtXW8PvOBJT_8smallvecINtB5_8SmallVecAhj10_E21reserve_one_uncheckedCshwCxqn3PiWH_8tk_train>
+   f7912:	mov    (%r12),%rcx
+   f7916:	jmp    f78d5 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x215>
+   f7918:	mov    %r14,%rdi
+   f791b:	call   f38a0 <_RNvMsc_CsbtXW8PvOBJT_8smallvecINtB5_8SmallVecAhj10_E21reserve_one_uncheckedCshwCxqn3PiWH_8tk_train>
+   f7920:	mov    (%r14),%rcx
+   f7923:	mov    (%r12),%rax
+   f7927:	mov    %r12,%rdx
+   f792a:	mov    %r13b,(%rcx,%rax,1)
+   f792e:	incq   (%rdx)
+   f7931:	test   %r15,%r15
+   f7934:	jne    f78b0 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x1f0>
+   f793a:	mov    %r14,%rdi
+   f793d:	call   f80f0 <_RNvXsp_CsbtXW8PvOBJT_8smallvecINtB5_8SmallVecAhj10_EINtNtNtCsgxBkk5gSRhY_4core3ops5index8IndexMutINtNtBT_5range7RangeTojEE9index_mutCshwCxqn3PiWH_8tk_train>
+   f7942:	mov    %rbx,(%rax)
+   f7945:	mov    0x10(%rsp),%rax
+   f794a:	mov    0x8(%rsp),%rcx
+   f794f:	mov    %rax,(%rcx)
+   f7952:	xor    %eax,%eax
+   f7954:	lea    0x104b5(%rip),%rdx        # 107e10 <_RNvNtNtCsbQHXimUXCOo_9bitcannon8classify11atom_tables11ATOM_TABLES+0x3538>
+   f795b:	add    $0x18,%rsp
+   f795f:	pop    %rbx
+   f7960:	pop    %r12
+   f7962:	pop    %r13
+   f7964:	pop    %r14
+   f7966:	pop    %r15
+   f7968:	pop    %rbp
+   f7969:	ret
+   f796a:	mov    $0x22,%edi
+   f796f:	call   *0x11573(%rip)        # 108ee8 <malloc@GLIBC_2.2.5>
+   f7975:	test   %rax,%rax
+   f7978:	je     f7a91 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x3d1>
+   f797e:	mov    %rax,%rbx
+   f7981:	movups -0xd8c43(%rip),%xmm0        # 1ed45 <_RNvNtNtNtCsgxBkk5gSRhY_4core7unicode12unicode_data11white_space14WHITESPACE_MAP+0x798>
+   f7988:	movups %xmm0,0x10(%rax)
+   f798c:	movups -0xd8c5e(%rip),%xmm0        # 1ed35 <_RNvNtNtNtCsgxBkk5gSRhY_4core7unicode12unicode_data11white_space14WHITESPACE_MAP+0x788>
+   f7993:	movups %xmm0,(%rax)
+   f7996:	movw   $0x3436,0x20(%rax)
+   f799c:	call   f22a0 <_RNvNtCs6i54tJFfzR_5alloc5boxed14box_new_uninit.1376>
+   f79a1:	jmp    f79da <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x31a>
+   f79a3:	mov    $0x22,%edi
+   f79a8:	call   *0x1153a(%rip)        # 108ee8 <malloc@GLIBC_2.2.5>
+   f79ae:	test   %rax,%rax
+   f79b1:	je     f7a91 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x3d1>
+   f79b7:	mov    %rax,%rbx
+   f79ba:	movups -0xd8c7c(%rip),%xmm0        # 1ed45 <_RNvNtNtNtCsgxBkk5gSRhY_4core7unicode12unicode_data11white_space14WHITESPACE_MAP+0x798>
+   f79c1:	movups %xmm0,0x10(%rax)
+   f79c5:	movups -0xd8c97(%rip),%xmm0        # 1ed35 <_RNvNtNtNtCsgxBkk5gSRhY_4core7unicode12unicode_data11white_space14WHITESPACE_MAP+0x788>
+   f79cc:	movups %xmm0,(%rax)
+   f79cf:	movw   $0x3436,0x20(%rax)
+   f79d5:	call   f22a0 <_RNvNtCs6i54tJFfzR_5alloc5boxed14box_new_uninit.1376>
+   f79da:	movq   $0x22,(%rax)
+   f79e1:	mov    %rbx,0x8(%rax)
+   f79e5:	movq   $0x22,0x10(%rax)
+   f79ed:	jmp    f7954 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x294>
+   f79f2:	mov    $0x1e,%edi
+   f79f7:	call   *0x114eb(%rip)        # 108ee8 <malloc@GLIBC_2.2.5>
+   f79fd:	test   %rax,%rax
+   f7a00:	je     f7aa0 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x3e0>
+   f7a06:	mov    %rax,%rbx
+   f7a09:	movups -0xd9071(%rip),%xmm0        # 1e99f <_RNvNtNtNtCsgxBkk5gSRhY_4core7unicode12unicode_data11white_space14WHITESPACE_MAP+0x3f2>
+   f7a10:	movups %xmm0,0xe(%rax)
+   f7a14:	movups -0xd908a(%rip),%xmm0        # 1e991 <_RNvNtNtNtCsgxBkk5gSRhY_4core7unicode12unicode_data11white_space14WHITESPACE_MAP+0x3e4>
+   f7a1b:	movups %xmm0,(%rax)
+   f7a1e:	call   f22a0 <_RNvNtCs6i54tJFfzR_5alloc5boxed14box_new_uninit.1376>
+   f7a23:	movq   $0x1e,(%rax)
+   f7a2a:	mov    %rbx,0x8(%rax)
+   f7a2e:	movq   $0x1e,0x10(%rax)
+   f7a36:	jmp    f7954 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x294>
+   f7a3b:	mov    $0x8,%edi
+   f7a40:	mov    $0x18,%esi
+   f7a45:	call   69862 <_RNvNtCs6i54tJFfzR_5alloc5alloc18handle_alloc_error>
+   f7a4a:	jmp    f7a71 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x3b1>
+   f7a4c:	lea    0x10fcd(%rip),%rcx        # 108a20 <_RNvNtNtCsbQHXimUXCOo_9bitcannon8classify11atom_tables11ATOM_TABLES+0x4148>
+   f7a53:	mov    $0x8,%esi
+   f7a58:	xor    %edi,%edi
+   f7a5a:	mov    %r8,%rdx
+   f7a5d:	call   71180 <_RNvNtNtCsgxBkk5gSRhY_4core5slice5index16slice_index_fail>
+   f7a62:	mov    $0x8,%edi
+   f7a67:	mov    $0x18,%esi
+   f7a6c:	call   69862 <_RNvNtCs6i54tJFfzR_5alloc5alloc18handle_alloc_error>
+   f7a71:	ud2
+   f7a73:	mov    $0x1,%edi
+   f7a78:	mov    $0x1f,%esi
+   f7a7d:	call   69752 <_RNvNtCs6i54tJFfzR_5alloc7raw_vec12handle_error>
+   f7a82:	mov    $0x1,%edi
+   f7a87:	mov    $0x1c,%esi
+   f7a8c:	call   69752 <_RNvNtCs6i54tJFfzR_5alloc7raw_vec12handle_error>
+   f7a91:	mov    $0x1,%edi
+   f7a96:	mov    $0x22,%esi
+   f7a9b:	call   69752 <_RNvNtCs6i54tJFfzR_5alloc7raw_vec12handle_error>
+   f7aa0:	mov    $0x1,%edi
+   f7aa5:	mov    $0x1e,%esi
+   f7aaa:	call   69752 <_RNvNtCs6i54tJFfzR_5alloc7raw_vec12handle_error>
+   f7aaf:	jmp    f7ab7 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x3f7>
+   f7ab1:	jmp    f7ab7 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x3f7>
+   f7ab3:	jmp    f7ab7 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x3f7>
+   f7ab5:	jmp    f7ab7 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x3f7>
+   f7ab7:	mov    %rax,%r14
+   f7aba:	mov    %rbx,%rdi
+   f7abd:	call   *0x1140d(%rip)        # 108ed0 <free@GLIBC_2.2.5>
+   f7ac3:	mov    %r14,%rdi
+   f7ac6:	call   102d60 <_Unwind_Resume@plt>
+
+Disassembly of section .init:
+
+Disassembly of section .fini:
+
+Disassembly of section .plt:

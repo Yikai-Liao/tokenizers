@@ -1,0 +1,127 @@
+{
+  "method": "AST excludes cfg(test) items/statements/fields; code lines exclude blanks and Rust comments",
+  "variants": {
+    "baseline": {
+      "files": {
+        "positions.rs": {
+          "production": {
+            "physical_lines": 371,
+            "code_lines": 323
+          },
+          "tests": {
+            "physical_lines": 129,
+            "code_lines": 125
+          }
+        },
+        "merge.rs": {
+          "production": {
+            "physical_lines": 601,
+            "code_lines": 506
+          },
+          "tests": {
+            "physical_lines": 162,
+            "code_lines": 153
+          }
+        }
+      },
+      "total": {
+        "production": {
+          "physical_lines": 972,
+          "code_lines": 829
+        },
+        "tests": {
+          "physical_lines": 291,
+          "code_lines": 278
+        }
+      }
+    },
+    "a": {
+      "files": {
+        "positions.rs": {
+          "production": {
+            "physical_lines": 312,
+            "code_lines": 259
+          },
+          "tests": {
+            "physical_lines": 138,
+            "code_lines": 133
+          }
+        },
+        "positions/codec.rs": {
+          "production": {
+            "physical_lines": 68,
+            "code_lines": 58
+          },
+          "tests": {
+            "physical_lines": 20,
+            "code_lines": 19
+          }
+        },
+        "merge.rs": {
+          "production": {
+            "physical_lines": 588,
+            "code_lines": 495
+          },
+          "tests": {
+            "physical_lines": 162,
+            "code_lines": 153
+          }
+        }
+      },
+      "total": {
+        "production": {
+          "physical_lines": 968,
+          "code_lines": 812
+        },
+        "tests": {
+          "physical_lines": 320,
+          "code_lines": 305
+        }
+      }
+    },
+    "ab": {
+      "files": {
+        "positions.rs": {
+          "production": {
+            "physical_lines": 328,
+            "code_lines": 272
+          },
+          "tests": {
+            "physical_lines": 154,
+            "code_lines": 149
+          }
+        },
+        "positions/codec.rs": {
+          "production": {
+            "physical_lines": 73,
+            "code_lines": 63
+          },
+          "tests": {
+            "physical_lines": 20,
+            "code_lines": 19
+          }
+        },
+        "merge.rs": {
+          "production": {
+            "physical_lines": 588,
+            "code_lines": 495
+          },
+          "tests": {
+            "physical_lines": 162,
+            "code_lines": 153
+          }
+        }
+      },
+      "total": {
+        "production": {
+          "physical_lines": 989,
+          "code_lines": 830
+        },
+        "tests": {
+          "physical_lines": 336,
+          "code_lines": 321
+        }
+      }
+    }
+  }
+}

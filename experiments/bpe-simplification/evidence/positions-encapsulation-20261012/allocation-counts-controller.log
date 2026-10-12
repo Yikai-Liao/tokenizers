@@ -1,0 +1,6 @@
+built a
+built b
+start zh-bytelevel_regex-w1-a
+{'allocations': 7374961, 'deallocations': 7225456, 'reallocations': 11063005}
+start zh-bytelevel_regex-w1-b
+{'allocations': 4916333, 'deallocations': 4766826, 'reallocations': 11063005}

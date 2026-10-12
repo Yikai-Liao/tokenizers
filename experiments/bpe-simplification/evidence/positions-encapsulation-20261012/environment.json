@@ -1,0 +1,55 @@
+{
+  "cpu_affinity": [
+    0,
+    1
+  ],
+  "workers": [
+    1,
+    6
+  ],
+  "repeats": 2,
+  "cases": [
+    "zh-whitespace",
+    "zh-bytelevel_regex",
+    "en-whitespace",
+    "en-bytelevel_regex"
+  ],
+  "allocator": "unchanged System/default libc",
+  "diagnostic_environment": {},
+  "kernel": "6.12.101+deb13-amd64",
+  "cpu_models": [
+    "Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz"
+  ],
+  "memory_guard": {
+    "child_rss_kib_max": 4500000,
+    "host_available_kib_min": 2000000
+  },
+  "feature_tests": {
+    "command": [
+      "/root/.cargo/bin/cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "--manifest-path",
+      "tokenizers/tk-train/Cargo.toml",
+      "trainers::bpe",
+      "--",
+      "--test-threads=1",
+      "--skip",
+      "feed_training_tokenizer_json_and_encoding_roundtrip"
+    ],
+    "default_count": 32,
+    "nodefault_count": 32,
+    "environment": {
+      "CARGO_BUILD_JOBS": "1",
+      "CARGO_INCREMENTAL": "0",
+      "RAYON_NUM_THREADS": "1"
+    },
+    "known_fixture_skip": true
+  },
+  "commits": {
+    "baseline": "3436bba7f9603147f8ead3ffacc0a91b6c4b05ab",
+    "a": "5d617efe",
+    "ab": "d6a883e9"
+  }
+}

@@ -1,0 +1,148 @@
+# BPE training
+
+Training returns the complete vocabulary with token IDs, ranked merge rules,
+and special tokens. It preserves weighted pair selection and compatible batch
+execution while using one endpoint/event protocol.
+
+The public entry points and private training methods share [mod.rs](mod.rs).
+`do_train` borrows the caller's map; `train_vocab` borrows the collected map or
+frozen entries. Both enter `do_train_impl`, which selects workers, installs a
+dedicated pool and progress context, and runs one fresh attempt with at most one
+identity-reuse retry. The Trainer implementation builds and replaces the model
+from `train_vocab` results. Tests enter the real core with explicit workers and
+inspect the successful result's test-only trace.
+
+Read `train_attempt` for the complete workflow: initialize identities and a
+borrowed corpus plan, build the compressed occurrence index, materialize endpoints
+when merges are needed, call `merge_next` for each complete compatible round,
+collect its committed records, then publish the model parts. Merge joins snapshot
+preparation before endpoint writes and joins those writes before index updates.
+A collision with a previously activated identity discards the fresh attempt and
+restarts from original input and the retained alphabet. Errors and restart requests
+return no trace or speculative model parts. Zero-merge calls retain numeric and
+initial-index checks without allocating corpus slots; all successful paths release
+large attempt structures before building output. Special tokens are cloned once
+by the successful attempt when assembling its final result.
+
+The implementation is divided by the knowledge each module owns:
+
+- [vocabulary.rs](vocabulary.rs) owns strings, alphabet interpretation, decorated
+  IDs, initial activation metadata, alphabet selection, and canonical output.
+- [corpus.rs](corpus.rs) owns fixed coordinates, token endpoints, weights, and
+  ID activation and occurrence spans. Initial ID metadata moves here once;
+  merge selection and geometry use this same activation record.
+  It measures per-word symbol counts in parallel, then replaces those same
+  slots with checked word starts in one serial prefix pass. No second
+  per-word usize array is allocated during layout construction.
+  Only this module converts full-u64 occurrence coordinates
+  to checked resident indices.
+- [index.rs](index.rs) owns exact priority correction, count shards, signed reuse
+  ledgers, one owning candidate queue, and complete birth publication.
+- [merge.rs](merge.rs) owns compatible selection, read-only preparation, local
+  event aggregation, and a complete joined round. `BpeTrainer::merge_next` selects
+  and consumes its private Batch, returning finish, restart, or committed records
+  only after index publication; the coordinator collects records and progress.
+- [positions.rs](positions.rs) owns sorted full-u64 streams and restart blocks.
+  Producers use `SmallVec<[u64; 2]>` and construct immutable lists directly.
+  Empty, one-value and two-value lists stay inline; longer lists own compressed
+  byte slices. Construction accepts a sorted slice or consumes ordered fragments
+  without an encoder service. Duplicates and coordinates through `u64::MAX` are preserved.
+  Readers use iteration, `iter_from_value(coordinate)`, and `iter_range(range)`.
+  `partition_ranges(target_items)` returns standard ranges of list elements;
+  restart alignment stays inside Positions.
+- [feed.rs](feed.rs) owns streaming batches and word aggregation. Named
+  `flush` and `accumulate` closures share callback/error handling. Serial input
+  moves its completed map into owned entries; parallel folds flush at 2048
+  distinct local keys and publish successful tails before ordinary error
+  reduction. The shared table stays
+  private to one call, and failed feed leaves the previous trainer state intact.
+  After folds finish, consumption moves entries without a capacity reservation;
+  SCC checks shrinking after its consumption traversal, and a reservation can
+  itself trigger another enlargement.
+  Startup singletons expose short expensive streams to parallel callbacks; later
+  batches contain at most 32 inputs and retain the first exhaustion state.
+- [word_counts.rs](word_counts.rs) stores trainer-owned counts as entries and
+  borrows caller-owned maps for public `do_train`. Content equality, map-style
+  Debug and the flat serialization contract are independent of entry order.
+
+One owning priority queue holds fresh lists and reuse cohorts. Its historical
+resource measurements and equal-priority reuse ordering limitation are recorded
+in the [heap experiment](../../../../../experiments/bpe-simplification/HEAP_EXPERIMENT.md).
+Larger occurrence lists use owned allocations; dropping a list releases its bytes,
+including short compressed lists that previously remained in an attempt arena.
+
+Initial collection splits the borrowed plan at whole-word boundaries, with a
+2²⁴-resident-slot block cap. An oversized single word is processed alone. Each
+producer compresses its temporary positions before returning, so raw lists retire
+without waiting for every producer. Owned compressed fragments retain complete
+pair counts; global frequency admission precedes final list publication. There is
+no extra wave barrier.
+
+Each range admits one word first, including an oversized word. A fitting final
+tail is admitted directly; otherwise `slice-group-by`'s `exponential_search_by`
+counts additional words whose end boundaries fit, including an exact-budget end.
+Vocabulary initialization returns the completed identity table and `InitialTokenIds`
+together. The plan owns initial IDs, including activation spans, and consumes them
+after endpoint materialization: spans move to Corpus while character/decorated
+lookups are released before merging. Initialization resolves decorations in input
+order before words are sorted by weight; reuse retains the selected limited alphabet.
+The initial IDs expose one filtered `symbols()` iterator to initial edge counting and
+endpoint materialization. Decorations still use original UTF-8 byte boundaries;
+edge coordinates enumerate retained symbols. Unlimited alphabet observation uses
+Rayon bitmap reduction, retaining the full Unicode bit domain for empty input.
+
+Preparation indexes unique rule heads directly by token ID and checks tail
+presence before left-neighbor lookup. Shared heads fall back to exact pair keys.
+Only monotone snapshot write/birth appenders skip repeated ordering checks;
+general appends and final encoding retain validation.
+
+Preparation keeps at most 16 decoded positions ahead in a `VecDeque`. Initial
+filling takes at most 16 elements; every refill follows one pop, so the queue never
+exceeds that length. Cohort scans use `find` to consume the next eligible occurrence.
+Partial birth groups use `BTreeMap` order directly when publishing, preserving
+bucket/pair ordering without an intermediate collection and sort.
+
+Compatible batches retain the original priority prefix and permit shared heads
+or shared tails. Crossed endpoints end the batch without skipping a candidate.
+AA and reserved-ID rules run alone. Complete ordinary producers prune before encoding in preparation and publish
+directly. Partial, AA and reuse births aggregate before encoding and publication. Commit routes compact
+metadata references and moves each position stream only once. Reuse mode selects
+one cohort at a time; its word scans follow the original alias/length-gate conditions.
+
+Run library checks from the repository root:
+
+```sh
+cargo test --manifest-path tokenizers/tk-train/Cargo.toml --lib
+cargo test --manifest-path tokenizers/tk-train/Cargo.toml --no-default-features --lib
+cargo clippy --manifest-path tokenizers/tk-train/Cargo.toml --all-targets
+cargo +nightly miri test --manifest-path experiments/bpe-simplification/miri-codec/Cargo.toml
+```
+
+The tests compare full vocabulary IDs, ordered merges and per-rule traces with
+an independent small-input reference. Fixed-seed combinations cover thread
+counts, affixes, aliases, zero weights, ties, overlap and strict birth gates.
+Literal expectations cover wide counts and public errors. Position storage tests cover the
+entire u64 domain, repeated values and restart boundaries. The standalone Miri
+harness imports the actual position module and keeps borrow/leak checks enabled.
+Miri samples seek starts and targets around restart boundaries; native tests
+exhaust every start. Native and Miri storage tests use scoped threads and verify that frozen lists
+remain readable after their construction inputs are dropped.
+Public tests cover feed, model reload, progress and ambient-versus-training pool
+behavior. [The coverage map](COVERAGE.md) records the combined boundaries.
+
+Progress uses the upstream `ProgressBar`, `ProgressStyle` and `ProgressFormat`.
+The trainer's original helpers retain the Tokenize words, Count pairs and Compute
+merges stages. Parallel collectors increment the bar at work-block boundaries;
+the coordinator reports merges after each joined batch. There is no additional
+progress thread, channel or timer.
+
+The counting command also checks formatting of ordinary BPE and its tests;
+sibling trainers and unchanged legacy parity files retain upstream formatting.
+Source counts and diffs are descriptive, with no hard line limits. The report
+includes the ordinary BPE implementation, public API, feed and word-count storage;
+tests, the reference oracle, shared helpers and Miri harness are counted separately.
+Pass `--change-base <revision>` to `count_lines.py` to report this change alongside
+the default comparison with HF `origin/main`. Git diffs detect renames and include
+comments and documentation, while source counts exclude comments and blank lines.
+Performance evidence and build/input hashes are recorded by the
+[experiment](../../../../../experiments/bpe-simplification/STATUS.md).

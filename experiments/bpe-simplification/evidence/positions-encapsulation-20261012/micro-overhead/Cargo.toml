@@ -1,0 +1,10 @@
+[package]
+name="positions-encapsulation-micro"
+version="0.0.0"
+edition="2024"
+[dependencies]
+smallvec={version="=1.16.2",features=["union"]}
+itertools="0.14"
+[profile.release]
+lto="fat"
+codegen-units=1

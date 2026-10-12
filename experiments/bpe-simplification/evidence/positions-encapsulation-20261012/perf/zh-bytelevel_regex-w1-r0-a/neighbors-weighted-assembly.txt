@@ -1,0 +1,293 @@
+  0.122% global   1.281% local f6b00: push   %rbp
+  0.105% global   1.100% local f6b01: push   %r15
+  0.046% global   0.486% local f6b03: push   %r14
+  0.154% global   1.620% local f6b05: push   %r13
+  0.008% global   0.082% local f6b07: push   %r12
+  0.060% global   0.631% local f6b09: push   %rbx
+  0.000% global   0.000% local f6b0a: sub    $0x18,%rsp
+  0.213% global   2.235% local f6b0e: mov    %r9,%r14
+  0.015% global   0.156% local f6b11: mov    %r8,%rbx
+  0.000% global   0.000% local f6b14: mov    %ecx,%ebp
+  0.115% global   1.214% local f6b16: mov    %edx,%r13d
+  0.015% global   0.161% local f6b19: mov    %esi,%r12d
+  0.037% global   0.392% local f6b1c: mov    %rdi,%r15
+  0.008% global   0.079% local f6b1f: mov    %edx,%esi
+  0.145% global   1.525% local f6b21: mov    %r12d,%edx
+  0.000% global   0.000% local f6b24: call   f7430 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors5group>
+  0.077% global   0.805% local f6b29: mov    0x30(%rax),%rcx
+  0.061% global   0.640% local f6b2d: add    %r14,%rcx
+  0.000% global   0.000% local f6b30: jb     f6dfd <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x2fd>
+  0.031% global   0.321% local f6b36: movzbl 0x50(%rsp),%edx
+  0.160% global   1.684% local f6b3b: mov    %rcx,0x30(%rax)
+  0.098% global   1.032% local f6b3f: test   %dl,%dl
+  0.000% global   0.000% local f6b41: je     f6de5 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x2e5>
+  0.015% global   0.161% local f6b47: cmp    %ebp,%r13d
+  0.000% global   0.000% local f6b4a: je     f6b5a <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x5a>
+  0.000% global   0.000% local f6b4c: movzbl %r12b,%edx
+  0.000% global   0.000% local f6b50: mov    %r15,%rdi
+  0.000% global   0.000% local f6b53: mov    %ebp,%esi
+  0.000% global   0.000% local f6b55: call   f7430 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors5group>
+  0.000% global   0.000% local f6b5a: add    0x38(%rax),%r14
+  0.000% global   0.000% local f6b5e: jb     f6e36 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x336>
+  0.170% global   1.784% local f6b64: mov    %r14,0x38(%rax)
+  0.059% global   0.623% local f6b68: mov    (%rax),%rdx
+  0.016% global   0.163% local f6b6b: test   %rdx,%rdx
+  0.000% global   0.000% local f6b6e: je     f6b96 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x96>
+  0.015% global   0.162% local f6b70: mov    %rdx,%rcx
+  0.091% global   0.955% local f6b73: inc    %rcx
+  0.000% global   0.000% local f6b76: je     f6e85 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x385>
+  0.038% global   0.404% local f6b7c: mov    %edx,%esi
+  0.008% global   0.081% local f6b7e: and    $0x7f,%esi
+  0.000% global   0.000% local f6b81: cmp    $0x1,%esi
+  0.000% global   0.000% local f6b84: jne    f6bee <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0xee>
+  0.007% global   0.074% local f6b86: mov    %rax,%rdi
+  0.000% global   0.000% local f6b89: mov    %rbx,%rsi
+  0.000% global   0.000% local f6b8c: call   f2690 <_RNvMs0_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe9positionsNtB5_4Leaf12push_restart>
+  0.008% global   0.079% local f6b91: jmp    f6de7 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x2e7>
+  0.000% global   0.000% local f6b96: mov    $0x1f,%edi
+  0.000% global   0.000% local f6b9b: call   *0x11917(%rip)        # 1084b8 <malloc@GLIBC_2.2.5>
+  0.000% global   0.000% local f6ba1: test   %rax,%rax
+  0.000% global   0.000% local f6ba4: je     f6f52 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x452>
+  0.000% global   0.000% local f6baa: mov    %rax,%rbx
+  0.000% global   0.000% local f6bad: movups -0xd7eed(%rip),%xmm0        # 1ecc7 <_RNvNtNtNtCsgxBkk5gSRhY_4core7unicode12unicode_data11white_space14WHITESPACE_MAP+0x75a>
+  0.000% global   0.000% local f6bb4: movups %xmm0,0xf(%rax)
+  0.000% global   0.000% local f6bb8: movups -0xd7f07(%rip),%xmm0        # 1ecb8 <_RNvNtNtNtCsgxBkk5gSRhY_4core7unicode12unicode_data11white_space14WHITESPACE_MAP+0x74b>
+  0.000% global   0.000% local f6bbf: movups %xmm0,(%rax)
+  0.000% global   0.000% local f6bc2: mov    $0x18,%edi
+  0.000% global   0.000% local f6bc7: call   *0x118eb(%rip)        # 1084b8 <malloc@GLIBC_2.2.5>
+  0.000% global   0.000% local f6bcd: test   %rax,%rax
+  0.000% global   0.000% local f6bd0: je     f6ece <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x3ce>
+  0.000% global   0.000% local f6bd6: movq   $0x1f,(%rax)
+  0.000% global   0.000% local f6bdd: mov    %rbx,0x8(%rax)
+  0.000% global   0.000% local f6be1: movq   $0x1f,0x10(%rax)
+  0.000% global   0.000% local f6be9: jmp    f6de7 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x2e7>
+  0.076% global   0.799% local f6bee: mov    0x18(%rax),%rsi
+  0.058% global   0.614% local f6bf2: mov    %rsi,%rdx
+  0.000% global   0.000% local f6bf5: cmp    $0x11,%rsi
+  0.000% global   0.000% local f6bf9: jb     f6bff <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0xff>
+  0.015% global   0.153% local f6bfb: mov    0x10(%rax),%rdx
+  0.167% global   1.755% local f6bff: cmp    $0x7,%rdx
+  0.000% global   0.000% local f6c03: jbe    f6edf <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x3df>
+  0.076% global   0.797% local f6c09: lea    0x8(%rax),%r14
+  0.016% global   0.164% local f6c0d: cmp    $0x11,%rsi
+  0.000% global   0.000% local f6c11: mov    0x8(%rax),%rdx
+  0.098% global   1.033% local f6c15: cmovb  %r14,%rdx
+  0.067% global   0.706% local f6c19: mov    %rbx,%r15
+  0.008% global   0.080% local f6c1c: sub    (%rdx),%rbx
+  0.000% global   0.000% local f6c1f: jae    f6c79 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x179>
+  0.000% global   0.000% local f6c21: mov    $0x1c,%edi
+  0.000% global   0.000% local f6c26: call   *0x1188c(%rip)        # 1084b8 <malloc@GLIBC_2.2.5>
+  0.000% global   0.000% local f6c2c: test   %rax,%rax
+  0.000% global   0.000% local f6c2f: je     f6f61 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x461>
+  0.000% global   0.000% local f6c35: mov    %rax,%rbx
+  0.000% global   0.000% local f6c38: movups -0xd850a(%rip),%xmm0        # 1e735 <_RNvNtNtNtCsgxBkk5gSRhY_4core7unicode12unicode_data11white_space14WHITESPACE_MAP+0x1c8>
+  0.000% global   0.000% local f6c3f: movups %xmm0,0xc(%rax)
+  0.000% global   0.000% local f6c43: movups -0xd8521(%rip),%xmm0        # 1e729 <_RNvNtNtNtCsgxBkk5gSRhY_4core7unicode12unicode_data11white_space14WHITESPACE_MAP+0x1bc>
+  0.000% global   0.000% local f6c4a: movups %xmm0,(%rax)
+  0.000% global   0.000% local f6c4d: mov    $0x18,%edi
+  0.000% global   0.000% local f6c52: call   *0x11860(%rip)        # 1084b8 <malloc@GLIBC_2.2.5>
+  0.000% global   0.000% local f6c58: test   %rax,%rax
+  0.000% global   0.000% local f6c5b: je     f6ef2 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x3f2>
+  0.000% global   0.000% local f6c61: movq   $0x1c,(%rax)
+  0.000% global   0.000% local f6c68: mov    %rbx,0x8(%rax)
+  0.000% global   0.000% local f6c6c: movq   $0x1c,0x10(%rax)
+  0.000% global   0.000% local f6c74: jmp    f6de7 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x2e7>
+  0.863% global   9.072% local f6c79: mov    %rcx,0x8(%rsp)
+  0.114% global   1.196% local f6c7e: mov    $0x7f,%ecx
+  0.000% global   0.000% local f6c83: bsr    %rbx,%rcx
+  0.229% global   2.409% local f6c87: xor    $0x3f,%ecx
+  0.023% global   0.244% local f6c8a: mov    $0x40,%dl
+  0.054% global   0.570% local f6c8c: sub    %cl,%dl
+  0.061% global   0.640% local f6c8e: movzbl %dl,%ecx
+  0.290% global   3.051% local f6c91: imul   $0x93,%ecx,%esi
+  0.092% global   0.964% local f6c97: shr    $0xa,%esi
+  0.046% global   0.482% local f6c9a: imul   $0xffffffb7,%ecx,%ecx
+  0.015% global   0.162% local f6c9d: xor    %edx,%edx
+  0.183% global   1.922% local f6c9f: cmp    $0x25,%cl
+  0.000% global   0.000% local f6ca2: setae  %dl
+  0.137% global   1.439% local f6ca5: lea    (%rdx,%rsi,1),%ecx
+  0.030% global   0.319% local f6ca8: cmp    $0x1,%ecx
+  0.060% global   0.626% local f6cab: adc    %edx,%esi
+  0.091% global   0.959% local f6cad: mov    %rax,0x10(%rsp)
+  0.107% global   1.126% local f6cb2: mov    %rax,%rdi
+  0.000% global   0.000% local f6cb5: call   f2b80 <_RNvMs0_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe9positionsNtB5_4Leaf7reserve>
+  0.023% global   0.242% local f6cba: test   %rax,%rax
+  0.000% global   0.000% local f6cbd: jne    f6de7 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x2e7>
+  0.023% global   0.243% local f6cc3: mov    0x10(%rsp),%rax
+  0.273% global   2.871% local f6cc8: lea    0x18(%rax),%r12
+  0.037% global   0.388% local f6ccc: lea    0x10(%rax),%r13
+  0.015% global   0.162% local f6cd0: cmp    $0x80,%rbx
+  0.000% global   0.000% local f6cd7: jb     f6d75 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x275>
+  0.068% global   0.712% local f6cdd: mov    0x8(%rsp),%rcx
+  0.098% global   1.025% local f6ce2: jmp    f6d16 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x216>
+  0.000% global   0.000% local f6ce4: data16 data16 cs nopw 0x0(%rax,%rax,1)
+  0.000% global   0.000% local f6cf0: mov    %r14,%rsi
+  0.000% global   0.000% local f6cf3: mov    %r12,%rdi
+  0.000% global   0.000% local f6cf6: cmp    $0x10,%rdx
+  0.000% global   0.000% local f6cfa: je     f6d3f <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x23f>
+  0.000% global   0.000% local f6cfc: mov    %bpl,(%rsi,%rdx,1)
+  0.000% global   0.000% local f6d00: incq   (%rdi)
+  0.038% global   0.396% local f6d03: mov    %rbx,%rbp
+  0.129% global   1.358% local f6d06: shr    $0x7,%rbp
+  0.008% global   0.080% local f6d0a: cmp    $0x3fff,%rbx
+  0.091% global   0.955% local f6d11: mov    %rbp,%rbx
+  0.045% global   0.478% local f6d14: jbe    f6d7d <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x27d>
+  0.102% global   1.072% local f6d16: mov    %ebx,%ebp
+  0.008% global   0.081% local f6d18: or     $0x80,%bpl
+  0.203% global   2.131% local f6d1c: mov    (%r12),%rdx
+  0.229% global   2.403% local f6d20: cmp    $0x11,%rdx
+  0.000% global   0.000% local f6d24: jb     f6cf0 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x1f0>
+  0.131% global   1.376% local f6d26: mov    0x0(%r13),%rsi
+  0.023% global   0.243% local f6d2a: cmp    %rdx,%rsi
+  0.000% global   0.000% local f6d2d: je     f6d5d <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x25d>
+  0.154% global   1.614% local f6d2f: mov    (%r14),%rdx
+  0.084% global   0.878% local f6d32: mov    %bpl,(%rdx,%rsi,1)
+  0.768% global   8.071% local f6d36: inc    %rsi
+  0.008% global   0.081% local f6d39: mov    %rsi,0x0(%r13)
+  0.084% global   0.881% local f6d3d: jmp    f6d03 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x203>
+  0.000% global   0.000% local f6d3f: mov    %r14,%rdi
+  0.000% global   0.000% local f6d42: call   f2ce0 <_RNvMsc_CsbtXW8PvOBJT_8smallvecINtB5_8SmallVecAhj10_E21reserve_one_uncheckedCshwCxqn3PiWH_8tk_train>
+  0.000% global   0.000% local f6d47: mov    0x8(%rsp),%rcx
+  0.000% global   0.000% local f6d4c: mov    0x10(%rsp),%rax
+  0.000% global   0.000% local f6d51: mov    (%r14),%rsi
+  0.000% global   0.000% local f6d54: mov    0x0(%r13),%rdx
+  0.000% global   0.000% local f6d58: mov    %r13,%rdi
+  0.000% global   0.000% local f6d5b: jmp    f6cfc <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x1fc>
+  0.000% global   0.000% local f6d5d: mov    %r14,%rdi
+  0.000% global   0.000% local f6d60: call   f2ce0 <_RNvMsc_CsbtXW8PvOBJT_8smallvecINtB5_8SmallVecAhj10_E21reserve_one_uncheckedCshwCxqn3PiWH_8tk_train>
+  0.000% global   0.000% local f6d65: mov    0x8(%rsp),%rcx
+  0.000% global   0.000% local f6d6a: mov    0x10(%rsp),%rax
+  0.000% global   0.000% local f6d6f: mov    0x0(%r13),%rsi
+  0.000% global   0.000% local f6d73: jmp    f6d2f <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x22f>
+  0.000% global   0.000% local f6d75: mov    %rbx,%rbp
+  0.000% global   0.000% local f6d78: mov    0x8(%rsp),%rcx
+  0.174% global   1.825% local f6d7d: mov    (%r12),%rsi
+  0.077% global   0.808% local f6d81: cmp    $0x11,%rsi
+  0.000% global   0.000% local f6d85: jb     f6da4 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x2a4>
+  0.053% global   0.553% local f6d87: mov    0x0(%r13),%rdx
+  0.060% global   0.631% local f6d8b: cmp    %rsi,%rdx
+  0.000% global   0.000% local f6d8e: je     f6f16 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x416>
+  0.083% global   0.873% local f6d94: mov    (%r14),%rsi
+  0.023% global   0.241% local f6d97: mov    %bpl,(%rsi,%rdx,1)
+  0.619% global   6.504% local f6d9b: inc    %rdx
+  0.023% global   0.243% local f6d9e: mov    %rdx,0x0(%r13)
+  0.038% global   0.399% local f6da2: jmp    f6dbf <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x2bf>
+  0.000% global   0.000% local f6da4: mov    %r14,%rdx
+  0.000% global   0.000% local f6da7: mov    %r12,%rdi
+  0.000% global   0.000% local f6daa: cmp    $0x10,%rsi
+  0.000% global   0.000% local f6dae: je     f6f31 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x431>
+  0.000% global   0.000% local f6db4: mov    %bpl,(%rdx,%rsi,1)
+  0.000% global   0.000% local f6db8: incq   (%rdi)
+  0.000% global   0.000% local f6dbb: mov    0x0(%r13),%rdx
+  0.000% global   0.000% local f6dbf: mov    (%r12),%rsi
+  0.068% global   0.718% local f6dc3: cmp    $0x11,%rsi
+  0.023% global   0.243% local f6dc7: cmovb  %rsi,%rdx
+  0.007% global   0.076% local f6dcb: cmp    $0x7,%rdx
+  0.000% global   0.000% local f6dcf: jbe    f6f03 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x403>
+  0.000% global   0.000% local f6dd5: cmp    $0x11,%rsi
+  0.000% global   0.000% local f6dd9: jb     f6ddf <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x2df>
+  0.134% global   1.409% local f6ddb: mov    0x8(%rax),%r14
+  0.046% global   0.479% local f6ddf: mov    %r15,(%r14)
+  0.137% global   1.442% local f6de2: mov    %rcx,(%rax)
+  0.007% global   0.072% local f6de5: xor    %eax,%eax
+  0.051% global   0.539% local f6de7: lea    0x10622(%rip),%rdx        # 107410 <_RNvNtNtCsbQHXimUXCOo_9bitcannon8classify11atom_tables11ATOM_TABLES+0x3538>
+  0.015% global   0.163% local f6dee: add    $0x18,%rsp
+  0.031% global   0.322% local f6df2: pop    %rbx
+  0.052% global   0.545% local f6df3: pop    %r12
+  0.107% global   1.130% local f6df5: pop    %r13
+  0.030% global   0.318% local f6df7: pop    %r14
+  0.015% global   0.154% local f6df9: pop    %r15
+  0.015% global   0.162% local f6dfb: pop    %rbp
+  0.114% global   1.197% local f6dfc: ret
+  0.000% global   0.000% local f6dfd: mov    $0x22,%edi
+  0.000% global   0.000% local f6e02: call   *0x116b0(%rip)        # 1084b8 <malloc@GLIBC_2.2.5>
+  0.000% global   0.000% local f6e08: test   %rax,%rax
+  0.000% global   0.000% local f6e0b: je     f6f70 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x470>
+  0.000% global   0.000% local f6e11: mov    %rax,%rbx
+  0.000% global   0.000% local f6e14: movups -0xd8116(%rip),%xmm0        # 1ed05 <_RNvNtNtNtCsgxBkk5gSRhY_4core7unicode12unicode_data11white_space14WHITESPACE_MAP+0x798>
+  0.000% global   0.000% local f6e1b: movups %xmm0,0x10(%rax)
+  0.000% global   0.000% local f6e1f: movups -0xd8131(%rip),%xmm0        # 1ecf5 <_RNvNtNtNtCsgxBkk5gSRhY_4core7unicode12unicode_data11white_space14WHITESPACE_MAP+0x788>
+  0.000% global   0.000% local f6e26: movups %xmm0,(%rax)
+  0.000% global   0.000% local f6e29: movw   $0x3436,0x20(%rax)
+  0.000% global   0.000% local f6e2f: call   f1bc0 <_RNvNtCs6i54tJFfzR_5alloc5boxed14box_new_uninit.1376>
+  0.000% global   0.000% local f6e34: jmp    f6e6d <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x36d>
+  0.000% global   0.000% local f6e36: mov    $0x22,%edi
+  0.000% global   0.000% local f6e3b: call   *0x11677(%rip)        # 1084b8 <malloc@GLIBC_2.2.5>
+  0.000% global   0.000% local f6e41: test   %rax,%rax
+  0.000% global   0.000% local f6e44: je     f6f70 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x470>
+  0.000% global   0.000% local f6e4a: mov    %rax,%rbx
+  0.000% global   0.000% local f6e4d: movups -0xd814f(%rip),%xmm0        # 1ed05 <_RNvNtNtNtCsgxBkk5gSRhY_4core7unicode12unicode_data11white_space14WHITESPACE_MAP+0x798>
+  0.000% global   0.000% local f6e54: movups %xmm0,0x10(%rax)
+  0.000% global   0.000% local f6e58: movups -0xd816a(%rip),%xmm0        # 1ecf5 <_RNvNtNtNtCsgxBkk5gSRhY_4core7unicode12unicode_data11white_space14WHITESPACE_MAP+0x788>
+  0.000% global   0.000% local f6e5f: movups %xmm0,(%rax)
+  0.000% global   0.000% local f6e62: movw   $0x3436,0x20(%rax)
+  0.000% global   0.000% local f6e68: call   f1bc0 <_RNvNtCs6i54tJFfzR_5alloc5boxed14box_new_uninit.1376>
+  0.000% global   0.000% local f6e6d: movq   $0x22,(%rax)
+  0.000% global   0.000% local f6e74: mov    %rbx,0x8(%rax)
+  0.000% global   0.000% local f6e78: movq   $0x22,0x10(%rax)
+  0.000% global   0.000% local f6e80: jmp    f6de7 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x2e7>
+  0.000% global   0.000% local f6e85: mov    $0x1e,%edi
+  0.000% global   0.000% local f6e8a: call   *0x11628(%rip)        # 1084b8 <malloc@GLIBC_2.2.5>
+  0.000% global   0.000% local f6e90: test   %rax,%rax
+  0.000% global   0.000% local f6e93: je     f6f7f <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x47f>
+  0.000% global   0.000% local f6e99: mov    %rax,%rbx
+  0.000% global   0.000% local f6e9c: movups -0xd8544(%rip),%xmm0        # 1e95f <_RNvNtNtNtCsgxBkk5gSRhY_4core7unicode12unicode_data11white_space14WHITESPACE_MAP+0x3f2>
+  0.000% global   0.000% local f6ea3: movups %xmm0,0xe(%rax)
+  0.000% global   0.000% local f6ea7: movups -0xd855d(%rip),%xmm0        # 1e951 <_RNvNtNtNtCsgxBkk5gSRhY_4core7unicode12unicode_data11white_space14WHITESPACE_MAP+0x3e4>
+  0.000% global   0.000% local f6eae: movups %xmm0,(%rax)
+  0.000% global   0.000% local f6eb1: call   f1bc0 <_RNvNtCs6i54tJFfzR_5alloc5boxed14box_new_uninit.1376>
+  0.000% global   0.000% local f6eb6: movq   $0x1e,(%rax)
+  0.000% global   0.000% local f6ebd: mov    %rbx,0x8(%rax)
+  0.000% global   0.000% local f6ec1: movq   $0x1e,0x10(%rax)
+  0.000% global   0.000% local f6ec9: jmp    f6de7 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x2e7>
+  0.000% global   0.000% local f6ece: mov    $0x8,%edi
+  0.000% global   0.000% local f6ed3: mov    $0x18,%esi
+  0.000% global   0.000% local f6ed8: call   697b2 <_RNvNtCs6i54tJFfzR_5alloc5alloc18handle_alloc_error>
+  0.000% global   0.000% local f6edd: jmp    f6f01 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x401>
+  0.000% global   0.000% local f6edf: lea    0x1110a(%rip),%rcx        # 107ff0 <_RNvNtNtCsbQHXimUXCOo_9bitcannon8classify11atom_tables11ATOM_TABLES+0x4118>
+  0.000% global   0.000% local f6ee6: mov    $0x8,%esi
+  0.000% global   0.000% local f6eeb: xor    %edi,%edi
+  0.000% global   0.000% local f6eed: call   710d0 <_RNvNtNtCsgxBkk5gSRhY_4core5slice5index16slice_index_fail>
+  0.000% global   0.000% local f6ef2: mov    $0x8,%edi
+  0.000% global   0.000% local f6ef7: mov    $0x18,%esi
+  0.000% global   0.000% local f6efc: call   697b2 <_RNvNtCs6i54tJFfzR_5alloc5alloc18handle_alloc_error>
+  0.000% global   0.000% local f6f01: ud2
+  0.000% global   0.000% local f6f03: lea    0x10bee(%rip),%rcx        # 107af8 <_RNvNtNtCsbQHXimUXCOo_9bitcannon8classify11atom_tables11ATOM_TABLES+0x3c20>
+  0.000% global   0.000% local f6f0a: mov    $0x8,%esi
+  0.000% global   0.000% local f6f0f: xor    %edi,%edi
+  0.000% global   0.000% local f6f11: call   710d0 <_RNvNtNtCsgxBkk5gSRhY_4core5slice5index16slice_index_fail>
+  0.000% global   0.000% local f6f16: mov    %r14,%rdi
+  0.000% global   0.000% local f6f19: call   f2ce0 <_RNvMsc_CsbtXW8PvOBJT_8smallvecINtB5_8SmallVecAhj10_E21reserve_one_uncheckedCshwCxqn3PiWH_8tk_train>
+  0.000% global   0.000% local f6f1e: mov    0x8(%rsp),%rcx
+  0.000% global   0.000% local f6f23: mov    0x10(%rsp),%rax
+  0.000% global   0.000% local f6f28: mov    0x0(%r13),%rdx
+  0.000% global   0.000% local f6f2c: jmp    f6d94 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x294>
+  0.000% global   0.000% local f6f31: mov    %r14,%rdi
+  0.000% global   0.000% local f6f34: call   f2ce0 <_RNvMsc_CsbtXW8PvOBJT_8smallvecINtB5_8SmallVecAhj10_E21reserve_one_uncheckedCshwCxqn3PiWH_8tk_train>
+  0.000% global   0.000% local f6f39: mov    0x8(%rsp),%rcx
+  0.000% global   0.000% local f6f3e: mov    0x10(%rsp),%rax
+  0.000% global   0.000% local f6f43: mov    (%r14),%rdx
+  0.000% global   0.000% local f6f46: mov    0x0(%r13),%rsi
+  0.000% global   0.000% local f6f4a: mov    %r13,%rdi
+  0.000% global   0.000% local f6f4d: jmp    f6db4 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x2b4>
+  0.000% global   0.000% local f6f52: mov    $0x1,%edi
+  0.000% global   0.000% local f6f57: mov    $0x1f,%esi
+  0.000% global   0.000% local f6f5c: call   696a2 <_RNvNtCs6i54tJFfzR_5alloc7raw_vec12handle_error>
+  0.000% global   0.000% local f6f61: mov    $0x1,%edi
+  0.000% global   0.000% local f6f66: mov    $0x1c,%esi
+  0.000% global   0.000% local f6f6b: call   696a2 <_RNvNtCs6i54tJFfzR_5alloc7raw_vec12handle_error>
+  0.000% global   0.000% local f6f70: mov    $0x1,%edi
+  0.000% global   0.000% local f6f75: mov    $0x22,%esi
+  0.000% global   0.000% local f6f7a: call   696a2 <_RNvNtCs6i54tJFfzR_5alloc7raw_vec12handle_error>
+  0.000% global   0.000% local f6f7f: mov    $0x1,%edi
+  0.000% global   0.000% local f6f84: mov    $0x1e,%esi
+  0.000% global   0.000% local f6f89: call   696a2 <_RNvNtCs6i54tJFfzR_5alloc7raw_vec12handle_error>
+  0.000% global   0.000% local f6f8e: jmp    f6f96 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x496>
+  0.000% global   0.000% local f6f90: jmp    f6f96 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x496>
+  0.000% global   0.000% local f6f92: jmp    f6f96 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x496>
+  0.000% global   0.000% local f6f94: jmp    f6f96 <_RNvMs1_NtNtNtCshwCxqn3PiWH_8tk_train8trainers3bpe5mergeNtB5_9Neighbors6record+0x496>
+  0.000% global   0.000% local f6f96: mov    %rax,%r14
+  0.000% global   0.000% local f6f99: mov    %rbx,%rdi
+  0.000% global   0.000% local f6f9c: call   *0x114fe(%rip)        # 1084a0 <free@GLIBC_2.2.5>
+  0.000% global   0.000% local f6fa2: mov    %r14,%rdi
+  0.000% global   0.000% local f6fa5: call   102380 <_Unwind_Resume@plt>

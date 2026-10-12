@@ -1,0 +1,9 @@
+     Locking 3 packages to latest Rust 1.98.1 compatible versions
+      Adding itertools v0.14.0 (available: v0.15.0)
+      Adding smallvec v1.16.2 (available: v1.16.3)
+   Compiling positions-encapsulation-micro v0.0.0 (/tmp/bpe-positions-encapsulation-final-results-20261012/micro-short)
+    Finished `release` profile [optimized] target(s) in 7.01s
+legacy descriptor bytes 40
+a descriptor bytes 128
+b descriptor bytes 128
+micro completed

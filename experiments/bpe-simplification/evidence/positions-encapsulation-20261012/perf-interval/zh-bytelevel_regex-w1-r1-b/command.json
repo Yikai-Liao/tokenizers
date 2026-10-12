@@ -1,0 +1,18 @@
+[
+  "taskset",
+  "-c",
+  "0-1",
+  "perf",
+  "stat",
+  "-I",
+  "50",
+  "-x",
+  ";",
+  "-o",
+  "/tmp/bpe-positions-encapsulation-final-results-20261012/perf-interval/zh-bytelevel_regex-w1-r1-b/stat.csv",
+  "-e",
+  "instructions:u,branches:u,branch-misses:u,cache-misses:u,task-clock",
+  "--",
+  "/tmp/bpe-positions-encapsulation-final-results-20261012/b-bin",
+  "/tmp/bpe-positions-encapsulation-final-results-20261012/perf-interval/zh-bytelevel_regex-w1-r1-b/job.json"
+]

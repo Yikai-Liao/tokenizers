@@ -1,0 +1,121 @@
+{
+  "diagnostic_only": true,
+  "isolates": "System/libc malloc and free, without Positions encoding or copying; pointer-loop control subtracted",
+  "affinity": [
+    0
+  ],
+  "saved_allocations_in_training": 2458628,
+  "results": [
+    {
+      "bytes": 24,
+      "kind": "pair",
+      "measurements": {
+        "allocation_release_ns": {
+          "median": 31.4169385,
+          "min": 29.220952,
+          "max": 35.153574,
+          "raw": [
+            35.153574,
+            31.149923,
+            31.195952000000002,
+            31.637925,
+            32.926595999999996,
+            29.220952
+          ],
+          "scaled_to_saved_count_seconds": 0.077242564670378
+        }
+      }
+    },
+    {
+      "bytes": 24,
+      "kind": "batch",
+      "measurements": {
+        "allocation_ns": {
+          "median": 52.5348115,
+          "min": 49.60676,
+          "max": 75.18530899999999,
+          "raw": [
+            58.186676999999996,
+            50.356877000000004,
+            52.963832000000004,
+            49.60676,
+            75.18530899999999,
+            52.105790999999996
+          ],
+          "scaled_to_saved_count_seconds": 0.129163558528622
+        },
+        "release_ns": {
+          "median": 29.320504999999997,
+          "min": 24.643274,
+          "max": 36.059552000000004,
+          "raw": [
+            30.497175,
+            32.596666,
+            28.067128,
+            28.143835,
+            36.059552000000004,
+            24.643274
+          ],
+          "scaled_to_saved_count_seconds": 0.07208821456714
+        }
+      }
+    },
+    {
+      "bytes": 26,
+      "kind": "pair",
+      "measurements": {
+        "allocation_release_ns": {
+          "median": 31.679196,
+          "min": 22.542738,
+          "max": 33.655208,
+          "raw": [
+            33.655208,
+            31.006467,
+            33.464836,
+            31.971427000000002,
+            31.386965,
+            22.542738
+          ],
+          "scaled_to_saved_count_seconds": 0.077887358303088
+        }
+      }
+    },
+    {
+      "bytes": 26,
+      "kind": "batch",
+      "measurements": {
+        "allocation_ns": {
+          "median": 53.086366,
+          "min": 49.056144,
+          "max": 57.181554,
+          "raw": [
+            57.181554,
+            53.892669000000005,
+            53.4609,
+            49.501946000000004,
+            49.056144,
+            52.711832
+          ],
+          "scaled_to_saved_count_seconds": 0.13051962586584798
+        },
+        "release_ns": {
+          "median": 27.894515,
+          "min": 25.584525,
+          "max": 32.611457,
+          "raw": [
+            32.611457,
+            27.292854000000002,
+            25.584525,
+            25.79161,
+            28.496176,
+            29.445090999999998
+          ],
+          "scaled_to_saved_count_seconds": 0.06858223562541998
+        }
+      }
+    }
+  ],
+  "binary_sha256": "4a05ffb18970b378661d2c90d5039c395adae9a72b1efa0fa4712045fe57a03a",
+  "compiler": "gcc (Debian 14.2.0-19) 14.2.0",
+  "libc": "glibc 2.41"
+}

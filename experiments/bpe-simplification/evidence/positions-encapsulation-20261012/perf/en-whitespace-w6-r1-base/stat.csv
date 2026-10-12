@@ -1,0 +1,8 @@
+# started on Mon Oct 12 18:08:48 2026
+
+1073969452;;cycles:u;6612717572;100.00;;
+8099193669;;instructions:u;6612717572;100.00;7.54;insn per cycle
+1494694366;;branches:u;6612717572;100.00;;
+40264934;;branch-misses:u;6612717572;100.00;2.69;of all branches
+45231765;;cache-misses:u;6612717572;100.00;;
+6612.72;msec;task-clock;6612717572;100.00;1.511;CPUs utilized

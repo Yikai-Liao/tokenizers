@@ -1,0 +1,848 @@
+[
+  {
+    "case": "zh-bytelevel_regex-w1",
+    "arm": "b",
+    "repeat": 0,
+    "diagnostic_only": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-1",
+      "perf",
+      "stat",
+      "-I",
+      "50",
+      "-x",
+      ";",
+      "-o",
+      "/tmp/bpe-positions-encapsulation-final-results-20261012/perf-interval/zh-bytelevel_regex-w1-r0-b/stat.csv",
+      "-e",
+      "instructions:u,branches:u,branch-misses:u,cache-misses:u,task-clock",
+      "--",
+      "/tmp/bpe-positions-encapsulation-final-results-20261012/b-bin",
+      "/tmp/bpe-positions-encapsulation-final-results-20261012/perf-interval/zh-bytelevel_regex-w1-r0-b/job.json"
+    ],
+    "counters": {
+      "instructions:u": 240346089668.0,
+      "branches:u": 46377015516.0,
+      "branch-misses:u": 559203527.0,
+      "cache-misses:u": 1142054145.0,
+      "task-clock": 85561.59999999996
+    },
+    "phases": {
+      "SELECTION": {
+        "wall_seconds": 2.404032118,
+        "marker_end": 13.222631476999595,
+        "covered_seconds": 2.318665021,
+        "interior_interval_counters": {
+          "instructions:u": 4002728051.0,
+          "branches:u": 793929949.0,
+          "branch-misses:u": 7990105.0,
+          "cache-misses:u": 34906221.0,
+          "task-clock": 2309.4100000000003
+        }
+      },
+      "VOCABULARY": {
+        "wall_seconds": 0.004539344,
+        "marker_end": 13.226920929999324,
+        "covered_seconds": 0,
+        "interior_interval_counters": {}
+      },
+      "PLAN": {
+        "wall_seconds": 2.148799151,
+        "marker_end": 15.375834073000078,
+        "covered_seconds": 2.113182694,
+        "interior_interval_counters": {
+          "instructions:u": 1511242943.0,
+          "branches:u": 211219413.0,
+          "branch-misses:u": 13179515.0,
+          "cache-misses:u": 52863392.0,
+          "task-clock": 2111.25
+        }
+      },
+      "INITIAL_COUNT": {
+        "wall_seconds": 13.445937621,
+        "marker_end": 28.82175229599852,
+        "covered_seconds": 13.379021981000001,
+        "interior_interval_counters": {
+          "instructions:u": 38932425425.0,
+          "branches:u": 7871469385.0,
+          "branch-misses:u": 63465967.0,
+          "cache-misses:u": 95705779.0,
+          "task-clock": 13365.549999999994
+        }
+      },
+      "INITIAL_OWNER": {
+        "wall_seconds": 0.063470618,
+        "marker_end": 28.885286716998962,
+        "covered_seconds": 0.05,
+        "interior_interval_counters": {
+          "instructions:u": 69.0,
+          "branches:u": 69.0,
+          "branch-misses:u": 0.0,
+          "cache-misses:u": 454.0,
+          "task-clock": 50.35
+        }
+      },
+      "INDEX": {
+        "wall_seconds": 13.509933686,
+        "marker_end": 28.88565744599873,
+        "covered_seconds": 13.479682006,
+        "interior_interval_counters": {
+          "instructions:u": 38994626676.0,
+          "branches:u": 7882527904.0,
+          "branch-misses:u": 63755340.0,
+          "cache-misses:u": 96439986.0,
+          "task-clock": 13466.159999999994
+        }
+      },
+      "MATERIALIZE": {
+        "wall_seconds": 4.988965722,
+        "marker_end": 33.87474063299851,
+        "covered_seconds": 4.927139072999998,
+        "interior_interval_counters": {
+          "instructions:u": 14758235711.0,
+          "branches:u": 3055107280.0,
+          "branch-misses:u": 8088350.0,
+          "cache-misses:u": 45205597.0,
+          "task-clock": 4922.999999999999
+        }
+      },
+      "MERGE": {
+        "wall_seconds": 48.508599767,
+        "marker_end": 82.38349855500019,
+        "covered_seconds": 48.451666638999995,
+        "interior_interval_counters": {
+          "instructions:u": 147679116034.0,
+          "branches:u": 26707411944.0,
+          "branch-misses:u": 383161351.0,
+          "cache-misses:u": 791429590.0,
+          "task-clock": 48338.50000000002
+        }
+      },
+      "DROP": {
+        "wall_seconds": 1.082685898,
+        "marker_end": 83.4661993640002,
+        "covered_seconds": 1.005956293,
+        "interior_interval_counters": {
+          "instructions:u": 949001505.0,
+          "branches:u": 209710389.0,
+          "branch-misses:u": 11120852.0,
+          "cache-misses:u": 18810766.0,
+          "task-clock": 1004.1199999999999
+        }
+      }
+    },
+    "metrics": {
+      "load_seconds": 10.718918619,
+      "process_hwm_kib_before_validation": 2545604,
+      "train_cpu_seconds": 72.496096,
+      "train_seconds": 72.671051189
+    },
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "binary_sha256": "56c127068b695697d2637ef3af189327a5c32b95e21e93959ad17bb9309e660f"
+  },
+  {
+    "case": "zh-bytelevel_regex-w1",
+    "arm": "h",
+    "repeat": 0,
+    "diagnostic_only": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-1",
+      "perf",
+      "stat",
+      "-I",
+      "50",
+      "-x",
+      ";",
+      "-o",
+      "/tmp/bpe-positions-encapsulation-final-results-20261012/perf-interval/zh-bytelevel_regex-w1-r0-h/stat.csv",
+      "-e",
+      "instructions:u,branches:u,branch-misses:u,cache-misses:u,task-clock",
+      "--",
+      "/tmp/bpe-positions-encapsulation-final-results-20261012/h-bin",
+      "/tmp/bpe-positions-encapsulation-final-results-20261012/perf-interval/zh-bytelevel_regex-w1-r0-h/job.json"
+    ],
+    "counters": {
+      "instructions:u": 236761541041.0,
+      "branches:u": 43868841982.0,
+      "branch-misses:u": 559898157.0,
+      "cache-misses:u": 1139355194.0,
+      "task-clock": 84031.47999999997
+    },
+    "phases": {
+      "SELECTION": {
+        "wall_seconds": 2.468267523,
+        "marker_end": 12.789283141999476,
+        "covered_seconds": 2.413033957999999,
+        "interior_interval_counters": {
+          "instructions:u": 4044753169.0,
+          "branches:u": 802026827.0,
+          "branch-misses:u": 8075134.0,
+          "cache-misses:u": 35072716.0,
+          "task-clock": 2405.1700000000005
+        }
+      },
+      "VOCABULARY": {
+        "wall_seconds": 0.004154661,
+        "marker_end": 12.79319815800045,
+        "covered_seconds": 0,
+        "interior_interval_counters": {}
+      },
+      "PLAN": {
+        "wall_seconds": 2.206475232,
+        "marker_end": 14.999783773999297,
+        "covered_seconds": 2.1650510259999995,
+        "interior_interval_counters": {
+          "instructions:u": 1524029673.0,
+          "branches:u": 212808998.0,
+          "branch-misses:u": 13235173.0,
+          "cache-misses:u": 52924428.0,
+          "task-clock": 2158.28
+        }
+      },
+      "INITIAL_COUNT": {
+        "wall_seconds": 13.714024158,
+        "marker_end": 28.713803892000215,
+        "covered_seconds": 13.624569549999999,
+        "interior_interval_counters": {
+          "instructions:u": 39781116449.0,
+          "branches:u": 7515830174.0,
+          "branch-misses:u": 63456743.0,
+          "cache-misses:u": 97603387.0,
+          "task-clock": 13609.599999999986
+        }
+      },
+      "INITIAL_OWNER": {
+        "wall_seconds": 0.064088419,
+        "marker_end": 28.77789662199939,
+        "covered_seconds": 0.05,
+        "interior_interval_counters": {
+          "instructions:u": 25038003.0,
+          "branches:u": 4465870.0,
+          "branch-misses:u": 115437.0,
+          "cache-misses:u": 284006.0,
+          "task-clock": 50.25
+        }
+      },
+      "INDEX": {
+        "wall_seconds": 13.778621117,
+        "marker_end": 28.778280045999054,
+        "covered_seconds": 13.725124477,
+        "interior_interval_counters": {
+          "instructions:u": 39891750663.0,
+          "branches:u": 7534498366.0,
+          "branch-misses:u": 63879334.0,
+          "cache-misses:u": 98834495.0,
+          "task-clock": 13710.079999999985
+        }
+      },
+      "MATERIALIZE": {
+        "wall_seconds": 4.914604926,
+        "marker_end": 33.693027483999686,
+        "covered_seconds": 4.832741194,
+        "interior_interval_counters": {
+          "instructions:u": 14531677011.0,
+          "branches:u": 3012116182.0,
+          "branch-misses:u": 7962208.0,
+          "cache-misses:u": 44362031.0,
+          "task-clock": 4818.759999999998
+        }
+      },
+      "MERGE": {
+        "wall_seconds": 47.559684524,
+        "marker_end": 81.25267006499962,
+        "covered_seconds": 47.539324097,
+        "interior_interval_counters": {
+          "instructions:u": 143345779741.0,
+          "branches:u": 24580588744.0,
+          "branch-misses:u": 381838946.0,
+          "cache-misses:u": 788350075.0,
+          "task-clock": 47467.609999999986
+        }
+      },
+      "DROP": {
+        "wall_seconds": 1.088247384,
+        "marker_end": 82.3409758179987,
+        "covered_seconds": 1.0081622669999917,
+        "interior_interval_counters": {
+          "instructions:u": 901257471.0,
+          "branches:u": 200445763.0,
+          "branch-misses:u": 10647598.0,
+          "cache-misses:u": 18354855.0,
+          "task-clock": 1005.5100000000001
+        }
+      }
+    },
+    "metrics": {
+      "load_seconds": 10.273436104,
+      "process_hwm_kib_before_validation": 2545356,
+      "train_cpu_seconds": 71.898742,
+      "train_seconds": 72.045219197
+    },
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "binary_sha256": "0de4e906bd387fabcc159370bc030df4e59ffad3fd2c29384fba76ccce09fb1c"
+  },
+  {
+    "case": "zh-bytelevel_regex-w1",
+    "arm": "i",
+    "repeat": 0,
+    "diagnostic_only": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-1",
+      "perf",
+      "stat",
+      "-I",
+      "50",
+      "-x",
+      ";",
+      "-o",
+      "/tmp/bpe-positions-encapsulation-final-results-20261012/perf-interval/zh-bytelevel_regex-w1-r0-i/stat.csv",
+      "-e",
+      "instructions:u,branches:u,branch-misses:u,cache-misses:u,task-clock",
+      "--",
+      "/tmp/bpe-positions-encapsulation-final-results-20261012/i-bin",
+      "/tmp/bpe-positions-encapsulation-final-results-20261012/perf-interval/zh-bytelevel_regex-w1-r0-i/job.json"
+    ],
+    "counters": {
+      "instructions:u": 236656238737.0,
+      "branches:u": 44559231875.0,
+      "branch-misses:u": 560453676.0,
+      "cache-misses:u": 1107209875.0,
+      "task-clock": 82955.72000000004
+    },
+    "phases": {
+      "SELECTION": {
+        "wall_seconds": 2.608275656,
+        "marker_end": 13.047948770001312,
+        "covered_seconds": 2.561739694000001,
+        "interior_interval_counters": {
+          "instructions:u": 4002176216.0,
+          "branches:u": 796337673.0,
+          "branch-misses:u": 8134476.0,
+          "cache-misses:u": 35501283.0,
+          "task-clock": 2545.44
+        }
+      },
+      "VOCABULARY": {
+        "wall_seconds": 0.004428778,
+        "marker_end": 13.052207282000381,
+        "covered_seconds": 0,
+        "interior_interval_counters": {}
+      },
+      "PLAN": {
+        "wall_seconds": 2.207217951,
+        "marker_end": 15.259565431000738,
+        "covered_seconds": 2.168312513000001,
+        "interior_interval_counters": {
+          "instructions:u": 1508475305.0,
+          "branches:u": 206411778.0,
+          "branch-misses:u": 13063424.0,
+          "cache-misses:u": 53995316.0,
+          "task-clock": 2167.0400000000004
+        }
+      },
+      "INITIAL_COUNT": {
+        "wall_seconds": 13.654473967,
+        "marker_end": 28.914075980001144,
+        "covered_seconds": 13.584501698,
+        "interior_interval_counters": {
+          "instructions:u": 38565576425.0,
+          "branches:u": 7531347526.0,
+          "branch-misses:u": 63304825.0,
+          "cache-misses:u": 97191231.0,
+          "task-clock": 13558.820000000005
+        }
+      },
+      "INITIAL_OWNER": {
+        "wall_seconds": 0.10648551,
+        "marker_end": 29.020533120001346,
+        "covered_seconds": 0.05,
+        "interior_interval_counters": {
+          "instructions:u": 40932496.0,
+          "branches:u": 7217515.0,
+          "branch-misses:u": 158454.0,
+          "cache-misses:u": 544206.0,
+          "task-clock": 50.19
+        }
+      },
+      "INDEX": {
+        "wall_seconds": 13.761661595,
+        "marker_end": 29.021065972001452,
+        "covered_seconds": 13.685022224,
+        "interior_interval_counters": {
+          "instructions:u": 38673179494.0,
+          "branches:u": 7549750118.0,
+          "branch-misses:u": 63632454.0,
+          "cache-misses:u": 98597921.0,
+          "task-clock": 13659.190000000006
+        }
+      },
+      "MATERIALIZE": {
+        "wall_seconds": 4.775372823,
+        "marker_end": 33.796600352001406,
+        "covered_seconds": 4.727483969000004,
+        "interior_interval_counters": {
+          "instructions:u": 14492199384.0,
+          "branches:u": 3004016682.0,
+          "branch-misses:u": 8117377.0,
+          "cache-misses:u": 44042127.0,
+          "task-clock": 4722.130000000002
+        }
+      },
+      "MERGE": {
+        "wall_seconds": 46.506534582,
+        "marker_end": 80.30574699700082,
+        "covered_seconds": 46.466700521,
+        "interior_interval_counters": {
+          "instructions:u": 144599332498.0,
+          "branches:u": 25279945082.0,
+          "branch-misses:u": 387077591.0,
+          "cache-misses:u": 759767585.0,
+          "task-clock": 46393.820000000014
+        }
+      },
+      "DROP": {
+        "wall_seconds": 0.920398101,
+        "marker_end": 81.22356874700017,
+        "covered_seconds": 0.8562016230000069,
+        "interior_interval_counters": {
+          "instructions:u": 898976104.0,
+          "branches:u": 199967302.0,
+          "branch-misses:u": 10306052.0,
+          "cache-misses:u": 17127455.0,
+          "task-clock": 854.19
+        }
+      }
+    },
+    "metrics": {
+      "load_seconds": 10.406002156,
+      "process_hwm_kib_before_validation": 2549216,
+      "train_cpu_seconds": 70.65904900000001,
+      "train_seconds": 70.806876393
+    },
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "binary_sha256": "0283504267bf7c70f53846175ee5e6de15bb7ce64a29133cfbb3ceb780ef96e8"
+  },
+  {
+    "case": "zh-bytelevel_regex-w1",
+    "arm": "i",
+    "repeat": 1,
+    "diagnostic_only": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-1",
+      "perf",
+      "stat",
+      "-I",
+      "50",
+      "-x",
+      ";",
+      "-o",
+      "/tmp/bpe-positions-encapsulation-final-results-20261012/perf-interval/zh-bytelevel_regex-w1-r1-i/stat.csv",
+      "-e",
+      "instructions:u,branches:u,branch-misses:u,cache-misses:u,task-clock",
+      "--",
+      "/tmp/bpe-positions-encapsulation-final-results-20261012/i-bin",
+      "/tmp/bpe-positions-encapsulation-final-results-20261012/perf-interval/zh-bytelevel_regex-w1-r1-i/job.json"
+    ],
+    "counters": {
+      "instructions:u": 236739812055.0,
+      "branches:u": 44572553639.0,
+      "branch-misses:u": 566511051.0,
+      "cache-misses:u": 1083979678.0,
+      "task-clock": 82828.77999999997
+    },
+    "phases": {
+      "SELECTION": {
+        "wall_seconds": 2.257550361,
+        "marker_end": 12.099719377998554,
+        "covered_seconds": 2.214849461999999,
+        "interior_interval_counters": {
+          "instructions:u": 4044049113.0,
+          "branches:u": 802670573.0,
+          "branch-misses:u": 8182514.0,
+          "cache-misses:u": 34133439.0,
+          "task-clock": 2207.7800000000007
+        }
+      },
+      "VOCABULARY": {
+        "wall_seconds": 0.003142592,
+        "marker_end": 12.102882049999607,
+        "covered_seconds": 0,
+        "interior_interval_counters": {}
+      },
+      "PLAN": {
+        "wall_seconds": 1.931948551,
+        "marker_end": 14.034946242998558,
+        "covered_seconds": 1.8599564609999988,
+        "interior_interval_counters": {
+          "instructions:u": 1429435696.0,
+          "branches:u": 194342602.0,
+          "branch-misses:u": 12994698.0,
+          "cache-misses:u": 50302689.0,
+          "task-clock": 1853.65
+        }
+      },
+      "INITIAL_COUNT": {
+        "wall_seconds": 13.041147728,
+        "marker_end": 27.07618467700013,
+        "covered_seconds": 12.978868115,
+        "interior_interval_counters": {
+          "instructions:u": 38532914311.0,
+          "branches:u": 7524956830.0,
+          "branch-misses:u": 63133492.0,
+          "cache-misses:u": 89499502.0,
+          "task-clock": 12952.579999999998
+        }
+      },
+      "INITIAL_OWNER": {
+        "wall_seconds": 0.070320362,
+        "marker_end": 27.14644245999989,
+        "covered_seconds": 0.05,
+        "interior_interval_counters": {
+          "instructions:u": 39884282.0,
+          "branches:u": 7122747.0,
+          "branch-misses:u": 179463.0,
+          "cache-misses:u": 410100.0,
+          "task-clock": 50.25
+        }
+      },
+      "INDEX": {
+        "wall_seconds": 13.111943772,
+        "marker_end": 27.146818043000167,
+        "covered_seconds": 13.079629471000002,
+        "interior_interval_counters": {
+          "instructions:u": 38696702427.0,
+          "branches:u": 7554064563.0,
+          "branch-misses:u": 63653499.0,
+          "cache-misses:u": 90706121.0,
+          "task-clock": 13053.259999999998
+        }
+      },
+      "MATERIALIZE": {
+        "wall_seconds": 5.031021226,
+        "marker_end": 32.178249413998856,
+        "covered_seconds": 4.9770968569999985,
+        "interior_interval_counters": {
+          "instructions:u": 14568691157.0,
+          "branches:u": 3018875011.0,
+          "branch-misses:u": 8129478.0,
+          "cache-misses:u": 44055487.0,
+          "task-clock": 4972.550000000001
+        }
+      },
+      "MERGE": {
+        "wall_seconds": 47.589149441,
+        "marker_end": 79.76737490899905,
+        "covered_seconds": 47.541008053999995,
+        "interior_interval_counters": {
+          "instructions:u": 144638320295.0,
+          "branches:u": 25285216158.0,
+          "branch-misses:u": 389994552.0,
+          "cache-misses:u": 751831588.0,
+          "task-clock": 47471.34000000003
+        }
+      },
+      "DROP": {
+        "wall_seconds": 1.09458261,
+        "marker_end": 80.86185298300006,
+        "covered_seconds": 1.0560025559999986,
+        "interior_interval_counters": {
+          "instructions:u": 964667474.0,
+          "branches:u": 212056507.0,
+          "branch-misses:u": 8191578.0,
+          "cache-misses:u": 17930984.0,
+          "task-clock": 1054.8500000000001
+        }
+      }
+    },
+    "metrics": {
+      "load_seconds": 9.800783138,
+      "process_hwm_kib_before_validation": 2544328,
+      "train_cpu_seconds": 70.902675,
+      "train_seconds": 71.045735817
+    },
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "binary_sha256": "0283504267bf7c70f53846175ee5e6de15bb7ce64a29133cfbb3ceb780ef96e8"
+  },
+  {
+    "case": "zh-bytelevel_regex-w1",
+    "arm": "h",
+    "repeat": 1,
+    "diagnostic_only": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-1",
+      "perf",
+      "stat",
+      "-I",
+      "50",
+      "-x",
+      ";",
+      "-o",
+      "/tmp/bpe-positions-encapsulation-final-results-20261012/perf-interval/zh-bytelevel_regex-w1-r1-h/stat.csv",
+      "-e",
+      "instructions:u,branches:u,branch-misses:u,cache-misses:u,task-clock",
+      "--",
+      "/tmp/bpe-positions-encapsulation-final-results-20261012/h-bin",
+      "/tmp/bpe-positions-encapsulation-final-results-20261012/perf-interval/zh-bytelevel_regex-w1-r1-h/job.json"
+    ],
+    "counters": {
+      "instructions:u": 236790866601.0,
+      "branches:u": 43872977081.0,
+      "branch-misses:u": 560669035.0,
+      "cache-misses:u": 1097680851.0,
+      "task-clock": 84424.3500000003
+    },
+    "phases": {
+      "SELECTION": {
+        "wall_seconds": 2.384545728,
+        "marker_end": 12.260368159999416,
+        "covered_seconds": 2.3128255540000007,
+        "interior_interval_counters": {
+          "instructions:u": 3986126487.0,
+          "branches:u": 793137507.0,
+          "branch-misses:u": 7990281.0,
+          "cache-misses:u": 34514181.0,
+          "task-clock": 2306.8599999999997
+        }
+      },
+      "VOCABULARY": {
+        "wall_seconds": 0.004286649,
+        "marker_end": 12.26458449599886,
+        "covered_seconds": 0,
+        "interior_interval_counters": {}
+      },
+      "PLAN": {
+        "wall_seconds": 2.096923242,
+        "marker_end": 14.361565643999711,
+        "covered_seconds": 2.0614516269999994,
+        "interior_interval_counters": {
+          "instructions:u": 1527901934.0,
+          "branches:u": 209488368.0,
+          "branch-misses:u": 13151714.0,
+          "cache-misses:u": 53085761.0,
+          "task-clock": 2059.1000000000004
+        }
+      },
+      "INITIAL_COUNT": {
+        "wall_seconds": 13.75963737,
+        "marker_end": 28.121235680999234,
+        "covered_seconds": 13.73096933,
+        "interior_interval_counters": {
+          "instructions:u": 39917451897.0,
+          "branches:u": 7539837268.0,
+          "branch-misses:u": 63868833.0,
+          "cache-misses:u": 91302245.0,
+          "task-clock": 13710.589999999995
+        }
+      },
+      "INITIAL_OWNER": {
+        "wall_seconds": 0.058790663,
+        "marker_end": 28.180125980999946,
+        "covered_seconds": 0,
+        "interior_interval_counters": {}
+      },
+      "INDEX": {
+        "wall_seconds": 13.818916539,
+        "marker_end": 28.18048639100016,
+        "covered_seconds": 13.78118426,
+        "interior_interval_counters": {
+          "instructions:u": 39967560696.0,
+          "branches:u": 7548808966.0,
+          "branch-misses:u": 64099445.0,
+          "cache-misses:u": 91798865.0,
+          "task-clock": 13760.799999999994
+        }
+      },
+      "MATERIALIZE": {
+        "wall_seconds": 4.745862633,
+        "marker_end": 32.92645455300044,
+        "covered_seconds": 4.675963249000001,
+        "interior_interval_counters": {
+          "instructions:u": 14522587678.0,
+          "branches:u": 3010314799.0,
+          "branch-misses:u": 7893367.0,
+          "cache-misses:u": 43205745.0,
+          "task-clock": 4661.220000000002
+        }
+      },
+      "MERGE": {
+        "wall_seconds": 48.011960312,
+        "marker_end": 80.9390319539998,
+        "covered_seconds": 47.997707975,
+        "interior_interval_counters": {
+          "instructions:u": 143376582815.0,
+          "branches:u": 24584592557.0,
+          "branch-misses:u": 383050075.0,
+          "cache-misses:u": 761746460.0,
+          "task-clock": 47912.14999999998
+        }
+      },
+      "DROP": {
+        "wall_seconds": 1.253218891,
+        "marker_end": 82.19177938999928,
+        "covered_seconds": 1.1565261789999994,
+        "interior_interval_counters": {
+          "instructions:u": 907212175.0,
+          "branches:u": 201782775.0,
+          "branch-misses:u": 8993938.0,
+          "cache-misses:u": 18625017.0,
+          "task-clock": 1155.9499999999998
+        }
+      }
+    },
+    "metrics": {
+      "load_seconds": 9.837050285,
+      "process_hwm_kib_before_validation": 2552036,
+      "train_cpu_seconds": 72.179604,
+      "train_seconds": 72.341192177
+    },
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "binary_sha256": "0de4e906bd387fabcc159370bc030df4e59ffad3fd2c29384fba76ccce09fb1c"
+  },
+  {
+    "case": "zh-bytelevel_regex-w1",
+    "arm": "b",
+    "repeat": 1,
+    "diagnostic_only": true,
+    "command": [
+      "taskset",
+      "-c",
+      "0-1",
+      "perf",
+      "stat",
+      "-I",
+      "50",
+      "-x",
+      ";",
+      "-o",
+      "/tmp/bpe-positions-encapsulation-final-results-20261012/perf-interval/zh-bytelevel_regex-w1-r1-b/stat.csv",
+      "-e",
+      "instructions:u,branches:u,branch-misses:u,cache-misses:u,task-clock",
+      "--",
+      "/tmp/bpe-positions-encapsulation-final-results-20261012/b-bin",
+      "/tmp/bpe-positions-encapsulation-final-results-20261012/perf-interval/zh-bytelevel_regex-w1-r1-b/job.json"
+    ],
+    "counters": {
+      "instructions:u": 240305042291.0,
+      "branches:u": 46370374560.0,
+      "branch-misses:u": 556759556.0,
+      "cache-misses:u": 1091719939.0,
+      "task-clock": 87186.91000000002
+    },
+    "phases": {
+      "SELECTION": {
+        "wall_seconds": 2.451597227,
+        "marker_end": 12.836145786999623,
+        "covered_seconds": 2.4130102409999994,
+        "interior_interval_counters": {
+          "instructions:u": 4073761978.0,
+          "branches:u": 807540209.0,
+          "branch-misses:u": 8130618.0,
+          "cache-misses:u": 34832236.0,
+          "task-clock": 2405.5399999999995
+        }
+      },
+      "VOCABULARY": {
+        "wall_seconds": 0.003542239,
+        "marker_end": 12.839678211999853,
+        "covered_seconds": 0,
+        "interior_interval_counters": {}
+      },
+      "PLAN": {
+        "wall_seconds": 2.150210879,
+        "marker_end": 14.989927450998948,
+        "covered_seconds": 2.1107917159999987,
+        "interior_interval_counters": {
+          "instructions:u": 1524574043.0,
+          "branches:u": 215794140.0,
+          "branch-misses:u": 13272643.0,
+          "cache-misses:u": 50876270.0,
+          "task-clock": 2106.88
+        }
+      },
+      "INITIAL_COUNT": {
+        "wall_seconds": 14.024303832,
+        "marker_end": 29.01427750899893,
+        "covered_seconds": 13.944713453999999,
+        "interior_interval_counters": {
+          "instructions:u": 38844173790.0,
+          "branches:u": 7854497148.0,
+          "branch-misses:u": 62784498.0,
+          "cache-misses:u": 92054328.0,
+          "task-clock": 13921.440000000004
+        }
+      },
+      "INITIAL_OWNER": {
+        "wall_seconds": 0.058389309,
+        "marker_end": 29.0726533069992,
+        "covered_seconds": 0,
+        "interior_interval_counters": {}
+      },
+      "INDEX": {
+        "wall_seconds": 14.083180136,
+        "marker_end": 29.073051838000538,
+        "covered_seconds": 13.994939901999999,
+        "interior_interval_counters": {
+          "instructions:u": 38932550063.0,
+          "branches:u": 7870154999.0,
+          "branch-misses:u": 63144833.0,
+          "cache-misses:u": 92877442.0,
+          "task-clock": 13971.660000000003
+        }
+      },
+      "MATERIALIZE": {
+        "wall_seconds": 6.023942715,
+        "marker_end": 35.09709785799896,
+        "covered_seconds": 5.9866503190000016,
+        "interior_interval_counters": {
+          "instructions:u": 14537283847.0,
+          "branches:u": 3013217206.0,
+          "branch-misses:u": 8181308.0,
+          "cache-misses:u": 45071483.0,
+          "task-clock": 5979.1799999999985
+        }
+      },
+      "MERGE": {
+        "wall_seconds": 48.908284279,
+        "marker_end": 84.006903599,
+        "covered_seconds": 48.876554829,
+        "interior_interval_counters": {
+          "instructions:u": 147978540371.0,
+          "branches:u": 26765189907.0,
+          "branch-misses:u": 380517262.0,
+          "cache-misses:u": 752832631.0,
+          "task-clock": 48785.60000000003
+        }
+      },
+      "DROP": {
+        "wall_seconds": 1.081059212,
+        "marker_end": 85.08655541000007,
+        "covered_seconds": 1.0125427250000059,
+        "interior_interval_counters": {
+          "instructions:u": 940416394.0,
+          "branches:u": 208323195.0,
+          "branch-misses:u": 11006531.0,
+          "cache-misses:u": 17950083.0,
+          "task-clock": 996.45
+        }
+      }
+    },
+    "metrics": {
+      "load_seconds": 10.34161747,
+      "process_hwm_kib_before_validation": 2546644,
+      "train_cpu_seconds": 74.557602,
+      "train_seconds": 74.732196525
+    },
+    "model_sha256": "8bfb8bf8fa86b65584ddfed10dab6cf0f328da1af2e69cb768a14bde2b6ed6de",
+    "binary_sha256": "56c127068b695697d2637ef3af189327a5c32b95e21e93959ad17bb9309e660f"
+  }
+]

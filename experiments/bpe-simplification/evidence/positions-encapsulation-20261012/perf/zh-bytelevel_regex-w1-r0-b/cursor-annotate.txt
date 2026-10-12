@@ -1,0 +1,78 @@
+ Percent |	Source code & Disassembly of b-bin for cycles:u (284 samples, percent: local period)
+----------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3     Disassembly of section .text:
+         :
+         : 5     00000000000f32c0 <<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next>:
+    2.37 :   f32c0:  push   %rbx
+    2.08 :   f32c1:  mov    0x8(%rdi),%rdx
+    0.71 :   f32c5:  test   %rdx,%rdx
+    0.00 :   f32c8:  je     f3342 <<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next+0x82>
+    0.00 :   f32ca:  mov    (%rdi),%r8
+    1.43 :   f32cd:  mov    0x18(%rdi),%rax
+    2.13 :   f32d1:  test   $0x7f,%al
+    0.00 :   f32d3:  je     f3368 <<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next+0xa8>
+    1.06 :   f32d9:  lea    -0x1(%rdx),%r9
+    0.00 :   f32dd:  lea    0x1(%r8),%r10
+    1.76 :   f32e1:  xor    %ecx,%ecx
+    1.41 :   f32e3:  xor    %esi,%esi
+    0.35 :   f32e5:  data16 cs nopw 0x0(%rax,%rax,1)
+    0.36 :   f32f0:  mov    %rsi,%r11
+    2.52 :   f32f3:  movzbl -0x1(%r10),%esi
+   19.70 :   f32f8:  mov    %esi,%ebx
+    2.85 :   f32fa:  and    $0x7f,%esi
+    1.78 :   f32fd:  shl    %cl,%rsi
+   15.79 :   f3300:  or     %r11,%rsi
+    0.36 :   f3303:  test   %bl,%bl
+    0.00 :   f3305:  jns    f3331 <<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next+0x71>
+    3.84 :   f3307:  add    $0x7,%ecx
+    1.77 :   f330a:  inc    %r10
+    2.46 :   f330d:  add    $0xffffffffffffffff,%r9
+    0.00 :   f3311:  jb     f32f0 <<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next+0x30>
+    0.00 :   f3313:  add    %rdx,%r8
+    0.00 :   f3316:  mov    %r8,(%rdi)
+    0.00 :   f3319:  movq   $0x0,0x8(%rdi)
+    0.00 :   f3321:  lea    0x15b60(%rip),%rdx        # 108e88 <bitcannon::classify::atom_tables::ATOM_TABLES+0x42b0>
+    0.00 :   f3328:  xor    %edi,%edi
+    0.00 :   f332a:  xor    %esi,%esi
+    0.00 :   f332c:  call   7020b <core::panicking::panic_bounds_check>
+    8.82 :   f3331:  mov    %r10,(%rdi)
+    6.39 :   f3334:  mov    %r9,0x8(%rdi)
+    6.36 :   f3338:  add    0x10(%rdi),%rsi
+    0.00 :   f333c:  mov    %rsi,0x10(%rdi)
+    3.88 :   f3340:  jmp    f3384 <<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next+0xc4>
+    0.00 :   f3342:  mov    0x20(%rdi),%rax
+    0.00 :   f3346:  movq   $0x0,0x20(%rdi)
+    0.00 :   f334e:  test   %rax,%rax
+    0.00 :   f3351:  je     f3395 <<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next+0xd5>
+    0.00 :   f3353:  mov    (%rax),%rsi
+    0.00 :   f3356:  mov    %rsi,0x10(%rdi)
+    0.00 :   f335a:  incq   0x18(%rdi)
+    0.00 :   f335e:  mov    $0x1,%eax
+    0.00 :   f3363:  mov    %rsi,%rdx
+    0.00 :   f3366:  pop    %rbx
+    0.00 :   f3367:  ret
+    0.36 :   f3368:  cmp    $0x7,%rdx
+    0.00 :   f336c:  jbe    f339c <<tk_train::trainers::bpe::positions::codec::Cursor as core::iter::traits::iterator::Iterator>::next+0xdc>
+    0.00 :   f336e:  mov    (%r8),%rsi
+    2.10 :   f3371:  mov    %rsi,0x10(%rdi)
+    0.35 :   f3375:  add    $0xfffffffffffffff8,%rdx
+    0.00 :   f3379:  add    $0x8,%r8
+    0.00 :   f337d:  mov    %r8,(%rdi)
+    0.00 :   f3380:  mov    %rdx,0x8(%rdi)
+    1.06 :   f3384:  inc    %rax
+    2.12 :   f3387:  mov    %rax,0x18(%rdi)
+    0.68 :   f338b:  mov    $0x1,%eax
+    0.70 :   f3390:  mov    %rsi,%rdx
+    0.36 :   f3393:  pop    %rbx
+    2.11 :   f3394:  ret
+    0.00 :   f3395:  xor    %eax,%eax
+    0.00 :   f3397:  mov    %rsi,%rdx
+    0.00 :   f339a:  pop    %rbx
+    0.00 :   f339b:  ret
+    0.00 :   f339c:  lea    0x15965(%rip),%rcx        # 108d08 <bitcannon::classify::atom_tables::ATOM_TABLES+0x4130>
+    0.00 :   f33a3:  mov    $0x8,%esi
+    0.00 :   f33a8:  xor    %edi,%edi
+    0.00 :   f33aa:  call   71170 <core::slice::index::slice_index_fail>

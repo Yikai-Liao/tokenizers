@@ -1,0 +1,6 @@
+     Locking 1 package to latest Rust 1.98.1 compatible version
+   Compiling positions-layout-check v0.0.0 (/tmp/bpe-positions-encapsulation-final-results-20261012/layout-check)
+    Finished `release` profile [optimized] target(s) in 2.18s
+     Running `/tmp/bpe-positions-encapsulation-layout-target-20261012/release/positions-layout-check`
+32772 append states: identical encoded bytes, capacity and spill status
+1008 leaf/root partitions: identical chunk boundaries and contents

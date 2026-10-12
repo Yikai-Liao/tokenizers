@@ -1,0 +1,62 @@
+[
+  {
+    "elapsed": 12.099719377998554,
+    "line": "BPE_SELECTION_SECONDS 2.257550361"
+  },
+  {
+    "elapsed": 12.102882049999607,
+    "line": "BPE_VOCABULARY_SECONDS 0.003142592"
+  },
+  {
+    "elapsed": 14.034946242998558,
+    "line": "BPE_PLAN_SECONDS 1.931948551"
+  },
+  {
+    "elapsed": 27.07618467700013,
+    "line": "BPE_INITIAL_COUNT_SECONDS 13.041147728"
+  },
+  {
+    "elapsed": 27.14644245999989,
+    "line": "BPE_INITIAL_OWNER_SECONDS 0.070320362"
+  },
+  {
+    "elapsed": 27.146818043000167,
+    "line": "BPE_INDEX_SECONDS 13.111943772"
+  },
+  {
+    "elapsed": 32.17810120699869,
+    "line": "BPE_TOKEN_WIDTH 16"
+  },
+  {
+    "elapsed": 32.178249413998856,
+    "line": "BPE_MATERIALIZE_SECONDS 5.031021226"
+  },
+  {
+    "elapsed": 79.76737490899905,
+    "line": "BPE_MERGE_SECONDS 47.589149441"
+  },
+  {
+    "elapsed": 79.76748999399933,
+    "line": "BPE_APPLY_SECONDS 3.245415294"
+  },
+  {
+    "elapsed": 79.76749930999904,
+    "line": "BPE_COMMIT_SECONDS 9.903176527"
+  },
+  {
+    "elapsed": 79.7676318019985,
+    "line": "BPE_PREPARE_SECONDS 33.758031102"
+  },
+  {
+    "elapsed": 79.7676387349984,
+    "line": "BPE_FRESH_BATCHES 1646"
+  },
+  {
+    "elapsed": 79.76764381199973,
+    "line": "BPE_REUSE_BATCHES 0"
+  },
+  {
+    "elapsed": 80.86185298300006,
+    "line": "BPE_DROP_SECONDS 1.094582610"
+  }
+]

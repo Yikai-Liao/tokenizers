@@ -1,0 +1,30 @@
+{
+  "diagnostic_only": true,
+  "input": "en-whitespace-w6",
+  "affinity": [
+    0,
+    1
+  ],
+  "reports": [
+    {
+      "item_bytes": 112,
+      "max_tasks": 177,
+      "max_capacity": 256,
+      "max_vector_bytes": 28672,
+      "total_tasks": 47228
+    }
+  ],
+  "legacy_item_bytes": 40,
+  "b_item_bytes": 128,
+  "command": [
+    "cargo",
+    "build",
+    "--release",
+    "--locked",
+    "--offline",
+    "--target-dir",
+    "/tmp/bpe-positions-encapsulation-release-20261012"
+  ],
+  "binary_sha256": "ed1785f4bf7883b9e853a25fe459d0ea023dcf59a3ba46cfb7493f577e7c8677",
+  "model_sha256": "bbe7b8e9be466ba59e1b481aff686d04ceb6d018788e4fa0808bdefd12c4b4b6"
+}

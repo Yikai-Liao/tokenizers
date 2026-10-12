@@ -1,0 +1,9 @@
+start en-whitespace-w6-r0-base
+done en-whitespace-w6-r0-base {'load_seconds': 0.297656443, 'process_hwm_kib_before_validation': 138724, 'train_cpu_seconds': 5.048451, 'train_seconds': 2.851317295}
+start en-whitespace-w6-r0-a
+done en-whitespace-w6-r0-a {'load_seconds': 0.290361954, 'process_hwm_kib_before_validation': 136840, 'train_cpu_seconds': 4.7438780000000005, 'train_seconds': 2.625012232}
+start en-whitespace-w6-r1-a
+done en-whitespace-w6-r1-a {'load_seconds': 0.317315053, 'process_hwm_kib_before_validation': 150816, 'train_cpu_seconds': 5.06993, 'train_seconds': 2.775630858}
+start en-whitespace-w6-r1-base
+done en-whitespace-w6-r1-base {'load_seconds': 0.304512688, 'process_hwm_kib_before_validation': 136224, 'train_cpu_seconds': 5.733218, 'train_seconds': 3.116060267}
+Perf comparisons finished; all models identical

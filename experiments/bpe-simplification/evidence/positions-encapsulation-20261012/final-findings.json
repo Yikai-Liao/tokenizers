@@ -1,0 +1,473 @@
+{
+  "objective": "Opaque Positions chunk iterators with private codec and directory rules; reduce duplicate production code; independently evaluate two-position inline storage and explain allocation/CPU tradeoffs.",
+  "baseline_commit": "3436bba7f9603147f8ead3ffacc0a91b6c4b05ab",
+  "production": {
+    "selected_commit": "5d617efe",
+    "selected_variant": "a",
+    "production_code_lines_before": 829,
+    "production_code_lines_after": 812,
+    "positions_including_private_codec_code_line_delta": -6,
+    "merge_code_line_delta": -11,
+    "total_code_line_delta": -17,
+    "test_code_line_delta": 27,
+    "native_bpe_tests_default": 32,
+    "native_bpe_tests_no_default": 32,
+    "test_exclusion": "feed_training_tokenizer_json_and_encoding_roundtrip has a known baseline fixture failure; no claim of a full-repository test run",
+    "layout_states_compared": 32772,
+    "chunk_boundary_partitions_compared": 1008
+  },
+  "experiment_commits": {
+    "b_two_inline": "d6a883e9",
+    "e_isolated_short_path": "6ddcbaa5",
+    "h_single_write_loop_and_direct_tail": "97b3b829",
+    "i_original_gap_loop_and_direct_tail": "abe3fa7b"
+  },
+  "allocation_diagnostic": {
+    "case": "zh-bytelevel_regex-w1",
+    "actual_allocator": "System; instrumented forwarding wrapper only; timings not treated as normal performance",
+    "a_totals": {
+      "allocations": 7374961,
+      "deallocations": 7225456,
+      "reallocations": 11063005
+    },
+    "b_totals": {
+      "allocations": 4916333,
+      "deallocations": 4766826,
+      "reallocations": 11063005
+    },
+    "saved_allocations": 2458628,
+    "reallocations_identical": true,
+    "a_final_drop_deallocations": 6756808,
+    "b_final_drop_deallocations": 4299081,
+    "saved_final_drop_deallocations": 2457727,
+    "saved_final_drop_percent": 36.374083738948926,
+    "all_saved_final_drop_deallocations_requested_size_bytes": 24,
+    "raw": "allocation-counts-summary.json"
+  },
+  "allocator_only_experiment": {
+    "raw": "allocation-only-summary.json",
+    "method": "malloc/free for actual 24-byte request; opaque pointer use prevents elimination, subtract same pointer-loop control using preallocated storage. Immediate-pair and retained-one-million-block batch, seven interleaved rounds, first warmup excluded. No Positions encoding/copying.",
+    "interpretation": "Measured allocator micro-costs, scaled estimates only. Neither an exact causal training contribution nor an upper/lower bound. Full DROP also includes container traversal and cache effects."
+  },
+  "cleanup_seconds": {
+    "normal": {
+      "en-bytelevel_regex-w1": {
+        "a": {
+          "mean_seconds": 0.058724521,
+          "raw_seconds": [
+            0.062951484,
+            0.054497558
+          ]
+        },
+        "b": {
+          "mean_seconds": 0.0347973375,
+          "raw_seconds": [
+            0.032259628,
+            0.037335047
+          ]
+        },
+        "base": {
+          "mean_seconds": 0.067706973,
+          "raw_seconds": [
+            0.071430402,
+            0.063983544
+          ]
+        }
+      },
+      "en-bytelevel_regex-w6": {
+        "a": {
+          "mean_seconds": 0.0512977585,
+          "raw_seconds": [
+            0.049613156,
+            0.052982361
+          ]
+        },
+        "b": {
+          "mean_seconds": 0.037080598,
+          "raw_seconds": [
+            0.040096477,
+            0.034064719
+          ]
+        },
+        "base": {
+          "mean_seconds": 0.052566869,
+          "raw_seconds": [
+            0.057734007,
+            0.047399731
+          ]
+        }
+      },
+      "en-whitespace-w1": {
+        "a": {
+          "mean_seconds": 0.059841908,
+          "raw_seconds": [
+            0.064724181,
+            0.054959635
+          ]
+        },
+        "b": {
+          "mean_seconds": 0.0320113715,
+          "raw_seconds": [
+            0.032013004,
+            0.032009739
+          ]
+        },
+        "base": {
+          "mean_seconds": 0.055533756000000004,
+          "raw_seconds": [
+            0.051313087,
+            0.059754425
+          ]
+        }
+      },
+      "en-whitespace-w6": {
+        "a": {
+          "mean_seconds": 0.044941249,
+          "raw_seconds": [
+            0.045780112,
+            0.044102386
+          ]
+        },
+        "b": {
+          "mean_seconds": 0.029812105999999998,
+          "raw_seconds": [
+            0.02830711,
+            0.031317102
+          ]
+        },
+        "base": {
+          "mean_seconds": 0.041828741,
+          "raw_seconds": [
+            0.046618587,
+            0.037038895
+          ]
+        }
+      },
+      "zh-bytelevel_regex-w1": {
+        "a": {
+          "mean_seconds": 1.10140293,
+          "raw_seconds": [
+            1.045797883,
+            1.157007977
+          ]
+        },
+        "b": {
+          "mean_seconds": 0.7992426315000001,
+          "raw_seconds": [
+            0.799924775,
+            0.798560488
+          ]
+        },
+        "base": {
+          "mean_seconds": 1.212315554,
+          "raw_seconds": [
+            1.154747781,
+            1.269883327
+          ]
+        }
+      },
+      "zh-bytelevel_regex-w6": {
+        "a": {
+          "mean_seconds": 1.2010798985,
+          "raw_seconds": [
+            1.231639819,
+            1.170519978
+          ]
+        },
+        "b": {
+          "mean_seconds": 0.9382140875,
+          "raw_seconds": [
+            0.966846532,
+            0.909581643
+          ]
+        },
+        "base": {
+          "mean_seconds": 1.398921779,
+          "raw_seconds": [
+            1.356585762,
+            1.441257796
+          ]
+        }
+      },
+      "zh-whitespace-w1": {
+        "a": {
+          "mean_seconds": 3.633676553,
+          "raw_seconds": [
+            3.782008229,
+            3.485344877
+          ]
+        },
+        "b": {
+          "mean_seconds": 2.8725754495,
+          "raw_seconds": [
+            2.97157237,
+            2.773578529
+          ]
+        },
+        "base": {
+          "mean_seconds": 3.4120765545,
+          "raw_seconds": [
+            3.493660718,
+            3.330492391
+          ]
+        }
+      },
+      "zh-whitespace-w6": {
+        "a": {
+          "mean_seconds": 2.2057047770000002,
+          "raw_seconds": [
+            2.092906698,
+            2.318502856
+          ]
+        },
+        "b": {
+          "mean_seconds": 1.8269399165,
+          "raw_seconds": [
+            1.775635754,
+            1.878244079
+          ]
+        },
+        "base": {
+          "mean_seconds": 2.3044062204999998,
+          "raw_seconds": [
+            2.514748374,
+            2.094064067
+          ]
+        }
+      }
+    },
+    "overhead": {
+      "en-bytelevel_regex-w6": {
+        "a": {
+          "mean_seconds": 0.0535330205,
+          "raw_seconds": [
+            0.058527154,
+            0.048538887
+          ]
+        },
+        "b": {
+          "mean_seconds": 0.036640376,
+          "raw_seconds": [
+            0.037329369,
+            0.035951383
+          ]
+        },
+        "base": {
+          "mean_seconds": 0.054270937500000005,
+          "raw_seconds": [
+            0.051568161,
+            0.056973714
+          ]
+        },
+        "e": {
+          "mean_seconds": 0.0352562845,
+          "raw_seconds": [
+            0.038644519,
+            0.03186805
+          ]
+        },
+        "f": {
+          "mean_seconds": 0.0538688005,
+          "raw_seconds": [
+            0.056182269,
+            0.051555332
+          ]
+        },
+        "h": {
+          "mean_seconds": 0.040364355000000005,
+          "raw_seconds": [
+            0.042503349,
+            0.038225361
+          ]
+        }
+      },
+      "en-whitespace-w6": {
+        "a": {
+          "mean_seconds": 0.0416059025,
+          "raw_seconds": [
+            0.038023617,
+            0.045188188
+          ]
+        },
+        "b": {
+          "mean_seconds": 0.0291806605,
+          "raw_seconds": [
+            0.031735593,
+            0.026625728
+          ]
+        },
+        "base": {
+          "mean_seconds": 0.0468314385,
+          "raw_seconds": [
+            0.050006437,
+            0.04365644
+          ]
+        },
+        "e": {
+          "mean_seconds": 0.029804701000000003,
+          "raw_seconds": [
+            0.032682843,
+            0.026926559
+          ]
+        },
+        "f": {
+          "mean_seconds": 0.049035916,
+          "raw_seconds": [
+            0.049587004,
+            0.048484828
+          ]
+        },
+        "h": {
+          "mean_seconds": 0.02632116,
+          "raw_seconds": [
+            0.026049641,
+            0.026592679
+          ]
+        }
+      },
+      "zh-bytelevel_regex-w1": {
+        "a": {
+          "mean_seconds": 1.2238520670000002,
+          "raw_seconds": [
+            1.233003843,
+            1.214700291
+          ]
+        },
+        "b": {
+          "mean_seconds": 0.9459999705,
+          "raw_seconds": [
+            0.938619067,
+            0.953380874
+          ]
+        },
+        "e": {
+          "mean_seconds": 0.8733765445,
+          "raw_seconds": [
+            0.876249523,
+            0.870503566
+          ]
+        },
+        "h": {
+          "mean_seconds": 0.9574170885000001,
+          "raw_seconds": [
+            0.836589604,
+            1.078244573
+          ]
+        }
+      },
+      "zh-whitespace-w1": {
+        "b": {
+          "mean_seconds": 3.500410883,
+          "raw_seconds": [
+            3.58490378,
+            3.415917986
+          ]
+        },
+        "e": {
+          "mean_seconds": 3.1630034670000002,
+          "raw_seconds": [
+            3.191871794,
+            3.13413514
+          ]
+        },
+        "h": {
+          "mean_seconds": 3.0740213465000004,
+          "raw_seconds": [
+            3.012976741,
+            3.135065952
+          ]
+        }
+      }
+    }
+  },
+  "extra_hot_work": [
+    {
+      "variant": "b",
+      "source": "positions.rs Leaf::push",
+      "work": "Ordinary long-leaf appends execute two short-length comparisons before taking their common encoding path. They do not execute the short-case bodies."
+    },
+    {
+      "variant": "b",
+      "source": "Neighbors::record machine code after Leaf::push inlining",
+      "work": "Final SmallVec::push is outlined. The same final-byte operation is inlined in a.",
+      "evidence": "perf/zh-bytelevel_regex-w1-r0-b/*-disassembly.txt and perf/zh-bytelevel_regex-w1-r0-a/*-disassembly.txt"
+    },
+    {
+      "variant": "b",
+      "source": "Tail cache bytes[..8] write",
+      "work": "SmallVec IndexMut is outlined in b and inlined in a. Using as_mut_slice removes this call.",
+      "evidence": "h-neighbors-disassembly.txt and i-neighbors-disassembly.txt"
+    },
+    {
+      "variant": "h",
+      "source": "positions/codec.rs append_gap",
+      "work": "The unified single-write loop shifts and constructs a continuation flag on the final byte as well. Restoring the original loop in i lowers initial-count instructions but brings back the outlined final SmallVec::push in merge.",
+      "evidence": "perf-interval-summary.json; h/i frozen source and disassembly"
+    }
+  ],
+  "instruction_counter_phase_comparison": {
+    "variants": {
+      "b": {
+        "whole_process_mean_instructions": 240325565979.5,
+        "raw_whole_process_instructions": [
+          240346089668.0,
+          240305042291.0
+        ],
+        "phase_interior_means": {
+          "INITIAL_COUNT": 38888299607.5,
+          "MERGE": 147828828202.5,
+          "DROP": 944708949.5
+        },
+        "diagnostic_train_seconds": [
+          72.671051189,
+          74.732196525
+        ]
+      },
+      "h": {
+        "whole_process_mean_instructions": 236776203821.0,
+        "raw_whole_process_instructions": [
+          236761541041.0,
+          236790866601.0
+        ],
+        "phase_interior_means": {
+          "INITIAL_COUNT": 39849284173.0,
+          "MERGE": 143361181278.0,
+          "DROP": 904234823.0
+        },
+        "diagnostic_train_seconds": [
+          72.045219197,
+          72.341192177
+        ]
+      },
+      "i": {
+        "whole_process_mean_instructions": 236698025396.0,
+        "raw_whole_process_instructions": [
+          236656238737.0,
+          236739812055.0
+        ],
+        "phase_interior_means": {
+          "INITIAL_COUNT": 38549245368.0,
+          "MERGE": 144618826396.5,
+          "DROP": 931821789.0
+        },
+        "diagnostic_train_seconds": [
+          70.806876393,
+          71.045735817
+        ]
+      }
+    },
+    "method": "perf stat on exact original normal binaries; 50 ms intervals, stderr phase-end timestamps and existing duration markers. Phase counts exclude boundary intervals and are approximate interior counts. Whole-process counter sums are directly compared. Instructions ran at 100% in every recorded interval.",
+    "interpretation": "b to h lowers whole-process instruction count by about 1.48%, with fewer merge instructions and more initial-count instructions. h and i whole-process instruction counts differ by about 0.033%, despite opposite phase effects. Extra B-vs-A whole-process work is reproducible; it is not all attributed to one if or assigned quantitatively to one callsite."
+  },
+  "normal_timing": "normal.json and summary.json are 48 interleaved normal runs; overhead.json is an independent 38-run matrix. Neither perf nor allocation counter diagnostics are merged into normal timing averages.",
+  "limits": [
+    "All benchmark children restricted to CPUs 0 and 1; six requested Rayon workers do not represent unrestricted six-core throughput.",
+    "No allocator arena/environment tuning. All sampled normal swaps are zero.",
+    "Whole model bytes checked against original baseline references on every completed training run.",
+    "Virtual PMU cycle counts were inconsistent in the earlier simultaneous stat/record run; cycle and IPC values are excluded from causal conclusions.",
+    "No allocation-failure injector exists here; third-append failure atomicity is checked by reserve-before-write source invariant, not fault injection.",
+    "i has two perf interval diagnostic runs, not a new full normal timing matrix.",
+    "Micro overhead first-named JSONL snapshot contains the later inline rerun; use micro-overhead.log for the first diagnostic and do not treat micro timings as training throughput."
+  ],
+  "decision": "Keep pure encapsulation a as the selected production change. Preserve b/e/h/i as independent experiments. Fewer malloc/free calls and lower final cleanup cost are real, but overall time rankings changed between independent matrices and RSS did not improve uniformly. No adoption claim based on incomplete or unstable timing."
+}

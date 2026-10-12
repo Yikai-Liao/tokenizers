@@ -1,0 +1,97 @@
+start zh-whitespace-w1-r0-base
+{"case": "zh-whitespace-w1", "arm": "base", "repeat": 0, "train_seconds": 49.715879817, "train_cpu_seconds": 49.622822, "child_sampled_rss_kib": 1789940}
+start zh-whitespace-w1-r0-a
+{"case": "zh-whitespace-w1", "arm": "a", "repeat": 0, "train_seconds": 50.500060761, "train_cpu_seconds": 50.38678, "child_sampled_rss_kib": 1788280}
+start zh-whitespace-w1-r0-b
+{"case": "zh-whitespace-w1", "arm": "b", "repeat": 0, "train_seconds": 47.693921349, "train_cpu_seconds": 47.604715, "child_sampled_rss_kib": 1726780}
+start zh-whitespace-w1-r1-b
+{"case": "zh-whitespace-w1", "arm": "b", "repeat": 1, "train_seconds": 47.884276034, "train_cpu_seconds": 47.824327000000004, "child_sampled_rss_kib": 1727256}
+start zh-whitespace-w1-r1-a
+{"case": "zh-whitespace-w1", "arm": "a", "repeat": 1, "train_seconds": 48.783666715, "train_cpu_seconds": 48.691113, "child_sampled_rss_kib": 1789608}
+start zh-whitespace-w1-r1-base
+{"case": "zh-whitespace-w1", "arm": "base", "repeat": 1, "train_seconds": 48.777272969, "train_cpu_seconds": 48.715908, "child_sampled_rss_kib": 1789932}
+start zh-bytelevel_regex-w1-r0-a
+{"case": "zh-bytelevel_regex-w1", "arm": "a", "repeat": 0, "train_seconds": 60.469707022, "train_cpu_seconds": 60.39495199999999, "child_sampled_rss_kib": 2566912}
+start zh-bytelevel_regex-w1-r0-b
+{"case": "zh-bytelevel_regex-w1", "arm": "b", "repeat": 0, "train_seconds": 62.766398009, "train_cpu_seconds": 62.665456000000006, "child_sampled_rss_kib": 2541996}
+start zh-bytelevel_regex-w1-r0-base
+{"case": "zh-bytelevel_regex-w1", "arm": "base", "repeat": 0, "train_seconds": 61.061602455, "train_cpu_seconds": 60.977867, "child_sampled_rss_kib": 2563712}
+start zh-bytelevel_regex-w1-r1-base
+{"case": "zh-bytelevel_regex-w1", "arm": "base", "repeat": 1, "train_seconds": 61.011002558, "train_cpu_seconds": 60.934126, "child_sampled_rss_kib": 2563620}
+start zh-bytelevel_regex-w1-r1-b
+{"case": "zh-bytelevel_regex-w1", "arm": "b", "repeat": 1, "train_seconds": 62.868961553, "train_cpu_seconds": 62.772211999999996, "child_sampled_rss_kib": 2544052}
+start zh-bytelevel_regex-w1-r1-a
+{"case": "zh-bytelevel_regex-w1", "arm": "a", "repeat": 1, "train_seconds": 61.946429167, "train_cpu_seconds": 61.861307999999994, "child_sampled_rss_kib": 2580928}
+start en-whitespace-w1-r0-b
+{"case": "en-whitespace-w1", "arm": "b", "repeat": 0, "train_seconds": 1.9709925529999999, "train_cpu_seconds": 1.969632, "child_sampled_rss_kib": 126516}
+start en-whitespace-w1-r0-base
+{"case": "en-whitespace-w1", "arm": "base", "repeat": 0, "train_seconds": 2.013986108, "train_cpu_seconds": 2.012108, "child_sampled_rss_kib": 124676}
+start en-whitespace-w1-r0-a
+{"case": "en-whitespace-w1", "arm": "a", "repeat": 0, "train_seconds": 1.965024334, "train_cpu_seconds": 1.963734, "child_sampled_rss_kib": 123624}
+start en-whitespace-w1-r1-a
+{"case": "en-whitespace-w1", "arm": "a", "repeat": 1, "train_seconds": 2.072754586, "train_cpu_seconds": 2.063432, "child_sampled_rss_kib": 123636}
+start en-whitespace-w1-r1-base
+{"case": "en-whitespace-w1", "arm": "base", "repeat": 1, "train_seconds": 2.2566602, "train_cpu_seconds": 2.254155, "child_sampled_rss_kib": 123584}
+start en-whitespace-w1-r1-b
+{"case": "en-whitespace-w1", "arm": "b", "repeat": 1, "train_seconds": 2.0879053499999998, "train_cpu_seconds": 2.071159, "child_sampled_rss_kib": 126512}
+start en-bytelevel_regex-w1-r0-base
+{"case": "en-bytelevel_regex-w1", "arm": "base", "repeat": 0, "train_seconds": 2.295529399, "train_cpu_seconds": 2.289542, "child_sampled_rss_kib": 142132}
+start en-bytelevel_regex-w1-r0-a
+{"case": "en-bytelevel_regex-w1", "arm": "a", "repeat": 0, "train_seconds": 2.330163144, "train_cpu_seconds": 2.324134, "child_sampled_rss_kib": 141204}
+start en-bytelevel_regex-w1-r0-b
+{"case": "en-bytelevel_regex-w1", "arm": "b", "repeat": 0, "train_seconds": 2.345690399, "train_cpu_seconds": 2.3364279999999997, "child_sampled_rss_kib": 141304}
+start en-bytelevel_regex-w1-r1-b
+{"case": "en-bytelevel_regex-w1", "arm": "b", "repeat": 1, "train_seconds": 2.446939881, "train_cpu_seconds": 2.4153279999999997, "child_sampled_rss_kib": 141888}
+start en-bytelevel_regex-w1-r1-a
+{"case": "en-bytelevel_regex-w1", "arm": "a", "repeat": 1, "train_seconds": 2.285116783, "train_cpu_seconds": 2.2835639999999997, "child_sampled_rss_kib": 141684}
+start en-bytelevel_regex-w1-r1-base
+{"case": "en-bytelevel_regex-w1", "arm": "base", "repeat": 1, "train_seconds": 2.32560688, "train_cpu_seconds": 2.323842, "child_sampled_rss_kib": 141468}
+start zh-whitespace-w6-r0-base
+{"case": "zh-whitespace-w6", "arm": "base", "repeat": 0, "train_seconds": 28.467702893, "train_cpu_seconds": 52.231009, "child_sampled_rss_kib": 1827396}
+start zh-whitespace-w6-r0-a
+{"case": "zh-whitespace-w6", "arm": "a", "repeat": 0, "train_seconds": 28.042452487, "train_cpu_seconds": 52.073615999999994, "child_sampled_rss_kib": 1793216}
+start zh-whitespace-w6-r0-b
+{"case": "zh-whitespace-w6", "arm": "b", "repeat": 0, "train_seconds": 26.773153693, "train_cpu_seconds": 49.652008, "child_sampled_rss_kib": 1872368}
+start zh-whitespace-w6-r1-b
+{"case": "zh-whitespace-w6", "arm": "b", "repeat": 1, "train_seconds": 27.809151665, "train_cpu_seconds": 51.220710999999994, "child_sampled_rss_kib": 1801404}
+start zh-whitespace-w6-r1-a
+{"case": "zh-whitespace-w6", "arm": "a", "repeat": 1, "train_seconds": 27.281126089, "train_cpu_seconds": 50.025975, "child_sampled_rss_kib": 1774528}
+start zh-whitespace-w6-r1-base
+{"case": "zh-whitespace-w6", "arm": "base", "repeat": 1, "train_seconds": 26.802266156, "train_cpu_seconds": 48.723996, "child_sampled_rss_kib": 1767616}
+start zh-bytelevel_regex-w6-r0-a
+{"case": "zh-bytelevel_regex-w6", "arm": "a", "repeat": 0, "train_seconds": 34.293497399, "train_cpu_seconds": 64.462939, "child_sampled_rss_kib": 2601836}
+start zh-bytelevel_regex-w6-r0-b
+{"case": "zh-bytelevel_regex-w6", "arm": "b", "repeat": 0, "train_seconds": 35.090616388, "train_cpu_seconds": 66.068513, "child_sampled_rss_kib": 2624084}
+start zh-bytelevel_regex-w6-r0-base
+{"case": "zh-bytelevel_regex-w6", "arm": "base", "repeat": 0, "train_seconds": 34.555698285, "train_cpu_seconds": 64.24058600000001, "child_sampled_rss_kib": 2604216}
+start zh-bytelevel_regex-w6-r1-base
+{"case": "zh-bytelevel_regex-w6", "arm": "base", "repeat": 1, "train_seconds": 34.159229034, "train_cpu_seconds": 63.508818000000005, "child_sampled_rss_kib": 2605632}
+start zh-bytelevel_regex-w6-r1-b
+{"case": "zh-bytelevel_regex-w6", "arm": "b", "repeat": 1, "train_seconds": 34.809572092, "train_cpu_seconds": 65.50113400000001, "child_sampled_rss_kib": 2595768}
+start zh-bytelevel_regex-w6-r1-a
+{"case": "zh-bytelevel_regex-w6", "arm": "a", "repeat": 1, "train_seconds": 34.342953408, "train_cpu_seconds": 64.119842, "child_sampled_rss_kib": 2610800}
+start en-whitespace-w6-r0-b
+{"case": "en-whitespace-w6", "arm": "b", "repeat": 0, "train_seconds": 1.892928724, "train_cpu_seconds": 3.181177, "child_sampled_rss_kib": 152268}
+start en-whitespace-w6-r0-base
+{"case": "en-whitespace-w6", "arm": "base", "repeat": 0, "train_seconds": 1.763459793, "train_cpu_seconds": 2.977235, "child_sampled_rss_kib": 139548}
+start en-whitespace-w6-r0-a
+{"case": "en-whitespace-w6", "arm": "a", "repeat": 0, "train_seconds": 2.003108073, "train_cpu_seconds": 3.31212, "child_sampled_rss_kib": 137112}
+start en-whitespace-w6-r1-a
+{"case": "en-whitespace-w6", "arm": "a", "repeat": 1, "train_seconds": 1.847518534, "train_cpu_seconds": 3.14077, "child_sampled_rss_kib": 154460}
+start en-whitespace-w6-r1-base
+{"case": "en-whitespace-w6", "arm": "base", "repeat": 1, "train_seconds": 1.692742803, "train_cpu_seconds": 2.856116, "child_sampled_rss_kib": 137184}
+start en-whitespace-w6-r1-b
+{"case": "en-whitespace-w6", "arm": "b", "repeat": 1, "train_seconds": 1.846299438, "train_cpu_seconds": 2.978838, "child_sampled_rss_kib": 137428}
+start en-bytelevel_regex-w6-r0-base
+{"case": "en-bytelevel_regex-w6", "arm": "base", "repeat": 0, "train_seconds": 2.001655962, "train_cpu_seconds": 3.359096, "child_sampled_rss_kib": 149436}
+start en-bytelevel_regex-w6-r0-a
+{"case": "en-bytelevel_regex-w6", "arm": "a", "repeat": 0, "train_seconds": 2.169148898, "train_cpu_seconds": 3.666462, "child_sampled_rss_kib": 150316}
+start en-bytelevel_regex-w6-r0-b
+{"case": "en-bytelevel_regex-w6", "arm": "b", "repeat": 0, "train_seconds": 2.009989977, "train_cpu_seconds": 3.463711, "child_sampled_rss_kib": 147740}
+start en-bytelevel_regex-w6-r1-b
+{"case": "en-bytelevel_regex-w6", "arm": "b", "repeat": 1, "train_seconds": 2.060761569, "train_cpu_seconds": 3.478874, "child_sampled_rss_kib": 149384}
+start en-bytelevel_regex-w6-r1-a
+{"case": "en-bytelevel_regex-w6", "arm": "a", "repeat": 1, "train_seconds": 2.00502265, "train_cpu_seconds": 3.456735, "child_sampled_rss_kib": 150236}
+start en-bytelevel_regex-w6-r1-base
+{"case": "en-bytelevel_regex-w6", "arm": "base", "repeat": 1, "train_seconds": 1.8908155500000001, "train_cpu_seconds": 3.239859, "child_sampled_rss_kib": 151008}
+All 48 normal runs completed; full models match baseline

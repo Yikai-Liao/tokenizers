@@ -1,0 +1,6 @@
+[package]
+name="positions-layout-check"
+version="0.0.0"
+edition="2024"
+[dependencies]
+smallvec={version="1.16",features=["union"]}
