@@ -1,0 +1,26 @@
+{
+  "zh": {
+    "wall": {
+      "flags_seconds": 1.6742056550000002,
+      "candidate_seconds": 1.639521216,
+      "delta_percent": -2.071695248216099
+    },
+    "cpu": {
+      "flags_seconds": 1.6721165,
+      "candidate_seconds": 1.6355430000000002,
+      "delta_percent": -2.1872578854403857
+    }
+  },
+  "en": {
+    "wall": {
+      "flags_seconds": 0.05083953275,
+      "candidate_seconds": 0.05095457875,
+      "delta_percent": 0.2262924023431312
+    },
+    "cpu": {
+      "flags_seconds": 0.050729750000000004,
+      "candidate_seconds": 0.050904,
+      "delta_percent": 0.34348681000793135
+    }
+  }
+}

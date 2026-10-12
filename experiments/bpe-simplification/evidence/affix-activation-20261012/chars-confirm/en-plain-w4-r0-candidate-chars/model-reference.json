@@ -1,0 +1,6 @@
+{
+  "run": "chars-confirm/en-plain-w4-r0-candidate-chars",
+  "sha256": "f5985a11260436de069f450996b31261a6b73d4c2d1bd92df8216929237fe872",
+  "blob": "models/f5985a11260436de069f450996b31261a6b73d4c2d1bd92df8216929237fe872.json.gz",
+  "kind": "model"
+}

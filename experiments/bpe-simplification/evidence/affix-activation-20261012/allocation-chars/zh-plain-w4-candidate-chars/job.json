@@ -1,0 +1,19 @@
+{
+  "attempt_id": "zh-plain-w4-candidate-chars",
+  "build_id": "candidate-chars",
+  "protocol_version": 1,
+  "input_id": "zh256",
+  "mode": "core",
+  "input": "/root/code/tokenizers-bpe-benchmarks/.bench/main-yttm-inspired/inputs/zh256-words/words.json",
+  "workers": 4,
+  "pretokenizer": "whitespace",
+  "output": "/root/code/tokenizers-workspaces/bpe-affix-initial-final-results-20261012/allocation-chars/zh-plain-w4-candidate-chars/unused-model.json",
+  "trainer": {
+    "vocab_size": 50000,
+    "min_frequency": 2,
+    "prefix": null,
+    "suffix": null,
+    "max_token_length": null,
+    "limit_alphabet": 2047
+  }
+}

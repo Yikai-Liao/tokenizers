@@ -1,0 +1,6 @@
+{
+  "run": "choices/zh-affix-w4-r0-baseline",
+  "sha256": "588ed3aea9eba5d9cd77779540fc148d34312c7dadeebcdd6326c87cee757ab1",
+  "blob": "models/588ed3aea9eba5d9cd77779540fc148d34312c7dadeebcdd6326c87cee757ab1.json.gz",
+  "kind": "model"
+}

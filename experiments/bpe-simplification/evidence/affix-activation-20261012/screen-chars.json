@@ -1,0 +1,70 @@
+[
+  {
+    "case": "zh-affix-w4",
+    "arm": "flags",
+    "phases": {
+      "selection": 1.900295003,
+      "vocabulary_cpu": 1.701457,
+      "vocabulary": 1.712388864
+    },
+    "status": {
+      "VmHWM": 822068,
+      "VmSwap": 0
+    },
+    "external_wall_before_termination": 10.868290442973375,
+    "returncode": -15,
+    "termination_boundary": "BPE_VOCABULARY_SECONDS emitted; no completed training/model validation",
+    "binary_sha256": "4370f1c5308db3b64fca3836bd9a5906e023a2cb57951cc021eca5a366cf449d"
+  },
+  {
+    "case": "zh-affix-w4",
+    "arm": "candidate-chars",
+    "phases": {
+      "selection": 1.934052141,
+      "vocabulary_cpu": 1.620355,
+      "vocabulary": 1.622152237
+    },
+    "status": {
+      "VmHWM": 822280,
+      "VmSwap": 0
+    },
+    "external_wall_before_termination": 10.720993102993816,
+    "returncode": -15,
+    "termination_boundary": "BPE_VOCABULARY_SECONDS emitted; no completed training/model validation",
+    "binary_sha256": "bf264e538b639bdef205ebc9498d720a02412da8171afa4d767f0a50e1b702b1"
+  },
+  {
+    "case": "en-affix-w4",
+    "arm": "candidate-chars",
+    "phases": {
+      "selection": 0.051820259,
+      "vocabulary_cpu": 0.048906,
+      "vocabulary": 0.048939892
+    },
+    "status": {
+      "VmHWM": 75988,
+      "VmSwap": 0
+    },
+    "external_wall_before_termination": 0.5019578419160098,
+    "returncode": -15,
+    "termination_boundary": "BPE_VOCABULARY_SECONDS emitted; no completed training/model validation",
+    "binary_sha256": "bf264e538b639bdef205ebc9498d720a02412da8171afa4d767f0a50e1b702b1"
+  },
+  {
+    "case": "en-affix-w4",
+    "arm": "flags",
+    "phases": {
+      "selection": 0.052170847,
+      "vocabulary_cpu": 0.049829,
+      "vocabulary": 0.049863078
+    },
+    "status": {
+      "VmHWM": 75864,
+      "VmSwap": 0
+    },
+    "external_wall_before_termination": 0.4917470379732549,
+    "returncode": -15,
+    "termination_boundary": "BPE_VOCABULARY_SECONDS emitted; no completed training/model validation",
+    "binary_sha256": "4370f1c5308db3b64fca3836bd9a5906e023a2cb57951cc021eca5a366cf449d"
+  }
+]

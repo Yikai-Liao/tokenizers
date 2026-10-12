@@ -1,0 +1,19 @@
+{
+  "protocol_version": 1,
+  "input_id": "zh256",
+  "mode": "core",
+  "input": "/root/code/tokenizers-bpe-benchmarks/.bench/main-yttm-inspired/inputs/zh256-words/words.json",
+  "workers": 4,
+  "pretokenizer": "whitespace",
+  "trainer": {
+    "vocab_size": 50000,
+    "min_frequency": 2,
+    "prefix": "##",
+    "suffix": "</w>",
+    "max_token_length": null,
+    "limit_alphabet": 2047
+  },
+  "attempt_id": "zh-affix-w4-r0-baseline",
+  "build_id": "baseline",
+  "output": "/root/code/tokenizers-workspaces/bpe-affix-initial-final-results-20261012/paired/zh-affix-w4-r0-baseline/model.json"
+}

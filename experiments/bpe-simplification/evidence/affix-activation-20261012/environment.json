@@ -1,0 +1,21 @@
+{
+  "base_sha": "a2b20f329d1b4a0d39b5721f4a7a678a80d0d9b2",
+  "production_candidate_commit": "a583a0b4025495ef0006a6adea84c6139cb7b295",
+  "flags_diagnostic_commit": "83630bd02852d28425a50707878bc5ee5c2bc713",
+  "workers": 4,
+  "cpu_affinity": "0-3",
+  "normal_binary_sha256": {
+    "baseline": "ed238f14ae017c0cd66bac940f5b6a96f4079f48ee7828cfe6686280296a8a7e",
+    "flags": "4370f1c5308db3b64fca3836bd9a5906e023a2cb57951cc021eca5a366cf449d",
+    "candidate-choices": "15b04468d12f0977a8602d96ca6f3571fbb259754ed095d0bb986f6535805855",
+    "candidate-paired": "910d59e02a83a7f8b4af4a003e5d96620a047dbc3dd41503b48fd684801fad68",
+    "candidate-cursor": "9ecc0ddc5b40433840da3b7a8563019601d870e8f0bc10f1b802353b997e6cd6",
+    "candidate-chars": "bf264e538b639bdef205ebc9498d720a02412da8171afa4d767f0a50e1b702b1"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "input_sha256": {
+    "zh": "ed057a8fdb27544ed29f16dde53faa0de8f47f1ee8ac00080974fac5bb435660",
+    "en": "0e146cd7d9fd31c547c84c5bfea2424bb05ae02905cf2608f4d7aa980f6bdb2d"
+  },
+  "activity_note": "The discarded choices-confirm screening run overlapped one approximately 0.2-second standalone rustc code-generation probe. Final chars/chars-confirm/chars-en-check timings ran without compilation, tests or profiling. The screen-chars normal binary was terminated after initialization and does not validate a complete model."
+}
