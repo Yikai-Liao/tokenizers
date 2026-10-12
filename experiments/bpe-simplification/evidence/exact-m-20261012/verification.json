@@ -1,0 +1,12 @@
+{
+  "patch_forward_check": true,
+  "production_equals_baseline": true,
+  "normal_rows": 30,
+  "diagnostic_rows": 18,
+  "full_model_byte_equality": true,
+  "native_default_passed": 31,
+  "native_no_default_passed": 31,
+  "clippy_passed": true,
+  "tests_ast_lines": 1498,
+  "production_ast_net_lines": 386
+}

@@ -1,0 +1,10 @@
+   Compiling tk-train v0.1.0-dev.2 (/tmp/bpe-selected-rules-measurement-20261011/tokenizers/tk-train)
+error: no rules expected `[`
+    --> /tmp/bpe-selected-rules-measurement-20261011/tokenizers/tk-train/src/trainers/bpe/merge.rs:1308:54
+     |
+1308 |             "site": ["prepare", "replay", "coherent"][site],
+     |                                                      ^ no rules expected this token in macro call
+     |
+     = note: while trying to match end of macro
+
+error: could not compile `tk-train` (lib) due to 1 previous error

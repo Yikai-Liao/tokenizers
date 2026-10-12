@@ -1,0 +1,14 @@
+{
+  "arm": "exact-diagnostic",
+  "command": [
+    "cargo",
+    "build",
+    "--release",
+    "--locked",
+    "--offline",
+    "--target-dir",
+    "/root/code/tokenizers-build/bpe-affix-core-build-20261011"
+  ],
+  "binary_sha256": "85aa65577731b25f7b21befba62ab8d360f4c5b0305b58fb26e64db5e0aea3ba",
+  "diagnostic_only": true
+}

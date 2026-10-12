@@ -1,0 +1,14 @@
+{
+  "arm": "eager-diagnostic",
+  "command": [
+    "cargo",
+    "build",
+    "--release",
+    "--locked",
+    "--offline",
+    "--target-dir",
+    "/root/code/tokenizers-build/bpe-affix-core-build-20261011"
+  ],
+  "binary_sha256": "98c1ac530914a24d9378ef7a5e5e4758e7c4beaf885acbc2c1227ef97836c8de",
+  "diagnostic_only": true
+}

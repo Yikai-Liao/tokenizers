@@ -1,0 +1,20 @@
+[
+  {
+    "path": "/root/code/tokenizers-workspaces/bpe-exact-m-results-20261012/eager-bin",
+    "bytes": 1392840,
+    "sha256": "b2aa5e654de65eb0ecedde721e3ca632ec4f95e31ecf9f30fb8e53ee102fe6fa",
+    "reason": "Normal suites complete; rejected candidate; frozen source and build metadata retained"
+  },
+  {
+    "path": "/root/code/tokenizers-workspaces/bpe-exact-m-results-20261012/frontier-bin",
+    "bytes": 1456760,
+    "sha256": "0a329452d9797ea44f42ac2c8a9fed25cadfdbf9bbd8dc576617e9ecd0fc5276",
+    "reason": "Normal suites complete; rejected candidate; frozen source and build metadata retained"
+  },
+  {
+    "path": "/root/code/tokenizers-workspaces/bpe-exact-m-results-20261012/exact-bin",
+    "bytes": 1482624,
+    "sha256": "0718e67eb48d9d54082deda8e2499461efaf3aaa2d2f4f3d83c22b9cf79f980a",
+    "reason": "Normal suites complete; rejected candidate; frozen source and build metadata retained"
+  }
+]
