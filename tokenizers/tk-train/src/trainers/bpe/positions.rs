@@ -6,7 +6,10 @@ use smallvec::SmallVec;
 use std::num::NonZeroU64;
 use tk_encode::Result;
 
-const RESTART: usize = 128;
+#[path = "positions/codec.rs"]
+mod codec;
+
+use codec::{Cursor, RESTART};
 const OFFSET_BYTES: usize = std::mem::size_of::<usize>();
 
 pub(super) struct Positions(Repr);
@@ -95,10 +98,15 @@ impl Positions {
         read(self.leaves(), 0)
     }
 
-    /// Partition by position count, splitting large leaves at restart boundaries
-    /// and grouping small leaves. Each task holds its starting leaf directly.
-    pub(super) fn tasks(&self, target_items: usize) -> impl Iterator<Item = ReadTask<'_>> {
-        let target = target_items.max(1);
+    /// Cover the ordered sequence with nonoverlapping, independently consumable
+    /// iterators. Their lengths may differ from the requested target.
+    pub(super) fn chunks(
+        &self,
+        target_len: usize,
+    ) -> impl Iterator<Item = impl Iterator<Item = u64> + Send + '_> + '_ {
+        // Split large leaves at restart boundaries and group small leaves;
+        // every chunk retains its already located starting leaf.
+        let target = target_len.max(1);
         let leaves = self.leaves();
         let (mut leaf, mut start) = (0, 0);
         std::iter::from_fn(move || {
@@ -123,11 +131,8 @@ impl Positions {
                 leaf += 1;
                 start = 0;
             }
-            (count != 0).then(|| ReadTask {
-                leaves: &leaves[first..(leaf + 1).min(leaves.len())],
-                start: begin,
-                len: count,
-            })
+            (count != 0)
+                .then(|| read(&leaves[first..(leaf + 1).min(leaves.len())], begin).take(count))
         })
     }
 
@@ -158,8 +163,10 @@ impl Leaf {
         (self.len.get() - 1) as usize
     }
 
-    fn directory_bytes(len: usize) -> Result<usize> {
+    fn reserved_directory_bytes(len: usize) -> Result<usize> {
         let groups = len.div_ceil(RESTART);
+        // One block needs no directory; later capacities grow by powers of two,
+        // so appending each restart does not relocate the data area.
         if groups <= 1 {
             return Ok(0);
         }
@@ -169,16 +176,19 @@ impl Leaf {
             .ok_or_else(|| "BPE position layout exceeds usize".into())
     }
 
-    fn head(&self) -> usize {
-        8 + Self::directory_bytes(self.len()).expect("validated leaf layout")
+    // Nonempty leaves store the tail cache before the reserved directory.
+    fn data(&self) -> &[u8] {
+        let data_start =
+            8 + Self::reserved_directory_bytes(self.len()).expect("validated leaf layout");
+        &self.bytes[data_start..]
     }
 
     fn first(&self) -> u64 {
-        read_u64(&self.bytes[self.head()..])
+        codec::read_absolute(self.data())
     }
 
     fn last(&self) -> u64 {
-        read_u64(&self.bytes)
+        codec::read_absolute(&self.bytes)
     }
 
     #[inline(always)]
@@ -196,14 +206,9 @@ impl Leaf {
         let gap = position
             .checked_sub(previous)
             .ok_or("BPE positions are not sorted")?;
-        let width = (u64::BITS - gap.leading_zeros()).div_ceil(7).max(1) as usize;
+        let width = codec::gap_width(gap);
         self.reserve(width)?;
-        let mut delta = gap;
-        while delta >= 128 {
-            self.bytes.push(delta as u8 | 128);
-            delta >>= 7;
-        }
-        self.bytes.push(delta as u8);
+        codec::append_gap(&mut self.bytes, gap);
         self.bytes[..8].copy_from_slice(&position.to_le_bytes());
         self.len = encoded_len;
         Ok(())
@@ -238,9 +243,9 @@ impl Leaf {
         if len != 0 && position < self.last() {
             return Err("BPE positions are not sorted".into());
         }
-        let old_head = 8 + Self::directory_bytes(len)?;
-        let new_head = 8 + Self::directory_bytes(next_len)?;
-        let growth = new_head - old_head;
+        let old_data_start = 8 + Self::reserved_directory_bytes(len)?;
+        let new_data_start = 8 + Self::reserved_directory_bytes(next_len)?;
+        let growth = new_data_start - old_data_start;
         let data_end = self.bytes.len();
         self.reserve(
             growth
@@ -251,13 +256,15 @@ impl Leaf {
             self.bytes.resize(8, 0);
         } else if growth != 0 {
             self.bytes.resize(data_end + growth, 0);
-            self.bytes.copy_within(old_head..data_end, new_head);
-            self.bytes[old_head..new_head].fill(0);
+            // Entries are relative to the data area and survive this relocation.
+            self.bytes
+                .copy_within(old_data_start..data_end, new_data_start);
+            self.bytes[old_data_start..new_data_start].fill(0);
         }
-        if len != 0 && new_head > 8 {
+        if len != 0 && new_data_start > 8 {
             let entry = 8 + (len / RESTART) * OFFSET_BYTES;
             self.bytes[entry..entry + OFFSET_BYTES]
-                .copy_from_slice(&(data_end - old_head).to_le_bytes());
+                .copy_from_slice(&(data_end - old_data_start).to_le_bytes());
         }
         self.bytes.extend_from_slice(&position.to_le_bytes());
         self.bytes[..8].copy_from_slice(&position.to_le_bytes());
@@ -265,16 +272,11 @@ impl Leaf {
         Ok(())
     }
 
-    // Reading tasks and searches supply an aligned restart position.
+    // Chunk boundaries and searches supply an aligned restart position.
     fn cursor(&self, start: usize) -> Cursor<'_> {
         if start == self.len() {
-            return Cursor {
-                bytes: &[],
-                position: 0,
-                index: start,
-            };
+            return Cursor::new(&[], start);
         }
-        let head = self.head();
         let block = start / RESTART;
         let offset = if block == 0 {
             0
@@ -287,11 +289,7 @@ impl Leaf {
             )
         };
         debug_assert!(start.is_multiple_of(RESTART));
-        Cursor {
-            bytes: &self.bytes[head + offset..],
-            position: 0,
-            index: start,
-        }
+        Cursor::new(&self.data()[offset..], start)
     }
 
     fn restart_before(&self, target: u64) -> usize {
@@ -299,31 +297,20 @@ impl Leaf {
         let block = if groups <= 1 {
             0
         } else {
+            // Search only valid entries, including entry zero, not spare capacity.
             let directory = self.bytes[8..8 + groups * OFFSET_BYTES]
                 .as_chunks::<OFFSET_BYTES>()
                 .0;
-            let head = self.head();
+            let data = self.data();
+            // Strict comparison and fallback retain duplicates in the prior block.
             directory
                 .partition_point(|entry| {
                     let offset = usize::from_le_bytes(*entry);
-                    read_u64(&self.bytes[head + offset..]) < target
+                    codec::read_absolute(&data[offset..]) < target
                 })
                 .saturating_sub(1)
         };
         block * RESTART
-    }
-}
-
-/// Borrowed reading work; callers see coordinates, never leaf storage or blocks.
-pub(super) struct ReadTask<'a> {
-    leaves: &'a [Leaf],
-    start: usize,
-    len: usize,
-}
-
-impl ReadTask<'_> {
-    pub(super) fn iter(&self) -> impl Iterator<Item = u64> + '_ {
-        read(self.leaves, self.start).take(self.len)
     }
 }
 
@@ -335,54 +322,12 @@ fn read(leaves: &[Leaf], mut start: usize) -> impl Iterator<Item = u64> + '_ {
     })
 }
 
-fn read_u64(bytes: &[u8]) -> u64 {
-    u64::from_le_bytes(bytes[..8].try_into().expect("internal u64 position"))
-}
-
-struct Cursor<'a> {
-    bytes: &'a [u8],
-    position: u64,
-    index: usize,
-}
-
-impl Iterator for Cursor<'_> {
-    type Item = u64;
-    fn next(&mut self) -> Option<u64> {
-        if self.bytes.is_empty() {
-            return None;
-        }
-        if self.index.is_multiple_of(RESTART) {
-            let (seed, rest) = self
-                .bytes
-                .split_first_chunk::<8>()
-                .expect("internal restart seed");
-            self.position = u64::from_le_bytes(*seed);
-            self.bytes = rest;
-        } else {
-            let mut delta = 0u64;
-            let mut shift = 0;
-            loop {
-                let byte = self.bytes[0];
-                self.bytes = &self.bytes[1..];
-                delta |= u64::from(byte & 127) << shift;
-                if byte < 128 {
-                    break;
-                }
-                shift += 7;
-            }
-            self.position += delta;
-        }
-        self.index += 1;
-        Some(self.position)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn append_search_and_tasks() {
+    fn append_search_and_chunks() {
         let cases = [
             vec![],
             vec![0],
@@ -403,15 +348,8 @@ mod tests {
                 );
             }
             for target in [0, 1, 127, 128, 129, 511, usize::MAX] {
-                let tasks: Vec<_> = positions.tasks(target).collect();
-                assert_eq!(
-                    tasks.iter().flat_map(ReadTask::iter).collect::<Vec<_>>(),
-                    values
-                );
-                assert_eq!(
-                    tasks.iter().map(|task| task.len).sum::<usize>(),
-                    values.len()
-                );
+                let chunks: Vec<_> = positions.chunks(target).collect();
+                assert_eq!(chunks.into_iter().flatten().collect::<Vec<_>>(), values);
             }
         }
         if cfg!(target_pointer_width = "64") {
@@ -429,7 +367,30 @@ mod tests {
     }
 
     #[test]
-    fn concat_preserves_boundaries_and_tasks() {
+    fn leaf_format_and_exhausted_cursor() {
+        let positions = Positions::from_sorted(&[1, 128, 256]).unwrap();
+        let Repr::Leaf(leaf) = &positions.0 else {
+            unreachable!()
+        };
+        let mut expected = 256u64.to_le_bytes().to_vec();
+        expected.extend_from_slice(&1u64.to_le_bytes());
+        expected.extend_from_slice(&[127, 128, 1]);
+        assert_eq!(leaf.bytes.as_slice(), expected);
+        for start in [0, leaf.len()] {
+            let mut cursor = leaf.cursor(start);
+            while cursor.next().is_some() {}
+            assert_eq!(cursor.next(), None);
+            assert_eq!(cursor.next(), None);
+        }
+        let empty = Positions::default();
+        assert_eq!(empty.iter().next(), None);
+        if cfg!(target_pointer_width = "64") {
+            assert_eq!(std::mem::size_of::<Cursor<'_>>(), 32);
+        }
+    }
+
+    #[test]
+    fn concat_preserves_boundaries_and_chunks() {
         let values: Vec<u64> = (0..1300).map(|n| n / 3).collect();
         for width in [1, 2, 3, 127, 128, 129, 700, 1300] {
             let leaves = values
@@ -445,11 +406,8 @@ mod tests {
                 );
             }
             for target in [1, 129, 511, 10000] {
-                let tasks: Vec<_> = positions.tasks(target).collect();
-                assert_eq!(
-                    tasks.iter().flat_map(ReadTask::iter).collect::<Vec<_>>(),
-                    values
-                );
+                let chunks: Vec<_> = positions.chunks(target).collect();
+                assert_eq!(chunks.into_iter().flatten().collect::<Vec<_>>(), values);
             }
             if width < values.len() {
                 assert!(Positions::concat([positions]).is_err());
@@ -490,11 +448,7 @@ mod tests {
         };
         assert!(leaf.push(0).is_err());
         assert!(leaf.bytes.is_empty());
-        let mut cursor = Cursor {
-            bytes: &[0; 7],
-            position: 0,
-            index: 0,
-        };
+        let mut cursor = Cursor::new(&[0; 7], 0);
         assert!(std::panic::catch_unwind(move || cursor.next()).is_err());
     }
 }

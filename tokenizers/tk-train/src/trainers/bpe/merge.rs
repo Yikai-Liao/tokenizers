@@ -3,7 +3,7 @@ use super::{
     BpeTrainer, WORD_SEPARATOR_ID, add,
     corpus::{Corpus, Match},
     index::{Candidate, PairIndex},
-    positions::{Positions, ReadTask},
+    positions::Positions,
     vocabulary::Vocabulary,
 };
 use ahash::{AHashMap, AHashSet};
@@ -357,7 +357,7 @@ impl<'a> FreshSnapshot<'a> {
         }
     }
 
-    fn tasks(&self) -> Vec<(usize, Source<'_>)> {
+    fn tasks(&self) -> Vec<(usize, impl Iterator<Item = u64> + Send + '_)> {
         let mut tasks = Vec::new();
         let total: usize = self
             .batch
@@ -373,13 +373,13 @@ impl<'a> FreshSnapshot<'a> {
             match &self.matches {
                 FreshMatches::SelfPair(starts) => {
                     for part in starts.chunks(chunk) {
-                        tasks.push((rank, Source::Slice(part)));
+                        tasks.push((rank, itertools::Either::Left(part.iter().copied())));
                     }
                 }
                 FreshMatches::Ordinary(_) => {
                     let positions = &rule.candidate.positions;
-                    for task in positions.tasks(ordinary_chunk) {
-                        tasks.push((rank, Source::Task(task)));
+                    for positions in positions.chunks(ordinary_chunk) {
+                        tasks.push((rank, itertools::Either::Right(positions)));
                     }
                 }
             }
@@ -391,7 +391,7 @@ impl<'a> FreshSnapshot<'a> {
         &self,
         directories: &mut Directories,
         rank: usize,
-        positions: Source<'_>,
+        positions: impl Iterator<Item = u64>,
     ) -> Result<Job> {
         #[cfg(test)]
         super::tests::observe_worker(super::tests::Phase::FreshPrepare);
@@ -401,7 +401,7 @@ impl<'a> FreshSnapshot<'a> {
         let mut starts = SmallVec::new();
         let matcher = self.corpus.fresh_matcher(rule.pair());
         let mut weights = None;
-        for p in positions.prefetched(self.corpus) {
+        for p in prefetched(positions, self.corpus) {
             let Some(matched) = matcher(p, self.corpus.token(p)) else {
                 continue;
             };
@@ -580,35 +580,26 @@ impl<'task> CohortPreparation<'task> {
     }
 }
 
-/// Filtered self-pair starts or borrowed, directly positioned reading work.
-enum Source<'a> {
-    Slice(&'a [u64]),
-    Task(ReadTask<'a>),
-}
-
-impl Source<'_> {
-    // Decode one bounded queue ahead. Prefetch is a nonblocking
-    // hint; matching still reads the same joined preparation snapshot in order.
-    fn prefetched<'a>(&'a self, corpus: &'a Corpus) -> impl Iterator<Item = usize> + 'a {
-        let coordinates = match self {
-            Self::Slice(values) => itertools::Either::Left(values.iter().copied()),
-            Self::Task(task) => itertools::Either::Right(task.iter()),
-        };
-        let mut positions = coordinates.map(move |coordinate| corpus.resident(coordinate));
-        let mut ahead = VecDeque::with_capacity(16);
-        ahead.extend(positions.by_ref().take(16));
-        for &p in &ahead {
-            corpus.prefetch(p);
-        }
-        std::iter::from_fn(move || {
-            let position = ahead.pop_front()?;
-            if let Some(next) = positions.next() {
-                corpus.prefetch(next);
-                ahead.push_back(next);
-            }
-            Some(position)
-        })
+// Decode one bounded queue ahead. Prefetch is a nonblocking hint; matching
+// still reads the joined preparation snapshot in order, inside the worker.
+fn prefetched<'a>(
+    coordinates: impl Iterator<Item = u64> + 'a,
+    corpus: &'a Corpus,
+) -> impl Iterator<Item = usize> + 'a {
+    let mut positions = coordinates.map(move |coordinate| corpus.resident(coordinate));
+    let mut ahead = VecDeque::with_capacity(16);
+    ahead.extend(positions.by_ref().take(16));
+    for &p in &ahead {
+        corpus.prefetch(p);
     }
+    std::iter::from_fn(move || {
+        let position = ahead.pop_front()?;
+        if let Some(next) = positions.next() {
+            corpus.prefetch(next);
+            ahead.push_back(next);
+        }
+        Some(position)
+    })
 }
 
 #[cfg(test)]
@@ -684,7 +675,7 @@ mod tests {
         // Each task first sees a separator/stale coordinate, then valid AA starts.
         for (input, expected) in [(&[0, 1, 3][..], &[1, 3][..]), (&[0, 5, 7][..], &[5, 7][..])] {
             let job = snapshot
-                .prepare_job(&mut Directories::default(), 0, Source::Slice(input))
+                .prepare_job(&mut Directories::default(), 0, input.iter().copied())
                 .unwrap();
             assert_eq!(job.starts.as_slice(), expected);
         }
