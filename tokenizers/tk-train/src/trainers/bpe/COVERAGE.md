@@ -2,8 +2,9 @@
 
 The suite groups related contracts around complete training results, public
 integration and immutable storage. The differential helper compares every
-selected `(pair, count, replacement ID)`, full vocabulary IDs, ordered merges and
-special tokens at 1, 4 and 8 workers. The sequential oracle owns its own word
+selected `(pair, count, replacement ID)`, full vocabulary IDs and ordered merges
+at 1, 4 and 8 workers. Public integration checks special-token return.
+The sequential oracle owns its own word
 edits, ledger and historical birth cohorts; it shares only alphabet selection.
 Literal alphabet expectations independently check that shared selector.
 
@@ -17,7 +18,7 @@ Literal alphabet expectations independently check that shared selector.
 | Completed initialization and retained cutoff | Ordered frozen input has four characters with limit two; literal multibyte prefix/suffix IDs precede weight sorting, original UTF-8 boundaries survive filtering, spans retain allocation identity on transfer, a true four-way cutoff tie reuses its two selected characters, and a separate four-character/three-slot cutoff forces an actual fresh-to-reuse restart and matches complete models/traces at 1/4/8 workers |
 | Filtered symbols, forced alphabet and decorations | Generated filtered/decorated models, a filtered training fixture, and literal alphabet IDs |
 | Full token IDs beyond 16 bits and separator distinction | 65536 reserved IDs followed by ordinary training and literal ID expectation |
-| Joined compatible rules | Explicit three-rule `merge_next` returns ordered committed records, then Finished |
+| Joined compatible rules | Explicit four-rule preparation checks shared heads/tails and exact boundary births; full differential models and traces check ordered successful history at 1/4/8 workers |
 | Preparation failure before writes | An independent valid job precedes a neighbor-count overflow; `merge_next` fails with every endpoint unchanged at 1, 4 and 8 workers |
 | Reusable neighbor directories without reset | A task stops on weighted overflow; the next task reuses both directories with old indices outside its groups, indices naming different neighbors, and valid current-group hits; exact event order, weights, buckets and position lists are checked |
 | Shard-local commit and historical birth grouping | Unordered and zero-weight reuse fragments retain duplicates and publish in bucket order below the floor; fresh removals retire counts before complete/partial publication; fresh grouped and intermediate signed overflow drain pending streams while retaining capacity |
@@ -34,6 +35,7 @@ Literal alphabet expectations independently check that shared selector.
 | Direct encoding, append failures and immutable roots | Literal tail/seed/gap bytes, actual inline/spilled byte storage, empty leaf filtering, sole-leaf collapse, root rejection by concat and push, descending append rejection preserving the old sequence at restart boundaries, and exhausted/truncated decoder behavior |
 | Interleaved sorted stream merging | Empty input, a sole root retained as a root, mixed roots/leaves/empty streams, duplicate coordinates and duplicate `u64::MAX` values |
 | Fresh matches, stale coordinates and weight regions | Forty words cross more than one prefetch window; consumed starts, tails and separators are filtered while exact match intervals and repeated/unit/zero word weights remain correct |
+| Cohort scan domains and virtual neighbors | Compact literal results cover adjacent virtual left replacements, unchanged right IDs, duplicate/stale candidates, skipped physical neighbors and matches outside the candidate stream in whole-word mode; the snapshot remains unchanged |
 | Lazy initial-edge consumption and consumer errors | Filtered multibyte symbols yield literal pair/coordinate/weight triples; a consumer error leaves the exact consumed prefix and unconsumed suffix intact |
 
 The former fixture files and legacy trainer tests are consolidated into these

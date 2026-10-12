@@ -12,11 +12,16 @@ use tk_encode::{Result, models::bpe::Pair, utils::progress::ProgressBar};
 /// Field order defines heap priority; occurrence payloads never break ties.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub(super) struct Priority {
-    pub(super) count: u64,
+    count: u64,
     pair: Reverse<Pair>,
 }
 
 impl Priority {
+    #[cfg(test)]
+    pub(super) fn count(self) -> u64 {
+        self.count
+    }
+
     pub(super) fn pair(self) -> Pair {
         self.pair.0
     }
@@ -106,15 +111,15 @@ impl PairIndex {
     pub(super) fn build(
         corpus: &CorpusPlan<'_>,
         minimum: u64,
-        shard_count: usize,
-        reuse: bool,
         progress: &Option<ProgressBar>,
     ) -> Result<Self> {
+        let reuse = corpus.reuse();
+        let shard_count = rayon::current_num_threads();
+        let domain = corpus.token_count();
         // 1. Count and freeze each whole-word range independently.
         let pieces = corpus
-            .initial_ranges(if cfg!(test) { 16 } else { 1 << 24 })
-            .into_par_iter()
-            .map(|range| count_range(corpus, range, progress))
+            .initial_chunks(if cfg!(test) { 16 } else { 1 << 24 })
+            .map(|(words, edges)| count_chunk(domain, words, edges, progress))
             .collect::<Result<Vec<_>>>()?;
 
         // 2. Route ordered fragments to the sole count owner of each pair.
@@ -300,18 +305,19 @@ impl InitialPairCounts {
     }
 }
 
-fn count_range(
-    corpus: &CorpusPlan<'_>,
-    range: std::ops::Range<usize>,
+fn count_chunk(
+    domain: usize,
+    words: usize,
+    edges: impl Iterator<Item = (Pair, u64, u64)>,
     progress: &Option<ProgressBar>,
 ) -> Result<InitialPiece> {
-    let mut counts = InitialPairCounts::new(corpus.token_count());
-    for (pair, position, weight) in corpus.initial_edges(range.clone()) {
+    let mut counts = InitialPairCounts::new(domain);
+    for (pair, position, weight) in edges {
         debug_assert!(pair.0 != WORD_SEPARATOR_ID && pair.1 != WORD_SEPARATOR_ID);
         counts.record(pair, position, weight)?;
     }
     if let Some(p) = progress {
-        p.inc(range.len() as u64);
+        p.inc(words as u64);
     }
     Ok(counts.into_states())
 }
@@ -529,7 +535,8 @@ mod tests {
                 index.queue = candidates.into_iter().collect();
             } else {
                 // AB writes ID 3 before its right birth overflows the signed owner count.
-                index.shards[0].counts.insert((3, 2), i64::MAX as u64);
+                let shard = owner((3, 2), index.shards.len());
+                index.shards[shard].counts.insert((3, 2), i64::MAX as u64);
             }
             let before = tokens(&corpus);
             let queued = index.queue.len();

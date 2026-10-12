@@ -10,24 +10,27 @@ frozen entries. Both enter `do_train_impl`, which selects workers, installs a
 dedicated pool and progress context, and runs one fresh attempt with at most one
 identity-reuse retry. The Trainer implementation builds and replaces the model
 from `train_vocab` results. Tests enter the real core with explicit workers and
-inspect the successful result's test-only trace.
+inspect the successful Vocabulary's test-only trace. The builder directly owns
+the trainer it returns; default option values have one definition.
 
 Read `train_attempt` for the complete workflow: initialize identities and a
 borrowed corpus plan, build the compressed occurrence index, materialize endpoints
 when merges are needed, call `merge_next` for each complete compatible round,
-collect its committed records, then publish the model parts. Merge joins snapshot
+advance progress from its committed rule count, then publish the model parts.
+Vocabulary owns the committed ID history. Merge joins snapshot
 preparation before endpoint writes and joins those writes before index updates.
 A collision with a previously activated identity discards the fresh attempt and
 restarts from original input and the retained alphabet. Errors and restart requests
 return no trace or speculative model parts. Zero-merge calls retain numeric and
 initial-index checks without allocating corpus slots; all successful paths release
 large attempt structures before building output. Special tokens are cloned once
-by the successful attempt when assembling its final result.
+at the successful output exit, which translates ordered rules into string pairs.
 
 The implementation is divided by the knowledge each module owns:
 
 - [vocabulary.rs](vocabulary.rs) owns strings, alphabet interpretation, decorated
-  IDs, initial activation metadata, alphabet selection, and canonical output.
+  IDs, initial activation metadata, alphabet selection, committed rule history,
+  and canonical output.
 - [corpus.rs](corpus.rs) owns fixed coordinates, token endpoints, weights, and
   ID activation and occurrence spans. Initial ID metadata moves here once;
   merge selection and geometry use this same activation record.
@@ -37,16 +40,23 @@ The implementation is divided by the knowledge each module owns:
   Only this module converts full-u64 occurrence coordinates
   to checked resident indices. Its `fresh_matches` iterator filters stale starts
   and returns matches with weights, keeping prefetch and weight-region caching
-  inside each reader.
+  inside each reader. Fresh neighbor facts accompany each match. Its `cohort`
+  plan binds historical positions to word owners and gives parallel reader chunks,
+  keeping candidate seeks, whole-word scanning and virtual left neighbors private.
+  Merge consumes complete results and keeps selection membership, length gates
+  and shared-edge ownership decisions.
 - [index.rs](index.rs) owns exact priority correction, count shards, signed reuse
   ledgers, one owning candidate queue, and complete birth publication.
   `InitialPairCounts` chooses dense or sparse storage from the plan's token count.
-  Initial edges are consumed as a standard iterator; count overflow stays with
+  Index owner count follows the current training pool without caller configuration.
+  Initial chunks bind whole-word edge iterators and progress units; range
+  assembly stays private. Count overflow stays with
   the index rather than being forwarded through a corpus callback.
 - [merge.rs](merge.rs) owns compatible selection, read-only preparation, local
   event aggregation, and a complete joined round. `BpeTrainer::merge_next` selects
-  and consumes its private Batch, returning finish, restart, or committed records
-  only after index publication; the coordinator collects records and progress.
+  and consumes its private Batch, committing ordered history to Vocabulary and
+  returning finish, restart, or the accepted count only after index publication.
+  The coordinator advances progress without assembling rule output.
 - [positions.rs](positions.rs) owns sorted full-u64 streams and restart blocks.
   Producers append directly to compressed leaves backed by `SmallVec<[u8; 16]>`;
   byte width alone determines whether storage spills. `concat` consumes ordered

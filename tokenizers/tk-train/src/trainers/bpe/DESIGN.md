@@ -7,23 +7,24 @@ flow. `do_train` and `train_vocab` borrow a `WordCountsView` and enter it direct
 the Trainer implementation adapts `train_vocab` results into a replacement model.
 The private `train_attempt` owns the vocabulary, corpus and pair index for one attempt.
 Tests exercise this same coordinator with explicit workers and inspect its successful
-result, whose trace field exists only under `cfg(test)`. No test callback enters
+Vocabulary, whose trace field exists only under `cfg(test)`. No test callback enters
 the production call chain.
 `BpeTrainer::merge_next` in `merge.rs` contains selection and the complete joined
 round. Its private Batch owns the occurrence lists of selected rules; consuming
 preparation releases them before writes. The method returns Finished,
-RestartForReuse or Committed with ordered `MergeRecord` scalars only after the
-whole round succeeds. Selection scratch retires before preparation. The trainer then
-appends merges and its test-only trace and advances progress by the accepted rule
-count. Selection may already mutate identities and activation; errors discard the
+RestartForReuse or Committed with the accepted rule count only after the
+whole round succeeds. Selection scratch retires before preparation. Vocabulary
+owns ordered rule history; merge appends a batch and its test-only trace after
+index publication. The trainer advances progress by the accepted rule count.
+Selection may already mutate identities and activation; errors discard the
 whole attempt rather than rolling back those changes. Merge first prepares
 owned writes and neighbor changes in parallel and joins all readers. Only after
 successful preparation does it apply endpoint writes in parallel; those writers
 join before `PairIndex::commit` aggregates births and updates count owners in
 parallel, then publishes their owning candidates. Preparation and
 application remain separate passes so every reader observes the same corpus.
-Records copy pairs and test-only count/replacement scalars before consuming
-preparation. They retain no Candidate or Positions, so selected occurrence lists
+Batch output copies pairs and test-only count/replacement scalars before consuming
+preparation. It retains no Candidate or Positions, so selected occurrence lists
 retire before endpoint writes and publication. Counts describe the certified
 selection priority; repeated historical cohorts remain separate ordered records.
 Each nonempty commit attempt introduces one small record allocation (at most 256 pairs
@@ -69,8 +70,11 @@ and runs alone. Selecting a previously activated result during a fresh attempt c
 an immediate restart; vocabulary, index, corpus, traces and merges from that attempt
 are abandoned. The core permits one fresh-to-reuse switch. A restart request from
 the reuse attempt is an internal invariant error. The successful attempt clones
-special tokens once and returns the final TrainingResult with its test-only trace;
-the outer coordinator returns that same result.
+returns the Vocabulary with committed ID rules and its test-only trace.
+The public BPE exits translate rules into string pairs, publish vocabulary and
+clone special tokens once after success and after large attempt storage retires.
+The builder directly owns a BpeTrainer and returns it by move; trainer defaults
+are defined once, without a second configuration schema or field-copy protocol.
 
 The input view is borrowed and unchanged. Feed aggregation, serialization and
 public thread/parallelism settings are handled by the trainer entry. Training creates
@@ -98,14 +102,19 @@ equal-weight regions. Reuse keeps word starts for cohort scan domains.
 CorpusPlan exposes its token count without choosing a counting representation.
 `InitialPairCounts` owns the dense-versus-sparse choice and its domain: at most
 256 IDs use dense pair keys; larger domains use a sparse table.
-`CorpusPlan::initial_edges` lazily returns pair/coordinate/weight triples in word
-order. Each count task consumes them directly and stops on its own count error;
+`CorpusPlan::initial_chunks` returns indexed parallel edge readers paired with
+word counts. Word ranges and pair/coordinate/weight generation remain private.
+Each count task consumes its reader directly and stops on its own count error;
 Corpus does not own a counting callback or forward counting errors.
-`CohortPreparation::prepare` initializes one task, scans its words and finishes
-neighbor events through a single entry point. Its private context keeps writes,
-neighbor aggregation and geometry together; `prepare_word` retains the sequential
-scan and its evolving previous neighbor. The publication floor is only needed at
-task completion and stays out of the scan context.
+Progress advances by the bound word count only after a successful count task.
+The plan owns the attempt's fresh/reuse mode; PairIndex reads it from the plan,
+so index ledgers and materialized word directories cannot receive conflicting
+mode arguments. Index chooses its owner count from the current training pool,
+without another caller-supplied thread count. `Corpus::cohort` binds historical
+positions to their word owners in one plan; its standard parallel chunks preserve
+the original word partition. Reuse preparation consumes each reader, applies
+length admission, aggregates neighbors and returns deferred writes. Corpus owns
+the sequential scan and its evolving logical previous neighbor.
 
 Fresh task inputs carry a rule rank and a borrowed position fragment; the snapshot
 resolves the rule by rank. `record_neighbors` keeps both sides of one match together:
@@ -113,11 +122,18 @@ between adjacent selected matches, the left match owns the shared boundary and
 emits both final replacement IDs. The right match skips its left event, including
 across task boundaries. Ordinary selected rules use exact pair keys; self-pairs
 use membership in the separately selected nonoverlapping starts.
+The fresh reader returns physical neighbors and adjacent input pairs together
+with each match. Only ordinary input pairs read the additional pair endpoints;
+AA receives the preceding same-width start and checks accepted-start membership.
+Merge owns edge selection without assembling multiple Corpus queries or
+interpreting endpoint slots and separators.
 
 Preparation uses Rayon `map_init` to reuse private directories within each
 parallel task. Each side maps neighbor IDs to u32 change-entry indices. A cached
 index is valid only when the current task has a group at that index with the same
 neighbor ID. Stale indices need no reset, including after failed preparation.
+The neighbor accumulator sizes these borrowed directories during construction;
+callers do not need a separate initialization step.
 These indices do not represent positions. The directories have no shared scratch lock or
 assumption relating Rayon worker indices to an external directory array.
 
@@ -137,12 +153,22 @@ representative ID spans. Activation means that an ID has ever been used, even
 after its last occurrence is consumed.
 
 `Corpus::fresh_matches` accepts nondecreasing coordinates and returns valid
-matches with their word weights. It converts coordinates to resident indices,
+matches with their word weights and neighbor facts. It converts coordinates to resident indices,
 keeps at most 16 prefetched positions ahead, caches fixed pair geometry and
 reuses weight regions. Stale starts do not query weights. Every refill follows
 one pop, preserving the bounded queue. Merge consumes this iterator inside each
 preparation task; all readers finish before endpoint writes. AA overlap selection
 uses `fresh_matcher` separately so rejected overlapping starts do not add reads.
+
+The private cohort reader borrows the plan's word owners and Positions stream.
+It seeks candidates until aliases or a length gate require whole-word scans,
+and advances over stale positions using occurrence spans. Its left neighbor may
+be a replacement accepted earlier in the same word; its right neighbor always
+comes from the unchanged endpoint snapshot. A candidate jump reconstructs the
+left neighbor from physical endpoints; an adjacent accepted match retains the
+virtual replacement. Each result carries the match, weight and neighbor values,
+without allocating a decoded coordinate or result list. All results are consumed
+within preparation, before any endpoint writes.
 
 Lists store u64 coordinates. A physical allocation still has resident usize and
 isize bounds, enforced before construction. The position codec does not narrow

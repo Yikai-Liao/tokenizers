@@ -20,6 +20,9 @@ pub(super) struct Vocabulary {
     // supporting both text lookup and direct lookup by ID with the same hasher.
     tokens: IndexSet<CompactString, RandomState>,
     prefix: Option<String>,
+    merges: Vec<Pair>,
+    #[cfg(test)]
+    pub(super) trace: super::Trace,
 }
 
 /// Immutable character/decorated-ID tables shared by counting and materialization.
@@ -67,9 +70,16 @@ impl DecoratedIds {
 /// before token lookup tables and corpus storage are allocated.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(super) struct Alphabet {
-    pub(super) characters: Vec<(char, bool)>,
+    characters: Vec<(char, bool)>,
     complete: bool,
     observed_specials: Vec<char>,
+}
+
+impl Alphabet {
+    #[cfg(test)]
+    pub(super) fn characters(&self) -> &[(char, bool)] {
+        &self.characters
+    }
 }
 
 impl Vocabulary {
@@ -82,6 +92,9 @@ impl Vocabulary {
         let mut vocabulary = Self {
             tokens: IndexSet::with_capacity_and_hasher(trainer.vocab_size, RandomState::default()),
             prefix: trainer.continuing_subword_prefix.clone(),
+            merges: Vec::new(),
+            #[cfg(test)]
+            trace: Vec::new(),
         };
         let mut spans = Vec::new();
         // 1. Reserve special IDs before inserting the codepoint-ordered alphabet.
@@ -155,18 +168,24 @@ impl Vocabulary {
         self.insert_token(text)
     }
 
-    pub(super) fn into_model_parts(self, merges: Vec<Pair>) -> (Vocab, Merges) {
+    /// Record a complete successful round in selection order, including reused IDs.
+    pub(super) fn commit_merges(&mut self, pairs: Vec<Pair>) {
+        self.merges.extend(pairs);
+    }
+
+    pub(super) fn into_model_parts(self) -> (Vocab, Merges) {
+        let Self { tokens, merges, .. } = self;
         let merges = merges
             .into_iter()
             .map(|(left, right)| {
                 (
-                    self.tokens[left as usize].to_string(),
-                    self.tokens[right as usize].to_string(),
+                    tokens[left as usize].to_string(),
+                    tokens[right as usize].to_string(),
                 )
             })
             .collect();
         (
-            self.tokens
+            tokens
                 .into_iter()
                 .enumerate()
                 .map(|(id, token)| (token.to_string(), id as u32))
@@ -348,12 +367,12 @@ impl InitialTokenIds {
         !self.prefix && !self.suffix
     }
 
-    pub(super) fn plain_id(&self, character: char) -> Option<u32> {
+    fn plain_id(&self, character: char) -> Option<u32> {
         let id = self.characters[character as usize];
         (id != WORD_SEPARATOR_ID).then_some(id)
     }
 
-    pub(super) fn id(&self, character: char, first: bool, last: bool) -> Option<u32> {
+    fn id(&self, character: char, first: bool, last: bool) -> Option<u32> {
         let plain = self.characters[character as usize];
         if plain == WORD_SEPARATOR_ID {
             return None;
@@ -368,14 +387,10 @@ impl InitialTokenIds {
 }
 
 /// Select the alphabet with the existing frequency-tie and codepoint order.
-pub(super) fn select_alphabet(
-    trainer: &BpeTrainer,
-    wc: WordCountsView<'_>,
-    workers: usize,
-) -> Alphabet {
+pub(super) fn select_alphabet(trainer: &BpeTrainer, wc: WordCountsView<'_>) -> Alphabet {
     if trainer.limit_alphabet.is_none() {
         // Keep the unlimited fast path: parallel presence, without frequencies.
-        let observed = observed_characters(wc, workers);
+        let observed = observed_characters(wc);
         let mut present = observed.clone();
         for &character in &trainer.initial_alphabet {
             present.insert(character as usize);
@@ -452,8 +467,9 @@ fn observed_special_characters(trainer: &BpeTrainer, observed: &FixedBitSet) -> 
         .collect()
 }
 
-fn observed_characters(word_counts: WordCountsView<'_>, workers: usize) -> FixedBitSet {
+fn observed_characters(word_counts: WordCountsView<'_>) -> FixedBitSet {
     let words: Vec<_> = word_counts.keys().collect();
+    let workers = rayon::current_num_threads();
     let chunk = words.len().div_ceil(workers).max(1);
     words
         .par_chunks(chunk)
@@ -519,7 +535,7 @@ mod tests {
             ];
             trainer.continuing_subword_prefix = Some(prefix.into());
             trainer.end_of_word_suffix = Some(suffix.into());
-            let alphabet = select_alphabet(&trainer, words.view(), 1);
+            let alphabet = select_alphabet(&trainer, words.view());
             let (mut vocabulary, mut ids) =
                 Vocabulary::initialize(&trainer, words.view(), &alphabet, &None).unwrap();
             let tokens: Vec<_> = vocabulary.tokens.iter().map(|s| s.as_str()).collect();
@@ -551,7 +567,7 @@ mod tests {
         trainer.initial_alphabet = ['é', '🙂'].into();
         trainer.continuing_subword_prefix = Some("前".into());
         trainer.end_of_word_suffix = Some("尾".into());
-        let alphabet = select_alphabet(&trainer, words.view(), 1);
+        let alphabet = select_alphabet(&trainer, words.view());
         let (vocabulary, ids) =
             Vocabulary::initialize(&trainer, words.view(), &alphabet, &None).unwrap();
         assert_eq!(
@@ -577,7 +593,7 @@ mod tests {
             .into_iter()
             .map(|text| AddedToken::from(text, true))
             .collect();
-        let alphabet = select_alphabet(&trainer, words.view(), 4);
+        let alphabet = select_alphabet(&trainer, words.view());
         let (_, ids) = Vocabulary::initialize(&trainer, words.view(), &alphabet, &None).unwrap();
         assert_eq!(&ids.spans[..3], [1, 0, 0]);
         assert_eq!(ids.symbols("猫z").collect::<Vec<_>>(), [0, 1]);
@@ -592,7 +608,11 @@ mod tests {
         );
         let expected: AHashSet<_> = "ASCII中文é🙂𐀀".chars().collect();
         for workers in [1, 4] {
-            let observed = observed_characters(words.view(), workers);
+            let pool = rayon::ThreadPoolBuilder::new()
+                .num_threads(workers)
+                .build()
+                .unwrap();
+            let observed = pool.install(|| observed_characters(words.view()));
             assert_eq!(
                 observed
                     .ones()
@@ -602,6 +622,6 @@ mod tests {
             );
         }
         let words = WordCounts::default();
-        assert_eq!(observed_characters(words.view(), 4).count_ones(..), 0);
+        assert_eq!(observed_characters(words.view()).count_ones(..), 0);
     }
 }

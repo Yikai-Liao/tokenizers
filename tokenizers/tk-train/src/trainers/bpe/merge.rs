@@ -1,35 +1,23 @@
 //! Select compatible rules and complete each batch with joined parallel phases.
 use super::{
-    BpeTrainer, WORD_SEPARATOR_ID, add,
-    corpus::{Corpus, Match},
+    BpeTrainer, add,
+    corpus::{Corpus, FreshMatch},
     index::{Candidate, PairIndex},
     positions::Positions,
     vocabulary::Vocabulary,
 };
 use ahash::{AHashMap, AHashSet};
-use itertools::Itertools;
 use rayon::prelude::*;
 use smallvec::SmallVec;
 use tk_encode::{Result, models::bpe::Pair};
 
-/// Complete-round outcome. Only successful index publication returns records.
+/// Complete-round outcome. Only successful index publication commits history.
 /// Restart discards the attempt, including any speculative selected identities.
 #[derive(Debug)]
 pub(super) enum MergeOutcome {
     Finished,
     RestartForReuse,
-    Committed(Vec<MergeRecord>),
-}
-
-/// Selected-rule scalars returned only after the whole batch commits successfully.
-/// No candidate positions survive preparation through these records.
-#[derive(Debug)]
-pub(super) struct MergeRecord {
-    pub(super) pair: Pair,
-    #[cfg(test)]
-    pub(super) count: u64,
-    #[cfg(test)]
-    pub(super) replacement: u32,
+    Committed(usize),
 }
 
 impl BpeTrainer {
@@ -99,15 +87,18 @@ impl BpeTrainer {
 
         // Capture only bounded scalars before consuming preparation releases the
         // selected candidates. Preserve selection order, including reuse cohorts.
-        let records = batch
+        let records: Vec<_> = batch.rules.iter().map(Rule::pair).collect();
+        let accepted = records.len();
+        #[cfg(test)]
+        let trace: super::Trace = batch
             .rules
             .iter()
-            .map(|rule| MergeRecord {
-                pair: rule.pair(),
-                #[cfg(test)]
-                count: rule.candidate.priority.count,
-                #[cfg(test)]
-                replacement: rule.replacement,
+            .map(|rule| {
+                (
+                    rule.pair(),
+                    rule.candidate.priority.count(),
+                    rule.replacement,
+                )
             })
             .collect();
         let jobs = batch.prepare(corpus, self.max_token_length.unwrap_or(usize::MAX))?;
@@ -119,7 +110,10 @@ impl BpeTrainer {
             })
             .collect();
         index.commit(changes)?;
-        Ok(MergeOutcome::Committed(records))
+        vocabulary.commit_merges(records);
+        #[cfg(test)]
+        vocabulary.trace.extend(trace);
+        Ok(MergeOutcome::Committed(accepted))
     }
 }
 
@@ -179,16 +173,11 @@ struct Directories {
     indices: [Vec<u32>; 2],
 }
 
-impl Directories {
-    fn resize(&mut self, domain: usize) {
-        for values in &mut self.indices {
+impl<'a> Neighbors<'a> {
+    fn new(rule: &'a Rule, domain: usize, directories: &'a mut Directories) -> Self {
+        for values in &mut directories.indices {
             values.resize(domain, u32::MAX);
         }
-    }
-}
-
-impl<'a> Neighbors<'a> {
-    fn new(rule: &'a Rule, directories: &'a mut Directories) -> Self {
         Self {
             rule,
             directories,
@@ -280,22 +269,45 @@ impl Batch {
     }
 
     fn prepare_cohort(self, corpus: &Corpus, limit: usize) -> Result<Vec<Job>> {
-        // 1. Restrict the historical cohort to its unique word owners.
+        // Bind the historical stream and word owners to the joined snapshot.
         let rule = &self.rules[0];
-        let words: Vec<_> = rule
-            .candidate
-            .positions
-            .iter()
-            .map(|p| corpus.word(corpus.resident(p)))
-            .dedup()
-            .collect();
-
-        // 2. Prepare separate word chunks; edits within each word remain ordered.
-        let chunk = words.len().div_ceil(rayon::current_num_threads()).max(1);
-        let jobs = words
-            .par_chunks(chunk)
-            .map_init(Directories::default, |directories, words| -> Result<_> {
-                CohortPreparation::prepare(rule, corpus, words, limit, directories)
+        let cohort = corpus.cohort(&rule.candidate.positions, rule.pair(), rule.replacement);
+        let jobs = cohort
+            .chunks()
+            .map_init(Directories::default, |directories, matches| -> Result<_> {
+                #[cfg(test)]
+                super::tests::observe_worker(super::tests::Phase::ReusePrepare);
+                let mut neighbors = Neighbors::new(rule, corpus.id_count(), directories);
+                let mut starts = SmallVec::new();
+                for occurrence in matches {
+                    let matched = occurrence.matched;
+                    if let Some(previous) = occurrence.previous {
+                        neighbors.record(
+                            true,
+                            previous.id,
+                            previous.id,
+                            previous.start,
+                            occurrence.weight,
+                            previous.span + matched.span() < limit,
+                        )?;
+                    }
+                    if let Some(next) = occurrence.next {
+                        neighbors.record(
+                            false,
+                            next.id,
+                            next.id,
+                            matched.start,
+                            occurrence.weight,
+                            matched.span() + next.span < limit,
+                        )?;
+                    }
+                    starts.push(matched.start);
+                }
+                Ok(Job {
+                    starts,
+                    replacement: rule.replacement,
+                    changes: neighbors.finish(),
+                })
             })
             .collect::<Result<Vec<_>>>()?;
         Ok(jobs)
@@ -329,12 +341,11 @@ impl<'a> FreshSnapshot<'a> {
             let matcher = corpus.fresh_matcher(rule.pair());
             let mut after = 0;
             for coordinate in rule.candidate.positions.iter() {
-                let p = corpus.resident(coordinate);
-                if p >= after
-                    && let Some(matched) = matcher(p, corpus.token(p))
+                if coordinate >= after
+                    && let Some(matched) = matcher(coordinate)
                 {
                     starts.push(coordinate);
-                    after = matched.after;
+                    after = matched.after as u64;
                 }
             }
             FreshMatches::SelfPair(starts)
@@ -395,12 +406,12 @@ impl<'a> FreshSnapshot<'a> {
         #[cfg(test)]
         super::tests::observe_worker(super::tests::Phase::FreshPrepare);
         let rule = &self.batch.rules[rank];
-        directories.resize(self.corpus.id_count());
-        let mut neighbors = Neighbors::new(rule, directories);
+        let mut neighbors = Neighbors::new(rule, self.corpus.id_count(), directories);
         let mut starts = SmallVec::new();
-        for (matched, weight) in self.corpus.fresh_matches(positions, rule.pair()) {
-            self.record_neighbors(&mut neighbors, matched, weight)?;
-            starts.push(matched.start);
+        for occurrence in self.corpus.fresh_matches(positions, rule.pair()) {
+            let start = occurrence.matched.start;
+            self.record_neighbors(&mut neighbors, occurrence)?;
+            starts.push(start);
         }
         Ok(Job {
             starts,
@@ -415,155 +426,58 @@ impl<'a> FreshSnapshot<'a> {
     fn record_neighbors(
         &self,
         neighbors: &mut Neighbors<'_>,
-        matched: Match,
-        weight: u64,
+        occurrence: FreshMatch,
     ) -> Result<()> {
-        let p = matched.start;
+        let FreshMatch {
+            matched,
+            weight,
+            previous,
+            next,
+            adjacent_pairs,
+            preceding_start,
+        } = occurrence;
         // Left edge: register it only if the preceding match does not own it.
-        let prior = self.corpus.token(p - 1);
-        if prior != WORD_SEPARATOR_ID {
-            let span = self.corpus.id_span(prior);
-            let before = p - span;
+        if let Some(prior) = previous {
             let merging = match &self.matches {
                 FreshMatches::SelfPair(starts) => {
-                    p >= matched.span()
-                        && starts.binary_search(&((p - matched.span()) as u64)).is_ok()
+                    preceding_start.is_some_and(|start| starts.binary_search(&start).is_ok())
                 }
                 FreshMatches::Ordinary(selected) => {
-                    before != 0 && selected.contains_key(&(self.corpus.token(before - 1), prior))
+                    adjacent_pairs[0].is_some_and(|pair| selected.contains_key(&pair))
                 }
             };
             if !merging {
                 neighbors.record(
                     true,
-                    prior,
-                    prior,
-                    before,
+                    prior.id,
+                    prior.id,
+                    prior.start,
                     weight,
-                    span + matched.span() < self.limit,
+                    prior.span + matched.span() < self.limit,
                 )?;
             }
         }
 
         // Right edge: include the following match's replacement when selected.
-        let next = self.corpus.token(matched.after);
-        if next != WORD_SEPARATOR_ID {
+        if let Some(next) = next {
             let replacement = match &self.matches {
                 FreshMatches::SelfPair(starts) => starts
                     .binary_search(&(matched.after as u64))
                     .is_ok()
                     .then_some(neighbors.rule.replacement),
-                FreshMatches::Ordinary(selected) => selected
-                    .get(&(
-                        next,
-                        self.corpus.token(matched.after + self.corpus.id_span(next)),
-                    ))
-                    .copied(),
+                FreshMatches::Ordinary(selected) => {
+                    adjacent_pairs[1].and_then(|pair| selected.get(&pair).copied())
+                }
             };
-            let born = replacement.unwrap_or(next);
+            let born = replacement.unwrap_or(next.id);
             neighbors.record(
                 false,
-                next,
+                next.id,
                 born,
-                p,
+                matched.start,
                 weight,
                 matched.span() + self.corpus.id_span(born) < self.limit,
             )?;
-        }
-        Ok(())
-    }
-}
-
-/// One reuse task's sequential word scans, deferred writes and neighbor events.
-/// Borrows the joined corpus and rule; all words in this task share its admission
-/// policy and directories. Finishing transfers both outputs without applying them.
-struct CohortPreparation<'task> {
-    starts: SmallVec<[usize; 2]>,
-    neighbors: Neighbors<'task>,
-    corpus: &'task Corpus,
-    limit: usize,
-}
-
-impl<'task> CohortPreparation<'task> {
-    fn prepare(
-        rule: &'task Rule,
-        corpus: &'task Corpus,
-        words: &[usize],
-        limit: usize,
-        directories: &'task mut Directories,
-    ) -> Result<Job> {
-        #[cfg(test)]
-        super::tests::observe_worker(super::tests::Phase::ReusePrepare);
-        directories.resize(corpus.id_count());
-        let mut task = Self {
-            starts: SmallVec::new(),
-            neighbors: Neighbors::new(rule, directories),
-            corpus,
-            limit,
-        };
-        for &word in words {
-            task.prepare_word(word)?;
-        }
-        Ok(Job {
-            starts: task.starts,
-            replacement: rule.replacement,
-            changes: task.neighbors.finish(),
-        })
-    }
-
-    // Within one word each accepted merge changes the next left neighbor. Keep
-    // this sequential while separate word chunks prepare in parallel.
-    fn prepare_word(&mut self, word: usize) -> Result<()> {
-        let rule = self.neighbors.rule;
-        let corpus = self.corpus;
-        let limit = self.limit;
-        let neighbors = &mut self.neighbors;
-        let starts = &mut self.starts;
-        let mut previous = None;
-        let mut p = corpus.word_start(word);
-        let mut positions = rule.candidate.positions.iter_from_value(p as u64);
-        while p < corpus.word_end(word) {
-            // Full-word scans are required only after alias reuse or a length
-            // gate. Otherwise the selected cohort defines the scan domain.
-            if !corpus.whole_words() {
-                let Some(coordinate) = positions.find(|&start| start >= p as u64) else {
-                    break;
-                };
-                let next = corpus.resident(coordinate);
-                if next >= corpus.word_end(word) {
-                    break;
-                }
-                if next != p {
-                    let id = corpus.token(next - 1);
-                    previous = (id != WORD_SEPARATOR_ID)
-                        .then(|| (id, next - corpus.span(next - 1), corpus.span(next - 1)));
-                    p = next;
-                }
-            }
-            if let Some(matched) = corpus.matched(p, rule.pair()) {
-                let weight = corpus.word_weight(word);
-                if let Some((id, start, span)) = previous {
-                    neighbors.record(true, id, id, start, weight, span + matched.span() < limit)?;
-                }
-                let next = corpus.token(matched.after);
-                if next != WORD_SEPARATOR_ID {
-                    neighbors.record(
-                        false,
-                        next,
-                        next,
-                        p,
-                        weight,
-                        matched.span() + corpus.span(matched.after) < limit,
-                    )?;
-                }
-                previous = Some((rule.replacement, p, matched.span()));
-                starts.push(matched.start);
-                p = matched.after;
-            } else {
-                let span = corpus.span(p);
-                previous = Some((corpus.token(p), p, span));
-                p += span.max(1);
-            }
         }
         Ok(())
     }
@@ -573,6 +487,7 @@ impl<'task> CohortPreparation<'task> {
 mod tests {
     use super::super::tests::{spans, tokens};
     use super::super::{
+        WORD_SEPARATOR_ID,
         tests::{counts, initialize, trainer},
         word_counts::WordCountsView,
     };
@@ -678,21 +593,20 @@ mod tests {
     }
 
     #[test]
-    fn deletion_only_birth_and_directory_recovery() {
+    fn directory_recovery() {
         let trainer = trainer();
         let words = [("xab".into(), 1)].into_iter().collect();
         let (mut vocabulary, mut corpus, mut index) =
             initialize(&trainer, WordCountsView::from_map(&words), false);
         let rule = select(&mut vocabulary, &mut corpus, &mut index);
         let mut directories = Directories::default();
-        directories.resize(vocabulary.len());
         {
-            let mut neighbors = Neighbors::new(&rule, &mut directories);
+            let mut neighbors = Neighbors::new(&rule, corpus.id_count(), &mut directories);
             neighbors.record(true, 2, 2, 1, u64::MAX, true).unwrap();
             assert!(neighbors.record(true, 2, 2, 1, 1, true).is_err());
         }
         // The old directory index is reused without reset after the failed group.
-        let mut neighbors = Neighbors::new(&rule, &mut directories);
+        let mut neighbors = Neighbors::new(&rule, corpus.id_count(), &mut directories);
         neighbors.record(true, 1, 1, 1, 3, true).unwrap();
         neighbors.record(true, 2, 2, 2, 4, true).unwrap();
         let changes = neighbors.finish();

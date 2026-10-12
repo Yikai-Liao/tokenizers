@@ -445,7 +445,7 @@ mod tests {
     }
 
     #[test]
-    fn merge_sorted_preserves_interleaved_roots_and_duplicates() {
+    fn merge_streams() {
         assert!(Positions::merge_sorted([]).unwrap().is_empty());
         let root = Positions::concat([
             Positions::from_sorted(&[0, 2]).unwrap(),

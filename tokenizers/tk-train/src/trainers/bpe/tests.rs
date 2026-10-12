@@ -3,6 +3,7 @@ use super::*;
 use crate::Trainer;
 use ahash::AHashMap;
 use compact_str::CompactString;
+use rayon::iter::ParallelIterator;
 use std::time::{Duration, Instant};
 
 pub(super) fn counts(items: &[(&str, u64)]) -> AHashMap<CompactString, u64> {
@@ -27,7 +28,9 @@ fn check(trainer: &BpeTrainer, words: &AHashMap<CompactString, u64>) -> Vec<(Pai
             .do_train_impl(WordCountsView::from_map(words), Some(workers))
             .unwrap();
         assert_eq!(actual.trace, expected.trace, "workers={workers}");
-        assert_eq!(actual.parts, expected.parts, "workers={workers}");
+        let (vocab, merges) = actual.into_model_parts();
+        assert_eq!(vocab, expected.parts.0, "workers={workers}");
+        assert_eq!(merges, expected.parts.1, "workers={workers}");
     }
     expected.trace
 }
@@ -37,19 +40,19 @@ pub(super) fn initialize(
     words: WordCountsView<'_>,
     reuse: bool,
 ) -> (Vocabulary, Corpus, PairIndex) {
-    let alphabet = vocabulary::select_alphabet(trainer, words, 1);
+    let alphabet = vocabulary::select_alphabet(trainer, words);
     let (vocabulary, ids) = Vocabulary::initialize(trainer, words, &alphabet, &None).unwrap();
     let plan = CorpusPlan::build(words, ids, trainer, reuse).unwrap();
-    let index = PairIndex::build(&plan, trainer.min_frequency.max(1), 1, reuse, &None).unwrap();
+    let index = PairIndex::build(&plan, trainer.min_frequency.max(1), &None).unwrap();
     (vocabulary, plan.materialize(), index)
 }
 
 pub(super) fn tokens(corpus: &Corpus) -> Vec<u32> {
-    (0..corpus.len()).map(|p| corpus.token(p)).collect()
+    corpus.tokens().collect()
 }
 
 pub(super) fn spans(corpus: &Corpus) -> Vec<usize> {
-    (0..corpus.len()).map(|p| corpus.span(p)).collect()
+    corpus.spans().collect()
 }
 
 #[test]
@@ -215,28 +218,30 @@ fn restart_keeps_alphabet() {
     // Four characters exceed the cutoff; q/z tie for the one unforced slot.
     let words = counts(&[("baaba", 1), ("q", 1), ("z", 1)]);
     let view = WordCountsView::from_map(&words);
-    let retained = vocabulary::select_alphabet(&trainer, view, 1);
-    let selected: Vec<_> = retained.characters.iter().map(|&(c, _)| c).collect();
+    let retained = vocabulary::select_alphabet(&trainer, view);
+    let selected: Vec<_> = retained.characters().iter().map(|&(c, _)| c).collect();
     assert_eq!(selected.len(), 3);
     assert!(selected.contains(&'a') && selected.contains(&'b'));
     assert_ne!(selected.contains(&'q'), selected.contains(&'z'));
     assert!(matches!(
         trainer
-            .train_attempt(view, 1, false, &retained, &None)
+            .train_attempt(view, false, &retained, &None)
             .unwrap(),
         AttemptOutcome::RestartForReuse
     ));
-    let AttemptOutcome::Complete(result) = trainer
-        .train_attempt(view, 1, true, &retained, &None)
-        .unwrap()
+    let AttemptOutcome::Complete(result) =
+        trainer.train_attempt(view, true, &retained, &None).unwrap()
     else {
         panic!("reuse must complete")
     };
     let mut oracle = trainer.clone();
     oracle.initial_alphabet = selected.into_iter().collect();
     let expected = oracle.do_train_reference(&words).unwrap();
-    assert_eq!(result.parts, expected.parts);
     assert_eq!(result.trace, check(&oracle, &words));
+    assert_eq!(
+        result.into_model_parts(),
+        (expected.parts.0, expected.parts.1)
+    );
 }
 
 #[test]
@@ -247,13 +252,14 @@ fn restart_discards_ids() {
     let words = counts(&[("xy", 3), ("uv", 2), ("ab", 1)]);
     let (mut vocabulary, mut corpus, mut index) =
         initialize(&trainer, WordCountsView::from_map(&words), false);
-    let MergeOutcome::Committed(records) = trainer
+    let MergeOutcome::Committed(accepted) = trainer
         .merge_next(&mut vocabulary, &mut corpus, &mut index)
         .unwrap()
     else {
         panic!("reserved XY must commit")
     };
-    assert_eq!((records[0].count, records[0].replacement), (3, 0));
+    assert_eq!(accepted, 1);
+    assert_eq!((vocabulary.trace[0].1, vocabulary.trace[0].2), (3, 0));
     let committed_len = vocabulary.len();
     // UV allocates an ID before AB aliases activated B; both speculative rules
     // and the previously committed attempt must be discarded by the restart.
@@ -269,7 +275,7 @@ fn restart_discards_ids() {
 }
 
 #[test]
-fn feed_training_tokenizer_json_and_encoding_roundtrip() {
+fn tokenizer_roundtrip() {
     use tk_encode::{
         models::bpe::{BpeConfig, PipelineBPE},
         pipeline::{EncodeOptions, PipelineModel, PipelinePreTokenizer, PipelineTokenizer},
@@ -521,8 +527,8 @@ mod reference {
             for token in &self.special_tokens {
                 tokens.insert(token.content.clone());
             }
-            for (character, _) in
-                vocabulary::select_alphabet(self, WordCountsView::from_map(counts), 1).characters
+            for &(character, _) in
+                vocabulary::select_alphabet(self, WordCountsView::from_map(counts)).characters()
             {
                 tokens.insert(character.to_string());
             }
@@ -666,7 +672,7 @@ fn initial_edges() {
     let (_, ids) = Vocabulary::initialize(
         &trainer,
         view,
-        &vocabulary::select_alphabet(&trainer, view, 1),
+        &vocabulary::select_alphabet(&trainer, view),
         &None,
     )
     .unwrap();
@@ -677,10 +683,18 @@ fn initial_edges() {
         ((1, 0), 5, 6),
         ((1, 0), 8, 5),
     ];
-    let mut actual: Vec<_> = plan.initial_edges(0..plan.word_count()).collect();
+    let read = || {
+        let (words, edges) = plan
+            .initial_chunks(usize::MAX)
+            .find_first(|_| true)
+            .unwrap();
+        assert_eq!(words, 5);
+        edges
+    };
+    let mut actual: Vec<_> = read().collect();
     assert_eq!(actual, expected);
     actual.clear();
-    let mut edges = plan.initial_edges(0..plan.word_count());
+    let mut edges = read();
     let result: Result<()> = edges.by_ref().try_for_each(|edge| {
         actual.push(edge);
         if actual.len() == 2 {

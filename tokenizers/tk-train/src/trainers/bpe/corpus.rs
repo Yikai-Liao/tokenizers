@@ -1,6 +1,7 @@
 //! Endpoint tokens retain their original coordinates; span metadata skips holes.
 use super::{
-    BpeTrainer, WORD_SEPARATOR_ID, vocabulary::InitialTokenIds, word_counts::WordCountsView,
+    BpeTrainer, WORD_SEPARATOR_ID, positions::Positions, vocabulary::InitialTokenIds,
+    word_counts::WordCountsView,
 };
 use compact_str::CompactString;
 use itertools::Itertools;
@@ -35,6 +36,67 @@ pub(super) struct Match {
 impl Match {
     pub(super) fn span(self) -> usize {
         self.after - self.start
+    }
+
+    /// Start of an immediately preceding match with the same geometry.
+    fn preceding_start(self) -> Option<u64> {
+        self.start.checked_sub(self.span()).map(|p| p as u64)
+    }
+}
+
+/// A logical neighbor during preparation. Cohort scans may return a replacement
+/// accepted earlier in the same word but not yet written to the snapshot.
+#[derive(Clone, Copy)]
+pub(super) struct Neighbor {
+    pub(super) id: u32,
+    pub(super) start: usize,
+    pub(super) span: usize,
+}
+
+/// One cohort match with the preceding logical and following snapshot neighbors.
+pub(super) struct CohortMatch {
+    pub(super) matched: Match,
+    pub(super) weight: u64,
+    pub(super) previous: Option<Neighbor>,
+    pub(super) next: Option<Neighbor>,
+}
+
+/// One fresh match with the snapshot facts needed for shared-edge selection.
+/// Ordinary pairs include adjacent input pairs; AA includes the preceding
+/// same-width start instead, without reading those extra pair endpoints.
+pub(super) struct FreshMatch {
+    pub(super) matched: Match,
+    pub(super) weight: u64,
+    pub(super) previous: Option<Neighbor>,
+    pub(super) next: Option<Neighbor>,
+    pub(super) adjacent_pairs: [Option<Pair>; 2],
+    pub(super) preceding_start: Option<u64>,
+}
+
+/// Historical cohort word owners and readers bound to one joined snapshot.
+/// Owns only the word directory already needed to partition the scan.
+pub(super) struct Cohort<'a> {
+    corpus: &'a Corpus,
+    positions: &'a Positions,
+    words: Vec<usize>,
+    pair: Pair,
+    replacement: u32,
+}
+
+impl Cohort<'_> {
+    pub(super) fn chunks(
+        &self,
+    ) -> impl IndexedParallelIterator<Item = impl Iterator<Item = CohortMatch> + Send + '_> + '_
+    {
+        let chunk = self
+            .words
+            .len()
+            .div_ceil(rayon::current_num_threads())
+            .max(1);
+        self.words.par_chunks(chunk).map(move |words| {
+            self.corpus
+                .cohort_matches(words, self.positions, self.pair, self.replacement)
+        })
     }
 }
 
@@ -124,7 +186,7 @@ impl<'input> CorpusPlan<'input> {
 
     // Whole words preserve symbol-scan semantics. A single oversized word is
     // admitted alone; otherwise each range has at most `slots` resident slots.
-    pub(super) fn initial_ranges(&self, slots: usize) -> Vec<std::ops::Range<usize>> {
+    fn initial_ranges(&self, slots: usize) -> Vec<std::ops::Range<usize>> {
         let mut ranges = Vec::new();
         let mut begin = 0;
         let n = self.word_count();
@@ -155,7 +217,24 @@ impl<'input> CorpusPlan<'input> {
         self.ids.token_count()
     }
 
-    pub(super) fn initial_edges(
+    pub(super) fn reuse(&self) -> bool {
+        self.reuse
+    }
+
+    /// Bound whole-word edge streams in coordinate order, with progress units.
+    /// A count task consumes its stream directly and owns any counting error.
+    pub(super) fn initial_chunks(
+        &self,
+        slots: usize,
+    ) -> impl IndexedParallelIterator<
+        Item = (usize, impl Iterator<Item = (Pair, u64, u64)> + Send + '_),
+    > + '_ {
+        self.initial_ranges(slots)
+            .into_par_iter()
+            .map(move |range| (range.len(), self.initial_edges(range)))
+    }
+
+    fn initial_edges(
         &self,
         range: std::ops::Range<usize>,
     ) -> impl Iterator<Item = (Pair, u64, u64)> + '_ {
@@ -201,11 +280,21 @@ impl<'input> CorpusPlan<'input> {
 }
 
 impl Corpus {
-    pub(super) fn len(&self) -> usize {
+    #[cfg(test)]
+    pub(super) fn tokens(&self) -> impl Iterator<Item = u32> + '_ {
+        (0..self.len()).map(|p| self.token(p))
+    }
+
+    #[cfg(test)]
+    pub(super) fn spans(&self) -> impl Iterator<Item = usize> + '_ {
+        (0..self.len()).map(|p| self.span(p))
+    }
+
+    fn len(&self) -> usize {
         self.tokens.len()
     }
 
-    pub(super) fn resident(&self, coordinate: u64) -> usize {
+    fn resident(&self, coordinate: u64) -> usize {
         let position =
             usize::try_from(coordinate).expect("corpus coordinate fits resident indexing");
         assert!(
@@ -216,7 +305,7 @@ impl Corpus {
     }
 
     #[inline]
-    pub(super) fn token(&self, position: usize) -> u32 {
+    fn token(&self, position: usize) -> u32 {
         self.tokens.get(position)
     }
 
@@ -252,24 +341,24 @@ impl Corpus {
         )
     }
 
-    pub(super) fn word(&self, position: usize) -> usize {
+    fn word(&self, position: usize) -> usize {
         self.starts.partition_point(|&start| start <= position) - 1
     }
 
-    pub(super) fn word_start(&self, word: usize) -> usize {
+    fn word_start(&self, word: usize) -> usize {
         self.starts[word]
     }
 
-    pub(super) fn word_end(&self, word: usize) -> usize {
+    fn word_end(&self, word: usize) -> usize {
         self.starts.get(word + 1).copied().unwrap_or(self.len()) - 1
     }
 
-    pub(super) fn word_weight(&self, word: usize) -> u64 {
+    fn word_weight(&self, word: usize) -> u64 {
         self.weight_region(self.word_start(word)).0
     }
 
     #[inline]
-    pub(super) fn span(&self, position: usize) -> usize {
+    fn span(&self, position: usize) -> usize {
         self.occurrence_spans.as_ref().map_or_else(
             || self.id_span(self.token(position)),
             |spans| spans[position].load(Ordering::Relaxed),
@@ -286,12 +375,17 @@ impl Corpus {
 
     // Fresh IDs have fixed geometry. Cache it once per preparation task,
     // keeping occurrence-dependent alias matching in matched().
-    pub(super) fn fresh_matcher(&self, pair: Pair) -> impl Fn(usize, u32) -> Option<Match> + '_ {
+    pub(super) fn fresh_matcher(&self, pair: Pair) -> impl Fn(u64) -> Option<Match> + '_ {
+        let matcher = self.fixed_matcher(pair);
+        move |coordinate| matcher(self.resident(coordinate))
+    }
+
+    fn fixed_matcher(&self, pair: Pair) -> impl Fn(usize) -> Option<Match> + '_ {
         debug_assert!(self.occurrence_spans.is_none());
         let left = self.id_span(pair.0);
         let total = left + self.id_span(pair.1);
-        move |position, head| {
-            if head != pair.0
+        move |position| {
+            if self.token(position) != pair.0
                 || left == 0
                 || total == left
                 || position + total >= self.len()
@@ -314,8 +408,8 @@ impl Corpus {
         &'a self,
         coordinates: impl Iterator<Item = u64> + 'a,
         pair: Pair,
-    ) -> impl Iterator<Item = (Match, u64)> + 'a {
-        let matcher = self.fresh_matcher(pair);
+    ) -> impl Iterator<Item = FreshMatch> + 'a {
+        let matcher = self.fixed_matcher(pair);
         let mut positions = coordinates
             .map(move |coordinate| self.resident(coordinate))
             .inspect(move |&p| self.prefetch(p));
@@ -328,17 +422,160 @@ impl Corpus {
             Some(position)
         })
         .filter_map(move |p| {
-            let matched = matcher(p, self.token(p))?;
+            let matched = matcher(p)?;
             let (weight, end) = match weights {
                 Some((weight, end)) if p < end => (weight, end),
                 _ => self.weight_region(p),
             };
             weights = Some((weight, end));
-            Some((matched, weight))
+            let (previous, next) = self.fresh_neighbors(matched);
+            let self_pair = pair.0 == pair.1;
+            let adjacent_pairs = if self_pair {
+                [None, None]
+            } else {
+                [
+                    previous.and_then(|neighbor| self.preceding_pair(neighbor)),
+                    next.and_then(|neighbor| self.following_pair(neighbor)),
+                ]
+            };
+            Some(FreshMatch {
+                matched,
+                weight,
+                previous,
+                next,
+                adjacent_pairs,
+                preceding_start: self_pair.then(|| matched.preceding_start()).flatten(),
+            })
         })
     }
 
-    pub(super) fn matched(&self, position: usize, pair: Pair) -> Option<Match> {
+    /// Physical neighbors of a fresh match in the joined endpoint snapshot.
+    fn fresh_neighbors(&self, matched: Match) -> (Option<Neighbor>, Option<Neighbor>) {
+        debug_assert!(self.occurrence_spans.is_none());
+        let prior = self.token(matched.start - 1);
+        let previous = (prior != WORD_SEPARATOR_ID).then(|| {
+            let span = self.id_span(prior);
+            Neighbor {
+                id: prior,
+                start: matched.start - span,
+                span,
+            }
+        });
+        let next = self.token(matched.after);
+        let next = (next != WORD_SEPARATOR_ID).then(|| Neighbor {
+            id: next,
+            start: matched.after,
+            span: self.id_span(next),
+        });
+        (previous, next)
+    }
+
+    /// Pair ending with a physical neighbor, excluding word separators.
+    fn preceding_pair(&self, neighbor: Neighbor) -> Option<Pair> {
+        let position = neighbor.start.checked_sub(1)?;
+        let id = self.token(position);
+        (id != WORD_SEPARATOR_ID).then_some((id, neighbor.id))
+    }
+
+    /// Pair starting with a physical neighbor, excluding word separators.
+    fn following_pair(&self, neighbor: Neighbor) -> Option<Pair> {
+        let id = self.token(neighbor.start + neighbor.span);
+        (id != WORD_SEPARATOR_ID).then_some((neighbor.id, id))
+    }
+
+    /// Bind a historical stream to its unique word owners and joined snapshot.
+    /// The plan's chunks provide sequential readers without exposing word IDs.
+    /// Every reader must finish before endpoint writes begin.
+    pub(super) fn cohort<'a>(
+        &'a self,
+        positions: &'a Positions,
+        pair: Pair,
+        replacement: u32,
+    ) -> Cohort<'a> {
+        let words = positions
+            .iter()
+            .map(|p| self.word(self.resident(p)))
+            .dedup()
+            .collect();
+        Cohort {
+            corpus: self,
+            positions,
+            words,
+            pair,
+            replacement,
+        }
+    }
+
+    // Accepted matches advance the logical left neighbor to `replacement`;
+    // right neighbors retain their snapshot IDs. Candidate seeks and whole-word
+    // scans follow the corpus's alias and length-gate geometry.
+    fn cohort_matches<'a>(
+        &'a self,
+        words: &'a [usize],
+        coordinates: &'a Positions,
+        pair: Pair,
+        replacement: u32,
+    ) -> impl Iterator<Item = CohortMatch> + 'a {
+        words.iter().flat_map(move |&word| {
+            let mut previous = None;
+            let mut p = self.word_start(word);
+            let mut positions = coordinates.iter_from_value(p as u64);
+            std::iter::from_fn(move || {
+                while p < self.word_end(word) {
+                    // A seek replaces the virtual neighbor only when it skips
+                    // ahead. Adjacent accepted matches retain the replacement.
+                    if !self.whole_words {
+                        let coordinate = positions.find(|&start| start >= p as u64)?;
+                        let next = self.resident(coordinate);
+                        if next >= self.word_end(word) {
+                            return None;
+                        }
+                        if next != p {
+                            let id = self.token(next - 1);
+                            previous = (id != WORD_SEPARATOR_ID).then(|| Neighbor {
+                                id,
+                                start: next - self.span(next - 1),
+                                span: self.span(next - 1),
+                            });
+                            p = next;
+                        }
+                    }
+                    if let Some(matched) = self.matched(p, pair) {
+                        let weight = self.word_weight(word);
+                        let id = self.token(matched.after);
+                        let next = (id != WORD_SEPARATOR_ID).then(|| Neighbor {
+                            id,
+                            start: matched.after,
+                            span: self.span(matched.after),
+                        });
+                        let occurrence = CohortMatch {
+                            matched,
+                            weight,
+                            previous,
+                            next,
+                        };
+                        previous = Some(Neighbor {
+                            id: replacement,
+                            start: p,
+                            span: matched.span(),
+                        });
+                        p = matched.after;
+                        return Some(occurrence);
+                    }
+                    let span = self.span(p);
+                    previous = Some(Neighbor {
+                        id: self.token(p),
+                        start: p,
+                        span,
+                    });
+                    p += span.max(1);
+                }
+                None
+            })
+        })
+    }
+
+    fn matched(&self, position: usize, pair: Pair) -> Option<Match> {
         if self.token(position) != pair.0 {
             return None;
         }
@@ -353,10 +590,6 @@ impl Corpus {
             start: position,
             after,
         })
-    }
-
-    pub(super) fn whole_words(&self) -> bool {
-        self.whole_words
     }
 
     /// Activation history persists after an ID's last occurrence is consumed.
@@ -538,6 +771,12 @@ mod tests {
         let s = WORD_SEPARATOR_ID;
         for order in 0..3 {
             let corpus = fixture(&[s, 0, 0, 1, 0, 0, 1, s], &[2, 1, 3], None);
+            let (before, after) = corpus.fresh_neighbors(Match { start: 1, after: 4 });
+            assert!(before.is_none());
+            assert_eq!(corpus.following_pair(after.unwrap()), Some((0, 1)));
+            let (before, after) = corpus.fresh_neighbors(Match { start: 4, after: 7 });
+            assert_eq!(corpus.preceding_pair(before.unwrap()), Some((0, 1)));
+            assert!(after.is_none());
             corpus.apply_merges(&[], 2);
             assert_eq!(tokens(&corpus), [s, 0, 0, 1, 0, 0, 1, s]);
             match order {
@@ -562,7 +801,7 @@ mod tests {
     }
 
     #[test]
-    fn fresh_matches_skip_stale_starts_and_keep_word_weights() {
+    fn fresh_reader() {
         let s = WORD_SEPARATOR_ID;
         let input: Vec<_> = std::iter::once(s)
             .chain((0..40).flat_map(|_| [0, 1, s]))
@@ -576,7 +815,7 @@ mod tests {
         // separators. Weights cross repeated, unit and zero-weight regions.
         let matches: Vec<_> = corpus
             .fresh_matches(0..input.len() as u64, (0, 1))
-            .map(|(matched, weight)| (matched.start, matched.after, weight))
+            .map(|m| (m.matched.start, m.matched.after, m.weight))
             .collect();
         let expected: Vec<_> = (0..40)
             .filter(|&word| word != 0 && word != 21)
@@ -602,6 +841,41 @@ mod tests {
     }
 
     #[test]
+    fn cohort_reader() {
+        let s = WORD_SEPARATOR_ID;
+        let input = [s, 0, 1, 0, 1, 2, 0, 1, s];
+        for whole_words in [false, true] {
+            let mut corpus = fixture(&input, &[1, 1, 1, 2], None);
+            corpus.whole_words = whole_words;
+            for coordinates in [&[1, 1, 2, 3, 4, 6][..], &[1, 1, 2, 3, 4][..]] {
+                let positions = Positions::from_sorted(coordinates).unwrap();
+                let matches: Vec<_> = corpus
+                    .cohort(&positions, (0, 1), 3)
+                    .chunks()
+                    .flat_map_iter(|matches| matches)
+                    .map(|m| {
+                        (
+                            m.matched.start,
+                            m.matched.after,
+                            m.weight,
+                            [m.previous, m.next].map(|n| n.map(|n| (n.id, n.start, n.span))),
+                        )
+                    })
+                    .collect();
+                let mut expected = vec![
+                    (1, 3, 1, [None, Some((0, 3, 1))]),
+                    (3, 5, 1, [Some((3, 1, 2)), Some((2, 5, 1))]),
+                ];
+                if whole_words || coordinates.last() == Some(&6) {
+                    expected.push((6, 8, 1, [Some((2, 5, 1)), None]));
+                }
+                assert_eq!(matches, expected);
+                assert_eq!(tokens(&corpus), input);
+            }
+        }
+    }
+
+    #[test]
     fn initial_ranges() {
         let words = ahash::AHashMap::new();
         let view = WordCountsView::from_map(&words);
@@ -609,7 +883,7 @@ mod tests {
         let (_, ids) = super::super::vocabulary::Vocabulary::initialize(
             &trainer,
             view,
-            &super::super::vocabulary::select_alphabet(&trainer, view, 1),
+            &super::super::vocabulary::select_alphabet(&trainer, view),
             &None,
         )
         .unwrap();
