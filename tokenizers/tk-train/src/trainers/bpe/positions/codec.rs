@@ -8,14 +8,18 @@ pub(super) fn gap_width(gap: u64) -> usize {
 }
 
 /// Leaf reserves the complete append before changing its logical contents.
-#[inline]
-pub(super) fn append_gap(bytes: &mut SmallVec<[u8; 16]>, mut gap: u64) {
-    debug_assert!(bytes.capacity() - bytes.len() >= gap_width(gap));
-    while gap >= 128 {
-        bytes.push(gap as u8 | 128);
-        gap >>= 7;
+#[inline(always)]
+pub(super) fn append_gap(bytes: &mut SmallVec<[u8; 16]>, gap: u64) {
+    let width = gap_width(gap);
+    debug_assert!(bytes.capacity() - bytes.len() >= width);
+    let start = bytes.len();
+    for _ in 0..width {
+        bytes.push(0);
     }
-    bytes.push(gap as u8);
+    let mut end = start;
+    leb128fmt::encode_uint_slice::<u64, 64>(gap, bytes.as_mut_slice(), &mut end)
+        .expect("internal reserved gap buffer");
+    debug_assert_eq!(end, bytes.len());
 }
 
 pub(super) fn read_absolute(bytes: &[u8]) -> u64 {
@@ -40,6 +44,7 @@ impl<'a> Cursor<'a> {
 
 impl Iterator for Cursor<'_> {
     type Item = u64;
+    #[inline]
     fn next(&mut self) -> Option<u64> {
         if self.bytes.is_empty() {
             return None;
@@ -48,18 +53,10 @@ impl Iterator for Cursor<'_> {
             self.position = read_absolute(self.bytes);
             self.bytes = &self.bytes[8..];
         } else {
-            let mut delta = 0u64;
-            let mut shift = 0;
-            loop {
-                let byte = self.bytes[0];
-                self.bytes = &self.bytes[1..];
-                delta |= u64::from(byte & 127) << shift;
-                if byte < 128 {
-                    break;
-                }
-                shift += 7;
-            }
-            self.position += delta;
+            let mut consumed = 0;
+            self.position += leb128fmt::decode_uint_slice::<u64, 64>(self.bytes, &mut consumed)
+                .expect("internal LEB128 gap");
+            self.bytes = &self.bytes[consumed..];
         }
         self.index += 1;
         Some(self.position)
