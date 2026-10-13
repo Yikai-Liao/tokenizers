@@ -20,6 +20,12 @@ fn main() -> Result<(), Error> {
     }
     tk_encode::parallelism::set_num_threads(job.workers);
     tk_encode::parallelism::set_parallelism(true);
+    // The supervisor configures the ambient training pool before this process
+    // starts. set_num_threads alone only configures the encoder's separate pool.
+    let workers_effective = tk_encode::parallelism::current_num_threads();
+    if workers_effective != job.workers {
+        return Err("ambient Rayon workers differ from job; set RAYON_NUM_THREADS before starting the runner".into());
+    }
     let mut result = match job.mode.as_str() {
         "prepare" => core::prepare(&job)?,
         "core" => core::run(&job)?,
@@ -33,6 +39,7 @@ fn main() -> Result<(), Error> {
     fields.insert("input_id".into(), job.input_id.into());
     fields.insert("mode".into(), job.mode.into());
     fields.insert("workers_requested".into(), job.workers.into());
+    fields.insert("workers_effective".into(), workers_effective.into());
     fields.insert(
         "effective_affinity".into(),
         serde_json::to_value(protocol::affinity()?)?,

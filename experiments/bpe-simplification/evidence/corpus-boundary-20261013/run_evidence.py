@@ -4,6 +4,7 @@ from collections import Counter
 import gzip
 import hashlib
 import json
+import os
 from pathlib import Path
 import subprocess
 import time
@@ -25,7 +26,9 @@ def run(binary, arm, case, workers, repeat, group, train_repeats=1):
     path.write_text(json.dumps(job, indent=2))
     begin = time.monotonic()
     with (directory / 'stdout.log').open('w') as out, (directory / 'stderr.log').open('w') as err:
-        result = subprocess.run([str(binary), str(path)], stdout=out, stderr=err)
+        # Training follows the ambient/global Rayon pool, like upstream.
+        environment = dict(os.environ, RAYON_NUM_THREADS=str(workers), TOKENIZERS_PARALLELISM="true")
+        result = subprocess.run([str(binary), str(path)], stdout=out, stderr=err, env=environment)
     assert result.returncode == 0, (directory, result.returncode)
     output = json.loads((directory / 'stdout.log').read_text())
     model = directory / 'model.json'

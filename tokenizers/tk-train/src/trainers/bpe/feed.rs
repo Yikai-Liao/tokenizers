@@ -19,11 +19,7 @@ where
     F: Fn(&str) -> Result<Vec<String>> + Sync,
 {
     let hash = RandomState::default();
-    let workers = if get_parallelism() {
-        current_num_threads()
-    } else {
-        1
-    };
+    let workers = super::num_workers();
     let parallel = workers > 1;
     let shared = parallel.then(|| SharedCounts::with_hasher(hash.clone()));
     let flush = |counts: &mut CountMap| {
@@ -70,7 +66,7 @@ where
         (!batch.is_empty()).then_some(batch)
     });
     batches
-        .maybe_par_bridge()
+        .maybe_par_bridge_cond(parallel)
         .flat_map_iter(std::iter::IntoIterator::into_iter)
         .fold(|| Ok(CountMap::with_hasher(hash.clone())), accumulate)
         .map(|counts| -> Result<()> {

@@ -3,8 +3,21 @@ use super::*;
 use crate::Trainer;
 use ahash::AHashMap;
 use compact_str::CompactString;
-use rayon::iter::ParallelIterator;
 use std::time::{Duration, Instant};
+
+// Explicit pools belong to tests and callers, never to the trainer.
+impl BpeTrainer {
+    fn do_train_with_workers(
+        &self,
+        words: WordCountsView<'_>,
+        workers: usize,
+    ) -> Result<Vocabulary> {
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(workers)
+            .build()?
+            .install(|| self.do_train_impl(words))
+    }
+}
 
 pub(super) fn counts(items: &[(&str, u64)]) -> AHashMap<CompactString, u64> {
     items
@@ -25,7 +38,7 @@ fn check(trainer: &BpeTrainer, words: &AHashMap<CompactString, u64>) -> Vec<(Pai
     let expected = trainer.do_train_reference(words).unwrap();
     for workers in [1, 4, 8] {
         let actual = trainer
-            .do_train_impl(WordCountsView::from(words), Some(workers))
+            .do_train_with_workers(WordCountsView::from(words), workers)
             .unwrap();
         assert_eq!(actual.trace, expected.trace, "workers={workers}");
         let (vocab, merges) = actual.into_parts();
@@ -148,7 +161,7 @@ fn count_boundaries() {
     let mut trainer = trainer();
     for weight in [u32::MAX as u64 + 17, u64::MAX] {
         let result = trainer
-            .do_train_impl(WordCountsView::from(&counts(&[("ab", weight)])), Some(2))
+            .do_train_with_workers(WordCountsView::from(&counts(&[("ab", weight)])), 2)
             .unwrap();
         assert_eq!(result.trace, [((0, 1), weight, 2)]);
     }
@@ -346,24 +359,33 @@ fn tokenizer_roundtrip() {
     }
 }
 
-// Child processes isolate public settings; their ambient pool deliberately differs
-// from the pool requested for training. Both fresh and alias preparation execute.
+// Child processes isolate public settings. Training must reuse the ambient pool
+// and stay on the calling worker when repository parallelism is disabled.
 use std::sync::atomic::{AtomicUsize, Ordering};
 static EXPECTED_WORKERS: AtomicUsize = AtomicUsize::new(0);
+static EXPECTED_THREAD: AtomicUsize = AtomicUsize::new(usize::MAX);
 static OBSERVED_PHASES: AtomicUsize = AtomicUsize::new(0);
 /// Worker-executed stages observed by the public training subprocess test.
-/// These markers check the requested pool inside materialization and both
-/// preparation paths, rather than inferring it from the caller's ambient pool.
+/// Check ambient pool reuse at each stage and caller-thread execution in serial mode.
 pub(super) enum Phase {
     Materialize,
     FreshPrepare,
     ReusePrepare,
+    Alphabet,
+    InitialCount,
+    InitialOwner,
+    Commit,
+    Retire,
 }
 
 pub(super) fn observe_worker(phase: Phase) {
     let expected = EXPECTED_WORKERS.load(Ordering::Relaxed);
     if expected != 0 {
         assert_eq!(rayon::current_num_threads(), expected);
+        let thread = EXPECTED_THREAD.load(Ordering::Relaxed);
+        if thread != usize::MAX {
+            assert_eq!(rayon::current_thread_index(), Some(thread));
+        }
         OBSERVED_PHASES.fetch_or(1 << phase as usize, Ordering::Relaxed);
     }
 }
@@ -372,6 +394,15 @@ fn run_child(test: &str, child: &str, setting: &str) -> std::process::Output {
     let result = std::process::Command::new(std::env::current_exe().unwrap())
         .args(["--exact", test, "--nocapture"])
         .env(child, setting)
+        .env(
+            "TOKENIZERS_PARALLELISM",
+            if setting == "env_false" {
+                "false"
+            } else {
+                "true"
+            },
+        )
+        .env("RAYON_NUM_THREADS", "3")
         .output()
         .unwrap();
     assert!(
@@ -390,7 +421,15 @@ fn public_feed_pools_and_progress() {
         run_public_training_child(&setting);
         return;
     }
-    for setting in ["parallel", "serial", "one", "zero", "silent", "restart"] {
+    for setting in [
+        "parallel",
+        "serial",
+        "env_false",
+        "one",
+        "zero",
+        "silent",
+        "restart",
+    ] {
         check_progress_records(setting, run_child(TEST, CHILD, setting));
     }
 }
@@ -398,18 +437,24 @@ fn public_feed_pools_and_progress() {
 // The child owns process-wide parallelism settings; the parent checks its output.
 fn run_public_training_child(setting: &str) {
     use tk_encode::utils::progress::ProgressFormat;
-    let parallel = setting != "serial";
-    let workers = if setting == "one" { 1 } else { 4 };
-    tk_encode::parallelism::set_num_threads(workers);
-    tk_encode::parallelism::set_parallelism(parallel);
-    EXPECTED_WORKERS.store(if parallel { workers } else { 1 }, Ordering::Relaxed);
+    let parallel = !matches!(setting, "serial" | "env_false");
+    let workers = if setting == "one" { 1 } else { 2 };
+    // The encoder's separate pool setting must not replace the training caller's pool.
+    tk_encode::parallelism::set_num_threads(4);
+    if setting != "env_false" {
+        tk_encode::parallelism::set_parallelism(parallel);
+    }
+    EXPECTED_WORKERS.store(workers, Ordering::Relaxed);
     rayon::ThreadPoolBuilder::new()
-        .num_threads(2)
+        .num_threads(workers)
         .build()
         .unwrap()
         .install(|| {
-            if matches!(setting, "parallel" | "serial" | "one") {
-                check_feed_success(2, parallel);
+            if !parallel {
+                EXPECTED_THREAD.store(rayon::current_thread_index().unwrap(), Ordering::Relaxed);
+            }
+            if matches!(setting, "parallel" | "serial" | "env_false" | "one") {
+                check_feed_success(workers, parallel);
                 if setting == "parallel" {
                     check_feed_partial_failure();
                 }
@@ -427,10 +472,21 @@ fn run_public_training_child(setting: &str) {
             OBSERVED_PHASES.store(0, Ordering::Relaxed);
             let (_, merges, _) = trainer.do_train(&words).unwrap();
             assert_eq!(
-                OBSERVED_PHASES.load(Ordering::Relaxed),
-                if setting == "zero" { 0 } else { 0b111 }
+                OBSERVED_PHASES.load(Ordering::Relaxed) & 0xbf,
+                if setting == "zero" { 0b10111000 } else { 0xbf }
             );
+            assert_eq!(has_parallelism_been_used(), parallel);
             println!("BPE_MERGE_COUNT={}", merges.len());
+            let trainer = BpeTrainer::builder()
+                .vocab_size(96)
+                .min_frequency(1)
+                .show_progress(false)
+                .build();
+            let words = counts(&[("ab".repeat(8192).as_str(), 3), ("xyxy", 2)]);
+            let actual = trainer.do_train(&words).unwrap();
+            assert_eq!(actual, trainer.do_train_reference(&words).unwrap().parts);
+            assert_ne!(OBSERVED_PHASES.load(Ordering::Relaxed) & 0x40, 0);
+            assert_eq!(has_parallelism_been_used(), parallel);
         });
 }
 
@@ -703,7 +759,7 @@ fn initial_edges() {
         ((1, 0), 8, 5),
     ];
     let read = || {
-        let (words, edges) = plan.chunks(usize::MAX).find_first(|_| true).unwrap();
+        let (words, edges) = plan.chunks(usize::MAX).into_iter().next().unwrap();
         assert_eq!(words, 5);
         edges.map(|edge| (edge.pair, edge.coordinate, edge.weight))
     };

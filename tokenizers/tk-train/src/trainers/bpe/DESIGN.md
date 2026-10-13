@@ -2,21 +2,22 @@
 
 ## Joined rounds and ownership
 
-`BpeTrainer::do_train_impl` in `mod.rs` owns the dedicated pool, progress and retry
-flow. `do_train` and `train_vocab` borrow a `WordCountsView` and enter it directly;
-the Trainer implementation adapts `train_vocab` results into a replacement model.
+`BpeTrainer::do_train_impl` in `mod.rs` owns progress and retry flow; it uses
+conditional iterators in the ambient Rayon pool. `do_train` and `train_vocab`
+borrow a `WordCountsView` and enter it directly; the Trainer implementation adapts
+`train_vocab` results into a replacement model.
 The private `train_attempt` owns the vocabulary, corpus and pair index for one attempt.
-Tests exercise this same coordinator with explicit workers and inspect its successful
-Vocabulary, whose trace field exists only under `cfg(test)`. No test callback enters
-the production call chain.
-`BpeTrainer::merge_next` in `merge.rs` selects a compatible priority prefix,
+Tests install caller-owned pools around this same coordinator and inspect its
+successful Vocabulary, whose trace field exists only under `cfg(test)`. No test
+callback enters the production call chain.
+`BpeTrainer::merge_next` in `mod.rs` selects a compatible priority prefix,
 resolves and activates identities, then publishes the complete round. It moves
 `SelectedMerge { pair, merged_id, positions }` into `Corpus::merge`, commits
 returned changes to the index, and appends ordered history to the vocabulary.
 Its result is Finished, RestartForReuse, or Committed with the rule count. The
 trainer uses that count for progress. Selection scratch retires before preparation.
 
-The private `merging.rs` owns preparation and endpoint application.
+The private `merge.rs` owns preparation and endpoint application.
 Consuming preparation releases selected streams, task iterators and shared lookups
 before writes. All readers join before application; all writers join before index
 publication. Pair records and test-only priority scalars are captured before moving

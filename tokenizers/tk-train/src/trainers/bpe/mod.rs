@@ -3,7 +3,6 @@
 mod corpus;
 mod feed;
 mod index;
-mod merge;
 #[cfg(feature = "parity-aware-bpe")]
 pub mod parity_trainer;
 mod positions;
@@ -19,9 +18,8 @@ pub use parity_trainer::{ParityBpeTrainer, ParityBpeTrainerBuilder, ParityVarian
 use crate::Trainer;
 use ahash::{AHashMap, AHashSet};
 use compact_str::CompactString;
-use corpus::{Corpus, CorpusPlan};
+use corpus::{Corpus, CorpusPlan, SelectedMerge};
 use index::PairIndex;
-use merge::MergeOutcome;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use tk_encode::vocab::bucket_added_vocabulary::AddedToken;
@@ -246,7 +244,7 @@ impl BpeTrainer {
     /// Returns the training errors described in [`Self::do_train`], including the
     /// signed input limits for nonempty affixes even when no merge is needed.
     pub fn train_vocab(&self) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
-        self.do_train_impl(WordCountsView::from(&self.words), None)
+        self.do_train_impl(WordCountsView::from(&self.words))
             .map(|vocabulary| {
                 let (vocab, merges) = vocabulary.into_parts();
                 (vocab, merges, self.special_tokens.clone())
@@ -260,10 +258,9 @@ impl BpeTrainer {
     /// WordPiece trainer consumes the vocabulary without building BPE merge tables.
     /// The input map is borrowed and remains unchanged.
     ///
-    /// Training uses a dedicated Rayon pool sized by
-    /// [`tk_encode::parallelism::num_threads`], or one worker when parallelism is
-    /// disabled. [`Trainer::feed`] uses the ambient pool, including one installed
-    /// by the caller.
+    /// Training and [`Trainer::feed`] use the ambient Rayon pool, including one
+    /// installed by the caller. Conditional iterators and sorting respect
+    /// [`tk_encode::parallelism::get_parallelism`].
     ///
     /// # Errors
     ///
@@ -281,56 +278,114 @@ impl BpeTrainer {
     /// affixes or identity reuse, there is no total-`u64` mass limit when every
     /// individual pair count fits.
     ///
-    /// Pool creation, progress setup, vocabulary or corpus size bounds, and fallible position
+    /// Progress setup, vocabulary or corpus size bounds, and fallible position
     /// storage operations can also return errors. Feed counting and limited-alphabet
     /// frequency accumulation use ordinary addition rather than these checked rules.
     pub fn do_train(
         &self,
         word_counts: &AHashMap<CompactString, u64>,
     ) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
-        self.do_train_impl(WordCountsView::from(word_counts), None)
+        self.do_train_impl(WordCountsView::from(word_counts))
             .map(|vocabulary| {
                 let (vocab, merges) = vocabulary.into_parts();
                 (vocab, merges, self.special_tokens.clone())
             })
     }
 
-    fn do_train_impl(
+    fn do_train_impl(&self, words: WordCountsView<'_>) -> Result<Vocabulary> {
+        let progress = self.setup_progress();
+        let alphabet = vocabulary::select_alphabet(self, words);
+        let outcome = self.train_attempt(words, TrainingMode::Fresh, &alphabet, &progress)?;
+        let outcome = match outcome {
+            // Retry borrows the same alphabet so frequency ties cannot select
+            // different characters after an identity-reuse restart.
+            AttemptOutcome::RestartForReuse => {
+                self.train_attempt(words, TrainingMode::Reuse, &alphabet, &progress)?
+            }
+            complete @ AttemptOutcome::Complete(_) => complete,
+        };
+        match outcome {
+            AttemptOutcome::Complete(result) => Ok(result),
+            AttemptOutcome::RestartForReuse => Err(
+                "BPE internal invariant violated: identity-reuse attempt requested another restart"
+                    .into(),
+            ),
+        }
+    }
+
+    /// Selection can reserve identities and consume candidates. Errors or restart
+    /// discard the attempt; successful corpus writes precede index publication.
+    fn merge_next(
         &self,
-        words: WordCountsView<'_>,
-        workers: Option<usize>,
-    ) -> Result<Vocabulary> {
-        let workers = workers.unwrap_or_else(|| {
-            if get_parallelism() {
-                num_threads().max(1)
-            } else {
-                1
-            }
-        });
-        let pool = rayon::ThreadPoolBuilder::new()
-            .num_threads(workers)
-            .build()?;
-        pool.install(|| {
-            let progress = self.setup_progress();
-            let alphabet = vocabulary::select_alphabet(self, words);
-            let outcome = self.train_attempt(words, TrainingMode::Fresh, &alphabet, &progress)?;
-            let outcome = match outcome {
-                // A previously activated ID requires historical cohorts. Discard
-                // the fresh attempt; both attempts borrow the same alphabet so
-                // frequency ties cannot select different characters on retry.
-                AttemptOutcome::RestartForReuse => {
-                    self.train_attempt(words, TrainingMode::Reuse, &alphabet, &progress)?
-                }
-                complete @ AttemptOutcome::Complete(_) => complete,
+        vocabulary: &mut Vocabulary,
+        corpus: &mut Corpus,
+        index: &mut PairIndex,
+    ) -> Result<MergeOutcome> {
+        let reuse = index.mode() == TrainingMode::Reuse;
+        let mut selected = Vec::new();
+        let cap = if reuse {
+            1
+        } else {
+            256.min(self.vocab_size - vocabulary.len())
+        };
+        let mut heads = AHashSet::new();
+        let mut tails = AHashSet::new();
+        #[cfg(test)]
+        let mut pending_trace: Trace = Vec::new();
+
+        // Keep the priority prefix: crossed endpoints stop selection, while shared
+        // heads/tails may batch. DESIGN.md records the newborn priority argument.
+        while selected.len() < cap {
+            let Some(priority) = index.peek() else {
+                break;
             };
-            match outcome {
-                AttemptOutcome::Complete(result) => Ok(result),
-                AttemptOutcome::RestartForReuse => Err(
-                    "BPE internal invariant violated: identity-reuse attempt requested another restart"
-                        .into(),
-                ),
+            let pair = priority.pair();
+            if !selected.is_empty()
+                && (pair.0 == pair.1 || tails.contains(&pair.0) || heads.contains(&pair.1))
+            {
+                break;
             }
-        })
+            let resolved = vocabulary.resolve(pair)?;
+            if !reuse
+                && resolved.already_in_vocabulary
+                && corpus.has_been_activated(resolved.merged_id)
+            {
+                return Ok(MergeOutcome::RestartForReuse);
+            }
+            // An existing identity may precede old IDs; run it alone without the
+            // compatible-prefix argument about newly appended IDs.
+            if resolved.already_in_vocabulary && !selected.is_empty() {
+                break;
+            }
+            let candidate = index.take(priority);
+            corpus.activate(pair, resolved.merged_id);
+            #[cfg(test)]
+            pending_trace.push((pair, candidate.priority.count(), resolved.merged_id));
+            selected.push(SelectedMerge {
+                pair,
+                merged_id: resolved.merged_id,
+                positions: candidate.positions,
+            });
+            if resolved.already_in_vocabulary || pair.0 == pair.1 {
+                break;
+            }
+            heads.insert(pair.0);
+            tails.insert(pair.1);
+        }
+        if selected.is_empty() {
+            return Ok(MergeOutcome::Finished);
+        }
+        drop(heads);
+        drop(tails);
+
+        let merges: Vec<_> = selected.iter().map(|rule| rule.pair).collect();
+        let rule_count = merges.len();
+        let changes = corpus.merge(selected)?;
+        index.commit(changes)?;
+        vocabulary.commit(merges);
+        #[cfg(test)]
+        vocabulary.trace.extend(pending_trace);
+        Ok(MergeOutcome::Committed { rule_count })
     }
 
     fn train_attempt(
@@ -449,6 +504,15 @@ impl BpeTrainer {
     }
 }
 
+// Do not initialize or query Rayon when repository parallelism is disabled.
+fn num_workers() -> usize {
+    if get_parallelism() {
+        current_num_threads()
+    } else {
+        1
+    }
+}
+
 fn add(count: &mut u64, amount: u64) -> Result<()> {
     *count = count
         .checked_add(amount)
@@ -464,6 +528,14 @@ type ModelParts = (Vocab, Merges, Vec<AddedToken>);
 struct TrainingResult {
     parts: ModelParts,
     trace: Trace,
+}
+
+/// Only successful index publication commits the current round's history.
+#[derive(Debug)]
+enum MergeOutcome {
+    Finished,
+    RestartForReuse,
+    Committed { rule_count: usize },
 }
 
 enum AttemptOutcome {

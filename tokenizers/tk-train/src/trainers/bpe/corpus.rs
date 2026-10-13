@@ -1,6 +1,6 @@
 //! Endpoint tokens retain their original coordinates; span metadata skips holes.
-#[path = "merging.rs"]
-mod merging;
+#[path = "merge.rs"]
+mod merge;
 
 use super::{
     TrainingMode, WORD_SEPARATOR_ID, positions::Positions, vocabulary::InitialTokenIds,
@@ -12,7 +12,7 @@ use rayon::prelude::*;
 use std::collections::VecDeque;
 use std::ops::Range;
 use std::sync::atomic::{AtomicU16, AtomicU32, AtomicUsize, Ordering};
-use tk_encode::{Result, models::bpe::Pair};
+use tk_encode::{Result, models::bpe::Pair, parallelism::*};
 
 /// Resident token endpoints at fixed original coordinates, with weights and spans.
 /// Merges leave holes; span metadata skips them without moving other occurrences.
@@ -93,10 +93,14 @@ impl<'input> CorpusPlan<'input> {
         birth_pair_span_limit: Option<usize>,
     ) -> Result<Self> {
         let mut words: Vec<_> = words.iter().collect();
-        words.par_sort_unstable_by(|a, b| b.1.cmp(a.1));
+        if get_parallelism() {
+            words.par_sort_unstable_by(|a, b| b.1.cmp(a.1));
+        } else {
+            words.sort_unstable_by(|a, b| b.1.cmp(a.1));
+        }
         let words = words.into_boxed_slice();
         let mut starts: Vec<_> = words
-            .par_iter()
+            .maybe_par_iter()
             .map(|(word, _)| ids.symbol_count(word))
             .collect();
         let mut weight_runs = Vec::<WeightRun>::new();
@@ -192,11 +196,11 @@ impl<'input> CorpusPlan<'input> {
     pub(super) fn chunks(
         &self,
         slots: usize,
-    ) -> impl IndexedParallelIterator<Item = (usize, impl Iterator<Item = InitialEdge> + Send + '_)> + '_
-    {
+    ) -> Vec<(usize, impl Iterator<Item = InitialEdge> + Send + '_)> {
         self.ranges(slots)
-            .into_par_iter()
+            .into_iter()
             .map(move |range| (range.len(), self.edges(range)))
+            .collect()
     }
 
     fn edges(&self, range: Range<usize>) -> impl Iterator<Item = InitialEdge> + '_ {
@@ -218,7 +222,7 @@ impl<'input> CorpusPlan<'input> {
     pub(super) fn materialize(self) -> Corpus {
         let tokens = Slots::new(self.length, self.slot_bound);
         self.words
-            .par_iter()
+            .maybe_par_iter()
             .enumerate()
             .for_each(|(word, (text, _))| {
                 #[cfg(test)]
@@ -607,7 +611,7 @@ mod tests {
             match order {
                 0 => corpus.apply(&[1, 4], 2),
                 1 => corpus.apply(&[4, 1], 2),
-                _ => [1, 4].par_iter().for_each(|&p| corpus.apply(&[p], 2)),
+                _ => [1, 4].maybe_par_iter().for_each(|&p| corpus.apply(&[p], 2)),
             }
             assert_eq!(tokens(&corpus), [s, 2, 0, 2, 2, 0, 2, s]);
             assert_eq!(corpus.id_metadata, [2, 1, 3]);

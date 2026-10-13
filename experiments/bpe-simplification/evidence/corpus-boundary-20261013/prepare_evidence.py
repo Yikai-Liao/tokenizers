@@ -33,8 +33,16 @@ def diagnostic(root, dest, mode):
         shutil.copytree(root / directory, dest / directory,
                         ignore=shutil.ignore_patterns('target', '.git'), dirs_exist_ok=True)
     source = dest / BPE
-    merge = source / 'merge.rs'
-    modern = (source / 'corpus/merging.rs').exists()
+    # Support the original nested layout, the flat files, and the coordinator
+    # now owned by BpeTrainer in mod.rs. Keep historical source arms usable.
+    mod = source / 'mod.rs'
+    merge = mod if 'fn merge_next(' in mod.read_text() else source / 'merge.rs'
+    preparation = next((source / name for name in
+                        ('corpus/merging.rs', 'merging.rs', 'merge.rs')
+                        if (source / name).is_file()
+                        and 'impl Corpus {' in (source / name).read_text()), None)
+    modern = preparation is not None
+    coordinator_prefix = '' if merge == mod else 'super::'
     if mode == 'trace':
         if modern:
             anchor = 'let candidate = index.take(priority);'
@@ -60,7 +68,7 @@ def diagnostic(root, dest, mode):
         ''' + batch_anchor)
         commit = 'vocabulary.commit(merges);' if modern else 'vocabulary.commit_merges(records);'
         replace(merge, commit, commit + '\n        eprintln!("BPE_DIAG {}", serde_json::json!({"kind":"commit"}));')
-        preparation = source / 'corpus/merging.rs' if modern else merge
+        preparation = preparation if modern else merge
         anchor = 'let range = corpus.word_range(word);' if modern else 'let mut p = corpus.word_start(word);'
         replace(preparation, anchor, 'eprintln!("BPE_DIAG {}", serde_json::json!({"kind":"reuse_scan", "whole_words":corpus.whole_words()}));\n    ' + anchor)
         # Observe configuration before any alias activation in each attempt.
@@ -81,7 +89,7 @@ fn diagnostic_stage(stage: &str, begin: std::time::Instant, tasks: usize, starts
 }
 ''')
         if modern:
-            prep = source / 'corpus/merging.rs'
+            prep = preparation
             replace(prep, 'let chunks = self.prepare(selected)?;', '''let begin = std::time::Instant::now();
         super::super::diagnostic_stage("before_prepare", begin, selected.len(), 0, 0);
         let chunks = self.prepare(selected)?;
@@ -108,7 +116,7 @@ fn diagnostic_stage(stage: &str, begin: std::time::Instant, tasks: usize, starts
             replace(merge, 'index.commit(changes)?;', 'super::diagnostic_stage("apply", begin, 0, 0, 0);\n        index.commit(changes)?;')
         replace(merge, 'index.commit(changes)?;', '''let begin = std::time::Instant::now();
         index.commit(changes)?;
-        super::diagnostic_stage("commit", begin, 0, 0, 0);''')
+        ''' + coordinator_prefix + '''diagnostic_stage("commit", begin, 0, 0, 0);''')
         index = source / 'index.rs'
         replace(index, 'drop(shards);', '''super::diagnostic_stage("before_retire", std::time::Instant::now(), queue.len(), 0, 0);
         drop(shards);''')
@@ -127,16 +135,16 @@ fn diagnostic_stage(stage: &str, begin: std::time::Instant, tasks: usize, starts
         LAYOUT.call_once(|| eprintln!("BPE_TYPES {}", serde_json::json!({
             "resolved_merge":std::mem::size_of::<''' + identity + '''>()})));''')
         if modern:
-            preparation = source / 'corpus/merging.rs'
             # These probes inspect the actual inferred task type in each arm.
-            replace(preparation, 'tasks\n                    .into_par_iter()', '''eprintln!("BPE_LAYOUT {}", serde_json::json!({"shape":"AA",
+            iterator = '.into_maybe_par_iter()' if '.into_maybe_par_iter()' in preparation.read_text() else '.into_par_iter()'
+            replace(preparation, 'tasks\n                    ' + iterator, '''eprintln!("BPE_LAYOUT {}", serde_json::json!({"shape":"AA",
                     "positions":original_positions_len, "positions_live":false,
                     "accepted_len":accepted_starts.len(), "accepted_capacity":accepted_starts.capacity(),
                     "tasks":tasks.len(), "task_capacity":tasks.capacity(),
                     "task_bytes":tasks.first().map_or(0, std::mem::size_of_val),
                     "selected_bytes":std::mem::size_of::<SelectedMerge>()}));
                 tasks
-                    .into_par_iter()''')
+                    ''' + iterator)
             replace(preparation, '// Rule order, then restart-aligned chunk order, remains indexed.', '''eprintln!("BPE_LAYOUT {}", serde_json::json!({"shape":"AB", "positions":total,
                     "positions_live":true, "lookup_len":merged_ids_by_pair.len(),
                     "lookup_capacity":merged_ids_by_pair.capacity(), "tasks":tasks.len(),

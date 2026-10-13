@@ -5,12 +5,21 @@ and special tokens. It preserves weighted pair selection and compatible batch
 execution while using one endpoint/event protocol.
 
 The public entry points and private training methods share [mod.rs](mod.rs).
-`do_train` borrows the caller's map; `train_vocab` borrows stored counts. Both enter `do_train_impl`, which selects workers, installs a
-dedicated pool and progress context, and runs one fresh attempt with at most one
+`do_train` borrows the caller's map; `train_vocab` borrows stored counts. Both enter
+`do_train_impl`, which sets up progress and runs one fresh attempt with at most one
 identity-reuse retry. The Trainer implementation builds and replaces the model
-from `train_vocab` results. Tests enter the real core with explicit workers and
-inspect the successful Vocabulary's test-only trace. The builder directly owns
-the trainer it returns; default option values have one definition.
+from `train_vocab` results. Tests install caller-owned Rayon pools around the real
+core and inspect the successful Vocabulary's test-only trace. The builder directly
+owns the trainer it returns; default option values have one definition.
+
+Feed and training share the upstream conditional-iterator policy from
+`tk_encode::parallelism`. They use the ambient Rayon pool (the global pool or
+one installed by the caller), respect `TOKENIZERS_PARALLELISM` and
+`set_parallelism`, and record parallel iterator use. Corpus sorting and index
+retirement also select serial execution when parallelism is disabled.
+`set_num_threads` configures the encoder's separate pool; training worker counts
+come from the ambient pool, as in upstream. The benchmark supervisor supplies
+`RAYON_NUM_THREADS` before starting each runner.
 
 Read `train_attempt` for the complete workflow: initialize identities and a
 borrowed corpus plan, build the compressed occurrence index, materialize endpoints
@@ -40,7 +49,7 @@ The implementation is divided by the knowledge each module owns:
   to checked resident indices. Its `fresh_matches` iterator filters stale starts
   and returns matches with weights, keeping prefetch and weight-region caching
   inside each reader. Matches use `Range<usize>` in original coordinates.
-  Its private [merging.rs](merging.rs) consumes selected payloads,
+  Its private [merge.rs](merge.rs) consumes selected payloads,
   prepares neighbor events and historical word scans, then applies joined writes.
   Candidate seeks, virtual left neighbors, length gates and shared-edge ownership
   stay beside the geometry they interpret. Mode and the optional birth-span limit
@@ -51,7 +60,7 @@ The implementation is divided by the knowledge each module owns:
   Index derives its owner count from the current training pool.
   Initial chunks bind whole-word edge iterators and progress units; range
   assembly stays private. Index performs checked count accumulation.
-- [merge.rs](merge.rs) owns compatible selection and round publication.
+- [mod.rs](mod.rs) owns compatible selection and round publication.
   `BpeTrainer::merge_next` resolves identities, activates IDs, moves ordered
   `SelectedMerge` payloads into `corpus.merge`, then commits returned changes to
   the index and ordered rules to the vocabulary. It returns finish, restart, or
@@ -63,7 +72,7 @@ The implementation is divided by the knowledge each module owns:
   streams while retaining duplicates. Coordinates through `u64::MAX` are preserved.
   Readers use `iter()`, `iter_from(coordinate)` and `chunks(target_len)`.
   Chunks are independently consumable iterators with private restart alignment
-  and already located starting leaves. The nested codec owns sequential decoding.
+  and already located starting leaves. The inline private codec owns sequential decoding.
 - [feed.rs](feed.rs) owns streaming batches and word aggregation. Named
   `flush` and `accumulate` closures share callback/error handling. Serial input
   moves its completed map into owned entries; parallel folds flush at 2048

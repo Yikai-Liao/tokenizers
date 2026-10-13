@@ -10,7 +10,7 @@ use dary_heap::OctonaryHeap;
 use rayon::prelude::*;
 use smallvec::SmallVec;
 use std::cmp::{Ordering, Reverse};
-use tk_encode::{Result, models::bpe::Pair, utils::progress::ProgressBar};
+use tk_encode::{Result, models::bpe::Pair, parallelism::*, utils::progress::ProgressBar};
 
 /// Queue key: highest count first, then smallest pair.
 /// Field order defines heap priority; occurrence payloads never break ties.
@@ -132,12 +132,17 @@ impl PairIndex {
     ) -> Result<Self> {
         let mode = corpus.mode();
         let reuse = mode == TrainingMode::Reuse;
-        let shard_count = rayon::current_num_threads();
+        let shard_count = super::num_workers();
         let domain = corpus.token_count();
         // 1. Count and freeze each whole-word range independently.
         let pieces = corpus
             .chunks(if cfg!(test) { 16 } else { 1 << 24 })
-            .map(|(words, edges)| count_chunk(domain, words, edges, progress))
+            .into_maybe_par_iter()
+            .map(|(words, edges)| {
+                #[cfg(test)]
+                super::tests::observe_worker(super::tests::Phase::InitialCount);
+                count_chunk(domain, words, edges, progress)
+            })
             .collect::<Result<Vec<_>>>()?;
 
         // 2. Route ordered fragments to the sole count owner of each pair.
@@ -150,8 +155,12 @@ impl PairIndex {
 
         // 3. Aggregate counts, admit pairs, and concatenate their sorted fragments.
         let owners = routed
-            .into_par_iter()
-            .map(|pieces| build_owner(pieces, minimum.max(1), reuse))
+            .into_maybe_par_iter()
+            .map(|pieces| {
+                #[cfg(test)]
+                super::tests::observe_worker(super::tests::Phase::InitialOwner);
+                build_owner(pieces, minimum.max(1), reuse)
+            })
             .collect::<Result<Vec<_>>>()?;
         let (shards, candidates): (Vec<_>, Vec<_>) = owners.into_iter().unzip();
         Ok(Self {
@@ -169,13 +178,19 @@ impl PairIndex {
     /// Consume remaining candidates at the successful training boundary.
     /// Ordinary retirement and errors keep their normal, synchronous drops.
     pub(super) fn retire(self) {
+        #[cfg(test)]
+        super::tests::observe_worker(super::tests::Phase::Retire);
         let Self { shards, queue, .. } = self;
         drop(shards);
-        queue
-            .into_vec()
-            .into_par_iter()
-            .with_min_len(4096)
-            .for_each(drop);
+        if get_parallelism() {
+            queue
+                .into_vec()
+                .into_par_iter()
+                .with_min_len(4096)
+                .for_each(drop);
+        } else {
+            drop(queue);
+        }
     }
 
     pub(super) fn peek(&mut self) -> Option<Priority> {
@@ -223,9 +238,13 @@ impl PairIndex {
         let floor = self.floor;
         let births = self
             .shards
-            .par_iter_mut()
+            .maybe_par_iter_mut()
             .filter(|shard| !shard.actions.is_empty())
-            .map(|shard| shard.commit(&events, reuse, floor))
+            .map(|shard| {
+                #[cfg(test)]
+                super::tests::observe_worker(super::tests::Phase::Commit);
+                shard.commit(&events, reuse, floor)
+            })
             .collect::<Result<Vec<_>>>()?;
 
         // 3. Publish only after all owners join, in the same owner traversal order.
@@ -568,7 +587,7 @@ mod tests {
                             trainer
                                 .merge_next(&mut vocabulary, &mut corpus, &mut index)
                                 .unwrap(),
-                            super::super::merge::MergeOutcome::Committed { rule_count: 1 }
+                            super::super::MergeOutcome::Committed { rule_count: 1 }
                         ));
                         let committed = vocabulary.merges().to_vec();
                         let trace = vocabulary.trace.clone();

@@ -5,7 +5,7 @@ use ahash::{AHashMap, RandomState};
 use compact_str::CompactString;
 use fixedbitset::FixedBitSet;
 use indexmap::IndexSet;
-use rayon::prelude::*;
+use tk_encode::parallelism::*;
 use tk_encode::{
     Result,
     models::bpe::{Merges, Pair, Vocab},
@@ -496,11 +496,13 @@ fn observed_special_characters(trainer: &BpeTrainer, observed: &FixedBitSet) -> 
 
 fn observed_characters(word_counts: WordCountsView<'_>) -> FixedBitSet {
     let words: Vec<_> = word_counts.keys().collect();
-    let workers = rayon::current_num_threads();
+    let workers = super::num_workers();
     let chunk = words.len().div_ceil(workers).max(1);
     words
-        .par_chunks(chunk)
+        .maybe_par_chunks(chunk)
         .map(|chunk| {
+            #[cfg(test)]
+            super::tests::observe_worker(super::tests::Phase::Alphabet);
             let mut present = FixedBitSet::with_capacity(0x110000);
             for word in chunk {
                 for character in word.chars() {
