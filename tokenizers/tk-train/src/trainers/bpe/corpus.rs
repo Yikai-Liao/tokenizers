@@ -1,6 +1,9 @@
 //! Endpoint tokens retain their original coordinates; span metadata skips holes.
+mod merging;
+
 use super::{
-    BpeTrainer, WORD_SEPARATOR_ID, vocabulary::InitialTokenIds, word_counts::WordCountsView,
+    TrainingMode, WORD_SEPARATOR_ID, positions::Positions, vocabulary::InitialTokenIds,
+    word_counts::WordCountsView,
 };
 use compact_str::CompactString;
 use itertools::Itertools;
@@ -22,18 +25,37 @@ pub(super) struct Corpus {
     spans: Vec<usize>,
     occurrence_spans: Option<Box<[AtomicUsize]>>,
     whole_words: bool,
+    mode: TrainingMode,
+    birth_pair_span_limit: Option<usize>,
+}
+
+/// The selected historical payload moves here without its priority snapshot.
+pub(super) struct SelectedMerge {
+    pub(super) pair: Pair,
+    pub(super) merged_id: u32,
+    pub(super) positions: Positions,
+}
+
+/// Ordered removal and birth; checked weights must remain separate at commit.
+pub(super) struct PairChange<P> {
+    pub(super) removed: Pair,
+    pub(super) born: Pair,
+    pub(super) removed_weight: u64,
+    pub(super) born_weight: u64,
+    pub(super) positions: P,
+    pub(super) birth_group: usize,
 }
 
 /// One accepted occurrence's start and exclusive merged end.
 /// Coordinates describe the preparation snapshot, before endpoint writes apply.
 #[derive(Clone, Copy)]
-pub(super) struct Match {
-    pub(super) start: usize,
-    pub(super) after: usize,
+struct Match {
+    start: usize,
+    after: usize,
 }
 
 impl Match {
-    pub(super) fn span(self) -> usize {
+    fn span(self) -> usize {
         self.after - self.start
     }
 }
@@ -50,7 +72,8 @@ pub(super) struct CorpusPlan<'input> {
     ids: InitialTokenIds,
     length: usize,
     slot_bound: usize,
-    reuse: bool,
+    mode: TrainingMode,
+    birth_pair_span_limit: Option<usize>,
 }
 
 /// One original adjacent edge in the filtered symbol coordinate space.
@@ -64,8 +87,9 @@ impl<'input> CorpusPlan<'input> {
     pub(super) fn build(
         words: WordCountsView<'input>,
         ids: InitialTokenIds,
-        trainer: &BpeTrainer,
-        reuse: bool,
+        target_vocab_size: usize,
+        mode: TrainingMode,
+        birth_pair_span_limit: Option<usize>,
     ) -> Result<Self> {
         let mut words: Vec<_> = words.iter().collect();
         words.par_sort_unstable_by(|a, b| b.1.cmp(a.1));
@@ -96,7 +120,7 @@ impl<'input> CorpusPlan<'input> {
         if length > isize::MAX as usize / std::mem::size_of::<AtomicU32>() {
             return Err("BPE corpus exceeds resident allocation bounds".into());
         }
-        if (reuse || !ids.is_plain())
+        if (mode == TrainingMode::Reuse || !ids.is_plain())
             && (mass > i64::MAX as u128
                 || words.iter().any(|(_, weight)| **weight > i64::MAX as u64))
         {
@@ -111,17 +135,18 @@ impl<'input> CorpusPlan<'input> {
                     weight_regions.get(i + 1).map_or(length, |r| r.0),
                 )
             });
-        let slot_bound = ids.token_count().max(trainer.vocab_size);
+        let slot_bound = ids.token_count().max(target_vocab_size);
         Ok(Self {
             starts: starts.into_boxed_slice(),
             weight_regions: weight_regions.into_boxed_slice(),
             unit_region,
-            whole_words: trainer.max_token_length.is_some(),
+            whole_words: birth_pair_span_limit.is_some(),
             words,
             ids,
             length,
             slot_bound,
-            reuse,
+            mode,
+            birth_pair_span_limit,
         })
     }
 
@@ -162,8 +187,8 @@ impl<'input> CorpusPlan<'input> {
         self.ids.token_count()
     }
 
-    pub(super) fn reuse(&self) -> bool {
-        self.reuse
+    pub(super) fn mode(&self) -> TrainingMode {
+        self.mode
     }
 
     /// Bound whole-word edge streams in coordinate order, with progress units.
@@ -213,7 +238,7 @@ impl<'input> CorpusPlan<'input> {
         // Only historical reuse cohorts need a word directory after counting.
         Corpus {
             tokens,
-            starts: if self.reuse {
+            starts: if self.mode == TrainingMode::Reuse {
                 self.starts
             } else {
                 Box::default()
@@ -223,6 +248,8 @@ impl<'input> CorpusPlan<'input> {
             spans: self.ids.into_metadata(),
             occurrence_spans: None,
             whole_words: self.whole_words,
+            mode: self.mode,
+            birth_pair_span_limit: self.birth_pair_span_limit,
         }
     }
 }
@@ -238,11 +265,11 @@ impl Corpus {
         (0..self.len()).map(|p| self.span(p))
     }
 
-    pub(super) fn len(&self) -> usize {
+    fn len(&self) -> usize {
         self.tokens.len()
     }
 
-    pub(super) fn resident(&self, coordinate: u64) -> usize {
+    fn resident(&self, coordinate: u64) -> usize {
         let position =
             usize::try_from(coordinate).expect("corpus coordinate fits resident indexing");
         assert!(
@@ -253,7 +280,7 @@ impl Corpus {
     }
 
     #[inline]
-    pub(super) fn token(&self, position: usize) -> u32 {
+    fn token(&self, position: usize) -> u32 {
         self.tokens.get(position)
     }
 
@@ -289,41 +316,41 @@ impl Corpus {
         )
     }
 
-    pub(super) fn word(&self, position: usize) -> usize {
+    fn word(&self, position: usize) -> usize {
         self.starts.partition_point(|&start| start <= position) - 1
     }
 
-    pub(super) fn word_start(&self, word: usize) -> usize {
+    fn word_start(&self, word: usize) -> usize {
         self.starts[word]
     }
 
-    pub(super) fn word_end(&self, word: usize) -> usize {
+    fn word_end(&self, word: usize) -> usize {
         self.starts.get(word + 1).copied().unwrap_or(self.len()) - 1
     }
 
-    pub(super) fn word_weight(&self, word: usize) -> u64 {
+    fn word_weight(&self, word: usize) -> u64 {
         self.weight_region(self.word_start(word)).0
     }
 
     #[inline]
-    pub(super) fn span(&self, position: usize) -> usize {
+    fn span(&self, position: usize) -> usize {
         self.occurrence_spans.as_ref().map_or_else(
             || self.id_span(self.token(position)),
             |spans| spans[position].load(Ordering::Relaxed),
         )
     }
 
-    pub(super) fn id_count(&self) -> usize {
+    fn id_count(&self) -> usize {
         self.spans.len()
     }
 
-    pub(super) fn id_span(&self, id: u32) -> usize {
+    fn id_span(&self, id: u32) -> usize {
         self.spans[id as usize]
     }
 
     // Fresh IDs have fixed geometry. Cache it once per preparation task,
     // keeping occurrence-dependent alias matching in matched().
-    pub(super) fn fresh_matcher(&self, pair: Pair) -> impl Fn(u64) -> Option<Match> + '_ {
+    fn fresh_matcher(&self, pair: Pair) -> impl Fn(u64) -> Option<Match> + '_ {
         let matcher = self.fixed_matcher(pair);
         move |coordinate| matcher(self.resident(coordinate))
     }
@@ -352,7 +379,7 @@ impl Corpus {
     /// Cache fixed geometry and weight regions within this reader; prefetch at
     /// most 16 coordinates ahead. The preparation snapshot must remain unchanged
     /// until every reader joins. AA overlap selection stays with the caller.
-    pub(super) fn fresh_matches<'a>(
+    fn fresh_matches<'a>(
         &'a self,
         coordinates: impl Iterator<Item = u64> + 'a,
         pair: Pair,
@@ -380,7 +407,7 @@ impl Corpus {
         })
     }
 
-    pub(super) fn matched(&self, position: usize, pair: Pair) -> Option<Match> {
+    fn matched(&self, position: usize, pair: Pair) -> Option<Match> {
         if self.token(position) != pair.0 {
             return None;
         }
@@ -397,7 +424,7 @@ impl Corpus {
         })
     }
 
-    pub(super) fn whole_words(&self) -> bool {
+    fn whole_words(&self) -> bool {
         self.whole_words
     }
 
@@ -446,7 +473,7 @@ impl Corpus {
     /// Match intervals must be disjoint across every Job in the round; reads
     /// touch only this match's own endpoints. Atomics keep individual accesses
     /// safe on error or unwind, but overlapping writes invalidate reconstruction.
-    pub(super) fn apply(&self, starts: &[usize], merged_id: u32) {
+    fn apply(&self, starts: &[usize], merged_id: u32) {
         let Some(&first) = starts.first() else {
             return;
         };
@@ -568,6 +595,8 @@ mod tests {
             occurrence_spans: occurrences
                 .map(|values| values.iter().copied().map(AtomicUsize::new).collect()),
             whole_words: occurrences.is_some(),
+            mode: TrainingMode::Reuse,
+            birth_pair_span_limit: None,
         };
         for (position, &id) in input.iter().enumerate() {
             corpus.tokens.set(position, id);
@@ -645,7 +674,7 @@ mod tests {
     fn initial_ranges() {
         let words = ahash::AHashMap::new();
         let view = WordCountsView::from_map(&words);
-        let trainer = BpeTrainer::new(1, 0);
+        let trainer = super::super::BpeTrainer::new(1, 0);
         let (_, ids) = super::super::vocabulary::Vocabulary::initialize(
             &trainer,
             view,
@@ -653,7 +682,14 @@ mod tests {
             &None,
         )
         .unwrap();
-        let mut plan = CorpusPlan::build(view, ids, &trainer, false).unwrap();
+        let mut plan = CorpusPlan::build(
+            view,
+            ids,
+            trainer.vocab_size,
+            TrainingMode::Fresh,
+            trainer.max_token_length,
+        )
+        .unwrap();
         assert!(plan.initial_ranges(0).is_empty());
         let text = CompactString::default();
         let weight = 1;

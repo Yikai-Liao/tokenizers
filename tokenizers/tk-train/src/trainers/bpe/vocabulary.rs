@@ -166,6 +166,11 @@ impl Vocabulary {
         self.tokens.len()
     }
 
+    #[cfg(test)]
+    pub(super) fn merges(&self) -> &[Pair] {
+        &self.merges
+    }
+
     pub(super) fn resolve(&mut self, pair: Pair) -> Result<ResolvedMerge> {
         let left = self.tokens[pair.0 as usize].as_str();
         let right = self.tokens[pair.1 as usize].as_str();

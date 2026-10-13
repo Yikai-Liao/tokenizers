@@ -41,6 +41,13 @@ use tk_encode::models::bpe::{BpeConfig, Merges, PipelineBPE, Vocab};
 use tk_encode::parallelism::*;
 use tk_encode::utils::progress::{ProgressBar, ProgressFormat, ProgressStyle};
 
+/// Immutable execution choice for one attempt; reuse restarts from original input.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum TrainingMode {
+    Fresh,
+    Reuse,
+}
+
 /// A `BpeTrainerBuilder` can be used to create a `BpeTrainer` with a custom
 /// configuration.
 #[derive(Default)]
@@ -306,13 +313,13 @@ impl BpeTrainer {
         pool.install(|| {
             let progress = self.setup_progress();
             let alphabet = vocabulary::select_alphabet(self, words);
-            let outcome = self.train_attempt(words, false, &alphabet, &progress)?;
+            let outcome = self.train_attempt(words, TrainingMode::Fresh, &alphabet, &progress)?;
             let outcome = match outcome {
                 // A previously activated ID requires historical cohorts. Discard
                 // the fresh attempt; both attempts borrow the same alphabet so
                 // frequency ties cannot select different characters on retry.
                 AttemptOutcome::RestartForReuse => {
-                    self.train_attempt(words, true, &alphabet, &progress)?
+                    self.train_attempt(words, TrainingMode::Reuse, &alphabet, &progress)?
                 }
                 complete @ AttemptOutcome::Complete(_) => complete,
             };
@@ -329,13 +336,13 @@ impl BpeTrainer {
     fn train_attempt(
         &self,
         words: WordCountsView<'_>,
-        reuse: bool,
+        mode: TrainingMode,
         alphabet: &Alphabet,
         progress: &Option<ProgressBar>,
     ) -> Result<AttemptOutcome> {
         // 1. Resolve the vocabulary and tokenize borrowed input into a corpus plan.
         let (mut vocabulary, ids) = Vocabulary::initialize(self, words, alphabet, progress)?;
-        let plan = CorpusPlan::build(words, ids, self, reuse)?;
+        let plan = CorpusPlan::build(words, ids, self.vocab_size, mode, self.max_token_length)?;
         self.finalize_progress(progress, plan.word_count(), "Tokenize words");
 
         // 2. Freeze initial pairs first: their temporary counting buffers retire
@@ -360,7 +367,7 @@ impl BpeTrainer {
                         self.finalize_progress(progress, completed, "Compute merges");
                         return Ok(AttemptOutcome::RestartForReuse);
                     }
-                    MergeOutcome::Committed(accepted) => accepted,
+                    MergeOutcome::Committed { rule_count } => rule_count,
                 };
                 completed += accepted;
                 if let Some(p) = progress {

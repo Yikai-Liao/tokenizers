@@ -42,7 +42,18 @@ pub(super) fn initialize(
 ) -> (Vocabulary, Corpus, PairIndex) {
     let alphabet = vocabulary::select_alphabet(trainer, words);
     let (vocabulary, ids) = Vocabulary::initialize(trainer, words, &alphabet, &None).unwrap();
-    let plan = CorpusPlan::build(words, ids, trainer, reuse).unwrap();
+    let plan = CorpusPlan::build(
+        words,
+        ids,
+        trainer.vocab_size,
+        if reuse {
+            TrainingMode::Reuse
+        } else {
+            TrainingMode::Fresh
+        },
+        trainer.max_token_length,
+    )
+    .unwrap();
     let index = PairIndex::build(&plan, trainer.min_frequency.max(1), &None).unwrap();
     (vocabulary, plan.materialize(), index)
 }
@@ -229,12 +240,13 @@ fn restart_keeps_alphabet() {
     assert_ne!(selected.contains(&'q'), selected.contains(&'z'));
     assert!(matches!(
         trainer
-            .train_attempt(view, false, &retained, &None)
+            .train_attempt(view, TrainingMode::Fresh, &retained, &None)
             .unwrap(),
         AttemptOutcome::RestartForReuse
     ));
-    let AttemptOutcome::Complete(result) =
-        trainer.train_attempt(view, true, &retained, &None).unwrap()
+    let AttemptOutcome::Complete(result) = trainer
+        .train_attempt(view, TrainingMode::Reuse, &retained, &None)
+        .unwrap()
     else {
         panic!("reuse must complete")
     };
@@ -253,7 +265,9 @@ fn restart_discards_ids() {
     let words = counts(&[("xy", 3), ("uv", 2), ("ab", 1)]);
     let (mut vocabulary, mut corpus, mut index) =
         initialize(&trainer, WordCountsView::from_map(&words), false);
-    let MergeOutcome::Committed(accepted) = trainer
+    let MergeOutcome::Committed {
+        rule_count: accepted,
+    } = trainer
         .merge_next(&mut vocabulary, &mut corpus, &mut index)
         .unwrap()
     else {
@@ -677,7 +691,14 @@ fn initial_edges() {
         &None,
     )
     .unwrap();
-    let plan = CorpusPlan::build(view, ids, &trainer, true).unwrap();
+    let plan = CorpusPlan::build(
+        view,
+        ids,
+        trainer.vocab_size,
+        TrainingMode::Reuse,
+        trainer.max_token_length,
+    )
+    .unwrap();
     let expected = [
         ((0, 1), 1, 7),
         ((0, 1), 4, 6),

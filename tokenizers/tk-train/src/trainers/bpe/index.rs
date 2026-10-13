@@ -1,7 +1,7 @@
 //! Count owners publish complete lists; the queue repairs stale snapshots lazily.
-use super::merge::Change;
+use super::corpus::PairChange;
 use super::{
-    WORD_SEPARATOR_ID, add,
+    TrainingMode, WORD_SEPARATOR_ID, add,
     corpus::{CorpusPlan, InitialEdge},
     positions::Positions,
 };
@@ -68,7 +68,7 @@ struct PairAggregate<P> {
 }
 
 // Metadata stays borrowed during commit; each position stream has one owner.
-type Event = Change<()>;
+type Event = PairChange<()>;
 
 /// One pair-count owner and its reusable pending work, in producer order.
 /// Actions index shared event metadata; the separate birth array owns one stream
@@ -88,7 +88,7 @@ pub(super) struct PairIndex {
     shards: Box<[Shard]>,
     queue: OctonaryHeap<Candidate>,
     floor: u64,
-    reuse: bool,
+    mode: TrainingMode,
 }
 
 // Map an ordered pair to its sole count owner, with a nonzero shard count fixed for
@@ -117,7 +117,8 @@ impl PairIndex {
         minimum: u64,
         progress: &Option<ProgressBar>,
     ) -> Result<Self> {
-        let reuse = corpus.reuse();
+        let mode = corpus.mode();
+        let reuse = mode == TrainingMode::Reuse;
         let shard_count = rayon::current_num_threads();
         let domain = corpus.token_count();
         // 1. Count and freeze each whole-word range independently.
@@ -144,12 +145,12 @@ impl PairIndex {
             shards: shards.into_boxed_slice(),
             queue: candidates.into_iter().flatten().collect(),
             floor: minimum.max(1),
-            reuse,
+            mode,
         })
     }
 
-    pub(super) fn reuse(&self) -> bool {
-        self.reuse
+    pub(super) fn mode(&self) -> TrainingMode {
+        self.mode
     }
 
     /// Consume remaining candidates at the successful training boundary.
@@ -190,7 +191,7 @@ impl PairIndex {
     pub(super) fn take(&mut self, priority: Priority) -> Candidate {
         let candidate = self.queue.pop().expect("certified candidate exists");
         debug_assert_eq!(candidate.priority, priority);
-        if !self.reuse {
+        if self.mode == TrainingMode::Fresh {
             let shard_count = self.shards.len();
             self.shards[owner(priority.pair(), shard_count)]
                 .counts
@@ -200,12 +201,12 @@ impl PairIndex {
         candidate
     }
 
-    pub(super) fn commit(&mut self, changes: Vec<Vec<Change<Positions>>>) -> Result<()> {
+    pub(super) fn commit(&mut self, changes: Vec<Vec<PairChange<Positions>>>) -> Result<()> {
         // 1. Route each removal and birth to its count owner.
         let events = self.route(changes);
 
         // 2. Apply owner-local actions and encode their birth cohorts in parallel.
-        let reuse = self.reuse;
+        let reuse = self.mode == TrainingMode::Reuse;
         let floor = self.floor;
         let births = self
             .shards
@@ -221,7 +222,7 @@ impl PairIndex {
         Ok(())
     }
 
-    fn route(&mut self, changes: Vec<Vec<Change<Positions>>>) -> Vec<Event> {
+    fn route(&mut self, changes: Vec<Vec<PairChange<Positions>>>) -> Vec<Event> {
         let shard_count = self.shards.len();
         // Joined commits drain each shard's pending work; any error aborts this attempt.
         let mut events = Vec::with_capacity(changes.iter().map(Vec::len).sum());
@@ -235,7 +236,7 @@ impl PairIndex {
                 born: change.born,
                 removed_weight: change.removed_weight,
                 born_weight: change.born_weight,
-                bucket: change.bucket,
+                birth_group: change.birth_group,
                 positions: (),
             });
             match (removed, born) {
@@ -392,11 +393,15 @@ impl Shard {
                 adjust_signed(count, change.born_weight, false)?;
             }
             let fragment = positions.next().expect("each birth owns one stream");
-            fragments.push(((change.bucket, change.born), change.born_weight, fragment));
+            fragments.push((
+                (change.birth_group, change.born),
+                change.born_weight,
+                fragment,
+            ));
         }
 
         // Stable key order keeps each cohort's spatial fragment order while
-        // publishing in bucket/pair order. Reuse streams may interleave.
+        // publishing in birth_group/pair order. Reuse streams may interleave.
         fragments.sort_by_key(|(key, _, _)| *key);
         let mut fragments = fragments.into_iter();
         while let Some((key, _, _)) = fragments.as_slice().first() {
@@ -453,13 +458,13 @@ mod tests {
         word_counts::WordCountsView,
     };
 
-    fn event(pair: Pair, add: u64, remove: u64, bucket: usize) -> Event {
+    fn event(pair: Pair, add: u64, remove: u64, birth_group: usize) -> Event {
         Event {
             removed: pair,
             born: pair,
             removed_weight: remove,
             born_weight: add,
-            bucket,
+            birth_group,
             positions: (),
         }
     }
@@ -518,19 +523,31 @@ mod tests {
 
     #[test]
     fn failures_before_and_after_writes() {
-        let trainer = trainer();
         for preparation in [true, false] {
+            let mut trainer = trainer();
             let words = if preparation {
                 [("ab".into(), u64::MAX), ("xcd".into(), u64::MAX)]
                     .into_iter()
                     .collect()
             } else {
-                [("abc".into(), 1)].into_iter().collect()
+                [("abcd".into(), 1)].into_iter().collect()
             };
             let (mut vocabulary, mut corpus, mut index) =
                 initialize(&trainer, WordCountsView::from_map(&words), !preparation);
+            // First commit AB alone. Its history must survive a later failed round.
+            trainer.vocab_size = vocabulary.len() + 1;
+            assert!(matches!(
+                trainer
+                    .merge_next(&mut vocabulary, &mut corpus, &mut index)
+                    .unwrap(),
+                super::super::merge::MergeOutcome::Committed { rule_count: 1 }
+            ));
+            let committed = vocabulary.merges().to_vec();
+            let trace = vocabulary.trace.clone();
+            assert_eq!(committed.len(), 1);
+            trainer.vocab_size = 64;
             if preparation {
-                // AB is valid; duplicate CD overflows its neighbor count before writes.
+                // Duplicate CD overflows its left neighbor count before writes.
                 let mut candidates = std::mem::take(&mut index.queue).into_vec();
                 let candidate = candidates
                     .iter_mut()
@@ -540,9 +557,9 @@ mod tests {
                 candidate.positions = Positions::from_sorted(&[start, start]).unwrap();
                 index.queue = candidates.into_iter().collect();
             } else {
-                // AB writes ID 3 before its right birth overflows the signed owner count.
-                let shard = owner((3, 2), index.shards.len());
-                index.shards[shard].counts.insert((3, 2), i64::MAX as u64);
+                // CD writes ID 5; its left birth (AB, CD) then overflows the ledger.
+                let shard = owner((4, 5), index.shards.len());
+                index.shards[shard].counts.insert((4, 5), i64::MAX as u64);
             }
             let before = tokens(&corpus);
             let queued = index.queue.len();
@@ -558,11 +575,13 @@ mod tests {
                 "{error}"
             );
             let after = tokens(&corpus);
+            assert_eq!(vocabulary.merges(), committed);
+            assert_eq!(vocabulary.trace, trace);
             if preparation {
                 assert_eq!(after, before);
             } else {
                 assert_ne!(after, before, "commit errors do not roll back writes");
-                assert!(after.contains(&3));
+                assert!(after.contains(&5));
                 assert_eq!(
                     index.queue.len(),
                     queued - 1,
@@ -595,7 +614,7 @@ mod tests {
             shards: vec![shard].into_boxed_slice(),
             queue: candidates.into_iter().collect(),
             floor: 1,
-            reuse: true,
+            mode: TrainingMode::Reuse,
         };
         // Repair pop/update/push preserves which equal-priority cohort comes first.
         let priority = index.peek().unwrap();

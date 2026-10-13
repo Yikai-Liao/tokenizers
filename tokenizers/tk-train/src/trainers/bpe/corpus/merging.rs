@@ -1,0 +1,604 @@
+//! Private joined preparation and application over corpus geometry.
+use super::super::{TrainingMode, WORD_SEPARATOR_ID, add, positions::Positions};
+use super::{Corpus, Match, PairChange, SelectedMerge};
+use ahash::AHashMap;
+use itertools::Itertools;
+use rayon::prelude::*;
+use smallvec::SmallVec;
+use tk_encode::{Result, models::bpe::Pair};
+
+impl Corpus {
+    /// Complete all readers before writes and all writers before returning changes.
+    /// Errors during preparation leave endpoints unchanged. Later index errors
+    /// can occur after these writes; the owning attempt provides no rollback.
+    pub(in crate::trainers::bpe) fn merge(
+        &mut self,
+        selected: Vec<SelectedMerge>,
+    ) -> Result<Vec<Vec<PairChange<Positions>>>> {
+        let chunks = self.prepare(selected)?;
+        let corpus: &Corpus = self;
+        Ok(chunks
+            .into_par_iter()
+            .map(|chunk| {
+                corpus.apply(&chunk.starts, chunk.merged_id);
+                chunk.changes
+            })
+            .collect())
+    }
+
+    fn prepare(&self, selected: Vec<SelectedMerge>) -> Result<Vec<PreparedChunk>> {
+        Batch {
+            rules: selected,
+            reuse: self.mode == TrainingMode::Reuse,
+        }
+        .prepare(self, self.birth_pair_span_limit.unwrap_or(usize::MAX))
+    }
+}
+
+/// Priority-prefix rules selected for one joined preparation/application round.
+/// Fresh rules have compatible endpoints; reuse mode selects a single cohort.
+struct Batch {
+    rules: Vec<SelectedMerge>,
+    reuse: bool,
+}
+
+/// One preparation task's disjoint writes and owned neighbor-event payloads.
+/// The task returns both together so no corpus mutation precedes preparation join.
+struct PreparedChunk {
+    starts: SmallVec<[usize; 2]>,
+    merged_id: u32,
+    changes: Vec<PairChange<Positions>>,
+}
+
+/// Task-local left/right neighbor aggregation for one selected rule.
+/// Borrows reusable lookup directories and directly appends compressed positions.
+struct Neighbors<'a> {
+    rule: &'a SelectedMerge,
+    directories: &'a mut Directories,
+    changes: [Vec<PairChange<Positions>>; 2],
+}
+
+/// Reusable direct-ID lookups from left/right neighbors to task-local group indices.
+/// Cached indices are validated against the current task's group keys.
+#[derive(Default)]
+struct Directories {
+    indices: [Vec<u32>; 2],
+}
+
+impl<'a> Neighbors<'a> {
+    fn new(rule: &'a SelectedMerge, domain: usize, directories: &'a mut Directories) -> Self {
+        for values in &mut directories.indices {
+            values.resize(domain, u32::MAX);
+        }
+        Self {
+            rule,
+            directories,
+            changes: std::array::from_fn(|_| Vec::new()),
+        }
+    }
+
+    fn group(&mut self, neighbor: u32, left: bool) -> &mut PairChange<Positions> {
+        let side = usize::from(!left);
+        let slot = &mut self.directories.indices[side][neighbor as usize];
+        if self.changes[side]
+            .get(*slot as usize)
+            .is_none_or(|change| (if left { change.born.0 } else { change.born.1 }) != neighbor)
+        {
+            let id = self.rule.merged_id;
+            let pair = self.rule.pair;
+            let index = self.changes[side].len();
+            self.changes[side].push(PairChange {
+                removed: if left {
+                    (neighbor, pair.0)
+                } else {
+                    (pair.1, neighbor)
+                },
+                born: if left { (neighbor, id) } else { (id, neighbor) },
+                removed_weight: 0,
+                born_weight: 0,
+                positions: Positions::default(),
+                // Both sides can create (id, id); keep them in one birth cohort.
+                // Other right births follow left births in the reference update order.
+                birth_group: usize::from(!left && neighbor != id),
+            });
+            *slot =
+                u32::try_from(index).expect("each neighbor directory is bounded by real token IDs");
+        }
+        &mut self.changes[side][*slot as usize]
+    }
+
+    fn record(
+        &mut self,
+        left: bool,
+        removed: u32,
+        born: u32,
+        position: usize,
+        weight: u64,
+        admit: bool,
+    ) -> Result<()> {
+        let group = self.group(removed, left);
+        add(&mut group.removed_weight, weight)?;
+        if admit {
+            let group = if removed == born {
+                group
+            } else {
+                self.group(born, left)
+            };
+            add(&mut group.born_weight, weight)?;
+            group.positions.push(position as u64)?;
+        }
+        Ok(())
+    }
+
+    fn finish(self) -> Vec<PairChange<Positions>> {
+        // Preserve left-before-right count actions and historical cohort order.
+        self.changes
+            .into_iter()
+            .flatten()
+            .filter(|change| change.removed_weight != 0 || !change.positions.is_empty())
+            .collect()
+    }
+}
+
+impl Batch {
+    fn prepare(self, corpus: &Corpus, limit: usize) -> Result<Vec<PreparedChunk>> {
+        if self.reuse {
+            return self.prepare_cohort(corpus, limit);
+        }
+
+        // 1. Resolve the selected rules against this joined corpus snapshot.
+        let snapshot = FreshSnapshot::new(&self, corpus, limit);
+
+        // 2. Split ordered candidate streams into independent preparation jobs.
+        let tasks = snapshot.tasks();
+        let jobs = tasks
+            .into_par_iter()
+            .map_init(Directories::default, |directories, (rank, source)| {
+                snapshot.prepare_job(directories, rank, source)
+            })
+            .collect::<Result<Vec<_>>>()?;
+        Ok(jobs)
+    }
+
+    fn prepare_cohort(self, corpus: &Corpus, limit: usize) -> Result<Vec<PreparedChunk>> {
+        // 1. Restrict the historical cohort to its unique word owners.
+        let rule = &self.rules[0];
+        let words: Vec<_> = rule
+            .positions
+            .iter()
+            .map(|p| corpus.word(corpus.resident(p)))
+            .dedup()
+            .collect();
+
+        // 2. Prepare separate word chunks; edits within each word remain ordered.
+        let chunk = words.len().div_ceil(rayon::current_num_threads()).max(1);
+        let jobs = words
+            .par_chunks(chunk)
+            .map_init(Directories::default, |directories, words| -> Result<_> {
+                CohortPreparation::prepare(rule, corpus, words, limit, directories)
+            })
+            .collect::<Result<Vec<_>>>()?;
+        Ok(jobs)
+    }
+}
+
+/// Shared read-only lookup for fresh preparation against one joined corpus snapshot.
+/// Resolves selected endpoints once; tasks own their directories, writes and
+/// neighbor events. Self-pairs also retain nonoverlapping left-to-right starts.
+struct FreshSnapshot<'a> {
+    batch: &'a Batch,
+    corpus: &'a Corpus,
+
+    limit: usize,
+    matches: FreshMatches,
+}
+
+enum FreshMatches {
+    Ordinary(AHashMap<Pair, u32>),
+    SelfPair(Vec<u64>),
+}
+
+impl<'a> FreshSnapshot<'a> {
+    fn new(batch: &'a Batch, corpus: &'a Corpus, limit: usize) -> Self {
+        let pair = batch.rules[0].pair;
+        let matches = if pair.0 == pair.1 {
+            // Self-pairs overlap: retain left-to-right nonoverlapping starts.
+            // They use start membership rather than ordinary endpoint lookup.
+            let mut starts = Vec::new();
+            let rule = &batch.rules[0];
+            let matcher = corpus.fresh_matcher(rule.pair);
+            let mut after = 0;
+            for coordinate in rule.positions.iter() {
+                if coordinate >= after
+                    && let Some(matched) = matcher(coordinate)
+                {
+                    starts.push(coordinate);
+                    after = matched.after as u64;
+                }
+            }
+            FreshMatches::SelfPair(starts)
+        } else {
+            FreshMatches::Ordinary(
+                batch
+                    .rules
+                    .iter()
+                    .map(|rule| (rule.pair, rule.merged_id))
+                    .collect(),
+            )
+        };
+        Self {
+            batch,
+            corpus,
+
+            limit,
+            matches,
+        }
+    }
+
+    fn tasks(&self) -> Vec<(usize, impl Iterator<Item = u64> + Send + '_)> {
+        let mut tasks = Vec::new();
+        let total: usize = self
+            .batch
+            .rules
+            .iter()
+            .map(|rule| rule.positions.len())
+            .sum();
+        let chunk = total.div_ceil(rayon::current_num_threads() * 4).max(4096);
+        let ordinary_chunk = total
+            .div_ceil(rayon::current_num_threads())
+            .clamp(1, 1 << 26);
+        for (rank, rule) in self.batch.rules.iter().enumerate() {
+            match &self.matches {
+                FreshMatches::SelfPair(starts) => {
+                    for part in starts.chunks(chunk) {
+                        tasks.push((rank, itertools::Either::Left(part.iter().copied())));
+                    }
+                }
+                FreshMatches::Ordinary(_) => {
+                    let positions = &rule.positions;
+                    for positions in positions.chunks(ordinary_chunk) {
+                        tasks.push((rank, itertools::Either::Right(positions)));
+                    }
+                }
+            }
+        }
+        tasks
+    }
+
+    fn prepare_job(
+        &self,
+        directories: &mut Directories,
+        rank: usize,
+        positions: impl Iterator<Item = u64>,
+    ) -> Result<PreparedChunk> {
+        #[cfg(test)]
+        super::super::tests::observe_worker(super::super::tests::Phase::FreshPrepare);
+        let rule = &self.batch.rules[rank];
+        let mut neighbors = Neighbors::new(rule, self.corpus.id_count(), directories);
+        let mut starts = SmallVec::new();
+        for (matched, weight) in self.corpus.fresh_matches(positions, rule.pair) {
+            self.record_neighbors(&mut neighbors, matched, weight)?;
+            starts.push(matched.start);
+        }
+        Ok(PreparedChunk {
+            starts,
+            merged_id: rule.merged_id,
+            changes: neighbors.finish(),
+        })
+    }
+
+    // Between adjacent selected matches, the left match owns the shared boundary:
+    // it emits the removal and the birth using both final merged_id IDs. The
+    // right match skips that left edge, including when matches span separate jobs.
+    fn record_neighbors(
+        &self,
+        neighbors: &mut Neighbors<'_>,
+        matched: Match,
+        weight: u64,
+    ) -> Result<()> {
+        let p = matched.start;
+        // Left edge: register it only if the preceding match does not own it.
+        let prior = self.corpus.token(p - 1);
+        if prior != WORD_SEPARATOR_ID {
+            let span = self.corpus.id_span(prior);
+            let before = p - span;
+            let merging = match &self.matches {
+                FreshMatches::SelfPair(starts) => {
+                    p >= matched.span()
+                        && starts.binary_search(&((p - matched.span()) as u64)).is_ok()
+                }
+                FreshMatches::Ordinary(selected) => {
+                    before != 0 && selected.contains_key(&(self.corpus.token(before - 1), prior))
+                }
+            };
+            if !merging {
+                neighbors.record(
+                    true,
+                    prior,
+                    prior,
+                    before,
+                    weight,
+                    span + matched.span() < self.limit,
+                )?;
+            }
+        }
+
+        // Right edge: include the following match's merged_id when selected.
+        let next = self.corpus.token(matched.after);
+        if next != WORD_SEPARATOR_ID {
+            let merged_id = match &self.matches {
+                FreshMatches::SelfPair(starts) => starts
+                    .binary_search(&(matched.after as u64))
+                    .is_ok()
+                    .then_some(neighbors.rule.merged_id),
+                FreshMatches::Ordinary(selected) => selected
+                    .get(&(
+                        next,
+                        self.corpus.token(matched.after + self.corpus.id_span(next)),
+                    ))
+                    .copied(),
+            };
+            let born = merged_id.unwrap_or(next);
+            neighbors.record(
+                false,
+                next,
+                born,
+                p,
+                weight,
+                matched.span() + self.corpus.id_span(born) < self.limit,
+            )?;
+        }
+        Ok(())
+    }
+}
+
+/// One reuse task's sequential word scans, deferred writes and neighbor events.
+/// Borrows the joined corpus and rule; all words in this task share its admission
+/// policy and directories. Finishing transfers both outputs without applying them.
+struct CohortPreparation<'task> {
+    starts: SmallVec<[usize; 2]>,
+    neighbors: Neighbors<'task>,
+    corpus: &'task Corpus,
+    limit: usize,
+}
+
+impl<'task> CohortPreparation<'task> {
+    fn prepare(
+        rule: &'task SelectedMerge,
+        corpus: &'task Corpus,
+        words: &[usize],
+        limit: usize,
+        directories: &'task mut Directories,
+    ) -> Result<PreparedChunk> {
+        #[cfg(test)]
+        super::super::tests::observe_worker(super::super::tests::Phase::ReusePrepare);
+        let mut task = Self {
+            starts: SmallVec::new(),
+            neighbors: Neighbors::new(rule, corpus.id_count(), directories),
+            corpus,
+            limit,
+        };
+        for &word in words {
+            task.prepare_word(word)?;
+        }
+        Ok(PreparedChunk {
+            starts: task.starts,
+            merged_id: rule.merged_id,
+            changes: task.neighbors.finish(),
+        })
+    }
+
+    // Within one word each accepted merge changes the next left neighbor. Keep
+    // this sequential while separate word chunks prepare in parallel.
+    fn prepare_word(&mut self, word: usize) -> Result<()> {
+        let rule = self.neighbors.rule;
+        let corpus = self.corpus;
+        let limit = self.limit;
+        let neighbors = &mut self.neighbors;
+        let starts = &mut self.starts;
+        let mut previous = None;
+        let mut p = corpus.word_start(word);
+        let mut positions = rule.positions.iter_from(p as u64);
+        while p < corpus.word_end(word) {
+            // Full-word scans are required only after alias reuse or a length
+            // gate. Otherwise the selected cohort defines the scan domain.
+            if !corpus.whole_words() {
+                let Some(coordinate) = positions.find(|&start| start >= p as u64) else {
+                    break;
+                };
+                let next = corpus.resident(coordinate);
+                if next >= corpus.word_end(word) {
+                    break;
+                }
+                if next != p {
+                    let id = corpus.token(next - 1);
+                    previous = (id != WORD_SEPARATOR_ID)
+                        .then(|| (id, next - corpus.span(next - 1), corpus.span(next - 1)));
+                    p = next;
+                }
+            }
+            if let Some(matched) = corpus.matched(p, rule.pair) {
+                let weight = corpus.word_weight(word);
+                if let Some((id, start, span)) = previous {
+                    neighbors.record(true, id, id, start, weight, span + matched.span() < limit)?;
+                }
+                let next = corpus.token(matched.after);
+                if next != WORD_SEPARATOR_ID {
+                    neighbors.record(
+                        false,
+                        next,
+                        next,
+                        p,
+                        weight,
+                        matched.span() + corpus.span(matched.after) < limit,
+                    )?;
+                }
+                previous = Some((rule.merged_id, p, matched.span()));
+                starts.push(matched.start);
+                p = matched.after;
+            } else {
+                let span = corpus.span(p);
+                previous = Some((corpus.token(p), p, span));
+                p += span.max(1);
+            }
+        }
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::super::super::tests::{spans, tokens};
+    use super::super::super::{
+        WORD_SEPARATOR_ID,
+        tests::{counts, initialize, trainer},
+        word_counts::WordCountsView,
+    };
+    use super::super::super::{index::PairIndex, merge::MergeOutcome, vocabulary::Vocabulary};
+    use super::*;
+
+    fn select(
+        vocabulary: &mut Vocabulary,
+        corpus: &mut Corpus,
+        index: &mut PairIndex,
+    ) -> SelectedMerge {
+        let priority = index.peek().unwrap();
+        let merged_id = vocabulary.resolve(priority.pair()).unwrap().merged_id;
+        corpus.activate(priority.pair(), merged_id);
+        SelectedMerge {
+            pair: priority.pair(),
+            merged_id,
+            positions: index.take(priority).positions,
+        }
+    }
+
+    #[test]
+    fn shared_boundary_once() {
+        let trainer = trainer();
+        let words = counts(&[("abacdbdc", 2), ("ab", 10), ("ac", 9), ("db", 8), ("dc", 7)]);
+        let (mut vocabulary, mut corpus, mut index) =
+            initialize(&trainer, WordCountsView::from_map(&words), false);
+        let mut batch = Batch {
+            rules: Vec::new(),
+            reuse: false,
+        };
+        // Shared heads/tails remain compatible; adjacent replacements publish once.
+        for pair in [(0, 1), (0, 2), (3, 1), (3, 2)] {
+            let rule = select(&mut vocabulary, &mut corpus, &mut index);
+            assert_eq!(rule.pair, pair);
+            batch.rules.push(rule);
+        }
+        let jobs = batch.prepare(&corpus, usize::MAX).unwrap();
+        let mut births: Vec<_> = jobs
+            .iter()
+            .flat_map(|j| &j.changes)
+            .filter(|c| c.born_weight != 0)
+            .map(|c| (c.born, c.born_weight))
+            .collect();
+        births.sort_unstable();
+        assert_eq!(births, [((4, 5), 2), ((5, 6), 2), ((6, 7), 2)]);
+        jobs.par_iter()
+            .for_each(|j| corpus.apply(&j.starts, j.merged_id));
+        let s = WORD_SEPARATOR_ID;
+        assert_eq!(
+            tokens(&corpus),
+            [
+                s, 4, 4, s, 5, 5, s, 6, 6, s, 7, 7, s, 4, 4, 5, 5, 6, 6, 7, 7, s
+            ]
+        );
+    }
+
+    #[test]
+    fn rejected_start_and_aa_tasks() {
+        let trainer = trainer();
+        let words = [("aaaaaaaaa".into(), 1)].into_iter().collect();
+        let (mut vocabulary, mut corpus, mut index) =
+            initialize(&trainer, WordCountsView::from_map(&words), false);
+        let batch = Batch {
+            rules: vec![select(&mut vocabulary, &mut corpus, &mut index)],
+            reuse: false,
+        };
+        let snapshot = FreshSnapshot::new(&batch, &corpus, usize::MAX);
+        let FreshMatches::SelfPair(starts) = &snapshot.matches else {
+            panic!("expected AA starts")
+        };
+        assert_eq!(starts, &[1, 3, 5, 7]);
+        // Each task first sees a separator/stale coordinate, then valid AA starts.
+        for (input, expected) in [(&[0, 1, 3][..], &[1, 3][..]), (&[0, 5, 7][..], &[5, 7][..])] {
+            let job = snapshot
+                .prepare_job(&mut Directories::default(), 0, input.iter().copied())
+                .unwrap();
+            assert_eq!(job.starts.as_slice(), expected);
+        }
+    }
+
+    #[test]
+    fn reuse_spans() {
+        let mut trainer = trainer();
+        trainer.end_of_word_suffix = Some("a".into());
+        let words = counts(&[("baaaaaba", 2), ("ba", 1)]);
+        let (mut vocabulary, mut corpus, mut index) =
+            initialize(&trainer, WordCountsView::from_map(&words), true);
+        assert!(matches!(
+            trainer
+                .merge_next(&mut vocabulary, &mut corpus, &mut index)
+                .unwrap(),
+            MergeOutcome::Committed { .. }
+        ));
+        let rule = select(&mut vocabulary, &mut corpus, &mut index);
+        assert_eq!((rule.pair, rule.merged_id), ((1, 2), 3));
+        // AA aliases the suffix ID: BA sees original and merged occurrences.
+        let batch = Batch {
+            rules: vec![rule],
+            reuse: true,
+        };
+        let jobs = batch.prepare(&corpus, usize::MAX).unwrap();
+        for job in jobs {
+            corpus.apply(&job.starts, job.merged_id);
+        }
+        let s = WORD_SEPARATOR_ID;
+        assert_eq!(tokens(&corpus), [s, 3, s, 3, 2, 2, 0, 3, 3, s, 1, 2, s]);
+        assert_eq!(spans(&corpus), [0, 3, 0, 3, 2, 2, 1, 2, 2, 0, 1, 1, 0]);
+    }
+
+    #[test]
+    fn directory_recovery() {
+        let trainer = trainer();
+        let words = [("xab".into(), 1)].into_iter().collect();
+        let (mut vocabulary, mut corpus, mut index) =
+            initialize(&trainer, WordCountsView::from_map(&words), false);
+        let rule = select(&mut vocabulary, &mut corpus, &mut index);
+        let mut directories = Directories::default();
+        {
+            let mut neighbors = Neighbors::new(&rule, corpus.id_count(), &mut directories);
+            neighbors.record(true, 2, 2, 1, u64::MAX, true).unwrap();
+            assert!(neighbors.record(true, 2, 2, 1, 1, true).is_err());
+        }
+        // The old directory index is reused without reset after the failed group.
+        let mut neighbors = Neighbors::new(&rule, corpus.id_count(), &mut directories);
+        neighbors.record(true, 1, 1, 1, 3, true).unwrap();
+        neighbors.record(true, 2, 2, 2, 4, true).unwrap();
+        let changes = neighbors.finish();
+        assert_eq!(
+            changes
+                .iter()
+                .map(|c| (c.removed, c.born_weight))
+                .collect::<Vec<_>>(),
+            [((1, 0), 3), ((2, 0), 4)]
+        );
+        let batch = Batch {
+            rules: vec![rule],
+            reuse: false,
+        };
+        let job = batch.prepare(&corpus, 3).unwrap().pop().unwrap();
+        let change = &job.changes[0];
+        assert_eq!(
+            (change.removed, change.removed_weight, change.born_weight),
+            ((2, 0), 1, 0)
+        );
+        assert!(change.positions.is_empty());
+        corpus.apply(&job.starts, job.merged_id);
+        index.commit(vec![job.changes]).unwrap();
+        assert!(index.peek().is_none());
+    }
+}
