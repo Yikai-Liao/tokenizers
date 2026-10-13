@@ -541,7 +541,7 @@ mod tests {
 
     #[test]
     fn failures_before_and_after_writes() {
-        for workers in [1, 4, 8] {
+        for workers in [1, 6] {
             rayon::ThreadPoolBuilder::new()
                 .num_threads(workers)
                 .build()

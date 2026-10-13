@@ -511,7 +511,7 @@ mod tests {
 
     #[test]
     fn rejected_start_and_aa_tasks() {
-        for workers in [1, 4] {
+        for workers in [1, 6] {
             let pool = rayon::ThreadPoolBuilder::new()
                 .num_threads(workers)
                 .build()
