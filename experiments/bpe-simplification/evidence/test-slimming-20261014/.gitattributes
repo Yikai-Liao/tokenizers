@@ -1,0 +1,4 @@
+# Preserve raw tool output and the uploaded plan verbatim.
+*.log -whitespace
+BPE.diff -whitespace
+PLAN.zh.md -whitespace

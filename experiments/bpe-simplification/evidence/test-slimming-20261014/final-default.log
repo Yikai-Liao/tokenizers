@@ -1,0 +1,47 @@
+   Compiling tk-train v0.1.0-dev.2 (/dev/shm/bpe-test-slimming-worktree-20261014/tokenizers/tk-train)
+    Finished `test` profile [unoptimized] target(s) in 3.76s
+     Running unittests src/lib.rs (/dev/shm/bpe-test-slimming-target-20261014/debug/deps/tk_train-79663fd380eb8308)
+
+running 25 tests
+test trainers::bpe::index::tests::intermediate_overflow ... ok
+test trainers::bpe::positions::codec::tests::gap_width ... ok
+test trainers::bpe::positions::tests::merge_streams ... ok
+test trainers::bpe::corpus::tests::adjacent_writes ... ok
+test trainers::bpe::positions::tests::append_errors ... ok
+test trainers::bpe::tests::builder_serialization ... ok
+test trainers::bpe::positions::tests::leaf_roundtrip ... ok
+test trainers::bpe::positions::tests::concat_boundaries ... ok
+test trainers::bpe::index::tests::failed_rounds ... ok
+test trainers::bpe::tests::failed_train ... ok
+test trainers::bpe::tests::restart_discards_ids ... ok
+test trainers::bpe::tests::restart_keeps_alphabet ... ok
+test trainers::bpe::tests::count_boundaries ... ok
+test trainers::bpe::tests::reusable_input ... ok
+test trainers::bpe::tests::tokenizer_roundtrip ... FAILED
+test trainers::bpe::vocabulary::tests::affix_ids ... ok
+test trainers::bpe::vocabulary::tests::alphabet_activation ... ok
+test trainers::bpe::vocabulary::tests::unicode_id_order ... ok
+test trainers::bpe::vocabulary::tests::unicode_presence ... ok
+test trainers::bpe::word_counts::tests::equality_and_serde ... ok
+test trainers::bpe::tests::targeted_models ... ok
+test trainers::bpe::tests::overlap_and_alias ... ok
+test trainers::bpe::tests::wide_ids ... ok
+test trainers::bpe::tests::public_behavior ... ok
+test trainers::bpe::tests::parity ... ok
+
+failures:
+
+---- trainers::bpe::tests::tokenizer_roundtrip stdout ----
+
+thread 'trainers::bpe::tests::tokenizer_roundtrip' (1507728) panicked at src/trainers/bpe/tests.rs:399:13:
+assertion `left == right` failed: 测
+  left: [PipelineToken(3)]
+ right: [6]
+
+
+failures:
+    trainers::bpe::tests::tokenizer_roundtrip
+
+test result: FAILED. 24 passed; 1 failed; 0 ignored; 0 measured; 7 filtered out; finished in 4.96s
+
+error: test failed, to rerun pass `--lib`

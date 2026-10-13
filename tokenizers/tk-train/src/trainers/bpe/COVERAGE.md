@@ -1,62 +1,56 @@
-# Combined BPE test coverage
+# Ordinary BPE test coverage
 
-The suite groups related contracts around complete training results, public
-integration and immutable storage. The differential helper compares every
-selected `(pair, count, merged ID)`, full vocabulary IDs and ordered merges
-at 1, 4 and 8 workers. Public integration checks special-token return.
-The sequential oracle owns its own word
-edits, ledger and historical birth cohorts; it shares only alphabet selection.
-Literal alphabet expectations independently check that shared selector.
+The differential helper compares every selected `(pair, count, merged ID)`,
+complete vocabulary IDs and ordered merges at 1, 4 and 8 workers. Its sequential
+oracle owns word edits, the count ledger and historical birth cohorts, and
+shares alphabet selection with the trainer. Literal Unicode IDs, the weighted
+cutoff expectation and character-presence tests independently check that selector.
 
-| Contract | Combined coverage |
+| Contract | Retained coverage |
 | --- | --- |
-| Weighted ordering, equal counts, empty words, zero weights, Unicode and duplicate reserved strings | Fixed-seed model combinations plus an explicit equal-count fixture |
-| Affixes, activated identity reuse, unactivated reserved IDs and restart behavior | Generated prefix/suffix combinations, duplicate specials, literal `baaba` traces, and 128 long words with interleaved zero/positive weights across three affix/gate settings; a reserved long merge activates after occurrence geometry is established; a fresh XY rule precedes an activated-ID restart, the limited alphabet survives, and only the successful trace is returned |
-| AA overlap and position restart boundaries | An 8195-symbol AA run spans restart blocks and two preparation jobs even at one worker; full model/rule agreement and generated repeated words |
-| Complete and partial birth pruning | Long AB producer split across workers, a competing complete XY producer, and complete-model/trace comparison; 127/129/257 repeated ABC groups check rounded whole fragments versus partial publication and full model/rule agreement |
-| Strict newborn length admission, including limits 0, 1 and 2 | Generated length gates and independent sequential neighbor admission |
-| Completed initialization and retained cutoff | Ordered frozen input has four characters with limit two; literal multibyte prefix/suffix IDs precede weight sorting, original UTF-8 boundaries survive filtering, spans retain allocation identity on transfer, a true four-way cutoff tie reuses its two selected characters, and a separate four-character/three-slot cutoff forces an actual fresh-to-reuse restart and matches complete models/traces at 1/4/8 workers |
-| Filtered symbols, forced alphabet and decorations | Generated filtered/decorated models, a filtered training fixture, and literal alphabet IDs |
-| Full token IDs beyond 16 bits and separator distinction | 65536 reserved IDs followed by ordinary training and literal ID expectation |
-| Joined compatible rules | Explicit four-rule preparation checks shared heads/tails and exact boundary births; full differential models and traces check ordered successful history at 1/4/8 workers |
-| Preparation failure before writes | A committed AB round precedes a batch with a valid CD task and an overflowing EF task; `merge_next` fails with every endpoint unchanged at 1 and 6 workers |
-| Reusable neighbor directories without reset | A task stops on weighted overflow; the next task reuses both directories with old indices outside its groups, indices naming different neighbors, and valid current-group hits; exact event order, weights, birth groups and position lists are checked |
-| Shard-local commit and historical birth grouping | Unordered and zero-weight reuse fragments retain duplicates and publish in birth-group order below the floor; fresh removals retire counts before complete/partial publication; fresh grouped and intermediate signed overflow drain pending streams while retaining capacity |
-| Full-u64 counts, per-key overflow, signed reuse limits and validation before zero merges | Literal success/error cases repeated with vocabulary targets 0, 2 and 64 |
-| Borrowed map, stored entries, feed and repeat training | Complete model equality through the public entries, repeated successful calls with unchanged counts, and training after flat-map serde; decorated representations preserve the same borrowed traversal order |
-| Failed training and failed model construction | Pair-count overflow and a successfully trained oversized affix rejected by the reader both leave the previous model vocabulary intact |
-| Public feed, trainer serialization, special-token return, model options and tokenizer JSON reload | Feed-to-training integration and complete serialized model equality and three literal input-to-ID expectations before/after tokenizer JSON reload |
-| Feed flushing, first `None`, duplicate callback words and transactional process errors | Isolated public test at 0/31/32/33/127/128/129/257 items, resumed nonfused input, empty/Unicode/long callback words, bulk 2047/2048/2049 unique words, exact flat counts, full callback count after error and unchanged prior state |
-| Feed unification boundaries and failure interleaving | Disabled parallelism, enabled/one worker and four workers; startup W and W+31/32/33/64 lengths; per-ID callback/read counts; first exhaustion; 2047/2048/2049/4097 keys with repeated words across flushes; first/middle/last/multiple ordinary errors; exact counts and public model equality; controlled two-worker shared writes plus a successful tail and failing partition leave prior trainer state intact |
-| Upstream parallelism policy and ambient pool reuse | Child processes install one/two-thread pools while the encoder is configured for four threads; alphabet scans, initial counting/owners, materialization, fresh/reuse preparation, commit and retirement check ambient pool size; disabled settings and `TOKENIZERS_PARALLELISM=false` keep callbacks on the calling worker and leave the parallel-use flag unset; a long-word fixture checks complete model equality against the sequential oracle |
-| JSON progress schema, starts and completion | Child-process matrix covers normal/no-bar/zero-merge/empty/Silent; strict JSON parsing, exact three-field schema, initial zero and final actual merge count; the zero-merge case executes no materialization or preparation tasks |
-| Numeric position width, duplicate values, restart blocks and seeking | Empty/small lists and a 2049-value repeated sequence; values through `u64::MAX`, gap-width boundaries through ten bytes, and value seeking checked against independent slice lower bounds |
-| Independently consumable chunks and leaf/root boundaries | Nested chunks flatten to the exact original sequence at targets 0/1/127/128/129/511/usize::MAX; concatenated leaves of widths 1/2/3/127/128/129/700/1300 retain duplicated coordinates and seeking behavior |
-| Direct encoding, append failures and immutable roots | Literal tail/seed/gap bytes, actual inline/spilled byte storage, empty leaf filtering, sole-leaf collapse, root rejection by concat and push, descending append rejection preserving the old sequence at restart boundaries, and exhausted/truncated decoder behavior |
-| Interleaved sorted stream merging | Empty input, a sole root retained as a root, mixed roots/leaves/empty streams, duplicate coordinates and duplicate `u64::MAX` values |
-| Fresh matches, stale coordinates and weight regions | Forty words cross more than one prefetch window; consumed starts, tails and separators are filtered while exact match intervals and repeated/unit/zero word weights remain correct |
-| Reuse word scans and virtual neighbors | Literal reuse_spans checks endpoints and occurrence spans; reuse_scan_domain_and_bound_configuration checks historical-only scans versus `Some(usize::MAX)` whole-word scans and separator exclusion; complete reference comparisons cover affixes, aliases and length gates at 1/4/8 workers |
-| Lazy initial-edge consumption and consumer errors | Filtered multibyte symbols yield literal pair/coordinate/weight triples; a consumer error leaves the exact consumed prefix and unconsumed suffix intact |
+| Weighted ordering, equal counts, empty words, zero weights, Unicode, duplicate reserved strings and affixes | `parity` uses 64 fixed-seed combinations; `overlap_and_alias` supplies equal-count and literal alias traces |
+| Compatible rules and shared boundaries | `targeted_models` compares full models and traces for `abacdbdc` and weighted `ab/ac/db/dc` words |
+| Multiple words and weight regions | `targeted_models` uses forty distinct words with repeated, unit and zero weights |
+| Alias geometry and length admission | `targeted_models` compares suffix-`a` models for `baaaaaba/ba` with no limit, limit 3 and `usize::MAX`; `parity` includes limits 0, 1 and 2 |
+| AA overlap, restart blocks and preparation across tasks | A 20001-symbol odd AA word and a long AB producer in `overlap_and_alias` compare complete models and traces without fixing the number or size of internal jobs |
+| Alphabet filtering and decorations | `targeted_models` checks literal weighted-cutoff IDs and the complete filtered Unicode model; `affix_ids`, `unicode_id_order`, `alphabet_activation` and `unicode_presence` retain independent Unicode/decoration expectations |
+| Full token IDs and counts | `wide_ids` crosses 16-bit IDs; `count_boundaries` covers full-u64 counts, per-key overflow, signed reuse limits and validation at vocabulary targets 0, 2 and 64 |
+| Restart identity and retained alphabet | `restart_discards_ids` checks discarded speculative IDs and successful history; `restart_keeps_alphabet` exercises a real fresh-to-reuse restart with a constrained alphabet |
+| Adjacent concurrent writes | `adjacent_writes` checks both write orders, parallel adjacent writes and reused occurrence spans |
+| Preparation and commit failures | `failed_rounds` first commits AB, then injects preparation overflow before writes and index overflow after writes at 1 and 6 workers; prior history/trace survives and failed owners publish no births |
+| Intermediate arithmetic overflow | `intermediate_overflow` retains fresh-u64 and reuse-i64 failures while draining pending streams |
+| Reusable public input and model failure | `reusable_input` preserves borrowed/stored counts over repeated training; `failed_train` preserves the old model after count overflow and a trained affix rejected by the model reader |
+| Public serialization and encoding | `builder_serialization` checks trainer defaults/options; `tokenizer_roundtrip` checks feed, trainer serde, special-token return, model options and tokenizer JSON reload, and retains its known failing encoding assertion |
+| Feed callback execution and transactional failure | `public_behavior` isolates enabled/disabled/environment/one-worker settings; callbacks check the ambient pool, serial caller thread, exact reads/counts, nonfused exhaustion and 2047/2048/2049/4097 unique-key boundaries; controlled two-worker partial failure preserves prior trainer state |
+| Public progress and parallel-use flags | `public_behavior` covers normal, serial, environment-disabled, one-worker, zero-merge, Silent and restart settings; JSON parses strictly and finishes at the actual merge count; long-word models match the sequential oracle |
+| Numeric position width, duplicates, restart blocks and seek | `gap_width` covers seven-bit boundaries through ten-byte u64 gaps; `leaf_roundtrip` covers empty/small/full-u64 sequences and 2049 repeated values with independent slice lower bounds |
+| Chunk and leaf/root boundaries | `leaf_roundtrip` and `concat_boundaries` flatten chunks to the exact original sequence and retain duplicates across restart/leaf boundaries |
+| Append failure and immutable roots | `append_errors` checks descending append rollback at restart boundaries, full-u64 append, length overflow and truncated cursor failure; `concat_boundaries` retains invalid ordering and root rejection |
+| Sorted stream merging | `merge_streams` retains mixed roots/leaves/empty streams and duplicate coordinates through `u64::MAX` |
+| Word-count representation and serde | `equality_and_serde` retains equality/order and full-u64 serialization limits |
 
-The former fixture files and legacy trainer tests are consolidated into these
-contracts. Their repeated helper infrastructure and overlapping private feed tests are
-replaced by public flat-count/callback contracts. This map describes
-asserted behavior.
-Position appends validate ordering; concat accepts owned leaves and sorted-stream
-merging consumes owned Positions. Appended coordinates determine the stored
-length and encoded payload. The standalone Miri harness imports the same position module and
-its tests; historical storage experiments retain their separate native/Miri evidence.
+`tokenizer_roundtrip` is active and currently fails when encoding `测`: the
+encoder returns plain ID 3 instead of `config.vocab["测</w>"]`. This failure was
+also observed before the corpus-boundary refactor; it is reported separately,
+with the assertion unchanged, rather than treated as passing coverage.
 
-The formatted line count includes test hooks, the complete reference oracle,
-all default BPE public/helper test declarations and the Miri harness. Dedicated
-word-count tests retain representation/order equality and full-u64 serde limits. Comments and blank lines are
-excluded. The separately feature-gated parity trainer is unchanged and is not
-used as a test helper for this engine.
+The high-level replacements preserve complete observable training comparisons.
+They do not reproduce every removed private assertion. The suite deliberately
+no longer checks precise initial range formulas, fresh-reader prefetch/cache
+state, event-payload ordering, equal-priority cohort identity, prepared-job and
+raw-slot layout, exact job counts or first-job length, injected invalid starts,
+private occurrence-span arrays, directory reuse after an injected scratch
+failure, artificially truncated scan domains, literal leaf bytes, repeated
+cursor exhaustion, decoration-slot getters/setters, private edge coordinates,
+standard iterator error recovery, `sizeof`, SmallVec inline/spill shape, or a
+phase bitmap proving each internal stage's worker identity. Production queue,
+cohort, priority and count-repair semantics are unchanged.
 
-The corpus-boundary refactor also exercises the actual owning preparation path:
-`rejected_start_and_aa_tasks` verifies the original-position chunk budget and
-global AA membership at 1/6 workers. `failures_before_and_after_writes` first
-commits a round, then checks that both preparation and post-write index failures
-preserve that history and trace while withholding new births. Production-grain
-trace and resource evidence is recorded in the
-[corpus-boundary experiment](../../../../../experiments/bpe-simplification/evidence/corpus-boundary-20261013/README.md).
+The formatted count excludes blank lines/comments and includes all ordinary
+BPE test helpers, active test hooks, the complete oracle, the shared trainer
+wrapper and the four-line Miri harness once. Parity Trainer and its exclusive
+`word.rs` remain outside this scope. No tests moved to escape the count. The
+Miri harness imports the same position module and its retained tests.
+
+Exact results, the before/after line audit and deletion mapping are recorded in
+[the slimming validation report](../../../../../experiments/bpe-simplification/evidence/test-slimming-20261014/VALIDATION.zh.md).

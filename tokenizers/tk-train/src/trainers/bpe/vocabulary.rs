@@ -515,8 +515,6 @@ fn observed_characters(word_counts: WordCountsView<'_>) -> FixedBitSet {
     words
         .maybe_par_chunks(chunk)
         .map(|chunk| {
-            #[cfg(test)]
-            super::tests::observe_worker(super::tests::Phase::Alphabet);
             let mut present = FixedBitSet::with_capacity(0x110000);
             for word in chunk {
                 for character in word.chars() {
@@ -538,20 +536,6 @@ mod tests {
     use super::*;
     use ahash::AHashSet;
     use tk_encode::vocab::bucket_added_vocabulary::AddedToken;
-
-    #[test]
-    fn decoration_row() {
-        assert_eq!(std::mem::size_of::<DecoratedIds>(), 12);
-        let mut row = DecoratedIds([WORD_SEPARATOR_ID; 3]);
-        for (affix, id) in [(Affix::Prefix, 0), (Affix::Suffix, 1), (Affix::Both, 2)] {
-            assert_eq!(row.get(affix, 9), WORD_SEPARATOR_ID);
-            row.remember(affix, id);
-        }
-        assert_eq!(row.0, [0, 1, 2]);
-        row.remember(Affix::Plain, 8);
-        assert_eq!(row.0, [0, 1, 2]);
-        assert_eq!(row.get(Affix::Plain, 9), 9);
-    }
 
     #[test]
     fn affix_ids() {

@@ -80,7 +80,7 @@ pub(super) fn spans(corpus: &Corpus) -> Vec<usize> {
 }
 
 #[test]
-fn models_match_reference() {
+fn parity() {
     let mut seed = 0x58e4_a91du64;
     // Fixed-seed xorshift64 keeps generated cases reproducible. The three
     // shifts mix the same state; discarding shifted-out bits is intentional.
@@ -126,6 +126,39 @@ fn models_match_reference() {
 }
 
 #[test]
+fn targeted_models() {
+    check(
+        &trainer(),
+        &counts(&[("abacdbdc", 2), ("ab", 10), ("ac", 9), ("db", 8), ("dc", 7)]),
+    );
+    // Distinct lengths keep all forty words present across the weight regions.
+    let words = (0..40)
+        .map(|i| {
+            (
+                format!("{}ababa", "x".repeat(i)).into(),
+                [9, 1, 1, 0][i / 10],
+            )
+        })
+        .collect();
+    check(&trainer(), &words);
+    let mut trainer = trainer();
+    trainer.end_of_word_suffix = Some("a".into());
+    for limit in [None, Some(3), Some(usize::MAX)] {
+        trainer.max_token_length = limit;
+        check(&trainer, &counts(&[("baaaaaba", 2), ("ba", 1)]));
+    }
+    trainer.end_of_word_suffix = None;
+    trainer.max_token_length = None;
+    trainer.limit_alphabet = Some(2);
+    let words = counts(&[("qé🙂z", 7), ("é🙂é", 6), ("🙂é", 5), ("", 4), ("é", 3)]);
+    let (vocab, _, _) = trainer.do_train(&words).unwrap();
+    // The oracle shares alphabet selection; keep an independent cutoff expectation.
+    assert_eq!((vocab["é"], vocab["🙂"]), (0, 1));
+    check(&trainer, &words);
+    check(&trainer, &counts(&[]));
+}
+
+#[test]
 fn overlap_and_alias() {
     check(
         &trainer(),
@@ -135,11 +168,11 @@ fn overlap_and_alias() {
         &trainer(),
         &counts(&[("ab", 3), ("cd", 3), ("aaaaa", 0), ("", 7)]),
     );
-    // 4097 AA starts cross the 4096-start task boundary, even with one worker.
+    // The long odd AA run crosses preparation tasks, even with one worker.
     let words = counts(&[
         (&"ab".repeat(12_000), 1),
         ("xy", 12_000),
-        (&"a".repeat(8195), 3),
+        (&"a".repeat(20001), 3),
     ]);
     let mut trainer = trainer();
     trainer.min_frequency = 10_000;
@@ -192,7 +225,7 @@ fn count_boundaries() {
 }
 
 #[test]
-fn inputs_remain_reusable() {
+fn reusable_input() {
     let words = counts(&[("ab测", 2), ("测", 1)]);
     let original = words.clone();
     let mut trainer = trainer();
@@ -211,7 +244,7 @@ fn inputs_remain_reusable() {
 }
 
 #[test]
-fn failed_training_keeps_model() {
+fn failed_train() {
     let mut model = PipelineBPE::from_config(BpeConfig {
         vocab: [("old".into(), 0)].into(),
         ..Default::default()
@@ -306,9 +339,8 @@ fn restart_discards_ids() {
     assert_eq!(trace.iter().filter(|rule| rule.1 == 3).count(), 1);
 }
 
-// Temporarily disabled: encoding "测" returns ID 3 instead of the affixed
-// vocabulary ID. The pre-refactor baseline also fails; the cause is unresolved.
-/*
+// Known failure: encoding "测" returns plain ID 3 instead of the affixed ID.
+// Keep the assertion active while the pre-refactor failure remains unresolved.
 #[test]
 fn tokenizer_roundtrip() {
     use tk_encode::{
@@ -368,39 +400,10 @@ fn tokenizer_roundtrip() {
         }
     }
 }
-*/
 
 // Child processes isolate public settings. Training must reuse the ambient pool
 // and stay on the calling worker when repository parallelism is disabled.
 use std::sync::atomic::{AtomicUsize, Ordering};
-static EXPECTED_WORKERS: AtomicUsize = AtomicUsize::new(0);
-static EXPECTED_THREAD: AtomicUsize = AtomicUsize::new(usize::MAX);
-static OBSERVED_PHASES: AtomicUsize = AtomicUsize::new(0);
-/// Worker-executed stages observed by the public training subprocess test.
-/// Check ambient pool reuse at each stage and caller-thread execution in serial mode.
-pub(super) enum Phase {
-    Materialize,
-    FreshPrepare,
-    ReusePrepare,
-    Alphabet,
-    InitialCount,
-    InitialOwner,
-    Commit,
-    Retire,
-}
-
-pub(super) fn observe_worker(phase: Phase) {
-    let expected = EXPECTED_WORKERS.load(Ordering::Relaxed);
-    if expected != 0 {
-        assert_eq!(rayon::current_num_threads(), expected);
-        let thread = EXPECTED_THREAD.load(Ordering::Relaxed);
-        if thread != usize::MAX {
-            assert_eq!(rayon::current_thread_index(), Some(thread));
-        }
-        // One bit per phase records that its callback ran in the expected pool.
-        OBSERVED_PHASES.fetch_or(1 << phase as usize, Ordering::Relaxed);
-    }
-}
 
 fn run_child(test: &str, child: &str, setting: &str) -> std::process::Output {
     let result = std::process::Command::new(std::env::current_exe().unwrap())
@@ -426,9 +429,9 @@ fn run_child(test: &str, child: &str, setting: &str) -> std::process::Output {
 }
 
 #[test]
-fn public_feed_pools_and_progress() {
+fn public_behavior() {
     const CHILD: &str = "BPE_PUBLIC_TEST_CHILD";
-    const TEST: &str = "trainers::bpe::tests::public_feed_pools_and_progress";
+    const TEST: &str = "trainers::bpe::tests::public_behavior";
     if let Ok(setting) = std::env::var(CHILD) {
         run_public_training_child(&setting);
         return;
@@ -456,15 +459,11 @@ fn run_public_training_child(setting: &str) {
     if setting != "env_false" {
         tk_encode::parallelism::set_parallelism(parallel);
     }
-    EXPECTED_WORKERS.store(workers, Ordering::Relaxed);
     rayon::ThreadPoolBuilder::new()
         .num_threads(workers)
         .build()
         .unwrap()
         .install(|| {
-            if !parallel {
-                EXPECTED_THREAD.store(rayon::current_thread_index().unwrap(), Ordering::Relaxed);
-            }
             if matches!(setting, "parallel" | "serial" | "env_false" | "one") {
                 check_feed_success(workers, parallel);
                 if setting == "parallel" {
@@ -481,12 +480,7 @@ fn run_public_training_child(setting: &str) {
             trainer.continuing_subword_prefix = Some("a".into());
             trainer.special_tokens = vec![AddedToken::from("xy", true)];
             let words = counts(&[("xy", 3), ("uv", 2), ("ab", 1)]);
-            OBSERVED_PHASES.store(0, Ordering::Relaxed);
             let (_, merges, _) = trainer.do_train(&words).unwrap();
-            assert_eq!(
-                OBSERVED_PHASES.load(Ordering::Relaxed) & 0xbf,
-                if setting == "zero" { 0b10111000 } else { 0xbf }
-            );
             assert_eq!(has_parallelism_been_used(), parallel);
             println!("BPE_MERGE_COUNT={}", merges.len());
             let trainer = BpeTrainer::builder()
@@ -497,7 +491,6 @@ fn run_public_training_child(setting: &str) {
             let words = counts(&[("ab".repeat(8192).as_str(), 3), ("xyxy", 2)]);
             let actual = trainer.do_train(&words).unwrap();
             assert_eq!(actual, trainer.do_train_reference(&words).unwrap().parts);
-            assert_ne!(OBSERVED_PHASES.load(Ordering::Relaxed) & 0x40, 0);
             assert_eq!(has_parallelism_been_used(), parallel);
         });
 }
@@ -754,51 +747,8 @@ fn builder_serialization() {
     assert_eq!(serde_json::from_value::<BpeTrainer>(json).unwrap(), default);
 }
 
-#[test]
-fn initial_edges() {
-    let words = counts(&[("qé🙂z", 7), ("é🙂é", 6), ("🙂é", 5), ("", 4), ("é", 3)]);
-    let mut trainer = trainer();
-    trainer.limit_alphabet = Some(2);
-    let view = WordCountsView::from(&words);
-    let (_, ids) =
-        Vocabulary::initialize(&trainer, view, &trainer.select_alphabet(view), &None).unwrap();
-    let plan = CorpusPlan::build(
-        view,
-        ids,
-        trainer.vocab_size,
-        TrainingMode::Reuse,
-        trainer.max_token_length,
-    )
-    .unwrap();
-    let expected = [
-        ((0, 1), 1, 7),
-        ((0, 1), 4, 6),
-        ((1, 0), 5, 6),
-        ((1, 0), 8, 5),
-    ];
-    let read = || {
-        let (words, edges) = plan.chunks(usize::MAX).into_iter().next().unwrap();
-        assert_eq!(words, 5);
-        edges.map(|edge| (edge.pair, edge.coordinate, edge.weight))
-    };
-    let mut actual: Vec<_> = read().collect();
-    assert_eq!(actual, expected);
-    actual.clear();
-    let mut edges = read();
-    let result: Result<()> = edges.by_ref().try_for_each(|edge| {
-        actual.push(edge);
-        if actual.len() == 2 {
-            Err("designated edge failure".into())
-        } else {
-            Ok(())
-        }
-    });
-    assert_eq!(result.unwrap_err().to_string(), "designated edge failure");
-    assert_eq!(actual, expected[..2]);
-    assert_eq!(edges.collect::<Vec<_>>(), expected[2..]);
-}
-
 fn check_feed_success(workers: usize, parallel: bool) {
+    let caller = rayon::current_thread_index();
     let length = workers + 33;
     let reads = AtomicUsize::new(0);
     let seen: Vec<_> = (0..length).map(|_| AtomicUsize::new(0)).collect();
@@ -815,6 +765,7 @@ fn check_feed_success(workers: usize, parallel: bool) {
     });
     let counted = super::feed::count(input, &|text| {
         assert_eq!(rayon::current_num_threads(), workers);
+        assert!(parallel || rayon::current_thread_index() == caller);
         participants.fetch_or(
             1 << rayon::current_thread_index().unwrap(),
             Ordering::Relaxed,

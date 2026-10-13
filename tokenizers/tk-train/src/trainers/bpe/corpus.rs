@@ -241,8 +241,6 @@ impl<'input> CorpusPlan<'input> {
             .maybe_par_iter()
             .enumerate()
             .for_each(|(word, (text, _))| {
-                #[cfg(test)]
-                super::tests::observe_worker(super::tests::Phase::Materialize);
                 let start = self.starts[word];
                 for (offset, id) in self.ids.symbols(text).enumerate() {
                     tokens.set(start + offset, id);
@@ -658,93 +656,5 @@ mod tests {
         corpus.apply(&[1, 4], 0);
         assert_eq!(tokens(&corpus), [s, 0, 0, 0, 0, s, 1, 0, s]);
         assert_eq!(spans(&corpus), [0, 3, 2, 3, 4, 0, 0, 4, 0]);
-    }
-
-    #[test]
-    fn fresh_reader() {
-        let s = WORD_SEPARATOR_ID;
-        let input: Vec<_> = std::iter::once(s)
-            .chain((0..40).flat_map(|_| [0, 1, s]))
-            .collect();
-        let mut corpus = fixture(&input, &[1, 1, 2], None);
-        corpus.weight_runs = vec![(1, 9), (31, 1), (91, 0)]
-            .into_iter()
-            .map(|(start, weight)| WeightRun { start, weight })
-            .collect();
-        corpus.unit_weight_range = Some(31..91);
-        corpus.apply(&[1, 64], 2);
-
-        // Span more than one prefetch window and include old starts, tails and
-        // separators. Weights cross repeated, unit and zero-weight regions.
-        let matches: Vec<_> = corpus
-            .fresh_matches(0..input.len() as u64, (0, 1))
-            .map(|(matched, weight)| (matched.start, matched.end, weight))
-            .collect();
-        let expected: Vec<_> = (0..40)
-            .filter(|&word| word != 0 && word != 21)
-            .map(|word| {
-                // The leading separator consumes one slot; each [a, b, sep]
-                // word contributes three more slots to the original coordinates.
-                let start = 1 + word * 3;
-                let weight = if word < 10 {
-                    9
-                } else if word < 30 {
-                    1
-                } else {
-                    0
-                };
-                (start, start + 2, weight)
-            })
-            .collect();
-        assert_eq!(matches, expected);
-        assert!(
-            corpus
-                .fresh_matches(std::iter::empty(), (0, 1))
-                .next()
-                .is_none()
-        );
-    }
-
-    #[test]
-    fn initial_ranges() {
-        let words = ahash::AHashMap::new();
-        let view = WordCountsView::from(&words);
-        let trainer = super::super::BpeTrainer::new(1, 0);
-        let (_, ids) = super::super::vocabulary::Vocabulary::initialize(
-            &trainer,
-            view,
-            &trainer.select_alphabet(view),
-            &None,
-        )
-        .unwrap();
-        let mut plan = CorpusPlan::build(
-            view,
-            ids,
-            trainer.vocab_size,
-            TrainingMode::Fresh,
-            trainer.max_token_length,
-        )
-        .unwrap();
-        assert!(plan.ranges(0).is_empty());
-        let text = CompactString::default();
-        let weight = 1;
-        let maximum = usize::MAX;
-        for (starts, length, budget, expected) in [
-            (vec![1], 1025, 0, std::iter::once(0..1).collect()),
-            (vec![1, 4, 8, 10], 16, 0, vec![0..1, 1..2, 2..3, 3..4]),
-            (vec![1, 4, 8, 10], 16, 7, vec![0..2, 2..3, 3..4]),
-            (vec![1, 4, 8, 10], 16, 9, vec![0..3, 3..4]),
-            (
-                vec![maximum - 8, maximum - 3],
-                maximum,
-                8,
-                std::iter::once(0..2).collect(),
-            ),
-        ] {
-            plan.words = vec![(&text, &weight); starts.len()].into_boxed_slice();
-            plan.starts = starts.into_boxed_slice();
-            plan.length = length;
-            assert_eq!(plan.ranges(budget), expected);
-        }
     }
 }

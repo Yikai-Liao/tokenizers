@@ -1,0 +1,177 @@
+   Compiling smallvec v1.16.2
+   Compiling lean-bpe-codec-check v0.0.0 (/dev/shm/bpe-test-slimming-worktree-20261014/experiments/bpe-simplification/miri-codec)
+warning: constant `OFFSET_BYTES` is never used
+   --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:104:7
+    |
+104 | const OFFSET_BYTES: usize = std::mem::size_of::<usize>();
+    |       ^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: struct `Positions` is never constructed
+   --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:106:19
+    |
+106 | pub(super) struct Positions(Repr);
+    |                   ^^^^^^^^^
+
+warning: enum `Repr` is never used
+   --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:108:6
+    |
+108 | enum Repr {
+    |      ^^^^
+
+warning: struct `Leaf` is never constructed
+   --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:113:8
+    |
+113 | struct Leaf {
+    |        ^^^^
+
+warning: multiple associated items are never used
+   --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:129:19
+    |
+128 | impl Positions {
+    | -------------- associated items in this implementation
+129 |     pub(super) fn len(&self) -> usize {
+    |                   ^^^
+...
+136 |     pub(super) fn is_empty(&self) -> bool {
+    |                   ^^^^^^^^
+...
+142 |     pub(super) fn push(&mut self, position: u64) -> Result<()> {
+    |                   ^^^^
+...
+151 |     pub(super) fn concat(fragments: impl IntoIterator<Item = Self>) -> Result<Self> {
+    |                   ^^^^^^
+...
+184 |     pub(super) fn merge(fragments: impl IntoIterator<Item = Self>) -> Result<Self> {
+    |                   ^^^^^
+...
+197 |     fn leaves(&self) -> &[Leaf] {
+    |        ^^^^^^
+...
+204 |     pub(super) fn iter(&self) -> impl Iterator<Item = u64> + '_ {
+    |                   ^^^^
+...
+210 |     pub(super) fn chunks(
+    |                   ^^^^^^
+...
+251 |     pub(super) fn iter_from(&self, target: u64) -> impl Iterator<Item = u64> + '_ {
+    |                   ^^^^^^^^^
+
+warning: multiple associated items are never used
+   --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:274:8
+    |
+273 | impl Leaf {
+    | --------- associated items in this implementation
+274 |     fn len(&self) -> usize {
+    |        ^^^
+...
+280 |     fn reserved_directory_bytes(len: usize) -> Result<usize> {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^
+...
+295 |     fn directory(&self) -> &[[u8; OFFSET_BYTES]] {
+    |        ^^^^^^^^^
+...
+306 |     fn data(&self) -> &[u8] {
+    |        ^^^^
+...
+314 |     fn first(&self) -> u64 {
+    |        ^^^^^
+...
+318 |     fn last(&self) -> u64 {
+    |        ^^^^
+...
+323 |     fn push(&mut self, position: u64) -> Result<()> {
+    |        ^^^^
+...
+347 |     fn reserve(&mut self, additional: usize) -> Result<()> {
+    |        ^^^^^^^
+...
+368 |     fn push_restart(
+    |        ^^^^^^^^^^^^
+...
+417 |     fn cursor(&self, start: usize) -> Cursor<'_> {
+    |        ^^^^^^
+...
+432 |     fn restart_before(&self, target: u64) -> usize {
+    |        ^^^^^^^^^^^^^^
+
+warning: function `read` is never used
+   --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:450:4
+    |
+450 | fn read(leaves: &[Leaf], mut start: usize) -> impl Iterator<Item = u64> + '_ {
+    |    ^^^^
+
+warning: constant `RESTART` is never used
+  --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:13:22
+   |
+13 |     pub(super) const RESTART: usize = 128;
+   |                      ^^^^^^^
+
+warning: function `gap_width` is never used
+  --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:15:19
+   |
+15 |     pub(super) fn gap_width(gap: u64) -> usize {
+   |                   ^^^^^^^^^
+
+warning: function `append_gap` is never used
+  --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:23:19
+   |
+23 |     pub(super) fn append_gap(bytes: &mut SmallVec<[u8; 16]>, gap: u64) {
+   |                   ^^^^^^^^^^
+
+warning: function `read_absolute` is never used
+  --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:36:19
+   |
+36 |     pub(super) fn read_absolute(bytes: &[u8]) -> u64 {
+   |                   ^^^^^^^^^^^^^
+
+warning: struct `Cursor` is never constructed
+  --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:40:23
+   |
+40 |     pub(super) struct Cursor<'a> {
+   |                       ^^^^^^
+
+warning: associated function `new` is never used
+  --> src/../../../../tokenizers/tk-train/src/trainers/bpe/positions.rs:47:23
+   |
+46 |     impl<'a> Cursor<'a> {
+   |     ------------------- associated function in this implementation
+47 |         pub(super) fn new(bytes: &'a [u8], start: usize) -> Self {
+   |                       ^^^
+
+warning: `lean-bpe-codec-check` (lib) generated 13 warnings
+warning: unused dependency `rayon`
+ --> Cargo.toml:7:1
+  |
+7 | rayon = "1.10"
+  | ^^^^^^^^^^^^^^
+  |
+  = note: `cargo::unused_dependencies` is set to `warn` by default
+help: consider removing the dependency on `rayon`
+warning: unused dependency `thread_local`
+ --> Cargo.toml:6:1
+  |
+6 | thread_local = "1.1.10"
+  | ^^^^^^^^^^^^^^^^^^^^^^^
+  |
+help: consider removing the dependency on `thread_local`
+warning: `lean-bpe-codec-check` (manifest) generated 2 warnings
+    Finished `test` profile [unoptimized] target(s) in 0.41s
+     Running unittests src/lib.rs (/dev/shm/bpe-test-slimming-target-20261014/miri/x86_64-unknown-linux-gnu/debug/build/lean-bpe-codec-check/62725b029a6a6137/out/lean_bpe_codec_check-62725b029a6a6137)
+
+running 5 tests
+test positions::codec::tests::gap_width ... ok
+test positions::tests::append_errors ... ok
+test positions::tests::concat_boundaries ... ok
+test positions::tests::leaf_roundtrip ... ok
+test positions::tests::merge_streams ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 217.01s
+
+   Doc-tests lean_bpe_codec_check
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

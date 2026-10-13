@@ -1,0 +1,988 @@
+diff --git a/tokenizers/tk-train/src/trainers/bpe/COVERAGE.md b/tokenizers/tk-train/src/trainers/bpe/COVERAGE.md
+index 29e39c76..998a5f5c 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/COVERAGE.md
++++ b/tokenizers/tk-train/src/trainers/bpe/COVERAGE.md
+@@ -1,62 +1,56 @@
+-# Combined BPE test coverage
++# Ordinary BPE test coverage
+ 
+-The suite groups related contracts around complete training results, public
+-integration and immutable storage. The differential helper compares every
+-selected `(pair, count, merged ID)`, full vocabulary IDs and ordered merges
+-at 1, 4 and 8 workers. Public integration checks special-token return.
+-The sequential oracle owns its own word
+-edits, ledger and historical birth cohorts; it shares only alphabet selection.
+-Literal alphabet expectations independently check that shared selector.
++The differential helper compares every selected `(pair, count, merged ID)`,
++complete vocabulary IDs and ordered merges at 1, 4 and 8 workers. Its sequential
++oracle owns word edits, the count ledger and historical birth cohorts, and
++shares alphabet selection with the trainer. Literal Unicode IDs, the weighted
++cutoff expectation and character-presence tests independently check that selector.
+ 
+-| Contract | Combined coverage |
++| Contract | Retained coverage |
+ | --- | --- |
+-| Weighted ordering, equal counts, empty words, zero weights, Unicode and duplicate reserved strings | Fixed-seed model combinations plus an explicit equal-count fixture |
+-| Affixes, activated identity reuse, unactivated reserved IDs and restart behavior | Generated prefix/suffix combinations, duplicate specials, literal `baaba` traces, and 128 long words with interleaved zero/positive weights across three affix/gate settings; a reserved long merge activates after occurrence geometry is established; a fresh XY rule precedes an activated-ID restart, the limited alphabet survives, and only the successful trace is returned |
+-| AA overlap and position restart boundaries | An 8195-symbol AA run spans restart blocks and two preparation jobs even at one worker; full model/rule agreement and generated repeated words |
+-| Complete and partial birth pruning | Long AB producer split across workers, a competing complete XY producer, and complete-model/trace comparison; 127/129/257 repeated ABC groups check rounded whole fragments versus partial publication and full model/rule agreement |
+-| Strict newborn length admission, including limits 0, 1 and 2 | Generated length gates and independent sequential neighbor admission |
+-| Completed initialization and retained cutoff | Ordered frozen input has four characters with limit two; literal multibyte prefix/suffix IDs precede weight sorting, original UTF-8 boundaries survive filtering, spans retain allocation identity on transfer, a true four-way cutoff tie reuses its two selected characters, and a separate four-character/three-slot cutoff forces an actual fresh-to-reuse restart and matches complete models/traces at 1/4/8 workers |
+-| Filtered symbols, forced alphabet and decorations | Generated filtered/decorated models, a filtered training fixture, and literal alphabet IDs |
+-| Full token IDs beyond 16 bits and separator distinction | 65536 reserved IDs followed by ordinary training and literal ID expectation |
+-| Joined compatible rules | Explicit four-rule preparation checks shared heads/tails and exact boundary births; full differential models and traces check ordered successful history at 1/4/8 workers |
+-| Preparation failure before writes | A committed AB round precedes a batch with a valid CD task and an overflowing EF task; `merge_next` fails with every endpoint unchanged at 1 and 6 workers |
+-| Reusable neighbor directories without reset | A task stops on weighted overflow; the next task reuses both directories with old indices outside its groups, indices naming different neighbors, and valid current-group hits; exact event order, weights, birth groups and position lists are checked |
+-| Shard-local commit and historical birth grouping | Unordered and zero-weight reuse fragments retain duplicates and publish in birth-group order below the floor; fresh removals retire counts before complete/partial publication; fresh grouped and intermediate signed overflow drain pending streams while retaining capacity |
+-| Full-u64 counts, per-key overflow, signed reuse limits and validation before zero merges | Literal success/error cases repeated with vocabulary targets 0, 2 and 64 |
+-| Borrowed map, stored entries, feed and repeat training | Complete model equality through the public entries, repeated successful calls with unchanged counts, and training after flat-map serde; decorated representations preserve the same borrowed traversal order |
+-| Failed training and failed model construction | Pair-count overflow and a successfully trained oversized affix rejected by the reader both leave the previous model vocabulary intact |
+-| Public feed, trainer serialization, special-token return, model options and tokenizer JSON reload | Feed-to-training integration and complete serialized model equality and three literal input-to-ID expectations before/after tokenizer JSON reload |
+-| Feed flushing, first `None`, duplicate callback words and transactional process errors | Isolated public test at 0/31/32/33/127/128/129/257 items, resumed nonfused input, empty/Unicode/long callback words, bulk 2047/2048/2049 unique words, exact flat counts, full callback count after error and unchanged prior state |
+-| Feed unification boundaries and failure interleaving | Disabled parallelism, enabled/one worker and four workers; startup W and W+31/32/33/64 lengths; per-ID callback/read counts; first exhaustion; 2047/2048/2049/4097 keys with repeated words across flushes; first/middle/last/multiple ordinary errors; exact counts and public model equality; controlled two-worker shared writes plus a successful tail and failing partition leave prior trainer state intact |
+-| Upstream parallelism policy and ambient pool reuse | Child processes install one/two-thread pools while the encoder is configured for four threads; alphabet scans, initial counting/owners, materialization, fresh/reuse preparation, commit and retirement check ambient pool size; disabled settings and `TOKENIZERS_PARALLELISM=false` keep callbacks on the calling worker and leave the parallel-use flag unset; a long-word fixture checks complete model equality against the sequential oracle |
+-| JSON progress schema, starts and completion | Child-process matrix covers normal/no-bar/zero-merge/empty/Silent; strict JSON parsing, exact three-field schema, initial zero and final actual merge count; the zero-merge case executes no materialization or preparation tasks |
+-| Numeric position width, duplicate values, restart blocks and seeking | Empty/small lists and a 2049-value repeated sequence; values through `u64::MAX`, gap-width boundaries through ten bytes, and value seeking checked against independent slice lower bounds |
+-| Independently consumable chunks and leaf/root boundaries | Nested chunks flatten to the exact original sequence at targets 0/1/127/128/129/511/usize::MAX; concatenated leaves of widths 1/2/3/127/128/129/700/1300 retain duplicated coordinates and seeking behavior |
+-| Direct encoding, append failures and immutable roots | Literal tail/seed/gap bytes, actual inline/spilled byte storage, empty leaf filtering, sole-leaf collapse, root rejection by concat and push, descending append rejection preserving the old sequence at restart boundaries, and exhausted/truncated decoder behavior |
+-| Interleaved sorted stream merging | Empty input, a sole root retained as a root, mixed roots/leaves/empty streams, duplicate coordinates and duplicate `u64::MAX` values |
+-| Fresh matches, stale coordinates and weight regions | Forty words cross more than one prefetch window; consumed starts, tails and separators are filtered while exact match intervals and repeated/unit/zero word weights remain correct |
+-| Reuse word scans and virtual neighbors | Literal reuse_spans checks endpoints and occurrence spans; reuse_scan_domain_and_bound_configuration checks historical-only scans versus `Some(usize::MAX)` whole-word scans and separator exclusion; complete reference comparisons cover affixes, aliases and length gates at 1/4/8 workers |
+-| Lazy initial-edge consumption and consumer errors | Filtered multibyte symbols yield literal pair/coordinate/weight triples; a consumer error leaves the exact consumed prefix and unconsumed suffix intact |
++| Weighted ordering, equal counts, empty words, zero weights, Unicode, duplicate reserved strings and affixes | `parity` uses 64 fixed-seed combinations; `overlap_and_alias` supplies equal-count and literal alias traces |
++| Compatible rules and shared boundaries | `targeted_models` compares full models and traces for `abacdbdc` and weighted `ab/ac/db/dc` words |
++| Multiple words and weight regions | `targeted_models` uses forty distinct words with repeated, unit and zero weights |
++| Alias geometry and length admission | `targeted_models` compares suffix-`a` models for `baaaaaba/ba` with no limit, limit 3 and `usize::MAX`; `parity` includes limits 0, 1 and 2 |
++| AA overlap, restart blocks and preparation across tasks | A 20001-symbol odd AA word and a long AB producer in `overlap_and_alias` compare complete models and traces without fixing the number or size of internal jobs |
++| Alphabet filtering and decorations | `targeted_models` checks literal weighted-cutoff IDs and the complete filtered Unicode model; `affix_ids`, `unicode_id_order`, `alphabet_activation` and `unicode_presence` retain independent Unicode/decoration expectations |
++| Full token IDs and counts | `wide_ids` crosses 16-bit IDs; `count_boundaries` covers full-u64 counts, per-key overflow, signed reuse limits and validation at vocabulary targets 0, 2 and 64 |
++| Restart identity and retained alphabet | `restart_discards_ids` checks discarded speculative IDs and successful history; `restart_keeps_alphabet` exercises a real fresh-to-reuse restart with a constrained alphabet |
++| Adjacent concurrent writes | `adjacent_writes` checks both write orders, parallel adjacent writes and reused occurrence spans |
++| Preparation and commit failures | `failed_rounds` first commits AB, then injects preparation overflow before writes and index overflow after writes at 1 and 6 workers; prior history/trace survives and failed owners publish no births |
++| Intermediate arithmetic overflow | `intermediate_overflow` retains fresh-u64 and reuse-i64 failures while draining pending streams |
++| Reusable public input and model failure | `reusable_input` preserves borrowed/stored counts over repeated training; `failed_train` preserves the old model after count overflow and a trained affix rejected by the model reader |
++| Public serialization and encoding | `builder_serialization` checks trainer defaults/options; `tokenizer_roundtrip` checks feed, trainer serde, special-token return, model options and tokenizer JSON reload, and retains its known failing encoding assertion |
++| Feed callback execution and transactional failure | `public_behavior` isolates enabled/disabled/environment/one-worker settings; callbacks check the ambient pool, serial caller thread, exact reads/counts, nonfused exhaustion and 2047/2048/2049/4097 unique-key boundaries; controlled two-worker partial failure preserves prior trainer state |
++| Public progress and parallel-use flags | `public_behavior` covers normal, serial, environment-disabled, one-worker, zero-merge, Silent and restart settings; JSON parses strictly and finishes at the actual merge count; long-word models match the sequential oracle |
++| Numeric position width, duplicates, restart blocks and seek | `gap_width` covers seven-bit boundaries through ten-byte u64 gaps; `leaf_roundtrip` covers empty/small/full-u64 sequences and 2049 repeated values with independent slice lower bounds |
++| Chunk and leaf/root boundaries | `leaf_roundtrip` and `concat_boundaries` flatten chunks to the exact original sequence and retain duplicates across restart/leaf boundaries |
++| Append failure and immutable roots | `append_errors` checks descending append rollback at restart boundaries, full-u64 append, length overflow and truncated cursor failure; `concat_boundaries` retains invalid ordering and root rejection |
++| Sorted stream merging | `merge_streams` retains mixed roots/leaves/empty streams and duplicate coordinates through `u64::MAX` |
++| Word-count representation and serde | `equality_and_serde` retains equality/order and full-u64 serialization limits |
+ 
+-The former fixture files and legacy trainer tests are consolidated into these
+-contracts. Their repeated helper infrastructure and overlapping private feed tests are
+-replaced by public flat-count/callback contracts. This map describes
+-asserted behavior.
+-Position appends validate ordering; concat accepts owned leaves and sorted-stream
+-merging consumes owned Positions. Appended coordinates determine the stored
+-length and encoded payload. The standalone Miri harness imports the same position module and
+-its tests; historical storage experiments retain their separate native/Miri evidence.
++`tokenizer_roundtrip` is active and currently fails when encoding `测`: the
++encoder returns plain ID 3 instead of `config.vocab["测</w>"]`. This failure was
++also observed before the corpus-boundary refactor; it is reported separately,
++with the assertion unchanged, rather than treated as passing coverage.
+ 
+-The formatted line count includes test hooks, the complete reference oracle,
+-all default BPE public/helper test declarations and the Miri harness. Dedicated
+-word-count tests retain representation/order equality and full-u64 serde limits. Comments and blank lines are
+-excluded. The separately feature-gated parity trainer is unchanged and is not
+-used as a test helper for this engine.
++The high-level replacements preserve complete observable training comparisons.
++They do not reproduce every removed private assertion. The suite deliberately
++no longer checks precise initial range formulas, fresh-reader prefetch/cache
++state, event-payload ordering, equal-priority cohort identity, prepared-job and
++raw-slot layout, exact job counts or first-job length, injected invalid starts,
++private occurrence-span arrays, directory reuse after an injected scratch
++failure, artificially truncated scan domains, literal leaf bytes, repeated
++cursor exhaustion, decoration-slot getters/setters, private edge coordinates,
++standard iterator error recovery, `sizeof`, SmallVec inline/spill shape, or a
++phase bitmap proving each internal stage's worker identity. Production queue,
++cohort, priority and count-repair semantics are unchanged.
+ 
+-The corpus-boundary refactor also exercises the actual owning preparation path:
+-`rejected_start_and_aa_tasks` verifies the original-position chunk budget and
+-global AA membership at 1/6 workers. `failures_before_and_after_writes` first
+-commits a round, then checks that both preparation and post-write index failures
+-preserve that history and trace while withholding new births. Production-grain
+-trace and resource evidence is recorded in the
+-[corpus-boundary experiment](../../../../../experiments/bpe-simplification/evidence/corpus-boundary-20261013/README.md).
++The formatted count excludes blank lines/comments and includes all ordinary
++BPE test helpers, active test hooks, the complete oracle, the shared trainer
++wrapper and the four-line Miri harness once. Parity Trainer and its exclusive
++`word.rs` remain outside this scope. No tests moved to escape the count. The
++Miri harness imports the same position module and its retained tests.
++
++Exact results, the before/after line audit and deletion mapping are recorded in
++[the slimming validation report](../../../../../experiments/bpe-simplification/evidence/test-slimming-20261014/VALIDATION.zh.md).
+diff --git a/tokenizers/tk-train/src/trainers/bpe/corpus.rs b/tokenizers/tk-train/src/trainers/bpe/corpus.rs
+index 36984c07..3fd4d6da 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/corpus.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/corpus.rs
+@@ -241,8 +241,6 @@ impl<'input> CorpusPlan<'input> {
+             .maybe_par_iter()
+             .enumerate()
+             .for_each(|(word, (text, _))| {
+-                #[cfg(test)]
+-                super::tests::observe_worker(super::tests::Phase::Materialize);
+                 let start = self.starts[word];
+                 for (offset, id) in self.ids.symbols(text).enumerate() {
+                     tokens.set(start + offset, id);
+@@ -659,92 +657,4 @@ mod tests {
+         assert_eq!(tokens(&corpus), [s, 0, 0, 0, 0, s, 1, 0, s]);
+         assert_eq!(spans(&corpus), [0, 3, 2, 3, 4, 0, 0, 4, 0]);
+     }
+-
+-    #[test]
+-    fn fresh_reader() {
+-        let s = WORD_SEPARATOR_ID;
+-        let input: Vec<_> = std::iter::once(s)
+-            .chain((0..40).flat_map(|_| [0, 1, s]))
+-            .collect();
+-        let mut corpus = fixture(&input, &[1, 1, 2], None);
+-        corpus.weight_runs = vec![(1, 9), (31, 1), (91, 0)]
+-            .into_iter()
+-            .map(|(start, weight)| WeightRun { start, weight })
+-            .collect();
+-        corpus.unit_weight_range = Some(31..91);
+-        corpus.apply(&[1, 64], 2);
+-
+-        // Span more than one prefetch window and include old starts, tails and
+-        // separators. Weights cross repeated, unit and zero-weight regions.
+-        let matches: Vec<_> = corpus
+-            .fresh_matches(0..input.len() as u64, (0, 1))
+-            .map(|(matched, weight)| (matched.start, matched.end, weight))
+-            .collect();
+-        let expected: Vec<_> = (0..40)
+-            .filter(|&word| word != 0 && word != 21)
+-            .map(|word| {
+-                // The leading separator consumes one slot; each [a, b, sep]
+-                // word contributes three more slots to the original coordinates.
+-                let start = 1 + word * 3;
+-                let weight = if word < 10 {
+-                    9
+-                } else if word < 30 {
+-                    1
+-                } else {
+-                    0
+-                };
+-                (start, start + 2, weight)
+-            })
+-            .collect();
+-        assert_eq!(matches, expected);
+-        assert!(
+-            corpus
+-                .fresh_matches(std::iter::empty(), (0, 1))
+-                .next()
+-                .is_none()
+-        );
+-    }
+-
+-    #[test]
+-    fn initial_ranges() {
+-        let words = ahash::AHashMap::new();
+-        let view = WordCountsView::from(&words);
+-        let trainer = super::super::BpeTrainer::new(1, 0);
+-        let (_, ids) = super::super::vocabulary::Vocabulary::initialize(
+-            &trainer,
+-            view,
+-            &trainer.select_alphabet(view),
+-            &None,
+-        )
+-        .unwrap();
+-        let mut plan = CorpusPlan::build(
+-            view,
+-            ids,
+-            trainer.vocab_size,
+-            TrainingMode::Fresh,
+-            trainer.max_token_length,
+-        )
+-        .unwrap();
+-        assert!(plan.ranges(0).is_empty());
+-        let text = CompactString::default();
+-        let weight = 1;
+-        let maximum = usize::MAX;
+-        for (starts, length, budget, expected) in [
+-            (vec![1], 1025, 0, std::iter::once(0..1).collect()),
+-            (vec![1, 4, 8, 10], 16, 0, vec![0..1, 1..2, 2..3, 3..4]),
+-            (vec![1, 4, 8, 10], 16, 7, vec![0..2, 2..3, 3..4]),
+-            (vec![1, 4, 8, 10], 16, 9, vec![0..3, 3..4]),
+-            (
+-                vec![maximum - 8, maximum - 3],
+-                maximum,
+-                8,
+-                std::iter::once(0..2).collect(),
+-            ),
+-        ] {
+-            plan.words = vec![(&text, &weight); starts.len()].into_boxed_slice();
+-            plan.starts = starts.into_boxed_slice();
+-            plan.length = length;
+-            assert_eq!(plan.ranges(budget), expected);
+-        }
+-    }
+ }
+diff --git a/tokenizers/tk-train/src/trainers/bpe/index.rs b/tokenizers/tk-train/src/trainers/bpe/index.rs
+index d1322e26..d3edc769 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/index.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/index.rs
+@@ -155,11 +155,7 @@ impl PairIndex {
+         let pieces = corpus
+             .chunks(if cfg!(test) { 16 } else { 1 << 24 })
+             .into_maybe_par_iter()
+-            .map(|(words, edges)| {
+-                #[cfg(test)]
+-                super::tests::observe_worker(super::tests::Phase::InitialCount);
+-                count_chunk(domain, words, edges, progress)
+-            })
++            .map(|(words, edges)| count_chunk(domain, words, edges, progress))
+             .collect::<Result<Vec<_>>>()?;
+ 
+         // 2. Route ordered fragments to the sole count owner of each pair.
+@@ -173,11 +169,7 @@ impl PairIndex {
+         // 3. Aggregate counts, admit pairs, and concatenate their sorted fragments.
+         let owners = routed
+             .into_maybe_par_iter()
+-            .map(|pieces| {
+-                #[cfg(test)]
+-                super::tests::observe_worker(super::tests::Phase::InitialOwner);
+-                build_owner(pieces, minimum.max(1), reuse)
+-            })
++            .map(|pieces| build_owner(pieces, minimum.max(1), reuse))
+             .collect::<Result<Vec<_>>>()?;
+         let (shards, candidates): (Vec<_>, Vec<_>) = owners.into_iter().unzip();
+         Ok(Self {
+@@ -195,8 +187,6 @@ impl PairIndex {
+     /// Consume remaining candidates at the successful training boundary.
+     /// Ordinary retirement and errors keep their normal, synchronous drops.
+     pub(super) fn retire(self) {
+-        #[cfg(test)]
+-        super::tests::observe_worker(super::tests::Phase::Retire);
+         let Self { shards, queue, .. } = self;
+         drop(shards);
+         if get_parallelism() {
+@@ -257,11 +247,7 @@ impl PairIndex {
+             .shards
+             .maybe_par_iter_mut()
+             .filter(|shard| !shard.actions.is_empty())
+-            .map(|shard| {
+-                #[cfg(test)]
+-                super::tests::observe_worker(super::tests::Phase::Commit);
+-                shard.commit(&events, reuse, floor)
+-            })
++            .map(|shard| shard.commit(&events, reuse, floor))
+             .collect::<Result<Vec<_>>>()?;
+ 
+         // 3. Publish only after all owners join, in the same owner traversal order.
+@@ -522,30 +508,6 @@ mod tests {
+         }
+     }
+ 
+-    #[test]
+-    fn unified_aggregation() {
+-        let pair = (0, 1);
+-        for reuse in [false, true] {
+-            let mut shard = Shard::default();
+-            let events = [event(pair, 1, 0, 0), event(pair, 1, 0, 0)];
+-            let streams: [&[u64]; 2] = if reuse {
+-                [&[1, 4, 4], &[0, 4, 5]]
+-            } else {
+-                [&[0, 1, 4], &[4, 4, 5]]
+-            };
+-            for (index, stream) in streams.into_iter().enumerate() {
+-                shard.push(index, false, Some(Positions::from_sorted(stream).unwrap()));
+-            }
+-            let candidates = shard.commit(&events, reuse, 2).unwrap();
+-            assert_eq!(candidates.len(), 1);
+-            assert_eq!(candidates[0].priority.count, 2);
+-            assert_eq!(
+-                candidates[0].positions.iter().collect::<Vec<_>>(),
+-                [0, 1, 4, 4, 4, 5]
+-            );
+-        }
+-    }
+-
+     #[test]
+     fn intermediate_overflow() {
+         let pair = (0, 1);
+@@ -575,7 +537,7 @@ mod tests {
+     }
+ 
+     #[test]
+-    fn failures_before_and_after_writes() {
++    fn failed_rounds() {
+         for workers in [1, 6] {
+             rayon::ThreadPoolBuilder::new()
+                 .num_threads(workers)
+@@ -655,44 +617,4 @@ mod tests {
+                 });
+         }
+     }
+-
+-    #[test]
+-    fn historical_cohorts() {
+-        let pair = (7, 8);
+-        let mut shard = Shard::default();
+-        // Separate commits retain two cohorts; the second changes the count 10→5.
+-        let mut candidates = Vec::new();
+-        for (add, remove, position) in [(10, 0, 20), (3, 8, 21)] {
+-            shard.push(
+-                0,
+-                remove != 0,
+-                Some(Positions::from_sorted(&[position]).unwrap()),
+-            );
+-            candidates.extend(
+-                shard
+-                    .commit(&[event(pair, add, remove, 0)], true, 1)
+-                    .unwrap(),
+-            );
+-        }
+-        assert_eq!(candidates.len(), 2);
+-        let mut index = PairIndex {
+-            shards: vec![shard].into_boxed_slice(),
+-            queue: candidates.into_iter().collect(),
+-            floor: 1,
+-            mode: TrainingMode::Reuse,
+-        };
+-        // Repair pop/update/push preserves which equal-priority cohort comes first.
+-        let priority = index.peek().unwrap();
+-        assert_eq!(priority.count, 5);
+-        assert_eq!(
+-            index.take(priority).positions.iter().collect::<Vec<_>>(),
+-            [21]
+-        );
+-        let priority = index.peek().unwrap();
+-        assert_eq!(
+-            index.take(priority).positions.iter().collect::<Vec<_>>(),
+-            [20]
+-        );
+-        assert!(index.peek().is_none());
+-    }
+ }
+diff --git a/tokenizers/tk-train/src/trainers/bpe/merge.rs b/tokenizers/tk-train/src/trainers/bpe/merge.rs
+index 7466137e..bd1fb7b4 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/merge.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/merge.rs
+@@ -3,8 +3,6 @@ use super::super::{TrainingMode, WORD_SEPARATOR_ID, add, positions::Positions};
+ use super::{Corpus, PairChange, SelectedMerge};
+ use ahash::AHashMap;
+ use itertools::Itertools;
+-#[cfg(test)]
+-use rayon::prelude::*;
+ use smallvec::SmallVec;
+ use std::ops::Range;
+ use tk_encode::parallelism::*;
+@@ -188,8 +186,6 @@ impl Corpus {
+         words
+             .maybe_par_chunks(chunk)
+             .map_init(NeighborScratch::default, |scratch, words| {
+-                #[cfg(test)]
+-                super::super::tests::observe_worker(super::super::tests::Phase::ReusePrepare);
+                 self.prepare_chunk(rule.pair, rule.merged_id, scratch, |neighbors, starts| {
+                     for &word in words {
+                         self.scan_word(&rule, word, limit, neighbors, starts)?;
+@@ -440,8 +436,6 @@ impl FreshPreparation<'_> {
+         left_merging: impl Fn(&Range<usize>, usize, u32) -> bool,
+         right_merged_id: impl Fn(usize, u32) -> Option<u32>,
+     ) -> Result<PreparedChunk> {
+-        #[cfg(test)]
+-        super::super::tests::observe_worker(super::super::tests::Phase::FreshPrepare);
+         self.corpus
+             .prepare_chunk(pair, merged_id, scratch, |neighbors, starts| {
+                 // PERF: Borrow the local decoder so lookahead adapters hold a pointer.
+@@ -501,225 +495,3 @@ impl FreshPreparation<'_> {
+         Ok(())
+     }
+ }
+-
+-#[cfg(test)]
+-mod tests {
+-    use super::super::super::tests::{spans, tokens};
+-    use super::super::super::{MergeOutcome, index::PairIndex, vocabulary::Vocabulary};
+-    use super::super::super::{
+-        WORD_SEPARATOR_ID,
+-        tests::{counts, initialize, trainer},
+-        word_counts::WordCountsView,
+-    };
+-    use super::*;
+-
+-    fn select(
+-        vocabulary: &mut Vocabulary,
+-        corpus: &mut Corpus,
+-        index: &mut PairIndex,
+-    ) -> SelectedMerge {
+-        let priority = index.peek().unwrap();
+-        let merged_id = vocabulary.resolve(priority.pair()).unwrap().merged_id;
+-        corpus.activate(priority.pair(), merged_id);
+-        SelectedMerge {
+-            pair: priority.pair(),
+-            merged_id,
+-            positions: index.take(priority).positions,
+-        }
+-    }
+-
+-    #[test]
+-    fn shared_boundary_once() {
+-        let trainer = trainer();
+-        let words = counts(&[("abacdbdc", 2), ("ab", 10), ("ac", 9), ("db", 8), ("dc", 7)]);
+-        let (mut vocabulary, mut corpus, mut index) =
+-            initialize(&trainer, WordCountsView::from(&words), false);
+-        let mut selected = Vec::new();
+-        // Shared heads/tails remain compatible; adjacent replacements publish once.
+-        for pair in [(0, 1), (0, 2), (3, 1), (3, 2)] {
+-            let rule = select(&mut vocabulary, &mut corpus, &mut index);
+-            assert_eq!(rule.pair, pair);
+-            selected.push(rule);
+-        }
+-        let jobs = corpus.prepare(selected).unwrap();
+-        let mut births: Vec<_> = jobs
+-            .iter()
+-            .flat_map(|j| &j.changes)
+-            .filter(|c| c.born_weight != 0)
+-            .map(|c| (c.born, c.born_weight))
+-            .collect();
+-        births.sort_unstable();
+-        assert_eq!(births, [((4, 5), 2), ((5, 6), 2), ((6, 7), 2)]);
+-        jobs.par_iter()
+-            .for_each(|j| corpus.apply(&j.starts, j.merged_id));
+-        let s = WORD_SEPARATOR_ID;
+-        assert_eq!(
+-            tokens(&corpus),
+-            [
+-                s, 4, 4, s, 5, 5, s, 6, 6, s, 7, 7, s, 4, 4, 5, 5, 6, 6, 7, 7, s
+-            ]
+-        );
+-    }
+-
+-    #[test]
+-    fn rejected_start_and_aa_tasks() {
+-        for workers in [1, 6] {
+-            let pool = rayon::ThreadPoolBuilder::new()
+-                .num_threads(workers)
+-                .build()
+-                .unwrap();
+-            pool.install(|| {
+-                let trainer = trainer();
+-                // An odd-length AA word leaves one symbol unmerged and is
+-                // large enough to exercise two accepted-start chunks per worker.
+-                let word = "a".repeat(20_000 * workers + 1);
+-                let words = counts(&[(&word, 1)]);
+-                let (mut vocabulary, mut corpus, mut index) =
+-                    initialize(&trainer, WordCountsView::from(&words), false);
+-                let mut rule = select(&mut vocabulary, &mut corpus, &mut index);
+-                // A stale separator precedes the overlapping valid AA starts.
+-                let coordinates: Vec<_> = std::iter::once(0).chain(rule.positions.iter()).collect();
+-                rule.positions = Positions::from_sorted(&coordinates).unwrap();
+-                let chunks = corpus.prepare(vec![rule]).unwrap();
+-                // Original length gives 5001; accepted length would incorrectly give 4096.
+-                assert_eq!(chunks[0].starts.len(), 5001);
+-                assert_eq!(chunks.len(), 2 * workers);
+-                let accepted: Vec<_> = chunks
+-                    .iter()
+-                    .flat_map(|c| c.starts.iter().copied())
+-                    .collect();
+-                assert_eq!(accepted, (1..word.len()).step_by(2).collect::<Vec<_>>());
+-                let changes: Vec<_> = chunks.iter().flat_map(|c| &c.changes).collect();
+-                let shared: Vec<_> = changes.iter().filter(|c| c.born == (1, 1)).collect();
+-                // N adjacent accepted matches create N - 1 shared boundaries;
+-                // each belongs to the left match, so the final start is excluded.
+-                assert_eq!(
+-                    shared.iter().map(|c| c.born_weight).sum::<u64>(),
+-                    (accepted.len() - 1) as u64
+-                );
+-                assert_eq!(
+-                    shared
+-                        .iter()
+-                        .flat_map(|c| c.positions.iter())
+-                        .collect::<Vec<_>>(),
+-                    accepted[..accepted.len() - 1]
+-                        .iter()
+-                        .map(|&p| p as u64)
+-                        .collect::<Vec<_>>()
+-                );
+-                assert!(
+-                    !changes
+-                        .iter()
+-                        .any(|c| c.born == (0, 1) && !c.positions.is_empty()),
+-                    "every later chunk must consult the complete AA acceptance set"
+-                );
+-            });
+-        }
+-    }
+-
+-    #[test]
+-    fn reuse_spans() {
+-        let mut trainer = trainer();
+-        trainer.end_of_word_suffix = Some("a".into());
+-        let words = counts(&[("baaaaaba", 2), ("ba", 1)]);
+-        let (mut vocabulary, mut corpus, mut index) =
+-            initialize(&trainer, WordCountsView::from(&words), true);
+-        assert!(matches!(
+-            trainer
+-                .merge_next(&mut vocabulary, &mut corpus, &mut index)
+-                .unwrap(),
+-            MergeOutcome::Committed { .. }
+-        ));
+-        let rule = select(&mut vocabulary, &mut corpus, &mut index);
+-        assert_eq!((rule.pair, rule.merged_id), ((1, 2), 3));
+-        // AA aliases the suffix ID: BA sees original and merged occurrences.
+-        let selected = vec![rule];
+-        let jobs = corpus.prepare(selected).unwrap();
+-        for job in jobs {
+-            corpus.apply(&job.starts, job.merged_id);
+-        }
+-        let s = WORD_SEPARATOR_ID;
+-        assert_eq!(tokens(&corpus), [s, 3, s, 3, 2, 2, 0, 3, 3, s, 1, 2, s]);
+-        assert_eq!(spans(&corpus), [0, 3, 0, 3, 2, 2, 1, 2, 2, 0, 1, 1, 0]);
+-    }
+-
+-    #[test]
+-    fn directory_recovery() {
+-        let mut trainer = trainer();
+-        trainer.max_token_length = Some(3);
+-        let words = counts(&[("xab", 1)]);
+-        let (mut vocabulary, mut corpus, mut index) =
+-            initialize(&trainer, WordCountsView::from(&words), false);
+-        let rule = select(&mut vocabulary, &mut corpus, &mut index);
+-        let mut directories = NeighborScratch::default();
+-        {
+-            let mut neighbors = NeighborChanges::new(
+-                rule.pair,
+-                rule.merged_id,
+-                corpus.id_count(),
+-                &mut directories,
+-            );
+-            neighbors
+-                .record(EdgeSide::Left, 2, 2, 1, u64::MAX, true)
+-                .unwrap();
+-            assert!(neighbors.record(EdgeSide::Left, 2, 2, 1, 1, true).is_err());
+-        }
+-        // The old directory index is reused without reset after the failed group.
+-        let mut neighbors = NeighborChanges::new(
+-            rule.pair,
+-            rule.merged_id,
+-            corpus.id_count(),
+-            &mut directories,
+-        );
+-        neighbors.record(EdgeSide::Left, 1, 1, 1, 3, true).unwrap();
+-        neighbors.record(EdgeSide::Left, 2, 2, 2, 4, true).unwrap();
+-        let changes = neighbors.finish();
+-        assert_eq!(
+-            changes
+-                .iter()
+-                .map(|c| (c.removed, c.born_weight))
+-                .collect::<Vec<_>>(),
+-            [((1, 0), 3), ((2, 0), 4)]
+-        );
+-        let job = corpus.prepare(vec![rule]).unwrap().pop().unwrap();
+-        let change = &job.changes[0];
+-        assert_eq!(
+-            (change.removed, change.removed_weight, change.born_weight),
+-            ((2, 0), 1, 0)
+-        );
+-        assert!(change.positions.is_empty());
+-        corpus.apply(&job.starts, job.merged_id);
+-        index.commit(vec![job.changes]).unwrap();
+-        assert!(index.peek().is_none());
+-    }
+-
+-    #[test]
+-    fn reuse_scan_domain_and_bound_configuration() {
+-        for limit in [None, Some(usize::MAX)] {
+-            let mut trainer = trainer();
+-            trainer.max_token_length = limit;
+-            let words = counts(&[("abab", 2), ("ab", 1)]);
+-            let (mut vocabulary, mut corpus, mut index) =
+-                initialize(&trainer, WordCountsView::from(&words), true);
+-            assert_eq!(corpus.word_range(0), 1..5);
+-            assert_eq!(corpus.word_range(1), 6..8);
+-            let mut rule = select(&mut vocabulary, &mut corpus, &mut index);
+-            assert_eq!(rule.pair, (0, 1));
+-            rule.positions = Positions::from_sorted(&[1]).unwrap();
+-            let chunks = corpus.prepare(vec![rule]).unwrap();
+-            let starts: Vec<_> = chunks
+-                .iter()
+-                .flat_map(|c| c.starts.iter().copied())
+-                .collect();
+-            assert_eq!(starts, if limit.is_some() { vec![1, 3] } else { vec![1] });
+-            for chunk in chunks {
+-                corpus.apply(&chunk.starts, chunk.merged_id);
+-            }
+-            assert_eq!(
+-                &tokens(&corpus)[6..8],
+-                &[0, 1],
+-                "an unrepresented word is never scanned"
+-            );
+-        }
+-    }
+-}
+diff --git a/tokenizers/tk-train/src/trainers/bpe/positions.rs b/tokenizers/tk-train/src/trainers/bpe/positions.rs
+index 1cdf6334..8b2f788b 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/positions.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/positions.rs
+@@ -81,7 +81,7 @@ mod codec {
+         use super::*;
+ 
+         #[test]
+-        fn gap_width_matches_appended_bytes() {
++        fn gap_width() {
+             let mut gaps = vec![0, 1, 127, 128, u64::MAX];
+             // Each seven-bit boundary increases LEB128 width by one byte;
+             // exercise the final value before it and the first value after it.
+@@ -91,9 +91,9 @@ mod codec {
+             for gap in gaps {
+                 let mut bytes = SmallVec::new();
+                 bytes.extend_from_slice(&0u64.to_le_bytes());
+-                bytes.reserve(gap_width(gap));
++                bytes.reserve(super::gap_width(gap));
+                 append_gap(&mut bytes, gap);
+-                assert_eq!(bytes.len() - 8, gap_width(gap));
++                assert_eq!(bytes.len() - 8, super::gap_width(gap));
+                 assert_eq!(Cursor::new(&bytes, 0).collect::<Vec<_>>(), [0, gap]);
+             }
+         }
+@@ -460,7 +460,7 @@ mod tests {
+     use super::*;
+ 
+     #[test]
+-    fn append_search_and_chunks() {
++    fn leaf_roundtrip() {
+         let cases = [
+             vec![],
+             vec![0],
+@@ -485,45 +485,10 @@ mod tests {
+                 assert_eq!(chunks.into_iter().flatten().collect::<Vec<_>>(), values);
+             }
+         }
+-        if cfg!(target_pointer_width = "64") {
+-            assert_eq!(std::mem::size_of::<Positions>(), 32);
+-        }
+-        // Actual byte width determines SmallVec storage, without item-count forms.
+-        for (count, bytes, spilled) in [(0, 0, false), (1, 16, false), (2, 17, true), (3, 18, true)]
+-        {
+-            let positions = Positions::from_sorted(&vec![7; count]).unwrap();
+-            let Repr::Leaf(leaf) = positions.0 else {
+-                unreachable!()
+-            };
+-            assert_eq!((leaf.bytes.len(), leaf.bytes.spilled()), (bytes, spilled));
+-        }
+-    }
+-
+-    #[test]
+-    fn leaf_format_and_exhausted_cursor() {
+-        let positions = Positions::from_sorted(&[1, 128, 256]).unwrap();
+-        let Repr::Leaf(leaf) = &positions.0 else {
+-            unreachable!()
+-        };
+-        let mut expected = 256u64.to_le_bytes().to_vec();
+-        expected.extend_from_slice(&1u64.to_le_bytes());
+-        expected.extend_from_slice(&[127, 128, 1]);
+-        assert_eq!(leaf.bytes.as_slice(), expected);
+-        for start in [0, leaf.len()] {
+-            let mut cursor = leaf.cursor(start);
+-            while cursor.next().is_some() {}
+-            assert_eq!(cursor.next(), None);
+-            assert_eq!(cursor.next(), None);
+-        }
+-        let empty = Positions::default();
+-        assert_eq!(empty.iter().next(), None);
+-        if cfg!(target_pointer_width = "64") {
+-            assert_eq!(std::mem::size_of::<Cursor<'_>>(), 32);
+-        }
+     }
+ 
+     #[test]
+-    fn concat_preserves_boundaries_and_chunks() {
++    fn concat_boundaries() {
+         // Three copies of every coordinate force equal values across both leaf
+         // and restart boundaries while keeping the full sequence sorted.
+         let values: Vec<u64> = (0..1300).map(|n| n / 3).collect();
+@@ -590,7 +555,7 @@ mod tests {
+     }
+ 
+     #[test]
+-    fn append_errors_preserve_leaf() {
++    fn append_errors() {
+         for count in [1, 2, 127, 128, 129, 256, 257] {
+             let values: Vec<u64> = (0..count).map(|n| 100 + n as u64).collect();
+             let mut positions = Positions::from_sorted(&values).unwrap();
+diff --git a/tokenizers/tk-train/src/trainers/bpe/tests.rs b/tokenizers/tk-train/src/trainers/bpe/tests.rs
+index 13433156..4ab119ca 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/tests.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/tests.rs
+@@ -80,7 +80,7 @@ pub(super) fn spans(corpus: &Corpus) -> Vec<usize> {
+ }
+ 
+ #[test]
+-fn models_match_reference() {
++fn parity() {
+     let mut seed = 0x58e4_a91du64;
+     // Fixed-seed xorshift64 keeps generated cases reproducible. The three
+     // shifts mix the same state; discarding shifted-out bits is intentional.
+@@ -125,6 +125,39 @@ fn models_match_reference() {
+     }
+ }
+ 
++#[test]
++fn targeted_models() {
++    check(
++        &trainer(),
++        &counts(&[("abacdbdc", 2), ("ab", 10), ("ac", 9), ("db", 8), ("dc", 7)]),
++    );
++    // Distinct lengths keep all forty words present across the weight regions.
++    let words = (0..40)
++        .map(|i| {
++            (
++                format!("{}ababa", "x".repeat(i)).into(),
++                [9, 1, 1, 0][i / 10],
++            )
++        })
++        .collect();
++    check(&trainer(), &words);
++    let mut trainer = trainer();
++    trainer.end_of_word_suffix = Some("a".into());
++    for limit in [None, Some(3), Some(usize::MAX)] {
++        trainer.max_token_length = limit;
++        check(&trainer, &counts(&[("baaaaaba", 2), ("ba", 1)]));
++    }
++    trainer.end_of_word_suffix = None;
++    trainer.max_token_length = None;
++    trainer.limit_alphabet = Some(2);
++    let words = counts(&[("qé🙂z", 7), ("é🙂é", 6), ("🙂é", 5), ("", 4), ("é", 3)]);
++    let (vocab, _, _) = trainer.do_train(&words).unwrap();
++    // The oracle shares alphabet selection; keep an independent cutoff expectation.
++    assert_eq!((vocab["é"], vocab["🙂"]), (0, 1));
++    check(&trainer, &words);
++    check(&trainer, &counts(&[]));
++}
++
+ #[test]
+ fn overlap_and_alias() {
+     check(
+@@ -135,11 +168,11 @@ fn overlap_and_alias() {
+         &trainer(),
+         &counts(&[("ab", 3), ("cd", 3), ("aaaaa", 0), ("", 7)]),
+     );
+-    // 4097 AA starts cross the 4096-start task boundary, even with one worker.
++    // The long odd AA run crosses preparation tasks, even with one worker.
+     let words = counts(&[
+         (&"ab".repeat(12_000), 1),
+         ("xy", 12_000),
+-        (&"a".repeat(8195), 3),
++        (&"a".repeat(20001), 3),
+     ]);
+     let mut trainer = trainer();
+     trainer.min_frequency = 10_000;
+@@ -192,7 +225,7 @@ fn count_boundaries() {
+ }
+ 
+ #[test]
+-fn inputs_remain_reusable() {
++fn reusable_input() {
+     let words = counts(&[("ab测", 2), ("测", 1)]);
+     let original = words.clone();
+     let mut trainer = trainer();
+@@ -211,7 +244,7 @@ fn inputs_remain_reusable() {
+ }
+ 
+ #[test]
+-fn failed_training_keeps_model() {
++fn failed_train() {
+     let mut model = PipelineBPE::from_config(BpeConfig {
+         vocab: [("old".into(), 0)].into(),
+         ..Default::default()
+@@ -306,9 +339,8 @@ fn restart_discards_ids() {
+     assert_eq!(trace.iter().filter(|rule| rule.1 == 3).count(), 1);
+ }
+ 
+-// Temporarily disabled: encoding "测" returns ID 3 instead of the affixed
+-// vocabulary ID. The pre-refactor baseline also fails; the cause is unresolved.
+-/*
++// Known failure: encoding "测" returns plain ID 3 instead of the affixed ID.
++// Keep the assertion active while the pre-refactor failure remains unresolved.
+ #[test]
+ fn tokenizer_roundtrip() {
+     use tk_encode::{
+@@ -368,39 +400,10 @@ fn tokenizer_roundtrip() {
+         }
+     }
+ }
+-*/
+ 
+ // Child processes isolate public settings. Training must reuse the ambient pool
+ // and stay on the calling worker when repository parallelism is disabled.
+ use std::sync::atomic::{AtomicUsize, Ordering};
+-static EXPECTED_WORKERS: AtomicUsize = AtomicUsize::new(0);
+-static EXPECTED_THREAD: AtomicUsize = AtomicUsize::new(usize::MAX);
+-static OBSERVED_PHASES: AtomicUsize = AtomicUsize::new(0);
+-/// Worker-executed stages observed by the public training subprocess test.
+-/// Check ambient pool reuse at each stage and caller-thread execution in serial mode.
+-pub(super) enum Phase {
+-    Materialize,
+-    FreshPrepare,
+-    ReusePrepare,
+-    Alphabet,
+-    InitialCount,
+-    InitialOwner,
+-    Commit,
+-    Retire,
+-}
+-
+-pub(super) fn observe_worker(phase: Phase) {
+-    let expected = EXPECTED_WORKERS.load(Ordering::Relaxed);
+-    if expected != 0 {
+-        assert_eq!(rayon::current_num_threads(), expected);
+-        let thread = EXPECTED_THREAD.load(Ordering::Relaxed);
+-        if thread != usize::MAX {
+-            assert_eq!(rayon::current_thread_index(), Some(thread));
+-        }
+-        // One bit per phase records that its callback ran in the expected pool.
+-        OBSERVED_PHASES.fetch_or(1 << phase as usize, Ordering::Relaxed);
+-    }
+-}
+ 
+ fn run_child(test: &str, child: &str, setting: &str) -> std::process::Output {
+     let result = std::process::Command::new(std::env::current_exe().unwrap())
+@@ -426,9 +429,9 @@ fn run_child(test: &str, child: &str, setting: &str) -> std::process::Output {
+ }
+ 
+ #[test]
+-fn public_feed_pools_and_progress() {
++fn public_behavior() {
+     const CHILD: &str = "BPE_PUBLIC_TEST_CHILD";
+-    const TEST: &str = "trainers::bpe::tests::public_feed_pools_and_progress";
++    const TEST: &str = "trainers::bpe::tests::public_behavior";
+     if let Ok(setting) = std::env::var(CHILD) {
+         run_public_training_child(&setting);
+         return;
+@@ -456,15 +459,11 @@ fn run_public_training_child(setting: &str) {
+     if setting != "env_false" {
+         tk_encode::parallelism::set_parallelism(parallel);
+     }
+-    EXPECTED_WORKERS.store(workers, Ordering::Relaxed);
+     rayon::ThreadPoolBuilder::new()
+         .num_threads(workers)
+         .build()
+         .unwrap()
+         .install(|| {
+-            if !parallel {
+-                EXPECTED_THREAD.store(rayon::current_thread_index().unwrap(), Ordering::Relaxed);
+-            }
+             if matches!(setting, "parallel" | "serial" | "env_false" | "one") {
+                 check_feed_success(workers, parallel);
+                 if setting == "parallel" {
+@@ -481,12 +480,7 @@ fn run_public_training_child(setting: &str) {
+             trainer.continuing_subword_prefix = Some("a".into());
+             trainer.special_tokens = vec![AddedToken::from("xy", true)];
+             let words = counts(&[("xy", 3), ("uv", 2), ("ab", 1)]);
+-            OBSERVED_PHASES.store(0, Ordering::Relaxed);
+             let (_, merges, _) = trainer.do_train(&words).unwrap();
+-            assert_eq!(
+-                OBSERVED_PHASES.load(Ordering::Relaxed) & 0xbf,
+-                if setting == "zero" { 0b10111000 } else { 0xbf }
+-            );
+             assert_eq!(has_parallelism_been_used(), parallel);
+             println!("BPE_MERGE_COUNT={}", merges.len());
+             let trainer = BpeTrainer::builder()
+@@ -497,7 +491,6 @@ fn run_public_training_child(setting: &str) {
+             let words = counts(&[("ab".repeat(8192).as_str(), 3), ("xyxy", 2)]);
+             let actual = trainer.do_train(&words).unwrap();
+             assert_eq!(actual, trainer.do_train_reference(&words).unwrap().parts);
+-            assert_ne!(OBSERVED_PHASES.load(Ordering::Relaxed) & 0x40, 0);
+             assert_eq!(has_parallelism_been_used(), parallel);
+         });
+ }
+@@ -754,51 +747,8 @@ fn builder_serialization() {
+     assert_eq!(serde_json::from_value::<BpeTrainer>(json).unwrap(), default);
+ }
+ 
+-#[test]
+-fn initial_edges() {
+-    let words = counts(&[("qé🙂z", 7), ("é🙂é", 6), ("🙂é", 5), ("", 4), ("é", 3)]);
+-    let mut trainer = trainer();
+-    trainer.limit_alphabet = Some(2);
+-    let view = WordCountsView::from(&words);
+-    let (_, ids) =
+-        Vocabulary::initialize(&trainer, view, &trainer.select_alphabet(view), &None).unwrap();
+-    let plan = CorpusPlan::build(
+-        view,
+-        ids,
+-        trainer.vocab_size,
+-        TrainingMode::Reuse,
+-        trainer.max_token_length,
+-    )
+-    .unwrap();
+-    let expected = [
+-        ((0, 1), 1, 7),
+-        ((0, 1), 4, 6),
+-        ((1, 0), 5, 6),
+-        ((1, 0), 8, 5),
+-    ];
+-    let read = || {
+-        let (words, edges) = plan.chunks(usize::MAX).into_iter().next().unwrap();
+-        assert_eq!(words, 5);
+-        edges.map(|edge| (edge.pair, edge.coordinate, edge.weight))
+-    };
+-    let mut actual: Vec<_> = read().collect();
+-    assert_eq!(actual, expected);
+-    actual.clear();
+-    let mut edges = read();
+-    let result: Result<()> = edges.by_ref().try_for_each(|edge| {
+-        actual.push(edge);
+-        if actual.len() == 2 {
+-            Err("designated edge failure".into())
+-        } else {
+-            Ok(())
+-        }
+-    });
+-    assert_eq!(result.unwrap_err().to_string(), "designated edge failure");
+-    assert_eq!(actual, expected[..2]);
+-    assert_eq!(edges.collect::<Vec<_>>(), expected[2..]);
+-}
+-
+ fn check_feed_success(workers: usize, parallel: bool) {
++    let caller = rayon::current_thread_index();
+     let length = workers + 33;
+     let reads = AtomicUsize::new(0);
+     let seen: Vec<_> = (0..length).map(|_| AtomicUsize::new(0)).collect();
+@@ -815,6 +765,7 @@ fn check_feed_success(workers: usize, parallel: bool) {
+     });
+     let counted = super::feed::count(input, &|text| {
+         assert_eq!(rayon::current_num_threads(), workers);
++        assert!(parallel || rayon::current_thread_index() == caller);
+         participants.fetch_or(
+             1 << rayon::current_thread_index().unwrap(),
+             Ordering::Relaxed,
+diff --git a/tokenizers/tk-train/src/trainers/bpe/vocabulary.rs b/tokenizers/tk-train/src/trainers/bpe/vocabulary.rs
+index a896e6a3..5ed7a9bb 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/vocabulary.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/vocabulary.rs
+@@ -515,8 +515,6 @@ fn observed_characters(word_counts: WordCountsView<'_>) -> FixedBitSet {
+     words
+         .maybe_par_chunks(chunk)
+         .map(|chunk| {
+-            #[cfg(test)]
+-            super::tests::observe_worker(super::tests::Phase::Alphabet);
+             let mut present = FixedBitSet::with_capacity(0x110000);
+             for word in chunk {
+                 for character in word.chars() {
+@@ -539,20 +537,6 @@ mod tests {
+     use ahash::AHashSet;
+     use tk_encode::vocab::bucket_added_vocabulary::AddedToken;
+ 
+-    #[test]
+-    fn decoration_row() {
+-        assert_eq!(std::mem::size_of::<DecoratedIds>(), 12);
+-        let mut row = DecoratedIds([WORD_SEPARATOR_ID; 3]);
+-        for (affix, id) in [(Affix::Prefix, 0), (Affix::Suffix, 1), (Affix::Both, 2)] {
+-            assert_eq!(row.get(affix, 9), WORD_SEPARATOR_ID);
+-            row.remember(affix, id);
+-        }
+-        assert_eq!(row.0, [0, 1, 2]);
+-        row.remember(Affix::Plain, 8);
+-        assert_eq!(row.0, [0, 1, 2]);
+-        assert_eq!(row.get(Affix::Plain, 9), 9);
+-    }
+-
+     #[test]
+     fn affix_ids() {
+         let inputs = ["a", "axa", "zaaz", "aa", ""];

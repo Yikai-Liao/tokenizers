@@ -1,0 +1,41 @@
+{
+  "production": {
+    "corpus.rs": 475,
+    "feed.rs": 76,
+    "index.rs": 383,
+    "merge.rs": 417,
+    "mod.rs": 374,
+    "positions.rs": 326,
+    "vocabulary.rs": 417,
+    "word_counts.rs": 91
+  },
+  "tests": {
+    "corpus.rs [cfg(test)]": 59,
+    "index.rs [cfg(test)]": 128,
+    "mod.rs [cfg(test)]": 19,
+    "positions.rs [cfg(test)]": 140,
+    "tests.rs": 766,
+    "vocabulary.rs [cfg(test)]": 142,
+    "word_counts.rs [cfg(test)]": 27,
+    "trainers/mod.rs [cfg(test) BPE wrapper]": 12,
+    "experiments/bpe-simplification/miri-codec/src/lib.rs [Miri harness]": 4
+  },
+  "production_total": 2559,
+  "test_total": 1297,
+  "counting_rule": "Descriptive nonblank noncomment lines after rustfmt; ordinary BPE components, public API, feed and word counts. Optional parity implementation excluded. Test count includes embedded cfg(test), reference, shared trainer wrapper and Miri harness, each once. No hard limits.",
+  "diffs": {
+    "upstream": {
+      "revision": "HEAD",
+      "commit": "6bbafd1db650842453162b7dcf789f07c7262196",
+      "scopes": [
+        "tokenizers/tk-train/src/trainers/bpe",
+        "tokenizers/tk-train/src/trainers/wordpiece.rs",
+        "tokenizers/tk-train/src/trainers/mod.rs",
+        "experiments/bpe-simplification/miri-codec/src"
+      ],
+      "stat": " tokenizers/tk-train/src/trainers/bpe/COVERAGE.md   | 106 +++++-----\n tokenizers/tk-train/src/trainers/bpe/corpus.rs     |  90 --------\n tokenizers/tk-train/src/trainers/bpe/index.rs      |  86 +-------\n tokenizers/tk-train/src/trainers/bpe/merge.rs      | 228 ---------------------\n tokenizers/tk-train/src/trainers/bpe/positions.rs  |  47 +----\n tokenizers/tk-train/src/trainers/bpe/tests.rs      | 137 ++++---------\n tokenizers/tk-train/src/trainers/bpe/vocabulary.rs |  16 --\n 7 files changed, 104 insertions(+), 606 deletions(-)\n",
+      "numstat": "50\t56\ttokenizers/tk-train/src/trainers/bpe/COVERAGE.md\n0\t90\ttokenizers/tk-train/src/trainers/bpe/corpus.rs\n4\t82\ttokenizers/tk-train/src/trainers/bpe/index.rs\n0\t228\ttokenizers/tk-train/src/trainers/bpe/merge.rs\n6\t41\ttokenizers/tk-train/src/trainers/bpe/positions.rs\n44\t93\ttokenizers/tk-train/src/trainers/bpe/tests.rs\n0\t16\ttokenizers/tk-train/src/trainers/bpe/vocabulary.rs\n"
+    }
+  },
+  "diff_rule": "Git text additions/deletions include comments, formatting and documentation; rename detection is enabled. Counts and diffs describe different scopes and are not complexity or correctness gates."
+}

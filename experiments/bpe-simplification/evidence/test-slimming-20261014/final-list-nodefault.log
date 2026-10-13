@@ -1,0 +1,29 @@
+    Finished `test` profile [unoptimized] target(s) in 0.16s
+     Running unittests src/lib.rs (/dev/shm/bpe-test-slimming-target-20261014/debug/deps/tk_train-7e368597fbeaa9e1)
+trainers::bpe::corpus::tests::adjacent_writes: test
+trainers::bpe::index::tests::failed_rounds: test
+trainers::bpe::index::tests::intermediate_overflow: test
+trainers::bpe::positions::codec::tests::gap_width: test
+trainers::bpe::positions::tests::append_errors: test
+trainers::bpe::positions::tests::concat_boundaries: test
+trainers::bpe::positions::tests::leaf_roundtrip: test
+trainers::bpe::positions::tests::merge_streams: test
+trainers::bpe::tests::builder_serialization: test
+trainers::bpe::tests::count_boundaries: test
+trainers::bpe::tests::failed_train: test
+trainers::bpe::tests::overlap_and_alias: test
+trainers::bpe::tests::parity: test
+trainers::bpe::tests::public_behavior: test
+trainers::bpe::tests::restart_discards_ids: test
+trainers::bpe::tests::restart_keeps_alphabet: test
+trainers::bpe::tests::reusable_input: test
+trainers::bpe::tests::targeted_models: test
+trainers::bpe::tests::tokenizer_roundtrip: test
+trainers::bpe::tests::wide_ids: test
+trainers::bpe::vocabulary::tests::affix_ids: test
+trainers::bpe::vocabulary::tests::alphabet_activation: test
+trainers::bpe::vocabulary::tests::unicode_id_order: test
+trainers::bpe::vocabulary::tests::unicode_presence: test
+trainers::bpe::word_counts::tests::equality_and_serde: test
+
+25 tests, 0 benchmarks

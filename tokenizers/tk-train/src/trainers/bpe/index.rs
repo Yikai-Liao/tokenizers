@@ -155,11 +155,7 @@ impl PairIndex {
         let pieces = corpus
             .chunks(if cfg!(test) { 16 } else { 1 << 24 })
             .into_maybe_par_iter()
-            .map(|(words, edges)| {
-                #[cfg(test)]
-                super::tests::observe_worker(super::tests::Phase::InitialCount);
-                count_chunk(domain, words, edges, progress)
-            })
+            .map(|(words, edges)| count_chunk(domain, words, edges, progress))
             .collect::<Result<Vec<_>>>()?;
 
         // 2. Route ordered fragments to the sole count owner of each pair.
@@ -173,11 +169,7 @@ impl PairIndex {
         // 3. Aggregate counts, admit pairs, and concatenate their sorted fragments.
         let owners = routed
             .into_maybe_par_iter()
-            .map(|pieces| {
-                #[cfg(test)]
-                super::tests::observe_worker(super::tests::Phase::InitialOwner);
-                build_owner(pieces, minimum.max(1), reuse)
-            })
+            .map(|pieces| build_owner(pieces, minimum.max(1), reuse))
             .collect::<Result<Vec<_>>>()?;
         let (shards, candidates): (Vec<_>, Vec<_>) = owners.into_iter().unzip();
         Ok(Self {
@@ -195,8 +187,6 @@ impl PairIndex {
     /// Consume remaining candidates at the successful training boundary.
     /// Ordinary retirement and errors keep their normal, synchronous drops.
     pub(super) fn retire(self) {
-        #[cfg(test)]
-        super::tests::observe_worker(super::tests::Phase::Retire);
         let Self { shards, queue, .. } = self;
         drop(shards);
         if get_parallelism() {
@@ -257,11 +247,7 @@ impl PairIndex {
             .shards
             .maybe_par_iter_mut()
             .filter(|shard| !shard.actions.is_empty())
-            .map(|shard| {
-                #[cfg(test)]
-                super::tests::observe_worker(super::tests::Phase::Commit);
-                shard.commit(&events, reuse, floor)
-            })
+            .map(|shard| shard.commit(&events, reuse, floor))
             .collect::<Result<Vec<_>>>()?;
 
         // 3. Publish only after all owners join, in the same owner traversal order.
@@ -523,30 +509,6 @@ mod tests {
     }
 
     #[test]
-    fn unified_aggregation() {
-        let pair = (0, 1);
-        for reuse in [false, true] {
-            let mut shard = Shard::default();
-            let events = [event(pair, 1, 0, 0), event(pair, 1, 0, 0)];
-            let streams: [&[u64]; 2] = if reuse {
-                [&[1, 4, 4], &[0, 4, 5]]
-            } else {
-                [&[0, 1, 4], &[4, 4, 5]]
-            };
-            for (index, stream) in streams.into_iter().enumerate() {
-                shard.push(index, false, Some(Positions::from_sorted(stream).unwrap()));
-            }
-            let candidates = shard.commit(&events, reuse, 2).unwrap();
-            assert_eq!(candidates.len(), 1);
-            assert_eq!(candidates[0].priority.count, 2);
-            assert_eq!(
-                candidates[0].positions.iter().collect::<Vec<_>>(),
-                [0, 1, 4, 4, 4, 5]
-            );
-        }
-    }
-
-    #[test]
     fn intermediate_overflow() {
         let pair = (0, 1);
         for reuse in [false, true] {
@@ -575,7 +537,7 @@ mod tests {
     }
 
     #[test]
-    fn failures_before_and_after_writes() {
+    fn failed_rounds() {
         for workers in [1, 6] {
             rayon::ThreadPoolBuilder::new()
                 .num_threads(workers)
@@ -654,45 +616,5 @@ mod tests {
                     }
                 });
         }
-    }
-
-    #[test]
-    fn historical_cohorts() {
-        let pair = (7, 8);
-        let mut shard = Shard::default();
-        // Separate commits retain two cohorts; the second changes the count 10→5.
-        let mut candidates = Vec::new();
-        for (add, remove, position) in [(10, 0, 20), (3, 8, 21)] {
-            shard.push(
-                0,
-                remove != 0,
-                Some(Positions::from_sorted(&[position]).unwrap()),
-            );
-            candidates.extend(
-                shard
-                    .commit(&[event(pair, add, remove, 0)], true, 1)
-                    .unwrap(),
-            );
-        }
-        assert_eq!(candidates.len(), 2);
-        let mut index = PairIndex {
-            shards: vec![shard].into_boxed_slice(),
-            queue: candidates.into_iter().collect(),
-            floor: 1,
-            mode: TrainingMode::Reuse,
-        };
-        // Repair pop/update/push preserves which equal-priority cohort comes first.
-        let priority = index.peek().unwrap();
-        assert_eq!(priority.count, 5);
-        assert_eq!(
-            index.take(priority).positions.iter().collect::<Vec<_>>(),
-            [21]
-        );
-        let priority = index.peek().unwrap();
-        assert_eq!(
-            index.take(priority).positions.iter().collect::<Vec<_>>(),
-            [20]
-        );
-        assert!(index.peek().is_none());
     }
 }

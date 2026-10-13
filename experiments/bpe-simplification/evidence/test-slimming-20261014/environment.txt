@@ -1,0 +1,4 @@
+rustc 1.98.1 (48a229cea 2026-09-01)
+miri 0.1.0 (a30aa9064d 2026-10-08)
+e6ca630bedb9eb7963433a0cab399e7bd343030a19ebb4a8640dd5cd2048fb50  tokenizers/tk-train/Cargo.lock
+74f524a7006cd00314039c8581d9c5fc3b87e0330c0cb6ea3ac80b0dbd8799b3  experiments/bpe-simplification/miri-codec/Cargo.lock

@@ -81,7 +81,7 @@ mod codec {
         use super::*;
 
         #[test]
-        fn gap_width_matches_appended_bytes() {
+        fn gap_width() {
             let mut gaps = vec![0, 1, 127, 128, u64::MAX];
             // Each seven-bit boundary increases LEB128 width by one byte;
             // exercise the final value before it and the first value after it.
@@ -91,9 +91,9 @@ mod codec {
             for gap in gaps {
                 let mut bytes = SmallVec::new();
                 bytes.extend_from_slice(&0u64.to_le_bytes());
-                bytes.reserve(gap_width(gap));
+                bytes.reserve(super::gap_width(gap));
                 append_gap(&mut bytes, gap);
-                assert_eq!(bytes.len() - 8, gap_width(gap));
+                assert_eq!(bytes.len() - 8, super::gap_width(gap));
                 assert_eq!(Cursor::new(&bytes, 0).collect::<Vec<_>>(), [0, gap]);
             }
         }
@@ -460,7 +460,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn append_search_and_chunks() {
+    fn leaf_roundtrip() {
         let cases = [
             vec![],
             vec![0],
@@ -485,45 +485,10 @@ mod tests {
                 assert_eq!(chunks.into_iter().flatten().collect::<Vec<_>>(), values);
             }
         }
-        if cfg!(target_pointer_width = "64") {
-            assert_eq!(std::mem::size_of::<Positions>(), 32);
-        }
-        // Actual byte width determines SmallVec storage, without item-count forms.
-        for (count, bytes, spilled) in [(0, 0, false), (1, 16, false), (2, 17, true), (3, 18, true)]
-        {
-            let positions = Positions::from_sorted(&vec![7; count]).unwrap();
-            let Repr::Leaf(leaf) = positions.0 else {
-                unreachable!()
-            };
-            assert_eq!((leaf.bytes.len(), leaf.bytes.spilled()), (bytes, spilled));
-        }
     }
 
     #[test]
-    fn leaf_format_and_exhausted_cursor() {
-        let positions = Positions::from_sorted(&[1, 128, 256]).unwrap();
-        let Repr::Leaf(leaf) = &positions.0 else {
-            unreachable!()
-        };
-        let mut expected = 256u64.to_le_bytes().to_vec();
-        expected.extend_from_slice(&1u64.to_le_bytes());
-        expected.extend_from_slice(&[127, 128, 1]);
-        assert_eq!(leaf.bytes.as_slice(), expected);
-        for start in [0, leaf.len()] {
-            let mut cursor = leaf.cursor(start);
-            while cursor.next().is_some() {}
-            assert_eq!(cursor.next(), None);
-            assert_eq!(cursor.next(), None);
-        }
-        let empty = Positions::default();
-        assert_eq!(empty.iter().next(), None);
-        if cfg!(target_pointer_width = "64") {
-            assert_eq!(std::mem::size_of::<Cursor<'_>>(), 32);
-        }
-    }
-
-    #[test]
-    fn concat_preserves_boundaries_and_chunks() {
+    fn concat_boundaries() {
         // Three copies of every coordinate force equal values across both leaf
         // and restart boundaries while keeping the full sequence sorted.
         let values: Vec<u64> = (0..1300).map(|n| n / 3).collect();
@@ -590,7 +555,7 @@ mod tests {
     }
 
     #[test]
-    fn append_errors_preserve_leaf() {
+    fn append_errors() {
         for count in [1, 2, 127, 128, 129, 256, 257] {
             let values: Vec<u64> = (0..count).map(|n| 100 + n as u64).collect();
             let mut positions = Positions::from_sorted(&values).unwrap();

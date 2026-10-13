@@ -3,8 +3,6 @@ use super::super::{TrainingMode, WORD_SEPARATOR_ID, add, positions::Positions};
 use super::{Corpus, PairChange, SelectedMerge};
 use ahash::AHashMap;
 use itertools::Itertools;
-#[cfg(test)]
-use rayon::prelude::*;
 use smallvec::SmallVec;
 use std::ops::Range;
 use tk_encode::parallelism::*;
@@ -188,8 +186,6 @@ impl Corpus {
         words
             .maybe_par_chunks(chunk)
             .map_init(NeighborScratch::default, |scratch, words| {
-                #[cfg(test)]
-                super::super::tests::observe_worker(super::super::tests::Phase::ReusePrepare);
                 self.prepare_chunk(rule.pair, rule.merged_id, scratch, |neighbors, starts| {
                     for &word in words {
                         self.scan_word(&rule, word, limit, neighbors, starts)?;
@@ -440,8 +436,6 @@ impl FreshPreparation<'_> {
         left_merging: impl Fn(&Range<usize>, usize, u32) -> bool,
         right_merged_id: impl Fn(usize, u32) -> Option<u32>,
     ) -> Result<PreparedChunk> {
-        #[cfg(test)]
-        super::super::tests::observe_worker(super::super::tests::Phase::FreshPrepare);
         self.corpus
             .prepare_chunk(pair, merged_id, scratch, |neighbors, starts| {
                 // PERF: Borrow the local decoder so lookahead adapters hold a pointer.
@@ -499,227 +493,5 @@ impl FreshPreparation<'_> {
             )?;
         }
         Ok(())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::super::super::tests::{spans, tokens};
-    use super::super::super::{MergeOutcome, index::PairIndex, vocabulary::Vocabulary};
-    use super::super::super::{
-        WORD_SEPARATOR_ID,
-        tests::{counts, initialize, trainer},
-        word_counts::WordCountsView,
-    };
-    use super::*;
-
-    fn select(
-        vocabulary: &mut Vocabulary,
-        corpus: &mut Corpus,
-        index: &mut PairIndex,
-    ) -> SelectedMerge {
-        let priority = index.peek().unwrap();
-        let merged_id = vocabulary.resolve(priority.pair()).unwrap().merged_id;
-        corpus.activate(priority.pair(), merged_id);
-        SelectedMerge {
-            pair: priority.pair(),
-            merged_id,
-            positions: index.take(priority).positions,
-        }
-    }
-
-    #[test]
-    fn shared_boundary_once() {
-        let trainer = trainer();
-        let words = counts(&[("abacdbdc", 2), ("ab", 10), ("ac", 9), ("db", 8), ("dc", 7)]);
-        let (mut vocabulary, mut corpus, mut index) =
-            initialize(&trainer, WordCountsView::from(&words), false);
-        let mut selected = Vec::new();
-        // Shared heads/tails remain compatible; adjacent replacements publish once.
-        for pair in [(0, 1), (0, 2), (3, 1), (3, 2)] {
-            let rule = select(&mut vocabulary, &mut corpus, &mut index);
-            assert_eq!(rule.pair, pair);
-            selected.push(rule);
-        }
-        let jobs = corpus.prepare(selected).unwrap();
-        let mut births: Vec<_> = jobs
-            .iter()
-            .flat_map(|j| &j.changes)
-            .filter(|c| c.born_weight != 0)
-            .map(|c| (c.born, c.born_weight))
-            .collect();
-        births.sort_unstable();
-        assert_eq!(births, [((4, 5), 2), ((5, 6), 2), ((6, 7), 2)]);
-        jobs.par_iter()
-            .for_each(|j| corpus.apply(&j.starts, j.merged_id));
-        let s = WORD_SEPARATOR_ID;
-        assert_eq!(
-            tokens(&corpus),
-            [
-                s, 4, 4, s, 5, 5, s, 6, 6, s, 7, 7, s, 4, 4, 5, 5, 6, 6, 7, 7, s
-            ]
-        );
-    }
-
-    #[test]
-    fn rejected_start_and_aa_tasks() {
-        for workers in [1, 6] {
-            let pool = rayon::ThreadPoolBuilder::new()
-                .num_threads(workers)
-                .build()
-                .unwrap();
-            pool.install(|| {
-                let trainer = trainer();
-                // An odd-length AA word leaves one symbol unmerged and is
-                // large enough to exercise two accepted-start chunks per worker.
-                let word = "a".repeat(20_000 * workers + 1);
-                let words = counts(&[(&word, 1)]);
-                let (mut vocabulary, mut corpus, mut index) =
-                    initialize(&trainer, WordCountsView::from(&words), false);
-                let mut rule = select(&mut vocabulary, &mut corpus, &mut index);
-                // A stale separator precedes the overlapping valid AA starts.
-                let coordinates: Vec<_> = std::iter::once(0).chain(rule.positions.iter()).collect();
-                rule.positions = Positions::from_sorted(&coordinates).unwrap();
-                let chunks = corpus.prepare(vec![rule]).unwrap();
-                // Original length gives 5001; accepted length would incorrectly give 4096.
-                assert_eq!(chunks[0].starts.len(), 5001);
-                assert_eq!(chunks.len(), 2 * workers);
-                let accepted: Vec<_> = chunks
-                    .iter()
-                    .flat_map(|c| c.starts.iter().copied())
-                    .collect();
-                assert_eq!(accepted, (1..word.len()).step_by(2).collect::<Vec<_>>());
-                let changes: Vec<_> = chunks.iter().flat_map(|c| &c.changes).collect();
-                let shared: Vec<_> = changes.iter().filter(|c| c.born == (1, 1)).collect();
-                // N adjacent accepted matches create N - 1 shared boundaries;
-                // each belongs to the left match, so the final start is excluded.
-                assert_eq!(
-                    shared.iter().map(|c| c.born_weight).sum::<u64>(),
-                    (accepted.len() - 1) as u64
-                );
-                assert_eq!(
-                    shared
-                        .iter()
-                        .flat_map(|c| c.positions.iter())
-                        .collect::<Vec<_>>(),
-                    accepted[..accepted.len() - 1]
-                        .iter()
-                        .map(|&p| p as u64)
-                        .collect::<Vec<_>>()
-                );
-                assert!(
-                    !changes
-                        .iter()
-                        .any(|c| c.born == (0, 1) && !c.positions.is_empty()),
-                    "every later chunk must consult the complete AA acceptance set"
-                );
-            });
-        }
-    }
-
-    #[test]
-    fn reuse_spans() {
-        let mut trainer = trainer();
-        trainer.end_of_word_suffix = Some("a".into());
-        let words = counts(&[("baaaaaba", 2), ("ba", 1)]);
-        let (mut vocabulary, mut corpus, mut index) =
-            initialize(&trainer, WordCountsView::from(&words), true);
-        assert!(matches!(
-            trainer
-                .merge_next(&mut vocabulary, &mut corpus, &mut index)
-                .unwrap(),
-            MergeOutcome::Committed { .. }
-        ));
-        let rule = select(&mut vocabulary, &mut corpus, &mut index);
-        assert_eq!((rule.pair, rule.merged_id), ((1, 2), 3));
-        // AA aliases the suffix ID: BA sees original and merged occurrences.
-        let selected = vec![rule];
-        let jobs = corpus.prepare(selected).unwrap();
-        for job in jobs {
-            corpus.apply(&job.starts, job.merged_id);
-        }
-        let s = WORD_SEPARATOR_ID;
-        assert_eq!(tokens(&corpus), [s, 3, s, 3, 2, 2, 0, 3, 3, s, 1, 2, s]);
-        assert_eq!(spans(&corpus), [0, 3, 0, 3, 2, 2, 1, 2, 2, 0, 1, 1, 0]);
-    }
-
-    #[test]
-    fn directory_recovery() {
-        let mut trainer = trainer();
-        trainer.max_token_length = Some(3);
-        let words = counts(&[("xab", 1)]);
-        let (mut vocabulary, mut corpus, mut index) =
-            initialize(&trainer, WordCountsView::from(&words), false);
-        let rule = select(&mut vocabulary, &mut corpus, &mut index);
-        let mut directories = NeighborScratch::default();
-        {
-            let mut neighbors = NeighborChanges::new(
-                rule.pair,
-                rule.merged_id,
-                corpus.id_count(),
-                &mut directories,
-            );
-            neighbors
-                .record(EdgeSide::Left, 2, 2, 1, u64::MAX, true)
-                .unwrap();
-            assert!(neighbors.record(EdgeSide::Left, 2, 2, 1, 1, true).is_err());
-        }
-        // The old directory index is reused without reset after the failed group.
-        let mut neighbors = NeighborChanges::new(
-            rule.pair,
-            rule.merged_id,
-            corpus.id_count(),
-            &mut directories,
-        );
-        neighbors.record(EdgeSide::Left, 1, 1, 1, 3, true).unwrap();
-        neighbors.record(EdgeSide::Left, 2, 2, 2, 4, true).unwrap();
-        let changes = neighbors.finish();
-        assert_eq!(
-            changes
-                .iter()
-                .map(|c| (c.removed, c.born_weight))
-                .collect::<Vec<_>>(),
-            [((1, 0), 3), ((2, 0), 4)]
-        );
-        let job = corpus.prepare(vec![rule]).unwrap().pop().unwrap();
-        let change = &job.changes[0];
-        assert_eq!(
-            (change.removed, change.removed_weight, change.born_weight),
-            ((2, 0), 1, 0)
-        );
-        assert!(change.positions.is_empty());
-        corpus.apply(&job.starts, job.merged_id);
-        index.commit(vec![job.changes]).unwrap();
-        assert!(index.peek().is_none());
-    }
-
-    #[test]
-    fn reuse_scan_domain_and_bound_configuration() {
-        for limit in [None, Some(usize::MAX)] {
-            let mut trainer = trainer();
-            trainer.max_token_length = limit;
-            let words = counts(&[("abab", 2), ("ab", 1)]);
-            let (mut vocabulary, mut corpus, mut index) =
-                initialize(&trainer, WordCountsView::from(&words), true);
-            assert_eq!(corpus.word_range(0), 1..5);
-            assert_eq!(corpus.word_range(1), 6..8);
-            let mut rule = select(&mut vocabulary, &mut corpus, &mut index);
-            assert_eq!(rule.pair, (0, 1));
-            rule.positions = Positions::from_sorted(&[1]).unwrap();
-            let chunks = corpus.prepare(vec![rule]).unwrap();
-            let starts: Vec<_> = chunks
-                .iter()
-                .flat_map(|c| c.starts.iter().copied())
-                .collect();
-            assert_eq!(starts, if limit.is_some() { vec![1, 3] } else { vec![1] });
-            for chunk in chunks {
-                corpus.apply(&chunk.starts, chunk.merged_id);
-            }
-            assert_eq!(
-                &tokens(&corpus)[6..8],
-                &[0, 1],
-                "an unrepresented word is never scanned"
-            );
-        }
     }
 }
