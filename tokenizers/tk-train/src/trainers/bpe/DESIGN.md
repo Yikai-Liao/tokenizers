@@ -124,6 +124,11 @@ both final IDs. The right match skips that left event across rule and task bound
 Matches are `Range<usize>` values in original coordinates; word ranges exclude
 separators. The fresh reader pairs each valid range with its cached word weight.
 
+`Corpus::prepare_chunk` owns the task-local accumulator, accepted starts, and
+result assembly for AA, AB, and reuse preparation. Its scan closure retains the
+mode-specific reader and adjacency rules; a scan error publishes no chunk.
+Task partitioning and indexed collection remain with each preparation mode.
+
 Preparation uses Rayon `map_init` to reuse private directories within each
 parallel task. Each side maps neighbor IDs to u32 change-entry indices. A cached
 index is valid only when the current task has a group at that index with the same
@@ -156,7 +161,7 @@ The borrow ends before the task returns; all readers finish before endpoint writ
 checks the overlap boundary before calling `fixed_matcher`, so rejected
 overlapping starts incur no endpoint reads.
 
-The private `scan_word` scans each selected historical word domain and Positions
+The private `Corpus::scan_word` scans each selected historical word domain and Positions
 stream. Candidate seeks advance over stale positions using occurrence spans;
 alias activation or a configured length gate enables whole-word scans. The left
 neighbor may be a merge accepted earlier in the word; the right neighbor comes

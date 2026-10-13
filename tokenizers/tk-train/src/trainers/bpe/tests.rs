@@ -53,7 +53,7 @@ pub(super) fn initialize(
     words: WordCountsView<'_>,
     reuse: bool,
 ) -> (Vocabulary, Corpus, PairIndex) {
-    let alphabet = vocabulary::select_alphabet(trainer, words);
+    let alphabet = trainer.select_alphabet(words);
     let (vocabulary, ids) = Vocabulary::initialize(trainer, words, &alphabet, &None).unwrap();
     let plan = CorpusPlan::build(
         words,
@@ -239,7 +239,7 @@ fn restart_keeps_alphabet() {
     // Four characters exceed the cutoff; q/z tie for the one unforced slot.
     let words = counts(&[("baaba", 1), ("q", 1), ("z", 1)]);
     let view = WordCountsView::from(&words);
-    let retained = vocabulary::select_alphabet(&trainer, view);
+    let retained = trainer.select_alphabet(view);
     let selected: Vec<_> = retained
         .characters()
         .iter()
@@ -595,8 +595,9 @@ mod reference {
             for token in &self.special_tokens {
                 tokens.insert(token.content.clone());
             }
-            for entry in
-                vocabulary::select_alphabet(self, WordCountsView::from(counts)).characters()
+            for entry in self
+                .select_alphabet(WordCountsView::from(counts))
+                .characters()
             {
                 tokens.insert(entry.character.to_string());
             }
@@ -737,13 +738,8 @@ fn initial_edges() {
     let mut trainer = trainer();
     trainer.limit_alphabet = Some(2);
     let view = WordCountsView::from(&words);
-    let (_, ids) = Vocabulary::initialize(
-        &trainer,
-        view,
-        &vocabulary::select_alphabet(&trainer, view),
-        &None,
-    )
-    .unwrap();
+    let (_, ids) =
+        Vocabulary::initialize(&trainer, view, &trainer.select_alphabet(view), &None).unwrap();
     let plan = CorpusPlan::build(
         view,
         ids,

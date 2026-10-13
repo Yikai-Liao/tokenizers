@@ -330,10 +330,6 @@ impl Corpus {
         self.starts[word]..self.starts.get(word + 1).copied().unwrap_or(self.len()) - 1
     }
 
-    fn word_weight(&self, word: usize) -> u64 {
-        self.weight(self.starts[word]).weight
-    }
-
     #[inline]
     fn occurrence_span(&self, position: usize) -> usize {
         self.occurrence_spans.as_ref().map_or_else(
@@ -478,11 +474,7 @@ impl Corpus {
                 for &start in starts {
                     let right = start + left;
                     let after = start + total;
-                    self.tokens.set(start, merged_id);
-                    if right + 1 != after {
-                        self.tokens.set(right, WORD_SEPARATOR_ID);
-                    }
-                    self.tokens.set(after - 1, merged_id);
+                    self.tokens.replace_pair(start, right, after, merged_id);
                 }
             }
             Some(spans) => {
@@ -492,11 +484,7 @@ impl Corpus {
                     let right = start + left;
                     let total = left + spans[right].load(Ordering::Relaxed);
                     let after = start + total;
-                    self.tokens.set(start, merged_id);
-                    if right + 1 != after {
-                        self.tokens.set(right, WORD_SEPARATOR_ID);
-                    }
-                    self.tokens.set(after - 1, merged_id);
+                    self.tokens.replace_pair(start, right, after, merged_id);
                     if right + 1 != after {
                         spans[right].store(0, Ordering::Relaxed);
                     }
@@ -555,6 +543,16 @@ impl Slots {
             }
             Self::Wide(values) => values[position].load(Ordering::Relaxed),
         }
+    }
+
+    // Publish the merged endpoints and clear a former right start only when it
+    // is interior. A one-slot right token shares that start with the new tail.
+    fn replace_pair(&self, start: usize, right: usize, after: usize, merged_id: u32) {
+        self.set(start, merged_id);
+        if right + 1 != after {
+            self.set(right, WORD_SEPARATOR_ID);
+        }
+        self.set(after - 1, merged_id);
     }
 
     #[inline]
@@ -678,7 +676,7 @@ mod tests {
         let (_, ids) = super::super::vocabulary::Vocabulary::initialize(
             &trainer,
             view,
-            &super::super::vocabulary::select_alphabet(&trainer, view),
+            &trainer.select_alphabet(view),
             &None,
         )
         .unwrap();

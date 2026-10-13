@@ -69,8 +69,9 @@ def diagnostic(root, dest, mode):
         commit = 'vocabulary.commit(merges);' if modern else 'vocabulary.commit_merges(records);'
         replace(merge, commit, commit + '\n        eprintln!("BPE_DIAG {}", serde_json::json!({"kind":"commit"}));')
         preparation = preparation if modern else merge
-        anchor = 'let range = corpus.word_range(word);' if modern else 'let mut p = corpus.word_start(word);'
-        replace(preparation, anchor, 'eprintln!("BPE_DIAG {}", serde_json::json!({"kind":"reuse_scan", "whole_words":corpus.whole_words()}));\n    ' + anchor)
+        receiver = 'self' if 'let range = self.word_range(word);' in preparation.read_text() else 'corpus'
+        anchor = f'let range = {receiver}.word_range(word);' if modern else 'let mut p = corpus.word_start(word);'
+        replace(preparation, anchor, 'eprintln!("BPE_DIAG {}", serde_json::json!({"kind":"reuse_scan", "whole_words":' + receiver + '.whole_words()}));\n    ' + anchor)
         # Observe configuration before any alias activation in each attempt.
         replace(source / 'corpus.rs', 'pub(super) fn materialize(self) -> Corpus {',
                 '''pub(super) fn materialize(self) -> Corpus {
@@ -226,7 +227,8 @@ def prepare_bytelevel(binary):
                    workers=1, pretokenizer='bytelevel_regex', trainer=config)
         path = HERE / 'inputs' / (language + '-prepare-job.json')
         path.write_text(json.dumps(job, indent=2))
-        result = subprocess.check_output([str(binary), str(path)], text=True)
+        environment = dict(os.environ, RAYON_NUM_THREADS=str(job['workers']), TOKENIZERS_PARALLELISM="true")
+        result = subprocess.check_output([str(binary), str(path)], text=True, env=environment)
         (HERE / 'inputs' / (language + '-preprocessing.json')).write_text(result)
         manifest[language+'-bytelevel'] = {'input':str(words), 'sha256':sha(words),
             'pretokenizer':'bytelevel_regex','trainer':config, 'source_text_sha256':sha(text)}

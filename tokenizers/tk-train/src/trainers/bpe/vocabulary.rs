@@ -313,7 +313,8 @@ impl InitialTokenIds {
         if affix == Affix::Plain {
             return Ok(plain_id);
         }
-        let cached = self.decorated[plain_id as usize].get(affix, plain_id);
+        let ids = &mut self.decorated[plain_id as usize];
+        let cached = ids.get(affix, plain_id);
         if cached != WORD_SEPARATOR_ID {
             return Ok(cached);
         }
@@ -332,7 +333,7 @@ impl InitialTokenIds {
             decorated.push_str(suffix.expect("suffix decoration requires a suffix"));
         }
         let id = vocabulary.intern(decorated, &mut self.spans)?;
-        self.decorated[plain_id as usize].remember(affix, id);
+        ids.remember(affix, id);
         Ok(id)
     }
 
@@ -407,91 +408,93 @@ impl InitialTokenIds {
     }
 }
 
-/// Select the alphabet with the existing frequency-tie and codepoint order.
-pub(super) fn select_alphabet(trainer: &BpeTrainer, wc: WordCountsView<'_>) -> Alphabet {
-    if trainer.limit_alphabet.is_none() {
-        // Keep the unlimited fast path: parallel presence, without frequencies.
-        let observed = observed_characters(wc);
-        let mut present = observed.clone();
-        for &character in &trainer.initial_alphabet {
-            present.insert(character as usize);
+impl BpeTrainer {
+    /// Select the alphabet with the existing frequency-tie and codepoint order.
+    pub(super) fn select_alphabet(&self, wc: WordCountsView<'_>) -> Alphabet {
+        if self.limit_alphabet.is_none() {
+            // Keep the unlimited fast path: parallel presence, without frequencies.
+            let observed = observed_characters(wc);
+            let mut present = observed.clone();
+            for &character in &self.initial_alphabet {
+                present.insert(character as usize);
+            }
+            let characters = present
+                .ones()
+                .map(|codepoint| {
+                    let character = char::from_u32(codepoint as u32)
+                        .expect("alphabet bits come from valid characters");
+                    AlphabetCharacter {
+                        character,
+                        observed_in_input: observed.contains(codepoint),
+                    }
+                })
+                .collect();
+            return Alphabet {
+                characters,
+                complete: true,
+                observed_specials: self.observed_special_characters(&observed),
+            };
         }
-        let characters = present
-            .ones()
-            .map(|codepoint| {
-                let character = char::from_u32(codepoint as u32)
-                    .expect("alphabet bits come from valid characters");
-                AlphabetCharacter {
-                    character,
-                    observed_in_input: observed.contains(codepoint),
-                }
+        let mut observed = FixedBitSet::with_capacity(0x110000);
+        // Compute the alphabet from seen words
+        let mut alphabet: AHashMap<char, usize> = AHashMap::new();
+        for (word, count) in wc.iter() {
+            for c in word.chars() {
+                *alphabet.entry(c).or_default() += *count as usize;
+                observed.insert(c as usize);
+            }
+        }
+
+        // Also include anything from the provided initial alphabet
+        for c in &self.initial_alphabet {
+            *alphabet.entry(*c).or_default() = usize::MAX;
+        }
+
+        let mut kept = alphabet.iter().collect::<Vec<_>>();
+
+        // Compute the number of chars to remove from the alphabet
+        // If `limit_alphabet < initial_alphabet.len()`, some of these initial characters
+        // will be removed
+        let to_remove = self
+            .limit_alphabet
+            .map(|limit| alphabet.len().saturating_sub(limit))
+            .unwrap_or(0);
+
+        // Remove the unwanted chars
+        if to_remove > 0 {
+            kept.sort_unstable_by_key(|k| *k.1);
+            kept.drain(..to_remove);
+        }
+
+        // Keep the initial alphabet (sorted for determinism)
+        kept.sort_unstable_by_key(|k| *k.0 as u32);
+        let characters = kept
+            .into_iter()
+            .map(|(&character, _)| AlphabetCharacter {
+                character,
+                observed_in_input: observed.contains(character as usize),
             })
             .collect();
-        return Alphabet {
+        // The 136 KiB bitmap is selection scratch, never retained across attempts.
+        Alphabet {
             characters,
-            complete: true,
-            observed_specials: observed_special_characters(trainer, &observed),
-        };
-    }
-    let mut observed = FixedBitSet::with_capacity(0x110000);
-    // Compute the alphabet from seen words
-    let mut alphabet: AHashMap<char, usize> = AHashMap::new();
-    for (word, count) in wc.iter() {
-        for c in word.chars() {
-            *alphabet.entry(c).or_default() += *count as usize;
-            observed.insert(c as usize);
+            complete: false,
+            observed_specials: self.observed_special_characters(&observed),
         }
     }
 
-    // Also include anything from the provided initial alphabet
-    for c in &trainer.initial_alphabet {
-        *alphabet.entry(*c).or_default() = usize::MAX;
+    // Special identities can admit characters removed by the frequency cutoff.
+    fn observed_special_characters(&self, observed: &FixedBitSet) -> Vec<char> {
+        self.special_tokens
+            .iter()
+            .filter_map(|token| {
+                let mut chars = token.content.chars();
+                let character = chars.next()?;
+                (chars.next().is_none() && observed.contains(character as usize))
+                    .then_some(character)
+            })
+            .collect()
     }
-
-    let mut kept = alphabet.iter().collect::<Vec<_>>();
-
-    // Compute the number of chars to remove from the alphabet
-    // If `limit_alphabet < initial_alphabet.len()`, some of these initial characters
-    // will be removed
-    let to_remove = trainer
-        .limit_alphabet
-        .map(|limit| alphabet.len().saturating_sub(limit))
-        .unwrap_or(0);
-
-    // Remove the unwanted chars
-    if to_remove > 0 {
-        kept.sort_unstable_by_key(|k| *k.1);
-        kept.drain(..to_remove);
-    }
-
-    // Keep the initial alphabet (sorted for determinism)
-    kept.sort_unstable_by_key(|k| *k.0 as u32);
-    let characters = kept
-        .into_iter()
-        .map(|(&character, _)| AlphabetCharacter {
-            character,
-            observed_in_input: observed.contains(character as usize),
-        })
-        .collect();
-    // The 136 KiB bitmap is selection scratch, never retained across attempts.
-    Alphabet {
-        characters,
-        complete: false,
-        observed_specials: observed_special_characters(trainer, &observed),
-    }
-}
-
-// Special identities can admit characters removed by the frequency cutoff.
-fn observed_special_characters(trainer: &BpeTrainer, observed: &FixedBitSet) -> Vec<char> {
-    trainer
-        .special_tokens
-        .iter()
-        .filter_map(|token| {
-            let mut chars = token.content.chars();
-            let character = chars.next()?;
-            (chars.next().is_none() && observed.contains(character as usize)).then_some(character)
-        })
-        .collect()
 }
 
 fn observed_characters(word_counts: WordCountsView<'_>) -> FixedBitSet {
@@ -564,7 +567,7 @@ mod tests {
             ];
             trainer.continuing_subword_prefix = Some(prefix.into());
             trainer.end_of_word_suffix = Some(suffix.into());
-            let alphabet = select_alphabet(&trainer, WordCountsView::from(&words));
+            let alphabet = trainer.select_alphabet(WordCountsView::from(&words));
             let (mut vocabulary, mut ids) =
                 Vocabulary::initialize(&trainer, WordCountsView::from(&words), &alphabet, &None)
                     .unwrap();
@@ -597,7 +600,7 @@ mod tests {
         trainer.initial_alphabet = ['é', '🙂'].into();
         trainer.continuing_subword_prefix = Some("前".into());
         trainer.end_of_word_suffix = Some("尾".into());
-        let alphabet = select_alphabet(&trainer, WordCountsView::from(&words));
+        let alphabet = trainer.select_alphabet(WordCountsView::from(&words));
         let (vocabulary, ids) =
             Vocabulary::initialize(&trainer, WordCountsView::from(&words), &alphabet, &None)
                 .unwrap();
@@ -624,7 +627,7 @@ mod tests {
             .into_iter()
             .map(|text| AddedToken::from(text, true))
             .collect();
-        let alphabet = select_alphabet(&trainer, WordCountsView::from(&words));
+        let alphabet = trainer.select_alphabet(WordCountsView::from(&words));
         let (_, ids) =
             Vocabulary::initialize(&trainer, WordCountsView::from(&words), &alphabet, &None)
                 .unwrap();

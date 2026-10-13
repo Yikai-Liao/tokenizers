@@ -10,6 +10,7 @@ use dary_heap::OctonaryHeap;
 use rayon::prelude::*;
 use smallvec::SmallVec;
 use std::cmp::{Ordering, Reverse};
+use std::collections::hash_map::Entry;
 use tk_encode::{Result, models::bpe::Pair, parallelism::*, utils::progress::ProgressBar};
 
 /// Queue key: highest count first, then smallest pair.
@@ -37,6 +38,18 @@ impl Priority {
 pub(super) struct Candidate {
     pub(super) priority: Priority,
     pub(super) positions: Positions,
+}
+
+impl Candidate {
+    fn new(pair: Pair, count: u64, positions: Positions) -> Self {
+        Self {
+            priority: Priority {
+                count,
+                pair: Reverse(pair),
+            },
+            positions,
+        }
+    }
 }
 
 impl Eq for Candidate {}
@@ -375,13 +388,7 @@ fn build_owner(pieces: InitialPiece, floor: u64, reuse: bool) -> Result<(Shard, 
             let positions = Positions::concat(state.positions)?;
             shard.counts.insert(pair, state.count);
             if state.count != 0 {
-                candidates.push(Candidate {
-                    priority: Priority {
-                        pair: Reverse(pair),
-                        count: state.count,
-                    },
-                    positions,
-                });
+                candidates.push(Candidate::new(pair, state.count, positions));
             }
         }
     }
@@ -412,12 +419,13 @@ impl Shard {
                 if reuse {
                     let count = self.counts.entry(change.removed).or_default();
                     adjust_signed(count, change.removed_weight, true)?;
-                } else if let Some(count) = self.counts.get_mut(&change.removed) {
+                } else if let Entry::Occupied(mut entry) = self.counts.entry(change.removed) {
+                    let count = entry.get_mut();
                     *count = count
                         .checked_sub(change.removed_weight)
                         .ok_or("BPE fresh removal exceeds the current count")?;
                     if *count < floor {
-                        self.counts.remove(&change.removed);
+                        entry.remove();
                     }
                 }
             }
@@ -474,13 +482,7 @@ impl Shard {
                 debug_assert!(!self.counts.contains_key(&pair));
                 self.counts.insert(pair, count);
             }
-            candidates.push(Candidate {
-                priority: Priority {
-                    count,
-                    pair: Reverse(pair),
-                },
-                positions,
-            });
+            candidates.push(Candidate::new(pair, count, positions));
         }
         Ok(candidates)
     }

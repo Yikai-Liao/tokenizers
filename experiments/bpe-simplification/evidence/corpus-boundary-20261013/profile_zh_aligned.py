@@ -1,4 +1,4 @@
-import gzip, hashlib, json, subprocess
+import gzip, hashlib, json, os, subprocess
 from pathlib import Path
 root=Path('/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013')
 definition=json.loads((root/'inputs.json').read_text())['zh-bytelevel']
@@ -13,7 +13,8 @@ for kind, rounds in [('stat',8),('record',2)]:
    prefix=['perf','stat','-x',';','-o',str(directory/'counters.csv'),'-e','cycles,instructions,branches,branch-misses,cache-references,cache-misses'] if kind=='stat' else ['perf','record','-F','997','-g','--call-graph','dwarf,8192','-o',str(directory/'perf.data')]
    command=prefix+['--','taskset','-c','0',str(binaries[arm]),str(directory/'job.json')]
    with (directory/'stdout.log').open('w') as out,(directory/'stderr.log').open('w') as err:
-    subprocess.run(command,stdout=out,stderr=err,check=True)
+    environment=dict(os.environ,RAYON_NUM_THREADS=str(job['workers']),TOKENIZERS_PARALLELISM="true")
+    subprocess.run(command,stdout=out,stderr=err,check=True,env=environment)
    model=(directory/'model.json').read_bytes()
    with gzip.open(directory/'model.json.gz','wb') as out:out.write(model)
    (directory/'model.json').unlink()

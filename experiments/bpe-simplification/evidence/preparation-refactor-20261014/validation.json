@@ -1,0 +1,232 @@
+{
+  "baseline": "35d73e24c3ff07d47d7a442edacbcfb7073f40f3",
+  "ordinary_source_sha256": {
+    "tokenizers/tk-train/src/trainers/bpe/corpus.rs": "91ab21c6423ae4323d54a9766783b07cc2f9faf4aae6270f21479b96e9b887fc",
+    "tokenizers/tk-train/src/trainers/bpe/feed.rs": "caf007c67c5dfd65a64ab9475701c8c25880f99e8be3929486d23a41528fd162",
+    "tokenizers/tk-train/src/trainers/bpe/index.rs": "5120742f1ee4488f22f5cc05f849dd5556f1535ea7689742941dd22a4042e8be",
+    "tokenizers/tk-train/src/trainers/bpe/merge.rs": "33af7e5529f173067267fa6337fac0a3387e7f1c9c56268e32732f445753d0a7",
+    "tokenizers/tk-train/src/trainers/bpe/mod.rs": "57cb43cc48d6037444689dc976c936d91ae62459a270a945d1780c250d25b729",
+    "tokenizers/tk-train/src/trainers/bpe/positions.rs": "5fbfe5232c091f07ed214faeabaa2902a9ca8853180b34de5ecd48be2ff39e1f",
+    "tokenizers/tk-train/src/trainers/bpe/tests.rs": "94a1ffd9c1ed95aef4247e8c92221476d77a6615c8fa783af69d73d0c6ef5664",
+    "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs": "3ae23df7aca59d07593b2ad9e8f6db4e69c9b59d8ea7d1e66ec4e4596301e1ea",
+    "tokenizers/tk-train/src/trainers/bpe/word_counts.rs": "7197651ee7fcf17dfc1172ee89c5cf9e6e09a95edd382dc475c8d5b4097c9363"
+  },
+  "final_trace_binary_sha256": "8e7fd5f49762e178cdde723bd8c69621c4de243ad7ba4052e40b1fab9512433c",
+  "comparisons": [
+    {
+      "case": "aa",
+      "workers": 1,
+      "model_sha256": "61fd069755db37f6c998d647773c8a21a5d6b3a1a12efc8ae10e6bb24633112a",
+      "trace_sha256": "c7debacf105862165d8271ded3f6af34e4890154c5cc6ff154141264c3257577",
+      "coverage": {
+        "initial_scan_config": 1,
+        "select": 38,
+        "batch": 36,
+        "commit": 36,
+        "aa": 28,
+        "ab": 10,
+        "existing_fresh": 0,
+        "multi_rule": 2,
+        "whole_words": 0,
+        "initial_whole_words": 0
+      },
+      "baseline_equal": true
+    },
+    {
+      "case": "aa",
+      "workers": 2,
+      "model_sha256": "61fd069755db37f6c998d647773c8a21a5d6b3a1a12efc8ae10e6bb24633112a",
+      "trace_sha256": "c7debacf105862165d8271ded3f6af34e4890154c5cc6ff154141264c3257577",
+      "coverage": {
+        "initial_scan_config": 1,
+        "select": 38,
+        "batch": 36,
+        "commit": 36,
+        "aa": 28,
+        "ab": 10,
+        "existing_fresh": 0,
+        "multi_rule": 2,
+        "whole_words": 0,
+        "initial_whole_words": 0
+      },
+      "baseline_equal": true
+    },
+    {
+      "case": "ab",
+      "workers": 1,
+      "model_sha256": "fdad32b28715797bf495a2072030dd5198f81a5249b8a99404b56890108667ed",
+      "trace_sha256": "df8d4a30e37fe8791bffc040ff80108755eea9316704811a4e493a25c4b6e61b",
+      "coverage": {
+        "initial_scan_config": 1,
+        "select": 7,
+        "batch": 4,
+        "commit": 4,
+        "aa": 0,
+        "ab": 7,
+        "existing_fresh": 0,
+        "multi_rule": 1,
+        "whole_words": 0,
+        "initial_whole_words": 0
+      },
+      "baseline_equal": true
+    },
+    {
+      "case": "ab",
+      "workers": 2,
+      "model_sha256": "fdad32b28715797bf495a2072030dd5198f81a5249b8a99404b56890108667ed",
+      "trace_sha256": "df8d4a30e37fe8791bffc040ff80108755eea9316704811a4e493a25c4b6e61b",
+      "coverage": {
+        "initial_scan_config": 1,
+        "select": 7,
+        "batch": 4,
+        "commit": 4,
+        "aa": 0,
+        "ab": 7,
+        "existing_fresh": 0,
+        "multi_rule": 1,
+        "whole_words": 0,
+        "initial_whole_words": 0
+      },
+      "baseline_equal": true
+    },
+    {
+      "case": "reserved",
+      "workers": 1,
+      "model_sha256": "797969fe1c5c9271d09096514204e1883cc138d990d973b17ffad1198785ace3",
+      "trace_sha256": "5d866934239f50ae203c4d451d8276a154559afc68507321fc039916d107c7fc",
+      "coverage": {
+        "initial_scan_config": 1,
+        "select": 4,
+        "batch": 4,
+        "commit": 4,
+        "aa": 2,
+        "ab": 2,
+        "existing_fresh": 1,
+        "multi_rule": 0,
+        "whole_words": 0,
+        "initial_whole_words": 0
+      },
+      "baseline_equal": true
+    },
+    {
+      "case": "reserved",
+      "workers": 2,
+      "model_sha256": "797969fe1c5c9271d09096514204e1883cc138d990d973b17ffad1198785ace3",
+      "trace_sha256": "5d866934239f50ae203c4d451d8276a154559afc68507321fc039916d107c7fc",
+      "coverage": {
+        "initial_scan_config": 1,
+        "select": 4,
+        "batch": 4,
+        "commit": 4,
+        "aa": 2,
+        "ab": 2,
+        "existing_fresh": 1,
+        "multi_rule": 0,
+        "whole_words": 0,
+        "initial_whole_words": 0
+      },
+      "baseline_equal": true
+    },
+    {
+      "case": "alias",
+      "workers": 1,
+      "model_sha256": "63297903068b6dcaf87f44c90b99a697a98d79e591cde58a84f01a96f2053e1a",
+      "trace_sha256": "9281489c01fe32d569cdac464153df27ff8218e57fce1de49a95fcc5d8d34425",
+      "coverage": {
+        "initial_scan_config": 2,
+        "restart": 1,
+        "select": 4,
+        "batch": 4,
+        "reuse_scan": 4,
+        "commit": 4,
+        "aa": 2,
+        "ab": 2,
+        "existing_fresh": 0,
+        "multi_rule": 0,
+        "whole_words": 4,
+        "initial_whole_words": 0
+      },
+      "baseline_equal": true
+    },
+    {
+      "case": "alias",
+      "workers": 2,
+      "model_sha256": "63297903068b6dcaf87f44c90b99a697a98d79e591cde58a84f01a96f2053e1a",
+      "trace_sha256": "9281489c01fe32d569cdac464153df27ff8218e57fce1de49a95fcc5d8d34425",
+      "coverage": {
+        "initial_scan_config": 2,
+        "restart": 1,
+        "select": 4,
+        "batch": 4,
+        "reuse_scan": 4,
+        "commit": 4,
+        "aa": 2,
+        "ab": 2,
+        "existing_fresh": 0,
+        "multi_rule": 0,
+        "whole_words": 4,
+        "initial_whole_words": 0
+      },
+      "baseline_equal": true
+    },
+    {
+      "case": "length-reuse",
+      "workers": 1,
+      "model_sha256": "63297903068b6dcaf87f44c90b99a697a98d79e591cde58a84f01a96f2053e1a",
+      "trace_sha256": "8d899690acec118d5fc7607b33d8615d0cf3293460850f7a5d3d2a754742548c",
+      "coverage": {
+        "initial_scan_config": 2,
+        "restart": 1,
+        "select": 4,
+        "batch": 4,
+        "reuse_scan": 4,
+        "commit": 4,
+        "aa": 2,
+        "ab": 2,
+        "existing_fresh": 0,
+        "multi_rule": 0,
+        "whole_words": 4,
+        "initial_whole_words": 2
+      },
+      "baseline_equal": true
+    },
+    {
+      "case": "length-reuse",
+      "workers": 2,
+      "model_sha256": "63297903068b6dcaf87f44c90b99a697a98d79e591cde58a84f01a96f2053e1a",
+      "trace_sha256": "8d899690acec118d5fc7607b33d8615d0cf3293460850f7a5d3d2a754742548c",
+      "coverage": {
+        "initial_scan_config": 2,
+        "restart": 1,
+        "select": 4,
+        "batch": 4,
+        "reuse_scan": 4,
+        "commit": 4,
+        "aa": 2,
+        "ab": 2,
+        "existing_fresh": 0,
+        "multi_rule": 0,
+        "whole_words": 4,
+        "initial_whole_words": 2
+      },
+      "baseline_equal": true
+    }
+  ],
+  "bytelevel_prepare": {
+    "en": {
+      "parent_RAYON_NUM_THREADS": "4",
+      "parent_TOKENIZERS_PARALLELISM": "false",
+      "workers_requested": 1,
+      "workers_effective": 1,
+      "mode": "prepare"
+    },
+    "zh": {
+      "parent_RAYON_NUM_THREADS": "4",
+      "parent_TOKENIZERS_PARALLELISM": "false",
+      "workers_requested": 1,
+      "workers_effective": 1,
+      "mode": "prepare"
+    }
+  },
+  "independent_review": "One fresh agent scanned all eight ordinary production modules and the Rust diff; its single confirmed missed map lookup was fixed and rechecked."
+}

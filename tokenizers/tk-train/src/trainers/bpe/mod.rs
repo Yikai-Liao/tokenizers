@@ -244,11 +244,7 @@ impl BpeTrainer {
     /// Returns the training errors described in [`Self::do_train`], including the
     /// signed input limits for nonempty affixes even when no merge is needed.
     pub fn train_vocab(&self) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
-        self.do_train_impl(WordCountsView::from(&self.words))
-            .map(|vocabulary| {
-                let (vocab, merges) = vocabulary.into_parts();
-                (vocab, merges, self.special_tokens.clone())
-            })
+        self.train_parts(WordCountsView::from(&self.words))
     }
 
     /// Train weighted words and return vocabulary entries, ordered merges, and
@@ -285,16 +281,18 @@ impl BpeTrainer {
         &self,
         word_counts: &AHashMap<CompactString, u64>,
     ) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
-        self.do_train_impl(WordCountsView::from(word_counts))
-            .map(|vocabulary| {
-                let (vocab, merges) = vocabulary.into_parts();
-                (vocab, merges, self.special_tokens.clone())
-            })
+        self.train_parts(WordCountsView::from(word_counts))
+    }
+
+    fn train_parts(&self, words: WordCountsView<'_>) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
+        let vocabulary = self.do_train_impl(words)?;
+        let (vocab, merges) = vocabulary.into_parts();
+        Ok((vocab, merges, self.special_tokens.clone()))
     }
 
     fn do_train_impl(&self, words: WordCountsView<'_>) -> Result<Vocabulary> {
         let progress = self.setup_progress();
-        let alphabet = vocabulary::select_alphabet(self, words);
+        let alphabet = self.select_alphabet(words);
         let outcome = self.train_attempt(words, TrainingMode::Fresh, &alphabet, &progress)?;
         let outcome = match outcome {
             // Retry borrows the same alphabet so frequency ties cannot select
