@@ -25,7 +25,7 @@ fn check(trainer: &BpeTrainer, words: &AHashMap<CompactString, u64>) -> Vec<(Pai
     let expected = trainer.do_train_reference(words).unwrap();
     for workers in [1, 4, 8] {
         let actual = trainer
-            .do_train_impl(WordCountsView::from_map(words), Some(workers))
+            .do_train_impl(WordCountsView::from(words), Some(workers))
             .unwrap();
         assert_eq!(actual.trace, expected.trace, "workers={workers}");
         let (vocab, merges) = actual.into_parts();
@@ -148,10 +148,7 @@ fn count_boundaries() {
     let mut trainer = trainer();
     for weight in [u32::MAX as u64 + 17, u64::MAX] {
         let result = trainer
-            .do_train_impl(
-                WordCountsView::from_map(&counts(&[("ab", weight)])),
-                Some(2),
-            )
+            .do_train_impl(WordCountsView::from(&counts(&[("ab", weight)])), Some(2))
             .unwrap();
         assert_eq!(result.trace, [((0, 1), weight, 2)]);
     }
@@ -202,11 +199,11 @@ fn failed_training_keeps_model() {
     .unwrap();
     let original = model.to_config().unwrap().vocab;
     let mut trainer = trainer();
-    trainer.words = WordCounts::from_map(counts(&[("abab", u64::MAX)]));
+    trainer.words = WordCounts::from(counts(&[("abab", u64::MAX)]));
     assert!(trainer.train(&mut model).is_err());
     assert_eq!(model.to_config().unwrap().vocab, original);
 
-    trainer.words = WordCounts::from_map(counts(&[("ab", 1)]));
+    trainer.words = WordCounts::from(counts(&[("ab", 1)]));
     trainer.end_of_word_suffix = Some("s".repeat(64));
     // Training succeeds, but the model reader rejects its oversized affix.
     assert!(trainer.train_vocab().is_ok());
@@ -228,7 +225,7 @@ fn restart_keeps_alphabet() {
     trainer.initial_alphabet = ['a', 'b'].into();
     // Four characters exceed the cutoff; q/z tie for the one unforced slot.
     let words = counts(&[("baaba", 1), ("q", 1), ("z", 1)]);
-    let view = WordCountsView::from_map(&words);
+    let view = WordCountsView::from(&words);
     let retained = vocabulary::select_alphabet(&trainer, view);
     let selected: Vec<_> = retained
         .characters()
@@ -264,7 +261,7 @@ fn restart_discards_ids() {
     trainer.special_tokens = vec![AddedToken::from("xy", true)];
     let words = counts(&[("xy", 3), ("uv", 2), ("ab", 1)]);
     let (mut vocabulary, mut corpus, mut index) =
-        initialize(&trainer, WordCountsView::from_map(&words), false);
+        initialize(&trainer, WordCountsView::from(&words), false);
     let MergeOutcome::Committed {
         rule_count: accepted,
     } = trainer
@@ -543,7 +540,7 @@ mod reference {
                 tokens.insert(token.content.clone());
             }
             for entry in
-                vocabulary::select_alphabet(self, WordCountsView::from_map(counts)).characters()
+                vocabulary::select_alphabet(self, WordCountsView::from(counts)).characters()
             {
                 tokens.insert(entry.character.to_string());
             }
@@ -683,7 +680,7 @@ fn initial_edges() {
     let words = counts(&[("qé🙂z", 7), ("é🙂é", 6), ("🙂é", 5), ("", 4), ("é", 3)]);
     let mut trainer = trainer();
     trainer.limit_alphabet = Some(2);
-    let view = WordCountsView::from_map(&words);
+    let view = WordCountsView::from(&words);
     let (_, ids) = Vocabulary::initialize(
         &trainer,
         view,
@@ -706,10 +703,7 @@ fn initial_edges() {
         ((1, 0), 8, 5),
     ];
     let read = || {
-        let (words, edges) = plan
-            .initial_chunks(usize::MAX)
-            .find_first(|_| true)
-            .unwrap();
+        let (words, edges) = plan.chunks(usize::MAX).find_first(|_| true).unwrap();
         assert_eq!(words, 5);
         edges.map(|edge| (edge.pair, edge.position, edge.weight))
     };
@@ -766,7 +760,7 @@ fn check_feed_success(workers: usize, parallel: bool) {
         expected.insert(format!("词🙂{id}").into(), 1);
         *expected.entry("repeat".into()).or_default() += 2;
     }
-    assert_eq!(counted, WordCounts::from_map(expected));
+    assert_eq!(counted, WordCounts::from(expected));
     for unique in [2047, 2048, 2049, 4097] {
         let mut words: Vec<_> = (0..unique).map(|id| format!("key{id}")).collect();
         words.extend(["key0".into(), format!("key{}", unique - 1), "key0".into()]);
@@ -775,7 +769,7 @@ fn check_feed_success(workers: usize, parallel: bool) {
         for word in &words {
             *expected.entry(word.as_str().into()).or_default() += 1;
         }
-        assert_eq!(counted, WordCounts::from_map(expected));
+        assert_eq!(counted, WordCounts::from(expected));
     }
 }
 

@@ -246,7 +246,7 @@ impl BpeTrainer {
     /// Returns the training errors described in [`Self::do_train`], including the
     /// signed input limits for nonempty affixes even when no merge is needed.
     pub fn train_vocab(&self) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
-        self.do_train_impl(self.words.view(), None)
+        self.do_train_impl(WordCountsView::from(&self.words), None)
             .map(|vocabulary| {
                 let (vocab, merges) = vocabulary.into_parts();
                 (vocab, merges, self.special_tokens.clone())
@@ -288,7 +288,7 @@ impl BpeTrainer {
         &self,
         word_counts: &AHashMap<CompactString, u64>,
     ) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
-        self.do_train_impl(WordCountsView::from_map(word_counts), None)
+        self.do_train_impl(WordCountsView::from(word_counts), None)
             .map(|vocabulary| {
                 let (vocab, merges) = vocabulary.into_parts();
                 (vocab, merges, self.special_tokens.clone())

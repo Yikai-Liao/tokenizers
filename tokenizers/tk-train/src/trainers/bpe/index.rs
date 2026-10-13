@@ -76,9 +76,22 @@ type Event = PairChange<()>;
 #[derive(Default)]
 struct Shard {
     counts: AHashMap<Pair, u64>,
-    actions: Vec<(usize, bool, bool)>,
+    actions: Vec<PendingAction>,
     // One stream per birth action, in the same order.
     positions: Vec<Positions>,
+}
+
+struct PendingAction {
+    event_index: usize,
+    remove_count: bool,
+    has_birth: bool,
+}
+
+struct BirthFragment {
+    birth_group: usize,
+    pair: Pair,
+    weight: u64,
+    positions: Positions,
 }
 
 /// Authoritative pair-count shards plus an owning queue of occurrence candidates.
@@ -123,7 +136,7 @@ impl PairIndex {
         let domain = corpus.token_count();
         // 1. Count and freeze each whole-word range independently.
         let pieces = corpus
-            .initial_chunks(if cfg!(test) { 16 } else { 1 << 24 })
+            .chunks(if cfg!(test) { 16 } else { 1 << 24 })
             .map(|(words, edges)| count_chunk(domain, words, edges, progress))
             .collect::<Result<Vec<_>>>()?;
 
@@ -358,7 +371,11 @@ fn build_owner(pieces: InitialPiece, floor: u64, reuse: bool) -> Result<(Shard, 
 
 impl Shard {
     fn push(&mut self, index: usize, remove: bool, birth: Option<Positions>) {
-        self.actions.push((index, remove, birth.is_some()));
+        self.actions.push(PendingAction {
+            event_index: index,
+            remove_count: remove,
+            has_birth: birth.is_some(),
+        });
         self.positions.extend(birth);
     }
 
@@ -368,11 +385,11 @@ impl Shard {
         // Both drains own their remaining items: errors drop unpublished births
         // and empty the pending vectors while retaining their capacity.
         let mut positions = self.positions.drain(..);
-        for (index, remove, birth) in self.actions.drain(..) {
-            let change = &events[index];
+        for action in self.actions.drain(..) {
+            let change = &events[action.event_index];
             // A boundary removal precedes its replacement birth. The signed reuse
             // ledger checks each action in order, including intermediate overflow.
-            if remove {
+            if action.remove_count {
                 if reuse {
                     let count = self.counts.entry(change.removed).or_default();
                     adjust_signed(count, change.removed_weight, true)?;
@@ -385,7 +402,7 @@ impl Shard {
                     }
                 }
             }
-            if !birth {
+            if !action.has_birth {
                 continue;
             }
             if reuse {
@@ -393,27 +410,28 @@ impl Shard {
                 adjust_signed(count, change.born_weight, false)?;
             }
             let fragment = positions.next().expect("each birth owns one stream");
-            fragments.push((
-                (change.birth_group, change.born),
-                change.born_weight,
-                fragment,
-            ));
+            fragments.push(BirthFragment {
+                birth_group: change.birth_group,
+                pair: change.born,
+                weight: change.born_weight,
+                positions: fragment,
+            });
         }
 
         // Stable key order keeps each cohort's spatial fragment order while
         // publishing in birth_group/pair order. Reuse streams may interleave.
-        fragments.sort_by_key(|(key, _, _)| *key);
+        fragments.sort_by_key(|fragment| (fragment.birth_group, fragment.pair));
         let mut fragments = fragments.into_iter();
-        while let Some((key, _, _)) = fragments.as_slice().first() {
-            let key = *key;
+        while let Some(fragment) = fragments.as_slice().first() {
+            let key = (fragment.birth_group, fragment.pair);
             let mut group_len = 0;
             let mut weight = 0;
-            for (_, part_weight, _) in fragments
+            for part in fragments
                 .as_slice()
                 .iter()
-                .take_while(|(other, _, _)| *other == key)
+                .take_while(|part| (part.birth_group, part.pair) == key)
             {
-                add(&mut weight, *part_weight)?;
+                add(&mut weight, part.weight)?;
                 group_len += 1;
             }
             let pair = key.1;
@@ -421,7 +439,7 @@ impl Shard {
             let streams = fragments
                 .by_ref()
                 .take(group_len)
-                .map(|(_, _, positions)| positions);
+                .map(|fragment| fragment.positions);
             // A positive reuse ledger publishes a historical cohort even below
             // the floor; selection applies the floor after correcting its head.
             if (reuse && (count as i64) <= 0) || (!reuse && count < floor) {
@@ -525,7 +543,7 @@ mod tests {
     fn failures_before_and_after_writes() {
         for preparation in [true, false] {
             let mut trainer = trainer();
-            let words = if preparation {
+            let words: AHashMap<compact_str::CompactString, u64> = if preparation {
                 [("ab".into(), u64::MAX), ("xcd".into(), u64::MAX)]
                     .into_iter()
                     .collect()
@@ -533,7 +551,7 @@ mod tests {
                 [("abcd".into(), 1)].into_iter().collect()
             };
             let (mut vocabulary, mut corpus, mut index) =
-                initialize(&trainer, WordCountsView::from_map(&words), !preparation);
+                initialize(&trainer, WordCountsView::from(&words), !preparation);
             // First commit AB alone. Its history must survive a later failed round.
             trainer.vocab_size = vocabulary.len() + 1;
             assert!(matches!(

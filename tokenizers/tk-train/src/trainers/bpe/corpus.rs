@@ -9,6 +9,7 @@ use compact_str::CompactString;
 use itertools::Itertools;
 use rayon::prelude::*;
 use std::collections::VecDeque;
+use std::ops::Range;
 use std::sync::atomic::{AtomicU16, AtomicU32, AtomicUsize, Ordering};
 use tk_encode::{Result, models::bpe::Pair};
 
@@ -18,11 +19,11 @@ use tk_encode::{Result, models::bpe::Pair};
 pub(super) struct Corpus {
     tokens: Slots,
     starts: Box<[usize]>,
-    weight_regions: Box<[(usize, u64)]>,
-    unit_region: Option<(usize, usize)>,
+    weight_runs: Box<[WeightRun]>,
+    unit_weight_range: Option<Range<usize>>,
     // Nonzero marks an activated ID. Until alias geometry diverges it also
     // stores that ID's span; afterwards occurrence_spans owns all geometry.
-    spans: Vec<usize>,
+    id_metadata: Vec<usize>,
     occurrence_spans: Option<Box<[AtomicUsize]>>,
     whole_words: bool,
     mode: TrainingMode,
@@ -46,18 +47,17 @@ pub(super) struct PairChange<P> {
     pub(super) birth_group: usize,
 }
 
-/// One accepted occurrence's start and exclusive merged end.
-/// Coordinates describe the preparation snapshot, before endpoint writes apply.
-#[derive(Clone, Copy)]
-struct Match {
+/// A run in the sorted word-weight directory.
+struct WeightRun {
     start: usize,
-    after: usize,
+    weight: u64,
 }
 
-impl Match {
-    fn span(self) -> usize {
-        self.after - self.start
-    }
+/// Cached weight through an exclusive coordinate end.
+#[derive(Clone, Copy)]
+struct WeightLookup {
+    weight: u64,
+    end: usize,
 }
 
 /// Borrowed input and measured coordinate layout for initial pair counting.
@@ -65,8 +65,8 @@ impl Match {
 /// materialization consumes the plan and transfers its metadata to the Corpus.
 pub(super) struct CorpusPlan<'input> {
     starts: Box<[usize]>,
-    weight_regions: Box<[(usize, u64)]>,
-    unit_region: Option<(usize, usize)>,
+    weight_runs: Box<[WeightRun]>,
+    unit_weight_range: Option<Range<usize>>,
     whole_words: bool,
     words: Box<[(&'input CompactString, &'input u64)]>,
     ids: InitialTokenIds,
@@ -98,18 +98,18 @@ impl<'input> CorpusPlan<'input> {
             .par_iter()
             .map(|(word, _)| ids.symbol_count(word))
             .collect();
-        let mut weight_regions = Vec::new();
+        let mut weight_runs = Vec::<WeightRun>::new();
         let mut length = 1usize;
         let mut mass = 0u128;
         // Reuse the measured symbol counts as the checked word-start directory.
         for (&(_, &weight), start) in words.iter().zip(&mut starts) {
             let symbols = *start;
             *start = length;
-            if weight_regions
-                .last()
-                .is_none_or(|&(_, previous)| previous != weight)
-            {
-                weight_regions.push((length, weight));
+            if weight_runs.last().is_none_or(|run| run.weight != weight) {
+                weight_runs.push(WeightRun {
+                    start: length,
+                    weight,
+                });
             }
             length = length
                 .checked_add(symbols)
@@ -126,20 +126,15 @@ impl<'input> CorpusPlan<'input> {
         {
             return Err("BPE identity-reuse weighted edge mass or word weight exceeds i64".into());
         }
-        let unit_region = weight_regions
+        let unit_weight_range = weight_runs
             .iter()
-            .position(|&(_, weight)| weight == 1)
-            .map(|i| {
-                (
-                    weight_regions[i].0,
-                    weight_regions.get(i + 1).map_or(length, |r| r.0),
-                )
-            });
+            .position(|run| run.weight == 1)
+            .map(|i| weight_runs[i].start..weight_runs.get(i + 1).map_or(length, |run| run.start));
         let slot_bound = ids.token_count().max(target_vocab_size);
         Ok(Self {
             starts: starts.into_boxed_slice(),
-            weight_regions: weight_regions.into_boxed_slice(),
-            unit_region,
+            weight_runs: weight_runs.into_boxed_slice(),
+            unit_weight_range,
             whole_words: birth_pair_span_limit.is_some(),
             words,
             ids,
@@ -156,7 +151,7 @@ impl<'input> CorpusPlan<'input> {
 
     // Whole words preserve symbol-scan semantics. A single oversized word is
     // admitted alone; otherwise each range has at most `slots` resident slots.
-    fn initial_ranges(&self, slots: usize) -> Vec<std::ops::Range<usize>> {
+    fn ranges(&self, slots: usize) -> Vec<Range<usize>> {
         let mut ranges = Vec::new();
         let mut begin = 0;
         let n = self.word_count();
@@ -193,20 +188,17 @@ impl<'input> CorpusPlan<'input> {
 
     /// Bound whole-word edge streams in coordinate order, with progress units.
     /// A count task consumes its stream directly and owns any counting error.
-    pub(super) fn initial_chunks(
+    pub(super) fn chunks(
         &self,
         slots: usize,
     ) -> impl IndexedParallelIterator<Item = (usize, impl Iterator<Item = InitialEdge> + Send + '_)> + '_
     {
-        self.initial_ranges(slots)
+        self.ranges(slots)
             .into_par_iter()
-            .map(move |range| (range.len(), self.initial_edges(range)))
+            .map(move |range| (range.len(), self.edges(range)))
     }
 
-    fn initial_edges(
-        &self,
-        range: std::ops::Range<usize>,
-    ) -> impl Iterator<Item = InitialEdge> + '_ {
+    fn edges(&self, range: Range<usize>) -> impl Iterator<Item = InitialEdge> + '_ {
         range.flat_map(move |word| {
             let (text, &weight) = self.words[word];
             let start = self.starts[word];
@@ -243,9 +235,9 @@ impl<'input> CorpusPlan<'input> {
             } else {
                 Box::default()
             },
-            weight_regions: self.weight_regions,
-            unit_region: self.unit_region,
-            spans: self.ids.into_metadata(),
+            weight_runs: self.weight_runs,
+            unit_weight_range: self.unit_weight_range,
+            id_metadata: self.ids.into_metadata(),
             occurrence_spans: None,
             whole_words: self.whole_words,
             mode: self.mode,
@@ -262,7 +254,7 @@ impl Corpus {
 
     #[cfg(test)]
     pub(super) fn spans(&self) -> impl Iterator<Item = usize> + '_ {
-        (0..self.len()).map(|p| self.span(p))
+        (0..self.len()).map(|p| self.occurrence_span(p))
     }
 
     fn len(&self) -> usize {
@@ -296,69 +288,68 @@ impl Corpus {
         }
     }
 
-    fn weight_region(&self, position: usize) -> (u64, usize) {
-        if self.weight_regions.len() == 1 {
-            return (self.weight_regions[0].1, self.len());
+    fn weight(&self, position: usize) -> WeightLookup {
+        if self.weight_runs.len() == 1 {
+            return WeightLookup {
+                weight: self.weight_runs[0].weight,
+                end: self.len(),
+            };
         }
-        if let Some((begin, end)) = self.unit_region
-            && position >= begin
-            && position < end
+        if let Some(range) = &self.unit_weight_range
+            && position >= range.start
+            && position < range.end
         {
-            return (1, end);
+            return WeightLookup {
+                weight: 1,
+                end: range.end,
+            };
         }
         let i = self
-            .weight_regions
-            .partition_point(|&(start, _)| start <= position)
+            .weight_runs
+            .partition_point(|run| run.start <= position)
             - 1;
-        (
-            self.weight_regions[i].1,
-            self.weight_regions.get(i + 1).map_or(self.len(), |r| r.0),
-        )
+        WeightLookup {
+            weight: self.weight_runs[i].weight,
+            end: self
+                .weight_runs
+                .get(i + 1)
+                .map_or(self.len(), |run| run.start),
+        }
     }
 
     fn word(&self, position: usize) -> usize {
         self.starts.partition_point(|&start| start <= position) - 1
     }
 
-    fn word_start(&self, word: usize) -> usize {
-        self.starts[word]
-    }
-
-    fn word_end(&self, word: usize) -> usize {
-        self.starts.get(word + 1).copied().unwrap_or(self.len()) - 1
+    fn word_range(&self, word: usize) -> Range<usize> {
+        self.starts[word]..self.starts.get(word + 1).copied().unwrap_or(self.len()) - 1
     }
 
     fn word_weight(&self, word: usize) -> u64 {
-        self.weight_region(self.word_start(word)).0
+        self.weight(self.starts[word]).weight
     }
 
     #[inline]
-    fn span(&self, position: usize) -> usize {
+    fn occurrence_span(&self, position: usize) -> usize {
         self.occurrence_spans.as_ref().map_or_else(
-            || self.id_span(self.token(position)),
+            || self.fixed_id_span(self.token(position)),
             |spans| spans[position].load(Ordering::Relaxed),
         )
     }
 
     fn id_count(&self) -> usize {
-        self.spans.len()
+        self.id_metadata.len()
     }
 
-    fn id_span(&self, id: u32) -> usize {
-        self.spans[id as usize]
+    fn fixed_id_span(&self, id: u32) -> usize {
+        self.id_metadata[id as usize]
     }
 
-    // Fresh IDs have fixed geometry. Cache it once per preparation task,
-    // keeping occurrence-dependent alias matching in matched().
-    fn fresh_matcher(&self, pair: Pair) -> impl Fn(u64) -> Option<Match> + '_ {
-        let matcher = self.fixed_matcher(pair);
-        move |coordinate| matcher(self.resident(coordinate))
-    }
-
-    fn fixed_matcher(&self, pair: Pair) -> impl Fn(usize) -> Option<Match> + '_ {
+    // Fresh IDs have fixed geometry cached once per reader. Aliases use match_at.
+    fn fixed_matcher(&self, pair: Pair) -> impl Fn(usize) -> Option<Range<usize>> + '_ {
         debug_assert!(self.occurrence_spans.is_none());
-        let left = self.id_span(pair.0);
-        let total = left + self.id_span(pair.1);
+        let left = self.fixed_id_span(pair.0);
+        let total = left + self.fixed_id_span(pair.1);
         move |position| {
             if self.token(position) != pair.0
                 || left == 0
@@ -368,10 +359,7 @@ impl Corpus {
             {
                 return None;
             }
-            Some(Match {
-                start: position,
-                after: position + total,
-            })
+            Some(position..position + total)
         }
     }
 
@@ -381,16 +369,17 @@ impl Corpus {
     /// until every reader joins. AA overlap selection stays with the caller.
     fn fresh_matches<'a>(
         &'a self,
-        coordinates: impl Iterator<Item = u64> + 'a,
+        coordinates: impl IntoIterator<Item = u64> + 'a,
         pair: Pair,
-    ) -> impl Iterator<Item = (Match, u64)> + 'a {
+    ) -> impl Iterator<Item = (Range<usize>, u64)> + 'a {
         let matcher = self.fixed_matcher(pair);
         let mut positions = coordinates
+            .into_iter()
             .map(move |coordinate| self.resident(coordinate))
             .inspect(move |&p| self.prefetch(p));
         let mut ahead = VecDeque::with_capacity(16);
         ahead.extend(positions.by_ref().take(16));
-        let mut weights = None;
+        let mut cached_weight: Option<WeightLookup> = None;
         std::iter::from_fn(move || {
             let position = ahead.pop_front()?;
             ahead.extend(positions.next());
@@ -398,30 +387,27 @@ impl Corpus {
         })
         .filter_map(move |p| {
             let matched = matcher(p)?;
-            let (weight, end) = match weights {
-                Some((weight, end)) if p < end => (weight, end),
-                _ => self.weight_region(p),
+            let lookup = match cached_weight {
+                Some(lookup) if p < lookup.end => lookup,
+                _ => self.weight(p),
             };
-            weights = Some((weight, end));
-            Some((matched, weight))
+            cached_weight = Some(lookup);
+            Some((matched, lookup.weight))
         })
     }
 
-    fn matched(&self, position: usize, pair: Pair) -> Option<Match> {
+    fn match_at(&self, position: usize, pair: Pair) -> Option<Range<usize>> {
         if self.token(position) != pair.0 {
             return None;
         }
-        let span = self.span(position);
+        let span = self.occurrence_span(position);
         let right = position + span;
         if span == 0 || right >= self.len() || self.token(right) != pair.1 {
             return None;
         }
-        let right_span = self.span(right);
+        let right_span = self.occurrence_span(right);
         let after = right + right_span;
-        (right_span != 0 && after < self.len()).then_some(Match {
-            start: position,
-            after,
-        })
+        (right_span != 0 && after < self.len()).then_some(position..after)
     }
 
     fn whole_words(&self) -> bool {
@@ -430,7 +416,9 @@ impl Corpus {
 
     /// Activation history persists after an ID's last occurrence is consumed.
     pub(super) fn has_been_activated(&self, id: u32) -> bool {
-        self.spans.get(id as usize).is_some_and(|&span| span != 0)
+        self.id_metadata
+            .get(id as usize)
+            .is_some_and(|&span| span != 0)
     }
 
     pub(super) fn activate(&mut self, pair: Pair, id: u32) {
@@ -440,18 +428,18 @@ impl Corpus {
         let span = if self.occurrence_spans.is_some() {
             1
         } else {
-            self.id_span(pair.0) + self.id_span(pair.1)
+            self.fixed_id_span(pair.0) + self.fixed_id_span(pair.1)
         };
-        if id as usize == self.spans.len() {
-            self.spans.push(span);
+        if id as usize == self.id_metadata.len() {
+            self.id_metadata.push(span);
         } else {
-            let old = self.spans[id as usize];
+            let old = self.id_metadata[id as usize];
             if self.occurrence_spans.is_none() && old != 0 && old != span {
                 // Preserve each occurrence's old geometry before changing this
                 // ID's representative span. Reused IDs can have several lengths.
                 self.materialize_occurrence_spans();
             }
-            self.spans[id as usize] = span;
+            self.id_metadata[id as usize] = span;
         }
     }
 
@@ -460,7 +448,7 @@ impl Corpus {
         for &start in &self.starts {
             let mut p = start;
             while self.token(p) != WORD_SEPARATOR_ID {
-                let n = self.id_span(self.token(p));
+                let n = self.fixed_id_span(self.token(p));
                 values[p].store(n, Ordering::Relaxed);
                 values[p + n - 1].store(n, Ordering::Relaxed);
                 p += n;
@@ -470,7 +458,7 @@ impl Corpus {
     }
 
     /// Apply one rule's accepted starts after all preparation tasks join.
-    /// Match intervals must be disjoint across every Job in the round; reads
+    /// Match intervals must be disjoint across every PreparedChunk in the round; reads
     /// touch only this match's own endpoints. Atomics keep individual accesses
     /// safe on error or unwind, but overlapping writes invalidate reconstruction.
     fn apply(&self, starts: &[usize], merged_id: u32) {
@@ -480,8 +468,8 @@ impl Corpus {
         match &self.occurrence_spans {
             None => {
                 // One rule has shared geometry. Cache it before any token store.
-                let left = self.id_span(self.token(first));
-                let total = left + self.id_span(self.token(first + left));
+                let left = self.fixed_id_span(self.token(first));
+                let total = left + self.fixed_id_span(self.token(first + left));
                 for &start in starts {
                     let right = start + left;
                     let after = start + total;
@@ -589,9 +577,13 @@ mod tests {
         let corpus = Corpus {
             tokens: Slots::new(input.len(), spans.len()),
             starts: vec![1].into_boxed_slice(),
-            weight_regions: vec![(1, 1)].into_boxed_slice(),
-            unit_region: Some((1, input.len())),
-            spans: spans.to_vec(),
+            weight_runs: vec![WeightRun {
+                start: 1,
+                weight: 1,
+            }]
+            .into_boxed_slice(),
+            unit_weight_range: Some(1..input.len()),
+            id_metadata: spans.to_vec(),
             occurrence_spans: occurrences
                 .map(|values| values.iter().copied().map(AtomicUsize::new).collect()),
             whole_words: occurrences.is_some(),
@@ -617,7 +609,7 @@ mod tests {
                 _ => [1, 4].par_iter().for_each(|&p| corpus.apply(&[p], 2)),
             }
             assert_eq!(tokens(&corpus), [s, 2, 0, 2, 2, 0, 2, s]);
-            assert_eq!(corpus.spans, [2, 1, 3]);
+            assert_eq!(corpus.id_metadata, [2, 1, 3]);
         }
         // One pair has 2+1 and 1+3 spans; merged_id reuses ID 0.
         let corpus = fixture(
@@ -637,15 +629,18 @@ mod tests {
             .chain((0..40).flat_map(|_| [0, 1, s]))
             .collect();
         let mut corpus = fixture(&input, &[1, 1, 2], None);
-        corpus.weight_regions = vec![(1, 9), (31, 1), (91, 0)].into_boxed_slice();
-        corpus.unit_region = Some((31, 91));
+        corpus.weight_runs = vec![(1, 9), (31, 1), (91, 0)]
+            .into_iter()
+            .map(|(start, weight)| WeightRun { start, weight })
+            .collect();
+        corpus.unit_weight_range = Some(31..91);
         corpus.apply(&[1, 64], 2);
 
         // Span more than one prefetch window and include old starts, tails and
         // separators. Weights cross repeated, unit and zero-weight regions.
         let matches: Vec<_> = corpus
             .fresh_matches(0..input.len() as u64, (0, 1))
-            .map(|(matched, weight)| (matched.start, matched.after, weight))
+            .map(|(matched, weight)| (matched.start, matched.end, weight))
             .collect();
         let expected: Vec<_> = (0..40)
             .filter(|&word| word != 0 && word != 21)
@@ -673,7 +668,7 @@ mod tests {
     #[test]
     fn initial_ranges() {
         let words = ahash::AHashMap::new();
-        let view = WordCountsView::from_map(&words);
+        let view = WordCountsView::from(&words);
         let trainer = super::super::BpeTrainer::new(1, 0);
         let (_, ids) = super::super::vocabulary::Vocabulary::initialize(
             &trainer,
@@ -690,7 +685,7 @@ mod tests {
             trainer.max_token_length,
         )
         .unwrap();
-        assert!(plan.initial_ranges(0).is_empty());
+        assert!(plan.ranges(0).is_empty());
         let text = CompactString::default();
         let weight = 1;
         let maximum = usize::MAX;
@@ -709,7 +704,7 @@ mod tests {
             plan.words = vec![(&text, &weight); starts.len()].into_boxed_slice();
             plan.starts = starts.into_boxed_slice();
             plan.length = length;
-            assert_eq!(plan.initial_ranges(budget), expected);
+            assert_eq!(plan.ranges(budget), expected);
         }
     }
 }

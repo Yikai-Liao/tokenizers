@@ -540,7 +540,7 @@ mod tests {
     #[test]
     fn affix_ids() {
         let inputs = ["a", "axa", "zaaz", "aa", ""];
-        let words = WordCounts::from_entries(inputs.map(|s| (s.into(), 1)).to_vec());
+        let words = WordCounts::from_unique(inputs.map(|s| (s.into(), 1)).to_vec());
         let mut trainer = BpeTrainer::new(1, 32);
         trainer.limit_alphabet = Some(1);
         trainer.initial_alphabet = ['a'].into();
@@ -562,9 +562,10 @@ mod tests {
             ];
             trainer.continuing_subword_prefix = Some(prefix.into());
             trainer.end_of_word_suffix = Some(suffix.into());
-            let alphabet = select_alphabet(&trainer, words.view());
+            let alphabet = select_alphabet(&trainer, WordCountsView::from(&words));
             let (mut vocabulary, mut ids) =
-                Vocabulary::initialize(&trainer, words.view(), &alphabet, &None).unwrap();
+                Vocabulary::initialize(&trainer, WordCountsView::from(&words), &alphabet, &None)
+                    .unwrap();
             let tokens: Vec<_> = vocabulary.tokens.iter().map(|s| s.as_str()).collect();
             assert_eq!(&tokens[..3], ["##a", "a</w>", "a"]);
             assert_eq!(tokens.len(), spans.len());
@@ -588,15 +589,16 @@ mod tests {
 
     #[test]
     fn unicode_id_order() {
-        let words = WordCounts::from_entries(vec![("qé🙂z".into(), 1), ("🙂é".into(), 9)]);
+        let words = WordCounts::from_unique(vec![("qé🙂z".into(), 1), ("🙂é".into(), 9)]);
         let mut trainer = BpeTrainer::new(1, 32);
         trainer.limit_alphabet = Some(2);
         trainer.initial_alphabet = ['é', '🙂'].into();
         trainer.continuing_subword_prefix = Some("前".into());
         trainer.end_of_word_suffix = Some("尾".into());
-        let alphabet = select_alphabet(&trainer, words.view());
+        let alphabet = select_alphabet(&trainer, WordCountsView::from(&words));
         let (vocabulary, ids) =
-            Vocabulary::initialize(&trainer, words.view(), &alphabet, &None).unwrap();
+            Vocabulary::initialize(&trainer, WordCountsView::from(&words), &alphabet, &None)
+                .unwrap();
         assert_eq!(
             vocabulary
                 .tokens
@@ -612,7 +614,7 @@ mod tests {
     #[test]
     fn alphabet_activation() {
         // Presence includes zero-weight words, independently of frequencies.
-        let words = WordCounts::from_entries(vec![("猫é".into(), 0)]);
+        let words = WordCounts::from_unique(vec![("猫é".into(), 0)]);
         let mut trainer = BpeTrainer::new(1, 32);
         trainer.limit_alphabet = Some(0);
         trainer.initial_alphabet = ['z'].into();
@@ -620,15 +622,17 @@ mod tests {
             .into_iter()
             .map(|text| AddedToken::from(text, true))
             .collect();
-        let alphabet = select_alphabet(&trainer, words.view());
-        let (_, ids) = Vocabulary::initialize(&trainer, words.view(), &alphabet, &None).unwrap();
+        let alphabet = select_alphabet(&trainer, WordCountsView::from(&words));
+        let (_, ids) =
+            Vocabulary::initialize(&trainer, WordCountsView::from(&words), &alphabet, &None)
+                .unwrap();
         assert_eq!(&ids.spans[..3], [1, 0, 0]);
         assert_eq!(ids.symbols("猫z").collect::<Vec<_>>(), [0, 1]);
     }
 
     #[test]
     fn unicode_presence() {
-        let words = WordCounts::from_entries(
+        let words = WordCounts::from_unique(
             ["ASCII", "中文中文", "é🙂𐀀é"]
                 .map(|s| (s.into(), 0))
                 .to_vec(),
@@ -639,7 +643,7 @@ mod tests {
                 .num_threads(workers)
                 .build()
                 .unwrap();
-            let observed = pool.install(|| observed_characters(words.view()));
+            let observed = pool.install(|| observed_characters(WordCountsView::from(&words)));
             assert_eq!(
                 observed
                     .ones()
@@ -649,6 +653,9 @@ mod tests {
             );
         }
         let words = WordCounts::default();
-        assert_eq!(observed_characters(words.view()).count_ones(..), 0);
+        assert_eq!(
+            observed_characters(WordCountsView::from(&words)).count_ones(..),
+            0
+        );
     }
 }

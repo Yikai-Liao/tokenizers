@@ -14,19 +14,8 @@ pub(super) struct WordCounts(Vec<Entry>);
 
 impl WordCounts {
     // Requires globally unique keys. Entry order is unspecified.
-    pub(super) fn from_entries(entries: Vec<Entry>) -> Self {
+    pub(super) fn from_unique(entries: Vec<Entry>) -> Self {
         Self(entries)
-    }
-
-    pub(super) fn from_map(map: CountMap) -> Self {
-        Self(map.into_iter().collect())
-    }
-
-    pub(super) fn view(&self) -> WordCountsView<'_> {
-        WordCountsView {
-            map: None,
-            entries: &self.0,
-        }
     }
 
     pub(super) fn len(&self) -> usize {
@@ -34,9 +23,17 @@ impl WordCounts {
     }
 }
 
+impl From<CountMap> for WordCounts {
+    fn from(map: CountMap) -> Self {
+        Self(map.into_iter().collect())
+    }
+}
+
 impl fmt::Debug for WordCounts {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_map().entries(self.view().iter()).finish()
+        f.debug_map()
+            .entries(WordCountsView::from(self).iter())
+            .finish()
     }
 }
 
@@ -50,12 +47,11 @@ impl PartialEq for WordCounts {
         }
 
         // Public content equality remains linear, with a temporary borrowed index.
-        let lookup: AHashMap<&CompactString, u64> = other
-            .view()
+        let lookup: AHashMap<&CompactString, u64> = WordCountsView::from(other)
             .iter()
             .map(|(word, count)| (word, *count))
             .collect();
-        self.view()
+        WordCountsView::from(self)
             .iter()
             .all(|(word, count)| lookup.get(word) == Some(count))
     }
@@ -71,7 +67,7 @@ impl Serialize for WordCounts {
 
 impl<'de> Deserialize<'de> for WordCounts {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        CountMap::deserialize(deserializer).map(Self::from_map)
+        CountMap::deserialize(deserializer).map(Self::from)
     }
 }
 
@@ -84,14 +80,25 @@ pub(super) struct WordCountsView<'a> {
     entries: &'a [Entry],
 }
 
-impl<'a> WordCountsView<'a> {
-    pub(super) fn from_map(map: &'a CountMap) -> Self {
+impl<'a> From<&'a CountMap> for WordCountsView<'a> {
+    fn from(map: &'a CountMap) -> Self {
         Self {
             map: Some(map),
             entries: &[],
         }
     }
+}
 
+impl<'a> From<&'a WordCounts> for WordCountsView<'a> {
+    fn from(counts: &'a WordCounts) -> Self {
+        Self {
+            map: None,
+            entries: &counts.0,
+        }
+    }
+}
+
+impl<'a> WordCountsView<'a> {
     pub(super) fn len(self) -> usize {
         self.map.map_or(0, |map| map.len()) + self.entries.len()
     }
@@ -114,9 +121,9 @@ mod tests {
 
     #[test]
     fn equality_and_serde() {
-        let original =
-            WordCounts::from_entries(vec![("zero".into(), 0), ("wide".into(), u64::MAX)]);
-        let map = WordCounts::from_map([("wide".into(), u64::MAX), ("zero".into(), 0)].into());
+        let original = WordCounts::from_unique(vec![("zero".into(), 0), ("wide".into(), u64::MAX)]);
+        let counts: CountMap = [("wide".into(), u64::MAX), ("zero".into(), 0)].into();
+        let map = WordCounts::from(counts);
         assert_eq!(original, map);
         for json in [
             r#"{"zero":1,"wide":18446744073709551615}"#,
@@ -132,10 +139,7 @@ mod tests {
             original
         );
         let duplicate: WordCounts = serde_json::from_str(r#"{"word":1,"word":9}"#).unwrap();
-        assert_eq!(
-            duplicate,
-            WordCounts::from_entries(vec![("word".into(), 9)])
-        );
+        assert_eq!(duplicate, WordCounts::from_unique(vec![("word".into(), 9)]));
         assert!(serde_json::from_str::<WordCounts>(r#"{"word":-1}"#).is_err());
     }
 }

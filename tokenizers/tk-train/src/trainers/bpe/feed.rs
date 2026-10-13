@@ -57,7 +57,7 @@ where
     if !parallel {
         return iterator
             .fold(Ok(CountMap::with_hasher(hash.clone())), accumulate)
-            .map(WordCounts::from_map);
+            .map(WordCounts::from);
     }
 
     // Seed with single inputs, then amortize the bridge lock across batches.
@@ -88,5 +88,5 @@ where
         words.push(entry.consume());
         true
     });
-    Ok(WordCounts::from_entries(words))
+    Ok(WordCounts::from_unique(words))
 }
