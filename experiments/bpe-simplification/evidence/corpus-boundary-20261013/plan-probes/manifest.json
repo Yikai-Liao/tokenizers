@@ -1,0 +1,11 @@
+{
+  "source_revision": "826479034460c18530ebe2522aaa1585133f97fe",
+  "positions_sha256": "06705e52a87eef87adf15b6708fa699d57c8f5f8037ad37e4c967bf042bfe7c2",
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)",
+  "manifest_sha256": "0936dd9ee0f1973bdac7b15d5819488c2306ba90def4e3b0e38f45456e673c18",
+  "probe_only": "Layout inspection imports original Positions and uses structural equivalents for proposed records; not a training implementation or a timing benchmark.",
+  "results": [
+    "rust_type_layout positions=32 priority=16 candidate=48 old_rule=56 selected_merge=48 tuple_action=16 named_action=16 tuple_resolution=8 named_resolution=8 bool=1 mode=1 side=1",
+    "actual_positions_task_layout old_rank_either=112 ab_pair_id=112 ab_rank=104 aa_pair_id=32 old_count=3 ab_count=3 aa_count=2"
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "arm": "baseline",
+  "case": "en-bytelevel",
+  "workers": 6,
+  "repeat": 0,
+  "elapsed_process_seconds": 0.9539357859903248,
+  "metrics": {
+    "load_seconds": 0.043894246,
+    "process_hwm_kib_before_validation": 31976,
+    "train_cpu_seconds": 1.53452,
+    "train_seconds": 0.452800082
+  },
+  "model_sha256": "c3fae75a49259633748fb8f55ef8b5dfa559d89a7d76219087a9153fc3a8e0cd",
+  "coverage": {
+    "aa": 0,
+    "ab": 0,
+    "existing_fresh": 0,
+    "multi_rule": 0,
+    "whole_words": 0
+  },
+  "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "binary_sha256": "d4387dc000af39d2febffb2dd921c3e3b6421fc0ba4a97f1056dee94d37c2826",
+  "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/baseline-timing/en-bytelevel-w6-r0-baseline"
+}

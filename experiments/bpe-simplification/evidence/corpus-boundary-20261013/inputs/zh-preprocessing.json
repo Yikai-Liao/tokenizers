@@ -1,0 +1,1 @@
+{"attempt_id":"zh-prepare","build_id":"baseline-production","effective_affinity":[0,1,2,3,4,5],"input_id":"zh-bytelevel","mode":"prepare","preprocessing_cpu_seconds":0.5072880000000001,"preprocessing_seconds":0.508058849,"protocol_version":1,"unique_words":254487,"workers_requested":1}

@@ -1,0 +1,46 @@
+{
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "affinity": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "RUSTFLAGS": "",
+  "baseline": "826479034460c18530ebe2522aaa1585133f97fe",
+  "profile": {
+    "opt-level": 3,
+    "lto": "fat",
+    "codegen-units": 1
+  },
+  "cgroup": {
+    "cpu.max": "max 100000",
+    "cpuset.cpus.effective": "0-5",
+    "memory.max": "max",
+    "memory.swap.max": "max"
+  },
+  "source_hashes": {
+    "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs": "50c69511e20d0be6ca8cf64094c15adee3b11bef16b818815f0a91ac891cbe75",
+    "tokenizers/tk-train/src/trainers/bpe/COVERAGE.md": "d8eeeb320de11aafc28abd784a3df4f27cd73777e50f2479148426a39ef7bdd9",
+    "tokenizers/tk-train/src/trainers/bpe/word.rs": "f9c3bd0a7a8fade42a5643ee6341b4ebf203f7a45aa0a65797e773d1ce21396a",
+    "tokenizers/tk-train/src/trainers/bpe/positions.rs": "06705e52a87eef87adf15b6708fa699d57c8f5f8037ad37e4c967bf042bfe7c2",
+    "tokenizers/tk-train/src/trainers/bpe/corpus.rs": "86c93d68f7711a31a8cd5b3b7cf4fe7953815d446eabdff682885d28b9707722",
+    "tokenizers/tk-train/src/trainers/bpe/index.rs": "9674e530f77c4d081131a6d9d2ed704ab05ca5bce4916bff70721d9bc55e2704",
+    "tokenizers/tk-train/src/trainers/bpe/tests.rs": "85c35f688114a4af15cb3ff8355b7b358a773b98a931422518123786cc5aef50",
+    "tokenizers/tk-train/src/trainers/bpe/AGENTS.md": "fafcb2e2276ab3f9f81e491f6029bbfcbeb5a7b6ba274018e308b8a24b758c6d",
+    "tokenizers/tk-train/src/trainers/bpe/DESIGN.md": "5e23a9702a4f69a90533bd2f1f6ab4d1cc743cfca8f428ff6092314b66da3245",
+    "tokenizers/tk-train/src/trainers/bpe/mod.rs": "6399ebf7e8854aad70471dc07676875ba36e19b5f3fa59ded19fd18fe18409be",
+    "tokenizers/tk-train/src/trainers/bpe/feed.rs": "7c6be5e032a25faf0e0bcad4ee502a38792312233aadbd4a324ac7dca4b62ea7",
+    "tokenizers/tk-train/src/trainers/bpe/merge.rs": "4c0b9c20a48f5646ff2459f7e976afe75f45694986c07e0ae62aed4303771763",
+    "tokenizers/tk-train/src/trainers/bpe/README.md": "8faf1b8e105725110aad30ec294b7e284c4b0351eceb33e23ce36cf95ec045bb",
+    "tokenizers/tk-train/src/trainers/bpe/word_counts.rs": "4f877cd0554b24a3845fd42c2d424a22d81359bd580bd98a0183f39c7a499053",
+    "tokenizers/tk-train/src/trainers/bpe/parity_trainer.rs": "a584152379dc59de167a14f751f37bab8da9c723eddc1c238df21965dd08f37c",
+    "tokenizers/tk-train/src/trainers/bpe/positions/codec.rs": "bd30d00fa9a27150b69912d81d0d14e491348ebc6e694b1936de1ccd7da38544"
+  },
+  "locks": {
+    "tokenizers/tk-train/Cargo.lock": "e6ca630bedb9eb7963433a0cab399e7bd343030a19ebb4a8640dd5cd2048fb50",
+    "experiments/bpe-simplification/runner/Cargo.lock": "bdacf9e24d480d8556249a8472a2ce588fbb113be79d476c4bb640930d49d1c8"
+  }
+}

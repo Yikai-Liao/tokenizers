@@ -1,0 +1,1 @@
+{"attempt_id":"en-prepare","build_id":"baseline-production","effective_affinity":[0,1,2,3,4,5],"input_id":"en-bytelevel","mode":"prepare","preprocessing_cpu_seconds":0.397862,"preprocessing_seconds":0.399807417,"protocol_version":1,"unique_words":97343,"workers_requested":1}

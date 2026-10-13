@@ -23,6 +23,8 @@ pub struct TrainerConfig {
     pub prefix: Option<String>,
     pub suffix: Option<String>,
     pub max_token_length: Option<usize>,
+    #[serde(default)]
+    pub special_tokens: Vec<String>,
 }
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]

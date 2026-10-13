@@ -24,6 +24,12 @@ pub fn trainer(job: &Job) -> BpeTrainer {
         .show_progress(false)
         .vocab_size(cfg.vocab_size)
         .min_frequency(cfg.min_frequency)
+        .special_tokens(
+            cfg.special_tokens
+                .iter()
+                .map(|content| tk_encode::vocab::bucket_added_vocabulary::AddedToken::from(content.as_str(), true))
+                .collect(),
+        )
         .max_token_length(cfg.max_token_length);
     if let Some(value) = &cfg.prefix {
         builder = builder.continuing_subword_prefix(value.clone());
