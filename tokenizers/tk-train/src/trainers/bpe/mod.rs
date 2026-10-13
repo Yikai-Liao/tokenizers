@@ -361,17 +361,18 @@ impl BpeTrainer {
             // 3. Only attempts needing merges allocate resident endpoints.
             corpus = plan.materialize();
             while vocabulary.len() < self.vocab_size {
-                let accepted = match self.merge_next(&mut vocabulary, &mut corpus, &mut index)? {
-                    MergeOutcome::Finished => break,
-                    MergeOutcome::RestartForReuse => {
-                        self.finalize_progress(progress, completed, "Compute merges");
-                        return Ok(AttemptOutcome::RestartForReuse);
-                    }
-                    MergeOutcome::Committed { rule_count } => rule_count,
-                };
-                completed += accepted;
+                let committed_rule_count =
+                    match self.merge_next(&mut vocabulary, &mut corpus, &mut index)? {
+                        MergeOutcome::Finished => break,
+                        MergeOutcome::RestartForReuse => {
+                            self.finalize_progress(progress, completed, "Compute merges");
+                            return Ok(AttemptOutcome::RestartForReuse);
+                        }
+                        MergeOutcome::Committed { rule_count } => rule_count,
+                    };
+                completed += committed_rule_count;
                 if let Some(p) = progress {
-                    p.inc(accepted as u64);
+                    p.inc(committed_rule_count as u64);
                 }
                 self.emit_json_progress("Compute merges", completed, self.vocab_size);
             }

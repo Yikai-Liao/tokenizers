@@ -79,7 +79,7 @@ pub(super) struct CorpusPlan<'input> {
 /// One original adjacent edge in the filtered symbol coordinate space.
 pub(super) struct InitialEdge {
     pub(super) pair: Pair,
-    pub(super) position: u64,
+    pub(super) coordinate: u64,
     pub(super) weight: u64,
 }
 
@@ -208,7 +208,7 @@ impl<'input> CorpusPlan<'input> {
                 .enumerate()
                 .map(move |(offset, pair)| InitialEdge {
                     pair,
-                    position: (start + offset) as u64,
+                    coordinate: (start + offset) as u64,
                     weight,
                 })
         })

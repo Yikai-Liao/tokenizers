@@ -705,7 +705,7 @@ fn initial_edges() {
     let read = || {
         let (words, edges) = plan.chunks(usize::MAX).find_first(|_| true).unwrap();
         assert_eq!(words, 5);
-        edges.map(|edge| (edge.pair, edge.position, edge.weight))
+        edges.map(|edge| (edge.pair, edge.coordinate, edge.weight))
     };
     let mut actual: Vec<_> = read().collect();
     assert_eq!(actual, expected);

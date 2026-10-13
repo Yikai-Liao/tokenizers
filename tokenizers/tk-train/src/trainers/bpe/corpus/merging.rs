@@ -207,7 +207,7 @@ struct Neighbor {
     span: usize,
 }
 
-/// Task-local aggregation borrows only reusable directories, not a selected payload.
+/// Task-local aggregation reuses borrowed neighbor directories.
 struct NeighborChanges<'a> {
     pair: Pair,
     merged_id: u32,

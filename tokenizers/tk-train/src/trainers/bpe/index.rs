@@ -334,7 +334,7 @@ fn count_chunk(
     let mut counts = InitialPairCounts::new(domain);
     for edge in edges {
         debug_assert!(edge.pair.0 != WORD_SEPARATOR_ID && edge.pair.1 != WORD_SEPARATOR_ID);
-        counts.record(edge.pair, edge.position, edge.weight)?;
+        counts.record(edge.pair, edge.coordinate, edge.weight)?;
     }
     if let Some(p) = progress {
         p.inc(words as u64);
@@ -541,71 +541,83 @@ mod tests {
 
     #[test]
     fn failures_before_and_after_writes() {
-        for preparation in [true, false] {
-            let mut trainer = trainer();
-            let words: AHashMap<compact_str::CompactString, u64> = if preparation {
-                [("ab".into(), u64::MAX), ("xcd".into(), u64::MAX)]
-                    .into_iter()
-                    .collect()
-            } else {
-                [("abcd".into(), 1)].into_iter().collect()
-            };
-            let (mut vocabulary, mut corpus, mut index) =
-                initialize(&trainer, WordCountsView::from(&words), !preparation);
-            // First commit AB alone. Its history must survive a later failed round.
-            trainer.vocab_size = vocabulary.len() + 1;
-            assert!(matches!(
-                trainer
-                    .merge_next(&mut vocabulary, &mut corpus, &mut index)
-                    .unwrap(),
-                super::super::merge::MergeOutcome::Committed { rule_count: 1 }
-            ));
-            let committed = vocabulary.merges().to_vec();
-            let trace = vocabulary.trace.clone();
-            assert_eq!(committed.len(), 1);
-            trainer.vocab_size = 64;
-            if preparation {
-                // Duplicate CD overflows its left neighbor count before writes.
-                let mut candidates = std::mem::take(&mut index.queue).into_vec();
-                let candidate = candidates
-                    .iter_mut()
-                    .find(|c| c.priority.pair() == (2, 3))
-                    .unwrap();
-                let start = candidate.positions.iter().next().unwrap();
-                candidate.positions = Positions::from_sorted(&[start, start]).unwrap();
-                index.queue = candidates.into_iter().collect();
-            } else {
-                // CD writes ID 5; its left birth (AB, CD) then overflows the ledger.
-                let shard = owner((4, 5), index.shards.len());
-                index.shards[shard].counts.insert((4, 5), i64::MAX as u64);
-            }
-            let before = tokens(&corpus);
-            let queued = index.queue.len();
-            let error = trainer
-                .merge_next(&mut vocabulary, &mut corpus, &mut index)
-                .unwrap_err();
-            assert!(
-                error.to_string().contains(if preparation {
-                    "exceeds u64"
-                } else {
-                    "exceeds i64"
-                }),
-                "{error}"
-            );
-            let after = tokens(&corpus);
-            assert_eq!(vocabulary.merges(), committed);
-            assert_eq!(vocabulary.trace, trace);
-            if preparation {
-                assert_eq!(after, before);
-            } else {
-                assert_ne!(after, before, "commit errors do not roll back writes");
-                assert!(after.contains(&5));
-                assert_eq!(
-                    index.queue.len(),
-                    queued - 1,
-                    "failed owners publish no births"
-                );
-            }
+        for workers in [1, 4, 8] {
+            rayon::ThreadPoolBuilder::new()
+                .num_threads(workers)
+                .build()
+                .unwrap()
+                .install(|| {
+                    for preparation in [true, false] {
+                        let mut trainer = trainer();
+                        let words: AHashMap<compact_str::CompactString, u64> = if preparation {
+                            [
+                                ("ab".into(), u64::MAX),
+                                ("cd".into(), u64::MAX),
+                                ("xef".into(), u64::MAX),
+                            ]
+                            .into_iter()
+                            .collect()
+                        } else {
+                            [("abcd".into(), 1)].into_iter().collect()
+                        };
+                        let (mut vocabulary, mut corpus, mut index) =
+                            initialize(&trainer, WordCountsView::from(&words), !preparation);
+                        // First commit AB alone. Its history must survive a later failed round.
+                        trainer.vocab_size = vocabulary.len() + 1;
+                        assert!(matches!(
+                            trainer
+                                .merge_next(&mut vocabulary, &mut corpus, &mut index)
+                                .unwrap(),
+                            super::super::merge::MergeOutcome::Committed { rule_count: 1 }
+                        ));
+                        let committed = vocabulary.merges().to_vec();
+                        let trace = vocabulary.trace.clone();
+                        assert_eq!(committed.len(), 1);
+                        trainer.vocab_size = 64;
+                        if preparation {
+                            // CD prepares successfully; duplicate EF overflows its left neighbor count.
+                            let mut candidates = std::mem::take(&mut index.queue).into_vec();
+                            let candidate = candidates
+                                .iter_mut()
+                                .find(|c| c.priority.pair() == (4, 5))
+                                .unwrap();
+                            let start = candidate.positions.iter().next().unwrap();
+                            candidate.positions = Positions::from_sorted(&[start, start]).unwrap();
+                            index.queue = candidates.into_iter().collect();
+                        } else {
+                            // CD writes ID 5; its left birth (AB, CD) then overflows the ledger.
+                            let shard = owner((4, 5), index.shards.len());
+                            index.shards[shard].counts.insert((4, 5), i64::MAX as u64);
+                        }
+                        let before = tokens(&corpus);
+                        let queued = index.queue.len();
+                        let error = trainer
+                            .merge_next(&mut vocabulary, &mut corpus, &mut index)
+                            .unwrap_err();
+                        assert!(
+                            error.to_string().contains(if preparation {
+                                "exceeds u64"
+                            } else {
+                                "exceeds i64"
+                            }),
+                            "{error}"
+                        );
+                        let after = tokens(&corpus);
+                        assert_eq!(vocabulary.merges(), committed);
+                        assert_eq!(vocabulary.trace, trace);
+                        if preparation {
+                            assert_eq!(after, before);
+                        } else {
+                            assert_ne!(after, before, "commit errors do not roll back writes");
+                            assert!(after.contains(&5));
+                            assert_eq!(
+                                index.queue.len(),
+                                queued - 1,
+                                "failed owners publish no births"
+                            );
+                        }
+                    }
+                });
         }
     }
 
