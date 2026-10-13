@@ -228,7 +228,7 @@ impl Corpus {
         starts: &mut SmallVec<[usize; 2]>,
     ) -> Result<()> {
         let range = self.word_range(word);
-        let weight = self.weight(range.start).weight;
+        let weight = self.weight(range.start, 0).weight;
         let mut p = range.start;
         let mut positions = rule.positions.iter_from(p as u64);
         let mut left_neighbor: Option<Neighbor> = None;

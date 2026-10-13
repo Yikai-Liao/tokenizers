@@ -21,7 +21,7 @@ pub(super) struct Corpus {
     tokens: Slots,
     starts: Box<[usize]>,
     weight_runs: Box<[WeightRun]>,
-    unit_weight_range: Option<Range<usize>>,
+    unit_weight_range: Option<(Range<usize>, usize)>,
     // Nonzero marks an activated ID. Until alias geometry diverges it also
     // stores that ID's span; afterwards occurrence_spans owns all geometry.
     id_metadata: Vec<usize>,
@@ -59,6 +59,7 @@ struct WeightRun {
 struct WeightLookup {
     weight: u64,
     end: usize,
+    index: usize,
 }
 
 /// Borrowed input and measured coordinate layout for initial pair counting.
@@ -67,7 +68,7 @@ struct WeightLookup {
 pub(super) struct CorpusPlan<'input> {
     starts: Box<[usize]>,
     weight_runs: Box<[WeightRun]>,
-    unit_weight_range: Option<Range<usize>>,
+    unit_weight_range: Option<(Range<usize>, usize)>,
     whole_words: bool,
     words: Box<[(&'input CompactString, &'input u64)]>,
     ids: InitialTokenIds,
@@ -142,10 +143,11 @@ impl<'input> CorpusPlan<'input> {
         }
         // Descending weights put all frequency-one words in one contiguous run.
         // Its exclusive end is the next run's start, or the corpus end.
-        let unit_weight_range = weight_runs
-            .iter()
-            .position(|run| run.weight == 1)
-            .map(|i| weight_runs[i].start..weight_runs.get(i + 1).map_or(length, |run| run.start));
+        let unit_weight_range = weight_runs.iter().position(|run| run.weight == 1).map(|i| {
+            let range =
+                weight_runs[i].start..weight_runs.get(i + 1).map_or(length, |run| run.start);
+            (range, i)
+        });
         let slot_bound = ids.token_count().max(target_vocab_size);
         Ok(Self {
             starts: starts.into_boxed_slice(),
@@ -309,29 +311,31 @@ impl Corpus {
         }
     }
 
-    fn weight(&self, position: usize) -> WeightLookup {
+    fn weight(&self, position: usize, first_run: usize) -> WeightLookup {
         if self.weight_runs.len() == 1 {
             return WeightLookup {
                 weight: self.weight_runs[0].weight,
                 end: self.len(),
+                index: 0,
             };
         }
         // Cached runs are half-open: a coordinate at end belongs to the next
         // weight run and must fall through to the directory lookup.
-        if let Some(range) = &self.unit_weight_range
+        if let Some((range, index)) = &self.unit_weight_range
             && position >= range.start
             && position < range.end
         {
             return WeightLookup {
                 weight: 1,
                 end: range.end,
+                index: *index,
             };
         }
-        // partition_point returns the first later run; its predecessor owns
-        // this coordinate. Callers supply a coordinate at or after the first start.
-        let i = self
-            .weight_runs
-            .partition_point(|run| run.start <= position)
+        // Fresh readers start anywhere, then only move forward. An expired
+        // cache guarantees position >= the next run's start, so its suffix has
+        // a predecessor; reuse and first queries search the whole directory.
+        let i = first_run
+            + self.weight_runs[first_run..].partition_point(|run| run.start <= position)
             - 1;
         WeightLookup {
             weight: self.weight_runs[i].weight,
@@ -339,6 +343,7 @@ impl Corpus {
                 .weight_runs
                 .get(i + 1)
                 .map_or(self.len(), |run| run.start),
+            index: i,
         }
     }
 
@@ -417,7 +422,8 @@ impl Corpus {
             let matched = matcher(p)?;
             let lookup = match cached_weight {
                 Some(lookup) if p < lookup.end => lookup,
-                _ => self.weight(p),
+                Some(lookup) => self.weight(p, lookup.index + 1),
+                None => self.weight(p, 0),
             };
             cached_weight = Some(lookup);
             Some((matched, lookup.weight))
@@ -620,7 +626,7 @@ mod tests {
                 weight: 1,
             }]
             .into_boxed_slice(),
-            unit_weight_range: Some(1..input.len()),
+            unit_weight_range: Some((1..input.len(), 0)),
             id_metadata: spans.to_vec(),
             occurrence_spans: occurrences
                 .map(|values| values.iter().copied().map(AtomicUsize::new).collect()),
@@ -667,42 +673,66 @@ mod tests {
             .chain((0..40).flat_map(|_| [0, 1, s]))
             .collect();
         let mut corpus = fixture(&input, &[1, 1, 2], None);
-        corpus.weight_runs = vec![(1, 9), (31, 1), (91, 0)]
-            .into_iter()
-            .map(|(start, weight)| WeightRun { start, weight })
-            .collect();
-        corpus.unit_weight_range = Some(31..91);
         corpus.apply(&[1, 64], 2);
-
-        // Span more than one prefetch window and include old starts, tails and
-        // separators. Weights cross repeated, unit and zero-weight regions.
-        let matches: Vec<_> = corpus
-            .fresh_matches(0..input.len() as u64, (0, 1))
-            .map(|(matched, weight)| (matched.start, matched.end, weight))
-            .collect();
-        let expected: Vec<_> = (0..40)
-            .filter(|&word| word != 0 && word != 21)
-            .map(|word| {
-                // The leading separator consumes one slot; each [a, b, sep]
-                // word contributes three more slots to the original coordinates.
-                let start = 1 + word * 3;
-                let weight = if word < 10 {
-                    9
-                } else if word < 30 {
-                    1
-                } else {
-                    0
-                };
-                (start, start + 2, weight)
-            })
-            .collect();
-        assert_eq!(matches, expected);
-        assert!(
-            corpus
-                .fresh_matches(std::iter::empty(), (0, 1))
-                .next()
-                .is_none()
-        );
+        for runs in [
+            vec![(1, 9), (31, 1), (91, 0)],
+            vec![
+                (1, 9),
+                (4, 8),
+                (7, 7),
+                (10, 6),
+                (13, 5),
+                (16, 4),
+                (19, 3),
+                (22, 2),
+                (25, 1),
+                (91, 0),
+            ],
+            vec![(1, 0)],
+            vec![(1, 1)],
+            vec![(1, 9)],
+        ] {
+            corpus.weight_runs = runs
+                .iter()
+                .map(|&(start, weight)| WeightRun { start, weight })
+                .collect();
+            corpus.unit_weight_range = runs
+                .iter()
+                .position(|&(_, weight)| weight == 1)
+                .map(|i| (runs[i].0..runs.get(i + 1).map_or(input.len(), |r| r.0), i));
+            for coordinates in [
+                (0..input.len() as u64).collect::<Vec<_>>(),
+                vec![7, 7, 31, 34, 91, 118],
+                vec![31, 91, 118],
+                vec![7, 91],
+                vec![118, 118],
+                vec![],
+            ] {
+                // Original [a, b, sep] words begin at 1 + 3*word. Starts 1 and
+                // 64 were consumed above; every other tail, hole and separator
+                // must be filtered before querying weights. Linear reference
+                // lookup checks arbitrary task starts and duplicate coordinates.
+                let expected: Vec<_> = coordinates
+                    .iter()
+                    .copied()
+                    .filter(|&p| p % 3 == 1 && p != 1 && p != 64)
+                    .map(|p| {
+                        let weight = runs
+                            .iter()
+                            .rev()
+                            .find(|&&(start, _)| start <= p as usize)
+                            .unwrap()
+                            .1;
+                        (p as usize, p as usize + 2, weight)
+                    })
+                    .collect();
+                let matches: Vec<_> = corpus
+                    .fresh_matches(coordinates, (0, 1))
+                    .map(|(matched, weight)| (matched.start, matched.end, weight))
+                    .collect();
+                assert_eq!(matches, expected, "runs={runs:?}");
+            }
+        }
     }
 
     #[test]
