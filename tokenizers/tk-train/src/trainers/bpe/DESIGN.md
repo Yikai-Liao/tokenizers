@@ -16,7 +16,7 @@ returned changes to the index, and appends ordered history to the vocabulary.
 Its result is Finished, RestartForReuse, or Committed with the rule count. The
 trainer uses that count for progress. Selection scratch retires before preparation.
 
-The private `corpus/merging.rs` owns preparation and endpoint application.
+The private `merging.rs` owns preparation and endpoint application.
 Consuming preparation releases selected streams, task iterators and shared lookups
 before writes. All readers join before application; all writers join before index
 publication. Pair records and test-only priority scalars are captured before moving

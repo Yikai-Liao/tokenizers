@@ -40,7 +40,7 @@ The implementation is divided by the knowledge each module owns:
   to checked resident indices. Its `fresh_matches` iterator filters stale starts
   and returns matches with weights, keeping prefetch and weight-region caching
   inside each reader. Matches use `Range<usize>` in original coordinates.
-  Its private [corpus/merging.rs](corpus/merging.rs) consumes selected payloads,
+  Its private [merging.rs](merging.rs) consumes selected payloads,
   prepares neighbor events and historical word scans, then applies joined writes.
   Candidate seeks, virtual left neighbors, length gates and shared-edge ownership
   stay beside the geometry they interpret. Mode and the optional birth-span limit

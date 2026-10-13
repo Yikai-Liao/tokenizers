@@ -6,7 +6,7 @@ use smallvec::SmallVec;
 use std::num::NonZeroU64;
 use tk_encode::Result;
 
-#[path = "positions/codec.rs"]
+#[path = "codec.rs"]
 mod codec;
 
 use codec::{Cursor, RESTART};

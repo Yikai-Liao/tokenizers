@@ -1,4 +1,5 @@
 //! Endpoint tokens retain their original coordinates; span metadata skips holes.
+#[path = "merging.rs"]
 mod merging;
 
 use super::{
