@@ -1,0 +1,48 @@
+{
+  "zh256": {
+    "total_cycles": 192455570964,
+    "parent_percent": 5.771219365262042,
+    "lookup_miss_percent": 0.033788350565421565,
+    "binary_and_return_percent": 0.030845604885661855,
+    "binary_samples": 21,
+    "cache_check_percent": 0.03699298629984449,
+    "scope": "AB closure4 only; global process sample periods; includes input loading",
+    "ranges": {
+      "cache": [
+        "0xc34",
+        "0xc60"
+      ],
+      "miss": [
+        "0xc60",
+        "0xd1d"
+      ],
+      "binary": [
+        "0xca5",
+        "0xd1d"
+      ]
+    }
+  },
+  "en-bytelevel": {
+    "total_cycles": 1733130630,
+    "parent_percent": 13.528152231664153,
+    "lookup_miss_percent": 0.9947800645586652,
+    "binary_and_return_percent": 0.9947800645586652,
+    "binary_samples": 7,
+    "cache_check_percent": 0.29593158826118027,
+    "scope": "AB closure4 only; global process sample periods; includes input loading",
+    "ranges": {
+      "cache": [
+        "0xc34",
+        "0xc60"
+      ],
+      "miss": [
+        "0xc60",
+        "0xd1d"
+      ],
+      "binary": [
+        "0xca5",
+        "0xd1d"
+      ]
+    }
+  }
+}

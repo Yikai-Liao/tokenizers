@@ -1,0 +1,621 @@
+[
+  {
+    "case": "aa",
+    "workers": 1,
+    "binary_sha256": "d0c3353fb5b0f222285235569b7798920d8e98a159797e6f783ed65a097a2e32",
+    "input_sha256": "02e4d469ce56b27c735d5b2cc5721396b6d05cdc4f5bde4ce0ca50ab23bd889d",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/tmp/bpe-frequency-20261014/diagnostic/aa-w1-r0-diag/time.txt",
+      "taskset",
+      "-c",
+      "0",
+      "/dev/shm/bpe-frequency-20261014/diagnostic-runner",
+      "/tmp/bpe-frequency-20261014/diagnostic/aa-w1-r0-diag/job.json"
+    ],
+    "environment": {
+      "RAYON_NUM_THREADS": "1",
+      "TOKENIZERS_PARALLELISM": "true"
+    },
+    "seconds": 0.05952744399837684,
+    "returncode": 0,
+    "result": {
+      "attempt_id": "aa-w1-r0-diag",
+      "build_id": "diagnostic-runner",
+      "effective_affinity": [
+        0
+      ],
+      "input_id": "aa",
+      "metrics": {
+        "export_seconds": 0.000819917,
+        "load_seconds": 0.00065846,
+        "process_hwm_kib_before_validation": 7364,
+        "train_cpu_seconds": 0.04245,
+        "train_seconds": 0.04244841
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 38,
+        "actual_vocab": 42,
+        "model_path": "/tmp/bpe-frequency-20261014/diagnostic/aa-w1-r0-diag/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_effective": 1,
+      "workers_requested": 1
+    },
+    "model_sha256": "61fd069755db37f6c998d647773c8a21a5d6b3a1a12efc8ae10e6bb24633112a",
+    "diagnostic": {
+      "fresh": {
+        "aa_selection_accepted": 44761,
+        "aa_selection_input": 89502,
+        "binary": 20,
+        "comparisons": 60,
+        "duplicates": 0,
+        "expired": 0,
+        "extra_comparisons": 63,
+        "first": 41,
+        "hits": 56729,
+        "input": 56770,
+        "jump_0": 0,
+        "jump_1": 0,
+        "jump_2": 0,
+        "jump_3": 0,
+        "single": 0,
+        "suffix_comparisons": 0,
+        "suffix_queries": 0,
+        "suffix_sum": 0,
+        "unit": 21,
+        "valid": 56770,
+        "readers": 82,
+        "zero_readers": 41,
+        "one_lookup_readers": 41,
+        "accepted_matches": 56770
+      },
+      "reuse": {},
+      "layouts": [
+        {
+          "aa": false,
+          "cache": 16,
+          "decoder": 96,
+          "option_cache": 24,
+          "reader": 312
+        },
+        {
+          "aa": true,
+          "cache": 16,
+          "decoder": 16,
+          "option_cache": 24,
+          "reader": 312
+        }
+      ]
+    },
+    "arm": "diag",
+    "repeat": 0,
+    "warmup": false
+  },
+  {
+    "case": "ab",
+    "workers": 1,
+    "binary_sha256": "d0c3353fb5b0f222285235569b7798920d8e98a159797e6f783ed65a097a2e32",
+    "input_sha256": "b8db5a354a318245f77ac41a0e220a84e2a6017dca42970dc579ce5ea1364441",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/tmp/bpe-frequency-20261014/diagnostic/ab-w1-r0-diag/time.txt",
+      "taskset",
+      "-c",
+      "0",
+      "/dev/shm/bpe-frequency-20261014/diagnostic-runner",
+      "/tmp/bpe-frequency-20261014/diagnostic/ab-w1-r0-diag/job.json"
+    ],
+    "environment": {
+      "RAYON_NUM_THREADS": "1",
+      "TOKENIZERS_PARALLELISM": "true"
+    },
+    "seconds": 0.022035119007341564,
+    "returncode": 0,
+    "result": {
+      "attempt_id": "ab-w1-r0-diag",
+      "build_id": "diagnostic-runner",
+      "effective_affinity": [
+        0
+      ],
+      "input_id": "ab",
+      "metrics": {
+        "export_seconds": 4.5585e-05,
+        "load_seconds": 4.2336e-05,
+        "process_hwm_kib_before_validation": 7060,
+        "train_cpu_seconds": 0.008299,
+        "train_seconds": 0.008298642
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 7,
+        "actual_vocab": 11,
+        "model_path": "/tmp/bpe-frequency-20261014/diagnostic/ab-w1-r0-diag/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_effective": 1,
+      "workers_requested": 1
+    },
+    "model_sha256": "fdad32b28715797bf495a2072030dd5198f81a5249b8a99404b56890108667ed",
+    "diagnostic": {
+      "fresh": {
+        "binary": 11,
+        "comparisons": 44,
+        "duplicates": 0,
+        "expired": 4,
+        "extra_comparisons": 0,
+        "first": 7,
+        "hits": 0,
+        "input": 11,
+        "jump_0": 1,
+        "jump_1": 3,
+        "jump_2": 0,
+        "jump_3": 0,
+        "single": 0,
+        "suffix_comparisons": 9,
+        "suffix_queries": 4,
+        "suffix_sum": 10,
+        "unit": 0,
+        "valid": 11,
+        "readers": 14,
+        "zero_readers": 7,
+        "one_lookup_readers": 3,
+        "accepted_matches": 11
+      },
+      "reuse": {},
+      "layouts": [
+        {
+          "aa": false,
+          "cache": 16,
+          "decoder": 96,
+          "option_cache": 24,
+          "reader": 312
+        }
+      ]
+    },
+    "arm": "diag",
+    "repeat": 0,
+    "warmup": false
+  },
+  {
+    "case": "reserved",
+    "workers": 1,
+    "binary_sha256": "d0c3353fb5b0f222285235569b7798920d8e98a159797e6f783ed65a097a2e32",
+    "input_sha256": "3375c0107b648f6f9dec3b44610e6045f9d23dff7dd2f8f7866b9f04eb19d1c0",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/tmp/bpe-frequency-20261014/diagnostic/reserved-w1-r0-diag/time.txt",
+      "taskset",
+      "-c",
+      "0",
+      "/dev/shm/bpe-frequency-20261014/diagnostic-runner",
+      "/tmp/bpe-frequency-20261014/diagnostic/reserved-w1-r0-diag/job.json"
+    ],
+    "environment": {
+      "RAYON_NUM_THREADS": "1",
+      "TOKENIZERS_PARALLELISM": "true"
+    },
+    "seconds": 0.01977264299057424,
+    "returncode": 0,
+    "result": {
+      "attempt_id": "reserved-w1-r0-diag",
+      "build_id": "diagnostic-runner",
+      "effective_affinity": [
+        0
+      ],
+      "input_id": "reserved",
+      "metrics": {
+        "export_seconds": 8.4783e-05,
+        "load_seconds": 4.0553e-05,
+        "process_hwm_kib_before_validation": 7160,
+        "train_cpu_seconds": 0.006233,
+        "train_seconds": 0.006276334
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 4,
+        "actual_vocab": 8,
+        "model_path": "/tmp/bpe-frequency-20261014/diagnostic/reserved-w1-r0-diag/model.json",
+        "special_tokens": 1
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_effective": 1,
+      "workers_requested": 1
+    },
+    "model_sha256": "797969fe1c5c9271d09096514204e1883cc138d990d973b17ffad1198785ace3",
+    "diagnostic": {
+      "fresh": {
+        "binary": 5,
+        "comparisons": 15,
+        "duplicates": 0,
+        "expired": 1,
+        "extra_comparisons": 0,
+        "first": 4,
+        "hits": 2,
+        "input": 7,
+        "jump_0": 0,
+        "jump_1": 1,
+        "jump_2": 0,
+        "jump_3": 0,
+        "single": 0,
+        "suffix_comparisons": 2,
+        "suffix_queries": 1,
+        "suffix_sum": 2,
+        "unit": 0,
+        "valid": 7,
+        "readers": 8,
+        "zero_readers": 4,
+        "one_lookup_readers": 3,
+        "accepted_matches": 7,
+        "aa_selection_accepted": 2,
+        "aa_selection_input": 2
+      },
+      "reuse": {},
+      "layouts": [
+        {
+          "aa": false,
+          "cache": 16,
+          "decoder": 96,
+          "option_cache": 24,
+          "reader": 312
+        },
+        {
+          "aa": true,
+          "cache": 16,
+          "decoder": 16,
+          "option_cache": 24,
+          "reader": 312
+        }
+      ]
+    },
+    "arm": "diag",
+    "repeat": 0,
+    "warmup": false
+  },
+  {
+    "case": "alias",
+    "workers": 1,
+    "binary_sha256": "d0c3353fb5b0f222285235569b7798920d8e98a159797e6f783ed65a097a2e32",
+    "input_sha256": "2b878f4e2647ed683047ebdc023e6695ec1734ab1e8cde2d1ca57709b4174031",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/tmp/bpe-frequency-20261014/diagnostic/alias-w1-r0-diag/time.txt",
+      "taskset",
+      "-c",
+      "0",
+      "/dev/shm/bpe-frequency-20261014/diagnostic-runner",
+      "/tmp/bpe-frequency-20261014/diagnostic/alias-w1-r0-diag/job.json"
+    ],
+    "environment": {
+      "RAYON_NUM_THREADS": "1",
+      "TOKENIZERS_PARALLELISM": "true"
+    },
+    "seconds": 0.01751828400301747,
+    "returncode": 0,
+    "result": {
+      "attempt_id": "alias-w1-r0-diag",
+      "build_id": "diagnostic-runner",
+      "effective_affinity": [
+        0
+      ],
+      "input_id": "alias",
+      "metrics": {
+        "export_seconds": 2.858e-05,
+        "load_seconds": 3.2647e-05,
+        "process_hwm_kib_before_validation": 7232,
+        "train_cpu_seconds": 0.005907000000000001,
+        "train_seconds": 0.005931247
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 4,
+        "actual_vocab": 5,
+        "model_path": "/tmp/bpe-frequency-20261014/diagnostic/alias-w1-r0-diag/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_effective": 1,
+      "workers_requested": 1
+    },
+    "model_sha256": "63297903068b6dcaf87f44c90b99a697a98d79e591cde58a84f01a96f2053e1a",
+    "diagnostic": {
+      "fresh": {
+        "accepted_matches": 4
+      },
+      "reuse": {
+        "whole_binary": 0,
+        "whole_comparisons": 0,
+        "whole_multi": 1,
+        "whole_one": 2,
+        "whole_single": 4,
+        "whole_unit": 0,
+        "whole_words": 4,
+        "whole_zero": 1
+      },
+      "layouts": []
+    },
+    "arm": "diag",
+    "repeat": 0,
+    "warmup": false
+  },
+  {
+    "case": "length-reuse",
+    "workers": 1,
+    "binary_sha256": "d0c3353fb5b0f222285235569b7798920d8e98a159797e6f783ed65a097a2e32",
+    "input_sha256": "2b878f4e2647ed683047ebdc023e6695ec1734ab1e8cde2d1ca57709b4174031",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/tmp/bpe-frequency-20261014/diagnostic/length-reuse-w1-r0-diag/time.txt",
+      "taskset",
+      "-c",
+      "0",
+      "/dev/shm/bpe-frequency-20261014/diagnostic-runner",
+      "/tmp/bpe-frequency-20261014/diagnostic/length-reuse-w1-r0-diag/job.json"
+    ],
+    "environment": {
+      "RAYON_NUM_THREADS": "1",
+      "TOKENIZERS_PARALLELISM": "true"
+    },
+    "seconds": 0.019282469002064317,
+    "returncode": 0,
+    "result": {
+      "attempt_id": "length-reuse-w1-r0-diag",
+      "build_id": "diagnostic-runner",
+      "effective_affinity": [
+        0
+      ],
+      "input_id": "length-reuse",
+      "metrics": {
+        "export_seconds": 2.9981e-05,
+        "load_seconds": 4.5412e-05,
+        "process_hwm_kib_before_validation": 7232,
+        "train_cpu_seconds": 0.0066419999999999995,
+        "train_seconds": 0.006699527
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 4,
+        "actual_vocab": 5,
+        "model_path": "/tmp/bpe-frequency-20261014/diagnostic/length-reuse-w1-r0-diag/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_effective": 1,
+      "workers_requested": 1
+    },
+    "model_sha256": "63297903068b6dcaf87f44c90b99a697a98d79e591cde58a84f01a96f2053e1a",
+    "diagnostic": {
+      "fresh": {
+        "accepted_matches": 4
+      },
+      "reuse": {
+        "whole_binary": 0,
+        "whole_comparisons": 0,
+        "whole_multi": 1,
+        "whole_one": 2,
+        "whole_single": 4,
+        "whole_unit": 0,
+        "whole_words": 4,
+        "whole_zero": 1
+      },
+      "layouts": []
+    },
+    "arm": "diag",
+    "repeat": 0,
+    "warmup": false
+  },
+  {
+    "case": "en-bytelevel",
+    "workers": 1,
+    "binary_sha256": "d0c3353fb5b0f222285235569b7798920d8e98a159797e6f783ed65a097a2e32",
+    "input_sha256": "8384647de3201a7145a8ba03331df14408685ad4e84f0d825b241a2294665e29",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/tmp/bpe-frequency-20261014/diagnostic/en-bytelevel-w1-r0-diag/time.txt",
+      "taskset",
+      "-c",
+      "0",
+      "/dev/shm/bpe-frequency-20261014/diagnostic-runner",
+      "/tmp/bpe-frequency-20261014/diagnostic/en-bytelevel-w1-r0-diag/job.json"
+    ],
+    "environment": {
+      "RAYON_NUM_THREADS": "1",
+      "TOKENIZERS_PARALLELISM": "true"
+    },
+    "seconds": 15.022894727997482,
+    "returncode": 0,
+    "result": {
+      "attempt_id": "en-bytelevel-w1-r0-diag",
+      "build_id": "diagnostic-runner",
+      "effective_affinity": [
+        0
+      ],
+      "input_id": "en-bytelevel",
+      "metrics": {
+        "export_seconds": 0.008209391,
+        "load_seconds": 0.041266908,
+        "process_hwm_kib_before_validation": 27660,
+        "train_cpu_seconds": 14.934736,
+        "train_seconds": 14.948980509
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 29744,
+        "actual_vocab": 30000,
+        "model_path": "/tmp/bpe-frequency-20261014/diagnostic/en-bytelevel-w1-r0-diag/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_effective": 1,
+      "workers_requested": 1
+    },
+    "model_sha256": "c3fae75a49259633748fb8f55ef8b5dfa559d89a7d76219087a9153fc3a8e0cd",
+    "diagnostic": {
+      "fresh": {
+        "binary": 93742,
+        "comparisons": 1031162,
+        "duplicates": 0,
+        "expired": 78118,
+        "extra_comparisons": 155320,
+        "first": 29744,
+        "hits": 444509,
+        "input": 1036478,
+        "jump_0": 35674,
+        "jump_1": 18683,
+        "jump_2": 14118,
+        "jump_3": 9643,
+        "single": 0,
+        "suffix_comparisons": 346532,
+        "suffix_queries": 64073,
+        "suffix_sum": 2930089,
+        "unit": 14120,
+        "valid": 552371,
+        "readers": 59488,
+        "zero_readers": 29744,
+        "one_lookup_readers": 12836,
+        "accepted_matches": 552371,
+        "aa_selection_accepted": 2291,
+        "aa_selection_input": 15961
+      },
+      "reuse": {},
+      "layouts": [
+        {
+          "aa": false,
+          "cache": 16,
+          "decoder": 96,
+          "option_cache": 24,
+          "reader": 312
+        },
+        {
+          "aa": true,
+          "cache": 16,
+          "decoder": 16,
+          "option_cache": 24,
+          "reader": 312
+        }
+      ]
+    },
+    "arm": "diag",
+    "repeat": 0,
+    "warmup": false
+  },
+  {
+    "case": "zh256",
+    "workers": 1,
+    "binary_sha256": "d0c3353fb5b0f222285235569b7798920d8e98a159797e6f783ed65a097a2e32",
+    "input_sha256": "ed057a8fdb27544ed29f16dde53faa0de8f47f1ee8ac00080974fac5bb435660",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/tmp/bpe-frequency-20261014/diagnostic/zh256-w1-r0-diag/time.txt",
+      "taskset",
+      "-c",
+      "0",
+      "/dev/shm/bpe-frequency-20261014/diagnostic-runner",
+      "/tmp/bpe-frequency-20261014/diagnostic/zh256-w1-r0-diag/job.json"
+    ],
+    "environment": {
+      "RAYON_NUM_THREADS": "1",
+      "TOKENIZERS_PARALLELISM": "true"
+    },
+    "seconds": 80.45375262299785,
+    "returncode": 0,
+    "result": {
+      "attempt_id": "zh256-w1-r0-diag",
+      "build_id": "diagnostic-runner",
+      "effective_affinity": [
+        0
+      ],
+      "input_id": "zh256",
+      "metrics": {
+        "export_seconds": 0.00984816,
+        "load_seconds": 6.765788204,
+        "process_hwm_kib_before_validation": 1858160,
+        "train_cpu_seconds": 71.18966900000001,
+        "train_seconds": 71.31557379
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 32241,
+        "actual_vocab": 50000,
+        "model_path": "/tmp/bpe-frequency-20261014/diagnostic/zh256-w1-r0-diag/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_effective": 1,
+      "workers_requested": 1
+    },
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "diagnostic": {
+      "fresh": {
+        "binary": 209181,
+        "comparisons": 2510172,
+        "duplicates": 0,
+        "expired": 209137,
+        "extra_comparisons": 386424,
+        "first": 32246,
+        "hits": 29140629,
+        "input": 36130172,
+        "jump_0": 131089,
+        "jump_1": 38355,
+        "jump_2": 23051,
+        "jump_3": 16642,
+        "single": 0,
+        "suffix_comparisons": 819088,
+        "suffix_queries": 177048,
+        "suffix_sum": 5121285,
+        "unit": 32202,
+        "valid": 29382012,
+        "readers": 64492,
+        "zero_readers": 32246,
+        "one_lookup_readers": 145,
+        "accepted_matches": 29382012,
+        "aa_selection_accepted": 152436,
+        "aa_selection_input": 391377
+      },
+      "reuse": {},
+      "layouts": [
+        {
+          "aa": false,
+          "cache": 16,
+          "decoder": 96,
+          "option_cache": 24,
+          "reader": 312
+        },
+        {
+          "aa": true,
+          "cache": 16,
+          "decoder": 16,
+          "option_cache": 24,
+          "reader": 312
+        }
+      ]
+    },
+    "arm": "diag",
+    "repeat": 0,
+    "warmup": false
+  }
+]

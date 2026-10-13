@@ -1,0 +1,18 @@
+{
+  "protocol_version": 1,
+  "attempt_id": "alias-w6-r0-layoutA",
+  "build_id": "layout-A-runner",
+  "input_id": "alias",
+  "mode": "core",
+  "workers": 6,
+  "output": "/tmp/bpe-frequency-20261014/layout/alias-w6-r0-layoutA/model.json",
+  "input": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/inputs/alias.json",
+  "pretokenizer": "none",
+  "trainer": {
+    "vocab_size": 64,
+    "min_frequency": 1,
+    "prefix": null,
+    "suffix": "a",
+    "max_token_length": null
+  }
+}

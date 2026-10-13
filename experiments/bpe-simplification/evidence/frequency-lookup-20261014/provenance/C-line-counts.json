@@ -1,0 +1,54 @@
+{
+  "production": {
+    "corpus.rs": 480,
+    "feed.rs": 76,
+    "index.rs": 389,
+    "merge.rs": 417,
+    "mod.rs": 374,
+    "positions.rs": 326,
+    "vocabulary.rs": 417,
+    "word_counts.rs": 91
+  },
+  "tests": {
+    "corpus.rs [cfg(test)]": 167,
+    "index.rs [cfg(test)]": 196,
+    "merge.rs [cfg(test)]": 212,
+    "mod.rs [cfg(test)]": 19,
+    "positions.rs [cfg(test)]": 173,
+    "tests.rs": 752,
+    "vocabulary.rs [cfg(test)]": 157,
+    "word_counts.rs [cfg(test)]": 27,
+    "trainers/mod.rs [cfg(test) BPE wrapper]": 12,
+    "experiments/bpe-simplification/miri-codec/src/lib.rs [Miri harness]": 4
+  },
+  "production_total": 2570,
+  "test_total": 1719,
+  "counting_rule": "Descriptive nonblank noncomment lines after rustfmt; ordinary BPE components, public API, feed and word counts. Optional parity implementation excluded. Test count includes embedded cfg(test), reference, shared trainer wrapper and Miri harness, each once. No hard limits.",
+  "diffs": {
+    "upstream": {
+      "revision": "origin/main",
+      "commit": "fb49a29223724a96f26e061bec8ec7517aa14177",
+      "scopes": [
+        "tokenizers/tk-train/src/trainers/bpe",
+        "tokenizers/tk-train/src/trainers/wordpiece.rs",
+        "tokenizers/tk-train/src/trainers/mod.rs",
+        "experiments/bpe-simplification/miri-codec/src"
+      ],
+      "stat": " .../bpe-simplification/miri-codec/src/lib.rs       |   4 +\n tokenizers/tk-train/src/trainers/bpe/AGENTS.md     |  20 +\n tokenizers/tk-train/src/trainers/bpe/COVERAGE.md   |  62 ++\n tokenizers/tk-train/src/trainers/bpe/DESIGN.md     | 338 ++++++++\n tokenizers/tk-train/src/trainers/bpe/README.md     | 173 ++++\n tokenizers/tk-train/src/trainers/bpe/corpus.rs     | 780 +++++++++++++++++\n tokenizers/tk-train/src/trainers/bpe/feed.rs       |  91 ++\n tokenizers/tk-train/src/trainers/bpe/index.rs      | 698 +++++++++++++++\n tokenizers/tk-train/src/trainers/bpe/merge.rs      | 725 ++++++++++++++++\n tokenizers/tk-train/src/trainers/bpe/mod.rs        | 960 +++++++--------------\n tokenizers/tk-train/src/trainers/bpe/positions.rs  | 611 +++++++++++++\n tokenizers/tk-train/src/trainers/bpe/tests.rs      | 906 +++++++++++++++++++\n tokenizers/tk-train/src/trainers/bpe/vocabulary.rs | 677 +++++++++++++++\n .../tk-train/src/trainers/bpe/word_counts.rs       | 147 ++++\n 14 files changed, 5547 insertions(+), 645 deletions(-)\n",
+      "numstat": "4\t0\texperiments/bpe-simplification/miri-codec/src/lib.rs\n20\t0\ttokenizers/tk-train/src/trainers/bpe/AGENTS.md\n62\t0\ttokenizers/tk-train/src/trainers/bpe/COVERAGE.md\n338\t0\ttokenizers/tk-train/src/trainers/bpe/DESIGN.md\n173\t0\ttokenizers/tk-train/src/trainers/bpe/README.md\n780\t0\ttokenizers/tk-train/src/trainers/bpe/corpus.rs\n91\t0\ttokenizers/tk-train/src/trainers/bpe/feed.rs\n698\t0\ttokenizers/tk-train/src/trainers/bpe/index.rs\n725\t0\ttokenizers/tk-train/src/trainers/bpe/merge.rs\n315\t645\ttokenizers/tk-train/src/trainers/bpe/mod.rs\n611\t0\ttokenizers/tk-train/src/trainers/bpe/positions.rs\n906\t0\ttokenizers/tk-train/src/trainers/bpe/tests.rs\n677\t0\ttokenizers/tk-train/src/trainers/bpe/vocabulary.rs\n147\t0\ttokenizers/tk-train/src/trainers/bpe/word_counts.rs\n"
+    },
+    "change": {
+      "revision": "6bbafd1d",
+      "commit": "6bbafd1db650842453162b7dcf789f07c7262196",
+      "scopes": [
+        "tokenizers/tk-train/src/trainers/bpe",
+        "tokenizers/tk-train/src/trainers/wordpiece.rs",
+        "tokenizers/tk-train/src/trainers/mod.rs",
+        "experiments/bpe-simplification/miri-codec/src"
+      ],
+      "stat": " tokenizers/tk-train/src/trainers/bpe/corpus.rs | 130 +++++++++++++++----------\n tokenizers/tk-train/src/trainers/bpe/merge.rs  |   2 +-\n 2 files changed, 81 insertions(+), 51 deletions(-)\n",
+      "numstat": "80\t50\ttokenizers/tk-train/src/trainers/bpe/corpus.rs\n1\t1\ttokenizers/tk-train/src/trainers/bpe/merge.rs\n"
+    }
+  },
+  "diff_rule": "Git text additions/deletions include comments, formatting and documentation; rename detection is enabled. Counts and diffs describe different scopes and are not complexity or correctness gates."
+}

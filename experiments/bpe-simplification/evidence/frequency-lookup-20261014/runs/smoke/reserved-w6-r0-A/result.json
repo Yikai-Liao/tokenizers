@@ -1,0 +1,60 @@
+{
+  "case": "reserved",
+  "workers": 6,
+  "binary_sha256": "38491c4b841b74ea1cffdfc0348d930b7f6e6d89a794e9b7fda518840562ee95",
+  "input_sha256": "3375c0107b648f6f9dec3b44610e6045f9d23dff7dd2f8f7866b9f04eb19d1c0",
+  "command": [
+    "/usr/bin/time",
+    "-v",
+    "-o",
+    "/tmp/bpe-frequency-20261014/smoke/reserved-w6-r0-A/time.txt",
+    "taskset",
+    "-c",
+    "0,1,2,3,4,5",
+    "/dev/shm/bpe-frequency-20261014/A-runner",
+    "/tmp/bpe-frequency-20261014/smoke/reserved-w6-r0-A/job.json"
+  ],
+  "environment": {
+    "RAYON_NUM_THREADS": "6",
+    "TOKENIZERS_PARALLELISM": "true"
+  },
+  "seconds": 0.02073411400488112,
+  "returncode": 0,
+  "result": {
+    "attempt_id": "reserved-w6-r0-A",
+    "build_id": "A-runner",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "reserved",
+    "metrics": {
+      "export_seconds": 0.000281013,
+      "load_seconds": 4.6871e-05,
+      "process_hwm_kib_before_validation": 7144,
+      "train_cpu_seconds": 0.006901999999999999,
+      "train_seconds": 0.006259855
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 4,
+      "actual_vocab": 8,
+      "model_path": "/tmp/bpe-frequency-20261014/smoke/reserved-w6-r0-A/model.json",
+      "special_tokens": 1
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_effective": 6,
+    "workers_requested": 6
+  },
+  "model_sha256": "797969fe1c5c9271d09096514204e1883cc138d990d973b17ffad1198785ace3",
+  "diagnostic": {
+    "fresh": {},
+    "reuse": {},
+    "layouts": []
+  }
+}

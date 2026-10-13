@@ -1,0 +1,55 @@
+{
+  "case": "en-bytelevel-reuse",
+  "workers": 1,
+  "binary_sha256": "ecce63d956b7d8a245aaa8c86c2445ca152f5f14aefadf4d8f69f753935386d7",
+  "input_sha256": "8384647de3201a7145a8ba03331df14408685ad4e84f0d825b241a2294665e29",
+  "command": [
+    "/usr/bin/time",
+    "-v",
+    "-o",
+    "/tmp/bpe-frequency-20261014/baseline-repeat/en-bytelevel-reuse-w1-r1-A/time.txt",
+    "taskset",
+    "-c",
+    "0",
+    "/dev/shm/bpe-frequency-20261014/A-full-runner",
+    "/tmp/bpe-frequency-20261014/baseline-repeat/en-bytelevel-reuse-w1-r1-A/job.json"
+  ],
+  "environment": {
+    "RAYON_NUM_THREADS": "1",
+    "TOKENIZERS_PARALLELISM": "true"
+  },
+  "seconds": 1.332873920997372,
+  "returncode": 0,
+  "result": {
+    "attempt_id": "en-bytelevel-reuse-w1-r1-A",
+    "build_id": "A-full-runner",
+    "effective_affinity": [
+      0
+    ],
+    "input_id": "en-bytelevel-reuse",
+    "metrics": {
+      "export_seconds": 0.209618774,
+      "load_seconds": 0.040437813,
+      "process_hwm_kib_before_validation": 40448,
+      "train_cpu_seconds": 1.0551869999999999,
+      "train_seconds": 1.056975863
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 29765,
+      "actual_vocab": 30000,
+      "model_path": "/tmp/bpe-frequency-20261014/baseline-repeat/en-bytelevel-reuse-w1-r1-A/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_effective": 1,
+    "workers_requested": 1
+  },
+  "model_sha256": "714886c6a208e830f4ba4a976a09ba30f0b908af04b12ac16ededb141f93d01d",
+  "diagnostic": {
+    "fresh": {},
+    "reuse": {},
+    "layouts": []
+  }
+}

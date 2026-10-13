@@ -1,0 +1,103 @@
+{
+  "case": "en-bytelevel-reuse",
+  "workers": 1,
+  "binary_sha256": "d0c3353fb5b0f222285235569b7798920d8e98a159797e6f783ed65a097a2e32",
+  "input_sha256": "8384647de3201a7145a8ba03331df14408685ad4e84f0d825b241a2294665e29",
+  "command": [
+    "/usr/bin/time",
+    "-v",
+    "-o",
+    "/tmp/bpe-frequency-20261014/reuse-diagnostic/en-bytelevel-reuse-w1-r0-diag/time.txt",
+    "taskset",
+    "-c",
+    "0",
+    "/dev/shm/bpe-frequency-20261014/diagnostic-runner",
+    "/tmp/bpe-frequency-20261014/reuse-diagnostic/en-bytelevel-reuse-w1-r0-diag/job.json"
+  ],
+  "environment": {
+    "RAYON_NUM_THREADS": "1",
+    "TOKENIZERS_PARALLELISM": "true"
+  },
+  "seconds": 5.070521824003663,
+  "returncode": 0,
+  "result": {
+    "attempt_id": "en-bytelevel-reuse-w1-r0-diag",
+    "build_id": "diagnostic-runner",
+    "effective_affinity": [
+      0
+    ],
+    "input_id": "en-bytelevel-reuse",
+    "metrics": {
+      "export_seconds": 0.008292759,
+      "load_seconds": 0.060176496,
+      "process_hwm_kib_before_validation": 41164,
+      "train_cpu_seconds": 4.970001,
+      "train_seconds": 4.979682277
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 29766,
+      "actual_vocab": 30000,
+      "model_path": "/tmp/bpe-frequency-20261014/reuse-diagnostic/en-bytelevel-reuse-w1-r0-diag/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_effective": 1,
+    "workers_requested": 1
+  },
+  "model_sha256": "6eab9a58b1ef5eeac2da38e2596db629377f8cd661d35637bf59ef442717b94e",
+  "diagnostic": {
+    "fresh": {
+      "binary": 9158,
+      "comparisons": 100738,
+      "duplicates": 0,
+      "expired": 9150,
+      "extra_comparisons": 1012,
+      "first": 100,
+      "hits": 203839,
+      "input": 226973,
+      "jump_0": 5440,
+      "jump_1": 1857,
+      "jump_2": 1166,
+      "jump_3": 687,
+      "single": 0,
+      "suffix_comparisons": 66571,
+      "suffix_queries": 9058,
+      "suffix_sum": 1003707,
+      "unit": 92,
+      "valid": 213089,
+      "readers": 100,
+      "zero_readers": 0,
+      "one_lookup_readers": 8,
+      "accepted_matches": 753502
+    },
+    "reuse": {
+      "history_binary": 116303,
+      "history_comparisons": 1279333,
+      "history_multi": 1699,
+      "history_one": 210932,
+      "history_single": 0,
+      "history_unit": 110124,
+      "history_words": 226427,
+      "history_zero": 13796,
+      "whole_binary": 357732,
+      "whole_comparisons": 3935052,
+      "whole_multi": 401,
+      "whole_one": 325203,
+      "whole_single": 0,
+      "whole_unit": 335084,
+      "whole_words": 692816,
+      "whole_zero": 367212
+    },
+    "layouts": [
+      {
+        "aa": false,
+        "cache": 16,
+        "decoder": 96,
+        "option_cache": 24,
+        "reader": 312
+      }
+    ]
+  }
+}

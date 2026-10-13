@@ -1,0 +1,12 @@
+{
+  "path": "/tmp/bpe-frequency-20261014-raw.tar.gz",
+  "sha256": "7e2dd3780dc643b0e92b015e2b632d80ac972c5aa7dfa326d6d89d652c536bcf",
+  "bytes": 186466727,
+  "contains": [
+    "raw attempts and perf.data.gz",
+    "frozen source and native binaries, build/test logs",
+    "hashed inputs for all executed configurations",
+    "compact evidence"
+  ],
+  "note": "Local attachment; not committed to Git. Archive excludes archive.json and artifact-hashes.json to avoid circular checksums."
+}

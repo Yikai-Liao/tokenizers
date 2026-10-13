@@ -1,0 +1,60 @@
+{
+  "case": "reserved",
+  "workers": 6,
+  "binary_sha256": "08c6ab97063f8ae65120b805522737c8e3e4cb43279ab2511b82d419746c0c48",
+  "input_sha256": "3375c0107b648f6f9dec3b44610e6045f9d23dff7dd2f8f7866b9f04eb19d1c0",
+  "command": [
+    "/usr/bin/time",
+    "-v",
+    "-o",
+    "/tmp/bpe-frequency-20261014/full-smoke/reserved-w6-r0-C/time.txt",
+    "taskset",
+    "-c",
+    "0,1,2,3,4,5",
+    "/dev/shm/bpe-frequency-20261014/C-full-runner",
+    "/tmp/bpe-frequency-20261014/full-smoke/reserved-w6-r0-C/job.json"
+  ],
+  "environment": {
+    "RAYON_NUM_THREADS": "6",
+    "TOKENIZERS_PARALLELISM": "true"
+  },
+  "seconds": 0.025023499998496845,
+  "returncode": 0,
+  "result": {
+    "attempt_id": "reserved-w6-r0-C",
+    "build_id": "C-full-runner",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "reserved",
+    "metrics": {
+      "export_seconds": 0.004604379,
+      "load_seconds": 4.3934e-05,
+      "process_hwm_kib_before_validation": 7644,
+      "train_cpu_seconds": 0.007084999999999999,
+      "train_seconds": 0.00524465
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 4,
+      "actual_vocab": 8,
+      "model_path": "/tmp/bpe-frequency-20261014/full-smoke/reserved-w6-r0-C/model.json",
+      "special_tokens": 1
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_effective": 6,
+    "workers_requested": 6
+  },
+  "model_sha256": "ac1090a65e78c1b890ebe92959c4316e285b04b69d74d60cf5b284eb135a1426",
+  "diagnostic": {
+    "fresh": {},
+    "reuse": {},
+    "layouts": []
+  }
+}

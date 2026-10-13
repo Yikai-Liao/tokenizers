@@ -1,0 +1,59 @@
+{
+  "seed": 20261014,
+  "schedule": [
+    {
+      "case": "aa",
+      "workers": 1,
+      "repeat": 0,
+      "order": [
+        "layoutC",
+        "layoutA"
+      ]
+    },
+    {
+      "case": "aa",
+      "workers": 6,
+      "repeat": 0,
+      "order": [
+        "layoutC",
+        "layoutA"
+      ]
+    },
+    {
+      "case": "ab",
+      "workers": 1,
+      "repeat": 0,
+      "order": [
+        "layoutA",
+        "layoutC"
+      ]
+    },
+    {
+      "case": "ab",
+      "workers": 6,
+      "repeat": 0,
+      "order": [
+        "layoutA",
+        "layoutC"
+      ]
+    },
+    {
+      "case": "alias",
+      "workers": 1,
+      "repeat": 0,
+      "order": [
+        "layoutA",
+        "layoutC"
+      ]
+    },
+    {
+      "case": "alias",
+      "workers": 6,
+      "repeat": 0,
+      "order": [
+        "layoutA",
+        "layoutC"
+      ]
+    }
+  ]
+}

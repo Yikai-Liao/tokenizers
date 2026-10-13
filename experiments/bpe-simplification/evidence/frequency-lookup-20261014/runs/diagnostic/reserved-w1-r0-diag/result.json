@@ -1,0 +1,95 @@
+{
+  "case": "reserved",
+  "workers": 1,
+  "binary_sha256": "d0c3353fb5b0f222285235569b7798920d8e98a159797e6f783ed65a097a2e32",
+  "input_sha256": "3375c0107b648f6f9dec3b44610e6045f9d23dff7dd2f8f7866b9f04eb19d1c0",
+  "command": [
+    "/usr/bin/time",
+    "-v",
+    "-o",
+    "/tmp/bpe-frequency-20261014/diagnostic/reserved-w1-r0-diag/time.txt",
+    "taskset",
+    "-c",
+    "0",
+    "/dev/shm/bpe-frequency-20261014/diagnostic-runner",
+    "/tmp/bpe-frequency-20261014/diagnostic/reserved-w1-r0-diag/job.json"
+  ],
+  "environment": {
+    "RAYON_NUM_THREADS": "1",
+    "TOKENIZERS_PARALLELISM": "true"
+  },
+  "seconds": 0.01977264299057424,
+  "returncode": 0,
+  "result": {
+    "attempt_id": "reserved-w1-r0-diag",
+    "build_id": "diagnostic-runner",
+    "effective_affinity": [
+      0
+    ],
+    "input_id": "reserved",
+    "metrics": {
+      "export_seconds": 8.4783e-05,
+      "load_seconds": 4.0553e-05,
+      "process_hwm_kib_before_validation": 7160,
+      "train_cpu_seconds": 0.006233,
+      "train_seconds": 0.006276334
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 4,
+      "actual_vocab": 8,
+      "model_path": "/tmp/bpe-frequency-20261014/diagnostic/reserved-w1-r0-diag/model.json",
+      "special_tokens": 1
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_effective": 1,
+    "workers_requested": 1
+  },
+  "model_sha256": "797969fe1c5c9271d09096514204e1883cc138d990d973b17ffad1198785ace3",
+  "diagnostic": {
+    "fresh": {
+      "binary": 5,
+      "comparisons": 15,
+      "duplicates": 0,
+      "expired": 1,
+      "extra_comparisons": 0,
+      "first": 4,
+      "hits": 2,
+      "input": 7,
+      "jump_0": 0,
+      "jump_1": 1,
+      "jump_2": 0,
+      "jump_3": 0,
+      "single": 0,
+      "suffix_comparisons": 2,
+      "suffix_queries": 1,
+      "suffix_sum": 2,
+      "unit": 0,
+      "valid": 7,
+      "readers": 8,
+      "zero_readers": 4,
+      "one_lookup_readers": 3,
+      "accepted_matches": 7,
+      "aa_selection_accepted": 2,
+      "aa_selection_input": 2
+    },
+    "reuse": {},
+    "layouts": [
+      {
+        "aa": false,
+        "cache": 16,
+        "decoder": 96,
+        "option_cache": 24,
+        "reader": 312
+      },
+      {
+        "aa": true,
+        "cache": 16,
+        "decoder": 16,
+        "option_cache": 24,
+        "reader": 312
+      }
+    ]
+  }
+}

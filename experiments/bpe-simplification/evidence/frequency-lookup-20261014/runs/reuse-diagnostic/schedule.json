@@ -1,0 +1,13 @@
+{
+  "seed": 20261014,
+  "schedule": [
+    {
+      "case": "en-bytelevel-reuse",
+      "workers": 1,
+      "repeat": 0,
+      "order": [
+        "diag"
+      ]
+    }
+  ]
+}

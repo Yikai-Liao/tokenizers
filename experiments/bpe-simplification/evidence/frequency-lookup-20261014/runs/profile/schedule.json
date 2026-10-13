@@ -1,0 +1,21 @@
+{
+  "seed": 20261014,
+  "schedule": [
+    {
+      "case": "en-bytelevel",
+      "workers": 1,
+      "repeat": 0,
+      "order": [
+        "A"
+      ]
+    },
+    {
+      "case": "zh256",
+      "workers": 1,
+      "repeat": 0,
+      "order": [
+        "A"
+      ]
+    }
+  ]
+}

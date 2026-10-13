@@ -1,0 +1,203 @@
+{
+  "aa": {
+    "input": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/inputs/aa.json",
+    "sha256": "02e4d469ce56b27c735d5b2cc5721396b6d05cdc4f5bde4ce0ca50ab23bd889d",
+    "pretokenizer": "none",
+    "trainer": {
+      "vocab_size": 64,
+      "min_frequency": 1,
+      "prefix": null,
+      "suffix": null,
+      "max_token_length": null
+    }
+  },
+  "ab": {
+    "input": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/inputs/ab.json",
+    "sha256": "b8db5a354a318245f77ac41a0e220a84e2a6017dca42970dc579ce5ea1364441",
+    "pretokenizer": "none",
+    "trainer": {
+      "vocab_size": 64,
+      "min_frequency": 1,
+      "prefix": null,
+      "suffix": null,
+      "max_token_length": null
+    }
+  },
+  "reserved": {
+    "input": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/inputs/reserved.json",
+    "sha256": "3375c0107b648f6f9dec3b44610e6045f9d23dff7dd2f8f7866b9f04eb19d1c0",
+    "pretokenizer": "none",
+    "trainer": {
+      "vocab_size": 64,
+      "min_frequency": 1,
+      "prefix": null,
+      "suffix": null,
+      "max_token_length": null,
+      "special_tokens": [
+        "ab"
+      ]
+    }
+  },
+  "alias": {
+    "input": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/inputs/alias.json",
+    "sha256": "2b878f4e2647ed683047ebdc023e6695ec1734ab1e8cde2d1ca57709b4174031",
+    "pretokenizer": "none",
+    "trainer": {
+      "vocab_size": 64,
+      "min_frequency": 1,
+      "prefix": null,
+      "suffix": "a",
+      "max_token_length": null
+    }
+  },
+  "length-reuse": {
+    "input": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/inputs/length-reuse.json",
+    "sha256": "2b878f4e2647ed683047ebdc023e6695ec1734ab1e8cde2d1ca57709b4174031",
+    "pretokenizer": "none",
+    "trainer": {
+      "vocab_size": 64,
+      "min_frequency": 1,
+      "prefix": null,
+      "suffix": "a",
+      "max_token_length": 9
+    }
+  },
+  "en256": {
+    "input": "/root/code/tokenizers-bpe-benchmarks/.bench/main-yttm-inspired/inputs/en256-words/words.json",
+    "sha256": "6c6995e8c4d12a7fa7b0deff3c9a80ba19e86e40b1c3ebf2100d5d2831c419b9",
+    "pretokenizer": "whitespace_split",
+    "trainer": {
+      "vocab_size": 50000,
+      "min_frequency": 2,
+      "prefix": null,
+      "suffix": null,
+      "max_token_length": null
+    }
+  },
+  "zh256": {
+    "input": "/root/code/tokenizers-bpe-benchmarks/.bench/main-yttm-inspired/inputs/zh256-words/words.json",
+    "sha256": "ed057a8fdb27544ed29f16dde53faa0de8f47f1ee8ac00080974fac5bb435660",
+    "pretokenizer": "whitespace",
+    "trainer": {
+      "vocab_size": 50000,
+      "min_frequency": 2,
+      "prefix": null,
+      "suffix": null,
+      "max_token_length": null
+    }
+  },
+  "en-bytelevel": {
+    "input": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/inputs/en-bytelevel.json",
+    "sha256": "8384647de3201a7145a8ba03331df14408685ad4e84f0d825b241a2294665e29",
+    "pretokenizer": "bytelevel_regex",
+    "trainer": {
+      "vocab_size": 30000,
+      "min_frequency": 2,
+      "prefix": null,
+      "suffix": null,
+      "max_token_length": null
+    },
+    "source_text_sha256": "a47607c9f0b108828480a5940d7c046e361ce8030945ce1c83b9708f919c2872"
+  },
+  "zh-bytelevel": {
+    "input": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/inputs/zh-bytelevel.json",
+    "sha256": "c068ce880d1e2260d14223cf7bab3f9a39ea8ad88b6e9c6ed66c6091957fb97c",
+    "pretokenizer": "bytelevel_regex",
+    "trainer": {
+      "vocab_size": 30000,
+      "min_frequency": 2,
+      "prefix": null,
+      "suffix": null,
+      "max_token_length": null
+    },
+    "source_text_sha256": "8bfae3a5da2b5e46d6cfb748d7b21cf53ebbf826c10bb8a6987f29e0f44d249f"
+  },
+  "aa-large": {
+    "input": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/inputs/aa-large.json",
+    "sha256": "a6eb27204cddd398394de0de7c1554b87a9610b35a1e9478b695b07de4489cbe",
+    "pretokenizer": "none",
+    "trainer": {
+      "vocab_size": 64,
+      "min_frequency": 1,
+      "prefix": null,
+      "suffix": null,
+      "max_token_length": null
+    }
+  },
+  "ab-large": {
+    "input": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/inputs/ab-large.json",
+    "sha256": "d2e050a3414bd9b80e270eb2ce97e357f23c6450d9b82f35479a847b16a7b0a2",
+    "pretokenizer": "none",
+    "trainer": {
+      "vocab_size": 64,
+      "min_frequency": 1,
+      "prefix": null,
+      "suffix": null,
+      "max_token_length": null
+    }
+  },
+  "reserved-large": {
+    "input": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/inputs/reserved-large.json",
+    "sha256": "170b6c349d2e45bf13df267f6bcdcca0f3b8f3c2b53301256a5f7471138d5c3d",
+    "pretokenizer": "none",
+    "trainer": {
+      "vocab_size": 64,
+      "min_frequency": 1,
+      "prefix": null,
+      "suffix": null,
+      "max_token_length": null,
+      "special_tokens": [
+        "ab"
+      ]
+    }
+  },
+  "alias-large": {
+    "input": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/inputs/alias-large.json",
+    "sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "pretokenizer": "none",
+    "trainer": {
+      "vocab_size": 64,
+      "min_frequency": 1,
+      "prefix": null,
+      "suffix": "a",
+      "max_token_length": null
+    }
+  },
+  "length-reuse-large": {
+    "input": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/inputs/length-reuse-large.json",
+    "sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "pretokenizer": "none",
+    "trainer": {
+      "vocab_size": 64,
+      "min_frequency": 1,
+      "prefix": null,
+      "suffix": "a",
+      "max_token_length": 9
+    }
+  },
+  "ab-steady": {
+    "input": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/inputs/ab-steady.json",
+    "sha256": "2d2100bd0732d1edf414ca21c789484798c99fc1b16cf7a9ae1af6c4fc70cb17",
+    "pretokenizer": "none",
+    "trainer": {
+      "vocab_size": 64,
+      "min_frequency": 1,
+      "prefix": null,
+      "suffix": null,
+      "max_token_length": null
+    }
+  },
+  "en-bytelevel-reuse": {
+    "input": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/inputs/en-bytelevel.json",
+    "sha256": "8384647de3201a7145a8ba03331df14408685ad4e84f0d825b241a2294665e29",
+    "pretokenizer": "bytelevel_regex",
+    "trainer": {
+      "vocab_size": 30000,
+      "min_frequency": 2,
+      "prefix": null,
+      "suffix": "a",
+      "max_token_length": null
+    },
+    "source_text_sha256": "a47607c9f0b108828480a5940d7c046e361ce8030945ce1c83b9708f919c2872"
+  }
+}

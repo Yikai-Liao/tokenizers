@@ -1,0 +1,60 @@
+{
+  "case": "length-reuse",
+  "workers": 6,
+  "binary_sha256": "38491c4b841b74ea1cffdfc0348d930b7f6e6d89a794e9b7fda518840562ee95",
+  "input_sha256": "2b878f4e2647ed683047ebdc023e6695ec1734ab1e8cde2d1ca57709b4174031",
+  "command": [
+    "/usr/bin/time",
+    "-v",
+    "-o",
+    "/tmp/bpe-frequency-20261014/smoke/length-reuse-w6-r0-A/time.txt",
+    "taskset",
+    "-c",
+    "0,1,2,3,4,5",
+    "/dev/shm/bpe-frequency-20261014/A-runner",
+    "/tmp/bpe-frequency-20261014/smoke/length-reuse-w6-r0-A/job.json"
+  ],
+  "environment": {
+    "RAYON_NUM_THREADS": "6",
+    "TOKENIZERS_PARALLELISM": "true"
+  },
+  "seconds": 0.018529069013311528,
+  "returncode": 0,
+  "result": {
+    "attempt_id": "length-reuse-w6-r0-A",
+    "build_id": "A-runner",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "length-reuse",
+    "metrics": {
+      "export_seconds": 3.5539e-05,
+      "load_seconds": 3.2946e-05,
+      "process_hwm_kib_before_validation": 7304,
+      "train_cpu_seconds": 0.0067410000000000005,
+      "train_seconds": 0.005974845
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 4,
+      "actual_vocab": 5,
+      "model_path": "/tmp/bpe-frequency-20261014/smoke/length-reuse-w6-r0-A/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_effective": 6,
+    "workers_requested": 6
+  },
+  "model_sha256": "63297903068b6dcaf87f44c90b99a697a98d79e591cde58a84f01a96f2053e1a",
+  "diagnostic": {
+    "fresh": {},
+    "reuse": {},
+    "layouts": []
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "baseline-repeat/en-bytelevel-reuse-w1-r0-A": {
+    "reference": "full-smoke/en-bytelevel-reuse-w1-r0-A",
+    "differences": {
+      "model_config.merges": {
+        "equal": false,
+        "before_length": 29641,
+        "after_length": 29641,
+        "first_difference": 9754
+      },
+      "training_parts.merges": {
+        "equal": false,
+        "before_length": 29766,
+        "after_length": 29763,
+        "first_difference": 10020
+      }
+    }
+  },
+  "baseline-repeat/en-bytelevel-reuse-w1-r1-A": {
+    "reference": "full-smoke/en-bytelevel-reuse-w1-r0-A",
+    "differences": {
+      "model_config.merges": {
+        "equal": false,
+        "before_length": 29641,
+        "after_length": 29641,
+        "first_difference": 16260
+      },
+      "training_parts.merges": {
+        "equal": false,
+        "before_length": 29766,
+        "after_length": 29765,
+        "first_difference": 16949
+      }
+    }
+  },
+  "full-smoke/en-bytelevel-reuse-w1-r0-A": {
+    "reference": "full-smoke/en-bytelevel-reuse-w1-r0-A",
+    "differences": {}
+  },
+  "full-smoke/en-bytelevel-reuse-w1-r0-C": {
+    "reference": "full-smoke/en-bytelevel-reuse-w1-r0-A",
+    "differences": {
+      "model_config.merges": {
+        "equal": false,
+        "before_length": 29641,
+        "after_length": 29641,
+        "first_difference": 16260
+      },
+      "training_parts.merges": {
+        "equal": false,
+        "before_length": 29766,
+        "after_length": 29765,
+        "first_difference": 16949
+      }
+    }
+  }
+}

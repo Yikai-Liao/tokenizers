@@ -1,0 +1,7 @@
+{"directory": "/tmp/bpe-frequency-20261014/baseline-repeat/en-bytelevel-reuse-w1-r0-A", "seconds": 1.325959656998748, "metrics": {"export_seconds": 0.22714011, "load_seconds": 0.054298029, "process_hwm_kib_before_validation": 42096, "train_cpu_seconds": 1.014538, "train_seconds": 1.018227998}, "diagnostic": {"fresh": {}, "reuse": {}, "layouts": []}}
+{"directory": "/tmp/bpe-frequency-20261014/baseline-repeat/en-bytelevel-reuse-w1-r1-A", "seconds": 1.332873920997372, "metrics": {"export_seconds": 0.209618774, "load_seconds": 0.040437813, "process_hwm_kib_before_validation": 40448, "train_cpu_seconds": 1.0551869999999999, "train_seconds": 1.056975863}, "diagnostic": {"fresh": {}, "reuse": {}, "layouts": []}}
+Traceback (most recent call last):
+  File "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/frequency-lookup-20261014/run.py", line 111, in <module>
+    assert expected==record['model_sha256'], (case,workers,repeat,arm,'exact model mismatch')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ('en-bytelevel-reuse', 1, 1, 'A', 'exact model mismatch')

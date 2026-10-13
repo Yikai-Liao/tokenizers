@@ -1,0 +1,5 @@
+# Preserve raw tool output and exact copied plan/patch whitespace.
+C.patch -whitespace
+PLAN.zh.md -whitespace
+provenance/** -whitespace
+runs/** -whitespace

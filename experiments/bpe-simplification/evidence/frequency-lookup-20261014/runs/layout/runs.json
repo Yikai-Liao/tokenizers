@@ -1,0 +1,728 @@
+[
+  {
+    "case": "aa",
+    "workers": 1,
+    "binary_sha256": "2e6d80b0cf4e3c9fd065eceb6b2c9f537a3ae3f0c8d3a387224066bffbadf09e",
+    "input_sha256": "02e4d469ce56b27c735d5b2cc5721396b6d05cdc4f5bde4ce0ca50ab23bd889d",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/tmp/bpe-frequency-20261014/layout/aa-w1-r0-layoutC/time.txt",
+      "taskset",
+      "-c",
+      "0",
+      "/dev/shm/bpe-frequency-20261014/layout-C-runner",
+      "/tmp/bpe-frequency-20261014/layout/aa-w1-r0-layoutC/job.json"
+    ],
+    "environment": {
+      "RAYON_NUM_THREADS": "1",
+      "TOKENIZERS_PARALLELISM": "true"
+    },
+    "seconds": 0.0361246829997981,
+    "returncode": 0,
+    "result": {
+      "attempt_id": "aa-w1-r0-layoutC",
+      "build_id": "layout-C-runner",
+      "effective_affinity": [
+        0
+      ],
+      "input_id": "aa",
+      "metrics": {
+        "export_seconds": 0.000687241,
+        "load_seconds": 0.000680948,
+        "process_hwm_kib_before_validation": 7300,
+        "train_cpu_seconds": 0.017341,
+        "train_seconds": 0.01791711
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 38,
+        "actual_vocab": 42,
+        "model_path": "/tmp/bpe-frequency-20261014/layout/aa-w1-r0-layoutC/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_effective": 1,
+      "workers_requested": 1
+    },
+    "model_sha256": "61fd069755db37f6c998d647773c8a21a5d6b3a1a12efc8ae10e6bb24633112a",
+    "diagnostic": {
+      "fresh": {},
+      "reuse": {},
+      "layouts": []
+    },
+    "arm": "layoutC",
+    "repeat": 0,
+    "warmup": false
+  },
+  {
+    "case": "aa",
+    "workers": 1,
+    "binary_sha256": "1aa80e599b94909736c0174856146b764e7ef1f5959500ba3cf2ca1a48553f21",
+    "input_sha256": "02e4d469ce56b27c735d5b2cc5721396b6d05cdc4f5bde4ce0ca50ab23bd889d",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/tmp/bpe-frequency-20261014/layout/aa-w1-r0-layoutA/time.txt",
+      "taskset",
+      "-c",
+      "0",
+      "/dev/shm/bpe-frequency-20261014/layout-A-runner",
+      "/tmp/bpe-frequency-20261014/layout/aa-w1-r0-layoutA/job.json"
+    ],
+    "environment": {
+      "RAYON_NUM_THREADS": "1",
+      "TOKENIZERS_PARALLELISM": "true"
+    },
+    "seconds": 0.029934455989859998,
+    "returncode": 0,
+    "result": {
+      "attempt_id": "aa-w1-r0-layoutA",
+      "build_id": "layout-A-runner",
+      "effective_affinity": [
+        0
+      ],
+      "input_id": "aa",
+      "metrics": {
+        "export_seconds": 0.000678609,
+        "load_seconds": 0.000684584,
+        "process_hwm_kib_before_validation": 7552,
+        "train_cpu_seconds": 0.014536,
+        "train_seconds": 0.014544729
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 38,
+        "actual_vocab": 42,
+        "model_path": "/tmp/bpe-frequency-20261014/layout/aa-w1-r0-layoutA/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_effective": 1,
+      "workers_requested": 1
+    },
+    "model_sha256": "61fd069755db37f6c998d647773c8a21a5d6b3a1a12efc8ae10e6bb24633112a",
+    "diagnostic": {
+      "fresh": {},
+      "reuse": {},
+      "layouts": []
+    },
+    "arm": "layoutA",
+    "repeat": 0,
+    "warmup": false
+  },
+  {
+    "case": "aa",
+    "workers": 6,
+    "binary_sha256": "2e6d80b0cf4e3c9fd065eceb6b2c9f537a3ae3f0c8d3a387224066bffbadf09e",
+    "input_sha256": "02e4d469ce56b27c735d5b2cc5721396b6d05cdc4f5bde4ce0ca50ab23bd889d",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/tmp/bpe-frequency-20261014/layout/aa-w6-r0-layoutC/time.txt",
+      "taskset",
+      "-c",
+      "0,1,2,3,4,5",
+      "/dev/shm/bpe-frequency-20261014/layout-C-runner",
+      "/tmp/bpe-frequency-20261014/layout/aa-w6-r0-layoutC/job.json"
+    ],
+    "environment": {
+      "RAYON_NUM_THREADS": "6",
+      "TOKENIZERS_PARALLELISM": "true"
+    },
+    "seconds": 0.054683951995684765,
+    "returncode": 0,
+    "result": {
+      "attempt_id": "aa-w6-r0-layoutC",
+      "build_id": "layout-C-runner",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "input_id": "aa",
+      "metrics": {
+        "export_seconds": 0.000761002,
+        "load_seconds": 0.000727256,
+        "process_hwm_kib_before_validation": 7180,
+        "train_cpu_seconds": 0.034686,
+        "train_seconds": 0.039605421
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 38,
+        "actual_vocab": 42,
+        "model_path": "/tmp/bpe-frequency-20261014/layout/aa-w6-r0-layoutC/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_effective": 6,
+      "workers_requested": 6
+    },
+    "model_sha256": "61fd069755db37f6c998d647773c8a21a5d6b3a1a12efc8ae10e6bb24633112a",
+    "diagnostic": {
+      "fresh": {},
+      "reuse": {},
+      "layouts": []
+    },
+    "arm": "layoutC",
+    "repeat": 0,
+    "warmup": false
+  },
+  {
+    "case": "aa",
+    "workers": 6,
+    "binary_sha256": "1aa80e599b94909736c0174856146b764e7ef1f5959500ba3cf2ca1a48553f21",
+    "input_sha256": "02e4d469ce56b27c735d5b2cc5721396b6d05cdc4f5bde4ce0ca50ab23bd889d",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/tmp/bpe-frequency-20261014/layout/aa-w6-r0-layoutA/time.txt",
+      "taskset",
+      "-c",
+      "0,1,2,3,4,5",
+      "/dev/shm/bpe-frequency-20261014/layout-A-runner",
+      "/tmp/bpe-frequency-20261014/layout/aa-w6-r0-layoutA/job.json"
+    ],
+    "environment": {
+      "RAYON_NUM_THREADS": "6",
+      "TOKENIZERS_PARALLELISM": "true"
+    },
+    "seconds": 0.03701698000077158,
+    "returncode": 0,
+    "result": {
+      "attempt_id": "aa-w6-r0-layoutA",
+      "build_id": "layout-A-runner",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "input_id": "aa",
+      "metrics": {
+        "export_seconds": 0.000719458,
+        "load_seconds": 0.000576324,
+        "process_hwm_kib_before_validation": 7400,
+        "train_cpu_seconds": 0.035928,
+        "train_seconds": 0.020805011
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 38,
+        "actual_vocab": 42,
+        "model_path": "/tmp/bpe-frequency-20261014/layout/aa-w6-r0-layoutA/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_effective": 6,
+      "workers_requested": 6
+    },
+    "model_sha256": "61fd069755db37f6c998d647773c8a21a5d6b3a1a12efc8ae10e6bb24633112a",
+    "diagnostic": {
+      "fresh": {},
+      "reuse": {},
+      "layouts": []
+    },
+    "arm": "layoutA",
+    "repeat": 0,
+    "warmup": false
+  },
+  {
+    "case": "ab",
+    "workers": 1,
+    "binary_sha256": "1aa80e599b94909736c0174856146b764e7ef1f5959500ba3cf2ca1a48553f21",
+    "input_sha256": "b8db5a354a318245f77ac41a0e220a84e2a6017dca42970dc579ce5ea1364441",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/tmp/bpe-frequency-20261014/layout/ab-w1-r0-layoutA/time.txt",
+      "taskset",
+      "-c",
+      "0",
+      "/dev/shm/bpe-frequency-20261014/layout-A-runner",
+      "/tmp/bpe-frequency-20261014/layout/ab-w1-r0-layoutA/job.json"
+    ],
+    "environment": {
+      "RAYON_NUM_THREADS": "1",
+      "TOKENIZERS_PARALLELISM": "true"
+    },
+    "seconds": 0.021048965005320497,
+    "returncode": 0,
+    "result": {
+      "attempt_id": "ab-w1-r0-layoutA",
+      "build_id": "layout-A-runner",
+      "effective_affinity": [
+        0
+      ],
+      "input_id": "ab",
+      "metrics": {
+        "export_seconds": 3.1224e-05,
+        "load_seconds": 4.2459e-05,
+        "process_hwm_kib_before_validation": 7064,
+        "train_cpu_seconds": 0.004368,
+        "train_seconds": 0.006469146
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 7,
+        "actual_vocab": 11,
+        "model_path": "/tmp/bpe-frequency-20261014/layout/ab-w1-r0-layoutA/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_effective": 1,
+      "workers_requested": 1
+    },
+    "model_sha256": "fdad32b28715797bf495a2072030dd5198f81a5249b8a99404b56890108667ed",
+    "diagnostic": {
+      "fresh": {},
+      "reuse": {},
+      "layouts": []
+    },
+    "arm": "layoutA",
+    "repeat": 0,
+    "warmup": false
+  },
+  {
+    "case": "ab",
+    "workers": 1,
+    "binary_sha256": "2e6d80b0cf4e3c9fd065eceb6b2c9f537a3ae3f0c8d3a387224066bffbadf09e",
+    "input_sha256": "b8db5a354a318245f77ac41a0e220a84e2a6017dca42970dc579ce5ea1364441",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/tmp/bpe-frequency-20261014/layout/ab-w1-r0-layoutC/time.txt",
+      "taskset",
+      "-c",
+      "0",
+      "/dev/shm/bpe-frequency-20261014/layout-C-runner",
+      "/tmp/bpe-frequency-20261014/layout/ab-w1-r0-layoutC/job.json"
+    ],
+    "environment": {
+      "RAYON_NUM_THREADS": "1",
+      "TOKENIZERS_PARALLELISM": "true"
+    },
+    "seconds": 0.018847605999326333,
+    "returncode": 0,
+    "result": {
+      "attempt_id": "ab-w1-r0-layoutC",
+      "build_id": "layout-C-runner",
+      "effective_affinity": [
+        0
+      ],
+      "input_id": "ab",
+      "metrics": {
+        "export_seconds": 3.149e-05,
+        "load_seconds": 2.9624e-05,
+        "process_hwm_kib_before_validation": 7116,
+        "train_cpu_seconds": 0.0036000000000000003,
+        "train_seconds": 0.005335627
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 7,
+        "actual_vocab": 11,
+        "model_path": "/tmp/bpe-frequency-20261014/layout/ab-w1-r0-layoutC/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_effective": 1,
+      "workers_requested": 1
+    },
+    "model_sha256": "fdad32b28715797bf495a2072030dd5198f81a5249b8a99404b56890108667ed",
+    "diagnostic": {
+      "fresh": {},
+      "reuse": {},
+      "layouts": []
+    },
+    "arm": "layoutC",
+    "repeat": 0,
+    "warmup": false
+  },
+  {
+    "case": "ab",
+    "workers": 6,
+    "binary_sha256": "1aa80e599b94909736c0174856146b764e7ef1f5959500ba3cf2ca1a48553f21",
+    "input_sha256": "b8db5a354a318245f77ac41a0e220a84e2a6017dca42970dc579ce5ea1364441",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/tmp/bpe-frequency-20261014/layout/ab-w6-r0-layoutA/time.txt",
+      "taskset",
+      "-c",
+      "0,1,2,3,4,5",
+      "/dev/shm/bpe-frequency-20261014/layout-A-runner",
+      "/tmp/bpe-frequency-20261014/layout/ab-w6-r0-layoutA/job.json"
+    ],
+    "environment": {
+      "RAYON_NUM_THREADS": "6",
+      "TOKENIZERS_PARALLELISM": "true"
+    },
+    "seconds": 0.018767431989545003,
+    "returncode": 0,
+    "result": {
+      "attempt_id": "ab-w6-r0-layoutA",
+      "build_id": "layout-A-runner",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "input_id": "ab",
+      "metrics": {
+        "export_seconds": 3.8177e-05,
+        "load_seconds": 4.0246e-05,
+        "process_hwm_kib_before_validation": 7048,
+        "train_cpu_seconds": 0.008273,
+        "train_seconds": 0.005139519
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 7,
+        "actual_vocab": 11,
+        "model_path": "/tmp/bpe-frequency-20261014/layout/ab-w6-r0-layoutA/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_effective": 6,
+      "workers_requested": 6
+    },
+    "model_sha256": "fdad32b28715797bf495a2072030dd5198f81a5249b8a99404b56890108667ed",
+    "diagnostic": {
+      "fresh": {},
+      "reuse": {},
+      "layouts": []
+    },
+    "arm": "layoutA",
+    "repeat": 0,
+    "warmup": false
+  },
+  {
+    "case": "ab",
+    "workers": 6,
+    "binary_sha256": "2e6d80b0cf4e3c9fd065eceb6b2c9f537a3ae3f0c8d3a387224066bffbadf09e",
+    "input_sha256": "b8db5a354a318245f77ac41a0e220a84e2a6017dca42970dc579ce5ea1364441",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/tmp/bpe-frequency-20261014/layout/ab-w6-r0-layoutC/time.txt",
+      "taskset",
+      "-c",
+      "0,1,2,3,4,5",
+      "/dev/shm/bpe-frequency-20261014/layout-C-runner",
+      "/tmp/bpe-frequency-20261014/layout/ab-w6-r0-layoutC/job.json"
+    ],
+    "environment": {
+      "RAYON_NUM_THREADS": "6",
+      "TOKENIZERS_PARALLELISM": "true"
+    },
+    "seconds": 0.016000949995941482,
+    "returncode": 0,
+    "result": {
+      "attempt_id": "ab-w6-r0-layoutC",
+      "build_id": "layout-C-runner",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "input_id": "ab",
+      "metrics": {
+        "export_seconds": 3.2064e-05,
+        "load_seconds": 3.6799e-05,
+        "process_hwm_kib_before_validation": 7368,
+        "train_cpu_seconds": 0.006154000000000001,
+        "train_seconds": 0.004329521
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 7,
+        "actual_vocab": 11,
+        "model_path": "/tmp/bpe-frequency-20261014/layout/ab-w6-r0-layoutC/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_effective": 6,
+      "workers_requested": 6
+    },
+    "model_sha256": "fdad32b28715797bf495a2072030dd5198f81a5249b8a99404b56890108667ed",
+    "diagnostic": {
+      "fresh": {},
+      "reuse": {},
+      "layouts": []
+    },
+    "arm": "layoutC",
+    "repeat": 0,
+    "warmup": false
+  },
+  {
+    "case": "alias",
+    "workers": 1,
+    "binary_sha256": "1aa80e599b94909736c0174856146b764e7ef1f5959500ba3cf2ca1a48553f21",
+    "input_sha256": "2b878f4e2647ed683047ebdc023e6695ec1734ab1e8cde2d1ca57709b4174031",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/tmp/bpe-frequency-20261014/layout/alias-w1-r0-layoutA/time.txt",
+      "taskset",
+      "-c",
+      "0",
+      "/dev/shm/bpe-frequency-20261014/layout-A-runner",
+      "/tmp/bpe-frequency-20261014/layout/alias-w1-r0-layoutA/job.json"
+    ],
+    "environment": {
+      "RAYON_NUM_THREADS": "1",
+      "TOKENIZERS_PARALLELISM": "true"
+    },
+    "seconds": 0.018234382005175576,
+    "returncode": 0,
+    "result": {
+      "attempt_id": "alias-w1-r0-layoutA",
+      "build_id": "layout-A-runner",
+      "effective_affinity": [
+        0
+      ],
+      "input_id": "alias",
+      "metrics": {
+        "export_seconds": 2.6953e-05,
+        "load_seconds": 3.2144e-05,
+        "process_hwm_kib_before_validation": 7188,
+        "train_cpu_seconds": 0.0063620000000000005,
+        "train_seconds": 0.006398662
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 4,
+        "actual_vocab": 5,
+        "model_path": "/tmp/bpe-frequency-20261014/layout/alias-w1-r0-layoutA/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_effective": 1,
+      "workers_requested": 1
+    },
+    "model_sha256": "63297903068b6dcaf87f44c90b99a697a98d79e591cde58a84f01a96f2053e1a",
+    "diagnostic": {
+      "fresh": {},
+      "reuse": {},
+      "layouts": []
+    },
+    "arm": "layoutA",
+    "repeat": 0,
+    "warmup": false
+  },
+  {
+    "case": "alias",
+    "workers": 1,
+    "binary_sha256": "2e6d80b0cf4e3c9fd065eceb6b2c9f537a3ae3f0c8d3a387224066bffbadf09e",
+    "input_sha256": "2b878f4e2647ed683047ebdc023e6695ec1734ab1e8cde2d1ca57709b4174031",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/tmp/bpe-frequency-20261014/layout/alias-w1-r0-layoutC/time.txt",
+      "taskset",
+      "-c",
+      "0",
+      "/dev/shm/bpe-frequency-20261014/layout-C-runner",
+      "/tmp/bpe-frequency-20261014/layout/alias-w1-r0-layoutC/job.json"
+    ],
+    "environment": {
+      "RAYON_NUM_THREADS": "1",
+      "TOKENIZERS_PARALLELISM": "true"
+    },
+    "seconds": 0.01905513599922415,
+    "returncode": 0,
+    "result": {
+      "attempt_id": "alias-w1-r0-layoutC",
+      "build_id": "layout-C-runner",
+      "effective_affinity": [
+        0
+      ],
+      "input_id": "alias",
+      "metrics": {
+        "export_seconds": 3.3272e-05,
+        "load_seconds": 4.3181e-05,
+        "process_hwm_kib_before_validation": 7300,
+        "train_cpu_seconds": 0.005311000000000001,
+        "train_seconds": 0.005310603
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 4,
+        "actual_vocab": 5,
+        "model_path": "/tmp/bpe-frequency-20261014/layout/alias-w1-r0-layoutC/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_effective": 1,
+      "workers_requested": 1
+    },
+    "model_sha256": "63297903068b6dcaf87f44c90b99a697a98d79e591cde58a84f01a96f2053e1a",
+    "diagnostic": {
+      "fresh": {},
+      "reuse": {},
+      "layouts": []
+    },
+    "arm": "layoutC",
+    "repeat": 0,
+    "warmup": false
+  },
+  {
+    "case": "alias",
+    "workers": 6,
+    "binary_sha256": "1aa80e599b94909736c0174856146b764e7ef1f5959500ba3cf2ca1a48553f21",
+    "input_sha256": "2b878f4e2647ed683047ebdc023e6695ec1734ab1e8cde2d1ca57709b4174031",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/tmp/bpe-frequency-20261014/layout/alias-w6-r0-layoutA/time.txt",
+      "taskset",
+      "-c",
+      "0,1,2,3,4,5",
+      "/dev/shm/bpe-frequency-20261014/layout-A-runner",
+      "/tmp/bpe-frequency-20261014/layout/alias-w6-r0-layoutA/job.json"
+    ],
+    "environment": {
+      "RAYON_NUM_THREADS": "6",
+      "TOKENIZERS_PARALLELISM": "true"
+    },
+    "seconds": 0.016568170001846738,
+    "returncode": 0,
+    "result": {
+      "attempt_id": "alias-w6-r0-layoutA",
+      "build_id": "layout-A-runner",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "input_id": "alias",
+      "metrics": {
+        "export_seconds": 2.7225e-05,
+        "load_seconds": 3.2249e-05,
+        "process_hwm_kib_before_validation": 7416,
+        "train_cpu_seconds": 0.006924,
+        "train_seconds": 0.004876029
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 4,
+        "actual_vocab": 5,
+        "model_path": "/tmp/bpe-frequency-20261014/layout/alias-w6-r0-layoutA/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_effective": 6,
+      "workers_requested": 6
+    },
+    "model_sha256": "63297903068b6dcaf87f44c90b99a697a98d79e591cde58a84f01a96f2053e1a",
+    "diagnostic": {
+      "fresh": {},
+      "reuse": {},
+      "layouts": []
+    },
+    "arm": "layoutA",
+    "repeat": 0,
+    "warmup": false
+  },
+  {
+    "case": "alias",
+    "workers": 6,
+    "binary_sha256": "2e6d80b0cf4e3c9fd065eceb6b2c9f537a3ae3f0c8d3a387224066bffbadf09e",
+    "input_sha256": "2b878f4e2647ed683047ebdc023e6695ec1734ab1e8cde2d1ca57709b4174031",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/tmp/bpe-frequency-20261014/layout/alias-w6-r0-layoutC/time.txt",
+      "taskset",
+      "-c",
+      "0,1,2,3,4,5",
+      "/dev/shm/bpe-frequency-20261014/layout-C-runner",
+      "/tmp/bpe-frequency-20261014/layout/alias-w6-r0-layoutC/job.json"
+    ],
+    "environment": {
+      "RAYON_NUM_THREADS": "6",
+      "TOKENIZERS_PARALLELISM": "true"
+    },
+    "seconds": 0.019483429001411423,
+    "returncode": 0,
+    "result": {
+      "attempt_id": "alias-w6-r0-layoutC",
+      "build_id": "layout-C-runner",
+      "effective_affinity": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "input_id": "alias",
+      "metrics": {
+        "export_seconds": 2.974e-05,
+        "load_seconds": 4.3049e-05,
+        "process_hwm_kib_before_validation": 7308,
+        "train_cpu_seconds": 0.008793,
+        "train_seconds": 0.006935099
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 4,
+        "actual_vocab": 5,
+        "model_path": "/tmp/bpe-frequency-20261014/layout/alias-w6-r0-layoutC/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_effective": 6,
+      "workers_requested": 6
+    },
+    "model_sha256": "63297903068b6dcaf87f44c90b99a697a98d79e591cde58a84f01a96f2053e1a",
+    "diagnostic": {
+      "fresh": {},
+      "reuse": {},
+      "layouts": []
+    },
+    "arm": "layoutC",
+    "repeat": 0,
+    "warmup": false
+  }
+]

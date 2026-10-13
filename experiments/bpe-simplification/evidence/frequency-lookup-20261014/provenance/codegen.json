@@ -1,0 +1,40 @@
+{
+  "A": {
+    "functions": {
+      "AB": {
+        "symbol": "_RNCNvMNtNtNtNtCsgHLVOFInvdC_8tk_train8trainers3bpe6corpus5mergeNtB6_6Corpus13prepare_freshs2_0Bc_",
+        "size": 5753,
+        "stack_reservation": 648,
+        "prologue_pushes": [
+          "%rbp",
+          "%r15",
+          "%r14",
+          "%r13",
+          "%r12",
+          "%rbx"
+        ]
+      }
+    },
+    "binary_sha256": "ecce63d956b7d8a245aaa8c86c2445ca152f5f14aefadf4d8f69f753935386d7",
+    "size": "   text\t   data\t    bss\t    dec\t    hex\tfilename\n1420917\t  32425\t   1600\t1454942\t 16335e\t/dev/shm/bpe-frequency-20261014/A-full-runner\n"
+  },
+  "C": {
+    "functions": {
+      "AB": {
+        "symbol": "_RNCNvMNtNtNtNtCsigKge7u8hP3_8tk_train8trainers3bpe6corpus5mergeNtB6_6Corpus13prepare_freshs2_0Bc_",
+        "size": 5673,
+        "stack_reservation": 648,
+        "prologue_pushes": [
+          "%rbp",
+          "%r15",
+          "%r14",
+          "%r13",
+          "%r12",
+          "%rbx"
+        ]
+      }
+    },
+    "binary_sha256": "08c6ab97063f8ae65120b805522737c8e3e4cb43279ab2511b82d419746c0c48",
+    "size": "   text\t   data\t    bss\t    dec\t    hex\tfilename\n1420841\t  32449\t   1576\t1454866\t 163312\t/dev/shm/bpe-frequency-20261014/C-full-runner\n"
+  }
+}

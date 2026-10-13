@@ -1,0 +1,60 @@
+{
+  "case": "aa",
+  "workers": 6,
+  "binary_sha256": "1aa80e599b94909736c0174856146b764e7ef1f5959500ba3cf2ca1a48553f21",
+  "input_sha256": "02e4d469ce56b27c735d5b2cc5721396b6d05cdc4f5bde4ce0ca50ab23bd889d",
+  "command": [
+    "/usr/bin/time",
+    "-v",
+    "-o",
+    "/tmp/bpe-frequency-20261014/layout/aa-w6-r0-layoutA/time.txt",
+    "taskset",
+    "-c",
+    "0,1,2,3,4,5",
+    "/dev/shm/bpe-frequency-20261014/layout-A-runner",
+    "/tmp/bpe-frequency-20261014/layout/aa-w6-r0-layoutA/job.json"
+  ],
+  "environment": {
+    "RAYON_NUM_THREADS": "6",
+    "TOKENIZERS_PARALLELISM": "true"
+  },
+  "seconds": 0.03701698000077158,
+  "returncode": 0,
+  "result": {
+    "attempt_id": "aa-w6-r0-layoutA",
+    "build_id": "layout-A-runner",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "aa",
+    "metrics": {
+      "export_seconds": 0.000719458,
+      "load_seconds": 0.000576324,
+      "process_hwm_kib_before_validation": 7400,
+      "train_cpu_seconds": 0.035928,
+      "train_seconds": 0.020805011
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 38,
+      "actual_vocab": 42,
+      "model_path": "/tmp/bpe-frequency-20261014/layout/aa-w6-r0-layoutA/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_effective": 6,
+    "workers_requested": 6
+  },
+  "model_sha256": "61fd069755db37f6c998d647773c8a21a5d6b3a1a12efc8ae10e6bb24633112a",
+  "diagnostic": {
+    "fresh": {},
+    "reuse": {},
+    "layouts": []
+  }
+}

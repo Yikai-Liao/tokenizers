@@ -1,0 +1,61 @@
+{
+  "seed": 20261014,
+  "schedule": [
+    {
+      "case": "aa",
+      "workers": 1,
+      "repeat": 0,
+      "order": [
+        "diag"
+      ]
+    },
+    {
+      "case": "ab",
+      "workers": 1,
+      "repeat": 0,
+      "order": [
+        "diag"
+      ]
+    },
+    {
+      "case": "reserved",
+      "workers": 1,
+      "repeat": 0,
+      "order": [
+        "diag"
+      ]
+    },
+    {
+      "case": "alias",
+      "workers": 1,
+      "repeat": 0,
+      "order": [
+        "diag"
+      ]
+    },
+    {
+      "case": "length-reuse",
+      "workers": 1,
+      "repeat": 0,
+      "order": [
+        "diag"
+      ]
+    },
+    {
+      "case": "en-bytelevel",
+      "workers": 1,
+      "repeat": 0,
+      "order": [
+        "diag"
+      ]
+    },
+    {
+      "case": "zh256",
+      "workers": 1,
+      "repeat": 0,
+      "order": [
+        "diag"
+      ]
+    }
+  ]
+}

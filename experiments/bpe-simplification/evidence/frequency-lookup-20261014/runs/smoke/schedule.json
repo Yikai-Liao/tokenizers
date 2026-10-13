@@ -1,0 +1,95 @@
+{
+  "seed": 20261014,
+  "schedule": [
+    {
+      "case": "aa",
+      "workers": 1,
+      "repeat": 0,
+      "order": [
+        "diag",
+        "A"
+      ]
+    },
+    {
+      "case": "aa",
+      "workers": 6,
+      "repeat": 0,
+      "order": [
+        "diag",
+        "A"
+      ]
+    },
+    {
+      "case": "ab",
+      "workers": 1,
+      "repeat": 0,
+      "order": [
+        "A",
+        "diag"
+      ]
+    },
+    {
+      "case": "ab",
+      "workers": 6,
+      "repeat": 0,
+      "order": [
+        "A",
+        "diag"
+      ]
+    },
+    {
+      "case": "reserved",
+      "workers": 1,
+      "repeat": 0,
+      "order": [
+        "A",
+        "diag"
+      ]
+    },
+    {
+      "case": "reserved",
+      "workers": 6,
+      "repeat": 0,
+      "order": [
+        "A",
+        "diag"
+      ]
+    },
+    {
+      "case": "alias",
+      "workers": 1,
+      "repeat": 0,
+      "order": [
+        "A",
+        "diag"
+      ]
+    },
+    {
+      "case": "alias",
+      "workers": 6,
+      "repeat": 0,
+      "order": [
+        "diag",
+        "A"
+      ]
+    },
+    {
+      "case": "length-reuse",
+      "workers": 1,
+      "repeat": 0,
+      "order": [
+        "A",
+        "diag"
+      ]
+    },
+    {
+      "case": "length-reuse",
+      "workers": 6,
+      "repeat": 0,
+      "order": [
+        "A",
+        "diag"
+      ]
+    }
+  ]
+}

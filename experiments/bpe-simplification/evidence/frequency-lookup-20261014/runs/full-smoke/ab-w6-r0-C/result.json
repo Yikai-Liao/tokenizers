@@ -1,0 +1,60 @@
+{
+  "case": "ab",
+  "workers": 6,
+  "binary_sha256": "08c6ab97063f8ae65120b805522737c8e3e4cb43279ab2511b82d419746c0c48",
+  "input_sha256": "b8db5a354a318245f77ac41a0e220a84e2a6017dca42970dc579ce5ea1364441",
+  "command": [
+    "/usr/bin/time",
+    "-v",
+    "-o",
+    "/tmp/bpe-frequency-20261014/full-smoke/ab-w6-r0-C/time.txt",
+    "taskset",
+    "-c",
+    "0,1,2,3,4,5",
+    "/dev/shm/bpe-frequency-20261014/C-full-runner",
+    "/tmp/bpe-frequency-20261014/full-smoke/ab-w6-r0-C/job.json"
+  ],
+  "environment": {
+    "RAYON_NUM_THREADS": "6",
+    "TOKENIZERS_PARALLELISM": "true"
+  },
+  "seconds": 0.026075330999447033,
+  "returncode": 0,
+  "result": {
+    "attempt_id": "ab-w6-r0-C",
+    "build_id": "C-full-runner",
+    "effective_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "input_id": "ab",
+    "metrics": {
+      "export_seconds": 0.004089734,
+      "load_seconds": 3.6637e-05,
+      "process_hwm_kib_before_validation": 7840,
+      "train_cpu_seconds": 0.009013,
+      "train_seconds": 0.005558557
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 7,
+      "actual_vocab": 11,
+      "model_path": "/tmp/bpe-frequency-20261014/full-smoke/ab-w6-r0-C/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_effective": 6,
+    "workers_requested": 6
+  },
+  "model_sha256": "e09cef65d1519591a3d55dfbdab892d5a9d38d0aef4f2f3b1c9560d9c095fc88",
+  "diagnostic": {
+    "fresh": {},
+    "reuse": {},
+    "layouts": []
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "protocol_version": 1,
+  "attempt_id": "en-bytelevel-reuse-w1-r0-A",
+  "build_id": "A-full-runner",
+  "input_id": "en-bytelevel-reuse",
+  "mode": "core",
+  "workers": 1,
+  "output": "/tmp/bpe-frequency-20261014/baseline-repeat/en-bytelevel-reuse-w1-r0-A/model.json",
+  "input": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/inputs/en-bytelevel.json",
+  "pretokenizer": "bytelevel_regex",
+  "trainer": {
+    "vocab_size": 30000,
+    "min_frequency": 2,
+    "prefix": null,
+    "suffix": "a",
+    "max_token_length": null
+  }
+}
