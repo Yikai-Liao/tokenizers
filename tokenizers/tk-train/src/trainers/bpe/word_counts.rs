@@ -100,6 +100,8 @@ impl<'a> From<&'a WordCounts> for WordCountsView<'a> {
 
 impl<'a> WordCountsView<'a> {
     pub(super) fn len(self) -> usize {
+        // Exactly one representation is active; the absent map or empty entry
+        // slice contributes zero to the borrowed view's length.
         self.map.map_or(0, |map| map.len()) + self.entries.len()
     }
 

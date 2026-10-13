@@ -321,6 +321,8 @@ impl BpeTrainer {
     ) -> Result<MergeOutcome> {
         let reuse = index.mode() == TrainingMode::Reuse;
         let mut selected = Vec::new();
+        // A fresh rule can append one ID: cap the batch by both the remaining
+        // vocabulary slots and the 256-rule scheduling limit. Reuse runs alone.
         let cap = if reuse {
             1
         } else {
@@ -338,12 +340,16 @@ impl BpeTrainer {
                 break;
             };
             let pair = priority.pair();
+            // AA cannot share a batch. For AB, crossed head/tail IDs would
+            // overlap edits; equal heads or equal tails alone remain compatible.
             if !selected.is_empty()
                 && (pair.0 == pair.1 || tails.contains(&pair.0) || heads.contains(&pair.1))
             {
                 break;
             }
             let resolved = vocabulary.resolve(pair)?;
+            // A reserved but never-activated ID is safe in fresh mode. Restart
+            // only when the result reuses an identity that has had occurrences.
             if !reuse
                 && resolved.already_in_vocabulary
                 && corpus.has_been_activated(resolved.merged_id)
@@ -364,6 +370,8 @@ impl BpeTrainer {
                 merged_id: resolved.merged_id,
                 positions: candidate.positions,
             });
+            // Existing identities lack the fresh-ID priority proof; AA needs
+            // global overlap selection. Either kind closes this one-rule batch.
             if resolved.already_in_vocabulary || pair.0 == pair.1 {
                 break;
             }

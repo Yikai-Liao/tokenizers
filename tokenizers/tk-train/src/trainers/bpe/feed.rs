@@ -61,6 +61,8 @@ where
     let mut singles = workers;
     let batches = std::iter::from_fn(move || {
         let size = if singles > 0 { 1 } else { FEED_BATCH_SIZE };
+        // Exhaust the one-input seed budget without wrapping: once it reaches
+        // zero, every subsequent bridge item keeps the regular batch size.
         singles = singles.saturating_sub(1);
         let batch: Vec<_> = iterator.by_ref().take(size).collect();
         (!batch.is_empty()).then_some(batch)
@@ -74,7 +76,8 @@ where
             flush(&mut counts);
             Ok(())
         })
-        // Ordinary reduction completes all callbacks despite ordinary errors.
+        // Both fold results already exist: left.and(right) keeps the left error
+        // when present, otherwise the right result. Reduction does not skip callbacks.
         .reduce(|| Ok(()), |left, right| left.and(right))?;
 
     let shared = shared.unwrap();

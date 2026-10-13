@@ -116,21 +116,32 @@ impl<'input> CorpusPlan<'input> {
                     weight,
                 });
             }
+            // Each word contributes its retained symbols and one trailing
+            // separator; length already includes the leading separator.
             length = length
                 .checked_add(symbols)
                 .and_then(|n| n.checked_add(1))
                 .ok_or("BPE corpus exceeds resident index bounds")?;
+            // A word with n retained symbols has max(n - 1, 0) adjacent edges.
+            // Weight each edge by word frequency; u128 checks the total mass
+            // without imposing a total-u64 limit on fresh pair counts.
             mass += u128::from(weight) * symbols.saturating_sub(1) as u128;
         }
+        // Bound bytes using the widest slot representation. Division avoids
+        // overflowing the multiplication that an allocation-size check needs.
         if length > isize::MAX as usize / std::mem::size_of::<AtomicU32>() {
             return Err("BPE corpus exceeds resident allocation bounds".into());
         }
+        // Reuse and nonempty affixes require the signed ledger contract: both
+        // total edge mass and each word's weight must fit i64 independently.
         if (mode == TrainingMode::Reuse || !ids.is_plain())
             && (mass > i64::MAX as u128
                 || words.iter().any(|(_, weight)| **weight > i64::MAX as u64))
         {
             return Err("BPE identity-reuse weighted edge mass or word weight exceeds i64".into());
         }
+        // Descending weights put all frequency-one words in one contiguous run.
+        // Its exclusive end is the next run's start, or the corpus end.
         let unit_weight_range = weight_runs
             .iter()
             .position(|run| run.weight == 1)
@@ -163,11 +174,16 @@ impl<'input> CorpusPlan<'input> {
         while begin < n {
             let start = self.starts[begin];
             let one_word_end = begin + 1;
+            // The last word must be admitted; otherwise take the whole suffix
+            // only when all remaining symbols and separators fit the slot budget.
             let end = if one_word_end == n || self.length - start <= slots {
                 n
             } else {
                 // The first word is admitted even when oversized. Each later
                 // boundary closes one additional word; an exact-budget end fits.
+                // Search starts after the first word's end. An exact hit at
+                // offset k closes k + 1 additional words; an insertion index
+                // counts only earlier boundaries whose spans fit the budget.
                 let additional_words = match slice_group_by::exponential_search_by(
                     &self.starts[one_word_end + 1..],
                     |&next| (next - start).cmp(&slots),
@@ -300,6 +316,8 @@ impl Corpus {
                 end: self.len(),
             };
         }
+        // Cached runs are half-open: a coordinate at end belongs to the next
+        // weight run and must fall through to the directory lookup.
         if let Some(range) = &self.unit_weight_range
             && position >= range.start
             && position < range.end
@@ -309,6 +327,8 @@ impl Corpus {
                 end: range.end,
             };
         }
+        // partition_point returns the first later run; its predecessor owns
+        // this coordinate. Callers supply a coordinate at or after the first start.
         let i = self
             .weight_runs
             .partition_point(|run| run.start <= position)
@@ -323,10 +343,14 @@ impl Corpus {
     }
 
     fn word(&self, position: usize) -> usize {
+        // The last word start at or before this coordinate is its owning word;
+        // valid historical positions guarantee that a predecessor exists.
         self.starts.partition_point(|&start| start <= position) - 1
     }
 
     fn word_range(&self, word: usize) -> Range<usize> {
+        // The slot immediately before the next word (or corpus end) is this
+        // word's separator. Subtract it from the exclusive end of the scan.
         self.starts[word]..self.starts.get(word + 1).copied().unwrap_or(self.len()) - 1
     }
 
@@ -352,6 +376,9 @@ impl Corpus {
         let left = self.fixed_id_span(pair.0);
         let total = left + self.fixed_id_span(pair.1);
         move |position| {
+            // Zero spans mark inactive IDs (total == left means an inactive
+            // right ID). The exclusive end must still name a resident slot,
+            // and the right token must begin exactly one left span away.
             if self.token(position) != pair.0
                 || left == 0
                 || total == left
@@ -403,11 +430,15 @@ impl Corpus {
         }
         let span = self.occurrence_span(position);
         let right = position + span;
+        // Reject an inactive left endpoint or a right start outside the plane
+        // before reading it; holes are skipped by the left occurrence's span.
         if span == 0 || right >= self.len() || self.token(right) != pair.1 {
             return None;
         }
         let right_span = self.occurrence_span(right);
         let after = right + right_span;
+        // The right occurrence must be active and its exclusive end must remain
+        // resident, because preparation reads the neighbor at that coordinate.
         (right_span != 0 && after < self.len()).then_some(position..after)
     }
 
@@ -451,6 +482,7 @@ impl Corpus {
             while self.token(p) != WORD_SEPARATOR_ID {
                 let n = self.fixed_id_span(self.token(p));
                 values[p].store(n, Ordering::Relaxed);
+                // A span covers [p, p + n): its final endpoint is p + n - 1.
                 values[p + n - 1].store(n, Ordering::Relaxed);
                 p += n;
             }
@@ -468,7 +500,8 @@ impl Corpus {
         };
         match &self.occurrence_spans {
             None => {
-                // One rule has shared geometry. Cache it before any token store.
+                // One rule has shared geometry. Cache it before any token store:
+                // first + left locates its right token, whose span completes total.
                 let left = self.fixed_id_span(self.token(first));
                 let total = left + self.fixed_id_span(self.token(first + left));
                 for &start in starts {
@@ -485,6 +518,8 @@ impl Corpus {
                     let total = left + spans[right].load(Ordering::Relaxed);
                     let after = start + total;
                     self.tokens.replace_pair(start, right, after, merged_id);
+                    // A one-slot right token is the new tail itself; clear its
+                    // old span only when that right start becomes an interior hole.
                     if right + 1 != after {
                         spans[right].store(0, Ordering::Relaxed);
                     }
@@ -648,6 +683,8 @@ mod tests {
         let expected: Vec<_> = (0..40)
             .filter(|&word| word != 0 && word != 21)
             .map(|word| {
+                // The leading separator consumes one slot; each [a, b, sep]
+                // word contributes three more slots to the original coordinates.
                 let start = 1 + word * 3;
                 let weight = if word < 10 {
                     9

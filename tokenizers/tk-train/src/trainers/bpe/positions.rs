@@ -13,6 +13,8 @@ mod codec {
     pub(super) const RESTART: usize = 128;
 
     pub(super) fn gap_width(gap: u64) -> usize {
+        // LEB128 carries seven value bits per byte. Round the significant-bit
+        // count upward, reserving one byte even for a zero gap.
         (u64::BITS - gap.leading_zeros()).div_ceil(7).max(1) as usize
     }
 
@@ -58,6 +60,8 @@ mod codec {
             if self.bytes.is_empty() {
                 return None;
             }
+            // Every RESTART-th item is an absolute u64 seed; all intervening
+            // items are gaps relative to the previously decoded coordinate.
             if self.index.is_multiple_of(RESTART) {
                 self.position = read_absolute(self.bytes);
                 self.bytes = &self.bytes[8..];
@@ -79,6 +83,8 @@ mod codec {
         #[test]
         fn gap_width_matches_appended_bytes() {
             let mut gaps = vec![0, 1, 127, 128, u64::MAX];
+            // Each seven-bit boundary increases LEB128 width by one byte;
+            // exercise the final value before it and the first value after it.
             for bit in (7..64).step_by(7) {
                 gaps.extend([(1u64 << bit) - 1, 1u64 << bit]);
             }
@@ -214,6 +220,9 @@ impl Positions {
             let (first, begin) = (remaining, start);
             let mut count = 0;
             while let Some(leaf) = remaining.first() {
+                // Fill the remaining chunk budget with whole restart blocks:
+                // ceil(max(target - count, 1) / RESTART) * RESTART. Clamp at
+                // this leaf's tail; saturating arithmetic handles huge targets.
                 let take = target
                     .saturating_sub(count)
                     .max(1)
@@ -230,6 +239,8 @@ impl Positions {
                     break;
                 }
             }
+            // Include every fully consumed leaf, plus the current leaf only
+            // when part of it was consumed. end is an exclusive leaf index.
             let end = first.len() - remaining.len() + usize::from(start != 0);
             (count != 0).then(|| read(&first[..end], begin).take(count))
         })
@@ -239,6 +250,8 @@ impl Positions {
     /// directory. Equal values at a preceding leaf/block tail remain visible.
     pub(super) fn iter_from(&self, target: u64) -> impl Iterator<Item = u64> + '_ {
         let leaves = self.leaves();
+        // Empty leaves have no readable tail; nonempty tails strictly below
+        // target can be skipped. Equality must retain duplicates in that leaf.
         let index = leaves.partition_point(|leaf| leaf.len() == 0 || leaf.last() < target);
         let start = leaves
             .get(index)
@@ -259,6 +272,8 @@ impl Positions {
 
 impl Leaf {
     fn len(&self) -> usize {
+        // Stored counts include the extra one that keeps the NonZero niche;
+        // remove it to recover the logical item count validated during append.
         (self.len.get() - 1) as usize
     }
 
@@ -282,11 +297,15 @@ impl Leaf {
         if groups <= 1 {
             return &[];
         }
+        // Skip the eight-byte tail cache and expose one offset per live block;
+        // unused reserved directory capacity is outside this slice.
         self.bytes[8..8 + groups * OFFSET_BYTES].as_chunks().0
     }
 
     // Nonempty leaves store the tail cache before the reserved directory.
     fn data(&self) -> &[u8] {
+        // Payload begins after the tail cache and the full reserved directory,
+        // including directory entries not yet logically populated.
         let data_start =
             8 + Self::reserved_directory_bytes(self.len()).expect("validated leaf layout");
         &self.bytes[data_start..]
@@ -307,6 +326,8 @@ impl Leaf {
             .len
             .checked_add(1)
             .ok_or("BPE position count exceeds u64")?;
+        // Decode the proposed count before mutating bytes, so an item count
+        // that fits u64 but exceeds resident usize bounds fails atomically.
         let next_len = usize::try_from(encoded_len.get() - 1)?;
         if len.is_multiple_of(RESTART) {
             return self.push_restart(position, next_len, encoded_len);
@@ -331,6 +352,8 @@ impl Leaf {
             .ok_or("BPE position layout exceeds usize")?;
         // Reserve before mutation. A 1.5x capacity step remains amortized linear
         // while retaining less slack in the immutable published leaves.
+        // A large append can exceed that geometric step, so grow to at least
+        // new_size and reserve only the capacity missing from the current length.
         if new_size > self.bytes.capacity() {
             let capacity = self.bytes.capacity();
             let capacity = capacity.saturating_add(capacity / 2).max(new_size);
@@ -349,13 +372,19 @@ impl Leaf {
         encoded_len: NonZeroU64,
     ) -> Result<()> {
         let len = self.len();
+        // Empty leaves have no cached tail to compare. Every later absolute
+        // restart seed must preserve the same nondecreasing order as gaps.
         if len != 0 && position < self.last() {
             return Err("BPE positions are not sorted".into());
         }
+        // Directory growth shifts the data area's origin; this displacement
+        // is separate from the bytes needed for the new absolute restart seed.
         let old_data_start = 8 + Self::reserved_directory_bytes(len)?;
         let new_data_start = 8 + Self::reserved_directory_bytes(next_len)?;
         let growth = new_data_start - old_data_start;
         let data_end = self.bytes.len();
+        // The first item needs both an eight-byte tail cache and an eight-byte
+        // seed (16 bytes); later restarts add only a seed (8), plus directory growth.
         self.reserve(
             growth
                 .checked_add(if len == 0 { 16 } else { 8 })
@@ -370,6 +399,9 @@ impl Leaf {
                 .copy_within(old_data_start..data_end, new_data_start);
             self.bytes[old_data_start..new_data_start].fill(0);
         }
+        // A later restart writes a directory entry only when a directory exists.
+        // len / RESTART is its block ordinal; the stored offset excludes headers
+        // and still points at the old payload end after directory relocation.
         if len != 0 && new_data_start > 8 {
             let entry = 8 + (len / RESTART) * OFFSET_BYTES;
             self.bytes[entry..entry + OFFSET_BYTES]
@@ -386,6 +418,8 @@ impl Leaf {
         if start == self.len() {
             return Cursor::new(&[], start);
         }
+        // The first block starts at data offset zero even without a directory.
+        // Later aligned starts select their block's cached byte offset.
         let offset = if start == 0 {
             0
         } else {
@@ -402,6 +436,8 @@ impl Leaf {
         }
         let data = self.data();
         // Strict comparison and fallback retain duplicates in the prior block.
+        // Read seeds through relative byte offsets, then convert the preceding
+        // block ordinal into an item index. Saturation keeps the first block at zero.
         directory
             .partition_point(|entry| {
                 codec::read_absolute(&data[usize::from_le_bytes(*entry)..]) < target
@@ -488,6 +524,8 @@ mod tests {
 
     #[test]
     fn concat_preserves_boundaries_and_chunks() {
+        // Three copies of every coordinate force equal values across both leaf
+        // and restart boundaries while keeping the full sequence sorted.
         let values: Vec<u64> = (0..1300).map(|n| n / 3).collect();
         for width in [1, 2, 3, 127, 128, 129, 700, 1300] {
             let leaves = values

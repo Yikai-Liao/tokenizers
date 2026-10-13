@@ -123,6 +123,8 @@ fn owner(pair: Pair, shard_count: usize) -> usize {
     // Zero seeds keep routing repeatable within this build, without per-call
     // randomness. Hash mixing is provided by the existing ahash dependency.
     const HASHER: ahash::RandomState = ahash::RandomState::with_seeds(0, 0, 0, 0);
+    // Modulo selects exactly one owner in 0..shard_count; the fixed nonzero
+    // shard count also bounds the result before conversion to resident indexing.
     (HASHER.hash_one(pair) % shard_count as u64) as usize
 }
 
@@ -148,6 +150,8 @@ impl PairIndex {
         let shard_count = super::num_workers();
         let domain = corpus.token_count();
         // 1. Count and freeze each whole-word range independently.
+        // The production budget is 2^24 resident slots per range; tests use
+        // 16 slots to force range boundaries on small fixtures.
         let pieces = corpus
             .chunks(if cfg!(test) { 16 } else { 1 << 24 })
             .into_maybe_par_iter()
@@ -319,6 +323,8 @@ enum InitialPairCounts {
 
 impl InitialPairCounts {
     fn new(domain: usize) -> Self {
+        // The dense plane has one cell for every ordered pair: domain squared.
+        // A 256-ID cutoff limits it to 65,536 cells; larger alphabets stay sparse.
         if domain <= 256 {
             Self::Dense {
                 domain,
@@ -334,6 +340,8 @@ impl InitialPairCounts {
     fn record(&mut self, pair: Pair, position: u64, weight: u64) -> Result<()> {
         let state = match self {
             Self::Dense { domain, states } => {
+                // Row-major pair key: left ID chooses a domain-wide row and
+                // right ID chooses its column. Both IDs are below domain.
                 &mut states[pair.0 as usize * *domain + pair.1 as usize]
             }
             Self::Sparse(states) => states.entry(pair).or_default(),
@@ -345,6 +353,8 @@ impl InitialPairCounts {
     }
 
     fn into_entries(self) -> Vec<(Pair, PairAggregate<Positions>)> {
+        // Invert the dense row-major key: quotient is the left ID, remainder
+        // is the right ID. Sparse keys already carry their ordered pair.
         match self {
             Self::Dense { domain, states } => states
                 .into_iter()
@@ -384,6 +394,8 @@ fn build_owner(pieces: InitialPiece, floor: u64, reuse: bool) -> Result<(Shard, 
     let mut shard = Shard::default();
     let mut candidates = Vec::new();
     for (pair, state) in states {
+        // Reuse retains even below-floor ledger entries for later signed
+        // adjustments. Fresh mode can retire those pairs immediately.
         if reuse || state.count >= floor {
             let positions = Positions::concat(state.positions)?;
             shard.counts.insert(pair, state.count);
@@ -469,6 +481,8 @@ impl Shard {
                 .map(|fragment| fragment.positions);
             // A positive reuse ledger publishes a historical cohort even below
             // the floor; selection applies the floor after correcting its head.
+            // Interpret reuse counts as signed bits, rejecting zero/negative
+            // ledgers. Fresh counts are unsigned and must meet the floor now.
             if (reuse && (count as i64) <= 0) || (!reuse && count < floor) {
                 streams.for_each(drop);
                 continue;

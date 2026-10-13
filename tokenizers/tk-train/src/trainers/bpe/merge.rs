@@ -63,6 +63,8 @@ impl Corpus {
                 let matcher = self.fixed_matcher(pair);
                 let mut previous_end = 0;
                 for coordinate in positions.iter() {
+                    // A historical start must be at or after the previous accepted end
+                    // before matching; overlapping AA starts never read endpoints.
                     if coordinate >= previous_end
                         && let Some(matched) = matcher(self.resident(coordinate))
                     {
@@ -72,6 +74,8 @@ impl Corpus {
                 }
                 drop(positions);
                 // Budget from the original historical payload, not accepted starts.
+                // Aim for four tasks per worker, with at least 4096 starts per task;
+                // ceil division covers any remainder in the original payload.
                 let chunk = original_positions_len
                     .div_ceil(super::super::num_workers() * 4)
                     .max(4096);
@@ -90,6 +94,10 @@ impl Corpus {
                                 positions,
                                 scratch,
                                 |matched, _, _| {
+                                    // All AA matches have the same length. The
+                                    // preceding adjacent match would start one
+                                    // length earlier; guard subtraction, then check
+                                    // the global acceptance set across task cuts.
                                     matched.start >= matched.len()
                                         && accepted_starts
                                             .binary_search(
@@ -98,6 +106,9 @@ impl Corpus {
                                             .is_ok()
                                 },
                                 |after, _| {
+                                    // An accepted start at this match's exclusive
+                                    // end replaces the right neighbor with the
+                                    // same merged ID, even in another task.
                                     accepted_starts
                                         .binary_search(&(after as u64))
                                         .is_ok()
@@ -114,6 +125,8 @@ impl Corpus {
                     .map(|rule| (rule.pair, rule.merged_id))
                     .collect();
                 let total: usize = rules.iter().map(|rule| rule.positions.len()).sum();
+                // Aim for one task per worker; keep nonempty chunks and cap
+                // decoding work at 2^26 historical positions per chunk.
                 let chunk = total
                     .div_ceil(super::super::num_workers())
                     .clamp(1, 1 << 26);
@@ -135,11 +148,18 @@ impl Corpus {
                                 positions,
                                 scratch,
                                 |_, before, prior| {
+                                    // before is the prior token's start. The token
+                                    // preceding prior ends at before - 1; a selected
+                                    // pair ending in prior owns this shared left edge.
+                                    // Coordinate zero has no preceding endpoint.
                                     before != 0
                                         && merged_ids_by_pair
                                             .contains_key(&(self.token(before - 1), prior))
                                 },
                                 |after, next| {
+                                    // Skip the whole right neighbor to read the
+                                    // token after it. If that pair is selected,
+                                    // this edge must use its final merged ID.
                                     merged_ids_by_pair
                                         .get(&(next, self.token(after + self.fixed_id_span(next))))
                                         .copied()
@@ -161,6 +181,8 @@ impl Corpus {
             .map(|p| self.word(self.resident(p)))
             .dedup()
             .collect();
+        // Divide whole word domains across workers, rounding up and retaining
+        // a nonzero chunk size even when the historical list contains no words.
         let chunk = words.len().div_ceil(super::super::num_workers()).max(1);
         let limit = self.birth_pair_span_limit.unwrap_or(usize::MAX);
         words
@@ -222,6 +244,8 @@ impl Corpus {
                     break;
                 }
                 if next != p {
+                    // The slot just before a sought start is the preceding
+                    // token's tail. Its span reconstructs that token's start.
                     let id = self.token(next - 1);
                     left_neighbor = (id != WORD_SEPARATOR_ID).then(|| {
                         let span = self.occurrence_span(next - 1);
@@ -242,6 +266,8 @@ impl Corpus {
                         left.token_id,
                         left.start,
                         weight,
+                        // Gate the new pair's combined occurrence length;
+                        // equality is excluded by the strict birth-length limit.
                         left.span + matched.len() < limit,
                     )?;
                 }
@@ -253,6 +279,8 @@ impl Corpus {
                         next,
                         p,
                         weight,
+                        // The right neighbor comes from the joined snapshot;
+                        // its span plus this match is the new pair's length.
                         matched.len() + self.occurrence_span(matched.end) < limit,
                     )?;
                 }
@@ -270,6 +298,8 @@ impl Corpus {
                     start: p,
                     span,
                 });
+                // A stale coordinate may have zero span. Still advance one
+                // slot so a whole-word scan cannot stall on that hole.
                 p += span.max(1);
             }
         }
@@ -332,6 +362,8 @@ impl<'a> NeighborChanges<'a> {
         let left = side == EdgeSide::Left;
         let changes = &mut self.changes[side as usize];
         let slot = &mut self.scratch.indices[side as usize][neighbor as usize];
+        // Scratch indices survive earlier tasks. Reuse a slot only when it
+        // names a current group whose neighbor occupies this side's pair field.
         if changes
             .get(*slot as usize)
             .is_none_or(|change| (if left { change.born.0 } else { change.born.1 }) != neighbor)
@@ -382,6 +414,8 @@ impl<'a> NeighborChanges<'a> {
     }
 
     fn finish(self) -> Vec<PairChange<Positions>> {
+        // Removal-only events need a nonzero weight; zero-weight births still
+        // carry historical positions and must reach the index.
         self.changes
             .into_iter()
             .flatten()
@@ -444,6 +478,8 @@ impl FreshPreparation<'_> {
                     prior,
                     before,
                     weight,
+                    // Admit only a neighbor pair strictly shorter than the
+                    // limit, using prior-token span plus merged-match span.
                     span + matched.len() < self.birth_pair_span_limit,
                 )?;
             }
@@ -457,6 +493,8 @@ impl FreshPreparation<'_> {
                 born,
                 p,
                 weight,
+                // A selected right neighbor may also merge: use its final
+                // ID's span in the strict combined-length gate.
                 matched.len() + self.corpus.fixed_id_span(born) < self.birth_pair_span_limit,
             )?;
         }
@@ -532,6 +570,8 @@ mod tests {
                 .unwrap();
             pool.install(|| {
                 let trainer = trainer();
+                // An odd-length AA word leaves one symbol unmerged and is
+                // large enough to exercise two accepted-start chunks per worker.
                 let word = "a".repeat(20_000 * workers + 1);
                 let words = counts(&[(&word, 1)]);
                 let (mut vocabulary, mut corpus, mut index) =
@@ -551,6 +591,8 @@ mod tests {
                 assert_eq!(accepted, (1..word.len()).step_by(2).collect::<Vec<_>>());
                 let changes: Vec<_> = chunks.iter().flat_map(|c| &c.changes).collect();
                 let shared: Vec<_> = changes.iter().filter(|c| c.born == (1, 1)).collect();
+                // N adjacent accepted matches create N - 1 shared boundaries;
+                // each belongs to the left match, so the final start is excluded.
                 assert_eq!(
                     shared.iter().map(|c| c.born_weight).sum::<u64>(),
                     (accepted.len() - 1) as u64

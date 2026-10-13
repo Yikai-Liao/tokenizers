@@ -263,6 +263,7 @@ impl InitialTokenIds {
         let mut decorated = String::new();
         for (index, word) in word_counts.keys().enumerate() {
             ids.activate(word, vocabulary, suffix, &mut decorated)?;
+            // index is zero-based: report each completed 1024-word block.
             if (index + 1) % 1024 == 0
                 && let Some(p) = progress
             {
@@ -270,6 +271,7 @@ impl InitialTokenIds {
             }
         }
         if let Some(p) = progress {
+            // Full blocks were reported above; report only the final remainder.
             p.inc((word_counts.len() % 1024) as u64);
         }
         Ok(ids)
@@ -338,6 +340,8 @@ impl InitialTokenIds {
     }
 
     fn affix(&self, first: bool, last: bool) -> Affix {
+        // Prefixes apply behind the original first character; suffixes apply
+        // to the original last character. Both decorators can apply together.
         match (self.prefix && !first, self.suffix && last) {
             (false, false) => Affix::Plain,
             (true, false) => Affix::Prefix,
@@ -366,6 +370,8 @@ impl InitialTokenIds {
             )
         } else {
             itertools::Either::Right(word.char_indices().filter_map(move |(byte, character)| {
+                // UTF-8 byte offset plus this character's width identifies the
+                // original last character; filtering never moves the word boundary.
                 self.get(
                     character,
                     byte == 0,
@@ -386,6 +392,7 @@ impl InitialTokenIds {
     }
 
     pub(super) fn is_plain(&self) -> bool {
+        // The plain lookup path is valid only when neither decorator is active.
         !self.prefix && !self.suffix
     }
 
@@ -490,6 +497,8 @@ impl BpeTrainer {
             .filter_map(|token| {
                 let mut chars = token.content.chars();
                 let character = chars.next()?;
+                // A special token admits a symbol only when it is exactly one
+                // character and that character actually occurs in the input.
                 (chars.next().is_none() && observed.contains(character as usize))
                     .then_some(character)
             })
@@ -500,6 +509,8 @@ impl BpeTrainer {
 fn observed_characters(word_counts: WordCountsView<'_>) -> FixedBitSet {
     let words: Vec<_> = word_counts.keys().collect();
     let workers = super::num_workers();
+    // Round up to cover the remainder, and keep the chunk width valid for
+    // empty input; each worker scans whole words into its private presence bitmap.
     let chunk = words.len().div_ceil(workers).max(1);
     words
         .maybe_par_chunks(chunk)

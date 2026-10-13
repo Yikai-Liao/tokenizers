@@ -82,6 +82,8 @@ pub(super) fn spans(corpus: &Corpus) -> Vec<usize> {
 #[test]
 fn models_match_reference() {
     let mut seed = 0x58e4_a91du64;
+    // Fixed-seed xorshift64 keeps generated cases reproducible. The three
+    // shifts mix the same state; discarding shifted-out bits is intentional.
     let mut next = || {
         seed ^= seed << 13;
         seed ^= seed >> 7;
@@ -92,6 +94,8 @@ fn models_match_reference() {
     for case in 0..64 {
         let mut words = AHashMap::with_hasher(ahash::RandomState::with_seeds(11, 13, 17, 19));
         for _ in 0..24 {
+            // Every eighth case allows longer words to cross restart boundaries;
+            // the other cases keep small words and frequent alias interactions.
             let length = next() as usize % if case % 8 == 0 { 256 } else { 32 };
             let text: String = (0..length)
                 .map(|_| alphabet[next() as usize % alphabet.len()])
@@ -100,6 +104,9 @@ fn models_match_reference() {
         }
         let mut trainer = trainer();
         trainer.min_frequency = next() % 4;
+        // Cycle length gates and affixes at different strides so the fixed
+        // corpus cases exercise varied combinations. Suffix changes every four
+        // cases, instead of staying locked to the faster prefix/limit cycles.
         trainer.max_token_length =
             [None, Some(0), Some(1), Some(2), Some(3), Some(9)][case as usize % 6];
         trainer.continuing_subword_prefix = [None, Some(""), Some("##"), Some("a"), Some("ab")]
@@ -390,6 +397,7 @@ pub(super) fn observe_worker(phase: Phase) {
         if thread != usize::MAX {
             assert_eq!(rayon::current_thread_index(), Some(thread));
         }
+        // One bit per phase records that its callback ran in the expected pool.
         OBSERVED_PHASES.fetch_or(1 << phase as usize, Ordering::Relaxed);
     }
 }
@@ -566,17 +574,23 @@ mod reference {
     fn merge_word(word: &mut Word, pair: Pair, id: u32, limit: usize) -> Vec<(Pair, i64)> {
         let mut changes = Vec::new();
         let mut i = 0;
+        // i + 1 must exist before comparing adjacent IDs; spans are separate
+        // occurrence lengths and are summed only after the pair matches.
         while i + 1 < word.len() {
             if (word[i].0, word[i + 1].0) == pair {
                 let length = word[i].1 + word[i + 1].1;
                 if i > 0 {
                     changes.push(((word[i - 1].0, pair.0), -1));
+                    // Birth admission uses the combined left-neighbor and
+                    // merged occurrence length, excluding equality at the limit.
                     if word[i - 1].1 + length < limit {
                         changes.push(((word[i - 1].0, id), 1));
                     }
                 }
                 word[i] = (id, length);
                 word.remove(i + 1);
+                // Removing the old right token shifts the surviving neighbor
+                // to i + 1. Apply the same strict combined-length gate on that side.
                 if i + 1 < word.len() {
                     changes.push(((pair.1, word[i + 1].0), -1));
                     if length + word[i + 1].1 < limit {
@@ -664,6 +678,8 @@ mod reference {
                         id,
                         self.max_token_length.unwrap_or(usize::MAX),
                     ) {
+                        // Each +/-1 occurrence event represents this word's
+                        // entire frequency, including intermediate alias events.
                         *ledger.entry(pair).or_default() += change * weights[i];
                         if change > 0 {
                             births.entry(pair).or_default().insert(i);
@@ -703,6 +719,8 @@ mod reference {
                 {
                     token.insert_str(0, prefix);
                 }
+                // Count original characters, including filtered ones: only
+                // the original final character receives the end-of-word suffix.
                 if i + 1 == length
                     && let Some(suffix) = &trainer.end_of_word_suffix
                 {
@@ -791,6 +809,8 @@ fn check_feed_success(workers: usize, parallel: bool) {
         reads.fetch_add(1, Ordering::Relaxed);
         let value = index;
         index += 1;
+        // length produces the first None; length + 1 would revive the iterator.
+        // Feed must fuse it, so that resurrected item is never observed.
         (value != length && value <= length + 1).then(|| value.to_string())
     });
     let counted = super::feed::count(input, &|text| {
@@ -808,8 +828,11 @@ fn check_feed_success(workers: usize, parallel: bool) {
         })
     })
     .unwrap();
+    // Successful items plus the first exhaustion check account for length + 1 reads.
     assert_eq!(reads.load(Ordering::Relaxed), length + 1);
     assert!(seen.iter().all(|n| n.load(Ordering::Relaxed) == 1));
+    // Enabled parallelism need not fan out; disabled parallelism must keep
+    // every callback on one caller, represented by at most one participant bit.
     assert!(parallel || participants.load(Ordering::Relaxed).count_ones() <= 1);
     let mut expected = AHashMap::<CompactString, u64>::new();
     for id in (0..length).filter(|id| id % 3 != 0) {
