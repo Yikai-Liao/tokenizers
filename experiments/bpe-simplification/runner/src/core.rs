@@ -66,10 +66,13 @@ pub fn run(job: &Job) -> Result<Value, Error> {
     let train_seconds = begin.elapsed().as_secs_f64();
     let train_cpu_seconds = cpu_seconds()? - cpu;
     let process_hwm_kib_before_validation = hwm()?;
+    let export = Instant::now();
     model_output::write(&job.output, &vocab, &merges)?;
+    let export_seconds = export.elapsed().as_secs_f64();
     Ok(
         json!({"metrics":{"load_seconds":load_seconds,"train_seconds":train_seconds,
-        "train_cpu_seconds":train_cpu_seconds,"process_hwm_kib_before_validation":process_hwm_kib_before_validation},
+        "train_cpu_seconds":train_cpu_seconds,"process_hwm_kib_before_validation":process_hwm_kib_before_validation,
+        "export_seconds":export_seconds},
         "output":{"model_path":job.output,"actual_vocab":vocab.len(),"actual_merges":merges.len(),"special_tokens":special.len()},
         "timing_boundary":"public-do-train-before-serialization"}),
     )

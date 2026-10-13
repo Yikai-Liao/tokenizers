@@ -1,0 +1,8 @@
+# started on Tue Oct 13 16:04:11 2026
+
+0;;cycles;2894277820;100.00;;
+10245484097;;instructions;2894277820;100.00;;
+1877102856;;branches;2894277820;100.00;;
+33371720;;branch-misses;2894277820;100.00;1.78;of all branches
+62231901;;cache-references;2894277820;100.00;;
+39419453;;cache-misses;2894277820;100.00;63.34;of all cache refs

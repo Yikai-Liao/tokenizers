@@ -1,0 +1,674 @@
+[
+  {
+    "arm": "baseline",
+    "case": "zh-bytelevel",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "c068ce880d1e2260d14223cf7bab3f9a39ea8ad88b6e9c6ed66c6091957fb97c",
+    "elapsed_process_seconds": 3.317377055005636,
+    "metrics": {
+      "export_seconds": 0.008649112,
+      "load_seconds": 0.282068216,
+      "process_hwm_kib_before_validation": 124672,
+      "train_cpu_seconds": 2.4876329999999998,
+      "train_seconds": 2.495524008
+    },
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "7c029cce704c5844fbe3782a472a53c047a425db93374a3ba675f16eaf48c8f4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-phase-profile/zh-bytelevel-w1-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "zh-bytelevel",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "c068ce880d1e2260d14223cf7bab3f9a39ea8ad88b6e9c6ed66c6091957fb97c",
+    "elapsed_process_seconds": 3.369376338989241,
+    "metrics": {
+      "export_seconds": 0.009039649,
+      "load_seconds": 0.309324348,
+      "process_hwm_kib_before_validation": 126416,
+      "train_cpu_seconds": 2.510896,
+      "train_seconds": 2.514926356
+    },
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "0f211df0ca890aacc570747aa82cea4f5be60aaa5855945e59b18f8c657da003",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-phase-profile/zh-bytelevel-w1-r0-candidate"
+  },
+  {
+    "arm": "candidate",
+    "case": "zh-bytelevel",
+    "workers": 1,
+    "repeat": 1,
+    "input_sha256": "c068ce880d1e2260d14223cf7bab3f9a39ea8ad88b6e9c6ed66c6091957fb97c",
+    "elapsed_process_seconds": 3.2901805010042153,
+    "metrics": {
+      "export_seconds": 0.008563901,
+      "load_seconds": 0.29556117,
+      "process_hwm_kib_before_validation": 125268,
+      "train_cpu_seconds": 2.461439,
+      "train_seconds": 2.465182267
+    },
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "0f211df0ca890aacc570747aa82cea4f5be60aaa5855945e59b18f8c657da003",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-phase-profile/zh-bytelevel-w1-r1-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "zh-bytelevel",
+    "workers": 1,
+    "repeat": 1,
+    "input_sha256": "c068ce880d1e2260d14223cf7bab3f9a39ea8ad88b6e9c6ed66c6091957fb97c",
+    "elapsed_process_seconds": 3.4498685440048575,
+    "metrics": {
+      "export_seconds": 0.009574909,
+      "load_seconds": 0.299359541,
+      "process_hwm_kib_before_validation": 124552,
+      "train_cpu_seconds": 2.581595,
+      "train_seconds": 2.611399164
+    },
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "7c029cce704c5844fbe3782a472a53c047a425db93374a3ba675f16eaf48c8f4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-phase-profile/zh-bytelevel-w1-r1-baseline"
+  },
+  {
+    "arm": "baseline",
+    "case": "zh-bytelevel",
+    "workers": 1,
+    "repeat": 2,
+    "input_sha256": "c068ce880d1e2260d14223cf7bab3f9a39ea8ad88b6e9c6ed66c6091957fb97c",
+    "elapsed_process_seconds": 3.39693044500018,
+    "metrics": {
+      "export_seconds": 0.008347803,
+      "load_seconds": 0.28261179,
+      "process_hwm_kib_before_validation": 124668,
+      "train_cpu_seconds": 2.528622,
+      "train_seconds": 2.566996061
+    },
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "7c029cce704c5844fbe3782a472a53c047a425db93374a3ba675f16eaf48c8f4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-phase-profile/zh-bytelevel-w1-r2-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "zh-bytelevel",
+    "workers": 1,
+    "repeat": 2,
+    "input_sha256": "c068ce880d1e2260d14223cf7bab3f9a39ea8ad88b6e9c6ed66c6091957fb97c",
+    "elapsed_process_seconds": 3.4146168519946514,
+    "metrics": {
+      "export_seconds": 0.007990358,
+      "load_seconds": 0.319015957,
+      "process_hwm_kib_before_validation": 124528,
+      "train_cpu_seconds": 2.559596,
+      "train_seconds": 2.567271064
+    },
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "0f211df0ca890aacc570747aa82cea4f5be60aaa5855945e59b18f8c657da003",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-phase-profile/zh-bytelevel-w1-r2-candidate"
+  },
+  {
+    "arm": "candidate",
+    "case": "zh-bytelevel",
+    "workers": 1,
+    "repeat": 3,
+    "input_sha256": "c068ce880d1e2260d14223cf7bab3f9a39ea8ad88b6e9c6ed66c6091957fb97c",
+    "elapsed_process_seconds": 3.3480435060046148,
+    "metrics": {
+      "export_seconds": 0.011264525,
+      "load_seconds": 0.288252915,
+      "process_hwm_kib_before_validation": 124580,
+      "train_cpu_seconds": 2.446273,
+      "train_seconds": 2.459575777
+    },
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "0f211df0ca890aacc570747aa82cea4f5be60aaa5855945e59b18f8c657da003",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-phase-profile/zh-bytelevel-w1-r3-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "zh-bytelevel",
+    "workers": 1,
+    "repeat": 3,
+    "input_sha256": "c068ce880d1e2260d14223cf7bab3f9a39ea8ad88b6e9c6ed66c6091957fb97c",
+    "elapsed_process_seconds": 3.5495049719902454,
+    "metrics": {
+      "export_seconds": 0.008859919,
+      "load_seconds": 0.303960891,
+      "process_hwm_kib_before_validation": 124888,
+      "train_cpu_seconds": 2.657905,
+      "train_seconds": 2.660030518
+    },
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "7c029cce704c5844fbe3782a472a53c047a425db93374a3ba675f16eaf48c8f4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-phase-profile/zh-bytelevel-w1-r3-baseline"
+  },
+  {
+    "arm": "baseline",
+    "case": "zh-bytelevel",
+    "workers": 1,
+    "repeat": 4,
+    "input_sha256": "c068ce880d1e2260d14223cf7bab3f9a39ea8ad88b6e9c6ed66c6091957fb97c",
+    "elapsed_process_seconds": 3.5529002719995333,
+    "metrics": {
+      "export_seconds": 0.010023136,
+      "load_seconds": 0.310464259,
+      "process_hwm_kib_before_validation": 124788,
+      "train_cpu_seconds": 2.646668,
+      "train_seconds": 2.6509885520000003
+    },
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "7c029cce704c5844fbe3782a472a53c047a425db93374a3ba675f16eaf48c8f4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-phase-profile/zh-bytelevel-w1-r4-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "zh-bytelevel",
+    "workers": 1,
+    "repeat": 4,
+    "input_sha256": "c068ce880d1e2260d14223cf7bab3f9a39ea8ad88b6e9c6ed66c6091957fb97c",
+    "elapsed_process_seconds": 3.3093799329944886,
+    "metrics": {
+      "export_seconds": 0.010513481,
+      "load_seconds": 0.294104743,
+      "process_hwm_kib_before_validation": 126212,
+      "train_cpu_seconds": 2.480569,
+      "train_seconds": 2.481641507
+    },
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "0f211df0ca890aacc570747aa82cea4f5be60aaa5855945e59b18f8c657da003",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-phase-profile/zh-bytelevel-w1-r4-candidate"
+  },
+  {
+    "arm": "candidate",
+    "case": "zh-bytelevel",
+    "workers": 1,
+    "repeat": 5,
+    "input_sha256": "c068ce880d1e2260d14223cf7bab3f9a39ea8ad88b6e9c6ed66c6091957fb97c",
+    "elapsed_process_seconds": 3.41679062100593,
+    "metrics": {
+      "export_seconds": 0.009007458,
+      "load_seconds": 0.319715905,
+      "process_hwm_kib_before_validation": 126432,
+      "train_cpu_seconds": 2.56249,
+      "train_seconds": 2.565860924
+    },
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "0f211df0ca890aacc570747aa82cea4f5be60aaa5855945e59b18f8c657da003",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-phase-profile/zh-bytelevel-w1-r5-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "zh-bytelevel",
+    "workers": 1,
+    "repeat": 5,
+    "input_sha256": "c068ce880d1e2260d14223cf7bab3f9a39ea8ad88b6e9c6ed66c6091957fb97c",
+    "elapsed_process_seconds": 3.438627475989051,
+    "metrics": {
+      "export_seconds": 0.009325815,
+      "load_seconds": 0.279841699,
+      "process_hwm_kib_before_validation": 126152,
+      "train_cpu_seconds": 2.5978149999999998,
+      "train_seconds": 2.601991015
+    },
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "7c029cce704c5844fbe3782a472a53c047a425db93374a3ba675f16eaf48c8f4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-phase-profile/zh-bytelevel-w1-r5-baseline"
+  },
+  {
+    "arm": "baseline",
+    "case": "zh-bytelevel",
+    "workers": 1,
+    "repeat": 6,
+    "input_sha256": "c068ce880d1e2260d14223cf7bab3f9a39ea8ad88b6e9c6ed66c6091957fb97c",
+    "elapsed_process_seconds": 3.510389064991614,
+    "metrics": {
+      "export_seconds": 0.010063587,
+      "load_seconds": 0.315231842,
+      "process_hwm_kib_before_validation": 125864,
+      "train_cpu_seconds": 2.642204,
+      "train_seconds": 2.643998591
+    },
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "7c029cce704c5844fbe3782a472a53c047a425db93374a3ba675f16eaf48c8f4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-phase-profile/zh-bytelevel-w1-r6-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "zh-bytelevel",
+    "workers": 1,
+    "repeat": 6,
+    "input_sha256": "c068ce880d1e2260d14223cf7bab3f9a39ea8ad88b6e9c6ed66c6091957fb97c",
+    "elapsed_process_seconds": 3.460793675010791,
+    "metrics": {
+      "export_seconds": 0.009185769,
+      "load_seconds": 0.349783202,
+      "process_hwm_kib_before_validation": 124584,
+      "train_cpu_seconds": 2.5677100000000004,
+      "train_seconds": 2.572080197
+    },
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "0f211df0ca890aacc570747aa82cea4f5be60aaa5855945e59b18f8c657da003",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-phase-profile/zh-bytelevel-w1-r6-candidate"
+  },
+  {
+    "arm": "candidate",
+    "case": "zh-bytelevel",
+    "workers": 1,
+    "repeat": 7,
+    "input_sha256": "c068ce880d1e2260d14223cf7bab3f9a39ea8ad88b6e9c6ed66c6091957fb97c",
+    "elapsed_process_seconds": 3.5832003230025293,
+    "metrics": {
+      "export_seconds": 0.013526378,
+      "load_seconds": 0.308520474,
+      "process_hwm_kib_before_validation": 126016,
+      "train_cpu_seconds": 2.576524,
+      "train_seconds": 2.694722363
+    },
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "0f211df0ca890aacc570747aa82cea4f5be60aaa5855945e59b18f8c657da003",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-phase-profile/zh-bytelevel-w1-r7-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "zh-bytelevel",
+    "workers": 1,
+    "repeat": 7,
+    "input_sha256": "c068ce880d1e2260d14223cf7bab3f9a39ea8ad88b6e9c6ed66c6091957fb97c",
+    "elapsed_process_seconds": 3.7033012860047165,
+    "metrics": {
+      "export_seconds": 0.009350503,
+      "load_seconds": 0.328584756,
+      "process_hwm_kib_before_validation": 125360,
+      "train_cpu_seconds": 2.662205,
+      "train_seconds": 2.8112871029999997
+    },
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "7c029cce704c5844fbe3782a472a53c047a425db93374a3ba675f16eaf48c8f4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-phase-profile/zh-bytelevel-w1-r7-baseline"
+  },
+  {
+    "arm": "baseline",
+    "case": "zh-bytelevel",
+    "workers": 1,
+    "repeat": 8,
+    "input_sha256": "c068ce880d1e2260d14223cf7bab3f9a39ea8ad88b6e9c6ed66c6091957fb97c",
+    "elapsed_process_seconds": 3.6611271900037536,
+    "metrics": {
+      "export_seconds": 0.010079428,
+      "load_seconds": 0.323530063,
+      "process_hwm_kib_before_validation": 126024,
+      "train_cpu_seconds": 2.731923,
+      "train_seconds": 2.783909465
+    },
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "7c029cce704c5844fbe3782a472a53c047a425db93374a3ba675f16eaf48c8f4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-phase-profile/zh-bytelevel-w1-r8-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "zh-bytelevel",
+    "workers": 1,
+    "repeat": 8,
+    "input_sha256": "c068ce880d1e2260d14223cf7bab3f9a39ea8ad88b6e9c6ed66c6091957fb97c",
+    "elapsed_process_seconds": 3.4060495250014355,
+    "metrics": {
+      "export_seconds": 0.008940022,
+      "load_seconds": 0.33113027,
+      "process_hwm_kib_before_validation": 126296,
+      "train_cpu_seconds": 2.5174819999999998,
+      "train_seconds": 2.524793854
+    },
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "0f211df0ca890aacc570747aa82cea4f5be60aaa5855945e59b18f8c657da003",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-phase-profile/zh-bytelevel-w1-r8-candidate"
+  },
+  {
+    "arm": "candidate",
+    "case": "zh-bytelevel",
+    "workers": 1,
+    "repeat": 9,
+    "input_sha256": "c068ce880d1e2260d14223cf7bab3f9a39ea8ad88b6e9c6ed66c6091957fb97c",
+    "elapsed_process_seconds": 3.3779738060111413,
+    "metrics": {
+      "export_seconds": 0.008434731,
+      "load_seconds": 0.297640655,
+      "process_hwm_kib_before_validation": 126168,
+      "train_cpu_seconds": 2.5403700000000002,
+      "train_seconds": 2.54700902
+    },
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "0f211df0ca890aacc570747aa82cea4f5be60aaa5855945e59b18f8c657da003",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-phase-profile/zh-bytelevel-w1-r9-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "zh-bytelevel",
+    "workers": 1,
+    "repeat": 9,
+    "input_sha256": "c068ce880d1e2260d14223cf7bab3f9a39ea8ad88b6e9c6ed66c6091957fb97c",
+    "elapsed_process_seconds": 3.409128512997995,
+    "metrics": {
+      "export_seconds": 0.008422814,
+      "load_seconds": 0.299395941,
+      "process_hwm_kib_before_validation": 125520,
+      "train_cpu_seconds": 2.544106,
+      "train_seconds": 2.550120903
+    },
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "7c029cce704c5844fbe3782a472a53c047a425db93374a3ba675f16eaf48c8f4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-phase-profile/zh-bytelevel-w1-r9-baseline"
+  },
+  {
+    "arm": "baseline",
+    "case": "zh-bytelevel",
+    "workers": 1,
+    "repeat": 10,
+    "input_sha256": "c068ce880d1e2260d14223cf7bab3f9a39ea8ad88b6e9c6ed66c6091957fb97c",
+    "elapsed_process_seconds": 3.4067560069961473,
+    "metrics": {
+      "export_seconds": 0.00896548,
+      "load_seconds": 0.331876471,
+      "process_hwm_kib_before_validation": 124552,
+      "train_cpu_seconds": 2.540041,
+      "train_seconds": 2.542862367
+    },
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "7c029cce704c5844fbe3782a472a53c047a425db93374a3ba675f16eaf48c8f4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-phase-profile/zh-bytelevel-w1-r10-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "zh-bytelevel",
+    "workers": 1,
+    "repeat": 10,
+    "input_sha256": "c068ce880d1e2260d14223cf7bab3f9a39ea8ad88b6e9c6ed66c6091957fb97c",
+    "elapsed_process_seconds": 3.3786340749938972,
+    "metrics": {
+      "export_seconds": 0.008960164,
+      "load_seconds": 0.299288127,
+      "process_hwm_kib_before_validation": 125408,
+      "train_cpu_seconds": 2.527421,
+      "train_seconds": 2.538938962
+    },
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "0f211df0ca890aacc570747aa82cea4f5be60aaa5855945e59b18f8c657da003",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-phase-profile/zh-bytelevel-w1-r10-candidate"
+  },
+  {
+    "arm": "candidate",
+    "case": "zh-bytelevel",
+    "workers": 1,
+    "repeat": 11,
+    "input_sha256": "c068ce880d1e2260d14223cf7bab3f9a39ea8ad88b6e9c6ed66c6091957fb97c",
+    "elapsed_process_seconds": 3.369684457007679,
+    "metrics": {
+      "export_seconds": 0.009918276,
+      "load_seconds": 0.291537597,
+      "process_hwm_kib_before_validation": 125552,
+      "train_cpu_seconds": 2.5183959999999996,
+      "train_seconds": 2.532070076
+    },
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "0f211df0ca890aacc570747aa82cea4f5be60aaa5855945e59b18f8c657da003",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-phase-profile/zh-bytelevel-w1-r11-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "zh-bytelevel",
+    "workers": 1,
+    "repeat": 11,
+    "input_sha256": "c068ce880d1e2260d14223cf7bab3f9a39ea8ad88b6e9c6ed66c6091957fb97c",
+    "elapsed_process_seconds": 3.571227275999263,
+    "metrics": {
+      "export_seconds": 0.009270999,
+      "load_seconds": 0.302078341,
+      "process_hwm_kib_before_validation": 125952,
+      "train_cpu_seconds": 2.6556559999999996,
+      "train_seconds": 2.690298287
+    },
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "7c029cce704c5844fbe3782a472a53c047a425db93374a3ba675f16eaf48c8f4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-phase-profile/zh-bytelevel-w1-r11-baseline"
+  }
+]

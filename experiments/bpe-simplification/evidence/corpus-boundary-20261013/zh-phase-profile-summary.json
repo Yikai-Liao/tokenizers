@@ -1,0 +1,314 @@
+{
+  "0": {
+    "baseline": {
+      "vocabulary": 0.003379487,
+      "plan": 0.040003945,
+      "initial_count": 0.342415557,
+      "materialize": 0.11966894,
+      "merge_rounds": 1.851972674,
+      "retire": 0.071953219,
+      "prepare": 1.109546429,
+      "apply": 0.081797431,
+      "commit": 0.49431457,
+      "cpu": 2.4876329999999998
+    },
+    "candidate": {
+      "vocabulary": 0.004436992,
+      "plan": 0.063614258,
+      "initial_count": 0.436080093,
+      "materialize": 0.137980435,
+      "merge_rounds": 1.711098393,
+      "retire": 0.071868691,
+      "prepare": 1.04903438,
+      "apply": 0.075202039,
+      "commit": 0.434540931,
+      "cpu": 2.510896
+    }
+  },
+  "1": {
+    "candidate": {
+      "vocabulary": 0.00336392,
+      "plan": 0.044488831,
+      "initial_count": 0.361680067,
+      "materialize": 0.110136719,
+      "merge_rounds": 1.796724721,
+      "retire": 0.080577722,
+      "prepare": 1.10655592,
+      "apply": 0.077082875,
+      "commit": 0.456552455,
+      "cpu": 2.461439
+    },
+    "baseline": {
+      "vocabulary": 0.004726371,
+      "plan": 0.068431731,
+      "initial_count": 0.387196258,
+      "materialize": 0.113280607,
+      "merge_rounds": 1.873357649,
+      "retire": 0.076660829,
+      "prepare": 1.114051981,
+      "apply": 0.077860369,
+      "commit": 0.483683428,
+      "cpu": 2.581595
+    }
+  },
+  "2": {
+    "baseline": {
+      "vocabulary": 0.004386678,
+      "plan": 0.044079892,
+      "initial_count": 0.356820915,
+      "materialize": 0.123084381,
+      "merge_rounds": 1.887230723,
+      "retire": 0.082912077,
+      "prepare": 1.125138529,
+      "apply": 0.078629952,
+      "commit": 0.50921244,
+      "cpu": 2.528622
+    },
+    "candidate": {
+      "vocabulary": 0.004371829,
+      "plan": 0.065312594,
+      "initial_count": 0.372961566,
+      "materialize": 0.118843612,
+      "merge_rounds": 1.844458684,
+      "retire": 0.076201821,
+      "prepare": 1.138216313,
+      "apply": 0.079276295,
+      "commit": 0.469920384,
+      "cpu": 2.559596
+    }
+  },
+  "3": {
+    "candidate": {
+      "vocabulary": 0.003285612,
+      "plan": 0.041912613,
+      "initial_count": 0.352808839,
+      "materialize": 0.118575635,
+      "merge_rounds": 1.800406118,
+      "retire": 0.071674419,
+      "prepare": 1.102439137,
+      "apply": 0.077633709,
+      "commit": 0.462671546,
+      "cpu": 2.446273
+    },
+    "baseline": {
+      "vocabulary": 0.003442579,
+      "plan": 0.044036143,
+      "initial_count": 0.387251731,
+      "materialize": 0.115201587,
+      "merge_rounds": 1.970180918,
+      "retire": 0.073938928,
+      "prepare": 1.189044314,
+      "apply": 0.082659994,
+      "commit": 0.522304309,
+      "cpu": 2.657905
+    }
+  },
+  "4": {
+    "baseline": {
+      "vocabulary": 0.005290907,
+      "plan": 0.066242562,
+      "initial_count": 0.430314895,
+      "materialize": 0.121020256,
+      "merge_rounds": 1.853342577,
+      "retire": 0.070836227,
+      "prepare": 1.100724767,
+      "apply": 0.080680843,
+      "commit": 0.504159749,
+      "cpu": 2.646668
+    },
+    "candidate": {
+      "vocabulary": 0.00348251,
+      "plan": 0.045379346,
+      "initial_count": 0.345339692,
+      "materialize": 0.111695554,
+      "merge_rounds": 1.8277066,
+      "retire": 0.07368488,
+      "prepare": 1.115118283,
+      "apply": 0.07923434,
+      "commit": 0.472893174,
+      "cpu": 2.480569
+    }
+  },
+  "5": {
+    "candidate": {
+      "vocabulary": 0.004550898,
+      "plan": 0.053393461,
+      "initial_count": 0.352633993,
+      "materialize": 0.119117252,
+      "merge_rounds": 1.893628498,
+      "retire": 0.06657079,
+      "prepare": 1.143972046,
+      "apply": 0.080667872,
+      "commit": 0.49861775,
+      "cpu": 2.56249
+    },
+    "baseline": {
+      "vocabulary": 0.003818568,
+      "plan": 0.047928556,
+      "initial_count": 0.363041498,
+      "materialize": 0.126297116,
+      "merge_rounds": 1.913711091,
+      "retire": 0.079065539,
+      "prepare": 1.16246921,
+      "apply": 0.085417817,
+      "commit": 0.499123621,
+      "cpu": 2.5978149999999998
+    }
+  },
+  "6": {
+    "baseline": {
+      "vocabulary": 0.003648774,
+      "plan": 0.05926815,
+      "initial_count": 0.437917797,
+      "materialize": 0.126741402,
+      "merge_rounds": 1.87078143,
+      "retire": 0.076905734,
+      "prepare": 1.125979462,
+      "apply": 0.080140557,
+      "commit": 0.502326536,
+      "cpu": 2.642204
+    },
+    "candidate": {
+      "vocabulary": 0.005462409,
+      "plan": 0.07543861,
+      "initial_count": 0.358140592,
+      "materialize": 0.125616431,
+      "merge_rounds": 1.83986916,
+      "retire": 0.077205685,
+      "prepare": 1.109713072,
+      "apply": 0.078753812,
+      "commit": 0.489313534,
+      "cpu": 2.5677100000000004
+    }
+  },
+  "7": {
+    "candidate": {
+      "vocabulary": 0.003618439,
+      "plan": 0.046860534,
+      "initial_count": 0.394333395,
+      "materialize": 0.125176849,
+      "merge_rounds": 1.936797022,
+      "retire": 0.087156844,
+      "prepare": 1.171721668,
+      "apply": 0.087633749,
+      "commit": 0.512324397,
+      "cpu": 2.576524
+    },
+    "baseline": {
+      "vocabulary": 0.00385193,
+      "plan": 0.050430056,
+      "initial_count": 0.42962573,
+      "materialize": 0.128494011,
+      "merge_rounds": 2.02651313,
+      "retire": 0.084229593,
+      "prepare": 1.237822933,
+      "apply": 0.10190248,
+      "commit": 0.513964083,
+      "cpu": 2.662205
+    }
+  },
+  "8": {
+    "baseline": {
+      "vocabulary": 0.004063097,
+      "plan": 0.060947468,
+      "initial_count": 0.451871117,
+      "materialize": 0.123712241,
+      "merge_rounds": 1.987552931,
+      "retire": 0.081004221,
+      "prepare": 1.201115704,
+      "apply": 0.084781083,
+      "commit": 0.527994734,
+      "cpu": 2.731923
+    },
+    "candidate": {
+      "vocabulary": 0.003532217,
+      "plan": 0.045748194,
+      "initial_count": 0.379815136,
+      "materialize": 0.120210059,
+      "merge_rounds": 1.823618015,
+      "retire": 0.075940505,
+      "prepare": 1.099433837,
+      "apply": 0.079898591,
+      "commit": 0.477472485,
+      "cpu": 2.5174819999999998
+    }
+  },
+  "9": {
+    "candidate": {
+      "vocabulary": 0.003572182,
+      "plan": 0.04333137,
+      "initial_count": 0.371316422,
+      "materialize": 0.117706926,
+      "merge_rounds": 1.868778936,
+      "retire": 0.072203233,
+      "prepare": 1.132968914,
+      "apply": 0.084652471,
+      "commit": 0.487100885,
+      "cpu": 2.5403700000000002
+    },
+    "baseline": {
+      "vocabulary": 0.00369731,
+      "plan": 0.048633173,
+      "initial_count": 0.37353182,
+      "materialize": 0.128604754,
+      "merge_rounds": 1.860063299,
+      "retire": 0.072086892,
+      "prepare": 1.140926241,
+      "apply": 0.083958114,
+      "commit": 0.474916917,
+      "cpu": 2.544106
+    }
+  },
+  "10": {
+    "baseline": {
+      "vocabulary": 0.004067847,
+      "plan": 0.049140287,
+      "initial_count": 0.37844295,
+      "materialize": 0.125790957,
+      "merge_rounds": 1.829405871,
+      "retire": 0.088285034,
+      "prepare": 1.115315729,
+      "apply": 0.079503327,
+      "commit": 0.476818628,
+      "cpu": 2.540041
+    },
+    "candidate": {
+      "vocabulary": 0.003640883,
+      "plan": 0.05334853,
+      "initial_count": 0.369276817,
+      "materialize": 0.128853321,
+      "merge_rounds": 1.826760891,
+      "retire": 0.075332293,
+      "prepare": 1.107268007,
+      "apply": 0.083366024,
+      "commit": 0.470475722,
+      "cpu": 2.527421
+    }
+  },
+  "11": {
+    "candidate": {
+      "vocabulary": 0.003580929,
+      "plan": 0.045694526,
+      "initial_count": 0.350192965,
+      "materialize": 0.114858911,
+      "merge_rounds": 1.868821196,
+      "retire": 0.073687361,
+      "prepare": 1.129742103,
+      "apply": 0.082065659,
+      "commit": 0.482137315,
+      "cpu": 2.5183959999999996
+    },
+    "baseline": {
+      "vocabulary": 0.003514697,
+      "plan": 0.0480528,
+      "initial_count": 0.39877784,
+      "materialize": 0.122256505,
+      "merge_rounds": 1.969195879,
+      "retire": 0.078169048,
+      "prepare": 1.178711716,
+      "apply": 0.082031543,
+      "commit": 0.534001794,
+      "cpu": 2.6556559999999996
+    }
+  }
+}

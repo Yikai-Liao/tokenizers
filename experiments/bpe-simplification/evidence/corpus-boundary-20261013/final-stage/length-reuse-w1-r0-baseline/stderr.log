@@ -1,0 +1,23 @@
+BPE_TYPES {"resolved_merge":8}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t    7108 kB","seconds":0.000103583,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_STAGE {"events":2,"rss":"VmRSS:\t    7108 kB","seconds":0.000333592,"stage":"prepare","starts":1,"tasks":1}
+BPE_PREPARED {"birth_positions":2,"chunks_capacity":4,"events_capacity":4,"starts_capacity":2}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t    7108 kB","seconds":0.000059794,"stage":"apply","starts":0,"tasks":0}
+BPE_TYPES {"candidate":48,"pending_action":16,"positions":32,"priority":16}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t    7108 kB","seconds":0.000114102,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t    7108 kB","seconds":0.000040034,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_STAGE {"events":2,"rss":"VmRSS:\t    7108 kB","seconds":0.000189049,"stage":"prepare","starts":2,"tasks":1}
+BPE_PREPARED {"birth_positions":2,"chunks_capacity":4,"events_capacity":4,"starts_capacity":2}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t    7108 kB","seconds":0.000075659,"stage":"apply","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t    7108 kB","seconds":0.000050304,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t    7108 kB","seconds":0.000048838,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t    7108 kB","seconds":0.000295659,"stage":"prepare","starts":0,"tasks":1}
+BPE_PREPARED {"birth_positions":0,"chunks_capacity":4,"events_capacity":0,"starts_capacity":2}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t    7108 kB","seconds":0.000067553,"stage":"apply","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t    7108 kB","seconds":0.000051172,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t    7108 kB","seconds":0.000038841,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t    7108 kB","seconds":0.00018574,"stage":"prepare","starts":1,"tasks":1}
+BPE_PREPARED {"birth_positions":0,"chunks_capacity":4,"events_capacity":0,"starts_capacity":2}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t    7108 kB","seconds":0.000081803,"stage":"apply","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t    7108 kB","seconds":0.000067604,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t    7108 kB","seconds":0.000043842,"stage":"before_retire","starts":0,"tasks":3}

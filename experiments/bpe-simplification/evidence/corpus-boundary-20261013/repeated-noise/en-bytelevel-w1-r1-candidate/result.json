@@ -1,0 +1,80 @@
+{
+  "arm": "candidate",
+  "case": "en-bytelevel",
+  "workers": 1,
+  "repeat": 1,
+  "input_sha256": "8384647de3201a7145a8ba03331df14408685ad4e84f0d825b241a2294665e29",
+  "elapsed_process_seconds": 4.135913660007645,
+  "metrics": {
+    "export_seconds": 0.009235006100000002,
+    "load_seconds": 0.052440565,
+    "process_hwm_kib_before_validation": 35420,
+    "train_cpu_seconds": 0.3399288000000001,
+    "train_seconds": 0.3428080854000001,
+    "training_calls": [
+      [
+        0.435861425,
+        0.41663300000000003
+      ],
+      [
+        0.314220338,
+        0.3105939999999999
+      ],
+      [
+        0.304789751,
+        0.30392300000000005
+      ],
+      [
+        0.342575149,
+        0.342511
+      ],
+      [
+        0.31226865,
+        0.3122720000000001
+      ],
+      [
+        0.351761362,
+        0.35090600000000016
+      ],
+      [
+        0.32252524,
+        0.32225400000000004
+      ],
+      [
+        0.315598168,
+        0.31548599999999993
+      ],
+      [
+        0.38770947,
+        0.38715900000000003
+      ],
+      [
+        0.340771301,
+        0.33755000000000024
+      ]
+    ]
+  },
+  "model_sha256": "c3fae75a49259633748fb8f55ef8b5dfa559d89a7d76219087a9153fc3a8e0cd",
+  "iteration_model_sha256": [
+    "c3fae75a49259633748fb8f55ef8b5dfa559d89a7d76219087a9153fc3a8e0cd",
+    "c3fae75a49259633748fb8f55ef8b5dfa559d89a7d76219087a9153fc3a8e0cd",
+    "c3fae75a49259633748fb8f55ef8b5dfa559d89a7d76219087a9153fc3a8e0cd",
+    "c3fae75a49259633748fb8f55ef8b5dfa559d89a7d76219087a9153fc3a8e0cd",
+    "c3fae75a49259633748fb8f55ef8b5dfa559d89a7d76219087a9153fc3a8e0cd",
+    "c3fae75a49259633748fb8f55ef8b5dfa559d89a7d76219087a9153fc3a8e0cd",
+    "c3fae75a49259633748fb8f55ef8b5dfa559d89a7d76219087a9153fc3a8e0cd",
+    "c3fae75a49259633748fb8f55ef8b5dfa559d89a7d76219087a9153fc3a8e0cd",
+    "c3fae75a49259633748fb8f55ef8b5dfa559d89a7d76219087a9153fc3a8e0cd"
+  ],
+  "coverage": {
+    "aa": 0,
+    "ab": 0,
+    "existing_fresh": 0,
+    "multi_rule": 0,
+    "whole_words": 0,
+    "initial_whole_words": 0
+  },
+  "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "binary_sha256": "63bddc2eef87c78c82bf6d0f24d4fb6c0b601a3e1526b656477cfbca684e11ca",
+  "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/repeated-noise/en-bytelevel-w1-r1-candidate"
+}

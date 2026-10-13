@@ -1,0 +1,50 @@
+{
+  "kind": "record",
+  "repeat": 1,
+  "arm": "candidate",
+  "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+  "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+  "output": {
+    "attempt_id": "record-r1-candidate",
+    "build_id": "candidate",
+    "effective_affinity": [
+      0
+    ],
+    "input_id": "zh-bytelevel",
+    "metrics": {
+      "export_seconds": 0.008531109,
+      "load_seconds": 0.296987891,
+      "process_hwm_kib_before_validation": 124704,
+      "train_cpu_seconds": 2.586372,
+      "train_seconds": 2.591025923
+    },
+    "mode": "core",
+    "output": {
+      "actual_merges": 29744,
+      "actual_vocab": 30000,
+      "model_path": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/record-r1-candidate/model.json",
+      "special_tokens": 0
+    },
+    "protocol_version": 1,
+    "timing_boundary": "public-do-train-before-serialization",
+    "workers_requested": 1
+  },
+  "command": [
+    "perf",
+    "record",
+    "-F",
+    "997",
+    "-g",
+    "--call-graph",
+    "dwarf,8192",
+    "-o",
+    "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/record-r1-candidate/perf.data",
+    "--",
+    "taskset",
+    "-c",
+    "0",
+    "/tmp/bpe-corpus-binaries-20261013/aligned-candidate-production",
+    "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/record-r1-candidate/job.json"
+  ],
+  "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/record-r1-candidate"
+}

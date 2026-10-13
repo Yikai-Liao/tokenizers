@@ -1,0 +1,32 @@
+{
+  "arm": "candidate",
+  "case": "zh256",
+  "workers": 1,
+  "repeat": 0,
+  "input_sha256": "ed057a8fdb27544ed29f16dde53faa0de8f47f1ee8ac00080974fac5bb435660",
+  "elapsed_process_seconds": 54.542434613002115,
+  "metrics": {
+    "export_seconds": 0.010575328,
+    "load_seconds": 5.6349889730000005,
+    "process_hwm_kib_before_validation": 1789944,
+    "train_cpu_seconds": 45.874699,
+    "train_seconds": 45.993409531
+  },
+  "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+  "iteration_model_sha256": [],
+  "coverage": {
+    "initial_scan_config": 1,
+    "select": 32241,
+    "batch": 1390,
+    "commit": 1390,
+    "aa": 137,
+    "ab": 32104,
+    "existing_fresh": 0,
+    "multi_rule": 1244,
+    "whole_words": 0,
+    "initial_whole_words": 0
+  },
+  "trace_sha256": "268ed7c3ec30d6e31c86fb0bbdd8f6d8234d6533968e8e5c43bc6e6733be414b",
+  "binary_sha256": "f2c930cfe414a2606843f87dd455da470228cef88f9de5d30987fba52b86e97f",
+  "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-trace/zh256-w1-r0-candidate"
+}

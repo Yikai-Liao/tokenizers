@@ -1,0 +1,28 @@
+{
+  "arm": "candidate",
+  "case": "en256",
+  "workers": 1,
+  "repeat": 1,
+  "input_sha256": "6c6995e8c4d12a7fa7b0deff3c9a80ba19e86e40b1c3ebf2100d5d2831c419b9",
+  "elapsed_process_seconds": 6.1834850430022925,
+  "metrics": {
+    "export_seconds": 0.012327458,
+    "load_seconds": 0.771696372,
+    "process_hwm_kib_before_validation": 262276,
+    "train_cpu_seconds": 4.586252,
+    "train_seconds": 4.601181316
+  },
+  "model_sha256": "43e18d6eb289cbedda72179cbeae4cd32bef1c37ee2b1a73a51d48503e2876d0",
+  "iteration_model_sha256": [],
+  "coverage": {
+    "aa": 0,
+    "ab": 0,
+    "existing_fresh": 0,
+    "multi_rule": 0,
+    "whole_words": 0,
+    "initial_whole_words": 0
+  },
+  "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+  "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-timing/en256-w1-r1-candidate"
+}

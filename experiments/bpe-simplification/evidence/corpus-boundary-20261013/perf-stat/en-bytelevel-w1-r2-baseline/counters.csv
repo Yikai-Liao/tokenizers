@@ -1,0 +1,9 @@
+# started on Tue Oct 13 14:45:31 2026
+
+1111746785,,cycles,431499619,100.00,,
+1365333163,,instructions,431499619,100.00,1.23,insn per cycle
+244066062,,branches,431499619,100.00,,
+6869396,,branch-misses,431499619,100.00,2.81,of all branches
+3001677,,cache-misses,431499619,100.00,,
+9,,context-switches,431499619,100.00,,
+0,,cpu-migrations,431499619,100.00,,

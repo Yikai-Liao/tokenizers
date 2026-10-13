@@ -1,0 +1,20 @@
+    Checking tk-train v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/tokenizers/tk-train)
+warning: redundant field names in struct initialization
+   --> src/trainers/bpe/mod.rs:484:13
+    |
+484 |             vocab: vocab,
+    |             ^^^^^^^^^^^^ help: replace it with: `vocab`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#redundant_field_names
+    = note: `#[warn(clippy::redundant_field_names)]` on by default
+
+warning: redundant field names in struct initialization
+   --> src/trainers/bpe/mod.rs:485:13
+    |
+485 |             merges: merges,
+    |             ^^^^^^^^^^^^^^ help: replace it with: `merges`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#redundant_field_names
+
+warning: `tk-train` (lib) generated 2 warnings (run `cargo clippy --fix --lib -p tk-train -- ` to apply 2 suggestions)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.81s

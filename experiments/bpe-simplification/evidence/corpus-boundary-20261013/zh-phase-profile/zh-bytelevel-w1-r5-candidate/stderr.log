@@ -1,0 +1,9 @@
+BPE_PHASE {"calls":1,"nanoseconds":4550898,"phase":"vocabulary"}
+BPE_PHASE {"calls":1,"nanoseconds":53393461,"phase":"plan"}
+BPE_PHASE {"calls":1,"nanoseconds":352633993,"phase":"initial_count"}
+BPE_PHASE {"calls":1,"nanoseconds":119117252,"phase":"materialize"}
+BPE_PHASE {"calls":1,"nanoseconds":1893628498,"phase":"merge_rounds"}
+BPE_PHASE {"calls":1,"nanoseconds":66570790,"phase":"retire"}
+BPE_PHASE {"calls":799,"nanoseconds":1143972046,"phase":"prepare"}
+BPE_PHASE {"calls":799,"nanoseconds":80667872,"phase":"apply"}
+BPE_PHASE {"calls":799,"nanoseconds":498617750,"phase":"commit"}

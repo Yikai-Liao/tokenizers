@@ -1,0 +1,58 @@
+   Compiling tk-train v0.1.0-dev.2 (/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/tokenizers/tk-train)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 7.02s
+     Running unittests src/lib.rs (/tmp/bpe-corpus-baseline-20261013/tokenizers/tk-train/target/debug/deps/tk_train-c6d93b70b60ab37c)
+
+running 36 tests
+test trainers::bpe::corpus::tests::adjacent_writes ... ok
+test trainers::bpe::corpus::tests::fresh_reader ... ok
+test trainers::bpe::corpus::tests::initial_ranges ... ok
+test trainers::bpe::corpus::merging::tests::directory_recovery ... ok
+test trainers::bpe::index::tests::historical_cohorts ... ok
+test trainers::bpe::index::tests::intermediate_overflow ... ok
+test trainers::bpe::index::tests::unified_aggregation ... ok
+test trainers::bpe::corpus::merging::tests::reuse_spans ... ok
+test trainers::bpe::positions::codec::tests::gap_width_matches_appended_bytes ... ok
+test trainers::bpe::positions::tests::append_errors_preserve_leaf ... ok
+test trainers::bpe::positions::tests::append_search_and_chunks ... ok
+test trainers::bpe::positions::tests::leaf_format_and_exhausted_cursor ... ok
+test trainers::bpe::positions::tests::merge_streams ... ok
+test trainers::bpe::tests::builder_serialization ... ok
+test trainers::bpe::corpus::merging::tests::reuse_scan_domain_and_bound_configuration ... ok
+test trainers::bpe::corpus::merging::tests::shared_boundary_once ... ok
+test trainers::bpe::index::tests::failures_before_and_after_writes ... ok
+test trainers::bpe::positions::tests::concat_preserves_boundaries_and_chunks ... ok
+test trainers::bpe::tests::initial_edges ... ok
+test trainers::bpe::tests::inputs_remain_reusable ... ok
+test trainers::bpe::tests::failed_training_keeps_model ... ok
+test trainers::bpe::tests::restart_discards_ids ... ok
+test trainers::bpe::tests::count_boundaries ... ok
+test trainers::bpe::tests::restart_keeps_alphabet ... ok
+test trainers::bpe::corpus::merging::tests::rejected_start_and_aa_tasks ... ok
+test trainers::bpe::tests::tokenizer_roundtrip ... FAILED
+test trainers::bpe::vocabulary::tests::alphabet_activation ... ok
+test trainers::bpe::vocabulary::tests::decoration_row ... ok
+test trainers::bpe::vocabulary::tests::affix_ids ... ok
+test trainers::bpe::vocabulary::tests::unicode_presence ... ok
+test trainers::bpe::vocabulary::tests::unicode_id_order ... ok
+test trainers::bpe::word_counts::tests::equality_and_serde ... ok
+test trainers::bpe::tests::public_feed_pools_and_progress ... ok
+test trainers::bpe::tests::overlap_and_alias ... ok
+test trainers::bpe::tests::wide_ids ... ok
+test trainers::bpe::tests::models_match_reference ... ok
+
+failures:
+
+---- trainers::bpe::tests::tokenizer_roundtrip stdout ----
+
+thread 'trainers::bpe::tests::tokenizer_roundtrip' (840084) panicked at src/trainers/bpe/tests.rs:344:13:
+assertion `left == right` failed: 测
+  left: [PipelineToken(3)]
+ right: [4]
+
+
+failures:
+    trainers::bpe::tests::tokenizer_roundtrip
+
+test result: FAILED. 35 passed; 1 failed; 0 ignored; 0 measured; 7 filtered out; finished in 5.85s
+
+error: test failed, to rerun pass `--lib`

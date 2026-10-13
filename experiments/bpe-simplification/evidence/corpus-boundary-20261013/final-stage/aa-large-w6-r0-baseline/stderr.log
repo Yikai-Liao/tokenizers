@@ -1,0 +1,171 @@
+BPE_TYPES {"resolved_merge":8}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   26308 kB","seconds":0.000085142,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_LAYOUT {"cache_capacity":2097152,"cache_len":2000000,"positions":4000000,"positions_live":true,"selected_bytes":56,"shape":"AA","task_bytes":112,"task_capacity":16,"tasks":12}
+BPE_STAGE {"events":24,"rss":"VmRSS:\t   47104 kB","seconds":0.114681818,"stage":"prepare","starts":2000000,"tasks":12}
+BPE_PREPARED {"birth_positions":2000000,"chunks_capacity":12,"events_capacity":48,"starts_capacity":3145728}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   47108 kB","seconds":0.001349528,"stage":"apply","starts":0,"tasks":0}
+BPE_TYPES {"candidate":48,"pending_action":16,"positions":32,"priority":16}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   47108 kB","seconds":0.000114463,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   47108 kB","seconds":0.00002524,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_LAYOUT {"cache_capacity":1048576,"cache_len":1000000,"positions":1999999,"positions_live":true,"selected_bytes":56,"shape":"AA","task_bytes":112,"task_capacity":16,"tasks":12}
+BPE_STAGE {"events":25,"rss":"VmRSS:\t   52532 kB","seconds":0.053384506,"stage":"prepare","starts":1000000,"tasks":12}
+BPE_PREPARED {"birth_positions":1000000,"chunks_capacity":12,"events_capacity":48,"starts_capacity":1572864}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52532 kB","seconds":0.000970969,"stage":"apply","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52536 kB","seconds":0.000123299,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52536 kB","seconds":0.000027221,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_LAYOUT {"cache_capacity":524288,"cache_len":500000,"positions":999999,"positions_live":true,"selected_bytes":56,"shape":"AA","task_bytes":112,"task_capacity":16,"tasks":12}
+BPE_STAGE {"events":25,"rss":"VmRSS:\t   52904 kB","seconds":0.02589712,"stage":"prepare","starts":500000,"tasks":12}
+BPE_PREPARED {"birth_positions":500000,"chunks_capacity":12,"events_capacity":48,"starts_capacity":786432}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52904 kB","seconds":0.000623719,"stage":"apply","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52904 kB","seconds":0.000124943,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52904 kB","seconds":0.000030647,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_LAYOUT {"cache_capacity":262144,"cache_len":250000,"positions":499999,"positions_live":true,"selected_bytes":56,"shape":"AA","task_bytes":112,"task_capacity":16,"tasks":12}
+BPE_STAGE {"events":25,"rss":"VmRSS:\t   52904 kB","seconds":0.012963134,"stage":"prepare","starts":250000,"tasks":12}
+BPE_PREPARED {"birth_positions":250000,"chunks_capacity":12,"events_capacity":48,"starts_capacity":393216}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52904 kB","seconds":0.000578276,"stage":"apply","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52904 kB","seconds":0.000117396,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52904 kB","seconds":0.000049207,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_LAYOUT {"cache_capacity":131072,"cache_len":125000,"positions":249999,"positions_live":true,"selected_bytes":56,"shape":"AA","task_bytes":112,"task_capacity":16,"tasks":12}
+BPE_STAGE {"events":25,"rss":"VmRSS:\t   52908 kB","seconds":0.008368119,"stage":"prepare","starts":125000,"tasks":12}
+BPE_PREPARED {"birth_positions":125000,"chunks_capacity":12,"events_capacity":48,"starts_capacity":196608}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000459819,"stage":"apply","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.00011898,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000046655,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_LAYOUT {"cache_capacity":65536,"cache_len":62500,"positions":124999,"positions_live":true,"selected_bytes":56,"shape":"AA","task_bytes":112,"task_capacity":16,"tasks":12}
+BPE_STAGE {"events":25,"rss":"VmRSS:\t   52912 kB","seconds":0.004544493,"stage":"prepare","starts":62500,"tasks":12}
+BPE_PREPARED {"birth_positions":62500,"chunks_capacity":12,"events_capacity":48,"starts_capacity":98304}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000400005,"stage":"apply","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000133776,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000139734,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_LAYOUT {"cache_capacity":32768,"cache_len":31250,"positions":62499,"positions_live":true,"selected_bytes":56,"shape":"AA","task_bytes":112,"task_capacity":8,"tasks":8}
+BPE_STAGE {"events":17,"rss":"VmRSS:\t   52912 kB","seconds":0.002980418,"stage":"prepare","starts":31250,"tasks":8}
+BPE_PREPARED {"birth_positions":31250,"chunks_capacity":8,"events_capacity":32,"starts_capacity":32768}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000319526,"stage":"apply","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000092858,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000033635,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_LAYOUT {"cache_capacity":16384,"cache_len":15625,"positions":31249,"positions_live":true,"selected_bytes":56,"shape":"AA","task_bytes":112,"task_capacity":4,"tasks":4}
+BPE_STAGE {"events":9,"rss":"VmRSS:\t   52912 kB","seconds":0.002438988,"stage":"prepare","starts":15625,"tasks":4}
+BPE_PREPARED {"birth_positions":15625,"chunks_capacity":4,"events_capacity":16,"starts_capacity":16384}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.00021848,"stage":"apply","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000100202,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000046573,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_LAYOUT {"cache_capacity":8192,"cache_len":7812,"positions":15624,"positions_live":true,"selected_bytes":56,"shape":"AA","task_bytes":112,"task_capacity":4,"tasks":2}
+BPE_STAGE {"events":4,"rss":"VmRSS:\t   52912 kB","seconds":0.001509039,"stage":"prepare","starts":7812,"tasks":2}
+BPE_PREPARED {"birth_positions":7812,"chunks_capacity":4,"events_capacity":8,"starts_capacity":8192}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000153622,"stage":"apply","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.00005658,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000024194,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_LAYOUT {"cache_capacity":4096,"cache_len":3906,"positions":7811,"positions_live":true,"selected_bytes":56,"shape":"AA","task_bytes":112,"task_capacity":4,"tasks":1}
+BPE_STAGE {"events":3,"rss":"VmRSS:\t   52912 kB","seconds":0.000747805,"stage":"prepare","starts":3906,"tasks":1}
+BPE_PREPARED {"birth_positions":3906,"chunks_capacity":4,"events_capacity":4,"starts_capacity":4096}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000073592,"stage":"apply","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000043092,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000024563,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_LAYOUT {"cache_capacity":2048,"cache_len":1953,"positions":3905,"positions_live":true,"selected_bytes":56,"shape":"AA","task_bytes":112,"task_capacity":4,"tasks":1}
+BPE_STAGE {"events":3,"rss":"VmRSS:\t   52912 kB","seconds":0.000520078,"stage":"prepare","starts":1953,"tasks":1}
+BPE_PREPARED {"birth_positions":1953,"chunks_capacity":4,"events_capacity":4,"starts_capacity":2048}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.00004766,"stage":"apply","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000043914,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000024039,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_LAYOUT {"cache_capacity":1024,"cache_len":976,"positions":1952,"positions_live":true,"selected_bytes":56,"shape":"AA","task_bytes":112,"task_capacity":4,"tasks":1}
+BPE_STAGE {"events":2,"rss":"VmRSS:\t   52912 kB","seconds":0.000369864,"stage":"prepare","starts":976,"tasks":1}
+BPE_PREPARED {"birth_positions":976,"chunks_capacity":4,"events_capacity":4,"starts_capacity":1024}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000036665,"stage":"apply","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000044021,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000023858,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_LAYOUT {"cache_capacity":512,"cache_len":488,"positions":975,"positions_live":true,"selected_bytes":56,"shape":"AA","task_bytes":112,"task_capacity":4,"tasks":1}
+BPE_STAGE {"events":3,"rss":"VmRSS:\t   52912 kB","seconds":0.000274109,"stage":"prepare","starts":488,"tasks":1}
+BPE_PREPARED {"birth_positions":488,"chunks_capacity":4,"events_capacity":4,"starts_capacity":512}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.00002884,"stage":"apply","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000046192,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000023886,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_LAYOUT {"cache_capacity":256,"cache_len":244,"positions":487,"positions_live":true,"selected_bytes":56,"shape":"AA","task_bytes":112,"task_capacity":4,"tasks":1}
+BPE_STAGE {"events":3,"rss":"VmRSS:\t   52912 kB","seconds":0.000226712,"stage":"prepare","starts":244,"tasks":1}
+BPE_PREPARED {"birth_positions":244,"chunks_capacity":4,"events_capacity":4,"starts_capacity":256}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000028342,"stage":"apply","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000042441,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000023526,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_LAYOUT {"cache_capacity":128,"cache_len":122,"positions":243,"positions_live":true,"selected_bytes":56,"shape":"AA","task_bytes":112,"task_capacity":4,"tasks":1}
+BPE_STAGE {"events":3,"rss":"VmRSS:\t   52912 kB","seconds":0.000213657,"stage":"prepare","starts":122,"tasks":1}
+BPE_PREPARED {"birth_positions":122,"chunks_capacity":4,"events_capacity":4,"starts_capacity":128}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000024939,"stage":"apply","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000038674,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000023898,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_LAYOUT {"cache_capacity":64,"cache_len":61,"positions":121,"positions_live":true,"selected_bytes":56,"shape":"AA","task_bytes":112,"task_capacity":4,"tasks":1}
+BPE_STAGE {"events":3,"rss":"VmRSS:\t   52912 kB","seconds":0.000205407,"stage":"prepare","starts":61,"tasks":1}
+BPE_PREPARED {"birth_positions":61,"chunks_capacity":4,"events_capacity":4,"starts_capacity":64}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000024402,"stage":"apply","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000044517,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000024083,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_LAYOUT {"cache_capacity":32,"cache_len":30,"positions":60,"positions_live":true,"selected_bytes":56,"shape":"AA","task_bytes":112,"task_capacity":4,"tasks":1}
+BPE_STAGE {"events":2,"rss":"VmRSS:\t   52912 kB","seconds":0.000202185,"stage":"prepare","starts":30,"tasks":1}
+BPE_PREPARED {"birth_positions":30,"chunks_capacity":4,"events_capacity":4,"starts_capacity":32}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000025084,"stage":"apply","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000039782,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000024451,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_LAYOUT {"cache_capacity":16,"cache_len":15,"positions":29,"positions_live":true,"selected_bytes":56,"shape":"AA","task_bytes":112,"task_capacity":4,"tasks":1}
+BPE_STAGE {"events":3,"rss":"VmRSS:\t   52912 kB","seconds":0.000201236,"stage":"prepare","starts":15,"tasks":1}
+BPE_PREPARED {"birth_positions":15,"chunks_capacity":4,"events_capacity":4,"starts_capacity":16}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000024059,"stage":"apply","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000038439,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000026936,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_LAYOUT {"cache_capacity":8,"cache_len":7,"positions":14,"positions_live":true,"selected_bytes":56,"shape":"AA","task_bytes":112,"task_capacity":4,"tasks":1}
+BPE_STAGE {"events":2,"rss":"VmRSS:\t   52912 kB","seconds":0.000201611,"stage":"prepare","starts":7,"tasks":1}
+BPE_PREPARED {"birth_positions":7,"chunks_capacity":4,"events_capacity":4,"starts_capacity":8}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000023597,"stage":"apply","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000038872,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000055101,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_LAYOUT {"cache_capacity":4,"cache_len":3,"positions":6,"positions_live":true,"selected_bytes":56,"shape":"AA","task_bytes":112,"task_capacity":4,"tasks":1}
+BPE_STAGE {"events":2,"rss":"VmRSS:\t   52912 kB","seconds":0.000243981,"stage":"prepare","starts":3,"tasks":1}
+BPE_PREPARED {"birth_positions":3,"chunks_capacity":4,"events_capacity":4,"starts_capacity":4}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.00002704,"stage":"apply","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.00004125,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000037447,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_LAYOUT {"cache_capacity":4,"cache_len":1,"positions":2,"positions_live":true,"selected_bytes":56,"shape":"AA","task_bytes":112,"task_capacity":4,"tasks":1}
+BPE_STAGE {"events":1,"rss":"VmRSS:\t   52912 kB","seconds":0.000248678,"stage":"prepare","starts":1,"tasks":1}
+BPE_PREPARED {"birth_positions":1,"chunks_capacity":4,"events_capacity":4,"starts_capacity":2}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000023987,"stage":"apply","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000042298,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000023717,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_LAYOUT {"cache_capacity":3,"cache_len":1,"positions":1,"positions_live":true,"selected_bytes":56,"shape":"AB","task_bytes":112,"task_capacity":4,"tasks":1}
+BPE_STAGE {"events":1,"rss":"VmRSS:\t   52912 kB","seconds":0.000196522,"stage":"prepare","starts":1,"tasks":1}
+BPE_PREPARED {"birth_positions":1,"chunks_capacity":4,"events_capacity":4,"starts_capacity":2}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000023424,"stage":"apply","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000039284,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000023487,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_LAYOUT {"cache_capacity":3,"cache_len":1,"positions":1,"positions_live":true,"selected_bytes":56,"shape":"AB","task_bytes":112,"task_capacity":4,"tasks":1}
+BPE_STAGE {"events":1,"rss":"VmRSS:\t   52912 kB","seconds":0.000194862,"stage":"prepare","starts":1,"tasks":1}
+BPE_PREPARED {"birth_positions":1,"chunks_capacity":4,"events_capacity":4,"starts_capacity":2}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000023808,"stage":"apply","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000036624,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000023683,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_LAYOUT {"cache_capacity":3,"cache_len":1,"positions":1,"positions_live":true,"selected_bytes":56,"shape":"AB","task_bytes":112,"task_capacity":4,"tasks":1}
+BPE_STAGE {"events":1,"rss":"VmRSS:\t   52912 kB","seconds":0.000194947,"stage":"prepare","starts":1,"tasks":1}
+BPE_PREPARED {"birth_positions":1,"chunks_capacity":4,"events_capacity":4,"starts_capacity":2}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000023452,"stage":"apply","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000036278,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000025032,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_LAYOUT {"cache_capacity":3,"cache_len":1,"positions":1,"positions_live":true,"selected_bytes":56,"shape":"AB","task_bytes":112,"task_capacity":4,"tasks":1}
+BPE_STAGE {"events":1,"rss":"VmRSS:\t   52912 kB","seconds":0.000196414,"stage":"prepare","starts":1,"tasks":1}
+BPE_PREPARED {"birth_positions":1,"chunks_capacity":4,"events_capacity":4,"starts_capacity":2}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.00002334,"stage":"apply","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000037686,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000046036,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_LAYOUT {"cache_capacity":3,"cache_len":1,"positions":1,"positions_live":true,"selected_bytes":56,"shape":"AB","task_bytes":112,"task_capacity":4,"tasks":1}
+BPE_STAGE {"events":1,"rss":"VmRSS:\t   52912 kB","seconds":0.000231289,"stage":"prepare","starts":1,"tasks":1}
+BPE_PREPARED {"birth_positions":1,"chunks_capacity":4,"events_capacity":4,"starts_capacity":2}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000027364,"stage":"apply","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000105396,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.000038879,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_LAYOUT {"cache_capacity":3,"cache_len":1,"positions":1,"positions_live":true,"selected_bytes":56,"shape":"AB","task_bytes":112,"task_capacity":4,"tasks":1}
+BPE_STAGE {"events":1,"rss":"VmRSS:\t   52912 kB","seconds":0.000251321,"stage":"prepare","starts":1,"tasks":1}
+BPE_PREPARED {"birth_positions":1,"chunks_capacity":4,"events_capacity":4,"starts_capacity":2}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.0000241,"stage":"apply","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   52912 kB","seconds":0.00004775,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   53716 kB","seconds":0.000043856,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_LAYOUT {"cache_capacity":3,"cache_len":1,"positions":1,"positions_live":true,"selected_bytes":56,"shape":"AB","task_bytes":112,"task_capacity":4,"tasks":1}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   53716 kB","seconds":0.000225593,"stage":"prepare","starts":1,"tasks":1}
+BPE_PREPARED {"birth_positions":0,"chunks_capacity":4,"events_capacity":0,"starts_capacity":2}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   53716 kB","seconds":0.000024334,"stage":"apply","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   53716 kB","seconds":0.000063842,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t   53716 kB","seconds":0.000023874,"stage":"before_retire","starts":0,"tasks":0}

@@ -1,0 +1,30 @@
+{
+  "purpose": "matched aggregate wall-clock boundaries; no per-phase logging; single-call runner",
+  "source_sha256": {
+    "tokenizers/tk-train/src/trainers/bpe/corpus.rs": "86c93d68f7711a31a8cd5b3b7cf4fe7953815d446eabdff682885d28b9707722",
+    "tokenizers/tk-train/src/trainers/bpe/feed.rs": "7c6be5e032a25faf0e0bcad4ee502a38792312233aadbd4a324ac7dca4b62ea7",
+    "tokenizers/tk-train/src/trainers/bpe/index.rs": "9674e530f77c4d081131a6d9d2ed704ab05ca5bce4916bff70721d9bc55e2704",
+    "tokenizers/tk-train/src/trainers/bpe/merge.rs": "0f9a2f963f411dd07344ee44cee7cd1b6a08154bb437855634c2c67d11a2c7a0",
+    "tokenizers/tk-train/src/trainers/bpe/mod.rs": "85a28bcf58d326e543663bf8b1f0c918a1d581d76673ea87545b595379dddafe",
+    "tokenizers/tk-train/src/trainers/bpe/parity_trainer.rs": "a584152379dc59de167a14f751f37bab8da9c723eddc1c238df21965dd08f37c",
+    "tokenizers/tk-train/src/trainers/bpe/positions.rs": "06705e52a87eef87adf15b6708fa699d57c8f5f8037ad37e4c967bf042bfe7c2",
+    "tokenizers/tk-train/src/trainers/bpe/tests.rs": "85c35f688114a4af15cb3ff8355b7b358a773b98a931422518123786cc5aef50",
+    "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs": "50c69511e20d0be6ca8cf64094c15adee3b11bef16b818815f0a91ac891cbe75",
+    "tokenizers/tk-train/src/trainers/bpe/word.rs": "f9c3bd0a7a8fade42a5643ee6341b4ebf203f7a45aa0a65797e773d1ce21396a",
+    "tokenizers/tk-train/src/trainers/bpe/word_counts.rs": "4f877cd0554b24a3845fd42c2d424a22d81359bd580bd98a0183f39c7a499053",
+    "tokenizers/tk-train/src/trainers/bpe/positions/codec.rs": "bd30d00fa9a27150b69912d81d0d14e491348ebc6e694b1936de1ccd7da38544"
+  },
+  "runner_sha256": {
+    "experiments/bpe-simplification/runner/src/pipeline.rs": "300fe769f662872aecb8496efa695ac43382f319e9e1149bcc6226319ab3ecb9",
+    "experiments/bpe-simplification/runner/src/main.rs": "3bf0c679c660cf07760e1c3647c8308ef4ac7d138f45b8dfb5ca2f663b02c4c5",
+    "experiments/bpe-simplification/runner/src/model_output.rs": "58fedcea52879ce2028f296b2dcb8ae05866bc6cf6c156b0f1a4803a6c273168",
+    "experiments/bpe-simplification/runner/src/core.rs": "f1b28ef812926953fb371fb62e6a5fcf4b90b75198f6b5ed326e6bf651e76c59",
+    "experiments/bpe-simplification/runner/src/protocol.rs": "5b66d878b5e9895a22c7f4b3803aee79da4e6458d813537b4182d0ddde30460d",
+    "experiments/bpe-simplification/runner/src/feed_stats.rs": "cd317b213cff235d310e0fa5a66e826cad8a390c143a4d8551e0dd142a4a533d",
+    "experiments/bpe-simplification/runner/src/adapters/tk_train_v1.rs": "b4bd6b9ef2be4c99bd6b42e9831192b0e29fc7ec126d7f0e90d18f28460361bc",
+    "experiments/bpe-simplification/runner/src/adapters/mod.rs": "a5a2dd2147a680afb61c3ff34629d8ca7d1fc2d759e2931be01bf1567436001a",
+    "experiments/bpe-simplification/runner/src/adapters/tk_train_pr2348.rs": "f2b3030f7546b1d1bf23f06c75cf02e4acbc5e1e2bfbc74c3819c7a5324de1da"
+  },
+  "binary_sha256": "7c029cce704c5844fbe3782a472a53c047a425db93374a3ba675f16eaf48c8f4",
+  "binary_path": "/tmp/bpe-corpus-binaries-20261013/phase-baseline-production"
+}

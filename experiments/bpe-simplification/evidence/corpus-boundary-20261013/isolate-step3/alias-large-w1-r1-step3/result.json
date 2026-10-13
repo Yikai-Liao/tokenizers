@@ -1,0 +1,27 @@
+{
+  "arm": "step3",
+  "case": "alias-large",
+  "workers": 1,
+  "repeat": 1,
+  "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+  "elapsed_process_seconds": 0.6507585189974634,
+  "metrics": {
+    "export_seconds": 0.034972607,
+    "load_seconds": 0.024200995,
+    "process_hwm_kib_before_validation": 42724,
+    "train_cpu_seconds": 0.471305,
+    "train_seconds": 0.476132364
+  },
+  "model_sha256": "df75cb081a7a47e2db7e22a021d690facdb3b6892cdf982c7f160db40248231d",
+  "coverage": {
+    "aa": 0,
+    "ab": 0,
+    "existing_fresh": 0,
+    "multi_rule": 0,
+    "whole_words": 0,
+    "initial_whole_words": 0
+  },
+  "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "binary_sha256": "0a7484e9d0e8ab7fd91d7de407e24393534b59c958835a1b67071d05b6b719c7",
+  "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/isolate-step3/alias-large-w1-r1-step3"
+}

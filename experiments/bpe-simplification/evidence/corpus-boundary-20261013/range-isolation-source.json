@@ -1,0 +1,31 @@
+{
+  "purpose": "Only replace valid match Range::len by end-start; original single-call runner restored from final diagnostic source.",
+  "replacements": 7,
+  "source_sha256": "155ba8e03eb798a7e96a706fe4212fd7223d7bba4f8515008493b4aed7e6d13a",
+  "runner_sources": {
+    "experiments/bpe-simplification/runner/src/pipeline.rs": "300fe769f662872aecb8496efa695ac43382f319e9e1149bcc6226319ab3ecb9",
+    "experiments/bpe-simplification/runner/src/main.rs": "3bf0c679c660cf07760e1c3647c8308ef4ac7d138f45b8dfb5ca2f663b02c4c5",
+    "experiments/bpe-simplification/runner/src/model_output.rs": "58fedcea52879ce2028f296b2dcb8ae05866bc6cf6c156b0f1a4803a6c273168",
+    "experiments/bpe-simplification/runner/src/core.rs": "f1b28ef812926953fb371fb62e6a5fcf4b90b75198f6b5ed326e6bf651e76c59",
+    "experiments/bpe-simplification/runner/src/protocol.rs": "5b66d878b5e9895a22c7f4b3803aee79da4e6458d813537b4182d0ddde30460d",
+    "experiments/bpe-simplification/runner/src/feed_stats.rs": "cd317b213cff235d310e0fa5a66e826cad8a390c143a4d8551e0dd142a4a533d"
+  },
+  "binaries": {
+    "baseline": {
+      "path": "/tmp/bpe-corpus-binaries-20261013/final-baseline-production",
+      "sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f"
+    },
+    "candidate": {
+      "path": "/tmp/bpe-corpus-binaries-20261013/final-candidate-production",
+      "sha256": "e73a6a15a6dbbd32041b1372996a912a3922c9367ada3c1859a454786627a153"
+    },
+    "rebuilt": {
+      "path": "/tmp/bpe-corpus-binaries-20261013/rebuilt-current-production",
+      "sha256": "bf7c22c293d439203f3b23d8841b7c02f434327d259791ea13776e53c9ec9499"
+    },
+    "range": {
+      "path": "/tmp/bpe-corpus-binaries-20261013/range-arithmetic-production",
+      "sha256": "04686fd082dee291c109a801708dbf9c634af26d6d1e071f78bf0de92432c4d2"
+    }
+  }
+}

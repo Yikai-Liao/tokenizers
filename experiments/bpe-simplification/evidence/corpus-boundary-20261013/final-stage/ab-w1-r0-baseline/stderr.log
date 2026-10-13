@@ -1,0 +1,27 @@
+BPE_TYPES {"resolved_merge":8}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t    2804 kB","seconds":0.000076566,"stage":"before_prepare","starts":0,"tasks":4}
+BPE_LAYOUT {"cache_capacity":7,"cache_len":4,"positions":8,"positions_live":true,"selected_bytes":56,"shape":"AB","task_bytes":112,"task_capacity":4,"tasks":4}
+BPE_STAGE {"events":6,"rss":"VmRSS:\t    2876 kB","seconds":0.000277789,"stage":"prepare","starts":8,"tasks":4}
+BPE_PREPARED {"birth_positions":3,"chunks_capacity":4,"events_capacity":12,"starts_capacity":8}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t    2880 kB","seconds":0.000025741,"stage":"apply","starts":0,"tasks":0}
+BPE_TYPES {"candidate":48,"pending_action":16,"positions":32,"priority":16}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t    2880 kB","seconds":0.000089373,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t    2880 kB","seconds":0.000060786,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_LAYOUT {"cache_capacity":3,"cache_len":1,"positions":1,"positions_live":true,"selected_bytes":56,"shape":"AB","task_bytes":112,"task_capacity":4,"tasks":1}
+BPE_STAGE {"events":1,"rss":"VmRSS:\t    2880 kB","seconds":0.000234925,"stage":"prepare","starts":1,"tasks":1}
+BPE_PREPARED {"birth_positions":1,"chunks_capacity":4,"events_capacity":4,"starts_capacity":2}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t    2880 kB","seconds":0.000027659,"stage":"apply","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t    2880 kB","seconds":0.000025216,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t    2880 kB","seconds":0.000022945,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_LAYOUT {"cache_capacity":3,"cache_len":1,"positions":1,"positions_live":true,"selected_bytes":56,"shape":"AB","task_bytes":112,"task_capacity":4,"tasks":1}
+BPE_STAGE {"events":1,"rss":"VmRSS:\t    2880 kB","seconds":0.000194664,"stage":"prepare","starts":1,"tasks":1}
+BPE_PREPARED {"birth_positions":1,"chunks_capacity":4,"events_capacity":4,"starts_capacity":2}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t    2880 kB","seconds":0.000023127,"stage":"apply","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t    2880 kB","seconds":0.000025746,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t    2880 kB","seconds":0.000023802,"stage":"before_prepare","starts":0,"tasks":1}
+BPE_LAYOUT {"cache_capacity":3,"cache_len":1,"positions":1,"positions_live":true,"selected_bytes":56,"shape":"AB","task_bytes":112,"task_capacity":4,"tasks":1}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t    2880 kB","seconds":0.000207176,"stage":"prepare","starts":1,"tasks":1}
+BPE_PREPARED {"birth_positions":0,"chunks_capacity":4,"events_capacity":0,"starts_capacity":2}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t    2880 kB","seconds":0.000029462,"stage":"apply","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t    2880 kB","seconds":0.000023658,"stage":"commit","starts":0,"tasks":0}
+BPE_STAGE {"events":0,"rss":"VmRSS:\t    2880 kB","seconds":0.000023172,"stage":"before_retire","starts":0,"tasks":0}

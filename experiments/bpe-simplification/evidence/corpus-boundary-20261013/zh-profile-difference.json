@@ -1,0 +1,212 @@
+{
+  "boundary": "whole-process cycles:P sampling; input load/export included; two alternating pairs; sampling cycles are diagnostic, not core timer",
+  "runs": [
+    {
+      "arm": "baseline",
+      "repeat": 0,
+      "sampled_cycle_periods": {
+        "other": 2900596014,
+        "json_load_export": 401286120,
+        "initial_count_helper": 880934309,
+        "initial_symbol_iterator": 398689712,
+        "corpus_materialize": 152296617,
+        "fresh_prepare_helper": 1369164961,
+        "neighbor_group": 227450782,
+        "neighbor_record": 583804411,
+        "endpoint_write_helper": 218346911,
+        "merge_next_remaining": 299292710,
+        "index_commit_helper": 552519426,
+        "birth_fragment_sort": 322111217,
+        "neighbor_finish": 112037724,
+        "queue_max_sibling": 316313198,
+        "position_decoder": 20098173
+      },
+      "train_cpu_seconds": 2.683823,
+      "train_seconds": 2.698697615,
+      "total_sampled_cycle_period": 8754942285,
+      "source": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/record-r0-baseline"
+    },
+    {
+      "arm": "candidate",
+      "repeat": 0,
+      "sampled_cycle_periods": {
+        "other": 2740114279,
+        "json_load_export": 395348386,
+        "initial_symbol_iterator": 399454287,
+        "initial_count_helper": 672259836,
+        "corpus_materialize": 135388279,
+        "fresh_prepare_helper": 1391670986,
+        "endpoint_write_helper": 210992115,
+        "neighbor_group": 164358638,
+        "neighbor_record": 491164895,
+        "index_commit_helper": 499221653,
+        "birth_fragment_sort": 349261265,
+        "merge_next_remaining": 279586846,
+        "neighbor_finish": 92286299,
+        "queue_max_sibling": 256500668,
+        "position_decoder": 17281364
+      },
+      "train_cpu_seconds": 2.451667,
+      "train_seconds": 2.4645892959999998,
+      "total_sampled_cycle_period": 8094889796,
+      "source": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/record-r0-candidate"
+    },
+    {
+      "arm": "baseline",
+      "repeat": 1,
+      "sampled_cycle_periods": {
+        "other": 2713889817,
+        "json_load_export": 420380538,
+        "initial_count_helper": 720836643,
+        "initial_symbol_iterator": 381830126,
+        "corpus_materialize": 152480906,
+        "neighbor_record": 526353288,
+        "fresh_prepare_helper": 1460547982,
+        "endpoint_write_helper": 218631315,
+        "neighbor_group": 220771273,
+        "merge_next_remaining": 298991481,
+        "queue_max_sibling": 264455123,
+        "index_commit_helper": 542739229,
+        "neighbor_finish": 74558111,
+        "birth_fragment_sort": 332532074,
+        "position_decoder": 28779661
+      },
+      "train_cpu_seconds": 2.561753,
+      "train_seconds": 2.564046364,
+      "total_sampled_cycle_period": 8357777567,
+      "source": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/record-r1-baseline"
+    },
+    {
+      "arm": "candidate",
+      "repeat": 1,
+      "sampled_cycle_periods": {
+        "other": 2854610022,
+        "json_load_export": 400879768,
+        "initial_count_helper": 699089795,
+        "initial_symbol_iterator": 349018257,
+        "corpus_materialize": 147031017,
+        "fresh_prepare_helper": 1424060720,
+        "neighbor_record": 501216827,
+        "endpoint_write_helper": 204480407,
+        "neighbor_group": 218517559,
+        "neighbor_finish": 65850780,
+        "index_commit_helper": 571776062,
+        "birth_fragment_sort": 393900913,
+        "merge_next_remaining": 306619702,
+        "queue_max_sibling": 304167265,
+        "position_decoder": 43134820
+      },
+      "train_cpu_seconds": 2.586372,
+      "train_seconds": 2.591025923,
+      "total_sampled_cycle_period": 8484353914,
+      "source": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/record-r1-candidate"
+    }
+  ],
+  "aggregate_difference": [
+    {
+      "role": "birth_fragment_sort",
+      "baseline_sum_sampled_cycles": 654643291,
+      "candidate_sum_sampled_cycles": 743162178,
+      "change_cycles": 88518887,
+      "change_percent": 13.521697727136717
+    },
+    {
+      "role": "corpus_materialize",
+      "baseline_sum_sampled_cycles": 304777523,
+      "candidate_sum_sampled_cycles": 282419296,
+      "change_cycles": -22358227,
+      "change_percent": -7.335917288100013
+    },
+    {
+      "role": "endpoint_write_helper",
+      "baseline_sum_sampled_cycles": 436978226,
+      "candidate_sum_sampled_cycles": 415472522,
+      "change_cycles": -21505704,
+      "change_percent": -4.921458947018564
+    },
+    {
+      "role": "fresh_prepare_helper",
+      "baseline_sum_sampled_cycles": 2829712943,
+      "candidate_sum_sampled_cycles": 2815731706,
+      "change_cycles": -13981237,
+      "change_percent": -0.49408676009295993
+    },
+    {
+      "role": "index_commit_helper",
+      "baseline_sum_sampled_cycles": 1095258655,
+      "candidate_sum_sampled_cycles": 1070997715,
+      "change_cycles": -24260940,
+      "change_percent": -2.2150877228173993
+    },
+    {
+      "role": "initial_count_helper",
+      "baseline_sum_sampled_cycles": 1601770952,
+      "candidate_sum_sampled_cycles": 1371349631,
+      "change_cycles": -230421321,
+      "change_percent": -14.385410143210041
+    },
+    {
+      "role": "initial_symbol_iterator",
+      "baseline_sum_sampled_cycles": 780519838,
+      "candidate_sum_sampled_cycles": 748472544,
+      "change_cycles": -32047294,
+      "change_percent": -4.105891027974106
+    },
+    {
+      "role": "json_load_export",
+      "baseline_sum_sampled_cycles": 821666658,
+      "candidate_sum_sampled_cycles": 796228154,
+      "change_cycles": -25438504,
+      "change_percent": -3.0959640083144224
+    },
+    {
+      "role": "merge_next_remaining",
+      "baseline_sum_sampled_cycles": 598284191,
+      "candidate_sum_sampled_cycles": 586206548,
+      "change_cycles": -12077643,
+      "change_percent": -2.018713377636283
+    },
+    {
+      "role": "neighbor_finish",
+      "baseline_sum_sampled_cycles": 186595835,
+      "candidate_sum_sampled_cycles": 158137079,
+      "change_cycles": -28458756,
+      "change_percent": -15.251549424991184
+    },
+    {
+      "role": "neighbor_group",
+      "baseline_sum_sampled_cycles": 448222055,
+      "candidate_sum_sampled_cycles": 382876197,
+      "change_cycles": -65345858,
+      "change_percent": -14.57890286099376
+    },
+    {
+      "role": "neighbor_record",
+      "baseline_sum_sampled_cycles": 1110157699,
+      "candidate_sum_sampled_cycles": 992381722,
+      "change_cycles": -117775977,
+      "change_percent": -10.608941153683793
+    },
+    {
+      "role": "other",
+      "baseline_sum_sampled_cycles": 5614485831,
+      "candidate_sum_sampled_cycles": 5594724301,
+      "change_cycles": -19761530,
+      "change_percent": -0.35197399360932247
+    },
+    {
+      "role": "position_decoder",
+      "baseline_sum_sampled_cycles": 48877834,
+      "candidate_sum_sampled_cycles": 60416184,
+      "change_cycles": 11538350,
+      "change_percent": 23.606508422611363
+    },
+    {
+      "role": "queue_max_sibling",
+      "baseline_sum_sampled_cycles": 580768321,
+      "candidate_sum_sampled_cycles": 560667933,
+      "change_cycles": -20100388,
+      "change_percent": -3.460999381886054
+    }
+  ]
+}

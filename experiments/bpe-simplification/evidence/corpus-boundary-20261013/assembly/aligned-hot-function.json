@@ -1,0 +1,7 @@
+{
+  "binary": "/tmp/bpe-corpus-binaries-20261013/aligned-candidate-production",
+  "address": 936272,
+  "bytes": 8283,
+  "instructions": 1694,
+  "stack_allocation": "   e495a:\tsub    $0x3e8,%rsp"
+}

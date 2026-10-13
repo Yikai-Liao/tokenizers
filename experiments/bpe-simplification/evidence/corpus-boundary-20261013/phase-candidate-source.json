@@ -1,0 +1,31 @@
+{
+  "purpose": "matched aggregate wall-clock boundaries; no per-phase logging; single-call runner",
+  "source_sha256": {
+    "tokenizers/tk-train/src/trainers/bpe/parity_trainer.rs": "a584152379dc59de167a14f751f37bab8da9c723eddc1c238df21965dd08f37c",
+    "tokenizers/tk-train/src/trainers/bpe/word_counts.rs": "7197651ee7fcf17dfc1172ee89c5cf9e6e09a95edd382dc475c8d5b4097c9363",
+    "tokenizers/tk-train/src/trainers/bpe/merge.rs": "99d71d675326832c3118fffb6afd5cabd451162f497a87092a7c506a44023fac",
+    "tokenizers/tk-train/src/trainers/bpe/feed.rs": "dea1c03fb382d5d18b1ee6ad3bae44b482390ed2179fecb01eee1c1d0eb3f802",
+    "tokenizers/tk-train/src/trainers/bpe/mod.rs": "3067327522b83404aecbc0668b4a95b4a03910ee5d74d45d5b4d934566042efe",
+    "tokenizers/tk-train/src/trainers/bpe/tests.rs": "dc85ef1e845e38ca7016b9abf5e7761f3ccdd5a7fb348bf13bac65f6d797e128",
+    "tokenizers/tk-train/src/trainers/bpe/index.rs": "f3414c1f8c4ea7fb14200eebf0df99c9ddf061f4770c2fe4ca828e96010ecb9a",
+    "tokenizers/tk-train/src/trainers/bpe/corpus.rs": "5a52f969175d6742f944bc85359828d392cf49a826d7ad7c24aa194d05d9c4a6",
+    "tokenizers/tk-train/src/trainers/bpe/positions.rs": "cb9cb31fabc5109a98dd729e381b456a151e6fecad82784e170650b9b03fa48f",
+    "tokenizers/tk-train/src/trainers/bpe/word.rs": "f9c3bd0a7a8fade42a5643ee6341b4ebf203f7a45aa0a65797e773d1ce21396a",
+    "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs": "a8a09bcc80cf772aefa990cd0a3453a9a9452714f46c78fcc0cbeb7ac224725b",
+    "tokenizers/tk-train/src/trainers/bpe/positions/codec.rs": "bd30d00fa9a27150b69912d81d0d14e491348ebc6e694b1936de1ccd7da38544",
+    "tokenizers/tk-train/src/trainers/bpe/corpus/merging.rs": "8e965f8e3ed652ca90a571f2bc9b2606c1506d41b2bcfda6f923c6f5c13b48b9"
+  },
+  "runner_sha256": {
+    "experiments/bpe-simplification/runner/src/pipeline.rs": "300fe769f662872aecb8496efa695ac43382f319e9e1149bcc6226319ab3ecb9",
+    "experiments/bpe-simplification/runner/src/main.rs": "3bf0c679c660cf07760e1c3647c8308ef4ac7d138f45b8dfb5ca2f663b02c4c5",
+    "experiments/bpe-simplification/runner/src/model_output.rs": "58fedcea52879ce2028f296b2dcb8ae05866bc6cf6c156b0f1a4803a6c273168",
+    "experiments/bpe-simplification/runner/src/core.rs": "f1b28ef812926953fb371fb62e6a5fcf4b90b75198f6b5ed326e6bf651e76c59",
+    "experiments/bpe-simplification/runner/src/protocol.rs": "5b66d878b5e9895a22c7f4b3803aee79da4e6458d813537b4182d0ddde30460d",
+    "experiments/bpe-simplification/runner/src/feed_stats.rs": "cd317b213cff235d310e0fa5a66e826cad8a390c143a4d8551e0dd142a4a533d",
+    "experiments/bpe-simplification/runner/src/adapters/tk_train_v1.rs": "b4bd6b9ef2be4c99bd6b42e9831192b0e29fc7ec126d7f0e90d18f28460361bc",
+    "experiments/bpe-simplification/runner/src/adapters/mod.rs": "a5a2dd2147a680afb61c3ff34629d8ca7d1fc2d759e2931be01bf1567436001a",
+    "experiments/bpe-simplification/runner/src/adapters/tk_train_pr2348.rs": "f2b3030f7546b1d1bf23f06c75cf02e4acbc5e1e2bfbc74c3819c7a5324de1da"
+  },
+  "binary_sha256": "0f211df0ca890aacc570747aa82cea4f5be60aaa5855945e59b18f8c657da003",
+  "binary_path": "/tmp/bpe-corpus-binaries-20261013/phase-candidate-production"
+}

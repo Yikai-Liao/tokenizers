@@ -1,0 +1,30 @@
+{
+  "arm": "candidate",
+  "case": "aa-large",
+  "workers": 1,
+  "repeat": 0,
+  "input_sha256": "a6eb27204cddd398394de0de7c1554b87a9610b35a1e9478b695b07de4489cbe",
+  "elapsed_process_seconds": 1.200177671998972,
+  "metrics": {
+    "export_seconds": 0.044202978,
+    "load_seconds": 0.044220294,
+    "process_hwm_kib_before_validation": 61152,
+    "train_cpu_seconds": 0.8666579999999999,
+    "train_seconds": 0.868354351
+  },
+  "model_sha256": "97cc40f6392b0644376c72fb6babecc9d7ab34157bed01e52151b72d938d4c56",
+  "coverage": {
+    "initial_scan_config": 1,
+    "select": 28,
+    "batch": 28,
+    "commit": 28,
+    "aa": 21,
+    "ab": 7,
+    "existing_fresh": 0,
+    "multi_rule": 0,
+    "whole_words": 0
+  },
+  "trace_sha256": "dcfec3d2673f9525828833dcd5a143484b2e4200b1b472a7e05380cf88398ac8",
+  "binary_sha256": "26ce095b30ed4c98e2ef98761a16cbd80d201333bcda942ebfc9eb1e3e308167",
+  "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/aa-large-w1-r0-candidate"
+}

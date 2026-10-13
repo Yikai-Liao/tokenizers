@@ -1,0 +1,33 @@
+{
+  "arm": "candidate",
+  "case": "length-reuse-large",
+  "workers": 6,
+  "repeat": 0,
+  "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+  "elapsed_process_seconds": 0.47655788699921686,
+  "metrics": {
+    "export_seconds": 9.7657e-05,
+    "load_seconds": 0.029983392,
+    "process_hwm_kib_before_validation": 43500,
+    "train_cpu_seconds": 0.43782600000000005,
+    "train_seconds": 0.43794769
+  },
+  "model_sha256": "a5cf2738c42c1bf7a1ef2be4ee06b3118b73009742cfb80a77e8aacceca99d21",
+  "coverage": {
+    "initial_scan_config": 2,
+    "restart": 1,
+    "select": 10,
+    "batch": 10,
+    "reuse_scan": 10,
+    "commit": 10,
+    "aa": 4,
+    "ab": 6,
+    "existing_fresh": 0,
+    "multi_rule": 0,
+    "whole_words": 10,
+    "initial_whole_words": 2
+  },
+  "trace_sha256": "61f8dc3f940ab5ce24d9212893fe38c840c7eb9c9e8a29ea03242fe66886686d",
+  "binary_sha256": "c10e970fc7af4f6c116891264c21b985fc7d3bc9e2853238a6d4ef903a2cba87",
+  "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/length-reuse-large-w6-r0-candidate"
+}

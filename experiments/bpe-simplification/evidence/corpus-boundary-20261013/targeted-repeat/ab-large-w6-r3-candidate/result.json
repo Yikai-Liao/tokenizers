@@ -1,0 +1,27 @@
+{
+  "arm": "candidate",
+  "case": "ab-large",
+  "workers": 6,
+  "repeat": 3,
+  "input_sha256": "d2e050a3414bd9b80e270eb2ce97e357f23c6450d9b82f35479a847b16a7b0a2",
+  "elapsed_process_seconds": 0.3760981599916704,
+  "metrics": {
+    "export_seconds": 0.025061869,
+    "load_seconds": 0.02538125,
+    "process_hwm_kib_before_validation": 28512,
+    "train_cpu_seconds": 0.39637100000000003,
+    "train_seconds": 0.194522924
+  },
+  "model_sha256": "1c1a2fb5d362ae492b835fe01f1039d432b5e1d3fdf777b25f36a423fa261db8",
+  "coverage": {
+    "aa": 0,
+    "ab": 0,
+    "existing_fresh": 0,
+    "multi_rule": 0,
+    "whole_words": 0,
+    "initial_whole_words": 0
+  },
+  "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "binary_sha256": "e73a6a15a6dbbd32041b1372996a912a3922c9367ada3c1859a454786627a153",
+  "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/targeted-repeat/ab-large-w6-r3-candidate"
+}

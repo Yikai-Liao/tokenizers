@@ -1,0 +1,18 @@
+{
+  "protocol_version": 1,
+  "attempt_id": "zh-bytelevel-w6-r0-rebuilt",
+  "build_id": "rebuilt",
+  "input_id": "zh-bytelevel",
+  "mode": "core",
+  "workers": 6,
+  "output": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/range-normal/zh-bytelevel-w6-r0-rebuilt/model.json",
+  "input": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/inputs/zh-bytelevel.json",
+  "pretokenizer": "bytelevel_regex",
+  "trainer": {
+    "vocab_size": 30000,
+    "min_frequency": 2,
+    "prefix": null,
+    "suffix": null,
+    "max_token_length": null
+  }
+}

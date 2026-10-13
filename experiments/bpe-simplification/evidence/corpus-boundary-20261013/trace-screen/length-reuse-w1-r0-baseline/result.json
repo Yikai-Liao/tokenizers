@@ -1,0 +1,32 @@
+{
+  "arm": "baseline",
+  "case": "length-reuse",
+  "workers": 1,
+  "repeat": 0,
+  "input_sha256": "2b878f4e2647ed683047ebdc023e6695ec1734ab1e8cde2d1ca57709b4174031",
+  "elapsed_process_seconds": 0.011398910995922051,
+  "metrics": {
+    "export_seconds": 0.000119004,
+    "load_seconds": 3.6794e-05,
+    "process_hwm_kib_before_validation": 7420,
+    "train_cpu_seconds": 0.00686,
+    "train_seconds": 0.006831909
+  },
+  "model_sha256": "63297903068b6dcaf87f44c90b99a697a98d79e591cde58a84f01a96f2053e1a",
+  "coverage": {
+    "initial_scan_config": 2,
+    "restart": 1,
+    "select": 4,
+    "batch": 4,
+    "reuse_scan": 9,
+    "commit": 4,
+    "aa": 2,
+    "ab": 2,
+    "existing_fresh": 0,
+    "multi_rule": 0,
+    "whole_words": 11
+  },
+  "trace_sha256": "fcb79546d0e9a258420161831d005f5edc704f402465c2e9c0c5945a4a8ace5c",
+  "binary_sha256": "16bfd010fc92adcc9663d24baa883abcdf984ffb1ca78d669c7f6d8db163f02c",
+  "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/length-reuse-w1-r0-baseline"
+}

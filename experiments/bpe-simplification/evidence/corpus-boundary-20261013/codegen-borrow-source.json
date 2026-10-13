@@ -1,0 +1,6 @@
+{
+  "purpose": "Borrow the local input iterator inside the existing fresh reader to remove added iterator-state moves. Tasks, grain, prefetch depth and event order are identical.",
+  "source": "/tmp/bpe-corpus-codegen-20261013/tokenizers/tk-train/src/trainers/bpe/corpus/merging.rs",
+  "sha256": "f9ef9009a95fa04880aa978d664299706bc2b8e31bda38282c2623d9ebd309cc",
+  "binary_sha256": "e9b1eb730140fd4c8d1bc5df7062bef853a206eb2f9649a36140862fb5a8c1a0"
+}

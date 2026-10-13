@@ -1,0 +1,18 @@
+{
+  "protocol_version": 1,
+  "attempt_id": "aa-w1-r1-candidate",
+  "build_id": "candidate",
+  "input_id": "aa",
+  "mode": "core",
+  "workers": 1,
+  "output": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-timing/aa-w1-r1-candidate/model.json",
+  "input": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/inputs/aa.json",
+  "pretokenizer": "none",
+  "trainer": {
+    "vocab_size": 64,
+    "min_frequency": 1,
+    "prefix": null,
+    "suffix": null,
+    "max_token_length": null
+  }
+}

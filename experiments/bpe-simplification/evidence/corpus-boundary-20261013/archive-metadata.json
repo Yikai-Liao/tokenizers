@@ -1,0 +1,36 @@
+{
+  "normalized_untracked_model_headers": 1665,
+  "deduplicated_model_files": 1649,
+  "perf_archives": [
+    {
+      "path": "perf-record/candidate/perf.data.gz",
+      "uncompressed_sha256": "d61b94a941067336e2cb862873074003112cb4d6ceba0dc0500fea3dd4249635",
+      "uncompressed_bytes": 7238094
+    },
+    {
+      "path": "perf-record/baseline/perf.data.gz",
+      "uncompressed_sha256": "3a2b0ac344677adb90a7a830b360d68ce1f795f71e01d9261e26f293adbb4618",
+      "uncompressed_bytes": 6828862
+    },
+    {
+      "path": "zh-aligned-profile/record-r1-candidate/perf.data.gz",
+      "uncompressed_sha256": "b47ff770502ef4ffb017a96be64aeaf381d485ca4bf9220c0b8053d133e0835f",
+      "uncompressed_bytes": 25152902
+    },
+    {
+      "path": "zh-aligned-profile/record-r0-baseline/perf.data.gz",
+      "uncompressed_sha256": "e5d1e6f190ed8b436b3096b84e28cdd9bf33411e987f4d66caf194e0dba7d3fa",
+      "uncompressed_bytes": 26025618
+    },
+    {
+      "path": "zh-aligned-profile/record-r0-candidate/perf.data.gz",
+      "uncompressed_sha256": "f786f064abe48f0050d8959355991e318b6debe44c7443b1af029acd0204b0ad",
+      "uncompressed_bytes": 24049198
+    },
+    {
+      "path": "zh-aligned-profile/record-r1-baseline/perf.data.gz",
+      "uncompressed_sha256": "65ae0972fb0f4588b8ac684f7905ec53860971dae583e480193c130079fe0a2f",
+      "uncompressed_bytes": 25028362
+    }
+  ]
+}

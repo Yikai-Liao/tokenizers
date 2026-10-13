@@ -1,0 +1,2 @@
+[ perf record: Woken up 96 times to write data ]
+[ perf record: Captured and wrote 23.853 MB /root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/record-r1-baseline/perf.data (2942 samples) ]

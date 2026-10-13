@@ -1,0 +1,80 @@
+{
+  "arm": "candidate",
+  "case": "ab-large",
+  "workers": 6,
+  "repeat": 0,
+  "input_sha256": "d2e050a3414bd9b80e270eb2ce97e357f23c6450d9b82f35479a847b16a7b0a2",
+  "elapsed_process_seconds": 2.5120384940091753,
+  "metrics": {
+    "export_seconds": 0.022542164999999996,
+    "load_seconds": 0.024968685,
+    "process_hwm_kib_before_validation": 68372,
+    "train_cpu_seconds": 0.36440419999999996,
+    "train_seconds": 0.17812733740000003,
+    "training_calls": [
+      [
+        0.20308976,
+        0.38033
+      ],
+      [
+        0.163531476,
+        0.38611
+      ],
+      [
+        0.177547609,
+        0.4487509999999999
+      ],
+      [
+        0.199393873,
+        0.41637999999999975
+      ],
+      [
+        0.152067665,
+        0.33341200000000026
+      ],
+      [
+        0.184600814,
+        0.30587600000000004
+      ],
+      [
+        0.163505202,
+        0.31189599999999995
+      ],
+      [
+        0.163836113,
+        0.32227300000000003
+      ],
+      [
+        0.19139248,
+        0.358584
+      ],
+      [
+        0.182308382,
+        0.38043000000000005
+      ]
+    ]
+  },
+  "model_sha256": "1c1a2fb5d362ae492b835fe01f1039d432b5e1d3fdf777b25f36a423fa261db8",
+  "iteration_model_sha256": [
+    "1c1a2fb5d362ae492b835fe01f1039d432b5e1d3fdf777b25f36a423fa261db8",
+    "1c1a2fb5d362ae492b835fe01f1039d432b5e1d3fdf777b25f36a423fa261db8",
+    "1c1a2fb5d362ae492b835fe01f1039d432b5e1d3fdf777b25f36a423fa261db8",
+    "1c1a2fb5d362ae492b835fe01f1039d432b5e1d3fdf777b25f36a423fa261db8",
+    "1c1a2fb5d362ae492b835fe01f1039d432b5e1d3fdf777b25f36a423fa261db8",
+    "1c1a2fb5d362ae492b835fe01f1039d432b5e1d3fdf777b25f36a423fa261db8",
+    "1c1a2fb5d362ae492b835fe01f1039d432b5e1d3fdf777b25f36a423fa261db8",
+    "1c1a2fb5d362ae492b835fe01f1039d432b5e1d3fdf777b25f36a423fa261db8",
+    "1c1a2fb5d362ae492b835fe01f1039d432b5e1d3fdf777b25f36a423fa261db8"
+  ],
+  "coverage": {
+    "aa": 0,
+    "ab": 0,
+    "existing_fresh": 0,
+    "multi_rule": 0,
+    "whole_words": 0,
+    "initial_whole_words": 0
+  },
+  "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "binary_sha256": "581bd15dbb560258c09935cc4cf5a69706b59d597c61670f770249b5c6795168",
+  "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/repeated-timing/ab-large-w6-r0-candidate"
+}

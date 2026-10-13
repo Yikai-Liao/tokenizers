@@ -1,0 +1,28 @@
+{
+  "arm": "baseline",
+  "case": "length-reuse-large",
+  "workers": 1,
+  "repeat": 3,
+  "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+  "elapsed_process_seconds": 0.4338205759995617,
+  "metrics": {
+    "export_seconds": 0.000120122,
+    "load_seconds": 0.035750089,
+    "process_hwm_kib_before_validation": 43048,
+    "train_cpu_seconds": 0.389543,
+    "train_seconds": 0.389787402
+  },
+  "model_sha256": "a5cf2738c42c1bf7a1ef2be4ee06b3118b73009742cfb80a77e8aacceca99d21",
+  "iteration_model_sha256": [],
+  "coverage": {
+    "aa": 0,
+    "ab": 0,
+    "existing_fresh": 0,
+    "multi_rule": 0,
+    "whole_words": 0,
+    "initial_whole_words": 0
+  },
+  "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+  "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/length-reuse-large-w1-r3-baseline"
+}

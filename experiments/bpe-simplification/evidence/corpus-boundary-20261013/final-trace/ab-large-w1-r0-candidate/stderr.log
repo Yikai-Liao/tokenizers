@@ -1,0 +1,85 @@
+BPE_DIAG {"kind":"initial_scan_config","whole_words":false}
+BPE_DIAG {"count":"Priority { count: 1250000, pair: Reverse((0, 1)) }","existing":false,"kind":"select","merged_id":4,"pair":[0,1],"reuse":false}
+BPE_DIAG {"count":"Priority { count: 1150000, pair: Reverse((0, 2)) }","existing":false,"kind":"select","merged_id":5,"pair":[0,2],"reuse":false}
+BPE_DIAG {"count":"Priority { count: 1050000, pair: Reverse((3, 1)) }","existing":false,"kind":"select","merged_id":6,"pair":[3,1],"reuse":false}
+BPE_DIAG {"count":"Priority { count: 950000, pair: Reverse((3, 2)) }","existing":false,"kind":"select","merged_id":7,"pair":[3,2],"reuse":false}
+BPE_DIAG {"kind":"batch","reuse":false,"rules":4}
+BPE_DIAG {"kind":"commit"}
+BPE_DIAG {"count":"Priority { count: 250000, pair: Reverse((4, 5)) }","existing":false,"kind":"select","merged_id":8,"pair":[4,5],"reuse":false}
+BPE_DIAG {"kind":"batch","reuse":false,"rules":1}
+BPE_DIAG {"kind":"commit"}
+BPE_DIAG {"count":"Priority { count: 250000, pair: Reverse((6, 7)) }","existing":false,"kind":"select","merged_id":9,"pair":[6,7],"reuse":false}
+BPE_DIAG {"kind":"batch","reuse":false,"rules":1}
+BPE_DIAG {"kind":"commit"}
+BPE_DIAG {"count":"Priority { count: 250000, pair: Reverse((8, 9)) }","existing":false,"kind":"select","merged_id":10,"pair":[8,9],"reuse":false}
+BPE_DIAG {"kind":"batch","reuse":false,"rules":1}
+BPE_DIAG {"kind":"commit"}
+BPE_DIAG {"count":"Priority { count: 249999, pair: Reverse((10, 10)) }","existing":false,"kind":"select","merged_id":11,"pair":[10,10],"reuse":false}
+BPE_DIAG {"kind":"batch","reuse":false,"rules":1}
+BPE_DIAG {"kind":"commit"}
+BPE_DIAG {"count":"Priority { count: 124999, pair: Reverse((11, 11)) }","existing":false,"kind":"select","merged_id":12,"pair":[11,11],"reuse":false}
+BPE_DIAG {"kind":"batch","reuse":false,"rules":1}
+BPE_DIAG {"kind":"commit"}
+BPE_DIAG {"count":"Priority { count: 62499, pair: Reverse((12, 12)) }","existing":false,"kind":"select","merged_id":13,"pair":[12,12],"reuse":false}
+BPE_DIAG {"kind":"batch","reuse":false,"rules":1}
+BPE_DIAG {"kind":"commit"}
+BPE_DIAG {"count":"Priority { count: 31249, pair: Reverse((13, 13)) }","existing":false,"kind":"select","merged_id":14,"pair":[13,13],"reuse":false}
+BPE_DIAG {"kind":"batch","reuse":false,"rules":1}
+BPE_DIAG {"kind":"commit"}
+BPE_DIAG {"count":"Priority { count: 15624, pair: Reverse((14, 14)) }","existing":false,"kind":"select","merged_id":15,"pair":[14,14],"reuse":false}
+BPE_DIAG {"kind":"batch","reuse":false,"rules":1}
+BPE_DIAG {"kind":"commit"}
+BPE_DIAG {"count":"Priority { count: 7811, pair: Reverse((15, 15)) }","existing":false,"kind":"select","merged_id":16,"pair":[15,15],"reuse":false}
+BPE_DIAG {"kind":"batch","reuse":false,"rules":1}
+BPE_DIAG {"kind":"commit"}
+BPE_DIAG {"count":"Priority { count: 3905, pair: Reverse((16, 16)) }","existing":false,"kind":"select","merged_id":17,"pair":[16,16],"reuse":false}
+BPE_DIAG {"kind":"batch","reuse":false,"rules":1}
+BPE_DIAG {"kind":"commit"}
+BPE_DIAG {"count":"Priority { count: 1952, pair: Reverse((17, 17)) }","existing":false,"kind":"select","merged_id":18,"pair":[17,17],"reuse":false}
+BPE_DIAG {"kind":"batch","reuse":false,"rules":1}
+BPE_DIAG {"kind":"commit"}
+BPE_DIAG {"count":"Priority { count: 975, pair: Reverse((18, 18)) }","existing":false,"kind":"select","merged_id":19,"pair":[18,18],"reuse":false}
+BPE_DIAG {"kind":"batch","reuse":false,"rules":1}
+BPE_DIAG {"kind":"commit"}
+BPE_DIAG {"count":"Priority { count: 487, pair: Reverse((19, 19)) }","existing":false,"kind":"select","merged_id":20,"pair":[19,19],"reuse":false}
+BPE_DIAG {"kind":"batch","reuse":false,"rules":1}
+BPE_DIAG {"kind":"commit"}
+BPE_DIAG {"count":"Priority { count: 243, pair: Reverse((20, 20)) }","existing":false,"kind":"select","merged_id":21,"pair":[20,20],"reuse":false}
+BPE_DIAG {"kind":"batch","reuse":false,"rules":1}
+BPE_DIAG {"kind":"commit"}
+BPE_DIAG {"count":"Priority { count: 121, pair: Reverse((21, 21)) }","existing":false,"kind":"select","merged_id":22,"pair":[21,21],"reuse":false}
+BPE_DIAG {"kind":"batch","reuse":false,"rules":1}
+BPE_DIAG {"kind":"commit"}
+BPE_DIAG {"count":"Priority { count: 60, pair: Reverse((22, 22)) }","existing":false,"kind":"select","merged_id":23,"pair":[22,22],"reuse":false}
+BPE_DIAG {"kind":"batch","reuse":false,"rules":1}
+BPE_DIAG {"kind":"commit"}
+BPE_DIAG {"count":"Priority { count: 29, pair: Reverse((23, 23)) }","existing":false,"kind":"select","merged_id":24,"pair":[23,23],"reuse":false}
+BPE_DIAG {"kind":"batch","reuse":false,"rules":1}
+BPE_DIAG {"kind":"commit"}
+BPE_DIAG {"count":"Priority { count: 14, pair: Reverse((24, 24)) }","existing":false,"kind":"select","merged_id":25,"pair":[24,24],"reuse":false}
+BPE_DIAG {"kind":"batch","reuse":false,"rules":1}
+BPE_DIAG {"kind":"commit"}
+BPE_DIAG {"count":"Priority { count: 6, pair: Reverse((25, 25)) }","existing":false,"kind":"select","merged_id":26,"pair":[25,25],"reuse":false}
+BPE_DIAG {"kind":"batch","reuse":false,"rules":1}
+BPE_DIAG {"kind":"commit"}
+BPE_DIAG {"count":"Priority { count: 2, pair: Reverse((26, 26)) }","existing":false,"kind":"select","merged_id":27,"pair":[26,26],"reuse":false}
+BPE_DIAG {"kind":"batch","reuse":false,"rules":1}
+BPE_DIAG {"kind":"commit"}
+BPE_DIAG {"count":"Priority { count: 1, pair: Reverse((17, 14)) }","existing":false,"kind":"select","merged_id":28,"pair":[17,14],"reuse":false}
+BPE_DIAG {"kind":"batch","reuse":false,"rules":1}
+BPE_DIAG {"kind":"commit"}
+BPE_DIAG {"count":"Priority { count: 1, pair: Reverse((22, 28)) }","existing":false,"kind":"select","merged_id":29,"pair":[22,28],"reuse":false}
+BPE_DIAG {"kind":"batch","reuse":false,"rules":1}
+BPE_DIAG {"kind":"commit"}
+BPE_DIAG {"count":"Priority { count: 1, pair: Reverse((24, 29)) }","existing":false,"kind":"select","merged_id":30,"pair":[24,29],"reuse":false}
+BPE_DIAG {"kind":"batch","reuse":false,"rules":1}
+BPE_DIAG {"kind":"commit"}
+BPE_DIAG {"count":"Priority { count: 1, pair: Reverse((25, 30)) }","existing":false,"kind":"select","merged_id":31,"pair":[25,30],"reuse":false}
+BPE_DIAG {"kind":"batch","reuse":false,"rules":1}
+BPE_DIAG {"kind":"commit"}
+BPE_DIAG {"count":"Priority { count: 1, pair: Reverse((26, 31)) }","existing":false,"kind":"select","merged_id":32,"pair":[26,31],"reuse":false}
+BPE_DIAG {"kind":"batch","reuse":false,"rules":1}
+BPE_DIAG {"kind":"commit"}
+BPE_DIAG {"count":"Priority { count: 1, pair: Reverse((27, 32)) }","existing":false,"kind":"select","merged_id":33,"pair":[27,32],"reuse":false}
+BPE_DIAG {"kind":"batch","reuse":false,"rules":1}
+BPE_DIAG {"kind":"commit"}

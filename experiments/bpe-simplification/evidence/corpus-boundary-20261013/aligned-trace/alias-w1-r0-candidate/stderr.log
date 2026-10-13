@@ -1,0 +1,19 @@
+BPE_DIAG {"kind":"initial_scan_config","whole_words":false}
+BPE_DIAG {"kind":"restart"}
+BPE_DIAG {"kind":"initial_scan_config","whole_words":false}
+BPE_DIAG {"count":"Priority { count: 1, pair: Reverse((0, 0)) }","existing":true,"kind":"select","merged_id":2,"pair":[0,0],"reuse":true}
+BPE_DIAG {"kind":"batch","reuse":true,"rules":1}
+BPE_DIAG {"kind":"reuse_scan","whole_words":true}
+BPE_DIAG {"kind":"commit"}
+BPE_DIAG {"count":"Priority { count: 2, pair: Reverse((1, 2)) }","existing":false,"kind":"select","merged_id":3,"pair":[1,2],"reuse":true}
+BPE_DIAG {"kind":"batch","reuse":true,"rules":1}
+BPE_DIAG {"kind":"reuse_scan","whole_words":true}
+BPE_DIAG {"kind":"commit"}
+BPE_DIAG {"count":"Priority { count: 2, pair: Reverse((1, 2)) }","existing":true,"kind":"select","merged_id":3,"pair":[1,2],"reuse":true}
+BPE_DIAG {"kind":"batch","reuse":true,"rules":1}
+BPE_DIAG {"kind":"reuse_scan","whole_words":true}
+BPE_DIAG {"kind":"commit"}
+BPE_DIAG {"count":"Priority { count: 1, pair: Reverse((3, 3)) }","existing":false,"kind":"select","merged_id":4,"pair":[3,3],"reuse":true}
+BPE_DIAG {"kind":"batch","reuse":true,"rules":1}
+BPE_DIAG {"kind":"reuse_scan","whole_words":true}
+BPE_DIAG {"kind":"commit"}

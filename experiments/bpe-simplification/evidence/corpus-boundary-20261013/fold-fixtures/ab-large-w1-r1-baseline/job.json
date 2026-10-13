@@ -1,0 +1,18 @@
+{
+  "protocol_version": 1,
+  "attempt_id": "ab-large-w1-r1-baseline",
+  "build_id": "baseline",
+  "input_id": "ab-large",
+  "mode": "core",
+  "workers": 1,
+  "output": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/fold-fixtures/ab-large-w1-r1-baseline/model.json",
+  "input": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/inputs/ab-large.json",
+  "pretokenizer": "none",
+  "trainer": {
+    "vocab_size": 64,
+    "min_frequency": 1,
+    "prefix": null,
+    "suffix": null,
+    "max_token_length": null
+  }
+}

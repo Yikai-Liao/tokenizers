@@ -1,0 +1,1114 @@
+[
+  {
+    "kind": "stat",
+    "repeat": 0,
+    "arm": "baseline",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "output": {
+      "attempt_id": "stat-r0-baseline",
+      "build_id": "baseline",
+      "effective_affinity": [
+        0
+      ],
+      "input_id": "zh-bytelevel",
+      "metrics": {
+        "export_seconds": 0.008203066,
+        "load_seconds": 0.342470564,
+        "process_hwm_kib_before_validation": 125920,
+        "train_cpu_seconds": 2.413409,
+        "train_seconds": 2.420595914
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 29744,
+        "actual_vocab": 30000,
+        "model_path": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r0-baseline/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 1
+    },
+    "command": [
+      "perf",
+      "stat",
+      "-x",
+      ";",
+      "-o",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r0-baseline/counters.csv",
+      "-e",
+      "cycles,instructions,branches,branch-misses,cache-references,cache-misses",
+      "--",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/bpe-corpus-binaries-20261013/final-baseline-production",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r0-baseline/job.json"
+    ],
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r0-baseline",
+    "counters": {
+      "cycles": 0,
+      "instructions": 10254394406,
+      "branches": 1878610341,
+      "branch-misses": 34047363,
+      "cache-references": 62600394,
+      "cache-misses": 34804535
+    }
+  },
+  {
+    "kind": "stat",
+    "repeat": 0,
+    "arm": "candidate",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "output": {
+      "attempt_id": "stat-r0-candidate",
+      "build_id": "candidate",
+      "effective_affinity": [
+        0
+      ],
+      "input_id": "zh-bytelevel",
+      "metrics": {
+        "export_seconds": 0.00782002,
+        "load_seconds": 0.284501744,
+        "process_hwm_kib_before_validation": 125952,
+        "train_cpu_seconds": 2.3525899999999997,
+        "train_seconds": 2.361001643
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 29744,
+        "actual_vocab": 30000,
+        "model_path": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r0-candidate/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 1
+    },
+    "command": [
+      "perf",
+      "stat",
+      "-x",
+      ";",
+      "-o",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r0-candidate/counters.csv",
+      "-e",
+      "cycles,instructions,branches,branch-misses,cache-references,cache-misses",
+      "--",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/bpe-corpus-binaries-20261013/aligned-candidate-production",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r0-candidate/job.json"
+    ],
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r0-candidate",
+    "counters": {
+      "cycles": 0,
+      "instructions": 10224908436,
+      "branches": 1849718523,
+      "branch-misses": 33655970,
+      "cache-references": 61269077,
+      "cache-misses": 35036058
+    }
+  },
+  {
+    "kind": "stat",
+    "repeat": 1,
+    "arm": "candidate",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "output": {
+      "attempt_id": "stat-r1-candidate",
+      "build_id": "candidate",
+      "effective_affinity": [
+        0
+      ],
+      "input_id": "zh-bytelevel",
+      "metrics": {
+        "export_seconds": 0.007667514,
+        "load_seconds": 0.346941536,
+        "process_hwm_kib_before_validation": 125628,
+        "train_cpu_seconds": 2.534668,
+        "train_seconds": 2.537230486
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 29744,
+        "actual_vocab": 30000,
+        "model_path": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r1-candidate/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 1
+    },
+    "command": [
+      "perf",
+      "stat",
+      "-x",
+      ";",
+      "-o",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r1-candidate/counters.csv",
+      "-e",
+      "cycles,instructions,branches,branch-misses,cache-references,cache-misses",
+      "--",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/bpe-corpus-binaries-20261013/aligned-candidate-production",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r1-candidate/job.json"
+    ],
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r1-candidate",
+    "counters": {
+      "cycles": 0,
+      "instructions": 10221096083,
+      "branches": 1849000877,
+      "branch-misses": 33114782,
+      "cache-references": 62109710,
+      "cache-misses": 36727419
+    }
+  },
+  {
+    "kind": "stat",
+    "repeat": 1,
+    "arm": "baseline",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "output": {
+      "attempt_id": "stat-r1-baseline",
+      "build_id": "baseline",
+      "effective_affinity": [
+        0
+      ],
+      "input_id": "zh-bytelevel",
+      "metrics": {
+        "export_seconds": 0.008822939,
+        "load_seconds": 0.310087461,
+        "process_hwm_kib_before_validation": 124820,
+        "train_cpu_seconds": 2.415969,
+        "train_seconds": 2.418419901
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 29744,
+        "actual_vocab": 30000,
+        "model_path": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r1-baseline/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 1
+    },
+    "command": [
+      "perf",
+      "stat",
+      "-x",
+      ";",
+      "-o",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r1-baseline/counters.csv",
+      "-e",
+      "cycles,instructions,branches,branch-misses,cache-references,cache-misses",
+      "--",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/bpe-corpus-binaries-20261013/final-baseline-production",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r1-baseline/job.json"
+    ],
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r1-baseline",
+    "counters": {
+      "cycles": 0,
+      "instructions": 10238990060,
+      "branches": 1875833189,
+      "branch-misses": 33482051,
+      "cache-references": 62209780,
+      "cache-misses": 35845905
+    }
+  },
+  {
+    "kind": "stat",
+    "repeat": 2,
+    "arm": "baseline",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "output": {
+      "attempt_id": "stat-r2-baseline",
+      "build_id": "baseline",
+      "effective_affinity": [
+        0
+      ],
+      "input_id": "zh-bytelevel",
+      "metrics": {
+        "export_seconds": 0.008276815,
+        "load_seconds": 0.303232152,
+        "process_hwm_kib_before_validation": 126168,
+        "train_cpu_seconds": 2.438037,
+        "train_seconds": 2.44105383
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 29744,
+        "actual_vocab": 30000,
+        "model_path": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r2-baseline/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 1
+    },
+    "command": [
+      "perf",
+      "stat",
+      "-x",
+      ";",
+      "-o",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r2-baseline/counters.csv",
+      "-e",
+      "cycles,instructions,branches,branch-misses,cache-references,cache-misses",
+      "--",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/bpe-corpus-binaries-20261013/final-baseline-production",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r2-baseline/job.json"
+    ],
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r2-baseline",
+    "counters": {
+      "cycles": 0,
+      "instructions": 10245162583,
+      "branches": 1877023633,
+      "branch-misses": 33605244,
+      "cache-references": 61613754,
+      "cache-misses": 36577932
+    }
+  },
+  {
+    "kind": "stat",
+    "repeat": 2,
+    "arm": "candidate",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "output": {
+      "attempt_id": "stat-r2-candidate",
+      "build_id": "candidate",
+      "effective_affinity": [
+        0
+      ],
+      "input_id": "zh-bytelevel",
+      "metrics": {
+        "export_seconds": 0.008471766,
+        "load_seconds": 0.325372041,
+        "process_hwm_kib_before_validation": 125532,
+        "train_cpu_seconds": 2.619985,
+        "train_seconds": 2.623363198
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 29744,
+        "actual_vocab": 30000,
+        "model_path": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r2-candidate/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 1
+    },
+    "command": [
+      "perf",
+      "stat",
+      "-x",
+      ";",
+      "-o",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r2-candidate/counters.csv",
+      "-e",
+      "cycles,instructions,branches,branch-misses,cache-references,cache-misses",
+      "--",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/bpe-corpus-binaries-20261013/aligned-candidate-production",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r2-candidate/job.json"
+    ],
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r2-candidate",
+    "counters": {
+      "cycles": 0,
+      "instructions": 10222610769,
+      "branches": 1849215751,
+      "branch-misses": 33214332,
+      "cache-references": 63933228,
+      "cache-misses": 40686761
+    }
+  },
+  {
+    "kind": "stat",
+    "repeat": 3,
+    "arm": "candidate",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "output": {
+      "attempt_id": "stat-r3-candidate",
+      "build_id": "candidate",
+      "effective_affinity": [
+        0
+      ],
+      "input_id": "zh-bytelevel",
+      "metrics": {
+        "export_seconds": 0.011262717,
+        "load_seconds": 0.295257537,
+        "process_hwm_kib_before_validation": 124808,
+        "train_cpu_seconds": 2.6856619999999998,
+        "train_seconds": 2.689185777
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 29744,
+        "actual_vocab": 30000,
+        "model_path": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r3-candidate/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 1
+    },
+    "command": [
+      "perf",
+      "stat",
+      "-x",
+      ";",
+      "-o",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r3-candidate/counters.csv",
+      "-e",
+      "cycles,instructions,branches,branch-misses,cache-references,cache-misses",
+      "--",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/bpe-corpus-binaries-20261013/aligned-candidate-production",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r3-candidate/job.json"
+    ],
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r3-candidate",
+    "counters": {
+      "cycles": 0,
+      "instructions": 10226529114,
+      "branches": 1850102437,
+      "branch-misses": 32900245,
+      "cache-references": 64991619,
+      "cache-misses": 42562761
+    }
+  },
+  {
+    "kind": "stat",
+    "repeat": 3,
+    "arm": "baseline",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "output": {
+      "attempt_id": "stat-r3-baseline",
+      "build_id": "baseline",
+      "effective_affinity": [
+        0
+      ],
+      "input_id": "zh-bytelevel",
+      "metrics": {
+        "export_seconds": 0.008100136,
+        "load_seconds": 0.341581344,
+        "process_hwm_kib_before_validation": 124816,
+        "train_cpu_seconds": 2.8037959999999997,
+        "train_seconds": 2.807777028
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 29744,
+        "actual_vocab": 30000,
+        "model_path": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r3-baseline/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 1
+    },
+    "command": [
+      "perf",
+      "stat",
+      "-x",
+      ";",
+      "-o",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r3-baseline/counters.csv",
+      "-e",
+      "cycles,instructions,branches,branch-misses,cache-references,cache-misses",
+      "--",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/bpe-corpus-binaries-20261013/final-baseline-production",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r3-baseline/job.json"
+    ],
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r3-baseline",
+    "counters": {
+      "cycles": 0,
+      "instructions": 10246046595,
+      "branches": 1877204560,
+      "branch-misses": 33140990,
+      "cache-references": 64851524,
+      "cache-misses": 42335383
+    }
+  },
+  {
+    "kind": "stat",
+    "repeat": 4,
+    "arm": "baseline",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "output": {
+      "attempt_id": "stat-r4-baseline",
+      "build_id": "baseline",
+      "effective_affinity": [
+        0
+      ],
+      "input_id": "zh-bytelevel",
+      "metrics": {
+        "export_seconds": 0.007923268,
+        "load_seconds": 0.319849302,
+        "process_hwm_kib_before_validation": 124760,
+        "train_cpu_seconds": 2.500704,
+        "train_seconds": 2.504138436
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 29744,
+        "actual_vocab": 30000,
+        "model_path": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r4-baseline/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 1
+    },
+    "command": [
+      "perf",
+      "stat",
+      "-x",
+      ";",
+      "-o",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r4-baseline/counters.csv",
+      "-e",
+      "cycles,instructions,branches,branch-misses,cache-references,cache-misses",
+      "--",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/bpe-corpus-binaries-20261013/final-baseline-production",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r4-baseline/job.json"
+    ],
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r4-baseline",
+    "counters": {
+      "cycles": 0,
+      "instructions": 10245484097,
+      "branches": 1877102856,
+      "branch-misses": 33371720,
+      "cache-references": 62231901,
+      "cache-misses": 39419453
+    }
+  },
+  {
+    "kind": "stat",
+    "repeat": 4,
+    "arm": "candidate",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "output": {
+      "attempt_id": "stat-r4-candidate",
+      "build_id": "candidate",
+      "effective_affinity": [
+        0
+      ],
+      "input_id": "zh-bytelevel",
+      "metrics": {
+        "export_seconds": 0.008456225,
+        "load_seconds": 0.34396154,
+        "process_hwm_kib_before_validation": 126048,
+        "train_cpu_seconds": 2.602411,
+        "train_seconds": 2.605694391
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 29744,
+        "actual_vocab": 30000,
+        "model_path": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r4-candidate/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 1
+    },
+    "command": [
+      "perf",
+      "stat",
+      "-x",
+      ";",
+      "-o",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r4-candidate/counters.csv",
+      "-e",
+      "cycles,instructions,branches,branch-misses,cache-references,cache-misses",
+      "--",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/bpe-corpus-binaries-20261013/aligned-candidate-production",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r4-candidate/job.json"
+    ],
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r4-candidate",
+    "counters": {
+      "cycles": 0,
+      "instructions": 10224730451,
+      "branches": 1849711585,
+      "branch-misses": 33186057,
+      "cache-references": 64525346,
+      "cache-misses": 39195598
+    }
+  },
+  {
+    "kind": "stat",
+    "repeat": 5,
+    "arm": "candidate",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "output": {
+      "attempt_id": "stat-r5-candidate",
+      "build_id": "candidate",
+      "effective_affinity": [
+        0
+      ],
+      "input_id": "zh-bytelevel",
+      "metrics": {
+        "export_seconds": 0.008815986,
+        "load_seconds": 0.283446894,
+        "process_hwm_kib_before_validation": 124576,
+        "train_cpu_seconds": 2.3661239999999997,
+        "train_seconds": 2.368945127
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 29744,
+        "actual_vocab": 30000,
+        "model_path": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r5-candidate/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 1
+    },
+    "command": [
+      "perf",
+      "stat",
+      "-x",
+      ";",
+      "-o",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r5-candidate/counters.csv",
+      "-e",
+      "cycles,instructions,branches,branch-misses,cache-references,cache-misses",
+      "--",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/bpe-corpus-binaries-20261013/aligned-candidate-production",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r5-candidate/job.json"
+    ],
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r5-candidate",
+    "counters": {
+      "cycles": 0,
+      "instructions": 10220376008,
+      "branches": 1848864379,
+      "branch-misses": 33159251,
+      "cache-references": 60488914,
+      "cache-misses": 36829210
+    }
+  },
+  {
+    "kind": "stat",
+    "repeat": 5,
+    "arm": "baseline",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "output": {
+      "attempt_id": "stat-r5-baseline",
+      "build_id": "baseline",
+      "effective_affinity": [
+        0
+      ],
+      "input_id": "zh-bytelevel",
+      "metrics": {
+        "export_seconds": 0.007839735,
+        "load_seconds": 0.286542872,
+        "process_hwm_kib_before_validation": 124752,
+        "train_cpu_seconds": 2.4373069999999997,
+        "train_seconds": 2.44229116
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 29744,
+        "actual_vocab": 30000,
+        "model_path": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r5-baseline/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 1
+    },
+    "command": [
+      "perf",
+      "stat",
+      "-x",
+      ";",
+      "-o",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r5-baseline/counters.csv",
+      "-e",
+      "cycles,instructions,branches,branch-misses,cache-references,cache-misses",
+      "--",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/bpe-corpus-binaries-20261013/final-baseline-production",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r5-baseline/job.json"
+    ],
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r5-baseline",
+    "counters": {
+      "cycles": 0,
+      "instructions": 10246718411,
+      "branches": 1877303450,
+      "branch-misses": 33614599,
+      "cache-references": 62942903,
+      "cache-misses": 35928430
+    }
+  },
+  {
+    "kind": "stat",
+    "repeat": 6,
+    "arm": "baseline",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "output": {
+      "attempt_id": "stat-r6-baseline",
+      "build_id": "baseline",
+      "effective_affinity": [
+        0
+      ],
+      "input_id": "zh-bytelevel",
+      "metrics": {
+        "export_seconds": 0.008440691,
+        "load_seconds": 0.289161548,
+        "process_hwm_kib_before_validation": 124844,
+        "train_cpu_seconds": 2.401992,
+        "train_seconds": 2.417897774
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 29744,
+        "actual_vocab": 30000,
+        "model_path": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r6-baseline/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 1
+    },
+    "command": [
+      "perf",
+      "stat",
+      "-x",
+      ";",
+      "-o",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r6-baseline/counters.csv",
+      "-e",
+      "cycles,instructions,branches,branch-misses,cache-references,cache-misses",
+      "--",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/bpe-corpus-binaries-20261013/final-baseline-production",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r6-baseline/job.json"
+    ],
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r6-baseline",
+    "counters": {
+      "cycles": 0,
+      "instructions": 10251801024,
+      "branches": 1878157140,
+      "branch-misses": 33782606,
+      "cache-references": 61839315,
+      "cache-misses": 35495999
+    }
+  },
+  {
+    "kind": "stat",
+    "repeat": 6,
+    "arm": "candidate",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "output": {
+      "attempt_id": "stat-r6-candidate",
+      "build_id": "candidate",
+      "effective_affinity": [
+        0
+      ],
+      "input_id": "zh-bytelevel",
+      "metrics": {
+        "export_seconds": 0.007867022,
+        "load_seconds": 0.320928991,
+        "process_hwm_kib_before_validation": 124968,
+        "train_cpu_seconds": 2.490363,
+        "train_seconds": 2.493090859
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 29744,
+        "actual_vocab": 30000,
+        "model_path": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r6-candidate/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 1
+    },
+    "command": [
+      "perf",
+      "stat",
+      "-x",
+      ";",
+      "-o",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r6-candidate/counters.csv",
+      "-e",
+      "cycles,instructions,branches,branch-misses,cache-references,cache-misses",
+      "--",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/bpe-corpus-binaries-20261013/aligned-candidate-production",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r6-candidate/job.json"
+    ],
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r6-candidate",
+    "counters": {
+      "cycles": 0,
+      "instructions": 10220823307,
+      "branches": 1848900213,
+      "branch-misses": 33387613,
+      "cache-references": 62605713,
+      "cache-misses": 36725486
+    }
+  },
+  {
+    "kind": "stat",
+    "repeat": 7,
+    "arm": "candidate",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "output": {
+      "attempt_id": "stat-r7-candidate",
+      "build_id": "candidate",
+      "effective_affinity": [
+        0
+      ],
+      "input_id": "zh-bytelevel",
+      "metrics": {
+        "export_seconds": 0.007933471,
+        "load_seconds": 0.285185498,
+        "process_hwm_kib_before_validation": 124844,
+        "train_cpu_seconds": 2.6053290000000002,
+        "train_seconds": 2.608858819
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 29744,
+        "actual_vocab": 30000,
+        "model_path": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r7-candidate/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 1
+    },
+    "command": [
+      "perf",
+      "stat",
+      "-x",
+      ";",
+      "-o",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r7-candidate/counters.csv",
+      "-e",
+      "cycles,instructions,branches,branch-misses,cache-references,cache-misses",
+      "--",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/bpe-corpus-binaries-20261013/aligned-candidate-production",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r7-candidate/job.json"
+    ],
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r7-candidate",
+    "counters": {
+      "cycles": 0,
+      "instructions": 10217974066,
+      "branches": 1848341097,
+      "branch-misses": 33046681,
+      "cache-references": 64200404,
+      "cache-misses": 39158545
+    }
+  },
+  {
+    "kind": "stat",
+    "repeat": 7,
+    "arm": "baseline",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "output": {
+      "attempt_id": "stat-r7-baseline",
+      "build_id": "baseline",
+      "effective_affinity": [
+        0
+      ],
+      "input_id": "zh-bytelevel",
+      "metrics": {
+        "export_seconds": 0.008401128,
+        "load_seconds": 0.287221625,
+        "process_hwm_kib_before_validation": 124756,
+        "train_cpu_seconds": 2.415533,
+        "train_seconds": 2.418005052
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 29744,
+        "actual_vocab": 30000,
+        "model_path": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r7-baseline/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 1
+    },
+    "command": [
+      "perf",
+      "stat",
+      "-x",
+      ";",
+      "-o",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r7-baseline/counters.csv",
+      "-e",
+      "cycles,instructions,branches,branch-misses,cache-references,cache-misses",
+      "--",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/bpe-corpus-binaries-20261013/final-baseline-production",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r7-baseline/job.json"
+    ],
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/stat-r7-baseline",
+    "counters": {
+      "cycles": 0,
+      "instructions": 10245582493,
+      "branches": 1877141892,
+      "branch-misses": 33616455,
+      "cache-references": 62344776,
+      "cache-misses": 35723574
+    }
+  },
+  {
+    "kind": "record",
+    "repeat": 0,
+    "arm": "baseline",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "output": {
+      "attempt_id": "record-r0-baseline",
+      "build_id": "baseline",
+      "effective_affinity": [
+        0
+      ],
+      "input_id": "zh-bytelevel",
+      "metrics": {
+        "export_seconds": 0.010026526,
+        "load_seconds": 0.293647918,
+        "process_hwm_kib_before_validation": 124912,
+        "train_cpu_seconds": 2.683823,
+        "train_seconds": 2.698697615
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 29744,
+        "actual_vocab": 30000,
+        "model_path": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/record-r0-baseline/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 1
+    },
+    "command": [
+      "perf",
+      "record",
+      "-F",
+      "997",
+      "-g",
+      "--call-graph",
+      "dwarf,8192",
+      "-o",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/record-r0-baseline/perf.data",
+      "--",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/bpe-corpus-binaries-20261013/final-baseline-production",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/record-r0-baseline/job.json"
+    ],
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/record-r0-baseline"
+  },
+  {
+    "kind": "record",
+    "repeat": 0,
+    "arm": "candidate",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "output": {
+      "attempt_id": "record-r0-candidate",
+      "build_id": "candidate",
+      "effective_affinity": [
+        0
+      ],
+      "input_id": "zh-bytelevel",
+      "metrics": {
+        "export_seconds": 0.008724202,
+        "load_seconds": 0.293650935,
+        "process_hwm_kib_before_validation": 124580,
+        "train_cpu_seconds": 2.451667,
+        "train_seconds": 2.4645892959999998
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 29744,
+        "actual_vocab": 30000,
+        "model_path": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/record-r0-candidate/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 1
+    },
+    "command": [
+      "perf",
+      "record",
+      "-F",
+      "997",
+      "-g",
+      "--call-graph",
+      "dwarf,8192",
+      "-o",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/record-r0-candidate/perf.data",
+      "--",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/bpe-corpus-binaries-20261013/aligned-candidate-production",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/record-r0-candidate/job.json"
+    ],
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/record-r0-candidate"
+  },
+  {
+    "kind": "record",
+    "repeat": 1,
+    "arm": "candidate",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "output": {
+      "attempt_id": "record-r1-candidate",
+      "build_id": "candidate",
+      "effective_affinity": [
+        0
+      ],
+      "input_id": "zh-bytelevel",
+      "metrics": {
+        "export_seconds": 0.008531109,
+        "load_seconds": 0.296987891,
+        "process_hwm_kib_before_validation": 124704,
+        "train_cpu_seconds": 2.586372,
+        "train_seconds": 2.591025923
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 29744,
+        "actual_vocab": 30000,
+        "model_path": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/record-r1-candidate/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 1
+    },
+    "command": [
+      "perf",
+      "record",
+      "-F",
+      "997",
+      "-g",
+      "--call-graph",
+      "dwarf,8192",
+      "-o",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/record-r1-candidate/perf.data",
+      "--",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/bpe-corpus-binaries-20261013/aligned-candidate-production",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/record-r1-candidate/job.json"
+    ],
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/record-r1-candidate"
+  },
+  {
+    "kind": "record",
+    "repeat": 1,
+    "arm": "baseline",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "output": {
+      "attempt_id": "record-r1-baseline",
+      "build_id": "baseline",
+      "effective_affinity": [
+        0
+      ],
+      "input_id": "zh-bytelevel",
+      "metrics": {
+        "export_seconds": 0.008041471,
+        "load_seconds": 0.304032877,
+        "process_hwm_kib_before_validation": 126540,
+        "train_cpu_seconds": 2.561753,
+        "train_seconds": 2.564046364
+      },
+      "mode": "core",
+      "output": {
+        "actual_merges": 29744,
+        "actual_vocab": 30000,
+        "model_path": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/record-r1-baseline/model.json",
+        "special_tokens": 0
+      },
+      "protocol_version": 1,
+      "timing_boundary": "public-do-train-before-serialization",
+      "workers_requested": 1
+    },
+    "command": [
+      "perf",
+      "record",
+      "-F",
+      "997",
+      "-g",
+      "--call-graph",
+      "dwarf,8192",
+      "-o",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/record-r1-baseline/perf.data",
+      "--",
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/bpe-corpus-binaries-20261013/final-baseline-production",
+      "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/record-r1-baseline/job.json"
+    ],
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/zh-aligned-profile/record-r1-baseline"
+  }
+]

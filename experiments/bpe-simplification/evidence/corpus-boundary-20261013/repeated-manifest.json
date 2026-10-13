@@ -1,0 +1,33 @@
+{
+  "purpose": "Repeated public do_train calls; each call timed separately and every exported model compared. Supplementary timing only.",
+  "calls_per_process": 10,
+  "pairs_per_case_workers": 4,
+  "sources": {
+    "baseline": {
+      "experiments/bpe-simplification/runner/src/protocol.rs": "bee20bcf741feb86d2ed772d42826a8f42919531df4837ae1d599070e6299025",
+      "experiments/bpe-simplification/runner/src/pipeline.rs": "300fe769f662872aecb8496efa695ac43382f319e9e1149bcc6226319ab3ecb9",
+      "experiments/bpe-simplification/runner/src/model_output.rs": "58fedcea52879ce2028f296b2dcb8ae05866bc6cf6c156b0f1a4803a6c273168",
+      "experiments/bpe-simplification/runner/src/main.rs": "3bf0c679c660cf07760e1c3647c8308ef4ac7d138f45b8dfb5ca2f663b02c4c5",
+      "experiments/bpe-simplification/runner/src/feed_stats.rs": "cd317b213cff235d310e0fa5a66e826cad8a390c143a4d8551e0dd142a4a533d",
+      "experiments/bpe-simplification/runner/src/core.rs": "f416aaed14ac3864ec64ec83afea5e571b61aabf6e4caada2a068f306edf8890"
+    },
+    "candidate": {
+      "experiments/bpe-simplification/runner/src/feed_stats.rs": "cd317b213cff235d310e0fa5a66e826cad8a390c143a4d8551e0dd142a4a533d",
+      "experiments/bpe-simplification/runner/src/protocol.rs": "bee20bcf741feb86d2ed772d42826a8f42919531df4837ae1d599070e6299025",
+      "experiments/bpe-simplification/runner/src/core.rs": "f416aaed14ac3864ec64ec83afea5e571b61aabf6e4caada2a068f306edf8890",
+      "experiments/bpe-simplification/runner/src/model_output.rs": "58fedcea52879ce2028f296b2dcb8ae05866bc6cf6c156b0f1a4803a6c273168",
+      "experiments/bpe-simplification/runner/src/main.rs": "3bf0c679c660cf07760e1c3647c8308ef4ac7d138f45b8dfb5ca2f663b02c4c5",
+      "experiments/bpe-simplification/runner/src/pipeline.rs": "300fe769f662872aecb8496efa695ac43382f319e9e1149bcc6226319ab3ecb9"
+    }
+  },
+  "binaries": {
+    "baseline": {
+      "path": "/tmp/bpe-corpus-binaries-20261013/repeated-baseline-production",
+      "sha256": "63bddc2eef87c78c82bf6d0f24d4fb6c0b601a3e1526b656477cfbca684e11ca"
+    },
+    "candidate": {
+      "path": "/tmp/bpe-corpus-binaries-20261013/repeated-candidate-production",
+      "sha256": "581bd15dbb560258c09935cc4cf5a69706b59d597c61670f770249b5c6795168"
+    }
+  }
+}

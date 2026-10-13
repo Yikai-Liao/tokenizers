@@ -1,0 +1,28 @@
+{
+  "arm": "candidate",
+  "case": "ab-steady",
+  "workers": 6,
+  "repeat": 0,
+  "input_sha256": "2d2100bd0732d1edf414ca21c789484798c99fc1b16cf7a9ae1af6c4fc70cb17",
+  "elapsed_process_seconds": 2.933692794002127,
+  "metrics": {
+    "export_seconds": 0.222144387,
+    "load_seconds": 0.212208498,
+    "process_hwm_kib_before_validation": 280656,
+    "train_cpu_seconds": 3.167982,
+    "train_seconds": 1.4044115480000001
+  },
+  "model_sha256": "3c67c86ecbcb378d5c97485eee4da6167535da31400f4fd0214234c61149409b",
+  "iteration_model_sha256": [],
+  "coverage": {
+    "aa": 0,
+    "ab": 0,
+    "existing_fresh": 0,
+    "multi_rule": 0,
+    "whole_words": 0,
+    "initial_whole_words": 0
+  },
+  "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+  "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-steady-noise/ab-steady-w6-r0-candidate"
+}

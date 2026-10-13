@@ -1,0 +1,1698 @@
+[
+  {
+    "arm": "baseline",
+    "case": "aa",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "02e4d469ce56b27c735d5b2cc5721396b6d05cdc4f5bde4ce0ca50ab23bd889d",
+    "elapsed_process_seconds": 0.0316763360024197,
+    "metrics": {
+      "export_seconds": 0.000760238,
+      "load_seconds": 0.000652605,
+      "process_hwm_kib_before_validation": 7356,
+      "train_cpu_seconds": 0.020502,
+      "train_seconds": 0.020367547
+    },
+    "model_sha256": "61fd069755db37f6c998d647773c8a21a5d6b3a1a12efc8ae10e6bb24633112a",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 38,
+      "batch": 36,
+      "commit": 36,
+      "aa": 28,
+      "ab": 10,
+      "existing_fresh": 0,
+      "multi_rule": 2,
+      "whole_words": 0
+    },
+    "trace_sha256": "c7debacf105862165d8271ded3f6af34e4890154c5cc6ff154141264c3257577",
+    "binary_sha256": "16bfd010fc92adcc9663d24baa883abcdf984ffb1ca78d669c7f6d8db163f02c",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/aa-w1-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "aa",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "02e4d469ce56b27c735d5b2cc5721396b6d05cdc4f5bde4ce0ca50ab23bd889d",
+    "elapsed_process_seconds": 0.030241939995903522,
+    "metrics": {
+      "export_seconds": 0.000679964,
+      "load_seconds": 0.000672054,
+      "process_hwm_kib_before_validation": 7284,
+      "train_cpu_seconds": 0.019783000000000002,
+      "train_seconds": 0.019668579
+    },
+    "model_sha256": "61fd069755db37f6c998d647773c8a21a5d6b3a1a12efc8ae10e6bb24633112a",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 38,
+      "batch": 36,
+      "commit": 36,
+      "aa": 28,
+      "ab": 10,
+      "existing_fresh": 0,
+      "multi_rule": 2,
+      "whole_words": 0
+    },
+    "trace_sha256": "c7debacf105862165d8271ded3f6af34e4890154c5cc6ff154141264c3257577",
+    "binary_sha256": "26ce095b30ed4c98e2ef98761a16cbd80d201333bcda942ebfc9eb1e3e308167",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/aa-w1-r0-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "aa",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "02e4d469ce56b27c735d5b2cc5721396b6d05cdc4f5bde4ce0ca50ab23bd889d",
+    "elapsed_process_seconds": 0.02783843199722469,
+    "metrics": {
+      "export_seconds": 0.000759584,
+      "load_seconds": 0.000829095,
+      "process_hwm_kib_before_validation": 7228,
+      "train_cpu_seconds": 0.033850000000000005,
+      "train_seconds": 0.017765923
+    },
+    "model_sha256": "61fd069755db37f6c998d647773c8a21a5d6b3a1a12efc8ae10e6bb24633112a",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 38,
+      "batch": 36,
+      "commit": 36,
+      "aa": 28,
+      "ab": 10,
+      "existing_fresh": 0,
+      "multi_rule": 2,
+      "whole_words": 0
+    },
+    "trace_sha256": "c7debacf105862165d8271ded3f6af34e4890154c5cc6ff154141264c3257577",
+    "binary_sha256": "16bfd010fc92adcc9663d24baa883abcdf984ffb1ca78d669c7f6d8db163f02c",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/aa-w6-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "aa",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "02e4d469ce56b27c735d5b2cc5721396b6d05cdc4f5bde4ce0ca50ab23bd889d",
+    "elapsed_process_seconds": 0.027378971004509367,
+    "metrics": {
+      "export_seconds": 0.000641212,
+      "load_seconds": 0.000630924,
+      "process_hwm_kib_before_validation": 7384,
+      "train_cpu_seconds": 0.032823000000000005,
+      "train_seconds": 0.017234082
+    },
+    "model_sha256": "61fd069755db37f6c998d647773c8a21a5d6b3a1a12efc8ae10e6bb24633112a",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 38,
+      "batch": 36,
+      "commit": 36,
+      "aa": 28,
+      "ab": 10,
+      "existing_fresh": 0,
+      "multi_rule": 2,
+      "whole_words": 0
+    },
+    "trace_sha256": "c7debacf105862165d8271ded3f6af34e4890154c5cc6ff154141264c3257577",
+    "binary_sha256": "26ce095b30ed4c98e2ef98761a16cbd80d201333bcda942ebfc9eb1e3e308167",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/aa-w6-r0-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "ab",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "b8db5a354a318245f77ac41a0e220a84e2a6017dca42970dc579ce5ea1364441",
+    "elapsed_process_seconds": 0.009762057990883477,
+    "metrics": {
+      "export_seconds": 7.9914e-05,
+      "load_seconds": 5.0922e-05,
+      "process_hwm_kib_before_validation": 7096,
+      "train_cpu_seconds": 0.004770999999999999,
+      "train_seconds": 0.004728635
+    },
+    "model_sha256": "fdad32b28715797bf495a2072030dd5198f81a5249b8a99404b56890108667ed",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 7,
+      "batch": 4,
+      "commit": 4,
+      "aa": 0,
+      "ab": 7,
+      "existing_fresh": 0,
+      "multi_rule": 1,
+      "whole_words": 0
+    },
+    "trace_sha256": "df8d4a30e37fe8791bffc040ff80108755eea9316704811a4e493a25c4b6e61b",
+    "binary_sha256": "16bfd010fc92adcc9663d24baa883abcdf984ffb1ca78d669c7f6d8db163f02c",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/ab-w1-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "ab",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "b8db5a354a318245f77ac41a0e220a84e2a6017dca42970dc579ce5ea1364441",
+    "elapsed_process_seconds": 0.008019383007194847,
+    "metrics": {
+      "export_seconds": 8.7959e-05,
+      "load_seconds": 2.2108e-05,
+      "process_hwm_kib_before_validation": 6980,
+      "train_cpu_seconds": 0.004258,
+      "train_seconds": 0.004234233
+    },
+    "model_sha256": "fdad32b28715797bf495a2072030dd5198f81a5249b8a99404b56890108667ed",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 7,
+      "batch": 4,
+      "commit": 4,
+      "aa": 0,
+      "ab": 7,
+      "existing_fresh": 0,
+      "multi_rule": 1,
+      "whole_words": 0
+    },
+    "trace_sha256": "df8d4a30e37fe8791bffc040ff80108755eea9316704811a4e493a25c4b6e61b",
+    "binary_sha256": "26ce095b30ed4c98e2ef98761a16cbd80d201333bcda942ebfc9eb1e3e308167",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/ab-w1-r0-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "ab",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "b8db5a354a318245f77ac41a0e220a84e2a6017dca42970dc579ce5ea1364441",
+    "elapsed_process_seconds": 0.011745990996132605,
+    "metrics": {
+      "export_seconds": 8.8005e-05,
+      "load_seconds": 3.7703e-05,
+      "process_hwm_kib_before_validation": 7204,
+      "train_cpu_seconds": 0.010162999999999998,
+      "train_seconds": 0.006634839
+    },
+    "model_sha256": "fdad32b28715797bf495a2072030dd5198f81a5249b8a99404b56890108667ed",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 7,
+      "batch": 4,
+      "commit": 4,
+      "aa": 0,
+      "ab": 7,
+      "existing_fresh": 0,
+      "multi_rule": 1,
+      "whole_words": 0
+    },
+    "trace_sha256": "df8d4a30e37fe8791bffc040ff80108755eea9316704811a4e493a25c4b6e61b",
+    "binary_sha256": "16bfd010fc92adcc9663d24baa883abcdf984ffb1ca78d669c7f6d8db163f02c",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/ab-w6-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "ab",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "b8db5a354a318245f77ac41a0e220a84e2a6017dca42970dc579ce5ea1364441",
+    "elapsed_process_seconds": 0.009205786001984961,
+    "metrics": {
+      "export_seconds": 6.7996e-05,
+      "load_seconds": 2.8756e-05,
+      "process_hwm_kib_before_validation": 7220,
+      "train_cpu_seconds": 0.008309,
+      "train_seconds": 0.004678182
+    },
+    "model_sha256": "fdad32b28715797bf495a2072030dd5198f81a5249b8a99404b56890108667ed",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 7,
+      "batch": 4,
+      "commit": 4,
+      "aa": 0,
+      "ab": 7,
+      "existing_fresh": 0,
+      "multi_rule": 1,
+      "whole_words": 0
+    },
+    "trace_sha256": "df8d4a30e37fe8791bffc040ff80108755eea9316704811a4e493a25c4b6e61b",
+    "binary_sha256": "26ce095b30ed4c98e2ef98761a16cbd80d201333bcda942ebfc9eb1e3e308167",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/ab-w6-r0-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "reserved",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "3375c0107b648f6f9dec3b44610e6045f9d23dff7dd2f8f7866b9f04eb19d1c0",
+    "elapsed_process_seconds": 0.008898606000002474,
+    "metrics": {
+      "export_seconds": 7.6479e-05,
+      "load_seconds": 3.3938e-05,
+      "process_hwm_kib_before_validation": 7080,
+      "train_cpu_seconds": 0.004334,
+      "train_seconds": 0.004331645
+    },
+    "model_sha256": "797969fe1c5c9271d09096514204e1883cc138d990d973b17ffad1198785ace3",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 4,
+      "batch": 4,
+      "commit": 4,
+      "aa": 2,
+      "ab": 2,
+      "existing_fresh": 1,
+      "multi_rule": 0,
+      "whole_words": 0
+    },
+    "trace_sha256": "5d866934239f50ae203c4d451d8276a154559afc68507321fc039916d107c7fc",
+    "binary_sha256": "16bfd010fc92adcc9663d24baa883abcdf984ffb1ca78d669c7f6d8db163f02c",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/reserved-w1-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "reserved",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "3375c0107b648f6f9dec3b44610e6045f9d23dff7dd2f8f7866b9f04eb19d1c0",
+    "elapsed_process_seconds": 0.00795684100012295,
+    "metrics": {
+      "export_seconds": 6.2315e-05,
+      "load_seconds": 2.5958e-05,
+      "process_hwm_kib_before_validation": 7012,
+      "train_cpu_seconds": 0.003845,
+      "train_seconds": 0.003870461
+    },
+    "model_sha256": "797969fe1c5c9271d09096514204e1883cc138d990d973b17ffad1198785ace3",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 4,
+      "batch": 4,
+      "commit": 4,
+      "aa": 2,
+      "ab": 2,
+      "existing_fresh": 1,
+      "multi_rule": 0,
+      "whole_words": 0
+    },
+    "trace_sha256": "5d866934239f50ae203c4d451d8276a154559afc68507321fc039916d107c7fc",
+    "binary_sha256": "26ce095b30ed4c98e2ef98761a16cbd80d201333bcda942ebfc9eb1e3e308167",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/reserved-w1-r0-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "reserved",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "3375c0107b648f6f9dec3b44610e6045f9d23dff7dd2f8f7866b9f04eb19d1c0",
+    "elapsed_process_seconds": 0.009712490005767904,
+    "metrics": {
+      "export_seconds": 7.593e-05,
+      "load_seconds": 3.1456e-05,
+      "process_hwm_kib_before_validation": 7136,
+      "train_cpu_seconds": 0.008163,
+      "train_seconds": 0.005393547
+    },
+    "model_sha256": "797969fe1c5c9271d09096514204e1883cc138d990d973b17ffad1198785ace3",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 4,
+      "batch": 4,
+      "commit": 4,
+      "aa": 2,
+      "ab": 2,
+      "existing_fresh": 1,
+      "multi_rule": 0,
+      "whole_words": 0
+    },
+    "trace_sha256": "5d866934239f50ae203c4d451d8276a154559afc68507321fc039916d107c7fc",
+    "binary_sha256": "16bfd010fc92adcc9663d24baa883abcdf984ffb1ca78d669c7f6d8db163f02c",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/reserved-w6-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "reserved",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "3375c0107b648f6f9dec3b44610e6045f9d23dff7dd2f8f7866b9f04eb19d1c0",
+    "elapsed_process_seconds": 0.011331772999255918,
+    "metrics": {
+      "export_seconds": 0.000111886,
+      "load_seconds": 3.0811e-05,
+      "process_hwm_kib_before_validation": 7120,
+      "train_cpu_seconds": 0.009805000000000001,
+      "train_seconds": 0.006345115
+    },
+    "model_sha256": "797969fe1c5c9271d09096514204e1883cc138d990d973b17ffad1198785ace3",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 4,
+      "batch": 4,
+      "commit": 4,
+      "aa": 2,
+      "ab": 2,
+      "existing_fresh": 1,
+      "multi_rule": 0,
+      "whole_words": 0
+    },
+    "trace_sha256": "5d866934239f50ae203c4d451d8276a154559afc68507321fc039916d107c7fc",
+    "binary_sha256": "26ce095b30ed4c98e2ef98761a16cbd80d201333bcda942ebfc9eb1e3e308167",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/reserved-w6-r0-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "alias",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "2b878f4e2647ed683047ebdc023e6695ec1734ab1e8cde2d1ca57709b4174031",
+    "elapsed_process_seconds": 0.015555072997813113,
+    "metrics": {
+      "export_seconds": 0.000119106,
+      "load_seconds": 3.4263e-05,
+      "process_hwm_kib_before_validation": 7448,
+      "train_cpu_seconds": 0.010328,
+      "train_seconds": 0.010288396
+    },
+    "model_sha256": "63297903068b6dcaf87f44c90b99a697a98d79e591cde58a84f01a96f2053e1a",
+    "coverage": {
+      "initial_scan_config": 2,
+      "restart": 1,
+      "select": 4,
+      "batch": 4,
+      "reuse_scan": 9,
+      "commit": 4,
+      "aa": 2,
+      "ab": 2,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 9
+    },
+    "trace_sha256": "bcb163f9dc16ba235db5138f0bf4f055f461e0f69ba56e47106e0e9e220f3904",
+    "binary_sha256": "16bfd010fc92adcc9663d24baa883abcdf984ffb1ca78d669c7f6d8db163f02c",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/alias-w1-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "alias",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "2b878f4e2647ed683047ebdc023e6695ec1734ab1e8cde2d1ca57709b4174031",
+    "elapsed_process_seconds": 0.013523476009140722,
+    "metrics": {
+      "export_seconds": 0.00018229,
+      "load_seconds": 3.7863e-05,
+      "process_hwm_kib_before_validation": 7336,
+      "train_cpu_seconds": 0.007954000000000001,
+      "train_seconds": 0.007969107
+    },
+    "model_sha256": "63297903068b6dcaf87f44c90b99a697a98d79e591cde58a84f01a96f2053e1a",
+    "coverage": {
+      "initial_scan_config": 2,
+      "restart": 1,
+      "select": 4,
+      "batch": 4,
+      "reuse_scan": 9,
+      "commit": 4,
+      "aa": 2,
+      "ab": 2,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 9
+    },
+    "trace_sha256": "bcb163f9dc16ba235db5138f0bf4f055f461e0f69ba56e47106e0e9e220f3904",
+    "binary_sha256": "26ce095b30ed4c98e2ef98761a16cbd80d201333bcda942ebfc9eb1e3e308167",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/alias-w1-r0-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "alias",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "2b878f4e2647ed683047ebdc023e6695ec1734ab1e8cde2d1ca57709b4174031",
+    "elapsed_process_seconds": 0.013132528998539783,
+    "metrics": {
+      "export_seconds": 8.0805e-05,
+      "load_seconds": 4.6156e-05,
+      "process_hwm_kib_before_validation": 7520,
+      "train_cpu_seconds": 0.010333,
+      "train_seconds": 0.00748507
+    },
+    "model_sha256": "63297903068b6dcaf87f44c90b99a697a98d79e591cde58a84f01a96f2053e1a",
+    "coverage": {
+      "initial_scan_config": 2,
+      "restart": 1,
+      "select": 4,
+      "batch": 4,
+      "reuse_scan": 9,
+      "commit": 4,
+      "aa": 2,
+      "ab": 2,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 9
+    },
+    "trace_sha256": "bcb163f9dc16ba235db5138f0bf4f055f461e0f69ba56e47106e0e9e220f3904",
+    "binary_sha256": "16bfd010fc92adcc9663d24baa883abcdf984ffb1ca78d669c7f6d8db163f02c",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/alias-w6-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "alias",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "2b878f4e2647ed683047ebdc023e6695ec1734ab1e8cde2d1ca57709b4174031",
+    "elapsed_process_seconds": 0.011456325999461114,
+    "metrics": {
+      "export_seconds": 8.6798e-05,
+      "load_seconds": 3.0483e-05,
+      "process_hwm_kib_before_validation": 7576,
+      "train_cpu_seconds": 0.009411,
+      "train_seconds": 0.00704115
+    },
+    "model_sha256": "63297903068b6dcaf87f44c90b99a697a98d79e591cde58a84f01a96f2053e1a",
+    "coverage": {
+      "initial_scan_config": 2,
+      "restart": 1,
+      "select": 4,
+      "batch": 4,
+      "reuse_scan": 9,
+      "commit": 4,
+      "aa": 2,
+      "ab": 2,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 9
+    },
+    "trace_sha256": "bcb163f9dc16ba235db5138f0bf4f055f461e0f69ba56e47106e0e9e220f3904",
+    "binary_sha256": "26ce095b30ed4c98e2ef98761a16cbd80d201333bcda942ebfc9eb1e3e308167",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/alias-w6-r0-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "length-reuse",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "2b878f4e2647ed683047ebdc023e6695ec1734ab1e8cde2d1ca57709b4174031",
+    "elapsed_process_seconds": 0.011398910995922051,
+    "metrics": {
+      "export_seconds": 0.000119004,
+      "load_seconds": 3.6794e-05,
+      "process_hwm_kib_before_validation": 7420,
+      "train_cpu_seconds": 0.00686,
+      "train_seconds": 0.006831909
+    },
+    "model_sha256": "63297903068b6dcaf87f44c90b99a697a98d79e591cde58a84f01a96f2053e1a",
+    "coverage": {
+      "initial_scan_config": 2,
+      "restart": 1,
+      "select": 4,
+      "batch": 4,
+      "reuse_scan": 9,
+      "commit": 4,
+      "aa": 2,
+      "ab": 2,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 11
+    },
+    "trace_sha256": "fcb79546d0e9a258420161831d005f5edc704f402465c2e9c0c5945a4a8ace5c",
+    "binary_sha256": "16bfd010fc92adcc9663d24baa883abcdf984ffb1ca78d669c7f6d8db163f02c",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/length-reuse-w1-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "length-reuse",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "2b878f4e2647ed683047ebdc023e6695ec1734ab1e8cde2d1ca57709b4174031",
+    "elapsed_process_seconds": 0.015227261988911778,
+    "metrics": {
+      "export_seconds": 0.000117399,
+      "load_seconds": 2.9773e-05,
+      "process_hwm_kib_before_validation": 7360,
+      "train_cpu_seconds": 0.010359,
+      "train_seconds": 0.010316948
+    },
+    "model_sha256": "63297903068b6dcaf87f44c90b99a697a98d79e591cde58a84f01a96f2053e1a",
+    "coverage": {
+      "initial_scan_config": 2,
+      "restart": 1,
+      "select": 4,
+      "batch": 4,
+      "reuse_scan": 9,
+      "commit": 4,
+      "aa": 2,
+      "ab": 2,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 11
+    },
+    "trace_sha256": "fcb79546d0e9a258420161831d005f5edc704f402465c2e9c0c5945a4a8ace5c",
+    "binary_sha256": "26ce095b30ed4c98e2ef98761a16cbd80d201333bcda942ebfc9eb1e3e308167",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/length-reuse-w1-r0-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "length-reuse",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "2b878f4e2647ed683047ebdc023e6695ec1734ab1e8cde2d1ca57709b4174031",
+    "elapsed_process_seconds": 0.015102502991794609,
+    "metrics": {
+      "export_seconds": 0.000184031,
+      "load_seconds": 3.7396e-05,
+      "process_hwm_kib_before_validation": 7480,
+      "train_cpu_seconds": 0.012912000000000002,
+      "train_seconds": 0.009787632
+    },
+    "model_sha256": "63297903068b6dcaf87f44c90b99a697a98d79e591cde58a84f01a96f2053e1a",
+    "coverage": {
+      "initial_scan_config": 2,
+      "restart": 1,
+      "select": 4,
+      "batch": 4,
+      "reuse_scan": 9,
+      "commit": 4,
+      "aa": 2,
+      "ab": 2,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 11
+    },
+    "trace_sha256": "fcb79546d0e9a258420161831d005f5edc704f402465c2e9c0c5945a4a8ace5c",
+    "binary_sha256": "16bfd010fc92adcc9663d24baa883abcdf984ffb1ca78d669c7f6d8db163f02c",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/length-reuse-w6-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "length-reuse",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "2b878f4e2647ed683047ebdc023e6695ec1734ab1e8cde2d1ca57709b4174031",
+    "elapsed_process_seconds": 0.011870724993059412,
+    "metrics": {
+      "export_seconds": 0.000100064,
+      "load_seconds": 3.2603e-05,
+      "process_hwm_kib_before_validation": 7584,
+      "train_cpu_seconds": 0.009467,
+      "train_seconds": 0.007111156
+    },
+    "model_sha256": "63297903068b6dcaf87f44c90b99a697a98d79e591cde58a84f01a96f2053e1a",
+    "coverage": {
+      "initial_scan_config": 2,
+      "restart": 1,
+      "select": 4,
+      "batch": 4,
+      "reuse_scan": 9,
+      "commit": 4,
+      "aa": 2,
+      "ab": 2,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 11
+    },
+    "trace_sha256": "fcb79546d0e9a258420161831d005f5edc704f402465c2e9c0c5945a4a8ace5c",
+    "binary_sha256": "26ce095b30ed4c98e2ef98761a16cbd80d201333bcda942ebfc9eb1e3e308167",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/length-reuse-w6-r0-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "aa-large",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "a6eb27204cddd398394de0de7c1554b87a9610b35a1e9478b695b07de4489cbe",
+    "elapsed_process_seconds": 1.1666810330061708,
+    "metrics": {
+      "export_seconds": 0.038341182,
+      "load_seconds": 0.048802046,
+      "process_hwm_kib_before_validation": 61644,
+      "train_cpu_seconds": 0.84846,
+      "train_seconds": 0.848581086
+    },
+    "model_sha256": "97cc40f6392b0644376c72fb6babecc9d7ab34157bed01e52151b72d938d4c56",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 28,
+      "batch": 28,
+      "commit": 28,
+      "aa": 21,
+      "ab": 7,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0
+    },
+    "trace_sha256": "dcfec3d2673f9525828833dcd5a143484b2e4200b1b472a7e05380cf88398ac8",
+    "binary_sha256": "16bfd010fc92adcc9663d24baa883abcdf984ffb1ca78d669c7f6d8db163f02c",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/aa-large-w1-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "aa-large",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "a6eb27204cddd398394de0de7c1554b87a9610b35a1e9478b695b07de4489cbe",
+    "elapsed_process_seconds": 1.200177671998972,
+    "metrics": {
+      "export_seconds": 0.044202978,
+      "load_seconds": 0.044220294,
+      "process_hwm_kib_before_validation": 61152,
+      "train_cpu_seconds": 0.8666579999999999,
+      "train_seconds": 0.868354351
+    },
+    "model_sha256": "97cc40f6392b0644376c72fb6babecc9d7ab34157bed01e52151b72d938d4c56",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 28,
+      "batch": 28,
+      "commit": 28,
+      "aa": 21,
+      "ab": 7,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0
+    },
+    "trace_sha256": "dcfec3d2673f9525828833dcd5a143484b2e4200b1b472a7e05380cf88398ac8",
+    "binary_sha256": "26ce095b30ed4c98e2ef98761a16cbd80d201333bcda942ebfc9eb1e3e308167",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/aa-large-w1-r0-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "aa-large",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "a6eb27204cddd398394de0de7c1554b87a9610b35a1e9478b695b07de4489cbe",
+    "elapsed_process_seconds": 0.7667560419940855,
+    "metrics": {
+      "export_seconds": 0.039167936,
+      "load_seconds": 0.050149037,
+      "process_hwm_kib_before_validation": 67600,
+      "train_cpu_seconds": 0.9781090000000001,
+      "train_seconds": 0.450649852
+    },
+    "model_sha256": "97cc40f6392b0644376c72fb6babecc9d7ab34157bed01e52151b72d938d4c56",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 28,
+      "batch": 28,
+      "commit": 28,
+      "aa": 21,
+      "ab": 7,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0
+    },
+    "trace_sha256": "dcfec3d2673f9525828833dcd5a143484b2e4200b1b472a7e05380cf88398ac8",
+    "binary_sha256": "16bfd010fc92adcc9663d24baa883abcdf984ffb1ca78d669c7f6d8db163f02c",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/aa-large-w6-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "aa-large",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "a6eb27204cddd398394de0de7c1554b87a9610b35a1e9478b695b07de4489cbe",
+    "elapsed_process_seconds": 0.7153571209928486,
+    "metrics": {
+      "export_seconds": 0.036321109,
+      "load_seconds": 0.04665787,
+      "process_hwm_kib_before_validation": 64080,
+      "train_cpu_seconds": 0.969049,
+      "train_seconds": 0.414983912
+    },
+    "model_sha256": "97cc40f6392b0644376c72fb6babecc9d7ab34157bed01e52151b72d938d4c56",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 28,
+      "batch": 28,
+      "commit": 28,
+      "aa": 21,
+      "ab": 7,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0
+    },
+    "trace_sha256": "dcfec3d2673f9525828833dcd5a143484b2e4200b1b472a7e05380cf88398ac8",
+    "binary_sha256": "26ce095b30ed4c98e2ef98761a16cbd80d201333bcda942ebfc9eb1e3e308167",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/aa-large-w6-r0-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "ab-large",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "d2e050a3414bd9b80e270eb2ce97e357f23c6450d9b82f35479a847b16a7b0a2",
+    "elapsed_process_seconds": 0.4530522239947459,
+    "metrics": {
+      "export_seconds": 0.018660644,
+      "load_seconds": 0.023750466,
+      "process_hwm_kib_before_validation": 23032,
+      "train_cpu_seconds": 0.296076,
+      "train_seconds": 0.295964146
+    },
+    "model_sha256": "1c1a2fb5d362ae492b835fe01f1039d432b5e1d3fdf777b25f36a423fa261db8",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 30,
+      "batch": 27,
+      "commit": 27,
+      "aa": 17,
+      "ab": 13,
+      "existing_fresh": 0,
+      "multi_rule": 1,
+      "whole_words": 0
+    },
+    "trace_sha256": "6ed3b7cc9865a2e3f20af4d756e0f249c2b0817c13bdee4d77ded8ba5b7fd329",
+    "binary_sha256": "16bfd010fc92adcc9663d24baa883abcdf984ffb1ca78d669c7f6d8db163f02c",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/ab-large-w1-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "ab-large",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "d2e050a3414bd9b80e270eb2ce97e357f23c6450d9b82f35479a847b16a7b0a2",
+    "elapsed_process_seconds": 0.5813864460069453,
+    "metrics": {
+      "export_seconds": 0.017553556,
+      "load_seconds": 0.030909697,
+      "process_hwm_kib_before_validation": 23116,
+      "train_cpu_seconds": 0.410227,
+      "train_seconds": 0.410850563
+    },
+    "model_sha256": "1c1a2fb5d362ae492b835fe01f1039d432b5e1d3fdf777b25f36a423fa261db8",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 30,
+      "batch": 27,
+      "commit": 27,
+      "aa": 17,
+      "ab": 13,
+      "existing_fresh": 0,
+      "multi_rule": 1,
+      "whole_words": 0
+    },
+    "trace_sha256": "6ed3b7cc9865a2e3f20af4d756e0f249c2b0817c13bdee4d77ded8ba5b7fd329",
+    "binary_sha256": "26ce095b30ed4c98e2ef98761a16cbd80d201333bcda942ebfc9eb1e3e308167",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/ab-large-w1-r0-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "ab-large",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "d2e050a3414bd9b80e270eb2ce97e357f23c6450d9b82f35479a847b16a7b0a2",
+    "elapsed_process_seconds": 0.37198923400137573,
+    "metrics": {
+      "export_seconds": 0.018213009,
+      "load_seconds": 0.045090037,
+      "process_hwm_kib_before_validation": 29288,
+      "train_cpu_seconds": 0.347043,
+      "train_seconds": 0.179769009
+    },
+    "model_sha256": "1c1a2fb5d362ae492b835fe01f1039d432b5e1d3fdf777b25f36a423fa261db8",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 30,
+      "batch": 27,
+      "commit": 27,
+      "aa": 17,
+      "ab": 13,
+      "existing_fresh": 0,
+      "multi_rule": 1,
+      "whole_words": 0
+    },
+    "trace_sha256": "6ed3b7cc9865a2e3f20af4d756e0f249c2b0817c13bdee4d77ded8ba5b7fd329",
+    "binary_sha256": "16bfd010fc92adcc9663d24baa883abcdf984ffb1ca78d669c7f6d8db163f02c",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/ab-large-w6-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "ab-large",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "d2e050a3414bd9b80e270eb2ce97e357f23c6450d9b82f35479a847b16a7b0a2",
+    "elapsed_process_seconds": 0.33228053399943747,
+    "metrics": {
+      "export_seconds": 0.020542544,
+      "load_seconds": 0.023928047,
+      "process_hwm_kib_before_validation": 28672,
+      "train_cpu_seconds": 0.343096,
+      "train_seconds": 0.177390112
+    },
+    "model_sha256": "1c1a2fb5d362ae492b835fe01f1039d432b5e1d3fdf777b25f36a423fa261db8",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 30,
+      "batch": 27,
+      "commit": 27,
+      "aa": 17,
+      "ab": 13,
+      "existing_fresh": 0,
+      "multi_rule": 1,
+      "whole_words": 0
+    },
+    "trace_sha256": "6ed3b7cc9865a2e3f20af4d756e0f249c2b0817c13bdee4d77ded8ba5b7fd329",
+    "binary_sha256": "26ce095b30ed4c98e2ef98761a16cbd80d201333bcda942ebfc9eb1e3e308167",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/ab-large-w6-r0-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "reserved-large",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "170b6c349d2e45bf13df267f6bcdcca0f3b8f3c2b53301256a5f7471138d5c3d",
+    "elapsed_process_seconds": 0.5958403690019622,
+    "metrics": {
+      "export_seconds": 0.019967556,
+      "load_seconds": 0.032774119,
+      "process_hwm_kib_before_validation": 30448,
+      "train_cpu_seconds": 0.39765,
+      "train_seconds": 0.398360332
+    },
+    "model_sha256": "2f3f9e6868d130537bc4f1562c2ac47bfc97393567bfc49f958fe9b555776ef1",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 48,
+      "batch": 44,
+      "commit": 44,
+      "aa": 35,
+      "ab": 13,
+      "existing_fresh": 1,
+      "multi_rule": 4,
+      "whole_words": 0
+    },
+    "trace_sha256": "7147c53747a8c47c786ff31a4e0c59e5d8454dd20352a8174a8da0c5e3431db5",
+    "binary_sha256": "16bfd010fc92adcc9663d24baa883abcdf984ffb1ca78d669c7f6d8db163f02c",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/reserved-large-w1-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "reserved-large",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "170b6c349d2e45bf13df267f6bcdcca0f3b8f3c2b53301256a5f7471138d5c3d",
+    "elapsed_process_seconds": 0.544002114009345,
+    "metrics": {
+      "export_seconds": 0.019094695,
+      "load_seconds": 0.031578064,
+      "process_hwm_kib_before_validation": 28300,
+      "train_cpu_seconds": 0.367781,
+      "train_seconds": 0.367775256
+    },
+    "model_sha256": "2f3f9e6868d130537bc4f1562c2ac47bfc97393567bfc49f958fe9b555776ef1",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 48,
+      "batch": 44,
+      "commit": 44,
+      "aa": 35,
+      "ab": 13,
+      "existing_fresh": 1,
+      "multi_rule": 4,
+      "whole_words": 0
+    },
+    "trace_sha256": "7147c53747a8c47c786ff31a4e0c59e5d8454dd20352a8174a8da0c5e3431db5",
+    "binary_sha256": "26ce095b30ed4c98e2ef98761a16cbd80d201333bcda942ebfc9eb1e3e308167",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/reserved-large-w1-r0-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "reserved-large",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "170b6c349d2e45bf13df267f6bcdcca0f3b8f3c2b53301256a5f7471138d5c3d",
+    "elapsed_process_seconds": 0.3849558369984152,
+    "metrics": {
+      "export_seconds": 0.020371739,
+      "load_seconds": 0.027196866,
+      "process_hwm_kib_before_validation": 37336,
+      "train_cpu_seconds": 0.453167,
+      "train_seconds": 0.209906562
+    },
+    "model_sha256": "2f3f9e6868d130537bc4f1562c2ac47bfc97393567bfc49f958fe9b555776ef1",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 48,
+      "batch": 44,
+      "commit": 44,
+      "aa": 35,
+      "ab": 13,
+      "existing_fresh": 1,
+      "multi_rule": 4,
+      "whole_words": 0
+    },
+    "trace_sha256": "7147c53747a8c47c786ff31a4e0c59e5d8454dd20352a8174a8da0c5e3431db5",
+    "binary_sha256": "16bfd010fc92adcc9663d24baa883abcdf984ffb1ca78d669c7f6d8db163f02c",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/reserved-large-w6-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "reserved-large",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "170b6c349d2e45bf13df267f6bcdcca0f3b8f3c2b53301256a5f7471138d5c3d",
+    "elapsed_process_seconds": 0.4135736299940618,
+    "metrics": {
+      "export_seconds": 0.019959464,
+      "load_seconds": 0.028317437,
+      "process_hwm_kib_before_validation": 37084,
+      "train_cpu_seconds": 0.446914,
+      "train_seconds": 0.20848186
+    },
+    "model_sha256": "2f3f9e6868d130537bc4f1562c2ac47bfc97393567bfc49f958fe9b555776ef1",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 48,
+      "batch": 44,
+      "commit": 44,
+      "aa": 35,
+      "ab": 13,
+      "existing_fresh": 1,
+      "multi_rule": 4,
+      "whole_words": 0
+    },
+    "trace_sha256": "7147c53747a8c47c786ff31a4e0c59e5d8454dd20352a8174a8da0c5e3431db5",
+    "binary_sha256": "26ce095b30ed4c98e2ef98761a16cbd80d201333bcda942ebfc9eb1e3e308167",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/reserved-large-w6-r0-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "alias-large",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "b40ff80aeac46fccbd051d9a069f3122cb0fe64111560b827984cb008a8e388f",
+    "elapsed_process_seconds": 0.5845112690003589,
+    "metrics": {
+      "export_seconds": 0.026391462,
+      "load_seconds": 0.024188925,
+      "process_hwm_kib_before_validation": 33448,
+      "train_cpu_seconds": 0.342916,
+      "train_seconds": 0.343357725
+    },
+    "model_sha256": "9b4ef1df5e83b473b8e6df5e9af8d641f0fa79613580af2bc491f45d20daef35",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 35,
+      "batch": 35,
+      "commit": 35,
+      "aa": 18,
+      "ab": 17,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0
+    },
+    "trace_sha256": "d90d9c03d33db29f89d8c4731e66737daa751c1c9a88fde4fba7a99653c83fff",
+    "binary_sha256": "16bfd010fc92adcc9663d24baa883abcdf984ffb1ca78d669c7f6d8db163f02c",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/alias-large-w1-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "alias-large",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "b40ff80aeac46fccbd051d9a069f3122cb0fe64111560b827984cb008a8e388f",
+    "elapsed_process_seconds": 0.5873677970084827,
+    "metrics": {
+      "export_seconds": 0.031972989,
+      "load_seconds": 0.024866843,
+      "process_hwm_kib_before_validation": 33512,
+      "train_cpu_seconds": 0.34782,
+      "train_seconds": 0.347843269
+    },
+    "model_sha256": "9b4ef1df5e83b473b8e6df5e9af8d641f0fa79613580af2bc491f45d20daef35",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 35,
+      "batch": 35,
+      "commit": 35,
+      "aa": 18,
+      "ab": 17,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0
+    },
+    "trace_sha256": "d90d9c03d33db29f89d8c4731e66737daa751c1c9a88fde4fba7a99653c83fff",
+    "binary_sha256": "26ce095b30ed4c98e2ef98761a16cbd80d201333bcda942ebfc9eb1e3e308167",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/alias-large-w1-r0-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "alias-large",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "b40ff80aeac46fccbd051d9a069f3122cb0fe64111560b827984cb008a8e388f",
+    "elapsed_process_seconds": 0.4331687689991668,
+    "metrics": {
+      "export_seconds": 0.024845482,
+      "load_seconds": 0.023539668,
+      "process_hwm_kib_before_validation": 38956,
+      "train_cpu_seconds": 0.425046,
+      "train_seconds": 0.224053264
+    },
+    "model_sha256": "9b4ef1df5e83b473b8e6df5e9af8d641f0fa79613580af2bc491f45d20daef35",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 35,
+      "batch": 35,
+      "commit": 35,
+      "aa": 18,
+      "ab": 17,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0
+    },
+    "trace_sha256": "d90d9c03d33db29f89d8c4731e66737daa751c1c9a88fde4fba7a99653c83fff",
+    "binary_sha256": "16bfd010fc92adcc9663d24baa883abcdf984ffb1ca78d669c7f6d8db163f02c",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/alias-large-w6-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "alias-large",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "b40ff80aeac46fccbd051d9a069f3122cb0fe64111560b827984cb008a8e388f",
+    "elapsed_process_seconds": 0.4502640509890625,
+    "metrics": {
+      "export_seconds": 0.029346767,
+      "load_seconds": 0.02332156,
+      "process_hwm_kib_before_validation": 38544,
+      "train_cpu_seconds": 0.410374,
+      "train_seconds": 0.232197932
+    },
+    "model_sha256": "9b4ef1df5e83b473b8e6df5e9af8d641f0fa79613580af2bc491f45d20daef35",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 35,
+      "batch": 35,
+      "commit": 35,
+      "aa": 18,
+      "ab": 17,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0
+    },
+    "trace_sha256": "d90d9c03d33db29f89d8c4731e66737daa751c1c9a88fde4fba7a99653c83fff",
+    "binary_sha256": "26ce095b30ed4c98e2ef98761a16cbd80d201333bcda942ebfc9eb1e3e308167",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/alias-large-w6-r0-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "length-reuse-large",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "b40ff80aeac46fccbd051d9a069f3122cb0fe64111560b827984cb008a8e388f",
+    "elapsed_process_seconds": 0.29213457301375456,
+    "metrics": {
+      "export_seconds": 0.00012299,
+      "load_seconds": 0.029139561,
+      "process_hwm_kib_before_validation": 27580,
+      "train_cpu_seconds": 0.25518599999999997,
+      "train_seconds": 0.256384174
+    },
+    "model_sha256": "b4160bcaccc1d611dcae36b1fadc724ff96d82cd6de0f6da228285bb24028dbf",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 5,
+      "batch": 5,
+      "commit": 5,
+      "aa": 0,
+      "ab": 5,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 1
+    },
+    "trace_sha256": "c550d6b27e45998312b7b2fff9d10805af0f93c61e87820dc73e33baa49082b5",
+    "binary_sha256": "16bfd010fc92adcc9663d24baa883abcdf984ffb1ca78d669c7f6d8db163f02c",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/length-reuse-large-w1-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "length-reuse-large",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "b40ff80aeac46fccbd051d9a069f3122cb0fe64111560b827984cb008a8e388f",
+    "elapsed_process_seconds": 0.2689967699989211,
+    "metrics": {
+      "export_seconds": 0.000215522,
+      "load_seconds": 0.022865957,
+      "process_hwm_kib_before_validation": 26196,
+      "train_cpu_seconds": 0.237701,
+      "train_seconds": 0.237956861
+    },
+    "model_sha256": "b4160bcaccc1d611dcae36b1fadc724ff96d82cd6de0f6da228285bb24028dbf",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 5,
+      "batch": 5,
+      "commit": 5,
+      "aa": 0,
+      "ab": 5,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 1
+    },
+    "trace_sha256": "c550d6b27e45998312b7b2fff9d10805af0f93c61e87820dc73e33baa49082b5",
+    "binary_sha256": "26ce095b30ed4c98e2ef98761a16cbd80d201333bcda942ebfc9eb1e3e308167",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/length-reuse-large-w1-r0-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "length-reuse-large",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "b40ff80aeac46fccbd051d9a069f3122cb0fe64111560b827984cb008a8e388f",
+    "elapsed_process_seconds": 0.2322359480021987,
+    "metrics": {
+      "export_seconds": 9.9594e-05,
+      "load_seconds": 0.046616554,
+      "process_hwm_kib_before_validation": 23696,
+      "train_cpu_seconds": 0.330474,
+      "train_seconds": 0.177778835
+    },
+    "model_sha256": "b4160bcaccc1d611dcae36b1fadc724ff96d82cd6de0f6da228285bb24028dbf",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 5,
+      "batch": 5,
+      "commit": 5,
+      "aa": 0,
+      "ab": 5,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 1
+    },
+    "trace_sha256": "c550d6b27e45998312b7b2fff9d10805af0f93c61e87820dc73e33baa49082b5",
+    "binary_sha256": "16bfd010fc92adcc9663d24baa883abcdf984ffb1ca78d669c7f6d8db163f02c",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/length-reuse-large-w6-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "length-reuse-large",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "b40ff80aeac46fccbd051d9a069f3122cb0fe64111560b827984cb008a8e388f",
+    "elapsed_process_seconds": 0.1728854529937962,
+    "metrics": {
+      "export_seconds": 9.6067e-05,
+      "load_seconds": 0.023614169,
+      "process_hwm_kib_before_validation": 23724,
+      "train_cpu_seconds": 0.292131,
+      "train_seconds": 0.143351793
+    },
+    "model_sha256": "b4160bcaccc1d611dcae36b1fadc724ff96d82cd6de0f6da228285bb24028dbf",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 5,
+      "batch": 5,
+      "commit": 5,
+      "aa": 0,
+      "ab": 5,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 1
+    },
+    "trace_sha256": "c550d6b27e45998312b7b2fff9d10805af0f93c61e87820dc73e33baa49082b5",
+    "binary_sha256": "26ce095b30ed4c98e2ef98761a16cbd80d201333bcda942ebfc9eb1e3e308167",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/length-reuse-large-w6-r0-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "en256",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "6c6995e8c4d12a7fa7b0deff3c9a80ba19e86e40b1c3ebf2100d5d2831c419b9",
+    "elapsed_process_seconds": 10.908468980996986,
+    "metrics": {
+      "export_seconds": 0.012014876,
+      "load_seconds": 0.834202374,
+      "process_hwm_kib_before_validation": 264584,
+      "train_cpu_seconds": 8.835742,
+      "train_seconds": 8.850140112
+    },
+    "model_sha256": "43e18d6eb289cbedda72179cbeae4cd32bef1c37ee2b1a73a51d48503e2876d0",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 43364,
+      "batch": 1434,
+      "commit": 1434,
+      "aa": 73,
+      "ab": 43291,
+      "existing_fresh": 0,
+      "multi_rule": 1347,
+      "whole_words": 0
+    },
+    "trace_sha256": "7aa9396344ed32ca1bf1099e9251bbcd40445f641a4a7db67c466c752c52ecd4",
+    "binary_sha256": "16bfd010fc92adcc9663d24baa883abcdf984ffb1ca78d669c7f6d8db163f02c",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/en256-w1-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "en256",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "6c6995e8c4d12a7fa7b0deff3c9a80ba19e86e40b1c3ebf2100d5d2831c419b9",
+    "elapsed_process_seconds": 10.523199791001389,
+    "metrics": {
+      "export_seconds": 0.01144203,
+      "load_seconds": 0.763314101,
+      "process_hwm_kib_before_validation": 261864,
+      "train_cpu_seconds": 8.492331,
+      "train_seconds": 8.510072497
+    },
+    "model_sha256": "43e18d6eb289cbedda72179cbeae4cd32bef1c37ee2b1a73a51d48503e2876d0",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 43364,
+      "batch": 1434,
+      "commit": 1434,
+      "aa": 73,
+      "ab": 43291,
+      "existing_fresh": 0,
+      "multi_rule": 1347,
+      "whole_words": 0
+    },
+    "trace_sha256": "7aa9396344ed32ca1bf1099e9251bbcd40445f641a4a7db67c466c752c52ecd4",
+    "binary_sha256": "26ce095b30ed4c98e2ef98761a16cbd80d201333bcda942ebfc9eb1e3e308167",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/en256-w1-r0-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "en256",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "6c6995e8c4d12a7fa7b0deff3c9a80ba19e86e40b1c3ebf2100d5d2831c419b9",
+    "elapsed_process_seconds": 8.82962627899542,
+    "metrics": {
+      "export_seconds": 0.013602994,
+      "load_seconds": 0.76944512,
+      "process_hwm_kib_before_validation": 291344,
+      "train_cpu_seconds": 12.617502,
+      "train_seconds": 6.801673285
+    },
+    "model_sha256": "43e18d6eb289cbedda72179cbeae4cd32bef1c37ee2b1a73a51d48503e2876d0",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 43364,
+      "batch": 1434,
+      "commit": 1434,
+      "aa": 73,
+      "ab": 43291,
+      "existing_fresh": 0,
+      "multi_rule": 1347,
+      "whole_words": 0
+    },
+    "trace_sha256": "7aa9396344ed32ca1bf1099e9251bbcd40445f641a4a7db67c466c752c52ecd4",
+    "binary_sha256": "16bfd010fc92adcc9663d24baa883abcdf984ffb1ca78d669c7f6d8db163f02c",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/en256-w6-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "en256",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "6c6995e8c4d12a7fa7b0deff3c9a80ba19e86e40b1c3ebf2100d5d2831c419b9",
+    "elapsed_process_seconds": 9.165619125997182,
+    "metrics": {
+      "export_seconds": 0.013380913,
+      "load_seconds": 0.835781559,
+      "process_hwm_kib_before_validation": 289788,
+      "train_cpu_seconds": 12.831968,
+      "train_seconds": 7.08615776
+    },
+    "model_sha256": "43e18d6eb289cbedda72179cbeae4cd32bef1c37ee2b1a73a51d48503e2876d0",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 43364,
+      "batch": 1434,
+      "commit": 1434,
+      "aa": 73,
+      "ab": 43291,
+      "existing_fresh": 0,
+      "multi_rule": 1347,
+      "whole_words": 0
+    },
+    "trace_sha256": "7aa9396344ed32ca1bf1099e9251bbcd40445f641a4a7db67c466c752c52ecd4",
+    "binary_sha256": "26ce095b30ed4c98e2ef98761a16cbd80d201333bcda942ebfc9eb1e3e308167",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/en256-w6-r0-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "zh256",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "ed057a8fdb27544ed29f16dde53faa0de8f47f1ee8ac00080974fac5bb435660",
+    "elapsed_process_seconds": 61.734954963001655,
+    "metrics": {
+      "export_seconds": 0.009405529,
+      "load_seconds": 6.338888273,
+      "process_hwm_kib_before_validation": 1789712,
+      "train_cpu_seconds": 52.362618,
+      "train_seconds": 52.429923789
+    },
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 32241,
+      "batch": 1390,
+      "commit": 1390,
+      "aa": 137,
+      "ab": 32104,
+      "existing_fresh": 0,
+      "multi_rule": 1244,
+      "whole_words": 0
+    },
+    "trace_sha256": "268ed7c3ec30d6e31c86fb0bbdd8f6d8234d6533968e8e5c43bc6e6733be414b",
+    "binary_sha256": "16bfd010fc92adcc9663d24baa883abcdf984ffb1ca78d669c7f6d8db163f02c",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/zh256-w1-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "zh256",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "ed057a8fdb27544ed29f16dde53faa0de8f47f1ee8ac00080974fac5bb435660",
+    "elapsed_process_seconds": 59.70071899599861,
+    "metrics": {
+      "export_seconds": 0.009250804,
+      "load_seconds": 6.279324409,
+      "process_hwm_kib_before_validation": 1789740,
+      "train_cpu_seconds": 50.270859,
+      "train_seconds": 50.368029924
+    },
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 32241,
+      "batch": 1390,
+      "commit": 1390,
+      "aa": 137,
+      "ab": 32104,
+      "existing_fresh": 0,
+      "multi_rule": 1244,
+      "whole_words": 0
+    },
+    "trace_sha256": "268ed7c3ec30d6e31c86fb0bbdd8f6d8234d6533968e8e5c43bc6e6733be414b",
+    "binary_sha256": "26ce095b30ed4c98e2ef98761a16cbd80d201333bcda942ebfc9eb1e3e308167",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/zh256-w1-r0-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "zh256",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "ed057a8fdb27544ed29f16dde53faa0de8f47f1ee8ac00080974fac5bb435660",
+    "elapsed_process_seconds": 27.628587833009078,
+    "metrics": {
+      "export_seconds": 0.012921312,
+      "load_seconds": 6.293435803,
+      "process_hwm_kib_before_validation": 1864624,
+      "train_cpu_seconds": 58.863727000000004,
+      "train_seconds": 18.137358731
+    },
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 32241,
+      "batch": 1390,
+      "commit": 1390,
+      "aa": 137,
+      "ab": 32104,
+      "existing_fresh": 0,
+      "multi_rule": 1244,
+      "whole_words": 0
+    },
+    "trace_sha256": "268ed7c3ec30d6e31c86fb0bbdd8f6d8234d6533968e8e5c43bc6e6733be414b",
+    "binary_sha256": "16bfd010fc92adcc9663d24baa883abcdf984ffb1ca78d669c7f6d8db163f02c",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/zh256-w6-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "zh256",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "ed057a8fdb27544ed29f16dde53faa0de8f47f1ee8ac00080974fac5bb435660",
+    "elapsed_process_seconds": 27.540498761009076,
+    "metrics": {
+      "export_seconds": 0.013538929,
+      "load_seconds": 6.174807371,
+      "process_hwm_kib_before_validation": 1859460,
+      "train_cpu_seconds": 59.480404,
+      "train_seconds": 18.091636333
+    },
+    "model_sha256": "6ba955cc1c9ce96e5e730ae4f1cb8d8df6eb1342f0dd9a1e6de5bff41f77d1a1",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 32241,
+      "batch": 1390,
+      "commit": 1390,
+      "aa": 137,
+      "ab": 32104,
+      "existing_fresh": 0,
+      "multi_rule": 1244,
+      "whole_words": 0
+    },
+    "trace_sha256": "268ed7c3ec30d6e31c86fb0bbdd8f6d8234d6533968e8e5c43bc6e6733be414b",
+    "binary_sha256": "26ce095b30ed4c98e2ef98761a16cbd80d201333bcda942ebfc9eb1e3e308167",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/zh256-w6-r0-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "en-bytelevel",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "8384647de3201a7145a8ba03331df14408685ad4e84f0d825b241a2294665e29",
+    "elapsed_process_seconds": 3.414729927011649,
+    "metrics": {
+      "export_seconds": 0.012381708,
+      "load_seconds": 0.042606933,
+      "process_hwm_kib_before_validation": 26880,
+      "train_cpu_seconds": 2.625249,
+      "train_seconds": 2.626484013
+    },
+    "model_sha256": "c3fae75a49259633748fb8f55ef8b5dfa559d89a7d76219087a9153fc3a8e0cd",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 29744,
+      "batch": 839,
+      "commit": 839,
+      "aa": 55,
+      "ab": 29689,
+      "existing_fresh": 0,
+      "multi_rule": 773,
+      "whole_words": 0
+    },
+    "trace_sha256": "752874911e6d10cf5263b313a7b7959762a662aa242d9c0d3f134419b4ce41e7",
+    "binary_sha256": "16bfd010fc92adcc9663d24baa883abcdf984ffb1ca78d669c7f6d8db163f02c",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/en-bytelevel-w1-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "en-bytelevel",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "8384647de3201a7145a8ba03331df14408685ad4e84f0d825b241a2294665e29",
+    "elapsed_process_seconds": 3.5099051500001224,
+    "metrics": {
+      "export_seconds": 0.01106678,
+      "load_seconds": 0.044578931,
+      "process_hwm_kib_before_validation": 26880,
+      "train_cpu_seconds": 2.712647,
+      "train_seconds": 2.718418737
+    },
+    "model_sha256": "c3fae75a49259633748fb8f55ef8b5dfa559d89a7d76219087a9153fc3a8e0cd",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 29744,
+      "batch": 839,
+      "commit": 839,
+      "aa": 55,
+      "ab": 29689,
+      "existing_fresh": 0,
+      "multi_rule": 773,
+      "whole_words": 0
+    },
+    "trace_sha256": "752874911e6d10cf5263b313a7b7959762a662aa242d9c0d3f134419b4ce41e7",
+    "binary_sha256": "26ce095b30ed4c98e2ef98761a16cbd80d201333bcda942ebfc9eb1e3e308167",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/en-bytelevel-w1-r0-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "en-bytelevel",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "8384647de3201a7145a8ba03331df14408685ad4e84f0d825b241a2294665e29",
+    "elapsed_process_seconds": 3.6030388330109417,
+    "metrics": {
+      "export_seconds": 0.014198987,
+      "load_seconds": 0.04434605,
+      "process_hwm_kib_before_validation": 31568,
+      "train_cpu_seconds": 3.774412,
+      "train_seconds": 2.793440384
+    },
+    "model_sha256": "c3fae75a49259633748fb8f55ef8b5dfa559d89a7d76219087a9153fc3a8e0cd",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 29744,
+      "batch": 839,
+      "commit": 839,
+      "aa": 55,
+      "ab": 29689,
+      "existing_fresh": 0,
+      "multi_rule": 773,
+      "whole_words": 0
+    },
+    "trace_sha256": "752874911e6d10cf5263b313a7b7959762a662aa242d9c0d3f134419b4ce41e7",
+    "binary_sha256": "16bfd010fc92adcc9663d24baa883abcdf984ffb1ca78d669c7f6d8db163f02c",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/en-bytelevel-w6-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "en-bytelevel",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "8384647de3201a7145a8ba03331df14408685ad4e84f0d825b241a2294665e29",
+    "elapsed_process_seconds": 3.5919698149955366,
+    "metrics": {
+      "export_seconds": 0.007739069,
+      "load_seconds": 0.041148264,
+      "process_hwm_kib_before_validation": 31828,
+      "train_cpu_seconds": 3.9864900000000003,
+      "train_seconds": 2.816618148
+    },
+    "model_sha256": "c3fae75a49259633748fb8f55ef8b5dfa559d89a7d76219087a9153fc3a8e0cd",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 29744,
+      "batch": 839,
+      "commit": 839,
+      "aa": 55,
+      "ab": 29689,
+      "existing_fresh": 0,
+      "multi_rule": 773,
+      "whole_words": 0
+    },
+    "trace_sha256": "752874911e6d10cf5263b313a7b7959762a662aa242d9c0d3f134419b4ce41e7",
+    "binary_sha256": "26ce095b30ed4c98e2ef98761a16cbd80d201333bcda942ebfc9eb1e3e308167",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/en-bytelevel-w6-r0-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "zh-bytelevel",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "c068ce880d1e2260d14223cf7bab3f9a39ea8ad88b6e9c6ed66c6091957fb97c",
+    "elapsed_process_seconds": 6.476055842998903,
+    "metrics": {
+      "export_seconds": 0.007743047,
+      "load_seconds": 0.424521615,
+      "process_hwm_kib_before_validation": 124516,
+      "train_cpu_seconds": 5.211418,
+      "train_seconds": 5.2653659919999996
+    },
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 29744,
+      "batch": 799,
+      "commit": 799,
+      "aa": 81,
+      "ab": 29663,
+      "existing_fresh": 0,
+      "multi_rule": 714,
+      "whole_words": 0
+    },
+    "trace_sha256": "c965404f773f85ee1671efe33c14a8a3eddd72b88a25a39904eea09f87ca7d95",
+    "binary_sha256": "16bfd010fc92adcc9663d24baa883abcdf984ffb1ca78d669c7f6d8db163f02c",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/zh-bytelevel-w1-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "zh-bytelevel",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "c068ce880d1e2260d14223cf7bab3f9a39ea8ad88b6e9c6ed66c6091957fb97c",
+    "elapsed_process_seconds": 6.16807799799426,
+    "metrics": {
+      "export_seconds": 0.009263272,
+      "load_seconds": 0.320313765,
+      "process_hwm_kib_before_validation": 124460,
+      "train_cpu_seconds": 4.991174,
+      "train_seconds": 5.015102547
+    },
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 29744,
+      "batch": 799,
+      "commit": 799,
+      "aa": 81,
+      "ab": 29663,
+      "existing_fresh": 0,
+      "multi_rule": 714,
+      "whole_words": 0
+    },
+    "trace_sha256": "c965404f773f85ee1671efe33c14a8a3eddd72b88a25a39904eea09f87ca7d95",
+    "binary_sha256": "26ce095b30ed4c98e2ef98761a16cbd80d201333bcda942ebfc9eb1e3e308167",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/zh-bytelevel-w1-r0-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "zh-bytelevel",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "c068ce880d1e2260d14223cf7bab3f9a39ea8ad88b6e9c6ed66c6091957fb97c",
+    "elapsed_process_seconds": 5.027529628001503,
+    "metrics": {
+      "export_seconds": 0.008341402,
+      "load_seconds": 0.290649467,
+      "process_hwm_kib_before_validation": 142020,
+      "train_cpu_seconds": 6.767747,
+      "train_seconds": 3.9394346799999997
+    },
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 29744,
+      "batch": 799,
+      "commit": 799,
+      "aa": 81,
+      "ab": 29663,
+      "existing_fresh": 0,
+      "multi_rule": 714,
+      "whole_words": 0
+    },
+    "trace_sha256": "c965404f773f85ee1671efe33c14a8a3eddd72b88a25a39904eea09f87ca7d95",
+    "binary_sha256": "16bfd010fc92adcc9663d24baa883abcdf984ffb1ca78d669c7f6d8db163f02c",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/zh-bytelevel-w6-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "zh-bytelevel",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "c068ce880d1e2260d14223cf7bab3f9a39ea8ad88b6e9c6ed66c6091957fb97c",
+    "elapsed_process_seconds": 4.9501469189999625,
+    "metrics": {
+      "export_seconds": 0.009330427,
+      "load_seconds": 0.299138012,
+      "process_hwm_kib_before_validation": 141756,
+      "train_cpu_seconds": 6.946541,
+      "train_seconds": 3.841095268
+    },
+    "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+    "coverage": {
+      "initial_scan_config": 1,
+      "select": 29744,
+      "batch": 799,
+      "commit": 799,
+      "aa": 81,
+      "ab": 29663,
+      "existing_fresh": 0,
+      "multi_rule": 714,
+      "whole_words": 0
+    },
+    "trace_sha256": "c965404f773f85ee1671efe33c14a8a3eddd72b88a25a39904eea09f87ca7d95",
+    "binary_sha256": "26ce095b30ed4c98e2ef98761a16cbd80d201333bcda942ebfc9eb1e3e308167",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-trace/zh-bytelevel-w6-r0-candidate"
+  }
+]

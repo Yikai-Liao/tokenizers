@@ -1,0 +1,58 @@
+{
+  "production": {
+    "corpus/merging.rs": 412,
+    "corpus.rs": 474,
+    "feed.rs": 80,
+    "index.rs": 377,
+    "merge.rs": 76,
+    "mod.rs": 322,
+    "positions/codec.rs": 55,
+    "positions.rs": 271,
+    "vocabulary.rs": 414,
+    "word_counts.rs": 91
+  },
+  "tests": {
+    "corpus/merging.rs [cfg(test)]": 210,
+    "corpus.rs [cfg(test)]": 142,
+    "index.rs [cfg(test)]": 188,
+    "merge.rs [cfg(test)]": 6,
+    "mod.rs [cfg(test)]": 13,
+    "positions/codec.rs [cfg(test)]": 19,
+    "positions.rs [cfg(test)]": 154,
+    "tests.rs": 761,
+    "vocabulary.rs [cfg(test)]": 155,
+    "word_counts.rs [cfg(test)]": 27,
+    "trainers/mod.rs [cfg(test) BPE wrapper]": 12,
+    "experiments/bpe-simplification/miri-codec/src/lib.rs [Miri harness]": 4
+  },
+  "production_total": 2572,
+  "test_total": 1691,
+  "counting_rule": "Descriptive nonblank noncomment lines after rustfmt; ordinary BPE components, public API, feed and word counts. Optional parity implementation excluded. Test count includes embedded cfg(test), reference, shared trainer wrapper and Miri harness, each once. No hard limits.",
+  "diffs": {
+    "upstream": {
+      "revision": "origin/main",
+      "commit": "fb49a29223724a96f26e061bec8ec7517aa14177",
+      "scopes": [
+        "tokenizers/tk-train/src/trainers/bpe",
+        "tokenizers/tk-train/src/trainers/wordpiece.rs",
+        "tokenizers/tk-train/src/trainers/mod.rs",
+        "experiments/bpe-simplification/miri-codec/src"
+      ],
+      "stat": " .../bpe-simplification/miri-codec/src/lib.rs       |   4 +\n tokenizers/tk-train/src/trainers/bpe/AGENTS.md     |  20 +\n tokenizers/tk-train/src/trainers/bpe/COVERAGE.md   |  62 ++\n tokenizers/tk-train/src/trainers/bpe/DESIGN.md     | 331 ++++++++\n tokenizers/tk-train/src/trainers/bpe/README.md     | 162 ++++\n tokenizers/tk-train/src/trainers/bpe/corpus.rs     | 710 +++++++++++++++++\n .../tk-train/src/trainers/bpe/corpus/merging.rs    | 673 ++++++++++++++++\n tokenizers/tk-train/src/trainers/bpe/feed.rs       |  92 +++\n tokenizers/tk-train/src/trainers/bpe/index.rs      | 663 +++++++++++++++\n tokenizers/tk-train/src/trainers/bpe/merge.rs      |  94 +++\n tokenizers/tk-train/src/trainers/bpe/mod.rs        | 886 ++++++---------------\n tokenizers/tk-train/src/trainers/bpe/positions.rs  | 488 ++++++++++++\n .../tk-train/src/trainers/bpe/positions/codec.rs   |  85 ++\n tokenizers/tk-train/src/trainers/bpe/tests.rs      | 827 +++++++++++++++++++\n tokenizers/tk-train/src/trainers/bpe/vocabulary.rs | 661 +++++++++++++++\n .../tk-train/src/trainers/bpe/word_counts.rs       | 145 ++++\n 16 files changed, 5256 insertions(+), 647 deletions(-)\n",
+      "numstat": "4\t0\texperiments/bpe-simplification/miri-codec/src/lib.rs\n20\t0\ttokenizers/tk-train/src/trainers/bpe/AGENTS.md\n62\t0\ttokenizers/tk-train/src/trainers/bpe/COVERAGE.md\n331\t0\ttokenizers/tk-train/src/trainers/bpe/DESIGN.md\n162\t0\ttokenizers/tk-train/src/trainers/bpe/README.md\n710\t0\ttokenizers/tk-train/src/trainers/bpe/corpus.rs\n673\t0\ttokenizers/tk-train/src/trainers/bpe/corpus/merging.rs\n92\t0\ttokenizers/tk-train/src/trainers/bpe/feed.rs\n663\t0\ttokenizers/tk-train/src/trainers/bpe/index.rs\n94\t0\ttokenizers/tk-train/src/trainers/bpe/merge.rs\n239\t647\ttokenizers/tk-train/src/trainers/bpe/mod.rs\n488\t0\ttokenizers/tk-train/src/trainers/bpe/positions.rs\n85\t0\ttokenizers/tk-train/src/trainers/bpe/positions/codec.rs\n827\t0\ttokenizers/tk-train/src/trainers/bpe/tests.rs\n661\t0\ttokenizers/tk-train/src/trainers/bpe/vocabulary.rs\n145\t0\ttokenizers/tk-train/src/trainers/bpe/word_counts.rs\n"
+    },
+    "change": {
+      "revision": "826479034460c18530ebe2522aaa1585133f97fe",
+      "commit": "826479034460c18530ebe2522aaa1585133f97fe",
+      "scopes": [
+        "tokenizers/tk-train/src/trainers/bpe",
+        "tokenizers/tk-train/src/trainers/wordpiece.rs",
+        "tokenizers/tk-train/src/trainers/mod.rs",
+        "experiments/bpe-simplification/miri-codec/src"
+      ],
+      "stat": " tokenizers/tk-train/src/trainers/bpe/COVERAGE.md   |  26 +-\n tokenizers/tk-train/src/trainers/bpe/DESIGN.md     | 161 +++--\n tokenizers/tk-train/src/trainers/bpe/README.md     |  59 +-\n tokenizers/tk-train/src/trainers/bpe/corpus.rs     | 353 ++++++-----\n .../tk-train/src/trainers/bpe/corpus/merging.rs    | 673 ++++++++++++++++++++\n tokenizers/tk-train/src/trainers/bpe/feed.rs       |   4 +-\n tokenizers/tk-train/src/trainers/bpe/index.rs      | 257 +++++---\n tokenizers/tk-train/src/trainers/bpe/merge.rs      | 700 ++-------------------\n tokenizers/tk-train/src/trainers/bpe/mod.rs        |  44 +-\n tokenizers/tk-train/src/trainers/bpe/positions.rs  |  14 +-\n tokenizers/tk-train/src/trainers/bpe/tests.rs      |  80 ++-\n tokenizers/tk-train/src/trainers/bpe/vocabulary.rs | 112 ++--\n .../tk-train/src/trainers/bpe/word_counts.rs       |  56 +-\n 13 files changed, 1375 insertions(+), 1164 deletions(-)\n",
+      "numstat": "17\t9\ttokenizers/tk-train/src/trainers/bpe/COVERAGE.md\n74\t87\ttokenizers/tk-train/src/trainers/bpe/DESIGN.md\n30\t29\ttokenizers/tk-train/src/trainers/bpe/README.md\n196\t157\ttokenizers/tk-train/src/trainers/bpe/corpus.rs\n673\t0\ttokenizers/tk-train/src/trainers/bpe/corpus/merging.rs\n2\t2\ttokenizers/tk-train/src/trainers/bpe/feed.rs\n156\t101\ttokenizers/tk-train/src/trainers/bpe/index.rs\n43\t657\ttokenizers/tk-train/src/trainers/bpe/merge.rs\n26\t18\ttokenizers/tk-train/src/trainers/bpe/mod.rs\n7\t7\ttokenizers/tk-train/src/trainers/bpe/positions.rs\n48\t32\ttokenizers/tk-train/src/trainers/bpe/tests.rs\n73\t39\ttokenizers/tk-train/src/trainers/bpe/vocabulary.rs\n30\t26\ttokenizers/tk-train/src/trainers/bpe/word_counts.rs\n"
+    }
+  },
+  "diff_rule": "Git text additions/deletions include comments, formatting and documentation; rename detection is enabled. Counts and diffs describe different scopes and are not complexity or correctness gates."
+}

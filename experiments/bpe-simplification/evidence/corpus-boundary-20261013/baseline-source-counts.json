@@ -1,0 +1,56 @@
+{
+  "production": {
+    "corpus.rs": 453,
+    "feed.rs": 80,
+    "index.rs": 350,
+    "merge.rs": 456,
+    "mod.rs": 316,
+    "positions/codec.rs": 55,
+    "positions.rs": 271,
+    "vocabulary.rs": 391,
+    "word_counts.rs": 84
+  },
+  "tests": {
+    "corpus.rs [cfg(test)]": 128,
+    "index.rs [cfg(test)]": 163,
+    "merge.rs [cfg(test)]": 158,
+    "mod.rs [cfg(test)]": 13,
+    "positions/codec.rs [cfg(test)]": 19,
+    "positions.rs [cfg(test)]": 154,
+    "tests.rs": 745,
+    "vocabulary.rs [cfg(test)]": 148,
+    "word_counts.rs [cfg(test)]": 30,
+    "trainers/mod.rs [cfg(test) BPE wrapper]": 12,
+    "experiments/bpe-simplification/miri-codec/src/lib.rs [Miri harness]": 4
+  },
+  "production_total": 2456,
+  "test_total": 1574,
+  "counting_rule": "Descriptive nonblank noncomment lines after rustfmt; ordinary BPE components, public API, feed and word counts. Optional parity implementation excluded. Test count includes embedded cfg(test), reference, shared trainer wrapper and Miri harness, each once. No hard limits.",
+  "diffs": {
+    "upstream": {
+      "revision": "origin/main",
+      "commit": "fb49a29223724a96f26e061bec8ec7517aa14177",
+      "scopes": [
+        "tokenizers/tk-train/src/trainers/bpe",
+        "tokenizers/tk-train/src/trainers/wordpiece.rs",
+        "tokenizers/tk-train/src/trainers/mod.rs",
+        "experiments/bpe-simplification/miri-codec/src"
+      ],
+      "stat": " .../bpe-simplification/miri-codec/src/lib.rs       |   4 +\n tokenizers/tk-train/src/trainers/bpe/AGENTS.md     |  20 +\n tokenizers/tk-train/src/trainers/bpe/COVERAGE.md   |  54 ++\n tokenizers/tk-train/src/trainers/bpe/DESIGN.md     | 344 ++++++++\n tokenizers/tk-train/src/trainers/bpe/README.md     | 161 ++++\n tokenizers/tk-train/src/trainers/bpe/corpus.rs     | 671 ++++++++++++++++\n tokenizers/tk-train/src/trainers/bpe/feed.rs       |  92 +++\n tokenizers/tk-train/src/trainers/bpe/index.rs      | 608 ++++++++++++++\n tokenizers/tk-train/src/trainers/bpe/merge.rs      | 708 +++++++++++++++++\n tokenizers/tk-train/src/trainers/bpe/mod.rs        | 882 ++++++---------------\n tokenizers/tk-train/src/trainers/bpe/positions.rs  | 488 ++++++++++++\n .../tk-train/src/trainers/bpe/positions/codec.rs   |  85 ++\n tokenizers/tk-train/src/trainers/bpe/tests.rs      | 811 +++++++++++++++++++\n tokenizers/tk-train/src/trainers/bpe/vocabulary.rs | 627 +++++++++++++++\n .../tk-train/src/trainers/bpe/word_counts.rs       | 141 ++++\n 15 files changed, 5047 insertions(+), 649 deletions(-)\n",
+      "numstat": "4\t0\texperiments/bpe-simplification/miri-codec/src/lib.rs\n20\t0\ttokenizers/tk-train/src/trainers/bpe/AGENTS.md\n54\t0\ttokenizers/tk-train/src/trainers/bpe/COVERAGE.md\n344\t0\ttokenizers/tk-train/src/trainers/bpe/DESIGN.md\n161\t0\ttokenizers/tk-train/src/trainers/bpe/README.md\n671\t0\ttokenizers/tk-train/src/trainers/bpe/corpus.rs\n92\t0\ttokenizers/tk-train/src/trainers/bpe/feed.rs\n608\t0\ttokenizers/tk-train/src/trainers/bpe/index.rs\n708\t0\ttokenizers/tk-train/src/trainers/bpe/merge.rs\n233\t649\ttokenizers/tk-train/src/trainers/bpe/mod.rs\n488\t0\ttokenizers/tk-train/src/trainers/bpe/positions.rs\n85\t0\ttokenizers/tk-train/src/trainers/bpe/positions/codec.rs\n811\t0\ttokenizers/tk-train/src/trainers/bpe/tests.rs\n627\t0\ttokenizers/tk-train/src/trainers/bpe/vocabulary.rs\n141\t0\ttokenizers/tk-train/src/trainers/bpe/word_counts.rs\n"
+    },
+    "change": {
+      "revision": "826479034460c18530ebe2522aaa1585133f97fe",
+      "commit": "826479034460c18530ebe2522aaa1585133f97fe",
+      "scopes": [
+        "tokenizers/tk-train/src/trainers/bpe",
+        "tokenizers/tk-train/src/trainers/wordpiece.rs",
+        "tokenizers/tk-train/src/trainers/mod.rs",
+        "experiments/bpe-simplification/miri-codec/src"
+      ],
+      "stat": "",
+      "numstat": ""
+    }
+  },
+  "diff_rule": "Git text additions/deletions include comments, formatting and documentation; rename detection is enabled. Counts and diffs describe different scopes and are not complexity or correctness gates."
+}

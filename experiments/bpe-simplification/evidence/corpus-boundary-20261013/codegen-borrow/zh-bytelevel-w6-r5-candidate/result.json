@@ -1,0 +1,28 @@
+{
+  "arm": "candidate",
+  "case": "zh-bytelevel",
+  "workers": 6,
+  "repeat": 5,
+  "input_sha256": "c068ce880d1e2260d14223cf7bab3f9a39ea8ad88b6e9c6ed66c6091957fb97c",
+  "elapsed_process_seconds": 2.117537252008333,
+  "metrics": {
+    "export_seconds": 0.008610042,
+    "load_seconds": 0.301244851,
+    "process_hwm_kib_before_validation": 142476,
+    "train_cpu_seconds": 3.8222590000000003,
+    "train_seconds": 1.2868836350000001
+  },
+  "model_sha256": "7f82a6ed44f10478c36403cac0747ba51ce45f1877e3062cad0c48792a07b191",
+  "iteration_model_sha256": [],
+  "coverage": {
+    "aa": 0,
+    "ab": 0,
+    "existing_fresh": 0,
+    "multi_rule": 0,
+    "whole_words": 0,
+    "initial_whole_words": 0
+  },
+  "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "binary_sha256": "e73a6a15a6dbbd32041b1372996a912a3922c9367ada3c1859a454786627a153",
+  "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/codegen-borrow/zh-bytelevel-w6-r5-candidate"
+}

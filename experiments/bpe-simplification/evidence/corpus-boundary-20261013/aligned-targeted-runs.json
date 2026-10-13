@@ -1,0 +1,2242 @@
+[
+  {
+    "arm": "baseline",
+    "case": "aa-large",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "a6eb27204cddd398394de0de7c1554b87a9610b35a1e9478b695b07de4489cbe",
+    "elapsed_process_seconds": 1.1547278689977247,
+    "metrics": {
+      "export_seconds": 0.049890914,
+      "load_seconds": 0.045095454,
+      "process_hwm_kib_before_validation": 61264,
+      "train_cpu_seconds": 0.827314,
+      "train_seconds": 0.828235675
+    },
+    "model_sha256": "97cc40f6392b0644376c72fb6babecc9d7ab34157bed01e52151b72d938d4c56",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/aa-large-w1-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "aa-large",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "a6eb27204cddd398394de0de7c1554b87a9610b35a1e9478b695b07de4489cbe",
+    "elapsed_process_seconds": 1.1145088860066608,
+    "metrics": {
+      "export_seconds": 0.047778219,
+      "load_seconds": 0.046907351,
+      "process_hwm_kib_before_validation": 60924,
+      "train_cpu_seconds": 0.811973,
+      "train_seconds": 0.812224893
+    },
+    "model_sha256": "97cc40f6392b0644376c72fb6babecc9d7ab34157bed01e52151b72d938d4c56",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/aa-large-w1-r0-candidate"
+  },
+  {
+    "arm": "candidate",
+    "case": "aa-large",
+    "workers": 1,
+    "repeat": 1,
+    "input_sha256": "a6eb27204cddd398394de0de7c1554b87a9610b35a1e9478b695b07de4489cbe",
+    "elapsed_process_seconds": 1.1458934149995912,
+    "metrics": {
+      "export_seconds": 0.043222677,
+      "load_seconds": 0.044493512,
+      "process_hwm_kib_before_validation": 61548,
+      "train_cpu_seconds": 0.838005,
+      "train_seconds": 0.839910378
+    },
+    "model_sha256": "97cc40f6392b0644376c72fb6babecc9d7ab34157bed01e52151b72d938d4c56",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/aa-large-w1-r1-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "aa-large",
+    "workers": 1,
+    "repeat": 1,
+    "input_sha256": "a6eb27204cddd398394de0de7c1554b87a9610b35a1e9478b695b07de4489cbe",
+    "elapsed_process_seconds": 1.1413706020102836,
+    "metrics": {
+      "export_seconds": 0.052290348,
+      "load_seconds": 0.046917164,
+      "process_hwm_kib_before_validation": 61656,
+      "train_cpu_seconds": 0.836303,
+      "train_seconds": 0.836996346
+    },
+    "model_sha256": "97cc40f6392b0644376c72fb6babecc9d7ab34157bed01e52151b72d938d4c56",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/aa-large-w1-r1-baseline"
+  },
+  {
+    "arm": "baseline",
+    "case": "aa-large",
+    "workers": 1,
+    "repeat": 2,
+    "input_sha256": "a6eb27204cddd398394de0de7c1554b87a9610b35a1e9478b695b07de4489cbe",
+    "elapsed_process_seconds": 1.174183743991307,
+    "metrics": {
+      "export_seconds": 0.064019113,
+      "load_seconds": 0.056657013,
+      "process_hwm_kib_before_validation": 61068,
+      "train_cpu_seconds": 0.8333820000000001,
+      "train_seconds": 0.833697116
+    },
+    "model_sha256": "97cc40f6392b0644376c72fb6babecc9d7ab34157bed01e52151b72d938d4c56",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/aa-large-w1-r2-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "aa-large",
+    "workers": 1,
+    "repeat": 2,
+    "input_sha256": "a6eb27204cddd398394de0de7c1554b87a9610b35a1e9478b695b07de4489cbe",
+    "elapsed_process_seconds": 1.1125094710005214,
+    "metrics": {
+      "export_seconds": 0.050224574,
+      "load_seconds": 0.043616344,
+      "process_hwm_kib_before_validation": 60820,
+      "train_cpu_seconds": 0.808117,
+      "train_seconds": 0.808083873
+    },
+    "model_sha256": "97cc40f6392b0644376c72fb6babecc9d7ab34157bed01e52151b72d938d4c56",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/aa-large-w1-r2-candidate"
+  },
+  {
+    "arm": "candidate",
+    "case": "aa-large",
+    "workers": 1,
+    "repeat": 3,
+    "input_sha256": "a6eb27204cddd398394de0de7c1554b87a9610b35a1e9478b695b07de4489cbe",
+    "elapsed_process_seconds": 1.176872459007427,
+    "metrics": {
+      "export_seconds": 0.039970228,
+      "load_seconds": 0.059302702,
+      "process_hwm_kib_before_validation": 60692,
+      "train_cpu_seconds": 0.846784,
+      "train_seconds": 0.846894301
+    },
+    "model_sha256": "97cc40f6392b0644376c72fb6babecc9d7ab34157bed01e52151b72d938d4c56",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/aa-large-w1-r3-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "aa-large",
+    "workers": 1,
+    "repeat": 3,
+    "input_sha256": "a6eb27204cddd398394de0de7c1554b87a9610b35a1e9478b695b07de4489cbe",
+    "elapsed_process_seconds": 1.2817999859980773,
+    "metrics": {
+      "export_seconds": 0.06030825,
+      "load_seconds": 0.044885443,
+      "process_hwm_kib_before_validation": 61428,
+      "train_cpu_seconds": 0.9328110000000001,
+      "train_seconds": 0.935401479
+    },
+    "model_sha256": "97cc40f6392b0644376c72fb6babecc9d7ab34157bed01e52151b72d938d4c56",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/aa-large-w1-r3-baseline"
+  },
+  {
+    "arm": "baseline",
+    "case": "aa-large",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "a6eb27204cddd398394de0de7c1554b87a9610b35a1e9478b695b07de4489cbe",
+    "elapsed_process_seconds": 0.8328166229912313,
+    "metrics": {
+      "export_seconds": 0.042020631,
+      "load_seconds": 0.048716092,
+      "process_hwm_kib_before_validation": 68008,
+      "train_cpu_seconds": 0.966264,
+      "train_seconds": 0.525545126
+    },
+    "model_sha256": "97cc40f6392b0644376c72fb6babecc9d7ab34157bed01e52151b72d938d4c56",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/aa-large-w6-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "aa-large",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "a6eb27204cddd398394de0de7c1554b87a9610b35a1e9478b695b07de4489cbe",
+    "elapsed_process_seconds": 0.7719118919922039,
+    "metrics": {
+      "export_seconds": 0.041213394,
+      "load_seconds": 0.04742726,
+      "process_hwm_kib_before_validation": 78676,
+      "train_cpu_seconds": 1.069089,
+      "train_seconds": 0.471189431
+    },
+    "model_sha256": "97cc40f6392b0644376c72fb6babecc9d7ab34157bed01e52151b72d938d4c56",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/aa-large-w6-r0-candidate"
+  },
+  {
+    "arm": "candidate",
+    "case": "aa-large",
+    "workers": 6,
+    "repeat": 1,
+    "input_sha256": "a6eb27204cddd398394de0de7c1554b87a9610b35a1e9478b695b07de4489cbe",
+    "elapsed_process_seconds": 0.8052657980006188,
+    "metrics": {
+      "export_seconds": 0.051960357,
+      "load_seconds": 0.051360252,
+      "process_hwm_kib_before_validation": 63108,
+      "train_cpu_seconds": 0.9799390000000001,
+      "train_seconds": 0.491346422
+    },
+    "model_sha256": "97cc40f6392b0644376c72fb6babecc9d7ab34157bed01e52151b72d938d4c56",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/aa-large-w6-r1-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "aa-large",
+    "workers": 6,
+    "repeat": 1,
+    "input_sha256": "a6eb27204cddd398394de0de7c1554b87a9610b35a1e9478b695b07de4489cbe",
+    "elapsed_process_seconds": 0.7756831169972429,
+    "metrics": {
+      "export_seconds": 0.053865389,
+      "load_seconds": 0.047344491,
+      "process_hwm_kib_before_validation": 67540,
+      "train_cpu_seconds": 0.936302,
+      "train_seconds": 0.453232488
+    },
+    "model_sha256": "97cc40f6392b0644376c72fb6babecc9d7ab34157bed01e52151b72d938d4c56",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/aa-large-w6-r1-baseline"
+  },
+  {
+    "arm": "baseline",
+    "case": "aa-large",
+    "workers": 6,
+    "repeat": 2,
+    "input_sha256": "a6eb27204cddd398394de0de7c1554b87a9610b35a1e9478b695b07de4489cbe",
+    "elapsed_process_seconds": 0.8180077699944377,
+    "metrics": {
+      "export_seconds": 0.057119456,
+      "load_seconds": 0.050258606,
+      "process_hwm_kib_before_validation": 66452,
+      "train_cpu_seconds": 0.961511,
+      "train_seconds": 0.468168052
+    },
+    "model_sha256": "97cc40f6392b0644376c72fb6babecc9d7ab34157bed01e52151b72d938d4c56",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/aa-large-w6-r2-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "aa-large",
+    "workers": 6,
+    "repeat": 2,
+    "input_sha256": "a6eb27204cddd398394de0de7c1554b87a9610b35a1e9478b695b07de4489cbe",
+    "elapsed_process_seconds": 0.7598154739971505,
+    "metrics": {
+      "export_seconds": 0.058740955,
+      "load_seconds": 0.045272775,
+      "process_hwm_kib_before_validation": 73812,
+      "train_cpu_seconds": 0.957905,
+      "train_seconds": 0.449823155
+    },
+    "model_sha256": "97cc40f6392b0644376c72fb6babecc9d7ab34157bed01e52151b72d938d4c56",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/aa-large-w6-r2-candidate"
+  },
+  {
+    "arm": "candidate",
+    "case": "aa-large",
+    "workers": 6,
+    "repeat": 3,
+    "input_sha256": "a6eb27204cddd398394de0de7c1554b87a9610b35a1e9478b695b07de4489cbe",
+    "elapsed_process_seconds": 0.7744909180037212,
+    "metrics": {
+      "export_seconds": 0.042519201,
+      "load_seconds": 0.068638711,
+      "process_hwm_kib_before_validation": 64112,
+      "train_cpu_seconds": 0.9146110000000001,
+      "train_seconds": 0.42068505
+    },
+    "model_sha256": "97cc40f6392b0644376c72fb6babecc9d7ab34157bed01e52151b72d938d4c56",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/aa-large-w6-r3-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "aa-large",
+    "workers": 6,
+    "repeat": 3,
+    "input_sha256": "a6eb27204cddd398394de0de7c1554b87a9610b35a1e9478b695b07de4489cbe",
+    "elapsed_process_seconds": 0.7393556190072559,
+    "metrics": {
+      "export_seconds": 0.04451228,
+      "load_seconds": 0.041647469,
+      "process_hwm_kib_before_validation": 66780,
+      "train_cpu_seconds": 0.991361,
+      "train_seconds": 0.429474667
+    },
+    "model_sha256": "97cc40f6392b0644376c72fb6babecc9d7ab34157bed01e52151b72d938d4c56",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/aa-large-w6-r3-baseline"
+  },
+  {
+    "arm": "baseline",
+    "case": "ab-large",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "d2e050a3414bd9b80e270eb2ce97e357f23c6450d9b82f35479a847b16a7b0a2",
+    "elapsed_process_seconds": 0.4600977069931105,
+    "metrics": {
+      "export_seconds": 0.030401923,
+      "load_seconds": 0.022646592,
+      "process_hwm_kib_before_validation": 22732,
+      "train_cpu_seconds": 0.28577800000000003,
+      "train_seconds": 0.285960439
+    },
+    "model_sha256": "1c1a2fb5d362ae492b835fe01f1039d432b5e1d3fdf777b25f36a423fa261db8",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/ab-large-w1-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "ab-large",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "d2e050a3414bd9b80e270eb2ce97e357f23c6450d9b82f35479a847b16a7b0a2",
+    "elapsed_process_seconds": 0.46914280200144276,
+    "metrics": {
+      "export_seconds": 0.02046921,
+      "load_seconds": 0.02494529,
+      "process_hwm_kib_before_validation": 22652,
+      "train_cpu_seconds": 0.317684,
+      "train_seconds": 0.317736107
+    },
+    "model_sha256": "1c1a2fb5d362ae492b835fe01f1039d432b5e1d3fdf777b25f36a423fa261db8",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/ab-large-w1-r0-candidate"
+  },
+  {
+    "arm": "candidate",
+    "case": "ab-large",
+    "workers": 1,
+    "repeat": 1,
+    "input_sha256": "d2e050a3414bd9b80e270eb2ce97e357f23c6450d9b82f35479a847b16a7b0a2",
+    "elapsed_process_seconds": 0.5308127689932007,
+    "metrics": {
+      "export_seconds": 0.024978082,
+      "load_seconds": 0.031965222,
+      "process_hwm_kib_before_validation": 22780,
+      "train_cpu_seconds": 0.341929,
+      "train_seconds": 0.342256029
+    },
+    "model_sha256": "1c1a2fb5d362ae492b835fe01f1039d432b5e1d3fdf777b25f36a423fa261db8",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/ab-large-w1-r1-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "ab-large",
+    "workers": 1,
+    "repeat": 1,
+    "input_sha256": "d2e050a3414bd9b80e270eb2ce97e357f23c6450d9b82f35479a847b16a7b0a2",
+    "elapsed_process_seconds": 0.4824139990087133,
+    "metrics": {
+      "export_seconds": 0.032241525,
+      "load_seconds": 0.029958901,
+      "process_hwm_kib_before_validation": 22764,
+      "train_cpu_seconds": 0.306099,
+      "train_seconds": 0.306436775
+    },
+    "model_sha256": "1c1a2fb5d362ae492b835fe01f1039d432b5e1d3fdf777b25f36a423fa261db8",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/ab-large-w1-r1-baseline"
+  },
+  {
+    "arm": "baseline",
+    "case": "ab-large",
+    "workers": 1,
+    "repeat": 2,
+    "input_sha256": "d2e050a3414bd9b80e270eb2ce97e357f23c6450d9b82f35479a847b16a7b0a2",
+    "elapsed_process_seconds": 0.4472030350007117,
+    "metrics": {
+      "export_seconds": 0.021517282,
+      "load_seconds": 0.022022255,
+      "process_hwm_kib_before_validation": 22784,
+      "train_cpu_seconds": 0.288298,
+      "train_seconds": 0.288253071
+    },
+    "model_sha256": "1c1a2fb5d362ae492b835fe01f1039d432b5e1d3fdf777b25f36a423fa261db8",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/ab-large-w1-r2-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "ab-large",
+    "workers": 1,
+    "repeat": 2,
+    "input_sha256": "d2e050a3414bd9b80e270eb2ce97e357f23c6450d9b82f35479a847b16a7b0a2",
+    "elapsed_process_seconds": 0.46935911099717487,
+    "metrics": {
+      "export_seconds": 0.021575074,
+      "load_seconds": 0.023207369,
+      "process_hwm_kib_before_validation": 22640,
+      "train_cpu_seconds": 0.305513,
+      "train_seconds": 0.30554008
+    },
+    "model_sha256": "1c1a2fb5d362ae492b835fe01f1039d432b5e1d3fdf777b25f36a423fa261db8",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/ab-large-w1-r2-candidate"
+  },
+  {
+    "arm": "candidate",
+    "case": "ab-large",
+    "workers": 1,
+    "repeat": 3,
+    "input_sha256": "d2e050a3414bd9b80e270eb2ce97e357f23c6450d9b82f35479a847b16a7b0a2",
+    "elapsed_process_seconds": 0.5337175840104464,
+    "metrics": {
+      "export_seconds": 0.038164439,
+      "load_seconds": 0.027302478,
+      "process_hwm_kib_before_validation": 22712,
+      "train_cpu_seconds": 0.316842,
+      "train_seconds": 0.317712037
+    },
+    "model_sha256": "1c1a2fb5d362ae492b835fe01f1039d432b5e1d3fdf777b25f36a423fa261db8",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/ab-large-w1-r3-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "ab-large",
+    "workers": 1,
+    "repeat": 3,
+    "input_sha256": "d2e050a3414bd9b80e270eb2ce97e357f23c6450d9b82f35479a847b16a7b0a2",
+    "elapsed_process_seconds": 0.5349830949999159,
+    "metrics": {
+      "export_seconds": 0.021005321,
+      "load_seconds": 0.022920048,
+      "process_hwm_kib_before_validation": 22584,
+      "train_cpu_seconds": 0.34258299999999997,
+      "train_seconds": 0.342664864
+    },
+    "model_sha256": "1c1a2fb5d362ae492b835fe01f1039d432b5e1d3fdf777b25f36a423fa261db8",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/ab-large-w1-r3-baseline"
+  },
+  {
+    "arm": "baseline",
+    "case": "ab-large",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "d2e050a3414bd9b80e270eb2ce97e357f23c6450d9b82f35479a847b16a7b0a2",
+    "elapsed_process_seconds": 0.38202805300534237,
+    "metrics": {
+      "export_seconds": 0.020624539,
+      "load_seconds": 0.036861466,
+      "process_hwm_kib_before_validation": 28696,
+      "train_cpu_seconds": 0.451458,
+      "train_seconds": 0.206559285
+    },
+    "model_sha256": "1c1a2fb5d362ae492b835fe01f1039d432b5e1d3fdf777b25f36a423fa261db8",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/ab-large-w6-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "ab-large",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "d2e050a3414bd9b80e270eb2ce97e357f23c6450d9b82f35479a847b16a7b0a2",
+    "elapsed_process_seconds": 0.359331243991619,
+    "metrics": {
+      "export_seconds": 0.020560997,
+      "load_seconds": 0.037588271,
+      "process_hwm_kib_before_validation": 28764,
+      "train_cpu_seconds": 0.376274,
+      "train_seconds": 0.188597493
+    },
+    "model_sha256": "1c1a2fb5d362ae492b835fe01f1039d432b5e1d3fdf777b25f36a423fa261db8",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/ab-large-w6-r0-candidate"
+  },
+  {
+    "arm": "candidate",
+    "case": "ab-large",
+    "workers": 6,
+    "repeat": 1,
+    "input_sha256": "d2e050a3414bd9b80e270eb2ce97e357f23c6450d9b82f35479a847b16a7b0a2",
+    "elapsed_process_seconds": 0.3794049209973309,
+    "metrics": {
+      "export_seconds": 0.02789419,
+      "load_seconds": 0.023096017,
+      "process_hwm_kib_before_validation": 28564,
+      "train_cpu_seconds": 0.39690000000000003,
+      "train_seconds": 0.191334801
+    },
+    "model_sha256": "1c1a2fb5d362ae492b835fe01f1039d432b5e1d3fdf777b25f36a423fa261db8",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/ab-large-w6-r1-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "ab-large",
+    "workers": 6,
+    "repeat": 1,
+    "input_sha256": "d2e050a3414bd9b80e270eb2ce97e357f23c6450d9b82f35479a847b16a7b0a2",
+    "elapsed_process_seconds": 0.35231078999640886,
+    "metrics": {
+      "export_seconds": 0.027741004,
+      "load_seconds": 0.022889257,
+      "process_hwm_kib_before_validation": 28660,
+      "train_cpu_seconds": 0.378785,
+      "train_seconds": 0.185781604
+    },
+    "model_sha256": "1c1a2fb5d362ae492b835fe01f1039d432b5e1d3fdf777b25f36a423fa261db8",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/ab-large-w6-r1-baseline"
+  },
+  {
+    "arm": "baseline",
+    "case": "ab-large",
+    "workers": 6,
+    "repeat": 2,
+    "input_sha256": "d2e050a3414bd9b80e270eb2ce97e357f23c6450d9b82f35479a847b16a7b0a2",
+    "elapsed_process_seconds": 0.4355345200019656,
+    "metrics": {
+      "export_seconds": 0.021814315,
+      "load_seconds": 0.040470126,
+      "process_hwm_kib_before_validation": 28688,
+      "train_cpu_seconds": 0.46585000000000004,
+      "train_seconds": 0.21864755
+    },
+    "model_sha256": "1c1a2fb5d362ae492b835fe01f1039d432b5e1d3fdf777b25f36a423fa261db8",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/ab-large-w6-r2-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "ab-large",
+    "workers": 6,
+    "repeat": 2,
+    "input_sha256": "d2e050a3414bd9b80e270eb2ce97e357f23c6450d9b82f35479a847b16a7b0a2",
+    "elapsed_process_seconds": 0.34331597200070973,
+    "metrics": {
+      "export_seconds": 0.024720034,
+      "load_seconds": 0.023480109,
+      "process_hwm_kib_before_validation": 28536,
+      "train_cpu_seconds": 0.362549,
+      "train_seconds": 0.172585554
+    },
+    "model_sha256": "1c1a2fb5d362ae492b835fe01f1039d432b5e1d3fdf777b25f36a423fa261db8",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/ab-large-w6-r2-candidate"
+  },
+  {
+    "arm": "candidate",
+    "case": "ab-large",
+    "workers": 6,
+    "repeat": 3,
+    "input_sha256": "d2e050a3414bd9b80e270eb2ce97e357f23c6450d9b82f35479a847b16a7b0a2",
+    "elapsed_process_seconds": 0.33181886600505095,
+    "metrics": {
+      "export_seconds": 0.022956743,
+      "load_seconds": 0.023039817,
+      "process_hwm_kib_before_validation": 28548,
+      "train_cpu_seconds": 0.338423,
+      "train_seconds": 0.176074024
+    },
+    "model_sha256": "1c1a2fb5d362ae492b835fe01f1039d432b5e1d3fdf777b25f36a423fa261db8",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/ab-large-w6-r3-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "ab-large",
+    "workers": 6,
+    "repeat": 3,
+    "input_sha256": "d2e050a3414bd9b80e270eb2ce97e357f23c6450d9b82f35479a847b16a7b0a2",
+    "elapsed_process_seconds": 0.35279056399303954,
+    "metrics": {
+      "export_seconds": 0.021181263,
+      "load_seconds": 0.027812179,
+      "process_hwm_kib_before_validation": 28664,
+      "train_cpu_seconds": 0.39005599999999996,
+      "train_seconds": 0.180814409
+    },
+    "model_sha256": "1c1a2fb5d362ae492b835fe01f1039d432b5e1d3fdf777b25f36a423fa261db8",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/ab-large-w6-r3-baseline"
+  },
+  {
+    "arm": "baseline",
+    "case": "reserved-large",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "170b6c349d2e45bf13df267f6bcdcca0f3b8f3c2b53301256a5f7471138d5c3d",
+    "elapsed_process_seconds": 0.622674847007147,
+    "metrics": {
+      "export_seconds": 0.044864066,
+      "load_seconds": 0.028550441,
+      "process_hwm_kib_before_validation": 30356,
+      "train_cpu_seconds": 0.385256,
+      "train_seconds": 0.385412504
+    },
+    "model_sha256": "2f3f9e6868d130537bc4f1562c2ac47bfc97393567bfc49f958fe9b555776ef1",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/reserved-large-w1-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "reserved-large",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "170b6c349d2e45bf13df267f6bcdcca0f3b8f3c2b53301256a5f7471138d5c3d",
+    "elapsed_process_seconds": 0.5795672520034714,
+    "metrics": {
+      "export_seconds": 0.031140669,
+      "load_seconds": 0.035679504,
+      "process_hwm_kib_before_validation": 28332,
+      "train_cpu_seconds": 0.36774700000000005,
+      "train_seconds": 0.367674918
+    },
+    "model_sha256": "2f3f9e6868d130537bc4f1562c2ac47bfc97393567bfc49f958fe9b555776ef1",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/reserved-large-w1-r0-candidate"
+  },
+  {
+    "arm": "candidate",
+    "case": "reserved-large",
+    "workers": 1,
+    "repeat": 1,
+    "input_sha256": "170b6c349d2e45bf13df267f6bcdcca0f3b8f3c2b53301256a5f7471138d5c3d",
+    "elapsed_process_seconds": 0.5417523529904429,
+    "metrics": {
+      "export_seconds": 0.022204076,
+      "load_seconds": 0.036221362,
+      "process_hwm_kib_before_validation": 28412,
+      "train_cpu_seconds": 0.358299,
+      "train_seconds": 0.358352139
+    },
+    "model_sha256": "2f3f9e6868d130537bc4f1562c2ac47bfc97393567bfc49f958fe9b555776ef1",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/reserved-large-w1-r1-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "reserved-large",
+    "workers": 1,
+    "repeat": 1,
+    "input_sha256": "170b6c349d2e45bf13df267f6bcdcca0f3b8f3c2b53301256a5f7471138d5c3d",
+    "elapsed_process_seconds": 0.545654185989406,
+    "metrics": {
+      "export_seconds": 0.035493165,
+      "load_seconds": 0.024452124,
+      "process_hwm_kib_before_validation": 30392,
+      "train_cpu_seconds": 0.36144,
+      "train_seconds": 0.361736096
+    },
+    "model_sha256": "2f3f9e6868d130537bc4f1562c2ac47bfc97393567bfc49f958fe9b555776ef1",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/reserved-large-w1-r1-baseline"
+  },
+  {
+    "arm": "baseline",
+    "case": "reserved-large",
+    "workers": 1,
+    "repeat": 2,
+    "input_sha256": "170b6c349d2e45bf13df267f6bcdcca0f3b8f3c2b53301256a5f7471138d5c3d",
+    "elapsed_process_seconds": 0.6162719420099165,
+    "metrics": {
+      "export_seconds": 0.029764449,
+      "load_seconds": 0.024458347,
+      "process_hwm_kib_before_validation": 30412,
+      "train_cpu_seconds": 0.405887,
+      "train_seconds": 0.409448158
+    },
+    "model_sha256": "2f3f9e6868d130537bc4f1562c2ac47bfc97393567bfc49f958fe9b555776ef1",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/reserved-large-w1-r2-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "reserved-large",
+    "workers": 1,
+    "repeat": 2,
+    "input_sha256": "170b6c349d2e45bf13df267f6bcdcca0f3b8f3c2b53301256a5f7471138d5c3d",
+    "elapsed_process_seconds": 0.5816043160011759,
+    "metrics": {
+      "export_seconds": 0.029621806,
+      "load_seconds": 0.02975213,
+      "process_hwm_kib_before_validation": 28360,
+      "train_cpu_seconds": 0.379349,
+      "train_seconds": 0.379387183
+    },
+    "model_sha256": "2f3f9e6868d130537bc4f1562c2ac47bfc97393567bfc49f958fe9b555776ef1",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/reserved-large-w1-r2-candidate"
+  },
+  {
+    "arm": "candidate",
+    "case": "reserved-large",
+    "workers": 1,
+    "repeat": 3,
+    "input_sha256": "170b6c349d2e45bf13df267f6bcdcca0f3b8f3c2b53301256a5f7471138d5c3d",
+    "elapsed_process_seconds": 0.5866770670108963,
+    "metrics": {
+      "export_seconds": 0.028151309,
+      "load_seconds": 0.02908893,
+      "process_hwm_kib_before_validation": 28436,
+      "train_cpu_seconds": 0.363015,
+      "train_seconds": 0.363327906
+    },
+    "model_sha256": "2f3f9e6868d130537bc4f1562c2ac47bfc97393567bfc49f958fe9b555776ef1",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/reserved-large-w1-r3-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "reserved-large",
+    "workers": 1,
+    "repeat": 3,
+    "input_sha256": "170b6c349d2e45bf13df267f6bcdcca0f3b8f3c2b53301256a5f7471138d5c3d",
+    "elapsed_process_seconds": 0.5917712310038041,
+    "metrics": {
+      "export_seconds": 0.024812217,
+      "load_seconds": 0.027185691,
+      "process_hwm_kib_before_validation": 30396,
+      "train_cpu_seconds": 0.39852699999999996,
+      "train_seconds": 0.398759446
+    },
+    "model_sha256": "2f3f9e6868d130537bc4f1562c2ac47bfc97393567bfc49f958fe9b555776ef1",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/reserved-large-w1-r3-baseline"
+  },
+  {
+    "arm": "baseline",
+    "case": "reserved-large",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "170b6c349d2e45bf13df267f6bcdcca0f3b8f3c2b53301256a5f7471138d5c3d",
+    "elapsed_process_seconds": 0.4894151350017637,
+    "metrics": {
+      "export_seconds": 0.044549029,
+      "load_seconds": 0.02819001,
+      "process_hwm_kib_before_validation": 37288,
+      "train_cpu_seconds": 0.5379109999999999,
+      "train_seconds": 0.289229516
+    },
+    "model_sha256": "2f3f9e6868d130537bc4f1562c2ac47bfc97393567bfc49f958fe9b555776ef1",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/reserved-large-w6-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "reserved-large",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "170b6c349d2e45bf13df267f6bcdcca0f3b8f3c2b53301256a5f7471138d5c3d",
+    "elapsed_process_seconds": 0.43069244899379555,
+    "metrics": {
+      "export_seconds": 0.023411662,
+      "load_seconds": 0.032166488,
+      "process_hwm_kib_before_validation": 37216,
+      "train_cpu_seconds": 0.421741,
+      "train_seconds": 0.210672625
+    },
+    "model_sha256": "2f3f9e6868d130537bc4f1562c2ac47bfc97393567bfc49f958fe9b555776ef1",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/reserved-large-w6-r0-candidate"
+  },
+  {
+    "arm": "candidate",
+    "case": "reserved-large",
+    "workers": 6,
+    "repeat": 1,
+    "input_sha256": "170b6c349d2e45bf13df267f6bcdcca0f3b8f3c2b53301256a5f7471138d5c3d",
+    "elapsed_process_seconds": 0.39150475499627646,
+    "metrics": {
+      "export_seconds": 0.027593691,
+      "load_seconds": 0.025450714,
+      "process_hwm_kib_before_validation": 37256,
+      "train_cpu_seconds": 0.45033700000000004,
+      "train_seconds": 0.219624319
+    },
+    "model_sha256": "2f3f9e6868d130537bc4f1562c2ac47bfc97393567bfc49f958fe9b555776ef1",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/reserved-large-w6-r1-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "reserved-large",
+    "workers": 6,
+    "repeat": 1,
+    "input_sha256": "170b6c349d2e45bf13df267f6bcdcca0f3b8f3c2b53301256a5f7471138d5c3d",
+    "elapsed_process_seconds": 0.37998979100666475,
+    "metrics": {
+      "export_seconds": 0.02356187,
+      "load_seconds": 0.033564426,
+      "process_hwm_kib_before_validation": 37112,
+      "train_cpu_seconds": 0.43032099999999995,
+      "train_seconds": 0.20285107
+    },
+    "model_sha256": "2f3f9e6868d130537bc4f1562c2ac47bfc97393567bfc49f958fe9b555776ef1",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/reserved-large-w6-r1-baseline"
+  },
+  {
+    "arm": "baseline",
+    "case": "reserved-large",
+    "workers": 6,
+    "repeat": 2,
+    "input_sha256": "170b6c349d2e45bf13df267f6bcdcca0f3b8f3c2b53301256a5f7471138d5c3d",
+    "elapsed_process_seconds": 0.4157119300070917,
+    "metrics": {
+      "export_seconds": 0.025306709,
+      "load_seconds": 0.02616992,
+      "process_hwm_kib_before_validation": 37216,
+      "train_cpu_seconds": 0.446378,
+      "train_seconds": 0.216120741
+    },
+    "model_sha256": "2f3f9e6868d130537bc4f1562c2ac47bfc97393567bfc49f958fe9b555776ef1",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/reserved-large-w6-r2-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "reserved-large",
+    "workers": 6,
+    "repeat": 2,
+    "input_sha256": "170b6c349d2e45bf13df267f6bcdcca0f3b8f3c2b53301256a5f7471138d5c3d",
+    "elapsed_process_seconds": 0.3988167370116571,
+    "metrics": {
+      "export_seconds": 0.02249581,
+      "load_seconds": 0.027440547,
+      "process_hwm_kib_before_validation": 37232,
+      "train_cpu_seconds": 0.442515,
+      "train_seconds": 0.205122229
+    },
+    "model_sha256": "2f3f9e6868d130537bc4f1562c2ac47bfc97393567bfc49f958fe9b555776ef1",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/reserved-large-w6-r2-candidate"
+  },
+  {
+    "arm": "candidate",
+    "case": "reserved-large",
+    "workers": 6,
+    "repeat": 3,
+    "input_sha256": "170b6c349d2e45bf13df267f6bcdcca0f3b8f3c2b53301256a5f7471138d5c3d",
+    "elapsed_process_seconds": 0.4084680319938343,
+    "metrics": {
+      "export_seconds": 0.028138438,
+      "load_seconds": 0.027524904,
+      "process_hwm_kib_before_validation": 37260,
+      "train_cpu_seconds": 0.473221,
+      "train_seconds": 0.224105283
+    },
+    "model_sha256": "2f3f9e6868d130537bc4f1562c2ac47bfc97393567bfc49f958fe9b555776ef1",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/reserved-large-w6-r3-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "reserved-large",
+    "workers": 6,
+    "repeat": 3,
+    "input_sha256": "170b6c349d2e45bf13df267f6bcdcca0f3b8f3c2b53301256a5f7471138d5c3d",
+    "elapsed_process_seconds": 0.41838824799924623,
+    "metrics": {
+      "export_seconds": 0.022485398,
+      "load_seconds": 0.025478025,
+      "process_hwm_kib_before_validation": 37196,
+      "train_cpu_seconds": 0.416156,
+      "train_seconds": 0.213921017
+    },
+    "model_sha256": "2f3f9e6868d130537bc4f1562c2ac47bfc97393567bfc49f958fe9b555776ef1",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/reserved-large-w6-r3-baseline"
+  },
+  {
+    "arm": "baseline",
+    "case": "alias-large",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "elapsed_process_seconds": 0.6696639209985733,
+    "metrics": {
+      "export_seconds": 0.036729994,
+      "load_seconds": 0.032049112,
+      "process_hwm_kib_before_validation": 42780,
+      "train_cpu_seconds": 0.48760100000000006,
+      "train_seconds": 0.487717593
+    },
+    "model_sha256": "df75cb081a7a47e2db7e22a021d690facdb3b6892cdf982c7f160db40248231d",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/alias-large-w1-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "alias-large",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "elapsed_process_seconds": 0.5941325620078715,
+    "metrics": {
+      "export_seconds": 0.025981058,
+      "load_seconds": 0.023167491,
+      "process_hwm_kib_before_validation": 43184,
+      "train_cpu_seconds": 0.433718,
+      "train_seconds": 0.43390426
+    },
+    "model_sha256": "df75cb081a7a47e2db7e22a021d690facdb3b6892cdf982c7f160db40248231d",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/alias-large-w1-r0-candidate"
+  },
+  {
+    "arm": "candidate",
+    "case": "alias-large",
+    "workers": 1,
+    "repeat": 1,
+    "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "elapsed_process_seconds": 0.6392989209998632,
+    "metrics": {
+      "export_seconds": 0.024817206,
+      "load_seconds": 0.02551116,
+      "process_hwm_kib_before_validation": 42720,
+      "train_cpu_seconds": 0.45034799999999997,
+      "train_seconds": 0.450346832
+    },
+    "model_sha256": "df75cb081a7a47e2db7e22a021d690facdb3b6892cdf982c7f160db40248231d",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/alias-large-w1-r1-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "alias-large",
+    "workers": 1,
+    "repeat": 1,
+    "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "elapsed_process_seconds": 0.6059751069988124,
+    "metrics": {
+      "export_seconds": 0.020655799,
+      "load_seconds": 0.023182365,
+      "process_hwm_kib_before_validation": 42812,
+      "train_cpu_seconds": 0.43837299999999996,
+      "train_seconds": 0.439082622
+    },
+    "model_sha256": "df75cb081a7a47e2db7e22a021d690facdb3b6892cdf982c7f160db40248231d",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/alias-large-w1-r1-baseline"
+  },
+  {
+    "arm": "baseline",
+    "case": "alias-large",
+    "workers": 1,
+    "repeat": 2,
+    "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "elapsed_process_seconds": 0.6556965710042277,
+    "metrics": {
+      "export_seconds": 0.036532856,
+      "load_seconds": 0.026829135,
+      "process_hwm_kib_before_validation": 42656,
+      "train_cpu_seconds": 0.48059900000000005,
+      "train_seconds": 0.480529521
+    },
+    "model_sha256": "df75cb081a7a47e2db7e22a021d690facdb3b6892cdf982c7f160db40248231d",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/alias-large-w1-r2-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "alias-large",
+    "workers": 1,
+    "repeat": 2,
+    "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "elapsed_process_seconds": 0.613962454997818,
+    "metrics": {
+      "export_seconds": 0.022848215,
+      "load_seconds": 0.037916222,
+      "process_hwm_kib_before_validation": 42804,
+      "train_cpu_seconds": 0.445254,
+      "train_seconds": 0.445579013
+    },
+    "model_sha256": "df75cb081a7a47e2db7e22a021d690facdb3b6892cdf982c7f160db40248231d",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/alias-large-w1-r2-candidate"
+  },
+  {
+    "arm": "candidate",
+    "case": "alias-large",
+    "workers": 1,
+    "repeat": 3,
+    "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "elapsed_process_seconds": 0.648994526010938,
+    "metrics": {
+      "export_seconds": 0.030987405,
+      "load_seconds": 0.032607642,
+      "process_hwm_kib_before_validation": 42720,
+      "train_cpu_seconds": 0.4703149999999999,
+      "train_seconds": 0.475072585
+    },
+    "model_sha256": "df75cb081a7a47e2db7e22a021d690facdb3b6892cdf982c7f160db40248231d",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/alias-large-w1-r3-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "alias-large",
+    "workers": 1,
+    "repeat": 3,
+    "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "elapsed_process_seconds": 0.6899518930003978,
+    "metrics": {
+      "export_seconds": 0.02549816,
+      "load_seconds": 0.041187848,
+      "process_hwm_kib_before_validation": 42744,
+      "train_cpu_seconds": 0.49872700000000003,
+      "train_seconds": 0.500079032
+    },
+    "model_sha256": "df75cb081a7a47e2db7e22a021d690facdb3b6892cdf982c7f160db40248231d",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/alias-large-w1-r3-baseline"
+  },
+  {
+    "arm": "baseline",
+    "case": "alias-large",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "elapsed_process_seconds": 0.6372585909994086,
+    "metrics": {
+      "export_seconds": 0.024309969,
+      "load_seconds": 0.028222249,
+      "process_hwm_kib_before_validation": 43052,
+      "train_cpu_seconds": 0.476198,
+      "train_seconds": 0.464792197
+    },
+    "model_sha256": "df75cb081a7a47e2db7e22a021d690facdb3b6892cdf982c7f160db40248231d",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/alias-large-w6-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "alias-large",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "elapsed_process_seconds": 0.5959903019975172,
+    "metrics": {
+      "export_seconds": 0.023082284,
+      "load_seconds": 0.023196914,
+      "process_hwm_kib_before_validation": 43012,
+      "train_cpu_seconds": 0.444971,
+      "train_seconds": 0.438856084
+    },
+    "model_sha256": "df75cb081a7a47e2db7e22a021d690facdb3b6892cdf982c7f160db40248231d",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/alias-large-w6-r0-candidate"
+  },
+  {
+    "arm": "candidate",
+    "case": "alias-large",
+    "workers": 6,
+    "repeat": 1,
+    "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "elapsed_process_seconds": 0.6527452470036224,
+    "metrics": {
+      "export_seconds": 0.022486857,
+      "load_seconds": 0.025551237,
+      "process_hwm_kib_before_validation": 43036,
+      "train_cpu_seconds": 0.494638,
+      "train_seconds": 0.48329779
+    },
+    "model_sha256": "df75cb081a7a47e2db7e22a021d690facdb3b6892cdf982c7f160db40248231d",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/alias-large-w6-r1-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "alias-large",
+    "workers": 6,
+    "repeat": 1,
+    "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "elapsed_process_seconds": 0.6717584840080235,
+    "metrics": {
+      "export_seconds": 0.035476062,
+      "load_seconds": 0.035777723,
+      "process_hwm_kib_before_validation": 43100,
+      "train_cpu_seconds": 0.484381,
+      "train_seconds": 0.472980681
+    },
+    "model_sha256": "df75cb081a7a47e2db7e22a021d690facdb3b6892cdf982c7f160db40248231d",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/alias-large-w6-r1-baseline"
+  },
+  {
+    "arm": "baseline",
+    "case": "alias-large",
+    "workers": 6,
+    "repeat": 2,
+    "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "elapsed_process_seconds": 0.6685792839998612,
+    "metrics": {
+      "export_seconds": 0.032518718,
+      "load_seconds": 0.028134498,
+      "process_hwm_kib_before_validation": 43424,
+      "train_cpu_seconds": 0.495605,
+      "train_seconds": 0.485048551
+    },
+    "model_sha256": "df75cb081a7a47e2db7e22a021d690facdb3b6892cdf982c7f160db40248231d",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/alias-large-w6-r2-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "alias-large",
+    "workers": 6,
+    "repeat": 2,
+    "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "elapsed_process_seconds": 0.6477216240018606,
+    "metrics": {
+      "export_seconds": 0.023173326,
+      "load_seconds": 0.028522752,
+      "process_hwm_kib_before_validation": 43024,
+      "train_cpu_seconds": 0.469469,
+      "train_seconds": 0.460346521
+    },
+    "model_sha256": "df75cb081a7a47e2db7e22a021d690facdb3b6892cdf982c7f160db40248231d",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/alias-large-w6-r2-candidate"
+  },
+  {
+    "arm": "candidate",
+    "case": "alias-large",
+    "workers": 6,
+    "repeat": 3,
+    "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "elapsed_process_seconds": 0.6605466619948857,
+    "metrics": {
+      "export_seconds": 0.022366471,
+      "load_seconds": 0.022596004,
+      "process_hwm_kib_before_validation": 42948,
+      "train_cpu_seconds": 0.49602099999999993,
+      "train_seconds": 0.498492
+    },
+    "model_sha256": "df75cb081a7a47e2db7e22a021d690facdb3b6892cdf982c7f160db40248231d",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/alias-large-w6-r3-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "alias-large",
+    "workers": 6,
+    "repeat": 3,
+    "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "elapsed_process_seconds": 0.6166098609974142,
+    "metrics": {
+      "export_seconds": 0.019057018,
+      "load_seconds": 0.025401496,
+      "process_hwm_kib_before_validation": 42976,
+      "train_cpu_seconds": 0.45965,
+      "train_seconds": 0.461298249
+    },
+    "model_sha256": "df75cb081a7a47e2db7e22a021d690facdb3b6892cdf982c7f160db40248231d",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/alias-large-w6-r3-baseline"
+  },
+  {
+    "arm": "baseline",
+    "case": "length-reuse-large",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "elapsed_process_seconds": 0.43847513999207877,
+    "metrics": {
+      "export_seconds": 0.000100017,
+      "load_seconds": 0.028965158,
+      "process_hwm_kib_before_validation": 42604,
+      "train_cpu_seconds": 0.40176399999999995,
+      "train_seconds": 0.402085636
+    },
+    "model_sha256": "a5cf2738c42c1bf7a1ef2be4ee06b3118b73009742cfb80a77e8aacceca99d21",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/length-reuse-large-w1-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "length-reuse-large",
+    "workers": 1,
+    "repeat": 0,
+    "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "elapsed_process_seconds": 0.4454498249979224,
+    "metrics": {
+      "export_seconds": 0.00014833,
+      "load_seconds": 0.044261199,
+      "process_hwm_kib_before_validation": 42700,
+      "train_cpu_seconds": 0.39148499999999997,
+      "train_seconds": 0.391814587
+    },
+    "model_sha256": "a5cf2738c42c1bf7a1ef2be4ee06b3118b73009742cfb80a77e8aacceca99d21",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/length-reuse-large-w1-r0-candidate"
+  },
+  {
+    "arm": "candidate",
+    "case": "length-reuse-large",
+    "workers": 1,
+    "repeat": 1,
+    "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "elapsed_process_seconds": 0.4776219659979688,
+    "metrics": {
+      "export_seconds": 0.000116502,
+      "load_seconds": 0.028368843,
+      "process_hwm_kib_before_validation": 43152,
+      "train_cpu_seconds": 0.441544,
+      "train_seconds": 0.441703268
+    },
+    "model_sha256": "a5cf2738c42c1bf7a1ef2be4ee06b3118b73009742cfb80a77e8aacceca99d21",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/length-reuse-large-w1-r1-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "length-reuse-large",
+    "workers": 1,
+    "repeat": 1,
+    "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "elapsed_process_seconds": 0.4550287009915337,
+    "metrics": {
+      "export_seconds": 0.000111347,
+      "load_seconds": 0.024976698,
+      "process_hwm_kib_before_validation": 42660,
+      "train_cpu_seconds": 0.422609,
+      "train_seconds": 0.423987509
+    },
+    "model_sha256": "a5cf2738c42c1bf7a1ef2be4ee06b3118b73009742cfb80a77e8aacceca99d21",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/length-reuse-large-w1-r1-baseline"
+  },
+  {
+    "arm": "baseline",
+    "case": "length-reuse-large",
+    "workers": 1,
+    "repeat": 2,
+    "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "elapsed_process_seconds": 0.4667200099938782,
+    "metrics": {
+      "export_seconds": 0.000171926,
+      "load_seconds": 0.022983711,
+      "process_hwm_kib_before_validation": 42748,
+      "train_cpu_seconds": 0.434917,
+      "train_seconds": 0.436140506
+    },
+    "model_sha256": "a5cf2738c42c1bf7a1ef2be4ee06b3118b73009742cfb80a77e8aacceca99d21",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/length-reuse-large-w1-r2-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "length-reuse-large",
+    "workers": 1,
+    "repeat": 2,
+    "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "elapsed_process_seconds": 0.4782255550089758,
+    "metrics": {
+      "export_seconds": 0.000116883,
+      "load_seconds": 0.048683444,
+      "process_hwm_kib_before_validation": 42824,
+      "train_cpu_seconds": 0.41993100000000005,
+      "train_seconds": 0.420463821
+    },
+    "model_sha256": "a5cf2738c42c1bf7a1ef2be4ee06b3118b73009742cfb80a77e8aacceca99d21",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/length-reuse-large-w1-r2-candidate"
+  },
+  {
+    "arm": "candidate",
+    "case": "length-reuse-large",
+    "workers": 1,
+    "repeat": 3,
+    "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "elapsed_process_seconds": 0.43968414200935513,
+    "metrics": {
+      "export_seconds": 0.00017048,
+      "load_seconds": 0.02369007,
+      "process_hwm_kib_before_validation": 42860,
+      "train_cpu_seconds": 0.405779,
+      "train_seconds": 0.405887457
+    },
+    "model_sha256": "a5cf2738c42c1bf7a1ef2be4ee06b3118b73009742cfb80a77e8aacceca99d21",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/length-reuse-large-w1-r3-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "length-reuse-large",
+    "workers": 1,
+    "repeat": 3,
+    "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "elapsed_process_seconds": 0.4338205759995617,
+    "metrics": {
+      "export_seconds": 0.000120122,
+      "load_seconds": 0.035750089,
+      "process_hwm_kib_before_validation": 43048,
+      "train_cpu_seconds": 0.389543,
+      "train_seconds": 0.389787402
+    },
+    "model_sha256": "a5cf2738c42c1bf7a1ef2be4ee06b3118b73009742cfb80a77e8aacceca99d21",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/length-reuse-large-w1-r3-baseline"
+  },
+  {
+    "arm": "baseline",
+    "case": "length-reuse-large",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "elapsed_process_seconds": 0.4552191240072716,
+    "metrics": {
+      "export_seconds": 0.000126042,
+      "load_seconds": 0.029166278,
+      "process_hwm_kib_before_validation": 42956,
+      "train_cpu_seconds": 0.41973499999999997,
+      "train_seconds": 0.417561045
+    },
+    "model_sha256": "a5cf2738c42c1bf7a1ef2be4ee06b3118b73009742cfb80a77e8aacceca99d21",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/length-reuse-large-w6-r0-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "length-reuse-large",
+    "workers": 6,
+    "repeat": 0,
+    "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "elapsed_process_seconds": 0.4724514870031271,
+    "metrics": {
+      "export_seconds": 0.000157085,
+      "load_seconds": 0.034466604,
+      "process_hwm_kib_before_validation": 43044,
+      "train_cpu_seconds": 0.434592,
+      "train_seconds": 0.42970529
+    },
+    "model_sha256": "a5cf2738c42c1bf7a1ef2be4ee06b3118b73009742cfb80a77e8aacceca99d21",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/length-reuse-large-w6-r0-candidate"
+  },
+  {
+    "arm": "candidate",
+    "case": "length-reuse-large",
+    "workers": 6,
+    "repeat": 1,
+    "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "elapsed_process_seconds": 0.42771966999862343,
+    "metrics": {
+      "export_seconds": 0.000100704,
+      "load_seconds": 0.026947354,
+      "process_hwm_kib_before_validation": 43080,
+      "train_cpu_seconds": 0.396658,
+      "train_seconds": 0.393174139
+    },
+    "model_sha256": "a5cf2738c42c1bf7a1ef2be4ee06b3118b73009742cfb80a77e8aacceca99d21",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/length-reuse-large-w6-r1-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "length-reuse-large",
+    "workers": 6,
+    "repeat": 1,
+    "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "elapsed_process_seconds": 0.48058613200555556,
+    "metrics": {
+      "export_seconds": 0.00012678,
+      "load_seconds": 0.056896527,
+      "process_hwm_kib_before_validation": 43000,
+      "train_cpu_seconds": 0.418048,
+      "train_seconds": 0.412392411
+    },
+    "model_sha256": "a5cf2738c42c1bf7a1ef2be4ee06b3118b73009742cfb80a77e8aacceca99d21",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/length-reuse-large-w6-r1-baseline"
+  },
+  {
+    "arm": "baseline",
+    "case": "length-reuse-large",
+    "workers": 6,
+    "repeat": 2,
+    "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "elapsed_process_seconds": 0.45887231300002895,
+    "metrics": {
+      "export_seconds": 0.000144747,
+      "load_seconds": 0.027118584,
+      "process_hwm_kib_before_validation": 43112,
+      "train_cpu_seconds": 0.429729,
+      "train_seconds": 0.425010526
+    },
+    "model_sha256": "a5cf2738c42c1bf7a1ef2be4ee06b3118b73009742cfb80a77e8aacceca99d21",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/length-reuse-large-w6-r2-baseline"
+  },
+  {
+    "arm": "candidate",
+    "case": "length-reuse-large",
+    "workers": 6,
+    "repeat": 2,
+    "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "elapsed_process_seconds": 0.44399166500079446,
+    "metrics": {
+      "export_seconds": 0.000123354,
+      "load_seconds": 0.025752945,
+      "process_hwm_kib_before_validation": 43056,
+      "train_cpu_seconds": 0.41651099999999996,
+      "train_seconds": 0.411219194
+    },
+    "model_sha256": "a5cf2738c42c1bf7a1ef2be4ee06b3118b73009742cfb80a77e8aacceca99d21",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/length-reuse-large-w6-r2-candidate"
+  },
+  {
+    "arm": "candidate",
+    "case": "length-reuse-large",
+    "workers": 6,
+    "repeat": 3,
+    "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "elapsed_process_seconds": 0.5103507150051882,
+    "metrics": {
+      "export_seconds": 0.000109172,
+      "load_seconds": 0.030600408,
+      "process_hwm_kib_before_validation": 42980,
+      "train_cpu_seconds": 0.472653,
+      "train_seconds": 0.470275843
+    },
+    "model_sha256": "a5cf2738c42c1bf7a1ef2be4ee06b3118b73009742cfb80a77e8aacceca99d21",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/length-reuse-large-w6-r3-candidate"
+  },
+  {
+    "arm": "baseline",
+    "case": "length-reuse-large",
+    "workers": 6,
+    "repeat": 3,
+    "input_sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "elapsed_process_seconds": 0.44488211801217403,
+    "metrics": {
+      "export_seconds": 0.00015881,
+      "load_seconds": 0.022793282,
+      "process_hwm_kib_before_validation": 43072,
+      "train_cpu_seconds": 0.418234,
+      "train_seconds": 0.412656157
+    },
+    "model_sha256": "a5cf2738c42c1bf7a1ef2be4ee06b3118b73009742cfb80a77e8aacceca99d21",
+    "iteration_model_sha256": [],
+    "coverage": {
+      "aa": 0,
+      "ab": 0,
+      "existing_fresh": 0,
+      "multi_rule": 0,
+      "whole_words": 0,
+      "initial_whole_words": 0
+    },
+    "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "binary_sha256": "5c927ecb9b30911dc6914c269b8b870e9cadd266c12fc6bbbbc1e4128548994f",
+    "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-targeted/length-reuse-large-w6-r3-baseline"
+  }
+]

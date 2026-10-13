@@ -111,5 +111,80 @@
       "max_token_length": null
     },
     "source_text_sha256": "8bfae3a5da2b5e46d6cfb748d7b21cf53ebbf826c10bb8a6987f29e0f44d249f"
+  },
+  "aa-large": {
+    "input": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/inputs/aa-large.json",
+    "sha256": "a6eb27204cddd398394de0de7c1554b87a9610b35a1e9478b695b07de4489cbe",
+    "pretokenizer": "none",
+    "trainer": {
+      "vocab_size": 64,
+      "min_frequency": 1,
+      "prefix": null,
+      "suffix": null,
+      "max_token_length": null
+    }
+  },
+  "ab-large": {
+    "input": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/inputs/ab-large.json",
+    "sha256": "d2e050a3414bd9b80e270eb2ce97e357f23c6450d9b82f35479a847b16a7b0a2",
+    "pretokenizer": "none",
+    "trainer": {
+      "vocab_size": 64,
+      "min_frequency": 1,
+      "prefix": null,
+      "suffix": null,
+      "max_token_length": null
+    }
+  },
+  "reserved-large": {
+    "input": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/inputs/reserved-large.json",
+    "sha256": "170b6c349d2e45bf13df267f6bcdcca0f3b8f3c2b53301256a5f7471138d5c3d",
+    "pretokenizer": "none",
+    "trainer": {
+      "vocab_size": 64,
+      "min_frequency": 1,
+      "prefix": null,
+      "suffix": null,
+      "max_token_length": null,
+      "special_tokens": [
+        "ab"
+      ]
+    }
+  },
+  "alias-large": {
+    "input": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/inputs/alias-large.json",
+    "sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "pretokenizer": "none",
+    "trainer": {
+      "vocab_size": 64,
+      "min_frequency": 1,
+      "prefix": null,
+      "suffix": "a",
+      "max_token_length": null
+    }
+  },
+  "length-reuse-large": {
+    "input": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/inputs/length-reuse-large.json",
+    "sha256": "807e6cc9ef1ca45ff18e646aaa20fbba25779268be795c9332fc547936825be8",
+    "pretokenizer": "none",
+    "trainer": {
+      "vocab_size": 64,
+      "min_frequency": 1,
+      "prefix": null,
+      "suffix": "a",
+      "max_token_length": 9
+    }
+  },
+  "ab-steady": {
+    "input": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/inputs/ab-steady.json",
+    "sha256": "2d2100bd0732d1edf414ca21c789484798c99fc1b16cf7a9ae1af6c4fc70cb17",
+    "pretokenizer": "none",
+    "trainer": {
+      "vocab_size": 64,
+      "min_frequency": 1,
+      "prefix": null,
+      "suffix": null,
+      "max_token_length": null
+    }
   }
 }

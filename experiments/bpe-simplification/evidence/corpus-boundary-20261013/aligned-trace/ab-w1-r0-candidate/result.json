@@ -1,0 +1,32 @@
+{
+  "arm": "candidate",
+  "case": "ab",
+  "workers": 1,
+  "repeat": 0,
+  "input_sha256": "b8db5a354a318245f77ac41a0e220a84e2a6017dca42970dc579ce5ea1364441",
+  "elapsed_process_seconds": 0.011409197992179543,
+  "metrics": {
+    "export_seconds": 9.9197e-05,
+    "load_seconds": 3.0391e-05,
+    "process_hwm_kib_before_validation": 6844,
+    "train_cpu_seconds": 0.0068720000000000005,
+    "train_seconds": 0.006876252
+  },
+  "model_sha256": "fdad32b28715797bf495a2072030dd5198f81a5249b8a99404b56890108667ed",
+  "iteration_model_sha256": [],
+  "coverage": {
+    "initial_scan_config": 1,
+    "select": 7,
+    "batch": 4,
+    "commit": 4,
+    "aa": 0,
+    "ab": 7,
+    "existing_fresh": 0,
+    "multi_rule": 1,
+    "whole_words": 0,
+    "initial_whole_words": 0
+  },
+  "trace_sha256": "df8d4a30e37fe8791bffc040ff80108755eea9316704811a4e493a25c4b6e61b",
+  "binary_sha256": "f2c930cfe414a2606843f87dd455da470228cef88f9de5d30987fba52b86e97f",
+  "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/aligned-trace/ab-w1-r0-candidate"
+}

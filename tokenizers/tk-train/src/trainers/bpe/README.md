@@ -5,8 +5,7 @@ and special tokens. It preserves weighted pair selection and compatible batch
 execution while using one endpoint/event protocol.
 
 The public entry points and private training methods share [mod.rs](mod.rs).
-`do_train` borrows the caller's map; `train_vocab` borrows the collected map or
-frozen entries. Both enter `do_train_impl`, which selects workers, installs a
+`do_train` borrows the caller's map; `train_vocab` borrows stored counts. Both enter `do_train_impl`, which selects workers, installs a
 dedicated pool and progress context, and runs one fresh attempt with at most one
 identity-reuse retry. The Trainer implementation builds and replaces the model
 from `train_vocab` results. Tests enter the real core with explicit workers and
@@ -17,8 +16,8 @@ Read `train_attempt` for the complete workflow: initialize identities and a
 borrowed corpus plan, build the compressed occurrence index, materialize endpoints
 when merges are needed, call `merge_next` for each complete compatible round,
 advance progress from its committed rule count, then publish the model parts.
-Vocabulary owns the committed ID history. Merge joins snapshot
-preparation before endpoint writes and joins those writes before index updates.
+Vocabulary owns committed ID history. `Corpus::merge` joins preparation before
+endpoint writes and joins those writes before index updates.
 A collision with a previously activated identity discards the fresh attempt and
 restarts from original input and the retained alphabet. Errors and restart requests
 return no trace or speculative model parts. Zero-merge calls retain numeric and
@@ -40,29 +39,29 @@ The implementation is divided by the knowledge each module owns:
   Only this module converts full-u64 occurrence coordinates
   to checked resident indices. Its `fresh_matches` iterator filters stale starts
   and returns matches with weights, keeping prefetch and weight-region caching
-  inside each reader. It returns the existing Match and its weight.
-  Merge directly prepares neighbor events and historical word scans, including
-  candidate seeks, virtual left neighbors, length gates and shared-edge ownership.
-  This geometry coupling remains; no separate public neighbor, fresh/cohort
-  result or Cohort plan types are introduced.
+  inside each reader. Matches use `Range<usize>` in original coordinates.
+  Its private [corpus/merging.rs](corpus/merging.rs) consumes selected payloads,
+  prepares neighbor events and historical word scans, then applies joined writes.
+  Candidate seeks, virtual left neighbors, length gates and shared-edge ownership
+  stay beside the geometry they interpret. Mode and the optional birth-span limit
+  are bound by the plan for the entire attempt.
 - [index.rs](index.rs) owns exact priority correction, count shards, signed reuse
   ledgers, one owning candidate queue, and complete birth publication.
   `InitialPairCounts` chooses dense or sparse storage from the plan's token count.
-  Index owner count follows the current training pool without caller configuration.
+  Index derives its owner count from the current training pool.
   Initial chunks bind whole-word edge iterators and progress units; range
-  assembly stays private. Count overflow stays with
-  the index rather than being forwarded through a corpus callback.
-- [merge.rs](merge.rs) owns compatible selection, read-only preparation, local
-  event aggregation, and a complete joined round. `BpeTrainer::merge_next` selects
-  and consumes its private Batch, committing ordered history to Vocabulary and
-  returning finish, restart, or the accepted count only after index publication.
-  The coordinator advances progress without assembling rule output.
+  assembly stays private. Index performs checked count accumulation.
+- [merge.rs](merge.rs) owns compatible selection and round publication.
+  `BpeTrainer::merge_next` resolves identities, activates IDs, moves ordered
+  `SelectedMerge` payloads into `corpus.merge`, then commits returned changes to
+  the index and ordered rules to the vocabulary. It returns finish, restart, or
+  the committed rule count. The coordinator uses that count to advance progress.
 - [positions.rs](positions.rs) owns sorted full-u64 streams and restart blocks.
   Producers append directly to compressed leaves backed by `SmallVec<[u8; 16]>`;
   byte width alone determines whether storage spills. `concat` consumes ordered
-  leaves without re-encoding their heap payloads; `merge_sorted` merges interleaved
+  leaves without re-encoding their heap payloads; `merge` merges interleaved
   streams while retaining duplicates. Coordinates through `u64::MAX` are preserved.
-  Readers use `iter()`, `iter_from_value(coordinate)` and `chunks(target_len)`.
+  Readers use `iter()`, `iter_from(coordinate)` and `chunks(target_len)`.
   Chunks are independently consumable iterators with private restart alignment
   and already located starting leaves. The nested codec owns sequential decoding.
 - [feed.rs](feed.rs) owns streaming batches and word aggregation. Named
@@ -77,7 +76,9 @@ The implementation is divided by the knowledge each module owns:
   Startup singletons expose short expensive streams to parallel callbacks; later
   batches contain at most 32 inputs and retain the first exhaustion state.
 - [word_counts.rs](word_counts.rs) stores trainer-owned counts as entries and
-  borrows caller-owned maps for public `do_train`. Content equality, map-style
+  borrows caller-owned maps for public `do_train`. `From` conversions move owned
+  maps into entries or borrow either input representation. `from_unique` accepts
+  already aggregated entries. Content equality, map-style
   Debug and the flat serialization contract are independent of entry order.
 
 One owning priority queue holds fresh lists and reuse cohorts. Its historical
@@ -89,8 +90,7 @@ including short compressed lists that previously remained in an attempt arena.
 Initial collection splits the borrowed plan at whole-word boundaries, with a
 2²⁴-resident-slot block cap. An oversized single word is processed alone. Each
 producer appends positions directly to compressed leaves. Owned fragments retain complete
-pair counts; global frequency admission precedes final list publication. There is
-no extra wave barrier.
+pair counts; global frequency admission precedes final list publication.
 
 Each range admits one word first, including an oversized word. A fitting final
 tail is admitted directly; otherwise `slice-group-by`'s `exponential_search_by`
@@ -105,15 +105,17 @@ endpoint materialization. Decorations still use original UTF-8 byte boundaries;
 edge coordinates enumerate retained symbols. Unlimited alphabet observation uses
 Rayon bitmap reduction, retaining the full Unicode bit domain for empty input.
 
-Fresh preparation looks up selected rules by exact pair keys. AA preparation
-first selects nonoverlapping starts from left to right and uses their membership
-when accounting for adjacent matches. Position appends retain ordering checks.
+Fresh preparation specializes AA and AB task inputs. AA selects nonoverlapping
+starts from left to right, releases its historical payload, then uses the global
+accepted-start set to account for adjacent matches across chunks. Its chunk budget
+uses the original payload length. AB keeps one exact-pair lookup and borrows
+restart-aligned position chunks. Position appends retain ordering checks.
 
 Corpus readers keep at most 16 decoded positions ahead in a `VecDeque`. Initial
 filling takes at most 16 elements; every refill follows one pop, so the queue never
 exceeds that length. The same reader validates fresh matches and caches weight
 regions. Cohort scans use `find` to consume the next eligible occurrence.
-Commit stably sorts compressed fragments by bucket/pair, preserving each group's
+Commit stably sorts compressed fragments by birth group/pair, preserving each group's
 producer order before connecting fresh fragments or merging reuse streams.
 
 Compatible batches retain the original priority prefix and permit shared heads
@@ -146,12 +148,11 @@ behavior. [The coverage map](COVERAGE.md) records the combined boundaries.
 Progress uses the upstream `ProgressBar`, `ProgressStyle` and `ProgressFormat`.
 The trainer's original helpers retain the Tokenize words, Count pairs and Compute
 merges stages. Parallel collectors increment the bar at work-block boundaries;
-the coordinator reports merges after each joined batch. There is no additional
-progress thread, channel or timer.
+the coordinator reports merges after each joined batch.
 
 The counting command also checks formatting of ordinary BPE and its tests;
 sibling trainers and unchanged legacy parity files retain upstream formatting.
-Source counts and diffs are descriptive, with no hard line limits. The report
+Source counts and diffs describe the implementation scope. The report
 includes the ordinary BPE implementation, public API, feed and word-count storage;
 tests, the reference oracle, shared helpers and Miri harness are counted separately.
 Pass `--change-base <revision>` to `count_lines.py` to report this change alongside
@@ -159,3 +160,5 @@ the default comparison with HF `origin/main`. Git diffs detect renames and inclu
 comments and documentation, while source counts exclude comments and blank lines.
 Performance evidence and build/input hashes are recorded by the
 [experiment](../../../../../experiments/bpe-simplification/STATUS.md).
+The Corpus boundary refactor's correctness, timing and assembly evidence is in the
+[validation report](../../../../../experiments/bpe-simplification/evidence/corpus-boundary-20261013/README.md).

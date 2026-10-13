@@ -1,0 +1,34 @@
+{
+  "base_candidate_commit": "ccadf680",
+  "change": "FreshPreparation borrows its local decoder iterator",
+  "source_sha256": {
+    "tokenizers/tk-train/src/trainers/bpe/vocabulary.rs": "a8a09bcc80cf772aefa990cd0a3453a9a9452714f46c78fcc0cbeb7ac224725b",
+    "tokenizers/tk-train/src/trainers/bpe/word.rs": "f9c3bd0a7a8fade42a5643ee6341b4ebf203f7a45aa0a65797e773d1ce21396a",
+    "tokenizers/tk-train/src/trainers/bpe/positions.rs": "cb9cb31fabc5109a98dd729e381b456a151e6fecad82784e170650b9b03fa48f",
+    "tokenizers/tk-train/src/trainers/bpe/corpus.rs": "5a52f969175d6742f944bc85359828d392cf49a826d7ad7c24aa194d05d9c4a6",
+    "tokenizers/tk-train/src/trainers/bpe/index.rs": "f3414c1f8c4ea7fb14200eebf0df99c9ddf061f4770c2fe4ca828e96010ecb9a",
+    "tokenizers/tk-train/src/trainers/bpe/tests.rs": "dc85ef1e845e38ca7016b9abf5e7761f3ccdd5a7fb348bf13bac65f6d797e128",
+    "tokenizers/tk-train/src/trainers/bpe/mod.rs": "da3dd4d612c6c1c4e5aa235437181740808decde41d1292c0759976d277b3837",
+    "tokenizers/tk-train/src/trainers/bpe/feed.rs": "dea1c03fb382d5d18b1ee6ad3bae44b482390ed2179fecb01eee1c1d0eb3f802",
+    "tokenizers/tk-train/src/trainers/bpe/merge.rs": "90b425920ac20907ca8143c30700ae6a7802c2e70cb4acc5b2316c68b24daef2",
+    "tokenizers/tk-train/src/trainers/bpe/word_counts.rs": "7197651ee7fcf17dfc1172ee89c5cf9e6e09a95edd382dc475c8d5b4097c9363",
+    "tokenizers/tk-train/src/trainers/bpe/parity_trainer.rs": "a584152379dc59de167a14f751f37bab8da9c723eddc1c238df21965dd08f37c",
+    "tokenizers/tk-train/src/trainers/bpe/corpus/merging.rs": "2f68a9f9e235e222453f08fe7115bef983c2a355bbe422ebccda60bcfebe0f7c",
+    "tokenizers/tk-train/src/trainers/bpe/positions/codec.rs": "bd30d00fa9a27150b69912d81d0d14e491348ebc6e694b1936de1ccd7da38544"
+  },
+  "runner_sources": {
+    "experiments/bpe-simplification/runner/src/feed_stats.rs": "cd317b213cff235d310e0fa5a66e826cad8a390c143a4d8551e0dd142a4a533d",
+    "experiments/bpe-simplification/runner/src/protocol.rs": "5b66d878b5e9895a22c7f4b3803aee79da4e6458d813537b4182d0ddde30460d",
+    "experiments/bpe-simplification/runner/src/core.rs": "f1b28ef812926953fb371fb62e6a5fcf4b90b75198f6b5ed326e6bf651e76c59",
+    "experiments/bpe-simplification/runner/src/model_output.rs": "58fedcea52879ce2028f296b2dcb8ae05866bc6cf6c156b0f1a4803a6c273168",
+    "experiments/bpe-simplification/runner/src/main.rs": "3bf0c679c660cf07760e1c3647c8308ef4ac7d138f45b8dfb5ca2f663b02c4c5",
+    "experiments/bpe-simplification/runner/src/pipeline.rs": "300fe769f662872aecb8496efa695ac43382f319e9e1149bcc6226319ab3ecb9"
+  },
+  "binary_sha256": "753d1c6040a6387d5e46240b373f67d498e1c9a9b1a0f5be5e89ef81722eeba4",
+  "diagnostic_binaries": {
+    "trace": "f2c930cfe414a2606843f87dd455da470228cef88f9de5d30987fba52b86e97f",
+    "stage": "d888622022672e6bd138867cbb3575fdc2105a4b6f36d68f119d91231b1becef"
+  },
+  "candidate_commit": "309f4f92",
+  "remaining_chinese_single_worker_difference": "accepted by user; cause undetermined"
+}

@@ -1,0 +1,27 @@
+{
+  "arm": "candidate",
+  "case": "reserved",
+  "workers": 6,
+  "repeat": 1,
+  "input_sha256": "3375c0107b648f6f9dec3b44610e6045f9d23dff7dd2f8f7866b9f04eb19d1c0",
+  "elapsed_process_seconds": 0.009296618998632766,
+  "metrics": {
+    "export_seconds": 8.7389e-05,
+    "load_seconds": 3.1942e-05,
+    "process_hwm_kib_before_validation": 7196,
+    "train_cpu_seconds": 0.006777000000000001,
+    "train_seconds": 0.004635832
+  },
+  "model_sha256": "797969fe1c5c9271d09096514204e1883cc138d990d973b17ffad1198785ace3",
+  "coverage": {
+    "aa": 0,
+    "ab": 0,
+    "existing_fresh": 0,
+    "multi_rule": 0,
+    "whole_words": 0,
+    "initial_whole_words": 0
+  },
+  "trace_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "binary_sha256": "e73a6a15a6dbbd32041b1372996a912a3922c9367ada3c1859a454786627a153",
+  "directory": "/root/code/tokenizers-workspaces/bpe-corpus-boundary-20261013/experiments/bpe-simplification/evidence/corpus-boundary-20261013/final-timing/reserved-w6-r1-candidate"
+}
