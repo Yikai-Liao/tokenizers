@@ -25,6 +25,12 @@ pub(super) struct Vocabulary {
     pub(super) trace: super::Trace,
 }
 
+/// Canonical result identity; existence is independent of corpus activation.
+pub(super) struct ResolvedMerge {
+    pub(super) merged_id: u32,
+    pub(super) already_in_vocabulary: bool,
+}
+
 /// Immutable character/decorated-ID tables shared by counting and materialization.
 /// Both stages scan the same filtered alphabet and affix interpretation, preserving
 /// identical token sequences without interning strings during parallel scans.
@@ -70,14 +76,20 @@ impl DecoratedIds {
 /// before token lookup tables and corpus storage are allocated.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(super) struct Alphabet {
-    characters: Vec<(char, bool)>,
+    characters: Vec<AlphabetCharacter>,
     complete: bool,
     observed_specials: Vec<char>,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(super) struct AlphabetCharacter {
+    pub(super) character: char,
+    observed_in_input: bool,
+}
+
 impl Alphabet {
     #[cfg(test)]
-    pub(super) fn characters(&self) -> &[(char, bool)] {
+    pub(super) fn characters(&self) -> &[AlphabetCharacter] {
         &self.characters
     }
 }
@@ -112,10 +124,10 @@ impl Vocabulary {
 
         // 2. Reserve selected characters and activate those observed in the input.
         // Special tokens sharing a character identity use the same presence bit.
-        for &(character, observed) in &alphabet.characters {
+        for entry in &alphabet.characters {
             let mut utf8 = [0; 4];
-            let id = vocabulary.intern(character.encode_utf8(&mut utf8), &mut spans)?;
-            spans[id as usize] = usize::from(observed);
+            let id = vocabulary.intern(entry.character.encode_utf8(&mut utf8), &mut spans)?;
+            spans[id as usize] = usize::from(entry.observed_in_input);
         }
         // Resolve decorations before CorpusPlan sorts input by weight. Keep the
         // plain-alphabet shortcut and the original progress boundary.
@@ -135,13 +147,13 @@ impl Vocabulary {
         if let Some(id) = self.tokens.get_index_of(text) {
             return Ok(id as u32);
         }
-        let (id, _) = self.insert_token(CompactString::from(text))?;
+        let (id, _) = self.insert(CompactString::from(text))?;
         spans.push(0);
         Ok(id)
     }
 
     // ID errors discard the whole attempt, including any insertion made here.
-    fn insert_token(&mut self, token: CompactString) -> Result<(u32, bool)> {
+    fn insert(&mut self, token: CompactString) -> Result<(u32, bool)> {
         let (index, inserted) = self.tokens.insert_full(token);
         let id = u32::try_from(index).map_err(|_| "BPE vocabulary exceeds u32")?;
         if id == WORD_SEPARATOR_ID {
@@ -154,7 +166,7 @@ impl Vocabulary {
         self.tokens.len()
     }
 
-    pub(super) fn resolve_merge(&mut self, pair: Pair) -> Result<(u32, bool)> {
+    pub(super) fn resolve(&mut self, pair: Pair) -> Result<ResolvedMerge> {
         let left = self.tokens[pair.0 as usize].as_str();
         let right = self.tokens[pair.1 as usize].as_str();
         let right = self
@@ -165,15 +177,19 @@ impl Vocabulary {
         let mut text = CompactString::with_capacity(left.len() + right.len());
         text.push_str(left);
         text.push_str(right);
-        self.insert_token(text)
+        let (merged_id, already_in_vocabulary) = self.insert(text)?;
+        Ok(ResolvedMerge {
+            merged_id,
+            already_in_vocabulary,
+        })
     }
 
     /// Record a complete successful round in selection order, including reused IDs.
-    pub(super) fn commit_merges(&mut self, pairs: Vec<Pair>) {
+    pub(super) fn commit(&mut self, pairs: Vec<Pair>) {
         self.merges.extend(pairs);
     }
 
-    pub(super) fn into_model_parts(self) -> (Vocab, Merges) {
+    pub(super) fn into_parts(self) -> (Vocab, Merges) {
         let Self { tokens, merges, .. } = self;
         let merges = merges
             .into_iter()
@@ -229,7 +245,7 @@ impl InitialTokenIds {
             );
             ids.decorated = decorated.into_boxed_slice();
         }
-        if ids.plain() {
+        if ids.is_plain() {
             if let Some(p) = progress {
                 p.inc(word_counts.len() as u64);
             }
@@ -241,7 +257,7 @@ impl InitialTokenIds {
         ids.spans.fill(0);
         let mut decorated = String::new();
         for (index, word) in word_counts.keys().enumerate() {
-            ids.activate_word(word, vocabulary, suffix, &mut decorated)?;
+            ids.activate(word, vocabulary, suffix, &mut decorated)?;
             if (index + 1) % 1024 == 0
                 && let Some(p) = progress
             {
@@ -254,7 +270,7 @@ impl InitialTokenIds {
         Ok(ids)
     }
 
-    fn activate_word(
+    fn activate(
         &mut self,
         word: &str,
         vocabulary: &mut Vocabulary,
@@ -271,7 +287,7 @@ impl InitialTokenIds {
                 continue;
             }
             let affix = self.affix(is_first, original.as_str().is_empty());
-            let id = self.decorated_id(vocabulary, suffix, plain_id, affix, decorated)?;
+            let id = self.decorate(vocabulary, suffix, plain_id, affix, decorated)?;
             self.spans[id as usize] = 1;
         }
 
@@ -280,7 +296,7 @@ impl InitialTokenIds {
 
     // Cache each affix combination by plain character ID. The reusable string
     // buffer avoids allocating again when a decorated identity already exists.
-    fn decorated_id(
+    fn decorate(
         &mut self,
         vocabulary: &mut Vocabulary,
         suffix: Option<&str>,
@@ -329,7 +345,7 @@ impl InitialTokenIds {
     }
 
     // Move activation spans and retire symbol lookup tables before merge rounds.
-    pub(super) fn into_spans(self) -> Vec<usize> {
+    pub(super) fn into_metadata(self) -> Vec<usize> {
         self.spans
     }
 
@@ -337,14 +353,14 @@ impl InitialTokenIds {
     /// The plain path chooses its iterator once and avoids per-symbol affix checks.
     #[inline]
     pub(super) fn symbols<'a>(&'a self, word: &'a str) -> impl Iterator<Item = u32> + 'a {
-        if self.plain() {
+        if self.is_plain() {
             itertools::Either::Left(
                 word.chars()
-                    .filter_map(|character| self.plain_id(character)),
+                    .filter_map(|character| self.get_plain(character)),
             )
         } else {
             itertools::Either::Right(word.char_indices().filter_map(move |(byte, character)| {
-                self.id(
+                self.get(
                     character,
                     byte == 0,
                     byte + character.len_utf8() == word.len(),
@@ -363,16 +379,16 @@ impl InitialTokenIds {
         }
     }
 
-    pub(super) fn plain(&self) -> bool {
+    pub(super) fn is_plain(&self) -> bool {
         !self.prefix && !self.suffix
     }
 
-    fn plain_id(&self, character: char) -> Option<u32> {
+    fn get_plain(&self, character: char) -> Option<u32> {
         let id = self.characters[character as usize];
         (id != WORD_SEPARATOR_ID).then_some(id)
     }
 
-    fn id(&self, character: char, first: bool, last: bool) -> Option<u32> {
+    fn get(&self, character: char, first: bool, last: bool) -> Option<u32> {
         let plain = self.characters[character as usize];
         if plain == WORD_SEPARATOR_ID {
             return None;
@@ -400,7 +416,10 @@ pub(super) fn select_alphabet(trainer: &BpeTrainer, wc: WordCountsView<'_>) -> A
             .map(|codepoint| {
                 let character = char::from_u32(codepoint as u32)
                     .expect("alphabet bits come from valid characters");
-                (character, observed.contains(codepoint))
+                AlphabetCharacter {
+                    character,
+                    observed_in_input: observed.contains(codepoint),
+                }
             })
             .collect();
         return Alphabet {
@@ -444,7 +463,10 @@ pub(super) fn select_alphabet(trainer: &BpeTrainer, wc: WordCountsView<'_>) -> A
     kept.sort_unstable_by_key(|k| *k.0 as u32);
     let characters = kept
         .into_iter()
-        .map(|(&character, _)| (character, observed.contains(character as usize)))
+        .map(|(&character, _)| AlphabetCharacter {
+            character,
+            observed_in_input: observed.contains(character as usize),
+        })
         .collect();
     // The 136 KiB bitmap is selection scratch, never retained across attempts.
     Alphabet {
@@ -548,13 +570,13 @@ mod tests {
             assert_eq!(actual, expected);
             assert_eq!(ids.spans, spans);
             let count = vocabulary.len();
-            ids.activate_word("aa", &mut vocabulary, Some(suffix), &mut String::new())
+            ids.activate("aa", &mut vocabulary, Some(suffix), &mut String::new())
                 .unwrap();
             assert_eq!(vocabulary.len(), count);
             assert_eq!(ids.symbols("aa").collect::<Vec<_>>(), expected[3]);
             if prefix.is_empty() && suffix.is_empty() {
                 assert!(ids.decorated.is_empty());
-                assert_eq!(ids.id('a', true, true), Some(2));
+                assert_eq!(ids.get('a', true, true), Some(2));
             }
         }
     }

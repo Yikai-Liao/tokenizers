@@ -90,7 +90,7 @@ impl Positions {
     /// Merge interleaved sorted streams, retaining every duplicate. A sole stream
     /// moves unchanged; otherwise only the reader frontier is buffered while
     /// coordinates append directly to one ordered leaf.
-    pub(super) fn merge_sorted(fragments: impl IntoIterator<Item = Self>) -> Result<Self> {
+    pub(super) fn merge(fragments: impl IntoIterator<Item = Self>) -> Result<Self> {
         let fragments: SmallVec<[Self; 1]> = fragments.into_iter().collect();
         if fragments.len() == 1 {
             return Ok(fragments.into_iter().next().expect("one fragment"));
@@ -152,7 +152,7 @@ impl Positions {
 
     /// Locate the first qualifying leaf using its cached tail, then its restart
     /// directory. Equal values at a preceding leaf/block tail remain visible.
-    pub(super) fn iter_from_value(&self, target: u64) -> impl Iterator<Item = u64> + '_ {
+    pub(super) fn iter_from(&self, target: u64) -> impl Iterator<Item = u64> + '_ {
         let leaves = self.leaves();
         let index = leaves.partition_point(|leaf| leaf.len() == 0 || leaf.last() < target);
         let start = leaves
@@ -355,7 +355,7 @@ mod tests {
             for target in [0, 1, 42, 127, 128, 256, u32::MAX as u64, u64::MAX] {
                 let expected = values.partition_point(|&p| p < target);
                 assert_eq!(
-                    positions.iter_from_value(target).collect::<Vec<_>>(),
+                    positions.iter_from(target).collect::<Vec<_>>(),
                     values[expected..]
                 );
             }
@@ -413,7 +413,7 @@ mod tests {
             assert_eq!(positions.iter().collect::<Vec<_>>(), values);
             for target in [0, 1, 42, 127, 128, 256, 1000] {
                 assert_eq!(
-                    positions.iter_from_value(target).collect::<Vec<_>>(),
+                    positions.iter_from(target).collect::<Vec<_>>(),
                     values[values.partition_point(|&p| p < target)..]
                 );
             }
@@ -446,15 +446,15 @@ mod tests {
 
     #[test]
     fn merge_streams() {
-        assert!(Positions::merge_sorted([]).unwrap().is_empty());
+        assert!(Positions::merge([]).unwrap().is_empty());
         let root = Positions::concat([
             Positions::from_sorted(&[0, 2]).unwrap(),
             Positions::from_sorted(&[u64::MAX]).unwrap(),
         ])
         .unwrap();
-        let root = Positions::merge_sorted([root]).unwrap();
+        let root = Positions::merge([root]).unwrap();
         assert!(matches!(root.0, Repr::Root { .. }));
-        let positions = Positions::merge_sorted([
+        let positions = Positions::merge([
             root,
             Positions::default(),
             Positions::from_sorted(&[0, 1, u64::MAX]).unwrap(),

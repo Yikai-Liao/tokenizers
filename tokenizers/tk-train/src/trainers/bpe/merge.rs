@@ -48,7 +48,7 @@ impl BpeTrainer {
         // Every newborn has an unselected old boundary as a frequency/tie witness;
         // see DESIGN.md's compatible batch proof for why it cannot overtake this prefix.
         while batch.rules.len() < cap {
-            let Some(priority) = index.best() else {
+            let Some(priority) = index.peek() else {
                 break;
             };
             let pair = priority.pair();
@@ -57,8 +57,10 @@ impl BpeTrainer {
             {
                 break;
             }
-            let (replacement, reserved) = vocabulary.resolve_merge(pair)?;
-            if !reuse && reserved && corpus.has_been_activated(replacement) {
+            let resolved = vocabulary.resolve(pair)?;
+            let merged_id = resolved.merged_id;
+            let reserved = resolved.already_in_vocabulary;
+            if !reuse && reserved && corpus.has_been_activated(merged_id) {
                 return Ok(MergeOutcome::RestartForReuse);
             }
             // A reserved ID need not follow old IDs lexicographically. A singleton
@@ -67,9 +69,9 @@ impl BpeTrainer {
                 break;
             }
             let candidate = index.take(priority);
-            corpus.prepare_identity(pair, replacement);
+            corpus.activate(pair, merged_id);
             batch.rules.push(Rule {
-                replacement,
+                merged_id,
                 candidate,
             });
             if reserved || pair.0 == pair.1 {
@@ -94,34 +96,28 @@ impl BpeTrainer {
         let trace: super::Trace = batch
             .rules
             .iter()
-            .map(|rule| {
-                (
-                    rule.pair(),
-                    rule.candidate.priority.count(),
-                    rule.replacement,
-                )
-            })
+            .map(|rule| (rule.pair(), rule.candidate.priority.count(), rule.merged_id))
             .collect();
         let jobs = batch.prepare(corpus, self.max_token_length.unwrap_or(usize::MAX))?;
         let changes = jobs
             .into_par_iter()
             .map(|job| {
-                corpus.apply_merges(&job.starts, job.replacement);
+                corpus.apply(&job.starts, job.merged_id);
                 job.changes
             })
             .collect();
         index.commit(changes)?;
-        vocabulary.commit_merges(records);
+        vocabulary.commit(records);
         #[cfg(test)]
         vocabulary.trace.extend(trace);
         Ok(MergeOutcome::Committed(accepted))
     }
 }
 
-/// One selected pair and resolved replacement ID, owning its candidate positions.
+/// One selected pair and resolved merged_id ID, owning its candidate positions.
 /// Keeping the candidate binds preparation to the cohort selected by the queue.
 struct Rule {
-    replacement: u32,
+    merged_id: u32,
     candidate: Candidate,
 }
 
@@ -138,7 +134,7 @@ struct Batch {
     reuse: bool,
 }
 
-/// One neighbor-edge removal and replacement birth from preparation.
+/// One neighbor-edge removal and merged_id birth from preparation.
 /// Weights remain separate so commit preserves intermediate signed adjustments;
 /// P carries birth positions, or () for separately routed metadata. Bucket
 /// identifies the producer group used by owner aggregation.
@@ -155,7 +151,7 @@ pub(super) struct Change<P> {
 /// The task returns both together so no corpus mutation precedes preparation join.
 struct Job {
     starts: SmallVec<[usize; 2]>,
-    replacement: u32,
+    merged_id: u32,
     changes: Vec<Change<Positions>>,
 }
 
@@ -193,7 +189,7 @@ impl<'a> Neighbors<'a> {
             .get(*slot as usize)
             .is_none_or(|change| (if left { change.born.0 } else { change.born.1 }) != neighbor)
         {
-            let id = self.rule.replacement;
+            let id = self.rule.merged_id;
             let pair = self.rule.pair();
             let index = self.changes[side].len();
             self.changes[side].push(Change {
@@ -332,7 +328,7 @@ impl<'a> FreshSnapshot<'a> {
                 batch
                     .rules
                     .iter()
-                    .map(|rule| (rule.pair(), rule.replacement))
+                    .map(|rule| (rule.pair(), rule.merged_id))
                     .collect(),
             )
         };
@@ -392,13 +388,13 @@ impl<'a> FreshSnapshot<'a> {
         }
         Ok(Job {
             starts,
-            replacement: rule.replacement,
+            merged_id: rule.merged_id,
             changes: neighbors.finish(),
         })
     }
 
     // Between adjacent selected matches, the left match owns the shared boundary:
-    // it emits the removal and the birth using both final replacement IDs. The
+    // it emits the removal and the birth using both final merged_id IDs. The
     // right match skips that left edge, including when matches span separate jobs.
     fn record_neighbors(
         &self,
@@ -433,14 +429,14 @@ impl<'a> FreshSnapshot<'a> {
             }
         }
 
-        // Right edge: include the following match's replacement when selected.
+        // Right edge: include the following match's merged_id when selected.
         let next = self.corpus.token(matched.after);
         if next != WORD_SEPARATOR_ID {
-            let replacement = match &self.matches {
+            let merged_id = match &self.matches {
                 FreshMatches::SelfPair(starts) => starts
                     .binary_search(&(matched.after as u64))
                     .is_ok()
-                    .then_some(neighbors.rule.replacement),
+                    .then_some(neighbors.rule.merged_id),
                 FreshMatches::Ordinary(selected) => selected
                     .get(&(
                         next,
@@ -448,7 +444,7 @@ impl<'a> FreshSnapshot<'a> {
                     ))
                     .copied(),
             };
-            let born = replacement.unwrap_or(next);
+            let born = merged_id.unwrap_or(next);
             neighbors.record(
                 false,
                 next,
@@ -493,7 +489,7 @@ impl<'task> CohortPreparation<'task> {
         }
         Ok(Job {
             starts: task.starts,
-            replacement: rule.replacement,
+            merged_id: rule.merged_id,
             changes: task.neighbors.finish(),
         })
     }
@@ -508,7 +504,7 @@ impl<'task> CohortPreparation<'task> {
         let starts = &mut self.starts;
         let mut previous = None;
         let mut p = corpus.word_start(word);
-        let mut positions = rule.candidate.positions.iter_from_value(p as u64);
+        let mut positions = rule.candidate.positions.iter_from(p as u64);
         while p < corpus.word_end(word) {
             // Full-word scans are required only after alias reuse or a length
             // gate. Otherwise the selected cohort defines the scan domain.
@@ -543,7 +539,7 @@ impl<'task> CohortPreparation<'task> {
                         matched.span() + corpus.span(matched.after) < limit,
                     )?;
                 }
-                previous = Some((rule.replacement, p, matched.span()));
+                previous = Some((rule.merged_id, p, matched.span()));
                 starts.push(matched.start);
                 p = matched.after;
             } else {
@@ -567,11 +563,11 @@ mod tests {
     use super::*;
 
     fn select(vocabulary: &mut Vocabulary, corpus: &mut Corpus, index: &mut PairIndex) -> Rule {
-        let priority = index.best().unwrap();
-        let (replacement, _) = vocabulary.resolve_merge(priority.pair()).unwrap();
-        corpus.prepare_identity(priority.pair(), replacement);
+        let priority = index.peek().unwrap();
+        let merged_id = vocabulary.resolve(priority.pair()).unwrap().merged_id;
+        corpus.activate(priority.pair(), merged_id);
         Rule {
-            replacement,
+            merged_id,
             candidate: index.take(priority),
         }
     }
@@ -602,7 +598,7 @@ mod tests {
         births.sort_unstable();
         assert_eq!(births, [((4, 5), 2), ((5, 6), 2), ((6, 7), 2)]);
         jobs.par_iter()
-            .for_each(|j| corpus.apply_merges(&j.starts, j.replacement));
+            .for_each(|j| corpus.apply(&j.starts, j.merged_id));
         let s = WORD_SEPARATOR_ID;
         assert_eq!(
             tokens(&corpus),
@@ -650,7 +646,7 @@ mod tests {
             MergeOutcome::Committed(_)
         ));
         let rule = select(&mut vocabulary, &mut corpus, &mut index);
-        assert_eq!((rule.pair(), rule.replacement), ((1, 2), 3));
+        assert_eq!((rule.pair(), rule.merged_id), ((1, 2), 3));
         // AA aliases the suffix ID: BA sees original and merged occurrences.
         let batch = Batch {
             rules: vec![rule],
@@ -658,7 +654,7 @@ mod tests {
         };
         let jobs = batch.prepare(&corpus, usize::MAX).unwrap();
         for job in jobs {
-            corpus.apply_merges(&job.starts, job.replacement);
+            corpus.apply(&job.starts, job.merged_id);
         }
         let s = WORD_SEPARATOR_ID;
         assert_eq!(tokens(&corpus), [s, 3, s, 3, 2, 2, 0, 3, 3, s, 1, 2, s]);
@@ -701,8 +697,8 @@ mod tests {
             ((2, 0), 1, 0)
         );
         assert!(change.positions.is_empty());
-        corpus.apply_merges(&job.starts, job.replacement);
+        corpus.apply(&job.starts, job.merged_id);
         index.commit(vec![job.changes]).unwrap();
-        assert!(index.best().is_none());
+        assert!(index.peek().is_none());
     }
 }

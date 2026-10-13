@@ -53,6 +53,13 @@ pub(super) struct CorpusPlan<'input> {
     reuse: bool,
 }
 
+/// One original adjacent edge in the filtered symbol coordinate space.
+pub(super) struct InitialEdge {
+    pub(super) pair: Pair,
+    pub(super) position: u64,
+    pub(super) weight: u64,
+}
+
 impl<'input> CorpusPlan<'input> {
     pub(super) fn build(
         words: WordCountsView<'input>,
@@ -89,7 +96,7 @@ impl<'input> CorpusPlan<'input> {
         if length > isize::MAX as usize / std::mem::size_of::<AtomicU32>() {
             return Err("BPE corpus exceeds resident allocation bounds".into());
         }
-        if (reuse || !ids.plain())
+        if (reuse || !ids.is_plain())
             && (mass > i64::MAX as u128
                 || words.iter().any(|(_, weight)| **weight > i64::MAX as u64))
         {
@@ -164,9 +171,8 @@ impl<'input> CorpusPlan<'input> {
     pub(super) fn initial_chunks(
         &self,
         slots: usize,
-    ) -> impl IndexedParallelIterator<
-        Item = (usize, impl Iterator<Item = (Pair, u64, u64)> + Send + '_),
-    > + '_ {
+    ) -> impl IndexedParallelIterator<Item = (usize, impl Iterator<Item = InitialEdge> + Send + '_)> + '_
+    {
         self.initial_ranges(slots)
             .into_par_iter()
             .map(move |range| (range.len(), self.initial_edges(range)))
@@ -175,7 +181,7 @@ impl<'input> CorpusPlan<'input> {
     fn initial_edges(
         &self,
         range: std::ops::Range<usize>,
-    ) -> impl Iterator<Item = (Pair, u64, u64)> + '_ {
+    ) -> impl Iterator<Item = InitialEdge> + '_ {
         range.flat_map(move |word| {
             let (text, &weight) = self.words[word];
             let start = self.starts[word];
@@ -183,7 +189,11 @@ impl<'input> CorpusPlan<'input> {
                 .symbols(text)
                 .tuple_windows()
                 .enumerate()
-                .map(move |(offset, pair)| (pair, (start + offset) as u64, weight))
+                .map(move |(offset, pair)| InitialEdge {
+                    pair,
+                    position: (start + offset) as u64,
+                    weight,
+                })
         })
     }
 
@@ -210,7 +220,7 @@ impl<'input> CorpusPlan<'input> {
             },
             weight_regions: self.weight_regions,
             unit_region: self.unit_region,
-            spans: self.ids.into_spans(),
+            spans: self.ids.into_metadata(),
             occurrence_spans: None,
             whole_words: self.whole_words,
         }
@@ -396,7 +406,7 @@ impl Corpus {
         self.spans.get(id as usize).is_some_and(|&span| span != 0)
     }
 
-    pub(super) fn prepare_identity(&mut self, pair: Pair, id: u32) {
+    pub(super) fn activate(&mut self, pair: Pair, id: u32) {
         self.whole_words |= self.has_been_activated(id);
         // Once aliases need occurrence geometry, keep only activation here.
         // Summing representative ID spans would grow with repeated alias reuse.
@@ -436,7 +446,7 @@ impl Corpus {
     /// Match intervals must be disjoint across every Job in the round; reads
     /// touch only this match's own endpoints. Atomics keep individual accesses
     /// safe on error or unwind, but overlapping writes invalidate reconstruction.
-    pub(super) fn apply_merges(&self, starts: &[usize], replacement: u32) {
+    pub(super) fn apply(&self, starts: &[usize], merged_id: u32) {
         let Some(&first) = starts.first() else {
             return;
         };
@@ -448,11 +458,11 @@ impl Corpus {
                 for &start in starts {
                     let right = start + left;
                     let after = start + total;
-                    self.tokens.set(start, replacement);
+                    self.tokens.set(start, merged_id);
                     if right + 1 != after {
                         self.tokens.set(right, WORD_SEPARATOR_ID);
                     }
-                    self.tokens.set(after - 1, replacement);
+                    self.tokens.set(after - 1, merged_id);
                 }
             }
             Some(spans) => {
@@ -462,11 +472,11 @@ impl Corpus {
                     let right = start + left;
                     let total = left + spans[right].load(Ordering::Relaxed);
                     let after = start + total;
-                    self.tokens.set(start, replacement);
+                    self.tokens.set(start, merged_id);
                     if right + 1 != after {
                         self.tokens.set(right, WORD_SEPARATOR_ID);
                     }
-                    self.tokens.set(after - 1, replacement);
+                    self.tokens.set(after - 1, merged_id);
                     if right + 1 != after {
                         spans[right].store(0, Ordering::Relaxed);
                     }
@@ -570,25 +580,23 @@ mod tests {
         let s = WORD_SEPARATOR_ID;
         for order in 0..3 {
             let corpus = fixture(&[s, 0, 0, 1, 0, 0, 1, s], &[2, 1, 3], None);
-            corpus.apply_merges(&[], 2);
+            corpus.apply(&[], 2);
             assert_eq!(tokens(&corpus), [s, 0, 0, 1, 0, 0, 1, s]);
             match order {
-                0 => corpus.apply_merges(&[1, 4], 2),
-                1 => corpus.apply_merges(&[4, 1], 2),
-                _ => [1, 4]
-                    .par_iter()
-                    .for_each(|&p| corpus.apply_merges(&[p], 2)),
+                0 => corpus.apply(&[1, 4], 2),
+                1 => corpus.apply(&[4, 1], 2),
+                _ => [1, 4].par_iter().for_each(|&p| corpus.apply(&[p], 2)),
             }
             assert_eq!(tokens(&corpus), [s, 2, 0, 2, 2, 0, 2, s]);
             assert_eq!(corpus.spans, [2, 1, 3]);
         }
-        // One pair has 2+1 and 1+3 spans; replacement reuses ID 0.
+        // One pair has 2+1 and 1+3 spans; merged_id reuses ID 0.
         let corpus = fixture(
             &[s, 0, 0, 1, 0, 1, 1, 1, s],
             &[1, 1],
             Some(&[0, 2, 2, 1, 1, 3, 0, 3, 0]),
         );
-        corpus.apply_merges(&[1, 4], 0);
+        corpus.apply(&[1, 4], 0);
         assert_eq!(tokens(&corpus), [s, 0, 0, 0, 0, s, 1, 0, s]);
         assert_eq!(spans(&corpus), [0, 3, 2, 3, 4, 0, 0, 4, 0]);
     }
@@ -602,7 +610,7 @@ mod tests {
         let mut corpus = fixture(&input, &[1, 1, 2], None);
         corpus.weight_regions = vec![(1, 9), (31, 1), (91, 0)].into_boxed_slice();
         corpus.unit_region = Some((31, 91));
-        corpus.apply_merges(&[1, 64], 2);
+        corpus.apply(&[1, 64], 2);
 
         // Span more than one prefetch window and include old starts, tails and
         // separators. Weights cross repeated, unit and zero-weight regions.

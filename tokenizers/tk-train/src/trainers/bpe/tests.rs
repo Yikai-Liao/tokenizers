@@ -28,7 +28,7 @@ fn check(trainer: &BpeTrainer, words: &AHashMap<CompactString, u64>) -> Vec<(Pai
             .do_train_impl(WordCountsView::from_map(words), Some(workers))
             .unwrap();
         assert_eq!(actual.trace, expected.trace, "workers={workers}");
-        let (vocab, merges) = actual.into_model_parts();
+        let (vocab, merges) = actual.into_parts();
         assert_eq!(vocab, expected.parts.0, "workers={workers}");
         assert_eq!(merges, expected.parts.1, "workers={workers}");
     }
@@ -219,7 +219,11 @@ fn restart_keeps_alphabet() {
     let words = counts(&[("baaba", 1), ("q", 1), ("z", 1)]);
     let view = WordCountsView::from_map(&words);
     let retained = vocabulary::select_alphabet(&trainer, view);
-    let selected: Vec<_> = retained.characters().iter().map(|&(c, _)| c).collect();
+    let selected: Vec<_> = retained
+        .characters()
+        .iter()
+        .map(|entry| entry.character)
+        .collect();
     assert_eq!(selected.len(), 3);
     assert!(selected.contains(&'a') && selected.contains(&'b'));
     assert_ne!(selected.contains(&'q'), selected.contains(&'z'));
@@ -238,10 +242,7 @@ fn restart_keeps_alphabet() {
     oracle.initial_alphabet = selected.into_iter().collect();
     let expected = oracle.do_train_reference(&words).unwrap();
     assert_eq!(result.trace, check(&oracle, &words));
-    assert_eq!(
-        result.into_model_parts(),
-        (expected.parts.0, expected.parts.1)
-    );
+    assert_eq!(result.into_parts(), (expected.parts.0, expected.parts.1));
 }
 
 #[test]
@@ -527,10 +528,10 @@ mod reference {
             for token in &self.special_tokens {
                 tokens.insert(token.content.clone());
             }
-            for &(character, _) in
+            for entry in
                 vocabulary::select_alphabet(self, WordCountsView::from_map(counts)).characters()
             {
-                tokens.insert(character.to_string());
+                tokens.insert(entry.character.to_string());
             }
 
             // 2. Tokenize in input traversal order, allocating decorated IDs as seen.
@@ -689,7 +690,7 @@ fn initial_edges() {
             .find_first(|_| true)
             .unwrap();
         assert_eq!(words, 5);
-        edges
+        edges.map(|edge| (edge.pair, edge.position, edge.weight))
     };
     let mut actual: Vec<_> = read().collect();
     assert_eq!(actual, expected);

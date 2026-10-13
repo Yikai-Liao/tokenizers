@@ -241,7 +241,7 @@ impl BpeTrainer {
     pub fn train_vocab(&self) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
         self.do_train_impl(self.words.view(), None)
             .map(|vocabulary| {
-                let (vocab, merges) = vocabulary.into_model_parts();
+                let (vocab, merges) = vocabulary.into_parts();
                 (vocab, merges, self.special_tokens.clone())
             })
     }
@@ -283,7 +283,7 @@ impl BpeTrainer {
     ) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
         self.do_train_impl(WordCountsView::from_map(word_counts), None)
             .map(|vocabulary| {
-                let (vocab, merges) = vocabulary.into_model_parts();
+                let (vocab, merges) = vocabulary.into_parts();
                 (vocab, merges, self.special_tokens.clone())
             })
     }

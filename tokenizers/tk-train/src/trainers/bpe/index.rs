@@ -1,6 +1,10 @@
 //! Count owners publish complete lists; the queue repairs stale snapshots lazily.
 use super::merge::Change;
-use super::{WORD_SEPARATOR_ID, add, corpus::CorpusPlan, positions::Positions};
+use super::{
+    WORD_SEPARATOR_ID, add,
+    corpus::{CorpusPlan, InitialEdge},
+    positions::Positions,
+};
 use ahash::AHashMap;
 use dary_heap::OctonaryHeap;
 use rayon::prelude::*;
@@ -58,7 +62,7 @@ impl PartialOrd for Candidate {
 /// Weighted count and occurrence storage, mutable during aggregation and frozen
 /// for initial routing or candidate publication.
 #[derive(Default)]
-struct State<P> {
+struct PairAggregate<P> {
     count: u64,
     positions: P,
 }
@@ -160,7 +164,7 @@ impl PairIndex {
             .for_each(drop);
     }
 
-    pub(super) fn best(&mut self) -> Option<Priority> {
+    pub(super) fn peek(&mut self) -> Option<Priority> {
         loop {
             let top = self.queue.peek()?.priority;
             let Some(&count) = self.shards[owner(top.pair(), self.shards.len())]
@@ -198,7 +202,7 @@ impl PairIndex {
 
     pub(super) fn commit(&mut self, changes: Vec<Vec<Change<Positions>>>) -> Result<()> {
         // 1. Route each removal and birth to its count owner.
-        let events = self.route_changes(changes);
+        let events = self.route(changes);
 
         // 2. Apply owner-local actions and encode their birth cohorts in parallel.
         let reuse = self.reuse;
@@ -217,7 +221,7 @@ impl PairIndex {
         Ok(())
     }
 
-    fn route_changes(&mut self, changes: Vec<Vec<Change<Positions>>>) -> Vec<Event> {
+    fn route(&mut self, changes: Vec<Vec<Change<Positions>>>) -> Vec<Event> {
         let shard_count = self.shards.len();
         // Joined commits drain each shard's pending work; any error aborts this attempt.
         let mut events = Vec::with_capacity(changes.iter().map(Vec::len).sum());
@@ -254,7 +258,7 @@ impl PairIndex {
 
 // Initial fragments own their storage: an owner may discard or concatenate them
 // after range counting joins, without retaining every worker's temporary builder.
-type InitialPiece = Vec<(Pair, State<Positions>)>;
+type InitialPiece = Vec<(Pair, PairAggregate<Positions>)>;
 
 /// Range-local initial counts, choosing dense pair keys only for a small ID domain.
 /// The domain travels with its array; sparse counting owns no unused dense plane.
@@ -262,9 +266,9 @@ type InitialPiece = Vec<(Pair, State<Positions>)>;
 enum InitialPairCounts {
     Dense {
         domain: usize,
-        states: Vec<State<Positions>>,
+        states: Vec<PairAggregate<Positions>>,
     },
-    Sparse(AHashMap<Pair, State<Positions>>),
+    Sparse(AHashMap<Pair, PairAggregate<Positions>>),
 }
 
 impl InitialPairCounts {
@@ -272,7 +276,9 @@ impl InitialPairCounts {
         if domain <= 256 {
             Self::Dense {
                 domain,
-                states: (0..domain * domain).map(|_| State::default()).collect(),
+                states: (0..domain * domain)
+                    .map(|_| PairAggregate::default())
+                    .collect(),
             }
         } else {
             Self::Sparse(AHashMap::new())
@@ -292,7 +298,7 @@ impl InitialPairCounts {
         Ok(())
     }
 
-    fn into_states(self) -> Vec<(Pair, State<Positions>)> {
+    fn into_entries(self) -> Vec<(Pair, PairAggregate<Positions>)> {
         match self {
             Self::Dense { domain, states } => states
                 .into_iter()
@@ -308,22 +314,22 @@ impl InitialPairCounts {
 fn count_chunk(
     domain: usize,
     words: usize,
-    edges: impl Iterator<Item = (Pair, u64, u64)>,
+    edges: impl Iterator<Item = InitialEdge>,
     progress: &Option<ProgressBar>,
 ) -> Result<InitialPiece> {
     let mut counts = InitialPairCounts::new(domain);
-    for (pair, position, weight) in edges {
-        debug_assert!(pair.0 != WORD_SEPARATOR_ID && pair.1 != WORD_SEPARATOR_ID);
-        counts.record(pair, position, weight)?;
+    for edge in edges {
+        debug_assert!(edge.pair.0 != WORD_SEPARATOR_ID && edge.pair.1 != WORD_SEPARATOR_ID);
+        counts.record(edge.pair, edge.position, edge.weight)?;
     }
     if let Some(p) = progress {
         p.inc(words as u64);
     }
-    Ok(counts.into_states())
+    Ok(counts.into_entries())
 }
 
 fn build_owner(pieces: InitialPiece, floor: u64, reuse: bool) -> Result<(Shard, Vec<Candidate>)> {
-    let mut states = AHashMap::<Pair, State<SmallVec<[Positions; 1]>>>::new();
+    let mut states = AHashMap::<Pair, PairAggregate<SmallVec<[Positions; 1]>>>::new();
     for (pair, state) in pieces {
         let total = states.entry(pair).or_default();
         add(&mut total.count, state.count)?;
@@ -418,7 +424,7 @@ impl Shard {
                 continue;
             }
             let positions = if reuse {
-                Positions::merge_sorted(streams)?
+                Positions::merge(streams)?
             } else {
                 Positions::concat(streams)?
             };
@@ -592,17 +598,17 @@ mod tests {
             reuse: true,
         };
         // Repair pop/update/push preserves which equal-priority cohort comes first.
-        let priority = index.best().unwrap();
+        let priority = index.peek().unwrap();
         assert_eq!(priority.count, 5);
         assert_eq!(
             index.take(priority).positions.iter().collect::<Vec<_>>(),
             [21]
         );
-        let priority = index.best().unwrap();
+        let priority = index.peek().unwrap();
         assert_eq!(
             index.take(priority).positions.iter().collect::<Vec<_>>(),
             [20]
         );
-        assert!(index.best().is_none());
+        assert!(index.peek().is_none());
     }
 }
