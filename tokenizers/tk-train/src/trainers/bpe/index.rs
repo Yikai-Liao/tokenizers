@@ -92,6 +92,7 @@ struct Shard {
     actions: Vec<PendingAction>,
     // One stream per birth action, in the same order.
     positions: Vec<Positions>,
+    diagnostic_group_indices: Vec<u32>,
 }
 
 struct PendingAction {
@@ -443,6 +444,10 @@ impl Shard {
             });
         }
 
+        drop(positions);
+        if !reuse {
+            return self.diagnostic_fresh_groups(fragments, floor);
+        }
         // Stable key order keeps each cohort's spatial fragment order while
         // publishing in birth_group/pair order. Reuse streams may interleave.
         fragments.sort_by_key(|fragment| (fragment.birth_group, fragment.pair));
@@ -483,6 +488,73 @@ impl Shard {
                 self.counts.insert(pair, count);
             }
             candidates.push(Candidate::new(pair, count, positions));
+        }
+        Ok(candidates)
+    }
+}
+
+impl Shard {
+    // Diagnostic only: group fresh births by replacement/direction, then neighbor.
+    // Count actions have already run in their original order. Reuse keeps its path.
+    fn diagnostic_fresh_groups(
+        &mut self,
+        fragments: Vec<BirthFragment>,
+        floor: u64,
+    ) -> Result<Vec<Candidate>> {
+        if fragments.is_empty() {
+            return Ok(Vec::new());
+        }
+        let replacement = |part: &BirthFragment| {
+            if part.birth_group == 0 {
+                part.pair.1
+            } else {
+                part.pair.0
+            }
+        };
+        let min = fragments.iter().map(&replacement).min().unwrap();
+        let max = fragments.iter().map(&replacement).max().unwrap();
+        // Fresh compatible batches append at most 256 IDs; activated old IDs run alone.
+        assert!(max - min < 256);
+        let mut buckets: Vec<Vec<BirthFragment>> = (0..((max - min + 1) as usize) * 2)
+            .map(|_| Vec::new())
+            .collect();
+        for part in fragments {
+            let bucket = (replacement(&part) - min) as usize * 2 + part.birth_group;
+            buckets[bucket].push(part);
+        }
+        let mut candidates = Vec::new();
+        for (bucket, parts) in buckets.into_iter().enumerate() {
+            let left = bucket % 2 == 0;
+            let id = min + (bucket / 2) as u32;
+            let mut groups: Vec<(u32, PairAggregate<SmallVec<[Positions; 1]>>)> = Vec::new();
+            for part in parts {
+                let neighbor = if left { part.pair.0 } else { part.pair.1 };
+                if self.diagnostic_group_indices.len() <= neighbor as usize {
+                    self.diagnostic_group_indices
+                        .resize(neighbor as usize + 1, u32::MAX);
+                }
+                let slot = &mut self.diagnostic_group_indices[neighbor as usize];
+                if groups
+                    .get(*slot as usize)
+                    .is_none_or(|group| group.0 != neighbor)
+                {
+                    *slot = groups.len() as u32;
+                    groups.push((neighbor, PairAggregate::default()));
+                }
+                let group = &mut groups[*slot as usize].1;
+                add(&mut group.count, part.weight)?;
+                group.positions.push(part.positions);
+            }
+            for (neighbor, group) in groups {
+                if group.count < floor {
+                    continue;
+                }
+                let pair = if left { (neighbor, id) } else { (id, neighbor) };
+                let positions = Positions::concat(group.positions)?;
+                debug_assert!(!self.counts.contains_key(&pair));
+                self.counts.insert(pair, group.count);
+                candidates.push(Candidate::new(pair, group.count, positions));
+            }
         }
         Ok(candidates)
     }
