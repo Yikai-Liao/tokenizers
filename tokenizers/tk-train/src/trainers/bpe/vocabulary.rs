@@ -62,9 +62,7 @@ impl DecoratedIds {
     }
 
     fn remember(&mut self, affix: Affix, id: u32) {
-        if affix != Affix::Plain {
-            self.0[affix as usize] = id;
-        }
+        self.0[affix as usize] = id;
     }
 }
 
