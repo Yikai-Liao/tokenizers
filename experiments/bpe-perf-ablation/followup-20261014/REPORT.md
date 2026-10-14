@@ -160,6 +160,14 @@ Vec→Box 在 capacity 大于 len 时先收缩，可能请求 realloc；这项�
 
 按用户要求另做了 main Arena 消融：只移除 Arena 后端，保留 system/mimalloc 两种 allocator 对照。system allocator 下训练中位数增加 2.41 s，mimalloc 下无可测差异；退役阶段从 0.07 s 增至 1.19 s。完整方法、补丁和阶段数据见 [main Arena 消融](main-arena/README.md)。
 
+## 既有实验复核
+
+固定容量队列已有历史对照：2026-10-11 的独立测试比较 inline 16 项 `ArrayDeque` 与 `VecDeque`，四个真实输入各有两个反序配对块，结果没有一致的性能优势；其中中文 ByteLevel 的 `ArrayDeque` 墙钟反而高 1.56%。更早的 16 项同步 head-read ring 只有采样诊断，不适合做正式速度比较。用户确认 main 使用的固定栈环形缓冲已有独立消融且表现正常；本报告不重做该项，也不把不同 ring 实现混为一谈。详见 [固定容量队列报告](../../bpe-simplification/evidence/std-logic-20261011/README.md#fixed-capacity-queue-follow-up) 和 [head-read 记录](../../bpe-simplification/JOURNAL.md)。
+
+历史阶段对照也测过 `materialize`，但不是这一 old-buffer/main 源码对的单变量消融：2026-10-11 的 256/512 MiB 简化版本比较中，wall 差分别为 +0.075/+0.268 s；旧版与 main 的本轮同分配器对照则是 0.999→0.486 s（−51.4%，节省约 0.513 s）。因此它是排除 `retire` 后相对降幅最大的阶段，绝对节省仍小于 prepare 的约 1.407 s。两组是不同 revision 和测量条件，旧实验不能当作本轮机制的因果证明。见 [阶段复核](../../bpe-simplification/PERFORMANCE_REVIEW.md)。
+
+Arena 也不是未测变量：既有 Arena on/off 诊断覆盖旧实现；本报告另用 main 固定源码做了精确移除 Arena 的 system/mimalloc 配对。后者显示 system allocator 下有 2.414 s 差异，而 mimalloc 下无可测整训差异，不能据 Arena 解释同为 mimalloc 时 old-buffer 与 main 的剩余差距。
+
 ## 后续修订的设计条件
 
 目前对 current 的建议是进一步减少已量出的实际工作，不能将诊断控制、TLS 原型或旧 main 的机制直接叠进生产实现。
