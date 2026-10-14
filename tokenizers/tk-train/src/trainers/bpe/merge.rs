@@ -238,6 +238,12 @@ impl Corpus {
                 if next >= range.end {
                     break;
                 }
+                // Before alias activation, consuming a historical left start
+                // replaces its ID permanently. Reject stale starts before reading
+                // next - 1: interior slots do not identify the current predecessor.
+                if self.token(next) != rule.pair.0 {
+                    continue;
+                }
                 if next != p {
                     // The slot just before a sought start is the preceding
                     // token's tail. Its span reconstructs that token's start.
@@ -293,9 +299,9 @@ impl Corpus {
                     start: p,
                     span,
                 });
-                // A stale coordinate may have zero span. Still advance one
-                // slot so a whole-word scan cannot stall on that hole.
-                p += span.max(1);
+                // Whole-word traversal and the surviving historical-head check
+                // both keep p at a current token start with a nonzero span.
+                p += span;
             }
         }
         Ok(())

@@ -42,11 +42,16 @@ atomics provide safety for each individual access.
 
 Token strings are stored once in an insertion-ordered vocabulary. Insertion
 indices are u32 IDs; `u32::MAX` is reserved for separators. Special tokens are
-inserted first. Plain alphabets are ordered by codepoint. Limited alphabets keep
-the existing frequency selector in `vocabulary.rs`, including its unspecified ties.
+inserted first. Plain alphabets are ordered by codepoint. Limited alphabets select
+characters by weighted frequency in `vocabulary.rs`, with unspecified ties at the
+cutoff. Initial-alphabet characters receive the highest priority but still count
+toward `limit_alphabet`; a smaller limit can remove some of them.
 The independent reference shares only this selector. Decorations
 are resolved in the input view's traversal before weighted words are reordered.
 Filtering and first/last decoration flags use original UTF-8 word coordinates.
+The vocabulary target must fit the usable u32 ID domain. Initial reservation is
+fallible and capped by an input-derived identity bound, so a large supported
+target does not reserve billions of unused entries for a small corpus.
 
 Vocabulary initialization returns both the identity table and completed
 InitialTokenIds, whose spans mark unactivated IDs as zero and activated IDs as one.
@@ -73,10 +78,12 @@ clone special tokens once after success and after large attempt storage retires.
 The builder directly owns a BpeTrainer and returns it by move; trainer defaults
 have one definition.
 
-The input view is borrowed and unchanged. Feed aggregation, serialization and
-public thread/parallelism settings are handled by the trainer entry. Training creates
-one requested-size Rayon pool and installs all its stages there, independently
-of any ambient pool used by feed.
+The input view is borrowed and unchanged. Feed and training use the ambient
+Rayon pool, including one installed by the caller, and their conditional iterators
+respect the repository parallelism setting. Training creates no pool of its own.
+`set_num_threads` configures the encoder's separate pool; it does not select the
+training worker count. Disabling parallelism selects serial execution without
+initializing or querying Rayon for the worker count.
 
 ## Construction and task-local aggregation
 
@@ -85,9 +92,10 @@ Parallel measurement fills one per-word usize vector. The serial checked prefix
 pass reads each symbol count before replacing its slot with the word start; the
 same vector becomes the plan's directory. Separators, weighted edge mass and
 resident allocation checks retain their original order, including zero merges.
-Initial counting gathers sorted temporary positions, reduces counts and freezes
-retained lists before allocating token slots. Zero-merge calls still perform all
-plan and initial-index checks, then discard both without materialization.
+Initial counting appends ordered positions directly to compressed leaves,
+reduces counts and freezes retained lists before allocating token slots.
+Zero-merge calls still perform all plan and initial-index checks, then discard
+both without materialization.
 Materialization consumes the plan and releases thin input references. On successful
 merge attempts the index and corpus are explicitly released before output strings
 and the final vocabulary map are built. The corpus binding is declared before the
@@ -162,10 +170,12 @@ checks the overlap boundary before calling `fixed_matcher`, so rejected
 overlapping starts incur no endpoint reads.
 
 The private `Corpus::scan_word` scans each selected historical word domain and Positions
-stream. Candidate seeks advance over stale positions using occurrence spans;
-alias activation or a configured length gate enables whole-word scans. The left
-neighbor may be a merge accepted earlier in the word; the right neighbor comes
-from the joined endpoint snapshot. A candidate jump reconstructs the left neighbor
+stream. Before alias activation, a historical start is eligible only while its
+original left token ID survives there: consuming that token permanently replaces
+the ID. Sparse seeks reject stale starts before reconstructing the predecessor
+from endpoints. Alias activation or a configured length gate enables whole-word
+scans. The left neighbor may be a merge accepted earlier in the word; the right
+neighbor comes from the joined endpoint snapshot. A candidate jump reconstructs the left neighbor
 from physical endpoints, while adjacent accepted matches retain the virtual ID.
 The scan records ordered neighbor events and accepted starts for later application.
 
@@ -278,12 +288,15 @@ and reuse also require maximum input word weight and initial weighted edge mass
 to fit i64. Reuse ledger additions/subtractions are checked in i64. Plain fresh
 training has no global u64 mass cap; distinct keys can each carry `u64::MAX`.
 Initial counts are checked even when the initial vocabulary reaches the target.
-Feed and limited-alphabet accumulation retain their existing ordinary additions.
+Limited-alphabet frequencies accumulate in u128, retaining the full input u64
+weights without imposing a total-u64 mass cap. Feed counts still use ordinary
+u64 addition.
 
 `max_token_length` is a strict admission gate for newborn boundary spans in
 retained-symbol coordinates. Initial pairs bypass it, and the selected match
 itself has no additional gate. Decorated string byte length does not define this
-span. Limits zero, one and two therefore retain their existing distinct behavior.
+span. For example, the initial pair in `ab` can still produce the two-symbol token
+`ab` with a limit of zero or one.
 
 ## Position encoding
 
@@ -317,11 +330,13 @@ cohort selection can stream the full list without a corpus-sized bitmap.
 
 Full-model comparisons cover vocabulary IDs and complete ordered merges. Small
 fixtures also compare every `(pair, count, merged ID)` with an independent
-sequential reference. Literal expectations cover numeric limits and alias
-cohorts; storage tests and Miri exercise immutable storage, concurrent readers,
-owned concatenation, and exact restart/delta bytes when storage grows. Corpus
-tests check stale starts and repeated, unit and zero-weight regions across more
-than one prefetch window; stream tests include interleaved roots and duplicates.
+sequential reference. Literal expectations cover numeric limits and alias cohorts.
+Position tests and the Miri harness cover sequential round trips, gap widths,
+restart and leaf boundaries, seeking, chunk traversal, owned concatenation and
+interleaved stream merging with duplicates. They do not assert literal encoded
+bytes or run concurrent readers under Miri. Corpus tests check adjacent writes;
+differential models and traces cover stale starts and words with repeated, unit
+and zero weights without directly asserting prefetch or cache state.
 See [the test coverage map](COVERAGE.md).
 
 Performance evidence belongs to the experiment report: paired independent

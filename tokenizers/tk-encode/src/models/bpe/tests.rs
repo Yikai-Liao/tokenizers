@@ -1,6 +1,6 @@
 //! Tests for [`PipelineBPE`], the only BPE in this crate.
 //!
-//! Everything here goes through [`PipelineBPE::from_vocab_and_merges`], which is the serde-free door
+//! Everything here goes through [`PipelineBPE::from_config`], which is the serde-free door
 //! both readers come in by. The config-shaped `BPE` — its builder, its serde, its `read_file` — and
 //! the tests that pin the two engines against each other moved to `tk-convert` with the type.
 use super::*;
@@ -62,6 +62,111 @@ fn applies_merges() {
 fn empty_input_yields_no_tokens() {
     let pipeline = hello(BpeConfig::default()).unwrap();
     assert!(pipeline_ids(&pipeline, "").is_empty());
+}
+
+/// Exercise cold and warm caches in both the single-pretoken and batched-span entry points.
+fn assert_reused_tokenization(model: &PipelineBPE, cases: &[(&str, &[u32])]) {
+    let mut single_scratch = model.init_scratch();
+    let mut span_scratch = model.init_scratch();
+    for &(input, want) in cases {
+        let chunk = input.repeat(2);
+        let len = input.len() as u32;
+        let spans = [
+            pipeline::Span::new(0, len),
+            pipeline::Span::new(len, 2 * len),
+        ];
+        for _ in 0..2 {
+            let mut single = Vec::new();
+            model
+                .tokenize_pipeline(input, &mut single_scratch, &mut single)
+                .unwrap();
+            assert_eq!(
+                single.iter().map(|t| t.id()).collect::<Vec<_>>(),
+                want,
+                "{input:?}"
+            );
+
+            let mut batched = Vec::new();
+            model
+                .tokenize_spans(&chunk, &spans, &mut span_scratch, &mut batched)
+                .unwrap();
+            assert_eq!(
+                batched.iter().map(|t| t.id()).collect::<Vec<_>>(),
+                want.repeat(2),
+                "batched {input:?}"
+            );
+        }
+    }
+}
+
+#[test]
+fn empty_character_model_drops_unknown_input() {
+    for cache_capacity in [0, 16] {
+        let model = PipelineBPE::from_config(BpeConfig {
+            cache_capacity,
+            ..Default::default()
+        })
+        .unwrap();
+        let config = model.to_config().unwrap();
+        assert!(config.vocab.is_empty());
+        assert!(config.merges.is_empty());
+        let reloaded = PipelineBPE::from_config(config).unwrap();
+        for model in [&model, &reloaded] {
+            assert_reused_tokenization(
+                model,
+                &[
+                    ("", &[]),
+                    ("a", &[]),
+                    ("测🤗", &[]),
+                    ("an unknown word longer than the queue gate", &[]),
+                ],
+            );
+        }
+    }
+}
+
+#[test]
+fn affixed_single_characters_use_decorated_atoms() {
+    // Plain and decorated forms coexist in trained vocabularies. A plain vocabulary hit must
+    // still apply the suffix; otherwise the whole-word shortcut silently chooses the wrong id.
+    let vocab = [
+        ("a", 0),
+        ("a</w>", 1),
+        ("##a", 2),
+        ("##a</w>", 3),
+        ("测", 4),
+        ("测</w>", 5),
+        ("##测", 6),
+        ("##测</w>", 7),
+    ];
+    for cache_capacity in [0, 16] {
+        for prefix in [None, Some("##".to_string())] {
+            for suffix in [None, Some("</w>".to_string())] {
+                let model = PipelineBPE::from_config(BpeConfig {
+                    vocab: v(&vocab),
+                    continuing_subword_prefix: prefix.clone(),
+                    end_of_word_suffix: suffix.clone(),
+                    cache_capacity,
+                    ..Default::default()
+                })
+                .unwrap();
+                let reloaded = PipelineBPE::from_config(model.to_config().unwrap()).unwrap();
+                let last = u32::from(prefix.is_some()) * 2 + u32::from(suffix.is_some());
+                let single = u32::from(suffix.is_some());
+                for model in [&model, &reloaded] {
+                    assert_reused_tokenization(
+                        model,
+                        &[
+                            ("a", &[single]),
+                            ("aa", &[0, last]),
+                            ("测", &[4 + single]),
+                            ("测测", &[4, 4 + last]),
+                        ],
+                    );
+                }
+            }
+        }
+    }
 }
 
 // The scratch pool hands the SAME scratch to successive encodes. A bug leaking
@@ -402,4 +507,33 @@ fn byte_level_requires_full_byte_coverage() {
         })
         .is_err()
     );
+}
+
+#[test]
+fn empty_byte_level_model_reports_missing_atoms() {
+    let err = PipelineBPE::from_config(BpeConfig {
+        byte_level: true,
+        ..Default::default()
+    })
+    .err()
+    .unwrap();
+    match err.downcast_ref::<Error>() {
+        Some(Error::ByteAtomOutOfVocabulary(missing)) => {
+            assert!(missing.contains(&0x00));
+            assert!(missing.contains(&0xC2));
+            assert!(missing.contains(&0xF4));
+        }
+        other => panic!("expected ByteAtomOutOfVocabulary, got {other:?}"),
+    }
+}
+
+#[test]
+fn byte_level_single_character_requires_its_merges() {
+    // A Unicode character is several byte atoms. Its vocabulary entry alone cannot replace the
+    // missing merges, even though the raw bytes happen to spell one character.
+    let model = byte_level_bpe(&[("é", 300), ("测", 301)], &[], false).unwrap();
+    let reloaded = PipelineBPE::from_config(model.to_config().unwrap()).unwrap();
+    for model in [&model, &reloaded] {
+        assert_reused_tokenization(model, &[("é", &[0xC3, 0xA9]), ("测", &[0xE6, 0xB5, 0x8B])]);
+    }
 }

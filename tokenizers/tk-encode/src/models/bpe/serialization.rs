@@ -143,6 +143,9 @@ impl PipelineBPE {
     /// Each merge's two tokens are looked up in `vocab`, their concatenation (minus the
     /// continuing-subword prefix on the right-hand token) is looked up as well, and the rank plus
     /// that product id become the merge's value.
+    ///
+    /// An empty character vocabulary is supported: with no known atoms or unknown token,
+    /// encoding emits no tokens. Byte-level and byte-fallback models still require their atoms.
     pub fn from_config(mut config: BpeConfig) -> Result<Self> {
         let vocab = std::mem::take(&mut config.vocab);
         let merges = std::mem::take(&mut config.merges);
@@ -253,13 +256,12 @@ impl PipelineBPE {
             if !missing.is_empty() {
                 return Err(Error::ByteAtomOutOfVocabulary(missing).into());
             }
-            // Build the vocab and return it
-            let mut vocab = BucketVocabStore::build(vocab.byte_content())?;
-            vocab = byte_level::transform_vocab(vocab)?;
+            let vocab = byte_level::transform_vocab(vocab)?;
 
             (vocab, Atoms::Bytes)
         } else {
-            let vocab = BucketVocabStore::build(vocab.byte_content())?;
+            // Character vocabularies already store their final bytes. Reuse the store, including
+            // its supported empty state, rather than rebuilding an identical lookup table.
             let unk_token = if let Some(unk_str) = unk_token {
                 let token_id = vocab
                     .token_to_id(&unk_str)

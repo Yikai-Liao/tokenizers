@@ -3,12 +3,15 @@
 Training returns the complete vocabulary with token IDs, ranked merge rules,
 and special tokens. It preserves weighted pair selection and compatible batch
 execution while using one endpoint/event protocol.
+Empty input produces no merges and retains configured special tokens and selected
+initial characters; its vocabulary can be empty.
 
 The public entry points and private training methods share [mod.rs](mod.rs).
-`do_train` borrows the caller's map; `train_vocab` borrows stored counts. Both enter
-`do_train_impl`, which sets up progress and runs one fresh attempt with at most one
-identity-reuse retry. The Trainer implementation builds and replaces the model
-from `train_vocab` results. Tests install caller-owned Rayon pools around the real
+`do_train` borrows the caller's map; `train_vocab` borrows stored counts. Both use
+`train_parts` to run `do_train_impl` and publish the result. `do_train_impl` sets up
+progress and runs one fresh attempt with at most one identity-reuse retry.
+The Trainer implementation builds and replaces the model from `train_vocab`
+results. Tests install caller-owned Rayon pools around the real
 core and inspect the successful Vocabulary's test-only trace. The builder directly
 owns the trainer it returns; default option values have one definition.
 
@@ -78,7 +81,10 @@ The implementation is divided by the knowledge each module owns:
   moves its completed map into owned entries; parallel folds flush at 2048
   distinct local keys and publish successful tails before ordinary error
   reduction. The shared table stays
-  private to one call, and failed feed leaves the previous trainer state intact.
+  private to one call. Successful feed replaces stored counts; failed feed leaves
+  the previous trainer state intact. Ordinary callback errors do not stop input
+  consumption or later callbacks; the returned error is unspecified when several
+  callbacks fail in parallel.
   After folds finish, consumption moves entries without enlarging the shared table;
   SCC checks shrinking after its consumption traversal, and a reservation can
   itself trigger another enlargement.
@@ -90,9 +96,10 @@ The implementation is divided by the knowledge each module owns:
   already aggregated entries. Content equality, map-style
   Debug and the flat serialization contract are independent of entry order.
 
-One owning priority queue holds fresh lists and reuse cohorts. Its historical
-resource measurements and equal-priority reuse ordering limitation are recorded
-in the [heap experiment](../../../../../experiments/bpe-simplification/HEAP_EXPERIMENT.md).
+One owning priority queue holds fresh lists and reuse cohorts. Historical resource
+measurements and the equal-priority reuse ordering question investigated at that
+revision are recorded in the
+[heap experiment](../../../../../experiments/bpe-simplification/HEAP_EXPERIMENT.md).
 Larger occurrence lists use owned allocations; dropping a list releases its bytes,
 including short compressed lists that previously remained in an attempt arena.
 
@@ -148,11 +155,14 @@ an independent small-input reference. Fixed-seed combinations cover thread
 counts, affixes, aliases, zero weights, ties, overlap and strict birth gates.
 Literal expectations cover wide counts and public errors. Position storage tests
 cover the full u64 domain, repeated values, restart boundaries, independent chunks
-and interleaved stream merging. Corpus tests cover stale starts and weight-region
-transitions across more than one prefetch window. Historical native and Miri
-storage evidence is retained in the experiment reports.
-Public tests cover feed, model reload, progress and ambient-versus-training pool
-behavior. [The coverage map](COVERAGE.md) records the combined boundaries.
+and interleaved stream merging. Differential model and trace comparisons cover
+stale historical starts and words with repeated, unit and zero weights; they do
+not directly assert the reader's prefetch or cache state. Corpus tests check
+adjacent endpoint writes. The Miri harness runs the same sequential position
+storage tests; historical native and Miri evidence remains in the experiment
+reports. Public tests cover feed, model reload, progress, caller-installed Rayon
+pools, encoder-pool independence and disabled parallelism.
+[The coverage map](COVERAGE.md) records the combined boundaries.
 
 Progress uses the upstream `ProgressBar`, `ProgressStyle` and `ProgressFormat`.
 The trainer's original helpers retain the Tokenize words, Count pairs and Compute

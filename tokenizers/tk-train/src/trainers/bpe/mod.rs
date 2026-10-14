@@ -59,14 +59,16 @@ impl BpeTrainerBuilder {
         Self::default()
     }
 
-    /// Set the expected minimum frequency
+    /// Set the minimum weighted pair frequency. Zero has the same effect as one.
     #[must_use]
     pub fn min_frequency(mut self, frequency: u64) -> Self {
         self.trainer.min_frequency = frequency;
         self
     }
 
-    /// Set the vocabulary size
+    /// Set the vocabulary target, at most `u32::MAX` entries.
+    ///
+    /// Initial and special tokens are retained even when they exceed this target.
     #[must_use]
     pub fn vocab_size(mut self, size: usize) -> Self {
         self.trainer.vocab_size = size;
@@ -99,14 +101,19 @@ impl BpeTrainerBuilder {
         self
     }
 
-    /// Set whether to limit the alphabet
+    /// Limit the retained characters by weighted occurrence frequency.
+    ///
+    /// This limits characters, not special tokens or decorated vocabulary entries.
     #[must_use]
     pub fn limit_alphabet(mut self, limit: usize) -> Self {
         self.trainer.limit_alphabet = Some(limit);
         self
     }
 
-    /// Set the initial alphabet
+    /// Give these characters priority when retaining the alphabet.
+    ///
+    /// Characters need not occur in the input. If the alphabet limit is smaller
+    /// than this set, some initial characters are discarded; cutoff ties are unspecified.
     #[must_use]
     pub fn initial_alphabet(mut self, alphabet: HashSet<char>) -> Self {
         let mut initial_alphabet = AHashSet::with_capacity(alphabet.len());
@@ -115,21 +122,26 @@ impl BpeTrainerBuilder {
         self
     }
 
-    /// Set the continuing_subword_prefix
+    /// Set the prefix for retained characters after each word's original first character.
     #[must_use]
     pub fn continuing_subword_prefix(mut self, prefix: String) -> Self {
         self.trainer.continuing_subword_prefix = Some(prefix);
         self
     }
 
-    /// Set the end_of_word_suffix
+    /// Set the suffix for each word's original last character when it is retained.
     #[must_use]
     pub fn end_of_word_suffix(mut self, suffix: String) -> Self {
         self.trainer.end_of_word_suffix = Some(suffix);
         self
     }
 
-    /// Set max_token_length
+    /// Set the strict retained-symbol span limit for newly born neighboring pairs.
+    ///
+    /// A new pair is admitted only when its combined span is smaller than the
+    /// limit. Initial pairs and selected matches bypass this gate, so the value
+    /// does not bound every output token's length. UTF-8 bytes and affixes do not
+    /// contribute to the retained-symbol span.
     #[must_use]
     pub fn max_token_length(mut self, max_token_length: Option<usize>) -> Self {
         self.trainer.max_token_length = max_token_length;
@@ -154,42 +166,43 @@ impl BpeTrainerBuilder {
 /// let sequences = vec![ "Hello", "World" ];
 ///
 /// let mut trainer = BpeTrainer::default();
-/// trainer.feed(sequences.iter(), |s| Ok(vec![s.to_owned()]));
+/// trainer.feed(sequences.iter(), |s| Ok(vec![s.to_owned()])).unwrap();
 ///
-/// // `PipelineBPE` has no empty state to train *into* -- it only exists once there is a
-/// // vocabulary and a merge list -- so take the parts and build it.
-/// let (vocab, merges, special_tokens) = trainer.train_vocab().unwrap();
-/// let model = PipelineBPE::from_config(BpeConfig { vocab: vocab, merges: merges, ..BpeConfig::default() }).unwrap();
+/// let mut model = PipelineBPE::from_config(BpeConfig::default()).unwrap();
+/// let special_tokens = trainer.train(&mut model).unwrap();
 /// ```
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Eq)]
 pub struct BpeTrainer {
-    /// The minimum frequency a pair must have to produce a merge operation
+    /// Minimum weighted pair frequency. Zero has the same effect as one.
     pub min_frequency: u64,
-    /// The target vocabulary size
+    /// Vocabulary target, at most `u32::MAX` entries. Initial and special tokens
+    /// remain present even when they exceed this target.
     pub vocab_size: usize,
     /// Whether to show progress while training
     pub show_progress: bool,
     /// Progress output format (Indicatif, JsonLines, or Silent)
     ///
-    /// `ProgressFormat` is a `tk-encode` type and carries no serde of its own; `tk-convert` used to
-    /// own its on-disk shape, and that layer is gone. It only decides how progress is *displayed*,
-    /// so it is skipped rather than given a shape here, and falls back to its `Default`.
+    /// This display setting is omitted from serialization and restored to its default.
     #[serde(skip)]
     pub progress_format: ProgressFormat,
     /// A list of special tokens that the model should know of
     #[serde(with = "crate::added_token_serde")]
     pub special_tokens: Vec<AddedToken>,
-    /// Whether to limit the number of initial tokens that can be kept before computing merges
+    /// Maximum retained character count, selected by weighted occurrence frequency.
+    /// Special tokens and decorated vocabulary entries do not count toward this limit.
     pub limit_alphabet: Option<usize>,
-    /// The initial alphabet we want absolutely to include. This allows to cover
-    /// some characters that are not necessarily in the training set
+    /// Characters given highest retention priority, including unseen characters.
+    /// If `limit_alphabet` is smaller than this set, some are discarded. Cutoff
+    /// ties are unspecified.
     pub initial_alphabet: AHashSet<char>,
-    /// An optional prefix to use on any subword that exist only behind another one
+    /// Optional prefix for retained characters after each word's original first character.
     pub continuing_subword_prefix: Option<String>,
-    /// An optional suffix to characterize and end-of-word subword
+    /// Optional suffix for each word's original last character when it is retained.
     pub end_of_word_suffix: Option<String>,
-    /// An optional parameter to limit the max length of any single token
+    /// Strict retained-symbol span limit for newly born neighboring pairs.
+    /// Initial pairs and selected matches bypass the gate; this does not bound
+    /// every output token. UTF-8 bytes and affixes do not add to the span.
     pub max_token_length: Option<usize>,
 
     words: WordCounts,
@@ -274,9 +287,11 @@ impl BpeTrainer {
     /// affixes or identity reuse, there is no total-`u64` mass limit when every
     /// individual pair count fits.
     ///
-    /// Progress setup, vocabulary or corpus size bounds, and fallible position
-    /// storage operations can also return errors. Feed counting and limited-alphabet
-    /// frequency accumulation use ordinary addition rather than these checked rules.
+    /// Targets above `u32::MAX`, vocabulary or corpus size bounds, and fallible
+    /// vocabulary reservation or position storage operations can also return errors.
+    /// Limited-alphabet frequencies accumulate in `u128`, including repeated
+    /// characters at full `u64` weights. Feed occurrence counting uses ordinary
+    /// `u64` addition rather than these checked weighted rules.
     pub fn do_train(
         &self,
         word_counts: &AHashMap<CompactString, u64>,
@@ -555,12 +570,13 @@ type Trace = Vec<(Pair, u64, u32)>;
 impl Trainer for BpeTrainer {
     type Model = PipelineBPE;
 
-    /// Train a BPE model
+    /// Train a BPE model, replacing it only after training and construction succeed.
+    /// Empty input produces a model containing only selected initial characters and special tokens.
     fn train(&self, model: &mut PipelineBPE) -> Result<Vec<AddedToken>> {
         let (vocab, merges, special_tokens) = self.train_vocab()?;
         *model = PipelineBPE::from_config(BpeConfig {
-            vocab: vocab,
-            merges: merges,
+            vocab,
+            merges,
             ..self.model_options()
         })?;
         Ok(special_tokens)
@@ -571,6 +587,13 @@ impl Trainer for BpeTrainer {
         self.show_progress
     }
 
+    /// Replace stored word counts with the processed input's occurrence counts.
+    ///
+    /// A successful empty input clears the previous corpus. A processing error
+    /// preserves previous counts; callbacks still run for every input after an
+    /// ordinary returned error. Parallel callback order and the returned error
+    /// among multiple failures are unspecified. Uses the ambient Rayon pool and
+    /// respects the repository parallelism setting.
     fn feed<I, S, F>(&mut self, iterator: I, process: F) -> Result<()>
     where
         I: Iterator<Item = S> + Send,

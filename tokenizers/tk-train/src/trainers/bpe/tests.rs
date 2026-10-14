@@ -91,7 +91,8 @@ fn parity() {
         seed
     };
     let alphabet = ['a', 'b', 'c', '猫', '\u{301}', '🙂'];
-    for case in 0..64 {
+    // Include case 84, whose reuse cohorts retain consumed interior starts.
+    for case in 0..128 {
         let mut words = AHashMap::with_hasher(ahash::RandomState::with_seeds(11, 13, 17, 19));
         for _ in 0..24 {
             // Every eighth case allows longer words to cross restart boundaries;
@@ -184,6 +185,55 @@ fn overlap_and_alias() {
 }
 
 #[test]
+fn reuse_stale_starts() {
+    let mut trainer = trainer();
+    trainer.continuing_subword_prefix = Some("ab".into());
+    let words = counts(&[("cbbbbb", 6), ("aba", 4)]);
+    // The later ab + aba identity collision restarts this attempt in reuse mode.
+    // Before that collision, c + abbb consumes a historical abbb + abb start;
+    // its predecessor is now the cbb head, rather than a token tail.
+    let trace = check(&trainer, &words);
+    assert_eq!(
+        trace.iter().map(|rule| rule.1).collect::<Vec<_>>(),
+        [24, 6, 6, 6, 4, 4]
+    );
+    assert_eq!(
+        trainer.do_train(&words).unwrap().1,
+        [
+            ("abb".into(), "abb".into()),
+            ("c".into(), "abbb".into()),
+            ("abbb".into(), "abb".into()),
+            ("cbb".into(), "abbbb".into()),
+            ("a".into(), "abb".into()),
+            ("ab".into(), "aba".into()),
+        ]
+    );
+}
+
+#[test]
+fn reuse_stale_models() {
+    let mut trainer = trainer();
+    trainer.continuing_subword_prefix = Some("ab".into());
+    let words = counts(&[("aba", 7), ("bbbbbbbaba", 6)]);
+    // Seeking a consumed historical start also used to invent a left neighbor
+    // without panicking, publishing aba + abb instead of aba + abba.
+    check(&trainer, &words);
+    assert_eq!(
+        trainer.do_train(&words).unwrap().1,
+        [
+            ("abb".into(), "abb".into()),
+            ("abb".into(), "aba".into()),
+            ("abbb".into(), "abbb".into()),
+            ("a".into(), "abba".into()),
+            ("b".into(), "abbbbb".into()),
+            ("aba".into(), "abba".into()),
+            ("abbb".into(), "ababa".into()),
+            ("bbbbb".into(), "abbbaba".into()),
+        ]
+    );
+}
+
+#[test]
 fn wide_ids() {
     let mut trainer = trainer();
     trainer.vocab_size = 65550;
@@ -225,6 +275,58 @@ fn count_boundaries() {
 }
 
 #[test]
+fn vocabulary_bounds() {
+    let mut trainer = trainer();
+    let words = counts(&[("ab", 1)]);
+    trainer.vocab_size = u32::MAX as usize;
+    assert_eq!(trainer.do_train(&words).unwrap().0.len(), 3);
+    assert!(trainer.do_train(&counts(&[])).unwrap().0.is_empty());
+    if usize::BITS > 32 {
+        trainer.vocab_size = usize::MAX;
+        assert!(
+            trainer
+                .do_train(&counts(&[]))
+                .unwrap_err()
+                .to_string()
+                .contains("target vocabulary size exceeds")
+        );
+    }
+}
+
+#[test]
+fn limited_alphabet_wide_counts() {
+    let mut trainer = trainer();
+    trainer.limit_alphabet = Some(1);
+    let words = counts(&[("aa", u64::MAX), ("b", u64::MAX)]);
+    let (vocab, merges, _) = trainer.do_train(&words).unwrap();
+    assert_eq!(vocab, [("a".into(), 0), ("aa".into(), 1)].into());
+    assert_eq!(merges, [("a".into(), "a".into())]);
+    trainer.initial_alphabet = ['b'].into();
+    assert_eq!(
+        trainer.do_train(&words).unwrap().0,
+        [("b".into(), 0)].into()
+    );
+
+    // Initial characters have highest priority but still obey the alphabet cap.
+    trainer.initial_alphabet = ['a', 'b'].into();
+    assert_eq!(trainer.do_train(&counts(&[])).unwrap().0.len(), 1);
+}
+
+#[test]
+fn initial_pairs_bypass_length_gate() {
+    let mut trainer = trainer();
+    for limit in [0, 1, 2] {
+        trainer.max_token_length = Some(limit);
+        let (vocab, merges, _) = trainer.do_train(&counts(&[("ab", 1)])).unwrap();
+        assert_eq!(
+            vocab,
+            [("a".into(), 0), ("b".into(), 1), ("ab".into(), 2)].into()
+        );
+        assert_eq!(merges, [("a".into(), "b".into())]);
+    }
+}
+
+#[test]
 fn reusable_input() {
     let words = counts(&[("ab测", 2), ("测", 1)]);
     let original = words.clone();
@@ -241,6 +343,79 @@ fn reusable_input() {
         assert_eq!(trainer, stored);
     }
     assert_eq!(words, original);
+}
+
+#[test]
+fn feed_replaces_input() {
+    let mut trainer = trainer();
+    trainer
+        .feed(["old", "old"].into_iter(), |word| Ok(vec![word.into()]))
+        .unwrap();
+    trainer
+        .feed(["ab", "ab", "c"].into_iter(), |word| Ok(vec![word.into()]))
+        .unwrap();
+    assert_eq!(trainer.get_word_count(), 2);
+    let (vocab, merges, _) = trainer.train_vocab().unwrap();
+    assert_eq!(
+        vocab,
+        [
+            ("a".into(), 0),
+            ("b".into(), 1),
+            ("c".into(), 2),
+            ("ab".into(), 3)
+        ]
+        .into()
+    );
+    assert_eq!(merges, [("a".into(), "b".into())]);
+
+    let previous = trainer.clone();
+    let calls = std::sync::atomic::AtomicUsize::new(0);
+    assert!(
+        trainer
+            .feed(["bad", "ab", "bad"].into_iter(), |word| {
+                calls.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                if word == "bad" {
+                    Err("processing failed".into())
+                } else {
+                    Ok(vec![word.into()])
+                }
+            })
+            .is_err()
+    );
+    assert_eq!(calls.load(std::sync::atomic::Ordering::Relaxed), 3);
+    assert_eq!(trainer, previous);
+
+    trainer
+        .feed(std::iter::empty::<&str>(), |_| unreachable!())
+        .unwrap();
+    assert_eq!(trainer.get_word_count(), 0);
+    let (vocab, merges, _) = trainer.train_vocab().unwrap();
+    assert!(vocab.is_empty());
+    assert!(merges.is_empty());
+}
+
+#[test]
+fn empty_training() {
+    for target in [0, 64] {
+        let mut trainer = trainer();
+        trainer.vocab_size = target;
+        let mut model = PipelineBPE::from_config(BpeConfig {
+            vocab: [("old".into(), 0)].into(),
+            ..Default::default()
+        })
+        .unwrap();
+        assert!(trainer.train(&mut model).unwrap().is_empty());
+        let config = model.to_config().unwrap();
+        assert!(config.vocab.is_empty());
+        assert!(config.merges.is_empty());
+
+        trainer.initial_alphabet = ['测'].into();
+        trainer.special_tokens = vec![AddedToken::from("[UNK]", true)];
+        assert_eq!(trainer.train(&mut model).unwrap(), trainer.special_tokens);
+        let config = model.to_config().unwrap();
+        assert_eq!(config.vocab, [("[UNK]".into(), 0), ("测".into(), 1)].into());
+        assert!(config.merges.is_empty());
+    }
 }
 
 #[test]
@@ -339,8 +514,6 @@ fn restart_discards_ids() {
     assert_eq!(trace.iter().filter(|rule| rule.1 == 3).count(), 1);
 }
 
-// Known failure: encoding "测" returns plain ID 3 instead of the affixed ID.
-// Keep the assertion active while the pre-refactor failure remains unresolved.
 #[test]
 fn tokenizer_roundtrip() {
     use tk_encode::{

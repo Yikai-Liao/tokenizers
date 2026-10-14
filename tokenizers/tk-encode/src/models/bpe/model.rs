@@ -104,7 +104,8 @@ impl PipelineBPE {
     /// One bit per vocabulary id: can a pretoken equal to this entry be emitted as this entry,
     /// without running the merge loop?
     ///
-    /// We replace the old "ignore_merges" with something that actually ignores whether or not the flag was set.
+    /// The proof follows the configured atom conversion, including positional affixes and
+    /// byte decomposition, before deciding whether a whole-word lookup can replace merging.
     pub(super) fn prove_fold(&self) -> Vec<bool> {
         // The id space, not the entry count: ids may be sparse, and bounding the walk by
         // `vocab.len()` would leave every entry above it unproven.
@@ -121,8 +122,18 @@ impl PipelineBPE {
             let Ok(text) = std::str::from_utf8(bytes) else {
                 continue;
             };
-            let foldable = if text.chars().count() <= 1 {
-                // A single atom has no pair to merge and is trivially its own encoding.
+            // Empty input emits no ids, even if the vocabulary contains an empty entry.
+            if text.is_empty() {
+                continue;
+            }
+            let plain_atom = self.affixes.is_none()
+                && match self.atoms {
+                    Atoms::Chars { .. } => text.chars().count() == 1,
+                    Atoms::Bytes => bytes.len() == 1,
+                };
+            let foldable = if plain_atom {
+                // Only an undecorated atom is trivially its own encoding. A suffix changes a
+                // single character's lookup, and a Unicode character can span several byte atoms.
                 true
             } else {
                 self.merge_word(text, &mut symbols, &mut scratch);

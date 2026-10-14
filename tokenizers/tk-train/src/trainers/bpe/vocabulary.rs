@@ -96,8 +96,26 @@ impl Vocabulary {
         alphabet: &Alphabet,
         progress: &Option<ProgressBar>,
     ) -> Result<(Self, InitialTokenIds)> {
+        if trainer.vocab_size > WORD_SEPARATOR_ID as usize {
+            return Err("BPE target vocabulary size exceeds the usable u32 ID domain".into());
+        }
+        // Each input byte bounds one decorated symbol and one merge result.
+        // Keep the usual target reservation for large corpora without reserving
+        // billions of unused entries for a large target and a small input.
+        let symbol_bound = word_counts
+            .keys()
+            .fold(0usize, |total, word| total.saturating_add(word.len()));
+        let capacity_bound = trainer
+            .special_tokens
+            .len()
+            .saturating_add(alphabet.characters.len())
+            .saturating_add(symbol_bound.saturating_mul(2));
+        let mut tokens = IndexSet::with_hasher(RandomState::default());
+        tokens
+            .try_reserve(trainer.vocab_size.min(capacity_bound))
+            .map_err(|error| format!("BPE vocabulary reservation failed: {error}"))?;
         let mut vocabulary = Self {
-            tokens: IndexSet::with_capacity_and_hasher(trainer.vocab_size, RandomState::default()),
+            tokens,
             prefix: trainer.continuing_subword_prefix.clone(),
             merges: Vec::new(),
             #[cfg(test)]
@@ -356,6 +374,8 @@ impl InitialTokenIds {
 
     /// Interpret filtering and decorations against original UTF-8 coordinates.
     /// The plain path chooses its iterator once and avoids per-symbol affix checks.
+    /// Accepts only words from the input used to build these lookup tables;
+    /// other words may require decorated combinations that were never activated.
     #[inline]
     pub(super) fn symbols<'a>(&'a self, word: &'a str) -> impl Iterator<Item = u32> + 'a {
         if self.is_plain() {
@@ -376,6 +396,8 @@ impl InitialTokenIds {
         }
     }
 
+    /// Count a word from the input used to build these tables. A complete alphabet
+    /// covers that input, so the fast path can count all of its characters.
     pub(super) fn symbol_count(&self, text: &str) -> usize {
         if self.complete_alphabet {
             text.chars().count()
@@ -439,17 +461,20 @@ impl BpeTrainer {
         }
         let mut observed = FixedBitSet::with_capacity(0x110000);
         // Compute the alphabet from seen words
-        let mut alphabet: AHashMap<char, usize> = AHashMap::new();
+        // Full-u64 weights can exceed u64 after repeated character occurrences.
+        // Resident input byte counts bound the sum below u128::MAX, leaving that
+        // value available as the initial alphabet's highest retention priority.
+        let mut alphabet: AHashMap<char, u128> = AHashMap::new();
         for (word, count) in wc.iter() {
             for c in word.chars() {
-                *alphabet.entry(c).or_default() += *count as usize;
+                *alphabet.entry(c).or_default() += u128::from(*count);
                 observed.insert(c as usize);
             }
         }
 
         // Also include anything from the provided initial alphabet
         for c in &self.initial_alphabet {
-            *alphabet.entry(*c).or_default() = usize::MAX;
+            *alphabet.entry(*c).or_default() = u128::MAX;
         }
 
         let mut kept = alphabet.iter().collect::<Vec<_>>();
