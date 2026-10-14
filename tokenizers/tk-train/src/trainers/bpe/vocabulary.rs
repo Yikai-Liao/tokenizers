@@ -43,7 +43,7 @@ pub(super) struct InitialTokenIds {
     complete_alphabet: bool,
 }
 
-// Only decorated states have columns; Plain returns the caller's ordinary ID.
+// Only decorated states have columns; callers handle Plain with the ordinary ID.
 #[derive(Clone, Copy, PartialEq, Eq)]
 #[repr(usize)]
 enum Affix {
@@ -57,11 +57,8 @@ enum Affix {
 struct DecoratedIds([u32; 3]);
 
 impl DecoratedIds {
-    fn get(&self, affix: Affix, plain: u32) -> u32 {
-        match affix {
-            Affix::Plain => plain,
-            _ => self.0[affix as usize],
-        }
+    fn get(&self, affix: Affix) -> u32 {
+        self.0[affix as usize]
     }
 
     fn remember(&mut self, affix: Affix, id: u32) {
@@ -316,7 +313,7 @@ impl InitialTokenIds {
             return Ok(plain_id);
         }
         let ids = &mut self.decorated[plain_id as usize];
-        let cached = ids.get(affix, plain_id);
+        let cached = ids.get(affix);
         if cached != WORD_SEPARATOR_ID {
             return Ok(cached);
         }
@@ -410,7 +407,7 @@ impl InitialTokenIds {
         Some(if affix == Affix::Plain {
             plain
         } else {
-            self.decorated[plain as usize].get(affix, plain)
+            self.decorated[plain as usize].get(affix)
         })
     }
 }

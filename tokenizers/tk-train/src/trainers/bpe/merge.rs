@@ -182,13 +182,12 @@ impl Corpus {
         // Divide whole word domains across workers, rounding up and retaining
         // a nonzero chunk size even when the historical list contains no words.
         let chunk = words.len().div_ceil(super::super::num_workers()).max(1);
-        let limit = self.birth_pair_span_limit.unwrap_or(usize::MAX);
         words
             .maybe_par_chunks(chunk)
             .map_init(NeighborScratch::default, |scratch, words| {
                 self.prepare_chunk(rule.pair, rule.merged_id, scratch, |neighbors, starts| {
                     for &word in words {
-                        self.scan_word(&rule, word, limit, neighbors, starts)?;
+                        self.scan_word(&rule, word, neighbors, starts)?;
                     }
                     Ok(())
                 })
@@ -219,10 +218,10 @@ impl Corpus {
         &self,
         rule: &SelectedMerge,
         word: usize,
-        limit: usize,
         neighbors: &mut NeighborChanges<'_>,
         starts: &mut SmallVec<[usize; 2]>,
     ) -> Result<()> {
+        let limit = self.birth_pair_span_limit.unwrap_or(usize::MAX);
         let range = self.word_range(word);
         let weight = self.weight(range.start).weight;
         let mut p = range.start;

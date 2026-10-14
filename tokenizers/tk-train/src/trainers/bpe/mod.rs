@@ -361,7 +361,7 @@ impl BpeTrainer {
             if resolved.already_in_vocabulary && !selected.is_empty() {
                 break;
             }
-            let candidate = index.take(priority);
+            let candidate = index.take();
             corpus.activate(pair, resolved.merged_id);
             #[cfg(test)]
             pending_trace.push((pair, candidate.priority.count(), resolved.merged_id));

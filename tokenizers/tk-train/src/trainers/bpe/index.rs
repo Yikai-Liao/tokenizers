@@ -223,14 +223,14 @@ impl PairIndex {
         }
     }
 
-    pub(super) fn take(&mut self, priority: Priority) -> Candidate {
+    pub(super) fn take(&mut self) -> Candidate {
         let candidate = self.queue.pop().expect("certified candidate exists");
-        debug_assert_eq!(candidate.priority, priority);
         if self.mode == TrainingMode::Fresh {
+            let pair = candidate.priority.pair();
             let shard_count = self.shards.len();
-            self.shards[owner(priority.pair(), shard_count)]
+            self.shards[owner(pair, shard_count)]
                 .counts
-                .remove(&priority.pair())
+                .remove(&pair)
                 .expect("certified pair exists");
         }
         candidate

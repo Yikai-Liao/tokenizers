@@ -44,11 +44,11 @@ mod codec {
     }
 
     impl<'a> Cursor<'a> {
-        pub(super) fn new(bytes: &'a [u8], start: usize) -> Self {
+        pub(super) fn new(bytes: &'a [u8]) -> Self {
             Self {
                 bytes,
                 position: 0,
-                index: start,
+                index: 0,
             }
         }
     }
@@ -94,7 +94,7 @@ mod codec {
                 bytes.reserve(super::gap_width(gap));
                 append_gap(&mut bytes, gap);
                 assert_eq!(bytes.len() - 8, super::gap_width(gap));
-                assert_eq!(Cursor::new(&bytes, 0).collect::<Vec<_>>(), [0, gap]);
+                assert_eq!(Cursor::new(&bytes).collect::<Vec<_>>(), [0, gap]);
             }
         }
     }
@@ -330,16 +330,17 @@ impl Leaf {
         // that fits u64 but exceeds resident usize bounds fails atomically.
         let next_len = usize::try_from(encoded_len.get() - 1)?;
         if len.is_multiple_of(RESTART) {
-            return self.push_restart(position, next_len, encoded_len);
+            self.push_restart(position, next_len)?;
+        } else {
+            let previous = self.last();
+            let gap = position
+                .checked_sub(previous)
+                .ok_or("BPE positions are not sorted")?;
+            let width = codec::gap_width(gap);
+            self.reserve(width)?;
+            codec::append_gap(&mut self.bytes, gap);
+            self.bytes[..8].copy_from_slice(&position.to_le_bytes());
         }
-        let previous = self.last();
-        let gap = position
-            .checked_sub(previous)
-            .ok_or("BPE positions are not sorted")?;
-        let width = codec::gap_width(gap);
-        self.reserve(width)?;
-        codec::append_gap(&mut self.bytes, gap);
-        self.bytes[..8].copy_from_slice(&position.to_le_bytes());
         self.len = encoded_len;
         Ok(())
     }
@@ -365,12 +366,7 @@ impl Leaf {
     }
 
     #[inline(never)]
-    fn push_restart(
-        &mut self,
-        position: u64,
-        next_len: usize,
-        encoded_len: NonZeroU64,
-    ) -> Result<()> {
+    fn push_restart(&mut self, position: u64, next_len: usize) -> Result<()> {
         let len = self.len();
         // Empty leaves have no cached tail to compare. Every later absolute
         // restart seed must preserve the same nondecreasing order as gaps.
@@ -409,14 +405,13 @@ impl Leaf {
         }
         self.bytes.extend_from_slice(&position.to_le_bytes());
         self.bytes[..8].copy_from_slice(&position.to_le_bytes());
-        self.len = encoded_len;
         Ok(())
     }
 
     // Chunk boundaries and searches supply an aligned restart position.
     fn cursor(&self, start: usize) -> Cursor<'_> {
         if start == self.len() {
-            return Cursor::new(&[], start);
+            return Cursor::new(&[]);
         }
         // The first block starts at data offset zero even without a directory.
         // Later aligned starts select their block's cached byte offset.
@@ -426,7 +421,8 @@ impl Leaf {
             usize::from_le_bytes(self.directory()[start / RESTART])
         };
         debug_assert!(start.is_multiple_of(RESTART));
-        Cursor::new(&self.data()[offset..], start)
+        // The slice begins at an absolute seed, so decoder indices are local.
+        Cursor::new(&self.data()[offset..])
     }
 
     fn restart_before(&self, target: u64) -> usize {
@@ -560,8 +556,10 @@ mod tests {
             let values: Vec<u64> = (0..count).map(|n| 100 + n as u64).collect();
             let mut positions = Positions::from_sorted(&values).unwrap();
             assert!(positions.push(0).is_err());
+            assert_eq!(positions.len(), count);
             assert_eq!(positions.iter().collect::<Vec<_>>(), values);
             positions.push(u64::MAX).unwrap();
+            assert_eq!(positions.len(), count + 1);
             assert_eq!(positions.iter().last(), Some(u64::MAX));
         }
         let mut leaf = Leaf {
@@ -570,7 +568,7 @@ mod tests {
         };
         assert!(leaf.push(0).is_err());
         assert!(leaf.bytes.is_empty());
-        let mut cursor = Cursor::new(&[0; 7], 0);
+        let mut cursor = Cursor::new(&[0; 7]);
         assert!(std::panic::catch_unwind(move || cursor.next()).is_err());
     }
 }
