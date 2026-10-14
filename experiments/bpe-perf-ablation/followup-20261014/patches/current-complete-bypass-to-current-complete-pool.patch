@@ -1,0 +1,21 @@
+diff --git a/tokenizers/tk-train/src/trainers/bpe/mod.rs b/tokenizers/tk-train/src/trainers/bpe/mod.rs
+index 1368084..86610b4 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/mod.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/mod.rs
+@@ -306,6 +306,16 @@ impl BpeTrainer {
+     }
+ 
+     fn do_train_impl(&self, words: WordCountsView<'_>) -> Result<Vocabulary> {
++        // Keep round coordination on the ambient pool's worker, so each joined
++        // phase does not enter that pool again from the calling thread.
++        if get_parallelism() && rayon::current_thread_index().is_none() {
++            rayon::join(|| self.train_attempts(words), || ()).0
++        } else {
++            self.train_attempts(words)
++        }
++    }
++
++    fn train_attempts(&self, words: WordCountsView<'_>) -> Result<Vocabulary> {
+         let progress = self.setup_progress();
+         let alphabet = self.select_alphabet(words);
+         let outcome = self.train_attempt(words, TrainingMode::Fresh, &alphabet, &progress)?;

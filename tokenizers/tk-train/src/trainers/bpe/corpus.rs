@@ -48,6 +48,14 @@ pub(super) struct PairChange<P> {
     pub(super) birth_group: usize,
 }
 
+/// Neighbor events from either all actual chunks of one fresh AB rule or a
+/// partial/AA/reuse producer. Whole-rule non-self births are complete because
+/// each fresh replacement ID belongs to that rule; (id,id) still joins both sides.
+pub(super) enum ProducerChanges {
+    WholeRule(Vec<PairChange<Positions>>),
+    Fragment(Vec<PairChange<Positions>>),
+}
+
 /// A run in the sorted word-weight directory.
 struct WeightRun {
     start: usize,

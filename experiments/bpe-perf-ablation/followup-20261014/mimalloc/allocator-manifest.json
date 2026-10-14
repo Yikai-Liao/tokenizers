@@ -1,0 +1,21 @@
+{
+  "package": "libmimalloc3",
+  "version": "3.0.1+ds-2.1",
+  "upstream": "https://github.com/microsoft/mimalloc",
+  "method": "LD_PRELOAD only on native benchmark process; unchanged executable, no observer",
+  "library": "/root/code/tokenizers-perf-regression-20261014/allocator-mimalloc/extracted/usr/lib/x86_64-linux-gnu/libmimalloc.so.3.0",
+  "library_sha256": "abd5c496e7c699ae3baa53f99497d56b28ffadf255269524d17d898cb18befce",
+  "override_probe": "malloc /root/code/tokenizers-perf-regression-20261014/allocator-mimalloc/extracted/usr/lib/x86_64-linux-gnu/libmimalloc.so.3.0\ncalloc /root/code/tokenizers-perf-regression-20261014/allocator-mimalloc/extracted/usr/lib/x86_64-linux-gnu/libmimalloc.so.3.0\nrealloc /root/code/tokenizers-perf-regression-20261014/allocator-mimalloc/extracted/usr/lib/x86_64-linux-gnu/libmimalloc.so.3.0\nfree /root/code/tokenizers-perf-regression-20261014/allocator-mimalloc/extracted/usr/lib/x86_64-linux-gnu/libmimalloc.so.3.0\nposix_memalign /root/code/tokenizers-perf-regression-20261014/allocator-mimalloc/extracted/usr/lib/x86_64-linux-gnu/libmimalloc.so.3.0\n",
+  "rust_elf_bindings": [
+    "455354:\tbinding file /root/code/tokenizers-perf-regression-20261014/current [0] to /root/code/tokenizers-perf-regression-20261014/allocator-mimalloc/extracted/usr/lib/x86_64-linux-gnu/libmimalloc.so.3.0 [0]: normal symbol `free' [GLIBC_2.2.5]",
+    "455354:\tbinding file /root/code/tokenizers-perf-regression-20261014/current [0] to /root/code/tokenizers-perf-regression-20261014/allocator-mimalloc/extracted/usr/lib/x86_64-linux-gnu/libmimalloc.so.3.0 [0]: normal symbol `malloc' [GLIBC_2.2.5]",
+    "455354:\tbinding file /root/code/tokenizers-perf-regression-20261014/current [0] to /root/code/tokenizers-perf-regression-20261014/allocator-mimalloc/extracted/usr/lib/x86_64-linux-gnu/libmimalloc.so.3.0 [0]: normal symbol `posix_memalign' [GLIBC_2.2.5]",
+    "455354:\tbinding file /root/code/tokenizers-perf-regression-20261014/current [0] to /root/code/tokenizers-perf-regression-20261014/allocator-mimalloc/extracted/usr/lib/x86_64-linux-gnu/libmimalloc.so.3.0 [0]: normal symbol `calloc' [GLIBC_2.2.5]",
+    "455354:\tbinding file /root/code/tokenizers-perf-regression-20261014/current [0] to /root/code/tokenizers-perf-regression-20261014/allocator-mimalloc/extracted/usr/lib/x86_64-linux-gnu/libmimalloc.so.3.0 [0]: normal symbol `realloc' [GLIBC_2.2.5]",
+    "455354:\tbinding file /root/code/tokenizers-perf-regression-20261014/current [0] to /root/code/tokenizers-perf-regression-20261014/allocator-mimalloc/extracted/usr/lib/x86_64-linux-gnu/libmimalloc.so.3.0 [0]: normal symbol `calloc' [GLIBC_2.2.5]",
+    "455354:\tbinding file /root/code/tokenizers-perf-regression-20261014/current [0] to /root/code/tokenizers-perf-regression-20261014/allocator-mimalloc/extracted/usr/lib/x86_64-linux-gnu/libmimalloc.so.3.0 [0]: normal symbol `free' [GLIBC_2.2.5]",
+    "455354:\tbinding file /root/code/tokenizers-perf-regression-20261014/current [0] to /root/code/tokenizers-perf-regression-20261014/allocator-mimalloc/extracted/usr/lib/x86_64-linux-gnu/libmimalloc.so.3.0 [0]: normal symbol `malloc' [GLIBC_2.2.5]",
+    "455354:\tbinding file /root/code/tokenizers-perf-regression-20261014/current [0] to /root/code/tokenizers-perf-regression-20261014/allocator-mimalloc/extracted/usr/lib/x86_64-linux-gnu/libmimalloc.so.3.0 [0]: normal symbol `realloc' [GLIBC_2.2.5]"
+  ],
+  "binding_probe": "LD_BIND_NOW=1 LD_DEBUG=bindings on unchanged current executable with a nonexistent input; separate from timing runs"
+}

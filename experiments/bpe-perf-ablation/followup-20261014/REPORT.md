@@ -138,7 +138,25 @@ Vec→Box 在 capacity 大于 len 时先收缩，可能请求 realloc；这项�
 
 该原型的现有 32 项 BPE 单元/串行 oracle 测试全部通过，覆盖随机 min frequency、重启、overflow、AA、reuse、affix 和 1/4/8 worker 语义对照。裸 runner 依赖仍用冻结 lock；测试图添加 dev-dependencies，保留所有 runner 原有包/版本。该复测仍仅是中文 ByteLevel、100K、四 worker、本机两个配对块。
 
+## 整次训练只入池一次
+
+在不带 observer 的完整 producer 候选上，入口将整次训练（含 Fresh/Reuse 重试）放到既有 Rayon pool 的 worker 内。已在 pool 中的调用和串行设置直接执行；不创建专用线程池，也不修改每轮算法。该系列固定二进制并反转执行顺序，共两个配对块。
+
+| 案例 / worker | main wall/s | current wall/s | producer + 一次入池 wall/s |
+|---|---:|---:|---:|
+| Chinese ByteLevel / 4 | 16.220 | 24.293 | 21.647 |
+| English ByteLevel / 1 | 1.937 | 3.231 | 2.677 |
+| English ByteLevel / 4 | 1.289 | 2.429 | 2.199 |
+
+同系列 Chinese 四 worker 中，完整 producer 单独为 22.141 s，叠加一次入池为 21.647 s。原 current 为 24.293 s、main 为 16.220 s。所有完整模型一致、swap 为 0；该候选仍未恢复 main 的性能。
+
+
 上述源码 patch 是隔离的因果实验，尚不是生产修订。全模型对照与适用范围之外的语义测试须一并看；阶段计时 observer 也不能替代正式无 observer 复测。后续不应继续堆积独立 fast-path 状态，而应让 producer 完整性、最终表示和 index 的完整提交操作各自有明确归属。
+
+
+## mimalloc 直接对照
+
+同一二进制、仅替换 native allocator 的 12 次训练结果见 [mimalloc 对照](mimalloc/README.md)。旧 buffer 版配对 wall 下降约 12.8%，current 约 5.1%，main 约 5.9%；current 与 main 的绝对差距基本未缩小。
 
 ## 后续修订的设计条件
 

@@ -1,6 +1,6 @@
 //! Private joined preparation and application over corpus geometry.
 use super::super::{TrainingMode, WORD_SEPARATOR_ID, add, positions::Positions};
-use super::{Corpus, PairChange, SelectedMerge};
+use super::{Corpus, PairChange, ProducerChanges, SelectedMerge};
 use ahash::AHashMap;
 use itertools::Itertools;
 use smallvec::SmallVec;
@@ -15,7 +15,7 @@ impl Corpus {
     pub(in crate::trainers::bpe) fn merge(
         &mut self,
         selected: Vec<SelectedMerge>,
-    ) -> Result<Vec<Vec<PairChange<Positions>>>> {
+    ) -> Result<Vec<ProducerChanges>> {
         let chunks = self.prepare(selected)?;
         let corpus: &Corpus = self;
         Ok(chunks
@@ -130,8 +130,13 @@ impl Corpus {
                     .clamp(1, 1 << 26);
                 let mut tasks = Vec::new();
                 for rule in &rules {
-                    for positions in rule.positions.chunks(chunk) {
-                        tasks.push((rule.pair, rule.merged_id, positions));
+                    let mut parts = rule.positions.chunks(chunk).peekable();
+                    if let Some(first) = parts.next() {
+                        let complete = parts.peek().is_none();
+                        tasks.push((rule.pair, rule.merged_id, first, complete));
+                        tasks.extend(
+                            parts.map(|positions| (rule.pair, rule.merged_id, positions, false)),
+                        );
                     }
                 }
                 // Rule order, then restart-aligned chunk order, remains indexed.
@@ -139,8 +144,8 @@ impl Corpus {
                     .into_maybe_par_iter()
                     .map_init(
                         NeighborScratch::default,
-                        |scratch, (pair, merged_id, positions)| {
-                            preparation.prepare(
+                        |scratch, (pair, merged_id, positions, complete)| {
+                            let mut prepared = preparation.prepare(
                                 pair,
                                 merged_id,
                                 positions,
@@ -162,7 +167,16 @@ impl Corpus {
                                         .get(&(next, self.token(after + self.fixed_id_span(next))))
                                         .copied()
                                 },
-                            )
+                            )?;
+                            if complete {
+                                prepared.changes = match prepared.changes {
+                                    ProducerChanges::Fragment(changes) => {
+                                        ProducerChanges::WholeRule(changes)
+                                    }
+                                    ProducerChanges::WholeRule(_) => unreachable!(),
+                                };
+                            }
+                            Ok(prepared)
                         },
                     )
                     .collect()
@@ -210,7 +224,7 @@ impl Corpus {
         Ok(PreparedChunk {
             starts,
             merged_id,
-            changes: neighbors.finish(),
+            changes: ProducerChanges::Fragment(neighbors.finish()),
         })
     }
 
@@ -316,7 +330,7 @@ enum FreshBatch {
 struct PreparedChunk {
     starts: SmallVec<[usize; 2]>,
     merged_id: u32,
-    changes: Vec<PairChange<Positions>>,
+    changes: ProducerChanges,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]

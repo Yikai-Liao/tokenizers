@@ -1,5 +1,5 @@
 //! Count owners publish complete lists; the queue repairs stale snapshots lazily.
-use super::corpus::PairChange;
+use super::corpus::{PairChange, ProducerChanges};
 use super::{
     TrainingMode, WORD_SEPARATOR_ID, add,
     corpus::{CorpusPlan, InitialEdge},
@@ -92,7 +92,8 @@ struct Shard {
     actions: Vec<PendingAction>,
     // One stream per birth action, in the same order.
     positions: Vec<Positions>,
-    diagnostic_group_indices: Vec<u32>,
+    // Complete fresh producers already own their final count and positions.
+    completed: Vec<Candidate>,
 }
 
 struct PendingAction {
@@ -237,7 +238,7 @@ impl PairIndex {
         candidate
     }
 
-    pub(super) fn commit(&mut self, changes: Vec<Vec<PairChange<Positions>>>) -> Result<()> {
+    pub(super) fn commit(&mut self, changes: Vec<ProducerChanges>) -> Result<()> {
         // 1. Route each removal and birth to its count owner.
         let events = self.route(changes);
 
@@ -247,7 +248,7 @@ impl PairIndex {
         let births = self
             .shards
             .maybe_par_iter_mut()
-            .filter(|shard| !shard.actions.is_empty())
+            .filter(|shard| !shard.actions.is_empty() || !shard.completed.is_empty())
             .map(|shard| shard.commit(&events, reuse, floor))
             .collect::<Result<Vec<_>>>()?;
 
@@ -258,33 +259,68 @@ impl PairIndex {
         Ok(())
     }
 
-    fn route(&mut self, changes: Vec<Vec<PairChange<Positions>>>) -> Vec<Event> {
+    fn route(&mut self, changes: Vec<ProducerChanges>) -> Vec<Event> {
         let shard_count = self.shards.len();
         // Joined commits drain each shard's pending work; any error aborts this attempt.
-        let mut events = Vec::with_capacity(changes.iter().map(Vec::len).sum());
-        for change in changes.into_iter().flatten() {
-            let removed = (change.removed_weight != 0).then(|| owner(change.removed, shard_count));
-            // Zero-weight births still own positions, including reuse cohorts.
-            let born = (!change.positions.is_empty()).then(|| owner(change.born, shard_count));
-            let index = events.len();
-            events.push(Event {
-                removed: change.removed,
-                born: change.born,
-                removed_weight: change.removed_weight,
-                born_weight: change.born_weight,
-                birth_group: change.birth_group,
-                positions: (),
-            });
-            match (removed, born) {
-                (Some(removed), Some(born)) if removed == born => {
-                    self.shards[removed].push(index, true, Some(change.positions));
-                }
-                (removed, born) => {
-                    if let Some(removed) = removed {
-                        self.shards[removed].push(index, true, None);
+        let capacity = changes
+            .iter()
+            .map(|set| match set {
+                ProducerChanges::WholeRule(v) | ProducerChanges::Fragment(v) => v.len(),
+            })
+            .sum();
+        let mut events = Vec::with_capacity(capacity);
+        for set in changes {
+            let (complete, changes) = match set {
+                ProducerChanges::WholeRule(v) => (true, v),
+                ProducerChanges::Fragment(v) => (false, v),
+            };
+            for mut change in changes {
+                if complete && self.mode == TrainingMode::Fresh && change.born_weight < self.floor {
+                    // Both directions can name (id,id); let owner aggregation handle it.
+                    if change.born.0 != change.born.1 {
+                        change.positions = Positions::default();
+                        change.born_weight = 0;
                     }
-                    if let Some(born) = born {
-                        self.shards[born].push(index, false, Some(change.positions));
+                }
+                let removed =
+                    (change.removed_weight != 0).then(|| owner(change.removed, shard_count));
+                // Zero-weight births still own positions, including reuse cohorts.
+                let born = if complete
+                    && self.mode == TrainingMode::Fresh
+                    && change.born.0 != change.born.1
+                {
+                    if !change.positions.is_empty() {
+                        let shard = owner(change.born, shard_count);
+                        self.shards[shard].completed.push(Candidate::new(
+                            change.born,
+                            change.born_weight,
+                            std::mem::take(&mut change.positions),
+                        ));
+                    }
+                    None
+                } else {
+                    (!change.positions.is_empty()).then(|| owner(change.born, shard_count))
+                };
+                let index = events.len();
+                events.push(Event {
+                    removed: change.removed,
+                    born: change.born,
+                    removed_weight: change.removed_weight,
+                    born_weight: change.born_weight,
+                    birth_group: change.birth_group,
+                    positions: (),
+                });
+                match (removed, born) {
+                    (Some(removed), Some(born)) if removed == born => {
+                        self.shards[removed].push(index, true, Some(change.positions));
+                    }
+                    (removed, born) => {
+                        if let Some(removed) = removed {
+                            self.shards[removed].push(index, true, None);
+                        }
+                        if let Some(born) = born {
+                            self.shards[born].push(index, false, Some(change.positions));
+                        }
                     }
                 }
             }
@@ -444,9 +480,12 @@ impl Shard {
             });
         }
 
-        drop(positions);
-        if !reuse {
-            return self.diagnostic_fresh_groups(fragments, floor);
+        for candidate in self.completed.drain(..) {
+            debug_assert!(!reuse);
+            let pair = candidate.priority.pair();
+            debug_assert!(!self.counts.contains_key(&pair));
+            self.counts.insert(pair, candidate.priority.count);
+            candidates.push(candidate);
         }
         // Stable key order keeps each cohort's spatial fragment order while
         // publishing in birth_group/pair order. Reuse streams may interleave.
@@ -493,73 +532,6 @@ impl Shard {
     }
 }
 
-impl Shard {
-    // Diagnostic only: group fresh births by replacement/direction, then neighbor.
-    // Count actions have already run in their original order. Reuse keeps its path.
-    fn diagnostic_fresh_groups(
-        &mut self,
-        fragments: Vec<BirthFragment>,
-        floor: u64,
-    ) -> Result<Vec<Candidate>> {
-        if fragments.is_empty() {
-            return Ok(Vec::new());
-        }
-        let replacement = |part: &BirthFragment| {
-            if part.birth_group == 0 {
-                part.pair.1
-            } else {
-                part.pair.0
-            }
-        };
-        let min = fragments.iter().map(&replacement).min().unwrap();
-        let max = fragments.iter().map(&replacement).max().unwrap();
-        // Fresh compatible batches append at most 256 IDs; activated old IDs run alone.
-        assert!(max - min < 256);
-        let mut buckets: Vec<Vec<BirthFragment>> = (0..((max - min + 1) as usize) * 2)
-            .map(|_| Vec::new())
-            .collect();
-        for part in fragments {
-            let bucket = (replacement(&part) - min) as usize * 2 + part.birth_group;
-            buckets[bucket].push(part);
-        }
-        let mut candidates = Vec::new();
-        for (bucket, parts) in buckets.into_iter().enumerate() {
-            let left = bucket % 2 == 0;
-            let id = min + (bucket / 2) as u32;
-            let mut groups: Vec<(u32, PairAggregate<SmallVec<[Positions; 1]>>)> = Vec::new();
-            for part in parts {
-                let neighbor = if left { part.pair.0 } else { part.pair.1 };
-                if self.diagnostic_group_indices.len() <= neighbor as usize {
-                    self.diagnostic_group_indices
-                        .resize(neighbor as usize + 1, u32::MAX);
-                }
-                let slot = &mut self.diagnostic_group_indices[neighbor as usize];
-                if groups
-                    .get(*slot as usize)
-                    .is_none_or(|group| group.0 != neighbor)
-                {
-                    *slot = groups.len() as u32;
-                    groups.push((neighbor, PairAggregate::default()));
-                }
-                let group = &mut groups[*slot as usize].1;
-                add(&mut group.count, part.weight)?;
-                group.positions.push(part.positions);
-            }
-            for (neighbor, group) in groups {
-                if group.count < floor {
-                    continue;
-                }
-                let pair = if left { (neighbor, id) } else { (id, neighbor) };
-                let positions = Positions::concat(group.positions)?;
-                debug_assert!(!self.counts.contains_key(&pair));
-                self.counts.insert(pair, group.count);
-                candidates.push(Candidate::new(pair, group.count, positions));
-            }
-        }
-        Ok(candidates)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::super::tests::tokens;
@@ -577,6 +549,74 @@ mod tests {
             born_weight: add,
             birth_group,
             positions: (),
+        }
+    }
+
+    #[test]
+    fn producer_coverage_keeps_partial_and_self_births_until_reduction() {
+        for shard_count in [1, 4, 6] {
+            let mut index = PairIndex {
+                shards: (0..shard_count).map(|_| Shard::default()).collect(),
+                queue: OctonaryHeap::new(),
+                floor: 2,
+                mode: TrainingMode::Fresh,
+            };
+            let removed = (0, 1);
+            index.shards[owner(removed, shard_count)]
+                .counts
+                .insert(removed, 4);
+            let change = |born, position, weight| PairChange {
+                removed,
+                born,
+                removed_weight: 0,
+                born_weight: weight,
+                birth_group: 0,
+                positions: Positions::from_sorted(&[position]).unwrap(),
+            };
+            let mut pruned = change((1, 8), 0, 1);
+            pruned.removed_weight = 1;
+            index
+                .commit(vec![
+                    ProducerChanges::WholeRule(vec![pruned]),
+                    ProducerChanges::Fragment(vec![change((2, 9), 1, 1)]),
+                    ProducerChanges::Fragment(vec![change((2, 9), 2, 1)]),
+                    ProducerChanges::WholeRule(vec![
+                        change((10, 10), 3, 1),
+                        change((10, 10), 4, 1),
+                    ]),
+                    ProducerChanges::WholeRule(vec![change((3, 11), 5, 3)]),
+                ])
+                .unwrap();
+            assert_eq!(
+                index.shards[owner(removed, shard_count)].counts[&removed],
+                3
+            );
+            assert!(
+                !index.shards[owner((1, 8), shard_count)]
+                    .counts
+                    .contains_key(&(1, 8))
+            );
+            let mut candidates: Vec<_> = index
+                .queue
+                .into_vec()
+                .into_iter()
+                .map(|candidate| {
+                    (
+                        candidate.priority.pair(),
+                        candidate.priority.count(),
+                        candidate.positions.iter().collect::<Vec<_>>(),
+                    )
+                })
+                .collect();
+            candidates.sort_by_key(|candidate| candidate.0);
+            assert_eq!(
+                candidates,
+                vec![
+                    ((2, 9), 2, vec![1, 2]),
+                    ((3, 11), 3, vec![5]),
+                    ((10, 10), 2, vec![3, 4])
+                ]
+            );
         }
     }
 

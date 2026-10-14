@@ -1,0 +1,67 @@
+{
+  "condition": "Chinese ByteLevel 256MiB, vocab 100000, min_frequency 2, workers 4 pinned CPU0-3, two reversed blocks; no observer",
+  "allocator": {
+    "package": "libmimalloc3",
+    "version": "3.0.1+ds-2.1",
+    "upstream": "https://github.com/microsoft/mimalloc",
+    "method": "LD_PRELOAD only on native benchmark process; unchanged executable, no observer",
+    "library": "/root/code/tokenizers-perf-regression-20261014/allocator-mimalloc/extracted/usr/lib/x86_64-linux-gnu/libmimalloc.so.3.0",
+    "library_sha256": "abd5c496e7c699ae3baa53f99497d56b28ffadf255269524d17d898cb18befce",
+    "override_probe": "malloc /root/code/tokenizers-perf-regression-20261014/allocator-mimalloc/extracted/usr/lib/x86_64-linux-gnu/libmimalloc.so.3.0\ncalloc /root/code/tokenizers-perf-regression-20261014/allocator-mimalloc/extracted/usr/lib/x86_64-linux-gnu/libmimalloc.so.3.0\nrealloc /root/code/tokenizers-perf-regression-20261014/allocator-mimalloc/extracted/usr/lib/x86_64-linux-gnu/libmimalloc.so.3.0\nfree /root/code/tokenizers-perf-regression-20261014/allocator-mimalloc/extracted/usr/lib/x86_64-linux-gnu/libmimalloc.so.3.0\nposix_memalign /root/code/tokenizers-perf-regression-20261014/allocator-mimalloc/extracted/usr/lib/x86_64-linux-gnu/libmimalloc.so.3.0\n",
+    "rust_elf_bindings": [
+      "455354:\tbinding file /root/code/tokenizers-perf-regression-20261014/current [0] to /root/code/tokenizers-perf-regression-20261014/allocator-mimalloc/extracted/usr/lib/x86_64-linux-gnu/libmimalloc.so.3.0 [0]: normal symbol `free' [GLIBC_2.2.5]",
+      "455354:\tbinding file /root/code/tokenizers-perf-regression-20261014/current [0] to /root/code/tokenizers-perf-regression-20261014/allocator-mimalloc/extracted/usr/lib/x86_64-linux-gnu/libmimalloc.so.3.0 [0]: normal symbol `malloc' [GLIBC_2.2.5]",
+      "455354:\tbinding file /root/code/tokenizers-perf-regression-20261014/current [0] to /root/code/tokenizers-perf-regression-20261014/allocator-mimalloc/extracted/usr/lib/x86_64-linux-gnu/libmimalloc.so.3.0 [0]: normal symbol `posix_memalign' [GLIBC_2.2.5]",
+      "455354:\tbinding file /root/code/tokenizers-perf-regression-20261014/current [0] to /root/code/tokenizers-perf-regression-20261014/allocator-mimalloc/extracted/usr/lib/x86_64-linux-gnu/libmimalloc.so.3.0 [0]: normal symbol `calloc' [GLIBC_2.2.5]",
+      "455354:\tbinding file /root/code/tokenizers-perf-regression-20261014/current [0] to /root/code/tokenizers-perf-regression-20261014/allocator-mimalloc/extracted/usr/lib/x86_64-linux-gnu/libmimalloc.so.3.0 [0]: normal symbol `realloc' [GLIBC_2.2.5]",
+      "455354:\tbinding file /root/code/tokenizers-perf-regression-20261014/current [0] to /root/code/tokenizers-perf-regression-20261014/allocator-mimalloc/extracted/usr/lib/x86_64-linux-gnu/libmimalloc.so.3.0 [0]: normal symbol `calloc' [GLIBC_2.2.5]",
+      "455354:\tbinding file /root/code/tokenizers-perf-regression-20261014/current [0] to /root/code/tokenizers-perf-regression-20261014/allocator-mimalloc/extracted/usr/lib/x86_64-linux-gnu/libmimalloc.so.3.0 [0]: normal symbol `free' [GLIBC_2.2.5]",
+      "455354:\tbinding file /root/code/tokenizers-perf-regression-20261014/current [0] to /root/code/tokenizers-perf-regression-20261014/allocator-mimalloc/extracted/usr/lib/x86_64-linux-gnu/libmimalloc.so.3.0 [0]: normal symbol `malloc' [GLIBC_2.2.5]",
+      "455354:\tbinding file /root/code/tokenizers-perf-regression-20261014/current [0] to /root/code/tokenizers-perf-regression-20261014/allocator-mimalloc/extracted/usr/lib/x86_64-linux-gnu/libmimalloc.so.3.0 [0]: normal symbol `realloc' [GLIBC_2.2.5]"
+    ],
+    "binding_probe": "LD_BIND_NOW=1 LD_DEBUG=bindings on unchanged current executable with a nonexistent input; separate from timing runs"
+  },
+  "results": [
+    {
+      "arm": "main",
+      "n": 2,
+      "binary_sha256": "f3bccd15ca8957c47225b30ce5b7dd6b5de5208136ddb47053add9d2715222fb",
+      "system_wall": 16.684598382,
+      "mimalloc_wall": 15.720135605,
+      "system_cpu": 53.773810499999996,
+      "mimalloc_cpu": 51.723247,
+      "system_hwm_kib": 2731414.0,
+      "mimalloc_hwm_kib": 3812648.0,
+      "paired_wall_change_percent": -5.899114134063788,
+      "paired_cpu_change_percent": -3.8689215857610093
+    },
+    {
+      "arm": "history-buffer",
+      "n": 2,
+      "binary_sha256": "1b6734965d7c97196a27f6769f519e67fed11e8ca7c7b9afd8744f685f20ca06",
+      "system_wall": 23.1366032515,
+      "mimalloc_wall": 20.152447573,
+      "system_cpu": 71.040687,
+      "mimalloc_cpu": 62.960446,
+      "system_hwm_kib": 2874930.0,
+      "mimalloc_hwm_kib": 4048264.0,
+      "paired_wall_change_percent": -12.762105747390734,
+      "paired_cpu_change_percent": -11.350239963566672
+    },
+    {
+      "arm": "current",
+      "n": 2,
+      "binary_sha256": "9dc384d093000f765af03371b0bc0f580070a1b16c9117c58c85a57721df3fe1",
+      "system_wall": 25.101580505,
+      "mimalloc_wall": 23.812658974,
+      "system_cpu": 78.627355,
+      "mimalloc_cpu": 74.5510715,
+      "system_hwm_kib": 3005168.0,
+      "mimalloc_hwm_kib": 4162906.0,
+      "paired_wall_change_percent": -5.138362536171809,
+      "paired_cpu_change_percent": -5.186741516910382
+    }
+  ],
+  "all_models_equal": true,
+  "max_swap_kib": 0
+}

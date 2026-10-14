@@ -1,0 +1,13 @@
+{
+  "base": "36c819c5",
+  "measurement_source": "source-current-complete-pool",
+  "publication_only_differences": "rustfmt, documentation, one new coverage test; no production control-flow changes",
+  "test_command": "cargo test --offline --locked --manifest-path tokenizers/tk-train/Cargo.toml --lib --no-default-features trainers::bpe",
+  "test_result": "33 passed, 0 failed",
+  "source_sha256": {
+    "mod.rs": "50fb1361b1a087fb5a7339f76f3f3666213966a8f43a5df8cf3479b77fd95393",
+    "corpus.rs": "2550d13d75248ba115268149e9769782add4c55e00af610dbbbd71f2b1393e38",
+    "index.rs": "1b7a6e01e4deee642911dc5a954fa0a113a95630f7ac70ff991dfce80cec8db5",
+    "merge.rs": "35036bb90a5083b92483510ae62172f8f21f793c58bb82b4645bdfd9b6fb229a"
+  }
+}
