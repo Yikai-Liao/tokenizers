@@ -1,0 +1,86 @@
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/storage/arena.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/storage/arena.rs
+@@ -1,55 +1,24 @@
+-use super::{Result, StorageError};
+-use bumpalo::Bump;
+-use std::alloc::Layout;
+-use std::ptr::NonNull;
+-use std::sync::{Mutex, MutexGuard};
++//! Diagnostic control: all position payloads use their existing owned heap path.
++//! Keep the storage API so representation, encoding and callers stay unchanged.
++use super::Result;
++use std::{alloc::Layout, marker::PhantomData, ptr::NonNull};
+ 
+-/// Owns small position allocations for one training attempt.
+-/// Position lists borrow this storage, so the arena must outlive those lists.
+-/// Dropping an allocation lease releases cursor access and keeps the storage alive.
+-pub(in super::super) struct AllocationArena {
+-    workers: Vec<Mutex<Bump>>,
+-    cutoff: usize,
+-}
++pub(in super::super) struct AllocationArena;
++
+ impl AllocationArena {
+-    pub(in super::super) fn new(workers: usize, physical_items: usize) -> Self {
+-        Self {
+-            workers: (0..workers).map(|_| Mutex::new(Bump::new())).collect(),
+-            // A fixed decision for the scope; large buffers remain individually owned.
+-            cutoff: ((physical_items as u128 / 256).isqrt() as usize).max(256),
+-        }
++    pub(in super::super) fn new(_workers: usize, _physical_items: usize) -> Self {
++        Self
+     }
+-    /// Lock the allocation cursor for executing-worker index `worker`.
+-    /// Pass a worker index from this training pool, rather than a pair-owner index.
+-    /// Keep work sequential while the guard is held; nested pool work could try to
+-    /// lock the same cursor. Dropping the guard keeps published storage alive.
+-    pub(in super::super) fn lease(&self, worker: usize) -> AllocationLease<'_> {
+-        AllocationLease {
+-            arena: self,
+-            cursor: self.workers[worker]
+-                .lock()
+-                .unwrap_or_else(|e| e.into_inner()),
+-        }
++
++    pub(in super::super) fn lease(&self, _worker: usize) -> AllocationLease<'_> {
++        AllocationLease(PhantomData)
+     }
+ }
+-/// Temporary exclusive access to one executing worker's allocation cursor.
+-/// Published position lists borrow the arena for `'arena`.
+-/// The cursor guard can be dropped while those lists remain in use.
+-pub(in super::super) struct AllocationLease<'arena> {
+-    arena: &'arena AllocationArena,
+-    cursor: MutexGuard<'arena, Bump>,
+-}
++
++pub(in super::super) struct AllocationLease<'arena>(PhantomData<&'arena AllocationArena>);
++
+ impl AllocationLease<'_> {
+-    /// Allocate `layout` from the arena and return `Some(pointer)` on success.
+-    /// If the requested byte size exceeds the arena cutoff, return `None` so the
+-    /// caller can allocate an owned buffer. A failed small allocation returns an error.
+-    pub(in super::super) fn allocate(&self, layout: Layout) -> Result<Option<NonNull<u8>>> {
+-        if layout.size() > self.arena.cutoff {
+-            return Ok(None);
+-        }
+-        self.cursor
+-            .try_alloc_layout(layout)
+-            .map(Some)
+-            .map_err(|_| StorageError("position arena allocation failed"))
++    pub(in super::super) fn allocate(&self, _layout: Layout) -> Result<Option<NonNull<u8>>> {
++        Ok(None)
+     }
+ }
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs
+@@ -1062,7 +1062,8 @@
+                 SortedPositions::from_sorted(&values, &mut scratch, &lease).unwrap()
+             };
+             assert!(!positions.is_inline());
+-            assert_eq!(positions.payload.addr() & ARENA != 0, count == 180);
++            // This diagnostic backend always uses individually owned storage.
++            assert_eq!(positions.payload.addr() & ARENA, 0);
+             std::thread::scope(|scope| {
+                 for _ in 0..4 {
+                     scope.spawn(|| verify(&positions, &values));

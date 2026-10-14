@@ -1,0 +1,251 @@
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/merge/prepare/ordinary.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/merge/prepare/ordinary.rs
+@@ -1,4 +1,5 @@
+ //! Ordinary batches: partition positions and prepare complete or partial producers.
++use super::super::super::fine_diag as fd;
+ use super::*;
+ use rayon::prelude::*;
+ struct PositionTask {
+@@ -220,7 +221,10 @@
+     let eligible = task.encode_births_directly && plan.corpus.len() <= u32::MAX as usize;
+     debug_assert!(!CONTIGUOUS || eligible);
+     let nodes_before = plan.scratch.remaining_nodes;
++    let scan_timer = fd::timer(7);
+     prepare_positions::<CONTIGUOUS, S>(&mut plan, positions, task, selected)?;
++    drop(scan_timer);
++    let _finish_timer = fd::timer(8);
+     let shape = if eligible {
+         // Complete/noflush gives exact B: every actual birth decrements the
+         // budget once. Capture C before drains empty both directories. Linked
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/mod.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/mod.rs
+@@ -151,6 +151,7 @@
+         let progress = self.progress;
+         let policy = self.policy;
+         let workers = execution.workers();
++        let diag_begin = std::time::Instant::now();
+         let mut vocabulary = vocabulary::Vocabulary::initialize(
+             trainer,
+             word_counts,
+@@ -158,6 +159,8 @@
+             progress,
+             &mut self.retained_alphabet,
+         )?;
++        diag(0, diag_begin);
++        let diag_begin = std::time::Instant::now();
+         let prepared_corpus = corpus::CorpusPlan::build(
+             word_counts,
+             &mut vocabulary,
+@@ -165,6 +168,7 @@
+             trainer.max_token_length.is_some(),
+             progress,
+         )?;
++        diag(1, diag_begin);
+         if vocabulary.len() >= trainer.vocab_size && prepared_corpus.initial_counts_fit_u64() {
+             drop(prepared_corpus);
+             execution.release_scratch();
+@@ -206,6 +210,7 @@
+         let workers = execution.workers();
+ 
+         let arena = AllocationArena::new(workers, prepared_corpus.initial_edges());
++        let diag_begin = std::time::Instant::now();
+         let initial = initial_pairs::InitialPairTable::build(
+             &prepared_corpus,
+             if policy == IdentityPolicy::FirstActivationOnly {
+@@ -217,6 +222,7 @@
+             &arena,
+             progress,
+         )?;
++        diag(2, diag_begin);
+         if vocabulary.len() >= trainer.vocab_size {
+             // The total-mass proof was inconclusive. Initial construction has now
+             // retained every checked per-key and signed-policy validation.
+@@ -239,10 +245,13 @@
+             prepared_corpus.initial_edges(),
+         );
+         execution.expect_id_domain(expected_ids);
++        let diag_begin = std::time::Instant::now();
+         let mut corpus = prepared_corpus.materialize::<S>(workers, policy, progress)?;
++        diag(3, diag_begin);
+         let mut index =
+             pair_index::PairIndex::from_initial_pairs(initial, policy, trainer.min_frequency)?;
+ 
++        let rounds_begin = std::time::Instant::now();
+         let merges = match self.merge_loop(
+             &mut vocabulary,
+             &mut corpus,
+@@ -257,12 +266,19 @@
+         // Training state does not participate in model output. Release position
+         // owners before their arena, and free the corpus and scratch before
+         // constructing the public vocabulary and merge strings.
++        diag(4, rounds_begin);
++        let retire_begin = std::time::Instant::now();
+         drop(index);
+         drop(corpus);
+         drop(arena);
+         execution.release_scratch();
+ 
+-        Ok(complete_model(trainer, vocabulary, merges))
++        diag(5, retire_begin);
++        let output_begin = std::time::Instant::now();
++        let result = complete_model(trainer, vocabulary, merges);
++        diag(11, output_begin);
++        diag_report();
++        Ok(result)
+     }
+     /// Complete joined rounds, or request a fresh attempt for active-ID reuse.
+     /// Batch candidates and adaptive history belong only to this attempt.
+@@ -292,6 +308,7 @@
+         let mut contiguous_births = merge::ContiguousBirthPolicy::default();
+         let work = progress.stage("Compute merges", trainer.vocab_size);
+         while vocabulary.len() < trainer.vocab_size {
++            let select_begin = std::time::Instant::now();
+             match batch.select(
+                 trainer,
+                 vocabulary,
+@@ -305,10 +322,12 @@
+                 BatchSelection::Finished => break,
+                 BatchSelection::RestartForReuse => return Ok(AttemptOutcome::RestartForReuse),
+             }
++            diag(9, select_begin);
+             merges.extend(batch.rules.iter().map(|rule| rule.pair));
+             #[cfg(test)]
+             let enabled_before = contiguous_births.options(merge_options).contiguous_births;
+-            let (prepared, prepared_births) = merge::prepare_merges_with_births(
++            let diag_begin = std::time::Instant::now();
++        let (prepared, prepared_births) = merge::prepare_merges_with_births(
+                 corpus,
+                 &batch.rules,
+                 &batch.candidates,
+@@ -320,6 +339,7 @@
+                 trainer.min_frequency.max(1),
+                 contiguous_births.options(merge_options),
+             )?;
++        diag(6, diag_begin);
+ 
+             // PERF: Preparation owns all writes and birth events. Selected
+             // position lists have no remaining reader; release them before allocating
+@@ -328,15 +348,19 @@
+             let birth_shape = prepared.birth_shape;
+             #[cfg(test)]
+             let birth_paths = prepared.birth_paths;
+-            let events = prepared.apply(corpus);
+-
+-            index.commit_merges_with_prepared(
++            let diag_begin = std::time::Instant::now();
++        let events = prepared.apply(corpus);
++        diag(7, diag_begin);
++
++            let diag_begin = std::time::Instant::now();
++        index.commit_merges_with_prepared(
+                 &events,
+                 vocabulary.len(),
+                 execution,
+                 arena,
+                 prepared_births,
+             )?;
++        diag(8, diag_begin);
+             contiguous_births.observe(birth_shape);
+             #[cfg(test)]
+             if let Some(observer) = birth_observe.as_mut() {
+@@ -370,3 +394,34 @@
+ 
+ #[cfg(test)]
+ mod tests;
++
++static DIAG_NS: [std::sync::atomic::AtomicU64; 12] = [const { std::sync::atomic::AtomicU64::new(0) }; 12];
++static DIAG_CALLS: [std::sync::atomic::AtomicU64; 12] = [const { std::sync::atomic::AtomicU64::new(0) }; 12];
++fn diag(index: usize, begin: std::time::Instant) {
++    use std::sync::atomic::Ordering::Relaxed;
++    DIAG_NS[index].fetch_add(begin.elapsed().as_nanos() as u64, Relaxed);
++    DIAG_CALLS[index].fetch_add(1, Relaxed);
++}
++fn diag_report() {
++    fine_diag::report();
++    use std::sync::atomic::Ordering::Relaxed;
++    let names = ["vocabulary", "plan", "initial_count", "materialize", "merge_rounds", "retire", "prepare", "apply", "commit", "select", "alphabet", "output"];
++    for (i, name) in names.iter().enumerate() {
++        eprintln!("BPE_PHASE {}", serde_json::json!({"phase":name, "seconds": DIAG_NS[i].load(Relaxed) as f64 / 1e9, "calls":DIAG_CALLS[i].load(Relaxed)}));
++    }
++}
++
++mod fine_diag {
++    use std::{sync::atomic::{AtomicU64, Ordering::Relaxed}, time::Instant};
++    static WALL: [AtomicU64; 20] = [const { AtomicU64::new(0) }; 20];
++    static CPU: [AtomicU64; 20] = [const { AtomicU64::new(0) }; 20];
++    static CALLS: [AtomicU64; 20] = [const { AtomicU64::new(0) }; 20];
++    unsafe extern "C" { fn clock_gettime(clock: i32, time: *mut [i64; 2]) -> i32; }
++    fn cpu() -> u64 { let mut t = [0i64; 2]; unsafe { clock_gettime(3, &mut t); } (t[0] as u64)*1_000_000_000 + t[1] as u64 }
++    pub(super) struct Timer { tag: usize, wall: Instant, cpu: u64 }
++    pub(super) fn timer(tag: usize) -> Timer { Timer { tag, wall: Instant::now(), cpu: cpu() } }
++    impl Drop for Timer { fn drop(&mut self) { WALL[self.tag].fetch_add(self.wall.elapsed().as_nanos() as u64, Relaxed); CPU[self.tag].fetch_add(cpu()-self.cpu, Relaxed); CALLS[self.tag].fetch_add(1, Relaxed); } }
++    static COUNTS: [AtomicU64; 16] = [const { AtomicU64::new(0) }; 16];
++    pub(super) fn counts(values: [u64; 16]) { for (i, v) in values.into_iter().enumerate() { COUNTS[i].fetch_add(v, Relaxed); } }
++    pub(super) fn report() { eprintln!("BPE_WORK {}", serde_json::json!({"counters": COUNTS.iter().map(|x|x.load(Relaxed)).collect::<Vec<_>>() })); let names = ["commit_route", "commit_owner_join", "commit_global_publish", "owner_actions", "owner_sort", "owner_reduce_publish", "prepare_setup", "prepare_scan", "prepare_finish", "main_owner_group", "main_owner_counts", "main_completed_publish", "main_owner_reduce", "unused13", "unused14", "unused15", "unused16", "unused17", "unused18", "unused19"]; for i in 0..20 { if CALLS[i].load(Relaxed)>0 { eprintln!("BPE_FINE {}", serde_json::json!({"phase": names[i], "wall_seconds_sum":WALL[i].load(Relaxed) as f64/1e9, "thread_cpu_seconds_sum":CPU[i].load(Relaxed) as f64/1e9, "calls":CALLS[i].load(Relaxed)})); } } }
++}
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/pair_index/commit.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/pair_index/commit.rs
+@@ -1,6 +1,7 @@
+ //! Owner-local commit after corpus writes join.
+ //! Stable birth grouping precedes ordered counts, completed-birth publication,
+ //! and reduction/encoding of routed births. All owners join before event release.
++use super::super::fine_diag as fd;
+ use super::super::{
+     execution::Execution,
+     merge::{ChangeAction as Action, CompletedBirth, EventChunk, MergeEvents, OwnerRoute},
+@@ -35,6 +36,7 @@
+         arena: &'arena AllocationArena,
+         births: Vec<CompletedBirth<'arena>>,
+     ) -> Result<()> {
++        let route_timer = fd::timer(0);
+         let policy = self.policy;
+         let floor = self.minimum_frequency.max(1);
+         let router = ShardRouter::new(self.shards.len());
+@@ -47,10 +49,16 @@
+         for births in &mut self.prepared_births {
+             births.clear();
+         }
++        let mut totals = [0u64; 16];
++        totals[10] = births.len() as u64;
+         for birth in births {
++            totals[11] += birth.positions.len() as u64;
+             self.prepared_births[router.owner(birth.key)].push(birth);
+         }
+-
++        fd::counts(totals);
++
++        drop(route_timer);
++        let owner_timer = fd::timer(1);
+         let result = self
+             .shards
+             .par_iter_mut()
+@@ -65,9 +73,20 @@
+                     // PERF: Stable grouping by rule/direction lets each bucket
+                     // reuse one neighbor directory instead of per-pair hash tables.
+                     // It stays before worker leases and ordered count actions.
++                    let mut totals = [0u64; 16];
++                    totals[12] = route.changes.len() as u64;
++                    totals[13] = route.births.len() as u64;
++                    fd::counts(totals);
++                    let group_timer = fd::timer(9);
+                     route.group_births(events);
++                    drop(group_timer);
++                    let count_timer = fd::timer(10);
+                     shard.apply_ordered_counts(route, events, policy, floor)?;
++                    drop(count_timer);
++                    let completed_timer = fd::timer(11);
+                     shard.publish_completed_births(prepared, policy);
++                    drop(completed_timer);
++                    let _reduce_timer = fd::timer(12);
+                     shard.reduce_encode_and_publish_births(
+                         route, events, identities, execution, arena, policy, floor,
+                     )
+@@ -75,6 +94,8 @@
+             )
+             .collect::<Result<Vec<_>>>();
+ 
++        drop(owner_timer);
++        let _publish_timer = fd::timer(2);
+         // Routes contain numeric references only. Drop them after all owner jobs
+         // have joined, including on error, while retaining their vector capacity.
+         for route in &mut self.routes {

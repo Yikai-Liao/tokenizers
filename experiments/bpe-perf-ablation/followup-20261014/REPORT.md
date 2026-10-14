@@ -158,6 +158,8 @@ Vec→Box 在 capacity 大于 len 时先收缩，可能请求 realloc；这项�
 
 同一二进制、仅替换 native allocator 的 12 次训练结果见 [mimalloc 对照](mimalloc/README.md)。旧 buffer 版配对 wall 下降约 12.8%，current 约 5.1%，main 约 5.9%；current 与 main 的绝对差距基本未缩小。
 
+按用户要求另做了 main Arena 消融：只移除 Arena 后端，保留 system/mimalloc 两种 allocator 对照。system allocator 下训练中位数增加 2.41 s，mimalloc 下无可测差异；退役阶段从 0.07 s 增至 1.19 s。完整方法、补丁和阶段数据见 [main Arena 消融](main-arena/README.md)。
+
 ## 后续修订的设计条件
 
 目前对 current 的建议是进一步减少已量出的实际工作，不能将诊断控制、TLS 原型或旧 main 的机制直接叠进生产实现。

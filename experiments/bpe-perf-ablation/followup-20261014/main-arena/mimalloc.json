@@ -1,0 +1,6 @@
+{
+  "version": "3.0.1+ds-2.1",
+  "library_sha256": "abd5c496e7c699ae3baa53f99497d56b28ffadf255269524d17d898cb18befce",
+  "loaded": "LD_PRELOAD only for mimalloc arms; actual mappings verified for all timed processes; ELF symbol resolution separately verified",
+  "timed_executable_unchanged": true
+}

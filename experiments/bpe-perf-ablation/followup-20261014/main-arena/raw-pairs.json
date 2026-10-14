@@ -1,0 +1,434 @@
+[
+  {
+    "label": "old-allocator-detail-zh4",
+    "arm": "main-detail",
+    "repeat": 0,
+    "workers": 4,
+    "metrics": {
+      "load_seconds": 9.137711031,
+      "process_hwm_kib_before_validation": 2762824,
+      "train_cpu_seconds": 53.865352,
+      "train_seconds": 16.208724892
+    },
+    "model_equal": true,
+    "model_sha256": "db1ddf02659346f3e096fc1d4f706c822993e8ac942a97ac836a974f97c49670",
+    "binary_sha256": "a53aa56aba3cf3901b247beae83102dfae6c907a16fcebada54176a74ffa168f",
+    "allocator": "system",
+    "mimalloc_mapped": false,
+    "max_swap_kib": 0
+  },
+  {
+    "label": "old-allocator-detail-zh4",
+    "arm": "main-detail-mimalloc",
+    "repeat": 0,
+    "workers": 4,
+    "metrics": {
+      "load_seconds": 7.817666183,
+      "process_hwm_kib_before_validation": 3875600,
+      "train_cpu_seconds": 49.645955,
+      "train_seconds": 15.925634007
+    },
+    "model_equal": true,
+    "model_sha256": "db1ddf02659346f3e096fc1d4f706c822993e8ac942a97ac836a974f97c49670",
+    "binary_sha256": "a53aa56aba3cf3901b247beae83102dfae6c907a16fcebada54176a74ffa168f",
+    "allocator": "mimalloc-3.0.1+ds-2.1",
+    "mimalloc_mapped": true,
+    "max_swap_kib": 0
+  },
+  {
+    "label": "old-allocator-detail-zh4",
+    "arm": "history-buffer-detail",
+    "repeat": 0,
+    "workers": 4,
+    "metrics": {
+      "load_seconds": 8.771314018,
+      "process_hwm_kib_before_validation": 2984240,
+      "train_cpu_seconds": 76.461435,
+      "train_seconds": 24.430963236
+    },
+    "model_equal": true,
+    "model_sha256": "db1ddf02659346f3e096fc1d4f706c822993e8ac942a97ac836a974f97c49670",
+    "binary_sha256": "e34e919cf46aa78eb48849d6a2dd91682ecefdf559b419284c609d83be3a884a",
+    "allocator": "system",
+    "mimalloc_mapped": false,
+    "max_swap_kib": 0
+  },
+  {
+    "label": "old-allocator-detail-zh4",
+    "arm": "history-buffer-detail-mimalloc",
+    "repeat": 0,
+    "workers": 4,
+    "metrics": {
+      "load_seconds": 8.230910246,
+      "process_hwm_kib_before_validation": 3901996,
+      "train_cpu_seconds": 62.745335,
+      "train_seconds": 20.100580798
+    },
+    "model_equal": true,
+    "model_sha256": "db1ddf02659346f3e096fc1d4f706c822993e8ac942a97ac836a974f97c49670",
+    "binary_sha256": "e34e919cf46aa78eb48849d6a2dd91682ecefdf559b419284c609d83be3a884a",
+    "allocator": "mimalloc-3.0.1+ds-2.1",
+    "mimalloc_mapped": true,
+    "max_swap_kib": 0
+  },
+  {
+    "label": "old-allocator-detail-zh4",
+    "arm": "history-buffer-detail-mimalloc",
+    "repeat": 1,
+    "workers": 4,
+    "metrics": {
+      "load_seconds": 7.907081217,
+      "process_hwm_kib_before_validation": 3889180,
+      "train_cpu_seconds": 63.269162,
+      "train_seconds": 19.745620032
+    },
+    "model_equal": true,
+    "model_sha256": "db1ddf02659346f3e096fc1d4f706c822993e8ac942a97ac836a974f97c49670",
+    "binary_sha256": "e34e919cf46aa78eb48849d6a2dd91682ecefdf559b419284c609d83be3a884a",
+    "allocator": "mimalloc-3.0.1+ds-2.1",
+    "mimalloc_mapped": true,
+    "max_swap_kib": 0
+  },
+  {
+    "label": "old-allocator-detail-zh4",
+    "arm": "history-buffer-detail",
+    "repeat": 1,
+    "workers": 4,
+    "metrics": {
+      "load_seconds": 8.844773168,
+      "process_hwm_kib_before_validation": 2896300,
+      "train_cpu_seconds": 76.236755,
+      "train_seconds": 24.810117997
+    },
+    "model_equal": true,
+    "model_sha256": "db1ddf02659346f3e096fc1d4f706c822993e8ac942a97ac836a974f97c49670",
+    "binary_sha256": "e34e919cf46aa78eb48849d6a2dd91682ecefdf559b419284c609d83be3a884a",
+    "allocator": "system",
+    "mimalloc_mapped": false,
+    "max_swap_kib": 0
+  },
+  {
+    "label": "old-allocator-detail-zh4",
+    "arm": "main-detail-mimalloc",
+    "repeat": 1,
+    "workers": 4,
+    "metrics": {
+      "load_seconds": 8.223072881,
+      "process_hwm_kib_before_validation": 3829580,
+      "train_cpu_seconds": 49.600706,
+      "train_seconds": 14.899041819
+    },
+    "model_equal": true,
+    "model_sha256": "db1ddf02659346f3e096fc1d4f706c822993e8ac942a97ac836a974f97c49670",
+    "binary_sha256": "a53aa56aba3cf3901b247beae83102dfae6c907a16fcebada54176a74ffa168f",
+    "allocator": "mimalloc-3.0.1+ds-2.1",
+    "mimalloc_mapped": true,
+    "max_swap_kib": 0
+  },
+  {
+    "label": "old-allocator-detail-zh4",
+    "arm": "main-detail",
+    "repeat": 1,
+    "workers": 4,
+    "metrics": {
+      "load_seconds": 8.915552781,
+      "process_hwm_kib_before_validation": 2737308,
+      "train_cpu_seconds": 56.194920999999994,
+      "train_seconds": 17.139706031
+    },
+    "model_equal": true,
+    "model_sha256": "db1ddf02659346f3e096fc1d4f706c822993e8ac942a97ac836a974f97c49670",
+    "binary_sha256": "a53aa56aba3cf3901b247beae83102dfae6c907a16fcebada54176a74ffa168f",
+    "allocator": "system",
+    "mimalloc_mapped": false,
+    "max_swap_kib": 0
+  },
+  {
+    "label": "plain-main-arena-zh4",
+    "arm": "main",
+    "repeat": 0,
+    "workers": 4,
+    "metrics": {
+      "load_seconds": 9.252843611,
+      "process_hwm_kib_before_validation": 2807708,
+      "train_cpu_seconds": 53.655234,
+      "train_seconds": 16.51830179
+    },
+    "model_equal": true,
+    "model_sha256": "db1ddf02659346f3e096fc1d4f706c822993e8ac942a97ac836a974f97c49670",
+    "binary_sha256": "f3bccd15ca8957c47225b30ce5b7dd6b5de5208136ddb47053add9d2715222fb",
+    "allocator": "system",
+    "mimalloc_mapped": false,
+    "max_swap_kib": 0
+  },
+  {
+    "label": "plain-main-arena-zh4",
+    "arm": "main-mimalloc",
+    "repeat": 0,
+    "workers": 4,
+    "metrics": {
+      "load_seconds": 7.6235277329999995,
+      "process_hwm_kib_before_validation": 3902720,
+      "train_cpu_seconds": 47.507103,
+      "train_seconds": 14.556001485
+    },
+    "model_equal": true,
+    "model_sha256": "db1ddf02659346f3e096fc1d4f706c822993e8ac942a97ac836a974f97c49670",
+    "binary_sha256": "f3bccd15ca8957c47225b30ce5b7dd6b5de5208136ddb47053add9d2715222fb",
+    "allocator": "mimalloc-3.0.1+ds-2.1",
+    "mimalloc_mapped": true,
+    "max_swap_kib": 0
+  },
+  {
+    "label": "plain-main-arena-zh4",
+    "arm": "main-no-arena",
+    "repeat": 0,
+    "workers": 4,
+    "metrics": {
+      "load_seconds": 8.817788444,
+      "process_hwm_kib_before_validation": 2547476,
+      "train_cpu_seconds": 55.049293999999996,
+      "train_seconds": 17.913267492
+    },
+    "model_equal": true,
+    "model_sha256": "db1ddf02659346f3e096fc1d4f706c822993e8ac942a97ac836a974f97c49670",
+    "binary_sha256": "29ec861008b38f89e36f0a7279bb2cc9a202de34bbf7ec1d1aff521048e22d8b",
+    "allocator": "system",
+    "mimalloc_mapped": false,
+    "max_swap_kib": 0
+  },
+  {
+    "label": "plain-main-arena-zh4",
+    "arm": "main-no-arena-mimalloc",
+    "repeat": 0,
+    "workers": 4,
+    "metrics": {
+      "load_seconds": 8.242444215,
+      "process_hwm_kib_before_validation": 3863056,
+      "train_cpu_seconds": 47.822109,
+      "train_seconds": 14.78092764
+    },
+    "model_equal": true,
+    "model_sha256": "db1ddf02659346f3e096fc1d4f706c822993e8ac942a97ac836a974f97c49670",
+    "binary_sha256": "29ec861008b38f89e36f0a7279bb2cc9a202de34bbf7ec1d1aff521048e22d8b",
+    "allocator": "mimalloc-3.0.1+ds-2.1",
+    "mimalloc_mapped": true,
+    "max_swap_kib": 0
+  },
+  {
+    "label": "plain-main-arena-zh4",
+    "arm": "main-no-arena-mimalloc",
+    "repeat": 1,
+    "workers": 4,
+    "metrics": {
+      "load_seconds": 7.74062455,
+      "process_hwm_kib_before_validation": 3681520,
+      "train_cpu_seconds": 46.587347,
+      "train_seconds": 14.077960644
+    },
+    "model_equal": true,
+    "model_sha256": "db1ddf02659346f3e096fc1d4f706c822993e8ac942a97ac836a974f97c49670",
+    "binary_sha256": "29ec861008b38f89e36f0a7279bb2cc9a202de34bbf7ec1d1aff521048e22d8b",
+    "allocator": "mimalloc-3.0.1+ds-2.1",
+    "mimalloc_mapped": true,
+    "max_swap_kib": 0
+  },
+  {
+    "label": "plain-main-arena-zh4",
+    "arm": "main-no-arena",
+    "repeat": 1,
+    "workers": 4,
+    "metrics": {
+      "load_seconds": 8.574922996,
+      "process_hwm_kib_before_validation": 2502044,
+      "train_cpu_seconds": 57.171465,
+      "train_seconds": 18.935380933
+    },
+    "model_equal": true,
+    "model_sha256": "db1ddf02659346f3e096fc1d4f706c822993e8ac942a97ac836a974f97c49670",
+    "binary_sha256": "29ec861008b38f89e36f0a7279bb2cc9a202de34bbf7ec1d1aff521048e22d8b",
+    "allocator": "system",
+    "mimalloc_mapped": false,
+    "max_swap_kib": 0
+  },
+  {
+    "label": "plain-main-arena-zh4",
+    "arm": "main-mimalloc",
+    "repeat": 1,
+    "workers": 4,
+    "metrics": {
+      "load_seconds": 7.585911576,
+      "process_hwm_kib_before_validation": 3809496,
+      "train_cpu_seconds": 47.209386,
+      "train_seconds": 14.331781319
+    },
+    "model_equal": true,
+    "model_sha256": "db1ddf02659346f3e096fc1d4f706c822993e8ac942a97ac836a974f97c49670",
+    "binary_sha256": "f3bccd15ca8957c47225b30ce5b7dd6b5de5208136ddb47053add9d2715222fb",
+    "allocator": "mimalloc-3.0.1+ds-2.1",
+    "mimalloc_mapped": true,
+    "max_swap_kib": 0
+  },
+  {
+    "label": "plain-main-arena-zh4",
+    "arm": "main",
+    "repeat": 1,
+    "workers": 4,
+    "metrics": {
+      "load_seconds": 9.112585862,
+      "process_hwm_kib_before_validation": 2768216,
+      "train_cpu_seconds": 52.297957000000004,
+      "train_seconds": 15.502253644
+    },
+    "model_equal": true,
+    "model_sha256": "db1ddf02659346f3e096fc1d4f706c822993e8ac942a97ac836a974f97c49670",
+    "binary_sha256": "f3bccd15ca8957c47225b30ce5b7dd6b5de5208136ddb47053add9d2715222fb",
+    "allocator": "system",
+    "mimalloc_mapped": false,
+    "max_swap_kib": 0
+  },
+  {
+    "label": "fine-main-arena-zh4",
+    "arm": "main-detail",
+    "repeat": 0,
+    "workers": 4,
+    "metrics": {
+      "load_seconds": 8.883508731,
+      "process_hwm_kib_before_validation": 2749332,
+      "train_cpu_seconds": 53.231638,
+      "train_seconds": 16.972495793
+    },
+    "model_equal": true,
+    "model_sha256": "db1ddf02659346f3e096fc1d4f706c822993e8ac942a97ac836a974f97c49670",
+    "binary_sha256": "a53aa56aba3cf3901b247beae83102dfae6c907a16fcebada54176a74ffa168f",
+    "allocator": "system",
+    "mimalloc_mapped": false,
+    "max_swap_kib": 0
+  },
+  {
+    "label": "fine-main-arena-zh4",
+    "arm": "main-detail-mimalloc",
+    "repeat": 0,
+    "workers": 4,
+    "metrics": {
+      "load_seconds": 7.862715148,
+      "process_hwm_kib_before_validation": 3893532,
+      "train_cpu_seconds": 49.649539999999995,
+      "train_seconds": 15.24280984
+    },
+    "model_equal": true,
+    "model_sha256": "db1ddf02659346f3e096fc1d4f706c822993e8ac942a97ac836a974f97c49670",
+    "binary_sha256": "a53aa56aba3cf3901b247beae83102dfae6c907a16fcebada54176a74ffa168f",
+    "allocator": "mimalloc-3.0.1+ds-2.1",
+    "mimalloc_mapped": true,
+    "max_swap_kib": 0
+  },
+  {
+    "label": "fine-main-arena-zh4",
+    "arm": "main-no-arena-detail",
+    "repeat": 0,
+    "workers": 4,
+    "metrics": {
+      "load_seconds": 8.654823974,
+      "process_hwm_kib_before_validation": 2551432,
+      "train_cpu_seconds": 57.45432199999999,
+      "train_seconds": 18.63654401
+    },
+    "model_equal": true,
+    "model_sha256": "db1ddf02659346f3e096fc1d4f706c822993e8ac942a97ac836a974f97c49670",
+    "binary_sha256": "af0200ae2da88d6357fdd5ac06473d0428255d748f96916a07606d59b02b1a54",
+    "allocator": "system",
+    "mimalloc_mapped": false,
+    "max_swap_kib": 0
+  },
+  {
+    "label": "fine-main-arena-zh4",
+    "arm": "main-no-arena-detail-mimalloc",
+    "repeat": 0,
+    "workers": 4,
+    "metrics": {
+      "load_seconds": 8.241755215,
+      "process_hwm_kib_before_validation": 3766080,
+      "train_cpu_seconds": 49.176615999999996,
+      "train_seconds": 15.136471095
+    },
+    "model_equal": true,
+    "model_sha256": "db1ddf02659346f3e096fc1d4f706c822993e8ac942a97ac836a974f97c49670",
+    "binary_sha256": "af0200ae2da88d6357fdd5ac06473d0428255d748f96916a07606d59b02b1a54",
+    "allocator": "mimalloc-3.0.1+ds-2.1",
+    "mimalloc_mapped": true,
+    "max_swap_kib": 0
+  },
+  {
+    "label": "fine-main-arena-zh4",
+    "arm": "main-no-arena-detail-mimalloc",
+    "repeat": 1,
+    "workers": 4,
+    "metrics": {
+      "load_seconds": 7.751153973,
+      "process_hwm_kib_before_validation": 3738104,
+      "train_cpu_seconds": 48.277634,
+      "train_seconds": 14.691497545
+    },
+    "model_equal": true,
+    "model_sha256": "db1ddf02659346f3e096fc1d4f706c822993e8ac942a97ac836a974f97c49670",
+    "binary_sha256": "af0200ae2da88d6357fdd5ac06473d0428255d748f96916a07606d59b02b1a54",
+    "allocator": "mimalloc-3.0.1+ds-2.1",
+    "mimalloc_mapped": true,
+    "max_swap_kib": 0
+  },
+  {
+    "label": "fine-main-arena-zh4",
+    "arm": "main-no-arena-detail",
+    "repeat": 1,
+    "workers": 4,
+    "metrics": {
+      "load_seconds": 8.628973125,
+      "process_hwm_kib_before_validation": 2529316,
+      "train_cpu_seconds": 57.150879,
+      "train_seconds": 18.448911682
+    },
+    "model_equal": true,
+    "model_sha256": "db1ddf02659346f3e096fc1d4f706c822993e8ac942a97ac836a974f97c49670",
+    "binary_sha256": "af0200ae2da88d6357fdd5ac06473d0428255d748f96916a07606d59b02b1a54",
+    "allocator": "system",
+    "mimalloc_mapped": false,
+    "max_swap_kib": 0
+  },
+  {
+    "label": "fine-main-arena-zh4",
+    "arm": "main-detail-mimalloc",
+    "repeat": 1,
+    "workers": 4,
+    "metrics": {
+      "load_seconds": 8.497654073,
+      "process_hwm_kib_before_validation": 4005108,
+      "train_cpu_seconds": 48.815293,
+      "train_seconds": 14.635484588
+    },
+    "model_equal": true,
+    "model_sha256": "db1ddf02659346f3e096fc1d4f706c822993e8ac942a97ac836a974f97c49670",
+    "binary_sha256": "a53aa56aba3cf3901b247beae83102dfae6c907a16fcebada54176a74ffa168f",
+    "allocator": "mimalloc-3.0.1+ds-2.1",
+    "mimalloc_mapped": true,
+    "max_swap_kib": 0
+  },
+  {
+    "label": "fine-main-arena-zh4",
+    "arm": "main-detail",
+    "repeat": 1,
+    "workers": 4,
+    "metrics": {
+      "load_seconds": 9.014159169,
+      "process_hwm_kib_before_validation": 2748912,
+      "train_cpu_seconds": 53.401503,
+      "train_seconds": 16.186499033
+    },
+    "model_equal": true,
+    "model_sha256": "db1ddf02659346f3e096fc1d4f706c822993e8ac942a97ac836a974f97c49670",
+    "binary_sha256": "a53aa56aba3cf3901b247beae83102dfae6c907a16fcebada54176a74ffa168f",
+    "allocator": "system",
+    "mimalloc_mapped": false,
+    "max_swap_kib": 0
+  }
+]

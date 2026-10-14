@@ -1,0 +1,35 @@
+{
+  "base_sha": "e4f787dc189d9be7192107490d652096cde7480e",
+  "change": "Replace AllocationArena backend with a stateless lease returning None; use existing individually-owned allocation and Drop. All other source files byte-identical. Same 16-byte descriptor, codec, buffers, scratch and merge/commit algorithms.",
+  "variants": [
+    {
+      "name": "main-no-arena",
+      "base": "main",
+      "changed_files": [
+        "tokenizers/tk-train/src/trainers/bpe/engine/storage/arena.rs"
+      ],
+      "lock_sha256": "7d2596e50bcea112b717cde348db837e98f6d8c5fd306287439100752c33e137",
+      "arena_sha256": "26308b6970d3af789716ce3443aaeb256bfbab7e5a8535b80a100e7977f5ce36",
+      "test_only_changes": [
+        "tokenizers/tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs"
+      ],
+      "test_adaptation": "Only the Arena ownership-tag assertion expects independently owned storage; parallel reads and all value checks retained.",
+      "binary_sha256": "29ec861008b38f89e36f0a7279bb2cc9a202de34bbf7ec1d1aff521048e22d8b"
+    },
+    {
+      "name": "main-no-arena-detail",
+      "base": "main-detail",
+      "changed_files": [
+        "tokenizers/tk-train/src/trainers/bpe/engine/storage/arena.rs"
+      ],
+      "lock_sha256": "7d2596e50bcea112b717cde348db837e98f6d8c5fd306287439100752c33e137",
+      "arena_sha256": "26308b6970d3af789716ce3443aaeb256bfbab7e5a8535b80a100e7977f5ce36",
+      "test_only_changes": [
+        "tokenizers/tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs"
+      ],
+      "test_adaptation": "Only the Arena ownership-tag assertion expects independently owned storage; parallel reads and all value checks retained.",
+      "binary_sha256": "af0200ae2da88d6357fdd5ac06473d0428255d748f96916a07606d59b02b1a54"
+    }
+  ],
+  "test_result": "94 selected ordinary BPE tests passed; 7 unrelated filtered."
+}
