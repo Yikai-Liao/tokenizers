@@ -1,0 +1,12 @@
+{
+  "history-online": {
+    "commit": "177302e2873649deb8c11d8be371f2710e44ed8f",
+    "archive_sha256": "c3d88e4477f125cafbf0a9f68fc3ae198deb32b01aa72996cb1c78b67a58ba45",
+    "production_edits": false
+  },
+  "history-owned": {
+    "commit": "1396e736644db06ed2b7168fc6bebe9183afd7dc",
+    "archive_sha256": "a2033d3bc45bec11a8c81ab9ef0b1830f1dfa9e94890f7735a3f33200b76726f",
+    "production_edits": false
+  }
+}

@@ -1,0 +1,14 @@
+diff --git a/tokenizers/tk-train/src/trainers/bpe/index.rs b/tokenizers/tk-train/src/trainers/bpe/index.rs
+index 29eb416..d4ff9d2 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/index.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/index.rs
+@@ -126,7 +126,8 @@ fn owner(pair: Pair, shard_count: usize) -> usize {
+     const HASHER: ahash::RandomState = ahash::RandomState::with_seeds(0, 0, 0, 0);
+     // Modulo selects exactly one owner in 0..shard_count; the fixed nonzero
+     // shard count also bounds the result before conversion to resident indexing.
+-    (HASHER.hash_one(pair) % shard_count as u64) as usize
++    let hash=HASHER.hash_one(pair);
++    if shard_count.is_power_of_two() {hash as usize & (shard_count-1)} else {(hash % shard_count as u64) as usize}
+ }
+ 
+ fn adjust_signed(count: &mut u64, amount: u64, remove: bool) -> Result<()> {

@@ -2,6 +2,8 @@
 
 Base/control: `36c819c5`. This diagnostic branch publishes independent experiment trees in consecutive commits. Use the named commit for each experiment, rather than assuming later commits combine earlier changes.
 
+Historical commit replays, detailed phase/CPU counters, allocation diagnostics, training-gated perf and later negative controls are recorded in [the follow-up report](followup-20261014/REPORT.md). The follow-up adds evidence and isolated observer patches; it does not adopt the grouping prototype or change production Rust. The named experiment commits below remain independent source trees.
+
 Commit `20fdfc0a` (scratch reuse) changes only `NeighborScratch` lifetime: cache the two numeric directories on their executing thread between joined preparation rounds. Pool entry, initial indexing, position encoding, commit and selection keep their control behavior. The cache intentionally survives a training call; it contains numeric lookup entries, not corpus references. This is a diagnostic prototype, not a production lifetime design.
 
 Measure the same frozen Chinese ByteLevel input, vocabulary 100000, min_frequency 2, workers 1/4 locally or 8 on the fixed-frequency host. Compare each variant to the base/control using three paired blocks and identical compiler, features, release flags and CPU affinity. Check complete vocabulary IDs and ordered merges; keep model serialization outside train timing. Record train wall/CPU and preparation+commit separately and combined. Compare real work counters in a separate diagnostic run to avoid perturbing formal timing.

@@ -1,0 +1,236 @@
+diff --git a/tokenizers/tk-train/src/trainers/bpe/index.rs b/tokenizers/tk-train/src/trainers/bpe/index.rs
+index 7fcb3e0..9bfcb46 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/index.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/index.rs
+@@ -1,4 +1,5 @@
+ //! Count owners publish complete lists; the queue repairs stale snapshots lazily.
++use super::fine_diag as fd;
+ use super::merge::{Birth, Change};
+ use super::{WORD_SEPARATOR_ID, add, corpus::CorpusPlan, positions::Positions};
+ use ahash::AHashMap;
+@@ -182,11 +183,14 @@ impl PairIndex {
+ 
+     pub(super) fn commit(&mut self, changes: Vec<Vec<Change<Birth>>>) -> Result<()> {
+         // 1. Route each removal and birth to its count owner.
++        let route_timer = fd::timer(0);
+         let events = self.route_changes(changes);
++        drop(route_timer);
+ 
+         // 2. Apply owner-local actions and encode their birth cohorts in parallel.
+         let reuse = self.reuse;
+         let floor = self.floor;
++        let owner_timer = fd::timer(1);
+         let births = self
+             .shards
+             .par_iter_mut()
+@@ -194,6 +198,8 @@ impl PairIndex {
+             .map(|shard| shard.commit(&events, reuse, floor))
+             .collect::<Result<Vec<_>>>()?;
+ 
++        drop(owner_timer);
++        let _publish_timer = fd::timer(2);
+         // 3. Publish only after all owners join, in the same owner traversal order.
+         for candidate in births.into_iter().flatten() {
+             self.queue.push(candidate);
+@@ -352,6 +358,7 @@ impl Shard {
+     }
+ 
+     fn commit(&mut self, events: &[Event], reuse: bool, floor: u64) -> Result<Vec<Candidate>> {
++        let action_timer = fd::timer(3);
+         let mut groups = BTreeMap::<(usize, Pair), State<SmallVec<[u64; 2]>>>::new();
+         let mut candidates = Vec::new();
+         // Both drains own their remaining items: errors drop unpublished births
+@@ -411,6 +418,8 @@ impl Shard {
+             }
+         }
+ 
++        drop(action_timer);
++        let _reduce_timer = fd::timer(5);
+         // Complete producers precede partial groups, which follow bucket/pair order.
+         for ((_, pair), mut state) in groups {
+             let count = if reuse {
+diff --git a/tokenizers/tk-train/src/trainers/bpe/merge.rs b/tokenizers/tk-train/src/trainers/bpe/merge.rs
+index dff4019..feb87cc 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/merge.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/merge.rs
+@@ -1,4 +1,5 @@
+ //! Select compatible rules and complete each batch with joined parallel phases.
++use super::fine_diag as fd;
+ use super::{
+     BpeTrainer, WORD_SEPARATOR_ID, add,
+     corpus::{Corpus, Match},
+@@ -44,6 +45,7 @@ impl BpeTrainer {
+         corpus: &mut Corpus,
+         index: &mut PairIndex,
+     ) -> Result<MergeOutcome> {
++        let select_timer = fd::timer(18);
+         let reuse = index.reuse();
+         let mut batch = Batch {
+             rules: Vec::new(),
+@@ -113,7 +115,11 @@ impl BpeTrainer {
+                 replacement: rule.replacement,
+             })
+             .collect();
++        drop(select_timer);
++        let prepare_timer = fd::timer(19);
+         let jobs = batch.prepare(corpus, self.max_token_length.unwrap_or(usize::MAX))?;
++        drop(prepare_timer);
++        let apply_timer = fd::timer(9);
+         let changes = jobs
+             .into_par_iter()
+             .map(|job| {
+@@ -121,7 +127,10 @@ impl BpeTrainer {
+                 job.changes
+             })
+             .collect();
++        drop(apply_timer);
++        let commit_timer = fd::timer(10);
+         index.commit(changes)?;
++        drop(commit_timer);
+         Ok(MergeOutcome::Committed(records))
+     }
+ }
+@@ -283,10 +292,16 @@ impl<'a> Neighbors<'a> {
+         // Complete ordinary producers prune and encode before owner routing.
+         // Partial jobs retain raw positions until their counts have been reduced.
+         let mut result = Vec::new();
++        let mut totals = [0u64; 16];
+         // Left changes precede right changes. Reuse count actions and the resulting
+         // historical cohorts observe this order even when both sides name one key.
+         for mut change in self.changes.into_iter().flatten() {
++            totals[0] += 1;
++            let n = change.positions.len() as u64;
++            totals[1] += n; totals[2] += u64::from(n == 1); totals[3] += u64::from(n == 2); totals[4] += u64::from(n > 2);
+             if self.complete && change.born_weight < floor {
++                totals[6] += u64::from(!change.positions.is_empty());
++                totals[7] += change.positions.len() as u64;
+                 change.positions = SmallVec::new();
+                 change.born_weight = 0;
+             }
+@@ -294,7 +309,7 @@ impl<'a> Neighbors<'a> {
+                 continue;
+             }
+             let positions = if self.complete {
+-                Birth::Complete(Positions::from_sorted(&change.positions)?)
++                { totals[8] += u64::from(!change.positions.is_empty()); totals[9] += change.positions.len() as u64; Birth::Complete(Positions::from_sorted(&change.positions)?) }
+             } else {
+                 Birth::Partial(change.positions)
+             };
+@@ -307,6 +322,7 @@ impl<'a> Neighbors<'a> {
+                 positions,
+             });
+         }
++        fd::counts(totals);
+         Ok(result)
+     }
+ }
+@@ -446,6 +462,7 @@ impl<'a> FreshSnapshot<'a> {
+     ) -> Result<Job> {
+         #[cfg(test)]
+         super::tests::observe_worker(super::tests::Phase::FreshPrepare);
++        let setup_timer = fd::timer(6);
+         let rule = &self.batch.rules[rank];
+         directories.resize(self.corpus.id_count());
+         let mut neighbors = Neighbors::new(
+@@ -457,6 +474,8 @@ impl<'a> FreshSnapshot<'a> {
+         let mut starts = SmallVec::new();
+         let matcher = self.corpus.fresh_matcher(rule.pair());
+         let mut weights = None;
++        drop(setup_timer);
++        let scan_timer = fd::timer(7);
+         for p in positions.prefetched(&rule.candidate.positions, self.corpus) {
+             let Some(matched) = matcher(p, self.corpus.token(p)) else {
+                 continue;
+@@ -469,6 +488,8 @@ impl<'a> FreshSnapshot<'a> {
+             self.record_neighbors(&mut neighbors, matched, weight)?;
+             starts.push(matched.start);
+         }
++        drop(scan_timer);
++        let _finish_timer = fd::timer(8);
+         Ok(Job {
+             starts,
+             replacement: rule.replacement,
+diff --git a/tokenizers/tk-train/src/trainers/bpe/mod.rs b/tokenizers/tk-train/src/trainers/bpe/mod.rs
+index a0beb1e..89f89f0 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/mod.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/mod.rs
+@@ -342,7 +342,7 @@ impl BpeTrainer {
+                 complete @ AttemptOutcome::Complete(_) => complete,
+             };
+             match outcome {
+-                AttemptOutcome::Complete(result) => Ok(result),
++                AttemptOutcome::Complete(result) => { fine_diag::report(); Ok(result) },
+                 AttemptOutcome::RestartForReuse => Err(
+                     "BPE internal invariant violated: identity-reuse attempt requested another restart"
+                         .into(),
+@@ -360,8 +360,10 @@ impl BpeTrainer {
+         progress: &Option<ProgressBar>,
+     ) -> Result<AttemptOutcome> {
+         // 1. Resolve the vocabulary and tokenize borrowed input into a corpus plan.
++        let timer = fine_diag::timer(13);
+         let (mut vocabulary, ids) = Vocabulary::initialize(self, words, alphabet, progress)?;
+         let plan = CorpusPlan::build(words, ids, self, reuse)?;
++        drop(timer);
+         self.finalize_progress(progress, plan.word_count(), "Tokenize words");
+ 
+         // 2. Freeze initial pairs first: their temporary counting buffers retire
+@@ -371,7 +373,9 @@ impl BpeTrainer {
+         // zero-merge path never initializes or allocates this resident corpus.
+         let mut corpus: Corpus;
+         self.update_progress(progress, plan.word_count(), "Count pairs");
++        let timer = fine_diag::timer(14);
+         let mut index = PairIndex::build(&plan, self.min_frequency, workers, reuse, progress)?;
++        drop(timer);
+         self.finalize_progress(progress, plan.word_count(), "Count pairs");
+ 
+         let mut merges = Vec::new();
+@@ -380,7 +384,9 @@ impl BpeTrainer {
+         self.update_progress(progress, self.vocab_size, "Compute merges");
+         if vocabulary.len() < self.vocab_size {
+             // 3. Only attempts needing merges allocate resident endpoints.
++            let timer = fine_diag::timer(15);
+             corpus = plan.materialize();
++            drop(timer);
+             while vocabulary.len() < self.vocab_size {
+                 let records = match self.merge_next(&mut vocabulary, &mut corpus, &mut index)? {
+                     MergeOutcome::Finished => break,
+@@ -401,8 +407,10 @@ impl BpeTrainer {
+                 }
+                 self.emit_json_progress("Compute merges", merges.len(), self.vocab_size);
+             }
++            let timer = fine_diag::timer(16);
+             drop(index);
+             drop(corpus);
++            drop(timer);
+         } else {
+             drop(index);
+             drop(plan);
+@@ -411,7 +419,9 @@ impl BpeTrainer {
+         // 4. Large attempt storage is gone before output strings and the final
+         // vocabulary map are built, keeping their allocations from overlapping.
+         self.finalize_progress(progress, merges.len(), "Compute merges");
++        let timer = fine_diag::timer(17);
+         let (vocab, merges) = vocabulary.into_model_parts(merges);
++        drop(timer);
+         // Only success carries a trace out of the attempt. Errors and restart
+         // requests discard every speculative rule along with its local storage.
+         Ok(AttemptOutcome::Complete(TrainingResult {
+@@ -530,3 +540,18 @@ impl Trainer for BpeTrainer {
+         Ok(())
+     }
+ }
++
++mod fine_diag {
++    use std::{sync::atomic::{AtomicU64, Ordering::Relaxed}, time::Instant};
++    static WALL: [AtomicU64; 20] = [const { AtomicU64::new(0) }; 20];
++    static CPU: [AtomicU64; 20] = [const { AtomicU64::new(0) }; 20];
++    static CALLS: [AtomicU64; 20] = [const { AtomicU64::new(0) }; 20];
++    unsafe extern "C" { fn clock_gettime(clock: i32, time: *mut [i64; 2]) -> i32; }
++    fn cpu() -> u64 { let mut t = [0i64; 2]; unsafe { clock_gettime(3, &mut t); } (t[0] as u64)*1_000_000_000 + t[1] as u64 }
++    pub(super) struct Timer { tag: usize, wall: Instant, cpu: u64 }
++    pub(super) fn timer(tag: usize) -> Timer { Timer { tag, wall: Instant::now(), cpu: cpu() } }
++    impl Drop for Timer { fn drop(&mut self) { WALL[self.tag].fetch_add(self.wall.elapsed().as_nanos() as u64, Relaxed); CPU[self.tag].fetch_add(cpu()-self.cpu, Relaxed); CALLS[self.tag].fetch_add(1, Relaxed); } }
++    static COUNTS: [AtomicU64; 16] = [const { AtomicU64::new(0) }; 16];
++    pub(super) fn counts(values: [u64; 16]) { for (i, v) in values.into_iter().enumerate() { COUNTS[i].fetch_add(v, Relaxed); } }
++    pub(super) fn report() { eprintln!("BPE_WORK {}", serde_json::json!({"counters": COUNTS.iter().map(|x|x.load(Relaxed)).collect::<Vec<_>>() })); let names = ["commit_route", "commit_owner_join", "commit_global_publish", "owner_actions", "owner_sort", "owner_reduce_publish", "prepare_setup", "prepare_scan", "prepare_finish", "apply_total", "commit_total", "main_completed_publish", "main_owner_reduce", "vocabulary_plan", "initial_count", "materialize", "retire", "output", "select", "prepare_total"]; for i in 0..20 { if CALLS[i].load(Relaxed)>0 { eprintln!("BPE_FINE {}", serde_json::json!({"phase": names[i], "wall_seconds_sum":WALL[i].load(Relaxed) as f64/1e9, "thread_cpu_seconds_sum":CPU[i].load(Relaxed) as f64/1e9, "calls":CALLS[i].load(Relaxed)})); } } }
++}

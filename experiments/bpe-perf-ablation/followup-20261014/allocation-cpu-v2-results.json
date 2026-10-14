@@ -1,0 +1,4628 @@
+[
+  {
+    "arm": "main-allocation-cpu-v2",
+    "repeat": 0,
+    "metrics": {
+      "load_seconds": 9.800681588,
+      "process_hwm_kib_before_validation": 2759300,
+      "train_cpu_seconds": 51.748408999999995,
+      "train_seconds": 15.725615059
+    },
+    "model_equal": true,
+    "max_swap_kib": 0,
+    "binary_sha256": "454eb938487f30ba8ab7013f38dec602650d025a7cdc0d286e2e42d007ef88a5",
+    "phases": {
+      "vocabulary": {
+        "raw_cpu_seconds": 0.0,
+        "corrected_cpu_seconds": 0.0,
+        "operations": {
+          "alloc": {
+            "calls": 9,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          },
+          "alloc_zeroed": {
+            "calls": 7,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          },
+          "realloc": {
+            "calls": 5,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          },
+          "dealloc": {
+            "calls": 8,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          }
+        }
+      },
+      "plan": {
+        "raw_cpu_seconds": 0.0,
+        "corrected_cpu_seconds": 0.0,
+        "operations": {
+          "alloc": {
+            "calls": 7,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          },
+          "realloc": {
+            "calls": 18,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          },
+          "dealloc": {
+            "calls": 2,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          }
+        }
+      },
+      "initial_count": {
+        "raw_cpu_seconds": 0.08531169666666666,
+        "corrected_cpu_seconds": 0.0792486635777778,
+        "operations": {
+          "alloc": {
+            "calls": 5533,
+            "samples": 38,
+            "raw_seconds": 0.054250086666666655,
+            "corrected_seconds": 0.048293549577777775,
+            "max_sample_cpu_ns": 29700
+          },
+          "alloc_zeroed": {
+            "calls": 8,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          },
+          "realloc": {
+            "calls": 189,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          },
+          "dealloc": {
+            "calls": 132,
+            "samples": 3,
+            "raw_seconds": 0.03106161,
+            "corrected_seconds": 0.030955114,
+            "max_sample_cpu_ns": 1067128
+          }
+        }
+      },
+      "materialize": {
+        "raw_cpu_seconds": 0.0,
+        "corrected_cpu_seconds": 0.0,
+        "operations": {
+          "alloc": {
+            "calls": 3,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          },
+          "realloc": {
+            "calls": 3,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          },
+          "dealloc": {
+            "calls": 4,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          }
+        }
+      },
+      "merge_rounds": {
+        "raw_cpu_seconds": 0.0,
+        "corrected_cpu_seconds": 0.0,
+        "operations": {}
+      },
+      "retire": {
+        "raw_cpu_seconds": 0.03754621297435898,
+        "corrected_cpu_seconds": 0.021636051692307694,
+        "operations": {
+          "dealloc": {
+            "calls": 15207,
+            "samples": 117,
+            "raw_seconds": 0.03754621297435898,
+            "corrected_seconds": 0.021636051692307694,
+            "max_sample_cpu_ns": 7268
+          }
+        }
+      },
+      "prepare": {
+        "raw_cpu_seconds": 15.399100475027355,
+        "corrected_cpu_seconds": 7.870812321632209,
+        "operations": {
+          "alloc": {
+            "calls": 1471980,
+            "samples": 11490,
+            "raw_seconds": 2.6185930254600946,
+            "corrected_seconds": 0.9829651988690291,
+            "max_sample_cpu_ns": 68558
+          },
+          "alloc_zeroed": {
+            "calls": 283,
+            "samples": 2,
+            "raw_seconds": 0.000729291,
+            "corrected_seconds": 0.000401577,
+            "max_sample_cpu_ns": 3623
+          },
+          "realloc": {
+            "calls": 4046469,
+            "samples": 31611,
+            "raw_seconds": 10.804563407772184,
+            "corrected_seconds": 6.2609923337496864,
+            "max_sample_cpu_ns": 1427846
+          },
+          "dealloc": {
+            "calls": 1220655,
+            "samples": 9365,
+            "raw_seconds": 1.975214750795074,
+            "corrected_seconds": 0.6264532120134922,
+            "max_sample_cpu_ns": 57012
+          }
+        }
+      },
+      "apply": {
+        "raw_cpu_seconds": 0.21095701117596566,
+        "corrected_cpu_seconds": 0.0717900596223176,
+        "operations": {
+          "dealloc": {
+            "calls": 120392,
+            "samples": 932,
+            "raw_seconds": 0.21095701117596566,
+            "corrected_seconds": 0.0717900596223176,
+            "max_sample_cpu_ns": 5749
+          }
+        }
+      },
+      "commit": {
+        "raw_cpu_seconds": 0.479683254025229,
+        "corrected_cpu_seconds": 0.3340505760428612,
+        "operations": {
+          "alloc": {
+            "calls": 28171,
+            "samples": 203,
+            "raw_seconds": 0.17405104027085896,
+            "corrected_seconds": 0.14234267396168268,
+            "max_sample_cpu_ns": 93181
+          },
+          "realloc": {
+            "calls": 14760,
+            "samples": 116,
+            "raw_seconds": 0.08615248346608256,
+            "corrected_seconds": 0.06510343613202851,
+            "max_sample_cpu_ns": 114269
+          },
+          "dealloc": {
+            "calls": 81138,
+            "samples": 646,
+            "raw_seconds": 0.21947973028828746,
+            "corrected_seconds": 0.12660446594914998,
+            "max_sample_cpu_ns": 9710
+          }
+        }
+      },
+      "select": {
+        "raw_cpu_seconds": 0.008261102903225806,
+        "corrected_cpu_seconds": 0.004459248838709678,
+        "operations": {
+          "alloc": {
+            "calls": 3586,
+            "samples": 31,
+            "raw_seconds": 0.008261102903225806,
+            "corrected_seconds": 0.004459248838709678,
+            "max_sample_cpu_ns": 13695
+          },
+          "realloc": {
+            "calls": 30,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          },
+          "dealloc": {
+            "calls": 14,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          }
+        }
+      },
+      "alphabet": {
+        "raw_cpu_seconds": 0.0,
+        "corrected_cpu_seconds": 0.0,
+        "operations": {}
+      },
+      "output": {
+        "raw_cpu_seconds": 0.34128491777577796,
+        "corrected_cpu_seconds": 0.028166640814014883,
+        "operations": {
+          "alloc": {
+            "calls": 299490,
+            "samples": 2315,
+            "raw_seconds": 0.33724902647948163,
+            "corrected_seconds": 0.027742088591792658,
+            "max_sample_cpu_ns": 3867
+          },
+          "dealloc": {
+            "calls": 3571,
+            "samples": 27,
+            "raw_seconds": 0.004035891296296296,
+            "corrected_seconds": 0.0004245522222222222,
+            "max_sample_cpu_ns": 1881
+          }
+        }
+      }
+    },
+    "raw_allocator_observer": {
+      "vocabulary": {
+        "estimated_clock_corrected_cpu_seconds": 0.0,
+        "estimated_raw_cpu_seconds": 0.0,
+        "phase": "vocabulary",
+        "rows": [
+          {
+            "calls": 6,
+            "empty_clock_pair_median_ns": 1010,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 0
+          },
+          {
+            "calls": 2,
+            "empty_clock_pair_median_ns": 1010,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "alloc_zeroed",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 0
+          },
+          {
+            "calls": 5,
+            "empty_clock_pair_median_ns": 1010,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 0
+          },
+          {
+            "calls": 8,
+            "empty_clock_pair_median_ns": 1010,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 0
+          },
+          {
+            "calls": 1,
+            "empty_clock_pair_median_ns": 1009,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 1
+          },
+          {
+            "calls": 1,
+            "empty_clock_pair_median_ns": 1009,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "alloc_zeroed",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 1
+          },
+          {
+            "calls": 1,
+            "empty_clock_pair_median_ns": 1017,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 2
+          },
+          {
+            "calls": 2,
+            "empty_clock_pair_median_ns": 1017,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "alloc_zeroed",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 2
+          },
+          {
+            "calls": 1,
+            "empty_clock_pair_median_ns": 1014,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 3
+          },
+          {
+            "calls": 2,
+            "empty_clock_pair_median_ns": 1014,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "alloc_zeroed",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 3
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "plan": {
+        "estimated_clock_corrected_cpu_seconds": 0.0,
+        "estimated_raw_cpu_seconds": 0.0,
+        "phase": "plan",
+        "rows": [
+          {
+            "calls": 7,
+            "empty_clock_pair_median_ns": 1010,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 0
+          },
+          {
+            "calls": 18,
+            "empty_clock_pair_median_ns": 1010,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 0
+          },
+          {
+            "calls": 2,
+            "empty_clock_pair_median_ns": 1010,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 0
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "initial_count": {
+        "estimated_clock_corrected_cpu_seconds": 0.0792486635777778,
+        "estimated_raw_cpu_seconds": 0.08531169666666666,
+        "phase": "initial_count",
+        "rows": [
+          {
+            "calls": 1401,
+            "empty_clock_pair_median_ns": 1010,
+            "estimated_clock_corrected_cpu_seconds": 0.008106964333333333,
+            "estimated_raw_cpu_seconds": 0.009608525,
+            "max_sample_cpu_ns": 17954,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 9646,
+            "paired_empty_clock_mean_ns": 1071.7777777777778,
+            "sample_count": 9,
+            "sample_cpu_ns": 61725,
+            "sample_squared_cpu_ns": 840077113.0,
+            "thread": 0
+          },
+          {
+            "calls": 5,
+            "empty_clock_pair_median_ns": 1010,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "alloc_zeroed",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 0
+          },
+          {
+            "calls": 82,
+            "empty_clock_pair_median_ns": 1010,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 0
+          },
+          {
+            "calls": 58,
+            "empty_clock_pair_median_ns": 1010,
+            "estimated_clock_corrected_cpu_seconds": 0.030945349,
+            "estimated_raw_cpu_seconds": 0.031020256,
+            "max_sample_cpu_ns": 1067128,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 2583,
+            "paired_empty_clock_mean_ns": 1291.5,
+            "sample_count": 2,
+            "sample_cpu_ns": 1069664,
+            "sample_squared_cpu_ns": 1138768599680.0,
+            "thread": 0
+          },
+          {
+            "calls": 1370,
+            "empty_clock_pair_median_ns": 1009,
+            "estimated_clock_corrected_cpu_seconds": 0.008490194444444446,
+            "estimated_raw_cpu_seconds": 0.009941176666666666,
+            "max_sample_cpu_ns": 13810,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 9532,
+            "paired_empty_clock_mean_ns": 1059.111111111111,
+            "sample_count": 9,
+            "sample_cpu_ns": 65307,
+            "sample_squared_cpu_ns": 599064353.0,
+            "thread": 1
+          },
+          {
+            "calls": 1,
+            "empty_clock_pair_median_ns": 1009,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "alloc_zeroed",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 1
+          },
+          {
+            "calls": 42,
+            "empty_clock_pair_median_ns": 1009,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 1
+          },
+          {
+            "calls": 31,
+            "empty_clock_pair_median_ns": 1009,
+            "estimated_clock_corrected_cpu_seconds": 9.765e-06,
+            "estimated_raw_cpu_seconds": 4.1354e-05,
+            "max_sample_cpu_ns": 1334,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 1019,
+            "paired_empty_clock_mean_ns": 1019.0,
+            "sample_count": 1,
+            "sample_cpu_ns": 1334,
+            "sample_squared_cpu_ns": 1779556.0,
+            "thread": 1
+          },
+          {
+            "calls": 1366,
+            "empty_clock_pair_median_ns": 1017,
+            "estimated_clock_corrected_cpu_seconds": 0.01682229,
+            "estimated_raw_cpu_seconds": 0.018274211399999997,
+            "max_sample_cpu_ns": 29700,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 10629,
+            "paired_empty_clock_mean_ns": 1062.9,
+            "sample_count": 10,
+            "sample_cpu_ns": 133779,
+            "sample_squared_cpu_ns": 2513042441.0,
+            "thread": 2
+          },
+          {
+            "calls": 1,
+            "empty_clock_pair_median_ns": 1017,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "alloc_zeroed",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 2
+          },
+          {
+            "calls": 32,
+            "empty_clock_pair_median_ns": 1017,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 2
+          },
+          {
+            "calls": 23,
+            "empty_clock_pair_median_ns": 1017,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 2
+          },
+          {
+            "calls": 1396,
+            "empty_clock_pair_median_ns": 1014,
+            "estimated_clock_corrected_cpu_seconds": 0.0148741008,
+            "estimated_raw_cpu_seconds": 0.0164261736,
+            "max_sample_cpu_ns": 19814,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 11118,
+            "paired_empty_clock_mean_ns": 1111.8,
+            "sample_count": 10,
+            "sample_cpu_ns": 117666,
+            "sample_squared_cpu_ns": 1482337046.0,
+            "thread": 3
+          },
+          {
+            "calls": 1,
+            "empty_clock_pair_median_ns": 1014,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "alloc_zeroed",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 3
+          },
+          {
+            "calls": 33,
+            "empty_clock_pair_median_ns": 1014,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 3
+          },
+          {
+            "calls": 20,
+            "empty_clock_pair_median_ns": 1014,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 3
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "materialize": {
+        "estimated_clock_corrected_cpu_seconds": 0.0,
+        "estimated_raw_cpu_seconds": 0.0,
+        "phase": "materialize",
+        "rows": [
+          {
+            "calls": 3,
+            "empty_clock_pair_median_ns": 1010,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 0
+          },
+          {
+            "calls": 3,
+            "empty_clock_pair_median_ns": 1010,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 0
+          },
+          {
+            "calls": 4,
+            "empty_clock_pair_median_ns": 1010,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 0
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "merge_rounds": {
+        "estimated_clock_corrected_cpu_seconds": 0.0,
+        "estimated_raw_cpu_seconds": 0.0,
+        "phase": "merge_rounds",
+        "rows": [],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "retire": {
+        "estimated_clock_corrected_cpu_seconds": 0.021636051692307694,
+        "estimated_raw_cpu_seconds": 0.03754621297435898,
+        "phase": "retire",
+        "rows": [
+          {
+            "calls": 15207,
+            "empty_clock_pair_median_ns": 1010,
+            "estimated_clock_corrected_cpu_seconds": 0.021636051692307694,
+            "estimated_raw_cpu_seconds": 0.03754621297435898,
+            "max_sample_cpu_ns": 7268,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 122410,
+            "paired_empty_clock_mean_ns": 1046.2393162393162,
+            "sample_count": 117,
+            "sample_cpu_ns": 288874,
+            "sample_squared_cpu_ns": 787734216.0,
+            "thread": 0
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "prepare": {
+        "estimated_clock_corrected_cpu_seconds": 7.870812321632209,
+        "estimated_raw_cpu_seconds": 15.399100475027355,
+        "phase": "prepare",
+        "rows": [
+          {
+            "calls": 387928,
+            "empty_clock_pair_median_ns": 1010,
+            "estimated_clock_corrected_cpu_seconds": 0.26362134576976975,
+            "estimated_raw_cpu_seconds": 0.6981649074007341,
+            "max_sample_cpu_ns": 68558,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 3357136,
+            "paired_empty_clock_mean_ns": 1120.1654988321654,
+            "sample_count": 2997,
+            "sample_cpu_ns": 5393785,
+            "sample_squared_cpu_ns": 21259206859.0,
+            "thread": 0
+          },
+          {
+            "calls": 283,
+            "empty_clock_pair_median_ns": 1010,
+            "estimated_clock_corrected_cpu_seconds": 0.000401577,
+            "estimated_raw_cpu_seconds": 0.000729291,
+            "max_sample_cpu_ns": 3623,
+            "operation": "alloc_zeroed",
+            "paired_empty_clock_cpu_ns": 2316,
+            "paired_empty_clock_mean_ns": 1158.0,
+            "sample_count": 2,
+            "sample_cpu_ns": 5154,
+            "sample_squared_cpu_ns": 15470090.0,
+            "thread": 0
+          },
+          {
+            "calls": 1025329,
+            "empty_clock_pair_median_ns": 1010,
+            "estimated_clock_corrected_cpu_seconds": 1.8573382427826737,
+            "estimated_raw_cpu_seconds": 2.998977881914484,
+            "max_sample_cpu_ns": 357319,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 8970965,
+            "paired_empty_clock_mean_ns": 1113.4373836415539,
+            "sample_count": 8057,
+            "sample_cpu_ns": 23565865,
+            "sample_squared_cpu_ns": 440683843293.0,
+            "thread": 0
+          },
+          {
+            "calls": 358282,
+            "empty_clock_pair_median_ns": 1010,
+            "estimated_clock_corrected_cpu_seconds": 0.20517762139337176,
+            "estimated_raw_cpu_seconds": 0.6026274845893371,
+            "max_sample_cpu_ns": 57012,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 3079476,
+            "paired_empty_clock_mean_ns": 1109.321325648415,
+            "sample_count": 2776,
+            "sample_cpu_ns": 4669210,
+            "sample_squared_cpu_ns": 13214415360.0,
+            "thread": 0
+          },
+          {
+            "calls": 361536,
+            "empty_clock_pair_median_ns": 1009,
+            "estimated_clock_corrected_cpu_seconds": 0.2551352007115977,
+            "estimated_raw_cpu_seconds": 0.6558072562600068,
+            "max_sample_cpu_ns": 45561,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 3239413,
+            "paired_empty_clock_mean_ns": 1108.2494013000342,
+            "sample_count": 2923,
+            "sample_cpu_ns": 5302168,
+            "sample_squared_cpu_ns": 20181388688.0,
+            "thread": 1
+          },
+          {
+            "calls": 1008292,
+            "empty_clock_pair_median_ns": 1009,
+            "estimated_clock_corrected_cpu_seconds": 1.441681792085507,
+            "estimated_raw_cpu_seconds": 2.57131292664512,
+            "max_sample_cpu_ns": 111823,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 8804762,
+            "paired_empty_clock_mean_ns": 1120.3412647919583,
+            "sample_count": 7859,
+            "sample_cpu_ns": 20041762,
+            "sample_squared_cpu_ns": 153569493302.0,
+            "thread": 1
+          },
+          {
+            "calls": 288097,
+            "empty_clock_pair_median_ns": 1009,
+            "estimated_clock_corrected_cpu_seconds": 0.1583108077105513,
+            "estimated_raw_cpu_seconds": 0.4724963329572243,
+            "max_sample_cpu_ns": 43875,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 2294527,
+            "paired_empty_clock_mean_ns": 1090.5546577946768,
+            "sample_count": 2104,
+            "sample_cpu_ns": 3450686,
+            "sample_squared_cpu_ns": 9215143612.0,
+            "thread": 1
+          },
+          {
+            "calls": 360563,
+            "empty_clock_pair_median_ns": 1017,
+            "estimated_clock_corrected_cpu_seconds": 0.22948757673938083,
+            "estimated_raw_cpu_seconds": 0.6265328550568755,
+            "max_sample_cpu_ns": 38198,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 3059082,
+            "paired_empty_clock_mean_ns": 1101.1814254859612,
+            "sample_count": 2778,
+            "sample_cpu_ns": 4827196,
+            "sample_squared_cpu_ns": 14111625756.0,
+            "thread": 2
+          },
+          {
+            "calls": 1008419,
+            "empty_clock_pair_median_ns": 1017,
+            "estimated_clock_corrected_cpu_seconds": 1.5323471536189384,
+            "estimated_raw_cpu_seconds": 2.6644189611473847,
+            "max_sample_cpu_ns": 1427846,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 8820429,
+            "paired_empty_clock_mean_ns": 1122.6204658266513,
+            "sample_count": 7857,
+            "sample_cpu_ns": 20759565,
+            "sample_squared_cpu_ns": 2218647656753.0,
+            "thread": 2
+          },
+          {
+            "calls": 286504,
+            "empty_clock_pair_median_ns": 1017,
+            "estimated_clock_corrected_cpu_seconds": 0.13178329335351738,
+            "estimated_raw_cpu_seconds": 0.4500470143686554,
+            "max_sample_cpu_ns": 15391,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 2494975,
+            "paired_empty_clock_mean_ns": 1110.8526268922528,
+            "sample_count": 2246,
+            "sample_cpu_ns": 3528068,
+            "sample_squared_cpu_ns": 7554115840.0,
+            "thread": 2
+          },
+          {
+            "calls": 361953,
+            "empty_clock_pair_median_ns": 1014,
+            "estimated_clock_corrected_cpu_seconds": 0.2347210756482808,
+            "estimated_raw_cpu_seconds": 0.6380880067424785,
+            "max_sample_cpu_ns": 34318,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 3111455,
+            "paired_empty_clock_mean_ns": 1114.4179799426934,
+            "sample_count": 2792,
+            "sample_cpu_ns": 4922025,
+            "sample_squared_cpu_ns": 13922162259.0,
+            "thread": 3
+          },
+          {
+            "calls": 1004429,
+            "empty_clock_pair_median_ns": 1014,
+            "estimated_clock_corrected_cpu_seconds": 1.429625145262567,
+            "estimated_raw_cpu_seconds": 2.569853638065195,
+            "max_sample_cpu_ns": 442778,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 8897703,
+            "paired_empty_clock_mean_ns": 1135.2006889512631,
+            "sample_count": 7838,
+            "sample_cpu_ns": 20053695,
+            "sample_squared_cpu_ns": 402640115125.0,
+            "thread": 3
+          },
+          {
+            "calls": 287772,
+            "empty_clock_pair_median_ns": 1014,
+            "estimated_clock_corrected_cpu_seconds": 0.13118148955605183,
+            "estimated_raw_cpu_seconds": 0.4500439188798571,
+            "max_sample_cpu_ns": 19461,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 2480898,
+            "paired_empty_clock_mean_ns": 1108.0384100044662,
+            "sample_count": 2239,
+            "sample_cpu_ns": 3501551,
+            "sample_squared_cpu_ns": 6839098807.0,
+            "thread": 3
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "apply": {
+        "estimated_clock_corrected_cpu_seconds": 0.0717900596223176,
+        "estimated_raw_cpu_seconds": 0.21095701117596566,
+        "phase": "apply",
+        "rows": [
+          {
+            "calls": 120392,
+            "empty_clock_pair_median_ns": 1010,
+            "estimated_clock_corrected_cpu_seconds": 0.0717900596223176,
+            "estimated_raw_cpu_seconds": 0.21095701117596566,
+            "max_sample_cpu_ns": 5749,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 1077344,
+            "paired_empty_clock_mean_ns": 1155.9484978540772,
+            "sample_count": 932,
+            "sample_cpu_ns": 1633098,
+            "sample_squared_cpu_ns": 3095905960.0,
+            "thread": 0
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "commit": {
+        "estimated_clock_corrected_cpu_seconds": 0.3340505760428612,
+        "estimated_raw_cpu_seconds": 0.479683254025229,
+        "phase": "commit",
+        "rows": [
+          {
+            "calls": 8988,
+            "empty_clock_pair_median_ns": 1010,
+            "estimated_clock_corrected_cpu_seconds": 0.021072937963636365,
+            "estimated_raw_cpu_seconds": 0.03081380552727273,
+            "max_sample_cpu_ns": 81960,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 59607,
+            "paired_empty_clock_mean_ns": 1083.7636363636364,
+            "sample_count": 55,
+            "sample_cpu_ns": 188558,
+            "sample_squared_cpu_ns": 6965761404.0,
+            "thread": 0
+          },
+          {
+            "calls": 3785,
+            "empty_clock_pair_median_ns": 1010,
+            "estimated_clock_corrected_cpu_seconds": 0.012771715270270271,
+            "estimated_raw_cpu_seconds": 0.017720449324324324,
+            "max_sample_cpu_ns": 65205,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 48376,
+            "paired_empty_clock_mean_ns": 1307.4594594594594,
+            "sample_count": 37,
+            "sample_cpu_ns": 173225,
+            "sample_squared_cpu_ns": 4660074389.0,
+            "thread": 0
+          },
+          {
+            "calls": 39293,
+            "empty_clock_pair_median_ns": 1010,
+            "estimated_clock_corrected_cpu_seconds": 0.04814397370163934,
+            "estimated_raw_cpu_seconds": 0.09244869922950819,
+            "max_sample_cpu_ns": 6427,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 343902,
+            "paired_empty_clock_mean_ns": 1127.5475409836065,
+            "sample_count": 305,
+            "sample_cpu_ns": 717605,
+            "sample_squared_cpu_ns": 2010792567.0,
+            "thread": 0
+          },
+          {
+            "calls": 6410,
+            "empty_clock_pair_median_ns": 1009,
+            "estimated_clock_corrected_cpu_seconds": 0.05184364542372882,
+            "estimated_raw_cpu_seconds": 0.05930271254237289,
+            "max_sample_cpu_ns": 93181,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 68656,
+            "paired_empty_clock_mean_ns": 1163.6610169491526,
+            "sample_count": 59,
+            "sample_cpu_ns": 545844,
+            "sample_squared_cpu_ns": 25177199974.0,
+            "thread": 1
+          },
+          {
+            "calls": 3672,
+            "empty_clock_pair_median_ns": 1009,
+            "estimated_clock_corrected_cpu_seconds": 0.011834709120000002,
+            "estimated_raw_cpu_seconds": 0.016047374399999998,
+            "max_sample_cpu_ns": 34548,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 28681,
+            "paired_empty_clock_mean_ns": 1147.24,
+            "sample_count": 25,
+            "sample_cpu_ns": 109255,
+            "sample_squared_cpu_ns": 1495506953.0,
+            "thread": 1
+          },
+          {
+            "calls": 13877,
+            "empty_clock_pair_median_ns": 1009,
+            "estimated_clock_corrected_cpu_seconds": 0.02411262650877193,
+            "estimated_raw_cpu_seconds": 0.040344456026315784,
+            "max_sample_cpu_ns": 7025,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 133345,
+            "paired_empty_clock_mean_ns": 1169.6929824561403,
+            "sample_count": 114,
+            "sample_cpu_ns": 331431,
+            "sample_squared_cpu_ns": 1091905323.0,
+            "thread": 1
+          },
+          {
+            "calls": 6374,
+            "empty_clock_pair_median_ns": 1017,
+            "estimated_clock_corrected_cpu_seconds": 0.036200994434782606,
+            "estimated_raw_cpu_seconds": 0.04346278178260869,
+            "max_sample_cpu_ns": 84161,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 52407,
+            "paired_empty_clock_mean_ns": 1139.2826086956522,
+            "sample_count": 46,
+            "sample_cpu_ns": 313663,
+            "sample_squared_cpu_ns": 11941802723.0,
+            "thread": 2
+          },
+          {
+            "calls": 3643,
+            "empty_clock_pair_median_ns": 1017,
+            "estimated_clock_corrected_cpu_seconds": 0.025566433884615384,
+            "estimated_raw_cpu_seconds": 0.03322037688461539,
+            "max_sample_cpu_ns": 114269,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 54626,
+            "paired_empty_clock_mean_ns": 2101.0,
+            "sample_count": 26,
+            "sample_cpu_ns": 237093,
+            "sample_squared_cpu_ns": 15124891969.0,
+            "thread": 2
+          },
+          {
+            "calls": 14051,
+            "empty_clock_pair_median_ns": 1017,
+            "estimated_clock_corrected_cpu_seconds": 0.02605460473873874,
+            "estimated_raw_cpu_seconds": 0.04208666915315315,
+            "max_sample_cpu_ns": 7312,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 126650,
+            "paired_empty_clock_mean_ns": 1140.990990990991,
+            "sample_count": 111,
+            "sample_cpu_ns": 332476,
+            "sample_squared_cpu_ns": 1126142450.0,
+            "thread": 2
+          },
+          {
+            "calls": 6399,
+            "empty_clock_pair_median_ns": 1014,
+            "estimated_clock_corrected_cpu_seconds": 0.033225096139534886,
+            "estimated_raw_cpu_seconds": 0.04047174041860465,
+            "max_sample_cpu_ns": 54681,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 48696,
+            "paired_empty_clock_mean_ns": 1132.4651162790697,
+            "sample_count": 43,
+            "sample_cpu_ns": 271962,
+            "sample_squared_cpu_ns": 7927450562.0,
+            "thread": 3
+          },
+          {
+            "calls": 3660,
+            "empty_clock_pair_median_ns": 1014,
+            "estimated_clock_corrected_cpu_seconds": 0.014930577857142859,
+            "estimated_raw_cpu_seconds": 0.019164282857142854,
+            "max_sample_cpu_ns": 53338,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 32389,
+            "paired_empty_clock_mean_ns": 1156.75,
+            "sample_count": 28,
+            "sample_cpu_ns": 146612,
+            "sample_squared_cpu_ns": 3425695720.0,
+            "thread": 3
+          },
+          {
+            "calls": 13917,
+            "empty_clock_pair_median_ns": 1014,
+            "estimated_clock_corrected_cpu_seconds": 0.028293261,
+            "estimated_raw_cpu_seconds": 0.04459990587931035,
+            "max_sample_cpu_ns": 9710,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 135918,
+            "paired_empty_clock_mean_ns": 1171.7068965517242,
+            "sample_count": 116,
+            "sample_cpu_ns": 371746,
+            "sample_squared_cpu_ns": 1409925372.0,
+            "thread": 3
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "select": {
+        "estimated_clock_corrected_cpu_seconds": 0.004459248838709678,
+        "estimated_raw_cpu_seconds": 0.008261102903225806,
+        "phase": "select",
+        "rows": [
+          {
+            "calls": 3586,
+            "empty_clock_pair_median_ns": 1010,
+            "estimated_clock_corrected_cpu_seconds": 0.004459248838709678,
+            "estimated_raw_cpu_seconds": 0.008261102903225806,
+            "max_sample_cpu_ns": 13695,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 32866,
+            "paired_empty_clock_mean_ns": 1060.1935483870968,
+            "sample_count": 31,
+            "sample_cpu_ns": 71415,
+            "sample_squared_cpu_ns": 308365653.0,
+            "thread": 0
+          },
+          {
+            "calls": 30,
+            "empty_clock_pair_median_ns": 1010,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 0
+          },
+          {
+            "calls": 14,
+            "empty_clock_pair_median_ns": 1010,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 0
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "alphabet": {
+        "estimated_clock_corrected_cpu_seconds": 0.0,
+        "estimated_raw_cpu_seconds": 0.0,
+        "phase": "alphabet",
+        "rows": [],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "output": {
+        "estimated_clock_corrected_cpu_seconds": 0.028166640814014883,
+        "estimated_raw_cpu_seconds": 0.34128491777577796,
+        "phase": "output",
+        "rows": [
+          {
+            "calls": 299490,
+            "empty_clock_pair_median_ns": 1010,
+            "estimated_clock_corrected_cpu_seconds": 0.027742088591792658,
+            "estimated_raw_cpu_seconds": 0.33724902647948163,
+            "max_sample_cpu_ns": 3867,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 2392429,
+            "paired_empty_clock_mean_ns": 1033.4466522678185,
+            "sample_count": 2315,
+            "sample_cpu_ns": 2606870,
+            "sample_squared_cpu_ns": 3049340398.0,
+            "thread": 0
+          },
+          {
+            "calls": 3571,
+            "empty_clock_pair_median_ns": 1010,
+            "estimated_clock_corrected_cpu_seconds": 0.0004245522222222222,
+            "estimated_raw_cpu_seconds": 0.004035891296296296,
+            "max_sample_cpu_ns": 1881,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 27305,
+            "paired_empty_clock_mean_ns": 1011.2962962962963,
+            "sample_count": 27,
+            "sample_cpu_ns": 30515,
+            "sample_squared_cpu_ns": 35240773.0,
+            "thread": 0
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      }
+    }
+  },
+  {
+    "arm": "history-buffer-allocation-cpu-v2",
+    "repeat": 0,
+    "metrics": {
+      "load_seconds": 8.930428132,
+      "process_hwm_kib_before_validation": 2821100,
+      "train_cpu_seconds": 72.12584,
+      "train_seconds": 23.356072954
+    },
+    "model_equal": true,
+    "max_swap_kib": 0,
+    "binary_sha256": "3abd5e76d62fa946f121d898bbbebc69c1ffb61028ca38f7201507497c1c4a13",
+    "phases": {
+      "vocabulary": {
+        "raw_cpu_seconds": 0.0,
+        "corrected_cpu_seconds": 0.0,
+        "operations": {}
+      },
+      "plan": {
+        "raw_cpu_seconds": 0.0,
+        "corrected_cpu_seconds": 0.0,
+        "operations": {
+          "alloc": {
+            "calls": 7,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          },
+          "realloc": {
+            "calls": 16,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          }
+        }
+      },
+      "initial_count": {
+        "raw_cpu_seconds": 4.250651221482757,
+        "corrected_cpu_seconds": 2.5923756933197497,
+        "operations": {
+          "alloc": {
+            "calls": 256399,
+            "samples": 1942,
+            "raw_seconds": 0.5768280192430546,
+            "corrected_seconds": 0.277632222231085,
+            "max_sample_cpu_ns": 61696
+          },
+          "realloc": {
+            "calls": 865555,
+            "samples": 6741,
+            "raw_seconds": 3.1422542137759515,
+            "corrected_seconds": 2.052388132750798,
+            "max_sample_cpu_ns": 887828
+          },
+          "dealloc": {
+            "calls": 242306,
+            "samples": 1862,
+            "raw_seconds": 0.5315689884637504,
+            "corrected_seconds": 0.26235533833786623,
+            "max_sample_cpu_ns": 25141
+          }
+        }
+      },
+      "materialize": {
+        "raw_cpu_seconds": 0.0,
+        "corrected_cpu_seconds": 0.0,
+        "operations": {
+          "alloc": {
+            "calls": 1,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          },
+          "dealloc": {
+            "calls": 3,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          }
+        }
+      },
+      "merge_rounds": {
+        "raw_cpu_seconds": 0.0,
+        "corrected_cpu_seconds": 0.0,
+        "operations": {}
+      },
+      "retire": {
+        "raw_cpu_seconds": 6.825903978599896,
+        "corrected_cpu_seconds": 2.07198205749924,
+        "operations": {
+          "dealloc": {
+            "calls": 4377053,
+            "samples": 34206,
+            "raw_seconds": 6.825903978599896,
+            "corrected_seconds": 2.07198205749924,
+            "max_sample_cpu_ns": 680518
+          }
+        }
+      },
+      "prepare": {
+        "raw_cpu_seconds": 53.325923957254844,
+        "corrected_cpu_seconds": 15.027676113257153,
+        "operations": {
+          "alloc": {
+            "calls": 9920054,
+            "samples": 77736,
+            "raw_seconds": 13.909472556656727,
+            "corrected_seconds": 2.711380379586883,
+            "max_sample_cpu_ns": 68520
+          },
+          "realloc": {
+            "calls": 18796110,
+            "samples": 146472,
+            "raw_seconds": 32.2511846774672,
+            "corrected_seconds": 11.06441590165566,
+            "max_sample_cpu_ns": 909174
+          },
+          "dealloc": {
+            "calls": 5230703,
+            "samples": 40723,
+            "raw_seconds": 7.165266723130925,
+            "corrected_seconds": 1.2518798320146078,
+            "max_sample_cpu_ns": 43709
+          }
+        }
+      },
+      "apply": {
+        "raw_cpu_seconds": 0.2264474922070927,
+        "corrected_cpu_seconds": 0.10627134418051958,
+        "operations": {
+          "alloc": {
+            "calls": 2561,
+            "samples": 30,
+            "raw_seconds": 0.006133595,
+            "corrected_seconds": 0.003269287233333333,
+            "max_sample_cpu_ns": 11612
+          },
+          "dealloc": {
+            "calls": 101170,
+            "samples": 761,
+            "raw_seconds": 0.2203138972070927,
+            "corrected_seconds": 0.10300205694718625,
+            "max_sample_cpu_ns": 12252
+          }
+        }
+      },
+      "commit": {
+        "raw_cpu_seconds": 1.0136943637396163,
+        "corrected_cpu_seconds": 0.5247467078215156,
+        "operations": {
+          "alloc": {
+            "calls": 95913,
+            "samples": 673,
+            "raw_seconds": 0.1666141848126705,
+            "corrected_seconds": 0.05646830909672037,
+            "max_sample_cpu_ns": 54272
+          },
+          "realloc": {
+            "calls": 139024,
+            "samples": 1138,
+            "raw_seconds": 0.49193280319291066,
+            "corrected_seconds": 0.3305104754632897,
+            "max_sample_cpu_ns": 67875
+          },
+          "dealloc": {
+            "calls": 196733,
+            "samples": 1560,
+            "raw_seconds": 0.35514737573403543,
+            "corrected_seconds": 0.13776792326150544,
+            "max_sample_cpu_ns": 26260
+          }
+        }
+      },
+      "select": {
+        "raw_cpu_seconds": 0.38458339899015664,
+        "corrected_cpu_seconds": 0.18162404650780736,
+        "operations": {
+          "alloc": {
+            "calls": 29406,
+            "samples": 219,
+            "raw_seconds": 0.04749914926027397,
+            "corrected_seconds": 0.015217269315068494,
+            "max_sample_cpu_ns": 13346
+          },
+          "realloc": {
+            "calls": 7899,
+            "samples": 48,
+            "raw_seconds": 0.02698759175,
+            "corrected_seconds": 0.0183939734375,
+            "max_sample_cpu_ns": 12297
+          },
+          "dealloc": {
+            "calls": 147685,
+            "samples": 1193,
+            "raw_seconds": 0.3100966579798827,
+            "corrected_seconds": 0.1480128037552389,
+            "max_sample_cpu_ns": 5956
+          }
+        }
+      },
+      "alphabet": {
+        "raw_cpu_seconds": 0.0,
+        "corrected_cpu_seconds": 0.0,
+        "operations": {}
+      },
+      "output": {
+        "raw_cpu_seconds": 0.3699522476818182,
+        "corrected_cpu_seconds": 0.0436269009909091,
+        "operations": {
+          "alloc": {
+            "calls": 299490,
+            "samples": 2400,
+            "raw_seconds": 0.36594183950000003,
+            "corrected_seconds": 0.043319231900000005,
+            "max_sample_cpu_ns": 31473
+          },
+          "dealloc": {
+            "calls": 3570,
+            "samples": 22,
+            "raw_seconds": 0.004010408181818182,
+            "corrected_seconds": 0.00030766909090909096,
+            "max_sample_cpu_ns": 1498
+          }
+        }
+      }
+    },
+    "raw_allocator_observer": {
+      "vocabulary": {
+        "estimated_clock_corrected_cpu_seconds": 0.0,
+        "estimated_raw_cpu_seconds": 0.0,
+        "phase": "vocabulary",
+        "rows": [],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "plan": {
+        "estimated_clock_corrected_cpu_seconds": 0.0,
+        "estimated_raw_cpu_seconds": 0.0,
+        "phase": "plan",
+        "rows": [
+          {
+            "calls": 7,
+            "empty_clock_pair_median_ns": 1012,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 0
+          },
+          {
+            "calls": 16,
+            "empty_clock_pair_median_ns": 1012,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 0
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "initial_count": {
+        "estimated_clock_corrected_cpu_seconds": 2.5923756933197497,
+        "estimated_raw_cpu_seconds": 4.250651221482757,
+        "phase": "initial_count",
+        "rows": [
+          {
+            "calls": 63523,
+            "empty_clock_pair_median_ns": 1012,
+            "estimated_clock_corrected_cpu_seconds": 0.08249132931300814,
+            "estimated_raw_cpu_seconds": 0.1572477004817073,
+            "max_sample_cpu_ns": 55141,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 579005,
+            "paired_empty_clock_mean_ns": 1176.8394308943089,
+            "sample_count": 492,
+            "sample_cpu_ns": 1217919,
+            "sample_squared_cpu_ns": 10949592269.0,
+            "thread": 0
+          },
+          {
+            "calls": 215038,
+            "empty_clock_pair_median_ns": 1012,
+            "estimated_clock_corrected_cpu_seconds": 0.7350612500680597,
+            "estimated_raw_cpu_seconds": 0.9799986471116419,
+            "max_sample_cpu_ns": 887828,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 1907896,
+            "paired_empty_clock_mean_ns": 1139.0423880597016,
+            "sample_count": 1675,
+            "sample_cpu_ns": 7633524,
+            "sample_squared_cpu_ns": 1166880088418.0,
+            "thread": 0
+          },
+          {
+            "calls": 60411,
+            "empty_clock_pair_median_ns": 1012,
+            "estimated_clock_corrected_cpu_seconds": 0.07109255013362067,
+            "estimated_raw_cpu_seconds": 0.13863816735129308,
+            "max_sample_cpu_ns": 16983,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 518799,
+            "paired_empty_clock_mean_ns": 1118.1012931034484,
+            "sample_count": 464,
+            "sample_cpu_ns": 1064841,
+            "sample_squared_cpu_ns": 3585559743.0,
+            "thread": 0
+          },
+          {
+            "calls": 60825,
+            "empty_clock_pair_median_ns": 1006,
+            "estimated_clock_corrected_cpu_seconds": 0.05416545243506493,
+            "estimated_raw_cpu_seconds": 0.12244954594155844,
+            "max_sample_cpu_ns": 8519,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 518656,
+            "paired_empty_clock_mean_ns": 1122.6320346320347,
+            "sample_count": 462,
+            "sample_cpu_ns": 930073,
+            "sample_squared_cpu_ns": 2407862963.0,
+            "thread": 1
+          },
+          {
+            "calls": 206642,
+            "empty_clock_pair_median_ns": 1006,
+            "estimated_clock_corrected_cpu_seconds": 0.3515129327635904,
+            "estimated_raw_cpu_seconds": 0.70333177928445,
+            "max_sample_cpu_ns": 224077,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 2693438,
+            "paired_empty_clock_mean_ns": 1702.552465233881,
+            "sample_count": 1582,
+            "sample_cpu_ns": 5384534,
+            "sample_squared_cpu_ns": 171434135482.0,
+            "thread": 1
+          },
+          {
+            "calls": 58681,
+            "empty_clock_pair_median_ns": 1006,
+            "estimated_clock_corrected_cpu_seconds": 0.05255874105341881,
+            "estimated_raw_cpu_seconds": 0.11787056866666668,
+            "max_sample_cpu_ns": 8190,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 520883,
+            "paired_empty_clock_mean_ns": 1112.9978632478633,
+            "sample_count": 468,
+            "sample_cpu_ns": 940056,
+            "sample_squared_cpu_ns": 2339529088.0,
+            "thread": 1
+          },
+          {
+            "calls": 60980,
+            "empty_clock_pair_median_ns": 1258,
+            "estimated_clock_corrected_cpu_seconds": 0.06539538037190083,
+            "estimated_raw_cpu_seconds": 0.13376025995867769,
+            "max_sample_cpu_ns": 19039,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 542614,
+            "paired_empty_clock_mean_ns": 1121.103305785124,
+            "sample_count": 484,
+            "sample_cpu_ns": 1061659,
+            "sample_squared_cpu_ns": 3407726231.0,
+            "thread": 2
+          },
+          {
+            "calls": 206711,
+            "empty_clock_pair_median_ns": 1258,
+            "estimated_clock_corrected_cpu_seconds": 0.47176105044478905,
+            "estimated_raw_cpu_seconds": 0.7033493089503722,
+            "max_sample_cpu_ns": 118836,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 1806001,
+            "paired_empty_clock_mean_ns": 1120.3480148883375,
+            "sample_count": 1612,
+            "sample_cpu_ns": 5484948,
+            "sample_squared_cpu_ns": 91920137498.0,
+            "thread": 2
+          },
+          {
+            "calls": 58542,
+            "empty_clock_pair_median_ns": 1258,
+            "estimated_clock_corrected_cpu_seconds": 0.0715223197122302,
+            "estimated_raw_cpu_seconds": 0.13686866900719424,
+            "max_sample_cpu_ns": 25141,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 465468,
+            "paired_empty_clock_mean_ns": 1116.230215827338,
+            "sample_count": 417,
+            "sample_cpu_ns": 974928,
+            "sample_squared_cpu_ns": 3863602742.0,
+            "thread": 2
+          },
+          {
+            "calls": 71071,
+            "empty_clock_pair_median_ns": 1207,
+            "estimated_clock_corrected_cpu_seconds": 0.07558006011111111,
+            "estimated_raw_cpu_seconds": 0.1633705128611111,
+            "max_sample_cpu_ns": 61696,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 622566,
+            "paired_empty_clock_mean_ns": 1235.25,
+            "sample_count": 504,
+            "sample_cpu_ns": 1158542,
+            "sample_squared_cpu_ns": 8546406656.0,
+            "thread": 3
+          },
+          {
+            "calls": 237164,
+            "empty_clock_pair_median_ns": 1207,
+            "estimated_clock_corrected_cpu_seconds": 0.49405289947435893,
+            "estimated_raw_cpu_seconds": 0.7555744784294872,
+            "max_sample_cpu_ns": 122589,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 2064261,
+            "paired_empty_clock_mean_ns": 1102.7035256410256,
+            "sample_count": 1872,
+            "sample_cpu_ns": 5963955,
+            "sample_squared_cpu_ns": 93635966309.0,
+            "thread": 3
+          },
+          {
+            "calls": 64672,
+            "empty_clock_pair_median_ns": 1207,
+            "estimated_clock_corrected_cpu_seconds": 0.0671817274385965,
+            "estimated_raw_cpu_seconds": 0.1381915834385965,
+            "max_sample_cpu_ns": 11778,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 563274,
+            "paired_empty_clock_mean_ns": 1098.0,
+            "sample_count": 513,
+            "sample_cpu_ns": 1096182,
+            "sample_squared_cpu_ns": 3260400646.0,
+            "thread": 3
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "materialize": {
+        "estimated_clock_corrected_cpu_seconds": 0.0,
+        "estimated_raw_cpu_seconds": 0.0,
+        "phase": "materialize",
+        "rows": [
+          {
+            "calls": 1,
+            "empty_clock_pair_median_ns": 1012,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 0
+          },
+          {
+            "calls": 3,
+            "empty_clock_pair_median_ns": 1012,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 0
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "merge_rounds": {
+        "estimated_clock_corrected_cpu_seconds": 0.0,
+        "estimated_raw_cpu_seconds": 0.0,
+        "phase": "merge_rounds",
+        "rows": [],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "retire": {
+        "estimated_clock_corrected_cpu_seconds": 2.07198205749924,
+        "estimated_raw_cpu_seconds": 6.825903978599896,
+        "phase": "retire",
+        "rows": [
+          {
+            "calls": 4377053,
+            "empty_clock_pair_median_ns": 1012,
+            "estimated_clock_corrected_cpu_seconds": 2.07198205749924,
+            "estimated_raw_cpu_seconds": 6.825903978599896,
+            "max_sample_cpu_ns": 680518,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 37151173,
+            "paired_empty_clock_mean_ns": 1086.101064140794,
+            "sample_count": 34206,
+            "sample_cpu_ns": 53343396,
+            "sample_squared_cpu_ns": 1827830955038.0,
+            "thread": 0
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "prepare": {
+        "estimated_clock_corrected_cpu_seconds": 15.027676113257153,
+        "estimated_raw_cpu_seconds": 53.325923957254844,
+        "phase": "prepare",
+        "rows": [
+          {
+            "calls": 2515283,
+            "empty_clock_pair_median_ns": 1012,
+            "estimated_clock_corrected_cpu_seconds": 0.6440588921885061,
+            "estimated_raw_cpu_seconds": 3.440234207095883,
+            "max_sample_cpu_ns": 33715,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 22167896,
+            "paired_empty_clock_mean_ns": 1111.674239005065,
+            "sample_count": 19941,
+            "sample_cpu_ns": 27273953,
+            "sample_squared_cpu_ns": 48960051483.0,
+            "thread": 0
+          },
+          {
+            "calls": 4817375,
+            "empty_clock_pair_median_ns": 1012,
+            "estimated_clock_corrected_cpu_seconds": 2.9372450522011744,
+            "estimated_raw_cpu_seconds": 8.269388061262674,
+            "max_sample_cpu_ns": 69163,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 41484983,
+            "paired_empty_clock_mean_ns": 1106.856536819637,
+            "sample_count": 37480,
+            "sample_cpu_ns": 64337251,
+            "sample_squared_cpu_ns": 192978017089.0,
+            "thread": 0
+          },
+          {
+            "calls": 1502863,
+            "empty_clock_pair_median_ns": 1012,
+            "estimated_clock_corrected_cpu_seconds": 0.39489493437285217,
+            "estimated_raw_cpu_seconds": 2.067142182907866,
+            "max_sample_cpu_ns": 16532,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 12886268,
+            "paired_empty_clock_mean_ns": 1112.7077109057939,
+            "sample_count": 11581,
+            "sample_cpu_ns": 15929312,
+            "sample_squared_cpu_ns": 25537623980.0,
+            "thread": 0
+          },
+          {
+            "calls": 2530573,
+            "empty_clock_pair_median_ns": 1006,
+            "estimated_clock_corrected_cpu_seconds": 0.677983154207182,
+            "estimated_raw_cpu_seconds": 3.5323457201800084,
+            "max_sample_cpu_ns": 68520,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 22207101,
+            "paired_empty_clock_mean_ns": 1127.9510869565217,
+            "sample_count": 19688,
+            "sample_cpu_ns": 27481848,
+            "sample_squared_cpu_ns": 54231028506.0,
+            "thread": 1
+          },
+          {
+            "calls": 4776453,
+            "empty_clock_pair_median_ns": 1006,
+            "estimated_clock_corrected_cpu_seconds": 2.776073587214719,
+            "estimated_raw_cpu_seconds": 8.155803357738096,
+            "max_sample_cpu_ns": 909174,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 42011074,
+            "paired_empty_clock_mean_ns": 1126.3022520107238,
+            "sample_count": 37300,
+            "sample_cpu_ns": 63689827,
+            "sample_squared_cpu_ns": 1038199538819.0,
+            "thread": 1
+          },
+          {
+            "calls": 1274082,
+            "empty_clock_pair_median_ns": 1006,
+            "estimated_clock_corrected_cpu_seconds": 0.28096570797115383,
+            "estimated_raw_cpu_seconds": 1.718601859326923,
+            "max_sample_cpu_ns": 43709,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 11265648,
+            "paired_empty_clock_mean_ns": 1128.3701923076924,
+            "sample_count": 9984,
+            "sample_cpu_ns": 13467360,
+            "sample_squared_cpu_ns": 24789607472.0,
+            "thread": 1
+          },
+          {
+            "calls": 2504700,
+            "empty_clock_pair_median_ns": 1258,
+            "estimated_clock_corrected_cpu_seconds": 0.7028236056456121,
+            "estimated_raw_cpu_seconds": 3.547171056959195,
+            "max_sample_cpu_ns": 45014,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 22347552,
+            "paired_empty_clock_mean_ns": 1135.6040449209818,
+            "sample_count": 19679,
+            "sample_cpu_ns": 27869517,
+            "sample_squared_cpu_ns": 61069907063.0,
+            "thread": 2
+          },
+          {
+            "calls": 4745618,
+            "empty_clock_pair_median_ns": 1258,
+            "estimated_clock_corrected_cpu_seconds": 2.673447580816383,
+            "estimated_raw_cpu_seconds": 8.06375061135757,
+            "max_sample_cpu_ns": 476760,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 41959379,
+            "paired_empty_clock_mean_ns": 1135.8484881297204,
+            "sample_count": 36941,
+            "sample_cpu_ns": 62770120,
+            "sample_squared_cpu_ns": 510747241630.0,
+            "thread": 2
+          },
+          {
+            "calls": 1260955,
+            "empty_clock_pair_median_ns": 1258,
+            "estimated_clock_corrected_cpu_seconds": 0.29672489116449513,
+            "estimated_raw_cpu_seconds": 1.7320365698132123,
+            "max_sample_cpu_ns": 43437,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 11182399,
+            "paired_empty_clock_mean_ns": 1138.2735138436483,
+            "sample_count": 9824,
+            "sample_cpu_ns": 13494159,
+            "sample_squared_cpu_ns": 27469176437.0,
+            "thread": 2
+          },
+          {
+            "calls": 2369498,
+            "empty_clock_pair_median_ns": 1207,
+            "estimated_clock_corrected_cpu_seconds": 0.6865147275455828,
+            "estimated_raw_cpu_seconds": 3.389721572421641,
+            "max_sample_cpu_ns": 52589,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 21023312,
+            "paired_empty_clock_mean_ns": 1140.8352507054483,
+            "sample_count": 18428,
+            "sample_cpu_ns": 26362457,
+            "sample_squared_cpu_ns": 54109841667.0,
+            "thread": 3
+          },
+          {
+            "calls": 4456664,
+            "empty_clock_pair_median_ns": 1207,
+            "estimated_clock_corrected_cpu_seconds": 2.677649681423383,
+            "estimated_raw_cpu_seconds": 7.762242647108861,
+            "max_sample_cpu_ns": 227174,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 39647299,
+            "paired_empty_clock_mean_ns": 1140.8966360680267,
+            "sample_count": 34751,
+            "sample_cpu_ns": 60526370,
+            "sample_squared_cpu_ns": 240188752986.0,
+            "thread": 3
+          },
+          {
+            "calls": 1192803,
+            "empty_clock_pair_median_ns": 1207,
+            "estimated_clock_corrected_cpu_seconds": 0.2792942985061067,
+            "estimated_raw_cpu_seconds": 1.6474861110829226,
+            "max_sample_cpu_ns": 37692,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 10706464,
+            "paired_empty_clock_mean_ns": 1147.039211484894,
+            "sample_count": 9334,
+            "sample_cpu_ns": 12892016,
+            "sample_squared_cpu_ns": 23176998566.0,
+            "thread": 3
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "apply": {
+        "estimated_clock_corrected_cpu_seconds": 0.10627134418051958,
+        "estimated_raw_cpu_seconds": 0.2264474922070927,
+        "phase": "apply",
+        "rows": [
+          {
+            "calls": 2561,
+            "empty_clock_pair_median_ns": 1012,
+            "estimated_clock_corrected_cpu_seconds": 0.003269287233333333,
+            "estimated_raw_cpu_seconds": 0.006133595,
+            "max_sample_cpu_ns": 11612,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 33553,
+            "paired_empty_clock_mean_ns": 1118.4333333333334,
+            "sample_count": 30,
+            "sample_cpu_ns": 71850,
+            "sample_squared_cpu_ns": 340163918.0,
+            "thread": 0
+          },
+          {
+            "calls": 32518,
+            "empty_clock_pair_median_ns": 1012,
+            "estimated_clock_corrected_cpu_seconds": 0.022451629546218488,
+            "estimated_raw_cpu_seconds": 0.0594597095210084,
+            "max_sample_cpu_ns": 6630,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 270863,
+            "paired_empty_clock_mean_ns": 1138.079831932773,
+            "sample_count": 238,
+            "sample_cpu_ns": 435187,
+            "sample_squared_cpu_ns": 931172869.0,
+            "thread": 0
+          },
+          {
+            "calls": 23415,
+            "empty_clock_pair_median_ns": 1006,
+            "estimated_clock_corrected_cpu_seconds": 0.03028387303030303,
+            "estimated_raw_cpu_seconds": 0.05702403954545455,
+            "max_sample_cpu_ns": 12252,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 226118,
+            "paired_empty_clock_mean_ns": 1142.010101010101,
+            "sample_count": 198,
+            "sample_cpu_ns": 482202,
+            "sample_squared_cpu_ns": 1489946772.0,
+            "thread": 1
+          },
+          {
+            "calls": 23502,
+            "empty_clock_pair_median_ns": 1258,
+            "estimated_clock_corrected_cpu_seconds": 0.025219683745664738,
+            "estimated_raw_cpu_seconds": 0.05396004860115607,
+            "max_sample_cpu_ns": 5418,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 211560,
+            "paired_empty_clock_mean_ns": 1222.8901734104047,
+            "sample_count": 173,
+            "sample_cpu_ns": 397204,
+            "sample_squared_cpu_ns": 1035205386.0,
+            "thread": 2
+          },
+          {
+            "calls": 21735,
+            "empty_clock_pair_median_ns": 1207,
+            "estimated_clock_corrected_cpu_seconds": 0.025046870625,
+            "estimated_raw_cpu_seconds": 0.04987009953947369,
+            "max_sample_cpu_ns": 7425,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 173597,
+            "paired_empty_clock_mean_ns": 1142.0855263157894,
+            "sample_count": 152,
+            "sample_cpu_ns": 348758,
+            "sample_squared_cpu_ns": 943150386.0,
+            "thread": 3
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "commit": {
+        "estimated_clock_corrected_cpu_seconds": 0.5247467078215156,
+        "estimated_raw_cpu_seconds": 1.0136943637396163,
+        "phase": "commit",
+        "rows": [
+          {
+            "calls": 29499,
+            "empty_clock_pair_median_ns": 1012,
+            "estimated_clock_corrected_cpu_seconds": 0.026197219071428572,
+            "estimated_raw_cpu_seconds": 0.05891507168877551,
+            "max_sample_cpu_ns": 54272,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 217387,
+            "paired_empty_clock_mean_ns": 1109.1173469387754,
+            "sample_count": 196,
+            "sample_cpu_ns": 391449,
+            "sample_squared_cpu_ns": 3797770179.0,
+            "thread": 0
+          },
+          {
+            "calls": 35999,
+            "empty_clock_pair_median_ns": 1012,
+            "estimated_clock_corrected_cpu_seconds": 0.0764114774,
+            "estimated_raw_cpu_seconds": 0.11665847939666668,
+            "max_sample_cpu_ns": 65475,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 335401,
+            "paired_empty_clock_mean_ns": 1118.0033333333333,
+            "sample_count": 300,
+            "sample_cpu_ns": 972181,
+            "sample_squared_cpu_ns": 11879920493.0,
+            "thread": 0
+          },
+          {
+            "calls": 151420,
+            "empty_clock_pair_median_ns": 1012,
+            "estimated_clock_corrected_cpu_seconds": 0.11702943716017315,
+            "estimated_raw_cpu_seconds": 0.28245703260606064,
+            "max_sample_cpu_ns": 20071,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 1261847,
+            "paired_empty_clock_mean_ns": 1092.5082251082251,
+            "sample_count": 1155,
+            "sample_cpu_ns": 2154523,
+            "sample_squared_cpu_ns": 5986678889.0,
+            "thread": 0
+          },
+          {
+            "calls": 22544,
+            "empty_clock_pair_median_ns": 1006,
+            "estimated_clock_corrected_cpu_seconds": 0.01047352983006536,
+            "estimated_raw_cpu_seconds": 0.03589255288888889,
+            "max_sample_cpu_ns": 18094,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 172512,
+            "paired_empty_clock_mean_ns": 1127.5294117647059,
+            "sample_count": 153,
+            "sample_cpu_ns": 243593,
+            "sample_squared_cpu_ns": 680926827.0,
+            "thread": 1
+          },
+          {
+            "calls": 34713,
+            "empty_clock_pair_median_ns": 1006,
+            "estimated_clock_corrected_cpu_seconds": 0.0831799000648855,
+            "estimated_raw_cpu_seconds": 0.12561826496564885,
+            "max_sample_cpu_ns": 38058,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 320308,
+            "paired_empty_clock_mean_ns": 1222.5496183206108,
+            "sample_count": 262,
+            "sample_cpu_ns": 948117,
+            "sample_squared_cpu_ns": 9625369507.0,
+            "thread": 1
+          },
+          {
+            "calls": 15317,
+            "empty_clock_pair_median_ns": 1006,
+            "estimated_clock_corrected_cpu_seconds": 0.0057362693172413794,
+            "estimated_raw_cpu_seconds": 0.023493531503448274,
+            "max_sample_cpu_ns": 6443,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 168101,
+            "paired_empty_clock_mean_ns": 1159.3172413793104,
+            "sample_count": 145,
+            "sample_cpu_ns": 222404,
+            "sample_squared_cpu_ns": 396692534.0,
+            "thread": 1
+          },
+          {
+            "calls": 22738,
+            "empty_clock_pair_median_ns": 1258,
+            "estimated_clock_corrected_cpu_seconds": 0.011555663116279069,
+            "estimated_raw_cpu_seconds": 0.03876181231395349,
+            "max_sample_cpu_ns": 12297,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 205799,
+            "paired_empty_clock_mean_ns": 1196.5058139534883,
+            "sample_count": 172,
+            "sample_cpu_ns": 293211,
+            "sample_squared_cpu_ns": 759273531.0,
+            "thread": 2
+          },
+          {
+            "calls": 34927,
+            "empty_clock_pair_median_ns": 1258,
+            "estimated_clock_corrected_cpu_seconds": 0.09259876945054946,
+            "estimated_raw_cpu_seconds": 0.133484852989011,
+            "max_sample_cpu_ns": 67875,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 319578,
+            "paired_empty_clock_mean_ns": 1170.6153846153845,
+            "sample_count": 273,
+            "sample_cpu_ns": 1043358,
+            "sample_squared_cpu_ns": 17164607518.0,
+            "thread": 2
+          },
+          {
+            "calls": 15574,
+            "empty_clock_pair_median_ns": 1258,
+            "estimated_clock_corrected_cpu_seconds": 0.0064094089090909094,
+            "estimated_raw_cpu_seconds": 0.024532825515151516,
+            "max_sample_cpu_ns": 6891,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 153608,
+            "paired_empty_clock_mean_ns": 1163.6969696969697,
+            "sample_count": 132,
+            "sample_cpu_ns": 207932,
+            "sample_squared_cpu_ns": 382872652.0,
+            "thread": 2
+          },
+          {
+            "calls": 21132,
+            "empty_clock_pair_median_ns": 1207,
+            "estimated_clock_corrected_cpu_seconds": 0.008241897078947368,
+            "estimated_raw_cpu_seconds": 0.03304474792105263,
+            "max_sample_cpu_ns": 3829,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 178404,
+            "paired_empty_clock_mean_ns": 1173.7105263157894,
+            "sample_count": 152,
+            "sample_cpu_ns": 237687,
+            "sample_squared_cpu_ns": 400135423.0,
+            "thread": 3
+          },
+          {
+            "calls": 33385,
+            "empty_clock_pair_median_ns": 1207,
+            "estimated_clock_corrected_cpu_seconds": 0.07832032854785478,
+            "estimated_raw_cpu_seconds": 0.11617120584158415,
+            "max_sample_cpu_ns": 67295,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 343532,
+            "paired_empty_clock_mean_ns": 1133.7689768976898,
+            "sample_count": 303,
+            "sample_cpu_ns": 1054362,
+            "sample_squared_cpu_ns": 12619807524.0,
+            "thread": 3
+          },
+          {
+            "calls": 14422,
+            "empty_clock_pair_median_ns": 1207,
+            "estimated_clock_corrected_cpu_seconds": 0.008592807875,
+            "estimated_raw_cpu_seconds": 0.024663986109375,
+            "max_sample_cpu_ns": 26260,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 142637,
+            "paired_empty_clock_mean_ns": 1114.3515625,
+            "sample_count": 128,
+            "sample_cpu_ns": 218901,
+            "sample_squared_cpu_ns": 1013609729.0,
+            "thread": 3
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "select": {
+        "estimated_clock_corrected_cpu_seconds": 0.18162404650780736,
+        "estimated_raw_cpu_seconds": 0.38458339899015664,
+        "phase": "select",
+        "rows": [
+          {
+            "calls": 29406,
+            "empty_clock_pair_median_ns": 1012,
+            "estimated_clock_corrected_cpu_seconds": 0.015217269315068494,
+            "estimated_raw_cpu_seconds": 0.04749914926027397,
+            "max_sample_cpu_ns": 13346,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 240418,
+            "paired_empty_clock_mean_ns": 1097.7990867579908,
+            "sample_count": 219,
+            "sample_cpu_ns": 353748,
+            "sample_squared_cpu_ns": 771469650.0,
+            "thread": 0
+          },
+          {
+            "calls": 7899,
+            "empty_clock_pair_median_ns": 1012,
+            "estimated_clock_corrected_cpu_seconds": 0.0183939734375,
+            "estimated_raw_cpu_seconds": 0.02698759175,
+            "max_sample_cpu_ns": 12297,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 52221,
+            "paired_empty_clock_mean_ns": 1087.9375,
+            "sample_count": 48,
+            "sample_cpu_ns": 163996,
+            "sample_squared_cpu_ns": 798803658.0,
+            "thread": 0
+          },
+          {
+            "calls": 147685,
+            "empty_clock_pair_median_ns": 1012,
+            "estimated_clock_corrected_cpu_seconds": 0.1480128037552389,
+            "estimated_raw_cpu_seconds": 0.3100966579798827,
+            "max_sample_cpu_ns": 5956,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 1309314,
+            "paired_empty_clock_mean_ns": 1097.4970662196145,
+            "sample_count": 1193,
+            "sample_cpu_ns": 2504962,
+            "sample_squared_cpu_ns": 5802659054.0,
+            "thread": 0
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "alphabet": {
+        "estimated_clock_corrected_cpu_seconds": 0.0,
+        "estimated_raw_cpu_seconds": 0.0,
+        "phase": "alphabet",
+        "rows": [],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "output": {
+        "estimated_clock_corrected_cpu_seconds": 0.0436269009909091,
+        "estimated_raw_cpu_seconds": 0.3699522476818182,
+        "phase": "output",
+        "rows": [
+          {
+            "calls": 299490,
+            "empty_clock_pair_median_ns": 1012,
+            "estimated_clock_corrected_cpu_seconds": 0.043319231900000005,
+            "estimated_raw_cpu_seconds": 0.36594183950000003,
+            "max_sample_cpu_ns": 31473,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 2585376,
+            "paired_empty_clock_mean_ns": 1077.24,
+            "sample_count": 2400,
+            "sample_cpu_ns": 2932520,
+            "sample_squared_cpu_ns": 5589622518.0,
+            "thread": 0
+          },
+          {
+            "calls": 3570,
+            "empty_clock_pair_median_ns": 1012,
+            "estimated_clock_corrected_cpu_seconds": 0.00030766909090909096,
+            "estimated_raw_cpu_seconds": 0.004010408181818182,
+            "max_sample_cpu_ns": 1498,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 22818,
+            "paired_empty_clock_mean_ns": 1037.1818181818182,
+            "sample_count": 22,
+            "sample_cpu_ns": 24714,
+            "sample_squared_cpu_ns": 27958898.0,
+            "thread": 0
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      }
+    }
+  },
+  {
+    "arm": "history-buffer-allocation-cpu-v2",
+    "repeat": 1,
+    "metrics": {
+      "load_seconds": 9.308805103,
+      "process_hwm_kib_before_validation": 2914388,
+      "train_cpu_seconds": 75.896033,
+      "train_seconds": 24.465523433
+    },
+    "model_equal": true,
+    "max_swap_kib": 0,
+    "binary_sha256": "3abd5e76d62fa946f121d898bbbebc69c1ffb61028ca38f7201507497c1c4a13",
+    "phases": {
+      "vocabulary": {
+        "raw_cpu_seconds": 0.0,
+        "corrected_cpu_seconds": 0.0,
+        "operations": {}
+      },
+      "plan": {
+        "raw_cpu_seconds": 0.0,
+        "corrected_cpu_seconds": 0.0,
+        "operations": {
+          "alloc": {
+            "calls": 7,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          },
+          "realloc": {
+            "calls": 16,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          }
+        }
+      },
+      "initial_count": {
+        "raw_cpu_seconds": 4.2194879154617535,
+        "corrected_cpu_seconds": 2.725688291203939,
+        "operations": {
+          "alloc": {
+            "calls": 256397,
+            "samples": 1937,
+            "raw_seconds": 0.5837759540911321,
+            "corrected_seconds": 0.3049901246483085,
+            "max_sample_cpu_ns": 144190
+          },
+          "realloc": {
+            "calls": 865555,
+            "samples": 6729,
+            "raw_seconds": 3.1408996065532575,
+            "corrected_seconds": 2.193161534321711,
+            "max_sample_cpu_ns": 482286
+          },
+          "dealloc": {
+            "calls": 242304,
+            "samples": 1870,
+            "raw_seconds": 0.4948123548173641,
+            "corrected_seconds": 0.22753663223391957,
+            "max_sample_cpu_ns": 25101
+          }
+        }
+      },
+      "materialize": {
+        "raw_cpu_seconds": 0.0,
+        "corrected_cpu_seconds": 0.0,
+        "operations": {
+          "alloc": {
+            "calls": 1,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          },
+          "dealloc": {
+            "calls": 3,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          }
+        }
+      },
+      "merge_rounds": {
+        "raw_cpu_seconds": 0.0,
+        "corrected_cpu_seconds": 0.0,
+        "operations": {}
+      },
+      "retire": {
+        "raw_cpu_seconds": 6.531435571462756,
+        "corrected_cpu_seconds": 1.7912264086232108,
+        "operations": {
+          "dealloc": {
+            "calls": 4377053,
+            "samples": 34234,
+            "raw_seconds": 6.531435571462756,
+            "corrected_seconds": 1.7912264086232108,
+            "max_sample_cpu_ns": 490548
+          }
+        }
+      },
+      "prepare": {
+        "raw_cpu_seconds": 57.2072860747225,
+        "corrected_cpu_seconds": 18.1277208086802,
+        "operations": {
+          "alloc": {
+            "calls": 9925894,
+            "samples": 77585,
+            "raw_seconds": 14.432730592989612,
+            "corrected_seconds": 3.0654355250820133,
+            "max_sample_cpu_ns": 71953
+          },
+          "realloc": {
+            "calls": 18795804,
+            "samples": 146437,
+            "raw_seconds": 35.26702872402865,
+            "corrected_seconds": 13.54607361776062,
+            "max_sample_cpu_ns": 262699
+          },
+          "dealloc": {
+            "calls": 5236543,
+            "samples": 40974,
+            "raw_seconds": 7.5075267577042375,
+            "corrected_seconds": 1.516211665837564,
+            "max_sample_cpu_ns": 60125
+          }
+        }
+      },
+      "apply": {
+        "raw_cpu_seconds": 0.23403558673660593,
+        "corrected_cpu_seconds": 0.11312833662550788,
+        "operations": {
+          "alloc": {
+            "calls": 2561,
+            "samples": 16,
+            "raw_seconds": 0.015448272125,
+            "corrected_seconds": 0.0126582226875,
+            "max_sample_cpu_ns": 39540
+          },
+          "dealloc": {
+            "calls": 101170,
+            "samples": 783,
+            "raw_seconds": 0.21858731461160594,
+            "corrected_seconds": 0.10047011393800787,
+            "max_sample_cpu_ns": 17309
+          }
+        }
+      },
+      "commit": {
+        "raw_cpu_seconds": 1.0454249748766449,
+        "corrected_cpu_seconds": 0.5473082807883233,
+        "operations": {
+          "alloc": {
+            "calls": 95913,
+            "samples": 714,
+            "raw_seconds": 0.17352061202966812,
+            "corrected_seconds": 0.06321323175069316,
+            "max_sample_cpu_ns": 19805
+          },
+          "realloc": {
+            "calls": 139024,
+            "samples": 1047,
+            "raw_seconds": 0.523856563208017,
+            "corrected_seconds": 0.3620094079325865,
+            "max_sample_cpu_ns": 102336
+          },
+          "dealloc": {
+            "calls": 196733,
+            "samples": 1592,
+            "raw_seconds": 0.3480477996389599,
+            "corrected_seconds": 0.12208564110504357,
+            "max_sample_cpu_ns": 20425
+          }
+        }
+      },
+      "select": {
+        "raw_cpu_seconds": 0.46711579851280666,
+        "corrected_cpu_seconds": 0.2585639436420476,
+        "operations": {
+          "alloc": {
+            "calls": 29406,
+            "samples": 229,
+            "raw_seconds": 0.04863688194759825,
+            "corrected_seconds": 0.014027047231441048,
+            "max_sample_cpu_ns": 8397
+          },
+          "realloc": {
+            "calls": 7899,
+            "samples": 65,
+            "raw_seconds": 0.03629128712307692,
+            "corrected_seconds": 0.027519629907692307,
+            "max_sample_cpu_ns": 44080
+          },
+          "dealloc": {
+            "calls": 147685,
+            "samples": 1201,
+            "raw_seconds": 0.3821876294421315,
+            "corrected_seconds": 0.21701726650291425,
+            "max_sample_cpu_ns": 18487
+          }
+        }
+      },
+      "alphabet": {
+        "raw_cpu_seconds": 0.0,
+        "corrected_cpu_seconds": 0.0,
+        "operations": {}
+      },
+      "output": {
+        "raw_cpu_seconds": 0.38948237293179266,
+        "corrected_cpu_seconds": 0.058749293559403115,
+        "operations": {
+          "alloc": {
+            "calls": 299490,
+            "samples": 2363,
+            "raw_seconds": 0.3848744342361405,
+            "corrected_seconds": 0.05793781703766398,
+            "max_sample_cpu_ns": 77402
+          },
+          "dealloc": {
+            "calls": 3570,
+            "samples": 23,
+            "raw_seconds": 0.004607938695652174,
+            "corrected_seconds": 0.0008114765217391305,
+            "max_sample_cpu_ns": 2749
+          }
+        }
+      }
+    },
+    "raw_allocator_observer": {
+      "vocabulary": {
+        "estimated_clock_corrected_cpu_seconds": 0.0,
+        "estimated_raw_cpu_seconds": 0.0,
+        "phase": "vocabulary",
+        "rows": [],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "plan": {
+        "estimated_clock_corrected_cpu_seconds": 0.0,
+        "estimated_raw_cpu_seconds": 0.0,
+        "phase": "plan",
+        "rows": [
+          {
+            "calls": 7,
+            "empty_clock_pair_median_ns": 1014,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 0
+          },
+          {
+            "calls": 16,
+            "empty_clock_pair_median_ns": 1014,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 0
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "initial_count": {
+        "estimated_clock_corrected_cpu_seconds": 2.725688291203939,
+        "estimated_raw_cpu_seconds": 4.2194879154617535,
+        "phase": "initial_count",
+        "rows": [
+          {
+            "calls": 63531,
+            "empty_clock_pair_median_ns": 1014,
+            "estimated_clock_corrected_cpu_seconds": 0.1003988097554672,
+            "estimated_raw_cpu_seconds": 0.170895863916501,
+            "max_sample_cpu_ns": 121990,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 558153,
+            "paired_empty_clock_mean_ns": 1109.648111332008,
+            "sample_count": 503,
+            "sample_cpu_ns": 1353050,
+            "sample_squared_cpu_ns": 37196172824.0,
+            "thread": 0
+          },
+          {
+            "calls": 215095,
+            "empty_clock_pair_median_ns": 1014,
+            "estimated_clock_corrected_cpu_seconds": 0.7119033286880291,
+            "estimated_raw_cpu_seconds": 0.9466779606438936,
+            "max_sample_cpu_ns": 482286,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 1805329,
+            "paired_empty_clock_mean_ns": 1091.4927448609433,
+            "sample_count": 1654,
+            "sample_cpu_ns": 7279599,
+            "sample_squared_cpu_ns": 541341548505.0,
+            "thread": 0
+          },
+          {
+            "calls": 60414,
+            "empty_clock_pair_median_ns": 1014,
+            "estimated_clock_corrected_cpu_seconds": 0.057023678481012655,
+            "estimated_raw_cpu_seconds": 0.12458909013924052,
+            "max_sample_cpu_ns": 12812,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 530109,
+            "paired_empty_clock_mean_ns": 1118.373417721519,
+            "sample_count": 474,
+            "sample_cpu_ns": 977509,
+            "sample_squared_cpu_ns": 2587221173.0,
+            "thread": 0
+          },
+          {
+            "calls": 60993,
+            "empty_clock_pair_median_ns": 1009,
+            "estimated_clock_corrected_cpu_seconds": 0.05252941871052631,
+            "estimated_raw_cpu_seconds": 0.11826930594078948,
+            "max_sample_cpu_ns": 25932,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 491489,
+            "paired_empty_clock_mean_ns": 1077.826754385965,
+            "sample_count": 456,
+            "sample_cpu_ns": 884213,
+            "sample_squared_cpu_ns": 3228598893.0,
+            "thread": 1
+          },
+          {
+            "calls": 207225,
+            "empty_clock_pair_median_ns": 1009,
+            "estimated_clock_corrected_cpu_seconds": 0.46266048386194025,
+            "estimated_raw_cpu_seconds": 0.6882498973880598,
+            "max_sample_cpu_ns": 159095,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 1750502,
+            "paired_empty_clock_mean_ns": 1088.620646766169,
+            "sample_count": 1608,
+            "sample_cpu_ns": 5340600,
+            "sample_squared_cpu_ns": 122584048414.0,
+            "thread": 1
+          },
+          {
+            "calls": 59634,
+            "empty_clock_pair_median_ns": 1009,
+            "estimated_clock_corrected_cpu_seconds": 0.05690152632829374,
+            "estimated_raw_cpu_seconds": 0.1226208991101512,
+            "max_sample_cpu_ns": 7824,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 510247,
+            "paired_empty_clock_mean_ns": 1102.0453563714902,
+            "sample_count": 463,
+            "sample_cpu_ns": 952032,
+            "sample_squared_cpu_ns": 2401407376.0,
+            "thread": 1
+          },
+          {
+            "calls": 61096,
+            "empty_clock_pair_median_ns": 1016,
+            "estimated_clock_corrected_cpu_seconds": 0.07926829196475771,
+            "estimated_raw_cpu_seconds": 0.1464127959647577,
+            "max_sample_cpu_ns": 144190,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 498946,
+            "paired_empty_clock_mean_ns": 1099.0,
+            "sample_count": 454,
+            "sample_cpu_ns": 1087983,
+            "sample_squared_cpu_ns": 29234596427.0,
+            "thread": 2
+          },
+          {
+            "calls": 206768,
+            "empty_clock_pair_median_ns": 1016,
+            "estimated_clock_corrected_cpu_seconds": 0.5491828846894835,
+            "estimated_raw_cpu_seconds": 0.7756038807218419,
+            "max_sample_cpu_ns": 430709,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 1759743,
+            "paired_empty_clock_mean_ns": 1095.048537647791,
+            "sample_count": 1607,
+            "sample_cpu_ns": 6027990,
+            "sample_squared_cpu_ns": 405073458532.0,
+            "thread": 2
+          },
+          {
+            "calls": 58600,
+            "empty_clock_pair_median_ns": 1016,
+            "estimated_clock_corrected_cpu_seconds": 0.05309587831858407,
+            "estimated_raw_cpu_seconds": 0.11717744159292036,
+            "max_sample_cpu_ns": 14133,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 494281,
+            "paired_empty_clock_mean_ns": 1093.5420353982302,
+            "sample_count": 452,
+            "sample_cpu_ns": 903826,
+            "sample_squared_cpu_ns": 2372279174.0,
+            "thread": 2
+          },
+          {
+            "calls": 70777,
+            "empty_clock_pair_median_ns": 1009,
+            "estimated_clock_corrected_cpu_seconds": 0.07279360421755725,
+            "estimated_raw_cpu_seconds": 0.14819798826908398,
+            "max_sample_cpu_ns": 68241,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 558259,
+            "paired_empty_clock_mean_ns": 1065.3797709923665,
+            "sample_count": 524,
+            "sample_cpu_ns": 1097189,
+            "sample_squared_cpu_ns": 11310869711.0,
+            "thread": 3
+          },
+          {
+            "calls": 236467,
+            "empty_clock_pair_median_ns": 1009,
+            "estimated_clock_corrected_cpu_seconds": 0.46941483708225806,
+            "estimated_raw_cpu_seconds": 0.7303678677994624,
+            "max_sample_cpu_ns": 203582,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 2052602,
+            "paired_empty_clock_mean_ns": 1103.5494623655914,
+            "sample_count": 1860,
+            "sample_cpu_ns": 5744921,
+            "sample_squared_cpu_ns": 136368123427.0,
+            "thread": 3
+          },
+          {
+            "calls": 63656,
+            "empty_clock_pair_median_ns": 1009,
+            "estimated_clock_corrected_cpu_seconds": 0.06051554910602911,
+            "estimated_raw_cpu_seconds": 0.13042492397505198,
+            "max_sample_cpu_ns": 25101,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 528252,
+            "paired_empty_clock_mean_ns": 1098.2370062370062,
+            "sample_count": 481,
+            "sample_cpu_ns": 985522,
+            "sample_squared_cpu_ns": 3232311362.0,
+            "thread": 3
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "materialize": {
+        "estimated_clock_corrected_cpu_seconds": 0.0,
+        "estimated_raw_cpu_seconds": 0.0,
+        "phase": "materialize",
+        "rows": [
+          {
+            "calls": 1,
+            "empty_clock_pair_median_ns": 1014,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 0
+          },
+          {
+            "calls": 3,
+            "empty_clock_pair_median_ns": 1014,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 0
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "merge_rounds": {
+        "estimated_clock_corrected_cpu_seconds": 0.0,
+        "estimated_raw_cpu_seconds": 0.0,
+        "phase": "merge_rounds",
+        "rows": [],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "retire": {
+        "estimated_clock_corrected_cpu_seconds": 1.7912264086232108,
+        "estimated_raw_cpu_seconds": 6.531435571462756,
+        "phase": "retire",
+        "rows": [
+          {
+            "calls": 4377053,
+            "empty_clock_pair_median_ns": 1014,
+            "estimated_clock_corrected_cpu_seconds": 1.7912264086232108,
+            "estimated_raw_cpu_seconds": 6.531435571462756,
+            "max_sample_cpu_ns": 490548,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 37074333,
+            "paired_empty_clock_mean_ns": 1082.9681895191914,
+            "sample_count": 34234,
+            "sample_cpu_ns": 51083952,
+            "sample_squared_cpu_ns": 1043737263562.0,
+            "thread": 0
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "prepare": {
+        "estimated_clock_corrected_cpu_seconds": 18.1277208086802,
+        "estimated_raw_cpu_seconds": 57.2072860747225,
+        "phase": "prepare",
+        "rows": [
+          {
+            "calls": 2365384,
+            "empty_clock_pair_median_ns": 1014,
+            "estimated_clock_corrected_cpu_seconds": 0.696909964310019,
+            "estimated_raw_cpu_seconds": 3.379398761430624,
+            "max_sample_cpu_ns": 27896,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 20997132,
+            "paired_empty_clock_mean_ns": 1134.0605995139076,
+            "sample_count": 18515,
+            "sample_cpu_ns": 26452182,
+            "sample_squared_cpu_ns": 50809781720.0,
+            "thread": 0
+          },
+          {
+            "calls": 4549175,
+            "empty_clock_pair_median_ns": 1014,
+            "estimated_clock_corrected_cpu_seconds": 3.8349749519648406,
+            "estimated_raw_cpu_seconds": 8.958009814086417,
+            "max_sample_cpu_ns": 262699,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 39876827,
+            "paired_empty_clock_mean_ns": 1126.1459192318555,
+            "sample_count": 35410,
+            "sample_cpu_ns": 69727616,
+            "sample_squared_cpu_ns": 340564175734.0,
+            "thread": 0
+          },
+          {
+            "calls": 1429774,
+            "empty_clock_pair_median_ns": 1014,
+            "estimated_clock_corrected_cpu_seconds": 0.4894520006482178,
+            "estimated_raw_cpu_seconds": 2.10497177471861,
+            "max_sample_cpu_ns": 21478,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 12616605,
+            "paired_empty_clock_mean_ns": 1129.9126813541106,
+            "sample_count": 11166,
+            "sample_cpu_ns": 16439042,
+            "sample_squared_cpu_ns": 32155281840.0,
+            "thread": 0
+          },
+          {
+            "calls": 2477207,
+            "empty_clock_pair_median_ns": 1009,
+            "estimated_clock_corrected_cpu_seconds": 0.7567753198433292,
+            "estimated_raw_cpu_seconds": 3.6279670308304843,
+            "max_sample_cpu_ns": 57727,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 22378820,
+            "paired_empty_clock_mean_ns": 1159.0439196188108,
+            "sample_count": 19308,
+            "sample_cpu_ns": 28277325,
+            "sample_squared_cpu_ns": 64346456469.0,
+            "thread": 1
+          },
+          {
+            "calls": 4629530,
+            "empty_clock_pair_median_ns": 1009,
+            "estimated_clock_corrected_cpu_seconds": 3.029178277128434,
+            "estimated_raw_cpu_seconds": 8.645048910392521,
+            "max_sample_cpu_ns": 124454,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 43853121,
+            "paired_empty_clock_mean_ns": 1213.0541617106028,
+            "sample_count": 36151,
+            "sample_cpu_ns": 67507320,
+            "sample_squared_cpu_ns": 238864691994.0,
+            "thread": 1
+          },
+          {
+            "calls": 1247875,
+            "empty_clock_pair_median_ns": 1009,
+            "estimated_clock_corrected_cpu_seconds": 0.35563460085798204,
+            "estimated_raw_cpu_seconds": 1.8024897835592086,
+            "max_sample_cpu_ns": 60125,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 11250194,
+            "paired_empty_clock_mean_ns": 1159.4552200350406,
+            "sample_count": 9703,
+            "sample_cpu_ns": 14015473,
+            "sample_squared_cpu_ns": 35251383377.0,
+            "thread": 1
+          },
+          {
+            "calls": 2394716,
+            "empty_clock_pair_median_ns": 1016,
+            "estimated_clock_corrected_cpu_seconds": 0.835407455550045,
+            "estimated_raw_cpu_seconds": 3.577233434993907,
+            "max_sample_cpu_ns": 71953,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 21608609,
+            "paired_empty_clock_mean_ns": 1144.94828591109,
+            "sample_count": 18873,
+            "sample_cpu_ns": 28192540,
+            "sample_squared_cpu_ns": 71888987184.0,
+            "thread": 2
+          },
+          {
+            "calls": 4521924,
+            "empty_clock_pair_median_ns": 1016,
+            "estimated_clock_corrected_cpu_seconds": 3.469852170312263,
+            "estimated_raw_cpu_seconds": 8.630017694231137,
+            "max_sample_cpu_ns": 66226,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 40059853,
+            "paired_empty_clock_mean_ns": 1141.143797179889,
+            "sample_count": 35105,
+            "sample_cpu_ns": 66997316,
+            "sample_squared_cpu_ns": 228115860080.0,
+            "thread": 2
+          },
+          {
+            "calls": 1205819,
+            "empty_clock_pair_median_ns": 1016,
+            "estimated_clock_corrected_cpu_seconds": 0.30546386359236755,
+            "estimated_raw_cpu_seconds": 1.6827121237713463,
+            "max_sample_cpu_ns": 32128,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 10714681,
+            "paired_empty_clock_mean_ns": 1142.1683189425435,
+            "sample_count": 9381,
+            "sample_cpu_ns": 13091121,
+            "sample_squared_cpu_ns": 23551611633.0,
+            "thread": 2
+          },
+          {
+            "calls": 2688587,
+            "empty_clock_pair_median_ns": 1009,
+            "estimated_clock_corrected_cpu_seconds": 0.7763427853786203,
+            "estimated_raw_cpu_seconds": 3.8481313657345972,
+            "max_sample_cpu_ns": 37658,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 23866288,
+            "paired_empty_clock_mean_ns": 1142.528986547944,
+            "sample_count": 20889,
+            "sample_cpu_ns": 29898090,
+            "sample_squared_cpu_ns": 59086322432.0,
+            "thread": 3
+          },
+          {
+            "calls": 5095175,
+            "empty_clock_pair_median_ns": 1009,
+            "estimated_clock_corrected_cpu_seconds": 3.212068218355083,
+            "estimated_raw_cpu_seconds": 9.033952305318575,
+            "max_sample_cpu_ns": 245327,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 45443415,
+            "paired_empty_clock_mean_ns": 1142.626914083126,
+            "sample_count": 39771,
+            "sample_cpu_ns": 70515599,
+            "sample_squared_cpu_ns": 301899827029.0,
+            "thread": 3
+          },
+          {
+            "calls": 1353075,
+            "empty_clock_pair_median_ns": 1009,
+            "estimated_clock_corrected_cpu_seconds": 0.3656612007389966,
+            "estimated_raw_cpu_seconds": 1.9173530756550727,
+            "max_sample_cpu_ns": 42496,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 12298168,
+            "paired_empty_clock_mean_ns": 1146.7892577396494,
+            "sample_count": 10724,
+            "sample_cpu_ns": 15196271,
+            "sample_squared_cpu_ns": 33481785341.0,
+            "thread": 3
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "apply": {
+        "estimated_clock_corrected_cpu_seconds": 0.11312833662550788,
+        "estimated_raw_cpu_seconds": 0.23403558673660593,
+        "phase": "apply",
+        "rows": [
+          {
+            "calls": 2561,
+            "empty_clock_pair_median_ns": 1014,
+            "estimated_clock_corrected_cpu_seconds": 0.0126582226875,
+            "estimated_raw_cpu_seconds": 0.015448272125,
+            "max_sample_cpu_ns": 39540,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 17431,
+            "paired_empty_clock_mean_ns": 1089.4375,
+            "sample_count": 16,
+            "sample_cpu_ns": 96514,
+            "sample_squared_cpu_ns": 2101177620.0,
+            "thread": 0
+          },
+          {
+            "calls": 32023,
+            "empty_clock_pair_median_ns": 1014,
+            "estimated_clock_corrected_cpu_seconds": 0.028672694537815124,
+            "estimated_raw_cpu_seconds": 0.0644896127352941,
+            "max_sample_cpu_ns": 17309,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 266197,
+            "paired_empty_clock_mean_ns": 1118.4747899159663,
+            "sample_count": 238,
+            "sample_cpu_ns": 479297,
+            "sample_squared_cpu_ns": 1484999817.0,
+            "thread": 0
+          },
+          {
+            "calls": 21488,
+            "empty_clock_pair_median_ns": 1009,
+            "estimated_clock_corrected_cpu_seconds": 0.022107071999999995,
+            "estimated_raw_cpu_seconds": 0.048830528,
+            "max_sample_cpu_ns": 9779,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 196496,
+            "paired_empty_clock_mean_ns": 1243.6455696202531,
+            "sample_count": 158,
+            "sample_cpu_ns": 359048,
+            "sample_squared_cpu_ns": 989204406.0,
+            "thread": 1
+          },
+          {
+            "calls": 23284,
+            "empty_clock_pair_median_ns": 1016,
+            "estimated_clock_corrected_cpu_seconds": 0.024292678065217392,
+            "estimated_raw_cpu_seconds": 0.051046247152173915,
+            "max_sample_cpu_ns": 7663,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 211418,
+            "paired_empty_clock_mean_ns": 1149.0108695652175,
+            "sample_count": 184,
+            "sample_cpu_ns": 403389,
+            "sample_squared_cpu_ns": 1064054311.0,
+            "thread": 2
+          },
+          {
+            "calls": 24375,
+            "empty_clock_pair_median_ns": 1009,
+            "estimated_clock_corrected_cpu_seconds": 0.025397669334975365,
+            "estimated_raw_cpu_seconds": 0.054220926724137926,
+            "max_sample_cpu_ns": 9284,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 240046,
+            "paired_empty_clock_mean_ns": 1182.4926108374384,
+            "sample_count": 203,
+            "sample_cpu_ns": 451563,
+            "sample_squared_cpu_ns": 1197408613.0,
+            "thread": 3
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "commit": {
+        "estimated_clock_corrected_cpu_seconds": 0.5473082807883233,
+        "estimated_raw_cpu_seconds": 1.0454249748766449,
+        "phase": "commit",
+        "rows": [
+          {
+            "calls": 29514,
+            "empty_clock_pair_median_ns": 1014,
+            "estimated_clock_corrected_cpu_seconds": 0.03366259779411764,
+            "estimated_raw_cpu_seconds": 0.0668257724117647,
+            "max_sample_cpu_ns": 19805,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 229223,
+            "paired_empty_clock_mean_ns": 1123.6421568627452,
+            "sample_count": 204,
+            "sample_cpu_ns": 461898,
+            "sample_squared_cpu_ns": 2623753570.0,
+            "thread": 0
+          },
+          {
+            "calls": 36177,
+            "empty_clock_pair_median_ns": 1014,
+            "estimated_clock_corrected_cpu_seconds": 0.08197250789655171,
+            "estimated_raw_cpu_seconds": 0.12271113651724139,
+            "max_sample_cpu_ns": 44958,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 293910,
+            "paired_empty_clock_mean_ns": 1126.0919540229886,
+            "sample_count": 261,
+            "sample_cpu_ns": 885303,
+            "sample_squared_cpu_ns": 8780530519.0,
+            "thread": 0
+          },
+          {
+            "calls": 151440,
+            "empty_clock_pair_median_ns": 1014,
+            "estimated_clock_corrected_cpu_seconds": 0.10252218009724474,
+            "estimated_raw_cpu_seconds": 0.27267422431118316,
+            "max_sample_cpu_ns": 20425,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 1386474,
+            "paired_empty_clock_mean_ns": 1123.5607779578606,
+            "sample_count": 1234,
+            "sample_cpu_ns": 2221870,
+            "sample_squared_cpu_ns": 5027325804.0,
+            "thread": 0
+          },
+          {
+            "calls": 20943,
+            "empty_clock_pair_median_ns": 1009,
+            "estimated_clock_corrected_cpu_seconds": 0.008964396437837838,
+            "estimated_raw_cpu_seconds": 0.03294899927027027,
+            "max_sample_cpu_ns": 7426,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 211868,
+            "paired_empty_clock_mean_ns": 1145.2324324324325,
+            "sample_count": 185,
+            "sample_cpu_ns": 291055,
+            "sample_squared_cpu_ns": 540455241.0,
+            "thread": 1
+          },
+          {
+            "calls": 33107,
+            "empty_clock_pair_median_ns": 1009,
+            "estimated_clock_corrected_cpu_seconds": 0.08315714392307692,
+            "estimated_raw_cpu_seconds": 0.12203337216849817,
+            "max_sample_cpu_ns": 72110,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 320573,
+            "paired_empty_clock_mean_ns": 1174.2600732600733,
+            "sample_count": 273,
+            "sample_cpu_ns": 1006286,
+            "sample_squared_cpu_ns": 15697559636.0,
+            "thread": 1
+          },
+          {
+            "calls": 14270,
+            "empty_clock_pair_median_ns": 1009,
+            "estimated_clock_corrected_cpu_seconds": 0.009006448155339805,
+            "estimated_raw_cpu_seconds": 0.025277157572815533,
+            "max_sample_cpu_ns": 14777,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 117441,
+            "paired_empty_clock_mean_ns": 1140.2038834951456,
+            "sample_count": 103,
+            "sample_cpu_ns": 182449,
+            "sample_squared_cpu_ns": 581362635.0,
+            "thread": 1
+          },
+          {
+            "calls": 22615,
+            "empty_clock_pair_median_ns": 1016,
+            "estimated_clock_corrected_cpu_seconds": 0.008794424852071006,
+            "estimated_raw_cpu_seconds": 0.03498861659763313,
+            "max_sample_cpu_ns": 8318,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 195747,
+            "paired_empty_clock_mean_ns": 1158.2662721893491,
+            "sample_count": 169,
+            "sample_cpu_ns": 261467,
+            "sample_squared_cpu_ns": 485658711.0,
+            "thread": 2
+          },
+          {
+            "calls": 34620,
+            "empty_clock_pair_median_ns": 1016,
+            "estimated_clock_corrected_cpu_seconds": 0.13285048140221403,
+            "estimated_raw_cpu_seconds": 0.17393752295202952,
+            "max_sample_cpu_ns": 102336,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 321623,
+            "paired_empty_clock_mean_ns": 1186.80073800738,
+            "sample_count": 271,
+            "sample_cpu_ns": 1361556,
+            "sample_squared_cpu_ns": 38181491960.0,
+            "thread": 2
+          },
+          {
+            "calls": 15449,
+            "empty_clock_pair_median_ns": 1016,
+            "estimated_clock_corrected_cpu_seconds": 0.006323055,
+            "estimated_raw_cpu_seconds": 0.024101369263157896,
+            "max_sample_cpu_ns": 5456,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 153053,
+            "paired_empty_clock_mean_ns": 1150.7744360902257,
+            "sample_count": 133,
+            "sample_cpu_ns": 207488,
+            "sample_squared_cpu_ns": 382642378.0,
+            "thread": 2
+          },
+          {
+            "calls": 22841,
+            "empty_clock_pair_median_ns": 1009,
+            "estimated_clock_corrected_cpu_seconds": 0.011791812666666669,
+            "estimated_raw_cpu_seconds": 0.03875722375,
+            "max_sample_cpu_ns": 15476,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 184169,
+            "paired_empty_clock_mean_ns": 1180.570512820513,
+            "sample_count": 156,
+            "sample_cpu_ns": 264705,
+            "sample_squared_cpu_ns": 697466769.0,
+            "thread": 3
+          },
+          {
+            "calls": 35120,
+            "empty_clock_pair_median_ns": 1009,
+            "estimated_clock_corrected_cpu_seconds": 0.0640292747107438,
+            "estimated_raw_cpu_seconds": 0.10517453157024793,
+            "max_sample_cpu_ns": 30650,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 283518,
+            "paired_empty_clock_mean_ns": 1171.5619834710744,
+            "sample_count": 242,
+            "sample_cpu_ns": 724722,
+            "sample_squared_cpu_ns": 4743322506.0,
+            "thread": 3
+          },
+          {
+            "calls": 15574,
+            "empty_clock_pair_median_ns": 1009,
+            "estimated_clock_corrected_cpu_seconds": 0.004233957852459017,
+            "estimated_raw_cpu_seconds": 0.025995048491803282,
+            "max_sample_cpu_ns": 9095,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 170467,
+            "paired_empty_clock_mean_ns": 1397.2704918032787,
+            "sample_count": 122,
+            "sample_cpu_ns": 203634,
+            "sample_squared_cpu_ns": 466788490.0,
+            "thread": 3
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "select": {
+        "estimated_clock_corrected_cpu_seconds": 0.2585639436420476,
+        "estimated_raw_cpu_seconds": 0.46711579851280666,
+        "phase": "select",
+        "rows": [
+          {
+            "calls": 29406,
+            "empty_clock_pair_median_ns": 1014,
+            "estimated_clock_corrected_cpu_seconds": 0.014027047231441048,
+            "estimated_raw_cpu_seconds": 0.04863688194759825,
+            "max_sample_cpu_ns": 8397,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 269525,
+            "paired_empty_clock_mean_ns": 1176.9650655021835,
+            "sample_count": 229,
+            "sample_cpu_ns": 378761,
+            "sample_squared_cpu_ns": 759853585.0,
+            "thread": 0
+          },
+          {
+            "calls": 7899,
+            "empty_clock_pair_median_ns": 1014,
+            "estimated_clock_corrected_cpu_seconds": 0.027519629907692307,
+            "estimated_raw_cpu_seconds": 0.03629128712307692,
+            "max_sample_cpu_ns": 44080,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 72181,
+            "paired_empty_clock_mean_ns": 1110.4769230769232,
+            "sample_count": 65,
+            "sample_cpu_ns": 298637,
+            "sample_squared_cpu_ns": 4506642077.0,
+            "thread": 0
+          },
+          {
+            "calls": 147685,
+            "empty_clock_pair_median_ns": 1014,
+            "estimated_clock_corrected_cpu_seconds": 0.21701726650291425,
+            "estimated_raw_cpu_seconds": 0.3821876294421315,
+            "max_sample_cpu_ns": 18487,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 1343194,
+            "paired_empty_clock_mean_ns": 1118.3963363863447,
+            "sample_count": 1201,
+            "sample_cpu_ns": 3108016,
+            "sample_squared_cpu_ns": 11176592682.0,
+            "thread": 0
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "alphabet": {
+        "estimated_clock_corrected_cpu_seconds": 0.0,
+        "estimated_raw_cpu_seconds": 0.0,
+        "phase": "alphabet",
+        "rows": [],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "output": {
+        "estimated_clock_corrected_cpu_seconds": 0.058749293559403115,
+        "estimated_raw_cpu_seconds": 0.38948237293179266,
+        "phase": "output",
+        "rows": [
+          {
+            "calls": 299490,
+            "empty_clock_pair_median_ns": 1014,
+            "estimated_clock_corrected_cpu_seconds": 0.05793781703766398,
+            "estimated_raw_cpu_seconds": 0.3848744342361405,
+            "max_sample_cpu_ns": 77402,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 2579556,
+            "paired_empty_clock_mean_ns": 1091.644519678375,
+            "sample_count": 2363,
+            "sample_cpu_ns": 3036690,
+            "sample_squared_cpu_ns": 12177778218.0,
+            "thread": 0
+          },
+          {
+            "calls": 3570,
+            "empty_clock_pair_median_ns": 1014,
+            "estimated_clock_corrected_cpu_seconds": 0.0008114765217391305,
+            "estimated_raw_cpu_seconds": 0.004607938695652174,
+            "max_sample_cpu_ns": 2749,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 24459,
+            "paired_empty_clock_mean_ns": 1063.4347826086957,
+            "sample_count": 23,
+            "sample_cpu_ns": 29687,
+            "sample_squared_cpu_ns": 42527659.0,
+            "thread": 0
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      }
+    }
+  },
+  {
+    "arm": "main-allocation-cpu-v2",
+    "repeat": 1,
+    "metrics": {
+      "load_seconds": 9.397036965,
+      "process_hwm_kib_before_validation": 2719088,
+      "train_cpu_seconds": 50.68417,
+      "train_seconds": 15.338046476
+    },
+    "model_equal": true,
+    "max_swap_kib": 0,
+    "binary_sha256": "454eb938487f30ba8ab7013f38dec602650d025a7cdc0d286e2e42d007ef88a5",
+    "phases": {
+      "vocabulary": {
+        "raw_cpu_seconds": 0.0,
+        "corrected_cpu_seconds": 0.0,
+        "operations": {
+          "alloc": {
+            "calls": 9,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          },
+          "alloc_zeroed": {
+            "calls": 8,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          },
+          "realloc": {
+            "calls": 5,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          },
+          "dealloc": {
+            "calls": 8,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          }
+        }
+      },
+      "plan": {
+        "raw_cpu_seconds": 0.0,
+        "corrected_cpu_seconds": 0.0,
+        "operations": {
+          "alloc": {
+            "calls": 7,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          },
+          "realloc": {
+            "calls": 18,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          },
+          "dealloc": {
+            "calls": 2,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          }
+        }
+      },
+      "initial_count": {
+        "raw_cpu_seconds": 0.07603090477777778,
+        "corrected_cpu_seconds": 0.06979294564444445,
+        "operations": {
+          "alloc": {
+            "calls": 5533,
+            "samples": 38,
+            "raw_seconds": 0.04894717077777778,
+            "corrected_seconds": 0.04280305864444445,
+            "max_sample_cpu_ns": 26720
+          },
+          "alloc_zeroed": {
+            "calls": 8,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          },
+          "realloc": {
+            "calls": 189,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          },
+          "dealloc": {
+            "calls": 132,
+            "samples": 3,
+            "raw_seconds": 0.027083733999999998,
+            "corrected_seconds": 0.026989887,
+            "max_sample_cpu_ns": 927556
+          }
+        }
+      },
+      "materialize": {
+        "raw_cpu_seconds": 0.0,
+        "corrected_cpu_seconds": 0.0,
+        "operations": {
+          "alloc": {
+            "calls": 3,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          },
+          "realloc": {
+            "calls": 3,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          },
+          "dealloc": {
+            "calls": 4,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          }
+        }
+      },
+      "merge_rounds": {
+        "raw_cpu_seconds": 0.0,
+        "corrected_cpu_seconds": 0.0,
+        "operations": {}
+      },
+      "retire": {
+        "raw_cpu_seconds": 0.04534305693277311,
+        "corrected_cpu_seconds": 0.02860998975630252,
+        "operations": {
+          "dealloc": {
+            "calls": 15207,
+            "samples": 119,
+            "raw_seconds": 0.04534305693277311,
+            "corrected_seconds": 0.02860998975630252,
+            "max_sample_cpu_ns": 7287
+          }
+        }
+      },
+      "prepare": {
+        "raw_cpu_seconds": 15.4220124393224,
+        "corrected_cpu_seconds": 7.872458536059348,
+        "operations": {
+          "alloc": {
+            "calls": 1471960,
+            "samples": 11353,
+            "raw_seconds": 2.6038983789813335,
+            "corrected_seconds": 0.9713465878829258,
+            "max_sample_cpu_ns": 51969
+          },
+          "realloc": {
+            "calls": 4046469,
+            "samples": 31681,
+            "raw_seconds": 10.913316089101446,
+            "corrected_seconds": 6.332066779846771,
+            "max_sample_cpu_ns": 2641427
+          },
+          "dealloc": {
+            "calls": 1220635,
+            "samples": 9430,
+            "raw_seconds": 1.9041960302396213,
+            "corrected_seconds": 0.5689214973296508,
+            "max_sample_cpu_ns": 22147
+          },
+          "alloc_zeroed": {
+            "calls": 283,
+            "samples": 1,
+            "raw_seconds": 0.000601941,
+            "corrected_seconds": 0.000123671,
+            "max_sample_cpu_ns": 2127
+          }
+        }
+      },
+      "apply": {
+        "raw_cpu_seconds": 0.22815173472632677,
+        "corrected_cpu_seconds": 0.07761488081581687,
+        "operations": {
+          "dealloc": {
+            "calls": 120392,
+            "samples": 961,
+            "raw_seconds": 0.22815173472632677,
+            "corrected_seconds": 0.07761488081581687,
+            "max_sample_cpu_ns": 20766
+          }
+        }
+      },
+      "commit": {
+        "raw_cpu_seconds": 0.4002599574040406,
+        "corrected_cpu_seconds": 0.2534644223719895,
+        "operations": {
+          "alloc": {
+            "calls": 28171,
+            "samples": 189,
+            "raw_seconds": 0.1351137562848947,
+            "corrected_seconds": 0.10246411895487804,
+            "max_sample_cpu_ns": 59894
+          },
+          "realloc": {
+            "calls": 14760,
+            "samples": 110,
+            "raw_seconds": 0.0479345621061828,
+            "corrected_seconds": 0.030302499349217988,
+            "max_sample_cpu_ns": 13566
+          },
+          "dealloc": {
+            "calls": 81138,
+            "samples": 629,
+            "raw_seconds": 0.21721163901296311,
+            "corrected_seconds": 0.12069780406789352,
+            "max_sample_cpu_ns": 46936
+          }
+        }
+      },
+      "select": {
+        "raw_cpu_seconds": 0.02023959494117647,
+        "corrected_cpu_seconds": 0.008904670823529411,
+        "operations": {
+          "alloc": {
+            "calls": 3586,
+            "samples": 34,
+            "raw_seconds": 0.02023959494117647,
+            "corrected_seconds": 0.008904670823529411,
+            "max_sample_cpu_ns": 70737
+          },
+          "realloc": {
+            "calls": 30,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          },
+          "dealloc": {
+            "calls": 14,
+            "samples": 0,
+            "raw_seconds": 0.0,
+            "corrected_seconds": 0.0,
+            "max_sample_cpu_ns": 0
+          }
+        }
+      },
+      "alphabet": {
+        "raw_cpu_seconds": 0.0,
+        "corrected_cpu_seconds": 0.0,
+        "operations": {}
+      },
+      "output": {
+        "raw_cpu_seconds": 0.3566139826423999,
+        "corrected_cpu_seconds": 0.0364278305142881,
+        "operations": {
+          "alloc": {
+            "calls": 299490,
+            "samples": 2313,
+            "raw_seconds": 0.35226588696498057,
+            "corrected_seconds": 0.03588273464332036,
+            "max_sample_cpu_ns": 19721
+          },
+          "dealloc": {
+            "calls": 3571,
+            "samples": 31,
+            "raw_seconds": 0.004348095677419354,
+            "corrected_seconds": 0.0005450958709677419,
+            "max_sample_cpu_ns": 2369
+          }
+        }
+      }
+    },
+    "raw_allocator_observer": {
+      "vocabulary": {
+        "estimated_clock_corrected_cpu_seconds": 0.0,
+        "estimated_raw_cpu_seconds": 0.0,
+        "phase": "vocabulary",
+        "rows": [
+          {
+            "calls": 1,
+            "empty_clock_pair_median_ns": 1006,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 0
+          },
+          {
+            "calls": 2,
+            "empty_clock_pair_median_ns": 1006,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "alloc_zeroed",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 0
+          },
+          {
+            "calls": 1,
+            "empty_clock_pair_median_ns": 1011,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 1
+          },
+          {
+            "calls": 2,
+            "empty_clock_pair_median_ns": 1011,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "alloc_zeroed",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 1
+          },
+          {
+            "calls": 6,
+            "empty_clock_pair_median_ns": 1226,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 2
+          },
+          {
+            "calls": 2,
+            "empty_clock_pair_median_ns": 1226,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "alloc_zeroed",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 2
+          },
+          {
+            "calls": 5,
+            "empty_clock_pair_median_ns": 1226,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 2
+          },
+          {
+            "calls": 8,
+            "empty_clock_pair_median_ns": 1226,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 2
+          },
+          {
+            "calls": 1,
+            "empty_clock_pair_median_ns": 1015,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 3
+          },
+          {
+            "calls": 2,
+            "empty_clock_pair_median_ns": 1015,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "alloc_zeroed",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 3
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "plan": {
+        "estimated_clock_corrected_cpu_seconds": 0.0,
+        "estimated_raw_cpu_seconds": 0.0,
+        "phase": "plan",
+        "rows": [
+          {
+            "calls": 7,
+            "empty_clock_pair_median_ns": 1226,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 2
+          },
+          {
+            "calls": 18,
+            "empty_clock_pair_median_ns": 1226,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 2
+          },
+          {
+            "calls": 2,
+            "empty_clock_pair_median_ns": 1226,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 2
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "initial_count": {
+        "estimated_clock_corrected_cpu_seconds": 0.06979294564444445,
+        "estimated_raw_cpu_seconds": 0.07603090477777778,
+        "phase": "initial_count",
+        "rows": [
+          {
+            "calls": 1396,
+            "empty_clock_pair_median_ns": 1006,
+            "estimated_clock_corrected_cpu_seconds": 0.0163251032,
+            "estimated_raw_cpu_seconds": 0.0179299448,
+            "max_sample_cpu_ns": 20749,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 11496,
+            "paired_empty_clock_mean_ns": 1149.6,
+            "sample_count": 10,
+            "sample_cpu_ns": 128438,
+            "sample_squared_cpu_ns": 1813287616.0,
+            "thread": 0
+          },
+          {
+            "calls": 1,
+            "empty_clock_pair_median_ns": 1006,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "alloc_zeroed",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 0
+          },
+          {
+            "calls": 33,
+            "empty_clock_pair_median_ns": 1006,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 0
+          },
+          {
+            "calls": 20,
+            "empty_clock_pair_median_ns": 1006,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 0
+          },
+          {
+            "calls": 1366,
+            "empty_clock_pair_median_ns": 1011,
+            "estimated_clock_corrected_cpu_seconds": 0.016027278,
+            "estimated_raw_cpu_seconds": 0.0174857562,
+            "max_sample_cpu_ns": 26720,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 10677,
+            "paired_empty_clock_mean_ns": 1067.7,
+            "sample_count": 10,
+            "sample_cpu_ns": 128007,
+            "sample_squared_cpu_ns": 2251667655.0,
+            "thread": 1
+          },
+          {
+            "calls": 1,
+            "empty_clock_pair_median_ns": 1011,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "alloc_zeroed",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 1
+          },
+          {
+            "calls": 32,
+            "empty_clock_pair_median_ns": 1011,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 1
+          },
+          {
+            "calls": 23,
+            "empty_clock_pair_median_ns": 1011,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 1
+          },
+          {
+            "calls": 1401,
+            "empty_clock_pair_median_ns": 1226,
+            "estimated_clock_corrected_cpu_seconds": 0.006584233,
+            "estimated_raw_cpu_seconds": 0.008240682,
+            "max_sample_cpu_ns": 23622,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 10641,
+            "paired_empty_clock_mean_ns": 1182.3333333333333,
+            "sample_count": 9,
+            "sample_cpu_ns": 52938,
+            "sample_squared_cpu_ns": 724203268.0,
+            "thread": 2
+          },
+          {
+            "calls": 5,
+            "empty_clock_pair_median_ns": 1226,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "alloc_zeroed",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 2
+          },
+          {
+            "calls": 82,
+            "empty_clock_pair_median_ns": 1226,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 2
+          },
+          {
+            "calls": 58,
+            "empty_clock_pair_median_ns": 1226,
+            "estimated_clock_corrected_cpu_seconds": 0.026896949,
+            "estimated_raw_cpu_seconds": 0.026957936,
+            "max_sample_cpu_ns": 927556,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 2103,
+            "paired_empty_clock_mean_ns": 1051.5,
+            "sample_count": 2,
+            "sample_cpu_ns": 929584,
+            "sample_squared_cpu_ns": 860364245920.0,
+            "thread": 2
+          },
+          {
+            "calls": 1370,
+            "empty_clock_pair_median_ns": 1015,
+            "estimated_clock_corrected_cpu_seconds": 0.0038664444444444445,
+            "estimated_raw_cpu_seconds": 0.005290787777777777,
+            "max_sample_cpu_ns": 7172,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 9357,
+            "paired_empty_clock_mean_ns": 1039.6666666666667,
+            "sample_count": 9,
+            "sample_cpu_ns": 34757,
+            "sample_squared_cpu_ns": 156388017.0,
+            "thread": 3
+          },
+          {
+            "calls": 1,
+            "empty_clock_pair_median_ns": 1015,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "alloc_zeroed",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 3
+          },
+          {
+            "calls": 42,
+            "empty_clock_pair_median_ns": 1015,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 3
+          },
+          {
+            "calls": 31,
+            "empty_clock_pair_median_ns": 1015,
+            "estimated_clock_corrected_cpu_seconds": 9.2938e-05,
+            "estimated_raw_cpu_seconds": 0.000125798,
+            "max_sample_cpu_ns": 4058,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 1060,
+            "paired_empty_clock_mean_ns": 1060.0,
+            "sample_count": 1,
+            "sample_cpu_ns": 4058,
+            "sample_squared_cpu_ns": 16467364.0,
+            "thread": 3
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "materialize": {
+        "estimated_clock_corrected_cpu_seconds": 0.0,
+        "estimated_raw_cpu_seconds": 0.0,
+        "phase": "materialize",
+        "rows": [
+          {
+            "calls": 3,
+            "empty_clock_pair_median_ns": 1226,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 2
+          },
+          {
+            "calls": 3,
+            "empty_clock_pair_median_ns": 1226,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 2
+          },
+          {
+            "calls": 4,
+            "empty_clock_pair_median_ns": 1226,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 2
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "merge_rounds": {
+        "estimated_clock_corrected_cpu_seconds": 0.0,
+        "estimated_raw_cpu_seconds": 0.0,
+        "phase": "merge_rounds",
+        "rows": [],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "retire": {
+        "estimated_clock_corrected_cpu_seconds": 0.02860998975630252,
+        "estimated_raw_cpu_seconds": 0.04534305693277311,
+        "phase": "retire",
+        "rows": [
+          {
+            "calls": 15207,
+            "empty_clock_pair_median_ns": 1226,
+            "estimated_clock_corrected_cpu_seconds": 0.02860998975630252,
+            "estimated_raw_cpu_seconds": 0.04534305693277311,
+            "max_sample_cpu_ns": 7287,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 130942,
+            "paired_empty_clock_mean_ns": 1100.3529411764705,
+            "sample_count": 119,
+            "sample_cpu_ns": 354825,
+            "sample_squared_cpu_ns": 1153842695.0,
+            "thread": 2
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "prepare": {
+        "estimated_clock_corrected_cpu_seconds": 7.872458536059348,
+        "estimated_raw_cpu_seconds": 15.4220124393224,
+        "phase": "prepare",
+        "rows": [
+          {
+            "calls": 357027,
+            "empty_clock_pair_median_ns": 1006,
+            "estimated_clock_corrected_cpu_seconds": 0.24554868440574507,
+            "estimated_raw_cpu_seconds": 0.6456965978283663,
+            "max_sample_cpu_ns": 51969,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 3121366,
+            "paired_empty_clock_mean_ns": 1120.777737881508,
+            "sample_count": 2785,
+            "sample_cpu_ns": 5036776,
+            "sample_squared_cpu_ns": 19573146944.0,
+            "thread": 0
+          },
+          {
+            "calls": 998383,
+            "empty_clock_pair_median_ns": 1006,
+            "estimated_clock_corrected_cpu_seconds": 1.3338595740760981,
+            "estimated_raw_cpu_seconds": 2.484583939220378,
+            "max_sample_cpu_ns": 172799,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 9027070,
+            "paired_empty_clock_mean_ns": 1152.588100102145,
+            "sample_count": 7832,
+            "sample_cpu_ns": 19490778,
+            "sample_squared_cpu_ns": 166613854846.0,
+            "thread": 0
+          },
+          {
+            "calls": 282623,
+            "empty_clock_pair_median_ns": 1006,
+            "estimated_clock_corrected_cpu_seconds": 0.12979892507276997,
+            "estimated_raw_cpu_seconds": 0.43944758358920194,
+            "max_sample_cpu_ns": 15927,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 2333680,
+            "paired_empty_clock_mean_ns": 1095.6244131455398,
+            "sample_count": 2130,
+            "sample_cpu_ns": 3311915,
+            "sample_squared_cpu_ns": 6509481625.0,
+            "thread": 0
+          },
+          {
+            "calls": 362419,
+            "empty_clock_pair_median_ns": 1011,
+            "estimated_clock_corrected_cpu_seconds": 0.23495882914265584,
+            "estimated_raw_cpu_seconds": 0.6319923542176823,
+            "max_sample_cpu_ns": 45392,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 3110152,
+            "paired_empty_clock_mean_ns": 1095.5096865093342,
+            "sample_count": 2839,
+            "sample_cpu_ns": 4950696,
+            "sample_squared_cpu_ns": 15484324194.0,
+            "thread": 1
+          },
+          {
+            "calls": 1004410,
+            "empty_clock_pair_median_ns": 1011,
+            "estimated_clock_corrected_cpu_seconds": 1.7684476667973439,
+            "estimated_raw_cpu_seconds": 2.891246836041374,
+            "max_sample_cpu_ns": 2641427,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 8754035,
+            "paired_empty_clock_mean_ns": 1117.8693653428682,
+            "sample_count": 7831,
+            "sample_cpu_ns": 22541944,
+            "sample_squared_cpu_ns": 7147574847550.0,
+            "thread": 1
+          },
+          {
+            "calls": 289040,
+            "empty_clock_pair_median_ns": 1011,
+            "estimated_clock_corrected_cpu_seconds": 0.1215354146026044,
+            "estimated_raw_cpu_seconds": 0.4386671953300404,
+            "max_sample_cpu_ns": 6015,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 2443442,
+            "paired_empty_clock_mean_ns": 1097.189941625505,
+            "sample_count": 2227,
+            "sample_cpu_ns": 3379850,
+            "sample_squared_cpu_ns": 6043188014.0,
+            "thread": 1
+          },
+          {
+            "calls": 385845,
+            "empty_clock_pair_median_ns": 1226,
+            "estimated_clock_corrected_cpu_seconds": 0.2535004273011557,
+            "estimated_raw_cpu_seconds": 0.6794245192862,
+            "max_sample_cpu_ns": 42056,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 3247596,
+            "paired_empty_clock_mean_ns": 1103.8735554044868,
+            "sample_count": 2942,
+            "sample_cpu_ns": 5180492,
+            "sample_squared_cpu_ns": 18029364582.0,
+            "thread": 2
+          },
+          {
+            "calls": 283,
+            "empty_clock_pair_median_ns": 1226,
+            "estimated_clock_corrected_cpu_seconds": 0.000123671,
+            "estimated_raw_cpu_seconds": 0.000601941,
+            "max_sample_cpu_ns": 2127,
+            "operation": "alloc_zeroed",
+            "paired_empty_clock_cpu_ns": 1690,
+            "paired_empty_clock_mean_ns": 1690.0,
+            "sample_count": 1,
+            "sample_cpu_ns": 2127,
+            "sample_squared_cpu_ns": 4524129.0,
+            "thread": 2
+          },
+          {
+            "calls": 1023224,
+            "empty_clock_pair_median_ns": 1226,
+            "estimated_clock_corrected_cpu_seconds": 1.9097053997477162,
+            "estimated_raw_cpu_seconds": 3.068782969311475,
+            "max_sample_cpu_ns": 516824,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 9051966,
+            "paired_empty_clock_mean_ns": 1132.7701163809286,
+            "sample_count": 7991,
+            "sample_cpu_ns": 23966057,
+            "sample_squared_cpu_ns": 847633592905.0,
+            "thread": 2
+          },
+          {
+            "calls": 356179,
+            "empty_clock_pair_median_ns": 1226,
+            "estimated_clock_corrected_cpu_seconds": 0.19059448285932507,
+            "estimated_raw_cpu_seconds": 0.5820907500692718,
+            "max_sample_cpu_ns": 20262,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 3094124,
+            "paired_empty_clock_mean_ns": 1099.1559502664297,
+            "sample_count": 2815,
+            "sample_cpu_ns": 4600455,
+            "sample_squared_cpu_ns": 10107100141.0,
+            "thread": 2
+          },
+          {
+            "calls": 366669,
+            "empty_clock_pair_median_ns": 1015,
+            "estimated_clock_corrected_cpu_seconds": 0.23733864703336924,
+            "estimated_raw_cpu_seconds": 0.646784907649085,
+            "max_sample_cpu_ns": 38960,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 3112144,
+            "paired_empty_clock_mean_ns": 1116.664513814137,
+            "sample_count": 2787,
+            "sample_cpu_ns": 4916122,
+            "sample_squared_cpu_ns": 17011832252.0,
+            "thread": 3
+          },
+          {
+            "calls": 1020452,
+            "empty_clock_pair_median_ns": 1015,
+            "estimated_clock_corrected_cpu_seconds": 1.3200541392256135,
+            "estimated_raw_cpu_seconds": 2.4687023445282175,
+            "max_sample_cpu_ns": 178676,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 9035407,
+            "paired_empty_clock_mean_ns": 1125.6268842656036,
+            "sample_count": 8027,
+            "sample_cpu_ns": 19419114,
+            "sample_squared_cpu_ns": 149593775836.0,
+            "thread": 3
+          },
+          {
+            "calls": 292793,
+            "empty_clock_pair_median_ns": 1015,
+            "estimated_clock_corrected_cpu_seconds": 0.1269926747949513,
+            "estimated_raw_cpu_seconds": 0.44399050125110723,
+            "max_sample_cpu_ns": 22147,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 2444666,
+            "paired_empty_clock_mean_ns": 1082.6687333923826,
+            "sample_count": 2258,
+            "sample_cpu_ns": 3424025,
+            "sample_squared_cpu_ns": 7221296607.0,
+            "thread": 3
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "apply": {
+        "estimated_clock_corrected_cpu_seconds": 0.07761488081581687,
+        "estimated_raw_cpu_seconds": 0.22815173472632677,
+        "phase": "apply",
+        "rows": [
+          {
+            "calls": 120392,
+            "empty_clock_pair_median_ns": 1226,
+            "estimated_clock_corrected_cpu_seconds": 0.07761488081581687,
+            "estimated_raw_cpu_seconds": 0.22815173472632677,
+            "max_sample_cpu_ns": 20766,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 1201624,
+            "paired_empty_clock_mean_ns": 1250.3891779396463,
+            "sample_count": 961,
+            "sample_cpu_ns": 1821166,
+            "sample_squared_cpu_ns": 4243610614.0,
+            "thread": 2
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "commit": {
+        "estimated_clock_corrected_cpu_seconds": 0.2534644223719895,
+        "estimated_raw_cpu_seconds": 0.4002599574040406,
+        "phase": "commit",
+        "rows": [
+          {
+            "calls": 6331,
+            "empty_clock_pair_median_ns": 1006,
+            "estimated_clock_corrected_cpu_seconds": 0.031490552275,
+            "estimated_raw_cpu_seconds": 0.0390071903,
+            "max_sample_cpu_ns": 51949,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 47491,
+            "paired_empty_clock_mean_ns": 1187.275,
+            "sample_count": 40,
+            "sample_cpu_ns": 246452,
+            "sample_squared_cpu_ns": 7461948752.0,
+            "thread": 0
+          },
+          {
+            "calls": 3598,
+            "empty_clock_pair_median_ns": 1006,
+            "estimated_clock_corrected_cpu_seconds": 0.009447366727272727,
+            "estimated_raw_cpu_seconds": 0.013842487272727274,
+            "max_sample_cpu_ns": 13566,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 40311,
+            "paired_empty_clock_mean_ns": 1221.5454545454545,
+            "sample_count": 33,
+            "sample_cpu_ns": 126960,
+            "sample_squared_cpu_ns": 760958572.0,
+            "thread": 0
+          },
+          {
+            "calls": 13674,
+            "empty_clock_pair_median_ns": 1006,
+            "estimated_clock_corrected_cpu_seconds": 0.023365385345454542,
+            "estimated_raw_cpu_seconds": 0.0396587022,
+            "max_sample_cpu_ns": 7198,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 131071,
+            "paired_empty_clock_mean_ns": 1191.5545454545454,
+            "sample_count": 110,
+            "sample_cpu_ns": 319033,
+            "sample_squared_cpu_ns": 1007714901.0,
+            "thread": 0
+          },
+          {
+            "calls": 6384,
+            "empty_clock_pair_median_ns": 1011,
+            "estimated_clock_corrected_cpu_seconds": 0.04044699980487805,
+            "estimated_raw_cpu_seconds": 0.04763304819512195,
+            "max_sample_cpu_ns": 59894,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 46151,
+            "paired_empty_clock_mean_ns": 1125.6341463414635,
+            "sample_count": 41,
+            "sample_cpu_ns": 305914,
+            "sample_squared_cpu_ns": 9877592774.0,
+            "thread": 1
+          },
+          {
+            "calls": 3628,
+            "empty_clock_pair_median_ns": 1011,
+            "estimated_clock_corrected_cpu_seconds": 0.007619129818181817,
+            "estimated_raw_cpu_seconds": 0.011994662727272726,
+            "max_sample_cpu_ns": 11641,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 26533,
+            "paired_empty_clock_mean_ns": 1206.0454545454545,
+            "sample_count": 22,
+            "sample_cpu_ns": 72735,
+            "sample_squared_cpu_ns": 393475391.0,
+            "thread": 1
+          },
+          {
+            "calls": 14075,
+            "empty_clock_pair_median_ns": 1011,
+            "estimated_clock_corrected_cpu_seconds": 0.02710187289719626,
+            "estimated_raw_cpu_seconds": 0.043683012149532706,
+            "max_sample_cpu_ns": 19137,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 126052,
+            "paired_empty_clock_mean_ns": 1178.056074766355,
+            "sample_count": 107,
+            "sample_cpu_ns": 332084,
+            "sample_squared_cpu_ns": 1441443038.0,
+            "thread": 1
+          },
+          {
+            "calls": 9082,
+            "empty_clock_pair_median_ns": 1226,
+            "estimated_clock_corrected_cpu_seconds": 0.008979259875,
+            "estimated_raw_cpu_seconds": 0.0193392675625,
+            "max_sample_cpu_ns": 4746,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 73006,
+            "paired_empty_clock_mean_ns": 1140.71875,
+            "sample_count": 64,
+            "sample_cpu_ns": 136282,
+            "sample_squared_cpu_ns": 337897062.0,
+            "thread": 2
+          },
+          {
+            "calls": 3833,
+            "empty_clock_pair_median_ns": 1226,
+            "estimated_clock_corrected_cpu_seconds": 0.008620736416666669,
+            "estimated_raw_cpu_seconds": 0.012908426041666667,
+            "max_sample_cpu_ns": 12024,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 26847,
+            "paired_empty_clock_mean_ns": 1118.625,
+            "sample_count": 24,
+            "sample_cpu_ns": 80825,
+            "sample_squared_cpu_ns": 472707231.0,
+            "thread": 2
+          },
+          {
+            "calls": 39379,
+            "empty_clock_pair_median_ns": 1226,
+            "estimated_clock_corrected_cpu_seconds": 0.048183838543689315,
+            "estimated_raw_cpu_seconds": 0.09536459582847896,
+            "max_sample_cpu_ns": 46936,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 370219,
+            "paired_empty_clock_mean_ns": 1198.1197411003236,
+            "sample_count": 309,
+            "sample_cpu_ns": 748309,
+            "sample_squared_cpu_ns": 4639605869.0,
+            "thread": 2
+          },
+          {
+            "calls": 6374,
+            "empty_clock_pair_median_ns": 1015,
+            "estimated_clock_corrected_cpu_seconds": 0.021547307,
+            "estimated_raw_cpu_seconds": 0.02913425022727273,
+            "max_sample_cpu_ns": 44822,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 52373,
+            "paired_empty_clock_mean_ns": 1190.2954545454545,
+            "sample_count": 44,
+            "sample_cpu_ns": 201115,
+            "sample_squared_cpu_ns": 3484791031.0,
+            "thread": 3
+          },
+          {
+            "calls": 3701,
+            "empty_clock_pair_median_ns": 1015,
+            "estimated_clock_corrected_cpu_seconds": 0.004615266387096774,
+            "estimated_raw_cpu_seconds": 0.009188986064516128,
+            "max_sample_cpu_ns": 4683,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 38310,
+            "paired_empty_clock_mean_ns": 1235.8064516129032,
+            "sample_count": 31,
+            "sample_cpu_ns": 76968,
+            "sample_squared_cpu_ns": 210706638.0,
+            "thread": 3
+          },
+          {
+            "calls": 14010,
+            "empty_clock_pair_median_ns": 1015,
+            "estimated_clock_corrected_cpu_seconds": 0.022046707281553397,
+            "estimated_raw_cpu_seconds": 0.038505328834951454,
+            "max_sample_cpu_ns": 9806,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 121002,
+            "paired_empty_clock_mean_ns": 1174.7766990291261,
+            "sample_count": 103,
+            "sample_cpu_ns": 283087,
+            "sample_squared_cpu_ns": 903304613.0,
+            "thread": 3
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "select": {
+        "estimated_clock_corrected_cpu_seconds": 0.008904670823529411,
+        "estimated_raw_cpu_seconds": 0.02023959494117647,
+        "phase": "select",
+        "rows": [
+          {
+            "calls": 3586,
+            "empty_clock_pair_median_ns": 1226,
+            "estimated_clock_corrected_cpu_seconds": 0.008904670823529411,
+            "estimated_raw_cpu_seconds": 0.02023959494117647,
+            "max_sample_cpu_ns": 70737,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 107470,
+            "paired_empty_clock_mean_ns": 3160.8823529411766,
+            "sample_count": 34,
+            "sample_cpu_ns": 191898,
+            "sample_squared_cpu_ns": 6773591322.0,
+            "thread": 2
+          },
+          {
+            "calls": 30,
+            "empty_clock_pair_median_ns": 1226,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "realloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 2
+          },
+          {
+            "calls": 14,
+            "empty_clock_pair_median_ns": 1226,
+            "estimated_clock_corrected_cpu_seconds": 0.0,
+            "estimated_raw_cpu_seconds": 0.0,
+            "max_sample_cpu_ns": 0,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 0,
+            "paired_empty_clock_mean_ns": 0.0,
+            "sample_count": 0,
+            "sample_cpu_ns": 0,
+            "sample_squared_cpu_ns": 0.0,
+            "thread": 2
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "alphabet": {
+        "estimated_clock_corrected_cpu_seconds": 0.0,
+        "estimated_raw_cpu_seconds": 0.0,
+        "phase": "alphabet",
+        "rows": [],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      },
+      "output": {
+        "estimated_clock_corrected_cpu_seconds": 0.0364278305142881,
+        "estimated_raw_cpu_seconds": 0.3566139826423999,
+        "phase": "output",
+        "rows": [
+          {
+            "calls": 299490,
+            "empty_clock_pair_median_ns": 1226,
+            "estimated_clock_corrected_cpu_seconds": 0.03588273464332036,
+            "estimated_raw_cpu_seconds": 0.35226588696498057,
+            "max_sample_cpu_ns": 19721,
+            "operation": "alloc",
+            "paired_empty_clock_cpu_ns": 2443468,
+            "paired_empty_clock_mean_ns": 1056.4063986165154,
+            "sample_count": 2313,
+            "sample_cpu_ns": 2720595,
+            "sample_squared_cpu_ns": 3914374605.0,
+            "thread": 2
+          },
+          {
+            "calls": 3571,
+            "empty_clock_pair_median_ns": 1226,
+            "estimated_clock_corrected_cpu_seconds": 0.0005450958709677419,
+            "estimated_raw_cpu_seconds": 0.004348095677419354,
+            "max_sample_cpu_ns": 2369,
+            "operation": "dealloc",
+            "paired_empty_clock_cpu_ns": 33014,
+            "paired_empty_clock_mean_ns": 1064.967741935484,
+            "sample_count": 31,
+            "sample_cpu_ns": 37746,
+            "sample_squared_cpu_ns": 48330934.0,
+            "thread": 2
+          }
+        ],
+        "sampling_probability": "1/128 xorshift64 per thread"
+      }
+    }
+  }
+]

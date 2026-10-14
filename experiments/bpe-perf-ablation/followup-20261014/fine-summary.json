@@ -1,0 +1,1774 @@
+[
+  {
+    "label": "fine-zh-byte",
+    "arm": "main-detail",
+    "n": 2,
+    "train_wall": 15.4640977385,
+    "train_cpu": 51.504375,
+    "phases": {
+      "vocabulary": 0.625405744,
+      "plan": 0.6377769385000001,
+      "initial_count": 2.520545791,
+      "materialize": 0.6322192865,
+      "merge_rounds": 10.9225465685,
+      "retire": 0.08093081099999999,
+      "prepare": 7.553782458000001,
+      "apply": 0.9207750135,
+      "commit": 1.924178459,
+      "select": 0.4835243005,
+      "alphabet": 0.0,
+      "output": 0.042906977
+    },
+    "fine": {
+      "commit_route": {
+        "wall_seconds_sum": 0.24831249849999998,
+        "thread_cpu_seconds_sum": 0.2469097045,
+        "calls": 2561.0
+      },
+      "commit_owner_join": {
+        "wall_seconds_sum": 1.65855632,
+        "thread_cpu_seconds_sum": 1.284667095,
+        "calls": 2561.0
+      },
+      "commit_global_publish": {
+        "wall_seconds_sum": 0.004242109,
+        "thread_cpu_seconds_sum": 0.0042692115,
+        "calls": 2561.0
+      },
+      "prepare_scan": {
+        "wall_seconds_sum": 19.516624551,
+        "thread_cpu_seconds_sum": 19.2110236085,
+        "calls": 99943.0
+      },
+      "prepare_finish": {
+        "wall_seconds_sum": 5.283519287,
+        "thread_cpu_seconds_sum": 5.189651809,
+        "calls": 99943.0
+      },
+      "main_owner_group": {
+        "wall_seconds_sum": 0.027612481,
+        "thread_cpu_seconds_sum": 0.023341430500000003,
+        "calls": 10219.0
+      },
+      "main_owner_counts": {
+        "wall_seconds_sum": 2.6383205055,
+        "thread_cpu_seconds_sum": 2.627815401,
+        "calls": 10219.0
+      },
+      "main_completed_publish": {
+        "wall_seconds_sum": 1.2017215124999998,
+        "thread_cpu_seconds_sum": 1.1942985595,
+        "calls": 10219.0
+      },
+      "main_owner_reduce": {
+        "wall_seconds_sum": 0.9106033995,
+        "thread_cpu_seconds_sum": 0.9024552205,
+        "calls": 10219.0
+      }
+    },
+    "work": {
+      "counters": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        7696519,
+        261605092,
+        21298579,
+        221728,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "label": "fine-zh-byte",
+    "arm": "current-detail",
+    "n": 2,
+    "train_wall": 24.6074983765,
+    "train_cpu": 75.7646585,
+    "phases": {
+      "vocabulary": 0.050007116500000004,
+      "plan": 0.5455155895,
+      "initial_count": 3.1260325915,
+      "materialize": 1.1581281885,
+      "merge_rounds": 17.902904288499997,
+      "retire": 1.2585780020000001,
+      "prepare": 10.259660884999999,
+      "apply": 1.275322291,
+      "commit": 5.280363584,
+      "select": 1.0839508625,
+      "alphabet": 0.5197531,
+      "output": 0.045018093999999995
+    },
+    "fine": {
+      "commit_route": {
+        "wall_seconds_sum": 1.516709154,
+        "thread_cpu_seconds_sum": 1.512278137,
+        "calls": 2561.0
+      },
+      "commit_owner_join": {
+        "wall_seconds_sum": 3.3392380895,
+        "thread_cpu_seconds_sum": 0.0412980245,
+        "calls": 2561.0
+      },
+      "commit_global_publish": {
+        "wall_seconds_sum": 0.4037805845,
+        "thread_cpu_seconds_sum": 0.4012523615,
+        "calls": 2561.0
+      },
+      "owner_actions": {
+        "wall_seconds_sum": 4.0308260865,
+        "thread_cpu_seconds_sum": 4.0018814565,
+        "calls": 10222.0
+      },
+      "owner_sort": {
+        "wall_seconds_sum": 2.122326932,
+        "thread_cpu_seconds_sum": 2.1051703059999998,
+        "calls": 10222.0
+      },
+      "owner_reduce_publish": {
+        "wall_seconds_sum": 2.6408358655,
+        "thread_cpu_seconds_sum": 2.6081816250000003,
+        "calls": 10222.0
+      },
+      "prepare_setup": {
+        "wall_seconds_sum": 1.530434837,
+        "thread_cpu_seconds_sum": 1.516632478,
+        "calls": 100151.0
+      },
+      "prepare_scan": {
+        "wall_seconds_sum": 32.5486793265,
+        "thread_cpu_seconds_sum": 32.3370839545,
+        "calls": 100151.0
+      },
+      "prepare_finish": {
+        "wall_seconds_sum": 1.051797483,
+        "thread_cpu_seconds_sum": 1.047558287,
+        "calls": 100151.0
+      }
+    },
+    "work": {
+      "counters": [
+        21182128,
+        285717555,
+        13773416,
+        2805194,
+        4590064,
+        21168674,
+        13386663,
+        13386663,
+        7755811,
+        272330892,
+        0,
+        0,
+        0,
+        0,
+        21182128,
+        37004422
+      ]
+    }
+  },
+  {
+    "label": "fine-en",
+    "arm": "main-detail",
+    "n": 2,
+    "train_wall": 1.568380959,
+    "train_cpu": 4.1574480000000005,
+    "phases": {
+      "vocabulary": 0.021542858499999998,
+      "plan": 0.06747885249999999,
+      "initial_count": 0.1196758665,
+      "materialize": 0.022725389,
+      "merge_rounds": 1.2820094255,
+      "retire": 0.007463964,
+      "prepare": 0.744855237,
+      "apply": 0.0597458675,
+      "commit": 0.2396812545,
+      "select": 0.227428788,
+      "alphabet": 0.0,
+      "output": 0.045923064
+    },
+    "fine": {
+      "commit_route": {
+        "wall_seconds_sum": 0.022791744,
+        "thread_cpu_seconds_sum": 0.022517583,
+        "calls": 1917.0
+      },
+      "commit_owner_join": {
+        "wall_seconds_sum": 0.2055773175,
+        "thread_cpu_seconds_sum": 0.164861166,
+        "calls": 1917.0
+      },
+      "commit_global_publish": {
+        "wall_seconds_sum": 0.0030247265,
+        "thread_cpu_seconds_sum": 0.0030667965,
+        "calls": 1917.0
+      },
+      "prepare_scan": {
+        "wall_seconds_sum": 0.995290625,
+        "thread_cpu_seconds_sum": 0.9802386025000001,
+        "calls": 101426.0
+      },
+      "prepare_finish": {
+        "wall_seconds_sum": 0.321433235,
+        "thread_cpu_seconds_sum": 0.3212403145,
+        "calls": 101426.0
+      },
+      "main_owner_group": {
+        "wall_seconds_sum": 0.020361277,
+        "thread_cpu_seconds_sum": 0.0193379955,
+        "calls": 7624.0
+      },
+      "main_owner_counts": {
+        "wall_seconds_sum": 0.15434365249999998,
+        "thread_cpu_seconds_sum": 0.1549851465,
+        "calls": 7624.0
+      },
+      "main_completed_publish": {
+        "wall_seconds_sum": 0.113936597,
+        "thread_cpu_seconds_sum": 0.11480670500000001,
+        "calls": 7624.0
+      },
+      "main_owner_reduce": {
+        "wall_seconds_sum": 0.1624580205,
+        "thread_cpu_seconds_sum": 0.159128303,
+        "calls": 7624.0
+      }
+    },
+    "work": {
+      "counters": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        630748,
+        4582735,
+        1410619,
+        211367,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "label": "fine-en",
+    "arm": "current-detail",
+    "n": 2,
+    "train_wall": 2.76073956,
+    "train_cpu": 6.7164335,
+    "phases": {
+      "vocabulary": 0.008938189499999999,
+      "plan": 0.061822332,
+      "initial_count": 0.373153863,
+      "materialize": 0.0473377475,
+      "merge_rounds": 2.184174962,
+      "retire": 0.0208325985,
+      "prepare": 1.2240248519999999,
+      "apply": 0.099605508,
+      "commit": 0.5201550515,
+      "select": 0.33810542,
+      "alphabet": 0.0206416085,
+      "output": 0.042845173
+    },
+    "fine": {
+      "commit_route": {
+        "wall_seconds_sum": 0.1341524945,
+        "thread_cpu_seconds_sum": 0.1337495135,
+        "calls": 1917.0
+      },
+      "commit_owner_join": {
+        "wall_seconds_sum": 0.3365297545,
+        "thread_cpu_seconds_sum": 0.019512515,
+        "calls": 1917.0
+      },
+      "commit_global_publish": {
+        "wall_seconds_sum": 0.0392042295,
+        "thread_cpu_seconds_sum": 0.039221031,
+        "calls": 1917.0
+      },
+      "owner_actions": {
+        "wall_seconds_sum": 0.2541956675,
+        "thread_cpu_seconds_sum": 0.24837556,
+        "calls": 7629.0
+      },
+      "owner_sort": {
+        "wall_seconds_sum": 0.0949412055,
+        "thread_cpu_seconds_sum": 0.0948242625,
+        "calls": 7629.0
+      },
+      "owner_reduce_publish": {
+        "wall_seconds_sum": 0.2342448245,
+        "thread_cpu_seconds_sum": 0.2332772605,
+        "calls": 7629.0
+      },
+      "prepare_setup": {
+        "wall_seconds_sum": 1.1536778609999998,
+        "thread_cpu_seconds_sum": 1.1473622455,
+        "calls": 101152.0
+      },
+      "prepare_scan": {
+        "wall_seconds_sum": 1.3967762225,
+        "thread_cpu_seconds_sum": 1.3797414395,
+        "calls": 101152.0
+      },
+      "prepare_finish": {
+        "wall_seconds_sum": 0.22415949000000002,
+        "thread_cpu_seconds_sum": 0.2291136765,
+        "calls": 101152.0
+      }
+    },
+    "work": {
+      "counters": [
+        1244877,
+        7203308,
+        849054,
+        153866,
+        241678,
+        1244598,
+        463022,
+        463022,
+        727691,
+        6740286,
+        0,
+        0,
+        0,
+        0,
+        1244877,
+        2177429
+      ]
+    }
+  },
+  {
+    "label": "fine-white",
+    "arm": "main-detail",
+    "n": 1,
+    "train_wall": 8.238905946,
+    "train_cpu": 26.340842000000002,
+    "phases": {
+      "vocabulary": 0.315253302,
+      "plan": 0.523488092,
+      "initial_count": 1.696795729,
+      "materialize": 0.381303662,
+      "merge_rounds": 5.185467812,
+      "retire": 0.083642542,
+      "prepare": 3.034978798,
+      "apply": 0.289143317,
+      "commit": 1.459156654,
+      "select": 0.354833129,
+      "alphabet": 0.0,
+      "output": 0.038286128
+    },
+    "fine": {
+      "commit_route": {
+        "wall_seconds_sum": 0.210816914,
+        "thread_cpu_seconds_sum": 0.209348872,
+        "calls": 2635
+      },
+      "commit_owner_join": {
+        "wall_seconds_sum": 1.2300252,
+        "thread_cpu_seconds_sum": 0.981791485,
+        "calls": 2635
+      },
+      "commit_global_publish": {
+        "wall_seconds_sum": 0.004565777,
+        "thread_cpu_seconds_sum": 0.004646388,
+        "calls": 2635
+      },
+      "prepare_scan": {
+        "wall_seconds_sum": 6.53977638,
+        "thread_cpu_seconds_sum": 6.40569981,
+        "calls": 82676
+      },
+      "prepare_finish": {
+        "wall_seconds_sum": 2.048087053,
+        "thread_cpu_seconds_sum": 2.017110323,
+        "calls": 82676
+      },
+      "main_owner_group": {
+        "wall_seconds_sum": 0.034680457,
+        "thread_cpu_seconds_sum": 0.032326019,
+        "calls": 10529
+      },
+      "main_owner_counts": {
+        "wall_seconds_sum": 2.223343731,
+        "thread_cpu_seconds_sum": 2.224185303,
+        "calls": 10529
+      },
+      "main_completed_publish": {
+        "wall_seconds_sum": 0.851213524,
+        "thread_cpu_seconds_sum": 0.851925789,
+        "calls": 10529
+      },
+      "main_owner_reduce": {
+        "wall_seconds_sum": 0.290434399,
+        "thread_cpu_seconds_sum": 0.288690656,
+        "calls": 10529
+      }
+    },
+    "work": {
+      "counters": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        5568689,
+        41702791,
+        18267127,
+        392534,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "label": "fine-white",
+    "arm": "current-detail",
+    "n": 1,
+    "train_wall": 22.079861191,
+    "train_cpu": 61.257429,
+    "phases": {
+      "vocabulary": 0.053226179,
+      "plan": 0.482975751,
+      "initial_count": 9.697321162,
+      "materialize": 0.572840171,
+      "merge_rounds": 9.298078052,
+      "retire": 1.606913438,
+      "prepare": 4.051414936,
+      "apply": 0.339830993,
+      "commit": 4.193433358,
+      "select": 0.70995031,
+      "alphabet": 0.329949228,
+      "output": 0.037095247
+    },
+    "fine": {
+      "commit_route": {
+        "wall_seconds_sum": 1.320133261,
+        "thread_cpu_seconds_sum": 1.317666568,
+        "calls": 2635
+      },
+      "commit_owner_join": {
+        "wall_seconds_sum": 2.638501867,
+        "thread_cpu_seconds_sum": 0.038276438,
+        "calls": 2635
+      },
+      "commit_global_publish": {
+        "wall_seconds_sum": 0.214973286,
+        "thread_cpu_seconds_sum": 0.21300341,
+        "calls": 2635
+      },
+      "owner_actions": {
+        "wall_seconds_sum": 3.218568535,
+        "thread_cpu_seconds_sum": 3.195437531,
+        "calls": 10532
+      },
+      "owner_sort": {
+        "wall_seconds_sum": 1.704601895,
+        "thread_cpu_seconds_sum": 1.682357593,
+        "calls": 10532
+      },
+      "owner_reduce_publish": {
+        "wall_seconds_sum": 1.981851527,
+        "thread_cpu_seconds_sum": 1.964834509,
+        "calls": 10532
+      },
+      "prepare_setup": {
+        "wall_seconds_sum": 1.589597921,
+        "thread_cpu_seconds_sum": 1.581727707,
+        "calls": 82851
+      },
+      "prepare_scan": {
+        "wall_seconds_sum": 9.751194209,
+        "thread_cpu_seconds_sum": 9.699064966,
+        "calls": 82851
+      },
+      "prepare_finish": {
+        "wall_seconds_sum": 0.792470446,
+        "thread_cpu_seconds_sum": 0.795820524,
+        "calls": 82851
+      }
+    },
+    "work": {
+      "counters": [
+        17960291,
+        56282638,
+        12554294,
+        2364416,
+        3036735,
+        17955445,
+        12199330,
+        12199330,
+        5689383,
+        44083308,
+        0,
+        0,
+        0,
+        0,
+        17960291,
+        31414328
+      ]
+    }
+  },
+  {
+    "label": "fine-history-buffer",
+    "arm": "main-detail",
+    "n": 2,
+    "train_wall": 15.747283325,
+    "train_cpu": 51.849359,
+    "phases": {
+      "vocabulary": 0.47897006799999997,
+      "plan": 0.5967688865,
+      "initial_count": 2.5638392835,
+      "materialize": 0.6405167155,
+      "merge_rounds": 11.336100846,
+      "retire": 0.08432342949999999,
+      "prepare": 7.7770139545,
+      "apply": 0.962887195,
+      "commit": 2.0458141015,
+      "select": 0.504720335,
+      "alphabet": 0.0,
+      "output": 0.0447250965
+    },
+    "fine": {
+      "commit_route": {
+        "wall_seconds_sum": 0.260012649,
+        "thread_cpu_seconds_sum": 0.259282162,
+        "calls": 2561.0
+      },
+      "commit_owner_join": {
+        "wall_seconds_sum": 1.7676162734999998,
+        "thread_cpu_seconds_sum": 1.3576304525,
+        "calls": 2561.0
+      },
+      "commit_global_publish": {
+        "wall_seconds_sum": 0.0045696845,
+        "thread_cpu_seconds_sum": 0.00464837,
+        "calls": 2561.0
+      },
+      "prepare_scan": {
+        "wall_seconds_sum": 19.8180945555,
+        "thread_cpu_seconds_sum": 19.4222611205,
+        "calls": 99943.0
+      },
+      "prepare_finish": {
+        "wall_seconds_sum": 5.278152599,
+        "thread_cpu_seconds_sum": 5.192583482,
+        "calls": 99943.0
+      },
+      "main_owner_group": {
+        "wall_seconds_sum": 0.0282408745,
+        "thread_cpu_seconds_sum": 0.023955832,
+        "calls": 10219.0
+      },
+      "main_owner_counts": {
+        "wall_seconds_sum": 2.7909088339999997,
+        "thread_cpu_seconds_sum": 2.764328596,
+        "calls": 10219.0
+      },
+      "main_completed_publish": {
+        "wall_seconds_sum": 1.2061833819999999,
+        "thread_cpu_seconds_sum": 1.1992643685,
+        "calls": 10219.0
+      },
+      "main_owner_reduce": {
+        "wall_seconds_sum": 0.9721806195,
+        "thread_cpu_seconds_sum": 0.9017941615,
+        "calls": 10219.0
+      }
+    },
+    "work": {
+      "counters": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        7696519,
+        261605092,
+        21298579,
+        221728,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "label": "fine-history-buffer",
+    "arm": "history-buffer-detail",
+    "n": 2,
+    "train_wall": 22.9135916605,
+    "train_cpu": 71.4576375,
+    "phases": {},
+    "fine": {
+      "commit_route": {
+        "wall_seconds_sum": 1.6097655675,
+        "thread_cpu_seconds_sum": 1.6064551974999999,
+        "calls": 2561.0
+      },
+      "commit_owner_join": {
+        "wall_seconds_sum": 1.513639995,
+        "thread_cpu_seconds_sum": 1.1817852590000002,
+        "calls": 2561.0
+      },
+      "commit_global_publish": {
+        "wall_seconds_sum": 0.2700412985,
+        "thread_cpu_seconds_sum": 0.270410539,
+        "calls": 2561.0
+      },
+      "owner_actions": {
+        "wall_seconds_sum": 4.0966612935,
+        "thread_cpu_seconds_sum": 4.010842574,
+        "calls": 10222.0
+      },
+      "owner_reduce_publish": {
+        "wall_seconds_sum": 0.166794877,
+        "thread_cpu_seconds_sum": 0.147066539,
+        "calls": 10222.0
+      },
+      "prepare_setup": {
+        "wall_seconds_sum": 1.5196458499999999,
+        "thread_cpu_seconds_sum": 1.482827403,
+        "calls": 100148.0
+      },
+      "prepare_scan": {
+        "wall_seconds_sum": 26.477202157500002,
+        "thread_cpu_seconds_sum": 26.076125097000002,
+        "calls": 100148.0
+      },
+      "prepare_finish": {
+        "wall_seconds_sum": 7.8609223660000005,
+        "thread_cpu_seconds_sum": 7.3435972849999995,
+        "calls": 100148.0
+      },
+      "apply_total": {
+        "wall_seconds_sum": 0.947003561,
+        "thread_cpu_seconds_sum": 0.9046979035,
+        "calls": 2561.0
+      },
+      "commit_total": {
+        "wall_seconds_sum": 3.4146722499999997,
+        "thread_cpu_seconds_sum": 3.0763087105,
+        "calls": 2561.0
+      },
+      "vocabulary_plan": {
+        "wall_seconds_sum": 0.5789143775000001,
+        "thread_cpu_seconds_sum": 0.5767181095,
+        "calls": 1.0
+      },
+      "initial_count": {
+        "wall_seconds_sum": 3.981413573,
+        "thread_cpu_seconds_sum": 3.870565387,
+        "calls": 1.0
+      },
+      "materialize": {
+        "wall_seconds_sum": 1.13010461,
+        "thread_cpu_seconds_sum": 1.0989916575,
+        "calls": 1.0
+      },
+      "retire": {
+        "wall_seconds_sum": 1.193798554,
+        "thread_cpu_seconds_sum": 1.19038953,
+        "calls": 1.0
+      },
+      "output": {
+        "wall_seconds_sum": 0.045413473499999996,
+        "thread_cpu_seconds_sum": 0.045271758999999995,
+        "calls": 1.0
+      },
+      "select": {
+        "wall_seconds_sum": 0.9419445854999999,
+        "thread_cpu_seconds_sum": 0.9414625864999999,
+        "calls": 2561.0
+      },
+      "prepare_total": {
+        "wall_seconds_sum": 10.0738791025,
+        "thread_cpu_seconds_sum": 9.4454307105,
+        "calls": 2561.0
+      }
+    },
+    "work": {
+      "counters": [
+        21182109,
+        285717555,
+        13773385,
+        2805205,
+        4590065,
+        0,
+        13280235,
+        13280235,
+        7699481,
+        261617704,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "label": "alloc-zh-followup",
+    "arm": "main-alloc",
+    "n": 1,
+    "train_wall": 15.824022728,
+    "train_cpu": 50.453013,
+    "phases": {
+      "vocabulary": 0.582859077,
+      "plan": 0.623080913,
+      "initial_count": 2.523268904,
+      "materialize": 0.590545664,
+      "merge_rounds": 11.350989499,
+      "retire": 0.101187642,
+      "prepare": 7.876342513,
+      "apply": 0.982430645,
+      "commit": 1.939320493,
+      "select": 0.506724682,
+      "alphabet": 0.0,
+      "output": 0.049181831
+    },
+    "fine": {},
+    "work": null
+  },
+  {
+    "label": "alloc-zh-followup",
+    "arm": "current-alloc",
+    "n": 1,
+    "train_wall": 24.581042901,
+    "train_cpu": 76.052351,
+    "phases": {
+      "vocabulary": 0.048123891,
+      "plan": 0.71908123,
+      "initial_count": 3.744747421,
+      "materialize": 1.198178615,
+      "merge_rounds": 17.057265211,
+      "retire": 1.210601104,
+      "prepare": 9.911093345,
+      "apply": 1.257929674,
+      "commit": 4.890931732,
+      "select": 0.994102929,
+      "alphabet": 0.553845597,
+      "output": 0.046274976
+    },
+    "fine": {},
+    "work": null
+  },
+  {
+    "label": "alloc-history-buffer",
+    "arm": "history-buffer-alloc",
+    "n": 1,
+    "train_wall": 22.615533392,
+    "train_cpu": 70.623864,
+    "phases": {},
+    "fine": {
+      "commit_route": {
+        "wall_seconds_sum": 1.511969548,
+        "thread_cpu_seconds_sum": 1.513334507,
+        "calls": 2561
+      },
+      "commit_owner_join": {
+        "wall_seconds_sum": 1.433826829,
+        "thread_cpu_seconds_sum": 1.097921186,
+        "calls": 2561
+      },
+      "commit_global_publish": {
+        "wall_seconds_sum": 0.27025343,
+        "thread_cpu_seconds_sum": 0.269641681,
+        "calls": 2561
+      },
+      "owner_actions": {
+        "wall_seconds_sum": 3.927319007,
+        "thread_cpu_seconds_sum": 3.84672344,
+        "calls": 10222
+      },
+      "owner_reduce_publish": {
+        "wall_seconds_sum": 0.164484286,
+        "thread_cpu_seconds_sum": 0.142397,
+        "calls": 10222
+      },
+      "prepare_setup": {
+        "wall_seconds_sum": 1.458553868,
+        "thread_cpu_seconds_sum": 1.440651099,
+        "calls": 100148
+      },
+      "prepare_scan": {
+        "wall_seconds_sum": 25.844589142,
+        "thread_cpu_seconds_sum": 25.541900606,
+        "calls": 100148
+      },
+      "prepare_finish": {
+        "wall_seconds_sum": 7.467887444,
+        "thread_cpu_seconds_sum": 7.051370343,
+        "calls": 100148
+      },
+      "apply_total": {
+        "wall_seconds_sum": 0.94289367,
+        "thread_cpu_seconds_sum": 0.919044679,
+        "calls": 2561
+      },
+      "commit_total": {
+        "wall_seconds_sum": 3.23595345,
+        "thread_cpu_seconds_sum": 2.897532077,
+        "calls": 2561
+      },
+      "vocabulary_plan": {
+        "wall_seconds_sum": 0.567132945,
+        "thread_cpu_seconds_sum": 0.548574734,
+        "calls": 1
+      },
+      "initial_count": {
+        "wall_seconds_sum": 4.118257742,
+        "thread_cpu_seconds_sum": 4.053108997,
+        "calls": 1
+      },
+      "materialize": {
+        "wall_seconds_sum": 1.263483323,
+        "thread_cpu_seconds_sum": 1.24998141,
+        "calls": 1
+      },
+      "retire": {
+        "wall_seconds_sum": 1.078324445,
+        "thread_cpu_seconds_sum": 1.077362491,
+        "calls": 1
+      },
+      "output": {
+        "wall_seconds_sum": 0.051155041,
+        "thread_cpu_seconds_sum": 0.051160586,
+        "calls": 1
+      },
+      "select": {
+        "wall_seconds_sum": 0.935404513,
+        "thread_cpu_seconds_sum": 0.937238436,
+        "calls": 2561
+      },
+      "prepare_total": {
+        "wall_seconds_sum": 9.818750419,
+        "thread_cpu_seconds_sum": 9.345198877,
+        "calls": 2561
+      }
+    },
+    "work": {
+      "counters": [
+        21182109,
+        285717555,
+        13773385,
+        2805205,
+        4590065,
+        0,
+        13280235,
+        13280235,
+        7699481,
+        261617704,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "label": "fine-job-grain",
+    "arm": "main-detail",
+    "n": 2,
+    "train_wall": 16.044701114,
+    "train_cpu": 52.7915665,
+    "phases": {
+      "vocabulary": 0.5206418804999999,
+      "plan": 0.5936764155,
+      "initial_count": 2.5595157,
+      "materialize": 0.647150066,
+      "merge_rounds": 11.597733958500001,
+      "retire": 0.079536423,
+      "prepare": 8.065304575999999,
+      "apply": 1.0008632625,
+      "commit": 1.985873637,
+      "select": 0.4998126345,
+      "alphabet": 0.0,
+      "output": 0.0445170165
+    },
+    "fine": {
+      "commit_route": {
+        "wall_seconds_sum": 0.2590093495,
+        "thread_cpu_seconds_sum": 0.2570213535,
+        "calls": 2561.0
+      },
+      "commit_owner_join": {
+        "wall_seconds_sum": 1.7087619630000002,
+        "thread_cpu_seconds_sum": 1.3498577269999998,
+        "calls": 2561.0
+      },
+      "commit_global_publish": {
+        "wall_seconds_sum": 0.0045058875,
+        "thread_cpu_seconds_sum": 0.004554368499999999,
+        "calls": 2561.0
+      },
+      "prepare_scan": {
+        "wall_seconds_sum": 20.464326011,
+        "thread_cpu_seconds_sum": 20.057688280999997,
+        "calls": 99943.0
+      },
+      "prepare_finish": {
+        "wall_seconds_sum": 5.4790605545,
+        "thread_cpu_seconds_sum": 5.348890376,
+        "calls": 99943.0
+      },
+      "main_owner_group": {
+        "wall_seconds_sum": 0.0348491775,
+        "thread_cpu_seconds_sum": 0.024416886999999998,
+        "calls": 10219.0
+      },
+      "main_owner_counts": {
+        "wall_seconds_sum": 2.6984186735,
+        "thread_cpu_seconds_sum": 2.66834811,
+        "calls": 10219.0
+      },
+      "main_completed_publish": {
+        "wall_seconds_sum": 1.145187661,
+        "thread_cpu_seconds_sum": 1.1213820465,
+        "calls": 10219.0
+      },
+      "main_owner_reduce": {
+        "wall_seconds_sum": 0.9207594115,
+        "thread_cpu_seconds_sum": 0.9073039675,
+        "calls": 10219.0
+      }
+    },
+    "work": {
+      "counters": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        7696519,
+        261605092,
+        21298579,
+        221728,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "label": "fine-job-grain",
+    "arm": "main-single-job-detail",
+    "n": 2,
+    "train_wall": 16.8045552945,
+    "train_cpu": 55.478408,
+    "phases": {
+      "vocabulary": 0.704946007,
+      "plan": 0.60912207,
+      "initial_count": 2.4523445385000002,
+      "materialize": 0.6295324565,
+      "merge_rounds": 12.280013373,
+      "retire": 0.078038736,
+      "prepare": 8.6738805675,
+      "apply": 1.002735344,
+      "commit": 2.0334417125,
+      "select": 0.49403619200000004,
+      "alphabet": 0.0,
+      "output": 0.048533559500000004
+    },
+    "fine": {
+      "commit_route": {
+        "wall_seconds_sum": 0.2983901825,
+        "thread_cpu_seconds_sum": 0.2978294935,
+        "calls": 2561.0
+      },
+      "commit_owner_join": {
+        "wall_seconds_sum": 1.7164810025000001,
+        "thread_cpu_seconds_sum": 1.3663693989999999,
+        "calls": 2561.0
+      },
+      "commit_global_publish": {
+        "wall_seconds_sum": 0.0045109135,
+        "thread_cpu_seconds_sum": 0.0045935065,
+        "calls": 2561.0
+      },
+      "prepare_scan": {
+        "wall_seconds_sum": 22.6038048565,
+        "thread_cpu_seconds_sum": 21.867858614,
+        "calls": 99943.0
+      },
+      "prepare_finish": {
+        "wall_seconds_sum": 5.758466244499999,
+        "thread_cpu_seconds_sum": 5.569277995,
+        "calls": 99943.0
+      },
+      "main_owner_group": {
+        "wall_seconds_sum": 0.037231572500000004,
+        "thread_cpu_seconds_sum": 0.024791542,
+        "calls": 10219.0
+      },
+      "main_owner_counts": {
+        "wall_seconds_sum": 2.779613515,
+        "thread_cpu_seconds_sum": 2.7711784755,
+        "calls": 10219.0
+      },
+      "main_completed_publish": {
+        "wall_seconds_sum": 1.0945500730000002,
+        "thread_cpu_seconds_sum": 1.0892280175,
+        "calls": 10219.0
+      },
+      "main_owner_reduce": {
+        "wall_seconds_sum": 1.0192230675,
+        "thread_cpu_seconds_sum": 1.0132647339999998,
+        "calls": 10219.0
+      }
+    },
+    "work": {
+      "counters": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        7696519,
+        261605092,
+        21298579,
+        221728,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "label": "fine-birth-storage",
+    "arm": "main-detail",
+    "n": 2,
+    "train_wall": 15.636603326500001,
+    "train_cpu": 52.108593,
+    "phases": {
+      "vocabulary": 0.5744139795000001,
+      "plan": 0.58665305,
+      "initial_count": 2.598361392,
+      "materialize": 0.62995292,
+      "merge_rounds": 11.1267303625,
+      "retire": 0.0752297125,
+      "prepare": 7.7554525524999995,
+      "apply": 0.9944142775,
+      "commit": 1.857479239,
+      "select": 0.477562457,
+      "alphabet": 0.0,
+      "output": 0.043183375499999996
+    },
+    "fine": {
+      "commit_route": {
+        "wall_seconds_sum": 0.245928888,
+        "thread_cpu_seconds_sum": 0.243460502,
+        "calls": 2561.0
+      },
+      "commit_owner_join": {
+        "wall_seconds_sum": 1.5943213555,
+        "thread_cpu_seconds_sum": 1.2838462444999998,
+        "calls": 2561.0
+      },
+      "commit_global_publish": {
+        "wall_seconds_sum": 0.004294429,
+        "thread_cpu_seconds_sum": 0.004341921,
+        "calls": 2561.0
+      },
+      "prepare_scan": {
+        "wall_seconds_sum": 19.992458669999998,
+        "thread_cpu_seconds_sum": 19.683306602000002,
+        "calls": 99943.0
+      },
+      "prepare_finish": {
+        "wall_seconds_sum": 5.279260636,
+        "thread_cpu_seconds_sum": 5.2028668295,
+        "calls": 99943.0
+      },
+      "main_owner_group": {
+        "wall_seconds_sum": 0.026589842500000002,
+        "thread_cpu_seconds_sum": 0.0236532775,
+        "calls": 10219.0
+      },
+      "main_owner_counts": {
+        "wall_seconds_sum": 2.6033910745,
+        "thread_cpu_seconds_sum": 2.5756962875,
+        "calls": 10219.0
+      },
+      "main_completed_publish": {
+        "wall_seconds_sum": 1.11240359,
+        "thread_cpu_seconds_sum": 1.1095420754999998,
+        "calls": 10219.0
+      },
+      "main_owner_reduce": {
+        "wall_seconds_sum": 0.9100412525,
+        "thread_cpu_seconds_sum": 0.9039508285,
+        "calls": 10219.0
+      }
+    },
+    "work": {
+      "counters": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        7696519,
+        261605092,
+        21298579,
+        221728,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "label": "fine-birth-storage",
+    "arm": "main-vectors-detail",
+    "n": 2,
+    "train_wall": 15.738626590500001,
+    "train_cpu": 52.4117515,
+    "phases": {
+      "vocabulary": 0.5868775135,
+      "plan": 0.5637619965,
+      "initial_count": 2.450343322,
+      "materialize": 0.5869780735000001,
+      "merge_rounds": 11.431090997,
+      "retire": 0.073162169,
+      "prepare": 7.97379489,
+      "apply": 0.9961336165,
+      "commit": 1.9100980454999998,
+      "select": 0.49932067599999996,
+      "alphabet": 0.0,
+      "output": 0.0439655125
+    },
+    "fine": {
+      "commit_route": {
+        "wall_seconds_sum": 0.2664674045,
+        "thread_cpu_seconds_sum": 0.2653507935,
+        "calls": 2561.0
+      },
+      "commit_owner_join": {
+        "wall_seconds_sum": 1.625548878,
+        "thread_cpu_seconds_sum": 1.324063065,
+        "calls": 2561.0
+      },
+      "commit_global_publish": {
+        "wall_seconds_sum": 0.0044276590000000005,
+        "thread_cpu_seconds_sum": 0.004469758,
+        "calls": 2561.0
+      },
+      "prepare_scan": {
+        "wall_seconds_sum": 20.533280628500002,
+        "thread_cpu_seconds_sum": 20.2893530065,
+        "calls": 99943.0
+      },
+      "prepare_finish": {
+        "wall_seconds_sum": 5.344576861,
+        "thread_cpu_seconds_sum": 5.264266161,
+        "calls": 99943.0
+      },
+      "main_owner_group": {
+        "wall_seconds_sum": 0.028226848,
+        "thread_cpu_seconds_sum": 0.025219755,
+        "calls": 10219.0
+      },
+      "main_owner_counts": {
+        "wall_seconds_sum": 2.683831196,
+        "thread_cpu_seconds_sum": 2.6779044475,
+        "calls": 10219.0
+      },
+      "main_completed_publish": {
+        "wall_seconds_sum": 1.1240563319999999,
+        "thread_cpu_seconds_sum": 1.115779917,
+        "calls": 10219.0
+      },
+      "main_owner_reduce": {
+        "wall_seconds_sum": 0.9042643564999999,
+        "thread_cpu_seconds_sum": 0.899023293,
+        "calls": 10219.0
+      }
+    },
+    "work": {
+      "counters": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        7696519,
+        261605092,
+        21298579,
+        221728,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "label": "fine-birth-storage",
+    "arm": "main-chains-detail",
+    "n": 2,
+    "train_wall": 18.529600496,
+    "train_cpu": 61.403096000000005,
+    "phases": {
+      "vocabulary": 0.650712623,
+      "plan": 0.631335762,
+      "initial_count": 2.4670736189999998,
+      "materialize": 0.636764173,
+      "merge_rounds": 14.011860673000001,
+      "retire": 0.081549393,
+      "prepare": 10.672666850999999,
+      "apply": 0.9795021355,
+      "commit": 1.8209472230000001,
+      "select": 0.47648346649999995,
+      "alphabet": 0.0,
+      "output": 0.048528363500000005
+    },
+    "fine": {
+      "commit_route": {
+        "wall_seconds_sum": 0.2331045285,
+        "thread_cpu_seconds_sum": 0.2313333835,
+        "calls": 2561.0
+      },
+      "commit_owner_join": {
+        "wall_seconds_sum": 1.570701718,
+        "thread_cpu_seconds_sum": 1.2588798865,
+        "calls": 2561.0
+      },
+      "commit_global_publish": {
+        "wall_seconds_sum": 0.0040873275,
+        "thread_cpu_seconds_sum": 0.004156052,
+        "calls": 2561.0
+      },
+      "prepare_scan": {
+        "wall_seconds_sum": 22.659601857,
+        "thread_cpu_seconds_sum": 22.2673357185,
+        "calls": 99943.0
+      },
+      "prepare_finish": {
+        "wall_seconds_sum": 12.743149209,
+        "thread_cpu_seconds_sum": 12.6025318155,
+        "calls": 99943.0
+      },
+      "main_owner_group": {
+        "wall_seconds_sum": 0.027476122,
+        "thread_cpu_seconds_sum": 0.023819878000000003,
+        "calls": 10219.0
+      },
+      "main_owner_counts": {
+        "wall_seconds_sum": 2.54521605,
+        "thread_cpu_seconds_sum": 2.538023693,
+        "calls": 10219.0
+      },
+      "main_completed_publish": {
+        "wall_seconds_sum": 1.017775593,
+        "thread_cpu_seconds_sum": 1.01745309,
+        "calls": 10219.0
+      },
+      "main_owner_reduce": {
+        "wall_seconds_sum": 0.8803508769999999,
+        "thread_cpu_seconds_sum": 0.8716256925,
+        "calls": 10219.0
+      }
+    },
+    "work": {
+      "counters": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        7696519,
+        261605092,
+        21298579,
+        221728,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "label": "fine-current-controls-zh",
+    "arm": "current-detail",
+    "n": 2,
+    "train_wall": 25.230031716,
+    "train_cpu": 77.9108705,
+    "phases": {
+      "vocabulary": 0.053146637499999996,
+      "plan": 0.582900977,
+      "initial_count": 3.252412356,
+      "materialize": 1.214355329,
+      "merge_rounds": 18.2366289115,
+      "retire": 1.203408772,
+      "prepare": 10.7122915165,
+      "apply": 1.4198908540000001,
+      "commit": 5.0471036865,
+      "select": 1.053863319,
+      "alphabet": 0.6399735289999999,
+      "output": 0.045787842999999995
+    },
+    "fine": {
+      "commit_route": {
+        "wall_seconds_sum": 1.4974075925,
+        "thread_cpu_seconds_sum": 1.490272774,
+        "calls": 2561.0
+      },
+      "commit_owner_join": {
+        "wall_seconds_sum": 3.2154697255,
+        "thread_cpu_seconds_sum": 0.0367743205,
+        "calls": 2561.0
+      },
+      "commit_global_publish": {
+        "wall_seconds_sum": 0.3138702925,
+        "thread_cpu_seconds_sum": 0.311097754,
+        "calls": 2561.0
+      },
+      "owner_actions": {
+        "wall_seconds_sum": 3.6406501005,
+        "thread_cpu_seconds_sum": 3.6229313095,
+        "calls": 10222.0
+      },
+      "owner_sort": {
+        "wall_seconds_sum": 2.1054001094999997,
+        "thread_cpu_seconds_sum": 2.0857537455,
+        "calls": 10222.0
+      },
+      "owner_reduce_publish": {
+        "wall_seconds_sum": 2.452534019,
+        "thread_cpu_seconds_sum": 2.427749402,
+        "calls": 10222.0
+      },
+      "prepare_setup": {
+        "wall_seconds_sum": 1.489465076,
+        "thread_cpu_seconds_sum": 1.471599799,
+        "calls": 100151.0
+      },
+      "prepare_scan": {
+        "wall_seconds_sum": 33.8834021645,
+        "thread_cpu_seconds_sum": 33.738237659,
+        "calls": 100151.0
+      },
+      "prepare_finish": {
+        "wall_seconds_sum": 1.0490313125,
+        "thread_cpu_seconds_sum": 1.0376978495,
+        "calls": 100151.0
+      }
+    },
+    "work": {
+      "counters": [
+        21182128,
+        285717555,
+        13773416,
+        2805194,
+        4590064,
+        21168674,
+        13386663,
+        13386663,
+        7755811,
+        272330892,
+        0,
+        0,
+        0,
+        0,
+        21182128,
+        37004422
+      ]
+    }
+  },
+  {
+    "label": "fine-current-controls-zh",
+    "arm": "current-fast-mod-detail",
+    "n": 2,
+    "train_wall": 23.972323545000002,
+    "train_cpu": 76.229432,
+    "phases": {
+      "vocabulary": 0.053811354500000005,
+      "plan": 0.5959186345,
+      "initial_count": 3.2951745755,
+      "materialize": 1.2821128654999998,
+      "merge_rounds": 16.922334380000002,
+      "retire": 1.20346513,
+      "prepare": 10.153482902,
+      "apply": 1.3615380645,
+      "commit": 4.3860509835000006,
+      "select": 1.018093967,
+      "alphabet": 0.575828871,
+      "output": 0.0424555765
+    },
+    "fine": {
+      "commit_route": {
+        "wall_seconds_sum": 1.143393788,
+        "thread_cpu_seconds_sum": 1.1412493970000002,
+        "calls": 2561.0
+      },
+      "commit_owner_join": {
+        "wall_seconds_sum": 2.9445344970000003,
+        "thread_cpu_seconds_sum": 0.03459562,
+        "calls": 2561.0
+      },
+      "commit_global_publish": {
+        "wall_seconds_sum": 0.2793913755,
+        "thread_cpu_seconds_sum": 0.278778883,
+        "calls": 2561.0
+      },
+      "owner_actions": {
+        "wall_seconds_sum": 3.6151516005,
+        "thread_cpu_seconds_sum": 3.5983212245000002,
+        "calls": 10222.0
+      },
+      "owner_sort": {
+        "wall_seconds_sum": 2.096177641,
+        "thread_cpu_seconds_sum": 2.0891725904999996,
+        "calls": 10222.0
+      },
+      "owner_reduce_publish": {
+        "wall_seconds_sum": 2.3880855755,
+        "thread_cpu_seconds_sum": 2.3796013315,
+        "calls": 10222.0
+      },
+      "prepare_setup": {
+        "wall_seconds_sum": 1.4620547080000001,
+        "thread_cpu_seconds_sum": 1.4549813165,
+        "calls": 100151.0
+      },
+      "prepare_scan": {
+        "wall_seconds_sum": 33.106155953,
+        "thread_cpu_seconds_sum": 32.978663181,
+        "calls": 100151.0
+      },
+      "prepare_finish": {
+        "wall_seconds_sum": 1.021157409,
+        "thread_cpu_seconds_sum": 1.0268437069999998,
+        "calls": 100151.0
+      }
+    },
+    "work": {
+      "counters": [
+        21182128,
+        285717555,
+        13773416,
+        2805194,
+        4590064,
+        21168674,
+        13386663,
+        13386663,
+        7755811,
+        272330892,
+        0,
+        0,
+        0,
+        0,
+        21182128,
+        37004422
+      ]
+    }
+  },
+  {
+    "label": "fine-current-controls-zh",
+    "arm": "current-complete-floor-detail",
+    "n": 2,
+    "train_wall": 23.0146838995,
+    "train_cpu": 73.2849755,
+    "phases": {
+      "vocabulary": 0.052834013,
+      "plan": 0.539094679,
+      "initial_count": 3.2147860735,
+      "materialize": 1.42262508,
+      "merge_rounds": 15.958352446,
+      "retire": 1.2128986795,
+      "prepare": 10.1715113415,
+      "apply": 1.3809157965,
+      "commit": 3.3733840025,
+      "select": 1.029177034,
+      "alphabet": 0.5672349864999999,
+      "output": 0.0455608
+    },
+    "fine": {
+      "commit_route": {
+        "wall_seconds_sum": 0.9087162065000001,
+        "thread_cpu_seconds_sum": 0.907790251,
+        "calls": 2561.0
+      },
+      "commit_owner_join": {
+        "wall_seconds_sum": 2.154443899,
+        "thread_cpu_seconds_sum": 0.0335032605,
+        "calls": 2561.0
+      },
+      "commit_global_publish": {
+        "wall_seconds_sum": 0.292518257,
+        "thread_cpu_seconds_sum": 0.29154347150000004,
+        "calls": 2561.0
+      },
+      "owner_actions": {
+        "wall_seconds_sum": 3.1018517174999998,
+        "thread_cpu_seconds_sum": 3.084064332,
+        "calls": 10222.0
+      },
+      "owner_sort": {
+        "wall_seconds_sum": 0.761561984,
+        "thread_cpu_seconds_sum": 0.7534263555,
+        "calls": 10222.0
+      },
+      "owner_reduce_publish": {
+        "wall_seconds_sum": 2.003202773,
+        "thread_cpu_seconds_sum": 1.9969115715,
+        "calls": 10222.0
+      },
+      "prepare_setup": {
+        "wall_seconds_sum": 1.5057007305,
+        "thread_cpu_seconds_sum": 1.493263958,
+        "calls": 100151.0
+      },
+      "prepare_scan": {
+        "wall_seconds_sum": 33.110494104,
+        "thread_cpu_seconds_sum": 32.759501532,
+        "calls": 100151.0
+      },
+      "prepare_finish": {
+        "wall_seconds_sum": 1.0271220085000001,
+        "thread_cpu_seconds_sum": 1.029333144,
+        "calls": 100151.0
+      }
+    },
+    "work": {
+      "counters": [
+        21182128,
+        285717555,
+        13773416,
+        2805194,
+        4590064,
+        7890111,
+        108100,
+        108100,
+        7755811,
+        272330892,
+        0,
+        0,
+        0,
+        0,
+        21182128,
+        27041297
+      ]
+    }
+  },
+  {
+    "label": "fine-complete-bypass-zh",
+    "arm": "current-complete-floor-detail",
+    "n": 2,
+    "train_wall": 22.3886862675,
+    "train_cpu": 72.0959125,
+    "phases": {
+      "vocabulary": 0.058402237999999995,
+      "plan": 0.5751138425,
+      "initial_count": 3.0741731535000003,
+      "materialize": 1.177529498,
+      "merge_rounds": 15.6315082005,
+      "retire": 1.158194897,
+      "prepare": 9.9872542735,
+      "apply": 1.340719436,
+      "commit": 3.3332806535,
+      "select": 0.966973656,
+      "alphabet": 0.6683774195000001,
+      "output": 0.0435007285
+    },
+    "fine": {
+      "commit_route": {
+        "wall_seconds_sum": 0.9132931504999999,
+        "thread_cpu_seconds_sum": 0.9092104560000001,
+        "calls": 2561.0
+      },
+      "commit_owner_join": {
+        "wall_seconds_sum": 2.1217997475,
+        "thread_cpu_seconds_sum": 0.035143018,
+        "calls": 2561.0
+      },
+      "commit_global_publish": {
+        "wall_seconds_sum": 0.2805037955,
+        "thread_cpu_seconds_sum": 0.277978707,
+        "calls": 2561.0
+      },
+      "owner_actions": {
+        "wall_seconds_sum": 3.0212485785,
+        "thread_cpu_seconds_sum": 3.0013035744999996,
+        "calls": 10222.0
+      },
+      "owner_sort": {
+        "wall_seconds_sum": 0.7441367445,
+        "thread_cpu_seconds_sum": 0.7394779505,
+        "calls": 10222.0
+      },
+      "owner_reduce_publish": {
+        "wall_seconds_sum": 1.945403207,
+        "thread_cpu_seconds_sum": 1.9393714095,
+        "calls": 10222.0
+      },
+      "prepare_setup": {
+        "wall_seconds_sum": 1.4532985059999999,
+        "thread_cpu_seconds_sum": 1.4345219475,
+        "calls": 100151.0
+      },
+      "prepare_scan": {
+        "wall_seconds_sum": 32.460245309,
+        "thread_cpu_seconds_sum": 32.358545569499995,
+        "calls": 100151.0
+      },
+      "prepare_finish": {
+        "wall_seconds_sum": 1.0003614915,
+        "thread_cpu_seconds_sum": 0.9987675705000001,
+        "calls": 100151.0
+      }
+    },
+    "work": {
+      "counters": [
+        21182128,
+        285717555,
+        13773416,
+        2805194,
+        4590064,
+        7890111,
+        108100,
+        108100,
+        7755811,
+        272330892,
+        0,
+        0,
+        0,
+        0,
+        21182128,
+        27041297
+      ]
+    }
+  },
+  {
+    "label": "fine-complete-bypass-zh",
+    "arm": "current-complete-bypass-detail",
+    "n": 2,
+    "train_wall": 21.734609783499998,
+    "train_cpu": 70.3462775,
+    "phases": {
+      "vocabulary": 0.051424609999999996,
+      "plan": 0.573246889,
+      "initial_count": 3.109813121,
+      "materialize": 1.1904959025,
+      "merge_rounds": 15.154769903,
+      "retire": 1.04630243,
+      "prepare": 10.071813203000001,
+      "apply": 1.340122009,
+      "commit": 2.704971873,
+      "select": 1.034428826,
+      "alphabet": 0.562147838,
+      "output": 0.044757280499999996
+    },
+    "fine": {
+      "commit_route": {
+        "wall_seconds_sum": 0.9275229970000001,
+        "thread_cpu_seconds_sum": 0.927001285,
+        "calls": 2561.0
+      },
+      "commit_owner_join": {
+        "wall_seconds_sum": 1.4731740845,
+        "thread_cpu_seconds_sum": 0.035012625,
+        "calls": 2561.0
+      },
+      "commit_global_publish": {
+        "wall_seconds_sum": 0.286226588,
+        "thread_cpu_seconds_sum": 0.285751701,
+        "calls": 2561.0
+      },
+      "owner_actions": {
+        "wall_seconds_sum": 3.6984626074999998,
+        "thread_cpu_seconds_sum": 3.6925957545,
+        "calls": 10222.0
+      },
+      "owner_sort": {
+        "wall_seconds_sum": 0.027264258,
+        "thread_cpu_seconds_sum": 0.0277308245,
+        "calls": 10222.0
+      },
+      "owner_reduce_publish": {
+        "wall_seconds_sum": 0.040044769,
+        "thread_cpu_seconds_sum": 0.040416403000000004,
+        "calls": 10222.0
+      },
+      "prepare_setup": {
+        "wall_seconds_sum": 1.4577194759999998,
+        "thread_cpu_seconds_sum": 1.4470626814999998,
+        "calls": 100151.0
+      },
+      "prepare_scan": {
+        "wall_seconds_sum": 32.8221546295,
+        "thread_cpu_seconds_sum": 32.664599201,
+        "calls": 100151.0
+      },
+      "prepare_finish": {
+        "wall_seconds_sum": 0.9933643915,
+        "thread_cpu_seconds_sum": 0.9975037135,
+        "calls": 100151.0
+      }
+    },
+    "work": {
+      "counters": [
+        21182128,
+        285717555,
+        13773416,
+        2805194,
+        4590064,
+        193396,
+        108100,
+        108100,
+        59096,
+        10857020,
+        0,
+        0,
+        0,
+        0,
+        21182128,
+        21258836
+      ]
+    }
+  }
+]

@@ -1,0 +1,280 @@
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/mod.rs b/tokenizers/tk-train/src/trainers/bpe/engine/mod.rs
+index 04d4a41..0afc1de 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/mod.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/mod.rs
+@@ -151,6 +151,7 @@ impl Training<'_> {
+         let progress = self.progress;
+         let policy = self.policy;
+         let workers = execution.workers();
++        let diag_begin = diag_start(0);
+         let mut vocabulary = vocabulary::Vocabulary::initialize(
+             trainer,
+             word_counts,
+@@ -158,6 +159,8 @@ impl Training<'_> {
+             progress,
+             &mut self.retained_alphabet,
+         )?;
++        diag(0, diag_begin);
++        let diag_begin = diag_start(1);
+         let prepared_corpus = corpus::CorpusPlan::build(
+             word_counts,
+             &mut vocabulary,
+@@ -165,6 +168,7 @@ impl Training<'_> {
+             trainer.max_token_length.is_some(),
+             progress,
+         )?;
++        diag(1, diag_begin);
+         if vocabulary.len() >= trainer.vocab_size && prepared_corpus.initial_counts_fit_u64() {
+             drop(prepared_corpus);
+             execution.release_scratch();
+@@ -206,6 +210,7 @@ impl Training<'_> {
+         let workers = execution.workers();
+ 
+         let arena = AllocationArena::new(workers, prepared_corpus.initial_edges());
++        let diag_begin = diag_start(2);
+         let initial = initial_pairs::InitialPairTable::build(
+             &prepared_corpus,
+             if policy == IdentityPolicy::FirstActivationOnly {
+@@ -217,6 +222,7 @@ impl Training<'_> {
+             &arena,
+             progress,
+         )?;
++        diag(2, diag_begin);
+         if vocabulary.len() >= trainer.vocab_size {
+             // The total-mass proof was inconclusive. Initial construction has now
+             // retained every checked per-key and signed-policy validation.
+@@ -239,10 +245,13 @@ impl Training<'_> {
+             prepared_corpus.initial_edges(),
+         );
+         execution.expect_id_domain(expected_ids);
++        let diag_begin = diag_start(3);
+         let mut corpus = prepared_corpus.materialize::<S>(workers, policy, progress)?;
++        diag(3, diag_begin);
+         let mut index =
+             pair_index::PairIndex::from_initial_pairs(initial, policy, trainer.min_frequency)?;
+ 
++        let rounds_begin = diag_start(4);
+         let merges = match self.merge_loop(
+             &mut vocabulary,
+             &mut corpus,
+@@ -257,12 +266,19 @@ impl Training<'_> {
+         // Training state does not participate in model output. Release position
+         // owners before their arena, and free the corpus and scratch before
+         // constructing the public vocabulary and merge strings.
++        diag(4, rounds_begin);
++        let retire_begin = diag_start(5);
+         drop(index);
+         drop(corpus);
+         drop(arena);
+         execution.release_scratch();
+ 
+-        Ok(complete_model(trainer, vocabulary, merges))
++        diag(5, retire_begin);
++        let output_begin = diag_start(11);
++        let result = complete_model(trainer, vocabulary, merges);
++        diag(11, output_begin);
++        diag_report();
++        Ok(result)
+     }
+     /// Complete joined rounds, or request a fresh attempt for active-ID reuse.
+     /// Batch candidates and adaptive history belong only to this attempt.
+@@ -292,6 +308,7 @@ impl Training<'_> {
+         let mut contiguous_births = merge::ContiguousBirthPolicy::default();
+         let work = progress.stage("Compute merges", trainer.vocab_size);
+         while vocabulary.len() < trainer.vocab_size {
++            let select_begin = diag_start(9);
+             match batch.select(
+                 trainer,
+                 vocabulary,
+@@ -305,10 +322,12 @@ impl Training<'_> {
+                 BatchSelection::Finished => break,
+                 BatchSelection::RestartForReuse => return Ok(AttemptOutcome::RestartForReuse),
+             }
++            diag(9, select_begin);
+             merges.extend(batch.rules.iter().map(|rule| rule.pair));
+             #[cfg(test)]
+             let enabled_before = contiguous_births.options(merge_options).contiguous_births;
+-            let (prepared, prepared_births) = merge::prepare_merges_with_births(
++            let diag_begin = diag_start(6);
++        let (prepared, prepared_births) = merge::prepare_merges_with_births(
+                 corpus,
+                 &batch.rules,
+                 &batch.candidates,
+@@ -320,6 +339,7 @@ impl Training<'_> {
+                 trainer.min_frequency.max(1),
+                 contiguous_births.options(merge_options),
+             )?;
++        diag(6, diag_begin);
+ 
+             // PERF: Preparation owns all writes and birth events. Selected
+             // position lists have no remaining reader; release them before allocating
+@@ -328,15 +348,19 @@ impl Training<'_> {
+             let birth_shape = prepared.birth_shape;
+             #[cfg(test)]
+             let birth_paths = prepared.birth_paths;
+-            let events = prepared.apply(corpus);
++            let diag_begin = diag_start(7);
++        let events = prepared.apply(corpus);
++        diag(7, diag_begin);
+ 
+-            index.commit_merges_with_prepared(
++            let diag_begin = diag_start(8);
++        index.commit_merges_with_prepared(
+                 &events,
+                 vocabulary.len(),
+                 execution,
+                 arena,
+                 prepared_births,
+             )?;
++        diag(8, diag_begin);
+             contiguous_births.observe(birth_shape);
+             #[cfg(test)]
+             if let Some(observer) = birth_observe.as_mut() {
+@@ -370,3 +394,147 @@ fn complete_model(
+ 
+ #[cfg(test)]
+ mod tests;
++
++static DIAG_NS: [std::sync::atomic::AtomicU64; 12] = [const { std::sync::atomic::AtomicU64::new(0) }; 12];
++static DIAG_CALLS: [std::sync::atomic::AtomicU64; 12] = [const { std::sync::atomic::AtomicU64::new(0) }; 12];
++fn diag(index: usize, begin: std::time::Instant) {
++ DIAG_ALLOC_PHASE.store(12, std::sync::atomic::Ordering::Relaxed);
++    use std::sync::atomic::Ordering::Relaxed;
++    DIAG_NS[index].fetch_add(begin.elapsed().as_nanos() as u64, Relaxed);
++    DIAG_CALLS[index].fetch_add(1, Relaxed);
++}
++fn diag_report() {
++ diagnostic_allocation_report();
++    use std::sync::atomic::Ordering::Relaxed;
++    let names = ["vocabulary", "plan", "initial_count", "materialize", "merge_rounds", "retire", "prepare", "apply", "commit", "select", "alphabet", "output"];
++    for (i, name) in names.iter().enumerate() {
++        eprintln!("BPE_PHASE {}", serde_json::json!({"phase":name, "seconds": DIAG_NS[i].load(Relaxed) as f64 / 1e9, "calls":DIAG_CALLS[i].load(Relaxed)}));
++    }
++}
++
++use std::sync::atomic::{AtomicUsize, Ordering};
++static DIAG_ALLOC_PHASE: AtomicUsize = AtomicUsize::new(12);
++static DIAG_ALLOC_NEXT_THREAD: AtomicUsize = AtomicUsize::new(0);
++thread_local! { static DIAG_ALLOC_THREAD: std::cell::Cell<usize> = const {std::cell::Cell::new(usize::MAX)}; }
++#[repr(align(64))]
++struct DiagnosticAllocationCounter([std::sync::atomic::AtomicU64; 4]);
++static DIAG_ALLOC: [[DiagnosticAllocationCounter; 12]; 64] = [const { [const { DiagnosticAllocationCounter([const {std::sync::atomic::AtomicU64::new(0)};4]) };12] };64];
++struct DiagnosticAllocator;
++#[global_allocator]
++static DIAGNOSTIC_ALLOCATOR: DiagnosticAllocator = DiagnosticAllocator;
++fn diagnostic_allocation(calls: u64, bytes: u64, reallocs: u64, freed: u64) {
++    let phase = DIAG_ALLOC_PHASE.load(Ordering::Relaxed);
++    if phase >= 12 {return;}
++    DIAG_ALLOC_THREAD.with(|cell| {
++        let mut thread = cell.get();
++        if thread == usize::MAX {thread=DIAG_ALLOC_NEXT_THREAD.fetch_add(1,Ordering::Relaxed);cell.set(thread);}
++        if thread >= 64 {return;}
++        let counters = &DIAG_ALLOC[thread][phase].0;
++        for (counter,value) in counters.iter().zip([calls,bytes,reallocs,freed]) {
++            if value != 0 {counter.fetch_add(value,Ordering::Relaxed);}
++        }
++    });
++}
++unsafe impl std::alloc::GlobalAlloc for DiagnosticAllocator {
++    unsafe fn alloc(&self, layout: std::alloc::Layout) -> *mut u8 {
++        let sample=diagnostic_allocator_sample_start(0);
++        let p=unsafe {std::alloc::System.alloc(layout)};
++        diagnostic_allocator_sample_end(sample);
++        if !p.is_null() {diagnostic_allocation(1,layout.size() as u64,0,0);}
++        p
++    }
++    unsafe fn alloc_zeroed(&self, layout: std::alloc::Layout) -> *mut u8 {
++        let sample=diagnostic_allocator_sample_start(1);
++        let p=unsafe {std::alloc::System.alloc_zeroed(layout)};
++        diagnostic_allocator_sample_end(sample);
++        if !p.is_null() {diagnostic_allocation(1,layout.size() as u64,0,0);}
++        p
++    }
++    unsafe fn dealloc(&self,p:*mut u8,layout:std::alloc::Layout) {
++        diagnostic_allocation(0,0,0,layout.size() as u64);
++        let sample=diagnostic_allocator_sample_start(3);
++        unsafe {std::alloc::System.dealloc(p,layout)};
++        diagnostic_allocator_sample_end(sample);
++    }
++    unsafe fn realloc(&self,p:*mut u8,layout:std::alloc::Layout,size:usize)->*mut u8 {
++        let sample=diagnostic_allocator_sample_start(2);
++        let q=unsafe {std::alloc::System.realloc(p,layout,size)};
++        diagnostic_allocator_sample_end(sample);
++        if !q.is_null() {diagnostic_allocation(0,size as u64,1,layout.size() as u64);}
++        q
++    }
++}
++fn diag_start(index:usize)->std::time::Instant {
++    DIAG_ALLOC_PHASE.store(index,Ordering::Relaxed);
++    std::time::Instant::now()
++}
++fn diagnostic_allocation_report() {
++    DIAG_ALLOC_PHASE.store(12,Ordering::Relaxed);
++    diagnostic_allocator_time_report();
++    let names=["vocabulary","plan","initial_count","materialize","merge_rounds","retire","prepare","apply","commit","select","alphabet","output"];
++    for (phase,name) in names.iter().enumerate() {
++        let mut totals=[0u64;4];let mut threads=Vec::new();
++        for (i,thread) in DIAG_ALLOC.iter().enumerate() {
++            let values=thread[phase].0.each_ref().map(|v|v.load(Ordering::Relaxed));
++            for j in 0..4 {totals[j]+=values[j];}
++            if values.iter().any(|&v|v!=0) {threads.push(serde_json::json!({"thread":i,"values":values}));}
++        }
++        eprintln!("BPE_ALLOC {}",serde_json::json!({"phase":name,"alloc_calls":totals[0],"requested_bytes":totals[1],"realloc_calls":totals[2],"freed_bytes":totals[3],"threads":threads}));
++    }
++}
++
++#[repr(align(64))]
++struct DiagnosticAllocatorTiming([std::sync::atomic::AtomicU64; 6]);
++static DIAG_ALLOC_TIMES: [[[DiagnosticAllocatorTiming; 4]; 12]; 64] = [const { [const { [const {DiagnosticAllocatorTiming([const {std::sync::atomic::AtomicU64::new(0)};6])};4] };12] };64];
++static DIAG_CLOCK_NS: [std::sync::atomic::AtomicU64; 64] = [const {std::sync::atomic::AtomicU64::new(0)};64];
++thread_local! { static DIAG_TIMING_RANDOM: std::cell::Cell<u64> = const {std::cell::Cell::new(0x861a_9c74_4f1b_593d)}; }
++unsafe extern "C" { fn clock_gettime(clock: i32, output: *mut [i64;2]) -> i32; }
++fn diagnostic_allocator_clock() -> u64 {
++    let mut t=[0i64;2]; let status=unsafe {clock_gettime(3,&mut t)};
++    if status!=0 {std::process::abort();}
++    t[0] as u64*1_000_000_000+t[1] as u64
++}
++struct DiagnosticAllocatorSample {thread:usize, phase:usize, operation:usize, start:u64}
++fn diagnostic_allocator_sample_start(operation:usize) -> Option<DiagnosticAllocatorSample> {
++    let phase=DIAG_ALLOC_PHASE.load(Ordering::Relaxed);if phase>=12{return None;}
++    let thread=DIAG_ALLOC_THREAD.with(|cell|{let mut i=cell.get();if i==usize::MAX {i=DIAG_ALLOC_NEXT_THREAD.fetch_add(1,Ordering::Relaxed);cell.set(i);}i});
++    if thread>=64{return None;}
++    let counters=&DIAG_ALLOC_TIMES[thread][phase][operation].0;
++    counters[0].fetch_add(1,Ordering::Relaxed);
++    let selected=DIAG_TIMING_RANDOM.with(|cell|{let mut n=cell.get();n^=n<<13;n^=n>>7;n^=n<<17;cell.set(n);n&127==0});
++    if !selected{return None;}
++    if DIAG_CLOCK_NS[thread].load(Ordering::Relaxed)==0 {
++        let mut differences=[0u64;128];
++        for n in &mut differences {let a=diagnostic_allocator_clock();let b=diagnostic_allocator_clock();*n=b-a;}
++        differences.sort_unstable();
++        DIAG_CLOCK_NS[thread].store(differences[64].max(1),Ordering::Relaxed);
++    }
++    Some(DiagnosticAllocatorSample{thread,phase,operation,start:diagnostic_allocator_clock()})
++}
++fn diagnostic_allocator_sample_end(sample:Option<DiagnosticAllocatorSample>) {
++    let Some(sample)=sample else{return;};
++    let elapsed=diagnostic_allocator_clock()-sample.start;
++    let empty_begin=diagnostic_allocator_clock();
++    std::hint::black_box(sample.operation);
++    let empty_elapsed=diagnostic_allocator_clock()-empty_begin;
++    let c=&DIAG_ALLOC_TIMES[sample.thread][sample.phase][sample.operation].0;
++    c[1].fetch_add(1,Ordering::Relaxed);c[2].fetch_add(elapsed,Ordering::Relaxed);
++    let sq=f64::from_bits(c[3].load(Ordering::Relaxed))+(elapsed as f64).powi(2);
++    c[3].store(sq.to_bits(),Ordering::Relaxed);c[4].fetch_max(elapsed,Ordering::Relaxed);c[5].fetch_add(empty_elapsed,Ordering::Relaxed);
++}
++fn diagnostic_allocator_time_report() {
++    let phases=["vocabulary","plan","initial_count","materialize","merge_rounds","retire","prepare","apply","commit","select","alphabet","output"];
++    for (phase,name) in phases.iter().enumerate() {
++        let mut rows=Vec::new();let mut raw=0.0;let mut corrected=0.0;
++        for thread in 0..64 {for (operation,op) in ["alloc","alloc_zeroed","realloc","dealloc"].iter().enumerate() {
++            let c=DIAG_ALLOC_TIMES[thread][phase][operation].0.each_ref().map(|x|x.load(Ordering::Relaxed));
++            if c[0]==0 {continue;}
++            let baseline=DIAG_CLOCK_NS[thread].load(Ordering::Relaxed);
++            let estimated_ns=if c[1]>0 {c[2] as f64/c[1] as f64*c[0] as f64}else{0.0};
++            let corrected_ns=if c[1]>0 {((c[2] as f64-c[5] as f64)/c[1] as f64).max(0.0)*c[0] as f64}else{0.0};
++            raw+=estimated_ns;corrected+=corrected_ns;
++            rows.push(serde_json::json!({"thread":thread,"operation":op,"calls":c[0],"sample_count":c[1],"sample_cpu_ns":c[2],"sample_squared_cpu_ns":f64::from_bits(c[3]),"max_sample_cpu_ns":c[4],"empty_clock_pair_median_ns":baseline,"paired_empty_clock_cpu_ns":c[5],"paired_empty_clock_mean_ns":if c[1]>0 {c[5] as f64/c[1] as f64}else{0.0},"estimated_raw_cpu_seconds":estimated_ns/1e9,"estimated_clock_corrected_cpu_seconds":corrected_ns/1e9}));
++        }}
++        eprintln!("BPE_ALLOC_CPU {}",serde_json::json!({"phase":name,"sampling_probability":"1/128 xorshift64 per thread","estimated_raw_cpu_seconds":raw/1e9,"estimated_clock_corrected_cpu_seconds":corrected/1e9,"rows":rows}));
++    }
++}

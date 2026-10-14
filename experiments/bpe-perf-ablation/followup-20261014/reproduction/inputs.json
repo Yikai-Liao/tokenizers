@@ -1,0 +1,22 @@
+{
+  "en-bytelevel": {
+    "pipeline": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/en256/text.txt",
+    "core": "/root/code/tokenizers-perfetto-results/inputs/en-bytelevel/words.json",
+    "pretokenizer": "bytelevel_regex"
+  },
+  "zh-bytelevel": {
+    "pipeline": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+    "core": "/root/code/tokenizers-perfetto-results/inputs/zh-bytelevel/words.json",
+    "pretokenizer": "bytelevel_regex"
+  },
+  "zh-whitespace": {
+    "pipeline": "/root/code/tokenizers-bpe-benchmarks/.bench/owner/zh256/text.txt",
+    "core": "/root/code/tokenizers-simplification-results/online-initial/pretokenizers/zh-whitespace-256MiB/words.json",
+    "pretokenizer": "whitespace"
+  },
+  "code-bytelevel": {
+    "pipeline": "/root/code/tokenizers-perf-regression-20261014/code256.txt",
+    "core": "/root/code/tokenizers-perf-regression-20261014/code-bytelevel-words.json",
+    "pretokenizer": "bytelevel_regex"
+  }
+}

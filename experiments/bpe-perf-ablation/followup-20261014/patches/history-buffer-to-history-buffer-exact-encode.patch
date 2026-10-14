@@ -1,0 +1,52 @@
+diff --git a/tokenizers/tk-train/src/trainers/bpe/positions.rs b/tokenizers/tk-train/src/trainers/bpe/positions.rs
+index c5e6cfb..e7c982c 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/positions.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/positions.rs
+@@ -39,7 +39,21 @@ impl Positions {
+ 
+     /// Construct from nondecreasing coordinates, preserving duplicates.
+     pub(super) fn from_sorted(values: &[u64]) -> Result<Self> {
+-        Self::encode(values.len(), values.iter().copied())
++        let count=values.len();
++        let capacity=if count<=2 {None} else {
++            let groups=count.div_ceil(RESTART);
++            let head=(1usize+if groups>1 {groups}else{0}).checked_mul(USIZE_BYTES).ok_or("BPE position layout exceeds usize")?;
++            let mut used=head;
++            let mut previous=0;
++            for (index,&position) in values.iter().enumerate() {
++                let gap=position.checked_sub(previous).ok_or("BPE positions are not sorted")?;
++                let width=if index.is_multiple_of(RESTART) {8} else {(u64::BITS-gap.leading_zeros()).div_ceil(7).max(1) as usize};
++                used=used.checked_add(width).ok_or("BPE position layout exceeds usize")?;
++                previous=position;
++            }
++            Some(used)
++        };
++        Self::encode(count, values.iter().copied(), capacity)
+     }
+ 
+     /// Take ownership of ordered fragments and concatenate without sorting or deduplication.
+@@ -56,13 +70,13 @@ impl Positions {
+                 .checked_add(fragment.len())
+                 .ok_or("BPE fragment count exceeds usize")
+         })?;
+-        Self::encode(count, fragments.iter().flat_map(Self::iter))
++        Self::encode(count, fragments.iter().flat_map(Self::iter), None)
+     }
+ 
+     // Only a slice and owned fragment lengths supply cardinality.
+     // The iterator stays private; safe Vec writes require no trusted-iterator or
+     // uninitialized-memory protocol. Tiny lists bypass encoding entirely.
+-    fn encode(count: usize, mut values: impl Iterator<Item = u64>) -> Result<Self> {
++    fn encode(count: usize, mut values: impl Iterator<Item = u64>, capacity_hint:Option<usize>) -> Result<Self> {
+         if count == 0 {
+             return Ok(Self::Empty);
+         }
+@@ -92,7 +106,7 @@ impl Positions {
+             .and_then(|seeds| count.checked_add(seeds))
+             .and_then(|stream| head.checked_add(stream))
+             .ok_or("BPE position layout exceeds usize")?;
+-        let mut bytes = Vec::with_capacity(capacity);
++        let mut bytes = Vec::with_capacity(capacity_hint.unwrap_or(capacity));
+         bytes.resize(head, 0);
+         bytes[..USIZE_BYTES].copy_from_slice(&count.to_le_bytes());
+         let mut previous = 0;

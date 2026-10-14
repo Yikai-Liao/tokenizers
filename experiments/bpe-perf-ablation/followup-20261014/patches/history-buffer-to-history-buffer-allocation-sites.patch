@@ -1,0 +1,417 @@
+diff --git a/tokenizers/tk-train/src/trainers/bpe/index.rs b/tokenizers/tk-train/src/trainers/bpe/index.rs
+index 7fcb3e0..9bfcb46 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/index.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/index.rs
+@@ -1,4 +1,5 @@
+ //! Count owners publish complete lists; the queue repairs stale snapshots lazily.
++use super::fine_diag as fd;
+ use super::merge::{Birth, Change};
+ use super::{WORD_SEPARATOR_ID, add, corpus::CorpusPlan, positions::Positions};
+ use ahash::AHashMap;
+@@ -182,11 +183,14 @@ impl PairIndex {
+ 
+     pub(super) fn commit(&mut self, changes: Vec<Vec<Change<Birth>>>) -> Result<()> {
+         // 1. Route each removal and birth to its count owner.
++        let route_timer = fd::timer(0);
+         let events = self.route_changes(changes);
++        drop(route_timer);
+ 
+         // 2. Apply owner-local actions and encode their birth cohorts in parallel.
+         let reuse = self.reuse;
+         let floor = self.floor;
++        let owner_timer = fd::timer(1);
+         let births = self
+             .shards
+             .par_iter_mut()
+@@ -194,6 +198,8 @@ impl PairIndex {
+             .map(|shard| shard.commit(&events, reuse, floor))
+             .collect::<Result<Vec<_>>>()?;
+ 
++        drop(owner_timer);
++        let _publish_timer = fd::timer(2);
+         // 3. Publish only after all owners join, in the same owner traversal order.
+         for candidate in births.into_iter().flatten() {
+             self.queue.push(candidate);
+@@ -352,6 +358,7 @@ impl Shard {
+     }
+ 
+     fn commit(&mut self, events: &[Event], reuse: bool, floor: u64) -> Result<Vec<Candidate>> {
++        let action_timer = fd::timer(3);
+         let mut groups = BTreeMap::<(usize, Pair), State<SmallVec<[u64; 2]>>>::new();
+         let mut candidates = Vec::new();
+         // Both drains own their remaining items: errors drop unpublished births
+@@ -411,6 +418,8 @@ impl Shard {
+             }
+         }
+ 
++        drop(action_timer);
++        let _reduce_timer = fd::timer(5);
+         // Complete producers precede partial groups, which follow bucket/pair order.
+         for ((_, pair), mut state) in groups {
+             let count = if reuse {
+diff --git a/tokenizers/tk-train/src/trainers/bpe/merge.rs b/tokenizers/tk-train/src/trainers/bpe/merge.rs
+index dff4019..a58bcef 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/merge.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/merge.rs
+@@ -1,4 +1,5 @@
+ //! Select compatible rules and complete each batch with joined parallel phases.
++use super::fine_diag as fd;
+ use super::{
+     BpeTrainer, WORD_SEPARATOR_ID, add,
+     corpus::{Corpus, Match},
+@@ -44,6 +45,7 @@ impl BpeTrainer {
+         corpus: &mut Corpus,
+         index: &mut PairIndex,
+     ) -> Result<MergeOutcome> {
++        let select_timer = fd::timer(18);
+         let reuse = index.reuse();
+         let mut batch = Batch {
+             rules: Vec::new(),
+@@ -113,7 +115,11 @@ impl BpeTrainer {
+                 replacement: rule.replacement,
+             })
+             .collect();
++        drop(select_timer);
++        let prepare_timer = fd::timer(19);
+         let jobs = batch.prepare(corpus, self.max_token_length.unwrap_or(usize::MAX))?;
++        drop(prepare_timer);
++        let apply_timer = fd::timer(9);
+         let changes = jobs
+             .into_par_iter()
+             .map(|job| {
+@@ -121,7 +127,10 @@ impl BpeTrainer {
+                 job.changes
+             })
+             .collect();
++        drop(apply_timer);
++        let commit_timer = fd::timer(10);
+         index.commit(changes)?;
++        drop(commit_timer);
+         Ok(MergeOutcome::Committed(records))
+     }
+ }
+@@ -236,7 +245,7 @@ impl<'a> Neighbors<'a> {
+             let id = self.rule.replacement;
+             let pair = self.rule.pair();
+             let index = self.changes[side].len();
+-            self.changes[side].push(Change {
++            super::diagnostic_allocation_site(17, || self.changes[side].push(Change {
+                 removed: if left {
+                     (neighbor, pair.0)
+                 } else {
+@@ -249,7 +258,7 @@ impl<'a> Neighbors<'a> {
+                 // Both sides can create (id, id); keep them in one birth cohort.
+                 // Other right births follow left births in the reference update order.
+                 bucket: 2 * self.rank + usize::from(!left && neighbor != id),
+-            });
++            }));
+             *slot =
+                 u32::try_from(index).expect("each neighbor directory is bounded by real token IDs");
+         }
+@@ -283,10 +292,16 @@ impl<'a> Neighbors<'a> {
+         // Complete ordinary producers prune and encode before owner routing.
+         // Partial jobs retain raw positions until their counts have been reduced.
+         let mut result = Vec::new();
++        let mut totals = [0u64; 16];
+         // Left changes precede right changes. Reuse count actions and the resulting
+         // historical cohorts observe this order even when both sides name one key.
+         for mut change in self.changes.into_iter().flatten() {
++            totals[0] += 1;
++            let n = change.positions.len() as u64;
++            totals[1] += n; totals[2] += u64::from(n == 1); totals[3] += u64::from(n == 2); totals[4] += u64::from(n > 2);
+             if self.complete && change.born_weight < floor {
++                totals[6] += u64::from(!change.positions.is_empty());
++                totals[7] += change.positions.len() as u64;
+                 change.positions = SmallVec::new();
+                 change.born_weight = 0;
+             }
+@@ -294,7 +309,7 @@ impl<'a> Neighbors<'a> {
+                 continue;
+             }
+             let positions = if self.complete {
+-                Birth::Complete(Positions::from_sorted(&change.positions)?)
++                { totals[8] += u64::from(!change.positions.is_empty()); totals[9] += change.positions.len() as u64; Birth::Complete(super::diagnostic_allocation_site(18, || Positions::from_sorted(&change.positions))?) }
+             } else {
+                 Birth::Partial(change.positions)
+             };
+@@ -307,6 +322,7 @@ impl<'a> Neighbors<'a> {
+                 positions,
+             });
+         }
++        fd::counts(totals);
+         Ok(result)
+     }
+ }
+@@ -446,8 +462,9 @@ impl<'a> FreshSnapshot<'a> {
+     ) -> Result<Job> {
+         #[cfg(test)]
+         super::tests::observe_worker(super::tests::Phase::FreshPrepare);
++        let setup_timer = fd::timer(6);
+         let rule = &self.batch.rules[rank];
+-        directories.resize(self.corpus.id_count());
++        super::diagnostic_allocation_site(12, || directories.resize(self.corpus.id_count()));
+         let mut neighbors = Neighbors::new(
+             rule,
+             rank,
+@@ -457,6 +474,8 @@ impl<'a> FreshSnapshot<'a> {
+         let mut starts = SmallVec::new();
+         let matcher = self.corpus.fresh_matcher(rule.pair());
+         let mut weights = None;
++        drop(setup_timer);
++        let scan_timer = fd::timer(7);
+         for p in positions.prefetched(&rule.candidate.positions, self.corpus) {
+             let Some(matched) = matcher(p, self.corpus.token(p)) else {
+                 continue;
+@@ -466,13 +485,15 @@ impl<'a> FreshSnapshot<'a> {
+                 _ => self.corpus.weight_region(p),
+             };
+             weights = Some((weight, end));
+-            self.record_neighbors(&mut neighbors, matched, weight)?;
+-            starts.push(matched.start);
++            super::diagnostic_allocation_site(14, || self.record_neighbors(&mut neighbors, matched, weight))?;
++            super::diagnostic_allocation_site(15, || starts.push(matched.start));
+         }
++        drop(scan_timer);
++        let _finish_timer = fd::timer(8);
+         Ok(Job {
+             starts,
+             replacement: rule.replacement,
+-            changes: neighbors.finish(self.batch.floor)?,
++            changes: super::diagnostic_allocation_site(16, || neighbors.finish(self.batch.floor))?,
+         })
+     }
+ 
+@@ -625,7 +646,7 @@ impl<'task> CohortPreparation<'task> {
+                     )?;
+                 }
+                 previous = Some((rule.replacement, p, matched.span()));
+-                starts.push(matched.start);
++                super::diagnostic_allocation_site(15, || starts.push(matched.start));
+                 p = matched.after;
+             } else {
+                 let span = corpus.span(p);
+diff --git a/tokenizers/tk-train/src/trainers/bpe/mod.rs b/tokenizers/tk-train/src/trainers/bpe/mod.rs
+index a0beb1e..24efc8c 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/mod.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/mod.rs
+@@ -342,7 +342,7 @@ impl BpeTrainer {
+                 complete @ AttemptOutcome::Complete(_) => complete,
+             };
+             match outcome {
+-                AttemptOutcome::Complete(result) => Ok(result),
++                AttemptOutcome::Complete(result) => { fine_diag::report(); Ok(result) },
+                 AttemptOutcome::RestartForReuse => Err(
+                     "BPE internal invariant violated: identity-reuse attempt requested another restart"
+                         .into(),
+@@ -360,8 +360,10 @@ impl BpeTrainer {
+         progress: &Option<ProgressBar>,
+     ) -> Result<AttemptOutcome> {
+         // 1. Resolve the vocabulary and tokenize borrowed input into a corpus plan.
++        let timer = fine_diag::timer(13);
+         let (mut vocabulary, ids) = Vocabulary::initialize(self, words, alphabet, progress)?;
+         let plan = CorpusPlan::build(words, ids, self, reuse)?;
++        drop(timer);
+         self.finalize_progress(progress, plan.word_count(), "Tokenize words");
+ 
+         // 2. Freeze initial pairs first: their temporary counting buffers retire
+@@ -371,7 +373,9 @@ impl BpeTrainer {
+         // zero-merge path never initializes or allocates this resident corpus.
+         let mut corpus: Corpus;
+         self.update_progress(progress, plan.word_count(), "Count pairs");
++        let timer = fine_diag::timer(14);
+         let mut index = PairIndex::build(&plan, self.min_frequency, workers, reuse, progress)?;
++        drop(timer);
+         self.finalize_progress(progress, plan.word_count(), "Count pairs");
+ 
+         let mut merges = Vec::new();
+@@ -380,7 +384,9 @@ impl BpeTrainer {
+         self.update_progress(progress, self.vocab_size, "Compute merges");
+         if vocabulary.len() < self.vocab_size {
+             // 3. Only attempts needing merges allocate resident endpoints.
++            let timer = fine_diag::timer(15);
+             corpus = plan.materialize();
++            drop(timer);
+             while vocabulary.len() < self.vocab_size {
+                 let records = match self.merge_next(&mut vocabulary, &mut corpus, &mut index)? {
+                     MergeOutcome::Finished => break,
+@@ -401,8 +407,10 @@ impl BpeTrainer {
+                 }
+                 self.emit_json_progress("Compute merges", merges.len(), self.vocab_size);
+             }
++            let timer = fine_diag::timer(16);
+             drop(index);
+             drop(corpus);
++            drop(timer);
+         } else {
+             drop(index);
+             drop(plan);
+@@ -411,7 +419,9 @@ impl BpeTrainer {
+         // 4. Large attempt storage is gone before output strings and the final
+         // vocabulary map are built, keeping their allocations from overlapping.
+         self.finalize_progress(progress, merges.len(), "Compute merges");
++        let timer = fine_diag::timer(17);
+         let (vocab, merges) = vocabulary.into_model_parts(merges);
++        drop(timer);
+         // Only success carries a trace out of the attempt. Errors and restart
+         // requests discard every speculative rule along with its local storage.
+         Ok(AttemptOutcome::Complete(TrainingResult {
+@@ -530,3 +540,159 @@ impl Trainer for BpeTrainer {
+         Ok(())
+     }
+ }
++
++mod fine_diag {
++    use std::{sync::atomic::{AtomicU64, Ordering::Relaxed}, time::Instant};
++    static WALL: [AtomicU64; 20] = [const { AtomicU64::new(0) }; 20];
++    static CPU: [AtomicU64; 20] = [const { AtomicU64::new(0) }; 20];
++    static CALLS: [AtomicU64; 20] = [const { AtomicU64::new(0) }; 20];
++    unsafe extern "C" { fn clock_gettime(clock: i32, time: *mut [i64; 2]) -> i32; }
++    fn cpu() -> u64 { let mut t = [0i64; 2]; unsafe { clock_gettime(3, &mut t); } (t[0] as u64)*1_000_000_000 + t[1] as u64 }
++    pub(super) struct Timer { tag: usize, wall: Instant, cpu: u64 }
++    fn allocation_phase(tag: usize) -> Option<usize> { match tag { 13 => Some(1), 14 => Some(2), 15 => Some(3), 16 => Some(5), 17 => Some(11), 18 => Some(9), 19 => Some(6), 9 => Some(7), 0|1|2|10 => Some(8), _ => None } }
++    pub(super) fn timer(tag: usize) -> Timer { if let Some(phase) = allocation_phase(tag) { super::DIAG_ALLOC_PHASE.store(phase, Relaxed); } Timer { tag, wall: Instant::now(), cpu: cpu() } }
++    impl Drop for Timer { fn drop(&mut self) { WALL[self.tag].fetch_add(self.wall.elapsed().as_nanos() as u64, Relaxed); CPU[self.tag].fetch_add(cpu()-self.cpu, Relaxed); CALLS[self.tag].fetch_add(1, Relaxed); if allocation_phase(self.tag).is_some() { super::DIAG_ALLOC_PHASE.store(12, Relaxed); } } }
++    static COUNTS: [AtomicU64; 16] = [const { AtomicU64::new(0) }; 16];
++    pub(super) fn counts(values: [u64; 16]) { for (i, v) in values.into_iter().enumerate() { COUNTS[i].fetch_add(v, Relaxed); } }
++    pub(super) fn report() { super::diagnostic_allocation_report(); eprintln!("BPE_WORK {}", serde_json::json!({"counters": COUNTS.iter().map(|x|x.load(Relaxed)).collect::<Vec<_>>() })); let names = ["commit_route", "commit_owner_join", "commit_global_publish", "owner_actions", "owner_sort", "owner_reduce_publish", "prepare_setup", "prepare_scan", "prepare_finish", "apply_total", "commit_total", "main_completed_publish", "main_owner_reduce", "vocabulary_plan", "initial_count", "materialize", "retire", "output", "select", "prepare_total"]; for i in 0..20 { if CALLS[i].load(Relaxed)>0 { eprintln!("BPE_FINE {}", serde_json::json!({"phase": names[i], "wall_seconds_sum":WALL[i].load(Relaxed) as f64/1e9, "thread_cpu_seconds_sum":CPU[i].load(Relaxed) as f64/1e9, "calls":CALLS[i].load(Relaxed)})); } } }
++}
++
++use std::sync::atomic::{AtomicUsize, Ordering};
++static DIAG_ALLOC_PHASE: AtomicUsize = AtomicUsize::new(12);
++static DIAG_ALLOC_NEXT_THREAD: AtomicUsize = AtomicUsize::new(0);
++thread_local! { static DIAG_ALLOC_THREAD: std::cell::Cell<usize> = const {std::cell::Cell::new(usize::MAX)}; }
++#[repr(align(64))]
++struct DiagnosticAllocationCounter([std::sync::atomic::AtomicU64; 4]);
++static DIAG_ALLOC: [[DiagnosticAllocationCounter; 20]; 64] = [const { [const { DiagnosticAllocationCounter([const {std::sync::atomic::AtomicU64::new(0)};4]) };20] };64];
++struct DiagnosticAllocator;
++#[global_allocator]
++static DIAGNOSTIC_ALLOCATOR: DiagnosticAllocator = DiagnosticAllocator;
++fn diagnostic_allocation(calls: u64, bytes: u64, reallocs: u64, freed: u64) {
++    let phase = diagnostic_allocation_phase();
++    if phase >= 20 {return;}
++    DIAG_ALLOC_THREAD.with(|cell| {
++        let mut thread = cell.get();
++        if thread == usize::MAX {thread=DIAG_ALLOC_NEXT_THREAD.fetch_add(1,Ordering::Relaxed);cell.set(thread);}
++        if thread >= 64 {return;}
++        let counters = &DIAG_ALLOC[thread][phase].0;
++        for (counter,value) in counters.iter().zip([calls,bytes,reallocs,freed]) {
++            if value != 0 {counter.fetch_add(value,Ordering::Relaxed);}
++        }
++    });
++}
++unsafe impl std::alloc::GlobalAlloc for DiagnosticAllocator {
++    unsafe fn alloc(&self, layout: std::alloc::Layout) -> *mut u8 {
++        let sample=diagnostic_allocator_sample_start(0);
++        let p=unsafe {std::alloc::System.alloc(layout)};
++        diagnostic_allocator_sample_end(sample);
++        if !p.is_null() {diagnostic_allocation(1,layout.size() as u64,0,0);}
++        p
++    }
++    unsafe fn alloc_zeroed(&self, layout: std::alloc::Layout) -> *mut u8 {
++        let sample=diagnostic_allocator_sample_start(1);
++        let p=unsafe {std::alloc::System.alloc_zeroed(layout)};
++        diagnostic_allocator_sample_end(sample);
++        if !p.is_null() {diagnostic_allocation(1,layout.size() as u64,0,0);}
++        p
++    }
++    unsafe fn dealloc(&self,p:*mut u8,layout:std::alloc::Layout) {
++        diagnostic_allocation(0,0,0,layout.size() as u64);
++        let sample=diagnostic_allocator_sample_start(3);
++        unsafe {std::alloc::System.dealloc(p,layout)};
++        diagnostic_allocator_sample_end(sample);
++    }
++    unsafe fn realloc(&self,p:*mut u8,layout:std::alloc::Layout,size:usize)->*mut u8 {
++        let sample=diagnostic_allocator_sample_start(2);
++        let q=unsafe {std::alloc::System.realloc(p,layout,size)};
++        diagnostic_allocator_sample_end(sample);
++        if !q.is_null() {diagnostic_allocation(0,size as u64,1,layout.size() as u64);}
++        q
++    }
++}
++fn diag_start(index:usize)->std::time::Instant {
++    DIAG_ALLOC_PHASE.store(index,Ordering::Relaxed);
++    std::time::Instant::now()
++}
++fn diagnostic_allocation_report() {
++    DIAG_ALLOC_PHASE.store(12,Ordering::Relaxed);
++    diagnostic_allocator_time_report();
++    let names=["vocabulary","plan","initial_count","materialize","merge_rounds","retire","prepare","apply","commit","select","alphabet","output","prepare_directory","prepare_scan_other","prepare_neighbor_positions","prepare_starts","prepare_finish_other","prepare_group_metadata","prepare_position_encode","prepare_result_events"];
++    for (phase,name) in names.iter().enumerate() {
++        let mut totals=[0u64;4];let mut threads=Vec::new();
++        for (i,thread) in DIAG_ALLOC.iter().enumerate() {
++            let values=thread[phase].0.each_ref().map(|v|v.load(Ordering::Relaxed));
++            for j in 0..4 {totals[j]+=values[j];}
++            if values.iter().any(|&v|v!=0) {threads.push(serde_json::json!({"thread":i,"values":values}));}
++        }
++        eprintln!("BPE_ALLOC {}",serde_json::json!({"phase":name,"alloc_calls":totals[0],"requested_bytes":totals[1],"realloc_calls":totals[2],"freed_bytes":totals[3],"threads":threads}));
++    }
++}
++
++#[repr(align(64))]
++struct DiagnosticAllocatorTiming([std::sync::atomic::AtomicU64; 6]);
++static DIAG_ALLOC_TIMES: [[[DiagnosticAllocatorTiming; 4]; 20]; 64] = [const { [const { [const {DiagnosticAllocatorTiming([const {std::sync::atomic::AtomicU64::new(0)};6])};4] };20] };64];
++static DIAG_CLOCK_NS: [std::sync::atomic::AtomicU64; 64] = [const {std::sync::atomic::AtomicU64::new(0)};64];
++thread_local! { static DIAG_TIMING_RANDOM: std::cell::Cell<u64> = const {std::cell::Cell::new(0x861a_9c74_4f1b_593d)}; }
++unsafe extern "C" { fn clock_gettime(clock: i32, output: *mut [i64;2]) -> i32; }
++fn diagnostic_allocator_clock() -> u64 {
++    let mut t=[0i64;2]; let status=unsafe {clock_gettime(3,&mut t)};
++    if status!=0 {std::process::abort();}
++    t[0] as u64*1_000_000_000+t[1] as u64
++}
++struct DiagnosticAllocatorSample {thread:usize, phase:usize, operation:usize, start:u64}
++fn diagnostic_allocator_sample_start(operation:usize) -> Option<DiagnosticAllocatorSample> {
++    let phase=diagnostic_allocation_phase();if phase>=20{return None;}
++    let thread=DIAG_ALLOC_THREAD.with(|cell|{let mut i=cell.get();if i==usize::MAX {i=DIAG_ALLOC_NEXT_THREAD.fetch_add(1,Ordering::Relaxed);cell.set(i);}i});
++    if thread>=64{return None;}
++    let counters=&DIAG_ALLOC_TIMES[thread][phase][operation].0;
++    counters[0].fetch_add(1,Ordering::Relaxed);
++    let selected=DIAG_TIMING_RANDOM.with(|cell|{let mut n=cell.get();n^=n<<13;n^=n>>7;n^=n<<17;cell.set(n);n&127==0});
++    if !selected{return None;}
++    if DIAG_CLOCK_NS[thread].load(Ordering::Relaxed)==0 {
++        let mut differences=[0u64;128];
++        for n in &mut differences {let a=diagnostic_allocator_clock();let b=diagnostic_allocator_clock();*n=b-a;}
++        differences.sort_unstable();
++        DIAG_CLOCK_NS[thread].store(differences[64].max(1),Ordering::Relaxed);
++    }
++    Some(DiagnosticAllocatorSample{thread,phase,operation,start:diagnostic_allocator_clock()})
++}
++fn diagnostic_allocator_sample_end(sample:Option<DiagnosticAllocatorSample>) {
++    let Some(sample)=sample else{return;};
++    let elapsed=diagnostic_allocator_clock()-sample.start;
++    let empty_begin=diagnostic_allocator_clock();
++    std::hint::black_box(sample.operation);
++    let empty_elapsed=diagnostic_allocator_clock()-empty_begin;
++    let c=&DIAG_ALLOC_TIMES[sample.thread][sample.phase][sample.operation].0;
++    c[1].fetch_add(1,Ordering::Relaxed);c[2].fetch_add(elapsed,Ordering::Relaxed);
++    let sq=f64::from_bits(c[3].load(Ordering::Relaxed))+(elapsed as f64).powi(2);
++    c[3].store(sq.to_bits(),Ordering::Relaxed);c[4].fetch_max(elapsed,Ordering::Relaxed);c[5].fetch_add(empty_elapsed,Ordering::Relaxed);
++}
++fn diagnostic_allocator_time_report() {
++    let phases=["vocabulary","plan","initial_count","materialize","merge_rounds","retire","prepare","apply","commit","select","alphabet","output","prepare_directory","prepare_scan_other","prepare_neighbor_positions","prepare_starts","prepare_finish_other","prepare_group_metadata","prepare_position_encode","prepare_result_events"];
++    for (phase,name) in phases.iter().enumerate() {
++        let mut rows=Vec::new();let mut raw=0.0;let mut corrected=0.0;
++        for thread in 0..64 {for (operation,op) in ["alloc","alloc_zeroed","realloc","dealloc"].iter().enumerate() {
++            let c=DIAG_ALLOC_TIMES[thread][phase][operation].0.each_ref().map(|x|x.load(Ordering::Relaxed));
++            if c[0]==0 {continue;}
++            let baseline=DIAG_CLOCK_NS[thread].load(Ordering::Relaxed);
++            let estimated_ns=if c[1]>0 {c[2] as f64/c[1] as f64*c[0] as f64}else{0.0};
++            let corrected_ns=if c[1]>0 {((c[2] as f64-c[5] as f64)/c[1] as f64).max(0.0)*c[0] as f64}else{0.0};
++            raw+=estimated_ns;corrected+=corrected_ns;
++            rows.push(serde_json::json!({"thread":thread,"operation":op,"calls":c[0],"sample_count":c[1],"sample_cpu_ns":c[2],"sample_squared_cpu_ns":f64::from_bits(c[3]),"max_sample_cpu_ns":c[4],"empty_clock_pair_median_ns":baseline,"paired_empty_clock_cpu_ns":c[5],"paired_empty_clock_mean_ns":if c[1]>0 {c[5] as f64/c[1] as f64}else{0.0},"estimated_raw_cpu_seconds":estimated_ns/1e9,"estimated_clock_corrected_cpu_seconds":corrected_ns/1e9}));
++        }}
++        eprintln!("BPE_ALLOC_CPU {}",serde_json::json!({"phase":name,"sampling_probability":"1/128 xorshift64 per thread","estimated_raw_cpu_seconds":raw/1e9,"estimated_clock_corrected_cpu_seconds":corrected/1e9,"rows":rows}));
++    }
++}
++
++thread_local! {static DIAG_ALLOC_SITE: std::cell::Cell<usize> = const {std::cell::Cell::new(6)};}
++fn diagnostic_allocation_phase() -> usize {
++    let phase=DIAG_ALLOC_PHASE.load(Ordering::Relaxed);
++    if phase>=12 {return usize::MAX;}
++    if phase==6 {DIAG_ALLOC_SITE.with(|s|s.get())} else {phase}
++}
++fn diagnostic_allocation_site<R>(site:usize,f:impl FnOnce()->R)->R {
++    let prior=DIAG_ALLOC_SITE.with(|s|s.replace(site));
++    let result=f();
++    DIAG_ALLOC_SITE.with(|s|s.set(prior));
++    result
++}

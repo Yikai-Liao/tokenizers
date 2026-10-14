@@ -1,0 +1,13 @@
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs b/tokenizers/tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs
+index ce734af..0efd617 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs
+@@ -605,7 +605,7 @@ impl ContiguousBirthPolicy {
+             return options;
+         }
+         MergeOptions {
+-            contiguous_births: options.contiguous_births && self.enabled,
++            contiguous_births: options.contiguous_births,
+             ..options
+         }
+     }

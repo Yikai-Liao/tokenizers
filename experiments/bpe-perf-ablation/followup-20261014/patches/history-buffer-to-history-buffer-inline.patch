@@ -1,0 +1,28 @@
+diff --git a/tokenizers/tk-train/src/trainers/bpe/merge.rs b/tokenizers/tk-train/src/trainers/bpe/merge.rs
+index dff4019..413f42a 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/merge.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/merge.rs
+@@ -226,6 +226,7 @@ impl<'a> Neighbors<'a> {
+         }
+     }
+ 
++    #[inline(always)]
+     fn group(&mut self, neighbor: u32, left: bool) -> &mut Change<SmallVec<[u64; 2]>> {
+         let side = usize::from(!left);
+         let slot = &mut self.directories.indices[side][neighbor as usize];
+@@ -256,6 +257,7 @@ impl<'a> Neighbors<'a> {
+         &mut self.changes[side][*slot as usize]
+     }
+ 
++    #[inline(always)]
+     fn record(
+         &mut self,
+         left: bool,
+@@ -479,6 +481,7 @@ impl<'a> FreshSnapshot<'a> {
+     // Between adjacent selected matches, the left match owns the shared boundary:
+     // it emits the removal and the birth using both final replacement IDs. The
+     // right match skips that left edge, including when matches span separate jobs.
++    #[inline(always)]
+     fn record_neighbors(
+         &self,
+         neighbors: &mut Neighbors<'_>,

@@ -1,0 +1,1554 @@
+[
+  {
+    "arm": "main",
+    "repeat": 0,
+    "total_sample_period": 141206514617,
+    "application_sample_period": 129962435951,
+    "source_attribution": "nearest project line in innermost-first LLVM inline source stack; each sample counted once",
+    "by_file": [
+      {
+        "file": "tk-train/src/trainers/bpe/engine/vocabulary.rs",
+        "percent": 15.323514778825228
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/corpus/slots.rs",
+        "percent": 14.33627928704844
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs",
+        "percent": 13.792749561750908
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs",
+        "percent": 11.530351987060405
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/corpus/mod.rs",
+        "percent": 5.427535079941219
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/pair_index.rs",
+        "percent": 5.104982347699809
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/corpus/prepare.rs",
+        "percent": 4.32708399932732
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/initial_pairs.rs",
+        "percent": 3.352592214913333
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/storage/position_storage.rs",
+        "percent": 3.130050248027219
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/initial_pairs/bounded.rs",
+        "percent": 2.636210701819733
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/storage/id_accumulator.rs",
+        "percent": 2.4591950933841242
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/storage/position_chains.rs",
+        "percent": 1.8747424289738073
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/pair_index/commit.rs",
+        "percent": 1.6304305819349405
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/merge/prepare/ordinary.rs",
+        "percent": 0.8744574663209924
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/merge/events.rs",
+        "percent": 0.39622151181730414
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/storage/interval_index.rs",
+        "percent": 0.13896978020614292
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/merge/mod.rs",
+        "percent": 0.07707575411460309
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/storage/arena.rs",
+        "percent": 0.06369310951689772
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/execution.rs",
+        "percent": 0.04638011934338572
+      },
+      {
+        "file": "tk-train/src/lib.rs",
+        "percent": 0.00943214626897712
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/batch.rs",
+        "percent": 0.009143047001066397
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/mod.rs",
+        "percent": 0.008800914061017299
+      }
+    ],
+    "by_line": [
+      {
+        "line": "tk-train/src/trainers/bpe/engine/vocabulary.rs:287 (discriminator 2)",
+        "percent": 9.355492509557038
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/corpus/slots.rs:142",
+        "percent": 6.783075850274459
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/vocabulary.rs:77 (discriminator 4)",
+        "percent": 4.195092347592605
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/corpus/slots.rs:155",
+        "percent": 3.740837220809115
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:248",
+        "percent": 2.711583647812118
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/pair_index.rs:159",
+        "percent": 2.3947168883615357
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/corpus/mod.rs:356",
+        "percent": 2.1849523078792554
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/corpus/slots.rs:143",
+        "percent": 2.1033499977361743
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/pair_index.rs:158",
+        "percent": 2.0192532191122625
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/corpus/prepare.rs:125",
+        "percent": 1.7003011953890041
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/initial_pairs.rs:42",
+        "percent": 1.6778350916925528
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/initial_pairs.rs:41",
+        "percent": 1.5297462180544064
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/position_chains.rs:105",
+        "percent": 1.3614913399813826
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs:74",
+        "percent": 1.344024821480521
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs:65",
+        "percent": 1.3234995899934245
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:225",
+        "percent": 1.1343612221749142
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/pair_index/commit.rs:184",
+        "percent": 1.1164749000965706
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs:77",
+        "percent": 1.107397335909984
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs:118",
+        "percent": 1.0966868406888384
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/position_storage.rs:71",
+        "percent": 1.0343061939892735
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/id_accumulator.rs:60",
+        "percent": 0.9138976254036351
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/initial_pairs/bounded.rs:0",
+        "percent": 0.8501033003016155
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:387",
+        "percent": 0.848037205824379
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/corpus/mod.rs:165",
+        "percent": 0.8148830045986205
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/position_storage.rs:30",
+        "percent": 0.7998981293912747
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs:64",
+        "percent": 0.7913694138198545
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:297",
+        "percent": 0.7001030955840776
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs:72",
+        "percent": 0.6894840125759947
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/id_accumulator.rs:64",
+        "percent": 0.6479574681675822
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:276",
+        "percent": 0.6360720335291583
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/corpus/mod.rs:285",
+        "percent": 0.5846986410219074
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs:0",
+        "percent": 0.5781872070240222
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs:88",
+        "percent": 0.5328908237987262
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/corpus/mod.rs:155",
+        "percent": 0.5218345598279417
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:223",
+        "percent": 0.5147026063006448
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/corpus/prepare.rs:0",
+        "percent": 0.5137292631062973
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/corpus/slots.rs:125",
+        "percent": 0.49488817063109425
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:503",
+        "percent": 0.4900352727187093
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:375",
+        "percent": 0.4792987971098319
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/corpus/slots.rs:153",
+        "percent": 0.4735910809879089
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/id_accumulator.rs:71",
+        "percent": 0.4284122511208629
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/position_storage.rs:35",
+        "percent": 0.42070299561694624
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs:73",
+        "percent": 0.40390463325785975
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/initial_pairs/bounded.rs:230",
+        "percent": 0.39703516337092853
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/vocabulary.rs:322",
+        "percent": 0.39696799366543917
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/position_storage.rs:21",
+        "percent": 0.38524616762583
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs:89",
+        "percent": 0.3785053893934537
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/corpus/slots.rs:138",
+        "percent": 0.374743678388542
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:380",
+        "percent": 0.37272412708969793
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/initial_pairs/bounded.rs:92",
+        "percent": 0.3725021784063457
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:476",
+        "percent": 0.3613775386950637
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/initial_pairs/bounded.rs:95",
+        "percent": 0.3523656046249426
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/corpus/prepare.rs:450",
+        "percent": 0.3484982752635375
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:466",
+        "percent": 0.3380814357573034
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/vocabulary.rs:79",
+        "percent": 0.33469806636180605
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:325",
+        "percent": 0.33065838517891444
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/vocabulary.rs:310",
+        "percent": 0.32576976936772234
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/corpus/prepare.rs:182",
+        "percent": 0.324562749277592
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:393",
+        "percent": 0.32454088980454737
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:498",
+        "percent": 0.30229017064670943
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs:122",
+        "percent": 0.30014471368375195
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/vocabulary.rs:321",
+        "percent": 0.2844891767845085
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/corpus/prepare.rs:126",
+        "percent": 0.2801909565384652
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/initial_pairs/bounded.rs:91",
+        "percent": 0.2801220850701312
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/ordinary.rs:269",
+        "percent": 0.2788569564711813
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:0",
+        "percent": 0.27135318440461664
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs:852",
+        "percent": 0.2698652792568275
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:247",
+        "percent": 0.2587796221662477
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:386",
+        "percent": 0.2501934404076475
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs:223",
+        "percent": 0.25001597834034867
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/pair_index.rs:161",
+        "percent": 0.24889733590073856
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs:126",
+        "percent": 0.24454546444730904
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/id_accumulator.rs:59",
+        "percent": 0.2429543211448247
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:241",
+        "percent": 0.2392204183469964
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/position_storage.rs:24",
+        "percent": 0.23283708750390592
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:296",
+        "percent": 0.23057190943568748
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/corpus/prepare.rs:134",
+        "percent": 0.22795980686378817
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:273",
+        "percent": 0.2275096010062721
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs:114",
+        "percent": 0.22731636487921375
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs:860",
+        "percent": 0.22457495028478117
+      }
+    ]
+  },
+  {
+    "arm": "history-buffer",
+    "repeat": 0,
+    "total_sample_period": 197166380253,
+    "application_sample_period": 165382894350,
+    "source_attribution": "nearest project line in innermost-first LLVM inline source stack; each sample counted once",
+    "by_file": [
+      {
+        "file": "tk-train/src/trainers/bpe/corpus.rs",
+        "percent": 19.99011193765642
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/merge.rs",
+        "percent": 18.620885599202644
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/index.rs",
+        "percent": 13.805409322356233
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/positions.rs",
+        "percent": 12.137403363744047
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/vocabulary.rs",
+        "percent": 3.844908929845129
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/mod.rs",
+        "percent": 1.650828321148567
+      },
+      {
+        "file": "tk-train/src/lib.rs",
+        "percent": 0.02759713645408474
+      }
+    ],
+    "by_line": [
+      {
+        "line": "tk-train/src/trainers/bpe/corpus.rs:464",
+        "percent": 7.022171374873295
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/index.rs:274",
+        "percent": 5.839626454685503
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/corpus.rs:479",
+        "percent": 4.552671364905995
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/index.rs:368",
+        "percent": 3.7183486594380732
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:500",
+        "percent": 2.751407602573491
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/positions.rs:118",
+        "percent": 2.7073952694928467
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/corpus.rs:300",
+        "percent": 2.496768362173701
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/vocabulary.rs:428 (discriminator 4)",
+        "percent": 2.422312889688165
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:524",
+        "percent": 2.297461610436537
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:277",
+        "percent": 1.7028376763278916
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:679",
+        "percent": 1.6974557116205293
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/positions.rs:99",
+        "percent": 1.564488968170863
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/positions.rs:115",
+        "percent": 1.5063694886465355
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/mod.rs:486",
+        "percent": 1.2416954035766699
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:491",
+        "percent": 1.204807880000554
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/corpus.rs:184",
+        "percent": 1.004278393435623
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:676",
+        "percent": 0.9027314914013684
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/positions.rs:276",
+        "percent": 0.8820734284254518
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/corpus.rs:455",
+        "percent": 0.8048832305810176
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:0",
+        "percent": 0.7811098672216795
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/positions.rs:103",
+        "percent": 0.7753214113067537
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:259",
+        "percent": 0.754534460738706
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/positions.rs:277",
+        "percent": 0.7342292647166317
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:229",
+        "percent": 0.6748273317655307
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/corpus.rs:168",
+        "percent": 0.623706685400433
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:470",
+        "percent": 0.6229325417568556
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/positions.rs:114",
+        "percent": 0.572958601537653
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/index.rs:92",
+        "percent": 0.5431699910632735
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/index.rs:211",
+        "percent": 0.5234272068471963
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/corpus.rs:0",
+        "percent": 0.5225334464618108
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:493",
+        "percent": 0.5200295900773373
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:233",
+        "percent": 0.5180223954456147
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/positions.rs:283",
+        "percent": 0.5132289752956517
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/positions.rs:275",
+        "percent": 0.5131687581329449
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/index.rs:14",
+        "percent": 0.5075043598792116
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/positions.rs:0",
+        "percent": 0.48497088488058854
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/corpus.rs:165",
+        "percent": 0.46526588499665983
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:301",
+        "percent": 0.4621443391265665
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/vocabulary.rs:307",
+        "percent": 0.4256385043551211
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/corpus.rs:387",
+        "percent": 0.4156378536484953
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/vocabulary.rs:308",
+        "percent": 0.41421412360060483
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/mod.rs:485",
+        "percent": 0.4091329175718973
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:280",
+        "percent": 0.4053482637224809
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/index.rs:217",
+        "percent": 0.3752381111073032
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:257",
+        "percent": 0.3437084888054533
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/positions.rs:278",
+        "percent": 0.33927432057211576
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/corpus.rs:386 (discriminator 2)",
+        "percent": 0.30113002492521346
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:232",
+        "percent": 0.2887153769671838
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/corpus.rs:286",
+        "percent": 0.2801916514829329
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/index.rs:208 (discriminator 2)",
+        "percent": 0.2728123153195716
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:677",
+        "percent": 0.2655214835958497
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:231",
+        "percent": 0.2541786598490716
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/index.rs:268",
+        "percent": 0.22559913735254164
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/corpus.rs:296",
+        "percent": 0.2105241210328931
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/positions.rs:281",
+        "percent": 0.20923706793756128
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/positions.rs:285",
+        "percent": 0.20921221532326814
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/vocabulary.rs:429",
+        "percent": 0.20152692994116791
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/positions.rs:116",
+        "percent": 0.20101640984199662
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:504",
+        "percent": 0.19347521951283364
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/corpus.rs:67",
+        "percent": 0.19121431073402465
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/index.rs:152",
+        "percent": 0.18685037100507124
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/positions.rs:105",
+        "percent": 0.17413435016631137
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:288 (discriminator 2)",
+        "percent": 0.1657056850061175
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:230",
+        "percent": 0.15599852855508314
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/index.rs:365",
+        "percent": 0.13852992059270922
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/index.rs:390",
+        "percent": 0.1377917947529324
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:268",
+        "percent": 0.1352942193581409
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/index.rs:350",
+        "percent": 0.13448294159468674
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:510",
+        "percent": 0.12461934163659802
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:269",
+        "percent": 0.1219554255098931
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:256",
+        "percent": 0.12112872726757185
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:234",
+        "percent": 0.12094053950476771
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/corpus.rs:185",
+        "percent": 0.1188257169905797
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:537",
+        "percent": 0.11656060668411199
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/vocabulary.rs:428",
+        "percent": 0.11632576035817864
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/vocabulary.rs:294",
+        "percent": 0.11552205285086088
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/index.rs:199",
+        "percent": 0.11402692371362293
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/index.rs:0",
+        "percent": 0.11310127908919045
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/positions.rs:261",
+        "percent": 0.10520576516839708
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:239",
+        "percent": 0.10030751375879701
+      }
+    ]
+  },
+  {
+    "arm": "main",
+    "repeat": 1,
+    "total_sample_period": 142273152605,
+    "application_sample_period": 129802432154,
+    "source_attribution": "nearest project line in innermost-first LLVM inline source stack; each sample counted once",
+    "by_file": [
+      {
+        "file": "tk-train/src/trainers/bpe/engine/corpus/slots.rs",
+        "percent": 14.588569322439104
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/vocabulary.rs",
+        "percent": 13.416331214642096
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs",
+        "percent": 13.305556495649567
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs",
+        "percent": 11.57591044933463
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/pair_index.rs",
+        "percent": 5.698217572016528
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/corpus/mod.rs",
+        "percent": 5.356941653046741
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/corpus/prepare.rs",
+        "percent": 4.738088021930214
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/initial_pairs.rs",
+        "percent": 3.228400568132613
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/storage/position_storage.rs",
+        "percent": 3.108147498690201
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/initial_pairs/bounded.rs",
+        "percent": 2.567801801048731
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/storage/id_accumulator.rs",
+        "percent": 2.5423896875627965
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/pair_index/commit.rs",
+        "percent": 2.101034864461806
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/storage/position_chains.rs",
+        "percent": 1.8955890746918196
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/merge/prepare/ordinary.rs",
+        "percent": 0.8790305325363602
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/merge/events.rs",
+        "percent": 0.4065035977699104
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/storage/arena.rs",
+        "percent": 0.07833216173216603
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/storage/interval_index.rs",
+        "percent": 0.07317011403340584
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/merge/mod.rs",
+        "percent": 0.02848756441949795
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/execution.rs",
+        "percent": 0.02318106149764263
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/engine/batch.rs",
+        "percent": 0.018176954349074535
+      },
+      {
+        "file": "tk-train/src/lib.rs",
+        "percent": 0.008473995816675465
+      }
+    ],
+    "by_line": [
+      {
+        "line": "tk-train/src/trainers/bpe/engine/vocabulary.rs:287 (discriminator 2)",
+        "percent": 8.456662971687862
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/corpus/slots.rs:142",
+        "percent": 6.825681192966491
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/corpus/slots.rs:155",
+        "percent": 4.034890415999859
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/vocabulary.rs:77 (discriminator 4)",
+        "percent": 3.5028638606443985
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:248",
+        "percent": 2.9169201363814823
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/pair_index.rs:159",
+        "percent": 2.7375362685701274
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/pair_index.rs:158",
+        "percent": 2.2486864544868217
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/corpus/mod.rs:356",
+        "percent": 2.120244941345306
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/corpus/slots.rs:143",
+        "percent": 2.1080449656772404
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/corpus/prepare.rs:125",
+        "percent": 1.6564258146038853
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/initial_pairs.rs:42",
+        "percent": 1.566872834531999
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/initial_pairs.rs:41",
+        "percent": 1.5030823418506618
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/pair_index/commit.rs:184",
+        "percent": 1.3845326942806309
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/position_chains.rs:105",
+        "percent": 1.370171170953227
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs:74",
+        "percent": 1.3512965340253769
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs:65",
+        "percent": 1.1853068770339
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs:118",
+        "percent": 1.1604083270605614
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:225",
+        "percent": 1.076304613317597
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs:77",
+        "percent": 1.0107033538451757
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/position_storage.rs:71",
+        "percent": 0.9548714118760987
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/id_accumulator.rs:60",
+        "percent": 0.9104772708568462
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/initial_pairs/bounded.rs:0",
+        "percent": 0.8653826083535672
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/position_storage.rs:30",
+        "percent": 0.8550095149555641
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs:64",
+        "percent": 0.8158928095329248
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/corpus/mod.rs:165",
+        "percent": 0.812545813340874
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs:72",
+        "percent": 0.7186954553814148
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/id_accumulator.rs:64",
+        "percent": 0.7103018598355604
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:387",
+        "percent": 0.6482718447665764
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/corpus/prepare.rs:0",
+        "percent": 0.6284348758913902
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:297",
+        "percent": 0.6163800583197176
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:503",
+        "percent": 0.5806835821609296
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:375",
+        "percent": 0.5500677426982782
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs:73",
+        "percent": 0.5449106593936223
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:276",
+        "percent": 0.5439465927549866
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/corpus/slots.rs:125",
+        "percent": 0.5227971071007673
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:380",
+        "percent": 0.49677111883662683
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs:0",
+        "percent": 0.49405756682114677
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/corpus/mod.rs:155",
+        "percent": 0.48396565015443516
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/corpus/mod.rs:285",
+        "percent": 0.4811065499478815
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs:88",
+        "percent": 0.47214620446696465
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/position_storage.rs:35",
+        "percent": 0.46667937966018336
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:223",
+        "percent": 0.4639654396586428
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/corpus/slots.rs:153",
+        "percent": 0.4563190033487626
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/id_accumulator.rs:71",
+        "percent": 0.4493850633752884
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/corpus/prepare.rs:450",
+        "percent": 0.42474996858877684
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/initial_pairs/bounded.rs:230",
+        "percent": 0.40586991110205184
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:0",
+        "percent": 0.38492724099568004
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:476",
+        "percent": 0.3763610781063004
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/corpus/prepare.rs:134",
+        "percent": 0.3687156504196029
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/position_storage.rs:21",
+        "percent": 0.3675244474631989
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/initial_pairs/bounded.rs:92",
+        "percent": 0.3602495921510827
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/vocabulary.rs:322",
+        "percent": 0.3596202119879215
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/corpus/prepare.rs:182",
+        "percent": 0.35216845400977753
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs:860",
+        "percent": 0.3378174358266867
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/corpus/slots.rs:138",
+        "percent": 0.33600466584670297
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs:89",
+        "percent": 0.3350056425074605
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs:223",
+        "percent": 0.31046351606921296
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs:122",
+        "percent": 0.29610788914590663
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/initial_pairs/bounded.rs:91",
+        "percent": 0.28814991408687773
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:466",
+        "percent": 0.28475729930916155
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/corpus/prepare.rs:451",
+        "percent": 0.28327638955112056
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/initial_pairs/bounded.rs:95",
+        "percent": 0.2779178149638501
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:247",
+        "percent": 0.26505583175412617
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/corpus/prepare.rs:126",
+        "percent": 0.261968753187593
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/id_accumulator.rs:59",
+        "percent": 0.2559041093373542
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/pair_index/commit.rs:191",
+        "percent": 0.2541902469850032
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/vocabulary.rs:310",
+        "percent": 0.25415972611778054
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/vocabulary.rs:77",
+        "percent": 0.2514072328129669
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:296",
+        "percent": 0.2511661873355027
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:325",
+        "percent": 0.2482932264675109
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs:90",
+        "percent": 0.23752209240643754
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:386",
+        "percent": 0.22387812048019953
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/position_storage.rs:24",
+        "percent": 0.22251996332642876
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:498",
+        "percent": 0.21394595847966236
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/mod.rs:241",
+        "percent": 0.21349798077738322
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/storage/sorted_positions.rs:114",
+        "percent": 0.20868779285738945
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/events.rs:118",
+        "percent": 0.20597272263558555
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/pair_index.rs:161",
+        "percent": 0.20475227241837501
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/merge/prepare/ordinary.rs:275",
+        "percent": 0.20409740888091848
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/engine/corpus/mod.rs:0",
+        "percent": 0.20353114392843183
+      }
+    ]
+  },
+  {
+    "arm": "history-buffer",
+    "repeat": 1,
+    "total_sample_period": 192319615975,
+    "application_sample_period": 160494202206,
+    "source_attribution": "nearest project line in innermost-first LLVM inline source stack; each sample counted once",
+    "by_file": [
+      {
+        "file": "tk-train/src/trainers/bpe/corpus.rs",
+        "percent": 20.306962637694088
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/merge.rs",
+        "percent": 18.059768110453664
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/index.rs",
+        "percent": 13.850740994856544
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/positions.rs",
+        "percent": 13.201367999975803
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/vocabulary.rs",
+        "percent": 3.815332248247539
+      },
+      {
+        "file": "tk-train/src/trainers/bpe/mod.rs",
+        "percent": 1.4274171581940214
+      },
+      {
+        "file": "tk-train/src/lib.rs",
+        "percent": 0.009456361436559904
+      }
+    ],
+    "by_line": [
+      {
+        "line": "tk-train/src/trainers/bpe/corpus.rs:464",
+        "percent": 7.376784726340238
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/index.rs:274",
+        "percent": 5.948846019683822
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/corpus.rs:479",
+        "percent": 4.701714378514269
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/index.rs:368",
+        "percent": 3.7949348453091405
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:500",
+        "percent": 2.7550824028729193
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/positions.rs:118",
+        "percent": 2.729625170259495
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:524",
+        "percent": 2.5119949889188624
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/corpus.rs:300",
+        "percent": 2.392744622887655
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/vocabulary.rs:428 (discriminator 4)",
+        "percent": 2.357178520255206
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/positions.rs:115",
+        "percent": 1.9138529225632726
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:679",
+        "percent": 1.6964824261213793
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/positions.rs:99",
+        "percent": 1.6762184001132026
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:277",
+        "percent": 1.5564347088697954
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:491",
+        "percent": 1.2362193237267356
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/mod.rs:486",
+        "percent": 1.162457225523274
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/positions.rs:276",
+        "percent": 0.9859700729885466
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/corpus.rs:455",
+        "percent": 0.9636713756962357
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/corpus.rs:184",
+        "percent": 0.9433182173345384
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:676",
+        "percent": 0.9014778389664472
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/positions.rs:277",
+        "percent": 0.8590208563097147
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/positions.rs:103",
+        "percent": 0.771930195198072
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:259",
+        "percent": 0.7355824827478313
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/positions.rs:275",
+        "percent": 0.6328039902898938
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:470",
+        "percent": 0.6207681608282705
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:229",
+        "percent": 0.6014238277963054
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/positions.rs:0",
+        "percent": 0.5963013149678269
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:0",
+        "percent": 0.580325204655713
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/index.rs:92",
+        "percent": 0.5698667187139489
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/corpus.rs:0",
+        "percent": 0.5395715932247352
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:493",
+        "percent": 0.5321481377817627
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/corpus.rs:387",
+        "percent": 0.5237858223109942
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/index.rs:211",
+        "percent": 0.5118774411071876
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/positions.rs:114",
+        "percent": 0.4962644305217759
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/corpus.rs:168",
+        "percent": 0.49228916052071997
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/positions.rs:283",
+        "percent": 0.4818899009867368
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/index.rs:14",
+        "percent": 0.4536981553215167
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:280",
+        "percent": 0.4446881316106476
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:301",
+        "percent": 0.43737390267529624
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/positions.rs:278",
+        "percent": 0.41820288737709976
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/corpus.rs:165",
+        "percent": 0.41676507980558325
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:233",
+        "percent": 0.399845769814745
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/vocabulary.rs:308",
+        "percent": 0.3884312347509616
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:257",
+        "percent": 0.37933501546448267
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/index.rs:217",
+        "percent": 0.30646320970015656
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/index.rs:268",
+        "percent": 0.30287835593209567
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/corpus.rs:386 (discriminator 2)",
+        "percent": 0.29664504533648883
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/corpus.rs:286",
+        "percent": 0.2908319420067415
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/index.rs:208 (discriminator 2)",
+        "percent": 0.2692175046082166
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/mod.rs:485",
+        "percent": 0.2649599326707474
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/vocabulary.rs:294",
+        "percent": 0.2612848748956119
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/vocabulary.rs:307",
+        "percent": 0.25104918941953497
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/positions.rs:281",
+        "percent": 0.24199954780509744
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/corpus.rs:67",
+        "percent": 0.21613805741689635
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/positions.rs:105",
+        "percent": 0.21303479258884267
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/corpus.rs:296",
+        "percent": 0.20949881423035638
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:231",
+        "percent": 0.20586166262492198
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/index.rs:152",
+        "percent": 0.19178541155570233
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:232",
+        "percent": 0.18695272563706564
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/index.rs:199",
+        "percent": 0.18649517532658957
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:677",
+        "percent": 0.185492454938332
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/vocabulary.rs:429",
+        "percent": 0.1813324367522308
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:504",
+        "percent": 0.17721788870684124
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/positions.rs:116",
+        "percent": 0.16441758964468003
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/vocabulary.rs:428",
+        "percent": 0.16298513046154703
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:268",
+        "percent": 0.15498269351720506
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:678",
+        "percent": 0.15137616541301957
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/positions.rs:261",
+        "percent": 0.14791333559909892
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/index.rs:365",
+        "percent": 0.13927568939968085
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:256",
+        "percent": 0.1293387581599241
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/positions.rs:285",
+        "percent": 0.12760613822767902
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:230",
+        "percent": 0.12394851445158206
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/corpus.rs:185",
+        "percent": 0.11903092299734924
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:297",
+        "percent": 0.11520879806082923
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:239",
+        "percent": 0.1143368573638293
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:288 (discriminator 2)",
+        "percent": 0.1128105325606529
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/positions.rs:41",
+        "percent": 0.11099861078536558
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/corpus.rs:169",
+        "percent": 0.10765500385925986
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/index.rs:208",
+        "percent": 0.10502663078645949
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/index.rs:350",
+        "percent": 0.09604913573871335
+      },
+      {
+        "line": "tk-train/src/trainers/bpe/merge.rs:537",
+        "percent": 0.09562669625125846
+      }
+    ]
+  }
+]

@@ -1,0 +1,26 @@
+{
+  "history-buffer": {
+    "commit": "02620e0ad37d8b165b5923902a05184e483cbd88",
+    "archive_sha256": "34de80abc62084a9c598eb40a7e4fc86f579e6a374d052b96accf322e620109f",
+    "production_edits": false,
+    "runner_source": "matched runner-current",
+    "cargo_lock_sha256": "d4a54168f83f6a4ba157df6b954f541139278918bcabd4be88f8d64ceebc7f02",
+    "common_dependency_versions_match": true
+  },
+  "history-child": {
+    "commit": "ea1d4d56e30f8b7e5a1d91a405959a5054c8e30d",
+    "archive_sha256": "4320900b2dc1f37953db41246b318259d9e87ff8404f3e9bdaea240927867074",
+    "production_edits": false,
+    "runner_source": "matched runner-current",
+    "cargo_lock_sha256": "d4a54168f83f6a4ba157df6b954f541139278918bcabd4be88f8d64ceebc7f02",
+    "common_dependency_versions_match": true
+  },
+  "history-selected-fast": {
+    "commit": "7495cb8b4520e427b9833d56f5b026b59af86584",
+    "archive_sha256": "edcfc15750a8b0db22a8bfd38a3b237a51ad0b1a532b6e7619fb0cc4885c94de",
+    "production_edits": false,
+    "runner_source": "matched runner-current",
+    "cargo_lock_sha256": "d4a54168f83f6a4ba157df6b954f541139278918bcabd4be88f8d64ceebc7f02",
+    "common_dependency_versions_match": true
+  }
+}

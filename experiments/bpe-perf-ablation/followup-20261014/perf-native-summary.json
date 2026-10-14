@@ -1,0 +1,154 @@
+[
+  {
+    "arm": "main",
+    "repeat": 0,
+    "libc_percent": 7.962861130378976,
+    "libc_symbols": [
+      {
+        "symbol": "[unknown]",
+        "total_percent": 6.884355846730643
+      },
+      {
+        "symbol": "realloc",
+        "total_percent": 0.7689467443800777
+      },
+      {
+        "symbol": "malloc",
+        "total_percent": 0.20231256027730526
+      },
+      {
+        "symbol": "cfree",
+        "total_percent": 0.09356061252438469
+      },
+      {
+        "symbol": "__lll_lock_wait_private",
+        "total_percent": 0.013685366466564914
+      }
+    ],
+    "note": "cycles:u exclusive leaf samples; native libc DWARF stacks are mostly not recovered, so no reliable BPE phase attribution"
+  },
+  {
+    "arm": "main",
+    "repeat": 1,
+    "libc_percent": 8.765336412853014,
+    "libc_symbols": [
+      {
+        "symbol": "[unknown]",
+        "total_percent": 7.725070205981889
+      },
+      {
+        "symbol": "realloc",
+        "total_percent": 0.7101292053357462
+      },
+      {
+        "symbol": "malloc",
+        "total_percent": 0.178744830871951
+      },
+      {
+        "symbol": "cfree",
+        "total_percent": 0.09347574757778032
+      },
+      {
+        "symbol": "__lll_lock_wait_private",
+        "total_percent": 0.02805357389585062
+      },
+      {
+        "symbol": "syscall",
+        "total_percent": 0.01357478951325442
+      },
+      {
+        "symbol": "__lll_lock_wake_private",
+        "total_percent": 0.009416839196075534
+      },
+      {
+        "symbol": "__sched_yield",
+        "total_percent": 0.006871220480466417
+      }
+    ],
+    "note": "cycles:u exclusive leaf samples; native libc DWARF stacks are mostly not recovered, so no reliable BPE phase attribution"
+  },
+  {
+    "arm": "history-buffer",
+    "repeat": 0,
+    "libc_percent": 16.120134610279937,
+    "libc_symbols": [
+      {
+        "symbol": "[unknown]",
+        "total_percent": 12.640757044390066
+      },
+      {
+        "symbol": "realloc",
+        "total_percent": 2.0619348931513093
+      },
+      {
+        "symbol": "cfree",
+        "total_percent": 0.7247429451037243
+      },
+      {
+        "symbol": "malloc",
+        "total_percent": 0.5772944548352742
+      },
+      {
+        "symbol": "__lll_lock_wait_private",
+        "total_percent": 0.06943624761195408
+      },
+      {
+        "symbol": "__lll_lock_wake_private",
+        "total_percent": 0.01706639283879028
+      },
+      {
+        "symbol": "syscall",
+        "total_percent": 0.010989008862564605
+      },
+      {
+        "symbol": "__sched_yield",
+        "total_percent": 0.010458635480115653
+      },
+      {
+        "symbol": "memcpy@plt",
+        "total_percent": 0.007454988006139222
+      }
+    ],
+    "note": "cycles:u exclusive leaf samples; native libc DWARF stacks are mostly not recovered, so no reliable BPE phase attribution"
+  },
+  {
+    "arm": "history-buffer",
+    "repeat": 1,
+    "libc_percent": 16.548189121351538,
+    "libc_symbols": [
+      {
+        "symbol": "[unknown]",
+        "total_percent": 12.812245870542432
+      },
+      {
+        "symbol": "realloc",
+        "total_percent": 2.2706875031237956
+      },
+      {
+        "symbol": "cfree",
+        "total_percent": 0.7303199509209607
+      },
+      {
+        "symbol": "malloc",
+        "total_percent": 0.5820540381827267
+      },
+      {
+        "symbol": "__lll_lock_wait_private",
+        "total_percent": 0.11916617909105617
+      },
+      {
+        "symbol": "syscall",
+        "total_percent": 0.025628420039278316
+      },
+      {
+        "symbol": "__sched_yield",
+        "total_percent": 0.004117379789812675
+      },
+      {
+        "symbol": "__lll_lock_wake_private",
+        "total_percent": 0.003969779661473765
+      }
+    ],
+    "note": "cycles:u exclusive leaf samples; native libc DWARF stacks are mostly not recovered, so no reliable BPE phase attribution"
+  }
+]

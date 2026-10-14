@@ -1,0 +1,12 @@
+diff --git a/tokenizers/tk-train/src/trainers/bpe/engine/merge/prepare/ordinary.rs b/tokenizers/tk-train/src/trainers/bpe/engine/merge/prepare/ordinary.rs
+index 0aceb32..483968b 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/engine/merge/prepare/ordinary.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/engine/merge/prepare/ordinary.rs
+@@ -126,6 +126,7 @@ pub(super) fn prepare<'arena, S: SlotStorage>(
+         execution.workers(),
+         options.single_producer_fast,
+     );
++    let jobs: Vec<Vec<PositionTask>> = jobs.into_iter().flatten().map(|task| vec![task]).collect();
+     let mut selected = execution.selected_rules();
+     selected.reset(rules, token_id_count);
+ 

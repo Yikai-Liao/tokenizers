@@ -1,0 +1,22 @@
+diff --git a/tokenizers/tk-train/src/trainers/bpe/positions.rs b/tokenizers/tk-train/src/trainers/bpe/positions.rs
+index c5e6cfb..dbebd30 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/positions.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/positions.rs
+@@ -18,7 +18,7 @@ pub(super) enum Positions {
+     Empty,
+     One(u64),
+     Two(u64, u64),
+-    Compressed(Box<[u8]>),
++    Compressed(Vec<u8>),
+ }
+ 
+ impl Positions {
+@@ -119,7 +119,7 @@ impl Positions {
+             }
+             previous = position;
+         }
+-        Ok(Self::Compressed(bytes.into_boxed_slice()))
++        Ok(Self::Compressed(bytes))
+     }
+ 
+     /// Borrow the directory and data area through one shared layout reader.

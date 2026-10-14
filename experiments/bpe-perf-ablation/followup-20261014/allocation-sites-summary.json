@@ -1,0 +1,164 @@
+[
+  {
+    "phase": "prepare",
+    "cpu": 0.3287660148339964,
+    "operations": {
+      "alloc": {
+        "calls": 247781,
+        "cpu": 0.07061047757812419
+      },
+      "realloc": {
+        "calls": 12326,
+        "cpu": 0.024021907077777776
+      },
+      "dealloc": {
+        "calls": 486331,
+        "cpu": 0.2341336301780944
+      }
+    }
+  },
+  {
+    "phase": "prepare_directory",
+    "cpu": 0.2578561706006572,
+    "operations": {
+      "alloc": {
+        "calls": 139950,
+        "cpu": 0.2578561706006572
+      },
+      "realloc": {
+        "calls": 0,
+        "cpu": 0
+      },
+      "dealloc": {
+        "calls": 0,
+        "cpu": 0
+      }
+    }
+  },
+  {
+    "phase": "prepare_scan_other",
+    "cpu": 0.0,
+    "operations": {
+      "alloc": {
+        "calls": 0,
+        "cpu": 0
+      },
+      "realloc": {
+        "calls": 0,
+        "cpu": 0
+      },
+      "dealloc": {
+        "calls": 0,
+        "cpu": 0
+      }
+    }
+  },
+  {
+    "phase": "prepare_neighbor_positions",
+    "cpu": 8.038274201905761,
+    "operations": {
+      "alloc": {
+        "calls": 4590065,
+        "cpu": 1.9579462500956089
+      },
+      "realloc": {
+        "calls": 6425584,
+        "cpu": 6.080327951810152
+      },
+      "dealloc": {
+        "calls": 0,
+        "cpu": 0
+      }
+    }
+  },
+  {
+    "phase": "prepare_starts",
+    "cpu": 0.9247423415522165,
+    "operations": {
+      "alloc": {
+        "calls": 98609,
+        "cpu": 0.007784818375346359
+      },
+      "realloc": {
+        "calls": 562245,
+        "cpu": 0.9169575231768701
+      },
+      "dealloc": {
+        "calls": 0,
+        "cpu": 0
+      }
+    }
+  },
+  {
+    "phase": "prepare_finish_other",
+    "cpu": 2.4203633950252934,
+    "operations": {
+      "alloc": {
+        "calls": 99277,
+        "cpu": 0.013994305631468432
+      },
+      "realloc": {
+        "calls": 528340,
+        "cpu": 1.0484733676688012
+      },
+      "dealloc": {
+        "calls": 4749304,
+        "cpu": 1.3578957217250238
+      }
+    }
+  },
+  {
+    "phase": "prepare_group_metadata",
+    "cpu": 0.9035960616707864,
+    "operations": {
+      "alloc": {
+        "calls": 191204,
+        "cpu": 0.023844525968452508
+      },
+      "realloc": {
+        "calls": 831086,
+        "cpu": 0.8797515357023338
+      },
+      "dealloc": {
+        "calls": 0,
+        "cpu": 0
+      }
+    }
+  },
+  {
+    "phase": "prepare_position_encode",
+    "cpu": 6.866880156475655,
+    "operations": {
+      "alloc": {
+        "calls": 4558100,
+        "cpu": 0.8718627875099063
+      },
+      "realloc": {
+        "calls": 10436326,
+        "cpu": 5.995017368965748
+      },
+      "dealloc": {
+        "calls": 0,
+        "cpu": 0
+      }
+    }
+  },
+  {
+    "phase": "prepare_result_events",
+    "cpu": 0.0,
+    "operations": {
+      "alloc": {
+        "calls": 0,
+        "cpu": 0
+      },
+      "realloc": {
+        "calls": 0,
+        "cpu": 0
+      },
+      "dealloc": {
+        "calls": 0,
+        "cpu": 0
+      }
+    }
+  }
+]

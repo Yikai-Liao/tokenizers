@@ -1,0 +1,50 @@
+diff --git a/tokenizers/tk-train/src/trainers/bpe/index.rs b/tokenizers/tk-train/src/trainers/bpe/index.rs
+index cd63c3a..dcc095d 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/index.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/index.rs
+@@ -93,6 +93,7 @@ struct Shard {
+     actions: Vec<PendingAction>,
+     // One stream per birth action, in the same order.
+     positions: Vec<Positions>,
++    completed: Vec<Candidate>,
+ }
+ 
+ struct PendingAction {
+@@ -254,7 +255,7 @@ impl PairIndex {
+         let births = self
+             .shards
+             .maybe_par_iter_mut()
+-            .filter(|shard| !shard.actions.is_empty())
++            .filter(|shard| !shard.actions.is_empty() || !shard.completed.is_empty())
+             .map(|shard| shard.commit(&events, reuse, floor))
+             .collect::<Result<Vec<_>>>()?;
+ 
+@@ -284,7 +285,13 @@ impl PairIndex {
+             }
+             let removed = (change.removed_weight != 0).then(|| owner(change.removed, shard_count));
+             // Zero-weight births still own positions, including reuse cohorts.
+-            let born = (!change.positions.is_empty()).then(|| owner(change.born, shard_count));
++            let born = if complete && self.mode==TrainingMode::Fresh && change.born.0!=change.born.1 {
++                if !change.positions.is_empty() {
++                    let shard=owner(change.born,shard_count);
++                    self.shards[shard].completed.push(Candidate::new(change.born,change.born_weight,std::mem::take(&mut change.positions)));
++                }
++                None
++            } else {(!change.positions.is_empty()).then(|| owner(change.born,shard_count))};
+             let index = events.len();
+             events.push(Event {
+                 removed: change.removed,
+@@ -470,6 +477,13 @@ impl Shard {
+ 
+         // Stable key order keeps each cohort's spatial fragment order while
+         // publishing in birth_group/pair order. Reuse streams may interleave.
++        for candidate in self.completed.drain(..) {
++            debug_assert!(!reuse);
++            let pair=candidate.priority.pair();
++            debug_assert!(!self.counts.contains_key(&pair));
++            self.counts.insert(pair,candidate.priority.count);
++            candidates.push(candidate);
++        }
+         drop(actions_timer);
+         let sort_timer = fd::timer(4);
+         fragments.sort_by_key(|fragment| (fragment.birth_group, fragment.pair));

@@ -1,0 +1,152 @@
+diff --git a/tokenizers/tk-train/src/trainers/bpe/corpus.rs b/tokenizers/tk-train/src/trainers/bpe/corpus.rs
+index 19cf87e..1fbc545 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/corpus.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/corpus.rs
+@@ -48,6 +48,12 @@ pub(super) struct PairChange<P> {
+     pub(super) birth_group: usize,
+ }
+ 
++/// A task either covers its selected rule in full or contributes a fragment.
++pub(super) enum ProducerChanges {
++    WholeRule(Vec<PairChange<Positions>>),
++    Fragment(Vec<PairChange<Positions>>),
++}
++
+ /// A run in the sorted word-weight directory.
+ struct WeightRun {
+     start: usize,
+diff --git a/tokenizers/tk-train/src/trainers/bpe/index.rs b/tokenizers/tk-train/src/trainers/bpe/index.rs
+index 29eb416..cd63c3a 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/index.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/index.rs
+@@ -1,6 +1,6 @@
+ //! Count owners publish complete lists; the queue repairs stale snapshots lazily.
+ use super::fine_diag as fd;
+-use super::corpus::PairChange;
++use super::corpus::{PairChange,ProducerChanges};
+ use super::{
+     TrainingMode, WORD_SEPARATOR_ID, add,
+     corpus::{CorpusPlan, InitialEdge},
+@@ -238,7 +238,7 @@ impl PairIndex {
+         candidate
+     }
+ 
+-    pub(super) fn commit(&mut self, changes: Vec<Vec<PairChange<Positions>>>) -> Result<()> {
++    pub(super) fn commit(&mut self, changes: Vec<ProducerChanges>) -> Result<()> {
+         // 1. Route each removal and birth to its count owner.
+         let route_timer = fd::timer(0);
+         let events = self.route(changes);
+@@ -267,11 +267,21 @@ impl PairIndex {
+         Ok(())
+     }
+ 
+-    fn route(&mut self, changes: Vec<Vec<PairChange<Positions>>>) -> Vec<Event> {
++    fn route(&mut self, changes: Vec<ProducerChanges>) -> Vec<Event> {
+         let shard_count = self.shards.len();
+         // Joined commits drain each shard's pending work; any error aborts this attempt.
+-        let mut events = Vec::with_capacity(changes.iter().map(Vec::len).sum());
+-        for change in changes.into_iter().flatten() {
++        let capacity=changes.iter().map(|set| match set {ProducerChanges::WholeRule(v)|ProducerChanges::Fragment(v)=>v.len()}).sum();
++        let mut events = Vec::with_capacity(capacity);
++        for set in changes {
++          let (complete,changes)=match set {ProducerChanges::WholeRule(v)=>(true,v),ProducerChanges::Fragment(v)=>(false,v)};
++          for mut change in changes {
++            if complete && self.mode==TrainingMode::Fresh && change.born_weight<self.floor {
++                // Both directions can name (id,id); let owner aggregation handle it.
++                if change.born.0!=change.born.1 {
++                    change.positions=Positions::default();
++                    change.born_weight=0;
++                }
++            }
+             let removed = (change.removed_weight != 0).then(|| owner(change.removed, shard_count));
+             // Zero-weight births still own positions, including reuse cohorts.
+             let born = (!change.positions.is_empty()).then(|| owner(change.born, shard_count));
+@@ -298,6 +308,7 @@ impl PairIndex {
+                 }
+             }
+         }
++          }
+         events
+     }
+ }
+diff --git a/tokenizers/tk-train/src/trainers/bpe/merge.rs b/tokenizers/tk-train/src/trainers/bpe/merge.rs
+index 66318e6..e90ad8b 100644
+--- a/tokenizers/tk-train/src/trainers/bpe/merge.rs
++++ b/tokenizers/tk-train/src/trainers/bpe/merge.rs
+@@ -1,7 +1,7 @@
+ //! Private joined preparation and application over corpus geometry.
+ use super::super::fine_diag as fd;
+ use super::super::{TrainingMode, WORD_SEPARATOR_ID, add, positions::Positions};
+-use super::{Corpus, PairChange, SelectedMerge};
++use super::{Corpus, PairChange, SelectedMerge, ProducerChanges};
+ use ahash::AHashMap;
+ use itertools::Itertools;
+ use smallvec::SmallVec;
+@@ -16,7 +16,7 @@ impl Corpus {
+     pub(in crate::trainers::bpe) fn merge(
+         &mut self,
+         selected: Vec<SelectedMerge>,
+-    ) -> Result<Vec<Vec<PairChange<Positions>>>> {
++    ) -> Result<Vec<ProducerChanges>> {
+         let prep_begin = std::time::Instant::now();
+         let chunks = self.prepare(selected)?;
+         super::super::diag(6, prep_begin);
+@@ -136,8 +136,11 @@ impl Corpus {
+                     .clamp(1, 1 << 26);
+                 let mut tasks = Vec::new();
+                 for rule in &rules {
+-                    for positions in rule.positions.chunks(chunk) {
+-                        tasks.push((rule.pair, rule.merged_id, positions));
++                    let mut parts=rule.positions.chunks(chunk).peekable();
++                    if let Some(first)=parts.next() {
++                        let complete=parts.peek().is_none();
++                        tasks.push((rule.pair,rule.merged_id,first,complete));
++                        tasks.extend(parts.map(|positions|(rule.pair,rule.merged_id,positions,false)));
+                     }
+                 }
+                 // Rule order, then restart-aligned chunk order, remains indexed.
+@@ -145,8 +148,8 @@ impl Corpus {
+                     .into_maybe_par_iter()
+                     .map_init(
+                         NeighborScratch::default,
+-                        |scratch, (pair, merged_id, positions)| {
+-                            preparation.prepare(
++                        |scratch, (pair, merged_id, positions, complete)| {
++                            let mut prepared=preparation.prepare(
+                                 pair,
+                                 merged_id,
+                                 positions,
+@@ -168,7 +171,14 @@ impl Corpus {
+                                         .get(&(next, self.token(after + self.fixed_id_span(next))))
+                                         .copied()
+                                 },
+-                            )
++                            )?;
++                            if complete {
++                                prepared.changes=match prepared.changes {
++                                    ProducerChanges::Fragment(changes)=>ProducerChanges::WholeRule(changes),
++                                    ProducerChanges::WholeRule(_)=>unreachable!(),
++                                };
++                            }
++                            Ok(prepared)
+                         },
+                     )
+                     .collect()
+@@ -221,7 +231,7 @@ impl Corpus {
+         Ok(PreparedChunk {
+             starts,
+             merged_id,
+-            changes: neighbors.finish(),
++            changes: ProducerChanges::Fragment(neighbors.finish()),
+         })
+     }
+ 
+@@ -327,7 +337,7 @@ enum FreshBatch {
+ struct PreparedChunk {
+     starts: SmallVec<[usize; 2]>,
+     merged_id: u32,
+-    changes: Vec<PairChange<Positions>>,
++    changes: ProducerChanges,
+ }
+ 
+ #[derive(Clone, Copy, PartialEq, Eq)]
