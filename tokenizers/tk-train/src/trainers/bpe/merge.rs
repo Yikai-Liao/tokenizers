@@ -341,9 +341,32 @@ struct NeighborChanges<'a> {
     changes: [Vec<PairChange<Positions>>; 2],
 }
 
-#[derive(Default)]
 struct NeighborScratch {
     indices: [Vec<u32>; 2],
+}
+
+// Diagnostic only: retain directory capacity across joined preparation rounds.
+thread_local! {
+    static DIAGNOSTIC_INDICES: std::cell::RefCell<[Vec<u32>; 2]> = Default::default();
+}
+
+impl Default for NeighborScratch {
+    fn default() -> Self {
+        Self {
+            indices: DIAGNOSTIC_INDICES.with(|cache| std::mem::take(&mut *cache.borrow_mut())),
+        }
+    }
+}
+
+impl Drop for NeighborScratch {
+    fn drop(&mut self) {
+        DIAGNOSTIC_INDICES.with(|cache| {
+            let mut cache = cache.borrow_mut();
+            if self.indices[0].len() >= cache[0].len() {
+                *cache = std::mem::take(&mut self.indices);
+            }
+        });
+    }
 }
 
 impl<'a> NeighborChanges<'a> {
