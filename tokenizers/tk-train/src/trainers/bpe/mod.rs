@@ -438,6 +438,33 @@ mod tests {
     use compact_str::CompactString;
 
     #[test]
+    fn train_entries_matches_train() {
+        let words: AHashMap<CompactString, u64> = [
+            ("roses", 3),
+            ("are", 5),
+            ("red", 2),
+            ("violets", 1),
+            ("blue", 4),
+            ("rare", 2),
+            ("reader", 3),
+            ("bare", 1),
+        ]
+        .iter()
+        .map(|&(w, c)| (w.into(), c))
+        .collect();
+        let trainer = BpeTrainer::builder()
+            .show_progress(false)
+            .vocab_size(40)
+            .build();
+        let (vocab, merges, _) = trainer.do_train(&words).unwrap();
+        let (vocab_e, merges_e, _) = trainer
+            .do_train_entries(words.into_iter().collect())
+            .unwrap();
+        assert_eq!(vocab, vocab_e);
+        assert_eq!(merges, merges_e);
+    }
+
+    #[test]
     fn test_train() {
         let word_counts: AHashMap<CompactString, u64> = [
             ("roses".into(), 1),
