@@ -370,6 +370,15 @@ impl BpeTrainer {
         self.train_counts(WordCountsView::from_map(word_counts))
     }
 
+    /// [`Self::do_train`] for unique `(word, count)` entries in any order, without building a map of them.
+    pub fn do_train_entries(
+        &self,
+        entries: Vec<(CompactString, u64)>,
+    ) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
+        let counts = WordCounts::from_entries(entries);
+        self.train_counts(counts.view())
+    }
+
     fn train_counts(
         &self,
         word_counts: WordCountsView<'_>,
@@ -427,6 +436,33 @@ mod tests {
     use super::{BpeTrainer, Merges};
     use ahash::AHashMap;
     use compact_str::CompactString;
+
+    #[test]
+    fn train_entries_matches_train() {
+        let words: AHashMap<CompactString, u64> = [
+            ("roses", 3),
+            ("are", 5),
+            ("red", 2),
+            ("violets", 1),
+            ("blue", 4),
+            ("rare", 2),
+            ("reader", 3),
+            ("bare", 1),
+        ]
+        .iter()
+        .map(|&(w, c)| (w.into(), c))
+        .collect();
+        let trainer = BpeTrainer::builder()
+            .show_progress(false)
+            .vocab_size(40)
+            .build();
+        let (vocab, merges, _) = trainer.do_train(&words).unwrap();
+        let (vocab_e, merges_e, _) = trainer
+            .do_train_entries(words.into_iter().collect())
+            .unwrap();
+        assert_eq!(vocab, vocab_e);
+        assert_eq!(merges, merges_e);
+    }
 
     #[test]
     fn test_train() {
