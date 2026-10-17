@@ -13,9 +13,10 @@ mod codec {
     pub(super) const RESTART: usize = 128;
 
     pub(super) fn gap_width(gap: u64) -> usize {
-        // LEB128 carries seven value bits per byte. Round the significant-bit
-        // count upward, reserving one byte even for a zero gap.
-        (u64::BITS - gap.leading_zeros()).div_ceil(7).max(1) as usize
+        // Each completed seven-bit group adds a byte; setting bit zero
+        // also reserves one byte for a zero gap.
+        let last_bit = u64::BITS - 1 - (gap | 1).leading_zeros();
+        (last_bit / 7 + 1) as usize
     }
 
     /// Leaf reserves the complete append before changing its logical contents.
@@ -345,6 +346,7 @@ impl Leaf {
         Ok(())
     }
 
+    #[inline(always)]
     fn reserve(&mut self, additional: usize) -> Result<()> {
         let new_size = self
             .bytes

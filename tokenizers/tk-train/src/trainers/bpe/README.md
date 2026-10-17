@@ -124,20 +124,24 @@ Rayon bitmap reduction, retaining the full Unicode bit domain for empty input.
 Fresh preparation specializes AA and AB task inputs. AA selects nonoverlapping
 starts from left to right, releases its historical payload, then uses the global
 accepted-start set to account for adjacent matches across chunks. Its chunk budget
-uses the original payload length. AB keeps one exact-pair lookup and borrows
+uses the original payload length. AB uses reusable head/tail directories for
+unique selected endpoints, exact-pair lookup for shared endpoints, and borrows
 restart-aligned position chunks. Position appends retain ordering checks.
+The Corpus also owns neighbor scratch across rounds; tasks borrow it through
+checkout/return without holding a pool lock during the scan.
 
 Corpus readers keep at most 16 decoded positions ahead in a `VecDeque`. Initial
 filling takes at most 16 elements; every refill follows one pop, so the queue never
 exceeds that length. The same reader validates fresh matches and caches weight
 regions. Cohort scans use `find` to consume the next eligible occurrence.
-Commit stably sorts compressed fragments by birth group/pair, preserving each group's
+Complete non-AA fresh producers are admitted and published directly. Other
+compressed fragments are stably sorted by birth group/pair, preserving each group's
 producer order before connecting fresh fragments or merging reuse streams.
 
 Compatible batches retain the original priority prefix and permit shared heads
 or shared tails. Crossed endpoints end the batch without skipping a candidate.
 AA and reserved-ID rules run alone. Preparation records compressed birth streams;
-commit aggregates their weights before admission and publication. Commit routes
+commit aggregates fragmented births before admission and publication. Commit routes
 compact metadata references and moves each position stream only once. Reuse mode selects
 one cohort at a time; its word scans follow the original alias/length-gate conditions.
 

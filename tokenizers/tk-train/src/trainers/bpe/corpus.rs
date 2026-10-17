@@ -7,7 +7,6 @@ use super::{
     word_counts::WordCountsView,
 };
 use compact_str::CompactString;
-use itertools::Itertools;
 use rayon::prelude::*;
 use std::collections::VecDeque;
 use std::ops::Range;
@@ -19,6 +18,8 @@ use tk_encode::{Result, models::bpe::Pair, parallelism::*};
 /// Preparation reads a joined snapshot; application writes only disjoint matches.
 pub(super) struct Corpus {
     tokens: Slots,
+    neighbor_scratch: merge::NeighborScratchPool,
+    selected_rules: merge::SelectedRuleIndex,
     starts: Box<[usize]>,
     weight_runs: Box<[WeightRun]>,
     unit_weight_range: Option<Range<usize>>,
@@ -46,6 +47,12 @@ pub(super) struct PairChange<P> {
     pub(super) born_weight: u64,
     pub(super) positions: P,
     pub(super) birth_group: usize,
+}
+
+/// A task either covers its selected rule in full or contributes a fragment.
+pub(super) struct ProducerChanges {
+    pub(super) whole_rule: bool,
+    pub(super) changes: Vec<PairChange<Positions>>,
 }
 
 /// A run in the sorted word-weight directory.
@@ -81,6 +88,12 @@ pub(super) struct InitialEdge {
     pub(super) pair: Pair,
     pub(super) coordinate: u64,
     pub(super) weight: u64,
+}
+
+/// A whole-word task borrowing the plan that interprets its symbol coordinates.
+pub(super) struct InitialChunk<'plan, 'input> {
+    plan: &'plan CorpusPlan<'input>,
+    words: Range<usize>,
 }
 
 impl<'input> CorpusPlan<'input> {
@@ -197,6 +210,10 @@ impl<'input> CorpusPlan<'input> {
         ranges
     }
 
+    pub(super) fn slot_count(&self) -> usize {
+        self.length
+    }
+
     pub(super) fn token_count(&self) -> usize {
         self.ids.token_count()
     }
@@ -205,32 +222,12 @@ impl<'input> CorpusPlan<'input> {
         self.mode
     }
 
-    /// Bound whole-word edge streams in coordinate order, with progress units.
-    /// A count task consumes its stream directly and owns any counting error.
-    pub(super) fn chunks(
-        &self,
-        slots: usize,
-    ) -> Vec<(usize, impl Iterator<Item = InitialEdge> + Send + '_)> {
+    /// Bound whole-word tasks in coordinate order; each owns its counting error.
+    pub(super) fn chunks(&self, slots: usize) -> Vec<InitialChunk<'_, 'input>> {
         self.ranges(slots)
             .into_iter()
-            .map(move |range| (range.len(), self.edges(range)))
+            .map(|words| InitialChunk { plan: self, words })
             .collect()
-    }
-
-    fn edges(&self, range: Range<usize>) -> impl Iterator<Item = InitialEdge> + '_ {
-        range.flat_map(move |word| {
-            let (text, &weight) = self.words[word];
-            let start = self.starts[word];
-            self.ids
-                .symbols(text)
-                .tuple_windows()
-                .enumerate()
-                .map(move |(offset, pair)| InitialEdge {
-                    pair,
-                    coordinate: (start + offset) as u64,
-                    weight,
-                })
-        })
     }
 
     pub(super) fn materialize(self) -> Corpus {
@@ -240,13 +237,15 @@ impl<'input> CorpusPlan<'input> {
             .enumerate()
             .for_each(|(word, (text, _))| {
                 let start = self.starts[word];
-                for (offset, id) in self.ids.symbols(text).enumerate() {
+                self.ids.symbols(text).enumerate().for_each(|(offset, id)| {
                     tokens.set(start + offset, id);
-                }
+                });
             });
         // Only historical reuse cohorts need a word directory after counting.
         Corpus {
             tokens,
+            neighbor_scratch: merge::NeighborScratchPool::default(),
+            selected_rules: merge::SelectedRuleIndex::default(),
             starts: if self.mode == TrainingMode::Reuse {
                 self.starts
             } else {
@@ -260,6 +259,35 @@ impl<'input> CorpusPlan<'input> {
             mode: self.mode,
             birth_pair_span_limit: self.birth_pair_span_limit,
         }
+    }
+}
+
+impl InitialChunk<'_, '_> {
+    /// Return the first visitor error; successful scans return word progress.
+    pub(super) fn scan(self, mut visit: impl FnMut(InitialEdge) -> Result<()>) -> Result<usize> {
+        let words = self.words.len();
+        for word in self.words {
+            let (text, &weight) = self.plan.words[word];
+            let mut symbols = self.plan.ids.symbols(text);
+            let Some(mut left) = symbols.next() else {
+                continue;
+            };
+            let mut coordinate = self.plan.starts[word];
+            // Either forwards fold once per word. After an error, decode only
+            // the remaining symbols of this word without visiting further edges.
+            symbols.fold(Ok(()), #[inline(always)] |result, right| {
+                result?;
+                let result = visit(InitialEdge {
+                    pair: (left, right),
+                    coordinate: coordinate as u64,
+                    weight,
+                });
+                left = right;
+                coordinate += 1;
+                result
+            })?;
+        }
+        Ok(words)
     }
 }
 
@@ -610,6 +638,8 @@ mod tests {
     fn fixture(input: &[u32], spans: &[usize], occurrences: Option<&[usize]>) -> Corpus {
         let corpus = Corpus {
             tokens: Slots::new(input.len(), spans.len()),
+            neighbor_scratch: merge::NeighborScratchPool::default(),
+            selected_rules: merge::SelectedRuleIndex::default(),
             starts: vec![1].into_boxed_slice(),
             weight_runs: vec![WeightRun {
                 start: 1,

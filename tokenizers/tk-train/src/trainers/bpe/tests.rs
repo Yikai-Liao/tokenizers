@@ -160,6 +160,17 @@ fn targeted_models() {
 }
 
 #[test]
+fn fragmented_birth_floor() {
+    // Each parallel AB fragment is below the floor, while the complete birth
+    // (AB, c) reaches it. Only whole producers may prune before aggregation.
+    let mut trainer = trainer();
+    trainer.min_frequency = 3072;
+    let word = "abc".repeat(4096);
+    let trace = check(&trainer, &counts(&[(&word, 1)]));
+    assert_eq!(&trace[..2], &[((0, 1), 4096, 3), ((3, 2), 4096, 4)]);
+}
+
+#[test]
 fn overlap_and_alias() {
     check(
         &trainer(),

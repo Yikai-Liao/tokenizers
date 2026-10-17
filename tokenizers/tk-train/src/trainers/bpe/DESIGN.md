@@ -2,8 +2,9 @@
 
 ## Joined rounds and ownership
 
-`BpeTrainer::do_train_impl` in `mod.rs` owns progress and retry flow; it uses
-conditional iterators in the ambient Rayon pool. `do_train` and `train_vocab`
+`BpeTrainer::do_train_impl` in `mod.rs` enters the ambient Rayon pool once;
+`train_attempts` owns progress and retry flow using conditional iterators in that pool.
+`do_train` and `train_vocab`
 borrow a `WordCountsView` and enter it directly; the Trainer implementation adapts
 `train_vocab` results into a replacement model.
 The private `train_attempt` owns the vocabulary, corpus and pair index for one attempt.
@@ -18,8 +19,9 @@ Its result is Finished, RestartForReuse, or Committed with the rule count. The
 trainer uses that count for progress. Selection scratch retires before preparation.
 
 The private `merge.rs` owns preparation and endpoint application.
-Consuming preparation releases selected streams, task iterators and shared lookups
-before writes. All readers join before application; all writers join before index
+Consuming preparation releases selected streams and task iterators before writes.
+Reusable directories remain with the attempt's Corpus; their read borrows end
+before application. All readers join before application; all writers join before index
 publication. Pair records and test-only priority scalars are captured before moving
 selected payloads, retaining the certified count and historical cohort order.
 One record allocation holds at most 256 pairs in fresh mode and one in reuse mode.
@@ -123,8 +125,9 @@ Fresh AA tasks carry the pair, merged ID and a copied slice iterator. Acceptance
 runs once from left to right. The original historical length determines the chunk
 budget; its Positions payload is released before task assembly. All chunks borrow
 one global accepted-start set, so shared-edge ownership extends across boundaries.
-AB tasks carry the pair, merged ID and a restart-aligned Positions iterator, with
-one pair-to-ID lookup per batch. Both branches use the same fresh event loop with
+AB tasks carry the pair, merged ID and a restart-aligned Positions iterator.
+Persistent head/tail directories resolve unique selected endpoints directly;
+rules with a shared endpoint retain exact-pair lookup. Both branches use the same fresh event loop with
 statically dispatched adjacency closures.
 
 Between adjacent selected matches, the left match owns the shared edge and emits
@@ -137,13 +140,15 @@ result assembly for AA, AB, and reuse preparation. Its scan closure retains the
 mode-specific reader and adjacency rules; a scan error publishes no chunk.
 Task partitioning and indexed collection remain with each preparation mode.
 
-Preparation uses Rayon `map_init` to reuse private directories within each
-parallel task. Each side maps neighbor IDs to u32 change-entry indices. A cached
+The Corpus owns a private pool of neighbor scratch directories across rounds.
+Checkout and return hold its mutex briefly; scanning owns the checked-out scratch
+and runs without that lock. Normal errors also return scratch, while unwinding
+drops the local value without poisoning a held scan lock.
+Each side maps neighbor IDs to u32 change-entry indices. A cached
 index is valid only when the current task has a group at that index with the same
 neighbor ID. Stale indices need no reset, including after failed preparation.
-The neighbor accumulator sizes these borrowed directories during construction.
-Their u32 entries identify event groups. Rayon `map_init` owns scratch for the
-parallel task lifetime, which can differ from an OS worker lifetime.
+The neighbor accumulator grows these borrowed directories during construction.
+Neither the pool nor its entries refer to selected payloads or corpus slots.
 
 ## Fixed-coordinate corpus
 
@@ -216,7 +221,8 @@ of accepted AA matches remain parallel; the selection itself is serial.
 ## Counts and occurrence publication
 
 Pair ownership uses the existing `ahash` dependency to hash the ordered token-ID
-pair, then reduces it modulo the owner count. Fixed zero seeds make initial
+pair, then reduces it modulo the owner count, using a mask for powers of two.
+Both forms choose the same owner. Fixed zero seeds make initial
 counting, queue lookup and commit use the same mapping within a build, without
 per-call randomness. This replaces a local multiplier/rotation heuristic; hash
 outputs and owner indices are internal and are not stored in the model format.

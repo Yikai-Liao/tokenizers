@@ -1,8 +1,8 @@
 //! Count owners publish complete lists; the queue repairs stale snapshots lazily.
-use super::corpus::PairChange;
+use super::corpus::ProducerChanges;
 use super::{
     TrainingMode, WORD_SEPARATOR_ID, add,
-    corpus::{CorpusPlan, InitialEdge},
+    corpus::{CorpusPlan, InitialChunk, InitialEdge},
     positions::Positions,
 };
 use ahash::AHashMap;
@@ -10,7 +10,6 @@ use dary_heap::OctonaryHeap;
 use rayon::prelude::*;
 use smallvec::SmallVec;
 use std::cmp::{Ordering, Reverse};
-use std::collections::hash_map::Entry;
 use tk_encode::{Result, models::bpe::Pair, parallelism::*, utils::progress::ProgressBar};
 
 /// Queue key: highest count first, then smallest pair.
@@ -35,9 +34,9 @@ impl Priority {
 /// Owning queue entry: a possibly stale count snapshot and its occurrence list.
 /// PairIndex corrects the priority against the count shard before selection;
 /// positions remain a historical cohort when identities can be reused.
-pub(super) struct Candidate {
+pub(super) struct Candidate<P = Positions> {
     pub(super) priority: Priority,
-    pub(super) positions: Positions,
+    pub(super) positions: P,
 }
 
 impl Candidate {
@@ -52,23 +51,125 @@ impl Candidate {
     }
 }
 
-impl Eq for Candidate {}
+impl<P> Eq for Candidate<P> {}
 
-impl PartialEq for Candidate {
+impl<P> PartialEq for Candidate<P> {
     fn eq(&self, other: &Self) -> bool {
         self.priority == other.priority
     }
 }
 
-impl Ord for Candidate {
+impl<P> Ord for Candidate<P> {
     fn cmp(&self, other: &Self) -> Ordering {
         self.priority.cmp(&other.priority)
     }
 }
 
-impl PartialOrd for Candidate {
+impl<P> PartialOrd for Candidate<P> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
+    }
+}
+
+/// Move priority/index entries through the heap while payloads stay in one owner.
+/// Vacant slots are reused; each live entry exclusively owns its indexed list.
+#[derive(Default)]
+struct CandidateQueue {
+    heap: OctonaryHeap<Candidate<usize>>,
+    positions: Vec<Positions>,
+    vacant: Vec<usize>,
+}
+
+impl FromIterator<Candidate> for CandidateQueue {
+    fn from_iter<T: IntoIterator<Item = Candidate>>(candidates: T) -> Self {
+        let mut positions = Vec::new();
+        // Preserve the old initial heapify order, including equal priorities.
+        let heap = candidates
+            .into_iter()
+            .map(|candidate| {
+                let slot = positions.len();
+                positions.push(candidate.positions);
+                Candidate {
+                    priority: candidate.priority,
+                    positions: slot,
+                }
+            })
+            .collect();
+        Self {
+            heap,
+            positions,
+            vacant: Vec::new(),
+        }
+    }
+}
+
+impl CandidateQueue {
+    fn peek(&self) -> Option<Priority> {
+        self.heap.peek().map(|candidate| candidate.priority)
+    }
+
+    fn push(&mut self, candidate: Candidate) {
+        let Candidate {
+            priority,
+            positions,
+        } = candidate;
+        let slot = if let Some(slot) = self.vacant.pop() {
+            self.positions[slot] = positions;
+            slot
+        } else {
+            self.positions.push(positions);
+            self.positions.len() - 1
+        };
+        self.heap.push(Candidate {
+            priority,
+            positions: slot,
+        });
+    }
+
+    #[inline(always)]
+    fn pop(&mut self) -> Option<Candidate> {
+        let candidate = self.heap.pop()?;
+        let positions = std::mem::take(&mut self.positions[candidate.positions]);
+        self.vacant.push(candidate.positions);
+        Some(Candidate {
+            priority: candidate.priority,
+            positions,
+        })
+    }
+
+    fn rekey(&mut self, count: u64) {
+        // Pop/update/push retains the historical cohort tie-selection order.
+        let mut candidate = self.heap.pop().expect("observed candidate exists");
+        candidate.priority.count = count;
+        self.heap.push(candidate);
+    }
+
+    fn retire(self) {
+        let Self { heap, positions, vacant } = self;
+        drop(heap);
+        drop(vacant);
+        if get_parallelism() {
+            positions.into_par_iter().with_min_len(4096).for_each(drop);
+        } else {
+            drop(positions);
+        }
+    }
+
+    #[cfg(test)]
+    fn len(&self) -> usize {
+        self.heap.len()
+    }
+
+    #[cfg(test)]
+    fn into_vec(mut self) -> Vec<Candidate> {
+        self.heap
+            .into_vec()
+            .into_iter()
+            .map(|candidate| Candidate {
+                priority: candidate.priority,
+                positions: std::mem::take(&mut self.positions[candidate.positions]),
+            })
+            .collect()
     }
 }
 
@@ -80,24 +181,38 @@ struct PairAggregate<P> {
     positions: P,
 }
 
-// Metadata stays borrowed during commit; each position stream has one owner.
-type Event = PairChange<()>;
+impl PairAggregate<Positions> {
+    #[inline(always)]
+    fn record(&mut self, edge: InitialEdge) -> Result<()> {
+        debug_assert!(edge.pair.0 != WORD_SEPARATOR_ID && edge.pair.1 != WORD_SEPARATOR_ID);
+        add(&mut self.count, edge.weight)?;
+        // Keep checked count addition before appending this ordered coordinate.
+        self.positions.push(edge.coordinate)
+    }
+}
 
-/// One pair-count owner and its reusable pending work, in producer order.
-/// Actions index shared event metadata; the separate birth array owns one stream
-/// per birth action and avoids reserving a payload for removal-only actions.
+/// One pair-count owner and its reusable scalar actions, in producer order.
+/// The separate birth array owns one stream per birth action, so removals
+/// carry no position payload.
 #[derive(Default)]
 struct Shard {
     counts: AHashMap<Pair, u64>,
     actions: Vec<PendingAction>,
     // One stream per birth action, in the same order.
     positions: Vec<Positions>,
+    completed: Vec<Candidate>,
 }
 
-struct PendingAction {
-    event_index: usize,
-    remove_count: bool,
-    has_birth: bool,
+enum PendingAction {
+    Remove {
+        pair: Pair,
+        weight: u64,
+    },
+    Birth {
+        pair: Pair,
+        weight: u64,
+        birth_group: usize,
+    },
 }
 
 struct BirthFragment {
@@ -112,7 +227,7 @@ struct BirthFragment {
 /// Fresh counts retire below the floor; reuse retains the per-action signed ledger.
 pub(super) struct PairIndex {
     shards: Box<[Shard]>,
-    queue: OctonaryHeap<Candidate>,
+    queue: CandidateQueue,
     floor: u64,
     mode: TrainingMode,
 }
@@ -123,9 +238,13 @@ fn owner(pair: Pair, shard_count: usize) -> usize {
     // Zero seeds keep routing repeatable within this build, without per-call
     // randomness. Hash mixing is provided by the existing ahash dependency.
     const HASHER: ahash::RandomState = ahash::RandomState::with_seeds(0, 0, 0, 0);
-    // Modulo selects exactly one owner in 0..shard_count; the fixed nonzero
-    // shard count also bounds the result before conversion to resident indexing.
-    (HASHER.hash_one(pair) % shard_count as u64) as usize
+    // Both branches retain the original hash modulo this nonzero owner count.
+    let hash = HASHER.hash_one(pair);
+    if shard_count.is_power_of_two() {
+        hash as usize & (shard_count - 1)
+    } else {
+        (hash % shard_count as u64) as usize
+    }
 }
 
 fn adjust_signed(count: &mut u64, amount: u64, remove: bool) -> Result<()> {
@@ -150,12 +269,16 @@ impl PairIndex {
         let shard_count = super::num_workers();
         let domain = corpus.token_count();
         // 1. Count and freeze each whole-word range independently.
-        // The production budget is 2^24 resident slots per range; tests use
-        // 16 slots to force range boundaries on small fixtures.
+        // Bound each range to 2^24 resident slots; divide smaller inputs among
+        // workers. Tests use 16 slots to force boundaries on small fixtures.
         let pieces = corpus
-            .chunks(if cfg!(test) { 16 } else { 1 << 24 })
+            .chunks(if cfg!(test) {
+                16
+            } else {
+                corpus.slot_count().div_ceil(shard_count).clamp(1, 1 << 24)
+            })
             .into_maybe_par_iter()
-            .map(|(words, edges)| count_chunk(domain, words, edges, progress))
+            .map(|chunk| count_chunk(domain, chunk, progress))
             .collect::<Result<Vec<_>>>()?;
 
         // 2. Route ordered fragments to the sole count owner of each pair.
@@ -189,20 +312,12 @@ impl PairIndex {
     pub(super) fn retire(self) {
         let Self { shards, queue, .. } = self;
         drop(shards);
-        if get_parallelism() {
-            queue
-                .into_vec()
-                .into_par_iter()
-                .with_min_len(4096)
-                .for_each(drop);
-        } else {
-            drop(queue);
-        }
+        queue.retire();
     }
 
     pub(super) fn peek(&mut self) -> Option<Priority> {
         loop {
-            let top = self.queue.peek()?.priority;
+            let top = self.queue.peek()?;
             let Some(&count) = self.shards[owner(top.pair(), self.shards.len())]
                 .counts
                 .get(&top.pair())
@@ -217,9 +332,7 @@ impl PairIndex {
             }
             // Equal pair/priority entries can own different occurrence cohorts.
             // Keep pop/update/push: peek_mut can change their tie selection order.
-            let mut candidate = self.queue.pop().expect("observed candidate exists");
-            candidate.priority.count = count;
-            self.queue.push(candidate);
+            self.queue.rekey(count);
         }
     }
 
@@ -236,59 +349,67 @@ impl PairIndex {
         candidate
     }
 
-    pub(super) fn commit(&mut self, changes: Vec<Vec<PairChange<Positions>>>) -> Result<()> {
+    /// Errors can leave counts and unpublished births changed; discard this attempt.
+    pub(super) fn commit(&mut self, changes: Vec<ProducerChanges>) -> Result<()> {
         // 1. Route each removal and birth to its count owner.
-        let events = self.route(changes);
+        self.route(changes);
 
         // 2. Apply owner-local actions and encode their birth cohorts in parallel.
         let reuse = self.mode == TrainingMode::Reuse;
         let floor = self.floor;
-        let births = self
-            .shards
+        self.shards
             .maybe_par_iter_mut()
-            .filter(|shard| !shard.actions.is_empty())
-            .map(|shard| shard.commit(&events, reuse, floor))
-            .collect::<Result<Vec<_>>>()?;
+            .filter(|shard| !shard.actions.is_empty() || !shard.completed.is_empty())
+            .map(|shard| shard.commit(reuse, floor))
+            .collect::<Result<()>>()?;
 
         // 3. Publish only after all owners join, in the same owner traversal order.
-        for candidate in births.into_iter().flatten() {
-            self.queue.push(candidate);
+        for shard in self.shards.iter_mut() {
+            for candidate in shard.completed.drain(..) {
+                self.queue.push(candidate);
+            }
         }
         Ok(())
     }
 
-    fn route(&mut self, changes: Vec<Vec<PairChange<Positions>>>) -> Vec<Event> {
+    fn route(&mut self, changes: Vec<ProducerChanges>) {
         let shard_count = self.shards.len();
         // Joined commits drain each shard's pending work; any error aborts this attempt.
-        let mut events = Vec::with_capacity(changes.iter().map(Vec::len).sum());
-        for change in changes.into_iter().flatten() {
-            let removed = (change.removed_weight != 0).then(|| owner(change.removed, shard_count));
-            // Zero-weight births still own positions, including reuse cohorts.
-            let born = (!change.positions.is_empty()).then(|| owner(change.born, shard_count));
-            let index = events.len();
-            events.push(Event {
-                removed: change.removed,
-                born: change.born,
-                removed_weight: change.removed_weight,
-                born_weight: change.born_weight,
-                birth_group: change.birth_group,
-                positions: (),
-            });
-            match (removed, born) {
-                (Some(removed), Some(born)) if removed == born => {
-                    self.shards[removed].push(index, true, Some(change.positions));
+        for producer in changes {
+            for mut change in producer.changes {
+                // Only non-AA complete births have one producer. Both directions
+                // can name (id,id), so those still require owner aggregation.
+                let direct_birth = producer.whole_rule
+                    && self.mode == TrainingMode::Fresh
+                    && change.born.0 != change.born.1;
+                if change.removed_weight != 0 {
+                    let shard = owner(change.removed, shard_count);
+                    self.shards[shard].actions.push(PendingAction::Remove {
+                        pair: change.removed,
+                        weight: change.removed_weight,
+                    });
                 }
-                (removed, born) => {
-                    if let Some(removed) = removed {
-                        self.shards[removed].push(index, true, None);
+                // Zero-weight births still own positions, including reuse cohorts.
+                if direct_birth {
+                    if change.born_weight >= self.floor && !change.positions.is_empty() {
+                        let shard = owner(change.born, shard_count);
+                        self.shards[shard].completed.push(Candidate::new(
+                            change.born,
+                            change.born_weight,
+                            std::mem::take(&mut change.positions),
+                        ));
                     }
-                    if let Some(born) = born {
-                        self.shards[born].push(index, false, Some(change.positions));
-                    }
+                } else if !change.positions.is_empty() {
+                    let shard = owner(change.born, shard_count);
+                    self.shards[shard].actions.push(PendingAction::Birth {
+                        pair: change.born,
+                        weight: change.born_weight,
+                        birth_group: change.birth_group,
+                    });
+                    self.shards[shard].positions.push(change.positions);
                 }
             }
         }
-        events
     }
 }
 
@@ -323,19 +444,21 @@ impl InitialPairCounts {
         }
     }
 
-    fn record(&mut self, pair: Pair, position: u64, weight: u64) -> Result<()> {
-        let state = match self {
+    fn scan(&mut self, chunk: InitialChunk<'_, '_>) -> Result<usize> {
+        // Pick the representation once; each visitor borrows only concrete storage.
+        match self {
             Self::Dense { domain, states } => {
-                // Row-major pair key: left ID chooses a domain-wide row and
-                // right ID chooses its column. Both IDs are below domain.
-                &mut states[pair.0 as usize * *domain + pair.1 as usize]
+                let domain = *domain;
+                let states = states.as_mut_slice();
+                chunk.scan(#[inline(always)] |edge| {
+                    // The IDs choose one row and column in this fixed dense plane.
+                    states[edge.pair.0 as usize * domain + edge.pair.1 as usize].record(edge)
+                })
             }
-            Self::Sparse(states) => states.entry(pair).or_default(),
-        };
-        add(&mut state.count, weight)?;
-        // Initial edges arrive in corpus order; construction checks the full list.
-        state.positions.push(position)?;
-        Ok(())
+            Self::Sparse(states) => {
+                chunk.scan(#[inline(always)] |edge| states.entry(edge.pair).or_default().record(edge))
+            }
+        }
     }
 
     fn into_entries(self) -> Vec<(Pair, PairAggregate<Positions>)> {
@@ -355,15 +478,11 @@ impl InitialPairCounts {
 
 fn count_chunk(
     domain: usize,
-    words: usize,
-    edges: impl Iterator<Item = InitialEdge>,
+    chunk: InitialChunk<'_, '_>,
     progress: &Option<ProgressBar>,
 ) -> Result<InitialPiece> {
     let mut counts = InitialPairCounts::new(domain);
-    for edge in edges {
-        debug_assert!(edge.pair.0 != WORD_SEPARATOR_ID && edge.pair.1 != WORD_SEPARATOR_ID);
-        counts.record(edge.pair, edge.coordinate, edge.weight)?;
-    }
+    let words = counts.scan(chunk)?;
     if let Some(p) = progress {
         p.inc(words as u64);
     }
@@ -394,55 +513,53 @@ fn build_owner(pieces: InitialPiece, floor: u64, reuse: bool) -> Result<(Shard, 
 }
 
 impl Shard {
-    fn push(&mut self, index: usize, remove: bool, birth: Option<Positions>) {
-        self.actions.push(PendingAction {
-            event_index: index,
-            remove_count: remove,
-            has_birth: birth.is_some(),
-        });
-        self.positions.extend(birth);
-    }
-
-    fn commit(&mut self, events: &[Event], reuse: bool, floor: u64) -> Result<Vec<Candidate>> {
+    fn commit(&mut self, reuse: bool, floor: u64) -> Result<()> {
         let mut fragments = Vec::with_capacity(self.positions.len());
-        let mut candidates = Vec::new();
-        // Both drains own their remaining items: errors drop unpublished births
-        // and empty the pending vectors while retaining their capacity.
+        // Drains empty pending actions and streams on error; unpublished births
+        // stay with this shard until the failed attempt is discarded.
         let mut positions = self.positions.drain(..);
         for action in self.actions.drain(..) {
-            let change = &events[action.event_index];
             // A boundary removal precedes its replacement birth. The signed reuse
             // ledger checks each action in order, including intermediate overflow.
-            if action.remove_count {
-                if reuse {
-                    let count = self.counts.entry(change.removed).or_default();
-                    adjust_signed(count, change.removed_weight, true)?;
-                } else if let Entry::Occupied(mut entry) = self.counts.entry(change.removed) {
-                    let count = entry.get_mut();
-                    *count = count
-                        .checked_sub(change.removed_weight)
-                        .ok_or("BPE fresh removal exceeds the current count")?;
-                    if *count < floor {
-                        entry.remove();
+            match action {
+                PendingAction::Remove { pair, weight } => {
+                    if reuse {
+                        let count = self.counts.entry(pair).or_default();
+                        adjust_signed(count, weight, true)?;
+                    } else if let Some(count) = self.counts.get_mut(&pair) {
+                        *count = count
+                            .checked_sub(weight)
+                            .ok_or("BPE fresh removal exceeds the current count")?;
+                        if *count < floor {
+                            self.counts.remove(&pair);
+                        }
                     }
                 }
+                PendingAction::Birth {
+                    pair,
+                    weight,
+                    birth_group,
+                } => {
+                    if reuse {
+                        let count = self.counts.entry(pair).or_default();
+                        adjust_signed(count, weight, false)?;
+                    }
+                    fragments.push(BirthFragment {
+                        birth_group,
+                        pair,
+                        weight,
+                        positions: positions.next().expect("each birth owns one stream"),
+                    });
+                }
             }
-            if !action.has_birth {
-                continue;
-            }
-            if reuse {
-                let count = self.counts.entry(change.born).or_default();
-                adjust_signed(count, change.born_weight, false)?;
-            }
-            let fragment = positions.next().expect("each birth owns one stream");
-            fragments.push(BirthFragment {
-                birth_group: change.birth_group,
-                pair: change.born,
-                weight: change.born_weight,
-                positions: fragment,
-            });
         }
 
+        for candidate in &self.completed {
+            debug_assert!(!reuse);
+            let pair = candidate.priority.pair();
+            debug_assert!(!self.counts.contains_key(&pair));
+            self.counts.insert(pair, candidate.priority.count);
+        }
         // Stable key order keeps each cohort's spatial fragment order while
         // publishing in birth_group/pair order. Reuse streams may interleave.
         fragments.sort_by_key(|fragment| (fragment.birth_group, fragment.pair));
@@ -482,9 +599,9 @@ impl Shard {
                 debug_assert!(!self.counts.contains_key(&pair));
                 self.counts.insert(pair, count);
             }
-            candidates.push(Candidate::new(pair, count, positions));
+            self.completed.push(Candidate::new(pair, count, positions));
         }
-        Ok(candidates)
+        Ok(())
     }
 }
 
@@ -497,17 +614,6 @@ mod tests {
         word_counts::WordCountsView,
     };
 
-    fn event(pair: Pair, add: u64, remove: u64, birth_group: usize) -> Event {
-        Event {
-            removed: pair,
-            born: pair,
-            removed_weight: remove,
-            born_weight: add,
-            birth_group,
-            positions: (),
-        }
-    }
-
     #[test]
     fn intermediate_overflow() {
         let pair = (0, 1);
@@ -516,14 +622,25 @@ mod tests {
             if reuse {
                 shard.counts.insert(pair, i64::MAX as u64);
             }
-            let events = [
-                event(pair, if reuse { 1 } else { u64::MAX }, 0, 0),
-                event(pair, if reuse { 0 } else { 1 }, u64::from(reuse), 0),
-            ];
-            shard.push(0, false, Some(Positions::from_sorted(&[0]).unwrap()));
-            shard.push(1, reuse, Some(Positions::from_sorted(&[1]).unwrap()));
+            shard.actions.push(PendingAction::Birth {
+                pair,
+                weight: if reuse { 1 } else { u64::MAX },
+                birth_group: 0,
+            });
+            if reuse {
+                shard.actions.push(PendingAction::Remove { pair, weight: 1 });
+            }
+            shard.actions.push(PendingAction::Birth {
+                pair,
+                weight: if reuse { 0 } else { 1 },
+                birth_group: 0,
+            });
+            shard.positions.extend([
+                Positions::from_sorted(&[0]).unwrap(),
+                Positions::from_sorted(&[1]).unwrap(),
+            ]);
             let error = shard
-                .commit(&events, reuse, 1)
+                .commit(reuse, 1)
                 .err()
                 .expect("overflow must fail");
             assert!(

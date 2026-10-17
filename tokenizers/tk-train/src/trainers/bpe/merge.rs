@@ -1,10 +1,11 @@
 //! Private joined preparation and application over corpus geometry.
 use super::super::{TrainingMode, WORD_SEPARATOR_ID, add, positions::Positions};
-use super::{Corpus, PairChange, SelectedMerge};
+use super::{Corpus, PairChange, ProducerChanges, SelectedMerge};
 use ahash::AHashMap;
 use itertools::Itertools;
 use smallvec::SmallVec;
 use std::ops::Range;
+use std::sync::Mutex;
 use tk_encode::parallelism::*;
 use tk_encode::{Result, models::bpe::Pair};
 
@@ -15,7 +16,7 @@ impl Corpus {
     pub(in crate::trainers::bpe) fn merge(
         &mut self,
         selected: Vec<SelectedMerge>,
-    ) -> Result<Vec<Vec<PairChange<Positions>>>> {
+    ) -> Result<Vec<ProducerChanges>> {
         let chunks = self.prepare(selected)?;
         let corpus: &Corpus = self;
         Ok(chunks
@@ -27,9 +28,10 @@ impl Corpus {
             .collect())
     }
 
-    // Owning preparation retires every selected stream and shared lookup before
-    // application begins. The selector establishes the nonempty input shapes.
-    fn prepare(&self, selected: Vec<SelectedMerge>) -> Result<Vec<PreparedChunk>> {
+    // Preparation consumes selected streams before application. Its temporary
+    // borrows end here; reusable directories stay with this attempt's Corpus.
+    // The selector establishes the nonempty input shapes.
+    fn prepare(&mut self, selected: Vec<SelectedMerge>) -> Result<Vec<PreparedChunk>> {
         match self.mode {
             TrainingMode::Fresh => self.prepare_fresh(selected),
             TrainingMode::Reuse => {
@@ -39,13 +41,16 @@ impl Corpus {
         }
     }
 
-    fn prepare_fresh(&self, selected: Vec<SelectedMerge>) -> Result<Vec<PreparedChunk>> {
+    fn prepare_fresh(&mut self, selected: Vec<SelectedMerge>) -> Result<Vec<PreparedChunk>> {
         let batch = if selected[0].pair.0 == selected[0].pair.1 {
             debug_assert_eq!(selected.len(), 1);
             FreshBatch::AA(selected.into_iter().next().expect("AA selects one rule"))
         } else {
             FreshBatch::AB(selected)
         };
+        if let FreshBatch::AB(rules) = &batch {
+            self.selected_rules.reset(rules, self.id_count());
+        }
         let preparation = FreshPreparation {
             corpus: self,
             birth_pair_span_limit: self.birth_pair_span_limit.unwrap_or(usize::MAX),
@@ -83,9 +88,8 @@ impl Corpus {
                     .collect();
                 tasks
                     .into_maybe_par_iter()
-                    .map_init(
-                        NeighborScratch::default,
-                        |scratch, (pair, merged_id, positions)| {
+                    .map(|(pair, merged_id, positions)| {
+                        self.neighbor_scratch.with(|scratch| {
                             preparation.prepare(
                                 pair,
                                 merged_id,
@@ -113,15 +117,12 @@ impl Corpus {
                                         .then_some(merged_id)
                                 },
                             )
-                        },
-                    )
+                        })
+                    })
                     .collect()
             }
             FreshBatch::AB(rules) => {
-                let merged_ids_by_pair: AHashMap<_, _> = rules
-                    .iter()
-                    .map(|rule| (rule.pair, rule.merged_id))
-                    .collect();
+                let selected = &self.selected_rules;
                 let total: usize = rules.iter().map(|rule| rule.positions.len()).sum();
                 // Aim for one task per worker; keep nonempty chunks and cap
                 // decoding work at 2^26 historical positions per chunk.
@@ -130,41 +131,32 @@ impl Corpus {
                     .clamp(1, 1 << 26);
                 let mut tasks = Vec::new();
                 for rule in &rules {
-                    for positions in rule.positions.chunks(chunk) {
-                        tasks.push((rule.pair, rule.merged_id, positions));
+                    let mut parts = rule.positions.chunks(chunk).peekable();
+                    if let Some(first) = parts.next() {
+                        let complete = parts.peek().is_none();
+                        tasks.push((rule.pair, rule.merged_id, first, complete));
+                        tasks.extend(
+                            parts.map(|positions| (rule.pair, rule.merged_id, positions, false)),
+                        );
                     }
                 }
                 // Rule order, then restart-aligned chunk order, remains indexed.
                 tasks
                     .into_maybe_par_iter()
-                    .map_init(
-                        NeighborScratch::default,
-                        |scratch, (pair, merged_id, positions)| {
-                            preparation.prepare(
+                    .map(|(pair, merged_id, positions, complete)| {
+                        self.neighbor_scratch.with(|scratch| {
+                            let mut prepared = preparation.prepare(
                                 pair,
                                 merged_id,
                                 positions,
                                 scratch,
-                                |_, before, prior| {
-                                    // before is the prior token's start. The token
-                                    // preceding prior ends at before - 1; a selected
-                                    // pair ending in prior owns this shared left edge.
-                                    // Coordinate zero has no preceding endpoint.
-                                    before != 0
-                                        && merged_ids_by_pair
-                                            .contains_key(&(self.token(before - 1), prior))
-                                },
-                                |after, next| {
-                                    // Skip the whole right neighbor to read the
-                                    // token after it. If that pair is selected,
-                                    // this edge must use its final merged ID.
-                                    merged_ids_by_pair
-                                        .get(&(next, self.token(after + self.fixed_id_span(next))))
-                                        .copied()
-                                },
-                            )
-                        },
-                    )
+                                |_, before, prior| selected.left_selected(self, before, prior),
+                                |after, next| selected.final_next(self, after, next),
+                            )?;
+                            prepared.changes.whole_rule = complete;
+                            Ok(prepared)
+                        })
+                    })
                     .collect()
             }
         }
@@ -184,12 +176,14 @@ impl Corpus {
         let chunk = words.len().div_ceil(super::super::num_workers()).max(1);
         words
             .maybe_par_chunks(chunk)
-            .map_init(NeighborScratch::default, |scratch, words| {
-                self.prepare_chunk(rule.pair, rule.merged_id, scratch, |neighbors, starts| {
-                    for &word in words {
-                        self.scan_word(&rule, word, neighbors, starts)?;
-                    }
-                    Ok(())
+            .map(|words| {
+                self.neighbor_scratch.with(|scratch| {
+                    self.prepare_chunk(rule.pair, rule.merged_id, scratch, |neighbors, starts| {
+                        for &word in words {
+                            self.scan_word(&rule, word, neighbors, starts)?;
+                        }
+                        Ok(())
+                    })
                 })
             })
             .collect()
@@ -210,7 +204,10 @@ impl Corpus {
         Ok(PreparedChunk {
             starts,
             merged_id,
-            changes: neighbors.finish(),
+            changes: ProducerChanges {
+                whole_rule: false,
+                changes: neighbors.finish(),
+            },
         })
     }
 
@@ -316,7 +313,7 @@ enum FreshBatch {
 struct PreparedChunk {
     starts: SmallVec<[usize; 2]>,
     merged_id: u32,
-    changes: Vec<PairChange<Positions>>,
+    changes: ProducerChanges,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -498,5 +495,92 @@ impl FreshPreparation<'_> {
             )?;
         }
         Ok(())
+    }
+}
+
+// Selected endpoints usually identify one rule. Shared heads or tails retain
+// exact-pair lookup; directories reject unrelated endpoints before token loads.
+#[derive(Default)]
+pub(super) struct SelectedRuleIndex {
+    heads: Vec<u64>,
+    tails: Vec<u64>,
+    multiple: AHashMap<Pair, u32>,
+    pairs: Vec<Pair>,
+}
+
+impl SelectedRuleIndex {
+    const EMPTY: u64 = u64::MAX;
+    const MULTIPLE: u64 = u64::MAX - 1;
+
+    fn reset(&mut self, rules: &[SelectedMerge], domain: usize) {
+        for (head, tail) in self.pairs.drain(..) {
+            self.heads[head as usize] = Self::EMPTY;
+            self.tails[tail as usize] = Self::EMPTY;
+        }
+        self.heads.resize(domain, Self::EMPTY);
+        self.tails.resize(domain, Self::EMPTY);
+        self.multiple.clear();
+        for rule in rules {
+            self.pairs.push(rule.pair);
+            let head = &mut self.heads[rule.pair.0 as usize];
+            *head = if *head == Self::EMPTY {
+                (u64::from(rule.pair.1) << 32) | u64::from(rule.merged_id)
+            } else {
+                Self::MULTIPLE
+            };
+            let tail = &mut self.tails[rule.pair.1 as usize];
+            *tail = if *tail == Self::EMPTY {
+                (u64::from(rule.pair.0) << 32) | u64::from(rule.merged_id)
+            } else {
+                Self::MULTIPLE
+            };
+        }
+        for rule in rules {
+            if self.heads[rule.pair.0 as usize] == Self::MULTIPLE
+                || self.tails[rule.pair.1 as usize] == Self::MULTIPLE
+            {
+                self.multiple.insert(rule.pair, rule.merged_id);
+            }
+        }
+    }
+
+    fn left_selected(&self, corpus: &Corpus, before: usize, prior: u32) -> bool {
+        let tail = self.tails[prior as usize];
+        if before == 0 || tail == Self::EMPTY {
+            return false;
+        }
+        let previous = corpus.token(before - 1);
+        if tail == Self::MULTIPLE {
+            self.multiple.contains_key(&(previous, prior))
+        } else {
+            (tail >> 32) as u32 == previous
+        }
+    }
+
+    fn final_next(&self, corpus: &Corpus, after: usize, next: u32) -> Option<u32> {
+        let head = self.heads[next as usize];
+        if head == Self::EMPTY {
+            return None;
+        }
+        let following = corpus.token(after + corpus.fixed_id_span(next));
+        if head == Self::MULTIPLE {
+            self.multiple.get(&(next, following)).copied()
+        } else {
+            ((head >> 32) as u32 == following).then_some(head as u32)
+        }
+    }
+}
+
+/// One attempt owns the reusable directories. Locks cover checkout/return only;
+/// the scan and its fallible result run with exclusive local scratch ownership.
+#[derive(Default)]
+pub(super) struct NeighborScratchPool(Mutex<Vec<NeighborScratch>>);
+
+impl NeighborScratchPool {
+    fn with<T>(&self, scan: impl FnOnce(&mut NeighborScratch) -> T) -> T {
+        let mut scratch = self.0.lock().unwrap().pop().unwrap_or_default();
+        let result = scan(&mut scratch);
+        self.0.lock().unwrap().push(scratch);
+        result
     }
 }
