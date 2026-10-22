@@ -1,8 +1,11 @@
 //! Stable original-symbol coordinates for word-local training edits.
+#[path = "merge.rs"]
+mod merge;
+use super::positions::Positions;
 use super::vocabulary::InitialTokenIds;
 use super::word_counts::WordCountsView;
 use crate::progress::ProgressBar;
-use ahash::{AHashMap, AHashSet};
+use ahash::AHashMap;
 use std::ops::Range;
 use tk_encode::models::bpe::Pair;
 use tk_encode::parallelism::MaybeParallelRefIterator;
@@ -37,6 +40,9 @@ impl Word {
 
     pub(super) fn merge(&mut self, c1: u32, c2: u32, id: u32, limit: usize) -> Vec<(Pair, i32)> {
         merge_symbols(&mut self.symbols, c1, c2, id, limit)
+            .into_iter()
+            .map(|(pair, delta, _)| (pair, delta))
+            .collect()
     }
 }
 
@@ -45,12 +51,13 @@ pub(super) struct Corpus {
     symbols: Vec<Symbol>,
     starts: Vec<usize>,
     counts: Vec<u64>,
+    whole_words: bool,
 }
 
 pub(super) struct WordChange {
     pub(super) pair: Pair,
     pub(super) delta: i32,
-    pub(super) word: usize,
+    pub(super) coordinate: u64,
     pub(super) weight: u64,
 }
 
@@ -69,6 +76,7 @@ impl Corpus {
             symbols,
             starts,
             counts,
+            whole_words: false,
         }
     }
 
@@ -79,22 +87,25 @@ impl Corpus {
     pub(super) fn count_pairs(
         &self,
         p: &Option<ProgressBar>,
-    ) -> (AHashMap<Pair, i32>, AHashMap<Pair, AHashSet<usize>>) {
+    ) -> (AHashMap<Pair, i32>, AHashMap<Pair, Vec<u64>>) {
         self.starts
             .maybe_par_iter()
             .enumerate()
             .map(|(i, _)| {
                 let mut pair_counts = AHashMap::new();
-                let mut where_to_update: AHashMap<Pair, AHashSet<usize>> = AHashMap::new();
+                let mut where_to_update: AHashMap<Pair, Vec<u64>> = AHashMap::new();
 
                 let chars: Vec<_> = read_symbols(&self.symbols[self.word_range(i)]).collect();
-                for window in chars.windows(2) {
+                for (offset, window) in chars.windows(2).enumerate() {
                     let cur_pair: Pair = (window[0], window[1]);
 
                     // Initialize pair_counts and where_to_update for this pair if we just saw it
                     // Then update counts
                     *pair_counts.entry(cur_pair).or_default() += self.counts[i] as i32;
-                    where_to_update.entry(cur_pair).or_default().insert(i);
+                    where_to_update
+                        .entry(cur_pair)
+                        .or_default()
+                        .push((self.starts[i] + offset) as u64);
                 }
 
                 if let Some(p) = &p {
@@ -117,42 +128,6 @@ impl Corpus {
             )
     }
 
-    pub(super) fn merge(
-        &mut self,
-        pair: Pair,
-        id: u32,
-        limit: usize,
-        positions: &AHashSet<usize>,
-    ) -> Vec<WordChange> {
-        struct SlotPtr(*mut Symbol);
-        // Candidate word IDs are unique; their fixed slot ranges never overlap.
-        unsafe impl Sync for SlotPtr {}
-        let pointer = SlotPtr(self.symbols.as_mut_ptr());
-        let total = self.symbols.len();
-        let starts = &self.starts;
-        let weights = &self.counts;
-        positions
-            .maybe_par_iter()
-            .flat_map(|&word| {
-                let pointer = &pointer;
-                assert!(word < starts.len());
-                let begin = starts[word];
-                let end = starts.get(word + 1).copied().unwrap_or(total) - 1;
-                // SAFETY: only this task owns [begin,end); storage remains fixed until join.
-                let symbols =
-                    unsafe { std::slice::from_raw_parts_mut(pointer.0.add(begin), end - begin) };
-                merge_symbols(symbols, pair.0, pair.1, id, limit)
-                    .into_iter()
-                    .map(|(pair, delta)| WordChange {
-                        pair,
-                        delta,
-                        word,
-                        weight: weights[word],
-                    })
-                    .collect::<Vec<_>>()
-            })
-            .collect()
-    }
     fn word_range(&self, word: usize) -> Range<usize> {
         self.starts[word]
             ..self
@@ -170,7 +145,7 @@ fn merge_symbols(
     c2: u32,
     id: u32,
     limit: usize,
-) -> Vec<(Pair, i32)> {
+) -> Vec<(Pair, i32, usize)> {
     let mut changes = Vec::new();
     let mut previous: Option<usize> = None;
     let mut position = 0;
@@ -186,9 +161,9 @@ fn merge_symbols(
         let after = position + span;
         if let Some(before) = previous {
             let neighbor = symbols[before];
-            changes.push(((neighbor.id, c1), -1));
+            changes.push(((neighbor.id, c1), -1, before));
             if neighbor.span + span < limit {
-                changes.push(((neighbor.id, id), 1));
+                changes.push(((neighbor.id, id), 1, before));
             }
         }
         // Heads and tails identify each logical token; spans skip interior holes.
@@ -199,9 +174,9 @@ fn merge_symbols(
         symbols[after - 1] = Symbol { id, span };
         if after < symbols.len() {
             let neighbor = symbols[after];
-            changes.push(((c2, neighbor.id), -1));
+            changes.push(((c2, neighbor.id), -1, right));
             if span + neighbor.span < limit {
-                changes.push(((id, neighbor.id), 1));
+                changes.push(((id, neighbor.id), 1, position));
             }
         }
         previous = Some(position);

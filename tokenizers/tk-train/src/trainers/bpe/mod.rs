@@ -2,6 +2,7 @@
 
 mod corpus;
 mod index;
+mod positions;
 use index::PairIndex;
 mod feed;
 use corpus::Corpus;
@@ -355,8 +356,14 @@ impl BpeTrainer {
 
             let Some(top) = index.take() else { break };
 
-            let new_token_id = vocabulary.resolve(top.pair);
-            let changes = corpus.merge(top.pair, new_token_id, max_token_length, &top.pos);
+            let resolved = vocabulary.resolve(top.pair);
+            let changes = corpus.merge(
+                top.pair,
+                resolved.merged_id,
+                max_token_length,
+                &top.positions,
+                resolved.already_in_vocabulary,
+            );
             index.commit(changes);
 
             vocabulary.commit(top.pair);
@@ -651,3 +658,54 @@ mod builder_tests {
 
 #[cfg(feature = "parity-aware-bpe")]
 use tk_encode::models::bpe::Pair;
+
+#[cfg(test)]
+mod historical_coordinate_tests {
+    use super::*;
+
+    #[test]
+    fn stale_coordinate_keeps_its_historical_word_domain() {
+        let words = [("cbbbbb".into(), 6), ("aba".into(), 4)].into();
+        let trainer = BpeTrainer::builder()
+            .show_progress(false)
+            .vocab_size(64)
+            .min_frequency(1)
+            .continuing_subword_prefix("ab".into())
+            .build();
+        let (_, merges, _) = trainer.do_train(&words).unwrap();
+        assert_eq!(
+            merges,
+            [
+                ("abb".into(), "abb".into()),
+                ("c".into(), "abbb".into()),
+                ("abbb".into(), "abb".into()),
+                ("cbb".into(), "abbbb".into()),
+                ("a".into(), "abb".into()),
+                ("ab".into(), "aba".into()),
+            ]
+        );
+    }
+}
+
+#[cfg(test)]
+mod local_edit_tests {
+    use super::*;
+    #[test]
+    fn weighted_adjacent_edits_keep_literal_merge_order() {
+        let trainer = BpeTrainer::builder()
+            .show_progress(false)
+            .min_frequency(1)
+            .vocab_size(5)
+            .build();
+        let words = [("abab".into(), 10), ("ababa".into(), 1)].into();
+        let (_, merges, _) = trainer.do_train(&words).unwrap();
+        assert_eq!(
+            merges,
+            [
+                ("a".into(), "b".into()),
+                ("ab".into(), "ab".into()),
+                ("abab".into(), "a".into())
+            ]
+        );
+    }
+}

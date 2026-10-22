@@ -59,7 +59,7 @@ impl Vocabulary {
         self.tokens.len()
     }
 
-    pub(super) fn resolve(&mut self, pair: Pair) -> u32 {
+    pub(super) fn resolve(&mut self, pair: Pair) -> ResolvedMerge {
         let left = self.tokens[pair.0 as usize].as_str();
         let right = self.tokens[pair.1 as usize].as_str();
         let right = self
@@ -70,7 +70,11 @@ impl Vocabulary {
         let mut text = CompactString::with_capacity(left.len() + right.len());
         text.push_str(left);
         text.push_str(right);
-        self.intern(text)
+        let (id, inserted) = self.tokens.insert_full(text);
+        ResolvedMerge {
+            merged_id: id as u32,
+            already_in_vocabulary: !inserted,
+        }
     }
 
     pub(super) fn commit(&mut self, pair: Pair) {
@@ -266,6 +270,11 @@ impl DecoratedIds {
     fn remember(&mut self, affix: Affix, id: u32) {
         self.0[affix as usize] = id;
     }
+}
+
+pub(super) struct ResolvedMerge {
+    pub(super) merged_id: u32,
+    pub(super) already_in_vocabulary: bool,
 }
 
 impl BpeTrainer {
