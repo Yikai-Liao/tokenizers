@@ -1,6 +1,8 @@
 #![allow(clippy::map_entry)]
 
 mod corpus;
+mod index;
+use index::PairIndex;
 mod feed;
 use corpus::Corpus;
 mod vocabulary;
@@ -17,9 +19,7 @@ pub use parity_trainer::{ParityBpeTrainer, ParityBpeTrainerBuilder, ParityVarian
 use crate::Trainer;
 use ahash::{AHashMap, AHashSet};
 use compact_str::CompactString;
-use dary_heap::OctonaryHeap;
 use serde::{Deserialize, Serialize};
-use std::cmp::Ordering;
 use std::collections::HashSet;
 use tk_encode::vocab::bucket_added_vocabulary::AddedToken;
 use word_counts::{WordCounts, WordCountsView};
@@ -34,35 +34,8 @@ use word::Word;
 
 use crate::progress::{ProgressBar, ProgressFormat, ProgressStyle};
 use tk_encode::Result;
-use tk_encode::models::bpe::{BpeConfig, Merges, Pair, PipelineBPE, Vocab};
+use tk_encode::models::bpe::{BpeConfig, Merges, PipelineBPE, Vocab};
 use tk_encode::parallelism;
-
-#[derive(Debug, Eq)]
-struct Merge {
-    pair: Pair,
-    count: u64,
-    pos: AHashSet<usize>,
-}
-impl PartialEq for Merge {
-    fn eq(&self, other: &Self) -> bool {
-        self.count == other.count && self.pair == other.pair
-    }
-}
-impl PartialOrd for Merge {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-impl Ord for Merge {
-    fn cmp(&self, other: &Self) -> Ordering {
-        if self.count != other.count {
-            self.count.cmp(&other.count)
-        } else {
-            // Here we want ascending order
-            other.pair.cmp(&self.pair)
-        }
-    }
-}
 
 /// A `BpeTrainerBuilder` can be used to create a `BpeTrainer` with a custom
 /// configuration.
@@ -366,19 +339,7 @@ impl BpeTrainer {
         // 4. Count pairs in words
         //
         self.update_progress(&progress, corpus.word_count(), "Count pairs");
-        let (mut pair_counts, mut where_to_update) = corpus.count_pairs(&progress);
-        // Insert them in the queue
-        let mut queue = OctonaryHeap::with_capacity(pair_counts.len());
-        where_to_update.drain().for_each(|(pair, pos)| {
-            let count = pair_counts[&pair];
-            if count > 0 {
-                queue.push(Merge {
-                    pair,
-                    count: count as u64,
-                    pos,
-                });
-            }
-        });
+        let mut index = PairIndex::build(&corpus, self.min_frequency, &progress);
         self.finalize_progress(&progress, corpus.word_count(), "Count pairs");
 
         //
@@ -392,42 +353,11 @@ impl BpeTrainer {
                 break;
             }
 
-            let Some(mut top) = queue.pop() else {
-                break;
-            };
-
-            if top.count != pair_counts[&top.pair] as u64 {
-                top.count = pair_counts[&top.pair] as u64;
-                queue.push(top);
-                continue;
-            }
-
-            if top.count < 1 || self.min_frequency > top.count {
-                break;
-            }
+            let Some(top) = index.take() else { break };
 
             let new_token_id = vocabulary.resolve(top.pair);
             let changes = corpus.merge(top.pair, new_token_id, max_token_length, &top.pos);
-            for change in changes {
-                let count = change.delta * change.weight as i32;
-                *pair_counts.entry(change.pair).or_default() += count;
-                if change.delta > 0 {
-                    where_to_update
-                        .entry(change.pair)
-                        .or_default()
-                        .insert(change.word);
-                }
-            }
-            where_to_update.drain().for_each(|(pair, pos)| {
-                let count = pair_counts[&pair];
-                if count > 0 {
-                    queue.push(Merge {
-                        pair,
-                        count: count as u64,
-                        pos,
-                    });
-                }
-            });
+            index.commit(changes);
 
             vocabulary.commit(top.pair);
             completed += 1;
@@ -680,6 +610,9 @@ mod builder_tests {
         assert_eq!(serde_json::from_value::<BpeTrainer>(json).unwrap(), default);
     }
 }
+
+#[cfg(feature = "parity-aware-bpe")]
+use tk_encode::models::bpe::Pair;
 
 #[cfg(test)]
 mod trainer_contract_tests {
