@@ -1,4 +1,5 @@
 //! Local preaggregation into a shared table; feed returns unordered counts.
+use super::word_counts::WordCounts;
 use ahash::{AHashMap, RandomState};
 use compact_str::CompactString;
 use std::collections::hash_map::Entry;
@@ -12,7 +13,7 @@ type SharedCounts = scc::HashMap<CompactString, u64, RandomState>;
 const LOCAL_KEY_LIMIT: usize = 2048;
 const FEED_BATCH_SIZE: usize = 32;
 
-pub(super) fn count<I, S, F>(iterator: I, process: &F) -> Result<CountMap>
+pub(super) fn count<I, S, F>(iterator: I, process: &F) -> Result<WordCounts>
 where
     I: Iterator<Item = S> + Send,
     S: AsRef<str> + Send,
@@ -51,7 +52,9 @@ where
         Ok(counts)
     };
     if !parallel {
-        return iterator.fold(Ok(CountMap::with_hasher(hash.clone())), accumulate);
+        return iterator
+            .fold(Ok(CountMap::with_hasher(hash.clone())), accumulate)
+            .map(WordCounts::from);
     }
 
     // Seed with single inputs, then amortize the bridge lock across batches.
@@ -79,14 +82,13 @@ where
         .reduce(|| Ok(()), |left, right| left.and(right))?;
 
     let shared = shared.expect("parallel feed initializes its shared count table");
-    let mut words = CountMap::with_capacity(shared.len());
+    let mut words = Vec::with_capacity(shared.len());
     // No writers remain; consume moves each visited entry out of the table.
     shared.iter_mut_sync(|entry| {
-        let (word, count) = entry.consume();
-        words.insert(word, count);
+        words.push(entry.consume());
         true
     });
-    Ok(words)
+    Ok(WordCounts::from_unique(words))
 }
 
 #[cfg(test)]
@@ -101,6 +103,10 @@ mod tests {
             let mut input: Vec<_> = (0..unique).map(|i| format!("词{i}🙂")).collect();
             input.extend(["repeat".into(), "repeat".into()]);
             let actual = count(input.iter(), &|text| Ok(vec![text.into()])).unwrap();
+            let actual: CountMap = super::super::word_counts::WordCountsView::from(&actual)
+                .iter()
+                .map(|(word, count)| (word.clone(), *count))
+                .collect();
             assert_eq!(actual.len(), unique + 1);
             assert_eq!(actual["repeat"], 2);
             assert!(
