@@ -368,9 +368,9 @@ impl BpeTrainer {
 
             let Some(top) = index.take() else { break };
 
-            let resolved = vocabulary.resolve(top.pair)?;
+            let resolved = vocabulary.resolve(top.priority.pair())?;
             let changes = corpus.merge(
-                top.pair,
+                top.priority.pair(),
                 resolved.merged_id,
                 max_token_length,
                 &top.positions,
@@ -378,7 +378,7 @@ impl BpeTrainer {
             );
             index.commit(changes)?;
 
-            vocabulary.commit(top.pair);
+            vocabulary.commit(top.priority.pair());
             completed += 1;
             if let Some(p) = &progress {
                 p.inc(1);
@@ -387,6 +387,8 @@ impl BpeTrainer {
         }
         self.finalize_progress(&progress, completed, "Compute merges");
 
+        index.retire();
+        drop(corpus);
         let (vocab, merges) = vocabulary.into_parts();
         Ok((vocab, merges, self.special_tokens.clone()))
     }
