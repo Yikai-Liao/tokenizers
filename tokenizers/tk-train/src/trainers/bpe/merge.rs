@@ -9,6 +9,8 @@ use tk_encode::models::bpe::Pair;
 use tk_encode::parallelism::{MaybeParallelIterator, MaybeParallelSlice};
 /// Prepared disjoint writes and checked neighboring pair groups.
 struct PreparedChunk {
+    merged_id: u32,
+    whole_rule: bool,
     starts: SmallVec<[usize; 2]>,
     changes: Vec<PairChange<Positions>>,
 }
@@ -20,18 +22,15 @@ mod preparation_tests {
         let mut corpus = Corpus::fixture(&[EMPTY, 0, 1, 0, 1, EMPTY], vec![1], vec![3]);
         corpus.activate((0, 1), 2);
         let positions = Positions::from_unsorted(vec![1, 3]).unwrap();
-        let mut scratch = NeighborScratch::default();
         let prepared = corpus
-            .prepare_local(
-                (0, 1),
-                2,
-                usize::MAX,
-                positions.iter(),
-                None,
-                Some(&positions),
-                None,
-                &mut scratch,
-            )
+            .prepare_fresh(SelectedMerge {
+                pair: (0, 1),
+                merged_id: 2,
+                positions,
+            })
+            .unwrap()
+            .into_iter()
+            .next()
             .unwrap();
         assert_eq!(prepared.starts.as_slice(), [1, 3]);
         assert_eq!(
@@ -53,7 +52,11 @@ mod preparation_tests {
         );
         assert_eq!(corpus.symbol(1).id, 0);
         corpus
-            .merge_local((0, 1), 2, usize::MAX, &positions)
+            .merge(SelectedMerge {
+                pair: (0, 1),
+                merged_id: 2,
+                positions: Positions::from_unsorted(vec![1, 3]).unwrap(),
+            })
             .unwrap();
         assert_eq!(corpus.read_word(1..5).collect::<Vec<_>>(), [2, 2]);
     }
@@ -79,6 +82,20 @@ mod reader_duplicate_tests {
                 }
             };
             corpus.activate((0, 1), 2);
+            let prepared = corpus
+                .prepare_fresh(SelectedMerge {
+                    pair: (0, 1),
+                    merged_id: 2,
+                    positions: make(),
+                })
+                .unwrap();
+            assert_eq!(
+                prepared
+                    .iter()
+                    .flat_map(|chunk| chunk.starts.iter().copied())
+                    .collect::<Vec<_>>(),
+                [1, 3]
+            );
             let changes = corpus
                 .merge(SelectedMerge {
                     pair: (0, 1),
@@ -114,19 +131,103 @@ struct Neighbor {
     start: usize,
     span: usize,
 }
+struct FreshPreparation<'corpus> {
+    corpus: &'corpus Corpus,
+    birth_pair_span_limit: usize,
+}
+impl FreshPreparation<'_> {
+    fn prepare(
+        &self,
+        pair: Pair,
+        merged_id: u32,
+        positions: impl IntoIterator<Item = u64>,
+        scratch: &mut NeighborScratch,
+        left_merging: impl Fn(&Range<usize>, usize, u32) -> bool,
+        right_merged_id: impl Fn(usize, u32) -> Option<u32>,
+    ) -> Result<PreparedChunk> {
+        self.corpus
+            .prepare_chunk(pair, merged_id, scratch, |neighbors, starts| {
+                // Borrow decoder state through the lookahead adapters.
+                let mut positions = positions.into_iter().dedup();
+                for (matched, weight) in self.corpus.fresh_matches(&mut positions, pair) {
+                    self.record(neighbors, &matched, weight, &left_merging, &right_merged_id)?;
+                    starts.push(matched.start);
+                }
+                Ok(())
+            })
+    }
+
+    // The left match owns each shared edge and uses both final IDs. A later
+    // match skips that left edge, even across rule or task boundaries.
+    fn record(
+        &self,
+        neighbors: &mut NeighborChanges<'_>,
+        matched: &Range<usize>,
+        weight: u64,
+        left_merging: &impl Fn(&Range<usize>, usize, u32) -> bool,
+        right_merged_id: &impl Fn(usize, u32) -> Option<u32>,
+    ) -> Result<()> {
+        let p = matched.start;
+        let prior = self.corpus.token(p - 1);
+        if prior != EMPTY {
+            let span = self.corpus.fixed_id_span(prior);
+            let before = p - span;
+            if !left_merging(matched, before, prior) {
+                neighbors.record(
+                    EdgeSide::Left,
+                    prior,
+                    prior,
+                    before,
+                    weight,
+                    // Admit only a neighbor pair strictly shorter than the
+                    // limit, using prior-token span plus merged-match span.
+                    span + matched.len() < self.birth_pair_span_limit,
+                )?;
+            }
+        }
+        let next = self.corpus.token(matched.end);
+        if next != EMPTY {
+            let born = right_merged_id(matched.end, next).unwrap_or(next);
+            neighbors.record(
+                EdgeSide::Right,
+                next,
+                born,
+                p,
+                weight,
+                // A selected right neighbor may also merge: use its final
+                // ID's span in the strict combined-length gate.
+                matched.len() + self.corpus.fixed_id_span(born) < self.birth_pair_span_limit,
+            )?;
+        }
+        Ok(())
+    }
+}
 impl Corpus {
+    /// Preparation errors leave endpoints unchanged; all writers join before return.
+    /// Index errors after writes discard the attempt without local rollback.
     pub(in crate::trainers::bpe) fn merge(
         &mut self,
         rule: SelectedMerge,
     ) -> Result<Vec<ProducerChanges>> {
+        let prepared = match self.mode {
+            TrainingMode::Fresh => self.prepare_fresh(rule)?,
+            TrainingMode::Reuse => self.prepare_reuse(rule)?,
+        };
+        Ok(prepared
+            .into_maybe_par_iter()
+            .map(|chunk| {
+                self.apply(&chunk.starts, chunk.merged_id);
+                ProducerChanges {
+                    whole_rule: chunk.whole_rule,
+                    changes: chunk.changes,
+                }
+            })
+            .collect())
+    }
+    fn prepare_reuse(&self, rule: SelectedMerge) -> Result<Vec<PreparedChunk>> {
         let pair = rule.pair;
         let id = rule.merged_id;
         let positions = &rule.positions;
-        let limit = self.birth_pair_span_limit.unwrap_or(usize::MAX);
-        if self.mode == TrainingMode::Fresh {
-            return self.merge_local(pair, id, limit, &positions);
-        }
-
         // Historical coordinates select domains before stale-match filtering.
         let words: Vec<_> = positions
             .iter()
@@ -150,24 +251,18 @@ impl Corpus {
                 })
             })
             .collect::<Result<Vec<_>>>()?;
-        Ok(prepared
-            .into_maybe_par_iter()
-            .map(|chunk| {
-                self.apply(&chunk.starts, id);
-                ProducerChanges {
-                    whole_rule: false,
-                    changes: chunk.changes,
-                }
-            })
-            .collect())
+        Ok(prepared)
     }
-    fn merge_local(
-        &mut self,
-        pair: Pair,
-        id: u32,
-        limit: usize,
-        positions: &Positions,
-    ) -> Result<Vec<ProducerChanges>> {
+    fn prepare_fresh(&self, rule: SelectedMerge) -> Result<Vec<PreparedChunk>> {
+        let SelectedMerge {
+            pair,
+            merged_id: id,
+            positions,
+        } = rule;
+        let preparation = FreshPreparation {
+            corpus: self,
+            birth_pair_span_limit: self.birth_pair_span_limit.unwrap_or(usize::MAX),
+        };
         let chunk = if cfg!(test) {
             1
         } else {
@@ -179,34 +274,32 @@ impl Corpus {
         if pair.0 != pair.1 {
             let tasks: Vec<_> = positions.chunks(chunk).collect();
             let complete = tasks.len() == 1;
-            let prepared: Vec<_> = tasks
+            let mut prepared: Vec<_> = tasks
                 .into_maybe_par_iter()
                 .map(|(previous, coordinates)| {
                     let coordinates = coordinates.skip_while(move |&p| previous == Some(p));
                     self.neighbor_scratch.with(|scratch| {
-                        self.prepare_local(
+                        preparation.prepare(
                             pair,
                             id,
-                            limit,
                             coordinates,
-                            None,
-                            Some(positions),
-                            None,
                             scratch,
+                            |_, before, prior| {
+                                before != 0 && prior == pair.1 && self.token(before - 1) == pair.0
+                            },
+                            |after, next| {
+                                (next == pair.0
+                                    && self.token(after + self.fixed_id_span(next)) == pair.1)
+                                    .then_some(id)
+                            },
                         )
                     })
                 })
                 .collect::<Result<Vec<_>>>()?;
-            return Ok(prepared
-                .into_maybe_par_iter()
-                .map(|prepared| {
-                    self.apply(&prepared.starts, id);
-                    ProducerChanges {
-                        whole_rule: complete,
-                        changes: prepared.changes,
-                    }
-                })
-                .collect());
+            for chunk in &mut prepared {
+                chunk.whole_rule = complete;
+            }
+            return Ok(prepared);
         }
         // Decide overlaps globally before fragmenting this rule's immutable snapshot.
         let mut accepted = Vec::new();
@@ -218,7 +311,7 @@ impl Corpus {
                 && let Some(matched) = matcher(p)
             {
                 end = matched.end;
-                accepted.push(matched);
+                accepted.push(coordinate);
             }
         }
         let chunk = if cfg!(test) {
@@ -229,110 +322,33 @@ impl Corpus {
                 .div_ceil(super::super::num_workers() * 4)
                 .max(4096)
         };
+        drop(positions);
         let prepared: Vec<_> = accepted
             .maybe_par_chunks(chunk)
-            .enumerate()
-            .map(|(part, matches)| {
-                let seed = if part == 0 {
-                    None
-                } else {
-                    let prior = &accepted[part * chunk - 1];
-                    Some(prior.end)
-                };
+            .map(|matches| {
                 self.neighbor_scratch.with(|scratch| {
-                    self.prepare_local(
+                    preparation.prepare(
                         pair,
                         id,
-                        limit,
-                        matches.iter().map(|matched| matched.start as u64),
-                        seed,
-                        None,
-                        Some(&accepted),
+                        matches.iter().copied(),
                         scratch,
+                        |matched, _, _| {
+                            matched.start >= matched.len()
+                                && accepted
+                                    .binary_search(&((matched.start - matched.len()) as u64))
+                                    .is_ok()
+                        },
+                        |after, _| {
+                            accepted
+                                .binary_search(&(after as u64))
+                                .is_ok()
+                                .then_some(id)
+                        },
                     )
                 })
             })
             .collect::<Result<Vec<_>>>()?;
-        Ok(prepared
-            .into_maybe_par_iter()
-            .map(|prepared| {
-                self.apply(&prepared.starts, id);
-                ProducerChanges {
-                    whole_rule: false,
-                    changes: prepared.changes,
-                }
-            })
-            .collect())
-    }
-    fn prepare_local(
-        &self,
-        pair: Pair,
-        id: u32,
-        limit: usize,
-        coordinates: impl IntoIterator<Item = u64>,
-        previous: Option<usize>,
-        cohort: Option<&Positions>,
-        accepted: Option<&[Range<usize>]>,
-        scratch: &mut NeighborScratch,
-    ) -> Result<PreparedChunk> {
-        let mut starts = SmallVec::new();
-        let mut neighbors = NeighborChanges::new(pair, id, self.id_metadata.len(), scratch);
-        let mut previous_end = previous.unwrap_or(0);
-        for (matched, weight) in self.fresh_matches(coordinates, pair) {
-            let p = matched.start;
-            if p < previous_end {
-                continue;
-            }
-            let span = matched.len();
-            let after = matched.end;
-            // The preceding accepted match has already merged in the sequential
-            // contract. Read its virtual endpoint without mutating the snapshot.
-            let adjacent_selected = cohort.is_some_and(|positions| {
-                let total = self.fixed_id_span(pair.0) + self.fixed_id_span(pair.1);
-                p.checked_sub(total).is_some_and(|before| {
-                    self.match_at(before, pair)
-                        .is_some_and(|matched| matched.end == p)
-                        && positions.iter_from(before as u64).next() == Some(before as u64)
-                })
-            });
-            let prior = self.symbol(p - 1);
-            if prior.id != EMPTY && p != previous_end && !adjacent_selected {
-                neighbors.record(
-                    EdgeSide::Left,
-                    prior.id,
-                    prior.id,
-                    p - prior.span,
-                    weight,
-                    prior.span + span < limit,
-                )?;
-            }
-            let next = self.symbol(after);
-            if next.id != EMPTY {
-                let selected = cohort.is_some_and(|positions| {
-                    self.match_at(after, pair).is_some()
-                        && positions.iter_from(after as u64).next() == Some(after as u64)
-                }) || accepted.is_some_and(|matches| {
-                    matches
-                        .binary_search_by_key(&after, |matched| matched.start)
-                        .is_ok()
-                });
-                let born = if selected { id } else { next.id };
-                neighbors.record(
-                    EdgeSide::Right,
-                    next.id,
-                    born,
-                    p,
-                    weight,
-                    span + self.fixed_id_span(born) < limit,
-                )?;
-            }
-            starts.push(p);
-            previous_end = after;
-        }
-        Ok(PreparedChunk {
-            starts,
-            changes: neighbors.finish(),
-        })
+        Ok(prepared)
     }
     fn whole_words(&self) -> bool {
         self.whole_words
@@ -348,6 +364,8 @@ impl Corpus {
         let mut starts = SmallVec::new();
         scan(&mut neighbors, &mut starts)?;
         Ok(PreparedChunk {
+            merged_id,
+            whole_rule: false,
             starts,
             changes: neighbors.finish(),
         })

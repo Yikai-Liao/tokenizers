@@ -20,6 +20,7 @@ use tk_encode::parallelism::MaybeParallelRefIterator;
 
 const EMPTY: u32 = u32::MAX;
 
+#[cfg(test)]
 #[derive(Clone, Copy)]
 struct Symbol {
     id: u32,
@@ -407,6 +408,7 @@ impl Corpus {
 }
 
 impl Corpus {
+    #[cfg(test)]
     fn symbol(&self, p: usize) -> Symbol {
         let id = self.token(p);
         let span = if id == EMPTY {
@@ -717,8 +719,11 @@ impl CorpusPlan<'_> {
 }
 
 impl Corpus {
-    fn occurrence_span(&self, p: usize) -> usize {
-        self.symbol(p).span
+    fn occurrence_span(&self, position: usize) -> usize {
+        self.occurrence_spans.as_ref().map_or_else(
+            || self.fixed_id_span(self.token(position)),
+            |spans| spans[position].load(Ordering::Relaxed),
+        )
     }
     fn match_at(&self, position: usize, pair: Pair) -> Option<Range<usize>> {
         if self.token(position) != pair.0 {
