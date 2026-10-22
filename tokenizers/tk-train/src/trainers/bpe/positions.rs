@@ -115,6 +115,7 @@ impl Default for Positions {
     }
 }
 impl Positions {
+    #[cfg(test)]
     pub(super) fn from_unsorted(mut values: Vec<u64>) -> Result<Self> {
         values.sort_unstable();
         let mut positions = Self::default();
@@ -461,6 +462,21 @@ impl Positions {
             .map_or(0, |leaf| leaf.restart_before(target));
         // Search and skip share one cursor, including equal values across restarts.
         read(&leaves[index..], start).skip_while(move |&position| position < target)
+    }
+}
+
+impl Positions {
+    pub(super) fn merge(fragments: impl IntoIterator<Item = Self>) -> Result<Self> {
+        let fragments: SmallVec<[Self; 1]> = fragments.into_iter().collect();
+        if fragments.len() == 1 {
+            return Ok(fragments.into_iter().next().expect("one fragment"));
+        }
+        use itertools::Itertools;
+        let mut positions = Self::default();
+        for position in fragments.iter().map(Self::iter).kmerge() {
+            positions.push(position)?;
+        }
+        Ok(positions)
     }
 }
 
