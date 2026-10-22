@@ -5,7 +5,7 @@ mod index;
 mod positions;
 use index::PairIndex;
 mod feed;
-use corpus::{Corpus, CorpusPlan};
+use corpus::{Corpus, CorpusPlan, SelectedMerge};
 mod vocabulary;
 mod word_counts;
 use vocabulary::{Alphabet, Vocabulary};
@@ -359,7 +359,7 @@ impl BpeTrainer {
     ) -> Result<AttemptOutcome> {
         // 1. Resolve the vocabulary and tokenize borrowed input into a corpus plan.
         let (vocabulary, ids) = Vocabulary::initialize(self, words, alphabet, progress)?;
-        let plan = CorpusPlan::build(words, ids, self.vocab_size, mode)?;
+        let plan = CorpusPlan::build(words, ids, self.vocab_size, mode, self.max_token_length)?;
         self.finalize_progress(progress, plan.word_count(), "Tokenize words");
 
         // 2. Freeze initial pairs first: their temporary counting buffers retire
@@ -390,7 +390,6 @@ impl BpeTrainer {
     ) -> Result<AttemptOutcome> {
         // Argument order also releases index before corpus on early returns.
         let mut completed = 0;
-        let max_token_length = self.max_token_length.unwrap_or(usize::MAX);
         while vocabulary.len() < self.vocab_size {
             let Some(top) = index.take() else { break };
 
@@ -402,12 +401,12 @@ impl BpeTrainer {
                 self.finalize_progress(progress, completed, "Compute merges");
                 return Ok(AttemptOutcome::RestartForReuse);
             }
-            let changes = corpus.merge(
-                top.priority.pair(),
-                resolved.merged_id,
-                max_token_length,
-                &top.positions,
-            )?;
+            corpus.activate(top.priority.pair(), resolved.merged_id);
+            let changes = corpus.merge(SelectedMerge {
+                pair: top.priority.pair(),
+                merged_id: resolved.merged_id,
+                positions: top.positions,
+            })?;
             index.commit(changes)?;
 
             vocabulary.commit(top.priority.pair());

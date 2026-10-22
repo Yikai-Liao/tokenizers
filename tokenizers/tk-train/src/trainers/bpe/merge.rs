@@ -1,16 +1,18 @@
 //! Joined merge preparation and disjoint endpoint writes.
 use super::changes::{EdgeSide, NeighborChanges, NeighborScratch};
 use super::{
-    Corpus, EMPTY, PairChange, Positions, ProducerChanges, Symbol, TrainingMode, WeightLookup,
+    Corpus, EMPTY, PairChange, Positions, ProducerChanges, SelectedMerge, TrainingMode,
+    WeightLookup,
 };
 use itertools::Itertools;
+use smallvec::SmallVec;
 use std::ops::Range;
 use tk_encode::Result;
 use tk_encode::models::bpe::Pair;
 use tk_encode::parallelism::{MaybeParallelIterator, MaybeParallelSlice};
 /// Prepared disjoint writes and checked neighboring pair groups.
 struct PreparedChunk {
-    starts: Vec<usize>,
+    starts: SmallVec<[usize; 2]>,
     changes: Vec<PairChange<Positions>>,
 }
 #[cfg(test)]
@@ -34,7 +36,7 @@ mod preparation_tests {
                 &mut scratch,
             )
             .unwrap();
-        assert_eq!(prepared.starts, [1, 3]);
+        assert_eq!(prepared.starts.as_slice(), [1, 3]);
         assert_eq!(
             prepared
                 .changes
@@ -80,7 +82,13 @@ mod reader_duplicate_tests {
                 }
             };
             corpus.activate((0, 1), 2);
-            let changes = corpus.merge((0, 1), 2, usize::MAX, &make()).unwrap();
+            let changes = corpus
+                .merge(SelectedMerge {
+                    pair: (0, 1),
+                    merged_id: 2,
+                    positions: make(),
+                })
+                .unwrap();
             let total = changes
                 .iter()
                 .flat_map(|p| &p.changes)
@@ -103,34 +111,46 @@ mod reader_duplicate_tests {
         }
     }
 }
+#[derive(Clone, Copy)]
+struct Neighbor {
+    token_id: u32,
+    start: usize,
+    span: usize,
+}
 impl Corpus {
     pub(in crate::trainers::bpe) fn merge(
         &mut self,
-        pair: Pair,
-        id: u32,
-        limit: usize,
-        positions: &Positions,
+        rule: SelectedMerge,
     ) -> Result<Vec<ProducerChanges>> {
-        self.activate(pair, id);
+        let pair = rule.pair;
+        let id = rule.merged_id;
+        let positions = &rule.positions;
+        let limit = self.birth_pair_span_limit.unwrap_or(usize::MAX);
         if self.mode == TrainingMode::Fresh {
-            return self.merge_local(pair, id, limit, positions);
+            return self.merge_local(pair, id, limit, &positions);
         }
 
         // Historical coordinates select domains before stale-match filtering.
         let words: Vec<_> = positions
             .iter()
             .map(|coordinate| {
-                let position = usize::try_from(coordinate).expect("resident corpus coordinate");
-                assert!(position < self.tokens.len());
+                let position = self.resident(coordinate);
                 self.starts.partition_point(|&start| start <= position) - 1
             })
             .dedup()
             .collect();
-        let prepared: Vec<_> = words
-            .into_maybe_par_iter()
-            .map(|word| {
-                self.neighbor_scratch
-                    .with(|scratch| self.prepare_word(word, pair, id, limit, scratch))
+        let chunk = words.len().div_ceil(super::super::num_workers()).max(1);
+        let prepared = words
+            .maybe_par_chunks(chunk)
+            .map(|words| {
+                self.neighbor_scratch.with(|scratch| {
+                    self.prepare_chunk(pair, id, scratch, |neighbors, starts| {
+                        for &word in words {
+                            self.scan_word(&rule, word, neighbors, starts)?;
+                        }
+                        Ok(())
+                    })
+                })
             })
             .collect::<Result<Vec<_>>>()?;
         Ok(prepared
@@ -257,7 +277,7 @@ impl Corpus {
         accepted: Option<&[Range<usize>]>,
         scratch: &mut NeighborScratch,
     ) -> Result<PreparedChunk> {
-        let mut starts = Vec::new();
+        let mut starts = SmallVec::new();
         let mut neighbors = NeighborChanges::new(pair, id, self.id_metadata.len(), scratch);
         let mut previous_end = previous.unwrap_or(0);
         let mut cached_weight: Option<WeightLookup> = None;
@@ -333,59 +353,135 @@ impl Corpus {
             changes: neighbors.finish(),
         })
     }
-    fn prepare_word(
+    fn whole_words(&self) -> bool {
+        self.whole_words
+    }
+    fn prepare_chunk(
         &self,
-        word: usize,
         pair: Pair,
-        id: u32,
-        limit: usize,
+        merged_id: u32,
         scratch: &mut NeighborScratch,
+        scan: impl FnOnce(&mut NeighborChanges<'_>, &mut SmallVec<[usize; 2]>) -> Result<()>,
     ) -> Result<PreparedChunk> {
-        let mut starts = Vec::new();
-        let mut neighbors = NeighborChanges::new(pair, id, self.id_metadata.len(), scratch);
-        let mut previous: Option<(usize, Symbol)> = None;
-        let range = self.word_range(word);
-        let mut p = range.start;
-        while p < range.end {
-            let left = self.symbol(p);
-            let right = p + left.span;
-            if left.id != pair.0 || right >= range.end || self.symbol(right).id != pair.1 {
-                previous = Some((p, left));
-                p = right;
-                continue;
-            }
-            let span = left.span + self.symbol(right).span;
-            let after = p + span;
-            let weight = self.weight(range.start).weight;
-
-            if let Some((before, prior)) = previous {
-                neighbors.record(
-                    EdgeSide::Left,
-                    prior.id,
-                    prior.id,
-                    before,
-                    weight,
-                    prior.span + span < limit,
-                )?;
-            }
-            if after < range.end {
-                let next = self.symbol(after);
-                neighbors.record(
-                    EdgeSide::Right,
-                    next.id,
-                    next.id,
-                    p,
-                    weight,
-                    span + next.span < limit,
-                )?;
-            }
-            starts.push(p);
-            previous = Some((p, Symbol { id, span }));
-            p = after;
-        }
+        let mut neighbors = NeighborChanges::new(pair, merged_id, self.id_count(), scratch);
+        let mut starts = SmallVec::new();
+        scan(&mut neighbors, &mut starts)?;
         Ok(PreparedChunk {
             starts,
             changes: neighbors.finish(),
         })
+    }
+    fn scan_word(
+        &self,
+        rule: &SelectedMerge,
+        word: usize,
+        neighbors: &mut NeighborChanges<'_>,
+        starts: &mut SmallVec<[usize; 2]>,
+    ) -> Result<()> {
+        let range = self.word_range(word);
+        let weight = self.weight(range.start).weight;
+        let mut p = range.start;
+        let mut positions = rule.positions.iter_from(p as u64);
+        let mut left_neighbor: Option<Neighbor> = None;
+        while p < range.end {
+            // Full scans are required after alias activation or any Some length gate.
+            // Otherwise only eligible coordinates in this historical word are visited.
+            if !self.whole_words() {
+                let Some(next) =
+                    self.next_historical_start(&mut positions, p, range.end, rule.pair.0)
+                else {
+                    break;
+                };
+                if next != p {
+                    // The slot just before a sought start is the preceding
+                    // token's tail. Its span reconstructs that token's start.
+                    let id = self.token(next - 1);
+                    left_neighbor = (id != EMPTY).then(|| {
+                        let span = self.occurrence_span(next - 1);
+                        Neighbor {
+                            token_id: id,
+                            start: next - span,
+                            span,
+                        }
+                    });
+                    p = next;
+                }
+            }
+            if let Some(matched) = self.match_at(p, rule.pair) {
+                self.record_reuse_match(neighbors, &matched, left_neighbor, weight)?;
+                left_neighbor = Some(Neighbor {
+                    token_id: rule.merged_id,
+                    start: matched.start,
+                    span: matched.len(),
+                });
+                starts.push(matched.start);
+                p = matched.end;
+            } else {
+                let span = self.occurrence_span(p);
+                left_neighbor = Some(Neighbor {
+                    token_id: self.token(p),
+                    start: p,
+                    span,
+                });
+                // Whole-word traversal and the surviving historical-head check
+                // both keep p at a current token start with a nonzero span.
+                p += span;
+            }
+        }
+        Ok(())
+    }
+
+    fn next_historical_start(
+        &self,
+        positions: &mut impl Iterator<Item = u64>,
+        current: usize,
+        end: usize,
+        head: u32,
+    ) -> Option<usize> {
+        loop {
+            let coordinate = positions.find(|&start| start >= current as u64)?;
+            let next = self.resident(coordinate);
+            if next >= end {
+                return None;
+            }
+            // Before alias activation, a consumed historical head changes ID
+            // permanently. Interior slots cannot identify its current predecessor.
+            if self.token(next) == head {
+                return Some(next);
+            }
+        }
+    }
+
+    fn record_reuse_match(
+        &self,
+        neighbors: &mut NeighborChanges<'_>,
+        matched: &Range<usize>,
+        left: Option<Neighbor>,
+        weight: u64,
+    ) -> Result<()> {
+        let limit = self.birth_pair_span_limit.unwrap_or(usize::MAX);
+        if let Some(left) = left {
+            neighbors.record(
+                EdgeSide::Left,
+                left.token_id,
+                left.token_id,
+                left.start,
+                weight,
+                left.span + matched.len() < limit,
+            )?;
+        }
+        let next = self.token(matched.end);
+        if next != EMPTY {
+            // Equality is excluded; the right neighbor still belongs to the snapshot.
+            neighbors.record(
+                EdgeSide::Right,
+                next,
+                next,
+                matched.start,
+                weight,
+                matched.len() + self.occurrence_span(matched.end) < limit,
+            )?;
+        }
+        Ok(())
     }
 }
