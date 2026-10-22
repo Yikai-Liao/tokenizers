@@ -1,14 +1,11 @@
-#[cfg(feature = "parity-aware-bpe")]
 use std::{iter, mem};
 use tk_encode::models::bpe::Pair;
 
 /// Provides access to the `FirstLastIterator` to any Iterator
-#[cfg(feature = "parity-aware-bpe")]
 pub trait WithFirstLastIterator: Iterator + Sized {
     fn with_first_and_last(self) -> FirstLastIterator<Self>;
 }
 
-#[cfg(feature = "parity-aware-bpe")]
 impl<I> WithFirstLastIterator for I
 where
     I: Iterator,
@@ -22,7 +19,6 @@ where
 }
 
 /// Provides information about whether an item is the first and/or the last of the iterator
-#[cfg(feature = "parity-aware-bpe")]
 pub struct FirstLastIterator<I>
 where
     I: Iterator,
@@ -31,7 +27,6 @@ where
     iter: iter::Peekable<I>,
 }
 
-#[cfg(feature = "parity-aware-bpe")]
 impl<I> Iterator for FirstLastIterator<I>
 where
     I: Iterator,
