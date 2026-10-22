@@ -1,5 +1,5 @@
 name: BPE PR trends
-run-name: BPE trends · 28 versions · 3 rounds · 4 workers
+run-name: BPE trends · 28 versions · 3 rounds · 4 workers · 20 parallel
 
 on:
   push:
