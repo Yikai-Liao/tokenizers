@@ -1,7 +1,8 @@
 //! Authoritative weighted counts and owning historical word-domain candidates.
 use super::corpus::{Corpus, WordChange};
+use super::positions::Positions;
 use crate::progress::ProgressBar;
-use ahash::{AHashMap, AHashSet};
+use ahash::AHashMap;
 use dary_heap::OctonaryHeap;
 use std::cmp::Ordering;
 use tk_encode::models::bpe::Pair;
@@ -10,7 +11,7 @@ use tk_encode::models::bpe::Pair;
 pub(super) struct Candidate {
     pub(super) pair: Pair,
     count: u64,
-    pub(super) pos: AHashSet<usize>,
+    pub(super) positions: Positions,
 }
 
 impl PartialEq for Candidate {
@@ -49,11 +50,7 @@ impl PairIndex {
         for (pair, pos) in births.drain() {
             let count = counts[&pair];
             if count > 0 {
-                queue.push(Candidate {
-                    pair,
-                    count: count as u64,
-                    pos,
-                });
+                queue.push(Candidate::new(pair, count as u64, pos));
             }
         }
         Self {
@@ -76,23 +73,33 @@ impl PairIndex {
     }
 
     pub(super) fn commit(&mut self, changes: Vec<WordChange>) {
-        let mut births: AHashMap<Pair, AHashSet<usize>> = AHashMap::new();
+        let mut births: AHashMap<Pair, Vec<u64>> = AHashMap::new();
         for change in changes {
             let count = change.delta * change.weight as i32;
             *self.counts.entry(change.pair).or_default() += count;
             if change.delta > 0 {
-                births.entry(change.pair).or_default().insert(change.word);
+                births
+                    .entry(change.pair)
+                    .or_default()
+                    .push(change.coordinate);
             }
         }
         for (pair, pos) in births.drain() {
             let count = self.counts[&pair];
             if count > 0 {
-                self.queue.push(Candidate {
-                    pair,
-                    count: count as u64,
-                    pos,
-                });
+                self.queue.push(Candidate::new(pair, count as u64, pos));
             }
+        }
+    }
+}
+
+impl Candidate {
+    fn new(pair: Pair, count: u64, positions: Vec<u64>) -> Self {
+        // Keep the cohort boundary; only its own coordinate order is normalized.
+        Self {
+            pair,
+            count,
+            positions: Positions::from_unsorted(positions),
         }
     }
 }
