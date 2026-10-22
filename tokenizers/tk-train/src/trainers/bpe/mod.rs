@@ -3,7 +3,7 @@
 mod feed;
 mod vocabulary;
 mod word_counts;
-use vocabulary::Vocabulary;
+use vocabulary::{InitialTokenIds, Vocabulary};
 
 #[cfg(feature = "parity-aware-bpe")]
 pub mod parity_trainer;
@@ -24,7 +24,9 @@ use word_counts::{WordCounts, WordCountsView};
 // inference crate. `PipelineBPE` is the only BPE left; a trainer reaches it through
 // `from_config`, the same serde-free door a reader walks through, because its fields are
 // private to `tk-encode`.
-use word::{WithFirstLastIterator, Word};
+#[cfg(feature = "parity-aware-bpe")]
+use word::WithFirstLastIterator;
+use word::Word;
 
 use crate::progress::{ProgressBar, ProgressFormat, ProgressStyle};
 use tk_encode::Result;
@@ -304,12 +306,11 @@ impl BpeTrainer {
         self.emit_json_progress(message, 0, len);
     }
 
-    /// Tokenize words and add subwords to the vocabulary when relevant
+    /// Materialize immutable input symbol IDs into mutable training words.
     fn tokenize_words(
         &self,
         wc: WordCountsView<'_>,
-        vocabulary: &mut Vocabulary,
-        p: &Option<ProgressBar>,
+        ids: &InitialTokenIds,
     ) -> (Vec<Word>, Vec<u64>) {
         let mut words: Vec<Word> = Vec::with_capacity(wc.len());
         let mut counts: Vec<u64> = Vec::with_capacity(wc.len());
@@ -318,30 +319,10 @@ impl BpeTrainer {
             let mut current_word = Word::new();
             counts.push(*count);
 
-            for (is_first, is_last, c) in word.chars().with_first_and_last() {
-                let mut s = c.to_string();
-                if vocabulary.contains(s.as_str()) {
-                    // Found the initial char in the authorized alphabet
-
-                    // Add the `continuing_subword_prefix` if relevant
-                    if !is_first && let Some(prefix) = &self.continuing_subword_prefix {
-                        s.insert_str(0, prefix);
-                    }
-                    // Add the `end_of_word_suffix` if relevant
-                    if is_last && let Some(suffix) = &self.end_of_word_suffix {
-                        s.push_str(suffix);
-                    }
-
-                    // Insert the new formed string if necessary
-                    let id = vocabulary.intern(s.into());
-                    current_word.add(id, 1); // Training spans count retained symbols.
-                }
+            for id in ids.symbols(word) {
+                current_word.add(id, 1);
             }
             words.push(current_word);
-
-            if let Some(p) = p {
-                p.inc(1);
-            }
         }
 
         (words, counts)
@@ -433,14 +414,14 @@ impl BpeTrainer {
 
         let progress = self.setup_progress();
 
-        let mut vocabulary = Vocabulary::initialize(self, word_counts);
+        let (mut vocabulary, ids) = Vocabulary::initialize(self, word_counts, &progress);
 
         //
         // 3. Tokenize words
         //
-        self.update_progress(&progress, word_counts.len(), "Tokenize words");
-        let (mut words, counts) = self.tokenize_words(word_counts, &mut vocabulary, &progress);
+        let (mut words, counts) = self.tokenize_words(word_counts, &ids);
         self.finalize_progress(&progress, words.len(), "Tokenize words");
+        drop(ids);
 
         //
         // 4. Count pairs in words
@@ -923,5 +904,34 @@ mod trainer_contract_tests {
             .into()
         );
         assert_eq!(merges, [("a".into(), "b".into())]);
+    }
+
+    #[test]
+    fn weighted_alphabet_selection_preserves_wide_frequencies() {
+        let trainer = BpeTrainer::builder()
+            .show_progress(false)
+            .vocab_size(0)
+            .limit_alphabet(1)
+            .build();
+        for (input, expected) in [
+            (vec![("aaa", 1), ("b", 4)], "b"),
+            (
+                vec![
+                    ("ax", i64::MAX as u64),
+                    ("ay", i64::MAX as u64),
+                    ("az", i64::MAX as u64),
+                    ("b", i64::MAX as u64),
+                ],
+                "a",
+            ),
+        ] {
+            let words = input
+                .into_iter()
+                .map(|(word, weight)| (CompactString::from(word), weight))
+                .collect();
+            let (vocab, merges, _) = trainer.do_train(&words).unwrap();
+            assert_eq!(vocab, [(expected.into(), 0)].into());
+            assert!(merges.is_empty());
+        }
     }
 }
