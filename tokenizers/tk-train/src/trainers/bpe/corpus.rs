@@ -1,8 +1,9 @@
 //! Stable original-symbol coordinates for word-local training edits.
-#[path = "merge_changes.rs"]
-mod changes;
 #[path = "merge.rs"]
 mod merge;
+use merge::SelectedRuleIndex;
+#[path = "merge_changes.rs"]
+mod changes;
 use changes::NeighborScratchPool;
 
 use super::TrainingMode;
@@ -59,6 +60,7 @@ impl Word {
 pub(super) struct Corpus {
     tokens: Slots,
     neighbor_scratch: NeighborScratchPool,
+    selected_rules: SelectedRuleIndex,
     occurrence_spans: Option<Box<[AtomicUsize]>>,
     starts: Box<[usize]>,
     weight_runs: Box<[WeightRun]>,
@@ -174,6 +176,7 @@ impl<'input> CorpusPlan<'input> {
         Corpus {
             tokens,
             neighbor_scratch: NeighborScratchPool::default(),
+            selected_rules: SelectedRuleIndex::default(),
             occurrence_spans: None,
             starts: if self.mode == TrainingMode::Reuse || !self.ids.is_plain() {
                 self.starts
@@ -449,6 +452,7 @@ impl Corpus {
         Self {
             tokens,
             neighbor_scratch: NeighborScratchPool::default(),
+            selected_rules: SelectedRuleIndex::default(),
             occurrence_spans: None,
             weight_runs: starts
                 .iter()

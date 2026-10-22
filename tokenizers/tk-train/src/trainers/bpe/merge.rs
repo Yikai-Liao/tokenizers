@@ -1,6 +1,7 @@
 //! Joined merge preparation and disjoint endpoint writes.
 use super::changes::{EdgeSide, NeighborChanges, NeighborScratch};
 use super::{Corpus, EMPTY, PairChange, Positions, ProducerChanges, SelectedMerge, TrainingMode};
+use ahash::AHashMap;
 use itertools::Itertools;
 use smallvec::SmallVec;
 use std::ops::Range;
@@ -23,11 +24,11 @@ mod preparation_tests {
         corpus.activate((0, 1), 2);
         let positions = Positions::from_unsorted(vec![1, 3]).unwrap();
         let prepared = corpus
-            .prepare_fresh(SelectedMerge {
+            .prepare_fresh(vec![SelectedMerge {
                 pair: (0, 1),
                 merged_id: 2,
                 positions,
-            })
+            }])
             .unwrap()
             .into_iter()
             .next()
@@ -52,11 +53,11 @@ mod preparation_tests {
         );
         assert_eq!(corpus.symbol(1).id, 0);
         corpus
-            .merge(SelectedMerge {
+            .merge(vec![SelectedMerge {
                 pair: (0, 1),
                 merged_id: 2,
                 positions: Positions::from_unsorted(vec![1, 3]).unwrap(),
-            })
+            }])
             .unwrap();
         assert_eq!(corpus.read_word(1..5).collect::<Vec<_>>(), [2, 2]);
     }
@@ -83,11 +84,11 @@ mod reader_duplicate_tests {
             };
             corpus.activate((0, 1), 2);
             let prepared = corpus
-                .prepare_fresh(SelectedMerge {
+                .prepare_fresh(vec![SelectedMerge {
                     pair: (0, 1),
                     merged_id: 2,
                     positions: make(),
-                })
+                }])
                 .unwrap();
             assert_eq!(
                 prepared
@@ -97,11 +98,11 @@ mod reader_duplicate_tests {
                 [1, 3]
             );
             let changes = corpus
-                .merge(SelectedMerge {
+                .merge(vec![SelectedMerge {
                     pair: (0, 1),
                     merged_id: 2,
                     positions: make(),
-                })
+                }])
                 .unwrap();
             let total = changes
                 .iter()
@@ -202,16 +203,88 @@ impl FreshPreparation<'_> {
         Ok(())
     }
 }
+#[derive(Default)]
+pub(super) struct SelectedRuleIndex {
+    heads: Vec<u64>,
+    tails: Vec<u64>,
+    multiple: AHashMap<Pair, u32>,
+    pairs: Vec<Pair>,
+}
+impl SelectedRuleIndex {
+    const EMPTY: u64 = u64::MAX;
+    const MULTIPLE: u64 = u64::MAX - 1;
+
+    fn reset(&mut self, rules: &[SelectedMerge], domain: usize) {
+        for (head, tail) in self.pairs.drain(..) {
+            self.heads[head as usize] = Self::EMPTY;
+            self.tails[tail as usize] = Self::EMPTY;
+        }
+        self.heads.resize(domain, Self::EMPTY);
+        self.tails.resize(domain, Self::EMPTY);
+        self.multiple.clear();
+        for rule in rules {
+            self.pairs.push(rule.pair);
+            let head = &mut self.heads[rule.pair.0 as usize];
+            *head = if *head == Self::EMPTY {
+                (u64::from(rule.pair.1) << 32) | u64::from(rule.merged_id)
+            } else {
+                Self::MULTIPLE
+            };
+            let tail = &mut self.tails[rule.pair.1 as usize];
+            *tail = if *tail == Self::EMPTY {
+                (u64::from(rule.pair.0) << 32) | u64::from(rule.merged_id)
+            } else {
+                Self::MULTIPLE
+            };
+        }
+        for rule in rules {
+            if self.heads[rule.pair.0 as usize] == Self::MULTIPLE
+                || self.tails[rule.pair.1 as usize] == Self::MULTIPLE
+            {
+                self.multiple.insert(rule.pair, rule.merged_id);
+            }
+        }
+    }
+
+    fn left_selected(&self, corpus: &Corpus, before: usize, prior: u32) -> bool {
+        let tail = self.tails[prior as usize];
+        if before == 0 || tail == Self::EMPTY {
+            return false;
+        }
+        let previous = corpus.token(before - 1);
+        if tail == Self::MULTIPLE {
+            self.multiple.contains_key(&(previous, prior))
+        } else {
+            (tail >> 32) as u32 == previous
+        }
+    }
+
+    fn final_next(&self, corpus: &Corpus, after: usize, next: u32) -> Option<u32> {
+        let head = self.heads[next as usize];
+        if head == Self::EMPTY {
+            return None;
+        }
+        let following = corpus.token(after + corpus.fixed_id_span(next));
+        if head == Self::MULTIPLE {
+            self.multiple.get(&(next, following)).copied()
+        } else {
+            ((head >> 32) as u32 == following).then_some(head as u32)
+        }
+    }
+}
 impl Corpus {
     /// Preparation errors leave endpoints unchanged; all writers join before return.
     /// Index errors after writes discard the attempt without local rollback.
     pub(in crate::trainers::bpe) fn merge(
         &mut self,
-        rule: SelectedMerge,
+        selected: Vec<SelectedMerge>,
     ) -> Result<Vec<ProducerChanges>> {
         let prepared = match self.mode {
-            TrainingMode::Fresh => self.prepare_fresh(rule)?,
-            TrainingMode::Reuse => self.prepare_reuse(rule)?,
+            TrainingMode::Fresh => self.prepare_fresh(selected)?,
+            TrainingMode::Reuse => {
+                debug_assert_eq!(selected.len(), 1);
+                self.prepare_reuse(selected.into_iter().next().expect("reuse selects one rule"))?
+            }
         };
         Ok(prepared
             .into_maybe_par_iter()
@@ -253,54 +326,62 @@ impl Corpus {
             .collect::<Result<Vec<_>>>()?;
         Ok(prepared)
     }
-    fn prepare_fresh(&self, rule: SelectedMerge) -> Result<Vec<PreparedChunk>> {
-        let SelectedMerge {
-            pair,
-            merged_id: id,
-            positions,
-        } = rule;
-        let preparation = FreshPreparation {
-            corpus: self,
-            birth_pair_span_limit: self.birth_pair_span_limit.unwrap_or(usize::MAX),
-        };
-        let chunk = if cfg!(test) {
-            1
-        } else {
-            positions
-                .len()
-                .div_ceil(super::super::num_workers())
-                .clamp(1, 1 << 26)
-        };
-        if pair.0 != pair.1 {
-            let tasks: Vec<_> = positions.chunks(chunk).collect();
-            let complete = tasks.len() == 1;
-            let mut prepared: Vec<_> = tasks
+    fn prepare_fresh(&mut self, rules: Vec<SelectedMerge>) -> Result<Vec<PreparedChunk>> {
+        if rules[0].pair.0 != rules[0].pair.1 {
+            self.selected_rules.reset(&rules, self.id_count());
+            let preparation = FreshPreparation {
+                corpus: self,
+                birth_pair_span_limit: self.birth_pair_span_limit.unwrap_or(usize::MAX),
+            };
+            let selected = &self.selected_rules;
+            let total: usize = rules.iter().map(|rule| rule.positions.len()).sum();
+            let chunk = if cfg!(test) {
+                1
+            } else {
+                total
+                    .div_ceil(super::super::num_workers())
+                    .clamp(1, 1 << 26)
+            };
+            let mut tasks = Vec::new();
+            for rule in &rules {
+                let mut parts = rule.positions.chunks(chunk).peekable();
+                if let Some(first) = parts.next() {
+                    let complete = parts.peek().is_none();
+                    tasks.push((rule.pair, rule.merged_id, first, complete));
+                    tasks.extend(
+                        parts.map(|positions| (rule.pair, rule.merged_id, positions, false)),
+                    );
+                }
+            }
+            return tasks
                 .into_maybe_par_iter()
-                .map(|(previous, coordinates)| {
+                .map(|(pair, id, (previous, coordinates), complete)| {
                     let coordinates = coordinates.skip_while(move |&p| previous == Some(p));
                     self.neighbor_scratch.with(|scratch| {
-                        preparation.prepare(
+                        let mut prepared = preparation.prepare(
                             pair,
                             id,
                             coordinates,
                             scratch,
-                            |_, before, prior| {
-                                before != 0 && prior == pair.1 && self.token(before - 1) == pair.0
-                            },
-                            |after, next| {
-                                (next == pair.0
-                                    && self.token(after + self.fixed_id_span(next)) == pair.1)
-                                    .then_some(id)
-                            },
-                        )
+                            |_, before, prior| selected.left_selected(self, before, prior),
+                            |after, next| selected.final_next(self, after, next),
+                        )?;
+                        prepared.whole_rule = complete;
+                        Ok(prepared)
                     })
                 })
-                .collect::<Result<Vec<_>>>()?;
-            for chunk in &mut prepared {
-                chunk.whole_rule = complete;
-            }
-            return Ok(prepared);
+                .collect();
         }
+        debug_assert_eq!(rules.len(), 1);
+        let SelectedMerge {
+            pair,
+            merged_id: id,
+            positions,
+        } = rules.into_iter().next().expect("AA selects one rule");
+        let preparation = FreshPreparation {
+            corpus: self,
+            birth_pair_span_limit: self.birth_pair_span_limit.unwrap_or(usize::MAX),
+        };
         // Decide overlaps globally before fragmenting this rule's immutable snapshot.
         let mut accepted = Vec::new();
         let mut end = 0;

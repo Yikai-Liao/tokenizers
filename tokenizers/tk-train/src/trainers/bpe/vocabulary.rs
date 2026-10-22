@@ -112,8 +112,8 @@ impl Vocabulary {
         })
     }
 
-    pub(super) fn commit(&mut self, pair: Pair) {
-        self.merges.push(pair);
+    pub(super) fn commit(&mut self, pairs: Vec<Pair>) {
+        self.merges.extend(pairs);
     }
 
     pub(super) fn into_parts(self) -> (Vocab, Merges) {
