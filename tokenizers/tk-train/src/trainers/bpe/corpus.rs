@@ -4,8 +4,6 @@ mod merge;
 use super::positions::Positions;
 use super::vocabulary::InitialTokenIds;
 use super::word_counts::WordCountsView;
-use crate::progress::ProgressBar;
-use ahash::AHashMap;
 use rayon::prelude::*;
 use std::ops::Range;
 use std::sync::atomic::{AtomicU16, AtomicU32, AtomicUsize, Ordering};
@@ -91,6 +89,17 @@ impl<'input> CorpusPlan<'input> {
         if length > isize::MAX as usize / std::mem::size_of::<AtomicU32>() {
             return Err("BPE corpus exceeds resident allocation bounds".into());
         }
+        let mass = words
+            .iter()
+            .enumerate()
+            .map(|(i, (_, weight))| {
+                let end = starts.get(i + 1).copied().unwrap_or(length) - 1;
+                u128::from(**weight) * (end - starts[i]).saturating_sub(1) as u128
+            })
+            .sum::<u128>();
+        if mass > i64::MAX as u128 || words.iter().any(|(_, weight)| **weight > i64::MAX as u64) {
+            return Err("BPE identity-reuse weighted edge mass or word weight exceeds i64".into());
+        }
         // Descending weights put all frequency-one words in one contiguous run.
         // Its exclusive end is the next run's start, or the corpus end.
         let unit_weight_range = weight_runs
@@ -131,49 +140,6 @@ impl<'input> CorpusPlan<'input> {
             whole_words: false,
             id_metadata: self.ids.into_metadata(),
         }
-    }
-    pub(super) fn count_pairs(
-        &self,
-        p: &Option<ProgressBar>,
-    ) -> (AHashMap<Pair, i32>, AHashMap<Pair, Vec<u64>>) {
-        self.starts
-            .maybe_par_iter()
-            .enumerate()
-            .map(|(i, _)| {
-                let mut pair_counts = AHashMap::new();
-                let mut where_to_update: AHashMap<Pair, Vec<u64>> = AHashMap::new();
-
-                let chars: Vec<_> = self.ids.symbols(self.words[i].0).collect();
-                for (offset, window) in chars.windows(2).enumerate() {
-                    let cur_pair: Pair = (window[0], window[1]);
-
-                    // Initialize pair_counts and where_to_update for this pair if we just saw it
-                    // Then update counts
-                    *pair_counts.entry(cur_pair).or_default() += *self.words[i].1 as i32;
-                    where_to_update
-                        .entry(cur_pair)
-                        .or_default()
-                        .push((self.starts[i] + offset) as u64);
-                }
-
-                if let Some(p) = &p {
-                    p.inc(1);
-                }
-
-                (pair_counts, where_to_update)
-            })
-            .reduce(
-                || (AHashMap::new(), AHashMap::new()),
-                |(mut pair_counts, mut where_to_update), (pc, wtu)| {
-                    for (k, v) in pc {
-                        *pair_counts.entry(k).or_default() += v;
-                    }
-                    for (k, v) in wtu {
-                        where_to_update.entry(k).or_default().extend(v);
-                    }
-                    (pair_counts, where_to_update)
-                },
-            )
     }
 }
 
@@ -441,6 +407,98 @@ impl Corpus {
     }
 }
 
+pub(super) struct InitialEdge {
+    pub(super) pair: Pair,
+    pub(super) coordinate: u64,
+    pub(super) weight: u64,
+}
+pub(super) struct InitialChunk<'plan, 'input> {
+    plan: &'plan CorpusPlan<'input>,
+    words: Range<usize>,
+}
+
+impl<'input> CorpusPlan<'input> {
+    fn ranges(&self, slots: usize) -> Vec<Range<usize>> {
+        let mut ranges = Vec::new();
+        let mut begin = 0;
+        let n = self.word_count();
+        while begin < n {
+            let start = self.starts[begin];
+            let one_word_end = begin + 1;
+            // The last word must be admitted; otherwise take the whole suffix
+            // only when all remaining symbols and separators fit the slot budget.
+            let end = if one_word_end == n || self.length - start <= slots {
+                n
+            } else {
+                // The first word is admitted even when oversized. Each later
+                // boundary closes one additional word; an exact-budget end fits.
+                // Search starts after the first word's end. An exact hit at
+                // offset k closes k + 1 additional words; an insertion index
+                // counts only earlier boundaries whose spans fit the budget.
+                let additional_words = match slice_group_by::exponential_search_by(
+                    &self.starts[one_word_end + 1..],
+                    |&next| (next - start).cmp(&slots),
+                ) {
+                    Ok(exact) => exact + 1,
+                    Err(insertion) => insertion,
+                };
+                one_word_end + additional_words
+            };
+            ranges.push(begin..end);
+            begin = end;
+        }
+        ranges
+    }
+    pub(super) fn slot_count(&self) -> usize {
+        self.length
+    }
+    pub(super) fn chunks(&self, slots: usize) -> Vec<InitialChunk<'_, 'input>> {
+        self.ranges(slots)
+            .into_iter()
+            .map(|words| InitialChunk { plan: self, words })
+            .collect()
+    }
+}
+
+impl InitialChunk<'_, '_> {
+    /// Return the first visitor error; successful scans return word progress.
+    pub(super) fn scan(self, mut visit: impl FnMut(InitialEdge) -> Result<()>) -> Result<usize> {
+        let words = self.words.len();
+        for word in self.words {
+            let (text, &weight) = self.plan.words[word];
+            let mut symbols = self.plan.ids.symbols(text);
+            let Some(mut left) = symbols.next() else {
+                continue;
+            };
+            let mut coordinate = self.plan.starts[word];
+            // Either forwards fold once per word. After an error, decode only
+            // the remaining symbols of this word without visiting further edges.
+            symbols.fold(
+                Ok(()),
+                #[inline(always)]
+                |result, right| {
+                    result?;
+                    let result = visit(InitialEdge {
+                        pair: (left, right),
+                        coordinate: coordinate as u64,
+                        weight,
+                    });
+                    left = right;
+                    coordinate += 1;
+                    result
+                },
+            )?;
+        }
+        Ok(words)
+    }
+}
+
+impl CorpusPlan<'_> {
+    pub(super) fn token_count(&self) -> usize {
+        self.ids.token_count()
+    }
+}
+
 impl Slots {
     fn replace_pair(&self, start: usize, right: usize, after: usize, merged_id: u32) {
         self.set(start, merged_id);
@@ -470,6 +528,45 @@ mod merge_contract_tests {
             assert_eq!(slots.get(3), EMPTY);
             assert_eq!(slots.get(4), (bound - 1) as u32);
             assert_eq!(slots.get(5), EMPTY);
+        }
+    }
+
+    #[test]
+    fn initial_chunks_and_weight_runs_preserve_zero_and_unit_weights() {
+        use super::super::{BpeTrainer, vocabulary::Vocabulary, word_counts::WordCounts};
+        let words =
+            WordCounts::from_unique(vec![("ef".into(), 0), ("ab".into(), 9), ("cd".into(), 1)]);
+        let view = WordCountsView::from(&words);
+        let trainer = BpeTrainer::new(1, 64);
+        let (_, ids) = Vocabulary::initialize(&trainer, view, &None).unwrap();
+        let plan = CorpusPlan::build(view, ids, 64).unwrap();
+        assert_eq!(plan.slot_count(), 10);
+        for budget in [0, 2, 3, 6, usize::MAX] {
+            let mut edges = Vec::new();
+            let mut word_count = 0;
+            for chunk in plan.chunks(budget) {
+                word_count += chunk
+                    .scan(|edge| {
+                        edges.push((edge.pair, edge.coordinate, edge.weight));
+                        Ok(())
+                    })
+                    .unwrap();
+            }
+            assert_eq!(word_count, 3);
+            assert_eq!(edges, [((0, 1), 1, 9), ((2, 3), 4, 1), ((4, 5), 7, 0)]);
+        }
+        let corpus = plan.materialize();
+        let expected = [
+            (1, 9, 4),
+            (2, 9, 4),
+            (4, 1, 7),
+            (5, 1, 7),
+            (7, 0, 10),
+            (8, 0, 10),
+        ];
+        for (position, weight, end) in expected {
+            let actual = corpus.weight(position);
+            assert_eq!((actual.weight, actual.end), (weight, end));
         }
     }
 }
