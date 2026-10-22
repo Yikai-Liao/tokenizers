@@ -1,6 +1,11 @@
 //! Stable original-symbol coordinates for word-local training edits.
+#[path = "merge_changes.rs"]
+mod changes;
 #[path = "merge.rs"]
 mod merge;
+use changes::NeighborScratchPool;
+
+use super::TrainingMode;
 use super::positions::Positions;
 use super::vocabulary::InitialTokenIds;
 use super::word_counts::WordCountsView;
@@ -23,19 +28,13 @@ struct Symbol {
 /// Owns mutable word storage and the frequency attached to each word domain.
 pub(super) struct Corpus {
     tokens: Slots,
+    neighbor_scratch: NeighborScratchPool,
     occurrence_spans: Option<Box<[AtomicUsize]>>,
     starts: Box<[usize]>,
     weight_runs: Box<[WeightRun]>,
     unit_weight_range: Option<Range<usize>>,
-    whole_words: bool,
+    mode: TrainingMode,
     id_metadata: Vec<usize>,
-}
-
-pub(super) struct WordChange {
-    pub(super) pair: Pair,
-    pub(super) delta: i32,
-    pub(super) coordinate: u64,
-    pub(super) weight: u64,
 }
 
 /// Borrowed layout and initial IDs; resident endpoints are deferred until counting joins.
@@ -47,12 +46,14 @@ pub(super) struct CorpusPlan<'input> {
     length: usize,
     ids: InitialTokenIds,
     slot_bound: usize,
+    mode: TrainingMode,
 }
 impl<'input> CorpusPlan<'input> {
     pub(super) fn build(
         words: WordCountsView<'input>,
         ids: InitialTokenIds,
         target_vocab_size: usize,
+        mode: TrainingMode,
     ) -> Result<Self> {
         let mut words: Vec<_> = words.iter().collect();
         if parallelism::get_parallelism() {
@@ -97,7 +98,10 @@ impl<'input> CorpusPlan<'input> {
                 u128::from(**weight) * (end - starts[i]).saturating_sub(1) as u128
             })
             .sum::<u128>();
-        if mass > i64::MAX as u128 || words.iter().any(|(_, weight)| **weight > i64::MAX as u64) {
+        if (mode == TrainingMode::Reuse || !ids.is_plain())
+            && (mass > i64::MAX as u128
+                || words.iter().any(|(_, weight)| **weight > i64::MAX as u64))
+        {
             return Err("BPE identity-reuse weighted edge mass or word weight exceeds i64".into());
         }
         // Descending weights put all frequency-one words in one contiguous run.
@@ -115,6 +119,7 @@ impl<'input> CorpusPlan<'input> {
             ids,
             length,
             slot_bound,
+            mode,
         })
     }
     pub(super) fn word_count(&self) -> usize {
@@ -133,11 +138,12 @@ impl<'input> CorpusPlan<'input> {
             });
         Corpus {
             tokens,
+            neighbor_scratch: NeighborScratchPool::default(),
             occurrence_spans: None,
             starts: self.starts,
             weight_runs: self.weight_runs,
             unit_weight_range: self.unit_weight_range,
-            whole_words: false,
+            mode: self.mode,
             id_metadata: self.ids.into_metadata(),
         }
     }
@@ -233,6 +239,7 @@ impl Corpus {
         }
         Self {
             tokens,
+            neighbor_scratch: NeighborScratchPool::default(),
             occurrence_spans: None,
             weight_runs: starts
                 .iter()
@@ -241,7 +248,7 @@ impl Corpus {
                 .collect(),
             unit_weight_range: None,
             starts: starts.into_boxed_slice(),
-            whole_words: false,
+            mode: TrainingMode::Fresh,
             id_metadata: vec![
                 1;
                 values
@@ -262,7 +269,7 @@ impl Corpus {
     fn len(&self) -> usize {
         self.tokens.len()
     }
-    fn has_been_activated(&self, id: u32) -> bool {
+    pub(super) fn has_been_activated(&self, id: u32) -> bool {
         self.id_metadata
             .get(id as usize)
             .is_some_and(|&span| span != 0)
@@ -498,6 +505,46 @@ impl CorpusPlan<'_> {
     }
 }
 
+impl Corpus {
+    fn occurrence_span(&self, p: usize) -> usize {
+        self.symbol(p).span
+    }
+    fn match_at(&self, position: usize, pair: Pair) -> Option<Range<usize>> {
+        if self.token(position) != pair.0 {
+            return None;
+        }
+        let span = self.occurrence_span(position);
+        let right = position + span;
+        // Reject an inactive left endpoint or a right start outside the plane
+        // before reading it; holes are skipped by the left occurrence's span.
+        if span == 0 || right >= self.len() || self.token(right) != pair.1 {
+            return None;
+        }
+        let right_span = self.occurrence_span(right);
+        let after = right + right_span;
+        // The right occurrence must be active and its exclusive end must remain
+        // resident, because preparation reads the neighbor at that coordinate.
+        (right_span != 0 && after < self.len()).then_some(position..after)
+    }
+}
+
+pub(super) struct PairChange<P> {
+    pub(super) removed: Pair,
+    pub(super) born: Pair,
+    pub(super) removed_weight: u64,
+    pub(super) born_weight: u64,
+    pub(super) positions: P,
+}
+pub(super) struct ProducerChanges {
+    pub(super) changes: Vec<PairChange<Positions>>,
+}
+
+impl CorpusPlan<'_> {
+    pub(super) fn mode(&self) -> TrainingMode {
+        self.mode
+    }
+}
+
 impl Slots {
     fn replace_pair(&self, start: usize, right: usize, after: usize, merged_id: u32) {
         self.set(start, merged_id);
@@ -539,7 +586,7 @@ mod merge_contract_tests {
         let trainer = BpeTrainer::new(1, 64);
         let (_, ids) =
             Vocabulary::initialize(&trainer, view, &trainer.select_alphabet(view), &None).unwrap();
-        let plan = CorpusPlan::build(view, ids, 64).unwrap();
+        let plan = CorpusPlan::build(view, ids, 64, TrainingMode::Fresh).unwrap();
         assert_eq!(plan.slot_count(), 10);
         for budget in [0, 2, 3, 6, usize::MAX] {
             let mut edges = Vec::new();

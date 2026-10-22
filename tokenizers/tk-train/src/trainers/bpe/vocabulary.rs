@@ -240,7 +240,7 @@ impl InitialTokenIds {
             (true, true) => Affix::Both,
         }
     }
-    fn is_plain(&self) -> bool {
+    pub(super) fn is_plain(&self) -> bool {
         // The plain lookup path is valid only when neither decorator is active.
         !self.prefix && !self.suffix
     }

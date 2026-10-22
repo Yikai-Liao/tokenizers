@@ -5,10 +5,10 @@ mod index;
 mod positions;
 use index::PairIndex;
 mod feed;
-use corpus::CorpusPlan;
+use corpus::{Corpus, CorpusPlan};
 mod vocabulary;
 mod word_counts;
-use vocabulary::Vocabulary;
+use vocabulary::{Alphabet, Vocabulary};
 
 #[cfg(feature = "parity-aware-bpe")]
 pub mod parity_trainer;
@@ -294,6 +294,7 @@ impl BpeTrainer {
     /// Returns an error if checked position encoding or storage reservation fails.
     /// Initial and merged token identities must fit the supported ID domain.
     /// Checked corpus layouts and weighted pair counts must fit their numeric domains.
+    /// Identity reuse and decorated-symbol paths also require signed-count bounds.
     pub fn train_vocab(&self) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
         self.train_counts(WordCountsView::from(&self.words))
     }
@@ -329,68 +330,100 @@ impl BpeTrainer {
         self.train_counts(WordCountsView::from(word_counts))
     }
 
-    fn train_counts(
-        &self,
-        word_counts: WordCountsView<'_>,
-    ) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
-        let max_token_length: usize = self.max_token_length.unwrap_or(usize::MAX);
-
+    fn train_counts(&self, words: WordCountsView<'_>) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
+        let alphabet = self.select_alphabet(words);
         let progress = self.setup_progress();
-
-        let alphabet = self.select_alphabet(word_counts);
-        let (mut vocabulary, ids) =
-            Vocabulary::initialize(self, word_counts, &alphabet, &progress)?;
-
-        //
-        // 3. Tokenize words
-        //
-        let plan = CorpusPlan::build(word_counts, ids, self.vocab_size)?;
-        self.finalize_progress(&progress, plan.word_count(), "Tokenize words");
-
-        //
-        // 4. Count pairs in words
-        //
-        self.update_progress(&progress, plan.word_count(), "Count pairs");
-        let mut index = PairIndex::build(&plan, self.min_frequency, &progress)?;
-        self.finalize_progress(&progress, plan.word_count(), "Count pairs");
-
-        //
-        // 5. Do merges
-        //
-        let mut corpus = plan.materialize();
-        self.update_progress(&progress, self.vocab_size, "Compute merges");
-        let mut completed = 0;
-        loop {
-            // Stop as soon as we have a big enough vocabulary
-            if vocabulary.len() >= self.vocab_size {
-                break;
+        let outcome = self.train_attempt(words, TrainingMode::Fresh, &alphabet, &progress)?;
+        let outcome = match outcome {
+            AttemptOutcome::RestartForReuse => {
+                self.train_attempt(words, TrainingMode::Reuse, &alphabet, &progress)?
             }
+            complete => complete,
+        };
+        match outcome {
+            AttemptOutcome::Complete(vocabulary) => {
+                let (vocab, merges) = vocabulary.into_parts();
+                Ok((vocab, merges, self.special_tokens.clone()))
+            }
+            AttemptOutcome::RestartForReuse => {
+                Err("BPE identity-reuse attempt requested another restart".into())
+            }
+        }
+    }
+    fn train_attempt(
+        &self,
+        words: WordCountsView<'_>,
+        mode: TrainingMode,
+        alphabet: &Alphabet,
+        progress: &Option<ProgressBar>,
+    ) -> Result<AttemptOutcome> {
+        // 1. Resolve the vocabulary and tokenize borrowed input into a corpus plan.
+        let (vocabulary, ids) = Vocabulary::initialize(self, words, alphabet, progress)?;
+        let plan = CorpusPlan::build(words, ids, self.vocab_size, mode)?;
+        self.finalize_progress(progress, plan.word_count(), "Tokenize words");
 
+        // 2. Freeze initial pairs first: their temporary counting buffers retire
+        // before resident corpus slots are allocated. Even a zero-merge call must
+        // run the plan's numeric checks and the index's checked pair counting.
+        // The zero-merge path never allocates a resident corpus.
+        self.update_progress(progress, plan.word_count(), "Count pairs");
+        let index = PairIndex::build(&plan, self.min_frequency, progress)?;
+        self.finalize_progress(progress, plan.word_count(), "Count pairs");
+
+        self.update_progress(progress, self.vocab_size, "Compute merges");
+        if vocabulary.len() < self.vocab_size {
+            return self.merge_attempt(vocabulary, plan.materialize(), index, mode, progress);
+        }
+        index.retire();
+        drop(plan);
+        self.finalize_progress(progress, 0, "Compute merges");
+        Ok(AttemptOutcome::Complete(vocabulary))
+    }
+
+    fn merge_attempt(
+        &self,
+        mut vocabulary: Vocabulary,
+        mut corpus: Corpus,
+        mut index: PairIndex,
+        mode: TrainingMode,
+        progress: &Option<ProgressBar>,
+    ) -> Result<AttemptOutcome> {
+        // Argument order also releases index before corpus on early returns.
+        let mut completed = 0;
+        let max_token_length = self.max_token_length.unwrap_or(usize::MAX);
+        while vocabulary.len() < self.vocab_size {
             let Some(top) = index.take() else { break };
 
             let resolved = vocabulary.resolve(top.priority.pair())?;
+            if mode == TrainingMode::Fresh
+                && resolved.already_in_vocabulary
+                && corpus.has_been_activated(resolved.merged_id)
+            {
+                self.finalize_progress(progress, completed, "Compute merges");
+                return Ok(AttemptOutcome::RestartForReuse);
+            }
             let changes = corpus.merge(
                 top.priority.pair(),
                 resolved.merged_id,
                 max_token_length,
                 &top.positions,
-                resolved.already_in_vocabulary,
-            );
+            )?;
             index.commit(changes)?;
 
             vocabulary.commit(top.priority.pair());
             completed += 1;
-            if let Some(p) = &progress {
+            if let Some(p) = progress {
                 p.inc(1);
             }
             self.emit_json_progress("Compute merges", completed, self.vocab_size);
         }
-        self.finalize_progress(&progress, completed, "Compute merges");
-
         index.retire();
         drop(corpus);
-        let (vocab, merges) = vocabulary.into_parts();
-        Ok((vocab, merges, self.special_tokens.clone()))
+
+        // 4. Retire attempt storage before the consumer publishes output strings.
+        // Only success carries committed merge history out of the attempt.
+        self.finalize_progress(progress, completed, "Compute merges");
+        Ok(AttemptOutcome::Complete(vocabulary))
     }
 }
 
@@ -727,8 +760,41 @@ mod weighted_count_tests {
             merges,
             [("a".into(), "b".into()), ("ab".into(), "ab".into())]
         );
-        let words = [("abab".into(), i64::MAX as u64)].into();
+        let words = [("abab".into(), u64::MAX)].into();
         assert!(trainer.do_train(&words).is_err());
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum TrainingMode {
+    Fresh,
+    Reuse,
+}
+enum AttemptOutcome {
+    Complete(Vocabulary),
+    RestartForReuse,
+}
+
+#[cfg(test)]
+mod fresh_count_tests {
+    use super::*;
+    #[test]
+    fn fresh_pair_accepts_the_full_unsigned_weight() {
+        let trainer = BpeTrainer::builder()
+            .vocab_size(3)
+            .min_frequency(1)
+            .show_progress(false)
+            .build();
+        let words = [("ab".into(), u64::MAX)].into();
+        let (_, merges, _) = trainer.do_train(&words).unwrap();
+        assert_eq!(merges, [("a".into(), "b".into())]);
+        // A reserved multi-character special ID has never had occurrences.
+        // Reusing it must retain unsigned counting instead of restarting.
+        let mut reserved = trainer.clone();
+        reserved.vocab_size = 4;
+        reserved.special_tokens = vec![AddedToken::from("ab", true)];
+        let (_, merges, _) = reserved.do_train(&words).unwrap();
+        assert_eq!(merges, [("a".into(), "b".into())]);
     }
 }
 
@@ -752,6 +818,24 @@ mod local_edit_tests {
                 ("abab".into(), "a".into())
             ]
         );
+    }
+}
+
+#[cfg(test)]
+mod zero_merge_tests {
+    use super::*;
+    #[test]
+    fn zero_merge_calls_still_check_initial_pair_counts() {
+        let trainer = BpeTrainer::builder()
+            .vocab_size(0)
+            .show_progress(false)
+            .build();
+        let words = [("ab".into(), 1)].into();
+        let (vocab, merges, _) = trainer.do_train(&words).unwrap();
+        assert_eq!(vocab.len(), 2);
+        assert!(merges.is_empty());
+        let words = [("abab".into(), u64::MAX)].into();
+        assert!(trainer.do_train(&words).is_err());
     }
 }
 
@@ -906,16 +990,8 @@ mod trainer_contract_tests {
             .limit_alphabet(1)
             .build();
         for (input, expected) in [
-            (vec![("aaa", 1), ("b", 4)], "b"),
-            (
-                vec![
-                    ("ax", i64::MAX as u64),
-                    ("ay", i64::MAX as u64),
-                    ("az", i64::MAX as u64),
-                    ("b", i64::MAX as u64),
-                ],
-                "a",
-            ),
+            ([("aaa", 1), ("b", 4)], "b"),
+            ([("aa", u64::MAX), ("b", u64::MAX)], "a"),
         ] {
             let words = input
                 .into_iter()
@@ -925,6 +1001,30 @@ mod trainer_contract_tests {
             assert_eq!(vocab, [(expected.into(), 0)].into());
             assert!(merges.is_empty());
         }
+    }
+}
+
+#[cfg(test)]
+mod signed_domain_tests {
+    use super::*;
+
+    #[test]
+    fn decorated_inputs_check_signed_mass_even_without_merges() {
+        let trainer = BpeTrainer::builder()
+            .show_progress(false)
+            .vocab_size(0)
+            .continuing_subword_prefix("#".into())
+            .build();
+        let edge_weight = i64::MAX as u64 / 3;
+        let words = [("abab".into(), edge_weight)].into();
+        assert!(trainer.do_train(&words).is_ok());
+        let words = [("abab".into(), edge_weight + 1)].into();
+        assert!(trainer.do_train(&words).is_err());
+        // A one-symbol word has no edges, but its signed word weight is checked.
+        let words = [("a".into(), i64::MAX as u64)].into();
+        assert!(trainer.do_train(&words).is_ok());
+        let words = [("a".into(), i64::MAX as u64 + 1)].into();
+        assert!(trainer.do_train(&words).is_err());
     }
 }
 

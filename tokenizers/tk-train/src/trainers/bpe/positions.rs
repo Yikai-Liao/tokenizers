@@ -115,6 +115,7 @@ impl Default for Positions {
     }
 }
 impl Positions {
+    #[cfg(test)]
     pub(super) fn from_unsorted(mut values: Vec<u64>) -> Result<Self> {
         values.sort_unstable();
         let mut positions = Self::default();
@@ -131,18 +132,84 @@ impl Positions {
         }
     }
     pub(super) fn iter(&self) -> impl Iterator<Item = u64> + '_ {
-        self.leaves().iter().flat_map(Leaf::cursor)
+        read(self.leaves(), 0)
     }
 }
+
 impl Leaf {
     fn len(&self) -> usize {
-        // Stored counts include the extra one that keeps the NonZero niche;
-        // remove it to recover the logical item count validated during append.
+        // Remove the extra count that supplies the NonZero niche.
         (self.len.get() - 1) as usize
     }
+
+    fn reserved_directory_bytes(len: usize) -> Result<usize> {
+        let groups = len.div_ceil(RESTART);
+        // One block needs no directory; later capacities grow by powers of two,
+        // so appending each restart does not relocate the data area.
+        if groups <= 1 {
+            return Ok(0);
+        }
+        groups
+            .checked_next_power_of_two()
+            .and_then(|capacity| capacity.checked_mul(OFFSET_BYTES))
+            .ok_or_else(|| "BPE position layout exceeds usize".into())
+    }
+
+    // A single block has no physical directory. Expose only valid entries,
+    // including entry zero, rather than the reserved power-of-two capacity.
+    fn directory(&self) -> &[[u8; OFFSET_BYTES]] {
+        let groups = self.len().div_ceil(RESTART);
+        if groups <= 1 {
+            return &[];
+        }
+        // Skip the eight-byte tail cache and expose one offset per live block;
+        // unused reserved directory capacity is outside this slice.
+        self.bytes[8..8 + groups * OFFSET_BYTES].as_chunks().0
+    }
+
+    // Nonempty leaves store the tail cache before the reserved directory.
+    fn data(&self) -> &[u8] {
+        // Payload begins after the tail cache and the full reserved directory,
+        // including directory entries not yet logically populated.
+        let data_start =
+            8 + Self::reserved_directory_bytes(self.len()).expect("validated leaf layout");
+        &self.bytes[data_start..]
+    }
+
+    fn first(&self) -> u64 {
+        codec::read_absolute(self.data())
+    }
+
     fn last(&self) -> u64 {
         codec::read_absolute(&self.bytes)
     }
+
+    #[inline(always)]
+    fn push(&mut self, position: u64) -> Result<()> {
+        let len = self.len();
+        let encoded_len = self
+            .len
+            .checked_add(1)
+            .ok_or("BPE position count exceeds u64")?;
+        // Decode the proposed count before mutating bytes, so an item count
+        // that fits u64 but exceeds resident usize bounds fails atomically.
+        let next_len = usize::try_from(encoded_len.get() - 1)?;
+        if len.is_multiple_of(RESTART) {
+            self.push_restart(position, next_len)?;
+        } else {
+            let previous = self.last();
+            let gap = position
+                .checked_sub(previous)
+                .ok_or("BPE positions are not sorted")?;
+            let width = codec::gap_width(gap);
+            self.reserve(width)?;
+            codec::append_gap(&mut self.bytes, gap);
+            self.bytes[..8].copy_from_slice(&position.to_le_bytes());
+        }
+        self.len = encoded_len;
+        Ok(())
+    }
+
     #[inline(always)]
     fn reserve(&mut self, additional: usize) -> Result<()> {
         let new_size = self
@@ -163,40 +230,85 @@ impl Leaf {
         }
         Ok(())
     }
-    #[inline(always)]
-    fn push(&mut self, position: u64) -> Result<()> {
+
+    #[inline(never)]
+    fn push_restart(&mut self, position: u64, next_len: usize) -> Result<()> {
         let len = self.len();
-        let encoded_len = self
-            .len
-            .checked_add(1)
-            .ok_or("BPE position count exceeds u64")?;
-        usize::try_from(encoded_len.get() - 1)?;
+        // Empty leaves have no cached tail to compare. Every later absolute
+        // restart seed must preserve the same nondecreasing order as gaps.
         if len != 0 && position < self.last() {
             return Err("BPE positions are not sorted".into());
         }
-        if len.is_multiple_of(RESTART) {
-            self.reserve(if len == 0 { 16 } else { 8 })?;
-            if len == 0 {
-                self.bytes.resize(8, 0);
-            }
-            self.bytes.extend_from_slice(&position.to_le_bytes());
-        } else {
-            let gap = position - self.last();
-            self.reserve(codec::gap_width(gap))?;
-            codec::append_gap(&mut self.bytes, gap);
+        // Directory growth shifts the data area's origin; this displacement
+        // is separate from the bytes needed for the new absolute restart seed.
+        let old_data_start = 8 + Self::reserved_directory_bytes(len)?;
+        let new_data_start = 8 + Self::reserved_directory_bytes(next_len)?;
+        let growth = new_data_start - old_data_start;
+        let data_end = self.bytes.len();
+        // The first item needs both an eight-byte tail cache and an eight-byte
+        // seed (16 bytes); later restarts add only a seed (8), plus directory growth.
+        self.reserve(
+            growth
+                .checked_add(if len == 0 { 16 } else { 8 })
+                .ok_or("BPE position layout exceeds usize")?,
+        )?;
+        if len == 0 {
+            self.bytes.resize(8, 0);
+        } else if growth != 0 {
+            self.bytes.resize(data_end + growth, 0);
+            // Entries are relative to the data area and survive this relocation.
+            self.bytes
+                .copy_within(old_data_start..data_end, new_data_start);
+            self.bytes[old_data_start..new_data_start].fill(0);
         }
+        // A later restart writes a directory entry only when a directory exists.
+        // len / RESTART is its block ordinal; the stored offset excludes headers
+        // and still points at the old payload end after directory relocation.
+        if len != 0 && new_data_start > 8 {
+            let entry = 8 + (len / RESTART) * OFFSET_BYTES;
+            self.bytes[entry..entry + OFFSET_BYTES]
+                .copy_from_slice(&(data_end - old_data_start).to_le_bytes());
+        }
+        self.bytes.extend_from_slice(&position.to_le_bytes());
         self.bytes[..8].copy_from_slice(&position.to_le_bytes());
-        self.len = encoded_len;
         Ok(())
     }
-    fn cursor(&self) -> Cursor<'_> {
-        Cursor::new(if self.len() == 0 {
-            &[]
+
+    // Chunk boundaries and searches supply an aligned restart position.
+    fn cursor(&self, start: usize) -> Cursor<'_> {
+        if start == self.len() {
+            return Cursor::new(&[]);
+        }
+        // The first block starts at data offset zero even without a directory.
+        // Later aligned starts select their block's cached byte offset.
+        let offset = if start == 0 {
+            0
         } else {
-            &self.bytes[8..]
-        })
+            usize::from_le_bytes(self.directory()[start / RESTART])
+        };
+        debug_assert!(start.is_multiple_of(RESTART));
+        // The slice begins at an absolute seed, so decoder indices are local.
+        Cursor::new(&self.data()[offset..])
+    }
+
+    fn restart_before(&self, target: u64) -> usize {
+        let directory = self.directory();
+        if directory.is_empty() {
+            return 0;
+        }
+        let data = self.data();
+        // Strict comparison and fallback retain duplicates in the prior block.
+        // Read seeds through relative byte offsets, then convert the preceding
+        // block ordinal into an item index. Saturation keeps the first block at zero.
+        directory
+            .partition_point(|entry| {
+                codec::read_absolute(&data[usize::from_le_bytes(*entry)..]) < target
+            })
+            .saturating_sub(1)
+            * RESTART
     }
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -216,10 +328,7 @@ mod tests {
             positions.push(length).unwrap();
             positions.push(u64::MAX).unwrap();
             assert_eq!(
-                positions
-                    .iter()
-                    .filter(|&coordinate| coordinate >= length)
-                    .collect::<Vec<_>>(),
+                positions.iter_from(length).collect::<Vec<_>>(),
                 [length, length, u64::MAX]
             );
         }
@@ -276,11 +385,6 @@ impl Positions {
     }
 }
 
-impl Leaf {
-    fn first(&self) -> u64 {
-        codec::read_absolute(&self.bytes[8..])
-    }
-}
 #[cfg(test)]
 mod root_tests {
     use super::*;
@@ -296,5 +400,127 @@ mod root_tests {
         let mut root = Positions::concat([make(vec![1]), make(vec![2])]).unwrap();
         assert!(root.push(3).is_err());
         assert_eq!(root.iter().collect::<Vec<_>>(), [1, 2]);
+    }
+}
+
+const OFFSET_BYTES: usize = std::mem::size_of::<usize>();
+
+fn read(leaves: &[Leaf], mut start: usize) -> impl Iterator<Item = u64> + '_ {
+    leaves.iter().flat_map(move |leaf| {
+        let cursor = leaf.cursor(start);
+        start = 0;
+        cursor
+    })
+}
+
+impl Positions {
+    pub(super) fn chunks(
+        &self,
+        target_len: usize,
+    ) -> impl Iterator<Item = (Option<u64>, impl Iterator<Item = u64> + Send + '_)> + '_ {
+        // Split large leaves at restart boundaries and group small leaves;
+        // every chunk retains its already located starting leaf.
+        let target = target_len.max(1);
+        let leaves = self.leaves();
+        let mut remaining = leaves;
+        let mut start = 0;
+        std::iter::from_fn(move || {
+            let (first, begin) = (remaining, start);
+            let previous = if begin != 0 {
+                first[0].cursor(begin - RESTART).take(RESTART).last()
+            } else {
+                (leaves.len() - first.len())
+                    .checked_sub(1)
+                    .map(|i| leaves[i].last())
+            };
+            let mut count = 0;
+            while let Some(leaf) = remaining.first() {
+                // Fill the remaining chunk budget with whole restart blocks:
+                // ceil(max(target - count, 1) / RESTART) * RESTART. Clamp at
+                // this leaf's tail; saturating arithmetic handles huge targets.
+                let take = target
+                    .saturating_sub(count)
+                    .max(1)
+                    .div_ceil(RESTART)
+                    .saturating_mul(RESTART)
+                    .min(leaf.len() - start);
+                start += take;
+                count += take;
+                if start == leaf.len() {
+                    remaining = &remaining[1..];
+                    start = 0;
+                }
+                if count >= target {
+                    break;
+                }
+            }
+            // Include every fully consumed leaf, plus the current leaf only
+            // when part of it was consumed. end is an exclusive leaf index.
+            let end = first.len() - remaining.len() + usize::from(start != 0);
+            (count != 0).then(|| (previous, read(&first[..end], begin).take(count)))
+        })
+    }
+    pub(super) fn iter_from(&self, target: u64) -> impl Iterator<Item = u64> + '_ {
+        let leaves = self.leaves();
+        // Empty leaves have no readable tail; nonempty tails strictly below
+        // target can be skipped. Equality must retain duplicates in that leaf.
+        let index = leaves.partition_point(|leaf| leaf.len() == 0 || leaf.last() < target);
+        let start = leaves
+            .get(index)
+            .map_or(0, |leaf| leaf.restart_before(target));
+        // Search and skip share one cursor, including equal values across restarts.
+        read(&leaves[index..], start).skip_while(move |&position| position < target)
+    }
+}
+
+impl Positions {
+    pub(super) fn merge(fragments: impl IntoIterator<Item = Self>) -> Result<Self> {
+        let fragments: SmallVec<[Self; 1]> = fragments.into_iter().collect();
+        if fragments.len() == 1 {
+            return Ok(fragments.into_iter().next().expect("one fragment"));
+        }
+        use itertools::Itertools;
+        let mut positions = Self::default();
+        for position in fragments.iter().map(Self::iter).kmerge() {
+            positions.push(position)?;
+        }
+        Ok(positions)
+    }
+}
+
+#[cfg(test)]
+mod grouped_reader_tests {
+    use super::*;
+    #[test]
+    fn grouped_chunks_preserve_payload_and_actual_predecessors() {
+        let mut values: Vec<u64> = (0..128)
+            .chain(std::iter::repeat_n(128, 300))
+            .chain(129..700)
+            .collect();
+        values.push(u64::MAX);
+        let positions = Positions::concat(
+            [&values[..96], &values[96..333], &values[333..]]
+                .into_iter()
+                .map(|v| Positions::from_unsorted(v.to_vec()).unwrap()),
+        )
+        .unwrap();
+        for width in [1, 127, 128, 129, 512, usize::MAX] {
+            let mut decoded = Vec::new();
+            for (previous, chunk) in positions.chunks(width) {
+                assert_eq!(previous, decoded.last().copied());
+                decoded.extend(chunk);
+            }
+            assert_eq!(decoded, values);
+        }
+        for target in [0, 127, 128, 129, u64::MAX] {
+            assert_eq!(
+                positions.iter_from(target).collect::<Vec<_>>(),
+                values
+                    .iter()
+                    .copied()
+                    .filter(|&v| v >= target)
+                    .collect::<Vec<_>>()
+            );
+        }
     }
 }
