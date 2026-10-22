@@ -22,6 +22,8 @@ name = "tk_train"
 path = "src/lib.rs"
 
 [dependencies]
+fixedbitset = "0.5.7"
+indexmap = "2.14"
 scc = "=3.8.8"
 tk-encode = { path = "../tk-encode", version = "0.1.0-dev.2", default-features = false, features = [
   "parallelism",

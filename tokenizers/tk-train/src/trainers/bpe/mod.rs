@@ -1,7 +1,9 @@
 #![allow(clippy::map_entry)]
 
 mod feed;
+mod vocabulary;
 mod word_counts;
+use vocabulary::{InitialTokenIds, Vocabulary};
 
 #[cfg(feature = "parity-aware-bpe")]
 pub mod parity_trainer;
@@ -22,7 +24,9 @@ use word_counts::{WordCounts, WordCountsView};
 // inference crate. `PipelineBPE` is the only BPE left; a trainer reaches it through
 // `from_config`, the same serde-free door a reader walks through, because its fields are
 // private to `tk-encode`.
-use word::{WithFirstLastIterator, Word};
+#[cfg(feature = "parity-aware-bpe")]
+use word::WithFirstLastIterator;
+use word::Word;
 
 use crate::progress::{ProgressBar, ProgressFormat, ProgressStyle};
 use tk_encode::Result;
@@ -57,46 +61,16 @@ impl Ord for Merge {
     }
 }
 
-struct Config {
-    min_frequency: u64,
-    vocab_size: usize,
-    show_progress: bool,
-    progress_format: ProgressFormat,
-    special_tokens: Vec<AddedToken>,
-    limit_alphabet: Option<usize>,
-    initial_alphabet: AHashSet<char>,
-    continuing_subword_prefix: Option<String>,
-    end_of_word_suffix: Option<String>,
-    max_token_length: Option<usize>,
-}
-
 /// A `BpeTrainerBuilder` can be used to create a `BpeTrainer` with a custom
 /// configuration.
+#[derive(Default)]
 pub struct BpeTrainerBuilder {
-    config: Config,
-}
-
-impl Default for BpeTrainerBuilder {
-    fn default() -> Self {
-        Self {
-            config: Config {
-                min_frequency: 0,
-                vocab_size: 30000,
-                show_progress: true,
-                progress_format: ProgressFormat::default(),
-                special_tokens: vec![],
-                limit_alphabet: None,
-                initial_alphabet: AHashSet::new(),
-                continuing_subword_prefix: None,
-                end_of_word_suffix: None,
-                max_token_length: None,
-            },
-        }
-    }
+    trainer: BpeTrainer,
 }
 
 impl BpeTrainerBuilder {
     /// Constructs a new `BpeTrainerBuilder`
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
@@ -104,21 +78,21 @@ impl BpeTrainerBuilder {
     /// Set the expected minimum frequency
     #[must_use]
     pub fn min_frequency(mut self, frequency: u64) -> Self {
-        self.config.min_frequency = frequency;
+        self.trainer.min_frequency = frequency;
         self
     }
 
     /// Set the vocabulary size
     #[must_use]
     pub fn vocab_size(mut self, size: usize) -> Self {
-        self.config.vocab_size = size;
+        self.trainer.vocab_size = size;
         self
     }
 
     /// Set whether to show progress
     #[must_use]
     pub fn show_progress(mut self, show: bool) -> Self {
-        self.config.show_progress = show;
+        self.trainer.show_progress = show;
         self
     }
 
@@ -130,68 +104,60 @@ impl BpeTrainerBuilder {
     /// - `Silent`: No progress output
     #[must_use]
     pub fn progress_format(mut self, format: ProgressFormat) -> Self {
-        self.config.progress_format = format;
+        self.trainer.progress_format = format;
         self
     }
 
     /// Set the special tokens
     #[must_use]
     pub fn special_tokens(mut self, tokens: Vec<AddedToken>) -> Self {
-        self.config.special_tokens = tokens;
+        self.trainer.special_tokens = tokens;
         self
     }
 
     /// Set whether to limit the alphabet
     #[must_use]
     pub fn limit_alphabet(mut self, limit: usize) -> Self {
-        self.config.limit_alphabet = Some(limit);
+        self.trainer.limit_alphabet = Some(limit);
         self
     }
 
-    /// Set the initial alphabet
+    /// Set characters considered even when absent from the input.
+    /// A smaller alphabet limit may still remove some of these characters.
     #[must_use]
     pub fn initial_alphabet(mut self, alphabet: HashSet<char>) -> Self {
         let mut initial_alphabet = AHashSet::with_capacity(alphabet.len());
         initial_alphabet.extend(alphabet);
-        self.config.initial_alphabet = initial_alphabet;
+        self.trainer.initial_alphabet = initial_alphabet;
         self
     }
 
     /// Set the continuing_subword_prefix
     #[must_use]
     pub fn continuing_subword_prefix(mut self, prefix: String) -> Self {
-        self.config.continuing_subword_prefix = Some(prefix);
+        self.trainer.continuing_subword_prefix = Some(prefix);
         self
     }
 
     /// Set the end_of_word_suffix
     #[must_use]
     pub fn end_of_word_suffix(mut self, suffix: String) -> Self {
-        self.config.end_of_word_suffix = Some(suffix);
+        self.trainer.end_of_word_suffix = Some(suffix);
         self
     }
-    /// Set max_token_length
+    /// Set the strict span limit used to admit newly formed neighboring pairs.
+    ///
+    /// See [`BpeTrainer::max_token_length`] for units and initial-pair behavior.
     #[must_use]
     pub fn max_token_length(mut self, max_token_length: Option<usize>) -> Self {
-        self.config.max_token_length = max_token_length;
+        self.trainer.max_token_length = max_token_length;
         self
     }
 
     /// Constructs the final BpeTrainer
+    #[must_use]
     pub fn build(self) -> BpeTrainer {
-        BpeTrainer {
-            min_frequency: self.config.min_frequency,
-            vocab_size: self.config.vocab_size,
-            show_progress: self.config.show_progress,
-            progress_format: self.config.progress_format,
-            special_tokens: self.config.special_tokens,
-            limit_alphabet: self.config.limit_alphabet,
-            initial_alphabet: self.config.initial_alphabet,
-            continuing_subword_prefix: self.config.continuing_subword_prefix,
-            end_of_word_suffix: self.config.end_of_word_suffix,
-            max_token_length: self.config.max_token_length,
-            words: WordCounts::default(),
-        }
+        self.trainer
     }
 }
 
@@ -204,15 +170,18 @@ impl BpeTrainerBuilder {
 /// use tk_train::Trainer;
 /// use tk_encode::models::bpe::{PipelineBPE, BpeConfig};
 ///
+/// # fn main() -> tk_encode::Result<()> {
 /// let sequences = vec![ "Hello", "World" ];
 ///
 /// let mut trainer = BpeTrainer::default();
-/// trainer.feed(sequences.iter(), |s| Ok(vec![s.to_owned()]));
+/// trainer.feed(sequences.iter(), |s| Ok(vec![s.to_owned()]))?;
 ///
 /// // `PipelineBPE` has no empty state to train *into* -- it only exists once there is a
 /// // vocabulary and a merge list -- so take the parts and build it.
-/// let (vocab, merges, special_tokens) = trainer.train_vocab().unwrap();
-/// let model = PipelineBPE::from_config(BpeConfig { vocab, merges, ..BpeConfig::default() }).unwrap();
+/// let (vocab, merges, special_tokens) = trainer.train_vocab()?;
+/// let model = PipelineBPE::from_config(BpeConfig { vocab, merges, ..BpeConfig::default() })?;
+/// # Ok(())
+/// # }
 /// ```
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Eq)]
@@ -234,14 +203,18 @@ pub struct BpeTrainer {
     pub special_tokens: Vec<AddedToken>,
     /// Whether to limit the number of initial tokens that can be kept before computing merges
     pub limit_alphabet: Option<usize>,
-    /// The initial alphabet we want absolutely to include. This allows to cover
-    /// some characters that are not necessarily in the training set
+    /// Characters to consider even when they are absent from the training set.
+    /// A smaller `limit_alphabet` may still remove some of these characters.
     pub initial_alphabet: AHashSet<char>,
     /// An optional prefix to use on any subword that exist only behind another one
     pub continuing_subword_prefix: Option<String>,
     /// An optional suffix to characterize and end-of-word subword
     pub end_of_word_suffix: Option<String>,
-    /// An optional parameter to limit the max length of any single token
+    /// Strict upper bound for the combined span of newly formed neighboring pairs.
+    ///
+    /// Spans count retained input symbols, excluding prefix/suffix text. A new pair
+    /// is admitted only when its span is strictly below this limit. Initial pairs
+    /// are counted without this filter, so this is not a bound on every token.
     pub max_token_length: Option<usize>,
 
     words: WordCounts,
@@ -249,11 +222,24 @@ pub struct BpeTrainer {
 
 impl Default for BpeTrainer {
     fn default() -> Self {
-        Self::builder().build()
+        Self {
+            min_frequency: 0,
+            vocab_size: 30000,
+            show_progress: true,
+            progress_format: ProgressFormat::default(),
+            special_tokens: vec![],
+            limit_alphabet: None,
+            initial_alphabet: AHashSet::new(),
+            continuing_subword_prefix: None,
+            end_of_word_suffix: None,
+            max_token_length: None,
+            words: WordCounts::default(),
+        }
     }
 }
 
 impl BpeTrainer {
+    #[must_use]
     pub fn new(min_frequency: u64, vocab_size: usize) -> Self {
         Self {
             min_frequency,
@@ -262,12 +248,14 @@ impl BpeTrainer {
         }
     }
 
+    #[must_use]
     pub fn builder() -> BpeTrainerBuilder {
         BpeTrainerBuilder::new()
     }
 
     /// Returns the number of unique words in the corpus after feeding.
     /// This can be used to estimate training time before starting.
+    #[must_use]
     pub fn get_word_count(&self) -> usize {
         self.words.len()
     }
@@ -318,82 +306,11 @@ impl BpeTrainer {
         self.emit_json_progress(message, 0, len);
     }
 
-    /// Add the provided special tokens to the initial vocabulary
-    fn add_special_tokens(
-        &self,
-        w2id: &mut AHashMap<CompactString, u32>,
-        id2w: &mut Vec<CompactString>,
-    ) {
-        for token in &self.special_tokens {
-            // get hash of content
-            if !w2id.contains_key(&CompactString::from(&token.content)) {
-                id2w.push(CompactString::from(&token.content));
-                w2id.insert(CompactString::from(&token.content), (id2w.len() - 1) as u32);
-            }
-        }
-    }
-
-    /// Compute the initial alphabet and limit it if relevant
-    fn compute_alphabet(
-        &self,
-        wc: WordCountsView<'_>,
-        w2id: &mut AHashMap<CompactString, u32>,
-        id2w: &mut Vec<CompactString>,
-    ) {
-        // Compute the alphabet from seen words
-        let mut alphabet: AHashMap<char, usize> = AHashMap::new();
-        for (word, count) in wc.iter() {
-            for c in word.chars() {
-                *alphabet.entry(c).or_default() += *count as usize;
-            }
-        }
-
-        // Also include anything from the provided initial alphabet
-        for c in &self.initial_alphabet {
-            *alphabet.entry(*c).or_default() = usize::MAX;
-        }
-
-        let mut kept = alphabet.iter().collect::<Vec<_>>();
-
-        // Compute the number of chars to remove from the alphabet
-        // If `limit_alphabet < initial_alphabet.len()`, some of these initial characters
-        // will be removed
-        let to_remove = self
-            .limit_alphabet
-            .map(|limit| alphabet.len().saturating_sub(limit))
-            .unwrap_or(0);
-
-        // Remove the unwanted chars
-        if to_remove > 0 {
-            kept.sort_unstable_by_key(|k| *k.1);
-            kept.drain(..to_remove);
-        }
-
-        // Keep the initial alphabet (sorted for determinism)
-        kept.sort_unstable_by_key(|k| *k.0 as u32);
-        kept.into_iter().for_each(|(c, _)| {
-            let s = c.to_string();
-            /*
-            if !w2id.contains_key(&s) {
-                id2w.push(s.clone());
-                w2id.insert(s, (id2w.len() - 1) as u32);
-            }
-            */
-            // u64 hash version
-            if !w2id.contains_key(&CompactString::from(&s)) {
-                id2w.push(CompactString::from(&s));
-                w2id.insert(CompactString::from(&s), (id2w.len() - 1) as u32);
-            }
-        });
-    }
-
-    /// Tokenize words and add subwords to the vocabulary when relevant
+    /// Materialize immutable input symbol IDs into mutable training words.
     fn tokenize_words(
         &self,
         wc: WordCountsView<'_>,
-        w2id: &mut AHashMap<CompactString, u32>,
-        id2w: &mut Vec<CompactString>,
-        p: &Option<ProgressBar>,
+        ids: &InitialTokenIds,
     ) -> (Vec<Word>, Vec<u64>) {
         let mut words: Vec<Word> = Vec::with_capacity(wc.len());
         let mut counts: Vec<u64> = Vec::with_capacity(wc.len());
@@ -402,33 +319,10 @@ impl BpeTrainer {
             let mut current_word = Word::new();
             counts.push(*count);
 
-            for (is_first, is_last, c) in word.chars().with_first_and_last() {
-                let mut s = c.to_string();
-                if w2id.contains_key(&CompactString::from(&s)) {
-                    // Found the initial char in the authorized alphabet
-
-                    // Add the `continuing_subword_prefix` if relevant
-                    if !is_first && let Some(prefix) = &self.continuing_subword_prefix {
-                        s.insert_str(0, prefix);
-                    }
-                    // Add the `end_of_word_suffix` if relevant
-                    if is_last && let Some(suffix) = &self.end_of_word_suffix {
-                        s.push_str(suffix);
-                    }
-
-                    // Insert the new formed string if necessary
-                    if !w2id.contains_key(&CompactString::from(&s)) {
-                        id2w.push(CompactString::from(&s));
-                        w2id.insert(CompactString::from(&s), (id2w.len() - 1) as u32);
-                    }
-                    current_word.add(w2id[&CompactString::from(&s)], 1); // We do not care about the len here
-                }
+            for id in ids.symbols(word) {
+                current_word.add(id, 1);
             }
             words.push(current_word);
-
-            if let Some(p) = p {
-                p.inc(1);
-            }
         }
 
         (words, counts)
@@ -516,29 +410,18 @@ impl BpeTrainer {
         &self,
         word_counts: WordCountsView<'_>,
     ) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
-        let mut word_to_id: AHashMap<CompactString, u32> = AHashMap::with_capacity(self.vocab_size);
-        let mut id_to_word: Vec<CompactString> = Vec::with_capacity(self.vocab_size);
         let max_token_length: usize = self.max_token_length.unwrap_or(usize::MAX);
 
         let progress = self.setup_progress();
 
-        //
-        // 1. Add all special tokens to the vocabulary
-        //
-        self.add_special_tokens(&mut word_to_id, &mut id_to_word);
-
-        //
-        // 2. Compute the initial alphabet
-        //
-        self.compute_alphabet(word_counts, &mut word_to_id, &mut id_to_word);
+        let (mut vocabulary, ids) = Vocabulary::initialize(self, word_counts, &progress);
 
         //
         // 3. Tokenize words
         //
-        self.update_progress(&progress, word_counts.len(), "Tokenize words");
-        let (mut words, counts) =
-            self.tokenize_words(word_counts, &mut word_to_id, &mut id_to_word, &progress);
+        let (mut words, counts) = self.tokenize_words(word_counts, &ids);
         self.finalize_progress(&progress, words.len(), "Tokenize words");
+        drop(ids);
 
         //
         // 4. Count pairs in words
@@ -563,10 +446,10 @@ impl BpeTrainer {
         // 5. Do merges
         //
         self.update_progress(&progress, self.vocab_size, "Compute merges");
-        let mut merges: Vec<(Pair, u32)> = vec![];
+        let mut completed = 0;
         loop {
             // Stop as soon as we have a big enough vocabulary
-            if word_to_id.len() >= self.vocab_size {
+            if vocabulary.len() >= self.vocab_size {
                 break;
             }
 
@@ -584,28 +467,7 @@ impl BpeTrainer {
                 break;
             }
 
-            let part_a = &id_to_word[top.pair.0 as usize];
-            let mut part_b = id_to_word[top.pair.1 as usize].as_str();
-
-            // Build new token
-            if let Some(prefix) = &self.continuing_subword_prefix
-                && let Some(rest) = part_b.strip_prefix(prefix)
-            {
-                part_b = rest;
-            }
-
-            // Insert new token if it does not already exist
-            let new_token = format!("{part_a}{part_b}");
-            let new_token_id = word_to_id
-                .get(&CompactString::from(&new_token))
-                .copied()
-                .unwrap_or(id_to_word.len() as u32);
-            if !word_to_id.contains_key(&CompactString::from(&new_token)) {
-                id_to_word.push(CompactString::from(&new_token));
-                word_to_id.insert(CompactString::from(&new_token), new_token_id);
-            }
-            merges.push((top.pair, new_token_id));
-
+            let new_token_id = vocabulary.resolve(top.pair);
             // Merge the new pair in every words
             // Safety: This is just a type assertion, the code below may no longer be safe
             // if the type of `pos` changes
@@ -660,33 +522,16 @@ impl BpeTrainer {
                 }
             });
 
+            vocabulary.commit(top.pair);
+            completed += 1;
             if let Some(p) = &progress {
                 p.inc(1);
             }
-            self.emit_json_progress("Compute merges", merges.len(), self.vocab_size);
+            self.emit_json_progress("Compute merges", completed, self.vocab_size);
         }
-        self.finalize_progress(&progress, merges.len(), "Compute merges");
+        self.finalize_progress(&progress, completed, "Compute merges");
 
-        // The vocabulary, keyed by the token string rather than by `word_to_id`'s hash: we have to
-        // look the string up in `id_to_word` either way.
-        let vocab: Vocab = word_to_id
-            .into_iter()
-            .map(|(_key, val)| (id_to_word[val as usize].to_string(), val))
-            .collect();
-
-        // `merges` holds id pairs, highest priority first; the on-disk form is the two token
-        // strings, which is also what `from_config` re-derives its ranks from. Order is
-        // the rank, so it has to be preserved.
-        let merges: Merges = merges
-            .into_iter()
-            .map(|(pair, _new_token_id)| {
-                (
-                    id_to_word[pair.0 as usize].to_string(),
-                    id_to_word[pair.1 as usize].to_string(),
-                )
-            })
-            .collect();
-
+        let (vocab, merges) = vocabulary.into_parts();
         Ok((vocab, merges, self.special_tokens.clone()))
     }
 }
@@ -915,6 +760,60 @@ fn num_workers() -> usize {
 }
 
 #[cfg(test)]
+mod identity_tests {
+    use super::*;
+
+    #[test]
+    fn active_alias_keeps_historical_merge_order() {
+        let words = [("aba".into(), 7), ("bbbbbbbaba".into(), 6)].into();
+        let trainer = BpeTrainer::builder()
+            .show_progress(false)
+            .vocab_size(64)
+            .min_frequency(1)
+            .continuing_subword_prefix("ab".into())
+            .build();
+        let (_, merges, _) = trainer.do_train(&words).unwrap();
+        assert_eq!(
+            merges,
+            [
+                ("abb".into(), "abb".into()),
+                ("abb".into(), "aba".into()),
+                ("abbb".into(), "abbb".into()),
+                ("a".into(), "abba".into()),
+                ("b".into(), "abbbbb".into()),
+                ("aba".into(), "abba".into()),
+                ("abbb".into(), "ababa".into()),
+                ("bbbbb".into(), "abbbaba".into()),
+            ]
+        );
+    }
+}
+
+#[cfg(test)]
+mod builder_tests {
+    use super::*;
+    #[test]
+    fn builder_serialization() {
+        let default = BpeTrainer::default();
+        let json = serde_json::json!({
+            "min_frequency": 0, "vocab_size": 30000, "show_progress": true,
+            "special_tokens": [], "limit_alphabet": null, "initial_alphabet": [],
+            "continuing_subword_prefix": null, "end_of_word_suffix": null,
+            "max_token_length": null, "words": {}
+        });
+        assert_eq!(serde_json::to_value(&default).unwrap(), json);
+        assert_eq!(serde_json::from_value::<BpeTrainer>(json).unwrap(), default);
+        let configured = BpeTrainer::builder()
+            .progress_format(ProgressFormat::JsonLines)
+            .build();
+        assert_eq!(configured.progress_format, ProgressFormat::JsonLines);
+        let json = serde_json::to_value(&configured).unwrap();
+        assert!(json.get("progress_format").is_none());
+        assert_eq!(serde_json::from_value::<BpeTrainer>(json).unwrap(), default);
+    }
+}
+
+#[cfg(test)]
 mod trainer_contract_tests {
     use super::*;
     use std::sync::atomic::{AtomicUsize, Ordering};
@@ -1010,5 +909,79 @@ mod trainer_contract_tests {
             .feed(std::iter::empty::<&str>(), |_| unreachable!())
             .unwrap();
         assert_eq!(trainer.get_word_count(), 0);
+    }
+
+    #[test]
+    fn progress_and_alphabet_options_survive_builder_configuration() {
+        let trainer = BpeTrainer::builder()
+            .show_progress(false)
+            .initial_alphabet(['é', '🙂'].into())
+            .limit_alphabet(2)
+            .vocab_size(0)
+            .build();
+        assert!(!trainer.should_show_progress());
+        assert!(BpeTrainer::default().should_show_progress());
+        let (vocab, merges, _) = trainer.do_train(&[("abé".into(), 10)].into()).unwrap();
+        assert_eq!(vocab, [("é".into(), 0), ("🙂".into(), 1)].into());
+        assert!(merges.is_empty());
+    }
+
+    #[test]
+    fn observed_special_characters_survive_alphabet_filtering() {
+        let trainer = BpeTrainer::builder()
+            .show_progress(false)
+            .min_frequency(1)
+            .vocab_size(5)
+            .initial_alphabet(['b'].into())
+            .limit_alphabet(1)
+            .special_tokens(vec![
+                AddedToken::from("a", true),
+                AddedToken::from("xy", true),
+                AddedToken::from("z", true),
+            ])
+            .build();
+        let words = [("ab".into(), 3), ("xy".into(), 100)].into();
+        let (vocab, merges, _) = trainer.do_train(&words).unwrap();
+        assert_eq!(
+            vocab,
+            [
+                ("a".into(), 0),
+                ("xy".into(), 1),
+                ("z".into(), 2),
+                ("b".into(), 3),
+                ("ab".into(), 4)
+            ]
+            .into()
+        );
+        assert_eq!(merges, [("a".into(), "b".into())]);
+    }
+
+    #[test]
+    fn weighted_alphabet_selection_preserves_wide_frequencies() {
+        let trainer = BpeTrainer::builder()
+            .show_progress(false)
+            .vocab_size(0)
+            .limit_alphabet(1)
+            .build();
+        for (input, expected) in [
+            (vec![("aaa", 1), ("b", 4)], "b"),
+            (
+                vec![
+                    ("ax", i64::MAX as u64),
+                    ("ay", i64::MAX as u64),
+                    ("az", i64::MAX as u64),
+                    ("b", i64::MAX as u64),
+                ],
+                "a",
+            ),
+        ] {
+            let words = input
+                .into_iter()
+                .map(|(word, weight)| (CompactString::from(word), weight))
+                .collect();
+            let (vocab, merges, _) = trainer.do_train(&words).unwrap();
+            assert_eq!(vocab, [(expected.into(), 0)].into());
+            assert!(merges.is_empty());
+        }
     }
 }
