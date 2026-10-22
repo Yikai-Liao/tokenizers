@@ -1,6 +1,7 @@
 //! One insertion-ordered owner for token strings and their IDs.
 use super::BpeTrainer;
 use super::word_counts::WordCountsView;
+use crate::progress::ProgressBar;
 use ahash::{AHashMap, RandomState};
 use compact_str::CompactString;
 use fixedbitset::FixedBitSet;
@@ -15,7 +16,11 @@ pub(super) struct Vocabulary {
 }
 
 impl Vocabulary {
-    pub(super) fn initialize(trainer: &BpeTrainer, wc: WordCountsView<'_>) -> Self {
+    pub(super) fn initialize(
+        trainer: &BpeTrainer,
+        wc: WordCountsView<'_>,
+        progress: &Option<ProgressBar>,
+    ) -> (Self, InitialTokenIds) {
         let mut vocabulary = Self::new(
             trainer.vocab_size,
             trainer.continuing_subword_prefix.clone(),
@@ -28,7 +33,14 @@ impl Vocabulary {
             vocabulary.intern(character.to_string().into());
         }
 
-        vocabulary
+        trainer.update_progress(progress, wc.len(), "Tokenize words");
+        let ids = InitialTokenIds::build(
+            &mut vocabulary,
+            wc,
+            trainer.end_of_word_suffix.as_deref(),
+            progress,
+        );
+        (vocabulary, ids)
     }
 
     fn new(capacity: usize, prefix: Option<String>) -> Self {
@@ -39,12 +51,8 @@ impl Vocabulary {
         }
     }
 
-    pub(super) fn intern(&mut self, token: CompactString) -> u32 {
+    fn intern(&mut self, token: CompactString) -> u32 {
         self.tokens.insert_full(token).0 as u32
-    }
-
-    pub(super) fn contains(&self, token: &str) -> bool {
-        self.tokens.contains(token)
     }
 
     pub(super) fn len(&self) -> usize {
@@ -88,6 +96,176 @@ impl Vocabulary {
                 .collect(),
             merges,
         )
+    }
+}
+
+/// Immutable plain and observed decorated IDs for the input used to build this table.
+pub(super) struct InitialTokenIds {
+    characters: Box<[u32]>,
+    decorated: Box<[DecoratedIds]>,
+    prefix: bool,
+    suffix: bool,
+}
+
+impl InitialTokenIds {
+    fn build(
+        vocabulary: &mut Vocabulary,
+        words: WordCountsView<'_>,
+        suffix: Option<&str>,
+        progress: &Option<ProgressBar>,
+    ) -> Self {
+        let mut characters = vec![u32::MAX; 0x110000].into_boxed_slice();
+        for (id, token) in vocabulary.tokens.iter().enumerate() {
+            let mut chars = token.chars();
+            if let Some(character) = chars.next()
+                && chars.next().is_none()
+            {
+                characters[character as usize] = id as u32;
+            }
+        }
+        let mut ids = Self {
+            characters,
+            prefix: vocabulary.prefix.as_deref().is_some_and(|p| !p.is_empty()),
+            suffix: suffix.is_some_and(|s| !s.is_empty()),
+            decorated: Box::default(),
+        };
+        if ids.is_plain() {
+            if let Some(p) = progress {
+                p.inc(words.len() as u64);
+            }
+            return ids;
+        }
+        ids.decorated = vec![DecoratedIds([u32::MAX; 3]); vocabulary.len()].into_boxed_slice();
+        let mut text = String::new();
+        for (word, _) in words.iter() {
+            for (byte, character) in word.char_indices() {
+                let Some(plain) = ids.get_plain(character) else {
+                    continue;
+                };
+                let affix = ids.affix(byte == 0, byte + character.len_utf8() == word.len());
+                if affix == Affix::Plain || ids.decorated[plain as usize].get(affix) != u32::MAX {
+                    continue;
+                }
+                text.clear();
+                if matches!(affix, Affix::Prefix | Affix::Both) {
+                    text.push_str(vocabulary.prefix.as_deref().unwrap());
+                }
+                text.push_str(vocabulary.tokens[plain as usize].as_str());
+                if matches!(affix, Affix::Suffix | Affix::Both) {
+                    text.push_str(suffix.unwrap());
+                }
+                let id = vocabulary.intern(text.as_str().into());
+                ids.decorated[plain as usize].remember(affix, id);
+            }
+            if let Some(p) = progress {
+                p.inc(1);
+            }
+        }
+        ids
+    }
+
+    fn get_plain(&self, character: char) -> Option<u32> {
+        let id = self.characters[character as usize];
+        (id != u32::MAX).then_some(id)
+    }
+
+    fn affix(&self, first: bool, last: bool) -> Affix {
+        // Prefixes apply behind the original first character; suffixes apply
+        // to the original last character. Both decorators can apply together.
+        match (self.prefix && !first, self.suffix && last) {
+            (false, false) => Affix::Plain,
+            (true, false) => Affix::Prefix,
+            (false, true) => Affix::Suffix,
+            (true, true) => Affix::Both,
+        }
+    }
+    fn is_plain(&self) -> bool {
+        // The plain lookup path is valid only when neither decorator is active.
+        !self.prefix && !self.suffix
+    }
+    /// Read only words from the initialization input; other words may need unbuilt affix states.
+    #[inline]
+    pub(super) fn symbols<'a>(&'a self, word: &'a str) -> impl Iterator<Item = u32> + 'a {
+        if self.is_plain() {
+            itertools::Either::Left(
+                word.chars()
+                    .filter_map(|character| self.get_plain(character)),
+            )
+        } else {
+            itertools::Either::Right(word.char_indices().filter_map(move |(byte, character)| {
+                // UTF-8 byte offset plus this character's width identifies the
+                // original last character; filtering never moves the word boundary.
+                self.get(
+                    character,
+                    byte == 0,
+                    byte + character.len_utf8() == word.len(),
+                )
+            }))
+        }
+    }
+    fn get(&self, character: char, first: bool, last: bool) -> Option<u32> {
+        let plain = self.characters[character as usize];
+        if plain == u32::MAX {
+            return None;
+        }
+        let affix = self.affix(first, last);
+        Some(if affix == Affix::Plain {
+            plain
+        } else {
+            self.decorated[plain as usize].get(affix)
+        })
+    }
+}
+
+#[cfg(test)]
+mod initial_tests {
+    use super::super::word_counts::WordCounts;
+    use super::*;
+
+    #[test]
+    fn filtering_keeps_original_affix_positions_and_id_order() {
+        let words = WordCounts::from_unique(vec![("qé🙂z".into(), 1), ("🙂é".into(), 9)]);
+        let view = WordCountsView::from(&words);
+        let mut trainer = BpeTrainer::new(1, 32);
+        trainer.limit_alphabet = Some(2);
+        trainer.initial_alphabet = ['é', '🙂'].into();
+        trainer.continuing_subword_prefix = Some("前".into());
+        trainer.end_of_word_suffix = Some("尾".into());
+        let (vocabulary, ids) = Vocabulary::initialize(&trainer, view, &None);
+        let (tokenized, _) = trainer.tokenize_words(view, &ids);
+        assert_eq!(tokenized[0].get_chars(), [2, 3]);
+        assert_eq!(tokenized[1].get_chars(), [1, 4]);
+        assert_eq!(
+            vocabulary
+                .tokens
+                .iter()
+                .map(|s| s.as_str())
+                .collect::<Vec<_>>(),
+            ["é", "🙂", "前é", "前🙂", "前é尾"]
+        );
+        assert_eq!(ids.get_plain('q'), None);
+        assert_eq!(ids.get_plain('🙂'), Some(1));
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+#[repr(usize)]
+enum Affix {
+    Prefix = 0,
+    Suffix = 1,
+    Both = 2,
+    Plain = 3,
+}
+
+#[derive(Clone, Copy)]
+struct DecoratedIds([u32; 3]);
+
+impl DecoratedIds {
+    fn get(&self, affix: Affix) -> u32 {
+        self.0[affix as usize]
+    }
+    fn remember(&mut self, affix: Affix, id: u32) {
+        self.0[affix as usize] = id;
     }
 }
 
