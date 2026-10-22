@@ -304,51 +304,6 @@ impl BpeTrainer {
         self.emit_json_progress(message, 0, len);
     }
 
-    /// Add the provided special tokens to the initial vocabulary
-    fn add_special_tokens(&self, vocabulary: &mut Vocabulary) {
-        for token in &self.special_tokens {
-            vocabulary.intern(token.content.as_str().into());
-        }
-    }
-
-    /// Compute the initial alphabet and limit it if relevant
-    fn compute_alphabet(&self, wc: WordCountsView<'_>, vocabulary: &mut Vocabulary) {
-        // Compute the alphabet from seen words
-        let mut alphabet: AHashMap<char, usize> = AHashMap::new();
-        for (word, count) in wc.iter() {
-            for c in word.chars() {
-                *alphabet.entry(c).or_default() += *count as usize;
-            }
-        }
-
-        // Also include anything from the provided initial alphabet
-        for c in &self.initial_alphabet {
-            *alphabet.entry(*c).or_default() = usize::MAX;
-        }
-
-        let mut kept = alphabet.iter().collect::<Vec<_>>();
-
-        // Compute the number of chars to remove from the alphabet
-        // If `limit_alphabet < initial_alphabet.len()`, some of these initial characters
-        // will be removed
-        let to_remove = self
-            .limit_alphabet
-            .map(|limit| alphabet.len().saturating_sub(limit))
-            .unwrap_or(0);
-
-        // Remove the unwanted chars
-        if to_remove > 0 {
-            kept.sort_unstable_by_key(|k| *k.1);
-            kept.drain(..to_remove);
-        }
-
-        // Keep the initial alphabet (sorted for determinism)
-        kept.sort_unstable_by_key(|k| *k.0 as u32);
-        for (character, _) in kept {
-            vocabulary.intern(character.to_string().into());
-        }
-    }
-
     /// Tokenize words and add subwords to the vocabulary when relevant
     fn tokenize_words(
         &self,
@@ -474,21 +429,11 @@ impl BpeTrainer {
         &self,
         word_counts: WordCountsView<'_>,
     ) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
-        let mut vocabulary =
-            Vocabulary::new(self.vocab_size, self.continuing_subword_prefix.clone());
         let max_token_length: usize = self.max_token_length.unwrap_or(usize::MAX);
 
         let progress = self.setup_progress();
 
-        //
-        // 1. Add all special tokens to the vocabulary
-        //
-        self.add_special_tokens(&mut vocabulary);
-
-        //
-        // 2. Compute the initial alphabet
-        //
-        self.compute_alphabet(word_counts, &mut vocabulary);
+        let mut vocabulary = Vocabulary::initialize(self, word_counts);
 
         //
         // 3. Tokenize words
