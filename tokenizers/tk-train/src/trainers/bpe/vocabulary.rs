@@ -59,7 +59,7 @@ impl Vocabulary {
         self.tokens.len()
     }
 
-    pub(super) fn resolve(&mut self, pair: Pair) -> u32 {
+    pub(super) fn resolve(&mut self, pair: Pair) -> ResolvedMerge {
         let left = self.tokens[pair.0 as usize].as_str();
         let right = self.tokens[pair.1 as usize].as_str();
         let right = self
@@ -70,7 +70,11 @@ impl Vocabulary {
         let mut text = CompactString::with_capacity(left.len() + right.len());
         text.push_str(left);
         text.push_str(right);
-        self.intern(text)
+        let (id, inserted) = self.tokens.insert_full(text);
+        ResolvedMerge {
+            merged_id: id as u32,
+            already_in_vocabulary: !inserted,
+        }
     }
 
     pub(super) fn commit(&mut self, pair: Pair) {
@@ -234,9 +238,8 @@ mod initial_tests {
         trainer.continuing_subword_prefix = Some("前".into());
         trainer.end_of_word_suffix = Some("尾".into());
         let (vocabulary, ids) = Vocabulary::initialize(&trainer, view, &None);
-        let (tokenized, _) = trainer.tokenize_words(view, &ids);
-        assert_eq!(tokenized[0].get_chars(), [2, 3]);
-        assert_eq!(tokenized[1].get_chars(), [1, 4]);
+        assert_eq!(ids.symbols("qé🙂z").collect::<Vec<_>>(), [2, 3]);
+        assert_eq!(ids.symbols("🙂é").collect::<Vec<_>>(), [1, 4]);
         assert_eq!(
             vocabulary
                 .tokens
@@ -257,6 +260,11 @@ enum Affix {
     Suffix = 1,
     Both = 2,
     Plain = 3,
+}
+
+pub(super) struct ResolvedMerge {
+    pub(super) merged_id: u32,
+    pub(super) already_in_vocabulary: bool,
 }
 
 impl BpeTrainer {

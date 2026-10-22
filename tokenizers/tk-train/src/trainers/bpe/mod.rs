@@ -1,12 +1,18 @@
 #![allow(clippy::map_entry)]
 
+mod corpus;
+mod index;
+mod positions;
+use index::PairIndex;
 mod feed;
+use corpus::Corpus;
 mod vocabulary;
 mod word_counts;
-use vocabulary::{InitialTokenIds, Vocabulary};
+use vocabulary::Vocabulary;
 
 #[cfg(feature = "parity-aware-bpe")]
 pub mod parity_trainer;
+#[cfg(feature = "parity-aware-bpe")]
 mod word;
 #[cfg(feature = "parity-aware-bpe")]
 pub use parity_trainer::{ParityBpeTrainer, ParityBpeTrainerBuilder, ParityVariant};
@@ -14,9 +20,7 @@ pub use parity_trainer::{ParityBpeTrainer, ParityBpeTrainerBuilder, ParityVarian
 use crate::Trainer;
 use ahash::{AHashMap, AHashSet};
 use compact_str::CompactString;
-use dary_heap::OctonaryHeap;
 use serde::{Deserialize, Serialize};
-use std::cmp::Ordering;
 use std::collections::HashSet;
 use tk_encode::vocab::bucket_added_vocabulary::AddedToken;
 use word_counts::{WordCounts, WordCountsView};
@@ -26,40 +30,13 @@ use word_counts::{WordCounts, WordCountsView};
 // private to `tk-encode`.
 #[cfg(feature = "parity-aware-bpe")]
 use word::WithFirstLastIterator;
+#[cfg(feature = "parity-aware-bpe")]
 use word::Word;
 
 use crate::progress::{ProgressBar, ProgressFormat, ProgressStyle};
 use tk_encode::Result;
-use tk_encode::models::bpe::{BpeConfig, Merges, Pair, PipelineBPE, Vocab};
+use tk_encode::models::bpe::{BpeConfig, Merges, PipelineBPE, Vocab};
 use tk_encode::parallelism;
-use tk_encode::parallelism::MaybeParallelRefIterator;
-
-#[derive(Debug, Eq)]
-struct Merge {
-    pair: Pair,
-    count: u64,
-    pos: AHashSet<usize>,
-}
-impl PartialEq for Merge {
-    fn eq(&self, other: &Self) -> bool {
-        self.count == other.count && self.pair == other.pair
-    }
-}
-impl PartialOrd for Merge {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-impl Ord for Merge {
-    fn cmp(&self, other: &Self) -> Ordering {
-        if self.count != other.count {
-            self.count.cmp(&other.count)
-        } else {
-            // Here we want ascending order
-            other.pair.cmp(&self.pair)
-        }
-    }
-}
 
 /// A `BpeTrainerBuilder` can be used to create a `BpeTrainer` with a custom
 /// configuration.
@@ -306,75 +283,15 @@ impl BpeTrainer {
         self.emit_json_progress(message, 0, len);
     }
 
-    /// Materialize immutable input symbol IDs into mutable training words.
-    fn tokenize_words(
-        &self,
-        wc: WordCountsView<'_>,
-        ids: &InitialTokenIds,
-    ) -> (Vec<Word>, Vec<u64>) {
-        let mut words: Vec<Word> = Vec::with_capacity(wc.len());
-        let mut counts: Vec<u64> = Vec::with_capacity(wc.len());
-
-        for (word, count) in wc.iter() {
-            let mut current_word = Word::new();
-            counts.push(*count);
-
-            for id in ids.symbols(word) {
-                current_word.add(id, 1);
-            }
-            words.push(current_word);
-        }
-
-        (words, counts)
-    }
-
-    fn count_pairs(
-        &self,
-        words: &[Word],
-        counts: &[u64],
-        p: &Option<ProgressBar>,
-    ) -> (AHashMap<Pair, i32>, AHashMap<Pair, AHashSet<usize>>) {
-        words
-            .maybe_par_iter()
-            .enumerate()
-            .map(|(i, word)| {
-                let mut pair_counts = AHashMap::new();
-                let mut where_to_update: AHashMap<Pair, AHashSet<usize>> = AHashMap::new();
-
-                for window in word.get_chars().windows(2) {
-                    let cur_pair: Pair = (window[0], window[1]);
-
-                    // Initialize pair_counts and where_to_update for this pair if we just saw it
-                    // Then update counts
-                    *pair_counts.entry(cur_pair).or_default() += counts[i] as i32;
-                    where_to_update.entry(cur_pair).or_default().insert(i);
-                }
-
-                if let Some(p) = &p {
-                    p.inc(1);
-                }
-
-                (pair_counts, where_to_update)
-            })
-            .reduce(
-                || (AHashMap::new(), AHashMap::new()),
-                |(mut pair_counts, mut where_to_update), (pc, wtu)| {
-                    for (k, v) in pc {
-                        *pair_counts.entry(k).or_default() += v;
-                    }
-                    for (k, v) in wtu {
-                        where_to_update.entry(k).or_default().extend(v);
-                    }
-                    (pair_counts, where_to_update)
-                },
-            )
-    }
-
     /// Train and hand back the raw parts, for a caller that wants them rather than a built model.
     ///
     /// The WordPiece trainer is the one caller: it trains a BPE and reinterprets the vocabulary as
     /// WordPiece pieces, so building a `PipelineBPE` first -- merge tables and all -- would be work
     /// thrown away.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if checked position encoding or storage reservation fails.
     pub fn train_vocab(&self) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
         self.train_counts(WordCountsView::from(&self.words))
     }
@@ -399,6 +316,10 @@ impl BpeTrainer {
     /// `tokenizer.json` stores, and `PipelineBPE` can only be built from it -- see
     /// [`PipelineBPE::from_config`]. The WordPiece trainer wants the vocabulary alone, so
     /// splitting the two also saves it building merge tables it would throw away.
+    ///
+    /// # Errors
+    ///
+    /// Reports the same failure conditions as [`Self::train_vocab`].
     pub fn do_train(
         &self,
         word_counts: &AHashMap<CompactString, u64>,
@@ -419,28 +340,16 @@ impl BpeTrainer {
         //
         // 3. Tokenize words
         //
-        let (mut words, counts) = self.tokenize_words(word_counts, &ids);
-        self.finalize_progress(&progress, words.len(), "Tokenize words");
+        let mut corpus = Corpus::new(word_counts, &ids);
+        self.finalize_progress(&progress, corpus.word_count(), "Tokenize words");
         drop(ids);
 
         //
         // 4. Count pairs in words
         //
-        self.update_progress(&progress, words.len(), "Count pairs");
-        let (mut pair_counts, mut where_to_update) = self.count_pairs(&words, &counts, &progress);
-        // Insert them in the queue
-        let mut queue = OctonaryHeap::with_capacity(pair_counts.len());
-        where_to_update.drain().for_each(|(pair, pos)| {
-            let count = pair_counts[&pair];
-            if count > 0 {
-                queue.push(Merge {
-                    pair,
-                    count: count as u64,
-                    pos,
-                });
-            }
-        });
-        self.finalize_progress(&progress, words.len(), "Count pairs");
+        self.update_progress(&progress, corpus.word_count(), "Count pairs");
+        let mut index = PairIndex::build(&corpus, self.min_frequency, &progress)?;
+        self.finalize_progress(&progress, corpus.word_count(), "Count pairs");
 
         //
         // 5. Do merges
@@ -453,74 +362,17 @@ impl BpeTrainer {
                 break;
             }
 
-            let Some(mut top) = queue.pop() else {
-                break;
-            };
+            let Some(top) = index.take() else { break };
 
-            if top.count != pair_counts[&top.pair] as u64 {
-                top.count = pair_counts[&top.pair] as u64;
-                queue.push(top);
-                continue;
-            }
-
-            if top.count < 1 || self.min_frequency > top.count {
-                break;
-            }
-
-            let new_token_id = vocabulary.resolve(top.pair);
-            // Merge the new pair in every words
-            // Safety: This is just a type assertion, the code below may no longer be safe
-            // if the type of `pos` changes
-            let pos: &AHashSet<usize> = &top.pos;
-
-            let words_len = words.len();
-            // FIXME: doesn't look great
-            struct WordPtr(*mut Word);
-            // Safety: We do not actually use this for concurrent access to the same memory,
-            // only to different chunks within the same allocation.
-            unsafe impl Sync for WordPtr {}
-            let word_start = WordPtr(words.as_mut_ptr());
-
-            let changes = pos
-                .maybe_par_iter()
-                .flat_map(|&i| {
-                    // We can merge each of these words in parallel here because each position
-                    // can be there only once (AHashSet). So this is safe.
-                    unsafe {
-                        // Edition ≥2021 closures capture the `.0` field (a non-Sync raw
-                        // pointer) unless we force whole-struct capture of the Sync wrapper.
-                        let word_start = &word_start;
-                        assert!(i < words_len);
-                        // This is words[i], but avoids needing to go through &T (which triggers UB)
-                        let word = word_start.0.add(i);
-                        // let word: &mut Word = &mut (*word);
-                        (*word)
-                            .merge(top.pair.0, top.pair.1, new_token_id, max_token_length)
-                            .into_iter()
-                            .map(|c| (c, i))
-                            .collect::<Vec<_>>()
-                    }
-                })
-                .collect::<Vec<_>>();
-
-            // Introduce new formed pairs
-            for ((pair, change), iw) in changes {
-                let count = change * counts[iw] as i32;
-                *pair_counts.entry(pair).or_default() += count;
-                if change > 0 {
-                    where_to_update.entry(pair).or_default().insert(iw);
-                }
-            }
-            where_to_update.drain().for_each(|(pair, pos)| {
-                let count = pair_counts[&pair];
-                if count > 0 {
-                    queue.push(Merge {
-                        pair,
-                        count: count as u64,
-                        pos,
-                    });
-                }
-            });
+            let resolved = vocabulary.resolve(top.pair);
+            let changes = corpus.merge(
+                top.pair,
+                resolved.merged_id,
+                max_token_length,
+                &top.positions,
+                resolved.already_in_vocabulary,
+            );
+            index.commit(changes)?;
 
             vocabulary.commit(top.pair);
             completed += 1;
@@ -641,6 +493,7 @@ mod tests {
         ];
         assert_eq!(merges, expected_merges);
     }
+
     #[test]
     fn bpe_test_max_token_length_16() {
         /* bpe_test_max_token_length series of tests test the max_token_length flag of bpetrainer
@@ -681,6 +534,7 @@ mod tests {
             )
         }
     }
+
     #[test]
     fn bpe_test_max_token_length_direct_assert() {
         /* more direct version of bpe_test_max_token_length test
@@ -810,6 +664,60 @@ mod builder_tests {
         let json = serde_json::to_value(&configured).unwrap();
         assert!(json.get("progress_format").is_none());
         assert_eq!(serde_json::from_value::<BpeTrainer>(json).unwrap(), default);
+    }
+}
+
+#[cfg(feature = "parity-aware-bpe")]
+use tk_encode::models::bpe::Pair;
+
+#[cfg(test)]
+mod historical_coordinate_tests {
+    use super::*;
+
+    #[test]
+    fn stale_coordinate_keeps_its_historical_word_domain() {
+        let words = [("cbbbbb".into(), 6), ("aba".into(), 4)].into();
+        let trainer = BpeTrainer::builder()
+            .show_progress(false)
+            .vocab_size(64)
+            .min_frequency(1)
+            .continuing_subword_prefix("ab".into())
+            .build();
+        let (_, merges, _) = trainer.do_train(&words).unwrap();
+        assert_eq!(
+            merges,
+            [
+                ("abb".into(), "abb".into()),
+                ("c".into(), "abbb".into()),
+                ("abbb".into(), "abb".into()),
+                ("cbb".into(), "abbbb".into()),
+                ("a".into(), "abb".into()),
+                ("ab".into(), "aba".into()),
+            ]
+        );
+    }
+}
+
+#[cfg(test)]
+mod local_edit_tests {
+    use super::*;
+    #[test]
+    fn weighted_adjacent_edits_keep_literal_merge_order() {
+        let trainer = BpeTrainer::builder()
+            .show_progress(false)
+            .min_frequency(1)
+            .vocab_size(5)
+            .build();
+        let words = [("abab".into(), 10), ("ababa".into(), 1)].into();
+        let (_, merges, _) = trainer.do_train(&words).unwrap();
+        assert_eq!(
+            merges,
+            [
+                ("a".into(), "b".into()),
+                ("ab".into(), "ab".into()),
+                ("abab".into(), "a".into())
+            ]
+        );
     }
 }
 
@@ -982,6 +890,159 @@ mod trainer_contract_tests {
             let (vocab, merges, _) = trainer.do_train(&words).unwrap();
             assert_eq!(vocab, [(expected.into(), 0)].into());
             assert!(merges.is_empty());
+        }
+    }
+}
+
+#[cfg(test)]
+mod reference_tests {
+    use super::*;
+    use std::collections::{BTreeMap, BTreeSet};
+
+    // Recount every adjacent pair after each left-to-right rewrite. This small
+    // reference has no queue, historical positions, shards, or batched writes.
+    // Inputs here have plain symbols, bounded weights, and no special tokens.
+    fn reference(words: &AHashMap<CompactString, u64>, trainer: &BpeTrainer) -> (Vocab, Merges) {
+        let alphabet: BTreeSet<_> = words.keys().flat_map(|word| word.chars()).collect();
+        let mut tokens: Vec<_> = alphabet.into_iter().map(|c| c.to_string()).collect();
+        let initial = tokens.len();
+        let mut corpus: Vec<_> = words
+            .iter()
+            .map(|(word, &weight)| {
+                let ids: Vec<_> = word
+                    .chars()
+                    .map(|c| tokens.iter().position(|s| s == &c.to_string()).unwrap() as u32)
+                    .collect();
+                (ids, weight)
+            })
+            .collect();
+        let mut merges = Vec::new();
+        while tokens.len() < trainer.vocab_size {
+            let mut counts = BTreeMap::<(u32, u32), u64>::new();
+            for (word, weight) in &corpus {
+                for edge in word.windows(2) {
+                    let length = tokens[edge[0] as usize].chars().count()
+                        + tokens[edge[1] as usize].chars().count();
+                    let original_pair =
+                        (edge[0] as usize) < initial && (edge[1] as usize) < initial;
+                    if original_pair || trainer.max_token_length.is_none_or(|limit| length < limit)
+                    {
+                        *counts.entry((edge[0], edge[1])).or_default() += weight;
+                    }
+                }
+            }
+            let Some((pair, _)) = counts
+                .into_iter()
+                .filter(|(_, count)| *count >= trainer.min_frequency.max(1))
+                .max_by_key(|&(pair, count)| (count, std::cmp::Reverse(pair)))
+            else {
+                break;
+            };
+            let left = tokens[pair.0 as usize].clone();
+            let right = tokens[pair.1 as usize].clone();
+            let merged = left.clone() + &right;
+            let id = match tokens.iter().position(|s| s == &merged) {
+                Some(id) => id as u32,
+                None => {
+                    tokens.push(merged);
+                    (tokens.len() - 1) as u32
+                }
+            };
+            merges.push((left, right));
+            for (word, _) in &mut corpus {
+                let mut output = Vec::new();
+                let mut index = 0;
+                while index < word.len() {
+                    if word[index..].starts_with(&[pair.0, pair.1]) {
+                        output.push(id);
+                        index += 2;
+                    } else {
+                        output.push(word[index]);
+                        index += 1;
+                    }
+                }
+                *word = output;
+            }
+        }
+        (
+            tokens
+                .into_iter()
+                .enumerate()
+                .map(|(id, text)| (text, id as u32))
+                .collect(),
+            merges,
+        )
+    }
+
+    #[test]
+    fn plain_training_matches_recounting_reference() {
+        let mut state = 0x4632_9ab1u32;
+        let mut next = || {
+            state = state.wrapping_mul(1664525).wrapping_add(1013904223);
+            state
+        };
+        let characters = ['a', 'b', 'é', '字', '🙂'];
+        for case in 0..96 {
+            let mut words = AHashMap::<CompactString, u64>::new();
+            let domain = 2 + case % 4;
+            for _ in 0..2 + case % 7 {
+                let length = 1 + next() as usize % 12;
+                let text: String = (0..length)
+                    .map(|_| characters[next() as usize % domain])
+                    .collect();
+                *words.entry(text.into()).or_default() += u64::from(next() % 8);
+            }
+            if case == 0 {
+                words.clear();
+            } else if case % 8 == 0 {
+                words.insert("".into(), 0);
+            }
+            let trainer = BpeTrainer::builder()
+                .show_progress(false)
+                .vocab_size([0, 5, 9, 20][case % 4])
+                .min_frequency([0, 2, 7][case % 3])
+                .max_token_length([None, Some(1), Some(3), Some(6)][case / 4 % 4])
+                .build();
+            let expected = reference(&words, &trainer);
+            let (vocab, merges, _) = trainer.do_train(&words).unwrap();
+            assert_eq!((vocab, merges), expected, "case {case}: {words:?}");
+        }
+        // Four rules are compatible, but only two new vocabulary IDs fit.
+        let words = [
+            ("ab".into(), 8),
+            ("cd".into(), 7),
+            ("ef".into(), 6),
+            ("gh".into(), 5),
+        ]
+        .into();
+        let trainer = BpeTrainer::builder()
+            .show_progress(false)
+            .min_frequency(1)
+            .vocab_size(10)
+            .build();
+        let (vocab, merges, _) = trainer.do_train(&words).unwrap();
+        assert_eq!(vocab.len(), 10);
+        assert_eq!((vocab, merges), reference(&words, &trainer));
+    }
+
+    #[test]
+    fn large_alphabets_match_recounting_reference() {
+        for domain in [256, 257] {
+            let text: String = (0..domain)
+                .flat_map(|offset| {
+                    let character = char::from_u32(0x100 + offset).unwrap();
+                    [character, character]
+                })
+                .collect();
+            let words = [(CompactString::from(text), 1)].into();
+            let trainer = BpeTrainer::builder()
+                .show_progress(false)
+                .min_frequency(1)
+                .vocab_size(domain as usize + 3)
+                .build();
+            let expected = reference(&words, &trainer);
+            let (vocab, merges, _) = trainer.do_train(&words).unwrap();
+            assert_eq!((vocab, merges), expected, "alphabet size {domain}");
         }
     }
 }
