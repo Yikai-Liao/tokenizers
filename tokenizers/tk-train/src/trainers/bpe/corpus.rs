@@ -1,8 +1,9 @@
 //! Stable original-symbol coordinates for word-local training edits.
-#[path = "merge_changes.rs"]
-mod changes;
 #[path = "merge.rs"]
 mod merge;
+use merge::SelectedRuleIndex;
+#[path = "merge_changes.rs"]
+mod changes;
 use changes::NeighborScratchPool;
 
 use super::TrainingMode;
@@ -10,6 +11,7 @@ use super::positions::Positions;
 use super::vocabulary::InitialTokenIds;
 use super::word_counts::WordCountsView;
 use rayon::prelude::*;
+use std::collections::VecDeque;
 use std::ops::Range;
 use std::sync::atomic::{AtomicU16, AtomicU32, AtomicUsize, Ordering};
 use tk_encode::Result;
@@ -19,6 +21,7 @@ use tk_encode::parallelism::MaybeParallelRefIterator;
 
 const EMPTY: u32 = u32::MAX;
 
+#[cfg(test)]
 #[derive(Clone, Copy)]
 struct Symbol {
     id: u32,
@@ -29,10 +32,13 @@ struct Symbol {
 pub(super) struct Corpus {
     tokens: Slots,
     neighbor_scratch: NeighborScratchPool,
+    selected_rules: SelectedRuleIndex,
     occurrence_spans: Option<Box<[AtomicUsize]>>,
     starts: Box<[usize]>,
     weight_runs: Box<[WeightRun]>,
     unit_weight_range: Option<Range<usize>>,
+    whole_words: bool,
+    birth_pair_span_limit: Option<usize>,
     mode: TrainingMode,
     id_metadata: Vec<usize>,
 }
@@ -46,6 +52,7 @@ pub(super) struct CorpusPlan<'input> {
     length: usize,
     ids: InitialTokenIds,
     slot_bound: usize,
+    birth_pair_span_limit: Option<usize>,
     mode: TrainingMode,
 }
 impl<'input> CorpusPlan<'input> {
@@ -54,6 +61,7 @@ impl<'input> CorpusPlan<'input> {
         ids: InitialTokenIds,
         target_vocab_size: usize,
         mode: TrainingMode,
+        birth_pair_span_limit: Option<usize>,
     ) -> Result<Self> {
         let mut words: Vec<_> = words.iter().collect();
         if parallelism::get_parallelism() {
@@ -119,6 +127,7 @@ impl<'input> CorpusPlan<'input> {
             ids,
             length,
             slot_bound,
+            birth_pair_span_limit,
             mode,
         })
     }
@@ -139,10 +148,17 @@ impl<'input> CorpusPlan<'input> {
         Corpus {
             tokens,
             neighbor_scratch: NeighborScratchPool::default(),
+            selected_rules: SelectedRuleIndex::default(),
             occurrence_spans: None,
-            starts: self.starts,
+            starts: if self.mode == TrainingMode::Reuse || !self.ids.is_plain() {
+                self.starts
+            } else {
+                Box::default()
+            },
             weight_runs: self.weight_runs,
             unit_weight_range: self.unit_weight_range,
+            whole_words: self.birth_pair_span_limit.is_some(),
+            birth_pair_span_limit: self.birth_pair_span_limit,
             mode: self.mode,
             id_metadata: self.ids.into_metadata(),
         }
@@ -200,6 +216,7 @@ impl Corpus {
 }
 
 impl Corpus {
+    #[cfg(test)]
     fn symbol(&self, p: usize) -> Symbol {
         let id = self.token(p);
         let span = if id == EMPTY {
@@ -240,6 +257,7 @@ impl Corpus {
         Self {
             tokens,
             neighbor_scratch: NeighborScratchPool::default(),
+            selected_rules: SelectedRuleIndex::default(),
             occurrence_spans: None,
             weight_runs: starts
                 .iter()
@@ -248,6 +266,8 @@ impl Corpus {
                 .collect(),
             unit_weight_range: None,
             starts: starts.into_boxed_slice(),
+            whole_words: false,
+            birth_pair_span_limit: None,
             mode: TrainingMode::Fresh,
             id_metadata: vec![
                 1;
@@ -275,6 +295,7 @@ impl Corpus {
             .is_some_and(|&span| span != 0)
     }
     pub(super) fn activate(&mut self, pair: Pair, id: u32) {
+        self.whole_words |= self.has_been_activated(id);
         // Once aliases need occurrence geometry, keep only activation here.
         // Summing representative ID spans would grow with repeated alias reuse.
         let span = if self.occurrence_spans.is_some() {
@@ -506,8 +527,11 @@ impl CorpusPlan<'_> {
 }
 
 impl Corpus {
-    fn occurrence_span(&self, p: usize) -> usize {
-        self.symbol(p).span
+    fn occurrence_span(&self, position: usize) -> usize {
+        self.occurrence_spans.as_ref().map_or_else(
+            || self.fixed_id_span(self.token(position)),
+            |spans| spans[position].load(Ordering::Relaxed),
+        )
     }
     fn match_at(&self, position: usize, pair: Pair) -> Option<Range<usize>> {
         if self.token(position) != pair.0 {
@@ -557,9 +581,216 @@ impl Slots {
     }
 }
 
+pub(super) struct SelectedMerge {
+    pub(super) pair: Pair,
+    pub(super) merged_id: u32,
+    pub(super) positions: Positions,
+}
+
+impl Corpus {
+    fn resident(&self, coordinate: u64) -> usize {
+        let position =
+            usize::try_from(coordinate).expect("corpus coordinate fits resident indexing");
+        assert!(
+            position < self.len(),
+            "coordinate {coordinate} is outside the resident corpus of {} slots",
+            self.len()
+        );
+        position
+    }
+}
+
+impl Corpus {
+    fn id_count(&self) -> usize {
+        self.id_metadata.len()
+    }
+}
+
+impl Corpus {
+    fn prefetch(&self, position: usize) {
+        let address: Option<*const u8> = match &self.tokens {
+            Slots::Narrow(values) => values.get(position).map(|v| std::ptr::from_ref(v).cast()),
+            Slots::Wide(values) => values.get(position).map(|v| std::ptr::from_ref(v).cast()),
+        };
+        if let Some(address) = address {
+            // Locality zero is L1 on both stable and nightly branches builds,
+            // matching the former x86 T0 hint and covering AArch64 as well.
+            branches::prefetch_read_data::<_, 0>(address);
+        }
+    }
+    fn fixed_matcher(&self, pair: Pair) -> impl Fn(usize) -> Option<Range<usize>> + '_ {
+        debug_assert!(self.occurrence_spans.is_none());
+        let left = self.fixed_id_span(pair.0);
+        let total = left + self.fixed_id_span(pair.1);
+        move |position| {
+            // Zero spans mark inactive IDs (total == left means an inactive
+            // right ID). The exclusive end must still name a resident slot,
+            // and the right token must begin exactly one left span away.
+            if self.token(position) != pair.0
+                || left == 0
+                || total == left
+                || position + total >= self.len()
+                || self.token(position + left) != pair.1
+            {
+                return None;
+            }
+            Some(position..position + total)
+        }
+    }
+    fn fresh_matches<'a>(
+        &'a self,
+        coordinates: impl IntoIterator<Item = u64> + 'a,
+        pair: Pair,
+    ) -> impl Iterator<Item = (Range<usize>, u64)> + 'a {
+        let matcher = self.fixed_matcher(pair);
+        let mut positions = coordinates
+            .into_iter()
+            .map(move |coordinate| self.resident(coordinate))
+            .inspect(move |&p| self.prefetch(p));
+        let mut ahead = VecDeque::with_capacity(16);
+        ahead.extend(positions.by_ref().take(16));
+        let mut cached_weight: Option<WeightLookup> = None;
+        std::iter::from_fn(move || {
+            let position = ahead.pop_front()?;
+            ahead.extend(positions.next());
+            Some(position)
+        })
+        .filter_map(move |p| {
+            let matched = matcher(p)?;
+            let lookup = match cached_weight {
+                Some(lookup) if p < lookup.end => lookup,
+                _ => self.weight(p),
+            };
+            cached_weight = Some(lookup);
+            Some((matched, lookup.weight))
+        })
+    }
+}
+
 #[cfg(test)]
 mod merge_contract_tests {
     use super::*;
+
+    #[test]
+    fn joined_merge_updates_endpoints_and_strict_neighbor_counts() {
+        for (limit, born) in [(3, 0), (4, 7)] {
+            let mut corpus = Corpus::fixture(&[EMPTY, 0, 1, 2, 2, 3, EMPTY], vec![1], vec![7]);
+            corpus.birth_pair_span_limit = Some(limit);
+            corpus.activate((2, 2), 4);
+            let changes = corpus
+                .merge(vec![SelectedMerge {
+                    pair: (2, 2),
+                    merged_id: 4,
+                    positions: Positions::from_unsorted(vec![3]).unwrap(),
+                }])
+                .unwrap();
+            let counts: Vec<_> = changes
+                .iter()
+                .flat_map(|producer| &producer.changes)
+                .map(|change| {
+                    (
+                        change.removed,
+                        change.born,
+                        change.removed_weight,
+                        change.born_weight,
+                    )
+                })
+                .collect();
+            assert_eq!(
+                counts,
+                [((1, 2), (1, 4), 7, born), ((2, 3), (4, 3), 7, born)]
+            );
+            assert_eq!(corpus.read_word(1..6).collect::<Vec<_>>(), [0, 1, 4, 3]);
+            assert_eq!(
+                (corpus.occurrence_span(3), corpus.occurrence_span(4)),
+                (2, 2)
+            );
+        }
+    }
+
+    #[test]
+    fn reused_identity_keeps_distinct_occurrence_spans() {
+        for (values, pair, coordinate, expected, birth, spans) in [
+            (
+                [EMPTY, 0, 0, 0, 0, 2, EMPTY],
+                (0, 2),
+                3,
+                [0, 3],
+                (0, 3),
+                (2, 3),
+            ),
+            (
+                [EMPTY, 2, 0, 0, 0, 0, EMPTY],
+                (2, 0),
+                1,
+                [3, 0],
+                (3, 0),
+                (3, 2),
+            ),
+        ] {
+            for (limit, born_weight) in [(5, 0), (6, 11)] {
+                let mut corpus = Corpus::fixture(&values, vec![1], vec![11]);
+                corpus.mode = TrainingMode::Reuse;
+                corpus.activate((0, 0), 0);
+                corpus
+                    .merge(vec![SelectedMerge {
+                        pair: (0, 0),
+                        merged_id: 0,
+                        positions: Positions::from_unsorted(vec![1, 2, 3, 4]).unwrap(),
+                    }])
+                    .unwrap();
+                corpus.birth_pair_span_limit = Some(limit);
+                corpus.activate(pair, 3);
+                let changes = corpus
+                    .merge(vec![SelectedMerge {
+                        pair,
+                        merged_id: 3,
+                        positions: Positions::from_unsorted(vec![coordinate]).unwrap(),
+                    }])
+                    .unwrap();
+                let counts: Vec<_> = changes
+                    .into_iter()
+                    .flat_map(|producer| producer.changes)
+                    .map(|change| {
+                        (
+                            change.removed,
+                            change.born,
+                            change.removed_weight,
+                            change.born_weight,
+                        )
+                    })
+                    .collect();
+                assert_eq!(counts, [((0, 0), birth, 11, born_weight)]);
+                assert_eq!(corpus.read_word(1..6).collect::<Vec<_>>(), expected);
+                assert_eq!(
+                    (corpus.occurrence_span(1), corpus.occurrence_span(5)),
+                    spans
+                );
+            }
+        }
+        // Historical coordinates select a word even after alias rewrites have
+        // turned the coordinate into an interior slot of a longer token.
+        let mut corpus = Corpus::fixture(&[EMPTY, 0, 0, 0, 0, 0, EMPTY], vec![1], vec![1]);
+        corpus.mode = TrainingMode::Reuse;
+        let apply = |corpus: &mut Corpus, id, coordinates| {
+            corpus.activate((0, 0), id);
+            corpus
+                .merge(vec![SelectedMerge {
+                    pair: (0, 0),
+                    merged_id: id,
+                    positions: Positions::from_unsorted(coordinates).unwrap(),
+                }])
+                .unwrap();
+        };
+        apply(&mut corpus, 0, vec![1, 2, 3, 4]);
+        apply(&mut corpus, 0, vec![1]);
+        apply(&mut corpus, 1, vec![2]);
+        assert_eq!(corpus.read_word(1..6).collect::<Vec<_>>(), [1]);
+        assert_eq!(
+            (corpus.occurrence_span(1), corpus.occurrence_span(5)),
+            (5, 5)
+        );
+    }
 
     #[test]
     fn slot_storage_preserves_ids_at_the_narrow_boundary() {
@@ -588,7 +819,7 @@ mod merge_contract_tests {
         let trainer = BpeTrainer::new(1, 64);
         let (_, ids) =
             Vocabulary::initialize(&trainer, view, &trainer.select_alphabet(view), &None).unwrap();
-        let plan = CorpusPlan::build(view, ids, 64, TrainingMode::Fresh).unwrap();
+        let plan = CorpusPlan::build(view, ids, 64, TrainingMode::Fresh, None).unwrap();
         assert_eq!(plan.slot_count(), 10);
         for budget in [0, 2, 3, 6, usize::MAX] {
             let mut edges = Vec::new();

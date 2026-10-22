@@ -5,10 +5,10 @@ mod index;
 mod positions;
 use index::PairIndex;
 mod feed;
-use corpus::{Corpus, CorpusPlan};
+use corpus::{Corpus, CorpusPlan, SelectedMerge};
 mod vocabulary;
 mod word_counts;
-use vocabulary::{Alphabet, Vocabulary};
+use vocabulary::{Alphabet, ResolvedMerge, Vocabulary};
 
 #[cfg(feature = "parity-aware-bpe")]
 pub mod parity_trainer;
@@ -331,6 +331,18 @@ impl BpeTrainer {
     }
 
     fn train_counts(&self, words: WordCountsView<'_>) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
+        // Coordinate joined rounds on an ambient worker instead of re-entering
+        // that pool from the caller at every preparation/application boundary.
+        let vocabulary =
+            if parallelism::get_parallelism() && rayon::current_thread_index().is_none() {
+                rayon::join(|| self.train_attempts(words), || ()).0
+            } else {
+                self.train_attempts(words)
+            }?;
+        let (vocab, merges) = vocabulary.into_parts();
+        Ok((vocab, merges, self.special_tokens.clone()))
+    }
+    fn train_attempts(&self, words: WordCountsView<'_>) -> Result<Vocabulary> {
         let alphabet = self.select_alphabet(words);
         let progress = self.setup_progress();
         let outcome = self.train_attempt(words, TrainingMode::Fresh, &alphabet, &progress)?;
@@ -341,15 +353,63 @@ impl BpeTrainer {
             complete => complete,
         };
         match outcome {
-            AttemptOutcome::Complete(vocabulary) => {
-                let (vocab, merges) = vocabulary.into_parts();
-                Ok((vocab, merges, self.special_tokens.clone()))
-            }
+            AttemptOutcome::Complete(vocabulary) => Ok(vocabulary),
             AttemptOutcome::RestartForReuse => {
                 Err("BPE identity-reuse attempt requested another restart".into())
             }
         }
     }
+    fn select_batch(
+        &self,
+        vocabulary: &mut Vocabulary,
+        corpus: &mut Corpus,
+        index: &mut PairIndex,
+    ) -> Result<BatchSelection> {
+        let reuse = index.mode() == TrainingMode::Reuse;
+        let mut batch = MergeBatch::default();
+        // A fresh rule can append one ID: cap the batch by both the remaining
+        // vocabulary slots and the 256-rule scheduling limit. Reuse runs alone.
+        let cap = if reuse {
+            1
+        } else {
+            256.min(self.vocab_size - vocabulary.len())
+        };
+
+        // Keep the priority prefix: crossed endpoints stop selection, while shared
+        // heads/tails may batch. A higher-priority newborn edge would require a
+        // conflicting old boundary earlier in this prefix, which stops selection.
+        while !batch.closed && batch.rules.len() < cap {
+            let Some(priority) = index.peek() else {
+                break;
+            };
+            let pair = priority.pair();
+            // AA cannot share a batch. For AB, crossed head/tail IDs would
+            // overlap edits; equal heads or equal tails alone remain compatible.
+            if !batch.accepts(pair) {
+                break;
+            }
+            let resolved = vocabulary.resolve(pair)?;
+            // A reserved but never-activated ID is safe in fresh mode. Restart
+            // only when the result reuses an identity that has had occurrences.
+            if !reuse
+                && resolved.already_in_vocabulary
+                && corpus.has_been_activated(resolved.merged_id)
+            {
+                return Ok(BatchSelection::RestartForReuse);
+            }
+            // Defer candidate consumption until the batch owns the full admission
+            // decision. Rejected existing identities leave this queue head intact.
+            if !batch.try_push(pair, &resolved, || {
+                let candidate = index.take();
+                corpus.activate(pair, resolved.merged_id);
+                candidate.positions
+            }) {
+                break;
+            }
+        }
+        Ok(BatchSelection::Ready(batch.rules))
+    }
+
     fn train_attempt(
         &self,
         words: WordCountsView<'_>,
@@ -359,7 +419,7 @@ impl BpeTrainer {
     ) -> Result<AttemptOutcome> {
         // 1. Resolve the vocabulary and tokenize borrowed input into a corpus plan.
         let (vocabulary, ids) = Vocabulary::initialize(self, words, alphabet, progress)?;
-        let plan = CorpusPlan::build(words, ids, self.vocab_size, mode)?;
+        let plan = CorpusPlan::build(words, ids, self.vocab_size, mode, self.max_token_length)?;
         self.finalize_progress(progress, plan.word_count(), "Tokenize words");
 
         // 2. Freeze initial pairs first: their temporary counting buffers retire
@@ -372,7 +432,8 @@ impl BpeTrainer {
 
         self.update_progress(progress, self.vocab_size, "Compute merges");
         if vocabulary.len() < self.vocab_size {
-            return self.merge_attempt(vocabulary, plan.materialize(), index, mode, progress);
+            // 3. Only attempts needing merges allocate resident endpoints.
+            return self.merge_attempt(vocabulary, plan.materialize(), index, progress);
         }
         index.retire();
         drop(plan);
@@ -385,35 +446,29 @@ impl BpeTrainer {
         mut vocabulary: Vocabulary,
         mut corpus: Corpus,
         mut index: PairIndex,
-        mode: TrainingMode,
         progress: &Option<ProgressBar>,
     ) -> Result<AttemptOutcome> {
         // Argument order also releases index before corpus on early returns.
         let mut completed = 0;
-        let max_token_length = self.max_token_length.unwrap_or(usize::MAX);
         while vocabulary.len() < self.vocab_size {
-            let Some(top) = index.take() else { break };
-
-            let resolved = vocabulary.resolve(top.priority.pair())?;
-            if mode == TrainingMode::Fresh
-                && resolved.already_in_vocabulary
-                && corpus.has_been_activated(resolved.merged_id)
-            {
-                self.finalize_progress(progress, completed, "Compute merges");
-                return Ok(AttemptOutcome::RestartForReuse);
-            }
-            let changes = corpus.merge(
-                top.priority.pair(),
-                resolved.merged_id,
-                max_token_length,
-                &top.positions,
-            )?;
+            // Selection reserves IDs and consumes candidates. On any failure,
+            // discard this attempt; publish history only after writes and counts join.
+            let selected = match self.select_batch(&mut vocabulary, &mut corpus, &mut index)? {
+                BatchSelection::Ready(rules) if rules.is_empty() => break,
+                BatchSelection::Ready(rules) => rules,
+                BatchSelection::RestartForReuse => {
+                    self.finalize_progress(progress, completed, "Compute merges");
+                    return Ok(AttemptOutcome::RestartForReuse);
+                }
+            };
+            let merges: Vec<_> = selected.iter().map(|rule| rule.pair).collect();
+            let committed_rule_count = merges.len();
+            let changes = corpus.merge(selected)?;
             index.commit(changes)?;
-
-            vocabulary.commit(top.priority.pair());
-            completed += 1;
+            vocabulary.commit(merges);
+            completed += committed_rule_count;
             if let Some(p) = progress {
-                p.inc(1);
+                p.inc(committed_rule_count as u64);
             }
             self.emit_json_progress("Compute merges", completed, self.vocab_size);
         }
@@ -799,6 +854,102 @@ mod fresh_count_tests {
 }
 
 #[cfg(test)]
+mod prefix_tests {
+    use super::*;
+    #[test]
+    fn shared_endpoints_and_crossed_prefix_keep_merge_order() {
+        let trainer = BpeTrainer::builder()
+            .vocab_size(8)
+            .min_frequency(1)
+            .show_progress(false)
+            .build();
+        let words = [
+            ("ab".into(), 9),
+            ("ac".into(), 8),
+            ("db".into(), 7),
+            ("dc".into(), 6),
+        ]
+        .into();
+        let (_, merges, _) = trainer.do_train(&words).unwrap();
+        assert_eq!(
+            merges,
+            [
+                ("a".into(), "b".into()),
+                ("a".into(), "c".into()),
+                ("d".into(), "b".into()),
+                ("d".into(), "c".into())
+            ]
+        );
+        let words = [("abc".into(), 9), ("de".into(), 8)].into();
+        let (_, merges, _) = trainer.do_train(&words).unwrap();
+        assert_eq!(
+            merges,
+            [
+                ("a".into(), "b".into()),
+                ("ab".into(), "c".into()),
+                ("d".into(), "e".into())
+            ]
+        );
+    }
+}
+
+#[cfg(test)]
+mod zero_merge_tests {
+    use super::*;
+    #[test]
+    fn zero_merge_calls_still_check_initial_pair_counts() {
+        let trainer = BpeTrainer::builder()
+            .vocab_size(0)
+            .show_progress(false)
+            .build();
+        let words = [("ab".into(), 1)].into();
+        let (vocab, merges, _) = trainer.do_train(&words).unwrap();
+        assert_eq!(vocab.len(), 2);
+        assert!(merges.is_empty());
+        let words = [("abab".into(), u64::MAX)].into();
+        assert!(trainer.do_train(&words).is_err());
+    }
+}
+
+#[cfg(test)]
+mod adjacent_batch_tests {
+    use super::*;
+    #[test]
+    fn shared_endpoints_use_final_neighbor_spans() {
+        let words = [
+            ("ab".into(), 100),
+            ("ac".into(), 90),
+            ("db".into(), 80),
+            ("dc".into(), 70),
+            ("abac".into(), 1),
+            ("acdb".into(), 1),
+            ("dbdc".into(), 1),
+            ("dcab".into(), 1),
+        ]
+        .into();
+        for limit in [4, 5] {
+            let trainer = BpeTrainer::builder()
+                .show_progress(false)
+                .min_frequency(1)
+                .vocab_size(9)
+                .max_token_length(Some(limit))
+                .build();
+            let (_, merges, _) = trainer.do_train(&words).unwrap();
+            let mut expected = vec![
+                ("a".into(), "b".into()),
+                ("a".into(), "c".into()),
+                ("d".into(), "b".into()),
+                ("d".into(), "c".into()),
+            ];
+            if limit == 5 {
+                expected.push(("ab".into(), "ac".into()));
+            }
+            assert_eq!(merges, expected);
+        }
+    }
+}
+
+#[cfg(test)]
 mod local_edit_tests {
     use super::*;
     #[test]
@@ -821,21 +972,54 @@ mod local_edit_tests {
     }
 }
 
-#[cfg(test)]
-mod zero_merge_tests {
-    use super::*;
-    #[test]
-    fn zero_merge_calls_still_check_initial_pair_counts() {
-        let trainer = BpeTrainer::builder()
-            .vocab_size(0)
-            .show_progress(false)
-            .build();
-        let words = [("ab".into(), 1)].into();
-        let (vocab, merges, _) = trainer.do_train(&words).unwrap();
-        assert_eq!(vocab.len(), 2);
-        assert!(merges.is_empty());
-        let words = [("abab".into(), u64::MAX)].into();
-        assert!(trainer.do_train(&words).is_err());
+enum BatchSelection {
+    Ready(Vec<SelectedMerge>),
+    RestartForReuse,
+}
+
+/// Selection-only endpoint sets retire before preparation allocates its tasks.
+#[derive(Default)]
+struct MergeBatch {
+    rules: Vec<SelectedMerge>,
+    heads: AHashSet<u32>,
+    tails: AHashSet<u32>,
+    closed: bool,
+}
+
+impl MergeBatch {
+    fn accepts(&self, pair: tk_encode::models::bpe::Pair) -> bool {
+        !self.closed
+            && (self.rules.is_empty()
+                || (pair.0 != pair.1
+                    && !self.tails.contains(&pair.0)
+                    && !self.heads.contains(&pair.1)))
+    }
+
+    /// Own the compatible-prefix proof and record all state for an admitted rule.
+    /// The callback may consume the candidate only after admission succeeds.
+    fn try_push(
+        &mut self,
+        pair: tk_encode::models::bpe::Pair,
+        resolved: &ResolvedMerge,
+        select: impl FnOnce() -> positions::Positions,
+    ) -> bool {
+        if !self.accepts(pair) || (resolved.already_in_vocabulary && !self.rules.is_empty()) {
+            return false;
+        }
+        let rule = SelectedMerge {
+            pair,
+            merged_id: resolved.merged_id,
+            positions: select(),
+        };
+        // Existing IDs lack the fresh-ID priority proof; AA overlaps require
+        // global selection. Either closes this one-rule batch immediately.
+        self.closed = resolved.already_in_vocabulary || pair.0 == pair.1;
+        if !self.closed {
+            self.heads.insert(pair.0);
+            self.tails.insert(pair.1);
+        }
+        self.rules.push(rule);
+        true
     }
 }
 

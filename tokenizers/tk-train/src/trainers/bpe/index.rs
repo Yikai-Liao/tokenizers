@@ -206,27 +206,17 @@ impl PairIndex {
         })
     }
 
-    pub(super) fn take(&mut self) -> Option<Candidate> {
-        loop {
-            let top = self.queue.peek()?;
-            let shard = owner(top.pair(), self.shards.len());
-            let Some(&count) = self.shards[shard].counts.get(&top.pair()) else {
-                self.queue.pop();
-                continue;
-            };
-            if top.count != count {
-                self.queue.rekey(count);
-                continue;
-            }
-            if count < self.minimum.max(1) {
-                return None;
-            }
-            let candidate = self.queue.pop()?;
-            if self.mode == TrainingMode::Fresh {
-                self.shards[shard].counts.remove(&candidate.priority.pair());
-            }
-            return Some(candidate);
+    pub(super) fn take(&mut self) -> Candidate {
+        let candidate = self.queue.pop().expect("certified candidate exists");
+        if self.mode == TrainingMode::Fresh {
+            let pair = candidate.priority.pair();
+            let shard_count = self.shards.len();
+            self.shards[owner(pair, shard_count)]
+                .counts
+                .remove(&pair)
+                .expect("certified pair exists");
         }
+        candidate
     }
 
     pub(super) fn commit(&mut self, changes: Vec<ProducerChanges>) -> Result<()> {
@@ -627,6 +617,32 @@ impl PairIndex {
             });
             shard.positions.push(change.positions);
         }
+    }
+}
+
+impl PairIndex {
+    pub(super) fn peek(&mut self) -> Option<Priority> {
+        loop {
+            let top = self.queue.peek()?;
+            let Some(&count) = self.shards[owner(top.pair(), self.shards.len())]
+                .counts
+                .get(&top.pair())
+            else {
+                // Fresh counts retire below the floor. Their stale payloads are
+                // reclaimed when they reach the head of this owning queue.
+                self.queue.pop();
+                continue;
+            };
+            if top.count == count {
+                return (count >= self.minimum.max(1)).then_some(top);
+            }
+            // Equal pair/priority entries can own different occurrence cohorts.
+            // Keep pop/update/push: peek_mut can change their tie selection order.
+            self.queue.rekey(count);
+        }
+    }
+    pub(super) fn mode(&self) -> TrainingMode {
+        self.mode
     }
 }
 
