@@ -1,5 +1,5 @@
 //! Authoritative weighted counts and owning historical word-domain candidates.
-use super::corpus::{Corpus, WordChange};
+use super::corpus::{CorpusPlan, WordChange};
 use super::positions::Positions;
 use crate::progress::ProgressBar;
 use ahash::AHashMap;
@@ -46,7 +46,7 @@ pub(super) struct PairIndex {
 
 impl PairIndex {
     pub(super) fn build(
-        corpus: &Corpus,
+        corpus: &CorpusPlan<'_>,
         minimum: u64,
         progress: &Option<ProgressBar>,
     ) -> Result<Self> {

@@ -6,9 +6,12 @@ use super::vocabulary::InitialTokenIds;
 use super::word_counts::WordCountsView;
 use crate::progress::ProgressBar;
 use ahash::AHashMap;
+use rayon::prelude::*;
 use std::ops::Range;
 use std::sync::atomic::{AtomicU16, AtomicU32, AtomicUsize, Ordering};
+use tk_encode::Result;
 use tk_encode::models::bpe::Pair;
+use tk_encode::parallelism;
 use tk_encode::parallelism::MaybeParallelRefIterator;
 
 const EMPTY: u32 = u32::MAX;
@@ -51,8 +54,9 @@ impl Word {
 pub(super) struct Corpus {
     tokens: Slots,
     occurrence_spans: Option<Box<[AtomicUsize]>>,
-    starts: Vec<usize>,
-    counts: Vec<u64>,
+    starts: Box<[usize]>,
+    weight_runs: Box<[WeightRun]>,
+    unit_weight_range: Option<Range<usize>>,
     whole_words: bool,
     id_metadata: Vec<usize>,
 }
@@ -64,44 +68,98 @@ pub(super) struct WordChange {
     pub(super) weight: u64,
 }
 
-impl Corpus {
-    pub(super) fn new(
-        words: WordCountsView<'_>,
-        ids: &InitialTokenIds,
+/// Borrowed layout and initial IDs; resident endpoints are deferred until counting joins.
+pub(super) struct CorpusPlan<'input> {
+    words: Box<[(&'input compact_str::CompactString, &'input u64)]>,
+    starts: Box<[usize]>,
+    weight_runs: Box<[WeightRun]>,
+    unit_weight_range: Option<Range<usize>>,
+    length: usize,
+    ids: InitialTokenIds,
+    slot_bound: usize,
+}
+impl<'input> CorpusPlan<'input> {
+    pub(super) fn build(
+        words: WordCountsView<'input>,
+        ids: InitialTokenIds,
         target_vocab_size: usize,
-    ) -> Self {
-        let slots = 1 + words
+    ) -> Result<Self> {
+        let mut words: Vec<_> = words.iter().collect();
+        if parallelism::get_parallelism() {
+            words.par_sort_unstable_by(|a, b| b.1.cmp(a.1));
+        } else {
+            words.sort_unstable_by(|a, b| b.1.cmp(a.1));
+        }
+        let words = words.into_boxed_slice();
+        let mut starts: Vec<_> = words
+            .maybe_par_iter()
+            .map(|(word, _)| ids.symbol_count(word))
+            .collect();
+        let mut weight_runs = Vec::<WeightRun>::new();
+        let mut length = 1usize;
+        // Reuse the measured symbol counts as the checked word-start directory.
+        for (&(_, &weight), start) in words.iter().zip(&mut starts) {
+            let symbols = *start;
+            *start = length;
+            if weight_runs.last().is_none_or(|run| run.weight != weight) {
+                weight_runs.push(WeightRun {
+                    start: length,
+                    weight,
+                });
+            }
+            // Each word contributes its retained symbols and one trailing
+            // separator; length already includes the leading separator.
+            length = length
+                .checked_add(symbols)
+                .and_then(|n| n.checked_add(1))
+                .ok_or("BPE corpus exceeds resident index bounds")?;
+        }
+        // Bound bytes using the widest slot representation. Division avoids
+        // overflowing the multiplication that an allocation-size check needs.
+        if length > isize::MAX as usize / std::mem::size_of::<AtomicU32>() {
+            return Err("BPE corpus exceeds resident allocation bounds".into());
+        }
+        // Descending weights put all frequency-one words in one contiguous run.
+        // Its exclusive end is the next run's start, or the corpus end.
+        let unit_weight_range = weight_runs
             .iter()
-            .map(|(word, _)| ids.symbol_count(word) + 1)
-            .sum::<usize>();
-        let mut symbols = Vec::with_capacity(slots);
-        symbols.push(Symbol { id: EMPTY, span: 0 });
-        let mut starts = Vec::with_capacity(words.len());
-        let mut counts = Vec::with_capacity(words.len());
-        for (word, &weight) in words.iter() {
-            starts.push(symbols.len());
-            counts.push(weight);
-            symbols.extend(ids.symbols(word).map(|id| Symbol { id, span: 1 }));
-            symbols.push(Symbol { id: EMPTY, span: 0 });
-        }
-        let tokens = Slots::new(symbols.len(), ids.token_count().max(target_vocab_size));
-        for (p, symbol) in symbols.iter().enumerate() {
-            tokens.set(p, symbol.id);
-        }
-        Self {
+            .position(|run| run.weight == 1)
+            .map(|i| weight_runs[i].start..weight_runs.get(i + 1).map_or(length, |run| run.start));
+        let slot_bound = ids.token_count().max(target_vocab_size);
+        Ok(Self {
+            starts: starts.into_boxed_slice(),
+            weight_runs: weight_runs.into_boxed_slice(),
+            unit_weight_range,
+            words,
+            ids,
+            length,
+            slot_bound,
+        })
+    }
+    pub(super) fn word_count(&self) -> usize {
+        self.words.len()
+    }
+    pub(super) fn materialize(self) -> Corpus {
+        let tokens = Slots::new(self.length, self.slot_bound);
+        self.words
+            .maybe_par_iter()
+            .enumerate()
+            .for_each(|(word, (text, _))| {
+                let start = self.starts[word];
+                self.ids.symbols(text).enumerate().for_each(|(offset, id)| {
+                    tokens.set(start + offset, id);
+                });
+            });
+        Corpus {
             tokens,
             occurrence_spans: None,
-            starts,
-            counts,
+            starts: self.starts,
+            weight_runs: self.weight_runs,
+            unit_weight_range: self.unit_weight_range,
             whole_words: false,
-            id_metadata: ids.metadata(),
+            id_metadata: self.ids.into_metadata(),
         }
     }
-
-    pub(super) fn word_count(&self) -> usize {
-        self.starts.len()
-    }
-
     pub(super) fn count_pairs(
         &self,
         p: &Option<ProgressBar>,
@@ -113,13 +171,13 @@ impl Corpus {
                 let mut pair_counts = AHashMap::new();
                 let mut where_to_update: AHashMap<Pair, Vec<u64>> = AHashMap::new();
 
-                let chars: Vec<_> = self.read_word(self.word_range(i)).collect();
+                let chars: Vec<_> = self.ids.symbols(self.words[i].0).collect();
                 for (offset, window) in chars.windows(2).enumerate() {
                     let cur_pair: Pair = (window[0], window[1]);
 
                     // Initialize pair_counts and where_to_update for this pair if we just saw it
                     // Then update counts
-                    *pair_counts.entry(cur_pair).or_default() += self.counts[i] as i32;
+                    *pair_counts.entry(cur_pair).or_default() += *self.words[i].1 as i32;
                     where_to_update
                         .entry(cur_pair)
                         .or_default()
@@ -145,7 +203,9 @@ impl Corpus {
                 },
             )
     }
+}
 
+impl Corpus {
     fn word_range(&self, word: usize) -> Range<usize> {
         self.starts[word]
             ..self
@@ -376,6 +436,7 @@ impl Corpus {
         Symbol { id, span }
     }
 
+    #[cfg(test)]
     fn read_word(&self, range: Range<usize>) -> impl Iterator<Item = u32> + '_ {
         let mut p = range.start;
         std::iter::from_fn(move || {
@@ -402,8 +463,13 @@ impl Corpus {
         Self {
             tokens,
             occurrence_spans: None,
-            starts,
-            counts,
+            weight_runs: starts
+                .iter()
+                .zip(&counts)
+                .map(|(&start, &weight)| WeightRun { start, weight })
+                .collect(),
+            unit_weight_range: None,
+            starts: starts.into_boxed_slice(),
             whole_words: false,
             id_metadata: vec![
                 1;
@@ -522,6 +588,50 @@ impl Slots {
                 values[position].store(id, Ordering::Relaxed);
             }
             Self::Wide(values) => values[position].store(id, Ordering::Relaxed),
+        }
+    }
+}
+
+struct WeightRun {
+    start: usize,
+    weight: u64,
+}
+#[derive(Clone, Copy)]
+struct WeightLookup {
+    weight: u64,
+    end: usize,
+}
+impl Corpus {
+    fn weight(&self, position: usize) -> WeightLookup {
+        if self.weight_runs.len() == 1 {
+            return WeightLookup {
+                weight: self.weight_runs[0].weight,
+                end: self.len(),
+            };
+        }
+        // Cached runs are half-open: a coordinate at end belongs to the next
+        // weight run and must fall through to the directory lookup.
+        if let Some(range) = &self.unit_weight_range
+            && position >= range.start
+            && position < range.end
+        {
+            return WeightLookup {
+                weight: 1,
+                end: range.end,
+            };
+        }
+        // partition_point returns the first later run; its predecessor owns
+        // this coordinate. Callers supply a coordinate at or after the first start.
+        let i = self
+            .weight_runs
+            .partition_point(|run| run.start <= position)
+            - 1;
+        WeightLookup {
+            weight: self.weight_runs[i].weight,
+            end: self
+                .weight_runs
+                .get(i + 1)
+                .map_or(self.len(), |run| run.start),
         }
     }
 }
