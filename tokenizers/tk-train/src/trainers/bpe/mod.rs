@@ -292,6 +292,7 @@ impl BpeTrainer {
     /// # Errors
     ///
     /// Returns an error if checked position encoding or storage reservation fails.
+    /// Initial and merged token identities must fit the supported ID domain.
     pub fn train_vocab(&self) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
         self.train_counts(WordCountsView::from(&self.words))
     }
@@ -335,12 +336,12 @@ impl BpeTrainer {
 
         let progress = self.setup_progress();
 
-        let (mut vocabulary, ids) = Vocabulary::initialize(self, word_counts, &progress);
+        let (mut vocabulary, ids) = Vocabulary::initialize(self, word_counts, &progress)?;
 
         //
         // 3. Tokenize words
         //
-        let mut corpus = Corpus::new(word_counts, &ids);
+        let mut corpus = Corpus::new(word_counts, &ids, self.vocab_size);
         self.finalize_progress(&progress, corpus.word_count(), "Tokenize words");
         drop(ids);
 
@@ -364,7 +365,7 @@ impl BpeTrainer {
 
             let Some(top) = index.take() else { break };
 
-            let resolved = vocabulary.resolve(top.pair);
+            let resolved = vocabulary.resolve(top.pair)?;
             let changes = corpus.merge(
                 top.pair,
                 resolved.merged_id,

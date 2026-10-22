@@ -7,7 +7,7 @@ use super::word_counts::WordCountsView;
 use crate::progress::ProgressBar;
 use ahash::AHashMap;
 use std::ops::Range;
-use std::sync::atomic::{AtomicU32, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicU16, AtomicU32, AtomicUsize, Ordering};
 use tk_encode::models::bpe::Pair;
 use tk_encode::parallelism::MaybeParallelRefIterator;
 
@@ -21,7 +21,7 @@ struct Symbol {
 
 /// Owns mutable word storage and the frequency attached to each word domain.
 pub(super) struct Corpus {
-    tokens: Box<[AtomicU32]>,
+    tokens: Slots,
     occurrence_spans: Option<Box<[AtomicUsize]>>,
     starts: Vec<usize>,
     counts: Vec<u64>,
@@ -37,7 +37,11 @@ pub(super) struct WordChange {
 }
 
 impl Corpus {
-    pub(super) fn new(words: WordCountsView<'_>, ids: &InitialTokenIds) -> Self {
+    pub(super) fn new(
+        words: WordCountsView<'_>,
+        ids: &InitialTokenIds,
+        target_vocab_size: usize,
+    ) -> Self {
         let slots = 1 + words
             .iter()
             .map(|(word, _)| ids.symbol_count(word) + 1)
@@ -52,11 +56,12 @@ impl Corpus {
             symbols.extend(ids.symbols(word).map(|id| Symbol { id, span: 1 }));
             symbols.push(Symbol { id: EMPTY, span: 0 });
         }
+        let tokens = Slots::new(symbols.len(), ids.token_count().max(target_vocab_size));
+        for (p, symbol) in symbols.iter().enumerate() {
+            tokens.set(p, symbol.id);
+        }
         Self {
-            tokens: symbols
-                .iter()
-                .map(|symbol| AtomicU32::new(symbol.id))
-                .collect(),
+            tokens,
             occurrence_spans: None,
             starts,
             counts,
@@ -125,19 +130,39 @@ impl Corpus {
 }
 
 impl Corpus {
-    fn apply(&self, starts: &[usize], id: u32) {
-        // Preparation owns disjoint accepted intervals. Every reader joins before
-        // writes; atomics keep endpoint accesses safe if a task unwinds.
-        for &p in starts {
-            let left = self.symbol(p);
-            let right = p + left.span;
-            let span = left.span + self.symbol(right).span;
-            let after = p + span;
-            self.store(p, Symbol { id, span });
-            if right + 1 != after {
-                self.store(right, Symbol { id: EMPTY, span: 0 });
+    fn apply(&self, starts: &[usize], merged_id: u32) {
+        let Some(&first) = starts.first() else {
+            return;
+        };
+        match &self.occurrence_spans {
+            None => {
+                // One rule has shared geometry. Cache it before any token store:
+                // first + left locates its right token, whose span completes total.
+                let left = self.fixed_id_span(self.token(first));
+                let total = left + self.fixed_id_span(self.token(first + left));
+                for &start in starts {
+                    let right = start + left;
+                    let after = start + total;
+                    self.tokens.replace_pair(start, right, after, merged_id);
+                }
             }
-            self.store(after - 1, Symbol { id, span });
+            Some(spans) => {
+                for &start in starts {
+                    // Read this occurrence's old geometry before changing its endpoints.
+                    let left = spans[start].load(Ordering::Relaxed);
+                    let right = start + left;
+                    let total = left + spans[right].load(Ordering::Relaxed);
+                    let after = start + total;
+                    self.tokens.replace_pair(start, right, after, merged_id);
+                    // A one-slot right token is the new tail itself; clear its
+                    // old span only when that right start becomes an interior hole.
+                    if right + 1 != after {
+                        spans[right].store(0, Ordering::Relaxed);
+                    }
+                    spans[start].store(total, Ordering::Relaxed);
+                    spans[after - 1].store(total, Ordering::Relaxed);
+                }
+            }
         }
     }
 }
@@ -155,12 +180,7 @@ impl Corpus {
         };
         Symbol { id, span }
     }
-    fn store(&self, p: usize, symbol: Symbol) {
-        self.tokens[p].store(symbol.id, Ordering::Relaxed);
-        if let Some(spans) = &self.occurrence_spans {
-            spans[p].store(symbol.span, Ordering::Relaxed);
-        }
-    }
+
     fn read_word(&self, range: Range<usize>) -> impl Iterator<Item = u32> + '_ {
         let mut p = range.start;
         std::iter::from_fn(move || {
@@ -174,8 +194,18 @@ impl Corpus {
     }
     #[cfg(test)]
     fn fixture(values: &[u32], starts: Vec<usize>, counts: Vec<u64>) -> Self {
+        let bound = values
+            .iter()
+            .copied()
+            .filter(|&id| id != EMPTY)
+            .max()
+            .map_or(0, |id| id as usize + 1);
+        let tokens = Slots::new(values.len(), bound);
+        for (p, &id) in values.iter().enumerate() {
+            tokens.set(p, id);
+        }
         Self {
-            tokens: values.iter().map(|&id| AtomicU32::new(id)).collect(),
+            tokens,
             occurrence_spans: None,
             starts,
             counts,
@@ -195,7 +225,7 @@ impl Corpus {
 
 impl Corpus {
     fn token(&self, p: usize) -> u32 {
-        self.tokens[p].load(Ordering::Relaxed)
+        self.tokens.get(p)
     }
     fn len(&self) -> usize {
         self.tokens.len()
@@ -241,5 +271,95 @@ impl Corpus {
             }
         }
         self.occurrence_spans = Some(values.into_boxed_slice());
+    }
+}
+
+enum Slots {
+    Narrow(Box<[AtomicU16]>),
+    Wide(Box<[AtomicU32]>),
+}
+impl Slots {
+    fn new(length: usize, vocabulary_bound: usize) -> Self {
+        if vocabulary_bound <= u16::MAX as usize {
+            Self::Narrow(
+                (0..length)
+                    .map(|_| AtomicU16::new(u16::MAX))
+                    .collect::<Vec<_>>()
+                    .into_boxed_slice(),
+            )
+        } else {
+            Self::Wide(
+                (0..length)
+                    .map(|_| AtomicU32::new(EMPTY))
+                    .collect::<Vec<_>>()
+                    .into_boxed_slice(),
+            )
+        }
+    }
+
+    fn len(&self) -> usize {
+        match self {
+            Self::Narrow(values) => values.len(),
+            Self::Wide(values) => values.len(),
+        }
+    }
+
+    #[inline]
+    fn get(&self, position: usize) -> u32 {
+        match self {
+            Self::Narrow(values) => {
+                let id = values[position].load(Ordering::Relaxed);
+                if id == u16::MAX { EMPTY } else { u32::from(id) }
+            }
+            Self::Wide(values) => values[position].load(Ordering::Relaxed),
+        }
+    }
+
+    #[inline]
+    fn set(&self, position: usize, id: u32) {
+        match self {
+            Self::Narrow(values) => {
+                let id = if id == EMPTY {
+                    u16::MAX
+                } else {
+                    u16::try_from(id).expect("vocabulary bound admits narrow endpoint ID")
+                };
+                values[position].store(id, Ordering::Relaxed);
+            }
+            Self::Wide(values) => values[position].store(id, Ordering::Relaxed),
+        }
+    }
+}
+
+impl Slots {
+    fn replace_pair(&self, start: usize, right: usize, after: usize, merged_id: u32) {
+        self.set(start, merged_id);
+        if right + 1 != after {
+            self.set(right, EMPTY);
+        }
+        self.set(after - 1, merged_id);
+    }
+}
+
+#[cfg(test)]
+mod merge_contract_tests {
+    use super::*;
+
+    #[test]
+    fn slot_storage_preserves_ids_at_the_narrow_boundary() {
+        for bound in [65535, 65536] {
+            let slots = Slots::new(7, bound);
+            assert_eq!(slots.len(), 7);
+            assert_eq!(slots.get(0), EMPTY);
+            slots.set(1, 65534);
+            slots.set(3, 2);
+            slots.set(4, 2);
+            slots.replace_pair(1, 3, 5, (bound - 1) as u32);
+            assert_eq!(slots.get(0), EMPTY);
+            assert_eq!(slots.get(1), (bound - 1) as u32);
+            assert_eq!(slots.get(3), EMPTY);
+            assert_eq!(slots.get(4), (bound - 1) as u32);
+            assert_eq!(slots.get(5), EMPTY);
+        }
     }
 }
