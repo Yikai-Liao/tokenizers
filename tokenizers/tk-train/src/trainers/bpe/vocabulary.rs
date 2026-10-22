@@ -29,14 +29,24 @@ impl Vocabulary {
             vocabulary.intern(token.content.as_str().into());
         }
 
-        for character in trainer.select_alphabet(wc) {
-            vocabulary.intern(character.to_string().into());
+        let alphabet = trainer.select_alphabet(wc);
+        let mut spans = vec![0; vocabulary.len()];
+        for &character in &alphabet.observed_specials {
+            let id = vocabulary.intern(character.to_string().into());
+            spans[id as usize] = 1;
+        }
+        for entry in &alphabet.characters {
+            let id = vocabulary.intern(entry.character.to_string().into());
+            spans.resize(vocabulary.len(), 0);
+            spans[id as usize] = usize::from(entry.observed_in_input);
         }
 
         trainer.update_progress(progress, wc.len(), "Tokenize words");
         let ids = InitialTokenIds::build(
             &mut vocabulary,
             wc,
+            spans,
+            alphabet.complete,
             trainer.end_of_word_suffix.as_deref(),
             progress,
         );
@@ -105,6 +115,8 @@ impl Vocabulary {
 
 /// Immutable plain and observed decorated IDs for the input used to build this table.
 pub(super) struct InitialTokenIds {
+    spans: Vec<usize>,
+    complete_alphabet: bool,
     characters: Box<[u32]>,
     decorated: Box<[DecoratedIds]>,
     prefix: bool,
@@ -115,6 +127,8 @@ impl InitialTokenIds {
     fn build(
         vocabulary: &mut Vocabulary,
         words: WordCountsView<'_>,
+        spans: Vec<usize>,
+        complete_alphabet: bool,
         suffix: Option<&str>,
         progress: &Option<ProgressBar>,
     ) -> Self {
@@ -128,6 +142,8 @@ impl InitialTokenIds {
             }
         }
         let mut ids = Self {
+            spans,
+            complete_alphabet,
             characters,
             prefix: vocabulary.prefix.as_deref().is_some_and(|p| !p.is_empty()),
             suffix: suffix.is_some_and(|s| !s.is_empty()),
@@ -140,6 +156,7 @@ impl InitialTokenIds {
             return ids;
         }
         ids.decorated = vec![DecoratedIds([u32::MAX; 3]); vocabulary.len()].into_boxed_slice();
+        ids.spans.fill(0);
         let mut text = String::new();
         for (word, _) in words.iter() {
             for (byte, character) in word.char_indices() {
@@ -147,7 +164,13 @@ impl InitialTokenIds {
                     continue;
                 };
                 let affix = ids.affix(byte == 0, byte + character.len_utf8() == word.len());
-                if affix == Affix::Plain || ids.decorated[plain as usize].get(affix) != u32::MAX {
+                if affix == Affix::Plain {
+                    ids.spans[plain as usize] = 1;
+                    continue;
+                }
+                let cached = ids.decorated[plain as usize].get(affix);
+                if cached != u32::MAX {
+                    ids.spans[cached as usize] = 1;
                     continue;
                 }
                 text.clear();
@@ -160,6 +183,8 @@ impl InitialTokenIds {
                 }
                 let id = vocabulary.intern(text.as_str().into());
                 ids.decorated[plain as usize].remember(affix, id);
+                ids.spans.resize(vocabulary.len(), 0);
+                ids.spans[id as usize] = 1;
             }
             if let Some(p) = progress {
                 p.inc(1);
@@ -278,7 +303,7 @@ pub(super) struct ResolvedMerge {
 }
 
 impl BpeTrainer {
-    pub(super) fn select_alphabet(&self, wc: WordCountsView<'_>) -> Vec<char> {
+    pub(super) fn select_alphabet(&self, wc: WordCountsView<'_>) -> Alphabet {
         if self.limit_alphabet.is_none() {
             // Keep the unlimited fast path: parallel presence, without frequencies.
             let observed = observed_characters(wc);
@@ -286,12 +311,24 @@ impl BpeTrainer {
             for &character in &self.initial_alphabet {
                 present.insert(character as usize);
             }
-            return present
+            let characters = present
                 .ones()
-                .map(|codepoint| char::from_u32(codepoint as u32).expect("observed scalar"))
+                .map(|codepoint| {
+                    let character = char::from_u32(codepoint as u32)
+                        .expect("alphabet bits come from valid characters");
+                    AlphabetCharacter {
+                        character,
+                        observed_in_input: observed.contains(codepoint),
+                    }
+                })
                 .collect();
+            return Alphabet {
+                characters,
+                complete: true,
+                observed_specials: self.observed_special_characters(&observed),
+            };
         }
-
+        let mut observed = FixedBitSet::with_capacity(0x110000);
         // Compute the alphabet from seen words
         // Full-u64 weights can exceed u64 after repeated character occurrences.
         // Resident input byte counts bound the sum below u128::MAX, leaving that
@@ -300,6 +337,7 @@ impl BpeTrainer {
         for (word, count) in wc.iter() {
             for c in word.chars() {
                 *alphabet.entry(c).or_default() += u128::from(*count);
+                observed.insert(c as usize);
             }
         }
 
@@ -326,7 +364,19 @@ impl BpeTrainer {
 
         // Keep the initial alphabet (sorted for determinism)
         kept.sort_unstable_by_key(|k| *k.0 as u32);
-        kept.into_iter().map(|(&character, _)| character).collect()
+        let characters = kept
+            .into_iter()
+            .map(|(&character, _)| AlphabetCharacter {
+                character,
+                observed_in_input: observed.contains(character as usize),
+            })
+            .collect();
+        // The 136 KiB bitmap is selection scratch, never retained across attempts.
+        Alphabet {
+            characters,
+            complete: false,
+            observed_specials: self.observed_special_characters(&observed),
+        }
     }
 }
 
@@ -352,4 +402,47 @@ fn observed_characters(word_counts: WordCountsView<'_>) -> FixedBitSet {
             left
         })
         .unwrap_or_else(|| FixedBitSet::with_capacity(0x110000))
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(super) struct Alphabet {
+    characters: Vec<AlphabetCharacter>,
+    complete: bool,
+    observed_specials: Vec<char>,
+}
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(super) struct AlphabetCharacter {
+    pub(super) character: char,
+    observed_in_input: bool,
+}
+
+impl BpeTrainer {
+    fn observed_special_characters(&self, observed: &FixedBitSet) -> Vec<char> {
+        self.special_tokens
+            .iter()
+            .filter_map(|token| {
+                let mut chars = token.content.chars();
+                let character = chars.next()?;
+                // A special token admits a symbol only when it is exactly one
+                // character and that character actually occurs in the input.
+                (chars.next().is_none() && observed.contains(character as usize))
+                    .then_some(character)
+            })
+            .collect()
+    }
+}
+
+impl InitialTokenIds {
+    pub(super) fn metadata(&self) -> Vec<usize> {
+        self.spans.clone()
+    }
+    pub(super) fn symbol_count(&self, text: &str) -> usize {
+        if self.complete_alphabet {
+            text.chars().count()
+        } else {
+            text.chars()
+                .filter(|&ch| self.characters[ch as usize] != u32::MAX)
+                .count()
+        }
+    }
 }
