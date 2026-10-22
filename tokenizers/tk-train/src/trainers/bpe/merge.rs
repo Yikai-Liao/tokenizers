@@ -1,11 +1,14 @@
 //! Joined merge preparation and disjoint endpoint writes.
 use super::changes::{EdgeSide, NeighborChanges, NeighborScratch};
-use super::{Corpus, EMPTY, PairChange, Positions, ProducerChanges, Symbol, WeightLookup};
+use super::{
+    Corpus, EMPTY, PairChange, Positions, ProducerChanges, Symbol, TrainingMode, WeightLookup,
+};
 use itertools::Itertools;
+use std::ops::Range;
 use tk_encode::Result;
 use tk_encode::models::bpe::Pair;
 use tk_encode::parallelism::{MaybeParallelIterator, MaybeParallelSlice};
-/// Read-only preparation owns accepted starts and the old sequential edge events.
+/// Prepared disjoint writes and checked neighboring pair groups.
 struct PreparedChunk {
     starts: Vec<usize>,
     changes: Vec<PairChange<Positions>>,
@@ -14,7 +17,7 @@ struct PreparedChunk {
 mod preparation_tests {
     use super::*;
     #[test]
-    fn adjacent_matches_prepare_sequential_events_without_writes() {
+    fn adjacent_matches_prepare_final_boundaries_without_writes() {
         let mut corpus = Corpus::fixture(&[EMPTY, 0, 1, 0, 1, EMPTY], vec![1], vec![3]);
         corpus.activate((0, 1), 2);
         let positions = Positions::from_unsorted(vec![1, 3]).unwrap();
@@ -26,6 +29,7 @@ mod preparation_tests {
                 usize::MAX,
                 positions.iter(),
                 None,
+                Some(&positions),
                 None,
                 &mut scratch,
             )
@@ -44,8 +48,8 @@ mod preparation_tests {
                 ))
                 .collect::<Vec<_>>(),
             [
-                ((2, 0), (2, 2), 3, 3, vec![1]),
-                ((1, 0), (2, 0), 3, 3, vec![1])
+                ((1, 0), (2, 0), 3, 0, vec![]),
+                ((1, 2), (2, 2), 0, 3, vec![1])
             ]
         );
         assert_eq!(corpus.symbol(1).id, 0);
@@ -76,7 +80,7 @@ mod reader_duplicate_tests {
                 }
             };
             corpus.activate((0, 1), 2);
-            let changes = corpus.merge((0, 1), 2, usize::MAX, &make(), false).unwrap();
+            let changes = corpus.merge((0, 1), 2, usize::MAX, &make()).unwrap();
             let total = changes
                 .iter()
                 .flat_map(|p| &p.changes)
@@ -106,13 +110,9 @@ impl Corpus {
         id: u32,
         limit: usize,
         positions: &Positions,
-        existing_identity: bool,
     ) -> Result<Vec<ProducerChanges>> {
-        if existing_identity {
-            self.whole_words |= self.has_been_activated(id);
-        }
         self.activate(pair, id);
-        if !self.whole_words {
+        if self.mode == TrainingMode::Fresh {
             return self.merge_local(pair, id, limit, positions);
         }
 
@@ -172,6 +172,7 @@ impl Corpus {
                             coordinates,
                             None,
                             Some(positions),
+                            None,
                             scratch,
                         )
                     })
@@ -215,7 +216,7 @@ impl Corpus {
                     None
                 } else {
                     let prior = &accepted[part * chunk - 1];
-                    Some((prior.end, prior.len()))
+                    Some(prior.end)
                 };
                 self.neighbor_scratch.with(|scratch| {
                     self.prepare_local(
@@ -225,6 +226,7 @@ impl Corpus {
                         matches.iter().map(|matched| matched.start as u64),
                         seed,
                         None,
+                        Some(&accepted),
                         scratch,
                     )
                 })
@@ -246,13 +248,14 @@ impl Corpus {
         id: u32,
         limit: usize,
         coordinates: impl IntoIterator<Item = u64>,
-        previous: Option<(usize, usize)>,
+        previous: Option<usize>,
         cohort: Option<&Positions>,
+        accepted: Option<&[Range<usize>]>,
         scratch: &mut NeighborScratch,
     ) -> Result<PreparedChunk> {
         let mut starts = Vec::new();
         let mut neighbors = NeighborChanges::new(pair, id, self.id_metadata.len(), scratch);
-        let (mut previous_end, mut previous_span) = previous.unwrap_or((0, 0));
+        let mut previous_end = previous.unwrap_or(0);
         let mut cached_weight: Option<WeightLookup> = None;
         for coordinate in coordinates {
             let p = usize::try_from(coordinate).expect("resident corpus coordinate");
@@ -287,43 +290,39 @@ impl Corpus {
                         && positions.iter_from(before as u64).next() == Some(before as u64)
                 })
             });
-            let prior = if p == previous_end || adjacent_selected {
-                Symbol {
-                    id,
-                    span: if adjacent_selected {
-                        span
-                    } else {
-                        previous_span
-                    },
-                }
-            } else {
-                self.symbol(p - 1)
-            };
-            if prior.id != EMPTY {
-                let before = p - prior.span;
+            let prior = self.symbol(p - 1);
+            if prior.id != EMPTY && p != previous_end && !adjacent_selected {
                 neighbors.record(
                     EdgeSide::Left,
                     prior.id,
                     prior.id,
-                    before,
+                    p - prior.span,
                     weight,
                     prior.span + span < limit,
                 )?;
             }
             let next = self.symbol(after);
             if next.id != EMPTY {
+                let selected = cohort.is_some_and(|positions| {
+                    self.match_at(after, pair).is_some()
+                        && positions.iter_from(after as u64).next() == Some(after as u64)
+                }) || accepted.is_some_and(|matches| {
+                    matches
+                        .binary_search_by_key(&after, |matched| matched.start)
+                        .is_ok()
+                });
+                let born = if selected { id } else { next.id };
                 neighbors.record(
                     EdgeSide::Right,
                     next.id,
-                    next.id,
+                    born,
                     p,
                     weight,
-                    span + next.span < limit,
+                    span + self.fixed_id_span(born) < limit,
                 )?;
             }
             starts.push(p);
             previous_end = after;
-            previous_span = span;
         }
         Ok(PreparedChunk {
             starts,

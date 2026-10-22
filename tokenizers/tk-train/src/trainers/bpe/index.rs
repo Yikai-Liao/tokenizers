@@ -1,4 +1,5 @@
 //! Authoritative weighted counts and owning historical word-domain candidates.
+use super::TrainingMode;
 use super::corpus::{CorpusPlan, InitialChunk, InitialEdge, ProducerChanges};
 use super::positions::Positions;
 use crate::progress::ProgressBar;
@@ -163,6 +164,7 @@ pub(super) struct PairIndex {
     counts: AHashMap<Pair, u64>,
     queue: CandidateQueue,
     minimum: u64,
+    mode: TrainingMode,
 }
 
 impl PairIndex {
@@ -195,6 +197,9 @@ impl PairIndex {
         let mut counts = AHashMap::new();
         let mut candidates = Vec::new();
         for (pair, state) in states {
+            if corpus.mode() == TrainingMode::Fresh && state.count < minimum.max(1) {
+                continue;
+            }
             counts.insert(pair, state.count);
             if state.count != 0 {
                 let positions = Positions::concat(state.positions)?;
@@ -205,13 +210,17 @@ impl PairIndex {
             counts,
             queue: candidates.into_iter().collect(),
             minimum,
+            mode: corpus.mode(),
         })
     }
 
     pub(super) fn take(&mut self) -> Option<Candidate> {
         loop {
             let top = self.queue.peek()?;
-            let count = self.counts[&top.pair()];
+            let Some(&count) = self.counts.get(&top.pair()) else {
+                self.queue.pop();
+                continue;
+            };
             if top.count != count {
                 self.queue.rekey(count);
                 continue;
@@ -219,41 +228,66 @@ impl PairIndex {
             if count < self.minimum.max(1) {
                 return None;
             }
-            return self.queue.pop();
+            let candidate = self.queue.pop()?;
+            if self.mode == TrainingMode::Fresh {
+                self.counts.remove(&candidate.priority.pair());
+            }
+            return Some(candidate);
         }
     }
 
     pub(super) fn commit(&mut self, changes: Vec<ProducerChanges>) -> Result<()> {
-        let mut births: AHashMap<Pair, Vec<u64>> = AHashMap::new();
+        let reuse = self.mode == TrainingMode::Reuse;
+        let mut births = AHashMap::<Pair, PairAggregate<SmallVec<[Positions; 1]>>>::new();
         for producer in changes {
             for change in producer.changes {
-                adjust_signed(
-                    self.counts.entry(change.removed).or_default(),
-                    change.removed_weight,
-                    true,
-                )?;
-                adjust_signed(
-                    self.counts.entry(change.born).or_default(),
-                    change.born_weight,
-                    false,
-                )?;
+                if reuse {
+                    adjust_signed(
+                        self.counts.entry(change.removed).or_default(),
+                        change.removed_weight,
+                        true,
+                    )?;
+                    adjust_signed(
+                        self.counts.entry(change.born).or_default(),
+                        change.born_weight,
+                        false,
+                    )?;
+                } else if change.removed_weight != 0
+                    && let Some(count) = self.counts.get_mut(&change.removed)
+                {
+                    *count = count
+                        .checked_sub(change.removed_weight)
+                        .ok_or("BPE fresh removal exceeds the current count")?;
+                    if *count < self.minimum.max(1) {
+                        self.counts.remove(&change.removed);
+                    }
+                }
                 if !change.positions.is_empty() {
-                    births
-                        .entry(change.born)
-                        .or_default()
-                        .extend(change.positions.iter());
+                    let birth = births.entry(change.born).or_default();
+                    super::add(&mut birth.count, change.born_weight)?;
+                    birth.positions.push(change.positions);
                 }
             }
         }
-        for (pair, pos) in births.drain() {
-            let count = self.counts[&pair];
-            if (count as i64) > 0 {
-                self.queue.push(Candidate::new(
-                    pair,
-                    count as u64,
-                    Positions::from_unsorted(pos)?,
-                ));
+        for (pair, birth) in births {
+            let count = if reuse {
+                self.counts[&pair]
+            } else {
+                birth.count
+            };
+            if (reuse && (count as i64) <= 0) || (!reuse && count < self.minimum.max(1)) {
+                continue;
             }
+            let positions = if reuse {
+                Positions::merge(birth.positions)?
+            } else {
+                Positions::concat(birth.positions)?
+            };
+            if !reuse {
+                debug_assert!(!self.counts.contains_key(&pair));
+                self.counts.insert(pair, count);
+            }
+            self.queue.push(Candidate::new(pair, count, positions));
         }
         Ok(())
     }
@@ -392,4 +426,26 @@ fn count_chunk(
         p.inc(words as u64);
     }
     Ok(counts.into_entries())
+}
+
+#[cfg(test)]
+mod count_contract_tests {
+    use super::*;
+
+    #[test]
+    fn signed_adjustments_preserve_negative_bits_and_reject_overflow() {
+        let mut count = 0;
+        adjust_signed(&mut count, 1, true).unwrap();
+        assert_eq!(count, u64::MAX);
+        adjust_signed(&mut count, 2, false).unwrap();
+        assert_eq!(count, 1);
+        let mut high = i64::MAX as u64;
+        assert!(adjust_signed(&mut high, 1, false).is_err());
+        assert_eq!(high, i64::MAX as u64);
+        let mut low = i64::MIN as u64;
+        assert!(adjust_signed(&mut low, 1, true).is_err());
+        assert_eq!(low, i64::MIN as u64);
+        assert!(adjust_signed(&mut count, i64::MAX as u64 + 1, false).is_err());
+        assert_eq!(count, 1);
+    }
 }

@@ -5,6 +5,7 @@ mod changes;
 mod merge;
 use changes::NeighborScratchPool;
 
+use super::TrainingMode;
 use super::positions::Positions;
 use super::vocabulary::InitialTokenIds;
 use super::word_counts::WordCountsView;
@@ -32,7 +33,7 @@ pub(super) struct Corpus {
     starts: Box<[usize]>,
     weight_runs: Box<[WeightRun]>,
     unit_weight_range: Option<Range<usize>>,
-    whole_words: bool,
+    mode: TrainingMode,
     id_metadata: Vec<usize>,
 }
 
@@ -45,12 +46,14 @@ pub(super) struct CorpusPlan<'input> {
     length: usize,
     ids: InitialTokenIds,
     slot_bound: usize,
+    mode: TrainingMode,
 }
 impl<'input> CorpusPlan<'input> {
     pub(super) fn build(
         words: WordCountsView<'input>,
         ids: InitialTokenIds,
         target_vocab_size: usize,
+        mode: TrainingMode,
     ) -> Result<Self> {
         let mut words: Vec<_> = words.iter().collect();
         if parallelism::get_parallelism() {
@@ -95,7 +98,10 @@ impl<'input> CorpusPlan<'input> {
                 u128::from(**weight) * (end - starts[i]).saturating_sub(1) as u128
             })
             .sum::<u128>();
-        if mass > i64::MAX as u128 || words.iter().any(|(_, weight)| **weight > i64::MAX as u64) {
+        if (mode == TrainingMode::Reuse || !ids.is_plain())
+            && (mass > i64::MAX as u128
+                || words.iter().any(|(_, weight)| **weight > i64::MAX as u64))
+        {
             return Err("BPE identity-reuse weighted edge mass or word weight exceeds i64".into());
         }
         // Descending weights put all frequency-one words in one contiguous run.
@@ -113,6 +119,7 @@ impl<'input> CorpusPlan<'input> {
             ids,
             length,
             slot_bound,
+            mode,
         })
     }
     pub(super) fn word_count(&self) -> usize {
@@ -136,7 +143,7 @@ impl<'input> CorpusPlan<'input> {
             starts: self.starts,
             weight_runs: self.weight_runs,
             unit_weight_range: self.unit_weight_range,
-            whole_words: false,
+            mode: self.mode,
             id_metadata: self.ids.into_metadata(),
         }
     }
@@ -241,7 +248,7 @@ impl Corpus {
                 .collect(),
             unit_weight_range: None,
             starts: starts.into_boxed_slice(),
-            whole_words: false,
+            mode: TrainingMode::Fresh,
             id_metadata: vec![
                 1;
                 values
@@ -262,7 +269,7 @@ impl Corpus {
     fn len(&self) -> usize {
         self.tokens.len()
     }
-    fn has_been_activated(&self, id: u32) -> bool {
+    pub(super) fn has_been_activated(&self, id: u32) -> bool {
         self.id_metadata
             .get(id as usize)
             .is_some_and(|&span| span != 0)
@@ -533,6 +540,12 @@ pub(super) struct ProducerChanges {
     pub(super) changes: Vec<PairChange<Positions>>,
 }
 
+impl CorpusPlan<'_> {
+    pub(super) fn mode(&self) -> TrainingMode {
+        self.mode
+    }
+}
+
 impl Slots {
     fn replace_pair(&self, start: usize, right: usize, after: usize, merged_id: u32) {
         self.set(start, merged_id);
@@ -574,7 +587,7 @@ mod merge_contract_tests {
         let trainer = BpeTrainer::new(1, 64);
         let (_, ids) =
             Vocabulary::initialize(&trainer, view, &trainer.select_alphabet(view), &None).unwrap();
-        let plan = CorpusPlan::build(view, ids, 64).unwrap();
+        let plan = CorpusPlan::build(view, ids, 64, TrainingMode::Fresh).unwrap();
         assert_eq!(plan.slot_count(), 10);
         for budget in [0, 2, 3, 6, usize::MAX] {
             let mut edges = Vec::new();
