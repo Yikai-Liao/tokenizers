@@ -3235,6 +3235,7 @@ dependencies = [
  "compact_str",
  "dary_heap",
  "esaxx-rs",
+ "indexmap",
  "indicatif",
  "itertools 0.14.0",
  "log",
