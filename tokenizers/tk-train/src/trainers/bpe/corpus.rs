@@ -1,6 +1,10 @@
 //! Stable original-symbol coordinates for word-local training edits.
+#[path = "merge_changes.rs"]
+mod changes;
 #[path = "merge.rs"]
 mod merge;
+use changes::NeighborScratchPool;
+
 use super::positions::Positions;
 use super::vocabulary::InitialTokenIds;
 use super::word_counts::WordCountsView;
@@ -23,19 +27,13 @@ struct Symbol {
 /// Owns mutable word storage and the frequency attached to each word domain.
 pub(super) struct Corpus {
     tokens: Slots,
+    neighbor_scratch: NeighborScratchPool,
     occurrence_spans: Option<Box<[AtomicUsize]>>,
     starts: Box<[usize]>,
     weight_runs: Box<[WeightRun]>,
     unit_weight_range: Option<Range<usize>>,
     whole_words: bool,
     id_metadata: Vec<usize>,
-}
-
-pub(super) struct WordChange {
-    pub(super) pair: Pair,
-    pub(super) delta: i32,
-    pub(super) coordinate: u64,
-    pub(super) weight: u64,
 }
 
 /// Borrowed layout and initial IDs; resident endpoints are deferred until counting joins.
@@ -133,6 +131,7 @@ impl<'input> CorpusPlan<'input> {
             });
         Corpus {
             tokens,
+            neighbor_scratch: NeighborScratchPool::default(),
             occurrence_spans: None,
             starts: self.starts,
             weight_runs: self.weight_runs,
@@ -233,6 +232,7 @@ impl Corpus {
         }
         Self {
             tokens,
+            neighbor_scratch: NeighborScratchPool::default(),
             occurrence_spans: None,
             weight_runs: starts
                 .iter()
@@ -520,6 +520,17 @@ impl Corpus {
         // resident, because preparation reads the neighbor at that coordinate.
         (right_span != 0 && after < self.len()).then_some(position..after)
     }
+}
+
+pub(super) struct PairChange<P> {
+    pub(super) removed: Pair,
+    pub(super) born: Pair,
+    pub(super) removed_weight: u64,
+    pub(super) born_weight: u64,
+    pub(super) positions: P,
+}
+pub(super) struct ProducerChanges {
+    pub(super) changes: Vec<PairChange<Positions>>,
 }
 
 impl Slots {
