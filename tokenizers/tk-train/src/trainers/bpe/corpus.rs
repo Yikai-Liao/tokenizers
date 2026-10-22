@@ -1,8 +1,9 @@
 //! Stable original-symbol coordinates for word-local training edits.
-#[path = "merge_changes.rs"]
-mod changes;
 #[path = "merge.rs"]
 mod merge;
+use merge::SelectedRuleIndex;
+#[path = "merge_changes.rs"]
+mod changes;
 use changes::NeighborScratchPool;
 
 use super::TrainingMode;
@@ -31,6 +32,7 @@ struct Symbol {
 pub(super) struct Corpus {
     tokens: Slots,
     neighbor_scratch: NeighborScratchPool,
+    selected_rules: SelectedRuleIndex,
     occurrence_spans: Option<Box<[AtomicUsize]>>,
     starts: Box<[usize]>,
     weight_runs: Box<[WeightRun]>,
@@ -146,6 +148,7 @@ impl<'input> CorpusPlan<'input> {
         Corpus {
             tokens,
             neighbor_scratch: NeighborScratchPool::default(),
+            selected_rules: SelectedRuleIndex::default(),
             occurrence_spans: None,
             starts: if self.mode == TrainingMode::Reuse || !self.ids.is_plain() {
                 self.starts
@@ -254,6 +257,7 @@ impl Corpus {
         Self {
             tokens,
             neighbor_scratch: NeighborScratchPool::default(),
+            selected_rules: SelectedRuleIndex::default(),
             occurrence_spans: None,
             weight_runs: starts
                 .iter()
@@ -675,11 +679,11 @@ mod merge_contract_tests {
             corpus.birth_pair_span_limit = Some(limit);
             corpus.activate((2, 2), 4);
             let changes = corpus
-                .merge(SelectedMerge {
+                .merge(vec![SelectedMerge {
                     pair: (2, 2),
                     merged_id: 4,
                     positions: Positions::from_unsorted(vec![3]).unwrap(),
-                })
+                }])
                 .unwrap();
             let counts: Vec<_> = changes
                 .iter()
@@ -730,20 +734,20 @@ mod merge_contract_tests {
                 corpus.mode = TrainingMode::Reuse;
                 corpus.activate((0, 0), 0);
                 corpus
-                    .merge(SelectedMerge {
+                    .merge(vec![SelectedMerge {
                         pair: (0, 0),
                         merged_id: 0,
                         positions: Positions::from_unsorted(vec![1, 2, 3, 4]).unwrap(),
-                    })
+                    }])
                     .unwrap();
                 corpus.birth_pair_span_limit = Some(limit);
                 corpus.activate(pair, 3);
                 let changes = corpus
-                    .merge(SelectedMerge {
+                    .merge(vec![SelectedMerge {
                         pair,
                         merged_id: 3,
                         positions: Positions::from_unsorted(vec![coordinate]).unwrap(),
-                    })
+                    }])
                     .unwrap();
                 let counts: Vec<_> = changes
                     .into_iter()
@@ -772,11 +776,11 @@ mod merge_contract_tests {
         let apply = |corpus: &mut Corpus, id, coordinates| {
             corpus.activate((0, 0), id);
             corpus
-                .merge(SelectedMerge {
+                .merge(vec![SelectedMerge {
                     pair: (0, 0),
                     merged_id: id,
                     positions: Positions::from_unsorted(coordinates).unwrap(),
-                })
+                }])
                 .unwrap();
         };
         apply(&mut corpus, 0, vec![1, 2, 3, 4]);
