@@ -1,11 +1,9 @@
 name: BPE PR trends
+run-name: BPE trends · 28 versions · 3 rounds · 4 workers
 
 on:
   push:
     branches: [ci/bpe-pr-trends-20261022]
-    paths:
-      - .github/workflows/bpe-pr-trends.yml
-      - .github/bench/bpe-pr-trends/**
   workflow_dispatch:
 
 permissions:
