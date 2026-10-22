@@ -538,7 +538,8 @@ mod merge_contract_tests {
             WordCounts::from_unique(vec![("ef".into(), 0), ("ab".into(), 9), ("cd".into(), 1)]);
         let view = WordCountsView::from(&words);
         let trainer = BpeTrainer::new(1, 64);
-        let (_, ids) = Vocabulary::initialize(&trainer, view, &None).unwrap();
+        let (_, ids) =
+            Vocabulary::initialize(&trainer, view, &trainer.select_alphabet(view), &None).unwrap();
         let plan = CorpusPlan::build(view, ids, 64).unwrap();
         assert_eq!(plan.slot_count(), 10);
         for budget in [0, 2, 3, 6, usize::MAX] {

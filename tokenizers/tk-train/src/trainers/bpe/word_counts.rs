@@ -140,3 +140,9 @@ mod tests {
         assert!(serde_json::from_str::<WordCounts>(r#"{"word":-1}"#).is_err());
     }
 }
+
+impl<'counts> WordCountsView<'counts> {
+    pub(super) fn keys(self) -> impl Iterator<Item = &'counts CompactString> {
+        self.iter().map(|(word, _)| word)
+    }
+}
