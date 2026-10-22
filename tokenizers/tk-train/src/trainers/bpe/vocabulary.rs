@@ -442,8 +442,8 @@ impl BpeTrainer {
 }
 
 impl InitialTokenIds {
-    pub(super) fn metadata(&self) -> Vec<usize> {
-        self.spans.clone()
+    pub(super) fn into_metadata(self) -> Vec<usize> {
+        self.spans
     }
     pub(super) fn symbol_count(&self, text: &str) -> usize {
         if self.complete_alphabet {

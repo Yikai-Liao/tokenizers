@@ -3253,6 +3253,7 @@ dependencies = [
  "itertools 0.14.0",
  "leb128fmt",
  "log",
+ "rayon",
  "scc",
  "serde",
  "serde_json",

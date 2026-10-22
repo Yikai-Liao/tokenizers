@@ -5,7 +5,7 @@ mod index;
 mod positions;
 use index::PairIndex;
 mod feed;
-use corpus::Corpus;
+use corpus::CorpusPlan;
 mod vocabulary;
 mod word_counts;
 use vocabulary::Vocabulary;
@@ -341,20 +341,20 @@ impl BpeTrainer {
         //
         // 3. Tokenize words
         //
-        let mut corpus = Corpus::new(word_counts, &ids, self.vocab_size);
-        self.finalize_progress(&progress, corpus.word_count(), "Tokenize words");
-        drop(ids);
+        let plan = CorpusPlan::build(word_counts, ids, self.vocab_size)?;
+        self.finalize_progress(&progress, plan.word_count(), "Tokenize words");
 
         //
         // 4. Count pairs in words
         //
-        self.update_progress(&progress, corpus.word_count(), "Count pairs");
-        let mut index = PairIndex::build(&corpus, self.min_frequency, &progress)?;
-        self.finalize_progress(&progress, corpus.word_count(), "Count pairs");
+        self.update_progress(&progress, plan.word_count(), "Count pairs");
+        let mut index = PairIndex::build(&plan, self.min_frequency, &progress)?;
+        self.finalize_progress(&progress, plan.word_count(), "Count pairs");
 
         //
         // 5. Do merges
         //
+        let mut corpus = plan.materialize();
         self.update_progress(&progress, self.vocab_size, "Compute merges");
         let mut completed = 0;
         loop {
