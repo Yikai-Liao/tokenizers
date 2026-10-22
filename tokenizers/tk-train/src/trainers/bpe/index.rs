@@ -4,45 +4,164 @@ use super::positions::Positions;
 use crate::progress::ProgressBar;
 use ahash::AHashMap;
 use dary_heap::OctonaryHeap;
+use rayon::prelude::*;
 use smallvec::SmallVec;
-use std::cmp::Ordering;
+use std::cmp::{Ordering, Reverse};
 use tk_encode::Result;
 use tk_encode::models::bpe::Pair;
+use tk_encode::parallelism;
 use tk_encode::parallelism::MaybeParallelIterator;
 
-pub(super) struct Candidate {
-    pub(super) pair: Pair,
+/// Queue key: highest count first, then smallest pair.
+/// Field order defines heap priority; occurrence payloads never break ties.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub(super) struct Priority {
     count: u64,
-    pub(super) positions: Positions,
+    pair: Reverse<Pair>,
 }
 
-impl Eq for Candidate {}
-impl PartialEq for Candidate {
-    fn eq(&self, other: &Self) -> bool {
-        self.count == other.count && self.pair == other.pair
+impl Priority {
+    #[cfg(test)]
+    pub(super) fn count(self) -> u64 {
+        self.count
+    }
+
+    pub(super) fn pair(self) -> Pair {
+        self.pair.0
     }
 }
 
-impl PartialOrd for Candidate {
+/// Owning queue entry: a possibly stale count snapshot and its occurrence list.
+/// PairIndex corrects the priority against the count shard before selection;
+/// positions remain a historical cohort when identities can be reused.
+pub(super) struct Candidate<P = Positions> {
+    pub(super) priority: Priority,
+    pub(super) positions: P,
+}
+
+impl Candidate {
+    fn new(pair: Pair, count: u64, positions: Positions) -> Self {
+        Self {
+            priority: Priority {
+                count,
+                pair: Reverse(pair),
+            },
+            positions,
+        }
+    }
+}
+
+impl<P> Eq for Candidate<P> {}
+
+impl<P> PartialEq for Candidate<P> {
+    fn eq(&self, other: &Self) -> bool {
+        self.priority == other.priority
+    }
+}
+
+impl<P> Ord for Candidate<P> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.priority.cmp(&other.priority)
+    }
+}
+
+impl<P> PartialOrd for Candidate<P> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl Ord for Candidate {
-    fn cmp(&self, other: &Self) -> Ordering {
-        if self.count != other.count {
-            self.count.cmp(&other.count)
+/// Move priority/index entries through the heap while payloads stay in one owner.
+/// Vacant slots are reused; each live entry exclusively owns its indexed list.
+#[derive(Default)]
+struct CandidateQueue {
+    heap: OctonaryHeap<Candidate<usize>>,
+    positions: Vec<Positions>,
+    vacant: Vec<usize>,
+}
+
+impl FromIterator<Candidate> for CandidateQueue {
+    fn from_iter<T: IntoIterator<Item = Candidate>>(candidates: T) -> Self {
+        let candidates = candidates.into_iter();
+        let capacity = candidates.size_hint().0;
+        let mut heap = OctonaryHeap::with_capacity(capacity);
+        let mut positions = Vec::with_capacity(capacity);
+        for candidate in candidates {
+            let slot = positions.len();
+            positions.push(candidate.positions);
+            heap.push(Candidate {
+                priority: candidate.priority,
+                positions: slot,
+            });
+        }
+        Self {
+            heap,
+            positions,
+            vacant: Vec::new(),
+        }
+    }
+}
+
+impl CandidateQueue {
+    fn peek(&self) -> Option<Priority> {
+        self.heap.peek().map(|candidate| candidate.priority)
+    }
+
+    fn push(&mut self, candidate: Candidate) {
+        let Candidate {
+            priority,
+            positions,
+        } = candidate;
+        let slot = if let Some(slot) = self.vacant.pop() {
+            self.positions[slot] = positions;
+            slot
         } else {
-            // Here we want ascending order
-            other.pair.cmp(&self.pair)
+            self.positions.push(positions);
+            self.positions.len() - 1
+        };
+        self.heap.push(Candidate {
+            priority,
+            positions: slot,
+        });
+    }
+
+    #[inline(always)]
+    fn pop(&mut self) -> Option<Candidate> {
+        let candidate = self.heap.pop()?;
+        let positions = std::mem::take(&mut self.positions[candidate.positions]);
+        self.vacant.push(candidate.positions);
+        Some(Candidate {
+            priority: candidate.priority,
+            positions,
+        })
+    }
+
+    fn rekey(&mut self, count: u64) {
+        // Pop/update/push retains the historical cohort tie-selection order.
+        let mut candidate = self.heap.pop().expect("observed candidate exists");
+        candidate.priority.count = count;
+        self.heap.push(candidate);
+    }
+
+    fn retire(self) {
+        let Self {
+            heap,
+            positions,
+            vacant,
+        } = self;
+        drop(heap);
+        drop(vacant);
+        if parallelism::get_parallelism() {
+            positions.into_par_iter().with_min_len(4096).for_each(drop);
+        } else {
+            drop(positions);
         }
     }
 }
 
 pub(super) struct PairIndex {
     counts: AHashMap<Pair, u64>,
-    queue: OctonaryHeap<Candidate>,
+    queue: CandidateQueue,
     minimum: u64,
 }
 
@@ -74,30 +193,33 @@ impl PairIndex {
             }
         }
         let mut counts = AHashMap::new();
-        let mut queue = OctonaryHeap::with_capacity(states.len());
+        let mut candidates = Vec::new();
         for (pair, state) in states {
             counts.insert(pair, state.count);
             if state.count != 0 {
                 let positions = Positions::concat(state.positions)?;
-                queue.push(Candidate::new(pair, state.count, positions));
+                candidates.push(Candidate::new(pair, state.count, positions));
             }
         }
         Ok(Self {
             counts,
-            queue,
+            queue: candidates.into_iter().collect(),
             minimum,
         })
     }
 
     pub(super) fn take(&mut self) -> Option<Candidate> {
         loop {
-            let mut top = self.queue.pop()?;
-            if top.count != self.counts[&top.pair] as u64 {
-                top.count = self.counts[&top.pair] as u64;
-                self.queue.push(top);
+            let top = self.queue.peek()?;
+            let count = self.counts[&top.pair()];
+            if top.count != count {
+                self.queue.rekey(count);
                 continue;
             }
-            return (top.count >= self.minimum.max(1)).then_some(top);
+            if count < self.minimum.max(1) {
+                return None;
+            }
+            return self.queue.pop();
         }
     }
 
@@ -130,17 +252,6 @@ impl PairIndex {
     }
 }
 
-impl Candidate {
-    fn new(pair: Pair, count: u64, positions: Positions) -> Self {
-        // Keep the owning cohort; producers have already normalized its coordinates.
-        Self {
-            pair,
-            count,
-            positions,
-        }
-    }
-}
-
 fn adjust_signed(count: &mut u64, amount: u64, remove: bool) -> Result<()> {
     // Reuse keeps a signed ledger in u64 bits to preserve the queue's unsigned
     // ordering. Check each action, not its net delta: intermediate overflow matters.
@@ -150,6 +261,42 @@ fn adjust_signed(count: &mut u64, amount: u64, remove: bool) -> Result<()> {
         .checked_add(delta)
         .ok_or("BPE identity-reuse count adjustment exceeds i64")? as u64;
     Ok(())
+}
+
+impl PairIndex {
+    pub(super) fn retire(self) {
+        let Self { counts, queue, .. } = self;
+        drop(counts);
+        queue.retire();
+    }
+}
+#[cfg(test)]
+mod queue_tests {
+    use super::*;
+    #[test]
+    fn equal_priority_cohorts_keep_pop_update_push_order() {
+        let make = |p| Candidate::new((0, 1), 9, Positions::from_unsorted(vec![p]).unwrap());
+        let mut reference = OctonaryHeap::new();
+        for candidate in [make(1), make(2), make(3)] {
+            reference.push(candidate);
+        }
+        let mut queue: CandidateQueue = [make(1), make(2), make(3)].into_iter().collect();
+        let mut top = reference.pop().unwrap();
+        top.priority.count = 7;
+        reference.push(top);
+        queue.rekey(7);
+        for _ in 0..3 {
+            let old = reference.pop().unwrap();
+            let new = queue.pop().unwrap();
+            assert_eq!(old.priority.count(), new.priority.count());
+            assert_eq!(old.priority.pair(), new.priority.pair());
+            assert_eq!(
+                old.positions.iter().collect::<Vec<_>>(),
+                new.positions.iter().collect::<Vec<_>>()
+            );
+        }
+        assert!(queue.pop().is_none());
+    }
 }
 
 #[derive(Default)]
