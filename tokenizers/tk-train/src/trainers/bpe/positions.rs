@@ -97,17 +97,21 @@ mod codec {
     }
 }
 use codec::{Cursor, RESTART};
-pub(super) struct Positions(Leaf);
+pub(super) struct Positions(Repr);
+enum Repr {
+    Leaf(Leaf),
+    Root { leaves: Box<[Leaf]>, len: u64 },
+}
 struct Leaf {
     bytes: SmallVec<[u8; 16]>,
     len: NonZeroU64,
 }
 impl Default for Positions {
     fn default() -> Self {
-        Self(Leaf {
+        Self(Repr::Leaf(Leaf {
             bytes: SmallVec::new(),
             len: NonZeroU64::MIN,
-        })
+        }))
     }
 }
 impl Positions {
@@ -121,10 +125,13 @@ impl Positions {
     }
     #[inline(always)]
     pub(super) fn push(&mut self, position: u64) -> Result<()> {
-        self.0.push(position)
+        match &mut self.0 {
+            Repr::Leaf(leaf) => leaf.push(position),
+            Repr::Root { .. } => Err("BPE roots cannot be appended to".into()),
+        }
     }
     pub(super) fn iter(&self) -> impl Iterator<Item = u64> + '_ {
-        self.0.cursor()
+        self.leaves().iter().flat_map(Leaf::cursor)
     }
 }
 impl Leaf {
@@ -205,5 +212,78 @@ mod tests {
         empty.push(10).unwrap();
         assert!(empty.push(9).is_err());
         assert_eq!(empty.iter().collect::<Vec<_>>(), [10]);
+    }
+}
+
+impl Positions {
+    pub(super) fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+}
+
+impl Positions {
+    pub(super) fn len(&self) -> usize {
+        match &self.0 {
+            Repr::Leaf(leaf) => leaf.len(),
+            Repr::Root { len, .. } => *len as usize,
+        }
+    }
+    pub(super) fn concat(fragments: impl IntoIterator<Item = Self>) -> Result<Self> {
+        let mut leaves = SmallVec::<[Leaf; 1]>::new();
+        let mut len = 0usize;
+        let mut previous = None;
+        for fragment in fragments {
+            let Repr::Leaf(leaf) = fragment.0 else {
+                return Err("BPE concat requires leaves".into());
+            };
+            if leaf.len() == 0 {
+                continue;
+            }
+            if previous.is_some_and(|last| last > leaf.first()) {
+                return Err("BPE positions are not sorted".into());
+            }
+            len = len
+                .checked_add(leaf.len())
+                .ok_or("BPE fragment count exceeds usize")?;
+            previous = Some(leaf.last());
+            leaves.push(leaf);
+        }
+        match leaves.len() {
+            0 => Ok(Self::default()),
+            1 => Ok(Self(Repr::Leaf(leaves.pop().expect("one leaf")))),
+            _ => Ok(Self(Repr::Root {
+                leaves: leaves.into_vec().into_boxed_slice(),
+                len: len as u64,
+            })),
+        }
+    }
+    fn leaves(&self) -> &[Leaf] {
+        match &self.0 {
+            Repr::Leaf(leaf) => std::slice::from_ref(leaf),
+            Repr::Root { leaves, .. } => leaves,
+        }
+    }
+}
+
+impl Leaf {
+    fn first(&self) -> u64 {
+        codec::read_absolute(&self.bytes[8..])
+    }
+}
+#[cfg(test)]
+mod root_tests {
+    use super::*;
+    #[test]
+    fn ordered_fragments_move_without_losing_duplicates() {
+        let make = |values| Positions::from_unsorted(values).unwrap();
+        let root = Positions::concat([make(vec![0, 128]), make(vec![]), make(vec![128, u64::MAX])])
+            .unwrap();
+        assert_eq!(root.len(), 4);
+        assert_eq!(root.iter().collect::<Vec<_>>(), [0, 128, 128, u64::MAX]);
+        assert!(Positions::concat([root]).is_err());
+        assert!(Positions::concat([make(vec![9]), make(vec![8])]).is_err());
+        let mut root = Positions::concat([make(vec![1]), make(vec![2])]).unwrap();
+        assert!(root.push(3).is_err());
+        assert_eq!(root.iter().collect::<Vec<_>>(), [1, 2]);
     }
 }
