@@ -499,6 +499,29 @@ impl CorpusPlan<'_> {
     }
 }
 
+impl Corpus {
+    fn occurrence_span(&self, p: usize) -> usize {
+        self.symbol(p).span
+    }
+    fn match_at(&self, position: usize, pair: Pair) -> Option<Range<usize>> {
+        if self.token(position) != pair.0 {
+            return None;
+        }
+        let span = self.occurrence_span(position);
+        let right = position + span;
+        // Reject an inactive left endpoint or a right start outside the plane
+        // before reading it; holes are skipped by the left occurrence's span.
+        if span == 0 || right >= self.len() || self.token(right) != pair.1 {
+            return None;
+        }
+        let right_span = self.occurrence_span(right);
+        let after = right + right_span;
+        // The right occurrence must be active and its exclusive end must remain
+        // resident, because preparation reads the neighbor at that coordinate.
+        (right_span != 0 && after < self.len()).then_some(position..after)
+    }
+}
+
 impl Slots {
     fn replace_pair(&self, start: usize, right: usize, after: usize, merged_id: u32) {
         self.set(start, merged_id);
