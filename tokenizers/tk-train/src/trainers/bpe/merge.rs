@@ -138,6 +138,7 @@ impl Corpus {
             .map(|chunk| {
                 self.apply(&chunk.starts, id);
                 ProducerChanges {
+                    whole_rule: false,
                     changes: chunk.changes,
                 }
             })
@@ -160,6 +161,7 @@ impl Corpus {
         };
         if pair.0 != pair.1 {
             let tasks: Vec<_> = positions.chunks(chunk).collect();
+            let complete = tasks.len() == 1;
             let prepared: Vec<_> = tasks
                 .into_maybe_par_iter()
                 .map(|(previous, coordinates)| {
@@ -183,6 +185,7 @@ impl Corpus {
                 .map(|prepared| {
                     self.apply(&prepared.starts, id);
                     ProducerChanges {
+                        whole_rule: complete,
                         changes: prepared.changes,
                     }
                 })
@@ -237,6 +240,7 @@ impl Corpus {
             .map(|prepared| {
                 self.apply(&prepared.starts, id);
                 ProducerChanges {
+                    whole_rule: false,
                     changes: prepared.changes,
                 }
             })
