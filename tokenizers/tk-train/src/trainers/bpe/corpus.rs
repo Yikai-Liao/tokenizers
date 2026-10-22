@@ -20,6 +20,7 @@ use tk_encode::parallelism::MaybeParallelRefIterator;
 
 const EMPTY: u32 = u32::MAX;
 
+#[cfg(test)]
 #[derive(Clone, Copy)]
 struct Symbol {
     id: u32,
@@ -212,6 +213,7 @@ impl Corpus {
 }
 
 impl Corpus {
+    #[cfg(test)]
     fn symbol(&self, p: usize) -> Symbol {
         let id = self.token(p);
         let span = if id == EMPTY {
@@ -522,8 +524,11 @@ impl CorpusPlan<'_> {
 }
 
 impl Corpus {
-    fn occurrence_span(&self, p: usize) -> usize {
-        self.symbol(p).span
+    fn occurrence_span(&self, position: usize) -> usize {
+        self.occurrence_spans.as_ref().map_or_else(
+            || self.fixed_id_span(self.token(position)),
+            |spans| spans[position].load(Ordering::Relaxed),
+        )
     }
     fn match_at(&self, position: usize, pair: Pair) -> Option<Range<usize>> {
         if self.token(position) != pair.0 {
@@ -662,6 +667,127 @@ impl Corpus {
 #[cfg(test)]
 mod merge_contract_tests {
     use super::*;
+
+    #[test]
+    fn joined_merge_updates_endpoints_and_strict_neighbor_counts() {
+        for (limit, born) in [(3, 0), (4, 7)] {
+            let mut corpus = Corpus::fixture(&[EMPTY, 0, 1, 2, 2, 3, EMPTY], vec![1], vec![7]);
+            corpus.birth_pair_span_limit = Some(limit);
+            corpus.activate((2, 2), 4);
+            let changes = corpus
+                .merge(SelectedMerge {
+                    pair: (2, 2),
+                    merged_id: 4,
+                    positions: Positions::from_unsorted(vec![3]).unwrap(),
+                })
+                .unwrap();
+            let counts: Vec<_> = changes
+                .iter()
+                .flat_map(|producer| &producer.changes)
+                .map(|change| {
+                    (
+                        change.removed,
+                        change.born,
+                        change.removed_weight,
+                        change.born_weight,
+                    )
+                })
+                .collect();
+            assert_eq!(
+                counts,
+                [((1, 2), (1, 4), 7, born), ((2, 3), (4, 3), 7, born)]
+            );
+            assert_eq!(corpus.read_word(1..6).collect::<Vec<_>>(), [0, 1, 4, 3]);
+            assert_eq!(
+                (corpus.occurrence_span(3), corpus.occurrence_span(4)),
+                (2, 2)
+            );
+        }
+    }
+
+    #[test]
+    fn reused_identity_keeps_distinct_occurrence_spans() {
+        for (values, pair, coordinate, expected, birth, spans) in [
+            (
+                [EMPTY, 0, 0, 0, 0, 2, EMPTY],
+                (0, 2),
+                3,
+                [0, 3],
+                (0, 3),
+                (2, 3),
+            ),
+            (
+                [EMPTY, 2, 0, 0, 0, 0, EMPTY],
+                (2, 0),
+                1,
+                [3, 0],
+                (3, 0),
+                (3, 2),
+            ),
+        ] {
+            for (limit, born_weight) in [(5, 0), (6, 11)] {
+                let mut corpus = Corpus::fixture(&values, vec![1], vec![11]);
+                corpus.mode = TrainingMode::Reuse;
+                corpus.activate((0, 0), 0);
+                corpus
+                    .merge(SelectedMerge {
+                        pair: (0, 0),
+                        merged_id: 0,
+                        positions: Positions::from_unsorted(vec![1, 2, 3, 4]).unwrap(),
+                    })
+                    .unwrap();
+                corpus.birth_pair_span_limit = Some(limit);
+                corpus.activate(pair, 3);
+                let changes = corpus
+                    .merge(SelectedMerge {
+                        pair,
+                        merged_id: 3,
+                        positions: Positions::from_unsorted(vec![coordinate]).unwrap(),
+                    })
+                    .unwrap();
+                let counts: Vec<_> = changes
+                    .into_iter()
+                    .flat_map(|producer| producer.changes)
+                    .map(|change| {
+                        (
+                            change.removed,
+                            change.born,
+                            change.removed_weight,
+                            change.born_weight,
+                        )
+                    })
+                    .collect();
+                assert_eq!(counts, [((0, 0), birth, 11, born_weight)]);
+                assert_eq!(corpus.read_word(1..6).collect::<Vec<_>>(), expected);
+                assert_eq!(
+                    (corpus.occurrence_span(1), corpus.occurrence_span(5)),
+                    spans
+                );
+            }
+        }
+        // Historical coordinates select a word even after alias rewrites have
+        // turned the coordinate into an interior slot of a longer token.
+        let mut corpus = Corpus::fixture(&[EMPTY, 0, 0, 0, 0, 0, EMPTY], vec![1], vec![1]);
+        corpus.mode = TrainingMode::Reuse;
+        let apply = |corpus: &mut Corpus, id, coordinates| {
+            corpus.activate((0, 0), id);
+            corpus
+                .merge(SelectedMerge {
+                    pair: (0, 0),
+                    merged_id: id,
+                    positions: Positions::from_unsorted(coordinates).unwrap(),
+                })
+                .unwrap();
+        };
+        apply(&mut corpus, 0, vec![1, 2, 3, 4]);
+        apply(&mut corpus, 0, vec![1]);
+        apply(&mut corpus, 1, vec![2]);
+        assert_eq!(corpus.read_word(1..6).collect::<Vec<_>>(), [1]);
+        assert_eq!(
+            (corpus.occurrence_span(1), corpus.occurrence_span(5)),
+            (5, 5)
+        );
+    }
 
     #[test]
     fn slot_storage_preserves_ids_at_the_narrow_boundary() {
