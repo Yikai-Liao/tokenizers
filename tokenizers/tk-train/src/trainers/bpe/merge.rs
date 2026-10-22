@@ -15,7 +15,7 @@ mod preparation_tests {
     fn adjacent_matches_prepare_sequential_events_without_writes() {
         let mut corpus = Corpus::fixture(&[EMPTY, 0, 1, 0, 1, EMPTY], vec![1], vec![3]);
         let positions = Positions::from_unsorted(vec![1, 3]).unwrap();
-        let prepared = corpus.prepare_local((0, 1), 2, usize::MAX, positions.iter());
+        let prepared = corpus.prepare_local((0, 1), 2, usize::MAX, positions.iter(), None, None);
         assert_eq!(prepared.starts, [1, 3]);
         assert_eq!(
             prepared
@@ -34,6 +34,33 @@ mod preparation_tests {
         corpus.activate((0, 1), 2);
         corpus.merge_local((0, 1), 2, usize::MAX, &positions);
         assert_eq!(corpus.read_word(1..5).collect::<Vec<_>>(), [2, 2]);
+    }
+}
+#[cfg(test)]
+mod reader_duplicate_tests {
+    use super::*;
+    #[test]
+    fn ab_duplicate_runs_cross_reader_cuts_once() {
+        for split_leaf in [false, true] {
+            let mut corpus = Corpus::fixture(&[EMPTY, 0, 1, 0, 1, EMPTY], vec![1], vec![1]);
+            let mut values = vec![1; 257];
+            values.push(3);
+            let positions = if split_leaf {
+                Positions::concat([
+                    Positions::from_unsorted(values[..128].to_vec()).unwrap(),
+                    Positions::from_unsorted(values[128..].to_vec()).unwrap(),
+                ])
+                .unwrap()
+            } else {
+                Positions::from_unsorted(values).unwrap()
+            };
+            corpus.merge((0, 1), 2, usize::MAX, &positions, false);
+            assert_eq!(corpus.read_word(1..5).collect::<Vec<_>>(), [2, 2]);
+            assert_eq!(
+                (corpus.occurrence_span(1), corpus.occurrence_span(3)),
+                (2, 2)
+            );
+        }
     }
 }
 impl Corpus {
@@ -82,13 +109,84 @@ impl Corpus {
         limit: usize,
         positions: &Positions,
     ) -> Vec<WordChange> {
-        let prepared = self.prepare_local(pair, id, limit, positions.iter());
-        let chunk = if cfg!(test) { 1 } else { 4096 };
-        prepared
-            .starts
+        let chunk = if cfg!(test) {
+            1
+        } else {
+            positions
+                .len()
+                .div_ceil(super::super::num_workers())
+                .clamp(1, 1 << 26)
+        };
+        if pair.0 != pair.1 {
+            let tasks: Vec<_> = positions.chunks(chunk).collect();
+            let prepared: Vec<_> = tasks
+                .into_maybe_par_iter()
+                .map(|(previous, coordinates)| {
+                    self.prepare_local(
+                        pair,
+                        id,
+                        limit,
+                        coordinates.skip_while(|&coordinate| previous == Some(coordinate)),
+                        None,
+                        Some(positions),
+                    )
+                })
+                .collect();
+            return prepared
+                .into_maybe_par_iter()
+                .flat_map(|prepared| {
+                    self.apply(&prepared.starts, id);
+                    prepared.changes
+                })
+                .collect();
+        }
+        // Decide overlaps globally before fragmenting this rule's immutable snapshot.
+        let mut accepted = Vec::new();
+        let mut end = 0;
+        for coordinate in positions.iter() {
+            let p = usize::try_from(coordinate).expect("resident corpus coordinate");
+            if p >= end
+                && let Some(matched) = self.match_at(p, pair)
+            {
+                end = matched.end;
+                accepted.push(matched);
+            }
+        }
+        let chunk = if cfg!(test) {
+            1
+        } else {
+            positions
+                .len()
+                .div_ceil(super::super::num_workers() * 4)
+                .max(4096)
+        };
+        let prepared: Vec<_> = accepted
             .maybe_par_chunks(chunk)
-            .for_each(|starts| self.apply(starts, id));
-        prepared.changes
+            .enumerate()
+            .map(|(part, matches)| {
+                let seed = if part == 0 {
+                    None
+                } else {
+                    let prior = &accepted[part * chunk - 1];
+                    Some((prior.end, prior.len()))
+                };
+                self.prepare_local(
+                    pair,
+                    id,
+                    limit,
+                    matches.iter().map(|matched| matched.start as u64),
+                    seed,
+                    None,
+                )
+            })
+            .collect();
+        prepared
+            .into_maybe_par_iter()
+            .flat_map(|prepared| {
+                self.apply(&prepared.starts, id);
+                prepared.changes
+            })
+            .collect()
     }
     fn prepare_local(
         &self,
@@ -96,13 +194,14 @@ impl Corpus {
         id: u32,
         limit: usize,
         coordinates: impl IntoIterator<Item = u64>,
+        previous: Option<(usize, usize)>,
+        cohort: Option<&Positions>,
     ) -> PreparedChunk {
         let mut prepared = PreparedChunk {
             starts: Vec::new(),
             changes: Vec::new(),
         };
-        let mut previous_end = 0;
-        let mut previous_span = 0;
+        let (mut previous_end, mut previous_span) = previous.unwrap_or((0, 0));
         let mut cached_weight: Option<WeightLookup> = None;
         for coordinate in coordinates {
             let p = usize::try_from(coordinate).expect("resident corpus coordinate");
@@ -136,10 +235,22 @@ impl Corpus {
             };
             // The preceding accepted match has already merged in the sequential
             // contract. Read its virtual endpoint without mutating the snapshot.
-            let prior = if p == previous_end {
+            let adjacent_selected = cohort.is_some_and(|positions| {
+                let total = self.fixed_id_span(pair.0) + self.fixed_id_span(pair.1);
+                p.checked_sub(total).is_some_and(|before| {
+                    self.match_at(before, pair)
+                        .is_some_and(|matched| matched.end == p)
+                        && positions.iter_from(before as u64).next() == Some(before as u64)
+                })
+            });
+            let prior = if p == previous_end || adjacent_selected {
                 Symbol {
                     id,
-                    span: previous_span,
+                    span: if adjacent_selected {
+                        span
+                    } else {
+                        previous_span
+                    },
                 }
             } else {
                 self.symbol(p - 1)
