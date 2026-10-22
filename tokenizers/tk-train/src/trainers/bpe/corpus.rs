@@ -61,6 +61,8 @@ pub(super) struct Corpus {
     starts: Box<[usize]>,
     weight_runs: Box<[WeightRun]>,
     unit_weight_range: Option<Range<usize>>,
+    whole_words: bool,
+    birth_pair_span_limit: Option<usize>,
     mode: TrainingMode,
     id_metadata: Vec<usize>,
 }
@@ -74,6 +76,7 @@ pub(super) struct CorpusPlan<'input> {
     length: usize,
     ids: InitialTokenIds,
     slot_bound: usize,
+    birth_pair_span_limit: Option<usize>,
     mode: TrainingMode,
 }
 impl<'input> CorpusPlan<'input> {
@@ -82,6 +85,7 @@ impl<'input> CorpusPlan<'input> {
         ids: InitialTokenIds,
         target_vocab_size: usize,
         mode: TrainingMode,
+        birth_pair_span_limit: Option<usize>,
     ) -> Result<Self> {
         let mut words: Vec<_> = words.iter().collect();
         if parallelism::get_parallelism() {
@@ -147,6 +151,7 @@ impl<'input> CorpusPlan<'input> {
             ids,
             length,
             slot_bound,
+            birth_pair_span_limit,
             mode,
         })
     }
@@ -168,9 +173,15 @@ impl<'input> CorpusPlan<'input> {
             tokens,
             neighbor_scratch: NeighborScratchPool::default(),
             occurrence_spans: None,
-            starts: self.starts,
+            starts: if self.mode == TrainingMode::Reuse || !self.ids.is_plain() {
+                self.starts
+            } else {
+                Box::default()
+            },
             weight_runs: self.weight_runs,
             unit_weight_range: self.unit_weight_range,
+            whole_words: self.birth_pair_span_limit.is_some(),
+            birth_pair_span_limit: self.birth_pair_span_limit,
             mode: self.mode,
             id_metadata: self.ids.into_metadata(),
         }
@@ -443,6 +454,8 @@ impl Corpus {
                 .collect(),
             unit_weight_range: None,
             starts: starts.into_boxed_slice(),
+            whole_words: false,
+            birth_pair_span_limit: None,
             mode: TrainingMode::Fresh,
             id_metadata: vec![
                 1;
@@ -470,6 +483,7 @@ impl Corpus {
             .is_some_and(|&span| span != 0)
     }
     pub(super) fn activate(&mut self, pair: Pair, id: u32) {
+        self.whole_words |= self.has_been_activated(id);
         // Once aliases need occurrence geometry, keep only activation here.
         // Summing representative ID spans would grow with repeated alias reuse.
         let span = if self.occurrence_spans.is_some() {
@@ -750,5 +764,30 @@ impl Slots {
             self.set(right, EMPTY);
         }
         self.set(after - 1, merged_id);
+    }
+}
+
+pub(super) struct SelectedMerge {
+    pub(super) pair: Pair,
+    pub(super) merged_id: u32,
+    pub(super) positions: Positions,
+}
+
+impl Corpus {
+    fn resident(&self, coordinate: u64) -> usize {
+        let position =
+            usize::try_from(coordinate).expect("corpus coordinate fits resident indexing");
+        assert!(
+            position < self.len(),
+            "coordinate {coordinate} is outside the resident corpus of {} slots",
+            self.len()
+        );
+        position
+    }
+}
+
+impl Corpus {
+    fn id_count(&self) -> usize {
+        self.id_metadata.len()
     }
 }
