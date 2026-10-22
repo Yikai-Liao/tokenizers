@@ -288,6 +288,10 @@ impl BpeTrainer {
     /// The WordPiece trainer is the one caller: it trains a BPE and reinterprets the vocabulary as
     /// WordPiece pieces, so building a `PipelineBPE` first -- merge tables and all -- would be work
     /// thrown away.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if checked position encoding or storage reservation fails.
     pub fn train_vocab(&self) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
         self.train_counts(WordCountsView::from(&self.words))
     }
@@ -312,6 +316,10 @@ impl BpeTrainer {
     /// `tokenizer.json` stores, and `PipelineBPE` can only be built from it -- see
     /// [`PipelineBPE::from_config`]. The WordPiece trainer wants the vocabulary alone, so
     /// splitting the two also saves it building merge tables it would throw away.
+    ///
+    /// # Errors
+    ///
+    /// Reports the same failure conditions as [`Self::train_vocab`].
     pub fn do_train(
         &self,
         word_counts: &AHashMap<CompactString, u64>,
@@ -340,7 +348,7 @@ impl BpeTrainer {
         // 4. Count pairs in words
         //
         self.update_progress(&progress, corpus.word_count(), "Count pairs");
-        let mut index = PairIndex::build(&corpus, self.min_frequency, &progress);
+        let mut index = PairIndex::build(&corpus, self.min_frequency, &progress)?;
         self.finalize_progress(&progress, corpus.word_count(), "Count pairs");
 
         //
@@ -364,7 +372,7 @@ impl BpeTrainer {
                 &top.positions,
                 resolved.already_in_vocabulary,
             );
-            index.commit(changes);
+            index.commit(changes)?;
 
             vocabulary.commit(top.pair);
             completed += 1;

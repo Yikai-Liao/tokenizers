@@ -22,6 +22,8 @@ name = "tk_train"
 path = "src/lib.rs"
 
 [dependencies]
+smallvec = { version = "1.16", features = ["union"] }
+leb128fmt = "0.1"
 fixedbitset = "0.5.7"
 indexmap = "2.14"
 scc = "=3.8.8"
