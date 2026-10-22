@@ -375,7 +375,7 @@ impl BpeTrainer {
                 max_token_length,
                 &top.positions,
                 resolved.already_in_vocabulary,
-            );
+            )?;
             index.commit(changes)?;
 
             vocabulary.commit(top.priority.pair());

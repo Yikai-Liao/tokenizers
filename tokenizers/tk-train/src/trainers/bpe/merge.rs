@@ -1,12 +1,14 @@
 //! Joined merge preparation and disjoint endpoint writes.
-use super::{Corpus, EMPTY, Positions, Symbol, WeightLookup, WordChange};
+use super::changes::{EdgeSide, NeighborChanges, NeighborScratch};
+use super::{Corpus, EMPTY, PairChange, Positions, ProducerChanges, Symbol, WeightLookup};
 use itertools::Itertools;
+use tk_encode::Result;
 use tk_encode::models::bpe::Pair;
 use tk_encode::parallelism::{MaybeParallelIterator, MaybeParallelSlice};
 /// Read-only preparation owns accepted starts and the old sequential edge events.
 struct PreparedChunk {
     starts: Vec<usize>,
-    changes: Vec<WordChange>,
+    changes: Vec<PairChange<Positions>>,
 }
 #[cfg(test)]
 mod preparation_tests {
@@ -14,25 +16,42 @@ mod preparation_tests {
     #[test]
     fn adjacent_matches_prepare_sequential_events_without_writes() {
         let mut corpus = Corpus::fixture(&[EMPTY, 0, 1, 0, 1, EMPTY], vec![1], vec![3]);
+        corpus.activate((0, 1), 2);
         let positions = Positions::from_unsorted(vec![1, 3]).unwrap();
-        let prepared = corpus.prepare_local((0, 1), 2, usize::MAX, positions.iter(), None, None);
+        let mut scratch = NeighborScratch::default();
+        let prepared = corpus
+            .prepare_local(
+                (0, 1),
+                2,
+                usize::MAX,
+                positions.iter(),
+                None,
+                None,
+                &mut scratch,
+            )
+            .unwrap();
         assert_eq!(prepared.starts, [1, 3]);
         assert_eq!(
             prepared
                 .changes
                 .iter()
-                .map(|c| (c.pair, c.delta, c.coordinate, c.weight))
+                .map(|c| (
+                    c.removed,
+                    c.born,
+                    c.removed_weight,
+                    c.born_weight,
+                    c.positions.iter().collect::<Vec<_>>()
+                ))
                 .collect::<Vec<_>>(),
             [
-                ((1, 0), -1, 2, 3),
-                ((2, 0), 1, 1, 3),
-                ((2, 0), -1, 1, 3),
-                ((2, 2), 1, 1, 3)
+                ((2, 0), (2, 2), 3, 3, vec![1]),
+                ((1, 0), (2, 0), 3, 3, vec![1])
             ]
         );
         assert_eq!(corpus.symbol(1).id, 0);
-        corpus.activate((0, 1), 2);
-        corpus.merge_local((0, 1), 2, usize::MAX, &positions);
+        corpus
+            .merge_local((0, 1), 2, usize::MAX, &positions)
+            .unwrap();
         assert_eq!(corpus.read_word(1..5).collect::<Vec<_>>(), [2, 2]);
     }
 }
@@ -43,18 +62,35 @@ mod reader_duplicate_tests {
     fn ab_duplicate_runs_cross_reader_cuts_once() {
         for split_leaf in [false, true] {
             let mut corpus = Corpus::fixture(&[EMPTY, 0, 1, 0, 1, EMPTY], vec![1], vec![1]);
-            let mut values = vec![1; 257];
-            values.push(3);
-            let positions = if split_leaf {
-                Positions::concat([
-                    Positions::from_unsorted(values[..128].to_vec()).unwrap(),
-                    Positions::from_unsorted(values[128..].to_vec()).unwrap(),
-                ])
-                .unwrap()
-            } else {
-                Positions::from_unsorted(values).unwrap()
+            let make = || {
+                let mut values = vec![1; 257];
+                values.push(3);
+                if split_leaf {
+                    Positions::concat([
+                        Positions::from_unsorted(values[..128].to_vec()).unwrap(),
+                        Positions::from_unsorted(values[128..].to_vec()).unwrap(),
+                    ])
+                    .unwrap()
+                } else {
+                    Positions::from_unsorted(values).unwrap()
+                }
             };
-            corpus.merge((0, 1), 2, usize::MAX, &positions, false);
+            corpus.activate((0, 1), 2);
+            let changes = corpus.merge((0, 1), 2, usize::MAX, &make(), false).unwrap();
+            let total = changes
+                .iter()
+                .flat_map(|p| &p.changes)
+                .fold((0, 0), |a, c| {
+                    (
+                        a.0 + if c.removed == (1, 0) {
+                            c.removed_weight
+                        } else {
+                            0
+                        },
+                        a.1 + if c.born == (2, 2) { c.born_weight } else { 0 },
+                    )
+                });
+            assert_eq!(total, (1, 1));
             assert_eq!(corpus.read_word(1..5).collect::<Vec<_>>(), [2, 2]);
             assert_eq!(
                 (corpus.occurrence_span(1), corpus.occurrence_span(3)),
@@ -71,7 +107,7 @@ impl Corpus {
         limit: usize,
         positions: &Positions,
         existing_identity: bool,
-    ) -> Vec<WordChange> {
+    ) -> Result<Vec<ProducerChanges>> {
         if existing_identity {
             self.whole_words |= self.has_been_activated(id);
         }
@@ -92,15 +128,20 @@ impl Corpus {
             .collect();
         let prepared: Vec<_> = words
             .into_maybe_par_iter()
-            .map(|word| self.prepare_word(word, pair, id, limit))
-            .collect();
-        prepared
-            .into_maybe_par_iter()
-            .flat_map(|chunk| {
-                self.apply(&chunk.starts, id);
-                chunk.changes
+            .map(|word| {
+                self.neighbor_scratch
+                    .with(|scratch| self.prepare_word(word, pair, id, limit, scratch))
             })
-            .collect()
+            .collect::<Result<Vec<_>>>()?;
+        Ok(prepared
+            .into_maybe_par_iter()
+            .map(|chunk| {
+                self.apply(&chunk.starts, id);
+                ProducerChanges {
+                    changes: chunk.changes,
+                }
+            })
+            .collect())
     }
     fn merge_local(
         &mut self,
@@ -108,7 +149,7 @@ impl Corpus {
         id: u32,
         limit: usize,
         positions: &Positions,
-    ) -> Vec<WordChange> {
+    ) -> Result<Vec<ProducerChanges>> {
         let chunk = if cfg!(test) {
             1
         } else {
@@ -122,23 +163,29 @@ impl Corpus {
             let prepared: Vec<_> = tasks
                 .into_maybe_par_iter()
                 .map(|(previous, coordinates)| {
-                    self.prepare_local(
-                        pair,
-                        id,
-                        limit,
-                        coordinates.skip_while(|&coordinate| previous == Some(coordinate)),
-                        None,
-                        Some(positions),
-                    )
+                    let coordinates = coordinates.skip_while(move |&p| previous == Some(p));
+                    self.neighbor_scratch.with(|scratch| {
+                        self.prepare_local(
+                            pair,
+                            id,
+                            limit,
+                            coordinates,
+                            None,
+                            Some(positions),
+                            scratch,
+                        )
+                    })
                 })
-                .collect();
-            return prepared
+                .collect::<Result<Vec<_>>>()?;
+            return Ok(prepared
                 .into_maybe_par_iter()
-                .flat_map(|prepared| {
+                .map(|prepared| {
                     self.apply(&prepared.starts, id);
-                    prepared.changes
+                    ProducerChanges {
+                        changes: prepared.changes,
+                    }
                 })
-                .collect();
+                .collect());
         }
         // Decide overlaps globally before fragmenting this rule's immutable snapshot.
         let mut accepted = Vec::new();
@@ -170,23 +217,28 @@ impl Corpus {
                     let prior = &accepted[part * chunk - 1];
                     Some((prior.end, prior.len()))
                 };
-                self.prepare_local(
-                    pair,
-                    id,
-                    limit,
-                    matches.iter().map(|matched| matched.start as u64),
-                    seed,
-                    None,
-                )
+                self.neighbor_scratch.with(|scratch| {
+                    self.prepare_local(
+                        pair,
+                        id,
+                        limit,
+                        matches.iter().map(|matched| matched.start as u64),
+                        seed,
+                        None,
+                        scratch,
+                    )
+                })
             })
-            .collect();
-        prepared
+            .collect::<Result<Vec<_>>>()?;
+        Ok(prepared
             .into_maybe_par_iter()
-            .flat_map(|prepared| {
+            .map(|prepared| {
                 self.apply(&prepared.starts, id);
-                prepared.changes
+                ProducerChanges {
+                    changes: prepared.changes,
+                }
             })
-            .collect()
+            .collect())
     }
     fn prepare_local(
         &self,
@@ -196,11 +248,10 @@ impl Corpus {
         coordinates: impl IntoIterator<Item = u64>,
         previous: Option<(usize, usize)>,
         cohort: Option<&Positions>,
-    ) -> PreparedChunk {
-        let mut prepared = PreparedChunk {
-            starts: Vec::new(),
-            changes: Vec::new(),
-        };
+        scratch: &mut NeighborScratch,
+    ) -> Result<PreparedChunk> {
+        let mut starts = Vec::new();
+        let mut neighbors = NeighborChanges::new(pair, id, self.id_metadata.len(), scratch);
         let (mut previous_end, mut previous_span) = previous.unwrap_or((0, 0));
         let mut cached_weight: Option<WeightLookup> = None;
         for coordinate in coordinates {
@@ -225,14 +276,7 @@ impl Corpus {
             };
             cached_weight = Some(lookup);
             let weight = lookup.weight;
-            let mut record = |pair, delta, coordinate: usize| {
-                prepared.changes.push(WordChange {
-                    pair,
-                    delta,
-                    coordinate: coordinate as u64,
-                    weight,
-                })
-            };
+
             // The preceding accepted match has already merged in the sequential
             // contract. Read its virtual endpoint without mutating the snapshot.
             let adjacent_selected = cohort.is_some_and(|positions| {
@@ -257,29 +301,45 @@ impl Corpus {
             };
             if prior.id != EMPTY {
                 let before = p - prior.span;
-                record((prior.id, pair.0), -1, before);
-                if prior.span + span < limit {
-                    record((prior.id, id), 1, before);
-                }
+                neighbors.record(
+                    EdgeSide::Left,
+                    prior.id,
+                    prior.id,
+                    before,
+                    weight,
+                    prior.span + span < limit,
+                )?;
             }
             let next = self.symbol(after);
             if next.id != EMPTY {
-                record((pair.1, next.id), -1, right);
-                if span + next.span < limit {
-                    record((id, next.id), 1, p);
-                }
+                neighbors.record(
+                    EdgeSide::Right,
+                    next.id,
+                    next.id,
+                    p,
+                    weight,
+                    span + next.span < limit,
+                )?;
             }
-            prepared.starts.push(p);
+            starts.push(p);
             previous_end = after;
             previous_span = span;
         }
-        prepared
+        Ok(PreparedChunk {
+            starts,
+            changes: neighbors.finish(),
+        })
     }
-    fn prepare_word(&self, word: usize, pair: Pair, id: u32, limit: usize) -> PreparedChunk {
-        let mut prepared = PreparedChunk {
-            starts: Vec::new(),
-            changes: Vec::new(),
-        };
+    fn prepare_word(
+        &self,
+        word: usize,
+        pair: Pair,
+        id: u32,
+        limit: usize,
+        scratch: &mut NeighborScratch,
+    ) -> Result<PreparedChunk> {
+        let mut starts = Vec::new();
+        let mut neighbors = NeighborChanges::new(pair, id, self.id_metadata.len(), scratch);
         let mut previous: Option<(usize, Symbol)> = None;
         let range = self.word_range(word);
         let mut p = range.start;
@@ -294,31 +354,35 @@ impl Corpus {
             let span = left.span + self.symbol(right).span;
             let after = p + span;
             let weight = self.weight(range.start).weight;
-            let mut record = |pair, delta, coordinate: usize| {
-                prepared.changes.push(WordChange {
-                    pair,
-                    delta,
-                    coordinate: coordinate as u64,
-                    weight,
-                })
-            };
+
             if let Some((before, prior)) = previous {
-                record((prior.id, pair.0), -1, before);
-                if prior.span + span < limit {
-                    record((prior.id, id), 1, before);
-                }
+                neighbors.record(
+                    EdgeSide::Left,
+                    prior.id,
+                    prior.id,
+                    before,
+                    weight,
+                    prior.span + span < limit,
+                )?;
             }
             if after < range.end {
                 let next = self.symbol(after);
-                record((pair.1, next.id), -1, right);
-                if span + next.span < limit {
-                    record((id, next.id), 1, p);
-                }
+                neighbors.record(
+                    EdgeSide::Right,
+                    next.id,
+                    next.id,
+                    p,
+                    weight,
+                    span + next.span < limit,
+                )?;
             }
-            prepared.starts.push(p);
+            starts.push(p);
             previous = Some((p, Symbol { id, span }));
             p = after;
         }
-        prepared
+        Ok(PreparedChunk {
+            starts,
+            changes: neighbors.finish(),
+        })
     }
 }

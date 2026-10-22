@@ -1,5 +1,5 @@
 //! Authoritative weighted counts and owning historical word-domain candidates.
-use super::corpus::{CorpusPlan, InitialChunk, InitialEdge, WordChange};
+use super::corpus::{CorpusPlan, InitialChunk, InitialEdge, ProducerChanges};
 use super::positions::Positions;
 use crate::progress::ProgressBar;
 use ahash::AHashMap;
@@ -223,19 +223,26 @@ impl PairIndex {
         }
     }
 
-    pub(super) fn commit(&mut self, changes: Vec<WordChange>) -> Result<()> {
+    pub(super) fn commit(&mut self, changes: Vec<ProducerChanges>) -> Result<()> {
         let mut births: AHashMap<Pair, Vec<u64>> = AHashMap::new();
-        for change in changes {
-            adjust_signed(
-                self.counts.entry(change.pair).or_default(),
-                change.weight,
-                change.delta < 0,
-            )?;
-            if change.delta > 0 {
-                births
-                    .entry(change.pair)
-                    .or_default()
-                    .push(change.coordinate);
+        for producer in changes {
+            for change in producer.changes {
+                adjust_signed(
+                    self.counts.entry(change.removed).or_default(),
+                    change.removed_weight,
+                    true,
+                )?;
+                adjust_signed(
+                    self.counts.entry(change.born).or_default(),
+                    change.born_weight,
+                    false,
+                )?;
+                if !change.positions.is_empty() {
+                    births
+                        .entry(change.born)
+                        .or_default()
+                        .extend(change.positions.iter());
+                }
             }
         }
         for (pair, pos) in births.drain() {
