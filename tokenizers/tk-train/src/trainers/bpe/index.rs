@@ -11,7 +11,7 @@ use std::cmp::{Ordering, Reverse};
 use tk_encode::Result;
 use tk_encode::models::bpe::Pair;
 use tk_encode::parallelism;
-use tk_encode::parallelism::MaybeParallelIterator;
+use tk_encode::parallelism::{MaybeParallelIterator, MaybeParallelRefMutIterator};
 
 /// Queue key: highest count first, then smallest pair.
 /// Field order defines heap priority; occurrence payloads never break ties.
@@ -161,7 +161,7 @@ impl CandidateQueue {
 }
 
 pub(super) struct PairIndex {
-    shard: Shard,
+    shards: Box<[Shard]>,
     queue: CandidateQueue,
     minimum: u64,
     mode: TrainingMode,
@@ -173,54 +173,50 @@ impl PairIndex {
         minimum: u64,
         progress: &Option<ProgressBar>,
     ) -> Result<Self> {
-        let slots = if cfg!(test) {
-            16
-        } else {
-            corpus
-                .slot_count()
-                .div_ceil(super::num_workers())
-                .clamp(1, 1 << 24)
-        };
+        let mode = corpus.mode();
+        let reuse = mode == TrainingMode::Reuse;
+        let shard_count = super::num_workers();
+        let domain = corpus.token_count();
+        // 1. Count and freeze each whole-word range independently.
+        // Bound each range to 2^24 resident slots; divide smaller inputs among
+        // workers. Tests use 16 slots to force boundaries on small fixtures.
         let pieces = corpus
-            .chunks(slots)
+            .chunks(if cfg!(test) {
+                16
+            } else {
+                corpus.slot_count().div_ceil(shard_count).clamp(1, 1 << 24)
+            })
             .into_maybe_par_iter()
-            .map(|chunk| count_chunk(corpus.token_count(), chunk, progress))
+            .map(|chunk| count_chunk(domain, chunk, progress))
             .collect::<Result<Vec<_>>>()?;
-        let mut states = AHashMap::<Pair, PairAggregate<SmallVec<[Positions; 1]>>>::new();
+
+        // 2. Route ordered fragments to the sole count owner of each pair.
+        let mut routed: Vec<Vec<_>> = (0..shard_count).map(|_| Vec::new()).collect();
         for piece in pieces {
             for (pair, state) in piece {
-                let total = states.entry(pair).or_default();
-                super::add(&mut total.count, state.count)?;
-                total.positions.push(state.positions);
+                routed[owner(pair, shard_count)].push((pair, state));
             }
         }
-        let mut counts = AHashMap::new();
-        let mut candidates = Vec::new();
-        for (pair, state) in states {
-            if corpus.mode() == TrainingMode::Fresh && state.count < minimum.max(1) {
-                continue;
-            }
-            counts.insert(pair, state.count);
-            if state.count != 0 {
-                let positions = Positions::concat(state.positions)?;
-                candidates.push(Candidate::new(pair, state.count, positions));
-            }
-        }
+
+        // 3. Aggregate counts, admit pairs, and concatenate their sorted fragments.
+        let owners = routed
+            .into_maybe_par_iter()
+            .map(|pieces| build_owner(pieces, minimum.max(1), reuse))
+            .collect::<Result<Vec<_>>>()?;
+        let (shards, candidates): (Vec<_>, Vec<_>) = owners.into_iter().unzip();
         Ok(Self {
-            shard: Shard {
-                counts,
-                ..Shard::default()
-            },
-            queue: candidates.into_iter().collect(),
-            minimum,
-            mode: corpus.mode(),
+            shards: shards.into_boxed_slice(),
+            queue: candidates.into_iter().flatten().collect(),
+            minimum: minimum.max(1),
+            mode,
         })
     }
 
     pub(super) fn take(&mut self) -> Option<Candidate> {
         loop {
             let top = self.queue.peek()?;
-            let Some(&count) = self.shard.counts.get(&top.pair()) else {
+            let shard = owner(top.pair(), self.shards.len());
+            let Some(&count) = self.shards[shard].counts.get(&top.pair()) else {
                 self.queue.pop();
                 continue;
             };
@@ -233,54 +229,30 @@ impl PairIndex {
             }
             let candidate = self.queue.pop()?;
             if self.mode == TrainingMode::Fresh {
-                self.shard.counts.remove(&candidate.priority.pair());
+                self.shards[shard].counts.remove(&candidate.priority.pair());
             }
             return Some(candidate);
         }
     }
 
     pub(super) fn commit(&mut self, changes: Vec<ProducerChanges>) -> Result<()> {
-        for producer in changes {
-            for change in producer.changes {
-                if producer.whole_rule
-                    && change.born.0 != change.born.1
-                    && !change.positions.is_empty()
-                {
-                    if change.born_weight >= self.minimum.max(1) {
-                        self.shard.completed.push(Candidate::new(
-                            change.born,
-                            change.born_weight,
-                            change.positions,
-                        ));
-                    }
-                    if change.removed_weight != 0 {
-                        self.shard.actions.push(PendingAction::Remove {
-                            pair: change.removed,
-                            weight: change.removed_weight,
-                        });
-                    }
-                    continue;
-                }
-                if change.removed_weight != 0 {
-                    self.shard.actions.push(PendingAction::Remove {
-                        pair: change.removed,
-                        weight: change.removed_weight,
-                    });
-                }
-                if !change.positions.is_empty() {
-                    self.shard.actions.push(PendingAction::Birth {
-                        pair: change.born,
-                        weight: change.born_weight,
-                        birth_group: change.birth_group,
-                    });
-                    self.shard.positions.push(change.positions);
-                }
+        // 1. Route each removal and birth to its count owner.
+        self.route(changes);
+
+        // 2. Apply owner-local actions and encode their birth cohorts in parallel.
+        let reuse = self.mode == TrainingMode::Reuse;
+        let floor = self.minimum.max(1);
+        self.shards
+            .maybe_par_iter_mut()
+            .filter(|shard| !shard.actions.is_empty() || !shard.completed.is_empty())
+            .map(|shard| shard.commit(reuse, floor))
+            .collect::<Result<()>>()?;
+
+        // 3. Publish only after all owners join, in the same owner traversal order.
+        for shard in self.shards.iter_mut() {
+            for candidate in shard.completed.drain(..) {
+                self.queue.push(candidate);
             }
-        }
-        self.shard
-            .commit(self.mode == TrainingMode::Reuse, self.minimum.max(1))?;
-        for candidate in self.shard.completed.drain(..) {
-            self.queue.push(candidate);
         }
         Ok(())
     }
@@ -299,8 +271,8 @@ fn adjust_signed(count: &mut u64, amount: u64, remove: bool) -> Result<()> {
 
 impl PairIndex {
     pub(super) fn retire(self) {
-        let Self { shard, queue, .. } = self;
-        drop(shard);
+        let Self { shards, queue, .. } = self;
+        drop(shards);
         queue.retire();
     }
 }
@@ -580,6 +552,87 @@ impl BirthFragment {
             len += 1;
         }
         Ok((first.pair, len, weight))
+    }
+}
+
+fn owner(pair: Pair, shard_count: usize) -> usize {
+    // Zero seeds keep routing repeatable within this build, without per-call
+    // randomness. Hash mixing is provided by the existing ahash dependency.
+    const HASHER: ahash::RandomState = ahash::RandomState::with_seeds(0, 0, 0, 0);
+    // Both branches retain the original hash modulo this nonzero owner count.
+    let hash = HASHER.hash_one(pair);
+    if shard_count.is_power_of_two() {
+        hash as usize & (shard_count - 1)
+    } else {
+        (hash % shard_count as u64) as usize
+    }
+}
+fn build_owner(pieces: InitialPiece, floor: u64, reuse: bool) -> Result<(Shard, Vec<Candidate>)> {
+    let mut states = AHashMap::<Pair, PairAggregate<SmallVec<[Positions; 1]>>>::new();
+    for (pair, state) in pieces {
+        let total = states.entry(pair).or_default();
+        super::add(&mut total.count, state.count)?;
+        total.positions.push(state.positions);
+    }
+    let mut shard = Shard::default();
+    let mut candidates = Vec::new();
+    for (pair, state) in states {
+        // Reuse retains even below-floor ledger entries for later signed
+        // adjustments. Fresh mode can retire those pairs immediately.
+        if reuse || state.count >= floor {
+            let positions = Positions::concat(state.positions)?;
+            shard.counts.insert(pair, state.count);
+            if state.count != 0 {
+                candidates.push(Candidate::new(pair, state.count, positions));
+            }
+        }
+    }
+    Ok((shard, candidates))
+}
+
+impl PairIndex {
+    fn route(&mut self, changes: Vec<ProducerChanges>) {
+        let shard_count = self.shards.len();
+        // Joined commits drain each shard's pending work; any error aborts this attempt.
+        for producer in changes {
+            for change in producer.changes {
+                if change.removed_weight != 0 {
+                    let shard = owner(change.removed, shard_count);
+                    self.shards[shard].actions.push(PendingAction::Remove {
+                        pair: change.removed,
+                        weight: change.removed_weight,
+                    });
+                }
+                self.route_birth(change, producer.whole_rule);
+            }
+        }
+    }
+
+    fn route_birth(&mut self, change: super::corpus::PairChange<Positions>, whole_rule: bool) {
+        if change.positions.is_empty() {
+            return;
+        }
+        let shard_count = self.shards.len();
+        let shard = &mut self.shards[owner(change.born, shard_count)];
+        // Only non-AA complete births have one producer. Both directions can
+        // name (id,id), so those still require owner aggregation. Zero-weight
+        // births still own positions, including reuse cohorts.
+        if whole_rule && self.mode == TrainingMode::Fresh && change.born.0 != change.born.1 {
+            if change.born_weight >= self.minimum.max(1) {
+                shard.completed.push(Candidate::new(
+                    change.born,
+                    change.born_weight,
+                    change.positions,
+                ));
+            }
+        } else {
+            shard.actions.push(PendingAction::Birth {
+                pair: change.born,
+                weight: change.born_weight,
+                birth_group: change.birth_group,
+            });
+            shard.positions.push(change.positions);
+        }
     }
 }
 
