@@ -232,9 +232,8 @@ mod initial_tests {
         trainer.continuing_subword_prefix = Some("前".into());
         trainer.end_of_word_suffix = Some("尾".into());
         let (vocabulary, ids) = Vocabulary::initialize(&trainer, view, &None);
-        let (tokenized, _) = trainer.tokenize_words(view, &ids);
-        assert_eq!(tokenized[0].get_chars(), [2, 3]);
-        assert_eq!(tokenized[1].get_chars(), [1, 4]);
+        assert_eq!(ids.symbols("qé🙂z").collect::<Vec<_>>(), [2, 3]);
+        assert_eq!(ids.symbols("🙂é").collect::<Vec<_>>(), [1, 4]);
         assert_eq!(
             vocabulary
                 .tokens

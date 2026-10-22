@@ -2,10 +2,10 @@
 
 mod corpus;
 mod feed;
-use corpus::Word as TrainingWord;
+use corpus::Corpus;
 mod vocabulary;
 mod word_counts;
-use vocabulary::{InitialTokenIds, Vocabulary};
+use vocabulary::Vocabulary;
 
 #[cfg(feature = "parity-aware-bpe")]
 pub mod parity_trainer;
@@ -36,7 +36,6 @@ use crate::progress::{ProgressBar, ProgressFormat, ProgressStyle};
 use tk_encode::Result;
 use tk_encode::models::bpe::{BpeConfig, Merges, Pair, PipelineBPE, Vocab};
 use tk_encode::parallelism;
-use tk_encode::parallelism::MaybeParallelRefIterator;
 
 #[derive(Debug, Eq)]
 struct Merge {
@@ -310,70 +309,6 @@ impl BpeTrainer {
         self.emit_json_progress(message, 0, len);
     }
 
-    /// Materialize immutable input symbol IDs into mutable training words.
-    fn tokenize_words(
-        &self,
-        wc: WordCountsView<'_>,
-        ids: &InitialTokenIds,
-    ) -> (Vec<TrainingWord>, Vec<u64>) {
-        let mut words: Vec<TrainingWord> = Vec::with_capacity(wc.len());
-        let mut counts: Vec<u64> = Vec::with_capacity(wc.len());
-
-        for (word, count) in wc.iter() {
-            let mut current_word = TrainingWord::new();
-            counts.push(*count);
-
-            for id in ids.symbols(word) {
-                current_word.add(id);
-            }
-            words.push(current_word);
-        }
-
-        (words, counts)
-    }
-
-    fn count_pairs(
-        &self,
-        words: &[TrainingWord],
-        counts: &[u64],
-        p: &Option<ProgressBar>,
-    ) -> (AHashMap<Pair, i32>, AHashMap<Pair, AHashSet<usize>>) {
-        words
-            .maybe_par_iter()
-            .enumerate()
-            .map(|(i, word)| {
-                let mut pair_counts = AHashMap::new();
-                let mut where_to_update: AHashMap<Pair, AHashSet<usize>> = AHashMap::new();
-
-                for window in word.get_chars().windows(2) {
-                    let cur_pair: Pair = (window[0], window[1]);
-
-                    // Initialize pair_counts and where_to_update for this pair if we just saw it
-                    // Then update counts
-                    *pair_counts.entry(cur_pair).or_default() += counts[i] as i32;
-                    where_to_update.entry(cur_pair).or_default().insert(i);
-                }
-
-                if let Some(p) = &p {
-                    p.inc(1);
-                }
-
-                (pair_counts, where_to_update)
-            })
-            .reduce(
-                || (AHashMap::new(), AHashMap::new()),
-                |(mut pair_counts, mut where_to_update), (pc, wtu)| {
-                    for (k, v) in pc {
-                        *pair_counts.entry(k).or_default() += v;
-                    }
-                    for (k, v) in wtu {
-                        where_to_update.entry(k).or_default().extend(v);
-                    }
-                    (pair_counts, where_to_update)
-                },
-            )
-    }
-
     /// Train and hand back the raw parts, for a caller that wants them rather than a built model.
     ///
     /// The WordPiece trainer is the one caller: it trains a BPE and reinterprets the vocabulary as
@@ -423,15 +358,15 @@ impl BpeTrainer {
         //
         // 3. Tokenize words
         //
-        let (mut words, counts) = self.tokenize_words(word_counts, &ids);
-        self.finalize_progress(&progress, words.len(), "Tokenize words");
+        let mut corpus = Corpus::new(word_counts, &ids);
+        self.finalize_progress(&progress, corpus.word_count(), "Tokenize words");
         drop(ids);
 
         //
         // 4. Count pairs in words
         //
-        self.update_progress(&progress, words.len(), "Count pairs");
-        let (mut pair_counts, mut where_to_update) = self.count_pairs(&words, &counts, &progress);
+        self.update_progress(&progress, corpus.word_count(), "Count pairs");
+        let (mut pair_counts, mut where_to_update) = corpus.count_pairs(&progress);
         // Insert them in the queue
         let mut queue = OctonaryHeap::with_capacity(pair_counts.len());
         where_to_update.drain().for_each(|(pair, pos)| {
@@ -444,7 +379,7 @@ impl BpeTrainer {
                 });
             }
         });
-        self.finalize_progress(&progress, words.len(), "Count pairs");
+        self.finalize_progress(&progress, corpus.word_count(), "Count pairs");
 
         //
         // 5. Do merges
@@ -472,47 +407,15 @@ impl BpeTrainer {
             }
 
             let new_token_id = vocabulary.resolve(top.pair);
-            // Merge the new pair in every words
-            // Safety: This is just a type assertion, the code below may no longer be safe
-            // if the type of `pos` changes
-            let pos: &AHashSet<usize> = &top.pos;
-
-            let words_len = words.len();
-            // FIXME: doesn't look great
-            struct WordPtr(*mut TrainingWord);
-            // Safety: We do not actually use this for concurrent access to the same memory,
-            // only to different chunks within the same allocation.
-            unsafe impl Sync for WordPtr {}
-            let word_start = WordPtr(words.as_mut_ptr());
-
-            let changes = pos
-                .maybe_par_iter()
-                .flat_map(|&i| {
-                    // We can merge each of these words in parallel here because each position
-                    // can be there only once (AHashSet). So this is safe.
-                    unsafe {
-                        // Edition ≥2021 closures capture the `.0` field (a non-Sync raw
-                        // pointer) unless we force whole-struct capture of the Sync wrapper.
-                        let word_start = &word_start;
-                        assert!(i < words_len);
-                        // This is words[i], but avoids needing to go through &T (which triggers UB)
-                        let word = word_start.0.add(i);
-                        // let word: &mut Word = &mut (*word);
-                        (*word)
-                            .merge(top.pair.0, top.pair.1, new_token_id, max_token_length)
-                            .into_iter()
-                            .map(|c| (c, i))
-                            .collect::<Vec<_>>()
-                    }
-                })
-                .collect::<Vec<_>>();
-
-            // Introduce new formed pairs
-            for ((pair, change), iw) in changes {
-                let count = change * counts[iw] as i32;
-                *pair_counts.entry(pair).or_default() += count;
-                if change > 0 {
-                    where_to_update.entry(pair).or_default().insert(iw);
+            let changes = corpus.merge(top.pair, new_token_id, max_token_length, &top.pos);
+            for change in changes {
+                let count = change.delta * change.weight as i32;
+                *pair_counts.entry(change.pair).or_default() += count;
+                if change.delta > 0 {
+                    where_to_update
+                        .entry(change.pair)
+                        .or_default()
+                        .insert(change.word);
                 }
             }
             where_to_update.drain().for_each(|(pair, pos)| {
