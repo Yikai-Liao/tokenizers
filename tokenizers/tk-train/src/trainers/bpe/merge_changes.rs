@@ -59,6 +59,7 @@ impl<'scratch> NeighborChanges<'scratch> {
                 removed_weight: 0,
                 born_weight: 0,
                 positions: Positions::default(),
+                birth_group: usize::from(!left && neighbor != id),
             });
             *slot =
                 u32::try_from(index).expect("each neighbor directory is bounded by real token IDs");

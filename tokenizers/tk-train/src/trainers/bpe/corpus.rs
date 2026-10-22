@@ -730,8 +730,10 @@ pub(super) struct PairChange<P> {
     pub(super) removed_weight: u64,
     pub(super) born_weight: u64,
     pub(super) positions: P,
+    pub(super) birth_group: usize,
 }
 pub(super) struct ProducerChanges {
+    pub(super) whole_rule: bool,
     pub(super) changes: Vec<PairChange<Positions>>,
 }
 

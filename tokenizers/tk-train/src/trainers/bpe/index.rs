@@ -161,7 +161,7 @@ impl CandidateQueue {
 }
 
 pub(super) struct PairIndex {
-    counts: AHashMap<Pair, u64>,
+    shard: Shard,
     queue: CandidateQueue,
     minimum: u64,
     mode: TrainingMode,
@@ -207,7 +207,10 @@ impl PairIndex {
             }
         }
         Ok(Self {
-            counts,
+            shard: Shard {
+                counts,
+                ..Shard::default()
+            },
             queue: candidates.into_iter().collect(),
             minimum,
             mode: corpus.mode(),
@@ -217,7 +220,7 @@ impl PairIndex {
     pub(super) fn take(&mut self) -> Option<Candidate> {
         loop {
             let top = self.queue.peek()?;
-            let Some(&count) = self.counts.get(&top.pair()) else {
+            let Some(&count) = self.shard.counts.get(&top.pair()) else {
                 self.queue.pop();
                 continue;
             };
@@ -230,64 +233,54 @@ impl PairIndex {
             }
             let candidate = self.queue.pop()?;
             if self.mode == TrainingMode::Fresh {
-                self.counts.remove(&candidate.priority.pair());
+                self.shard.counts.remove(&candidate.priority.pair());
             }
             return Some(candidate);
         }
     }
 
     pub(super) fn commit(&mut self, changes: Vec<ProducerChanges>) -> Result<()> {
-        let reuse = self.mode == TrainingMode::Reuse;
-        let mut births = AHashMap::<Pair, PairAggregate<SmallVec<[Positions; 1]>>>::new();
         for producer in changes {
             for change in producer.changes {
-                if reuse {
-                    adjust_signed(
-                        self.counts.entry(change.removed).or_default(),
-                        change.removed_weight,
-                        true,
-                    )?;
-                    adjust_signed(
-                        self.counts.entry(change.born).or_default(),
-                        change.born_weight,
-                        false,
-                    )?;
-                } else if change.removed_weight != 0
-                    && let Some(count) = self.counts.get_mut(&change.removed)
+                if producer.whole_rule
+                    && change.born.0 != change.born.1
+                    && !change.positions.is_empty()
                 {
-                    *count = count
-                        .checked_sub(change.removed_weight)
-                        .ok_or("BPE fresh removal exceeds the current count")?;
-                    if *count < self.minimum.max(1) {
-                        self.counts.remove(&change.removed);
+                    if change.born_weight >= self.minimum.max(1) {
+                        self.shard.completed.push(Candidate::new(
+                            change.born,
+                            change.born_weight,
+                            change.positions,
+                        ));
                     }
+                    if change.removed_weight != 0 {
+                        self.shard.actions.push(PendingAction::Remove {
+                            pair: change.removed,
+                            weight: change.removed_weight,
+                        });
+                    }
+                    continue;
+                }
+                if change.removed_weight != 0 {
+                    self.shard.actions.push(PendingAction::Remove {
+                        pair: change.removed,
+                        weight: change.removed_weight,
+                    });
                 }
                 if !change.positions.is_empty() {
-                    let birth = births.entry(change.born).or_default();
-                    super::add(&mut birth.count, change.born_weight)?;
-                    birth.positions.push(change.positions);
+                    self.shard.actions.push(PendingAction::Birth {
+                        pair: change.born,
+                        weight: change.born_weight,
+                        birth_group: change.birth_group,
+                    });
+                    self.shard.positions.push(change.positions);
                 }
             }
         }
-        for (pair, birth) in births {
-            let count = if reuse {
-                self.counts[&pair]
-            } else {
-                birth.count
-            };
-            if (reuse && (count as i64) <= 0) || (!reuse && count < self.minimum.max(1)) {
-                continue;
-            }
-            let positions = if reuse {
-                Positions::merge(birth.positions)?
-            } else {
-                Positions::concat(birth.positions)?
-            };
-            if !reuse {
-                debug_assert!(!self.counts.contains_key(&pair));
-                self.counts.insert(pair, count);
-            }
-            self.queue.push(Candidate::new(pair, count, positions));
+        self.shard
+            .commit(self.mode == TrainingMode::Reuse, self.minimum.max(1))?;
+        for candidate in self.shard.completed.drain(..) {
+            self.queue.push(candidate);
         }
         Ok(())
     }
@@ -306,8 +299,8 @@ fn adjust_signed(count: &mut u64, amount: u64, remove: bool) -> Result<()> {
 
 impl PairIndex {
     pub(super) fn retire(self) {
-        let Self { counts, queue, .. } = self;
-        drop(counts);
+        let Self { shard, queue, .. } = self;
+        drop(shard);
         queue.retire();
     }
 }
@@ -426,4 +419,123 @@ fn count_chunk(
         p.inc(words as u64);
     }
     Ok(counts.into_entries())
+}
+
+#[derive(Default)]
+struct Shard {
+    counts: AHashMap<Pair, u64>,
+    actions: Vec<PendingAction>,
+    // One stream per birth action, in the same order.
+    positions: Vec<Positions>,
+    completed: Vec<Candidate>,
+}
+enum PendingAction {
+    Remove {
+        pair: Pair,
+        weight: u64,
+    },
+    Birth {
+        pair: Pair,
+        weight: u64,
+        birth_group: usize,
+    },
+}
+struct BirthFragment {
+    birth_group: usize,
+    pair: Pair,
+    weight: u64,
+    positions: Positions,
+}
+
+impl Shard {
+    fn commit(&mut self, reuse: bool, floor: u64) -> Result<()> {
+        let mut fragments = Vec::with_capacity(self.positions.len());
+        // Drains empty pending actions and streams on error; unpublished births
+        // stay with this shard until the failed attempt is discarded.
+        let mut positions = self.positions.drain(..);
+        for action in self.actions.drain(..) {
+            // A boundary removal precedes its replacement birth. The signed reuse
+            // ledger checks each action in order, including intermediate overflow.
+            match action {
+                PendingAction::Remove { pair, weight } => {
+                    if reuse {
+                        let count = self.counts.entry(pair).or_default();
+                        adjust_signed(count, weight, true)?;
+                    } else if let Some(count) = self.counts.get_mut(&pair) {
+                        *count = count
+                            .checked_sub(weight)
+                            .ok_or("BPE fresh removal exceeds the current count")?;
+                        if *count < floor {
+                            self.counts.remove(&pair);
+                        }
+                    }
+                }
+                PendingAction::Birth {
+                    pair,
+                    weight,
+                    birth_group,
+                } => {
+                    if reuse {
+                        let count = self.counts.entry(pair).or_default();
+                        adjust_signed(count, weight, false)?;
+                    }
+                    fragments.push(BirthFragment {
+                        birth_group,
+                        pair,
+                        weight,
+                        positions: positions.next().expect("each birth owns one stream"),
+                    });
+                }
+            }
+        }
+
+        for candidate in &self.completed {
+            debug_assert!(!reuse);
+            let pair = candidate.priority.pair();
+            debug_assert!(!self.counts.contains_key(&pair));
+            self.counts.insert(pair, candidate.priority.count);
+        }
+        // Stable key order keeps each cohort's spatial fragment order while
+        // publishing in birth_group/pair order. Reuse streams may interleave.
+        fragments.sort_by_key(|fragment| (fragment.birth_group, fragment.pair));
+        let mut fragments = fragments.into_iter();
+        while let Some(fragment) = fragments.as_slice().first() {
+            let key = (fragment.birth_group, fragment.pair);
+            let mut group_len = 0;
+            let mut weight = 0;
+            for part in fragments
+                .as_slice()
+                .iter()
+                .take_while(|part| (part.birth_group, part.pair) == key)
+            {
+                super::add(&mut weight, part.weight)?;
+                group_len += 1;
+            }
+            let pair = key.1;
+            let count = if reuse { self.counts[&pair] } else { weight };
+            let streams = fragments
+                .by_ref()
+                .take(group_len)
+                .map(|fragment| fragment.positions);
+            // A positive reuse ledger publishes a historical cohort even below
+            // the floor; selection applies the floor after correcting its head.
+            // Interpret reuse counts as signed bits, rejecting zero/negative
+            // ledgers. Fresh counts are unsigned and must meet the floor now.
+            if (reuse && (count as i64) <= 0) || (!reuse && count < floor) {
+                streams.for_each(drop);
+                continue;
+            }
+            let positions = if reuse {
+                Positions::merge(streams)?
+            } else {
+                Positions::concat(streams)?
+            };
+            if !reuse {
+                debug_assert!(!self.counts.contains_key(&pair));
+                self.counts.insert(pair, count);
+            }
+            self.completed.push(Candidate::new(pair, count, positions));
+        }
+        Ok(())
+    }
 }
