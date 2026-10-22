@@ -1,12 +1,15 @@
 #![allow(clippy::map_entry)]
 
+mod corpus;
 mod feed;
+use corpus::Word as TrainingWord;
 mod vocabulary;
 mod word_counts;
 use vocabulary::{InitialTokenIds, Vocabulary};
 
 #[cfg(feature = "parity-aware-bpe")]
 pub mod parity_trainer;
+#[cfg(feature = "parity-aware-bpe")]
 mod word;
 #[cfg(feature = "parity-aware-bpe")]
 pub use parity_trainer::{ParityBpeTrainer, ParityBpeTrainerBuilder, ParityVariant};
@@ -26,6 +29,7 @@ use word_counts::{WordCounts, WordCountsView};
 // private to `tk-encode`.
 #[cfg(feature = "parity-aware-bpe")]
 use word::WithFirstLastIterator;
+#[cfg(feature = "parity-aware-bpe")]
 use word::Word;
 
 use crate::progress::{ProgressBar, ProgressFormat, ProgressStyle};
@@ -311,16 +315,16 @@ impl BpeTrainer {
         &self,
         wc: WordCountsView<'_>,
         ids: &InitialTokenIds,
-    ) -> (Vec<Word>, Vec<u64>) {
-        let mut words: Vec<Word> = Vec::with_capacity(wc.len());
+    ) -> (Vec<TrainingWord>, Vec<u64>) {
+        let mut words: Vec<TrainingWord> = Vec::with_capacity(wc.len());
         let mut counts: Vec<u64> = Vec::with_capacity(wc.len());
 
         for (word, count) in wc.iter() {
-            let mut current_word = Word::new();
+            let mut current_word = TrainingWord::new();
             counts.push(*count);
 
             for id in ids.symbols(word) {
-                current_word.add(id, 1);
+                current_word.add(id);
             }
             words.push(current_word);
         }
@@ -330,7 +334,7 @@ impl BpeTrainer {
 
     fn count_pairs(
         &self,
-        words: &[Word],
+        words: &[TrainingWord],
         counts: &[u64],
         p: &Option<ProgressBar>,
     ) -> (AHashMap<Pair, i32>, AHashMap<Pair, AHashSet<usize>>) {
@@ -475,7 +479,7 @@ impl BpeTrainer {
 
             let words_len = words.len();
             // FIXME: doesn't look great
-            struct WordPtr(*mut Word);
+            struct WordPtr(*mut TrainingWord);
             // Safety: We do not actually use this for concurrent access to the same memory,
             // only to different chunks within the same allocation.
             unsafe impl Sync for WordPtr {}
