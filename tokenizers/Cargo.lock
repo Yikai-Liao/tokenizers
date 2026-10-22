@@ -2902,6 +2902,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0c790de23124f9ab44544d7ac05d60440adc586479ce501c1d6d7da3cd8c9cf5"
 
 [[package]]
+name = "slice-group-by"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "826167069c09b99d56f31e9ae5c99049e932a98c9dc2dac47645b08dbbf76ba7"
+
+[[package]]
 name = "smallvec"
 version = "1.16.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3253,9 +3259,11 @@ dependencies = [
  "itertools 0.14.0",
  "leb128fmt",
  "log",
+ "rayon",
  "scc",
  "serde",
  "serde_json",
+ "slice-group-by",
  "smallvec",
  "tempfile",
  "thiserror",

@@ -5,7 +5,7 @@ mod index;
 mod positions;
 use index::PairIndex;
 mod feed;
-use corpus::Corpus;
+use corpus::CorpusPlan;
 mod vocabulary;
 mod word_counts;
 use vocabulary::Vocabulary;
@@ -293,6 +293,7 @@ impl BpeTrainer {
     ///
     /// Returns an error if checked position encoding or storage reservation fails.
     /// Initial and merged token identities must fit the supported ID domain.
+    /// Checked corpus layouts and weighted pair counts must fit their numeric domains.
     pub fn train_vocab(&self) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
         self.train_counts(WordCountsView::from(&self.words))
     }
@@ -336,25 +337,27 @@ impl BpeTrainer {
 
         let progress = self.setup_progress();
 
-        let (mut vocabulary, ids) = Vocabulary::initialize(self, word_counts, &progress)?;
+        let alphabet = self.select_alphabet(word_counts);
+        let (mut vocabulary, ids) =
+            Vocabulary::initialize(self, word_counts, &alphabet, &progress)?;
 
         //
         // 3. Tokenize words
         //
-        let mut corpus = Corpus::new(word_counts, &ids, self.vocab_size);
-        self.finalize_progress(&progress, corpus.word_count(), "Tokenize words");
-        drop(ids);
+        let plan = CorpusPlan::build(word_counts, ids, self.vocab_size)?;
+        self.finalize_progress(&progress, plan.word_count(), "Tokenize words");
 
         //
         // 4. Count pairs in words
         //
-        self.update_progress(&progress, corpus.word_count(), "Count pairs");
-        let mut index = PairIndex::build(&corpus, self.min_frequency, &progress)?;
-        self.finalize_progress(&progress, corpus.word_count(), "Count pairs");
+        self.update_progress(&progress, plan.word_count(), "Count pairs");
+        let mut index = PairIndex::build(&plan, self.min_frequency, &progress)?;
+        self.finalize_progress(&progress, plan.word_count(), "Count pairs");
 
         //
         // 5. Do merges
         //
+        let mut corpus = plan.materialize();
         self.update_progress(&progress, self.vocab_size, "Compute merges");
         let mut completed = 0;
         loop {
@@ -696,6 +699,34 @@ mod historical_coordinate_tests {
                 ("ab".into(), "aba".into()),
             ]
         );
+    }
+}
+
+fn add(count: &mut u64, amount: u64) -> Result<()> {
+    *count = count
+        .checked_add(amount)
+        .ok_or("BPE weighted frequency exceeds u64")?;
+    Ok(())
+}
+
+#[cfg(test)]
+mod weighted_count_tests {
+    use super::*;
+    #[test]
+    fn wide_frequencies_and_signed_guard() {
+        let trainer = BpeTrainer::builder()
+            .vocab_size(8)
+            .min_frequency(1)
+            .show_progress(false)
+            .build();
+        let words = [("abab".into(), u32::MAX as u64)].into();
+        let (_, merges, _) = trainer.do_train(&words).unwrap();
+        assert_eq!(
+            merges,
+            [("a".into(), "b".into()), ("ab".into(), "ab".into())]
+        );
+        let words = [("abab".into(), i64::MAX as u64)].into();
+        assert!(trainer.do_train(&words).is_err());
     }
 }
 

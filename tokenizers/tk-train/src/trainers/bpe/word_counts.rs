@@ -111,3 +111,9 @@ impl<'counts> WordCountsView<'counts> {
             .chain(self.entries.iter().map(|(word, count)| (word, count)))
     }
 }
+
+impl<'counts> WordCountsView<'counts> {
+    pub(super) fn keys(self) -> impl Iterator<Item = &'counts CompactString> {
+        self.iter().map(|(word, _)| word)
+    }
+}

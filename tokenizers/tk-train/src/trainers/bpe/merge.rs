@@ -1,5 +1,5 @@
 //! Joined merge preparation and disjoint endpoint writes.
-use super::{Corpus, EMPTY, Positions, Symbol, WordChange};
+use super::{Corpus, EMPTY, Positions, Symbol, WeightLookup, WordChange};
 use itertools::Itertools;
 use tk_encode::models::bpe::Pair;
 use tk_encode::parallelism::{MaybeParallelIterator, MaybeParallelSlice};
@@ -103,6 +103,7 @@ impl Corpus {
         };
         let mut previous_end = 0;
         let mut previous_span = 0;
+        let mut cached_weight: Option<WeightLookup> = None;
         for coordinate in coordinates {
             let p = usize::try_from(coordinate).expect("resident corpus coordinate");
             if p < previous_end {
@@ -119,7 +120,12 @@ impl Corpus {
             }
             let span = left.span + self.symbol(right).span;
             let after = p + span;
-            let weight = self.counts[self.starts.partition_point(|&start| start <= p) - 1];
+            let lookup = match cached_weight {
+                Some(lookup) if p < lookup.end => lookup,
+                _ => self.weight(p),
+            };
+            cached_weight = Some(lookup);
+            let weight = lookup.weight;
             let mut record = |pair, delta, coordinate: usize| {
                 prepared.changes.push(WordChange {
                     pair,
@@ -176,7 +182,7 @@ impl Corpus {
             }
             let span = left.span + self.symbol(right).span;
             let after = p + span;
-            let weight = self.counts[word];
+            let weight = self.weight(range.start).weight;
             let mut record = |pair, delta, coordinate: usize| {
                 prepared.changes.push(WordChange {
                     pair,
