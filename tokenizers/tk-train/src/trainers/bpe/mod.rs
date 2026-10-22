@@ -337,7 +337,9 @@ impl BpeTrainer {
 
         let progress = self.setup_progress();
 
-        let (mut vocabulary, ids) = Vocabulary::initialize(self, word_counts, &progress)?;
+        let alphabet = self.select_alphabet(word_counts);
+        let (mut vocabulary, ids) =
+            Vocabulary::initialize(self, word_counts, &alphabet, &progress)?;
 
         //
         // 3. Tokenize words
