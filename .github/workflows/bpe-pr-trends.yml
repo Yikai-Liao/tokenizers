@@ -1,0 +1,176 @@
+name: BPE PR trends
+
+on:
+  push:
+    branches: [ci/bpe-pr-trends-20261022]
+    paths:
+      - .github/workflows/bpe-pr-trends.yml
+      - .github/bench/bpe-pr-trends/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bpe-pr-trends-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  RUSTUP_TOOLCHAIN: 1.98.1
+  CARGO_INCREMENTAL: '0'
+  RAYON_NUM_THREADS: '4'
+  TOKENIZERS_PARALLELISM: 'true'
+
+jobs:
+  baseline:
+    name: Inputs and upstream baseline
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      shared-artifact: ${{ steps.plan.outputs.shared-artifact }}
+    steps:
+      - name: Check out benchmark controls
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: control
+          persist-credentials: false
+      - name: Check out the pinned existing corpus protocol
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: Yikai-Liao/tokenizers-bpe-benchmarks
+          ref: 0fa8d08fc832b4f8f505e6bfb0f4637d0d29fad3
+          path: protocol
+          persist-credentials: false
+      - name: Check out upstream baseline
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: fb55b11bf6a8de420f1b09a3b2e723592e65b0fc
+          path: source
+          persist-credentials: false
+      - name: Install pinned Python helpers
+        run: |
+          python3 -m venv "$RUNNER_TEMP/bpe/python"
+          "$RUNNER_TEMP/bpe/python/bin/pip" install pyarrow==25.0.1 tree-sitter==0.26.0 tree-sitter-rust==0.24.2
+      - name: Cache verified128MiB inputs
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/bpe/shared/inputs
+          key: bpe-inputs128-e1427dad7d32-7dd7de3f8ec7-protocol0fa8d08
+      - name: Generate and verify the fixed inputs
+        run: |
+          "$RUNNER_TEMP/bpe/python/bin/python" control/.github/bench/bpe-pr-trends/driver.py prepare --protocol "$GITHUB_WORKSPACE/protocol" --shared "$RUNNER_TEMP/bpe/shared"
+      - name: Install the fixed Rust toolchain
+        run: rustup toolchain install 1.98.1 --profile minimal --no-self-update
+      - name: Cache Cargo dependencies and release output
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ${{ runner.temp }}/bpe/target
+          key: bpe-pr-trends-ubuntu24-rust1.98.1-${{ hashFiles('control/.github/bench/bpe-pr-trends/runner/Cargo.lock') }}
+      - name: Publish the fixed matrix
+        id: plan
+        run: |
+          matrix=$("$RUNNER_TEMP/bpe/python/bin/python" control/.github/bench/bpe-pr-trends/driver.py matrix)
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          echo "shared-artifact=bpe-shared-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_OUTPUT"
+      - name: Build upstream and measure3rounds
+        run: |
+          "$RUNNER_TEMP/bpe/python/bin/python" control/.github/bench/bpe-pr-trends/driver.py run --number 0 --source "$GITHUB_WORKSPACE/source" --shared "$RUNNER_TEMP/bpe/shared" --work "$RUNNER_TEMP/bpe" --out "$RUNNER_TEMP/bpe/point0" --rounds 3
+      - name: Upload shared inputs and exact model references
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: ${{ steps.plan.outputs.shared-artifact }}
+          path: ${{ runner.temp }}/bpe/shared
+          compression-level: 1
+          retention-days: 14
+      - name: Upload upstream measurements
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: bpe-curve-0-a${{ github.run_attempt }}
+          path: ${{ runner.temp }}/bpe/point0
+          if-no-files-found: warn
+          compression-level: 1
+          retention-days: 14
+
+  points:
+    needs: baseline
+    name: Measure ${{ matrix.label }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix: ${{ fromJSON(needs.baseline.outputs.matrix) }}
+    steps:
+      - name: Check out benchmark controls
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: control
+          persist-credentials: false
+      - name: Check out this exact source version
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ matrix.head }}
+          path: source
+          persist-credentials: false
+      - name: Install pinned Python helpers
+        run: |
+          python3 -m venv "$RUNNER_TEMP/bpe/python"
+          "$RUNNER_TEMP/bpe/python/bin/pip" install tree-sitter==0.26.0 tree-sitter-rust==0.24.2
+      - name: Install the fixed Rust toolchain
+        run: rustup toolchain install 1.98.1 --profile minimal --no-self-update
+      - name: Restore Cargo dependencies and release output
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ${{ runner.temp }}/bpe/target
+          key: bpe-pr-trends-ubuntu24-rust1.98.1-${{ hashFiles('control/.github/bench/bpe-pr-trends/runner/Cargo.lock') }}
+      - name: Download the shared inputs and references
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: ${{ needs.baseline.outputs.shared-artifact }}
+          path: ${{ runner.temp }}/bpe/shared
+      - name: Build this source and measure3rounds
+        env:
+          POINT_NUMBER: ${{ matrix.number }}
+        run: |
+          "$RUNNER_TEMP/bpe/python/bin/python" control/.github/bench/bpe-pr-trends/driver.py run --number "$POINT_NUMBER" --source "$GITHUB_WORKSPACE/source" --shared "$RUNNER_TEMP/bpe/shared" --work "$RUNNER_TEMP/bpe" --out "$RUNNER_TEMP/bpe/point" --rounds 3
+      - name: Upload this version's measurements
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: bpe-curve-${{ matrix.number }}-a${{ github.run_attempt }}
+          path: ${{ runner.temp }}/bpe/point
+          if-no-files-found: warn
+          compression-level: 1
+          retention-days: 14
+
+  summary:
+    name: Three-round medians and model checks
+    needs: [baseline, points]
+    if: always() && needs.baseline.result == 'success'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          pattern: bpe-curve-*
+          path: ${{ runner.temp }}/bpe-artifacts
+      - name: Check all exact models and summarize medians
+        run: python3 .github/bench/bpe-pr-trends/aggregate.py --artifacts "$RUNNER_TEMP/bpe-artifacts" --out "$RUNNER_TEMP/bpe-summary" --rounds 3
+      - name: Upload the combined tables and evidence index
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: bpe-summary-a${{ github.run_attempt }}
+          path: ${{ runner.temp }}/bpe-summary
+          if-no-files-found: warn
+          retention-days: 14
