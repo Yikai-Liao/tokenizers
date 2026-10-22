@@ -10,6 +10,7 @@ use super::positions::Positions;
 use super::vocabulary::InitialTokenIds;
 use super::word_counts::WordCountsView;
 use rayon::prelude::*;
+use std::collections::VecDeque;
 use std::ops::Range;
 use std::sync::atomic::{AtomicU16, AtomicU32, AtomicUsize, Ordering};
 use tk_encode::Result;
@@ -594,6 +595,67 @@ impl Corpus {
 impl Corpus {
     fn id_count(&self) -> usize {
         self.id_metadata.len()
+    }
+}
+
+impl Corpus {
+    fn prefetch(&self, position: usize) {
+        let address: Option<*const u8> = match &self.tokens {
+            Slots::Narrow(values) => values.get(position).map(|v| std::ptr::from_ref(v).cast()),
+            Slots::Wide(values) => values.get(position).map(|v| std::ptr::from_ref(v).cast()),
+        };
+        if let Some(address) = address {
+            // Locality zero is L1 on both stable and nightly branches builds,
+            // matching the former x86 T0 hint and covering AArch64 as well.
+            branches::prefetch_read_data::<_, 0>(address);
+        }
+    }
+    fn fixed_matcher(&self, pair: Pair) -> impl Fn(usize) -> Option<Range<usize>> + '_ {
+        debug_assert!(self.occurrence_spans.is_none());
+        let left = self.fixed_id_span(pair.0);
+        let total = left + self.fixed_id_span(pair.1);
+        move |position| {
+            // Zero spans mark inactive IDs (total == left means an inactive
+            // right ID). The exclusive end must still name a resident slot,
+            // and the right token must begin exactly one left span away.
+            if self.token(position) != pair.0
+                || left == 0
+                || total == left
+                || position + total >= self.len()
+                || self.token(position + left) != pair.1
+            {
+                return None;
+            }
+            Some(position..position + total)
+        }
+    }
+    fn fresh_matches<'a>(
+        &'a self,
+        coordinates: impl IntoIterator<Item = u64> + 'a,
+        pair: Pair,
+    ) -> impl Iterator<Item = (Range<usize>, u64)> + 'a {
+        let matcher = self.fixed_matcher(pair);
+        let mut positions = coordinates
+            .into_iter()
+            .map(move |coordinate| self.resident(coordinate))
+            .inspect(move |&p| self.prefetch(p));
+        let mut ahead = VecDeque::with_capacity(16);
+        ahead.extend(positions.by_ref().take(16));
+        let mut cached_weight: Option<WeightLookup> = None;
+        std::iter::from_fn(move || {
+            let position = ahead.pop_front()?;
+            ahead.extend(positions.next());
+            Some(position)
+        })
+        .filter_map(move |p| {
+            let matched = matcher(p)?;
+            let lookup = match cached_weight {
+                Some(lookup) if p < lookup.end => lookup,
+                _ => self.weight(p),
+            };
+            cached_weight = Some(lookup);
+            Some((matched, lookup.weight))
+        })
     }
 }
 
