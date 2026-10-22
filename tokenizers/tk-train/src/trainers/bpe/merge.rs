@@ -1,9 +1,6 @@
 //! Joined merge preparation and disjoint endpoint writes.
 use super::changes::{EdgeSide, NeighborChanges, NeighborScratch};
-use super::{
-    Corpus, EMPTY, PairChange, Positions, ProducerChanges, SelectedMerge, TrainingMode,
-    WeightLookup,
-};
+use super::{Corpus, EMPTY, PairChange, Positions, ProducerChanges, SelectedMerge, TrainingMode};
 use itertools::Itertools;
 use smallvec::SmallVec;
 use std::ops::Range;
@@ -214,10 +211,11 @@ impl Corpus {
         // Decide overlaps globally before fragmenting this rule's immutable snapshot.
         let mut accepted = Vec::new();
         let mut end = 0;
+        let matcher = self.fixed_matcher(pair);
         for coordinate in positions.iter() {
-            let p = usize::try_from(coordinate).expect("resident corpus coordinate");
+            let p = self.resident(coordinate);
             if p >= end
-                && let Some(matched) = self.match_at(p, pair)
+                && let Some(matched) = matcher(p)
             {
                 end = matched.end;
                 accepted.push(matched);
@@ -280,30 +278,13 @@ impl Corpus {
         let mut starts = SmallVec::new();
         let mut neighbors = NeighborChanges::new(pair, id, self.id_metadata.len(), scratch);
         let mut previous_end = previous.unwrap_or(0);
-        let mut cached_weight: Option<WeightLookup> = None;
-        for coordinate in coordinates {
-            let p = usize::try_from(coordinate).expect("resident corpus coordinate");
+        for (matched, weight) in self.fresh_matches(coordinates, pair) {
+            let p = matched.start;
             if p < previous_end {
                 continue;
             }
-            let left = self.symbol(p);
-            let right = p + left.span;
-            if left.id != pair.0
-                || left.span == 0
-                || right >= self.tokens.len()
-                || self.symbol(right).id != pair.1
-            {
-                continue;
-            }
-            let span = left.span + self.symbol(right).span;
-            let after = p + span;
-            let lookup = match cached_weight {
-                Some(lookup) if p < lookup.end => lookup,
-                _ => self.weight(p),
-            };
-            cached_weight = Some(lookup);
-            let weight = lookup.weight;
-
+            let span = matched.len();
+            let after = matched.end;
             // The preceding accepted match has already merged in the sequential
             // contract. Read its virtual endpoint without mutating the snapshot.
             let adjacent_selected = cohort.is_some_and(|positions| {
