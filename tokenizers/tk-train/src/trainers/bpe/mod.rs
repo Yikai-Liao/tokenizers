@@ -1,5 +1,8 @@
 #![allow(clippy::map_entry)]
 
+mod feed;
+mod word_counts;
+
 #[cfg(feature = "parity-aware-bpe")]
 pub mod parity_trainer;
 mod word;
@@ -14,6 +17,7 @@ use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::collections::HashSet;
 use tk_encode::vocab::bucket_added_vocabulary::AddedToken;
+use word_counts::{WordCounts, WordCountsView};
 // The `Word` machinery a trainer merges into is training-only, so it lives here rather than in the
 // inference crate. `PipelineBPE` is the only BPE left; a trainer reaches it through
 // `from_config`, the same serde-free door a reader walks through, because its fields are
@@ -23,7 +27,8 @@ use word::{WithFirstLastIterator, Word};
 use crate::progress::{ProgressBar, ProgressFormat, ProgressStyle};
 use tk_encode::Result;
 use tk_encode::models::bpe::{BpeConfig, Merges, Pair, PipelineBPE, Vocab};
-use tk_encode::parallelism::*;
+use tk_encode::parallelism;
+use tk_encode::parallelism::MaybeParallelRefIterator;
 
 #[derive(Debug, Eq)]
 struct Merge {
@@ -185,7 +190,7 @@ impl BpeTrainerBuilder {
             continuing_subword_prefix: self.config.continuing_subword_prefix,
             end_of_word_suffix: self.config.end_of_word_suffix,
             max_token_length: self.config.max_token_length,
-            words: AHashMap::new(),
+            words: WordCounts::default(),
         }
     }
 }
@@ -239,7 +244,7 @@ pub struct BpeTrainer {
     /// An optional parameter to limit the max length of any single token
     pub max_token_length: Option<usize>,
 
-    words: AHashMap<CompactString, u64>,
+    words: WordCounts,
 }
 
 impl Default for BpeTrainer {
@@ -331,13 +336,13 @@ impl BpeTrainer {
     /// Compute the initial alphabet and limit it if relevant
     fn compute_alphabet(
         &self,
-        wc: &AHashMap<CompactString, u64>,
+        wc: WordCountsView<'_>,
         w2id: &mut AHashMap<CompactString, u32>,
         id2w: &mut Vec<CompactString>,
     ) {
         // Compute the alphabet from seen words
         let mut alphabet: AHashMap<char, usize> = AHashMap::new();
-        for (word, count) in wc {
+        for (word, count) in wc.iter() {
             for c in word.chars() {
                 *alphabet.entry(c).or_default() += *count as usize;
             }
@@ -385,7 +390,7 @@ impl BpeTrainer {
     /// Tokenize words and add subwords to the vocabulary when relevant
     fn tokenize_words(
         &self,
-        wc: &AHashMap<CompactString, u64>,
+        wc: WordCountsView<'_>,
         w2id: &mut AHashMap<CompactString, u32>,
         id2w: &mut Vec<CompactString>,
         p: &Option<ProgressBar>,
@@ -393,7 +398,7 @@ impl BpeTrainer {
         let mut words: Vec<Word> = Vec::with_capacity(wc.len());
         let mut counts: Vec<u64> = Vec::with_capacity(wc.len());
 
-        for (word, count) in wc {
+        for (word, count) in wc.iter() {
             let mut current_word = Word::new();
             counts.push(*count);
 
@@ -477,7 +482,7 @@ impl BpeTrainer {
     /// WordPiece pieces, so building a `PipelineBPE` first -- merge tables and all -- would be work
     /// thrown away.
     pub fn train_vocab(&self) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
-        self.do_train(&self.words)
+        self.train_counts(WordCountsView::from(&self.words))
     }
 
     /// The runtime options a trained model is built with.
@@ -503,6 +508,13 @@ impl BpeTrainer {
     pub fn do_train(
         &self,
         word_counts: &AHashMap<CompactString, u64>,
+    ) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
+        self.train_counts(WordCountsView::from(word_counts))
+    }
+
+    fn train_counts(
+        &self,
+        word_counts: WordCountsView<'_>,
     ) -> Result<(Vocab, Merges, Vec<AddedToken>)> {
         let mut word_to_id: AHashMap<CompactString, u32> = AHashMap::with_capacity(self.vocab_size);
         let mut id_to_word: Vec<CompactString> = Vec::with_capacity(self.vocab_size);
@@ -679,12 +691,21 @@ impl BpeTrainer {
     }
 }
 
+fn num_workers() -> usize {
+    if parallelism::get_parallelism() {
+        parallelism::current_num_threads()
+    } else {
+        1
+    }
+}
+
 impl Trainer for BpeTrainer {
     type Model = PipelineBPE;
 
     /// Train a BPE model
     fn train(&self, model: &mut PipelineBPE) -> Result<Vec<AddedToken>> {
-        let (vocab, merges, special_tokens) = self.do_train(&self.words)?;
+        let (vocab, merges, special_tokens) =
+            self.train_counts(WordCountsView::from(&self.words))?;
         *model = PipelineBPE::from_config(BpeConfig {
             vocab,
             merges,
@@ -704,28 +725,7 @@ impl Trainer for BpeTrainer {
         S: AsRef<str> + Send,
         F: Fn(&str) -> Result<Vec<String>> + Sync,
     {
-        let words: Result<AHashMap<CompactString, u64>> = iterator
-            .maybe_par_bridge()
-            .map(|sequence| {
-                let words = process(sequence.as_ref())?;
-                let mut map = AHashMap::new();
-                for word in words {
-                    *map.entry(CompactString::from(word)).or_default() += 1;
-                }
-                Ok(map)
-            })
-            .reduce(
-                || Ok(AHashMap::new()),
-                |acc, ws| {
-                    let mut acc = acc?;
-                    for (k, v) in ws? {
-                        *acc.entry(k).or_default() += v;
-                    }
-                    Ok(acc)
-                },
-            );
-
-        self.words = words?;
+        self.words = feed::count(iterator, &process)?;
         Ok(())
     }
 }
@@ -911,5 +911,54 @@ mod tests {
         .map(|(k, v)| (k.to_string(), v))
         .collect();
         assert_eq!(trained_vocab, expected_vocab)
+    }
+}
+
+#[cfg(test)]
+mod trainer_contract_tests {
+    use super::*;
+
+    #[test]
+    fn training_replaces_model_and_preserves_fed_counts() {
+        let mut trainer = BpeTrainer::builder()
+            .show_progress(false)
+            .min_frequency(1)
+            .vocab_size(5)
+            .special_tokens(vec![AddedToken::from("!", true)])
+            .continuing_subword_prefix("##".into())
+            .end_of_word_suffix("$".into())
+            .build();
+        trainer
+            .feed(["ab", "ab"].into_iter(), |s| Ok(vec![s.into()]))
+            .unwrap();
+        let mut model = PipelineBPE::from_config(BpeConfig {
+            vocab: [("z".into(), 0)].into(),
+            ..Default::default()
+        })
+        .unwrap();
+        for _ in 0..2 {
+            let special = trainer.train(&mut model).unwrap();
+            assert_eq!(special, [AddedToken::from("!", true)]);
+            let config = model.to_config().unwrap();
+            assert_eq!(
+                config.vocab,
+                [
+                    ("!".into(), 0),
+                    ("a".into(), 1),
+                    ("b".into(), 2),
+                    ("##b$".into(), 3),
+                    ("ab$".into(), 4)
+                ]
+                .into()
+            );
+            assert_eq!(config.merges, [("a".into(), "##b$".into())]);
+            assert_eq!(config.continuing_subword_prefix.as_deref(), Some("##"));
+            assert_eq!(config.end_of_word_suffix.as_deref(), Some("$"));
+            assert_eq!(
+                trainer.train_vocab().unwrap(),
+                (config.vocab, config.merges, special)
+            );
+            assert_eq!(trainer.get_word_count(), 1);
+        }
     }
 }
