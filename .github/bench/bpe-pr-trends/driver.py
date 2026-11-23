@@ -110,7 +110,11 @@ def measure_job(args):
 
     def run(version, round_name, warmup):
         manifest, binary = builds[version]
-        return measure.run_one(version=version, ref=manifest['ref'], head=manifest['head'], binary=binary, corpus=corpora[args.language], expected_sha=PLAN['inputs'][args.language]['sha256'], language=args.language, workers=args.workers, round_name=round_name, warmup=warmup, output_root=args.out, environment=environment)
+        print(f'{version} {round_name} ...', flush=True)
+        record, model = measure.run_one(version=version, ref=manifest['ref'], head=manifest['head'], binary=binary, corpus=corpora[args.language], expected_sha=PLAN['inputs'][args.language]['sha256'], language=args.language, workers=args.workers, round_name=round_name, warmup=warmup, output_root=args.out, environment=environment)
+        metrics = record['metrics']
+        print(f"  feed {metrics['feed_seconds']:.2f}s train {metrics['train_seconds']:.2f}s rss {record['process']['maxrss_kib'] / 1024:.0f} MiB", flush=True)
+        return record, model
 
     # Warm up every version; the baseline warmup model is the reference for all timed runs.
     for version in version_names:
