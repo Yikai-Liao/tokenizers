@@ -1,5 +1,6 @@
 #![allow(clippy::map_entry)]
 
+mod feed;
 #[cfg(feature = "parity-aware-bpe")]
 pub mod parity_trainer;
 mod word;
@@ -23,7 +24,7 @@ use word::{WithFirstLastIterator, Word};
 use crate::progress::{ProgressBar, ProgressFormat, ProgressStyle};
 use tk_encode::Result;
 use tk_encode::models::bpe::{BPE, BpeConfig, Merges, Pair, Vocab};
-use tk_encode::parallelism::*;
+use tk_encode::parallelism::MaybeParallelRefIterator;
 
 #[derive(Debug, Eq)]
 struct Merge {
@@ -699,28 +700,7 @@ impl Trainer for BpeTrainer {
         S: AsRef<str> + Send,
         F: Fn(&str) -> Result<Vec<String>> + Sync,
     {
-        let words: Result<AHashMap<CompactString, u64>> = iterator
-            .maybe_par_bridge()
-            .map(|sequence| {
-                let words = process(sequence.as_ref())?;
-                let mut map = AHashMap::new();
-                for word in words {
-                    *map.entry(CompactString::from(word)).or_default() += 1;
-                }
-                Ok(map)
-            })
-            .reduce(
-                || Ok(AHashMap::new()),
-                |acc, ws| {
-                    let mut acc = acc?;
-                    for (k, v) in ws? {
-                        *acc.entry(k).or_default() += v;
-                    }
-                    Ok(acc)
-                },
-            );
-
-        self.words = words?;
+        self.words = feed::count(iterator, &process)?;
         Ok(())
     }
 }
