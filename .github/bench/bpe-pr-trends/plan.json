@@ -1,0 +1,15 @@
+{
+  "schema_version": 2,
+  "size_mib": 128,
+  "vocab_size": 100000,
+  "min_frequency": 2,
+  "rounds": 3,
+  "workers": [1, 4],
+  "rust_toolchain": "1.98.1",
+  "protocol_repository": "Yikai-Liao/tokenizers-bpe-benchmarks",
+  "protocol_revision": "0fa8d08fc832b4f8f505e6bfb0f4637d0d29fad3",
+  "inputs": {
+    "en": {"sha256": "e1427dad7d3224510a1b267069942106d9a8436e114ed91fa098cc8e1f591061", "bytes": 134217203, "lines": 318065, "path": "en128/text.txt"},
+    "zh": {"sha256": "7dd7de3f8ec76913c510fb0840818b6749b12fbdf503c997932df2e444a7af0b", "bytes": 134217639, "lines": 311670, "path": "zh128/text.txt"}
+  }
+}

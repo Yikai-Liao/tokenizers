@@ -1,0 +1,179 @@
+name: BPE PR benchmark
+run-name: BPE benchmark · ${{ inputs.baseline_ref }} · ${{ inputs.candidate_refs }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      baseline_ref:
+        description: Upstream tokenizers ref used as the baseline
+        required: true
+        default: main
+        type: string
+      candidate_refs:
+        description: Comma- or newline-separated refs in this repository to benchmark
+        required: true
+        default: pr/bpe-feed,pr/bpe-engine
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bpe-pr-benchmark-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  RUSTUP_TOOLCHAIN: 1.98.1
+  CARGO_INCREMENTAL: '0'
+  TOKENIZERS_PARALLELISM: 'true'
+
+jobs:
+  resolve:
+    runs-on: ubuntu-24.04
+    outputs:
+      resolved: ${{ steps.refs.outputs.resolved }}
+      build_matrix: ${{ steps.refs.outputs.build_matrix }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - id: refs
+        env:
+          BASELINE_REF: ${{ inputs.baseline_ref }}
+          CANDIDATE_REFS: ${{ inputs.candidate_refs }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          resolved=$(python3 .github/bench/bpe-pr-trends/driver.py resolve --repository "$REPOSITORY" --baseline-ref "$BASELINE_REF" --candidate-refs "$CANDIDATE_REFS")
+          echo "resolved=$resolved" >> "$GITHUB_OUTPUT"
+          matrix=$(python3 -c 'import json,sys; d=json.loads(sys.argv[1]); print(json.dumps({"include":[d["baseline"],*d["candidates"]]},separators=(",",":")))' "$resolved")
+          echo "build_matrix=$matrix" >> "$GITHUB_OUTPUT"
+
+  prepare:
+    needs: resolve
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: control
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: Yikai-Liao/tokenizers-bpe-benchmarks
+          ref: 0fa8d08fc832b4f8f505e6bfb0f4637d0d29fad3
+          path: protocol
+          persist-credentials: false
+      - name: Install corpus helper
+        run: |
+          python3 -m venv "$RUNNER_TEMP/bpe-python"
+          "$RUNNER_TEMP/bpe-python/bin/pip" install pyarrow==25.0.1
+      - name: Prepare and verify Wikipedia inputs
+        run: |
+          "$RUNNER_TEMP/bpe-python/bin/python" control/.github/bench/bpe-pr-trends/driver.py prepare --protocol "$GITHUB_WORKSPACE/protocol" --shared "$RUNNER_TEMP/bpe/shared"
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: bpe-inputs-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/bpe/shared
+          retention-days: 7
+          compression-level: 1
+
+  build:
+    needs: resolve
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.resolve.outputs.build_matrix) }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: control
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ matrix.repository }}
+          ref: ${{ matrix.sha }}
+          path: source
+          persist-credentials: false
+      - name: Install Rust
+        run: rustup toolchain install 1.98.1 --profile minimal --no-self-update
+      - name: Build release runner
+        env:
+          VERSION: ${{ matrix.version }}
+          REF: ${{ matrix.ref }}
+          HEAD_SHA: ${{ matrix.sha }}
+        run: |
+          python3 control/.github/bench/bpe-pr-trends/driver.py build --version "$VERSION" --ref "$REF" --head "$HEAD_SHA" --source "$GITHUB_WORKSPACE/source" --out "$RUNNER_TEMP/bpe-build" --work "$RUNNER_TEMP/bpe-work"
+      - if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: bpe-build-${{ matrix.version }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/bpe-build
+          if-no-files-found: warn
+          retention-days: 7
+          compression-level: 1
+
+  measure:
+    needs: [resolve, prepare, build]
+    if: always() && needs.prepare.result == 'success' && needs.build.result == 'success'
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [en, zh]
+        workers: [1, 4]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: control
+          persist-credentials: false
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: bpe-inputs-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/bpe/shared
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          pattern: bpe-build-*
+          path: ${{ runner.temp }}/bpe/binaries
+          merge-multiple: false
+      - name: Measure all versions on this runner
+        env:
+          VERSIONS_JSON: ${{ needs.resolve.outputs.resolved }}
+          LANGUAGE: ${{ matrix.language }}
+          WORKERS: ${{ matrix.workers }}
+        run: |
+          python3 control/.github/bench/bpe-pr-trends/driver.py measure --versions-json "$VERSIONS_JSON" --binaries "$RUNNER_TEMP/bpe/binaries" --shared "$RUNNER_TEMP/bpe/shared" --out "$RUNNER_TEMP/bpe/measure" --language "$LANGUAGE" --workers "$WORKERS"
+      - if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: bpe-measure-${{ matrix.language }}-w${{ matrix.workers }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/bpe/measure
+          if-no-files-found: warn
+          retention-days: 7
+          compression-level: 1
+
+  summary:
+    needs: [resolve, prepare, build, measure]
+    if: always() && needs.prepare.result == 'success'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          pattern: bpe-measure-*
+          path: ${{ runner.temp }}/bpe-artifacts
+          merge-multiple: false
+      - name: Aggregate medians, ratios, and model checks
+        env:
+          EXPECTED_VERSIONS: ${{ fromJSON(needs.resolve.outputs.resolved).baseline.version }},${{ join(fromJSON(needs.resolve.outputs.resolved).candidates.*.version, ',') }}
+        run: python3 .github/bench/bpe-pr-trends/aggregate.py --artifacts "$RUNNER_TEMP/bpe-artifacts" --out "$RUNNER_TEMP/bpe-summary" --expected-versions "$EXPECTED_VERSIONS"
+      - if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: bpe-summary-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/bpe-summary
+          if-no-files-found: warn
+          retention-days: 90
