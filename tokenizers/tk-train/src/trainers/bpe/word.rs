@@ -43,6 +43,7 @@ where
 }
 
 #[derive(Debug, Clone, Copy)]
+#[cfg_attr(not(any(test, feature = "parity-aware-bpe")), allow(dead_code))]
 pub(crate) struct Symbol {
     c: u32,
     prev: isize,
@@ -71,6 +72,7 @@ impl std::fmt::Debug for Word {
     }
 }
 
+#[cfg_attr(not(any(test, feature = "parity-aware-bpe")), allow(dead_code))]
 impl Word {
     pub fn new() -> Self {
         Word { symbols: vec![] }
@@ -157,6 +159,14 @@ impl Word {
 
     pub fn get_chars_iter(&self) -> impl ExactSizeIterator<Item = u32> + '_ {
         self.symbols.iter().map(|s| s.c)
+    }
+
+    pub(crate) fn len(&self) -> usize {
+        self.symbols.len()
+    }
+
+    pub(crate) fn into_ids(self) -> impl Iterator<Item = u32> {
+        self.symbols.into_iter().map(|symbol| symbol.c)
     }
 }
 

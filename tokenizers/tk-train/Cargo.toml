@@ -26,6 +26,7 @@ tk-encode = { path = "../tk-encode", version = "0.1.0-rc.6.dev.0", default-featu
 ] }
 serde = { version = "1.0", features = ["derive"] }
 ahash = { version = "0.8.11", features = ["serde"] }
+leb128fmt = { version = "0.1", optional = true }
 # The word type and merge queue of the BPE trainers, which are `bpe`-gated.
 compact_str = { version = "0.9", features = ["serde"], optional = true }
 dary_heap = { version = "0.3.6", features = ["serde"], optional = true }
@@ -36,7 +37,7 @@ indicatif = { version = "0.18", optional = true }
 
 [features]
 default = ["progressbar", "bpe", "unigram", "wordpiece", "wordlevel"]
-bpe = ["tk-encode/bpe", "dep:compact_str", "dep:dary_heap"]
+bpe = ["tk-encode/bpe", "dep:compact_str", "dep:dary_heap", "dep:leb128fmt"]
 unigram = ["tk-encode/unigram", "dep:esaxx-rs"]
 # The WordPiece trainer runs the BPE one and keeps only its vocabulary.
 wordpiece = ["bpe", "tk-encode/wordpiece"]
