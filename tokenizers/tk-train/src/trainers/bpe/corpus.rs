@@ -57,55 +57,44 @@ impl Corpus {
         self.starts.len()
     }
 
-    #[allow(clippy::type_complexity)]
     pub(super) fn count_pairs(
         &self,
         progress: &Option<ProgressBar>,
-    ) -> Result<(AHashMap<Pair, u64>, AHashMap<Pair, Vec<u64>>)> {
+    ) -> Result<AHashMap<Pair, (u64, Vec<u64>)>> {
         self.starts
             .maybe_par_iter()
             .enumerate()
             .map(|(i, _)| {
-                let mut pair_counts = AHashMap::new();
-                let mut where_to_update: AHashMap<Pair, Vec<u64>> = AHashMap::new();
+                let mut pairs = AHashMap::<Pair, (u64, Vec<u64>)>::new();
 
                 let chars: Vec<_> = read_symbols(&self.symbols[self.word_range(i)]).collect();
                 for (offset, window) in chars.windows(2).enumerate() {
                     let pair: Pair = (window[0], window[1]);
-                    let count = pair_counts.entry(pair).or_insert(0_u64);
+                    let (count, positions) = pairs.entry(pair).or_default();
                     *count = count
                         .checked_add(self.counts[i])
                         .ok_or("BPE pair count exceeds u64")?;
-                    where_to_update
-                        .entry(pair)
-                        .or_default()
-                        .push((self.starts[i] + offset) as u64);
+                    positions.push((self.starts[i] + offset) as u64);
                 }
 
                 if let Some(progress) = progress {
                     progress.inc(1);
                 }
 
-                Ok((pair_counts, where_to_update))
+                Ok(pairs)
             })
             .reduce(
-                || Ok((AHashMap::new(), AHashMap::new())),
-                |counts, positions| {
-                    let (mut pair_counts, mut where_to_update) = counts?;
-                    let (pc, wtu) = positions?;
-                    for (pair, count) in pc {
-                        let total = pair_counts.entry(pair).or_insert(0_u64);
+                || Ok(AHashMap::new()),
+                |left, right| {
+                    let mut pairs = left?;
+                    for (pair, (count, positions)) in right? {
+                        let (total, all_positions) = pairs.entry(pair).or_default();
                         *total = total
                             .checked_add(count)
                             .ok_or("BPE pair count exceeds u64")?;
+                        all_positions.extend(positions);
                     }
-                    for (pair, word_positions) in wtu {
-                        where_to_update
-                            .entry(pair)
-                            .or_insert_with(Vec::new)
-                            .extend(word_positions);
-                    }
-                    Ok((pair_counts, where_to_update))
+                    Ok(pairs)
                 },
             )
     }
@@ -143,16 +132,7 @@ impl Corpus {
             }
             previous_word = Some(word);
 
-            let range = self.word_range(word);
-            let local_changes = merge_symbols(&mut self.symbols[range.clone()], pair, id, limit);
-            for (pair, added, coordinate) in local_changes {
-                changes.push(WordChange {
-                    pair,
-                    added,
-                    coordinate: (range.start + coordinate) as u64,
-                    weight: self.counts[word],
-                });
-            }
+            self.merge_symbols(word, pair, id, limit, &mut changes);
         }
         changes
     }
@@ -180,63 +160,112 @@ impl Corpus {
             if right.id != pair.1 || right.span == 0 {
                 continue;
             }
-            let span = left.span + right.span;
-            let after = position + span;
+            let after = position + (left.span + right.span);
             let word = self.word_for(position);
             let word_start = self.word_range(word).start;
             let weight = self.counts[word];
 
-            if position > word_start {
-                let before = position - 1;
-                let neighbor = self.symbols[before];
-                if neighbor.id != EMPTY && neighbor.span != 0 {
-                    let neighbor_start = position - neighbor.span;
-                    changes.push(WordChange {
-                        pair: (neighbor.id, pair.0),
-                        added: false,
-                        coordinate: neighbor_start as u64,
-                        weight,
-                    });
-                    if neighbor.span + span < limit {
-                        changes.push(WordChange {
-                            pair: (neighbor.id, id),
-                            added: true,
-                            coordinate: neighbor_start as u64,
-                            weight,
-                        });
-                    }
-                }
-            }
-
+            let previous = if position > word_start {
+                let neighbor = self.symbols[position - 1];
+                (neighbor.id != EMPTY && neighbor.span != 0)
+                    .then(|| (position - neighbor.span, neighbor))
+            } else {
+                None
+            };
             let next = self
                 .symbols
                 .get(after)
                 .copied()
-                .unwrap_or(Symbol { id: EMPTY, span: 0 });
-            if next.id != EMPTY && next.span != 0 {
-                changes.push(WordChange {
-                    pair: (pair.1, next.id),
-                    added: false,
-                    coordinate: right_position as u64,
-                    weight,
-                });
-                if span + next.span < limit {
-                    changes.push(WordChange {
-                        pair: (id, next.id),
-                        added: true,
-                        coordinate,
-                        weight,
-                    });
-                }
-            }
-
-            self.symbols[position] = Symbol { id, span };
-            if right_position + 1 != after {
-                self.symbols[right_position] = Symbol { id: EMPTY, span: 0 };
-            }
-            self.symbols[after - 1] = Symbol { id, span };
+                .filter(|neighbor| neighbor.id != EMPTY && neighbor.span != 0);
+            self.apply_match(
+                position..after,
+                id,
+                limit,
+                (previous, next),
+                weight,
+                &mut changes,
+            );
         }
         changes
+    }
+
+    fn merge_symbols(
+        &mut self,
+        word: usize,
+        pair: Pair,
+        id: u32,
+        limit: usize,
+        changes: &mut Vec<WordChange>,
+    ) {
+        let range = self.word_range(word);
+        let weight = self.counts[word];
+        let mut previous = None;
+        let mut position = range.start;
+        while position < range.end {
+            let left = self.symbols[position];
+            let right_position = position + left.span;
+            if left.id != pair.0
+                || right_position >= range.end
+                || self.symbols[right_position].id != pair.1
+                || self.symbols[right_position].span == 0
+            {
+                previous = Some(position);
+                position = right_position;
+                continue;
+            }
+
+            let after = position + (left.span + self.symbols[right_position].span);
+            let neighbors = (
+                previous.map(|before| (before, self.symbols[before])),
+                (after < range.end).then(|| self.symbols[after]),
+            );
+            self.apply_match(position..after, id, limit, neighbors, weight, changes);
+            previous = Some(position);
+            position = after;
+        }
+    }
+
+    fn apply_match(
+        &mut self,
+        matched: Range<usize>,
+        id: u32,
+        limit: usize,
+        (previous, next): (Option<(usize, Symbol)>, Option<Symbol>),
+        weight: u64,
+        changes: &mut Vec<WordChange>,
+    ) {
+        let mut emit = |pair, added, position| {
+            changes.push(WordChange {
+                pair,
+                added,
+                coordinate: position as u64,
+                weight,
+            });
+        };
+        let position = matched.start;
+        let after = matched.end;
+        let span = matched.len();
+        let left = self.symbols[position];
+        let right_position = position + left.span;
+        let right_id = self.symbols[right_position].id;
+        if let Some((before, neighbor)) = previous {
+            emit((neighbor.id, left.id), false, before);
+            if neighbor.span + span < limit {
+                emit((neighbor.id, id), true, before);
+            }
+        }
+
+        self.symbols[position] = Symbol { id, span };
+        if right_position + 1 != after {
+            self.symbols[right_position] = Symbol { id: EMPTY, span: 0 };
+        }
+        self.symbols[after - 1] = Symbol { id, span };
+        if let Some(neighbor) = next {
+            emit((right_id, neighbor.id), false, right_position);
+            if span + neighbor.span < limit {
+                emit((id, neighbor.id), true, position);
+            }
+        }
     }
 
     fn word_for(&self, position: usize) -> usize {
@@ -252,57 +281,6 @@ impl Corpus {
             .unwrap_or(self.symbols.len());
         start..end - 1
     }
-}
-
-fn merge_symbols(
-    symbols: &mut [Symbol],
-    pair: Pair,
-    id: u32,
-    limit: usize,
-) -> Vec<(Pair, bool, usize)> {
-    let mut changes = Vec::new();
-    let mut previous = None;
-    let mut position = 0;
-    while position < symbols.len() {
-        let left = symbols[position];
-        let right_position = position + left.span;
-        if left.id != pair.0
-            || right_position >= symbols.len()
-            || symbols[right_position].id != pair.1
-            || symbols[right_position].span == 0
-        {
-            previous = Some(position);
-            position = right_position;
-            continue;
-        }
-
-        let right = symbols[right_position];
-        let span = left.span + right.span;
-        let after = position + span;
-        if let Some(before) = previous {
-            let neighbor = symbols[before];
-            changes.push(((neighbor.id, pair.0), false, before));
-            if neighbor.span + span < limit {
-                changes.push(((neighbor.id, id), true, before));
-            }
-        }
-
-        symbols[position] = Symbol { id, span };
-        if right_position + 1 != after {
-            symbols[right_position] = Symbol { id: EMPTY, span: 0 };
-        }
-        symbols[after - 1] = Symbol { id, span };
-        if after < symbols.len() {
-            let neighbor = symbols[after];
-            changes.push(((pair.1, neighbor.id), false, right_position));
-            if span + neighbor.span < limit {
-                changes.push(((id, neighbor.id), true, position));
-            }
-        }
-        previous = Some(position);
-        position = after;
-    }
-    changes
 }
 
 fn read_symbols(symbols: &[Symbol]) -> impl Iterator<Item = u32> + '_ {

@@ -50,15 +50,12 @@ impl PairIndex {
         minimum: u64,
         progress: &Option<ProgressBar>,
     ) -> Result<Self> {
-        let (counts, mut positions) = corpus.count_pairs(progress)?;
-        let counts = counts
-            .into_iter()
-            .map(|(pair, count)| (pair, i128::from(count)))
-            .collect::<AHashMap<_, _>>();
-        let mut queue = OctonaryHeap::with_capacity(counts.len());
+        let pairs = corpus.count_pairs(progress)?;
+        let mut counts = AHashMap::with_capacity(pairs.len());
+        let mut queue = OctonaryHeap::with_capacity(pairs.len());
 
-        for (pair, positions) in positions.drain() {
-            let count = u64::try_from(counts[&pair]).map_err(|_| "BPE pair count exceeds u64")?;
+        for (pair, (count, positions)) in pairs {
+            counts.insert(pair, i128::from(count));
             if count > 0 {
                 let positions = Positions::from_unsorted(positions)?;
                 queue.push(Candidate {

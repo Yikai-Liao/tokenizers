@@ -15,7 +15,7 @@ mod codec {
         (last_bit / 7 + 1) as usize
     }
 
-    /// Leaf reserves the complete append before changing its logical contents.
+    /// Positions reserves the complete append before changing its logical contents.
     #[inline(always)]
     pub(super) fn append_gap(bytes: &mut Vec<u8>, gap: u64) {
         let width = gap_width(gap);
@@ -100,19 +100,17 @@ mod codec {
 
 use codec::{Cursor, RESTART};
 
-pub(super) struct Positions(Leaf);
-
-struct Leaf {
+pub(super) struct Positions {
     bytes: Vec<u8>,
     len: NonZeroU64,
 }
 
 impl Default for Positions {
     fn default() -> Self {
-        Self(Leaf {
+        Self {
             bytes: Vec::new(),
             len: NonZeroU64::MIN,
-        })
+        }
     }
 }
 
@@ -126,17 +124,14 @@ impl Positions {
         Ok(positions)
     }
 
-    #[inline(always)]
-    pub(super) fn push(&mut self, position: u64) -> Result<()> {
-        self.0.push(position)
-    }
-
     pub(super) fn iter(&self) -> impl Iterator<Item = u64> + '_ {
-        self.0.cursor()
+        Cursor::new(if self.len() == 0 {
+            &[]
+        } else {
+            &self.bytes[8..]
+        })
     }
-}
 
-impl Leaf {
     fn len(&self) -> usize {
         // Stored counts include the extra one that keeps the NonZero niche;
         // remove it to recover the logical item count validated during append.
@@ -157,7 +152,7 @@ impl Leaf {
         if new_size > self.bytes.capacity() {
             let capacity = self.bytes.capacity();
             // Reserve before mutation. A 1.5x capacity step remains amortized linear
-            // while retaining less slack in the immutable published leaves.
+            // while retaining less slack in the immutable published position streams.
             // A large append can exceed that geometric step, so grow to at least
             // new_size and reserve only the capacity missing from the current length.
             let capacity = capacity.saturating_add(capacity / 2).max(new_size);
@@ -193,14 +188,6 @@ impl Leaf {
         self.bytes[..8].copy_from_slice(&position.to_le_bytes());
         self.len = encoded_len;
         Ok(())
-    }
-
-    fn cursor(&self) -> Cursor<'_> {
-        Cursor::new(if self.len() == 0 {
-            &[]
-        } else {
-            &self.bytes[8..]
-        })
     }
 }
 
