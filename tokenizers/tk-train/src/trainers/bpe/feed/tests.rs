@@ -47,11 +47,11 @@ fn feed_matches_sequence_map_reduce() {
 
 #[test]
 fn counts_survive_flush_boundaries_within_one_sequence() {
-    for distinct in [
-        LOCAL_KEY_LIMIT - 1,
-        LOCAL_KEY_LIMIT,
-        LOCAL_KEY_LIMIT + 1,
-        2 * LOCAL_KEY_LIMIT + 1,
+    for (distinct, count_before_tail) in [
+        (LOCAL_KEY_LIMIT - 1, 2047),
+        (LOCAL_KEY_LIMIT, 1),
+        (LOCAL_KEY_LIMIT + 1, 2),
+        (2 * LOCAL_KEY_LIMIT + 1, 2),
     ] {
         let words: Vec<_> = std::iter::once(String::new())
             .chain((1..distinct).map(|i| format!("词{i}🙂")))
@@ -61,11 +61,6 @@ fn counts_survive_flush_boundaries_within_one_sequence() {
         let mut input = words.clone();
         input.push(words[0].clone());
         local.add(input, &shared);
-        let count_before_tail = if distinct < LOCAL_KEY_LIMIT {
-            distinct
-        } else {
-            distinct % LOCAL_KEY_LIMIT + 1
-        };
         assert_eq!(local.words.len(), count_before_tail);
         shared.flush(&mut local);
         let counts = shared.into_counts();
